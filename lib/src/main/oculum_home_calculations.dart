@@ -1044,6 +1044,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           runtimeCurrentStatBonus(key) +
           meccanioStatAdjustment(key, current) +
           chaosStatBonus(key) +
+          cycleFateGiftBonus +
           dustFusionTier +
           nourishmentStatBonus(key, current) +
           (conditionTarget == null
@@ -1080,7 +1081,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           0,
           oculumVisibleTotal(
                 storedCurrent: currentOculum(),
-                runtimeBonus: runtimeCurrentStatBonus('oculum'),
+                runtimeBonus:
+                    runtimeCurrentStatBonus('oculum') + cycleFateGiftBonus,
                 sleeping: oculumAddormentato,
               ) -
               planePressurePenalty,
@@ -5159,6 +5161,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (isThunderBot) return 0;
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
+        cycleNaturalFlightBonus +
         spineMaterialDefense +
         maskedShadowDefense +
         meccanioVariantValue('defenseBonus') +
@@ -5726,6 +5729,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final beforeConditions = max(
       0,
       30 +
+          cycleNaturalFlightBonus +
           (materiaTotale() ~/ 6) +
           runtimeQuickBonus('movimento') +
           activeStructuredEffectBonus('movimento') -

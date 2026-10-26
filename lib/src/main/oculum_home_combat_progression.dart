@@ -608,8 +608,28 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         .firstOrNull;
     if (group == null || masterInitiativeTokens.isEmpty) return;
     group['fightStarted'] = true;
+    group['escapeLedger'] = <String, dynamic>{};
+    group.remove('escapeExperience');
+    group.remove('escapeFinishing');
+    final fightInstanceId = DateTime.now().microsecondsSinceEpoch.toString();
     group['combatEnded'] = false;
     for (final token in masterInitiativeTokens) {
+      token.remove('cycleGoblinGiftClaimed');
+      for (final key in [
+        'outsideFight',
+        'outsideFirstPending',
+        'outsideCritical',
+        'outsideNormal',
+        'outsideFast',
+        'escapeReturnFastTurns',
+        'provokerChance',
+        'provokerShield',
+        'provokerTurns',
+      ]) {
+        token.remove(key);
+      }
+      token['fightInstanceId'] = fightInstanceId;
+      if (token['status'] == 'fled') token['status'] = 'ready';
       for (final key in [
         'extraNormalReactionCurrent',
         'extraNormalReactionQueued',
@@ -2193,7 +2213,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       case 'dead':
         return t('Morto', 'Dead');
       case 'fled':
-        return t('Fuggito', 'Fled');
+        return t('Fuori fight', 'Outside fight');
       case 'expired':
         return t('Dissolto', 'Dissolved');
       default:
@@ -2277,6 +2297,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int masterInitiativeReactionMax(Map<String, dynamic> token) {
+    if (token['outsideFight'] == true) {
+      return max(0, readIntValue(token['outsideNormal']));
+    }
     if (token['mechaCriticalOnly'] == true) return 0;
     if (token['ashReactionExhausted'] == true ||
         token['oblivionMemoryReactionLost'] == true) {
@@ -2287,6 +2310,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   int masterInitiativeFastReactionMax(Map<String, dynamic> token) {
+    if (token['outsideFight'] == true) {
+      return max(0, readIntValue(token['outsideFast']));
+    }
     final extra = max(0, readIntValue(token['extraFastReactionCurrent']));
     if (token['mechaCriticalOnly'] == true) return 1 + extra;
     if (token['mechaReactionOnly'] == true) return extra;
@@ -2505,6 +2531,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token[field] = readIntValue(token[field]) + 1;
       }
       token['actionTurnRound'] = masterInitiativeRound;
+      cycleTurnReactions(token);
+      refreshEscapeTurn(token);
       final tag = publicInitiativeSourceTag(token);
       final index = localSheetIndexForOculumTag(tag);
       resolveOblivionMemoryTurn(token);
@@ -3748,7 +3776,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           .toInt();
       if (delta > 0) advanceEncounterParticipantTurn(current);
       if (masterInitiativeTokenCanAct(masterInitiativeTokens[current])) {
-        masterInitiativeTokens[current]['status'] = delta > 0
+        masterInitiativeTokens[current]['status'] =
+            masterInitiativeTokens[current]['outsideFight'] == true
+            ? 'fled'
+            : delta > 0
             ? 'acted'
             : 'ready';
       }
@@ -3765,7 +3796,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         unawaited(Future<void>.microtask(tickLavastrelloNests));
         removeExpiredTemporaryInitiativeTurns();
         for (final token in masterInitiativeTokens) {
-          if (masterInitiativeTokenCanAct(token)) token['status'] = 'ready';
+          if (masterInitiativeTokenCanAct(token)) {
+            token['status'] = token['outsideFight'] == true ? 'fled' : 'ready';
+          }
         }
         next = 0;
         for (int step = 0; step < masterInitiativeTokens.length; step++) {
@@ -3786,7 +3819,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
 
       masterInitiativeActiveIndex = next;
-      masterInitiativeTokens[next]['status'] = 'active';
+      masterInitiativeTokens[next]['status'] =
+          masterInitiativeTokens[next]['outsideFight'] == true
+          ? 'fled'
+          : 'active';
       if (delta > 0) advanceArtSwitchForToken(masterInitiativeTokens[next]);
       restoreMasterInitiativeTurnResources(masterInitiativeTokens[next]);
       risultato =
@@ -5965,6 +6001,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
 
       int rimanente = dannoFinale;
+      rimanente = absorbProvokerShield(rimanente, bypassShields: ignoraScudi);
       int oculumShield = scudoOculum();
       int shield = scudo();
       int temp = hpTemp();
@@ -6477,6 +6514,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         return;
       }
       checkAutomaticAshFromHpLoss(hpPrima, hp, source: t('danno', 'damage'));
+      recordEscapeHpLoss(max(0, hpPrima - hp));
       planarAfterHpDamage();
       controllaCadutaDopoDanno();
       controllaStatoForzaDopoHp();

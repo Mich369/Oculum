@@ -601,6 +601,7 @@ const _cycleSpecies = <String, List<_CycleSpecies>>{
 };
 
 final List<MonsterBookEntry> oculumCycleMonsterEntries = List.unmodifiable([
+  ..._suggestedCycleEntries,
   for (final phase in _cycleSpecies.entries)
     for (final spec in phase.value)
       _canonicalCreature(
@@ -695,6 +696,7 @@ MonsterConcreteTechnique _cycleTechnique(
 );
 
 final _cycleMonsterTechniques = <String, MonsterConcreteTechnique>{
+  ..._suggestedCycleTechniques,
   for (final species in _cycleSpecies.values)
     for (final spec in species) ...{
       '${spec.id}_prima': _cycleTechnique(spec, spec.first),

@@ -733,6 +733,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   int merchantOfferCost(Map<String, dynamic> offer) {
     final kind = '${offer['kind'] ?? ''}';
+    if (const {'power_scanner', 'postea_power_scanner'}.contains(kind)) {
+      return max(0, readIntValue(offer['cost']));
+    }
     if (kind == 'dust_crystal') return max(0, readIntValue(offer['cost']));
     if (kind == 'postea_companion' && offer['companion'] == 'core') {
       return (90 +
@@ -897,6 +900,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         kind == 'nurse_service' || offer['nurseCatalog'] == true,
       'alchimista' =>
         const {
+              'power_scanner',
               'fallen_eye',
               'smoking_herbs',
               'fate_sign',
@@ -1753,6 +1757,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureMerchantSpecialOffers() {
+    ensurePowerScannerOffers();
     ensurePosteaOffers();
     ensureDustCrystalOffers();
     ensurePlaneOffers();
@@ -3820,6 +3825,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (const {
+      'power_scanner',
+      'postea_power_scanner',
+    }.contains(offer['kind'])) {
+      return powerScannerFromOffer(offer);
+    }
     if (offer['kind'] == 'dust_crystal') {
       return oculumDustCrystal('${offer['size']}');
     }
@@ -4292,6 +4303,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['powerScanner'] == true ||
       item.craftData['dustCrystal'] != null ||
       item.craftData['posteaAntimalus'] == true ||
       item.craftData['summoningEmblem'] is Map ||
@@ -4321,6 +4333,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['powerScanner'] == true) {
+      await usePowerScanner(item);
       return;
     }
     if (item.craftData['dustCrystal'] != null) {

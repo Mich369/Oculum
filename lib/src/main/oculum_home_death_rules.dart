@@ -122,7 +122,8 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     if (token['mechaOccupied'] == true) return false;
     return !readBoolValue(token['shadowCloneExpired']) &&
         '${token['status'] ?? ''}' != 'expired' &&
-        '${token['status'] ?? ''}' != 'fled' &&
+        ('${token['status'] ?? ''}' != 'fled' ||
+            token['outsideFight'] == true) &&
         !masterInitiativeTokenIsDead(token) &&
         !masterInitiativeTokenIsDowned(token);
   }

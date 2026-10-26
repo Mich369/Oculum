@@ -351,7 +351,12 @@ CharacterSkillForm _naturalMonsterSkillForm({
     nome: const ['I', 'II', 'III'][form],
     tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
     livello:
-        '${(monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3}',
+        '${switch (oculumMonsterBookSkillBaseId(id)) {
+          'rock_slime_ball' => const [0, 5, 13][form],
+          'rock_slime_bounce' => const [1, 6, 12][form],
+          'rock_slime_harden' => const [0, 3, 10][form],
+          _ => (monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3,
+        }}',
     costo: passive || sacrificial || noResource
         ? 'Nessun costo'
         : '$minimum/$maximum $resourceLabel',
@@ -562,8 +567,10 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
     );
   }
   final art = _rawMonsterBookArt(monster);
-  if (oculumMonsterCyclePhase(monster).isNotEmpty) {
-    final phase = oculumMonsterCyclePhaseName(monster);
+  if (monster.encounterRules['cycleOpenName'] != null) {
+    final phase = oculumMonsterCyclePhaseName(monster).isEmpty
+        ? 'propria natura'
+        : oculumMonsterCyclePhaseName(monster);
     final kind = '${monster.encounterRules['cycleOpenKind'] ?? 'danno'}';
     art.openName = '${monster.encounterRules['cycleOpenName']}';
     art.openDescription =
@@ -841,6 +848,7 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
           skill.nome == 'Lancio di aculei' ||
           skill.nome == 'Aculei precisi' && form == 3;
       if (!spent &&
+          oculumMonsterBookSkillBaseId(id) != 'rock_slime_bounce' &&
           skill.oculumMassimoPerLivello(form) >
               skill.oculumMinimoPerLivello(form)) {
         final amount = skill.oculumMinimoPerLivello(form);
@@ -906,6 +914,28 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
   }
   for (final (index, skill) in art.skills.indexed) {
     final id = ids[index];
+    // Initial catalogue balancing only. Imported/saved customized skills never
+    // pass through this constructor. Explicit cooldowns and passive rules win.
+    if (!oculumMonsterBookSkillIsPassive(id)) {
+      for (var form = 0; form < 3; form++) {
+        final resourceGain = skill.effettiPerLivello[form].any(
+          (e) => const {
+            'aggiungi_reazioni',
+            'aggiungi_reazioni_rapide',
+            'cura',
+            'scudo',
+            'hp_temporanei',
+          }.contains(e.type),
+        );
+        if (resourceGain &&
+            skill.oculumMinimoPerLivello(form + 1) > 0 &&
+            skill.cooldownPerLivello[form].amount <= 0) {
+          skill.cooldownPerLivello[form] = OculumAbilityCooldown(
+            amount: form + 3,
+          );
+        }
+      }
+    }
     if (id == 'monk_ki' || id == 'monk_seal') {
       for (final cd in skill.cooldownPerLivello) {
         cd.unit = id == 'monk_ki' ? 'sessioni' : 'azioni';
@@ -1080,10 +1110,25 @@ CharacterArt oculumRockSlimeArt(MonsterBookEntry monster) => CharacterArt(
       '${monster.descIt}\nTecniche dello Slime Roccioso. Le forme richiedono il livello indicato; ogni attivazione sceglie il proprio investimento di Oculum.',
   openName: 'Masso Slime',
   openDescription:
-      'Richiede livello 15. Ti trasformi in Masso Slime: +5 a tutte le statistiche e +9 ai tiri mentre l’Open è attiva. La Skill Open infligge Oculum immesso ×5 danni, aumentati del 100%.',
+      'Richiede livello 15. Ti gonfi in cielo e cadi: Oculum attuale ×5 Danni, senza aggiungere il Danno base. Dopo il colpo ottieni +5 a tutte le statistiche e +9 ai tiri; il Buff potenzia Schiaccio del 50%.',
+  openDescriptionEffects: [
+    OculumStructuredEffect(
+      id: 'rock_slime_open_crash',
+      type: 'danno',
+      valueExpression: 'oculum*5',
+      recipient: 'bersaglio',
+    ),
+  ],
   openBuff:
       '+5 Resilienza, Volontà, Materia e Oculum; +9 a tutti i tiri. Termina quando l’Open si disattiva.',
   openBuffEffects: [
+    OculumStructuredEffect(
+      id: 'rock_slime_open_power',
+      type: 'modifica_statistica',
+      target: 'monster_open_power',
+      valueExpression: '50',
+      mode: 'finche_attivo',
+    ),
     for (final stat in ['Resilienza', 'Volontà', 'Materia', 'Oculum'])
       OculumStructuredEffect(
         id: 'rock_slime_open_$stat',
@@ -1099,11 +1144,28 @@ CharacterArt oculumRockSlimeArt(MonsterBookEntry monster) => CharacterArt(
     ),
   ],
   openSkill:
-      'Schiaccio — Oculum immesso ×5 danni, +100% danni Open. Il raddoppio si applica una sola volta; Difesa e Scudi restano validi.',
+      'Schiaccio — Danni normali ×2, poi +50% dal Buff Open: ×3 totali. CD 3 turni. Difesa e Scudi restano validi.',
+  openSkillEffects: [
+    OculumStructuredEffect(
+      id: 'rock_slime_open_schiaccio',
+      type: 'danno_percentuale',
+      valueExpression: '100+monster_open_bonus*2',
+      mode: 'prossima_azione',
+      recipient: 'se_stesso',
+    ),
+  ],
   monsterOpenSkill: true,
   skills: [
     for (final id in monster.skillIds.map(oculumMonsterBookSkillBaseId))
       ArtSkill(
+        cooldownPerLivello: [
+          for (final turns in switch (id) {
+            'rock_slime_bounce' => [2, 3, 5],
+            'rock_slime_harden' => [3, 4, 6],
+            _ => [2, 3, 4],
+          })
+            OculumAbilityCooldown(amount: turns),
+        ],
         nome: monsterBookSkillText(id).split('—').first.trim(),
         livello: 0,
         evo1:
@@ -1154,8 +1216,8 @@ List<OculumStructuredEffect> oculumRockSlimeEffects(
         type: block ? 'costrutto' : 'danno',
         target: block ? 'Blocco di Roccia Slime' : '',
         valueExpression: block
-            ? 'oculum_spent*${form == 1 ? 3 : 5}'
-            : 'oculum_spent+${const [0, 3, 10][form]}',
+            ? 'oculum_spent*${form == 1 ? 3 : 10}'
+            : 'oculum_spent+${const [15, 0, 0][form]}',
         recipient: block ? 'se_stesso' : 'bersaglio',
         mode: block ? 'immediato' : 'prossima_azione',
         customDisplayText: block
@@ -1196,13 +1258,16 @@ List<OculumStructuredEffect> oculumRockSlimeEffects(
     OculumStructuredEffect(
       id: '${id}_shield',
       type: 'scudo',
-      valueExpression: '${const [10, 15, 25][form]}+oculum_spent',
+      valueExpression: form == 2
+          ? '1d250+50+oculum_spent*3'
+          : '${form == 0 ? 10 : 25}+oculum_spent*${form == 0 ? 1 : 1.5}',
       mode: 'immediato',
     ),
     OculumStructuredEffect(
       id: '${id}_def',
       type: 'difesa',
-      valueExpression: '${const [5, 6, 15][form]}+oculum_spent',
+      valueExpression:
+          '${const [5, 6, 15][form]}+oculum_spent*${const [1, 1.5, 3][form]}',
       duration: '6',
     ),
   ];

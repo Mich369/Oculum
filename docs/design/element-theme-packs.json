@@ -56,5 +56,8 @@
   "benedizione": "element_pack_benedizione",
   "cura": "element_pack_cura",
   "vero": "element_pack_vero",
-  "sconosciuto": "element_pack_sconosciuto"
+  "sconosciuto": "element_pack_sconosciuto",
+  "demoniaco": "plane_demoniaco",
+  "nuvola": "plane_nuvole_rocciose",
+  "roccia": "plane_sotterraneo_maggiore"
 }

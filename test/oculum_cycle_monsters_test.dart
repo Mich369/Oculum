@@ -28,7 +28,7 @@ void main() {
         final scrolls = loot(
           20,
         ).where((i) => i.craftData['scroll'] != null).toList();
-        expect(scrolls, hasLength(2), reason: monster.id);
+        expect(scrolls, hasLength(monster.skillIds.length), reason: monster.id);
         for (final natural in [18, 19, 20]) {
           for (final bonus in [0, 100]) {
             final selected = loot(
@@ -37,7 +37,7 @@ void main() {
             ).where((item) => item.craftData['scroll'] != null).toList();
             expect(
               selected,
-              hasLength(natural == 20 ? 2 : 1),
+              hasLength(natural == 20 ? monster.skillIds.length : 1),
               reason: '${monster.id}/$natural/+$bonus',
             );
             expect(
@@ -77,9 +77,9 @@ void main() {
       }
     },
   );
-  test('all twelve calendar phases have two unique imported species', () {
+  test('all phases retain base species and eleven suggested additions', () {
     expect(oculumCycleMonsterPhaseNames.length, 12);
-    expect(oculumCycleMonsterEntries.length, 24);
+    expect(oculumCycleMonsterEntries.length, 35);
     final skills = <String>{};
     final materials = <String>{};
     for (final phase in oculumCycleMonsterPhaseNames.keys) {
@@ -87,7 +87,7 @@ void main() {
         oculumCycleMonsterEntries.where(
           (m) => oculumMonsterCyclePhase(m) == phase,
         ),
-        hasLength(2),
+        hasLength(phase == 'ultimo_ciclo' ? 2 : 3),
         reason: phase,
       );
     }
@@ -113,8 +113,8 @@ void main() {
       );
       expect(restored.dropIds, monster.dropIds);
     }
-    expect(materials, hasLength(24));
-    expect(skills, hasLength(48));
+    expect(materials, hasLength(35));
+    expect(skills, hasLength(73));
   });
 
   test(
@@ -122,7 +122,11 @@ void main() {
     () {
       for (final monster in oculumCycleMonsterEntries) {
         final art = oculumMonsterBookArt(monster);
-        expect(art.skills, hasLength(2), reason: monster.id);
+        expect(
+          art.skills,
+          hasLength(monster.skillIds.length),
+          reason: monster.id,
+        );
         expect(art.openName, monster.encounterRules['cycleOpenName']);
         expect(
           art.openBuffEffects.any((e) => e.target == 'monster_open_power'),
@@ -133,7 +137,7 @@ void main() {
           contains('monster_open_bonus'),
         );
         expect(art.openSkillCooldown!.amount, 4);
-        for (var index = 0; index < 2; index++) {
+        for (var index = 0; index < monster.skillIds.length; index++) {
           final technique = oculumPlanarTechnique(monster.skillIds[index])!;
           final skill = art.skills[index];
           for (var form = 1; form <= 3; form++) {
@@ -227,6 +231,7 @@ void main() {
       await tester.tap(find.text('The Moon').last);
       await tester.pumpAndSettle();
       expect(find.text('Cerbiatto dei Voti Lunari'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Gufo delle Stelle Alleate'), 80, scrollable: find.byType(Scrollable).last);
       expect(find.text('Gufo delle Stelle Alleate'), findsOneWidget);
       expect(find.text('Falena del Delirio'), findsNothing);
       await tester.tap(find.text('Annulla'));

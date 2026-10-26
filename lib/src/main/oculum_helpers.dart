@@ -1302,6 +1302,8 @@ String oculumNormalizeElementId(String value) {
 
 String oculumElementDisplayIt(String idOrName) {
   switch (oculumNormalizeElementId(idOrName)) {
+    case 'fango':
+      return 'Fango';
     case 'fisico':
       return 'Fisico';
     case 'taglio':

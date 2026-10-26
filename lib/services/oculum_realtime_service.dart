@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'oculum_sheet_transfer.dart';
 import 'oculum_chunk_recovery.dart';
+import 'oculum_room_activity.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -23,6 +24,8 @@ class OculumRealtimeService {
     this.presenceDataProvider,
     this.onConnected,
     this.onAccessRequested,
+    this.onIdleWarning,
+    this.onIdleClosed,
     this.httpPollingOnly = false,
     this.roomPassword = '',
     SupabaseClient? client,
@@ -96,6 +99,25 @@ class OculumRealtimeService {
   final void Function()? onConnected;
   final Future<bool?> Function(String userId, String displayName)?
   onAccessRequested;
+  final void Function(bool visible)? onIdleWarning;
+  final VoidCallback? onIdleClosed;
+  OculumRoomActivity _activity = OculumRoomActivity(DateTime.now());
+  DateTime _localUserActivity = DateTime.now();
+  bool _idleClosing = false;
+
+  void recordUserActivity() {
+    final warned = _activity.warningAt != null;
+    _localUserActivity = DateTime.now();
+    _activity.record(_localUserActivity);
+    if (warned) onIdleWarning?.call(false);
+    // Reuse the existing presence write; never send a packet per mouse move.
+    if (isConnected &&
+        (_lastPresenceWrite == null ||
+            _localUserActivity.difference(_lastPresenceWrite!) >=
+                roomRefreshInterval)) {
+      unawaited(_trackPresence());
+    }
+  }
 
   /// Use the authenticated HTTPS event journal instead of a websocket.
   /// Automatic mode falls back to this transport when websocket setup fails.
@@ -451,6 +473,9 @@ class OculumRealtimeService {
   }
 
   Future<void> disconnect({bool notify = true}) async {
+    _activity = OculumRoomActivity(DateTime.now());
+    _localUserActivity = DateTime.now();
+    _idleClosing = false;
     _generation++;
     _sheetSendTail = Future<void>.value();
     final approvalCancelled = _approvalCancelled;
@@ -1403,6 +1428,7 @@ class OculumRealtimeService {
     try {
       final payload = <String, dynamic>{
         'playerName': _displayName,
+        'userActivityAt': _localUserActivity.toUtc().toIso8601String(),
         'roomId': normalizedRoomId,
         'joinedAt': _nowIso(),
         'sessionId': _presenceKey,
@@ -1642,6 +1668,18 @@ class OculumRealtimeService {
     // The database already supplied the verified body. Unwrapping a user
     // supplied nested `payload` here would discard authenticated sender fields.
     final normalized = Map<String, dynamic>.from(payload);
+    if (event == 'initiative_control' &&
+        normalized['roomIdleClose'] == true &&
+        normalized['senderRole'] == 'master') {
+      final activity = DateTime.tryParse(
+        '${normalized['lastActivityAt'] ?? ''}',
+      );
+      if (activity != null && !_localUserActivity.isAfter(activity)) {
+        onIdleClosed?.call();
+        unawaited(disconnect(notify: false));
+      }
+      return;
+    }
 
     if (event == 'room_member_removed' &&
         normalized['targetUserId'] ==
@@ -1762,6 +1800,19 @@ class OculumRealtimeService {
         }
       }
       onPresenceChanged(users);
+      final hadWarning = _activity.warningAt != null;
+      final now = DateTime.now();
+      _activity.observe(users, now);
+      if (hadWarning && _activity.warningAt == null) onIdleWarning?.call(false);
+      if (authenticatedRole == 'master' && !_idleClosing) {
+        if (_activity.shouldWarn(now)) {
+          _activity.warn(now);
+          onIdleWarning?.call(true);
+        } else if (_activity.shouldClose(now)) {
+          _idleClosing = true;
+          unawaited(_closeIdleRoom(generation, channel));
+        }
+      }
     } catch (_) {
       // A failed poll must not replace known peers with an empty snapshot.
     }
@@ -1770,6 +1821,32 @@ class OculumRealtimeService {
   void _safeStatus(String status) {
     if (_disposed) return;
     onStatusChanged(status);
+  }
+
+  bool staleActivityClose(int generation, RealtimeChannel? channel) =>
+      _disposed ||
+      _generation != generation ||
+      _channel != channel ||
+      _activity.warningAt == null;
+
+  Future<void> _closeIdleRoom(int generation, RealtimeChannel? channel) async {
+    // Finish the presence read before sending; sending may itself reconcile presence.
+    await Future<void>.delayed(Duration.zero);
+    if (staleActivityClose(generation, channel)) {
+      _idleClosing = false;
+      return;
+    }
+    final sent = await sendCombatEvent('initiative_control', {
+      'roomIdleClose': true,
+      'id': 'room-idle:${DateTime.now().microsecondsSinceEpoch}',
+      'lastActivityAt': _activity.latestActivity.toUtc().toIso8601String(),
+    });
+    if (sent && !staleActivityClose(generation, channel)) {
+      onIdleClosed?.call();
+      await disconnect(notify: false);
+    } else {
+      _idleClosing = false;
+    }
   }
 
   String get _displayName {

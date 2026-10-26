@@ -30,15 +30,18 @@ class OculumSurfaceScope extends InheritedWidget {
     super.key,
     required this.highlightAll,
     required this.setButtonHover,
+    this.secondaryControls = false,
     required super.child,
   });
   final bool highlightAll;
+  final bool secondaryControls;
   final void Function(Object, bool) setButtonHover;
   static OculumSurfaceScope? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<OculumSurfaceScope>();
   @override
   bool updateShouldNotify(OculumSurfaceScope oldWidget) =>
-      highlightAll != oldWidget.highlightAll;
+      highlightAll != oldWidget.highlightAll ||
+      secondaryControls != oldWidget.secondaryControls;
 }
 
 /// Fades only decorations supplied to the builder, never text or hit targets.
@@ -47,9 +50,11 @@ class OculumHoverSurface extends StatefulWidget {
     super.key,
     required this.builder,
     this.actionGroup = false,
+    this.secondaryControls = false,
   });
   final Widget Function(BuildContext, double) builder;
   final bool actionGroup;
+  final bool secondaryControls;
   @override
   State<OculumHoverSurface> createState() => _OculumHoverSurfaceState();
 }
@@ -73,12 +78,18 @@ class _OculumHoverSurfaceState extends State<OculumHoverSurface> {
             buttons.clear();
           }),
           child: OculumSurfaceScope(
+            secondaryControls: widget.secondaryControls,
             highlightAll: widget.actionGroup && hovered && buttons.isEmpty,
             setButtonHover: buttonHover,
             child: Builder(
               builder: (context) => widget.builder(
                 context,
-                hovered ? 1 : 1 - value.surfaceTransparency,
+                hovered
+                    ? 1
+                    : 1 -
+                          (widget.secondaryControls
+                              ? value.controlTransparency
+                              : value.surfaceTransparency),
               ),
             ),
           ),
@@ -114,7 +125,10 @@ class _OculumSurfaceButtonState extends State<OculumSurfaceButton> {
           color,
           active || scope?.highlightAll == true
               ? 1
-              : 1 - oculumThemePresentation.value.surfaceTransparency,
+              : 1 -
+                    (scope?.secondaryControls == true
+                        ? oculumThemePresentation.value.controlTransparency
+                        : oculumThemePresentation.value.surfaceTransparency),
         );
       }),
     );

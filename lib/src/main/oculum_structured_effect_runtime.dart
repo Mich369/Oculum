@@ -414,6 +414,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ..diceExpression = ''
             ..includeLevel = false
             ..includeGrade = false;
+          if (effect.target == 'cycle_fate_gift') {
+            frozen.resource = sheetTagAt(schedaCorrente);
+          }
           if (effect.id.startsWith('corrosive_acid_spit_') &&
               effect.duration == '3') {
             frozen.duration =

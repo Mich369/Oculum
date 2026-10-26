@@ -6,6 +6,26 @@ part of '../../main.dart';
 class OculumPerformanceProbe {
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
+  Widget settings() => _state.settingsPage();
+  void ensurePowerScanners() => _state.ensurePowerScannerOffers();
+  InventoryItem scannerFromOffer(Map<String, dynamic> offer) =>
+      _state.merchantItemFromOffer(offer);
+  bool usableMerchantItem(InventoryItem item) =>
+      _state.isMerchantConsumable(item);
+  int totalPower(int index) => _state.scoutTotalPowerAt(index);
+  Map<String, dynamic> powerReading(
+    int index,
+    int total, {
+    bool success = true,
+    bool perception = true,
+  }) => _state.scoutAdditionalReading(
+    index,
+    18,
+    success,
+    100,
+    total: total,
+    perception: perception,
+  );
   Future<void> revealWeakPoint(String id) => _state.masterDiscoverWeakPoint(id);
   List<Map<String, dynamic>> precisionParts() =>
       _state.currentPrecisionBodyParts;
@@ -197,6 +217,59 @@ class OculumPerformanceProbe {
   bool chaosProc(String opponent, int percentile) =>
       _state.rollChaosProc(opponent, percentile: percentile);
   void tickPlanar() => _state.tickPlanarTurn();
+  bool cycleGift(String donor, int percentile) =>
+      _state.grantCycleFateGift(donor, percentile: percentile);
+  int cycleGiftBonus() => _state.cycleFateGiftBonus;
+  void cycleDay(int day) => _state.impostaGiornoOculum(day);
+  String celestial() => _state.celestialAllegiance;
+  void cycleCritical(
+    Map<String, dynamic> request, {
+    bool critical = true,
+    bool hit = true,
+  }) => _state.cycleIncomingCritical(request, critical: critical, hit: hit);
+  bool cycleCloud(Map<String, dynamic> request, int percentile) =>
+      _state.cycleCloudBlocksDefense(request, percentile: percentile);
+  void cycleReaction(Map<String, dynamic> token) =>
+      _state.cycleTurnReactions(token);
+  int cycleFlight() => _state.cycleNaturalFlightBonus;
+  String bestIncomingElement(List<String> elements, {int? tieIndex}) =>
+      _state.mostEffectiveIncomingElement(elements, tieIndex: tieIndex);
+  void barrierResponse(
+    Map<String, dynamic> incoming,
+    Map receipt,
+    int natural,
+  ) => _state.queueCloudBarrierResponse(incoming, receipt, natural: natural);
+  void barrierCritical(Map<String, dynamic> request) =>
+      _state.claimCloudBarrierCritical(request);
+  int provokerAbsorb(int damage, {bool bypass = false}) =>
+      _state.absorbProvokerShield(damage, bypassShields: bypass);
+  OculumAttackPlan provoke(OculumAttackPlan plan, int percentile) =>
+      _state.redirectProvokedAttack(plan, percentile: percentile);
+  void provokerEvent(Map<String, dynamic> payload) =>
+      _state.receiveProvokerState(payload);
+  void escapeTurn(Map<String, dynamic> token, int percentile) =>
+      _state.refreshEscapeTurn(token, percentile: percentile);
+  void escapeNotice(Map<String, dynamic> record) =>
+      _state.prepareEscapeNotice(record);
+  Map<String, dynamic> escapeLedger() => _state.escapeLedger;
+  void escapeEvent(Map<String, dynamic> payload) =>
+      _state.receiveEscapeEvent(payload);
+  void escapeDamage(Map<String, dynamic> request) =>
+      _state.recordEscapeDamage(request);
+  void escapeReturnBonus(Map<String, dynamic> request) =>
+      _state.applyEscapeReturnBonus(request);
+  void escapeReturnReply(
+    Map<String, dynamic> request,
+    Map<String, dynamic> reply,
+  ) => _state.acceptEscapeReturnReply(request, reply);
+  Widget roleFolder(Map<String, dynamic> group, {bool local = true}) =>
+      _state.encounterRoleFolder(group, '${group['id']}', local: local);
+  Widget encounterSlots() => _state.referenceEncounterSlots();
+  Map<String, int> escapeExperience() => _state.escapeExperienceByParticipant();
+  void moveToRole(String encounterId, Map<String, dynamic> token) =>
+      _state.moveEncounterMemberToRole(encounterId, token);
+  String cycleBite({bool lunar = true}) =>
+      _state.cycleLunarBiteElement(chooseLunarOnTie: lunar);
   void restPlanar() => _state.longRestPlanarEffects();
   void finishPlanarFight() => _state.resetPlanarFight();
   List<Map<String, dynamic>> partyQuests() => _state.activePartyQuests;
@@ -384,6 +457,8 @@ class OculumPerformanceProbe {
       );
   String incomingDamagePreset(String element) =>
       _state.configuredIncomingDamagePreset(element);
+  void setIncomingDamagePreset(String element, String preset) =>
+      _state.incomingDamagePresets[element] = preset;
   double corruptionResistance() => _state.currentCorruptionResistancePercent();
   double corruptionResistanceForSheet(Map<String, dynamic> sheet) =>
       _state.oculumCorruptionResistanceInSheet(sheet);

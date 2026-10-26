@@ -364,7 +364,10 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             .contains(key)) {
           continue;
         }
-        final amount = defeated.isEmpty
+        final escapeAmounts = reward['escapeExperience'] as Map?;
+        final amount = escapeAmounts != null
+            ? readIntValue(escapeAmounts[tag])
+            : defeated.isEmpty
             ? legacyAmount
             : oculumEncounterExperienceForEnemies(
                 defeated,
@@ -418,7 +421,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             'targetTag': tag,
             'amount': amount,
             'discoveryEnemies': [
-              for (final enemy in defeated)
+              for (final enemy in escapeAmounts != null ? <Map>[] : defeated)
                 {
                   ...enemy,
                   'experienceReward': oculumEncounterExperienceForEnemies(
@@ -447,7 +450,8 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             ),
             'encounterName': reward['name'],
             'multiplier':
-                reward['fateActive'] == true &&
+                escapeAmounts == null &&
+                    reward['fateActive'] == true &&
                     (reward['fateParticipants'] == null ||
                         (reward['fateParticipants'] as List).contains(tag))
                 ? ((i == schedaCorrente
@@ -598,7 +602,11 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     }
   }
 
-  Future<void> finishEncounter(String id, {Random? random}) async {
+  Future<void> finishEncounter(
+    String id, {
+    Random? random,
+    bool automatic = false,
+  }) async {
     if (realtimeService?.isConnected == true && !realtimeIsMasterRole) return;
     selectMasterInitiativeGroup(id);
     captureActiveMasterInitiativeGroup();
@@ -681,34 +689,36 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             : '${token['type'] ?? 'Mostro'}',
       });
     }
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dialog) => AlertDialog(
-        title: const Text('Termina scontro'),
-        content: SingleChildScrollView(
-          child: Text(
-            '${defeated.length} nemici sconfitti · $amount EXP base. '
-            'Il premio di ciascun partecipante usa categoria e Grado di ogni nemico, '
-            'confrontato con il proprio Grado. I Drop dei mostri uccisi presenti '
-            'in turnistica vengono tirati e distribuiti ora. Party e NPC alleati restano sulla board; i nemici vengono rimossi. La '
-            'condivisione chiusa. Gli scontri uniti tornano separati.\n\n'
-            '${defeated.map((enemy) => '${enemy['name'] ?? 'Nemico'} · '
-                '${enemy['source']} · Grado ${oculumExperienceGradeLabel(readIntValue(enemy['grade']))} · '
-                '${readIntValue(enemy['level']) + readIntValue(enemy['statsTotal'])} EXP base').join('\n')}',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialog),
-            child: const Text('Annulla'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialog, true),
-            child: const Text('Termina, tira i Drop e assegna EXP'),
-          ),
-        ],
-      ),
-    );
+    final ok = automatic
+        ? true
+        : await showDialog<bool>(
+            context: context,
+            builder: (dialog) => AlertDialog(
+              title: const Text('Termina scontro'),
+              content: SingleChildScrollView(
+                child: Text(
+                  '${defeated.length} nemici sconfitti · $amount EXP base. '
+                  'Il premio di ciascun partecipante usa categoria e Grado di ogni nemico, '
+                  'confrontato con il proprio Grado. I Drop dei mostri uccisi presenti '
+                  'in turnistica vengono tirati e distribuiti ora. Party e NPC alleati restano sulla board; i nemici vengono rimossi. La '
+                  'condivisione chiusa. Gli scontri uniti tornano separati.\n\n'
+                  '${defeated.map((enemy) => '${enemy['name'] ?? 'Nemico'} · '
+                      '${enemy['source']} · Grado ${oculumExperienceGradeLabel(readIntValue(enemy['grade']))} · '
+                      '${readIntValue(enemy['level']) + readIntValue(enemy['statsTotal'])} EXP base').join('\n')}',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialog),
+                  child: const Text('Annulla'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialog, true),
+                  child: const Text('Termina, tira i Drop e assegna EXP'),
+                ),
+              ],
+            ),
+          );
     if (!mounted || ok != true) return;
     resolveCorruptionFightEnd(id);
     final cooldownFightSequence =
@@ -950,6 +960,10 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       }
     }
     final reward = <String, dynamic>{
+      if (group['escapeExperience'] is Map)
+        'escapeExperience': Map<String, dynamic>.from(
+          group['escapeExperience'] as Map,
+        ),
       'won':
           defeated.isNotEmpty &&
           !(group['tokens'] as List? ?? []).whereType<Map>().any(
@@ -964,7 +978,12 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       'endedEncounterId': id,
       'id': '$id:${DateTime.now().microsecondsSinceEpoch}',
       'name': group['name'],
-      'amount': amount,
+      'amount': group['escapeExperience'] is Map
+          ? (group['escapeExperience'] as Map).values.fold<int>(
+              0,
+              (n, v) => n + readIntValue(v),
+            )
+          : amount,
       'defeated': defeated,
       'participants': participants.toList(),
       'participantLevels': participantLevels,
@@ -996,6 +1015,9 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     masterInitiativeTokens
       ..clear()
       ..addAll(allies);
+    for (final token in masterInitiativeTokens) {
+      token['outsideFight'] = true;
+    }
     group['combatEnded'] = true;
     group['fightStarted'] = false;
     reindexMasterInitiativeTokens();

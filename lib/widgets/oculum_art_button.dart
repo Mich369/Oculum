@@ -69,7 +69,10 @@ class OculumArtButtonLayer extends StatelessWidget {
               final surfaceOpacity =
                   hover || focus || pressed || scope?.highlightAll == true
                   ? 1.0
-                  : 1 - presentation.surfaceTransparency;
+                  : 1 -
+                        (scope?.secondaryControls == true
+                            ? presentation.controlTransparency
+                            : presentation.surfaceTransparency);
               return Stack(
                 fit: StackFit.passthrough,
                 children: [
@@ -140,9 +143,14 @@ class OculumArtButtonLayer extends StatelessWidget {
 }
 
 class _OculumButtonSurfaceColor implements WidgetStateProperty<Color?> {
-  const _OculumButtonSurfaceColor(this.source, this.highlightAll);
+  const _OculumButtonSurfaceColor(
+    this.source,
+    this.highlightAll,
+    this.secondaryControls,
+  );
   final WidgetStateProperty<Color?>? source;
   final bool highlightAll;
+  final bool secondaryControls;
   @override
   Color? resolve(Set<WidgetState> states) {
     final color = source?.resolve(states);
@@ -154,20 +162,33 @@ class _OculumButtonSurfaceColor implements WidgetStateProperty<Color?> {
         states.contains(WidgetState.pressed);
     return oculumSurfaceColor(
       color,
-      active ? 1 : 1 - oculumThemePresentation.value.surfaceTransparency,
+      active
+          ? 1
+          : 1 -
+                (secondaryControls
+                    ? oculumThemePresentation.value.controlTransparency
+                    : oculumThemePresentation.value.surfaceTransparency),
     );
   }
 }
 
 /// Applies the shared layer without replacing local button styles or callbacks.
-ThemeData oculumWithArtButtons(ThemeData theme, {bool highlightAll = false}) {
+ThemeData oculumWithArtButtons(
+  ThemeData theme, {
+  bool highlightAll = false,
+  bool secondaryControls = false,
+}) {
   ButtonStyle decorate(ButtonStyle? style) {
     final base = style ?? const ButtonStyle();
     final color = base.backgroundColor;
     final source = color is _OculumButtonSurfaceColor ? color.source : color;
     return base.copyWith(
       backgroundBuilder: oculumButtonArtwork,
-      backgroundColor: _OculumButtonSurfaceColor(source, highlightAll),
+      backgroundColor: _OculumButtonSurfaceColor(
+        source,
+        highlightAll,
+        secondaryControls,
+      ),
     );
   }
 

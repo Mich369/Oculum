@@ -46,7 +46,7 @@ Set<String> oculumInventoryCatalogCategories(InventoryItem item) {
       item.craftData['creatureCore'] == true) {
     categories.addAll({'companion', 'consumable'});
   }
-  if (item.statGemStat.isNotEmpty ||
+  if (item.craftData['powerScanner'] == true || item.statGemStat.isNotEmpty ||
       item.craftData['fateSign'] is Map ||
       item.craftData['chaosSign'] is Map ||
       item.craftData['smokingHerbs'] is Map) {
@@ -7131,6 +7131,19 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       programmaSalvataggio();
                     },
                   ),
+                  if (inventario[i].craftData['powerScanner'] == true)
+                    campoModello(
+                      label: 'Rilevatore · utilizzi rimanenti',
+                      initialValue:
+                          '${readIntValue(inventario[i].craftData['scannerUses'])}',
+                      onChanged: (value) {
+                        inventario[i].craftData = {
+                          ...inventario[i].craftData,
+                          'scannerUses': max(0, int.tryParse(value) ?? 0),
+                        };
+                        programmaSalvataggio();
+                      },
+                    ),
                   campoModello(
                     label: inventario[i].craftData['clothing'] == true
                         ? 'Livelli per +1 (vestito)'

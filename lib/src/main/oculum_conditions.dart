@@ -1247,6 +1247,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     },
   ),
   OculumConditionDefinition(
+    id: 'pressione_lupo_lunare',
+    nameIt: 'Pressione del Lupo Lunare',
+    nameEn: 'Lunar Wolf pressure',
+    icon: Icons.trending_down,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        '−6 a tutti i tiri per un turno dopo una Pedata lunare non resistita.',
+    descriptionEn:
+        '−6 to all rolls for one turn after failing to resist a Lunar Stomp.',
+    defaultDuration: 1,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+    rollModifierByStage: [-6],
+    affectedTargets: {
+      OculumConditionTarget.tiri,
+      OculumConditionTarget.combattimento,
+    },
+  ),
+  OculumConditionDefinition(
     id: 'chaos_svantaggio',
     nameIt: 'Svantaggio · Chaos',
     nameEn: 'Chaos disadvantage',

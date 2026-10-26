@@ -10455,6 +10455,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final cooldown = art.openSkillCooldown;
     if (cooldown != null && !cooldown.ready) return;
     if (art.openName == 'Masso Slime' &&
+        art.openSkillEffects.isEmpty &&
         art.skills.any((skill) => skill.nome == 'Palla di Roccia Slime')) {
       await useRockSlimeOpen(art);
       return;

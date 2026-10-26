@@ -7,6 +7,29 @@ import 'package:oculum/widgets/oculum_hover_surface.dart';
 import 'package:oculum/widgets/oculum_art_button.dart';
 
 void main() {
+  test(
+    'secondary controls preserve independent transparency and safe bounds',
+    () {
+      const presentation = OculumThemePresentation();
+      expect(presentation.controlTransparency, .24);
+      expect(
+        presentation.copyWith(surfaceTransparency: .3).controlTransparency,
+        .24,
+      );
+      expect(
+        presentation.copyWith(controlTransparency: .25).surfaceTransparency,
+        .34,
+      );
+      expect(
+        presentation.copyWith(controlTransparency: 5).controlTransparency,
+        .4,
+      );
+      expect(
+        presentation.copyWith(controlTransparency: -1).controlTransparency,
+        0,
+      );
+    },
+  );
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     oculumThemePresentation.value = const OculumThemePresentation();
@@ -18,7 +41,7 @@ void main() {
   test(
     'surface preference persists and stays within readable limits',
     () async {
-      expect(oculumThemePresentation.value.surfaceTransparency, .18);
+      expect(oculumThemePresentation.value.surfaceTransparency, .34);
       await setOculumThemePresentation(
         oculumThemePresentation.value.copyWith(surfaceTransparency: .32),
       );
@@ -95,7 +118,7 @@ void main() {
             )
             .first,
       );
-      expect(material('Attacco').color!.a, closeTo(.82, .01));
+      expect(material('Attacco').color!.a, closeTo(.66, .01));
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);
       await mouse.moveTo(
@@ -107,7 +130,7 @@ void main() {
       await mouse.moveTo(tester.getCenter(find.text('Attacco')));
       await tester.pumpAndSettle();
       expect(material('Attacco').color!.a, 1);
-      expect(material('Difesa').color!.a, closeTo(.82, .01));
+      expect(material('Difesa').color!.a, closeTo(.66, .01));
       await tester.tap(find.text('Attacco'));
       expect(clicks, 1);
       expect(
@@ -135,17 +158,17 @@ void main() {
         ),
       );
       final slider = find.byKey(const ValueKey('surface-transparency'));
-      await tester.drag(slider, const Offset(80, 0));
+      await tester.tapAt(tester.getTopRight(slider) + const Offset(-24, 24));
       await tester.pumpAndSettle();
       expect(
         oculumThemePresentation.value.surfaceTransparency,
-        greaterThan(.18),
+        greaterThan(.34),
       );
       await tester.tap(
         find.byKey(const ValueKey('surface-transparency-reset')),
       );
       await tester.pumpAndSettle();
-      expect(oculumThemePresentation.value.surfaceTransparency, .18);
+      expect(oculumThemePresentation.value.surfaceTransparency, .34);
       expect(tester.takeException(), isNull);
     },
   );

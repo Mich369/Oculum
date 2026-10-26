@@ -952,7 +952,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       ],
                     ),
                     Text(
-                      '${tipoSchedaPersonaggio(schedaCorrente)} · ${t('Livello', 'Level')} ${leggiNumero(livelloController)} · ${t('Grado', 'Grade')} ${leggiNumero(gradoController)}',
+                      '${tipoSchedaPersonaggio(schedaCorrente)} · ${t('Livello', 'Level')} ${leggiNumero(livelloController)} · ${t('Grado', 'Grade')} ${leggiNumero(gradoController)} · Potere totale ${scoutTotalPowerAt(schedaCorrente)}',
                       style: TextStyle(
                         color: primaryColor.withValues(alpha: .72),
                         fontSize: 12,
@@ -1214,6 +1214,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     SizedBox(height: 8),
                     masterRequestedRollsPanel(),
                     onlineCombatRequestsPanel(),
+                    escapeRequestsPanel(),
                     Text(
                       '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
                       style: TextStyle(fontSize: 12),
@@ -1388,115 +1389,129 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     );
   }
 
-  Widget referenceStatStrip() => ValueListenableBuilder<int>(
-    valueListenable: activeSheetSummaryRevision,
-    builder: (context, revision, child) => LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 600;
-        final stats = [
-          ('resilienza', t('Resilienza', 'Resilience'), resilienzaTotale()),
-          ('volonta', t('Volontà', 'Will'), volontaTotale()),
-          ('materia', t('Materia', 'Matter'), materiaTotale()),
-          ('oculum', 'Oculum', oculumTotale()),
-        ];
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              for (var i = 0; i < stats.length; i++) ...[
-                if (i > 0) SizedBox(width: 6),
-                Expanded(
-                  child: OculumThemeSheetFrame(
-                    role: OculumThemeFrameRole.statistics,
-                    sheetId: currentSheetScrollId(),
-                    child: Material(
-                      color: backgroundBottomColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(
-                          color: statFormulaColor(
-                            stats[i].$1,
-                          ).withValues(alpha: .55),
+  Widget referenceStatStrip() => OculumHoverSurface(
+    secondaryControls: true,
+    builder: (context, opacity) => ValueListenableBuilder<int>(
+      valueListenable: activeSheetSummaryRevision,
+      builder: (context, revision, child) => LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 600;
+          final stats = [
+            ('resilienza', t('Resilienza', 'Resilience'), resilienzaTotale()),
+            ('volonta', t('Volontà', 'Will'), volontaTotale()),
+            ('materia', t('Materia', 'Matter'), materiaTotale()),
+            ('oculum', 'Oculum', oculumTotale()),
+          ];
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                for (var i = 0; i < stats.length; i++) ...[
+                  if (i > 0) SizedBox(width: 6),
+                  Expanded(
+                    child: OculumThemeSheetFrame(
+                      role: OculumThemeFrameRole.statistics,
+                      sheetId: currentSheetScrollId(),
+                      child: Material(
+                        color: oculumSurfaceColor(
+                          backgroundBottomColor,
+                          opacity,
                         ),
-                      ),
-                      child: Ink(
-                        decoration: BoxDecoration(
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color.lerp(
-                                backgroundBottomColor,
-                                statFormulaColor(stats[i].$1),
-                                .09,
-                              )!,
-                              backgroundBottomColor,
-                            ],
+                          side: BorderSide(
+                            color: statFormulaColor(
+                              stats[i].$1,
+                            ).withValues(alpha: .55),
                           ),
                         ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          hoverColor: statFormulaColor(
-                            stats[i].$1,
-                          ).withValues(alpha: .09),
-                          splashColor: statFormulaColor(
-                            stats[i].$1,
-                          ).withValues(alpha: .18),
-                          onTap: () => tiraStat(stats[i].$2, stats[i].$3),
-                          onLongPress: () => vaiAllaFunzione(
-                            page: 0,
-                            anchorId: 'sheet_editable_values_${stats[i].$1}',
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                oculumSurfaceColor(
+                                  Color.lerp(
+                                    backgroundBottomColor,
+                                    statFormulaColor(stats[i].$1),
+                                    .09,
+                                  )!,
+                                  opacity,
+                                ),
+                                oculumSurfaceColor(
+                                  backgroundBottomColor,
+                                  opacity,
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Semantics(
-                            button: true,
-                            label:
-                                '${stats[i].$2} ${stats[i].$3}. ${t('Tocca per tirare; tieni premuto per modificare.', 'Tap to roll; hold to edit.')}',
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: compact ? 4 : 12,
-                                vertical: compact ? 9 : 10,
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    switch (stats[i].$1) {
-                                      'resilienza' => Icons.favorite_outline,
-                                      'volonta' =>
-                                        Icons.local_fire_department_outlined,
-                                      'materia' => Icons.shield_outlined,
-                                      _ => Icons.visibility_outlined,
-                                    },
-                                    size: compact ? 15 : 18,
-                                    color: statFormulaColor(stats[i].$1),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    stats[i].$2,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: compact ? 10 : 13,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    '${stats[i].$3}',
-                                    style: TextStyle(
-                                      fontSize: compact ? 21 : 28,
-                                      fontWeight: FontWeight.w700,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            hoverColor: statFormulaColor(
+                              stats[i].$1,
+                            ).withValues(alpha: .09),
+                            splashColor: statFormulaColor(
+                              stats[i].$1,
+                            ).withValues(alpha: .18),
+                            onTap: () => tiraStat(stats[i].$2, stats[i].$3),
+                            onLongPress: () => vaiAllaFunzione(
+                              page: 0,
+                              anchorId: 'sheet_editable_values_${stats[i].$1}',
+                            ),
+                            child: Semantics(
+                              button: true,
+                              label:
+                                  '${stats[i].$2} ${stats[i].$3}. ${t('Tocca per tirare; tieni premuto per modificare.', 'Tap to roll; hold to edit.')}',
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 4 : 12,
+                                  vertical: compact ? 9 : 10,
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      switch (stats[i].$1) {
+                                        'resilienza' => Icons.favorite_outline,
+                                        'volonta' =>
+                                          Icons.local_fire_department_outlined,
+                                        'materia' => Icons.shield_outlined,
+                                        _ => Icons.visibility_outlined,
+                                      },
+                                      size: compact ? 15 : 18,
                                       color: statFormulaColor(stats[i].$1),
                                     ),
-                                  ),
-                                  Text(
-                                    t('Tira', 'Roll'),
-                                    style: TextStyle(
-                                      fontSize: compact ? 10 : 11,
-                                      color: primaryColor.withValues(alpha: .7),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      stats[i].$2,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: compact ? 10 : 13,
+                                        color: primaryColor,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(height: 4),
+                                    Text(
+                                      '${stats[i].$3}',
+                                      style: TextStyle(
+                                        fontSize: compact ? 21 : 28,
+                                        fontWeight: FontWeight.w700,
+                                        color: statFormulaColor(stats[i].$1),
+                                      ),
+                                    ),
+                                    Text(
+                                      t('Tira', 'Roll'),
+                                      style: TextStyle(
+                                        fontSize: compact ? 10 : 11,
+                                        color: primaryColor.withValues(
+                                          alpha: .7,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -1504,12 +1519,12 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        },
+      ),
     ),
   );
 }
@@ -1683,6 +1698,9 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                             final token = tokens[row];
                             return ListTile(
                               dense: true,
+                              onLongPress: local && haPermessiMaster
+                                  ? () => moveEncounterMemberToRole(id, token)
+                                  : null,
                               title: Text(
                                 '${oculumReferenceEncounterTokenName(token)}'
                                 '${oculumCombatTokenHealthLabel(token).isEmpty ? '' : ' · ${oculumCombatTokenHealthLabel(token)}'}',
@@ -1768,6 +1786,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                           child: Text('Entra con questa scheda'),
                         ),
                       ),
+                    encounterRoleFolder(group, id, local: local),
                     if (local)
                       TextButton.icon(
                         onPressed: () => encounterFightStarted(id)

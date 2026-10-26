@@ -8192,6 +8192,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           SizedBox(height: spacing),
           fateChaosIdentityEditor(),
           SizedBox(height: spacing),
+          celestialIdentityEditor(),
+          SizedBox(height: spacing),
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(dense ? 8 : 10),

@@ -50,7 +50,7 @@ void main() {
     expect(oculumMonsterDropDifficulty(level: 5, grade: 2), 31);
     expect(
       oculumGenerateMonsterLoot(
-        monster: monsterById('slime_roccioso')!,
+        monster: monsterById('costrutto_rinsecchito')!,
         level: 2,
         grade: 1,
         random: Random(1),
@@ -446,14 +446,14 @@ void main() {
           naturalDropRoll: natural,
           dropTotal: total,
         );
-    final low = loot(1, 20);
+    final low = loot(1, 14);
     expect(low.first.nome, 'Roccia Slime');
     expect(low.first.peso, .25);
     expect(
       low.where((item) => item.monsterLoot['learnableMonsterSkill'] == true),
       isEmpty,
     );
-    final rare = loot(15, 20);
+    final rare = loot(1, 15);
     expect(rare, hasLength(2));
     expect(rare.last.monsterLoot['learnableMonsterSkill'], isTrue);
     final critical = loot(20, 20);

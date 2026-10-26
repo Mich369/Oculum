@@ -5418,16 +5418,61 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   }
 
   Widget settingsPage() {
-    return responsivePageList(
-      pageKey: 'settings',
-      maxColumns: 2,
-      minColumnWidth: 340,
-      fullWidthIndexes: const <int>{0, 2, 3, 4, 5, 6, 7, 17},
-      children: [
-        functionAnchor(
-          'settings_root',
-          sectionTitle(t('Impostazioni', 'Settings')),
+    final query = settingsQuery.trim().toLowerCase();
+    final categories = <OculumSettingsCategory>[
+      OculumSettingsCategory(
+        'general',
+        t('Preferenze', 'Preferences'),
+        Icons.tune,
+      ),
+      OculumSettingsCategory(
+        'appearance',
+        t('Aspetto', 'Appearance'),
+        Icons.auto_awesome_outlined,
+      ),
+      OculumSettingsCategory(
+        'colors',
+        t('Colori', 'Colors'),
+        Icons.palette_outlined,
+      ),
+      OculumSettingsCategory(
+        'sheet',
+        t('Scheda', 'Sheet'),
+        Icons.dashboard_customize_outlined,
+      ),
+      OculumSettingsCategory(
+        'session',
+        t('Sessione', 'Session'),
+        Icons.groups_outlined,
+      ),
+      OculumSettingsCategory(
+        'rules',
+        t('Regole e mod', 'Rules and mods'),
+        Icons.extension_outlined,
+      ),
+      OculumSettingsCategory(
+        'data',
+        t('Dati e backup', 'Data and backups'),
+        Icons.save_outlined,
+      ),
+    ];
+    final panels = <Widget>[];
+    if (query.isEmpty
+        ? settingsCategory == 'general'
+        : 'lingua language desktop mobile tutorial guida indicazioni preferenze'
+              .contains(query)) {
+      panels.add(
+        settingsSectionBanner(
+          icon: Icons.tune,
+          title: t('Preferenze', 'Preferences'),
+          subtitle: t(
+            'Lingua, navigazione e indicazioni per iniziare.',
+            'Language, navigation and getting started.',
+          ),
+          color: tertiaryColor,
         ),
+      );
+      panels.addAll(<Widget>[
         gothicPanel(
           borderColor: tertiaryColor,
           child: Column(
@@ -5452,823 +5497,6 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             ],
           ),
         ),
-        functionAnchor('settings_hero', settingsHeroPanel()),
-        functionAnchor('settings_mods', modsSettingsPanel()),
-        functionAnchor('settings_control_center', settingsControlCenterPanel()),
-        functionAnchor(
-          'settings_appearance_control',
-          settingsAppearanceControlPanel(),
-        ),
-        if (settingsAppearanceExpanded) ...[
-          functionAnchor(
-            'settings_theme_showcase',
-            settingsThemeShowcasePanel(),
-          ),
-          functionAnchor('settings_gui_skins', settingsGuiSkinGalleryPanel()),
-          functionAnchor(
-            'settings_skin_customization',
-            themeCustomizationSlidersPanel(),
-          ),
-          functionAnchor(
-            'settings_decorations_gallery',
-            settingsDecorationsGalleryPanel(),
-          ),
-        ],
-        functionAnchor(
-          'settings_management_layout',
-          settingsSectionBanner(
-            icon: Icons.dashboard_customize,
-            title: t('Gestione e layout', 'Management and layout'),
-            subtitle: t(
-              'Codici scheda, sicurezza visiva, modalita, lingua e tutorial.',
-              'Sheet codes, visual safeguards, modes, language and tutorial.',
-            ),
-            color: primaryColor,
-          ),
-        ),
-        functionAnchor('settings_sheet_codes', sheetCodeSettingsPanel()),
-        functionAnchor(
-          'settings_oculum_shield',
-          gothicPanel(
-            borderColor: eyePupilGlowColor,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  t('Scudo Oculum', 'Oculum Shield'),
-                  style: TextStyle(
-                    color: eyePupilGlowColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                smallInfoText(
-                  t(
-                    'Controlla se la sezione dello Scudo Oculum resta visibile anche quando non hai buff o valore.',
-                    'Controls whether the Oculum Shield section stays visible even without a buff or value.',
-                  ),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: mostraSempreScudoOculum,
-                  activeThumbColor: eyePupilGlowColor,
-                  title: Text(
-                    t('Mostra anche senza buff', 'Show even without buff'),
-                  ),
-                  subtitle: Text(
-                    t(
-                      'Se spento compare solo quando hai Scudo Oculum o @ScudoOculum attivo.',
-                      'When off, it appears only when you have Oculum Shield or active @ScudoOculum.',
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      mostraSempreScudoOculum = value;
-                      risultato = value
-                          ? t(
-                              'Scudo Oculum sempre visibile.',
-                              'Oculum Shield always visible.',
-                            )
-                          : t(
-                              'Scudo Oculum visibile solo quando presente.',
-                              'Oculum Shield visible only when present.',
-                            );
-                      aggiungiLog(risultato);
-                    });
-                    programmaSalvataggio();
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        gothicPanel(
-          borderColor: primaryColor,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                t('Layout Scheda', 'Sheet Layout'),
-                style: TextStyle(
-                  color: primaryColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              smallInfoText(
-                t(
-                  'Ripristina tendine, pannelli rapidi e menu laterale senza toccare personaggio, titoli, skill o inventario.',
-                  'Restore dropdowns, quick panels and side menu without touching character, titles, skills or inventory.',
-                ),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: resetSheetLayoutSettings,
-                icon: const Icon(Icons.dashboard_customize),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: primaryColor.computeLuminance() > 0.45
-                      ? Colors.black
-                      : Colors.white,
-                ),
-                label: Text(t('Reset layout scheda', 'Reset sheet layout')),
-              ),
-            ],
-          ),
-        ),
-
-        gothicPanel(
-          borderColor: tertiaryColor,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                t('Aspetto e modalita', 'Appearance and modes'),
-                style: TextStyle(
-                  color: tertiaryColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              smallInfoText(
-                t(
-                  'Attiva o nascondi sezioni ripetute. Le funzioni restano disponibili dai menù a tendina.',
-                  'Enable or hide repeated sections. Features remain available from dropdown menus.',
-                ),
-              ),
-              if (currentThemeVisualIdentity()
-                      .mainSheetGuiStyle
-                      .sheetLayoutId ==
-                  '__legacy_old_school_toggle__')
-                SwitchListTile(
-                  value: modalitaVeloce,
-                  activeThumbColor: tertiaryColor,
-                  title: Text(t('Modalità veloce', 'Fast mode')),
-                  subtitle: Text(
-                    t(
-                      'Mostra prima azioni essenziali e nasconde dettagli duplicati nella Scheda.',
-                      'Shows essential actions first and hides duplicated details on the Sheet.',
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() => modalitaVeloce = value);
-                    programmaSalvataggio();
-                  },
-                ),
-              SwitchListTile(
-                value: temiOldSchool,
-                activeThumbColor: tertiaryColor,
-                secondary: const Icon(Icons.history_edu),
-                title: Text(
-                  t('Torna al vecchio design', 'Return to the previous design'),
-                ),
-                subtitle: Text(
-                  t(
-                    'Ripristina il sistema grafico precedente senza perdere colori, temi o personalizzazioni già salvate.',
-                    'Restores the previous visual system without losing saved colors, themes or customizations.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    temiOldSchool = value;
-                    if (value &&
-                        paginaCorrente == _OculumHomePageState.homePageIndex) {
-                      paginaCorrente = 0;
-                    }
-                    risultato = value
-                        ? t(
-                            'Mod Temi old school attivata.',
-                            'Old-school Themes mod enabled.',
-                          )
-                        : t(
-                            'Nuovo design Oculum attivato.',
-                            'New Oculum design enabled.',
-                          );
-                    aggiungiLog(risultato);
-                  });
-                  programmaSalvataggio();
-                },
-              ),
-              if (!temiOldSchool)
-                DropdownButtonFormField<String>(
-                  initialValue:
-                      const <String>{
-                        'cattedrale',
-                        'manoscritto',
-                        'ferro_battuto',
-                        'pergamena_nera',
-                        'vetro_arcano',
-                        'sigillo_rituale',
-                      }.contains(nuovoDesignOculum)
-                      ? nuovoDesignOculum
-                      : 'cattedrale',
-                  decoration: fieldDecoration(
-                    t('Design Oculum', 'Oculum design'),
-                    helper: t(
-                      'Sei sistemi coordinati; cambiano superfici, bordi e profondità senza modificare dati o funzioni.',
-                      'Six coordinated systems; they change surfaces, borders and depth without modifying data or features.',
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'cattedrale',
-                      child: Text('Cattedrale d’Ossidiana'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'manoscritto',
-                      child: Text('Manoscritto Proibito'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'ferro_battuto',
-                      child: Text('Ferro Battuto'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'pergamena_nera',
-                      child: Text('Pergamena Nera'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'vetro_arcano',
-                      child: Text('Vetro Arcano'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'sigillo_rituale',
-                      child: Text('Sigillo Rituale'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() => nuovoDesignOculum = value ?? 'cattedrale');
-                    programmaSalvataggio();
-                  },
-                ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue:
-                    const <String>{
-                      'leggibile',
-                      'gotico',
-                      'manoscritto',
-                      'pergamena',
-                      'arcano',
-                      'rune',
-                    }.contains(stileCarattereApp)
-                    ? stileCarattereApp
-                    : 'leggibile',
-                isExpanded: true,
-                decoration: fieldDecoration(
-                  t('Stile dei caratteri', 'Typeface style'),
-                  helper: t(
-                    'Cambia i caratteri in tutta l app. I numeri e i controlli restano leggibili anche nelle finestre strette.',
-                    'Changes type across the app. Numbers and controls remain readable in narrow windows.',
-                  ),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'leggibile',
-                    child: Text(t('Leggibile moderno', 'Modern readable')),
-                  ),
-                  const DropdownMenuItem(
-                    value: 'gotico',
-                    child: Text('Gotico inciso'),
-                  ),
-                  const DropdownMenuItem(
-                    value: 'manoscritto',
-                    child: Text('Manoscritto antico'),
-                  ),
-                  const DropdownMenuItem(
-                    value: 'pergamena',
-                    child: Text('Pergamena classica'),
-                  ),
-                  const DropdownMenuItem(
-                    value: 'arcano',
-                    child: Text('Arcano elegante'),
-                  ),
-                  const DropdownMenuItem(
-                    value: 'rune',
-                    child: Text('Rune tecniche'),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() => stileCarattereApp = value ?? 'leggibile');
-                  programmaSalvataggio();
-                },
-              ),
-              const SizedBox(height: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final preview = gothicPanel(
-                    borderColor: eyePupilGlowColor,
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          t('Esempio immediato', 'Live example'),
-                          style: TextStyle(
-                            color: eyePupilGlowColor,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        oculumEyeHeartHealthMeter(
-                          current: max(1, (maxHp() * 0.7).round()),
-                          maximum: max(1, maxHp()),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          t(
-                            'Le scelte cambiano solo l aspetto.',
-                            'Choices change appearance only.',
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                  final selector = Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t('Aspetto della Vita', 'Health appearance'),
-                        style: TextStyle(
-                          color: tertiaryColor,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      smallInfoText(
-                        t(
-                          'Scegli dai pulsanti semitrasparenti: seguono il colore della scheda e mostrano subito la citazione scelta.',
-                          'Choose from the translucent buttons: they follow the sheet color and immediately show the selected reference.',
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      if (!modalitaVeloce)
-                        OutlinedButton.icon(
-                          onPressed: showLifeBarStyleGallery,
-                          icon: const Icon(Icons.open_in_new_rounded),
-                          label: Text(
-                            '${t('Apri galleria Vita', 'Open health gallery')} · ${lifeBarStyleLabel(stileBarraVita)}',
-                          ),
-                        )
-                      else
-                        smallInfoText(
-                          t(
-                            'La galleria Vita è nascosta in modalità veloce.',
-                            'The health gallery is hidden in fast mode.',
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: stileBarraVita == 'base_dinamica'
-                            ? null
-                            : () {
-                                setState(
-                                  () => stileBarraVita = 'base_dinamica',
-                                );
-                                programmaSalvataggio();
-                              },
-                        icon: const Icon(Icons.restart_alt_rounded),
-                        label: Text(
-                          t(
-                            'Ripristina Vita dinamica',
-                            'Restore dynamic health',
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                  if (constraints.maxWidth < 700) {
-                    return Column(
-                      children: [selector, const SizedBox(height: 12), preview],
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: selector),
-                      const SizedBox(width: 14),
-                      SizedBox(width: 330, child: preview),
-                    ],
-                  );
-                },
-              ),
-              SwitchListTile(
-                value: modalitaLeggera,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Modalita leggera', 'Lightweight mode')),
-                subtitle: Text(
-                  t(
-                    'Riduce ombre, glow e spaziature pesanti senza nascondere funzioni.',
-                    'Reduces heavy shadows, glow and spacing without hiding features.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    modalitaLeggera = value;
-                    risultato = value
-                        ? t(
-                            'Modalita leggera attiva.',
-                            'Lightweight mode enabled.',
-                          )
-                        : t(
-                            'Modalita leggera spenta.',
-                            'Lightweight mode disabled.',
-                          );
-                    aggiungiLog(risultato);
-                  });
-                  programmaSalvataggio();
-                },
-              ),
-              ValueListenableBuilder<bool>(
-                valueListenable: oculumGraphicsEnabled,
-                builder: (context, enabled, _) => SwitchListTile(
-                  value: enabled,
-                  secondary: const Icon(Icons.animation),
-                  title: Text(
-                    t(
-                      'Animazioni ed effetti grafici',
-                      'Animations and visual effects',
-                    ),
-                  ),
-                  subtitle: Text(
-                    t(
-                      'Disattiva per ridurre transizioni, sfondi decorativi e memoria grafica. Le funzioni restano disponibili.',
-                      'Turn off to reduce transitions, decorative backgrounds and graphics memory. All features remain available.',
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() => oculumGraphicsEnabled.value = value);
-                    unawaited(setOculumGraphicsPreference(value));
-                  },
-                ),
-              ),
-              OculumThemePresentationControls(english: linguaInglese),
-              ListTile(
-                leading: const Icon(Icons.layers_outlined),
-                title: const Text('Atelier · Immagini e colori statistiche'),
-                subtitle: const Text('Layer personali e codice condivisibile'),
-                onTap: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const OculumCustomThemeEditor(),
-                    ),
-                  );
-                  if (mounted) setState(() {});
-                },
-              ),
-              SwitchListTile(
-                value: modalitaMaster,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Modalita Master', 'Master Mode')),
-                subtitle: Text(
-                  t(
-                    'Abilita permessi e strumenti Master locali. La sezione Sessione Master compare nella pagina Storia.',
-                    'Enables local Master permissions and tools. The Master Session section appears on the Story page.',
-                  ),
-                ),
-                onChanged: oculumStartupRole == OculumStartupRole.player
-                    ? null
-                    : (value) {
-                        setState(() {
-                          modalitaMaster = value;
-                          risultato = value
-                              ? t(
-                                  'Modalita Master attiva.',
-                                  'Master Mode enabled.',
-                                )
-                              : t(
-                                  'Modalita Master spenta.',
-                                  'Master Mode disabled.',
-                                );
-                          aggiungiLog(risultato);
-                        });
-                        refreshRealtimeRolePresence();
-                        programmaSalvataggio();
-                      },
-              ),
-              SwitchListTile(
-                value: usaBarraVita,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Vita come barra', 'HP as bar')),
-                onChanged: (value) {
-                  setState(() => usaBarraVita = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: mostraDannoCuraScheda,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Mostra Danno / Cura', 'Show Damage / Healing')),
-                onChanged: (value) {
-                  setState(() => mostraDannoCuraScheda = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: mostraSempreColpito,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Mostra sempre Colpito', 'Always show Hit')),
-                subtitle: Text(
-                  t(
-                    'Invia al Master formula, totale e tipo danno; Vampirismo cura solo se la condizione e attiva.',
-                    'Sends formula, total and damage type to the Master; Vampirism heals only while the condition is active.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() => mostraSempreColpito = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: mostraValoriEditabiliScheda,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t('Valori principali a tendina', 'Main values dropdown'),
-                ),
-                onChanged: (value) {
-                  setState(() => mostraValoriEditabiliScheda = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: scalaExpAutomatica,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t('EXP scala automaticamente', 'EXP scales automatically'),
-                ),
-                subtitle: Text(
-                  t(
-                    'Quando aggiungi EXP, ogni 1000 viene sottratto e trasformato in livello. Spegnilo per tenere EXP grezza.',
-                    'When you add EXP, each 1000 is subtracted and converted into a level. Turn it off to keep raw EXP.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() => scalaExpAutomatica = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: coMasterCanSetCoMaster,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t(
-                    'I Co-Master possono nominare altri Co-Master',
-                    'Co-Masters can appoint other Co-Masters',
-                  ),
-                ),
-                subtitle: Text(
-                  t(
-                    'Se abilitato, i Co-Master possono promuovere altri giocatori a Co-Master dalla pagina Online.',
-                    'If enabled, Co-Masters can promote other players to Co-Master from the Online page.',
-                  ),
-                ),
-                onChanged: onlineMasterApprovalRequired
-                    ? null
-                    : (value) {
-                        setState(() => coMasterCanSetCoMaster = value);
-                        programmaSalvataggio();
-                      },
-              ),
-              SwitchListTile(
-                value: masterKickRequiresConfirmation,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t('Conferma prima di kickare', 'Confirm before kicking'),
-                ),
-                subtitle: Text(
-                  t(
-                    'Se disattivato, Kicka rimuove subito la scheda o il giocatore dalla campagna/sessione.',
-                    'If disabled, Kick removes the sheet or player from the campaign/session immediately.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() => masterKickRequiresConfirmation = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: masterEnemyFullSheetVisibility,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t(
-                    'Mostra dettagli schede nemiche',
-                    'Show enemy sheet details',
-                  ),
-                ),
-                subtitle: Text(
-                  t(
-                    'Spento: agli altri arrivano solo immagine, lato token e iniziativa delle schede nemiche del Master.',
-                    'Off: others receive only image, token side and initiative for the Master enemy sheets.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    masterEnemyFullSheetVisibility = value;
-                    risultato = value
-                        ? t(
-                            'Dettagli nemici visibili nelle condivisioni Master.',
-                            'Enemy details visible in Master shares.',
-                          )
-                        : t(
-                            'Schede nemiche limitate a immagine e iniziativa.',
-                            'Enemy sheets limited to image and initiative.',
-                          );
-                    aggiungiLog(risultato);
-                  });
-                  if (realtimeIsMasterRole) {
-                    sendRealtimeMasterVisiblePartyTokens();
-                  } else {
-                    sendRealtimeCurrentSheetToStaff();
-                  }
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: masterPublicDiceVisible,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t(
-                    'Dadi Master visibili a tutti',
-                    'Master dice visible to everyone',
-                  ),
-                ),
-                subtitle: Text(
-                  t(
-                    'Se attivo, i tiri non-iniziativa del Master possono essere mandati in realtime dopo conferma.',
-                    'When active, non-initiative Master rolls can be sent realtime after confirmation.',
-                  ),
-                ),
-                onChanged: (value) async {
-                  if (!value) {
-                    setState(() {
-                      masterPublicDiceVisible = false;
-                      risultato = t(
-                        'Dadi Master nascosti agli altri.',
-                        'Master dice hidden from others.',
-                      );
-                      aggiungiLog(risultato);
-                    });
-                    programmaSalvataggio();
-                    return;
-                  }
-
-                  final choice = await showDialog<String>(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) {
-                      return AlertDialog(
-                        backgroundColor: const Color(0xFF10121A),
-                        title: Text(
-                          t(
-                            'Dadi visibili a tutti?',
-                            'Dice visible to everyone?',
-                          ),
-                          style: TextStyle(
-                            color: tertiaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        content: Text(
-                          t(
-                            'Sei sicuro che vuoi che tutti vedano i dadi?',
-                            'Are you sure you want everyone to see the dice?',
-                          ),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, 'no'),
-                            child: Text(t('No', 'No')),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, 'yes'),
-                            child: Text(t('Si', 'Yes')),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context, 'never'),
-                            child: Text(
-                              t('Non chiedere piu', 'Do not ask again'),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-
-                  if (!context.mounted) return;
-                  setState(() {
-                    masterPublicDiceVisible =
-                        choice == 'yes' || choice == 'never';
-                    masterAskPublicDiceConfirmation = choice != 'never';
-                    risultato = masterPublicDiceVisible
-                        ? t(
-                            'Dadi Master pubblici abilitati.',
-                            'Public Master dice enabled.',
-                          )
-                        : t(
-                            'Dadi Master rimasti nascosti.',
-                            'Master dice stayed hidden.',
-                          );
-                    aggiungiLog(risultato);
-                  });
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: masterAskPublicDiceConfirmation,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t('Chiedi prima del tiro pubblico', 'Ask before public roll'),
-                ),
-                subtitle: Text(
-                  t(
-                    'Riattiva la domanda prima che un tiro Master non-iniziativa sia visibile a tutti.',
-                    'Turns the prompt back on before a non-initiative Master roll becomes visible to everyone.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    masterAskPublicDiceConfirmation = value;
-                    risultato = value
-                        ? t(
-                            'Domanda dadi pubblici riattivata.',
-                            'Public dice prompt restored.',
-                          )
-                        : t(
-                            'Domanda dadi pubblici disattivata.',
-                            'Public dice prompt disabled.',
-                          );
-                    aggiungiLog(risultato);
-                  });
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: sottraiStatsDaExpAggiunta,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t(
-                    'Sottrai stats dall’EXP aggiunta',
-                    'Subtract stats from added EXP',
-                  ),
-                ),
-                subtitle: Text(
-                  t(
-                    'Quando aggiungi EXP, Resilienza + Volontà + Materia + Oculum totali vengono sottratti dall’EXP realmente aggiunta.',
-                    'When adding EXP, total Resilience + Will + Matter + Oculum are subtracted from the EXP actually added.',
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() => sottraiStatsDaExpAggiunta = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: mostraStrumentiManualeRapidi,
-                activeThumbColor: tertiaryColor,
-                title: Text(
-                  t('Strumenti rapidi manuale', 'Manual quick tools'),
-                ),
-                onChanged: (value) {
-                  setState(() => mostraStrumentiManualeRapidi = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: mostraBorsaCompatta,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Borsa rapida a tendina', 'Quick bag dropdown')),
-                onChanged: (value) {
-                  setState(() => mostraBorsaCompatta = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: mostraPartyScheda,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Sezione Party', 'Party section')),
-                onChanged: (value) {
-                  setState(() => mostraPartyScheda = value);
-                  programmaSalvataggio();
-                },
-              ),
-              SwitchListTile(
-                value: mostraTastiRapidiIndice,
-                activeThumbColor: tertiaryColor,
-                title: Text(t('Tasti rapidi a indice', 'Quick index buttons')),
-                onChanged: (value) {
-                  setState(() => mostraTastiRapidiIndice = value);
-                  programmaSalvataggio();
-                },
-              ),
-            ],
-          ),
-        ),
-        blockedOculumFriendsSettingsPanel(),
         gothicPanel(
           borderColor: modalitaDesktop ? tertiaryColor : primaryColor,
           child: SwitchListTile(
@@ -6371,6 +5599,401 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             ],
           ),
         ),
+        functionAnchor('settings_hero', settingsHeroPanel()),
+      ]);
+    }
+    if (query.isEmpty
+        ? settingsCategory == 'appearance'
+        : 'aspetto tema skin pelle gui trasparenza transparency animazioni carattere font design vita atelier immagini galleria'
+              .contains(query)) {
+      panels.add(
+        settingsSectionBanner(
+          icon: Icons.auto_awesome_outlined,
+          title: t('Aspetto', 'Appearance'),
+          subtitle: t(
+            'Trasparenza, leggibilità, animazioni e gallerie del tema.',
+            'Transparency, readability, animations and theme galleries.',
+          ),
+          color: tertiaryColor,
+        ),
+      );
+      panels.addAll(<Widget>[
+        gothicPanel(
+          borderColor: primaryColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [OculumThemePresentationControls(english: linguaInglese)],
+          ),
+        ),
+        gothicPanel(
+          borderColor: primaryColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (currentThemeVisualIdentity()
+                      .mainSheetGuiStyle
+                      .sheetLayoutId ==
+                  '__legacy_old_school_toggle__')
+                SwitchListTile(
+                  value: modalitaVeloce,
+                  activeThumbColor: tertiaryColor,
+                  title: Text(t('Modalità veloce', 'Fast mode')),
+                  subtitle: Text(
+                    t(
+                      'Mostra prima azioni essenziali e nasconde dettagli duplicati nella Scheda.',
+                      'Shows essential actions first and hides duplicated details on the Sheet.',
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() => modalitaVeloce = value);
+                    programmaSalvataggio();
+                  },
+                ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: temiOldSchool,
+                activeThumbColor: tertiaryColor,
+                secondary: const Icon(Icons.history_edu),
+                title: Text(
+                  t('Torna al vecchio design', 'Return to the previous design'),
+                ),
+                subtitle: Text(
+                  t(
+                    'Ripristina il sistema grafico precedente senza perdere colori, temi o personalizzazioni già salvate.',
+                    'Restores the previous visual system without losing saved colors, themes or customizations.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    temiOldSchool = value;
+                    if (value &&
+                        paginaCorrente == _OculumHomePageState.homePageIndex) {
+                      paginaCorrente = 0;
+                    }
+                    risultato = value
+                        ? t(
+                            'Mod Temi old school attivata.',
+                            'Old-school Themes mod enabled.',
+                          )
+                        : t(
+                            'Nuovo design Oculum attivato.',
+                            'New Oculum design enabled.',
+                          );
+                    aggiungiLog(risultato);
+                  });
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              if (!temiOldSchool)
+                DropdownButtonFormField<String>(
+                  initialValue:
+                      const <String>{
+                        'cattedrale',
+                        'manoscritto',
+                        'ferro_battuto',
+                        'pergamena_nera',
+                        'vetro_arcano',
+                        'sigillo_rituale',
+                      }.contains(nuovoDesignOculum)
+                      ? nuovoDesignOculum
+                      : 'cattedrale',
+                  decoration: fieldDecoration(
+                    t('Design Oculum', 'Oculum design'),
+                    helper: t(
+                      'Sei sistemi coordinati; cambiano superfici, bordi e profondità senza modificare dati o funzioni.',
+                      'Six coordinated systems; they change surfaces, borders and depth without modifying data or features.',
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'cattedrale',
+                      child: Text('Cattedrale d’Ossidiana'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'manoscritto',
+                      child: Text('Manoscritto Proibito'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'ferro_battuto',
+                      child: Text('Ferro Battuto'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'pergamena_nera',
+                      child: Text('Pergamena Nera'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'vetro_arcano',
+                      child: Text('Vetro Arcano'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'sigillo_rituale',
+                      child: Text('Sigillo Rituale'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() => nuovoDesignOculum = value ?? 'cattedrale');
+                    programmaSalvataggio();
+                  },
+                ),
+              const Divider(height: 24),
+              DropdownButtonFormField<String>(
+                initialValue:
+                    const <String>{
+                      'leggibile',
+                      'gotico',
+                      'manoscritto',
+                      'pergamena',
+                      'arcano',
+                      'rune',
+                    }.contains(stileCarattereApp)
+                    ? stileCarattereApp
+                    : 'leggibile',
+                isExpanded: true,
+                decoration: fieldDecoration(
+                  t('Stile dei caratteri', 'Typeface style'),
+                  helper: t(
+                    'Cambia i caratteri in tutta l app. I numeri e i controlli restano leggibili anche nelle finestre strette.',
+                    'Changes type across the app. Numbers and controls remain readable in narrow windows.',
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: 'leggibile',
+                    child: Text(t('Leggibile moderno', 'Modern readable')),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'gotico',
+                    child: Text('Gotico inciso'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'manoscritto',
+                    child: Text('Manoscritto antico'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'pergamena',
+                    child: Text('Pergamena classica'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'arcano',
+                    child: Text('Arcano elegante'),
+                  ),
+                  const DropdownMenuItem(
+                    value: 'rune',
+                    child: Text('Rune tecniche'),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() => stileCarattereApp = value ?? 'leggibile');
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final preview = gothicPanel(
+                    borderColor: eyePupilGlowColor,
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t('Esempio immediato', 'Live example'),
+                          style: TextStyle(
+                            color: eyePupilGlowColor,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        oculumEyeHeartHealthMeter(
+                          current: max(1, (maxHp() * 0.7).round()),
+                          maximum: max(1, maxHp()),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          t(
+                            'Le scelte cambiano solo l aspetto.',
+                            'Choices change appearance only.',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                  final selector = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t('Aspetto della Vita', 'Health appearance'),
+                        style: TextStyle(
+                          color: tertiaryColor,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      smallInfoText(
+                        t(
+                          'Scegli dai pulsanti semitrasparenti: seguono il colore della scheda e mostrano subito la citazione scelta.',
+                          'Choose from the translucent buttons: they follow the sheet color and immediately show the selected reference.',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (!modalitaVeloce)
+                        OutlinedButton.icon(
+                          onPressed: showLifeBarStyleGallery,
+                          icon: const Icon(Icons.open_in_new_rounded),
+                          label: Text(
+                            '${t('Apri galleria Vita', 'Open health gallery')} · ${lifeBarStyleLabel(stileBarraVita)}',
+                          ),
+                        )
+                      else
+                        smallInfoText(
+                          t(
+                            'La galleria Vita è nascosta in modalità veloce.',
+                            'The health gallery is hidden in fast mode.',
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: stileBarraVita == 'base_dinamica'
+                            ? null
+                            : () {
+                                setState(
+                                  () => stileBarraVita = 'base_dinamica',
+                                );
+                                programmaSalvataggio();
+                              },
+                        icon: const Icon(Icons.restart_alt_rounded),
+                        label: Text(
+                          t(
+                            'Ripristina Vita dinamica',
+                            'Restore dynamic health',
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                  if (constraints.maxWidth < 700) {
+                    return Column(
+                      children: [selector, const SizedBox(height: 12), preview],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: selector),
+                      const SizedBox(width: 14),
+                      SizedBox(width: 330, child: preview),
+                    ],
+                  );
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: modalitaLeggera,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Modalita leggera', 'Lightweight mode')),
+                subtitle: Text(
+                  t(
+                    'Riduce ombre, glow e spaziature pesanti senza nascondere funzioni.',
+                    'Reduces heavy shadows, glow and spacing without hiding features.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    modalitaLeggera = value;
+                    risultato = value
+                        ? t(
+                            'Modalita leggera attiva.',
+                            'Lightweight mode enabled.',
+                          )
+                        : t(
+                            'Modalita leggera spenta.',
+                            'Lightweight mode disabled.',
+                          );
+                    aggiungiLog(risultato);
+                  });
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              ValueListenableBuilder<bool>(
+                valueListenable: oculumGraphicsEnabled,
+                builder: (context, enabled, _) => SwitchListTile(
+                  value: enabled,
+                  secondary: const Icon(Icons.animation),
+                  title: Text(
+                    t(
+                      'Animazioni ed effetti grafici',
+                      'Animations and visual effects',
+                    ),
+                  ),
+                  subtitle: Text(
+                    t(
+                      'Disattiva per ridurre transizioni, sfondi decorativi e memoria grafica. Le funzioni restano disponibili.',
+                      'Turn off to reduce transitions, decorative backgrounds and graphics memory. All features remain available.',
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() => oculumGraphicsEnabled.value = value);
+                    unawaited(setOculumGraphicsPreference(value));
+                  },
+                ),
+              ),
+              const Divider(height: 24),
+              ListTile(
+                leading: const Icon(Icons.layers_outlined),
+                title: const Text('Atelier · Immagini e colori statistiche'),
+                subtitle: const Text('Layer personali e codice condivisibile'),
+                onTap: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const OculumCustomThemeEditor(),
+                    ),
+                  );
+                  if (mounted) setState(() {});
+                },
+              ),
+            ],
+          ),
+        ),
+        functionAnchor(
+          'settings_appearance_control',
+          settingsAppearanceControlPanel(),
+        ),
+        if (settingsAppearanceExpanded) ...[
+          functionAnchor(
+            'settings_theme_showcase',
+            settingsThemeShowcasePanel(),
+          ),
+          functionAnchor('settings_gui_skins', settingsGuiSkinGalleryPanel()),
+          functionAnchor(
+            'settings_skin_customization',
+            themeCustomizationSlidersPanel(),
+          ),
+          functionAnchor(
+            'settings_decorations_gallery',
+            settingsDecorationsGalleryPanel(),
+          ),
+        ],
+      ]);
+    }
+    if (query.isEmpty
+        ? settingsCategory == 'colors'
+        : 'colori colors palette sfondo background rgb luminosità saturazione opacità pupilla primario secondario terziario danno'
+              .contains(query)) {
+      panels.add(
+        settingsSectionBanner(
+          icon: Icons.palette_outlined,
+          title: t('Colori', 'Colors'),
+          subtitle: t(
+            'Palette, sfondo, colori delle statistiche e anteprima.',
+            'Palettes, backgrounds, statistic colors and preview.',
+          ),
+          color: tertiaryColor,
+        ),
+      );
+      panels.addAll(<Widget>[
         gothicPanel(
           borderColor: tertiaryColor,
           child: Column(
@@ -6564,6 +6187,583 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             currentColor: tertiaryColor,
             onSelected: (color) => tertiaryColor = color,
           ),
+        sectionTitle(t('Anteprima Colori', 'Color Preview')),
+        gothicPanel(
+          borderColor: primaryColor,
+          child: Column(
+            children: [
+              Text(
+                'OCULUM',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 4,
+                ),
+              ),
+              const SizedBox(height: 18),
+              D20Widget(
+                text: '20+8=28',
+                fillColor: secondaryColor,
+                textColor: primaryColor,
+                glow: true,
+                tertiaryColor: tertiaryColor,
+              ),
+            ],
+          ),
+        ),
+      ]);
+    }
+    if (query.isEmpty
+        ? settingsCategory == 'sheet'
+        : 'scheda sheet layout scudo shield hp vita danno cura colpito valori borsa party indice rapidi manuale'
+              .contains(query)) {
+      panels.add(
+        functionAnchor(
+          'settings_management_layout',
+          settingsSectionBanner(
+            icon: Icons.dashboard_customize_outlined,
+            title: t('Scheda', 'Sheet'),
+            subtitle: t(
+              'Organizza Vita, Scudi, valori e pulsanti rapidi.',
+              'Arrange health, shields, values and quick controls.',
+            ),
+            color: tertiaryColor,
+          ),
+        ),
+      );
+      panels.addAll(<Widget>[
+        functionAnchor(
+          'settings_oculum_shield',
+          gothicPanel(
+            borderColor: eyePupilGlowColor,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t('Scudo Oculum', 'Oculum Shield'),
+                  style: TextStyle(
+                    color: eyePupilGlowColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                smallInfoText(
+                  t(
+                    'Controlla se la sezione dello Scudo Oculum resta visibile anche quando non hai buff o valore.',
+                    'Controls whether the Oculum Shield section stays visible even without a buff or value.',
+                  ),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: mostraSempreScudoOculum,
+                  activeThumbColor: eyePupilGlowColor,
+                  title: Text(
+                    t('Mostra anche senza buff', 'Show even without buff'),
+                  ),
+                  subtitle: Text(
+                    t(
+                      'Se spento compare solo quando hai Scudo Oculum o @ScudoOculum attivo.',
+                      'When off, it appears only when you have Oculum Shield or active @ScudoOculum.',
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      mostraSempreScudoOculum = value;
+                      risultato = value
+                          ? t(
+                              'Scudo Oculum sempre visibile.',
+                              'Oculum Shield always visible.',
+                            )
+                          : t(
+                              'Scudo Oculum visibile solo quando presente.',
+                              'Oculum Shield visible only when present.',
+                            );
+                      aggiungiLog(risultato);
+                    });
+                    programmaSalvataggio();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        gothicPanel(
+          borderColor: primaryColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SwitchListTile(
+                value: usaBarraVita,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Vita come barra', 'HP as bar')),
+                onChanged: (value) {
+                  setState(() => usaBarraVita = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: mostraDannoCuraScheda,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Mostra Danno / Cura', 'Show Damage / Healing')),
+                onChanged: (value) {
+                  setState(() => mostraDannoCuraScheda = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: mostraSempreColpito,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Mostra sempre Colpito', 'Always show Hit')),
+                subtitle: Text(
+                  t(
+                    'Invia al Master formula, totale e tipo danno; Vampirismo cura solo se la condizione e attiva.',
+                    'Sends formula, total and damage type to the Master; Vampirism heals only while the condition is active.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() => mostraSempreColpito = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: mostraValoriEditabiliScheda,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t('Valori principali a tendina', 'Main values dropdown'),
+                ),
+                onChanged: (value) {
+                  setState(() => mostraValoriEditabiliScheda = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: mostraStrumentiManualeRapidi,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t('Strumenti rapidi manuale', 'Manual quick tools'),
+                ),
+                onChanged: (value) {
+                  setState(() => mostraStrumentiManualeRapidi = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: mostraBorsaCompatta,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Borsa rapida a tendina', 'Quick bag dropdown')),
+                onChanged: (value) {
+                  setState(() => mostraBorsaCompatta = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: mostraPartyScheda,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Sezione Party', 'Party section')),
+                onChanged: (value) {
+                  setState(() => mostraPartyScheda = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: mostraTastiRapidiIndice,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Tasti rapidi a indice', 'Quick index buttons')),
+                onChanged: (value) {
+                  setState(() => mostraTastiRapidiIndice = value);
+                  programmaSalvataggio();
+                },
+              ),
+            ],
+          ),
+        ),
+        gothicPanel(
+          borderColor: primaryColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                t('Layout Scheda', 'Sheet Layout'),
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              smallInfoText(
+                t(
+                  'Ripristina tendine, pannelli rapidi e menu laterale senza toccare personaggio, titoli, skill o inventario.',
+                  'Restore dropdowns, quick panels and side menu without touching character, titles, skills or inventory.',
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: resetSheetLayoutSettings,
+                icon: const Icon(Icons.dashboard_customize),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: primaryColor.computeLuminance() > 0.45
+                      ? Colors.black
+                      : Colors.white,
+                ),
+                label: Text(t('Reset layout scheda', 'Reset sheet layout')),
+              ),
+            ],
+          ),
+        ),
+      ]);
+    }
+    if (query.isEmpty
+        ? settingsCategory == 'session'
+        : 'sessione session online master comaster permessi dadi pubblici conferma nemici dettagli amici bloccati kick'
+              .contains(query)) {
+      panels.add(
+        settingsSectionBanner(
+          icon: Icons.groups_outlined,
+          title: t('Sessione', 'Session'),
+          subtitle: t(
+            'Permessi Master, dadi pubblici e contatti bloccati.',
+            'Master permissions, public dice and blocked contacts.',
+          ),
+          color: tertiaryColor,
+        ),
+      );
+      panels.addAll(<Widget>[
+        gothicPanel(
+          borderColor: primaryColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SwitchListTile(
+                value: modalitaMaster,
+                activeThumbColor: tertiaryColor,
+                title: Text(t('Modalita Master', 'Master Mode')),
+                subtitle: Text(
+                  t(
+                    'Abilita permessi e strumenti Master locali. La sezione Sessione Master compare nella pagina Storia.',
+                    'Enables local Master permissions and tools. The Master Session section appears on the Story page.',
+                  ),
+                ),
+                onChanged: oculumStartupRole == OculumStartupRole.player
+                    ? null
+                    : (value) {
+                        setState(() {
+                          modalitaMaster = value;
+                          risultato = value
+                              ? t(
+                                  'Modalita Master attiva.',
+                                  'Master Mode enabled.',
+                                )
+                              : t(
+                                  'Modalita Master spenta.',
+                                  'Master Mode disabled.',
+                                );
+                          aggiungiLog(risultato);
+                        });
+                        refreshRealtimeRolePresence();
+                        programmaSalvataggio();
+                      },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: coMasterCanSetCoMaster,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t(
+                    'I Co-Master possono nominare altri Co-Master',
+                    'Co-Masters can appoint other Co-Masters',
+                  ),
+                ),
+                subtitle: Text(
+                  t(
+                    'Se abilitato, i Co-Master possono promuovere altri giocatori a Co-Master dalla pagina Online.',
+                    'If enabled, Co-Masters can promote other players to Co-Master from the Online page.',
+                  ),
+                ),
+                onChanged: onlineMasterApprovalRequired
+                    ? null
+                    : (value) {
+                        setState(() => coMasterCanSetCoMaster = value);
+                        programmaSalvataggio();
+                      },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: masterKickRequiresConfirmation,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t('Conferma prima di kickare', 'Confirm before kicking'),
+                ),
+                subtitle: Text(
+                  t(
+                    'Se disattivato, Kicka rimuove subito la scheda o il giocatore dalla campagna/sessione.',
+                    'If disabled, Kick removes the sheet or player from the campaign/session immediately.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() => masterKickRequiresConfirmation = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: masterEnemyFullSheetVisibility,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t(
+                    'Mostra dettagli schede nemiche',
+                    'Show enemy sheet details',
+                  ),
+                ),
+                subtitle: Text(
+                  t(
+                    'Spento: agli altri arrivano solo immagine, lato token e iniziativa delle schede nemiche del Master.',
+                    'Off: others receive only image, token side and initiative for the Master enemy sheets.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    masterEnemyFullSheetVisibility = value;
+                    risultato = value
+                        ? t(
+                            'Dettagli nemici visibili nelle condivisioni Master.',
+                            'Enemy details visible in Master shares.',
+                          )
+                        : t(
+                            'Schede nemiche limitate a immagine e iniziativa.',
+                            'Enemy sheets limited to image and initiative.',
+                          );
+                    aggiungiLog(risultato);
+                  });
+                  if (realtimeIsMasterRole) {
+                    sendRealtimeMasterVisiblePartyTokens();
+                  } else {
+                    sendRealtimeCurrentSheetToStaff();
+                  }
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: masterPublicDiceVisible,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t(
+                    'Dadi Master visibili a tutti',
+                    'Master dice visible to everyone',
+                  ),
+                ),
+                subtitle: Text(
+                  t(
+                    'Se attivo, i tiri non-iniziativa del Master possono essere mandati in realtime dopo conferma.',
+                    'When active, non-initiative Master rolls can be sent realtime after confirmation.',
+                  ),
+                ),
+                onChanged: (value) async {
+                  if (!value) {
+                    setState(() {
+                      masterPublicDiceVisible = false;
+                      risultato = t(
+                        'Dadi Master nascosti agli altri.',
+                        'Master dice hidden from others.',
+                      );
+                      aggiungiLog(risultato);
+                    });
+                    programmaSalvataggio();
+                    return;
+                  }
+
+                  final choice = await showDialog<String>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) {
+                      return AlertDialog(
+                        backgroundColor: const Color(0xFF10121A),
+                        title: Text(
+                          t(
+                            'Dadi visibili a tutti?',
+                            'Dice visible to everyone?',
+                          ),
+                          style: TextStyle(
+                            color: tertiaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        content: Text(
+                          t(
+                            'Sei sicuro che vuoi che tutti vedano i dadi?',
+                            'Are you sure you want everyone to see the dice?',
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, 'no'),
+                            child: Text(t('No', 'No')),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, 'yes'),
+                            child: Text(t('Si', 'Yes')),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, 'never'),
+                            child: Text(
+                              t('Non chiedere piu', 'Do not ask again'),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (!context.mounted) return;
+                  setState(() {
+                    masterPublicDiceVisible =
+                        choice == 'yes' || choice == 'never';
+                    masterAskPublicDiceConfirmation = choice != 'never';
+                    risultato = masterPublicDiceVisible
+                        ? t(
+                            'Dadi Master pubblici abilitati.',
+                            'Public Master dice enabled.',
+                          )
+                        : t(
+                            'Dadi Master rimasti nascosti.',
+                            'Master dice stayed hidden.',
+                          );
+                    aggiungiLog(risultato);
+                  });
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: masterAskPublicDiceConfirmation,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t('Chiedi prima del tiro pubblico', 'Ask before public roll'),
+                ),
+                subtitle: Text(
+                  t(
+                    'Riattiva la domanda prima che un tiro Master non-iniziativa sia visibile a tutti.',
+                    'Turns the prompt back on before a non-initiative Master roll becomes visible to everyone.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    masterAskPublicDiceConfirmation = value;
+                    risultato = value
+                        ? t(
+                            'Domanda dadi pubblici riattivata.',
+                            'Public dice prompt restored.',
+                          )
+                        : t(
+                            'Domanda dadi pubblici disattivata.',
+                            'Public dice prompt disabled.',
+                          );
+                    aggiungiLog(risultato);
+                  });
+                  programmaSalvataggio();
+                },
+              ),
+            ],
+          ),
+        ),
+        blockedOculumFriendsSettingsPanel(),
+      ]);
+    }
+    if (query.isEmpty
+        ? settingsCategory == 'rules'
+        : 'regole rules mod slot fortuna exp esperienza scala automaticamente sottrai stats'
+              .contains(query)) {
+      panels.add(
+        settingsSectionBanner(
+          icon: Icons.extension_outlined,
+          title: t('Regole e mod', 'Rules and mods'),
+          subtitle: t(
+            'Mod installate e automatismi dell’esperienza.',
+            'Installed mods and experience automation.',
+          ),
+          color: tertiaryColor,
+        ),
+      );
+      panels.addAll(<Widget>[
+        functionAnchor('settings_mods', modsSettingsPanel()),
+        gothicPanel(
+          borderColor: primaryColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SwitchListTile(
+                value: scalaExpAutomatica,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t('EXP scala automaticamente', 'EXP scales automatically'),
+                ),
+                subtitle: Text(
+                  t(
+                    'Quando aggiungi EXP, ogni 1000 viene sottratto e trasformato in livello. Spegnilo per tenere EXP grezza.',
+                    'When you add EXP, each 1000 is subtracted and converted into a level. Turn it off to keep raw EXP.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() => scalaExpAutomatica = value);
+                  programmaSalvataggio();
+                },
+              ),
+              const Divider(height: 24),
+              SwitchListTile(
+                value: sottraiStatsDaExpAggiunta,
+                activeThumbColor: tertiaryColor,
+                title: Text(
+                  t(
+                    'Sottrai stats dall’EXP aggiunta',
+                    'Subtract stats from added EXP',
+                  ),
+                ),
+                subtitle: Text(
+                  t(
+                    'Quando aggiungi EXP, Resilienza + Volontà + Materia + Oculum totali vengono sottratti dall’EXP realmente aggiunta.',
+                    'When adding EXP, total Resilience + Will + Matter + Oculum are subtracted from the EXP actually added.',
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() => sottraiStatsDaExpAggiunta = value);
+                  programmaSalvataggio();
+                },
+              ),
+            ],
+          ),
+        ),
+      ]);
+    }
+    if (query.isEmpty
+        ? settingsCategory == 'data'
+        : 'salvataggi save backup autosave autosalvataggio esporta importa import export codice parser osservato forme skill archivio archivia log eventi'
+              .contains(query)) {
+      panels.add(
+        settingsSectionBanner(
+          icon: Icons.save_outlined,
+          title: t('Dati e backup', 'Data and backups'),
+          subtitle: t(
+            'Salvataggi, codici scheda, importazione, archivio e log.',
+            'Saves, sheet codes, imports, archive and event log.',
+          ),
+          color: tertiaryColor,
+        ),
+      );
+      panels.addAll(<Widget>[
+        functionAnchor('settings_control_center', settingsControlCenterPanel()),
+        functionAnchor('settings_sheet_codes', sheetCodeSettingsPanel()),
         sectionTitle(t('Import / Export', 'Import / Export')),
         gothicPanel(
           borderColor: tertiaryColor,
@@ -6651,31 +6851,6 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             ],
           ),
         ),
-        sectionTitle(t('Anteprima Colori', 'Color Preview')),
-        gothicPanel(
-          borderColor: primaryColor,
-          child: Column(
-            children: [
-              Text(
-                'OCULUM',
-                style: TextStyle(
-                  color: primaryColor,
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 4,
-                ),
-              ),
-              const SizedBox(height: 18),
-              D20Widget(
-                text: '20+8=28',
-                fillColor: secondaryColor,
-                textColor: primaryColor,
-                glow: true,
-                tertiaryColor: tertiaryColor,
-              ),
-            ],
-          ),
-        ),
         gothicPanel(
           borderColor: Colors.redAccent,
           child: Column(
@@ -6710,6 +6885,43 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             ],
           ),
         ),
+      ]);
+    }
+    return responsivePageList(
+      pageKey: 'settings',
+      maxColumns: 1,
+      children: [
+        functionAnchor(
+          'settings_root',
+          sectionTitle(t('Impostazioni', 'Settings')),
+        ),
+        gothicPanel(
+          borderColor: tertiaryColor,
+          child: OculumSettingsNavigation(
+            categories: categories,
+            selected: settingsCategory,
+            query: settingsQuery,
+            english: linguaInglese,
+            onSelect: (id) => setState(() {
+              settingsCategory = id;
+              settingsQuery = '';
+            }),
+            onSearch: (value) => setState(() => settingsQuery = value),
+          ),
+        ),
+        if (query.isNotEmpty && panels.isEmpty)
+          gothicPanel(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                t(
+                  'Nessuna impostazione trovata. Prova con tema, backup o dadi.',
+                  'No settings found. Try theme, backup or dice.',
+                ),
+              ),
+            ),
+          ),
+        ...panels,
       ],
     );
   }

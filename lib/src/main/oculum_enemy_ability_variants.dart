@@ -103,6 +103,9 @@ List<OculumCatalogueEntry> oculumAbilityCatalogueEntries({
 }) {
   final entries =
       <({String id, String label, ArtSkill art, CharacterSkill? natural})>[];
+  if (elementFilter == null || elementFilter == 'oculum') {
+    entries.add((id: 'provoker_shield', label: 'Scudo del provocatore · Difesa', art: oculumProvokerShieldSkill(), natural: null));
+  }
   for (final monster in monsterBookEntries) {
     if (elementFilter != null &&
         oculumNormalizeElementId(monster.elementId) != elementFilter) {

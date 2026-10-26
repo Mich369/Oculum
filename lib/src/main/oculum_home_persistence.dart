@@ -1392,6 +1392,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'derivedCM': cm(),
       'derivedIniziativa': iniziativa(),
       'derivedRiflessi': sheetReflexesAt(schedaCorrente),
+      'derivedVelo': escapeSubtraitAt(schedaCorrente, 'velo'),
+      'derivedPercezione': escapeSubtraitAt(schedaCorrente, 'percezione'),
       'derivedMovimento': movimento(),
       'derivedScudoOculum': scudoOculum(),
       'derivedScudoOculumMax': scudoOculumMax(),

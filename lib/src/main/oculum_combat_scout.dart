@@ -389,21 +389,32 @@ extension _OculumCombatScout on _OculumHomePageState {
     int index,
     int natural,
     bool success,
-    int observerPower,
-  ) => {
+    int observerPower, {
+    int total = 0,
+    bool perception = false,
+  }) => {
     if (!success)
       'blockedByStat': oculumScoutDominantStat(scoutCoreStatsAt(index)),
     if (success && natural >= 18)
       'powerBand': oculumScoutPowerBand(
         observerPower,
-        oculumScoutPower(
-          sheetCriticalLevelAt(index),
-          scoutCoreStatsAt(index).values,
-        ),
+        scoutTotalPowerAt(index),
       ),
+    if (perception &&
+        oculumExactPowerChance(total, success: success) >
+            Random.secure().nextInt(100) &&
+        tipoSchedaPersonaggio(index) != 'Personaggio')
+      'exactPower': scoutTotalPowerAt(index),
   };
 
   String scoutLogReading(Map<String, dynamic> payload, String fallback) {
+    if (payload['scannerOutOfRange'] == true) return 'oltre la portata';
+    if (payload['scannerEstimate'] is num) {
+      return 'potere totale stimato ${readIntValue(payload['scannerEstimate'])} (±10%)';
+    }
+    if (payload['exactPower'] is num) {
+      return 'potere totale ${readIntValue(payload['exactPower'])}';
+    }
     final power = oculumPowerReadPhrases['${payload['powerBand'] ?? ''}'];
     if (power != null) return power;
     final blocked = '${payload['blockedByStat'] ?? ''}';
@@ -528,7 +539,8 @@ extension _OculumCombatScout on _OculumHomePageState {
             volontaTotale(),
             materiaTotale(),
             oculumTotale(),
-          ]),
+          ], grade: activeCriticalGrade()),
+          'scoutStat': stat.id,
           'natural': natural,
           'total': total,
         };
@@ -603,6 +615,8 @@ extension _OculumCombatScout on _OculumHomePageState {
             natural,
             read.isExact,
             readIntValue(request['observerPower']),
+            total: total,
+            perception: stat.id == 'percezione',
           );
           aggiungiLog(
             '[PERCEZIONE] ${scoutLogReading(extra, combatScoutReadText(read))}.',
@@ -643,6 +657,10 @@ extension _OculumCombatScout on _OculumHomePageState {
       }
       final targetIndex = localSheetIndexForOculumTag(target);
       if (targetIndex < 0) return;
+      if (payload['kind'] == 'power_scanner') {
+        receivePowerScanner(payload, targetIndex);
+        return;
+      }
       final previous = onlineCombatRequests[id];
       if (previous?['scoutPhase'] == 'result') {
         unawaited(
@@ -682,6 +700,8 @@ extension _OculumCombatScout on _OculumHomePageState {
           readIntValue(payload['natural']),
           read.isExact,
           readIntValue(payload['observerPower']),
+          total: readIntValue(payload['total']),
+          perception: payload['scoutStat'] == 'percezione',
         ),
         'themeUnlocked':
             monsterBookId.isNotEmpty &&
@@ -745,6 +765,10 @@ extension _OculumCombatScout on _OculumHomePageState {
         }),
       );
     } else if (payload['scoutPhase'] == 'result') {
+      if (payload['kind'] == 'power_scanner') {
+        receivePowerScanner(payload, -1);
+        return;
+      }
       if (payload['senderTag'] != target) {
         return;
       }

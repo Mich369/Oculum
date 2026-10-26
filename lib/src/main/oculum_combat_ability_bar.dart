@@ -398,6 +398,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     HiddenEyeStat? stat,
   }) async {
     final origin = currentSheetScrollId();
+    if (outsideFight && role != OculumCombatAbilityRole.support) {
+      aggiungiLog('[FUORI FIGHT] Rientra in battaglia dalle Utility.');
+      return;
+    }
     if (role == OculumCombatAbilityRole.support && stat?.id == 'meccanica') {
       await repairMeccanio(stat!);
       return;
@@ -986,6 +990,11 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (role == OculumCombatAbilityRole.support) ...[
+                  provokerShieldStatus(),
+                  escapeUtilityControls(),
+                  escapeRequestsPanel(),
+                ],
                 if (role == OculumCombatAbilityRole.defense)
                   for (final volley in maskedInterruptibleVolleys.toList())
                     OutlinedButton.icon(

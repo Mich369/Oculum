@@ -27,6 +27,7 @@ part 'fauna_variants.dart';
 part 'monster_anatomy.dart';
 part 'non_return_undead.dart';
 part 'cycle_monsters.dart';
+part 'cycle_suggested_monsters.dart';
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
     knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
@@ -3852,7 +3853,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Slime Roccioso',
     nameEn: 'Rocky Slime',
     descIt:
-        'Senza Grado/I/II. I cuccioli, privi di cervello, attaccano tutto ciò che incontrano; gli adulti sono neutrali buoni e proteggono i piccoli. Palla di Roccia Slime crea blocchi con Vita Oculum ×3/×5; Rimbalzo prepara Reazioni e danni; Indurimento aggiunge Scudo e Difesa, entrambi aumentati dall’Oculum immesso. Apertura livello 15: Masso Slime. Drop: Roccia Slime 250 g; con 15 o più Indurimento, con 20 naturale Rimbalzo.',
+        'Senza Grado/I/II. I cuccioli, privi di cervello, attaccano tutto ciò che incontrano; gli adulti sono neutrali buoni e proteggono i piccoli. Palla di Roccia Slime crea blocchi con Vita Oculum ×3/×10; Rimbalzo prepara Reazioni e danni; Indurimento aggiunge Scudo e Difesa, entrambi aumentati dall’Oculum immesso. Apertura livello 15: Masso Slime. Drop: Roccia Slime 250 g; con 15 o più Indurimento, con 20 naturale Rimbalzo.',
     descEn: 'Rock slime.',
     elementId: 'terra',
     spriteAssetPath: '',
@@ -5017,11 +5018,11 @@ String monsterBookSkillText(String rawId) {
   );
   switch (baseId) {
     case 'rock_slime_ball':
-      return 'Palla di Roccia Slime — I/Infliggi Oculum immesso danni. Richiede livello 0. (1/4 Oculum). II/Infliggi Oculum immesso +3 danni oppure crei un blocco indurito con Oculum immesso ×3 Vita che concede una Reazione contro il bersaglio. Richiede livello 5. (5/10 Oculum). III/Infliggi Oculum immesso +10 danni oppure crei un blocco indurito con Oculum immesso ×5 Vita che concede una Reazione contro il bersaglio. Richiede livello 13. (11/20 Oculum).';
+      return 'Palla di Roccia Slime — I/Infliggi Oculum immesso +15 danni. Richiede livello 0. (1/4 Oculum). II/Infliggi Oculum immesso danni oppure crei un blocco indurito con Oculum immesso ×3 Vita che concede una Reazione contro il bersaglio. Richiede livello 5. (5/10 Oculum). III/Infliggi Oculum immesso danni oppure crei un blocco indurito con Oculum immesso ×10 Vita che concede una Reazione contro il bersaglio. Richiede livello 13. (11/20 Oculum).';
     case 'rock_slime_bounce':
       return 'Rimbalzo — I/Ottieni una Reazione e +25% danni al prossimo attacco. Richiede livello 1. (1/3 Oculum). II/Ottieni una Reazione e +50% danni al prossimo attacco. Richiede livello 6. (4/6 Oculum). III/Tira 1d3 rimbalzi: una Reazione e +50% danni per ciascuno, per tutto il turno. Richiede livello 12. (7/10 Oculum).';
     case 'rock_slime_harden':
-      return 'Indurimento — I/Indurisci il rivestimento gelatinoso: ottieni 10 + Oculum immesso Scudo e +5 + Oculum immesso Difesa per 6 turni. Lo Scudo resta fino a esaurimento. Richiede livello 0. (1/2 Oculum). II/Lo strato di roccia conferisce 15 + Oculum immesso Scudo e +6 + Oculum immesso Difesa per 6 turni. Richiede livello 3. (3/4 Oculum). III/La crosta compatta conferisce 25 + Oculum immesso Scudo e +15 + Oculum immesso Difesa per 6 turni. Richiede livello 10. (5/10 Oculum). Non modifica Resilienza o Vita massima; la Difesa della stessa tecnica non si cumula.';
+      return 'Indurimento — I/Indurisci il rivestimento gelatinoso: ottieni 10 + Oculum immesso Scudo e +5 + Oculum immesso Difesa per 6 turni. Lo Scudo resta fino a esaurimento. Richiede livello 0. (1/2 Oculum). II/Lo strato di roccia conferisce 25 + Oculum immesso ×1,5 Scudo e +6 + Oculum immesso ×1,5 Difesa per 6 turni. Richiede livello 3. (3/4 Oculum). III/La crosta compatta conferisce 1d250+50 + Oculum immesso ×3 Scudo e +15 + Oculum immesso ×3 Difesa per 6 turni. Richiede livello 10. (5/10 Oculum). Non modifica Resilienza o Vita massima; la Difesa della stessa tecnica non si cumula.';
     case 'slime_tornado':
       return 'Tornado Slime — I/Dalla sfera slime volante scateni un tornado: +1 energia Reazione e Svantaggio ai nemici. Richiede livello 9. (3/10 Oculum). II/Il tornado concede +1 energia Reazione, dà Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 20. (11/20 Oculum). III/Il tornado concede +1 energia Reazione, dà Doppio Svantaggio ai nemici e infligge Oculum danni ad area. Richiede livello 30. (21/30 Oculum).';
     case 'king_crash':
@@ -5452,6 +5453,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
             ..._runicAcidMonsterEntries,
             ...oculumPlanarMonsterEntries,
             ...oculumCycleMonsterEntries,
+            ..._suggestedGiantEntries,
             ..._witheredConstructWhiteLarvaEntries,
             ..._goldMarbleAberrationEntries,
             ..._elementalCollectorEntries,
@@ -5699,6 +5701,7 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _runicAcidMonsterEntries;
   yield* oculumPlanarMonsterEntries;
   yield* oculumCycleMonsterEntries;
+  yield* _suggestedGiantEntries;
   yield* _witheredConstructWhiteLarvaEntries;
   yield* _manualMonsterBookEntries;
 }

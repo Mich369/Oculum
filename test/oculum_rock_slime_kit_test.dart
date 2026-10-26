@@ -19,8 +19,7 @@ void main() {
       ];
       final maximums = [
         [4, 10, 20],
-        // Bounce does not scale with Oculum spent: its cost is fixed.
-        [1, 4, 7],
+        [3, 6, 10],
         [2, 4, 10],
       ];
       final levels = [
@@ -67,14 +66,18 @@ void main() {
     final state = await fixtures.mountSheet(tester, const Size(1440, 900));
     final probe = OculumPerformanceProbe(state);
     final before = probe.damageTotal();
+    expect(
+      oculumRockSlimeEffects('rock_slime_ball', 0).single.valueExpression,
+      'oculum_spent+15',
+    );
     final attack = probe.applyEffects(
       oculumRockSlimeEffects('rock_slime_ball', 1),
       spentResources: {'oculum': 7},
     );
-    expect(attack.join(' '), contains('= 10'));
+    expect(attack.join(' '), contains('= 7'));
     expect(
       probe.damageTotal(),
-      before + 10,
+      before + 7,
       reason: 'The bonus applies to the next attack only',
     );
     expect(probe.consumeNextAttackEffects(), isTrue);
@@ -89,6 +92,16 @@ void main() {
     expect(block['hp'], 21);
     expect(block['maxHp'], 21);
     expect(block['value'], 0);
+    probe.applyEffects(
+      oculumRockSlimeEffects('rock_slime_ball', 2, block: true),
+      spentResources: {'oculum': 11},
+    );
+    expect(
+      state.activeStructuredEffects
+          .where((dynamic e) => e['type'] == 'costrutto')
+          .last['hp'],
+      110,
+    );
     state.activeStructuredEffects.clear();
     final messages = probe.applyEffects(
       oculumRockSlimeEffects('rock_slime_bounce', 2),
@@ -113,7 +126,10 @@ void main() {
       oculumRockSlimeEffects('rock_slime_harden', 2),
       spentResources: {'oculum': 5},
     );
-    expect(int.parse(state.scudoController.text), shieldBefore + 30);
+    expect(
+      int.parse(state.scudoController.text) - shieldBefore,
+      inInclusiveRange(66, 315),
+    );
     expect(
       probe.maximumHp(),
       hpBefore,
@@ -129,12 +145,17 @@ void main() {
       state.activeStructuredEffects.firstWhere(
         (dynamic effect) => effect['target'] == 'difesa',
       )['value'],
-      20,
+      30,
     );
     for (var turn = 0; turn < 6; turn++) {
       probe.tickEffects('turni');
     }
     expect(state.activeStructuredEffects, isEmpty);
+    final art = oculumRockSlimeArt(monsterById('slime_roccioso')!);
+    probe.applyEffects(art.openBuffEffects, source: 'Masso Slime');
+    final openDamage = probe.damageTotal();
+    probe.applyEffects(art.openSkillEffects, source: 'Schiaccio');
+    expect(probe.damageTotal(), openDamage * 3);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 600));
   });

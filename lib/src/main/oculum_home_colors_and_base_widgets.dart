@@ -778,6 +778,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
         return const Color(0xFFFFF06A);
       case 'terra':
         return const Color(0xFF8B6B3E);
+      case 'fango':
+        return const Color(0xFF887047);
       case 'vento':
         return const Color(0xFF7EE7C8);
       case 'veleno':
@@ -1868,10 +1870,12 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     bool actionGroup = false,
   }) => OculumHoverSurface(
     actionGroup: actionGroup,
+    secondaryControls: actionGroup,
     builder: (context, opacity) => Theme(
       data: oculumWithArtButtons(
         Theme.of(context),
         highlightAll: OculumSurfaceScope.maybeOf(context)?.highlightAll == true,
+        secondaryControls: actionGroup,
       ),
       child: _gothicPanelBody(
         child: child,

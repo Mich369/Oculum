@@ -3,6 +3,8 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 const _planarSelfRules = <String, String>{
+  'rock_cloud_punch': 'golem_best_element',
+  'cycle_lunar_bite': 'cycle_lunar_bite',
   'rock_shield_scales': 'rock_scales',
   'rock_shield_pressure': 'pressure',
   'rock_shield_blade': 'blade_recoil',
@@ -393,6 +395,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   int planarResilienceBonus(int normal) =>
       planarState['maxPower'] == true ? normal : 0;
   int planarAttackRollBonus() =>
+      (faunaCurrentMonsterId == 'ciclo_gigante_goblin' ? -5 : 0) +
       deadlySwordHitBonus +
       (faunaCurrentMonsterId == 'torretta_oculum' ? 9 : 0) +
       readIntValue(planarState['attackRollBonus']) +
@@ -410,6 +413,8 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     String source,
   ) {
     final state = planarState;
+    if (activateProvokerEffect(effect, value, duration)) return;
+    if (activateCycleEffect(effect, value)) return;
     if (effect.target == 'deadly_empowered') {
       state['deadlyEmpoweredTurns'] = max(1, duration);
       state['deadlyEmpoweredForm'] = value;
@@ -699,6 +704,9 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
         scudoController.text =
             '${leggiNumero(scudoController) + 10 + max(1, value) * 10}';
         break;
+      case 'golem_best_element':
+        state['golemBestElementPending'] = true;
+        break;
       case 'poison_knife':
         applyCondition('avvelenato', duration: 2, source: source);
         break;
@@ -785,6 +793,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    tickProvokerShield();
     if (readIntValue(planarState['deadlyEmpoweredTurns']) > 0) {
       planarState['deadlyEmpoweredTurns'] =
           readIntValue(planarState['deadlyEmpoweredTurns']) - 1;
@@ -842,6 +851,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void resetPlanarFight() {
+    planarState.remove('provokerShield');
+    planarState.remove('provokerTurns');
+    planarState.remove('provokerPendingReflection');
+    resetCycleFight();
     planarState.remove('deadlyEmpoweredTurns');
     planarState.remove('artWeakPointPenalties');
     planarState.remove('artWeakPointAction');
@@ -1052,6 +1065,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     planarState['cloudLifeHp'] = hp;
     planarState['cloudLifeActive'] = true;
     planarState['cloudLifeUsed'] = true;
+    unawaited(publishProvokerState());
     currentHpController.text = '$hp';
     aggiungiLog(
       '[VITA DI UNA NUVOLA] Ti trasformi in nube con $hp Vita. Puoi muoverti, non attaccare. Sopravvivi fino al Riposo Lungo per rinascere.',

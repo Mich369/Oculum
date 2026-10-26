@@ -623,6 +623,18 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
+    if (outsideFight &&
+        effects.any(
+          (e) =>
+              e.recipient != 'se_stesso' && e.recipient != 'alleato' ||
+              e.type == 'danno' ||
+              e.type == 'evocazione',
+        )) {
+      aggiungiLog(
+        '[FUORI FIGHT] Puoi curarti, ripararti o usare utilità su di te.',
+      );
+      return false;
+    }
     if (wingsGrounded && wingFlightSource(source)) {
       aggiungiLog(
         '[ALI] Volo indisponibile fino al Riposo Lungo o alla riparazione del Master.',

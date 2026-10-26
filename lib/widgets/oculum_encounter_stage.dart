@@ -12,6 +12,7 @@ class OculumEncounterStage extends StatefulWidget {
     this.onIdentify,
     this.onReveal,
     this.onOpenSheet,
+    this.onMoveToRole,
     this.events = const [],
   });
   final List<Map<String, dynamic>> tokens;
@@ -22,6 +23,7 @@ class OculumEncounterStage extends StatefulWidget {
   final void Function(Map<String, dynamic>)? onIdentify;
   final void Function(Map<String, dynamic>)? onReveal;
   final void Function(Map<String, dynamic>)? onOpenSheet;
+  final void Function(Map<String, dynamic>)? onMoveToRole;
   final List<String> events;
   @override
   State<OculumEncounterStage> createState() => _OculumEncounterStageState();
@@ -97,6 +99,9 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
                 message: '${widget.tokens[i]['name'] ?? '???'}',
                 child: InkWell(
                   onTap: () => _browse(i),
+                  onLongPress: widget.onMoveToRole == null
+                      ? null
+                      : () => widget.onMoveToRole!(widget.tokens[i]),
                   borderRadius: BorderRadius.circular(30),
                   child: Container(
                     width: 54,

@@ -589,38 +589,44 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
         if (mounted) unawaited(openReferenceDetail(title, anchor, content));
       });
     }
-    return SizedBox(
-      width: min(270.0, MediaQuery.sizeOf(context).width - 32),
-      child: Material(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5),
-          side: BorderSide(color: Color(0xff594447)),
-        ),
-        child: InkWell(
-          onTap: () => openReferenceDetail(title, anchor, content),
-          borderRadius: BorderRadius.circular(5),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 17,
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: Color(0xffe6ddd4)),
+    return OculumHoverSurface(
+      secondaryControls: true,
+      builder: (context, opacity) => SizedBox(
+        width: min(270.0, MediaQuery.sizeOf(context).width - 32),
+        child: Material(
+          color: oculumSurfaceColor(
+            Theme.of(context).colorScheme.surfaceContainerLow,
+            opacity,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5),
+            side: BorderSide(color: Color(0xff594447)),
+          ),
+          child: InkWell(
+            onTap: () => openReferenceDetail(title, anchor, content),
+            borderRadius: BorderRadius.circular(5),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 17,
+                    color: Theme.of(context).colorScheme.secondary,
                   ),
-                ),
-                Icon(Icons.chevron_right, size: 17, color: Color(0xffb79386)),
-              ],
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: Color(0xffe6ddd4)),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, size: 17, color: Color(0xffb79386)),
+                ],
+              ),
             ),
           ),
         ),
@@ -1272,6 +1278,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     bool master = false,
   }) {
     final shown = tokens
+        .where((token) => token['outsideFight'] != true)
         .map((token) {
           final copy = Map<String, dynamic>.from(token);
           copy['imageBase64'] = realtimeEncounterPortrait(token);
@@ -1306,13 +1313,21 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
           OculumReferenceArt(combat: true, height: 96),
           onlineAttackButton(),
           onlineCombatRequestsPanel(),
+          escapeRequestsPanel(),
           SizedBox(height: 12),
           OculumEncounterStage(
             key: ValueKey(
               'encounter_stage_${master ? selectedMasterInitiativeGroupId : activeCampaignId}',
             ),
             tokens: shown,
-            activeIndex: activeIndex,
+            activeIndex: shown
+                .indexWhere(
+                  (t) =>
+                      tokens.isNotEmpty &&
+                      t['id'] ==
+                          tokens[activeIndex.clamp(0, tokens.length - 1)]['id'],
+                )
+                .clamp(0, max(0, shown.length - 1)),
             accent: tertiaryColor,
             events: events,
             onNextTurn: master
@@ -1322,6 +1337,12 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 : null,
             onIdentify: master ? null : identifyEncounterParticipant,
             onReveal: master ? revealEncounterParticipant : null,
+            onMoveToRole: master
+                ? (token) => moveEncounterMemberToRole(
+                    selectedMasterInitiativeGroupId,
+                    token,
+                  )
+                : null,
             onOpenSheet: realtimeCanBrowseOtherSheets
                 ? apriSchedaPartecipanteTurnistica
                 : null,

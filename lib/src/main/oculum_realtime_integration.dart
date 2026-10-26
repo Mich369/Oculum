@@ -845,6 +845,39 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       roomId: room,
       playerName: realtimeDisplayName(),
       roomPassword: realtimeRoomPasswordController.text,
+      onIdleWarning: (visible) {
+        if (!mounted || realtimeService != service) return;
+        final messenger = ScaffoldMessenger.maybeOf(context);
+        if (!visible) {
+          messenger?.hideCurrentSnackBar();
+          return;
+        }
+        messenger?.showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 60),
+            content: const Text(
+              'Stanza inattiva da 30 minuti. Chiusura fra 60 secondi: basta un movimento del mouse o un tocco di qualsiasi partecipante.',
+            ),
+            action: SnackBarAction(
+              label: 'Resta online',
+              onPressed: () => service.recordUserActivity(),
+            ),
+          ),
+        );
+      },
+      onIdleClosed: () {
+        if (!mounted || realtimeService != service) return;
+        realtimeAutoReconnectEnabled = false;
+        realtimeReconnectTimer?.cancel();
+        setState(() {
+          realtimeConnected = false;
+          realtimeStatus =
+              'Stanza chiusa per inattività. Puoi riconnetterti senza perdere le schede.';
+        });
+        aggiungiLog(
+          '[ONLINE] Stanza chiusa dopo 30 minuti senza attività e 60 secondi di avviso.',
+        );
+      },
       onAccessRequested: (userId, displayName) async {
         if (!mounted || realtimeService != service) return null;
         final id = 'room_join:${service.normalizedRoomId}:$userId';
@@ -2736,6 +2769,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       if (group['chainedFate'] is Map) 'chainedFate': group['chainedFate'],
       if (group['rollRequests'] is List) 'rollRequests': group['rollRequests'],
       'name': group['name'],
+      'roleName': group['roleName'] ?? 'Role',
       'round': group['round'],
       'activeIndex': active,
       'turnCount': tokens.length,
@@ -2768,6 +2802,23 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'initiativeBase': readIntValue(tokens[i]['initiativeBase']),
             'initiativeTotal': readIntValue(tokens[i]['initiativeTotal']),
             'reflexes': readIntValue(tokens[i]['reflexes']),
+            for (final key in [
+              'provokerChance',
+              'cloudLifeActive',
+              'provokerShield',
+              'provokerTurns',
+            ])
+              if (tokens[i].containsKey(key)) key: tokens[i][key],
+            for (final key in [
+              'outsideFight',
+              'outsideFirstPending',
+              'outsideCritical',
+              'outsideNormal',
+              'outsideFast',
+              'escapeReturnFastTurns',
+              'fightInstanceId',
+            ])
+              if (tokens[i].containsKey(key)) key: tokens[i][key],
             if (readBoolValue(tokens[i]['oculumShadowClone'])) ...{
               'oculumShadowClone': true,
               'shadowCloneTurnsRemaining': readIntValue(

@@ -9,10 +9,38 @@ const oculumPowerReadPhrases = <String, String>{
   'impossible': 'impossibile da battere',
 };
 
-int oculumScoutPower(int level, Iterable<int> statistics) =>
-    max(0, level) + statistics.fold(0, (sum, stat) => sum + max(0, stat));
+int oculumScoutPower(int level, Iterable<int> statistics, {int grade = 0}) =>
+    max(0, level) +
+    max(0, grade) * 3 +
+    statistics.fold(0, (sum, stat) => sum + max(0, stat));
 
-/// Only this category crosses the network, never the target's power or stats.
+int oculumExactPowerChance(int rollTotal, {required bool success}) =>
+    success ? ((rollTotal - 40) * 5).clamp(0, 100) : 0;
+
+int oculumPowerScannerLimit(int level) => 50 + max(0, level) * 30;
+
+int oculumPowerScannerPrice(int level, {bool postea = false}) =>
+    ((30 + 15 * max(0, level)) * (postea ? 6 : 1)).toInt();
+
+int oculumPowerScannerUses(Random random, {bool postea = false}) =>
+    random.nextInt(postea ? 23 : 9) + (postea ? 13 : 7);
+
+/// Only the estimate is returned. Out-of-range results contain no power value.
+Map<String, dynamic> oculumPowerScannerRead(
+  int power,
+  int level,
+  Random random,
+) {
+  if (power > oculumPowerScannerLimit(level)) {
+    return {'scannerOutOfRange': true};
+  }
+  final minimum = (max(0, power) * .9).ceil();
+  final maximum = (max(0, power) * 1.1).floor();
+  return {'scannerEstimate': minimum + random.nextInt(maximum - minimum + 1)};
+}
+
+/// Ordinary readings share this category; the separate confirmed high-roll
+/// check may reveal total power, without sharing its component statistics.
 String oculumScoutPowerBand(
   int observer,
   int target, {

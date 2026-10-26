@@ -258,10 +258,13 @@ extension _OculumMaskedMen on _OculumHomePageState {
     int natural,
     int total,
   ) {
-    if (request['maskedVolley'] != true && request['boneVolley'] != true) {
+    if (request['maskedVolley'] != true &&
+        request['boneVolley'] != true &&
+        request['cycleSpines'] != true) {
       return;
     }
     if (request['boneVolley'] != true &&
+        request['cycleSpines'] != true &&
         oculumMaskedVolleyStops(
           natural,
           total,
@@ -278,6 +281,14 @@ extension _OculumMaskedMen on _OculumHomePageState {
         .toSet();
     if (!processed.add('${request['id']}')) return;
     record['processed'] = processed.toList();
+    final spineHits = (record['cycleSpineSuccessfulTags'] as List? ?? [])
+        .map((v) => '$v')
+        .toList();
+    if (request['cycleSpines'] == true &&
+        readIntValue(request['attack']) > total) {
+      spineHits.add('${request['targetTag']}');
+      record['cycleSpineSuccessfulTags'] = spineHits;
+    }
     if (request['boneVolley'] == true &&
         readIntValue(request['attack']) > total) {
       record['boneSuccessfulHits'] =
@@ -291,6 +302,13 @@ extension _OculumMaskedMen on _OculumHomePageState {
     }
     record['next'] = next + 1;
     final packet = Map<String, dynamic>.from(packets[next]);
+    if (packet['cycleSpines'] == true) {
+      packet['damage'] = oculumCycleSpineDamage(
+        readIntValue(packet['cycleSpineBaseDamage']),
+        spineHits,
+        '${packet['targetTag']}',
+      );
+    }
     if (packet['boneVolley'] == true) {
       packet['damage'] = oculumBoneSlashDamage(
         readIntValue(packet['boneSlashBase']),

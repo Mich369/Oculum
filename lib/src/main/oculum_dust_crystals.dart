@@ -65,7 +65,8 @@ List<Map<String, dynamic>> oculumBoardAfterFight(Iterable<Map> tokens) => [
   for (final token in tokens)
     if (token['side'] != 'enemy' &&
         token['temporaryTurn'] != true &&
-        !const {'fled', 'expired'}.contains('${token['status']}'))
+        token['status'] != 'expired' &&
+        (token['status'] != 'fled' || token['outsideFight'] == true))
       {
         ...Map<String, dynamic>.from(token),
         'actionUsed': false,

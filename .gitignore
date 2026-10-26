@@ -56,3 +56,6 @@ app.*.map.json
 # Local checkpoint exceeds GitHub's file size limit; retain it on disk only.
 /output/checkpoints/2026-09-05-manual-mod/shared_preferences.json
 /output/save-recovery-*/
+
+# Retain editable story originals locally; the app ships the tracked WebP exports.
+/assets/oculum/theme_stories/*.png

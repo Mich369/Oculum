@@ -21,7 +21,8 @@ class OculumThemePresentation {
     this.variant = OculumThemeVariant.still,
     this.relicScale = 1,
     this.relicOpacity = .8,
-    this.surfaceTransparency = .18,
+    this.surfaceTransparency = .34,
+    this.controlTransparency = .24,
     this.artPackId = '',
   });
   final OculumThemeMotion motion;
@@ -30,6 +31,7 @@ class OculumThemePresentation {
 
   /// Only the backing surfaces fade; labels and input stay fully visible.
   final double surfaceTransparency;
+  final double controlTransparency;
   final String artPackId;
   OculumThemePresentation copyWith({
     OculumThemeMotion? motion,
@@ -37,6 +39,7 @@ class OculumThemePresentation {
     double? relicScale,
     double? relicOpacity,
     double? surfaceTransparency,
+    double? controlTransparency,
     String? artPackId,
   }) => OculumThemePresentation(
     motion: motion ?? this.motion,
@@ -44,6 +47,8 @@ class OculumThemePresentation {
     relicScale: (relicScale ?? this.relicScale).clamp(.7, 1.3),
     relicOpacity: (relicOpacity ?? this.relicOpacity).clamp(.25, 1),
     surfaceTransparency: (surfaceTransparency ?? this.surfaceTransparency)
+        .clamp(0, .4),
+    controlTransparency: (controlTransparency ?? this.controlTransparency)
         .clamp(0, .4),
     artPackId: artPackId ?? this.artPackId,
   );
@@ -56,6 +61,18 @@ final ValueNotifier<Map<String, String>> oculumSheetRelicSelections =
 Future<void> loadOculumThemePresentation() async {
   await loadOculumCustomArtwork();
   final prefs = await SharedPreferences.getInstance();
+  // Upgrade only old defaults, retaining deliberate custom settings.
+  if (!(prefs.getBool('oculum.transparency20261026') ?? false)) {
+    final surface = prefs.getDouble('oculum.surfaceTransparency');
+    final controls = prefs.getDouble('oculum.controlTransparency');
+    if (surface != null && (surface - .18).abs() < .00001) {
+      await prefs.setDouble('oculum.surfaceTransparency', .34);
+    }
+    if (controls != null && (controls - .12).abs() < .00001) {
+      await prefs.setDouble('oculum.controlTransparency', .24);
+    }
+    await prefs.setBool('oculum.transparency20261026', true);
+  }
   final savedSheetRelics = prefs.getString('oculum.sheetRelicSelections');
   if (savedSheetRelics == null) {
     oculumSheetRelicSelections.value = <String, String>{};
@@ -88,8 +105,14 @@ Future<void> loadOculumThemePresentation() async {
       .25,
       1,
     ),
-    surfaceTransparency: (prefs.getDouble('oculum.surfaceTransparency') ?? .18)
+    surfaceTransparency: (prefs.getDouble('oculum.surfaceTransparency') ?? .34)
         .clamp(0, .4),
+    controlTransparency:
+        (prefs.getDouble('oculum.controlTransparency') ??
+                ((prefs.getDouble('oculum.surfaceTransparency') ?? .36) *
+                    2 /
+                    3))
+            .clamp(0, .4),
     // An empty preference means that the player has never selected the Home
     // artwork. Choose an image pack for this launch, but do not persist it:
     // the next launch can choose again, while an explicit selection remains
@@ -137,6 +160,10 @@ Future<void> setOculumThemePresentation(OculumThemePresentation value) async {
     value.surfaceTransparency,
   );
   await prefs.setString('oculum.themeArtPack', value.artPackId);
+  await prefs.setDouble(
+    'oculum.controlTransparency',
+    value.controlTransparency,
+  );
 }
 
 class OculumThemePresentationControls extends StatelessWidget {
@@ -180,55 +207,7 @@ class OculumThemePresentationControls extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ListTile(
-            leading: const Icon(Icons.layers_outlined),
-            title: Text(
-              english
-                  ? 'Panel and button transparency'
-                  : 'Trasparenza pannelli e pulsanti',
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  english
-                      ? 'Only the backing fades. Text and icons stay visible; hover or keyboard focus restores the surface.'
-                      : 'Schiarisce solo le superfici: testi e icone restano visibili. Mouse e focus ripristinano la superficie.',
-                ),
-                Slider(
-                  key: const ValueKey('surface-transparency'),
-                  value: value.surfaceTransparency,
-                  min: 0,
-                  max: .4,
-                  divisions: 20,
-                  label: '${(value.surfaceTransparency * 100).round()}%',
-                  semanticFormatterCallback: (v) => '${(v * 100).round()}%',
-                  onChanged: (v) => oculumThemePresentation.value = value
-                      .copyWith(surfaceTransparency: v),
-                  onChangeEnd: (_) =>
-                      setOculumThemePresentation(oculumThemePresentation.value),
-                ),
-                Wrap(
-                  spacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text('${(value.surfaceTransparency * 100).round()}%'),
-                    TextButton(
-                      key: const ValueKey('surface-transparency-reset'),
-                      onPressed: () => setOculumThemePresentation(
-                        value.copyWith(surfaceTransparency: .18),
-                      ),
-                      child: Text(
-                        english
-                            ? 'Restore recommended · 18%'
-                            : 'Ripristina consigliato · 18%',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          OculumTransparencyControls(english: english),
           ListTile(
             leading: const Icon(Icons.auto_awesome_outlined),
             title: Text(english ? 'Theme animations' : 'Animazioni tema'),
@@ -381,6 +360,125 @@ class OculumThemePresentationControls extends StatelessWidget {
             ),
           ),
         ],
+      );
+    },
+  );
+}
+
+class OculumTransparencyControls extends StatelessWidget {
+  const OculumTransparencyControls({super.key, this.english = false});
+  final bool english;
+  @override
+  Widget build(
+    BuildContext context,
+  ) => ValueListenableBuilder<OculumThemePresentation>(
+    valueListenable: oculumThemePresentation,
+    builder: (context, value, _) {
+      Widget control(bool secondary) {
+        final amount = secondary
+            ? value.controlTransparency
+            : value.surfaceTransparency;
+        final suggested = secondary ? .24 : .34;
+        final colors = Theme.of(context).colorScheme;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surface.withValues(alpha: .65),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: .65),
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(
+                secondary ? Icons.auto_awesome_outlined : Icons.layers_outlined,
+                size: 22,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                secondary
+                    ? (english
+                          ? 'Statistics and lower controls'
+                          : 'Statistiche e pulsanti sotto')
+                    : (english ? 'General interface' : 'Interfaccia generale'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                english
+                    ? 'Only surfaces fade. Text and icons stay fully visible.'
+                    : 'Si attenuano le superfici. Testi e icone restano pieni.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              Slider(
+                key: ValueKey(
+                  secondary ? 'control-transparency' : 'surface-transparency',
+                ),
+                value: amount,
+                min: 0,
+                max: .4,
+                divisions: 40,
+                label: '${(amount * 100).round()}%',
+                semanticFormatterCallback: (v) => '${(v * 100).round()}%',
+                onChanged: (v) => oculumThemePresentation.value = secondary
+                    ? value.copyWith(controlTransparency: v)
+                    : value.copyWith(surfaceTransparency: v),
+                onChangeEnd: (_) =>
+                    setOculumThemePresentation(oculumThemePresentation.value),
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '${(amount * 100).round()}%',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  TextButton(
+                    key: ValueKey(
+                      secondary
+                          ? 'control-transparency-reset'
+                          : 'surface-transparency-reset',
+                    ),
+                    onPressed: () => setOculumThemePresentation(
+                      secondary
+                          ? value.copyWith(controlTransparency: suggested)
+                          : value.copyWith(surfaceTransparency: suggested),
+                    ),
+                    child: Text(
+                      '${english ? 'Recommended' : 'Consigliata'} ${(suggested * 100).round()}%',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }
+
+      return LayoutBuilder(
+        builder: (context, constraints) => constraints.maxWidth >= 680
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: control(false)),
+                  const SizedBox(width: 12),
+                  Expanded(child: control(true)),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  control(false),
+                  const SizedBox(height: 12),
+                  control(true),
+                ],
+              ),
       );
     },
   );

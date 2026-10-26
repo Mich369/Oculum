@@ -329,7 +329,11 @@ List<InventoryItem> oculumGenerateMonsterLoot({
       }
     }
   }
-  if (resolvedDropTotal < dropDifficulty) {
+  // Authored Slime drops use their own threshold (Indurimento at 15).
+  final isRockSlime =
+      monster.id == 'slime_roccioso' ||
+      monster.id.startsWith('slime_roccioso_variante_');
+  if (resolvedDropTotal < dropDifficulty && !isRockSlime) {
     return _withManualDropPrices(
       cycleScrollDrops,
       level: safeLevel,
@@ -420,8 +424,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
       grade: safeGrade,
     );
   }
-  if (monster.id == 'slime_roccioso' ||
-      monster.id.startsWith('slime_roccioso_variante_')) {
+  if (isRockSlime) {
     final total = resolvedDropTotal;
     return _withManualDropPrices(
       [
@@ -443,8 +446,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
         ),
         for (final skill in art.skills.where(
           (skill) =>
-              (skill.nome == 'Indurimento' &&
-                  (natural >= 15 || natural == 20)) ||
+              (skill.nome == 'Indurimento' && total >= 15) ||
               (skill.nome == 'Rimbalzo' && natural == 20),
         ))
           InventoryItem(

@@ -1044,6 +1044,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
   void impostaGiornoOculum(int day, {bool annuncia = true}) {
     final normalized = normalizzaGiornoOculum(day);
+    cycleCalendarChanged(oculumCurrentDay(), normalized);
     setState(() {
       oculumCurrentDayController.text = normalized.toString();
       final marciti = aggiornaPutrefazioneInventarioPerGiorno(normalized);
@@ -1068,6 +1069,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     if (delta == 0) return;
     final before = oculumCurrentDay();
     final after = normalizzaGiornoOculum(before + delta);
+    cycleCalendarChanged(before, after, delta: delta);
     setState(() {
       oculumCurrentDayController.text = after.toString();
       final marciti = aggiornaPutrefazioneInventarioPerGiorno(after);
@@ -1091,6 +1093,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   void segnaSessioneSenzaBisogni() {
     final giorni = leggiNumero(sessioniSenzaBisogniController) + 1;
     final nuovoGiorno = normalizzaGiornoOculum(oculumCurrentDay() + 1);
+    cycleCalendarChanged(oculumCurrentDay(), nuovoGiorno, delta: 1);
 
     setState(() {
       sessioniSenzaBisogniController.text = giorni.toString();
