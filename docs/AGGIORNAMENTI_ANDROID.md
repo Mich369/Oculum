@@ -11,3 +11,5 @@ Prima di un'eventuale reinstallazione, esportare i salvataggi fuori dallo spazio
 Le versioni successive alla prima installazione con la chiave stabile potranno aggiornarsi mantenendo firma, identificativo e versioni crescenti. Il controllo dell'updater resta attivo contro firma errata, pacchetto diverso o downgrade.
 
 Riferimento: [firma e aggiornamenti Android](https://developer.android.com/studio/publish/app-signing).
+
+Verifica del 27 ottobre: il job GitHub 122454651673 della run40574510394 ha letto dal keystore stabile il certificato SHA256 `f883a37f4be2b4f038bac52c9e247021e2bb9dd2a9fe45e857b8f5572e40b876`; il pin è allineato a questo certificato. L'impronta `ae37f08088cdf520a9333d03f6db022618ef1a46393d5cad3888fda21f17ed79` appartiene invece all'APK locale precedente in distribution e non alla chiave stabile dei segreti GitHub. La configurazione precedente usava signingConfigs.debug. Non dichiarare compatibilità con gli APK legacy: la loro firma può essere differente. Nessuna chiave è stata generata o sostituita durante questa correzione; i controlli di firma restano obbligatori.

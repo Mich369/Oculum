@@ -24,3 +24,6 @@ Correzioni reali: tecniche Larva duplicate, costi non Oculum bloccati dalla rise
 
 Controllo finale locale: build/oct27-drop-characters-final.log, 7 test passati; include il drop con ID preservati e le due schede corrette. Ultimo gruppo precedente: gli altri 54 test sono passati. L'analisi lib+test aveva segnalato una sola parentesi graffa nel test, corretta prima del commit.
 
+
+Correzione bersagli: build/oct27-fight-targets-final.log,16 test passati; comprende selettore online/offline nel fight della scheda, nessun bersaglio senza spesa, turnistica/reazioni, consegna attacchi, contrattacchi e appartenenza ai fight condivisi. build/oct27-fight-targets-analyze.log: No issues found. Queste sono prove locali e trasporto simulato, non due app collegate realmente.
+Firma: corretto il pin verso il certificato effettivo della chiave stabile GitHub (f883a37...), verificato dal job122454651673. L'APK locale precedente ha ae37f080... e resta legacy; non è stato modificato né dichiarato aggiornabile con la chiave GitHub. Nuova distribuzione ancora da verificare sulla CI seguente.

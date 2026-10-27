@@ -2,6 +2,8 @@
 
 ## Versione stabile del 27 ottobre — schede, costi e personaggi
 
+- Attacco nella barra del fight: bersagli e tiro seguono il fight della scheda, anche quando il Master ne ha selezionato un altro o ci sono fight condivisi. Corretto il riconoscimento del partecipante con maiuscole/spazi diversi nei tag. Senza bersagli validi compare un avviso e non si consumano Azioni o Reazioni; il tiro non ripiega silenziosamente su un dado generico senza bersaglio.
+
 - Firma Android: il repository include l'impronta pubblica del certificato stabile per permettere il controllo della firma anche su GitHub; la chiave privata non cambia e rimane separata dal codice.
 
 - Corretta la duplicazione delle tecniche aggiuntive della Larva. I costi in Obser o statistiche non richiedono anche Oculum per apparire fra le mosse disponibili; la risorsa Follia viene riconosciuta nei costi strutturati. Conservati i costi dopo il salvataggio e la Maestria nelle descrizioni aggiornate. Scroll delle tecniche di crescita collegate alla tecnica naturale corretta, comprese le Reazioni veloci; gli Occhi dei Caduti mantengono distinte le tecniche prive di nome.

@@ -1,5 +1,7 @@
 # Ultimo aggiornamento — 27 ottobre 2026
 
+- Corretta la scelta del bersaglio da Attacco nella barra del fight, online e offline: usa il fight della scheda. Senza bersagli validi mostra un avviso senza consumare Azioni/Reazioni.
+
 - Assegnazione delle schede dal Master al giocatore, con selezione iniziale vuota, salvataggio locale e copia online conservando proprietà e personalizzazioni. Pagina Master riordinata.
 - Costi generici e parser PT; Senka organizzata con maschera, riserve, cloni e Titoli del Fato. Lusier III con equipaggiamento, carte esplosive, Derisione e PT misurata277.
 - Carte con tre evoluzioni e vendita soltanto al Mercato Nero; letture facilitate a50/30/20/10 PT e rivelazione con margine+5 fino a50 PT.

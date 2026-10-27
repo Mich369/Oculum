@@ -660,6 +660,8 @@ class OculumPerformanceProbe {
       _state.requestDefenseRetry(request);
   Future<void> useCombatRoll(OculumCombatAbilityRole role) =>
       _state.useCombatRoll(role);
+  List<String> attackTargetTags() =>
+      _state.onlineAttackTokens().map(_state.onlineCombatTokenTag).toList();
   Color combatAbilityColor(String resource) =>
       _state.combatAbilityResourceColor([resource]);
   Future<void> defendCombat(Map<String, dynamic> request, String choice) =>

@@ -127,7 +127,11 @@ extension _OculumCombatTurnStatus on _OculumHomePageState {
     }
     bool containsTag(Iterable tokens) => tokens.whereType<Map>().any(
       (token) =>
-          publicInitiativeSourceTag(Map<String, dynamic>.from(token)) == tag,
+          oculumSameSheetIdentity(
+            publicInitiativeSourceTag(Map<String, dynamic>.from(token)),
+            tag,
+          ) ||
+          oculumSameSheetIdentity(token['sheetTag'] ?? token['id'], tag),
     );
     final other = !containsTag(masterInitiativeTokens)
         ? masterInitiativeGroups
@@ -157,6 +161,22 @@ extension _OculumCombatTurnStatus on _OculumHomePageState {
         'activeIndex': masterInitiativeActiveIndex,
       },
     };
+  }
+
+  void alignCombatEncounterForRoll() {
+    if (!referenceUsesLocalTurnState) {
+      if (realtimeEncounterSnapshots.isNotEmpty) {
+        selectSharedEncounterForCurrentSheet();
+      }
+      return;
+    }
+    final encounter = referenceTurnEncounter();
+    final id = '${encounter['encounterId'] ?? encounter['id'] ?? ''}';
+    if (_usesLocalMasterInitiative &&
+        id.isNotEmpty &&
+        id != selectedMasterInitiativeGroupId) {
+      selectMasterInitiativeGroup(id);
+    }
   }
 
   String referenceTurnStatusText() => oculumCombatTurnStatus(

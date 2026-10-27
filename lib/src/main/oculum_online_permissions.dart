@@ -376,13 +376,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     final selectedResource = freeReaction?.key ?? resource;
     if (!_consumeLocalCombatTurnResource(tag, selectedResource)) return false;
     final spentToken = _writableOnlineCombatTokens()
-        .where(
-          (token) =>
-              (_usesLocalMasterInitiative
-                  ? publicInitiativeSourceTag(token)
-                  : onlineCombatTokenTag(token)) ==
-              tag,
-        )
+        .where((token) => combatTokenMatchesSheet(token, tag))
         .firstOrNull;
     final actualResource =
         freeReaction != null ||
@@ -478,11 +472,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       freeReaction['reactionUsed'] = true;
       final tokens = _writableOnlineCombatTokens();
       final index = tokens.indexWhere(
-        (token) =>
-            (_usesLocalMasterInitiative
-                ? publicInitiativeSourceTag(token)
-                : '${token['sheetTag'] ?? token['id'] ?? ''}') ==
-            tag,
+        (token) => combatTokenMatchesSheet(token, tag),
       );
       if (index >= 0) {
         tokens[index]['lastTurnResource'] = 'reazione';
@@ -511,11 +501,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     }
     final tokens = _writableOnlineCombatTokens();
     final index = tokens.indexWhere(
-      (token) =>
-          (_usesLocalMasterInitiative
-              ? publicInitiativeSourceTag(token)
-              : '${token['sheetTag'] ?? token['id'] ?? ''}') ==
-          tag,
+      (token) => combatTokenMatchesSheet(token, tag),
     );
     if (index < 0) return false;
     final token = tokens[index];
@@ -703,11 +689,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     if (tag.isEmpty) return 0;
     final tokens = _writableOnlineCombatTokens();
     final index = tokens.indexWhere(
-      (token) =>
-          (_usesLocalMasterInitiative
-              ? publicInitiativeSourceTag(token)
-              : '${token['sheetTag'] ?? token['id'] ?? ''}') ==
-          tag,
+      (token) => combatTokenMatchesSheet(token, tag),
     );
     if (index < 0) return 0;
     final token = tokens[index];
@@ -763,13 +745,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   int consumePendingFastReactionConsequenceBonus() {
     final tag = sheetTagAt(schedaCorrente);
     final token = _writableOnlineCombatTokens()
-        .where(
-          (token) =>
-              (_usesLocalMasterInitiative
-                  ? publicInitiativeSourceTag(token)
-                  : onlineCombatTokenTag(token)) ==
-              tag,
-        )
+        .where((token) => combatTokenMatchesSheet(token, tag))
         .firstOrNull;
     if (token == null) return 0;
     final bonus = max(
@@ -905,11 +881,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     }
     final tokens = _writableOnlineCombatTokens();
     final index = tokens.indexWhere(
-      (token) =>
-          (_usesLocalMasterInitiative
-              ? publicInitiativeSourceTag(token)
-              : onlineCombatTokenTag(token)) ==
-          sheetTagAt(schedaCorrente),
+      (token) => combatTokenMatchesSheet(token, sheetTagAt(schedaCorrente)),
     );
     final active = _usesLocalMasterInitiative
         ? masterInitiativeActiveIndex
@@ -968,11 +940,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     if (!currentTurnTrackerIsActive()) return true;
     final tokens = _writableOnlineCombatTokens();
     final index = tokens.indexWhere(
-      (token) =>
-          (_usesLocalMasterInitiative
-              ? publicInitiativeSourceTag(token)
-              : onlineCombatTokenTag(token)) ==
-          sheetTagAt(schedaCorrente),
+      (token) => combatTokenMatchesSheet(token, sheetTagAt(schedaCorrente)),
     );
     if (index < 0) return false;
     final active = _usesLocalMasterInitiative

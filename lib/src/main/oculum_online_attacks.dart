@@ -1508,8 +1508,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
 
   String get onlineCombatEncounterId =>
       realtimeService?.isConnected != true || realtimeIsMasterRole
-      ? selectedMasterInitiativeGroupId
-      : '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
+      ? '${referenceTurnEncounter()['encounterId'] ?? selectedMasterInitiativeGroupId}'
+      : '${referenceTurnEncounter()['encounterId'] ?? ''}';
 
   bool get localTurnCombat =>
       (realtimeService?.isConnected != true &&
@@ -1520,13 +1520,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   List<Map<String, dynamic>> onlineCombatTokens() {
     if (realtimeService?.isConnected != true) {
       if (!localTurnCombat) return [];
-      return masterInitiativeTokens
+      return ((referenceTurnEncounter()['tokens'] as List?) ?? const [])
+          .whereType<Map>()
           .map((t) => Map<String, dynamic>.from(t))
           .toList();
     }
-    final raw = realtimeIsMasterRole
-        ? masterInitiativeTokens
-        : realtimeVisibleInitiativeSnapshot['tokens'];
+    final raw = referenceTurnEncounter()['tokens'];
     if (raw is! List) return [];
     return raw
         .whereType<Map>()
@@ -1539,13 +1538,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       ? publicInitiativeSourceTag(token)
       : '${token['sheetTag'] ?? token['id'] ?? ''}';
 
+  bool combatTokenMatchesSheet(Map<String, dynamic> token, String tag) =>
+      oculumSameSheetIdentity(publicInitiativeSourceTag(token), tag) ||
+      oculumSameSheetIdentity(token['sheetTag'] ?? token['id'], tag);
+
   List<Map<String, dynamic>> onlineAttackTokens() {
     final tokens = onlineCombatTokens();
     final own = sheetTagAt(schedaCorrente);
+    bool isOwn(Map<String, dynamic> t) => combatTokenMatchesSheet(t, own);
     final actingToken = tokens
         .where(
           (t) =>
-              onlineCombatTokenTag(t) == own &&
+              isOwn(t) &&
               !const {'dead', 'fled', 'expired'}.contains(t['status']),
         )
         .firstOrNull;
@@ -1556,7 +1560,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .where(
           (t) =>
               onlineCombatTokenTag(t).isNotEmpty &&
-              onlineCombatTokenTag(t) != own &&
+              !isOwn(t) &&
               !const {'dead', 'fled', 'expired'}.contains(t['status']) &&
               referenceTargetAllowed(t) &&
               evergreenTargetAllowed(t, actingToken: actingToken),
@@ -1688,6 +1692,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool resourceAlreadySpent = false,
     bool rabbitHat = false,
   }) async {
+    alignCombatEncounterForRoll();
     if (totalPowerExhausted &&
         (freeReactionId != null ||
             schiantoReactionId != null ||
@@ -1868,7 +1873,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         });
       }
     }
-    if (tokens.isEmpty) return;
+    if (tokens.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: const Text('Nessun bersaglio disponibile'),
+          content: const Text(
+            'La scheda deve partecipare al fight e avere almeno un bersaglio valido nella sua turnistica. Controlla i partecipanti e lo stato del fight. Nessuna Azione o Reazione è stata consumata.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     final origin = currentSheetScrollId();
     final encounter = onlineCombatEncounterId;
     final counterBonus = freeReaction?['doubleDefense'] == true ? 9 : 0;
@@ -1988,10 +2010,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .where((e) => e['type'] == 'pending_target' && e['effect'] is Map)
         .map((e) => e['effect'] as Map)
         .toList();
-    if (preparedEffects.any((e)=>e['target']=='lusier_derision')) {
-      choices.removeWhere((choice)=>!const {'inganno','volonta','carisma','manifestazione_potere'}.contains(choice.id));
-      if(choices.isEmpty) return;
-      initialChoice=choices.any((choice)=>choice.id=='inganno')?'inganno':choices.first.id;
+    if (preparedEffects.any((e) => e['target'] == 'lusier_derision')) {
+      choices.removeWhere(
+        (choice) => !const {
+          'inganno',
+          'volonta',
+          'carisma',
+          'manifestazione_potere',
+        }.contains(choice.id),
+      );
+      if (choices.isEmpty) return;
+      initialChoice = choices.any((choice) => choice.id == 'inganno')
+          ? 'inganno'
+          : choices.first.id;
     }
     final suicideExplosion =
         preparedEffects.any((e) => readBoolValue(e['killSource'])) ||
@@ -2693,7 +2724,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 .join(' + '),
           'reason': controlledPlan.reason,
           'attack':
-              total - readIntValue(chosenBodyParts[selectedTag]?['penalty']) + lusierReplyBonus(selectedTag).accuracy,
+              total -
+              readIntValue(chosenBodyParts[selectedTag]?['penalty']) +
+              lusierReplyBonus(selectedTag).accuracy,
           'natural': natural,
           if (rabbitHat) 'rabbitHatAdaptRoll': Random.secure().nextInt(100),
           'damage':
@@ -2881,18 +2914,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         if (request['banditVendetta'] == true) {
           request['damage'] = (readIntValue(request['damage']) * 1.25).floor();
         }
-        lusierReplyBonus(selectedTag, consume:true);
+        lusierReplyBonus(selectedTag, consume: true);
         if (isLusierDerision(request)) {
           request['damage'] = 0;
           request['baseAttack'] = false;
-        } else if ((request['effects'] as List? ?? []).whereType<Map>()
-            .any((e)=>'${e['id']}'.startsWith('senka_grapple_'))) {
-          request['damage']=0;
-          request['baseAttack']=false;
+        } else if ((request['effects'] as List? ?? []).whereType<Map>().any(
+          (e) => '${e['id']}'.startsWith('senka_grapple_'),
+        )) {
+          request['damage'] = 0;
+          request['baseAttack'] = false;
         } else {
           applyTotalPowerBurstAttack(request);
         }
-        if(!claimExplosiveCards(request)) return;
+        if (!claimExplosiveCards(request)) return;
         if (oculumFateCoreReflects(
           monsterBookEntryById(monsterBookIdForCombatToken(byId[selectedTag]!)),
           '${request['targetBodyPart']}',
@@ -3837,7 +3871,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             schedePersonaggio[targetIndex]['lastDamageSourceTag'] =
                 request['sourceTag'];
             schedePersonaggio[targetIndex]['lastDamageTitleItemIds'] = ids;
-            schedePersonaggio[targetIndex]['lastDamagePowerRecord'] = {'totalPower': payload['targetTotalPower'], 'killerTotalPower': request['sourceTotalPower']};
+            schedePersonaggio[targetIndex]['lastDamagePowerRecord'] = {
+              'totalPower': payload['targetTotalPower'],
+              'killerTotalPower': request['sourceTotalPower'],
+            };
           }
           for (final token in masterInitiativeTokens.where(
             (t) => publicInitiativeSourceTag(t) == request['targetTag'],
@@ -3958,7 +3995,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     try {
-      if ((request['referenceMadnessWave'] == true || isLusierDerision(request)) &&
+      if ((request['referenceMadnessWave'] == true ||
+              isLusierDerision(request)) &&
           !const {
             'volonta',
             'resistenza',
@@ -4251,7 +4289,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['targetLevel'] = leggiNumero(livelloController);
     final mantleDefense = choice == 'mantello';
     if (mantleDefense && !referenceMantleAvailable) return;
-    if ((request['referenceMadnessWave'] == true || isLusierDerision(request)) &&
+    if ((request['referenceMadnessWave'] == true ||
+            isLusierDerision(request)) &&
         !const {
           'volonta',
           'resistenza',
@@ -4383,12 +4422,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             difficulty: '${request['difficulty'] ?? 'normale'}',
           );
     if (mantleDefense) outcome = OculumAttackOutcome.full;
-    final senkaImpale = (request['effects'] as List? ?? []).whereType<Map>()
-      .any((e)=>e['target']=='senka_shadow_impale');
-    if(senkaImpale && !(activeConditions.any((c)=>c.conditionType=='immobilizzato') &&
-        planarState['senkaHeldBy']==request['sourceTag'])) {
-      outcome=OculumAttackOutcome.avoided;
-      aggiungiLog('Impalamento: manca una presa ancora attiva dei Tentacoli di questo attaccante.');
+    final senkaImpale = (request['effects'] as List? ?? [])
+        .whereType<Map>()
+        .any((e) => e['target'] == 'senka_shadow_impale');
+    if (senkaImpale &&
+        !(activeConditions.any((c) => c.conditionType == 'immobilizzato') &&
+            planarState['senkaHeldBy'] == request['sourceTag'])) {
+      outcome = OculumAttackOutcome.avoided;
+      aggiungiLog(
+        'Impalamento: manca una presa ancora attiva dei Tentacoli di questo attaccante.',
+      );
     }
     // Derision is an opposed mental effect, never an HP damage packet.
     if (isLusierDerision(request)) outcome = OculumAttackOutcome.avoided;
@@ -4905,9 +4948,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         );
         if (readIntValue(request['lusierBeyondDefense']) > 0 &&
             outcome != OculumAttackOutcome.avoided) {
-          await applicaDannoSubito(dannoEsplicito:readIntValue(request['lusierBeyondDefense']),
-            bypassDefense:true,enemyLevel:readIntValue(request['level']),
-            magicalAttack:request['magicalAttack']==true);
+          await applicaDannoSubito(
+            dannoEsplicito: readIntValue(request['lusierBeyondDefense']),
+            bypassDefense: true,
+            enemyLevel: readIntValue(request['level']),
+            magicalAttack: request['magicalAttack'] == true,
+          );
         }
       } finally {
         if (mounted && sheetTagAt(schedaCorrente) == tag) {
@@ -4995,7 +5041,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           List<String>.from(
             (request['titleItemIds'] as List? ?? []).map((id) => '$id'),
           );
-      schedePersonaggio[schedaCorrente]['lastDamagePowerRecord'] = {'totalPower': request['targetTotalPower'], 'killerTotalPower': request['sourceTotalPower']};
+      schedePersonaggio[schedaCorrente]['lastDamagePowerRecord'] = {
+        'totalPower': request['targetTotalPower'],
+        'killerTotalPower': request['sourceTotalPower'],
+      };
     }
     if (readIntValue(receipt['hpLost']) > 0) {
       planarState['deadlyLastHpDamage'] = {
@@ -5028,7 +5077,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       };
     }
     planarAfterHpDamage();
-      if ((request['referenceMadnessWave'] == true || isLusierDerision(request)) &&
+    if ((request['referenceMadnessWave'] == true ||
+            isLusierDerision(request)) &&
         outcome != OculumAttackOutcome.avoided &&
         faunaReceipt('doppione-wave:$id')) {
       modificaFollia(1, daMostro: true);
@@ -5137,7 +5187,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             );
             continue;
           }
-          if (effect.type == 'danno' || effect.target == 'explosive_cards_damage') {
+          if (effect.type == 'danno' ||
+              effect.target == 'explosive_cards_damage') {
             continue; // Included in the single damage packet.
           }
           if (criticalShieldBlocksDebuffs(request) &&
@@ -5209,9 +5260,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             source: '${request['sourceName']} · attacco $id',
             applyFusionBonus: false,
           );
-          if(effect.id.startsWith('senka_grapple_') &&
-              activeConditions.any((c)=>c.conditionType=='immobilizzato')) {
-            planarState['senkaHeldBy']=request['sourceTag'];
+          if (effect.id.startsWith('senka_grapple_') &&
+              activeConditions.any((c) => c.conditionType == 'immobilizzato')) {
+            planarState['senkaHeldBy'] = request['sourceTag'];
           }
           if (effect.type == 'planar' && effect.target == 'oblivion_memory') {
             planarState['oblivionMemoryDifficulty'] = attack;
@@ -5731,13 +5782,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                                 ),
                               ),
                           for (final option in <String, String>{
-                            if ((request['referenceMadnessWave'] == true || isLusierDerision(request)))
+                            if ((request['referenceMadnessWave'] == true ||
+                                isLusierDerision(request)))
                               'volonta': 'Volontà',
-                            if ((request['referenceMadnessWave'] != true && !isLusierDerision(request)))
+                            if ((request['referenceMadnessWave'] != true &&
+                                !isLusierDerision(request)))
                               'cm': 'CM',
                             for (final stat in hiddenEyeStats)
                               if (oculumCombatSubtraitSelectable(stat) &&
-                                  ((request['referenceMadnessWave'] != true && !isLusierDerision(request)) ||
+                                  ((request['referenceMadnessWave'] != true &&
+                                          !isLusierDerision(request)) ||
                                       const {
                                         'resistenza',
                                         'canalizzazione',

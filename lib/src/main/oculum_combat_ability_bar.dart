@@ -413,6 +413,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     OculumCombatAbilityRole role, {
     HiddenEyeStat? stat,
   }) async {
+    alignCombatEncounterForRoll();
     final origin = currentSheetScrollId();
     if (outsideFight && role != OculumCombatAbilityRole.support) {
       aggiungiLog('[FUORI FIGHT] Rientra in battaglia dalle Utility.');
@@ -447,7 +448,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       return;
     }
     if (role == OculumCombatAbilityRole.attack &&
-        onlineAttackTokens().isNotEmpty) {
+        (onlineCombatTokens().isNotEmpty || currentCombatIsActive())) {
       await planOnlineAttack(initialChoice: stat?.id ?? 'vc');
       return;
     }
@@ -985,6 +986,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   }
 
   Future<void> showCombatActionPanel(OculumCombatAbilityRole role) async {
+    alignCombatEncounterForRoll();
     if (parasiteOwnerLocked) {
       await showDialog<void>(
         context: context,
@@ -1282,13 +1284,14 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     if (onlyRole != null) {
       final attack = onlyRole == OculumCombatAbilityRole.attack;
       final support = onlyRole == OculumCombatAbilityRole.support;
-      if (attack && onlineAttackTokens().isNotEmpty) {
+      if (attack &&
+          (onlineCombatTokens().isNotEmpty || currentCombatIsActive())) {
         entries.add((
           name: 'Bersaglio del fight',
           roles: {onlyRole},
           color: eyePupilGlowColor,
           enabled: true,
-          hint: 'Scegli il bersaglio e il tiro da inviare online.',
+          hint: 'Scegli il bersaglio e il tiro nel fight della tua scheda.',
           details: null,
           use: () => unawaited(planOnlineAttack()),
         ));
