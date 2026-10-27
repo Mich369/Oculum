@@ -27,6 +27,32 @@ bool oculumIsDoubleCritical({
   required int opposingTotal,
 }) => natural == 20 && total > 0 && total >= max(1, opposingTotal) * 2;
 
+/// Credits one resolved roll, even after replay or restoring its saved sheet.
+bool oculumGrantDoubleCriticalMagicalLuck(
+  Map<String, dynamic> sheet, {
+  required String receiptId,
+  required int natural,
+  required int total,
+  required int opposingTotal,
+}) {
+  if (receiptId.trim().isEmpty ||
+      !oculumIsDoubleCritical(
+        natural: natural,
+        total: total,
+        opposingTotal: opposingTotal,
+      )) {
+    return false;
+  }
+  final claimed = (sheet['magicalLuckCriticalIds'] as List? ?? const [])
+      .whereType<String>()
+      .toSet();
+  if (!claimed.add(receiptId)) return false;
+  final before = int.tryParse('${sheet['fortuna'] ?? 0}') ?? 0;
+  sheet['fortuna'] = max(0, before) + 1;
+  sheet['magicalLuckCriticalIds'] = claimed.toList();
+  return true;
+}
+
 int oculumDoubleCriticalDamageBonus(int level, int grade) =>
     max(2, max(0, level) * 3 + grade.clamp(0, 12) * 6);
 

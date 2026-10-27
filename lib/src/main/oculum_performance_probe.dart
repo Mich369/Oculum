@@ -198,6 +198,15 @@ class OculumPerformanceProbe {
       _state.abilityBenefitColor(effects);
   Map<String, dynamic> planarStateSnapshot() =>
       Map<String, dynamic>.from(_state.planarState);
+  int referenceAbsorb(int damage, {int mantle = 0, int shield = 0}) =>
+      _state.referenceAbsorbDamage(damage, mantle, shield);
+  int referenceHalo() => _state.referenceHaloDefense;
+  void referenceRest({bool long = true}) =>
+      long ? _state.referenceLongRest() : _state.referenceShortRest();
+  int shieldTotal() => _state.scudo();
+  int criticalShieldTotal() => _state.scudoCritico();
+  Map<String, dynamic> lunarCrystals() =>
+      Map<String, dynamic>.from(_state.lunarCrystalState);
   int planarIncoming(
     int damage, {
     String element = 'fisico',
@@ -337,6 +346,24 @@ class OculumPerformanceProbe {
   Future<bool> utilitySpend(String resource) =>
       _state.requestUtilitySpend(resource);
   Future<bool> spendCombatRoll() => _state.spendCombatRollResource();
+  Future<void> showAssignSheets() => _state.showAssignSheetsDialog();
+  Future<void> initialSheetLoad() => _state.initialSheetLoad;
+  Map<String, dynamic> assignmentBody(int index) =>
+      _state.sheetAssignmentBody(index);
+  Future<bool> applyAssignment(
+    Map<String, dynamic> receipt,
+    Map<String, dynamic> body, {
+    bool? preserveCopy,
+  }) => _state.applySheetAssignment(
+    receipt,
+    body,
+    preserveConflictingCopy: preserveCopy,
+  );
+  Widget combatTurnStatusBar() => _state.referenceTurnControls();
+  String combatTurnStatus() => _state.referenceTurnStatusText();
+  Map<String, dynamic> combatTurnEncounter() => _state.referenceTurnEncounter();
+  Map<String, int> combatTurnResources() =>
+      _state.currentSheetTurnResourceCounts();
   Future<bool> spendCounterAttack() => _state.spendCounterAttackResource();
   int takeReactionRollBonus() => _state.consumePendingReactionRollBonus();
   int takeReactionConsequenceBonus() =>
@@ -479,6 +506,9 @@ class OculumPerformanceProbe {
   Future<void> useScroll(InventoryItem item) =>
       _state.useMerchantConsumable(item);
   int defense() => _state.difesa();
+  String attackElement() => _state.elementoDannoDominante();
+  String defenseElement([Map request = const {}]) =>
+      _state.resolveCombatDefenseElement(request);
   void refillStatsAndHealth() => _state.refullVita();
   bool activateNurseBuff() => _state.activateHeroicNurseBuffForCurrentBattle();
   List<Map<String, dynamic>> structuredEffects() =>
@@ -489,6 +519,25 @@ class OculumPerformanceProbe {
       );
   String incomingDamagePreset(String element) =>
       _state.configuredIncomingDamagePreset(element);
+  int incomingParserDamage(int damage, String element) =>
+      _state.applicaParserDanniSubiti(damage, element);
+  double resistanceCommandMultiplier(String command) =>
+      _state.damageRuleMultiplierForCommand(command);
+  int abilityResistance(String element) => _state.abilityElementResistancePercent(element);
+  bool manifestTitleItem(InventoryItem item, bool manifested) =>
+      _state.setTitleItemManifested(item, manifested);
+  bool manifestSenkaMask(InventoryItem item, bool active) =>
+      _state.setSenkaMaskManifested(item, active);
+  int repairSenkaMask(int roll) => _state.repairSenkaMaskShield(roll);
+  void senkaDamageReceipt(Map request) => _state.senkaConfirmDamage(request);
+  int senkaClone(int hp) => _state.createSenkaShadowClone(hp);
+  int senkaFusion() => _state.absorbSenkaShadows();
+  int senkaCloneCount() => _state.senkaClonesCreated;
+  void cardsTurnStart() => _state.rechargeExplosiveCards();
+  bool claimCards(Map request) => _state.claimExplosiveCards(request);
+  int itemSaleValue(InventoryItem item) => _state.merchantSaleValue(item);
+  ({int accuracy,int beyondDefense}) lusierReply(String target,{bool consume=false}) =>
+    _state.lusierReplyBonus(target,consume:consume);
   void setIncomingDamagePreset(String element, String preset) =>
       _state.incomingDamagePresets[element] = preset;
   double corruptionResistance() => _state.currentCorruptionResistancePercent();
@@ -513,6 +562,11 @@ class OculumPerformanceProbe {
       _state.defendCorruptionApplication(request, choice);
   void convertItemTitle(InventoryItem item) =>
       _state.convertInventoryItemToTitle(item);
+  bool itemTitleAvailable(InventoryItem item, CharacterSkillForm form) => _state.itemTitleFormAvailable(item, form);
+  Future<void> useEquipment(InventoryItem item, CharacterSkillForm form) => _state.useEquipmentQuickAbility(item, form, oculumCombatAbilityRole(form.effettiStrutturati, explicitType: form.tipo));
+  Widget itemTitleEditor(InventoryItem item) => _state.equipmentAbilityEditor(item);
+  void repairItemTitles() => _state.repairConvertedItemTitles();
+  void tickEquipmentCooldowns() => _state.tickStructuredAbilityCooldowns('turni', scheduleSave: false);
   int itemShield(InventoryItem item) => _state.itemShieldBonus(item);
   String get planeId => _state.selectedPlaneId;
   Future<void> useNecromancy(InventoryItem item) =>
@@ -760,6 +814,21 @@ class OculumPerformanceProbe {
   );
   int spendArtResource(String resource, int amount) =>
       _state.spendArtSkillCostResource(resource, amount);
+  int availableArtResource(String resource) =>
+      _state.artSkillCostResourceAvailable(resource);
+  void settleMonsterRewards(
+    Iterable<Map> enemies,
+    String encounterId,
+    Iterable<String> participants,
+  ) {
+    _state.recordPlanarMonsterRewards(
+      enemies,
+      encounterId,
+      participantTags: participants,
+    );
+    _state.settlePartyQuestRewards();
+  }
+
   int attackVc() => _state.vc();
   int levelGradeBonus() => _state.bonusLivelloGrado();
   int defenseCm() => _state.cm();
@@ -832,6 +901,20 @@ class OculumPerformanceProbe {
       _state.setMasterInitiativeActiveIndex(index);
   void normalizeInitiative() => _state.normalizeMasterInitiativeTokens();
   void showTutorial() => _state.mostraTutorial();
+  Map<String, dynamic> get creationDraft => _state.creationDraft;
+  List<CharacterSkill> creationPool() => _state.tutorialSkillPool();
+  void generateCreation() => _state.generateTutorialDraft();
+  bool applyCreation() => _state.applicaSettaggioTutorial();
+  int creationPercent() => _state.tutorialCompletionPercent();
+  bool requirementsMet(Map<String, dynamic> requirements) =>
+      _state.progressionRequirementsMet(requirements);
+  bool lastStrength(int roll) => _state.tryConstructLastStrength(roll: roll);
+  Map<String, dynamic> get constructCore => _state.constructCore;
+  int get constructCoreHp => _state.constructCoreHp;
+  void restCore() => _state.restConstructCore();
+  int racialRollBonus(String trait) => _state.racialSubtraitRollBonus(trait);
+  Future<void> damageConstructCore(int amount) =>
+      _state.applicaDannoSubito(dannoEsplicito: amount, hitBodyPart: 'core');
   void sortInitiative() =>
       _state.sortMasterInitiativeTokens(forceInitiative: true);
   void longRest() => _state.riposoLungo();

@@ -1,5 +1,25 @@
 # Oculum — canone visivo confermato
 
+## Lusier III — artwork approvato, 27 ottobre 2026
+
+Riferimento canonico approvato esplicitamente dall'utente: `assets/oculum/home_art/character_lusier_iii_v1.png`. Prompt, riferimenti e conferma in `ART_LUSIER_III_2026-10-27.json`. Tecnica Rame fatato: pittura anime fantasy opaca, pennellate morbide e materiche, non fotografia o rendering 3D.
+
+Solare di bellissimo aspetto, Guardia Elité di Grado I e comandante di battaglie. Volto dai lineamenti regolari, sopracciglia marcate, carnagione calda olivastra e leggermente più scura di quella abituale dei Solari. Capelli castani ondulati, folti ma non troppo lunghi, con ciocche libere presso le tempie e la nuca. Le iridi sono d'oro intenso, ancora più dorate di quelle degli altri Solari; pupille e struttura degli occhi rimangono leggibili.
+
+Indossa vesti protettive di seta avorio e bordò, impreziosite da oro. Il collo alto è ricamato; una stola ornata e ampie fasce attraversano spalle e torace. Sigilli solari con occhio centrale compaiono sui bordi, sulla fibbia e sugli ornamenti; catenelle e piccoli pendagli d'oro seguono le pieghe. Ampi lembi di seta ricamata lo circondano come un mantello, dando volume alla figura senza trasformare l'abito in una pesante armatura a piastre. La protezione è forte, come richiesto, ma non è stato assegnato un valore numerico nuovo dall'illustrazione.
+
+Portamento composto e autoritario, una mano vicino al collo della veste, sguardo sicuro e distaccato. È Lusier III della leggenda di Vendetta di Senka: «Lusier III Guardia Elité di Grado I, dirige battaglie, stermina popoli proprio come ha fatto con la mia famiglia, proprio come io farò con lui.» Non fissare età esatta, statistiche ulteriori o poteri non confermati solo dall'immagine.
+
+## Precisazioni più recenti — Senka e Solari, 27 ottobre 2026
+
+- Dicitura visibile sempre **Chaos**.
+- Senka Kamaria, sedici anni, Mhunan lunare: aspetto normale volutamente aperto. Negli artwork mascherati non fissarlo implicitamente. Maschera intera nera opaca con solchi a spirale nello stile dell'assassino nero, ma DUE fori a occhio e DUE circoli. Non sostituire la maschera canonica dell'Ombra Ignota, che conserva il foro singolo. Occhi di Senka del colore dell'Oculum; mantello di tenebre dai bordi dissolti in filamenti/tentacoli. Sky non accompagna gli incarichi.
+- Guardie Solari: umanoidi in uniforme; comuni fragili e fastidiose, élite più equilibrate. Guardiani: colossi lenti in armatura pesante, volto nascosto dall'elmo con occhio solare, arco con due frecce d'oro e canali per raggi solari.
+- Angeli due ali, Arcangeli quattro, Serafini sei. I nuovi Serafini Solari e Angelici hanno volti belli e inquietanti e occhi sulle ali. Solare: oro e aggressività. Angelico: metallo angelico bianco e oro, protezione e giudizio. Il Serafino Boss già presente resta specie separata.
+- Grofix: muschio e radici che assorbono giacimenti trascurati, poi cristalli variegati lunghi e appuntiti secondo i materiali/Grado sottratti. Non trasformarlo in un generico umanoide di pietra. Nei sotterranei: tetto di roccia e luce locale, nessun cielo o corpo celeste.
+- Le figure sono per temi/sfondi delle schede, non ritratti imposti nel Monster Book. Composizioni entro margini, elementi importanti interi, spazio di lettura e inquadrature adattate.
+- Orea Zalira è l'eccezione esplicita con DUE soli SENZA occhi. Il Regno di Carne Viva è nel vuoto assoluto senza mondi o corpi celesti lontani. Nella Notte di Cubi Luminosi la luce proviene dai cubi.
+
 ## Riferimenti definitivi
 
 - Sole: riferimento approvato `assets/oculum/theme_stories/webp/benedict.webp`; riprendere soltanto il disco con iride oro/arancio e pupilla scura, senza copiare statua o città negli altri temi.
@@ -28,3 +48,10 @@ Riferimento pittorico: `assets/oculum/home_art/amber_shore.png` («Rame fatato»
 Le nuvole delle nuove scene mescolano blu dominante, indaco, viola e rosa pastello, luminosi in quest’ordine. I temi dedicati all’utente comprendono sia astrazione sia luoghi impossibili. Composizione, ambiente e illuminazione cambiano fra i temi; la tecnica pittorica condivisa non implica riutilizzare sempre lo stesso paesaggio.
 
 Gli sfondi riempiono la pagina. Testi, barre e comandi sono widget reali sopra l’immagine; i livelli decorativi non ricevono clic. Modalità desktop e telefono hanno inquadrature adattate. Cambiare piano aggiorna automaticamente l’aspetto; una scelta manuale della singola scheda prevale. Mostri ed evocazioni conservano il proprio aspetto e il colore scelto alla creazione.
+
+## Conferme successive — Corruzioni e reliquia del deserto, 27 ottobre
+
+- Baghest reinterpretato, approvato «perfetto»: `assets/oculum/home_art/creature_baghest_red_corruption_v1.png`. Compare come decorazione in basso a destra durante la Corruzione Rossa; la tonalità passa da rosso a bordò con le notti effettive, tenendo conto delle dosi di Anti-corruzione.
+- Oculiani: generalmente belli, molti occhi ma disposti armoniosamente senza eccessi. Nuovo riferimento con capelli e iridi viola, occhio frontale e nelle due palme: `assets/oculum/home_art/creature_oculian_purple_corruption_v1.png`. Decorazione equivalente per la Viola, da viola a viola scuro. Non modificare i temi personali salvati per simulare questa condizione; sovrapposizione derivata dallo stato.
+- Ancient Desert Dragon Claw: centro stellato chiaramente SCUDO e due grandi lame ricurve da artiglio, impugnatura difensiva dietro, ossa di drago e arenaria crepata; lanciabile come boomerang. Anteprima `assets/oculum/home_art/item_ancient_desert_dragon_claw_v1.png`. «Esplodere» indica il rilancio di 1d3 quando esce3, non esplosioni fisiche. La direzione pittorica resta quella sopra, non un obbligo di applicare rame o fate a ogni soggetto.
+- Tutte le altre regole di disegno restano valide. Prompt esatti e provenienza in ART_CORRUZIONE_2026-10-27.json.

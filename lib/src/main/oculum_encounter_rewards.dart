@@ -92,7 +92,9 @@ Map<String, List<Map<String, dynamic>>> oculumDistributeFallenEyes({
 }) {
   var obser = 0, dust = 0;
   var dustCap = 3;
+  var hasDefeatedEnemy = false;
   for (final enemy in enemies) {
+    if (!oculumEncounterEnemyIsSummon(enemy)) hasDefeatedEnemy = true;
     final grade = readIntValue(enemy['grade']).clamp(0, 12);
     obser += max(0, readIntValue(enemy['level'])) + grade * 3;
     if (readIntValue(enemy['statsTotal']) > max(0, characterStats)) {
@@ -129,7 +131,10 @@ Map<String, List<Map<String, dynamic>>> oculumDistributeFallenEyes({
       dust = min(dustCap, dust + gain);
     }
   }
-  return (obser: obser.clamp(0, 100000000), dust: dust);
+  return (
+    obser: obser.clamp(0, 100000000),
+    dust: hasDefeatedEnemy ? max(1, dust) : dust,
+  );
 }
 
 double oculumExperienceGradeMultiplier(int enemyGrade, int characterGrade) =>
@@ -525,6 +530,17 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       }
       final obser = readIntValue(reward['obser']).clamp(0, 100000000);
       final dust = readIntValue(reward['dust']).clamp(0, 5);
+      final awardedDust = min(
+        dust,
+        max(0, 3 - readIntValue(planarState['ascensionDustFightWindowEarned'])),
+      );
+      planarState['ascensionDustFightWindowEarned'] =
+          readIntValue(planarState['ascensionDustFightWindowEarned']) +
+          awardedDust;
+      advanceOwnedItemTitles(
+        (reward['discoveryEnemies'] as List? ?? []).whereType<Map>(),
+        '${reward['id']}',
+      );
       final items = (reward['items'] as List? ?? [])
           .whereType<Map>()
           .map(
@@ -547,13 +563,13 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       }
       obserController.text = '${max(0, leggiNumero(obserController)) + obser}';
       ascensionDustController.text =
-          '${max(0, leggiNumero(ascensionDustController)) + dust}';
+          '${max(0, leggiNumero(ascensionDustController)) + awardedDust}';
       claimed.add('${reward['id']}');
       schedePersonaggio[schedaCorrente]['claimedEncounterRewardIds'] = claimed
           .toList();
-      if (obser > 0 || dust > 0) {
+      if (obser > 0 || awardedDust > 0) {
         aggiungiLog(
-          '[DROP FINE SCONTRO] +$obser Obser · +$dust Ascension Dust.',
+          '[DROP FINE SCONTRO] +$obser Obser · +$awardedDust Ascension Dust (massimo 3 prima di riposare o aprire il mercante).',
         );
       }
       if (items.isNotEmpty) {
@@ -661,10 +677,21 @@ extension _OculumEncounterRewards on _OculumHomePageState {
                 .isNotEmpty)
           'experienceFamilyId': schedePersonaggio[index]['experienceFamilyId'],
         'monsterSheetTag': index >= 0 ? sheetTagAt(index) : '',
+        if(index >= 0 && (schedePersonaggio[index]['planarRuntime'] as Map?)?['canonicalNpc']=='lusier_iii')
+          'canonicalNpc':'lusier_iii',
         'level': level,
         'killerTag': index >= 0
             ? schedePersonaggio[index]['lastDamageSourceTag']
             : token['lastDamageSourceTag'],
+        'titleItemIds': index >= 0
+            ? schedePersonaggio[index]['lastDamageTitleItemIds'] ?? const []
+            : token['lastDamageTitleItemIds'] ?? const [],
+        'totalPower': index >= 0
+            ? readIntValue((schedePersonaggio[index]['lastDamagePowerRecord'] as Map?)?['totalPower'], fallback: scoutTotalPowerAt(index))
+            : readIntValue(token['totalPower'], fallback: -1),
+        'killerTotalPower': index >= 0
+            ? readIntValue((schedePersonaggio[index]['lastDamagePowerRecord'] as Map?)?['killerTotalPower'], fallback: -1)
+            : readIntValue(token['killerTotalPower'], fallback: -1),
         'finisher': index >= 0
             ? schedePersonaggio[index]['lastPlanarFinisher']
             : token['lastPlanarFinisher'],
@@ -730,7 +757,11 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     }
     recordAllMonsterKills(defeated, cooldownFightId);
     faunaConfirmedKills(defeated, cooldownFightId);
-    recordPlanarMonsterRewards(defeated, cooldownFightId);
+    recordPlanarMonsterRewards(
+      defeated,
+      cooldownFightId,
+      participantTags: participants,
+    );
     advancePartyQuestKills(defeated, cooldownFightId);
     recordPartySpeciesHunts(defeated, cooldownFightId);
     final partyTags = participants.toList()..sort();
@@ -838,6 +869,17 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         finishingSkillId: '${(enemy['finisher'] as Map?)?['skillId'] ?? ''}',
         combatHistory: enemy['finisher'] as Map? ?? const {},
       );
+      if(enemy['canonicalNpc']=='lusier_iii' && !oculumEncounterEnemyIsSummon(enemy)) {
+        final sourceIndex=localSheetIndexForOculumTag('${enemy['monsterSheetTag'] ?? ''}');
+        final sourceDeck=sourceIndex<0?null:
+          (schedePersonaggio[sourceIndex]['inventario'] as List? ?? []).whereType<Map>()
+            .where((i)=>(i['craftData'] as Map?)?['explosiveCards']==true).firstOrNull;
+        final deck=sourceDeck==null?oculumExplosiveCards(lusier:true):
+          InventoryItem.fromJson(Map<String,dynamic>.from(sourceDeck));
+        deck.equipaggiata=false;
+        deck.craftData['namedDropKillId']=killId;
+        dropped.add(deck);
+      }
       final rollerLevel = participantLevels[rollerTag] ?? 0;
       // Do not consume a percentile roll when a crystal cannot drop. Besides
       // avoiding needless RNG, this keeps deterministic Drop sequences stable

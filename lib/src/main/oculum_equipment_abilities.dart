@@ -224,6 +224,47 @@ OculumSkillCost? oculumStructuredCostFromText(String text) {
   );
 }
 
+OculumSkillCost? oculumCharacterSkillFormCost(CharacterSkillForm form) {
+  final declared =
+      form.costoStrutturato ?? oculumStructuredCostFromText(form.costo);
+  if (declared == null || declared.resource == 'nessuna') return declared;
+  if (!form.oculumLimitiConfiguratiManualmente) return declared;
+  final minimum = max(0, form.oculumMinimoUtilizzabile);
+  final maximum = max(minimum, form.oculumMassimoUtilizzabile);
+  final result = OculumSkillCost.fromJson(declared.toJson());
+  result
+    ..minimum = minimum
+    ..maximum = maximum
+    ..amountExpression = '$minimum'
+    ..variable = minimum != maximum;
+  return result;
+}
+
+/// The text field and the guided resource selector share the same quantities.
+/// Explicit numbers in a new text replace stale quantities; a resource-only
+/// spelling keeps the separately edited minimum and maximum.
+void oculumSetCharacterSkillCostText(CharacterSkillForm form, String text) {
+  final guided = form.costoStrutturato != null;
+  final previousExtras =
+      form.costoStrutturato?.additionalCosts ?? const <OculumSkillCost>[];
+  form.costo = text;
+  final parsed = oculumStructuredCostFromText(text);
+  if (parsed == null) {
+    form.costoStrutturato = null;
+    return;
+  }
+  if (parsed.maximum > 0 || parsed.resource == 'nessuna') {
+    form.oculumMinimoUtilizzabile = parsed.minimum;
+    form.oculumMassimoUtilizzabile = parsed.maximum;
+    form.oculumMassimoMaestriaIniziale = parsed.maximum;
+    form.oculumLimitiConfiguratiManualmente = true;
+  }
+  if (guided) {
+    parsed.additionalCosts.addAll(previousExtras);
+    form.costoStrutturato = parsed;
+  }
+}
+
 OculumStructuredEffect oculumStatPaidEffect(
   OculumStructuredEffect original,
   String resource,
@@ -302,6 +343,11 @@ CharacterSkill oculumEquipmentAbilityFromArt(ArtSkill skill) => CharacterSkill(
               caseSensitive: false,
             ).firstMatch(skill.testoEvoluzione(i + 1))?.group(1) ??
             '0',
+        unlockRequirements: Map<String, dynamic>.from(
+          skill.unlockRequirementsPerLevel[i],
+        ),
+        oculumMinimoUtilizzabile: skill.oculumMinimoPerLivello(i + 1),
+        oculumMassimoUtilizzabile: skill.oculumMassimoPerLivello(i + 1),
         costoStrutturato: OculumSkillCost(
           resource: skill.risorsaCostoPerLivello(i + 1),
           additionalCosts: skill.additionalCostsPerLevel[i]
@@ -426,6 +472,43 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     CharacterSkillForm form,
     OculumCombatAbilityRole role,
   ) async {
+    if (form.tipo.toLowerCase().contains('passiv')) return;
+    form.costoStrutturato ??= oculumStructuredCostFromText(form.costo);
+    if (form.costoStrutturato == null &&
+        form.costo.trim().isNotEmpty &&
+        !RegExp(
+          r'gratuit|nessun|free|passiv',
+          caseSensitive: false,
+        ).hasMatch(form.costo)) {
+      aggiungiLog(
+        '[EQUIPAGGIAMENTO] Costo non riconosciuto per ${item.nome}: configura il costo nell’editor. Nessuna risorsa consumata.',
+      );
+      return;
+    }
+    final legacyCooldown = RegExp(
+      r'^\s*(\d+)\s*(turni?|riposi?\s+(?:brevi?|lunghi?))\s*$',
+      caseSensitive: false,
+    ).firstMatch(form.cooldown);
+    if (form.cooldownStrutturato == null && legacyCooldown != null) {
+      form.cooldownStrutturato = OculumAbilityCooldown(
+        amount: int.parse(legacyCooldown.group(1)!),
+        unit: oculumTurnUnit(legacyCooldown.group(2)!),
+      );
+    }
+    if (!inventario.contains(item) ||
+        item.quantita <= 0 ||
+        !item.equipaggiata ||
+        !canEquipInventoryItem(item) ||
+        !oculumEquipmentSkillLevelAvailable(
+          characterLevel: leggiNumero(livelloController),
+          itemLevel: oculumEquipmentSkillItemLevel(item, form),
+          formLevel: form.livello,
+        ) ||
+        !progressionRequirementsMet(form.unlockRequirements) ||
+        !itemTitleFormAvailable(item, form) ||
+        !oculumAllEquipmentAbilities(item).any((s) => s.forme.contains(form))) {
+      return;
+    }
     if (item.craftData.containsKey('posteaUses') &&
         readIntValue(item.craftData['posteaUses']) <= 0) {
       aggiungiLog('[POSTEA] Runa esaurita: nessun utilizzo rimasto.');
@@ -506,12 +589,40 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return;
     }
     final origin = currentSheetScrollId();
-    final effects = form.effettiStrutturati.isNotEmpty
+    var effects = form.effettiStrutturati.isNotEmpty
         ? form.effettiStrutturati
         : oculumParseStructuredEffectsFromText(
             form.descrizione,
             subtraits: hiddenEyeStats,
           ).effects;
+    final titleOwner = oculumItemTitleAbilityForForm(item, form);
+    if (titleOwner != null &&
+        titleOwner.forme.firstOrNull != form &&
+        oculumItemTitleOpenIsActive(item, titleOwner)) {
+      final percent = max(
+        0,
+        readIntValue(
+          item.craftData['titleOpenSkillBoostPercent'],
+          fallback: 25,
+        ),
+      );
+      effects = [
+        for (final effect in effects)
+          if (const {
+                'danno',
+                'difesa',
+                'scudo',
+                'cura',
+              }.contains(effect.type) &&
+              effect.diceDestination == 'valore')
+            OculumStructuredEffect.fromJson(effect.toJson())
+              ..valueExpression =
+                  '((${effect.valueExpression})${effect.diceExpression.isEmpty ? '' : '+(${effect.diceExpression})'})*(100+$percent)/100'
+              ..diceExpression = ''
+          else
+            effect,
+      ];
+    }
     final previousSupport = combatSupportTargeting;
     final beforeCycleAttack = cyclePreparedAttackSignature;
     final before = activeStructuredEffects
@@ -521,7 +632,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     try {
       combatSupportTargeting = role == OculumCombatAbilityRole.support;
       used = await useConfiguredAbility(
-        source: '${item.nome} · ${item.ability?.nome}',
+        source: '${item.nome} · ${form.nome}',
         effects: effects,
         cost: form.costoStrutturato,
         cooldown: form.cooldownStrutturato,
@@ -530,9 +641,11 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             item.quantita > 0 &&
             item.equipaggiata &&
             canEquipInventoryItem(item) &&
+            progressionRequirementsMet(form.unlockRequirements) &&
+            itemTitleFormAvailable(item, form) &&
             oculumEquipmentSkillLevelAvailable(
               characterLevel: leggiNumero(livelloController),
-              itemLevel: item.livelloOggetto,
+              itemLevel: oculumEquipmentSkillItemLevel(item, form),
               formLevel: form.livello,
             ),
       );
@@ -540,6 +653,18 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       combatSupportTargeting = previousSupport;
     }
     if (!mounted || !used || currentSheetScrollId() != origin) return;
+    if (titleOwner?.forme.firstOrNull == form) {
+      final index = oculumItemTitleAbilities(item).indexOf(titleOwner!);
+      item.craftData = {
+        ...item.craftData,
+        if (index == 0) 'titleOpenUsedSinceLongRest': true,
+        'titleOpenUsedStages': {
+          ...(item.craftData['titleOpenUsedStages'] as List? ?? []),
+          index,
+        }.toList(),
+      };
+      programmaSalvataggio();
+    }
     if (item.craftData.containsKey('posteaUses')) {
       item.craftData = {
         ...item.craftData,
@@ -570,6 +695,27 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
   }
 
   Iterable<OculumStructuredEffect> automaticMonsterPassiveEffects() sync* {
+    for (final item in inventario.where(
+      (i) => i.quantita > 0 && i.equipaggiata && canEquipInventoryItem(i),
+    )) {
+      for (final ability in item.materialAbilities) {
+        for (final form in ability.forme.where(
+          (f) => f.tipo.toLowerCase().contains('passiv'),
+        )) {
+          if (leggiNumero(livelloController) >= readIntValue(form.livello) &&
+              progressionRequirementsMet(form.unlockRequirements)) {
+            yield* form.effettiStrutturati.where(
+              (e) =>
+                  e.enabled &&
+                  e.recipient == 'se_stesso' &&
+                  !oculumFormulaUsesTotalPower(
+                    '${e.valueExpression} ${e.duration}',
+                  ),
+            );
+          }
+        }
+      }
+    }
     final level = max(0, leggiNumero(livelloController));
     for (final skill in skills.where((s) => s.passiva && s.equipaggiata)) {
       CharacterSkillForm? selected;
@@ -588,7 +734,12 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
               subtraits: hiddenEyeStats,
             ).effects
           : selected.effettiStrutturati;
-      yield* effects.where((e) => e.enabled && e.recipient == 'se_stesso');
+      yield* effects.where(
+        (e) =>
+            e.enabled &&
+            e.recipient == 'se_stesso' &&
+            !oculumFormulaUsesTotalPower('${e.valueExpression} ${e.duration}'),
+      );
     }
   }
 
@@ -631,6 +782,20 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
+    if(effects.any((e)=>e.target=='explosive_cards_damage')) {
+      final selected=await prepareExplosiveCards(effects);
+      if(selected==null) return false;
+      effects=selected;
+    }
+    if (effects.any((e) => e.target == 'senka_shadow_clone') && !senkaCanCreateClone) {
+      aggiungiLog('Clone non disponibile: limite totale del fight raggiunto, nessun fight attivo oppure sei già un clone.');
+      return false;
+    }
+    if (effects.any((e) => e.target.startsWith('senka_')) && !senkaMaskActive && !senkaIsClone) {
+      aggiungiLog('Manifesta prima la maschera di Senka.');
+      return false;
+    }
+    if (!celestialAbilityAllowed(effects)) return false;
     if (outsideFight &&
         effects.any(
           (e) =>
@@ -1077,6 +1242,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         .where((e) => e.type == 'meccanio')
         .firstOrNull;
     final preparesAttack =
+        effects.any((e)=>e.id.startsWith('senka_grapple_')) ||
         effects.any(
           (e) =>
               e.type == 'planar' &&
@@ -1094,6 +1260,8 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 'skeleton_giant_throw',
                 'total_power_burst',
                 'total_power_accuracy',
+                'explosive_cards_damage',
+                'lusier_derision',
               }.contains(e.target),
         ) ||
         robotTechnique != null &&
@@ -1136,7 +1304,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       if (effects.any(
             (e) =>
                 e.type == 'preparazione' ||
-                const {'rabbit_hat', 'deadly_regen'}.contains(e.target),
+                const {'rabbit_hat', 'deadly_regen', 'senka_shadow_fusion'}.contains(e.target),
           ) &&
           !ownTurn) {
         aggiungiLog('Preparazione: serve la tua Azione nel tuo turno.');
@@ -1175,6 +1343,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     // Consume existing one-action conditions before adding new self effects.
     // A condition just granted by this ability starts with its full duration.
     processConditionTick(OculumConditionTickTrigger.action);
+    referenceBeforeMagic(effects);
     final messages = applyStructuredEffectsOnActivation(
       effects,
       source: source,
@@ -1246,8 +1415,13 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     notifyDiceResultChanged();
   }
 
-  Widget equipmentAbilityEditor(InventoryItem item) {
-    final ability = item.ability;
+  Widget equipmentAbilityEditor(
+    InventoryItem item, {
+    bool title = false,
+    CharacterSkill? abilityOverride,
+  }) {
+    final ability =
+        abilityOverride ?? (title ? item.titleAbility : item.ability);
     if (ability == null) {
       return OutlinedButton.icon(
         icon: const Icon(Icons.auto_fix_high),
@@ -1274,6 +1448,19 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     return ExpansionTile(
       title: Text('Skill dell’oggetto · ${ability.nome}'),
       children: [
+        if (!title &&
+            abilityOverride == null &&
+            item.craftData['titleItem'] == true) ...[
+          Text(oculumItemTitleSummary(item)),
+          itemTitleEvolutionEditor(item),
+          if (item.titleAbility != null)
+            equipmentAbilityEditor(item, title: true),
+          for (final extra in item.titleExtraAbilities)
+            equipmentAbilityEditor(item, title: true, abilityOverride: extra),
+        ],
+        if (!title && abilityOverride == null)
+          for (final material in item.materialAbilities)
+            equipmentAbilityEditor(item, abilityOverride: material),
         campoModello(
           label: 'Nome della skill',
           initialValue: ability.nome,
@@ -1286,6 +1473,10 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
           ExpansionTile(
             title: Text('Forma ${i + 1}'),
             children: [
+              progressionRequirementsEditor(
+                form.unlockRequirements,
+                storageId: 'gear_requirements_${identityHashCode(form)}',
+              ),
               campoModello(
                 label: 'Descrizione',
                 initialValue: form.descrizione,
@@ -1331,27 +1522,21 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 onPressed:
                     !item.equipaggiata ||
                         !canEquipInventoryItem(item) ||
+                        !progressionRequirementsMet(form.unlockRequirements) ||
+                        !itemTitleFormAvailable(item, form) ||
                         !oculumEquipmentSkillLevelAvailable(
                           characterLevel: leggiNumero(livelloController),
-                          itemLevel: item.livelloOggetto,
+                          itemLevel: oculumEquipmentSkillItemLevel(item, form),
                           formLevel: form.livello,
                         )
                     ? null
-                    : () => useConfiguredAbility(
-                        source: '${item.nome} / ${ability.nome} ${i + 1}',
-                        effects: form.effettiStrutturati,
-                        cost: form.costoStrutturato,
-                        cooldown: form.cooldownStrutturato,
-                        valid: () =>
-                            inventario.contains(item) &&
-                            item.quantita > 0 &&
-                            item.equipaggiata &&
-                            canEquipInventoryItem(item) &&
-                            oculumEquipmentSkillLevelAvailable(
-                              characterLevel: leggiNumero(livelloController),
-                              itemLevel: item.livelloOggetto,
-                              formLevel: form.livello,
-                            ),
+                    : () => useEquipmentQuickAbility(
+                        item,
+                        form,
+                        oculumCombatAbilityRole(
+                          form.effettiStrutturati,
+                          explicitType: form.tipo,
+                        ),
                       ),
               ),
             ],

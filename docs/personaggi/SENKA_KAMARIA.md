@@ -1,0 +1,62 @@
+# Senka Kamaria — L’Ombra Mascherata
+
+## Identità e legami
+
+Femmina, 16 anni; Mhunan lunare di Lost Town. Livello1, Grado0. Aspetto normale intenzionalmente aperto. Nella vita quotidiana è impacciata e deboluccia; indossando la maschera interpreta coscientemente L’Ombra Mascherata: è sempre Senka, senza un’altra coscienza stabilita.
+
+Sky, cinque anni, è gentile, vivace e cerca di mostrarsi coraggiosa per sostenerla. Crede che la figura mascherata sia un’altra persona che protegge entrambe. Conosce Haniel soltanto come amico. Senka non la porta mai negli incarichi.
+
+Senka ruba ai ricchi e ai Solari e compie incarichi mascherata per Haniel. Egli ha protetto le sorelle per un anno, poi ha pagato tre anni di stanza doppia in taverna. Continua ad addestrarla con missioni e allenamenti, conoscendo il suo desiderio di vendetta; i suoi segreti rimangono aperti.
+
+## L’incubo della piazza
+
+La morte dei genitori è narrata integralmente come incubo ricorrente in [SENKA_INCUBO.txt](SENKA_INCUBO.txt) e nel Background del codice. Lusier decapitò il padre perché non si inchinò; la madre fu colpita dalle cinque carte mentre accorreva. Kamaria teneva Sky fra le braccia, paralizzata dallo shock. La folla nascose la scena; Haniel prese la sua mano e le portò via.
+
+**Haniel:** «Quando avrai una potenza totale pari o superiore a **277**, sarai pronta.» Il numero proviene dalla misurazione del motore sulla scheda attuale di Lusier con gli equipaggiamenti attivi; il riferimento è `output/characters/lusier_iii/potenza.json`.
+
+## Base e Titoli del Fato
+
+Dieci punti base confermati: **RES3 / VOL1 / MAT2 / OCU4**, prima dei bonus razziali, dei Titoli e della maschera. Nessun punto viene riassegnato implicitamente per bilanciare i nuovi poteri. Nella scheda attuale, con bonus permanenti ed equipaggiamento iniziale ma SENZA maschera: **RES9 / VOL9 / MAT8 / OCU9, Vita90/90**. Un costo scritto `@mat-1` o `@ocu-2` non è un malus permanente: si paga solo attivando la tecnica.
+
+**Un Ricordo della Luna:** `@Stats+4` significa +4 a OGNUNA delle quattro statistiche; +2 Velo, +3×livello Danni Luna e +1×livello Difesa Luna. Punto cieco: «Devi salvarla anche al costo di te stessa, Sky è tutto.»
+
+**Vendetta:** +1 VOL dalla definizione esistente. Leggenda esatta: «Lusier III Guardia Elité di Grado I, dirige battaglie, stermina popoli proprio come ha fatto con la mia famiglia, proprio come io farò con lui.» Nessuna nuova Open inventata per Vendetta.
+
+## Maschera: equipaggiamento indossabile
+
+È il potere latente di Senka, presentato come ITEM e non come un altro Titolo. Maschera intera nera opaca con solchi a spirale, due fori a forma dell’occhio perfetto e due circoli. Gli occhi diventano del colore dell’Oculum. Il mantello si dissolve ai bordi in filamenti e tentacoli d’ombra.
+
+Manifestare e togliere la maschera non costa risorse né Azioni/Reazioni. Finché attiva: **+6 RES, +5 VOL, +10 MAT, +5 OCU, +6 Danni, +3 Difesa**. La Vita aggiunta dalla trasformazione e i cinque Oculum aggiunti si ricaricano alla nuova attivazione: questa è una scelta esplicita, senza ricaricare tutta la base. **+10 Scudo solo alla prima attivazione di ciascun fight.**
+
+Scudo Oculum della maschera: massimo normale20. Ogni attacco con Danni confermati recupera `min(6, 1 + max(0, livello nemico − livello Senka))`, entro20. A0 è spezzato e non si rigenera sui Danni. Riposo Breve/Lungo lo ripristina. Aggiusta nucleo usa **Velo**: solo sotto il massimo, recupera il risultato effettivo anche oltre20; se spezzato recupera `ceil(3×tiro/4)`. Tiro10 →8, tiro12 →9. A20 o oltre non ottiene altra riparazione.
+
+Passiva personale confermata: soltanto se viene MIRATA la maschera, maschera e corpo diventano immateriali per quel colpo. Un attacco capace di raggiungere immateriali può scheggiarla; un critico valido disattiva la trasformazione per un turno, impedendo la riattivazione gratuita durante quel tempo. Questo automatismo contestuale va ancora completato e verificato: non è un’immunità universale agli attacchi sul corpo.
+
+## Tecniche iniziali
+
+| Tecnica | Costo iniziale | Durata/CD | Funzionamento |
+|---|---:|---|---|
+| Mantello di Tenebre I | 3 Oculum | fino al prossimo turno personale; CD2 | Forma intangibile; il proprio attacco la rende momentaneamente solida. Gli attacchi capaci di colpire immateriali rimangono efficaci. |
+| Tentacoli d’Ombra I | 2 Oculum e Azione | una presa, fino al prossimo turno; CD2 | Confronto di Manifestazione del Potere contro una difesa coerente. Blocca un bersaglio; non include l’impalamento. |
+| Impalamento d’Ombra I | 2 Oculum, altra Azione oppure Reazione | confronto separato | Solo su un bersaglio ancora trattenuto dai propri tentacoli; contro il tentativo di liberarsi. Danni attuali +6 Buio. La Reazione non avanza il turno. |
+| Clone d’ombra personale | 1–10 Materia | fino a fine fight o0 Vita; CD iniziale2 | Vita `Materia SPESA×2+livello`. Copia statistiche, sottotratti e Skill alla creazione, maschera compresa, senza raddoppiare i bonus. Non può evocare altri cloni. |
+
+Il clone nasce con **0A / 0R / 1RV**; dai propri turni ha soltanto **1R**, nessuna Azione. Limite TOTALE per fight `max(1,min(16,2×livello))`: Lv1 due, dal Lv8 sedici. Morti e assorbiti restano conteggiati.
+
+Costi, CD e valori non fissati direttamente sono bilanciamenti iniziali modificabili. Vulnerabilità minore alla magia solare: proposta iniziale +15% Danni, modificabile.
+
+## Crescita ed evoluzioni
+
+**Confluenza delle Ombre — Velo+6 senza buff temporanei:** un’Azione, nessun altro costo, assorbe TUTTI i propri cloni vivi nel fight. Scompaiono dalla turnistica senza EXP/Drop. HP temporanei pari alla loro Vita ATTUALE sommata; VOL/MAT/OCU pari a un decimo delle rispettive somme, arrotondando per difetto solo alla fine. Nessuna RES. Fino a fine fight, senza liberare evocazioni già consumate.
+
+**Teletrasporto nell’Ombra — proposta Lv3 e Velo+5:** ombra ambientale visibile entro6m; il mantello non basta. Confronto vinto: una RV e +5 al prossimo tiro per colpire OPPURE difendersi, già valido contro il colpo in arrivo se usato in difesa. Il medesimo +5 non vale due volte. Costo iniziale3 Oculum, CD3; modificabili. Automatismo completo ancora in lavorazione.
+
+**Mille Tagli — proposta Lv6 e Riflessi+6:** una volta per Riposo Lungo, costo iniziale1 Materia. Un solo danno immediato: **Danni attuali + totale del tiro Riflessi effettivamente usato + PT attuale**. Poi SENKA riceve un turno personale di Sfinimento. Non sommare un altro danno base né applicare Sfinimento al nemico. Automatismo completo ancora in lavorazione.
+
+**Open del Ricordo — tre Guardie Solari valide:** la Luna compare fino a fine fight, poi scompare, come eccezione temporanea al cielo attuale. Senka riceve +25% alle quattro statistiche più il +5% dei Lunari: **+30% totale**, +5% agli altri Lunari. Buff Open +10 Danni Luna/+6 Difesa Luna; la Skill Open passa da CD3 e1d6 tagli a CD2 e1d8 tagli. Ogni taglio vale un sesto dei Danni attuali, doppio contro i Solari. Distribuibili fra più avversari, **un solo tiro d’attacco per la raffica**, difese individuali. Automatismi e riconoscimento completo della quest restano da verificare prima dello sblocco.
+
+## Modifica e verifica
+
+Nome, aspetto lasciato aperto, storia, legami, statistiche, sottotratti, inventario, Titoli, requisiti, costi min/max, durate, CD ed effetti rimangono modificabili e conservati nel JSON. Le future capacità sono registrate nel codice; l’importazione non aggiorna il motore di una vecchia app. Il codice non include una scheda separata di Sky né identità/account online privati.
+
+Prove locali, build, pubblicazione GitHub e sessioni online reali sono attestazioni distinte. Consultare i log della versione prima di considerare automatizzato un comportamento descritto soltanto nel testo.

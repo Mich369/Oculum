@@ -1437,12 +1437,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'planarRuntime',
         'receivedPartyQuestRewards',
         'lastDamageSourceTag',
+        'lastDamageTitleItemIds',
+        'lastDamagePowerRecord',
         'skullFormOriginal',
         'skullFormHitsRemaining',
         'skullFormName',
         'planePressurePenalty',
         'planePressureRolled',
         'planePressureDoubleCriticalIds',
+        'magicalLuckCriticalIds',
         'necromancyOwnerTurnExpires',
       ])
         if (schedaCorrente >= 0 &&
@@ -2321,6 +2324,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           (x) => InventoryItem.fromJson(Map<String, dynamic>.from(x)),
         ),
       );
+
+    repairConvertedItemTitles();
 
     personalRecipes
       ..clear()
@@ -5093,7 +5098,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
         tag,
         i,
         usati,
-        preserveAssignedPrefix: readBoolValue(scheda['realtimeSharedSheet']),
+        preserveAssignedPrefix:
+            readBoolValue(scheda['realtimeSharedSheet']) ||
+            '${scheda['sheetAssignmentReceipt'] ?? ''}'.startsWith(
+              'assignment-v1:',
+            ),
       );
 
       if (nonValido) {
@@ -5162,7 +5171,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
           tag,
           index,
           const <String>{},
-          preserveAssignedPrefix: readBoolValue(sheet['realtimeSharedSheet']),
+          preserveAssignedPrefix:
+              readBoolValue(sheet['realtimeSharedSheet']) ||
+              '${sheet['sheetAssignmentReceipt'] ?? ''}'.startsWith(
+                'assignment-v1:',
+              ),
         )) {
       assicuraTagSchede();
     }

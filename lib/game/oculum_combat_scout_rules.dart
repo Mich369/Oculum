@@ -23,12 +23,68 @@ int oculumScoutPower(int level, Iterable<int> statistics, {int grade = 0}) =>
     max(0, grade) * 3 +
     statistics.fold(0, (sum, stat) => sum + max(0, stat));
 
+({int divisor, int threshold, int chancePerPoint, int weakPointNatural})
+oculumScoutPowerTier(int? power) => switch (power) {
+  final int p when p <= 10 => (
+    divisor: 8,
+    threshold: 1,
+    chancePerPoint: 25,
+    weakPointNatural: 3,
+  ),
+  final int p when p <= 20 => (
+    divisor: 5,
+    threshold: 3,
+    chancePerPoint: 20,
+    weakPointNatural: 5,
+  ),
+  final int p when p <= 30 => (
+    divisor: 3,
+    threshold: 5,
+    chancePerPoint: 15,
+    weakPointNatural: 7,
+  ),
+  final int p when p <= 50 => (
+    divisor: 2,
+    threshold: 10,
+    chancePerPoint: 10,
+    weakPointNatural: 10,
+  ),
+  final int p when p < 100 => (
+    divisor: 1,
+    threshold: 20,
+    chancePerPoint: 5,
+    weakPointNatural: 20,
+  ),
+  _ => (divisor: 1, threshold: 40, chancePerPoint: 5, weakPointNatural: 20),
+};
+
+bool oculumScoutWeakPointRollQualifies(int natural, int power) =>
+    natural >= oculumScoutPowerTier(power).weakPointNatural;
+
+bool oculumScoutRevealsWeakPoint({
+  required int natural,
+  required int rollTotal,
+  required int targetPower,
+  required OculumCombatScoutRead read,
+}) =>
+    read.isExact &&
+    (natural == 20 || targetPower <= 50 && rollTotal >= read.requirement + 5);
+
 int oculumExactPowerChance(
   int rollTotal, {
   required bool success,
   int? targetPower,
-}) => success
-    ? ((rollTotal - (targetPower != null && targetPower < 100 ? 20 : 40)) * 5)
+  int? observationRequirement,
+}) =>
+    success &&
+        targetPower != null &&
+        targetPower <= 50 &&
+        observationRequirement != null &&
+        rollTotal >= observationRequirement + 5
+    ? 100
+    : success
+    ? ((rollTotal - oculumScoutPowerTier(targetPower).threshold) *
+              oculumScoutPowerTier(targetPower).chancePerPoint)
           .clamp(0, 100)
     : 0;
 
@@ -219,12 +275,14 @@ OculumCombatScoutRead oculumCombatScoutRead({
   required int targetVelo,
   required int targetGrade,
   required int targetCm,
+  int? targetPower,
 }) {
   final level = max(0, targetLevel);
   final velo = max(0, targetVelo);
   final grade = max(0, targetGrade);
   final cm = max(0, targetCm);
-  final requirement = level + velo;
+  final requirement =
+      (level + velo) ~/ oculumScoutPowerTier(targetPower).divisor;
   final failure = max(0, requirement - rollTotal);
   if (failure == 0) {
     return OculumCombatScoutRead(

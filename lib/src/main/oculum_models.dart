@@ -1569,6 +1569,9 @@ class InventoryItem {
     this.monsterLoot = const {},
     this.craftData = const {},
     this.ability,
+    this.titleAbility,
+    this.titleExtraAbilities = const [],
+    this.materialAbilities = const [],
   }) {
     if (!peso.isFinite || peso <= 0) {
       peso = arma
@@ -1612,6 +1615,9 @@ class InventoryItem {
   Map<String, dynamic> monsterLoot;
   Map<String, dynamic> craftData;
   CharacterSkill? ability;
+  CharacterSkill? titleAbility;
+  List<CharacterSkill> titleExtraAbilities;
+  List<CharacterSkill> materialAbilities;
 
   Map<String, dynamic> toJson() {
     return {
@@ -1649,11 +1655,31 @@ class InventoryItem {
       if (monsterLoot.isNotEmpty) 'monsterLoot': monsterLoot,
       if (craftData.isNotEmpty) 'craftData': craftData,
       if (ability != null) 'ability': ability!.toJson(),
+      if (titleAbility != null) 'titleAbility': titleAbility!.toJson(),
+      if (titleExtraAbilities.isNotEmpty)
+        'titleExtraAbilities': titleExtraAbilities
+            .map((s) => s.toJson())
+            .toList(),
+      if (materialAbilities.isNotEmpty)
+        'materialAbilities': materialAbilities.map((s) => s.toJson()).toList(),
     };
   }
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
     return InventoryItem(
+      titleExtraAbilities: (json['titleExtraAbilities'] as List? ?? [])
+          .whereType<Map>()
+          .map((s) => CharacterSkill.fromJson(Map<String, dynamic>.from(s)))
+          .toList(),
+      materialAbilities: (json['materialAbilities'] as List? ?? [])
+          .whereType<Map>()
+          .map((s) => CharacterSkill.fromJson(Map<String, dynamic>.from(s)))
+          .toList(),
+      titleAbility: json['titleAbility'] is Map
+          ? CharacterSkill.fromJson(
+              Map<String, dynamic>.from(json['titleAbility']),
+            )
+          : null,
       ability: json['ability'] is Map
           ? CharacterSkill.fromJson(Map<String, dynamic>.from(json['ability']))
           : null,
@@ -1823,6 +1849,7 @@ int? oculumSkillTextGrowthCap(String text) {
 
 class CharacterSkillForm {
   CharacterSkillForm({
+    Map<String, dynamic>? unlockRequirements,
     this.nome = '',
     this.tipo = '',
     this.livello = '',
@@ -1843,7 +1870,10 @@ class CharacterSkillForm {
     List<OculumStructuredEffect>? effettiStrutturati,
     this.costoStrutturato,
     this.cooldownStrutturato,
-  }) : oculumMassimoMaestriaIniziale = max(
+  }) : unlockRequirements = Map<String, dynamic>.from(
+         unlockRequirements ?? const {},
+       ),
+       oculumMassimoMaestriaIniziale = max(
          0,
          oculumMassimoMaestriaIniziale ?? oculumMassimoUtilizzabile,
        ),
@@ -1870,6 +1900,7 @@ class CharacterSkillForm {
   String nome;
   String tipo;
   String livello;
+  final Map<String, dynamic> unlockRequirements;
   String costo;
   String cooldown;
   String descrizione;
@@ -1893,13 +1924,16 @@ class CharacterSkillForm {
 
   bool aggiornaLimitiOculumDaDescrizione() {
     if (oculumLimitiConfiguratiManualmente) return false;
-    if (costoStrutturato != null &&
-        oculumNormalizeEffectResource(costoStrutturato!.resource) != 'oculum') {
-      return false;
-    }
-    final parsed =
-        oculumSkillTextCostLimits(descrizione) ??
-        oculumSkillTextCostLimits(costo);
+    final generic = oculumParseAbilityCost(costo);
+    final parsed = generic != null && generic.maximum > 0
+        ? OculumSkillTextLimits(
+            minimum: generic.minimum,
+            maximum: generic.maximum,
+          )
+        : costoStrutturato != null && costoStrutturato!.resource != 'oculum'
+        ? null
+        : oculumSkillTextCostLimits(descrizione) ??
+              oculumSkillTextCostLimits(costo);
     if (parsed == null) return false;
     final masteryGrowth = max(
       0,
@@ -1922,7 +1956,7 @@ class CharacterSkillForm {
     yield nome;
     yield tipo;
     yield livello;
-    yield costo;
+    // Costs are consumed by activation, never interpreted as passive bonuses.
     yield cooldown;
     yield descrizione;
     yield effetto;
@@ -1952,6 +1986,8 @@ class CharacterSkillForm {
       'oculumMassimoMaestriaIniziale': oculumMassimoMaestriaIniziale,
       'oculumLimitiConfiguratiManualmente': oculumLimitiConfiguratiManualmente,
       'aumentoMassimoOculumAttivo': aumentoMassimoOculumAttivo,
+      if (unlockRequirements.isNotEmpty)
+        'unlockRequirements': unlockRequirements,
       if (effettiStrutturati.isNotEmpty)
         'effettiStrutturati': effettiStrutturati
             .map((effect) => effect.toJson())
@@ -2004,10 +2040,14 @@ class CharacterSkillForm {
         ? null
         : oculumSkillTextCostLimits(description) ??
               oculumSkillTextCostLimits(costText);
-    final costLimits =
-        structuredCost == null ||
-            oculumNormalizeEffectResource(structuredCost.resource) != 'oculum'
-        ? parsedCostLimits
+    final genericCost = oculumParseAbilityCost(costText);
+    final costLimits = structuredCost == null
+        ? genericCost != null && genericCost.maximum > 0
+              ? OculumSkillTextLimits(
+                  minimum: genericCost.minimum,
+                  maximum: genericCost.maximum,
+                )
+              : parsedCostLimits
         : structuredCost.variable
         ? OculumSkillTextLimits(
             minimum: max(0, structuredCost.minimum),
@@ -2032,6 +2072,9 @@ class CharacterSkillForm {
     }
     return CharacterSkillForm(
       nome: '${json['nome'] ?? json['name'] ?? ''}',
+      unlockRequirements: json['unlockRequirements'] is Map
+          ? Map<String, dynamic>.from(json['unlockRequirements'])
+          : null,
       tipo: '${json['tipo'] ?? json['type'] ?? ''}',
       livello: '${json['livello'] ?? json['level'] ?? ''}',
       costo: costText,
@@ -2366,6 +2409,7 @@ int oculumSkillMasteryGrowthLimit(CharacterSkill skill, int formIndex) {
 
 class ArtSkill {
   ArtSkill({
+    List<Map<String, dynamic>>? unlockRequirementsPerLevel,
     required this.nome,
     this.livello = 0,
     this.activeTurnsRemaining = 0,
@@ -2391,7 +2435,15 @@ class ArtSkill {
     Iterable<Iterable<OculumStructuredEffect>>? effettiPerLivello,
     Iterable<OculumAbilityCooldown>? cooldownPerLivello,
     List<String>? tipiPerLivello,
-  }) : additionalCostsPerLevel = List.generate(
+  }) : unlockRequirementsPerLevel = List.generate(
+         5,
+         (i) => Map<String, dynamic>.from(
+           i < (unlockRequirementsPerLevel?.length ?? 0)
+               ? unlockRequirementsPerLevel![i]
+               : const {},
+         ),
+       ),
+       additionalCostsPerLevel = List.generate(
          5,
          (i) => i < (additionalCostsPerLevel?.length ?? 0)
              ? List<OculumSkillCost>.of(additionalCostsPerLevel![i])
@@ -2439,6 +2491,7 @@ class ArtSkill {
   }
 
   final List<List<OculumSkillCost>> additionalCostsPerLevel;
+  final List<Map<String, dynamic>> unlockRequirementsPerLevel;
   String nome;
 
   /// Livello della singola Skill dell’Art.
@@ -2649,6 +2702,8 @@ class ArtSkill {
         ],
       if (tipiPerLivello.any((value) => value.trim().isNotEmpty))
         'tipiPerLivello': List<String>.from(tipiPerLivello),
+      if (unlockRequirementsPerLevel.any((r) => r.isNotEmpty))
+        'unlockRequirementsPerLevel': unlockRequirementsPerLevel,
     };
   }
 
@@ -2657,6 +2712,14 @@ class ArtSkill {
     final maximums = _readArtSkillOculumLevels(json['oculumMassimiPerLivello']);
     return ArtSkill(
       nome: oculumCleanMojibakeText('${json['nome'] ?? ''}'),
+      unlockRequirementsPerLevel:
+          (json['unlockRequirementsPerLevel'] as List? ?? [])
+              .map(
+                (r) => r is Map
+                    ? Map<String, dynamic>.from(r)
+                    : <String, dynamic>{},
+              )
+              .toList(),
       livello: readIntValue(json['livello']),
       activeTurnsRemaining: max(
         0,
@@ -2767,6 +2830,9 @@ String oculumNormalizeArtSkillCostResource(
     case 'madness':
       return 'follia';
     case 'fortuna':
+    case 'fortunamagica':
+    case 'magicaluck':
+    case 'magicalluck':
     case 'fortune':
       return 'fortuna';
     case 'hp':
@@ -2795,6 +2861,7 @@ String oculumNormalizeArtSkillCostResource(
     case 'free':
       return 'nessuna';
     case 'oculum':
+    case 'ocu':
       return 'oculum';
     default:
       return legacyOculumDisabled ? 'nessuna' : 'oculum';
@@ -2827,7 +2894,7 @@ String oculumArtSkillCostResourceLabel(
     case 'follia':
       return english ? 'Madness' : 'Follia';
     case 'fortuna':
-      return english ? 'Fortune' : 'Fortuna';
+      return english ? 'Magical Luck' : 'Fortuna magica';
     case 'hp':
       return 'HP';
     case 'scudo':
@@ -3305,11 +3372,17 @@ List<OculumRecipe> oculumVisibleRecipes({
   required Iterable<OculumRecipe> recipes,
   required bool isMaster,
   String query = '',
+  Set<String>? knownRecipeIds,
 }) {
   final needle = query.trim().toLowerCase();
   return recipes
       .where((recipe) {
         if (!isMaster && !recipe.visibleToPlayers) return false;
+        if (!isMaster &&
+            knownRecipeIds != null &&
+            !knownRecipeIds.contains(recipe.id)) {
+          return false;
+        }
         if (needle.isEmpty) return true;
         return recipe.name.toLowerCase().contains(needle) ||
             recipe.resultName.toLowerCase().contains(needle) ||

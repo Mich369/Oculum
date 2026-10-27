@@ -414,6 +414,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     String source,
   ) {
     final state = planarState;
+    if (activateSenkaEffect(effect, value)) return;
+    if (activateReferenceCreatureEffect(effect, value, duration, source)) {
+      return;
+    }
     if (activateTotalPowerEffect(effect, value, duration)) return;
     if (activateProvokerEffect(effect, value, duration)) return;
     if (activateCycleEffect(effect, value)) return;
@@ -804,6 +808,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     tickBoneRuneTurn();
     tickFeralisFury();
     maskedTurnStart();
+    senkaTurnStart();
     meccanioTurn();
     parasiteTurn();
     if (currentCombatIsActive()) refreshChaosStats();
@@ -870,6 +875,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     planarState.remove('fuocherelliWaterSuppressedActions');
     resetStormBanditFight();
     resetBrambleFight();
+    senkaFightEnd();
     planarState.remove('maskedShadow');
     planarState.remove('maskedTeleport');
     planarState.remove('maskedAttack');
@@ -925,6 +931,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void longRestPlanarEffects() {
+    referenceLongRest();
     restoreDamagedWings();
     planarState.remove('banditVendetta');
     for (final token in _writableOnlineCombatTokens().where(
@@ -972,6 +979,14 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     final state = planarState;
     damage = (damage * silkResistanceMultiplier(element)).round();
     damage = feralisAdaptDamage(damage, element);
+    if (senkaMaskActive && magical && oculumNormalizeElementId(element) == 'solare') {
+      damage = (damage * 1.15).round();
+    }
+    if (senkaMaskActive && readIntValue(senkaRuntime['shadowUntilTurn']) > playerReportedTurn &&
+        const {'fisico','taglio','perforante','contundente'}.contains(oculumNormalizeElementId(element))) {
+      aggiungiLog('Forma ombra di Senka: il colpo fisico attraversa la sagoma.');
+      return 0;
+    }
     if (feralisFuryActive) damage = (damage / 2).ceil();
     if (damage <= 0) return damage;
     damage = brambleAbsorbDamage(damage, element, bypassShields: bypassShields);
@@ -1613,7 +1628,11 @@ extension _OculumPlanarHunts on _OculumHomePageState {
     unawaited(sendPartyChestState());
   }
 
-  void recordPlanarMonsterRewards(Iterable<Map> enemies, String encounterId) {
+  void recordPlanarMonsterRewards(
+    Iterable<Map> enemies,
+    String encounterId, {
+    Iterable<String> participantTags = const [],
+  }) {
     if (!canManagePartyQuests) return;
     final ledger = Map<String, dynamic>.from(
       partyChest['planarHunts'] as Map? ?? {},
@@ -1631,6 +1650,64 @@ extension _OculumPlanarHunts on _OculumHomePageState {
       final kills = (record['killIds'] as List? ?? []).map((v) => '$v').toSet();
       final killId = '$encounterId:${enemy['monsterSheetTag'] ?? enemy['id']}';
       if (!kills.add(killId)) continue;
+      final shieldPerLevel = readIntValue(
+        monster.encounterRules['shieldOnKillPerEnemyLevel'],
+      );
+      final shieldKiller = '${enemy['killerTag'] ?? ''}';
+      if (shieldPerLevel > 0 && shieldKiller.isNotEmpty) {
+        final rewards = Map<String, dynamic>.from(
+          partyChest['questRewards'] as Map? ?? {},
+        );
+        final receipt = 'monster-shield:$killId:$shieldKiller';
+        rewards.putIfAbsent(
+          receipt,
+          () => {
+            'id': receipt,
+            'recipient': shieldKiller,
+            'bonus': {
+              'scudo': shieldPerLevel * max(0, readIntValue(enemy['level'])),
+            },
+          },
+        );
+        partyChest['questRewards'] = rewards;
+      }
+      final magicalLuck = monster.encounterRules['magicalLuckOnDefeat'];
+      if (magicalLuck is Map) {
+        final rewards = Map<String, dynamic>.from(
+          partyChest['questRewards'] as Map? ?? {},
+        );
+        final killer = normalizeOculumFriendTag('${enemy['killerTag'] ?? ''}');
+        for (final tag
+            in participantTags.where((tag) => tag.trim().isNotEmpty).toSet()) {
+          final gain = readIntValue(
+            magicalLuck[normalizeOculumFriendTag(tag) == killer
+                ? 'killer'
+                : 'others'],
+          );
+          if (gain <= 0) continue;
+          final receipt = 'monster-gratitude:$killId:$tag';
+          rewards.putIfAbsent(
+            receipt,
+            () => {
+              'id': receipt,
+              'recipient': tag,
+              'bonus': {'fortunaMagica': gain},
+              'message': '${monster.encounterRules['defeatMessage'] ?? ''}',
+            },
+          );
+        }
+        partyChest['questRewards'] = rewards;
+      }
+      final defeatMessage = '${monster.encounterRules['defeatMessage'] ?? ''}'
+          .trim();
+      if (defeatMessage.isNotEmpty) {
+        aggiungiLog('[SCONFITTA] $defeatMessage');
+        final killer = '${enemy['killerTag'] ?? ''}';
+        if (killer.isNotEmpty &&
+            localSheetIndexForOculumTag(killer) != schedaCorrente) {
+          combatLogFor(killer, '[SCONFITTA] $defeatMessage');
+        }
+      }
       record['killIds'] = kills.toList();
       record['count'] = kills.length;
       final received = (record['rewards'] as List? ?? [])

@@ -2,6 +2,46 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('generic cost fields recognize resources and named items', () {
+    for (final entry in {
+      'Oculum': 'oculum',
+      'Resilienza': 'resilienza',
+      'Materia': 'materia',
+      'Obser': 'obser',
+      'Volontà': 'volonta',
+      'Fortuna magica': 'fortuna',
+    }.entries) {
+      expect(oculumParseAbilityCost(entry.key)?.resource, entry.value);
+      expect(oculumParseAbilityCost('${entry.key}: 2/5'), (
+        minimum: 2,
+        maximum: 5,
+        resource: entry.value,
+      ));
+      final form = CharacterSkillForm(
+        nome: 'I',
+        tipo: 'Skill',
+        costo: entry.key,
+        cooldown: '',
+        descrizione: '',
+        oculumMinimoUtilizzabile: 2,
+        oculumMassimoUtilizzabile: 5,
+      );
+      final cost = oculumCharacterSkillFormCost(form)!;
+      expect(cost.resource, entry.value);
+      expect((cost.minimum, cost.maximum), (2, 5));
+    }
+    expect(oculumParseAbilityCost('Oggetto: Polvere di luna'), (
+      minimum: 0,
+      maximum: 0,
+      resource: 'item:polverediluna',
+    ));
+    expect(oculumParseAbilityCost('3 Obser'), (
+      minimum: 3,
+      maximum: 3,
+      resource: 'obser',
+    ));
+    expect(oculumParseAbilityCost('Materia 5/2'), isNull);
+  });
   test('negative resource quick commands parse as costs', () {
     expect(oculumParseAbilityCost('@mat-1'), (
       minimum: 1,

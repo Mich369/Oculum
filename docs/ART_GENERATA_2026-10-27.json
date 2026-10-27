@@ -1,0 +1,51 @@
+{
+  "generator": "image_gen.imagegen",
+  "sourceCanon": "docs/OCULUM_LORE_VISIVA.md",
+  "styleReference": "assets/oculum/home_art/amber_shore.png",
+  "scostubanditoShapeReference": "assets/oculum/theme_stories/creature_scostubanditi_v2.png",
+  "initialPrompts": {
+    "errato": "Create an original Oculum wide landscape 16:9 illustrated creature THEME SCENE. Image 1 is the approved Scostubanditi CANONICAL IDENTITY AND STYLE: faithfully keep that particular small stocky rodent bandit's rounded modest ears, short broad slate-and-cream furry muzzle, expressive dark eyes, long thin rodent tail, compact upright body and handmade worn clothing silhouette. Do not turn it into a rabbit or use tall rabbit ears. Image 2 is EQUIPMENT REFERENCE ONLY: borrow the idea of sword plus magic wand/staff and light protective clothing, never its head, face, ears, anatomy or clean cel-anime style. Image 3 is the mandatory Rame fatato painting-technique anchor only: soft matte hand-painted anime fantasy, nuanced gouache/oil brush texture and broad painted shapes, no photorealism, no glossy 3D or movie-still rendering; do not copy its fairies or copper boulder. Keep the full character, ears, sword, staff, feet and tail within the frame with comfortable margins. Place the subject toward the right third, and keep the left and center spacious with low contrast for real RPG text overlays later. Its magic is SPIRITUAL, expressed in pale silver-white and delicate violet-blue light; not fire or solar magic. The character carries a magic sword in one hand and a worn pale-wood-and-brass wand/staff in the other. Maintain exactly two arms and two legs, clear believable furry hands and equipment grip. It is silent in combat and serious, with no speech, words, labels, logo, watermark, UI, numbers or painted border. No moon body in the sky, no sun disc or sky eye. Any clouds use dominant blue, indigo, violet, pastel pink. Subject is SCOSTUBANDITO ERRATO, the ordinary sword-and-magic variant. It has NO scar across either eye, no eye patch and no cut on the face. Keep the recognizable worn pointed cloth hood, dust-blue scarf and patched short leather jacket from the approved rodent design, adapted with modest worn leather-and-brass guards. It has ONE maintained spell: show its translucent spiritual shield curving near its sword guard. The sword is already subtly magical, but do not show an additional strong staff-to-sword empowerment spell simultaneously with the shield on this ordinary variant. Scene: an old woodland roadside checkpoint of mismatched dark planks and soft scattered cloth, damp stone path and a few subdued lanterns, in cool painted dusk. The subject holds a balanced alert guard with its sword low and its staff controlling the single shield. Original distinct scene composition, not a direct copy of the reference.",
+    "veterano": "Create an original Oculum wide landscape 16:9 illustrated creature THEME SCENE. Image 1 is the approved Scostubanditi CANONICAL IDENTITY AND STYLE: faithfully keep that particular small stocky rodent bandit's rounded modest ears, short broad slate-and-cream furry muzzle, expressive dark eyes, long thin rodent tail, compact upright body and handmade worn clothing silhouette. Do not turn it into a rabbit or use tall rabbit ears. Image 2 is EQUIPMENT REFERENCE ONLY: borrow the idea of sword plus magic wand/staff and light protective clothing, never its head, face, ears, anatomy or clean cel-anime style. Image 3 is the mandatory Rame fatato painting-technique anchor only: soft matte hand-painted anime fantasy, nuanced gouache/oil brush texture and broad painted shapes, no photorealism, no glossy 3D or movie-still rendering; do not copy its fairies or copper boulder. Keep the full character, ears, sword, staff, feet and tail within the frame with comfortable margins. Place the subject toward the right third, and keep the left and center spacious with low contrast for real RPG text overlays later. Its magic is SPIRITUAL, expressed in pale silver-white and delicate violet-blue light; not fire or solar magic. The character carries a magic sword in one hand and a worn pale-wood-and-brass wand/staff in the other. Maintain exactly two arms and two legs, clear believable furry hands and equipment grip. It is silent in combat and serious, with no speech, words, labels, logo, watermark, UI, numbers or painted border. No moon body in the sky, no sun disc or sky eye. Any clouds use dominant blue, indigo, violet, pastel pink. Subject is SCOSTUBANDITO VETERANO DELL'ERRATO, the stronger experienced version. It has ONE clear healed diagonal scar crossing ONE eye, which is its distinctive veteran feature; the ordinary variant must not have it. Preserve the same canonical rodent species, compact body, rounded ears, short broad muzzle, thin long tail, worn pointed cloth hood and dust-blue scarf, with more carefully reinforced but still handmade leather-and-brass equipment. This veteran can maintain TWO spiritual spells at once: show a translucent spiritual shield AND a bright controlled staff-to-sword spiritual empowerment together, connected by subtle coherent pale silver-violet magical strands. No extra hands. Keep its eye readable under the scar, no eye patch. It stands calmly and confidently at a weathered stone bridge toll arch beside a secluded old road, a different environment/composition from the ordinary checkpoint, with muted twilight blue shadows and restrained warm lantern light. It is visibly tougher and more practiced, never a regal human knight, never a rabbit."
+  },
+  "editPrompts": [
+    {
+      "key": "oculum_scost_errato_front_shield",
+      "prompt": "Edit IMAGE 1 with this single composition correction: the translucent spiritual MAGIC SHIELD must be clearly IN FRONT OF THE CHARACTER'S BODY, between the viewer and the rodent, rather than arcing behind its back or off its side. Remove the old rear/side shield and place ONE coherent slightly curved transparent frontal barrier in the guard position, approximately from below the face toward the knees, with subtle violet-silver edges. Its transparency must keep the face, ordinary dark eyes, sword, furry body and staff fully readable. Preserve the ordinary Scostubandito errato with NO eye scar, its exact canonical rounded rodent ears, broad short muzzle, hood, dust-blue scarf, tail, two hands, sword, staff, clothing, scene, camera framing and full-body margins. This ordinary variant maintains only the shield spell, not a separate strong staff-to-sword infusion. IMAGE 2 is Rame fatato STYLE ONLY: preserve the soft matte painted anime-fantasy/gouache texture, not photography, not glossy 3D; do not copy its fairies or copper boulder. Preserve the illustrated sky and landscape. No moon or sun disc, sky eye, text, labels, UI, logos, watermark or unrelated additions."
+    },
+    {
+      "key": "oculum_scost_veteran_front_shield_eyes",
+      "prompt": "Edit IMAGE 1 with TWO precise canonical changes. First, move the ONE translucent spiritual MAGIC SHIELD clearly IN FRONT OF THE CHARACTER'S BODY, between the viewer and the rodent, instead of behind its back or to its side. Remove the old rear shield and render one coherent curved transparent frontal guard barrier with delicate violet-silver edge light; keep the face, sword, staff and body readable through it. Second, the VETERAN'S EYES must have colored irises matching the same pale luminous VIOLET-SILVER spiritual magic used by its staff, shield and enchanted sword. Make both eyes clearly magical violet, still readable and expressive, not white blanks or laser beams. Preserve the healed cut/scar across ONE eye; only the veteran has this scar. Preserve its exact canonical rodent anatomy (modest rounded ears, short broad muzzle, compact stocky body and thin long tail), worn hood, dust-blue scarf, reinforced handmade leather/brass equipment, pose, bridge/toll-arch setting, composition and full-body margins. Keep TWO simultaneous spells visible: frontal shield and controlled sword empowerment from the staff. Exactly two arms and legs. IMAGE 2 is Rame fatato STYLE ONLY: preserve the soft matte painterly anime-fantasy/gouache technique, not photorealism, not glossy 3D; do not copy fairies or copper boulder. No moon body, sun disc or sky eye. No words, labels, stats, UI, logos, watermark or unrelated changes."
+    }
+  ],
+  "selected": [
+    {
+      "id": "scostubandito_errato",
+      "path": "assets/oculum/home_art/creature_scostubandito_errato_v1.png",
+      "source": "exec-d3df8fe2-5281-4338-b078-18aecd3da774.png",
+      "approval": "l'ultima immagine va bene",
+      "finalEditDescription": "Scudo proiettato davanti al personaggio nella direzione verso cui guarda, non avvolgente; occhi normali senza taglio."
+    },
+    {
+      "id": "scostubandito_veterano_errato",
+      "path": "assets/oculum/home_art/creature_scostubandito_veterano_errato_v1.png",
+      "source": "exec-fc87f7c9-20af-47b7-980e-883f9875f470.png",
+      "approval": "lui va bene",
+      "finalEditDescription": "Scudo davanti, iridi del colore della magia e taglio a un occhio, due magie mantenute."
+    },
+    {
+      "id": "mostro_lunare",
+      "path": "assets/oculum/home_art/creature_mostro_lunare_v1.png",
+      "source": "exec-ac5007d9-5c26-48d4-9ba0-d891daf71102.png",
+      "finalEditDescription": "Simbolo della luna nel cristallo centrale del petto. Cristalli #7B68EE. Luna assente nel cielo."
+    },
+    {
+      "id": "mostro_lunare_demoniaco",
+      "path": "assets/oculum/home_art/creature_mostro_lunare_demoniaco_v1.png",
+      "source": "exec-062a8ba2-31d2-44a0-b825-d5872c32d012.png",
+      "approval": "perfetto",
+      "finalEditDescription": "Cristalli rossi, metallo incandescente e aspetto demoniaco potenziato; simbolo lunare ancora nel cristallo centrale."
+    }
+  ],
+  "note": "I campi initialPrompts/editPrompts contengono i prompt originali conservati nella sessione. finalEditDescription riassume l'ultima modifica e non si presenta come trascrizione letterale del prompt.",
+  "use": "Illustrazioni nei temi e negli sfondi della pagina acquistata. Nessun ritratto dei mostri nel Monster Book."
+}

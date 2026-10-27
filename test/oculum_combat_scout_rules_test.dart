@@ -2,6 +2,68 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/game/oculum_combat_scout_rules.dart';
 
 void main() {
+  test(
+    'low-power tiers progressively ease exact power and weak-point discovery',
+    () {
+      final requirements = [
+        for (final power in [10, 20, 30, 50, 51])
+          oculumCombatScoutRead(
+            rollTotal: 0,
+            targetLevel: 10,
+            targetVelo: 20,
+            targetGrade: 1,
+            targetCm: 20,
+            targetPower: power,
+          ).requirement,
+      ];
+      expect(requirements, [3, 6, 10, 15, 30]);
+      expect(
+        [
+          for (final power in [10, 20, 30, 50])
+            oculumExactPowerChance(8, success: true, targetPower: power),
+        ],
+        [100, 100, 45, 0],
+      );
+      for (final power in [10, 20, 30, 50]) {
+        final read = oculumCombatScoutRead(
+          rollTotal: 99,
+          targetLevel: 10,
+          targetVelo: 20,
+          targetGrade: 1,
+          targetCm: 20,
+          targetPower: power,
+        );
+        expect(
+          oculumScoutRevealsWeakPoint(
+            natural: 2,
+            rollTotal: read.requirement + 5,
+            targetPower: power,
+            read: read,
+          ),
+          true,
+        );
+        expect(
+          oculumScoutRevealsWeakPoint(
+            natural: 2,
+            rollTotal: read.requirement + 4,
+            targetPower: power,
+            read: read,
+          ),
+          false,
+        );
+        expect(
+          oculumExactPowerChance(
+            read.requirement + 5,
+            success: true,
+            targetPower: power,
+            observationRequirement: read.requirement,
+          ),
+          100,
+        );
+      }
+      expect(oculumExactPowerChance(99, success: false, targetPower: 10), 0);
+    },
+  );
   test('only exact Percezione readings halve veil bonuses rounding down', () {
     final conditions = [
       {

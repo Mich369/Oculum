@@ -725,6 +725,12 @@ MonsterBookEntry _canonicalCreature(
     );
 
 final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
+  ..._sandAndHalfDemonTechniques,
+  ..._tacticalCreatureTechniques,
+  ..._octoberCreatureTechniques,
+  ..._celestialReferenceTechniques,
+  ..._microRealmTechniques,
+  ..._solarGuardAndGrofixTechniques,
   ..._faunaVariantTechniques,
   ..._maskedTechniques,
   ..._ordinaryCreatureTechniques,

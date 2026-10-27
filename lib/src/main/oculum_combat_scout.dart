@@ -77,6 +77,16 @@ extension _OculumCombatScout on _OculumHomePageState {
 
   bool monsterBookPartyKnowsWeakPoint(String monsterId) =>
       monsterBookPartyKnowledge(monsterId)?['weakPoint'] == true;
+  bool monsterBookPartyKnowsAny(String monsterId) {
+    final knowledge = monsterBookPartyKnowledge(monsterId);
+    return const [
+          'seen',
+          'nameKnown',
+          'weakPoint',
+          'pagePurchased',
+        ].any((key) => knowledge?[key] == true) ||
+        partyHuntsForMonster(monsterId).isNotEmpty;
+  }
 
   void rememberMonsterBookPartyDiscovery(
     String monsterId, {
@@ -389,6 +399,7 @@ extension _OculumCombatScout on _OculumHomePageState {
     int observerPower, {
     int total = 0,
     bool perception = false,
+    int? observationRequirement,
   }) => {
     if (!success)
       'blockedByStat': oculumScoutDominantStat(scoutCoreStatsAt(index)),
@@ -402,6 +413,7 @@ extension _OculumCombatScout on _OculumHomePageState {
               total,
               success: success,
               targetPower: scoutTotalPowerAt(index),
+              observationRequirement: observationRequirement,
             ) >
             Random.secure().nextInt(100))
       'exactPower': scoutTotalPowerAt(index),
@@ -571,6 +583,7 @@ extension _OculumCombatScout on _OculumHomePageState {
             ),
             targetGrade: sheetIntValueAt(index, 'grado'),
             targetCm: sheetRollBonusAt(index, 'cm'),
+            targetPower: scoutTotalPowerAt(index),
           );
           rememberCombatScoutRead(combatDiscoveryKey(targetTag, 'ally'), {
             'reveal': read.reveal.name,
@@ -583,7 +596,12 @@ extension _OculumCombatScout on _OculumHomePageState {
             if (read.showsProbabilities)
               'difficulty': normalizedCampaignDifficulty(),
             'veilBuffHalved': read.isExact && sheetCombatScoutHasVeilAt(index),
-            'weakPoint': read.isExact && natural == 20,
+            'weakPoint': oculumScoutRevealsWeakPoint(
+              natural: natural,
+              rollTotal: total,
+              targetPower: scoutTotalPowerAt(index),
+              read: read,
+            ),
             if (read.isExact) 'bodyObservers': [sheetTagAt(schedaCorrente)],
           });
           final monsterBookId = monsterBookIdForCombatToken(target);
@@ -599,7 +617,13 @@ extension _OculumCombatScout on _OculumHomePageState {
               broadcast: true,
             );
           }
-          if (read.isExact && natural == 20 && monsterBookId.isNotEmpty) {
+          if (oculumScoutRevealsWeakPoint(
+                natural: natural,
+                rollTotal: total,
+                targetPower: scoutTotalPowerAt(index),
+                read: read,
+              ) &&
+              monsterBookId.isNotEmpty) {
             rememberMonsterBookPartyDiscovery(
               monsterBookId,
               seen: true,
@@ -620,6 +644,7 @@ extension _OculumCombatScout on _OculumHomePageState {
             readIntValue(request['observerPower']),
             total: total,
             perception: oculumScoutReadingStatIds.contains(stat.id),
+            observationRequirement: read.requirement,
           );
           rememberKnownPower(
             targetTag,
@@ -706,8 +731,15 @@ extension _OculumCombatScout on _OculumHomePageState {
         ),
         targetGrade: sheetIntValueAt(targetIndex, 'grado'),
         targetCm: sheetRollBonusAt(targetIndex, 'cm'),
+        targetPower: scoutTotalPowerAt(targetIndex),
       );
-      final weakPoint = read.isExact && readIntValue(payload['natural']) == 20;
+      final natural = readIntValue(payload['natural']);
+      final weakPoint = oculumScoutRevealsWeakPoint(
+        natural: natural,
+        rollTotal: readIntValue(payload['total']),
+        targetPower: scoutTotalPowerAt(targetIndex),
+        read: read,
+      );
       final veilBuffHalved =
           read.isExact && sheetCombatScoutHasVeilAt(targetIndex);
       final targetSheet = schedePersonaggio[targetIndex];
@@ -727,6 +759,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           readIntValue(payload['observerPower']),
           total: readIntValue(payload['total']),
           perception: oculumScoutReadingStatIds.contains(payload['scoutStat']),
+          observationRequirement: read.requirement,
         ),
         'themeUnlocked':
             monsterBookId.isNotEmpty &&

@@ -21,7 +21,7 @@ int oculumGatherOutputGrams({
 }
 
 extension _OculumHomeRecipes on _OculumHomePageState {
-  bool get canManageRecipes => canActWithoutMasterApproval;
+  bool get canManageRecipes => haPermessiMaster;
 
   /// Seeds only the authored base recipe. It uses a stable id, so older
   /// campaigns and Master-made recipes retain their exact data and ordering.
@@ -607,6 +607,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Future<void> _createPersonalRecipe(OculumRecipe source) async {
+    if (!recipeKnown(source)) return;
     final owner = storySessionAuthorTag();
     final now = DateTime.now().toIso8601String();
     await _openRecipeEditor(
@@ -644,6 +645,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Future<void> _applyPersonalForge(OculumRecipe recipe) async {
+    if (!recipeKnown(recipe)) return;
     final candidates = inventario
         .where((item) {
           return oculumCraftWearable(item);
@@ -930,6 +932,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Future<void> _craftRecipe(OculumRecipe recipe, {int quantity = 1}) async {
+    if (!recipeKnown(recipe)) return;
     final safeQuantity = max(1, quantity);
     final missing = _missingRecipeIngredients(recipe, quantity: safeQuantity);
     final oculumRequired = max(0, recipe.oculumCost) * safeQuantity;
@@ -991,6 +994,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
 
     final check = await _resolveRecipeCheck(recipe, safeQuantity);
     if (check == null) return;
+    if (!recipeKnown(recipe)) return;
     final succeeded = oculumCraftingCheckSucceeds(
       naturalRoll: check.natural,
       total: check.total,
@@ -1086,6 +1090,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
   }
 
   Future<void> _openCraftingPreview(OculumRecipe recipe) async {
+    if (!recipeKnown(recipe)) return;
     final quantityController = TextEditingController(text: '1');
     await showDialog<void>(
       context: context,
@@ -1506,6 +1511,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                       final visibleCampaign = oculumVisibleRecipes(
                         recipes: recipes,
                         isMaster: isMaster,
+                        knownRecipeIds: knownRecipeIds,
                         query: query,
                       );
                       visiblePersonal.sort(_sortRecipesForCrafting);

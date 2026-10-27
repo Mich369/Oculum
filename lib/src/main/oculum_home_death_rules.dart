@@ -245,6 +245,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   void controllaCadutaDopoDanno() {
+    if (hpCorrenti() <= 0 && tryConstructLastStrength()) return;
     if (hpCorrenti() > 0 || personaggioCaduto) return;
     segnaSchedaAttivaCaduta();
   }

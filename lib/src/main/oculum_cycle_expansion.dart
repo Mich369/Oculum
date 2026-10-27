@@ -6,6 +6,12 @@ String oculumCelestialAllegiance(Map sheet) {
   final explicit =
       '${(sheet['planarRuntime'] as Map? ?? {})['identityCelestial'] ?? ''}';
   if (const {'solare', 'lunare', 'nessuna'}.contains(explicit)) return explicit;
+  final source = monsterById('${sheet['monsterBookSourceId'] ?? ''}');
+  final catalogueIdentity =
+      '${source?.encounterRules['celestialIdentity'] ?? ''}';
+  if (const {'solare', 'lunare', 'nessuna'}.contains(catalogueIdentity)) {
+    return catalogueIdentity;
+  }
   if (sheet['monsterBookSourceId'] == 'ciclo_solare_siccita') return 'solare';
   if (sheet['monsterBookSourceId'] == 'ciclo_lupo_lunare') return 'lunare';
   return '${sheet['razza'] ?? ''}'.toLowerCase().contains('mhunan')

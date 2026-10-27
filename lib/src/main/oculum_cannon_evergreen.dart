@@ -142,6 +142,7 @@ extension _OculumCannonEvergreen on _OculumHomePageState {
   }
 
   void faunaConfirmedKills(Iterable<Map> enemies, String encounter) {
+    clearReferenceCursesFromKilled(enemies);
     for (final enemy in enemies) {
       final source =
           '${enemy['killerTag'] ?? enemy['lastDamageSourceTag'] ?? ''}';

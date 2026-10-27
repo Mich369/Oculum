@@ -18,6 +18,10 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
     Map<String, dynamic> request,
     int index,
   ) => {
+    'corruptionRulesVersion': 2,
+    'corruptionKind': request['corruptionKind'] ?? 'viola',
+    'elapsedNights': 0,
+    'antiCorruptionDoses': 0,
     'corruptedByTag': request['sourceTag'],
     'sourceLevel': readIntValue(request['level']),
     'encounterId': request['encounterId'],
@@ -28,12 +32,7 @@ extension _OculumCorruptionRuntime on _OculumHomePageState {
             ? playerReportedTurn
             : readIntValue(schedePersonaggio[index]['playerReportedTurn'])) +
         3,
-    'suicideAtFightEnd':
-        readIntValue(request['corruptionDefenseNatural']) == 1 ||
-        (index == schedaCorrente
-                ? leggiNumero(livelloController)
-                : sheetIntValueAt(index, 'livello')) <
-            readIntValue(request['level']),
+    'suicideAtFightEnd': false,
     'resistanceIntervalTurns': 3,
     'difficultyIncreasePerAttempt': 3,
     'revengeDamage': 10,

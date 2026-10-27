@@ -1,5 +1,20 @@
 # Registro cumulativo per i giocatori
 
+## Versione stabile del 27 ottobre — schede, costi e personaggi
+
+- Il Master può assegnare una o più proprie schede a un giocatore. Selezione iniziale vuota; salvataggio locale del destinatario prima della conferma e copia online per il Master, senza cambiare il tag della scheda né duplicare consegne già ricevute. Immagini, personalizzazioni e ricevute dei premi restano conservate.
+- Pagina Master riordinata per categorie e ricerca, con disposizione adatta a telefono e desktop. Costi Skill con risorse e limiti generici, parser PT e Sfinimento proporzionale; formule e costi restano modificabili.
+- Senka Kamaria organizzata con storia, incubo, Sky, Haniel, Titoli Un Ricordo della Luna e Vendetta, maschera indossabile e poteri iniziali. Riserve della trasformazione, Scudo Oculum, clone personale, limite totale per fight e fusione conservati nel JSON. Le evoluzioni future dichiarate in lavorazione non sono certificate dal solo testo della scheda.
+- Lusier III: Guardia Solare Élite livello13, Grado I, 1 Scudo critico e150 Scudo Oculum; abito protettivo, spada sacra +20 Danni Solari, Vitalium Ridefinito e mazzo personale. La PT effettiva misurata è277 e alimenta la frase di Haniel nella storia di Senka.
+- Carte esplosive di Grado I: forme ai livelli10/12/20, capienze5/10/15, recupero1/2/3 per turno; massimo5 carte per lancio, ciascuna1d25 + un quinto per difetto dei Danni attuali. Lusier mantiene recupero personale3 anche nella II; il suo mazzo compare nei drop della morte confermata. Vendita solo al Mercato Nero con incasso180–250 Obser, proposta iniziale215 modificabile.
+- Osservazione progressivamente facilitata per PT50/30/20/10. Fino a50 PT, margine+5 sulla DT rivela punto debole e PT esatta senza un naturale minimo; varianti coerenti di Percezione usano le stesse regole.
+- Elementi automatici separati: maggior bonus Danni per attaccare, maggior bonus Difesa per difendersi; la Skill con elemento proprio prevale. Skill, Art e Titoli equipaggiati/in uso concedono3 punti percentuali di resistenza elementale, forme contate una volta, con limite90% e immunità già presenti conservate.
+- Resistenze delle creature coerenti con anatomia e materiali. Mezzo Slime con +2 MAT, Controllo corporeo e Riflessi e fragilità25% a Fuoco/Esplosioni. Titoli Item evocabili/disevocabili senza Azioni né ricarica gratuita delle riserve consumate. Entrare da un mercante esegue Riposo Breve completo.
+- I costi scritti come `@mat-1` o `@ocu-2` vengono consumati soltanto all’attivazione, senza diventare malus permanenti mentre la Skill è equipaggiata.
+- Corretto il costo di una Skill Open che cambiava dopo la riapertura JSON dei Titoli Item. I controlli su catalogo, conversione e progressione mantengono separati valori originari e potenziamenti.
+- Schede, statistiche, sottotratti, effetti, costi min/max, requisiti, durata, cooldown, inventario e descrizioni restano modificabili. Test locali, build, pacchetti pubblici e sessioni reali sono verifiche distinte. Le grandi espansioni non ancora validate restano dichiarate in lavorazione per conservare quota.
+
+
 ## Correzioni delle segnalazioni del 26 ottobre 2026
 
 - Stabilità durante il cambio turno e l'apertura dei menu: animazioni limitate alle decorazioni, con controlli stabili e accessibili. Il feedback al tocco parte dopo il tap e rispetta le finestre aperte.

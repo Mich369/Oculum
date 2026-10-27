@@ -352,6 +352,12 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       aggiungiLog('Paralisi dal Fato: Azioni e Reazioni bloccate.');
       return false;
     }
+    final commanded = executingCorruptionCommand;
+    if (commanded != null) {
+      if (commanded['executionResourceClaimed'] == true) return false;
+      commanded['executionResourceClaimed'] = true;
+      return true;
+    }
     if (!currentTurnTrackerIsActive()) return true;
     final tag = sheetTagAt(schedaCorrente);
     final freeReaction =
@@ -369,14 +375,41 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         : null;
     final selectedResource = freeReaction?.key ?? resource;
     if (!_consumeLocalCombatTurnResource(tag, selectedResource)) return false;
+    final spentToken = _writableOnlineCombatTokens()
+        .where(
+          (token) =>
+              (_usesLocalMasterInitiative
+                  ? publicInitiativeSourceTag(token)
+                  : onlineCombatTokenTag(token)) ==
+              tag,
+        )
+        .firstOrNull;
+    final actualResource =
+        freeReaction != null ||
+            onlineCombatRequests[selectedResource]?['freeReaction'] == true ||
+            const {
+              'azione',
+              'azione_anticipata',
+              'reazione',
+              'reazione_veloce',
+            }.contains(selectedResource)
+        ? '${spentToken?['lastTurnResource'] ?? selectedResource}'
+        : selectedResource;
     final spendId =
         '$tag:${DateTime.now().microsecondsSinceEpoch}:${pendingOnlineCombatTurnResourceSpends.length}';
     appliedOnlineCombatTurnResourceSpendIds.add(spendId);
-    if (realtimeService?.isConnected == true) {
+    {
+      for (final old in pendingOnlineCombatTurnResourceSpends.where(
+        (spend) => spend['sheetTag'] == tag,
+      )) {
+        old['activityComplete'] = true;
+      }
       pendingOnlineCombatTurnResourceSpends.add({
         'id': spendId,
         'sheetTag': tag,
         'resource': selectedResource,
+        'activityResource': actualResource,
+        'encounterId': onlineCombatEncounterId,
       });
       if (pendingOnlineCombatTurnResourceSpends.length > 16) {
         pendingOnlineCombatTurnResourceSpends.removeAt(0);
@@ -452,6 +485,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
             tag,
       );
       if (index >= 0) {
+        tokens[index]['lastTurnResource'] = 'reazione';
         tokens[index]['freeReactionUsed'] = true;
         tokens[index]['freeReactionUsedRound'] = _onlineCombatRound();
         tokens[index]['updatedAt'] = DateTime.now().toIso8601String();
@@ -603,6 +637,16 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       aggiungiLog(
         '[REAZIONE VELOCE] +$fastBonus al tiro di attacco, difesa, utilità o percezione per cui viene spesa.',
       );
+    }
+    if (const {
+      'azione',
+      'azione_anticipata',
+      'reazione',
+      'reazione_veloce',
+    }.contains(resource)) {
+      token['lastTurnResource'] = usedFastReaction
+          ? 'reazione_veloce'
+          : resource;
     }
     token['updatedAt'] = DateTime.now().toIso8601String();
     final tokenName = oculumReferenceEncounterTokenName(token);

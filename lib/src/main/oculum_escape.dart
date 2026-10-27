@@ -581,6 +581,84 @@ extension _OculumEscape on _OculumHomePageState {
     });
   }
 
+  List<Map<String, dynamic>> escapeRescueCandidates(Map<String, dynamic> hero) {
+    if (hero['kind'] != 'escape' ||
+        hero['status'] != 'escaped' ||
+        readIntValue(hero['natural']) != 20 ||
+        hero['criticalRescueUsed'] == true ||
+        hero['encounterId'] != onlineCombatEncounterId ||
+        hero['scope'] != permissionScope ||
+        !escapeRequestIsCurrent(hero) ||
+        escapeToken('${hero['sourceTag']}')?['outsideFight'] != true) {
+      return [];
+    }
+    return onlineCombatRequests.values.where((r) {
+      final tag = '${r['sourceTag']}';
+      final token = escapeToken(tag);
+      return r['kind'] == 'escape' &&
+          r['status'] == 'failed' &&
+          r['encounterId'] == hero['encounterId'] &&
+          r['scope'] == hero['scope'] &&
+          escapeRequestIsCurrent(r) &&
+          tag != hero['sourceTag'] &&
+          token != null &&
+          !const {'dead', 'expired', 'fled'}.contains(token['status']) &&
+          token['outsideFight'] != true &&
+          combatScoutSide(tag) == combatScoutSide('${hero['sourceTag']}');
+    }).toList();
+  }
+
+  Future<void> requestCriticalEscapeRescue(
+    Map<String, dynamic> hero,
+    Map<String, dynamic> companion,
+  ) async {
+    if (!escapeRescueCandidates(hero).contains(companion)) return;
+    await emitEscape({
+      'id': 'escape-rescue:${hero['id']}:${companion['id']}',
+      'stage': 'rescue_request',
+      'sourceTag': hero['sourceTag'],
+      'targetTag': companion['sourceTag'],
+      'escapeId': hero['id'],
+      'companionEscapeId': companion['id'],
+    });
+  }
+
+  Widget criticalEscapeRescuePanel() {
+    final own = sheetTagAt(schedaCorrente);
+    final heroes = onlineCombatRequests.values
+        .where(
+          (r) =>
+              (escapeAuthority || r['sourceTag'] == own) &&
+              escapeRescueCandidates(r).isNotEmpty,
+        )
+        .toList();
+    return Column(
+      children: [
+        for (final hero in heroes)
+          gothicPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Fuga critica · ${hero['sourceName']} può salvare un compagno',
+                ),
+                const Text(
+                  'Automaticamente, senza altri tiri né Azioni o Reazioni.',
+                ),
+                for (final companion in escapeRescueCandidates(hero))
+                  TextButton.icon(
+                    icon: const Icon(Icons.handshake_outlined),
+                    label: Text('Porta fuori ${companion['sourceName']}'),
+                    onPressed: () =>
+                        requestCriticalEscapeRescue(hero, companion),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
   void receiveEscapeEvent(Map<String, dynamic> payload) {
     final eventId = '${payload['id'] ?? ''}';
     if (eventId.isEmpty || eventId.length > 160) return;
@@ -666,6 +744,37 @@ extension _OculumEscape on _OculumHomePageState {
       if (escapeAuthority && payload['success'] == true) {
         unawaited(finishIfPartyEscaped());
       }
+    } else if (stage == 'rescue_request' || stage == 'rescue_result') {
+      final hero = onlineCombatRequests['${payload['escapeId']}'];
+      final companion = onlineCombatRequests['${payload['companionEscapeId']}'];
+      if (hero == null ||
+          companion == null ||
+          hero['sourceTag'] != source ||
+          companion['sourceTag'] != payload['targetTag'] ||
+          !escapeRescueCandidates(hero).contains(companion)) {
+        return;
+      }
+      if (stage == 'rescue_request') {
+        if (!escapeAuthority) return;
+        unawaited(
+          emitEscape({
+            ...payload,
+            'id': '${payload['id']}:result',
+            'stage': 'rescue_result',
+          }),
+        );
+        return;
+      }
+      if (!staff && realtimeService?.isConnected == true) return;
+      hero['criticalRescueUsed'] = true;
+      hero['criticalRescueTarget'] = companion['sourceTag'];
+      companion['status'] = 'escaped';
+      companion['rescuedBy'] = source;
+      markOutsideFight('${companion['sourceTag']}', critical: false);
+      aggiungiLog(
+        '[FUGA CRITICA] ${hero['sourceName']} porta fuori ${companion['sourceName']}: nessun altro tiro o costo.',
+      );
+      if (escapeAuthority) unawaited(finishIfPartyEscaped());
     } else if (stage == 'return') {
       if (!const {'velo', 'riflessi'}.contains(payload['mode'])) return;
       final token = escapeToken(source);

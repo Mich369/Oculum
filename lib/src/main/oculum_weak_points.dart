@@ -116,13 +116,37 @@ extension _OculumWeakPoints on _OculumHomePageState {
     );
   }
 
-  List<Map<String, dynamic>>
-  get currentPrecisionBodyParts => oculumPrecisionBodyParts(
-    monster: monsterBookEntryById(faunaCurrentMonsterId),
-    arts: arti,
-    description:
-        '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['razza'] ?? ''} ${backgroundController.text}',
-  );
+  List<Map<String, dynamic>> get currentPrecisionBodyParts =>
+      oculumPrecisionBodyParts(
+            monster: monsterBookEntryById(faunaCurrentMonsterId),
+            arts: arti,
+            description:
+                '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['razza'] ?? ''} ${backgroundController.text}',
+          )
+          .followedBy(
+            isConstructCharacter
+                ? [
+                    {
+                      'id': 'core',
+                      'label': 'Nucleo del Costrutto',
+                      'penalty': 0,
+                      'weak': true,
+                    },
+                  ].where(
+                    (p) => !oculumPrecisionBodyParts(
+                      monster: monsterBookEntryById(faunaCurrentMonsterId),
+                      arts: arti,
+                    ).any((part) => part['id'] == 'core'),
+                  )
+                : <Map<String, dynamic>>[],
+          )
+          .where(
+            (part) =>
+                !isLunarOrderCreature ||
+                !oculumLunarCrystalIds.contains(part['id']) ||
+                intactLunarCrystalIds.contains(part['id']),
+          )
+          .toList();
   List<Map<String, dynamic>> get publicPrecisionBodyParts => [
     for (final p in currentPrecisionBodyParts)
       {

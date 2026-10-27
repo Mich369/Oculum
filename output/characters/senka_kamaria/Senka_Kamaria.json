@@ -1,0 +1,841 @@
+{
+  "nome": "Senka Kamaria",
+  "tipoScheda": "Personaggio",
+  "razza": "Mhunan",
+  "livello": "1",
+  "grado": "0",
+  "exp": "0",
+  "resilienza": "3",
+  "volonta": "1",
+  "materia": "2",
+  "oculum": "4",
+  "currentResilienza": "3",
+  "currentVolonta": "1",
+  "currentMateria": "3",
+  "currentOculum": "4",
+  "normalCurrentOculum": 4,
+  "maxOculum": 4,
+  "currentHp": "90",
+  "hpTemp": "0",
+  "scudo": "0",
+  "scudoOculum": "0",
+  "scudoOculumMax": "0",
+  "background": "Senka Kamaria ha sedici anni ed è una Mhunan lunare di Lost Town. I Solari hanno ucciso i suoi genitori; lei e Sky sono orfane da tempo. Sky ha cinque anni, è molto gentile e vivace e cerca di mostrarsi coraggiosa per sostenere la sorella maggiore. Haniel, il loro portavoce e informatore, si è preso cura di entrambe quando Sky era troppo piccola per ricordarlo e ha addestrato Senka. Per mantenerle, Senka ruba ai ricchi e ai Solari; con la maschera compie anche assassinii per conto di Haniel. Non porta mai Sky negli incarichi. Sky considera Haniel un loro amico e crede che L'Ombra Mascherata sia un'altra persona che le protegge. Senka, normalmente impacciata e deboluccia, interpreta deliberatamente quell'identità: rimane lei, senza una seconda coscienza stabilita. Le motivazioni profonde, i segreti di Haniel e l'aspetto normale restano intenzionalmente da definire dal giocatore.\n\nINCUBO RICORRENTE — IL GIORNO DELLA PIAZZA\nNell’incubo la piazza di Lost Town è sempre troppo silenziosa. Senka ricorda il bagliore degli occhi di Lusier III e suo padre ancora in piedi, incapace di inchinarsi a quell’uomo. Poi la spada sacra attraversa la luce: suo padre viene decapitato perché non gli ha reso omaggio. Il rumore della folla si allontana, come se arrivasse da sott’acqua.\n\nSua madre sta correndo verso di lui. A Lusier basta quel movimento per sentirsi ancora una volta offeso: qualcuno osa interrompere il rispetto che pretende. Cinque carte lasciano la sua mano. Nell’incubo Senka le conta sempre, pur desiderando di non arrivare mai all’ultima. La prima le recide un braccio; la seconda l’altro. Altre due colpiscono le gambe. La quinta si ferma nella gola, incastrata nelle ossa. Sua madre sta morendo soffocata dal proprio sangue e dal dolore, e Senka non riesce né a gridare né a distogliere gli occhi.\n\nSky è fra le braccia di Kamaria. È così piccola che lei può ancora tenerla tutta contro il petto, ma le mani di Senka tremano e il suo corpo non obbedisce. Poi la folla, tremante quanto lei, si richiude davanti alla scena. Lusier III se ne va. Nell’incubo sembra che il mondo gli faccia spazio e nasconda ciò che ha fatto.\n\nUna mano raggiunge quella di Senka. È Haniel. La prende e porta via entrambe. Quando il sogno finisce, Senka sente ancora quella stretta: è l’ultima cosa che ricorda prima che la piazza scompaia.\n\nHaniel custodì Senka e Sky per un anno; poi pagò una stanza doppia in taverna per i tre anni successivi, perché potessero vivere tranquille. Capì subito il desiderio di vendetta di Kamaria. Ancora oggi continua a insegnarle attraverso missioni e allenamenti. Sky conosce soltanto un amico che si prende cura di loro. Le intenzioni più profonde di Haniel rimangono misteriose.\n\nHANIEL — «Quando avrai una potenza totale pari o superiore a 277 sarai pronta.»",
+  "notePersonaggio": "Femmina, 16 anni; Mhunan lunare di Lost Town. Aspetto normale volutamente aperto. Dieci punti base confermati: RES3/VOL1/MAT2/OCU4, più i bonus razziali e dei Titoli. Maschera ITEM indossabile, inizialmente disattivata: applica i bonus una sola volta. Le nuove riserve della trasformazione, lo Scudo Oculum, i cloni e la fusione richiedono la nuova build: importare il codice non aggiorna il motore di una vecchia app. Impalamento disponibile subito, separato dalla presa e con costo 2 Oculum. Teletrasporto, Mille Tagli e Open sono registrati come evoluzioni future: i loro automatismi completi restano in lavorazione e vanno verificati prima dello sblocco. Ogni costo, durata, requisito, effetto e statistica resta modificabile. Nessuna scheda di Sky inclusa.",
+  "titoli": [
+    {
+      "nome": "Un Ricordo della Luna",
+      "tipo": "Titolo del Fato",
+      "ottenimento": "Prima Skill della prima Oculum Art al livello 1: Mantello di Tenebre.",
+      "leggenda": "La maschera conserva un segreto che Senka non ha ancora condiviso con Sky.",
+      "buff": "@Stats+4\n@Velo+2\n@Danni+3*livello Luna\n@Difesa+livello Luna",
+      "puntoCieco": "Devi salvarla anche al costo di te stessa, Sky è tutto.",
+      "skill": "",
+      "richiede": "Per evolvere: partecipa alla sconfitta di tre Guardie Solari valide per la progressione personale; ciascuna deve avere Potenza totale almeno pari alla tua.",
+      "resilienza": 0,
+      "volonta": 0,
+      "materia": 0,
+      "oculum": 0,
+      "karma": 0,
+      "equipaggiato": true,
+      "evoluto": false,
+      "openName": "Un Ricordo della Luna",
+      "openDescription": "Da sbloccare uccidendo tre Guardie Solari valide. La Luna compare nel cielo per tutta la Open, fino a fine fight, poi scompare. Senka ottiene +25% a RES/VOL/MAT/OCU più il +5% ricevuto da tutti i Lunari: +30% totale per lei, +5% per gli altri Lunari. Manifestazione temporanea: non riscrive la scomparsa della Luna dal cielo attuale.",
+      "openBuff": "@Danni+10 Luna\n@Difesa+6 Luna\nLa Skill Open passa da CD 3 a CD 2 e da 1d6 a 1d8 tagli.",
+      "openSkill": "Tagli lunari: 1d6 tagli, ciascuno pari a un sesto dei Danni attuali; contro i Solari infliggono il doppio. CD 3 turni. Con Buff Open attivo: 1d8 tagli e CD 2. Ogni taglio conserva difese, resistenze e Scudi del bersaglio.",
+      "openAttiva": false,
+      "chiaveSistema": "fate_title_1_first_art_skill_1_lvl_1",
+      "openExperienceClaimed": 0,
+      "openExtra": [],
+      "skillExtra": [],
+      "titleConditionalBuffs": [],
+      "openConditionalBuffs": [],
+      "openEffects": [
+        {
+          "type": "planar",
+          "target": "senka_moon_open",
+          "valueExpression": "25",
+          "duration": "1",
+          "durationUnit": "fight",
+          "mode": "finche_attivo",
+          "elementType": "lunare"
+        }
+      ]
+    },
+    {
+      "nome": "Vendetta",
+      "tipo": "Titolo del Fato",
+      "ottenimento": "Il ricordo della famiglia sterminata dai Solari.",
+      "leggenda": "Lusier III Guardia Elité di Grado I, dirige battaglie, stermina popoli proprio come ha fatto con la mia famiglia, proprio come io farò con lui.",
+      "buff": "@Volonta+1",
+      "puntoCieco": "",
+      "skill": "",
+      "richiede": "Confrontati con il passato di Senka e con Lusier III.",
+      "resilienza": 0,
+      "volonta": 0,
+      "materia": 0,
+      "oculum": 0,
+      "karma": 0,
+      "equipaggiato": true,
+      "evoluto": false,
+      "openName": "",
+      "openDescription": "",
+      "openBuff": "",
+      "openSkill": "",
+      "openAttiva": false,
+      "chiaveSistema": "senka_fate_vendetta",
+      "openExperienceClaimed": 0,
+      "openExtra": [],
+      "skillExtra": [],
+      "titleConditionalBuffs": [],
+      "openConditionalBuffs": []
+    }
+  ],
+  "trattiRazziali": [
+    {
+      "nome": "Mhunan — Figlia della Luna",
+      "tipo": "Tratto Razziale",
+      "ottenimento": "Tratto razziale Mhunan, appartenenza lunare.",
+      "leggenda": "",
+      "buff": "Visione perfetta al buio. @VisioneBuio @Velo+2. +1 Materia razziale già contenuto nei campi di questo tratto: non aggiungerlo nuovamente alle statistiche base.",
+      "puntoCieco": "",
+      "skill": "",
+      "richiede": "Mhunan.",
+      "resilienza": 0,
+      "volonta": 0,
+      "materia": 1,
+      "oculum": 0,
+      "karma": 0,
+      "equipaggiato": true,
+      "evoluto": false,
+      "openName": "",
+      "openDescription": "",
+      "openBuff": "",
+      "openSkill": "",
+      "openAttiva": false,
+      "chiaveSistema": "tutorial_race_mhunan",
+      "openExperienceClaimed": 0,
+      "openExtra": [],
+      "skillExtra": [],
+      "titleConditionalBuffs": [],
+      "openConditionalBuffs": []
+    }
+  ],
+  "arti": [
+    {
+      "nome": "L'Ombra Mascherata",
+      "tipo": "Oculum Art",
+      "descrizione": "Potere latente di Senka Kamaria. Manifesta una maschera intera nera opaca, compatta, con solchi a spirale e DUE fori a forma dell'occhio perfetto, ciascuno circondato da un circolo. Gli occhi diventano del colore dell'Oculum. Un mantello di tenebre si dissolve ai bordi in filamenti e tentacoli. Senka rimane cosciente e interpreta deliberatamente un'identità diversa. Manifestare la maschera costa zero risorse. Gli effetti speciali della trasformazione sono descritti anche nel Titolo e nelle note di gestione.",
+      "skills": [
+        {
+          "nome": "Mantello di Tenebre",
+          "livello": 1,
+          "evo1": "I — Con la maschera attiva, paga 3 Oculum per diventare intangibile fino al prossimo turno personale. Il mantello avvolge il corpo come una sagoma estranea. Durante un proprio attacco Senka torna momentaneamente solida; poi riprende la forma ombra per la durata residua. Non conferisce protezione dagli attacchi capaci di colpire immateriali. CD 2 turni personali.",
+          "evo2": "II — Richiede livello 4 e Velo +5. Costa 4 Oculum; stessa durata. Durante la forma ombra può insinuarsi in un varco realmente abbastanza ampio per la sua sagoma, senza attraversare indiscriminatamente pareti sigillate. CD 2 turni personali.",
+          "evo3": "III — Richiede livello 8 e Velo +8. Costa 5 Oculum; stessa durata. Può occultare meglio contorni e direzione del movimento: +3 Velo durante la forma, mantenendo il ritorno solido durante ogni proprio attacco. CD 2 turni personali.",
+          "evo4": "Evoluzione futura da personalizzare con il Master.",
+          "evo5": "Evoluzione futura da personalizzare con il Master.",
+          "resilienza": 0,
+          "volonta": 0,
+          "materia": 0,
+          "oculum": 0,
+          "danni": 0,
+          "difesa": 0,
+          "oculumMinimiPerLivello": [
+            3,
+            4,
+            5,
+            0,
+            0
+          ],
+          "oculumMassimiPerLivello": [
+            3,
+            4,
+            5,
+            0,
+            0
+          ],
+          "oculumMassimiInizialiPerLivello": [
+            3,
+            4,
+            5,
+            0,
+            0
+          ],
+          "oculumLimitiManualiPerLivello": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "costoOculumDisabilitatoPerLivello": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "risorseCostoPerLivello": [
+            "oculum",
+            "oculum",
+            "oculum",
+            "oculum",
+            "oculum"
+          ],
+          "tipiPerLivello": [
+            "Attiva",
+            "Attiva",
+            "Attiva",
+            "Attiva",
+            "Attiva"
+          ],
+          "unlockRequirementsPerLevel": [
+            {
+              "level": 1
+            },
+            {
+              "level": 4,
+              "subtrait": "velo",
+              "subtraitValue": 5
+            },
+            {
+              "level": 8,
+              "subtrait": "velo",
+              "subtraitValue": 8
+            },
+            {},
+            {}
+          ],
+          "cooldownPerLivello": [
+            {
+              "amount": 2,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 2,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 2,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 0,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 0,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            }
+          ],
+          "effettiPerLivello": [
+            [
+              {
+                "type": "planar",
+                "target": "senka_shadow_form",
+                "valueExpression": "1",
+                "elementType": "ombra",
+                "duration": "1",
+                "mode": "immediato"
+              }
+            ],
+            [
+              {
+                "type": "planar",
+                "target": "senka_shadow_form",
+                "valueExpression": "1",
+                "elementType": "ombra",
+                "duration": "1",
+                "mode": "immediato"
+              }
+            ],
+            [
+              {
+                "type": "planar",
+                "target": "senka_shadow_form",
+                "valueExpression": "1",
+                "elementType": "ombra",
+                "duration": "1",
+                "mode": "immediato"
+              }
+            ],
+            [],
+            []
+          ]
+        },
+        {
+          "nome": "Tentacoli d’Ombra",
+          "livello": 1,
+          "evo1": "I — Paga 2 Oculum e un’Azione per tentare di bloccare UN bersaglio con filamenti neri; confronto di Manifestazione del Potere contro una difesa coerente. Una presa riuscita dura fino al prossimo turno personale. Finché è trattenuto, un’ALTRA Azione o Reazione e 2 Oculum consentono di infilzarlo: nuovo confronto contro il tiro del nemico per liberarsi, con Danni attuali di Senka +6 Buio se riesce. Nessun impalamento gratuito incluso nella presa. Una Reazione non avanza il turno.",
+          "evo2": "II — Richiede livello 5, Manifestazione del Potere +5 e la sconfitta di una Guardia Solare con Potenza totale almeno pari alla tua. Presa su massimo DUE bersagli, con difesa separata per ciascuno; costo 4 Oculum. Ogni impalamento richiede ancora un’Azione o Reazione separata e 2 Oculum, contro un solo bersaglio trattenuto. Danni attuali +10 Buio.",
+          "evo3": "III — Richiede livello 9 e Manifestazione del Potere +8. Presa su massimo TRE bersagli, con difese separate; costo 6 Oculum. Ogni impalamento costa separatamente un’Azione o Reazione e 3 Oculum. Danni attuali +15 Buio. Le prese non si moltiplicano riattivando la stessa forma.",
+          "evo4": "Evoluzione futura da personalizzare con il Master.",
+          "evo5": "Evoluzione futura da personalizzare con il Master.",
+          "resilienza": 0,
+          "volonta": 0,
+          "materia": 0,
+          "oculum": 0,
+          "danni": 0,
+          "difesa": 0,
+          "oculumMinimiPerLivello": [
+            2,
+            4,
+            6,
+            0,
+            0
+          ],
+          "oculumMassimiPerLivello": [
+            2,
+            4,
+            6,
+            0,
+            0
+          ],
+          "oculumMassimiInizialiPerLivello": [
+            2,
+            4,
+            6,
+            0,
+            0
+          ],
+          "oculumLimitiManualiPerLivello": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "costoOculumDisabilitatoPerLivello": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "risorseCostoPerLivello": [
+            "oculum",
+            "oculum",
+            "oculum",
+            "oculum",
+            "oculum"
+          ],
+          "tipiPerLivello": [
+            "Attiva",
+            "Attiva",
+            "Attiva",
+            "Attiva",
+            "Attiva"
+          ],
+          "unlockRequirementsPerLevel": [
+            {
+              "level": 1
+            },
+            {
+              "level": 5,
+              "subtrait": "manifestazione_potere",
+              "subtraitValue": 5,
+              "speciesKills": {
+                "guardia_solare": 1
+              },
+              "minimumEnemyPower": "owner"
+            },
+            {
+              "level": 9,
+              "subtrait": "manifestazione_potere",
+              "subtraitValue": 8
+            },
+            {},
+            {}
+          ],
+          "cooldownPerLivello": [
+            {
+              "amount": 2,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 3,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 3,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 0,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 0,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            }
+          ],
+          "effettiPerLivello": [
+            [
+              {
+                "id": "senka_grapple_1",
+                "type": "stato",
+                "appliedState": "immobilizzato",
+                "target": "immobilizzato",
+                "valueExpression": "1",
+                "recipient": "nemico",
+                "duration": "1",
+                "mode": "finche_attivo",
+                "elementType": "ombra",
+                "maximumTargets": 1
+              }
+            ],
+            [
+              {
+                "id": "senka_grapple_2",
+                "type": "stato",
+                "appliedState": "immobilizzato",
+                "target": "immobilizzato",
+                "valueExpression": "1",
+                "recipient": "nemico",
+                "duration": "1",
+                "mode": "finche_attivo",
+                "elementType": "ombra",
+                "maximumTargets": 2
+              }
+            ],
+            [
+              {
+                "id": "senka_grapple_3",
+                "type": "stato",
+                "appliedState": "immobilizzato",
+                "target": "immobilizzato",
+                "valueExpression": "1",
+                "recipient": "nemico",
+                "duration": "1",
+                "mode": "finche_attivo",
+                "elementType": "ombra",
+                "maximumTargets": 3
+              }
+            ],
+            [],
+            []
+          ]
+        },
+        {
+          "nome": "Passo nell’Ombra",
+          "livello": 0,
+          "evo1": "I — DA SBLOCCARE: livello 3 e Velo +5. Costa 3 Oculum e usa un’Azione oppure una Reazione se risponde a un attacco. Richiede un’ombra ambientale visibile entro 6 metri: il mantello non basta. Un confronto di Velo con l’avversario decide il vantaggio: se Senka supera il tiro ottiene UNA Reazione veloce e +5 al successivo tiro per colpire OPPURE difendersi. Se sta subendo un attacco, il +5 vale già contro quel colpo e si consuma lì. Non assegnare due volte il medesimo bonus. CD 3 turni personali.",
+          "evo2": "II — Richiede livello 6 e Velo +7. Costa 4 Oculum, portata 9 metri; stessa Reazione veloce e stesso bonus +5 su un solo tiro. CD 3 turni personali.",
+          "evo3": "III — Richiede livello 10 e Velo +10. Costa 5 Oculum, portata 12 metri; stessa Reazione veloce e stesso bonus +5 su un solo tiro. CD 2 turni personali.",
+          "evo4": "Evoluzione futura da personalizzare con il Master.",
+          "evo5": "Evoluzione futura da personalizzare con il Master.",
+          "resilienza": 0,
+          "volonta": 0,
+          "materia": 0,
+          "oculum": 0,
+          "danni": 0,
+          "difesa": 0,
+          "oculumMinimiPerLivello": [
+            3,
+            4,
+            5,
+            0,
+            0
+          ],
+          "oculumMassimiPerLivello": [
+            3,
+            4,
+            5,
+            0,
+            0
+          ],
+          "oculumMassimiInizialiPerLivello": [
+            3,
+            4,
+            5,
+            0,
+            0
+          ],
+          "oculumLimitiManualiPerLivello": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "costoOculumDisabilitatoPerLivello": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "risorseCostoPerLivello": [
+            "oculum",
+            "oculum",
+            "oculum",
+            "oculum",
+            "oculum"
+          ],
+          "tipiPerLivello": [
+            "Attiva",
+            "Attiva",
+            "Attiva",
+            "Attiva",
+            "Attiva"
+          ],
+          "unlockRequirementsPerLevel": [
+            {
+              "level": 3,
+              "subtrait": "velo",
+              "subtraitValue": 5
+            },
+            {
+              "level": 6,
+              "subtrait": "velo",
+              "subtraitValue": 7
+            },
+            {
+              "level": 10,
+              "subtrait": "velo",
+              "subtraitValue": 10
+            },
+            {},
+            {}
+          ],
+          "cooldownPerLivello": [
+            {
+              "amount": 3,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 3,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 2,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 0,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            },
+            {
+              "amount": 0,
+              "unit": "turni",
+              "startsReady": true,
+              "remaining": 0
+            }
+          ]
+        }
+      ],
+      "sbloccata": true,
+      "openName": "Da definire insieme al Master",
+      "openDescription": "Open futura non ancora stabilita: nessun potere aggiuntivo assegnato implicitamente.",
+      "openBuff": "",
+      "openSkill": "",
+      "openAttiva": false,
+      "runeWordsKnown": [],
+      "runeQuickWordIds": [],
+      "runeQuickWordIdsSlot2": [],
+      "runeActiveSlot": 1,
+      "runeCustomWords": [],
+      "runeBooksRead": 0,
+      "integritaCorrente": -1,
+      "esaurimentoCompleto": false,
+      "hasIntegrity": true,
+      "weakPointLocation": "La maschera: solo attacchi capaci di colpire immateriali possono scheggiarla quando viene mirata.",
+      "occhiCoinvolti": "Entrambi gli occhi, del colore dell’Oculum."
+    }
+  ],
+  "skills": [
+    {
+      "nome": "Impalamento d’Ombra",
+      "tipo": "Attacco",
+      "costo": "@ocu-2",
+      "cooldown": "0",
+      "equipaggiata": true,
+      "descrizione": "Disponibile subito. Richiede un bersaglio ancora immobilizzato dai propri Tentacoli d’Ombra e la maschera attiva. Paga un’altra Azione o Reazione e 2 Oculum. Nuovo confronto contro la difesa con cui il nemico cerca di liberarsi. Se riesce: Danni attuali +6 Buio. La Reazione non avanza il turno.",
+      "forme": [
+        {
+          "nome": "I",
+          "tipo": "Attacco",
+          "livello": "1",
+          "costo": "@ocu-2",
+          "costoStrutturato": {
+            "resource": "oculum",
+            "amountExpression": "2",
+            "minimum": 2,
+            "maximum": 2
+          },
+          "cooldownStrutturato": {
+            "amount": 0,
+            "unit": "turni",
+            "startsReady": true,
+            "remaining": 0
+          },
+          "effettiStrutturati": [
+            {
+              "type": "danno",
+              "valueExpression": "6",
+              "elementType": "ombra",
+              "recipient": "bersaglio",
+              "mode": "prossima_azione"
+            },
+            {
+              "type": "planar",
+              "target": "senka_shadow_impale",
+              "valueExpression": "0",
+              "elementType": "ombra",
+              "recipient": "bersaglio",
+              "mode": "prossima_azione"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "Mille Tagli",
+      "tipo": "Attiva · Attacco",
+      "costo": "@mat-1",
+      "cooldown": "1 Riposo Lungo",
+      "descrizione": "Da sbloccare: livello 6 e Riflessi +6. Richiede maschera attiva e coltello. Usa Riflessi per il tiro della Skill. Se il colpo riesce infligge SUBITO come UNICO danno: Danni attuali di Senka + totale del tiro Riflessi effettivamente usato + Potenza totale attuale. Non aggiungere nuovamente il danno base e non usare un tiro Riflessi aggiuntivo. Dopo l’uso SENKA riceve Sfinimento per UN turno personale: perde/blocca le Reazioni secondo le regole di Sfinimento. Non è danno di tipo Sfinimento e non è un effetto sul nemico. Una volta per Riposo Lungo. Costo iniziale modificabile: 1 Materia.",
+      "equipaggiata": false,
+      "forme": [
+        {
+          "nome": "Mille Tagli",
+          "tipo": "Attiva · Attacco",
+          "livello": "6",
+          "costo": "@mat-1",
+          "cooldown": "1 Riposo Lungo",
+          "descrizione": "Da sbloccare: livello 6 e Riflessi +6. Richiede maschera attiva e coltello. Usa Riflessi per il tiro della Skill. Se il colpo riesce infligge SUBITO come UNICO danno: Danni attuali di Senka + totale del tiro Riflessi effettivamente usato + Potenza totale attuale. Non aggiungere nuovamente il danno base e non usare un tiro Riflessi aggiuntivo. Dopo l’uso SENKA riceve Sfinimento per UN turno personale: perde/blocca le Reazioni secondo le regole di Sfinimento. Non è danno di tipo Sfinimento e non è un effetto sul nemico. Una volta per Riposo Lungo. Costo iniziale modificabile: 1 Materia.",
+          "unlockRequirements": {
+            "level": 6,
+            "subtrait": "riflessi",
+            "subtraitValue": 6
+          },
+          "costoStrutturato": {
+            "resource": "materia",
+            "amountExpression": "1",
+            "minimum": 1,
+            "maximum": 1,
+            "variable": false
+          },
+          "cooldownStrutturato": {
+            "amount": 1,
+            "unit": "riposi_lunghi",
+            "startsReady": true,
+            "remaining": 0
+          },
+          "oculumMinimoUtilizzabile": 1,
+          "oculumMassimoUtilizzabile": 1,
+          "oculumMassimoMaestriaIniziale": 1,
+          "oculumLimitiConfiguratiManualmente": true
+        }
+      ]
+    },
+    {
+      "nome": "Clone d’ombra di Senka",
+      "tipo": "Attiva · Evocazione",
+      "costo": "@mat-1",
+      "cooldown": "2 turni personali",
+      "equipaggiata": true,
+      "descrizione": "Spende da 1 a 10 Materia. Crea automaticamente un clone con Vita = Materia SPESA ×2 + livello di Senka; esempio 4 Materia e livello 1 → 9 Vita. Copia le quattro statistiche, sottotratti e Skill al momento dell’evocazione, compresa la maschera se attiva, senza duplicare due volte i bonus. Non può evocare altri cloni. Più cloni contemporanei, ciascuno pagato separatamente. Dura per tutto il fight o fino a 0 Vita. Alla creazione: 0 Azioni, 0 Reazioni normali, 1 Reazione veloce. Dai suoi turni: 0 Azioni e 1 Reazione normale; non riceve l’Azione ordinaria. Variante personale del Clone d’ombra del manuale; richiede il runtime della nuova versione; importare la scheda non aggiorna una vecchia app. Limite TOTALE per fight: max(1, min(16, 2 × livello)). Livello 0: 1; livello 1: 2; livello 4: 8; dal livello 8: 16. Contano anche i cloni morti o assorbiti: la fusione non libera nuovi utilizzi.",
+      "forme": [
+        {
+          "nome": "Clone d’ombra",
+          "tipo": "Attiva · Evocazione",
+          "livello": "1",
+          "costo": "@mat-1",
+          "descrizione": "Spende da 1 a 10 Materia. Crea automaticamente un clone con Vita = Materia SPESA ×2 + livello di Senka; esempio 4 Materia e livello 1 → 9 Vita. Copia le quattro statistiche, sottotratti e Skill al momento dell’evocazione, compresa la maschera se attiva, senza duplicare due volte i bonus. Non può evocare altri cloni. Più cloni contemporanei, ciascuno pagato separatamente. Dura per tutto il fight o fino a 0 Vita. Alla creazione: 0 Azioni, 0 Reazioni normali, 1 Reazione veloce. Dai suoi turni: 0 Azioni e 1 Reazione normale; non riceve l’Azione ordinaria. Variante personale del Clone d’ombra del manuale; richiede il runtime della nuova versione; importare la scheda non aggiorna una vecchia app. Limite TOTALE per fight: max(1, min(16, 2 × livello)). Livello 0: 1; livello 1: 2; livello 4: 8; dal livello 8: 16. Contano anche i cloni morti o assorbiti: la fusione non libera nuovi utilizzi.",
+          "oculumMinimoUtilizzabile": 1,
+          "oculumMassimoUtilizzabile": 10,
+          "oculumMassimoMaestriaIniziale": 10,
+          "oculumLimitiConfiguratiManualmente": true,
+          "costoStrutturato": {
+            "resource": "materia",
+            "amountExpression": "1",
+            "minimum": 1,
+            "maximum": 10,
+            "variable": true
+          },
+          "cooldownStrutturato": {
+            "amount": 2,
+            "unit": "turni",
+            "startsReady": true,
+            "remaining": 0
+          },
+          "effettiStrutturati": [
+            {
+              "id": "senka_shadow_clone_v1",
+              "type": "planar",
+              "target": "senka_shadow_clone",
+              "valueExpression": "materia_spent*2+livello",
+              "mode": "immediato",
+              "duration": "1",
+              "durationUnit": "fight",
+              "recipient": "se_stesso",
+              "enabled": true,
+              "narrativeText": "Spende da 1 a 10 Materia. Crea automaticamente un clone con Vita = Materia SPESA ×2 + livello di Senka; esempio 4 Materia e livello 1 → 9 Vita. Copia le quattro statistiche, sottotratti e Skill al momento dell’evocazione, compresa la maschera se attiva, senza duplicare due volte i bonus. Non può evocare altri cloni. Più cloni contemporanei, ciascuno pagato separatamente. Dura per tutto il fight o fino a 0 Vita. Alla creazione: 0 Azioni, 0 Reazioni normali, 1 Reazione veloce. Dai suoi turni: 0 Azioni e 1 Reazione normale; non riceve l’Azione ordinaria. Variante personale del Clone d’ombra del manuale; richiede il runtime della nuova versione; importare la scheda non aggiorna una vecchia app."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "Confluenza delle Ombre",
+      "tipo": "Attiva · Supporto",
+      "costo": "Nessun costo",
+      "cooldown": "",
+      "descrizione": "Richiede Velo +6 raggiunto senza buff temporanei. Usa UN’Azione, senza altri costi, per fondere Senka con TUTTI i suoi Cloni d’ombra attualmente presenti nel fight. I cloni assorbiti scompaiono e non generano morte nemica, EXP o Drop. Senka riceve come HP temporanei la somma della loro Vita ATTUALE. Riceve inoltre floor(somma Volontà dei cloni/10), floor(somma Materia/10) e floor(somma Oculum/10): prima somma, poi arrotonda per difetto. Nessun bonus Resilienza. Tutti questi benefici durano fino a fine fight. Esempio: due cloni con 7 Volontà ciascuno danno +1 Volontà. I cloni assorbiti contano ancora nel limite totale evocabile per fight. Runtime personale della nuova versione; verificare separatamente i fight condivisi.",
+      "equipaggiata": false,
+      "forme": [
+        {
+          "nome": "Confluenza delle Ombre",
+          "tipo": "Attiva · Supporto",
+          "livello": "1",
+          "costo": "Nessun costo",
+          "descrizione": "Richiede Velo +6 raggiunto senza buff temporanei. Usa UN’Azione, senza altri costi, per fondere Senka con TUTTI i suoi Cloni d’ombra attualmente presenti nel fight. I cloni assorbiti scompaiono e non generano morte nemica, EXP o Drop. Senka riceve come HP temporanei la somma della loro Vita ATTUALE. Riceve inoltre floor(somma Volontà dei cloni/10), floor(somma Materia/10) e floor(somma Oculum/10): prima somma, poi arrotonda per difetto. Nessun bonus Resilienza. Tutti questi benefici durano fino a fine fight. Esempio: due cloni con 7 Volontà ciascuno danno +1 Volontà. I cloni assorbiti contano ancora nel limite totale evocabile per fight. Runtime personale della nuova versione; verificare separatamente i fight condivisi.",
+          "unlockRequirements": {
+            "subtrait": "velo",
+            "subtraitValue": 6,
+            "permanentOnly": true
+          },
+          "costoStrutturato": {
+            "resource": "nessuna",
+            "amountExpression": "0",
+            "minimum": 0,
+            "maximum": 0,
+            "variable": false
+          },
+          "effettiStrutturati": [
+            {
+              "id": "senka_shadow_fusion_v1",
+              "type": "planar",
+              "target": "senka_shadow_fusion",
+              "valueExpression": "1",
+              "mode": "immediato",
+              "duration": "1",
+              "durationUnit": "fight",
+              "recipient": "se_stesso",
+              "enabled": true,
+              "narrativeText": "Richiede Velo +6 raggiunto senza buff temporanei. Usa UN’Azione, senza altri costi, per fondere Senka con TUTTI i suoi Cloni d’ombra attualmente presenti nel fight. I cloni assorbiti scompaiono e non generano morte nemica, EXP o Drop. Senka riceve come HP temporanei la somma della loro Vita ATTUALE. Riceve inoltre floor(somma Volontà dei cloni/10), floor(somma Materia/10) e floor(somma Oculum/10): prima somma, poi arrotonda per difetto. Nessun bonus Resilienza. Tutti questi benefici durano fino a fine fight. Esempio: due cloni con 7 Volontà ciascuno danno +1 Volontà. I cloni assorbiti contano ancora nel limite totale evocabile per fight. Runtime personale della nuova versione; verificare separatamente i fight condivisi."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "inventario": [
+    {
+      "nome": "Maschera di Senka — L’Ombra Mascherata",
+      "peso": 0.1,
+      "quantita": 1,
+      "note": "Sky conosce una sorella impacciata e una figura oscura che le protegge. Non sa che hanno lo stesso volto.\nSOLO CON MASCHERA ATTIVA: +6 RES, +5 VOL, +10 MAT, +5 OCU, +6 Danni e +3 Difesa. @Danni+6 @Difesa+3. La riserva di Vita aggiunta dai +6 RES e i +5 Oculum spendibili si RICARICANO a ogni nuova attivazione, per correzione esplicita dell’utente. +10 Scudo soltanto alla prima attivazione di ogni fight. Scudo Oculum proprio della maschera: massimo normale 20.\nSolo quando viene mirata proprio la maschera, questa e il corpo diventano immediatamente immateriali per quell’attacco, come passiva. Un colpo capace di raggiungere immateriali la scheggia; filamenti neri la ricompongono senza rivelare abbastanza del volto. La passiva NON vale contro ogni attacco al corpo. Finché lo Scudo Oculum non è spezzato, ogni attacco che infligge effettivamente Danni recupera min(6, 1 + max(0, livello nemico − livello Senka)), entro 20. A 0 si spezza e non si rigenera sui Danni: torna dopo Riposo Breve o Lungo, oppure riparando il nucleo dell’Art con VELO. Riparazione consentita soltanto se lo Scudo Oculum è sotto il massimo: recupera il totale del tiro, anche oltre 20; se era spezzato recupera invece ceil(3 × tiro / 4), per eccesso. Esempio: tiro 10 → 8 se spezzato; tiro 12 → 9. Se già a 20 o oltre non puoi usare questa riparazione.\nVulnerabilità minore alla magia solare: proposta iniziale modificabile +15% Danni ricevuti da magia solare. Se un attacco capace di colpire immateriali centra criticamente la maschera, la trasformazione si disattiva per un turno.",
+      "buff": "@res+6; @vol+5; @mat+10; @ocu+5",
+      "protegge": true,
+      "equipaggiata": false,
+      "bonusDanno": 6,
+      "bonusDifesa": 3,
+      "bonusScudo": 0,
+      "bonusScudoOculum": 20,
+      "scudoIntegritaOculumCorrente": 20,
+      "livelloOggetto": 1,
+      "gradoOggetto": 0,
+      "gradoRichiesto": 0,
+      "craftData": {
+        "senkaMask": true,
+        "latentManifestation": true,
+        "onEquipNormalShield": 10,
+        "onEquipNormalShieldOncePerFight": true,
+        "refillTransformationHpOnEquip": true,
+        "refillTransformationOculumOnEquip": true,
+        "oculumShieldRegen": "min(6,1+max(0,enemyLevel-ownerLevel))",
+        "repairSubtrait": "velo",
+        "brokenRepairNumerator": 3,
+        "brokenRepairDenominator": 4,
+        "brokenRepairRounding": "ceil",
+        "repairMayOverflow": true,
+        "repairOnlyBelowMaximum": true,
+        "futureRuntimeRequired": true
+      }
+    },
+    {
+      "nome": "Coltello di Senka",
+      "peso": 0.25,
+      "quantita": 1,
+      "note": "Coltello semplice da incarichi e autodifesa. Materiale e aspetto ancora personalizzabili; nessun potere magico implicito.",
+      "arma": true,
+      "equipaggiata": true,
+      "bonusDanno": 1,
+      "elementoDanno": "Tagliente",
+      "livelloOggetto": 1
+    }
+  ],
+  "hiddenEyeStats": [
+    {
+      "id": "velo",
+      "nome": "Velo",
+      "descrizione": "Scelta iniziale modificabile; competenze apprese da Haniel.",
+      "valore": 3,
+      "unlocked": true
+    },
+    {
+      "id": "riflessi",
+      "nome": "Riflessi",
+      "descrizione": "Scelta iniziale modificabile; competenze apprese da Haniel.",
+      "valore": 3,
+      "unlocked": true
+    },
+    {
+      "id": "inganno",
+      "nome": "Inganno",
+      "descrizione": "Scelta iniziale modificabile; competenze apprese da Haniel.",
+      "valore": 2,
+      "unlocked": true
+    },
+    {
+      "id": "percezione",
+      "nome": "Percezione",
+      "descrizione": "Scelta iniziale modificabile; competenze apprese da Haniel.",
+      "valore": 1,
+      "unlocked": true
+    }
+  ],
+  "tutorialSubtraitAllocation": {
+    "velo": 3,
+    "riflessi": 3,
+    "inganno": 2,
+    "percezione": 1
+  },
+  "tutorialCompletato": true,
+  "campaignDifficulty": "normale",
+  "planarRuntime": {
+    "identityCelestial": "lunare",
+    "hanielLusierTargetPower": 277
+  }
+}

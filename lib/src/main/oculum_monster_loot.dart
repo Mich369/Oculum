@@ -56,6 +56,8 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
               !skill.evo1.toLowerCase().contains('passiva automatica'),
         )
         .toList();
+    final sourceAppearance = monster.descIt.split(RegExp(r'(?<=[.!?])\s+')).first;
+    final sourceMaterials = monster.dropIds.map(oculumMonsterDropName).join(', ');
     if (skills.isEmpty) continue;
     final itemLevel = max(0, level ?? readIntValue(monster.stats['level']));
     final itemGrade = (grade ?? readIntValue(monster.stats['grade']))
@@ -109,16 +111,25 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
                 : 1.0,
             quantita: 1,
             note:
-                'Reliquia rara di ${monster.nameIt}. $style Riprende la Skill ${skill.nome} e il suo elemento ${monster.elementId}; non copia le statistiche base della creatura. Grado $itemGrade, livello $itemLevel. Richiede il livello $itemLevel per usare la Skill.',
+                'Reliquia rara di ${monster.nameIt}. $style Colori e struttura riprendono la creatura: $sourceAppearance Materiali coerenti: $sourceMaterials. Riprende la Skill ${skill.nome} e il suo elemento ${monster.elementId}; non copia le statistiche base della creatura. Grado $itemGrade, livello $itemLevel. Richiede il livello $itemLevel per usare la Skill.',
             arma: weapon,
             protegge: !weapon,
-            bonusDanno: weapon ? damage : 0,
-            bonusDifesa: weapon
+            bonusDanno: weapon
+                ? (monster.id == 'costrutto_minore' ? 1 : damage)
+                : 0,
+            bonusDifesa: monster.id == 'costrutto_minore'
+                ? (weapon ? 0 : 1)
+                : weapon
                 ? 0
                 : type == 'shield'
                 ? defense
                 : defense + 1,
-            bonusScudo: type == 'shield' ? 10 + itemLevel * 3 : 0,
+            bonusScudo: monster.id == 'costrutto_minore'
+                ? 35 + itemLevel * 15
+                : type == 'shield'
+                ? 10 + itemLevel * 3
+                : 0,
+            buff: monster.id == 'costrutto_minore' && weapon ? '@cm+1' : '',
             bonusScudoOculum: type == 'shield' ? 3 + itemGrade : 0,
             gradoOggetto: itemGrade,
             gradoRichiesto: itemGrade,
@@ -268,6 +279,18 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     throw ArgumentError.value(natural, 'naturalDropRoll');
   }
   final resolvedDropTotal = dropTotal ?? natural;
+  if (monster.id == 'funghetto_cappuccio_rosso') {
+    return natural == 20
+        ? []
+        : [
+            oculumRedcapBody(
+              killId: killId,
+              cooked: oculumNormalizeElementId(finishingElement) == 'fuoco',
+              level: safeLevel,
+              grade: safeGrade,
+            ),
+          ];
+  }
   final dropDifficulty = oculumMonsterDropDifficulty(
     level: safeLevel,
     grade: safeGrade,
@@ -306,6 +329,17 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     );
   }
   final cycleScrollDrops = <InventoryItem>[];
+  if (monster.id == 'costrutto_minore' && resolvedDropTotal >= dropDifficulty) {
+    cycleScrollDrops.add(
+      oculumPlanarTechniqueScroll(
+        monster,
+        'minor_construct_summon',
+        receipt: '$killId:minor_construct_summon',
+        level: safeLevel,
+        grade: safeGrade,
+      ),
+    );
+  }
   if (oculumMonsterCyclePhase(monster).isNotEmpty &&
       monster.skillIds.isNotEmpty) {
     final minimum = readIntValue(
@@ -919,6 +953,7 @@ extension _OculumMonsterLoot on _OculumHomePageState {
   void generateMonsterLootForDeath(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return;
     final sheet = schedePersonaggio[index];
+    if (oculumEncounterEnemyIsSummon(sheet)) return;
     if (sheet['monsterLootGenerated'] == true) return;
     final monster = monsterLootSourceForSheet(sheet);
     if (monster == null || monster.isNpc) return;

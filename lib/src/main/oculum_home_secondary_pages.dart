@@ -328,12 +328,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     ensureArtIntegrityValue(artIndex);
     final maximum = artIntegrityMaximum();
     final current = arti[artIndex].integritaCorrente.clamp(0, maximum).toInt();
-    if (current >= maximum) return;
+    final senkaRepair = senkaMaskItem != null &&
+        arti[artIndex].nome == "L'Ombra Mascherata";
+    if (current >= maximum && !senkaRepair) return;
 
     final targetArt = arti[artIndex];
     final targetSheetTag = sheetTagAt(schedaCorrente);
     final artName = nomeArtPerAggiustaNucleo(artIndex);
-    final medicine = medicinaAttualeAggiustaNucleo();
+    final medicine = senkaRepair
+        ? hiddenEyeStats.where((s) => s.id == 'velo').map(hiddenEyeTotal).firstOrNull ?? hiddenEyeDerivedBonus('velo')
+        : medicinaAttualeAggiustaNucleo();
     final maximumIntegrityBonus = oculumRepairCoreMaximumIntegrityBonus(
       maximum,
     );
@@ -376,7 +380,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
               const SizedBox(height: 6),
               smallInfoText(
-                '${t('Bonus Medicina applicato', 'Applied Medicine bonus')}: ${bonusConSegno(medicine)}',
+                '${senkaRepair ? t('Bonus Velo applicato', 'Applied Veil bonus') : t('Bonus Medicina applicato', 'Applied Medicine bonus')}: ${bonusConSegno(medicine)}',
                 color: accent,
               ),
               if (maximumIntegrityBonus > 0) ...[
@@ -392,8 +396,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               const SizedBox(height: 12),
               smallInfoText(
                 t(
-                  'Confermando tiri una sola volta 1d10 + Medicina. Il totale viene arrotondato alla decina: unità 0–5 in basso, 6–9 in alto.',
-                  'Confirming rolls 1d10 + Medicine once. The total is rounded to tens: units 0–5 down, 6–9 up.',
+                  senkaRepair ? 'Tiri 1d10 + Velo. Lo Scudo Oculum sotto il massimo recupera il totale effettivo, anche oltre 20; se spezzato, tre quarti per eccesso. L’integrità Art segue il suo arrotondamento ordinario.' : 'Confermando tiri una sola volta 1d10 + Medicina. Il totale viene arrotondato alla decina: unità 0–5 in basso, 6–9 in alto.',
+                  senkaRepair ? 'Roll 1d10 + Veil. The mask shield recovers the actual total, or three quarters rounded up if broken; Art integrity keeps its usual rounding.' : 'Confirming rolls 1d10 + Medicine once. The total is rounded to tens: units 0–5 down, 6–9 up.',
                 ),
                 color: Colors.grey.shade300,
               ),
@@ -443,6 +447,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final rawTotal = d10 + medicine;
     final roundedTotal = oculumAggiustaNucleoRoundedTotal(rawTotal);
     final boostedTotal = roundedTotal + maximumIntegrityBonus;
+    if (senkaRepair) repairSenkaMaskShield(rawTotal);
     final before = targetArt.integritaCorrente.clamp(0, maximum).toInt();
     final effectiveRecovery = oculumAggiustaNucleoEffectiveRecovery(
       current: before,
@@ -2075,7 +2080,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  t('Fortuna', 'Luck'),
+                  t('Fortuna magica', 'Magical Luck'),
                   style: const TextStyle(
                     color: color,
                     fontSize: 20,
@@ -2096,8 +2101,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 8),
           smallInfoText(
             t(
-              'Risorsa consumabile: puoi spenderla per aggiungere +1 a stats, attacco, difesa e iniziativa tramite bonus rapidi.',
-              'Consumable resource: spend it to add +1 to stats, attack, defense and initiative through quick bonuses.',
+              'Ogni punto posseduto aggiunge sempre +1 a Fortuna. Ogni doppio critico positivo concede +1 Fortuna magica. Puoi spenderla con gli usi previsti.',
+              'Each point held always adds +1 to Luck. Each positive double critical grants +1 Magical Luck. It can be spent by its available uses.',
             ),
           ),
           const SizedBox(height: 12),
@@ -2135,7 +2140,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(44),
             ),
-            label: Text(t('Usa Fortuna', 'Use Luck')),
+            label: Text(t('Usa Fortuna magica', 'Use Magical Luck')),
           ),
         ],
       ),
@@ -2405,6 +2410,21 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'You avoid passive damage, but gained Madness doubles and stronger encounters become more frequent.',
               ),
             ),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            key: ValueKey('madness-days-${sheetTagAt(schedaCorrente)}'),
+            initialValue: '${readIntValue(planarState['madnessDays'])}',
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Giorni di Follia',
+              helperText:
+                  'Strana Presenza: almeno 2 Follia oppure dal giorno 37.',
+            ),
+            onChanged: (text) {
+              planarState['madnessDays'] = max(0, int.tryParse(text) ?? 0);
+              programmaSalvataggio();
+            },
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -5763,6 +5783,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   );
 
   Widget masterDashboardMonsterBookPanel() {
+    if (!haPermessiMaster) return const SizedBox.shrink();
     final query = oculumNormalizeText(monsterBookSearchController.text);
     String categoryFor(MonsterBookEntry entry) {
       if (entry.isBoss) return 'Boss';
@@ -5788,11 +5809,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     // Il Book può contenere centinaia di mostri e varianti: la scansione è
     // riusata finché non cambiano query, filtro o la lista configurata.
     final filterCacheKey =
-        'power-asc|${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter';
+        'power-asc|${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter|$monsterBookKnowledgeFilter|${combatKnowledgeRevision.value}';
     final filtered = monsterBookFilterCacheKey == filterCacheKey
         ? monsterBookFilterCache
         : monsterBookEntries
               .where((entry) {
+                final known = monsterBookPartyKnowsAny(entry.id);
+                if (monsterBookKnowledgeFilter == 'known' && !known ||
+                    monsterBookKnowledgeFilter == 'locked' && known) {
+                  return false;
+                }
                 final categoryMatches =
                     monsterBookTierFilter == 'Tutti' ||
                     categoryFor(entry) == monsterBookTierFilter ||
@@ -5859,6 +5885,30 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           monsterHabitatFilter(
             monsterBookHabitatFilter,
             (v) => setState(() => monsterBookHabitatFilter = v),
+          ),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final filter in {
+                'all': 'Tutti',
+                'known': 'Conosciuti dal party',
+                'locked': 'Da sbloccare · solo Master',
+              }.entries)
+                FilterChip(
+                  avatar: Icon(
+                    filter.key == 'known'
+                        ? Icons.visibility
+                        : filter.key == 'locked'
+                        ? Icons.visibility_off
+                        : Icons.menu_book,
+                    size: 18,
+                  ),
+                  label: Text(filter.value),
+                  selected: monsterBookKnowledgeFilter == filter.key,
+                  onSelected: (_) =>
+                      setState(() => monsterBookKnowledgeFilter = filter.key),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           TextField(
@@ -6041,6 +6091,20 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           trailing: Wrap(
                             spacing: 2,
                             children: [
+                              Tooltip(
+                                message: monsterBookPartyKnowsAny(entry.id)
+                                    ? 'Il party conosce almeno parte delle informazioni'
+                                    : 'Da sbloccare: visibile soltanto al Master',
+                                child: Icon(
+                                  monsterBookPartyKnowsAny(entry.id)
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: monsterBookPartyKnowsAny(entry.id)
+                                      ? Colors.greenAccent
+                                      : Colors.white38,
+                                  size: 19,
+                                ),
+                              ),
                               IconButton(
                                 tooltip: t('Genera', 'Generate'),
                                 onPressed: () =>
@@ -6091,8 +6155,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         monsterBookEntries
             .where(
               (e) =>
-                  partyBookHabitatFilter.isEmpty ||
-                  e.planeIds.contains(partyBookHabitatFilter),
+                  (haPermessiMaster || monsterBookPartyKnowsAny(e.id)) &&
+                  (partyBookHabitatFilter.isEmpty ||
+                      e.planeIds.contains(partyBookHabitatFilter)),
             )
             .toList()
           ..sort((a, b) {
@@ -6136,7 +6201,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         ),
                       ),
                       smallInfoText(
-                        'Le scoperte si salvano per campagna e si condividono con il party. Le voci ignote restano «???».',
+                        'Le scoperte si salvano per campagna e si condividono con il party. Le voci ancora da sbloccare sono visibili soltanto al Master; i nomi non ancora identificati restano «???».',
                       ),
                     ],
                   ),
@@ -6150,6 +6215,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             partyBookHabitatFilter,
             (v) => setState(() => partyBookHabitatFilter = v),
           ),
+          corruptionBookLink(),
           const SizedBox(height: 8),
           Expanded(
             child: ListView.builder(
@@ -6220,58 +6286,46 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             title: Text(identified ? entry.nameIt : '???'),
             content: SizedBox(
               width: 620,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        monsterBookEntryPreview(entry, size: 72),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            identified
-                                ? '${entry.presetType} · ${elementDisplayName(entry.elementId)}'
-                                : 'Creatura non identificata. Combattendola o consultando una pagina del Monster Book registrerai le informazioni scoperte.',
+              child: OculumMonsterBookPage(
+                monster: entry,
+                purchased: knowledge?['pagePurchased'] == true,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          monsterBookEntryPreview(entry, size: 72),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              identified
+                                  ? '${entry.presetType} · ${elementDisplayName(entry.elementId)}'
+                                  : 'Creatura non identificata. Combattendola o consultando una pagina del Monster Book registrerai le informazioni scoperte.',
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    if (identified)
-                      monsterReadingOverview(
-                        entry,
-                        weakPointKnown: weakPointKnown,
+                        ],
                       ),
-                    Text(
-                      monsterKillCountLabel(entry.id),
-                      style: TextStyle(color: tertiaryColor),
-                    ),
-                    if (partyHuntsForMonster(entry.id).isNotEmpty) ...[
-                      const SizedBox(height: 10),
+                      if (identified)
+                        monsterReadingOverview(
+                          entry,
+                          weakPointKnown: weakPointKnown,
+                        ),
                       Text(
-                        partyHuntProgressText(entry.id),
+                        monsterKillCountLabel(entry.id),
                         style: TextStyle(color: tertiaryColor),
                       ),
-                    ],
-                    const SizedBox(height: 14),
-                    Text(
-                      'Punto debole e Precisione',
-                      style: TextStyle(
-                        color: tertiaryColor,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      weakPointKnown
-                          ? 'Punto debole scoperto: ${entry.weakPointDescriptionIt}. In combattimento è disponibile il tiro Precisione mirato; il confronto resta quello normale e il colpo può fallire.'
-                          : 'Punto debole: ???. Nessun tiro Precisione mirato è disponibile finché il party non lo scopre o acquista la pagina della creatura.',
-                    ),
-                    if (identified) ...[
+                      if (partyHuntsForMonster(entry.id).isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          partyHuntProgressText(entry.id),
+                          style: TextStyle(color: tertiaryColor),
+                        ),
+                      ],
                       const SizedBox(height: 14),
                       Text(
-                        'Resistenze e vulnerabilità',
+                        'Punto debole e Precisione',
                         style: TextStyle(
                           color: tertiaryColor,
                           fontWeight: FontWeight.w900,
@@ -6279,15 +6333,31 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        resistances.isEmpty
-                            ? 'Nessuna resistenza anatomica particolare; si applica la percentuale della scheda.'
-                            : resistances.entries
-                                  .map((e) => resistanceLabel(e.key, e.value))
-                                  .join(' · '),
+                        weakPointKnown
+                            ? 'Punto debole scoperto: ${entry.weakPointDescriptionIt}. In combattimento è disponibile il tiro Precisione mirato; il confronto resta quello normale e il colpo può fallire.'
+                            : 'Punto debole: ???. Nessun tiro Precisione mirato è disponibile finché il party non lo scopre o acquista la pagina della creatura.',
                       ),
-                      monsterReadingAbilities(entry),
+                      if (identified) ...[
+                        const SizedBox(height: 14),
+                        Text(
+                          'Resistenze e vulnerabilità',
+                          style: TextStyle(
+                            color: tertiaryColor,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          resistances.isEmpty
+                              ? 'Nessuna resistenza anatomica particolare; si applica la percentuale della scheda.'
+                              : resistances.entries
+                                    .map((e) => resistanceLabel(e.key, e.value))
+                                    .join(' · '),
+                        ),
+                        monsterReadingAbilities(entry),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -6996,6 +7066,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             initialValue: quickSheetType,
+            isExpanded: true,
             dropdownColor: const Color(0xFF11131A),
             decoration: fieldDecoration(
               t('Tipo nuova scheda', 'New sheet type'),
@@ -7021,6 +7092,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               );
               final art = DropdownButtonFormField<String>(
                 initialValue: quickSheetArtMode,
+                isExpanded: true,
                 dropdownColor: const Color(0xFF11131A),
                 decoration: fieldDecoration('Art'),
                 items: const [
@@ -7493,6 +7565,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 10),
+          sheetAssignmentControls(),
           ElevatedButton.icon(
             onPressed: controllaTitoliDelFatoAutomatici,
             icon: const Icon(Icons.auto_awesome),
@@ -7664,12 +7737,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 color: Color(0xFF7EE7C8),
               ),
               const SizedBox(width: 8),
-              Text(
-                t('Plancia Master della tavola', 'Table Master board'),
-                style: const TextStyle(
-                  color: Color(0xFF7EE7C8),
-                  fontSize: 19,
-                  fontWeight: FontWeight.w900,
+              Expanded(
+                child: Text(
+                  t('Plancia Master della tavola', 'Table Master board'),
+                  style: const TextStyle(
+                    color: Color(0xFF7EE7C8),
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ],
@@ -7690,16 +7765,18 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
             )
           else if (partyIndexes.length <= 6)
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final index in partyIndexes)
-                  SizedBox(
-                    width: 320,
-                    child: _masterDashboardPartyBoardCard(index),
-                  ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) => Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final index in partyIndexes)
+                    SizedBox(
+                      width: min(320.0, constraints.maxWidth),
+                      child: _masterDashboardPartyBoardCard(index),
+                    ),
+                ],
+              ),
             )
           else
             LayoutBuilder(
@@ -7840,85 +7917,181 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget masterDashboardPage() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 760 || phoneCompactUi;
-        final padding = responsivePagePadding();
-        final title = functionAnchor('master_root', sectionTitle('Master'));
-
-        if (narrow) {
-          final panels = <Widget Function()>[
-            () => title,
-            if (haPermessiMaster) () => masterItemGiftPanel(),
-            pawnGuardiansPanel,
-            masterDashboardActiveSheetPanel,
-            masterDashboardPartyBoardPanel,
-            masterInitiativeTrackerPanel,
-            pendingMonsterLootPanel,
-            () => masterDashboardEnemiesPanel(compactNote: true),
-            masterDashboardQuickControlsPanel,
-            masterDashboardQuickSheetPanel,
-            () => onlineStatusPanel(compatto: true),
-            campaignPanel,
-            connectedSheetsPanel,
-            masterDashboardRosterPanel,
-            masterDashboardMonsterBookPanel,
-            masterDashboardNotePanel,
-          ];
-          return ListView.builder(
-            key: sheetScrollKey('master'),
-            padding: padding,
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            itemCount: panels.length,
-            itemBuilder: (context, index) =>
-                RepaintBoundary(child: panels[index]()),
-          );
-        }
-
-        final sideWidth = min(
-          constraints.maxWidth >= 1500 ? 460.0 : 410.0,
-          max(320.0, constraints.maxWidth * 0.33),
-        );
-
-        Widget lazyColumn(String key, List<Widget Function()> panels) =>
-            ListView.builder(
-              key: sheetScrollKey(key),
-              padding: padding,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              itemCount: panels.length,
-              itemBuilder: (context, index) =>
-                  RepaintBoundary(child: panels[index]()),
-            );
-        return Row(
-          children: [
-            Expanded(
-              child: lazyColumn('master', [
-                () => title,
-                if (haPermessiMaster) () => masterItemGiftPanel(),
-                pawnGuardiansPanel,
-                masterInitiativeTrackerPanel,
-                pendingMonsterLootPanel,
-                masterDashboardPartyBoardPanel,
-                masterDashboardEnemiesPanel,
-                masterDashboardRosterPanel,
-                masterDashboardMonsterBookPanel,
-                connectedSheetsPanel,
-                masterDashboardNotePanel,
-              ]),
+    final sections =
+        <
+          ({
+            String id,
+            String label,
+            String description,
+            IconData icon,
+            String keywords,
+            List<Widget Function()> panels,
+          })
+        >[
+          (
+            id: 'overview',
+            label: t('Regia', 'Overview'),
+            description: t(
+              'Scheda attiva e comandi rapidi della sessione.',
+              'Active sheet and quick session controls.',
             ),
-            SizedBox(
-              width: sideWidth,
-              child: lazyColumn('master_tools', [
-                masterDashboardActiveSheetPanel,
-                masterDashboardQuickControlsPanel,
-                masterDashboardQuickSheetPanel,
-                () => onlineStatusPanel(compatto: true),
-                campaignPanel,
-              ]),
+            icon: Icons.dashboard_outlined,
+            keywords:
+                'regia overview scheda attiva active sheet comandi rapidi controlli titoli fato redistribuisci punti dt difficolta difficoltà assegna cedi trasferisci proprietà schede player',
+            panels: [
+              masterDashboardActiveSheetPanel,
+              masterDashboardQuickControlsPanel,
+            ],
+          ),
+          (
+            id: 'combat',
+            label: t('Combattimento', 'Combat'),
+            description: t(
+              'Fight, turni, Reazioni e nemici.',
+              'Fights, turns, Reactions and enemies.',
             ),
+            icon: Icons.sports_martial_arts,
+            keywords:
+                'combattimento combat fight turni turns iniziativa initiative azioni reazioni veloci nemici enemies vita hp',
+            panels: [
+              masterInitiativeTrackerPanel,
+              () => masterDashboardEnemiesPanel(compactNote: phoneCompactUi),
+            ],
+          ),
+          (
+            id: 'party',
+            label: 'Party',
+            description: t(
+              'Giocatori, schede salvate e schede condivise.',
+              'Players, saved sheets and shared sheets.',
+            ),
+            icon: Icons.groups_outlined,
+            keywords:
+                'party giocatori players alleati roster schede salvate saved sheets connesse condivise online shared',
+            panels: [
+              masterDashboardPartyBoardPanel,
+              masterDashboardRosterPanel,
+              connectedSheetsPanel,
+            ],
+          ),
+          (
+            id: 'creatures',
+            label: t('Creature', 'Creatures'),
+            description: t(
+              'Monster Book, creazione schede e guardiani.',
+              'Monster Book, sheet creation and guardians.',
+            ),
+            icon: Icons.auto_stories_outlined,
+            keywords:
+                'creature creatures mostri monsters monster book bestiario sbloccati scoperti percezione crea scheda quick guardiani pawn',
+            panels: [
+              masterDashboardQuickSheetPanel,
+              pawnGuardiansPanel,
+              masterDashboardMonsterBookPanel,
+            ],
+          ),
+          (
+            id: 'rewards',
+            label: t('Oggetti e premi', 'Items and rewards'),
+            description: t(
+              'Bottino e catalogo degli oggetti assegnabili.',
+              'Loot and the catalogue of items to grant.',
+            ),
+            icon: Icons.card_giftcard_outlined,
+            keywords:
+                'oggetti items premi rewards bottino loot drop catalogo equipaggiamenti equipment armi armature scudi materiali regala assegna dona inventario',
+            panels: [
+              pendingMonsterLootPanel,
+              if (haPermessiMaster) () => masterItemGiftPanel(),
+            ],
+          ),
+          (
+            id: 'session',
+            label: t('Sessione', 'Session'),
+            description: t(
+              'Connessione, campagna e note del Master.',
+              'Connection, campaign and Master notes.',
+            ),
+            icon: Icons.hub_outlined,
+            keywords:
+                'sessione session connessione connection online stanza room campagna campaign note appunti storia',
+            panels: [
+              () => onlineStatusPanel(compatto: true),
+              campaignPanel,
+              masterDashboardNotePanel,
+            ],
+          ),
+        ];
+    final terms = masterQuery
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final matches = sections
+        .where(
+          (section) => terms.isEmpty
+              ? section.id == masterCategory
+              : terms.every(
+                  ('${section.label} ${section.keywords}'.toLowerCase())
+                      .contains,
+                ),
+        )
+        .toList();
+    final builders = <Widget Function()>[
+      () => functionAnchor('master_root', sectionTitle('Master')),
+      () => gothicPanel(
+        borderColor: tertiaryColor,
+        child: OculumSettingsNavigation(
+          key: const ValueKey('master-navigation'),
+          keyPrefix: 'master',
+          categories: [
+            for (final s in sections)
+              OculumSettingsCategory(s.id, s.label, s.icon),
           ],
-        );
-      },
+          selected: masterCategory,
+          query: masterQuery,
+          english: linguaInglese,
+          searchLabel: t('Cerca negli strumenti Master', 'Search Master tools'),
+          searchHint: t(
+            'Turni, schede, bottino, Monster Book…',
+            'Turns, sheets, loot, Monster Book…',
+          ),
+          onSelect: (id) => setState(() {
+            masterCategory = id;
+            masterQuery = '';
+          }),
+          onSearch: (value) => setState(() => masterQuery = value),
+        ),
+      ),
+      if (matches.isEmpty)
+        () => gothicPanel(
+          child: smallInfoText(
+            t(
+              'Nessuno strumento trovato. Prova con turni, schede, bottino o campagna.',
+              'No tools found. Try turns, sheets, loot or campaign.',
+            ),
+          ),
+        ),
+      for (final section in matches) ...[
+        () => settingsSectionBanner(
+          icon: section.icon,
+          title: section.label,
+          subtitle: section.description,
+          color: tertiaryColor,
+        ),
+        ...section.panels,
+      ],
+    ];
+    // Lazy panels keep the catalogue and long rosters off the initial build.
+    // The navigation stays at the same index while typing, preserving focus.
+    return ListView.builder(
+      key: sheetScrollKey('master'),
+      padding: responsivePagePadding(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      itemCount: builders.length,
+      itemBuilder: (context, index) =>
+          RepaintBoundary(child: builders[index]()),
     );
   }
 
@@ -9066,6 +9239,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 .contains('passiv'));
     if (livelloNuovo == livelloPrecedente && !activating) return;
     if (activating) {
+      if (!progressionRequirementsMet(
+        skill.unlockRequirementsPerLevel[livelloNuovo - 1],
+      )) {
+        aggiungiLog(
+          '${skill.nome}: requisiti non raggiunti — ${oculumSkillRequirementDescription(skill.unlockRequirementsPerLevel[livelloNuovo - 1])}',
+        );
+        return;
+      }
       final required = int.tryParse(
         RegExp(
               r'Richiede livello\s+(\d+)',
@@ -11662,6 +11843,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ),
         structuredEffectsEditor(
           effects: skill.effettiEvoluzione(level),
+
           previousEffects: level > 1
               ? skill.effettiEvoluzione(level - 1)
               : null,
@@ -11671,6 +11853,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             notifyArtSkillUiChanged(artIndex, skillIndex);
             invalidateDerivedDataCaches();
           },
+        ),
+        progressionRequirementsEditor(
+          skill.unlockRequirementsPerLevel[index],
+          storageId: 'art_${artIndex}_${skillIndex}_$level',
         ),
       ],
     );

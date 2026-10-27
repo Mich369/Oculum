@@ -35,6 +35,18 @@ Map<String, dynamic> oculumApplyPartyChestOperation(Map previous, Map request) {
   var message = 'Operazione non valida';
   Map<String, dynamic>? transferred;
   switch (request['operation']) {
+    case 'learn_recipe_book':
+      final raw = request['item'];
+      final craft = raw is Map ? raw['craftData'] : null;
+      final book = craft is Map ? craft['recipeBook'] : null;
+      final ids = (request['recipeIds'] as List? ?? (book is Map ? book['recipeIds'] as List? : null) ?? []).map((e) => '$e').where((s) => s.isNotEmpty).take(2000).toList();
+      final tags = (request['recipients'] as List? ?? []).map((e) => '$e').where((s) => s.isNotEmpty).toSet();
+      if (book is Map && ids.isNotEmpty && tags.contains('${request['requesterTag']}')) {
+        state['recipeKnowledgeByTag'] = oculumLearnPartyRecipes(state['recipeKnowledgeByTag'] as Map? ?? {}, recipeIds: ids, tags: tags);
+        approved = true;
+        message = '${ids.length} ricette apprese cumulativamente dal party';
+      }
+      break;
     case 'deposit_obser':
       if (amount > 0) {
         balance += amount;
@@ -110,7 +122,7 @@ Map<String, dynamic> oculumApplyPartyChestOperation(Map previous, Map request) {
   return state;
 }
 
-int oculumItemTitleDustCost(int itemLevel) => (max(0, itemLevel) + 1) ~/ 2 + 1;
+int oculumItemTitleDustCost(int itemLevel) => 3;
 
 String oculumPartyHuntSpeciesId(String bookId) {
   var id = bookId.trim().replaceFirst(RegExp(r'_variante_.*$'), '');
@@ -328,7 +340,16 @@ extension _OculumPartyChest on _OculumHomePageState {
         return;
       }
       refreshPartyChestMembers();
-      final state = oculumApplyPartyChestOperation(partyChest, payload);
+      final effective = Map<String, dynamic>.from(payload);
+      if (effective['operation'] == 'learn_recipe_book') {
+        final raw = effective['item'];
+        final craft = raw is Map ? raw['craftData'] : null;
+        final book = craft is Map ? craft['recipeBook'] : null;
+        final public = recipes.where((r) => r.visibleToPlayers && !r.personal).map((r) => r.id).toSet();
+        effective['recipeIds'] = (book is Map ? book['recipeIds'] as List? ?? [] : []).map((v) => '$v').where(public.contains).toList();
+        effective['recipients'] = { '${effective['requesterTag']}', ...(partyChest['members'] as Map? ?? {}).keys.map((v) => '$v') }.toList();
+      }
+      final state = oculumApplyPartyChestOperation(partyChest, effective);
       partyChestCampaigns[permissionCampaignId] = state;
       await salvaDatiSoloLocale();
       final receipt = (state['receipts'] as Map?)?['${payload['id']}'];
@@ -357,6 +378,7 @@ extension _OculumPartyChest on _OculumHomePageState {
       }
     }
     settlePartyQuestRewards();
+    retainPartyRecipeKnowledge();
     final receipt = payload['receipt'];
     faunaConfirmedKills(
       (partyChest['confirmedFaunaKills'] as Map? ?? {}).values.whereType<Map>(),
@@ -405,7 +427,7 @@ extension _OculumPartyChest on _OculumHomePageState {
           ),
         );
       }
-      if (!approved && operation == 'deposit_item' && pending['item'] is Map) {
+      if (!approved && const {'deposit_item','learn_recipe_book'}.contains(operation) && pending['item'] is Map) {
         inventario.add(
           InventoryItem.fromJson(
             Map<String, dynamic>.from(pending['item'] as Map),
@@ -414,6 +436,7 @@ extension _OculumPartyChest on _OculumHomePageState {
       }
       // Settle before any save: replaying a receipt cannot mint a second copy.
       pending['status'] = approved ? 'approved' : 'rejected';
+      if (approved && operation == 'learn_recipe_book') retainPartyRecipeKnowledge();
       partyChestPending['${receipt['id']}']?['status'] = pending['status'];
       aggiungiLog(
         '[CASSA COMUNE] ${receipt['message']}${approved ? '' : ' · deposito restituito'}.',
@@ -441,7 +464,7 @@ extension _OculumPartyChest on _OculumHomePageState {
     if (operation == 'deposit_obser' && amount > leggiNumero(obserController)) {
       return;
     }
-    if (operation == 'deposit_item' &&
+    if (const {'deposit_item','learn_recipe_book'}.contains(operation) &&
         (item == null ||
             !inventario.contains(item) ||
             item.equipaggiata ||
@@ -464,7 +487,7 @@ extension _OculumPartyChest on _OculumHomePageState {
     if (operation == 'deposit_obser') {
       obserController.text = '${leggiNumero(obserController) - amount}';
     }
-    if (operation == 'deposit_item' && item != null) {
+    if (const {'deposit_item','learn_recipe_book'}.contains(operation) && item != null) {
       request['item'] = {
         ...item.toJson(),
         'quantita': amount,
@@ -649,7 +672,8 @@ extension _OculumPartyChest on _OculumHomePageState {
   void convertInventoryItemToTitle(InventoryItem item) {
     if (!inventario.contains(item) ||
         item.quantita <= 0 ||
-        item.craftData['titleItem'] == true) {
+        item.craftData['titleItem'] == true ||
+        !oculumEquipmentCanBecomeTitle(item)) {
       return;
     }
     final cost = oculumItemTitleDustCost(item.livelloOggetto);
@@ -664,25 +688,13 @@ extension _OculumPartyChest on _OculumHomePageState {
       });
       inventario.add(converted);
     }
-    converted.craftData = {
-      ...converted.craftData,
-      'titleItem': true,
-      'evolvable': true,
-      'conversionDustCost': cost,
-    };
-    converted.note +=
-        '\nTitolo Item evolvibile: effetti originali conservati; conversione $cost Ascension Dust.';
-    if (converted.ability != null && converted.ability!.nonEvolvibile) {
-      converted.ability = CharacterSkill.fromJson({
-        ...converted.ability!.toJson(),
-        'scrollData': <String, dynamic>{},
-      });
-    }
+    oculumInitializeItemTitle(converted);
     ascensionDustController.text =
         '${leggiNumero(ascensionDustController) - cost}';
     aggiungiLog(
-      '[TITOLO ITEM] ${converted.nome}: −$cost Ascension Dust, effetti conservati, evoluzioni abilitate.',
+      '[TITOLO ITEM] ${converted.nome}: −$cost Ascension Dust. ${oculumItemTitleSummary(converted)}',
     );
+    invalidateDerivedDataCaches();
     programmaSalvataggio();
     if (mounted) setState(() {});
   }

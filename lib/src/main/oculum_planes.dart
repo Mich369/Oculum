@@ -184,6 +184,38 @@ const oculumPlanes =
         price: 1,
         elements: ['roccia', 'fulmine', 'nuvola', 'vento'],
       ),
+      (
+        id: 'deserto_divoratore',
+        name: 'Deserto Divoratore–Deserto di Vetro',
+        folder: 'Micro realtà',
+        minimumGrade: 0,
+        price: 1.3,
+        elements: ['terra', 'tagliente', 'acqua'],
+      ),
+      (
+        id: 'reame_cristallo',
+        name: 'Reame Cristallo',
+        folder: 'Micro realtà',
+        minimumGrade: 0,
+        price: 1.3,
+        elements: ['roccia', 'luce', 'buio'],
+      ),
+      (
+        id: 'orea_zalira',
+        name: 'Orea Zalira',
+        folder: 'Micro realtà',
+        minimumGrade: 0,
+        price: 1.2,
+        elements: ['fisico', 'tempo', 'natura'],
+      ),
+      (
+        id: 'carne_viva',
+        name: 'Regno di Carne Viva',
+        folder: 'Micro realtà',
+        minimumGrade: 0,
+        price: 1.4,
+        elements: ['fisico', 'sangue', 'veleno'],
+      ),
     ];
 
 int oculumPlanePressurePenalty({
@@ -314,13 +346,17 @@ extension _OculumPlanes on _OculumHomePageState {
                 for (final plane in oculumPlanes.where(
                   (p) => p.folder == folder,
                 ))
-                  ListTile(
-                    title: Text(plane.name),
-                    selected: plane.id == selectedPlaneId,
-                    subtitle: Text(
-                      'Grado minimo ${plane.minimumGrade} · ${plane.elements.toSet().join(', ')}',
+                  Tooltip(
+                    waitDuration: const Duration(milliseconds: 900),
+                    message: oculumPlaneDescription(plane.id),
+                    child: ListTile(
+                      title: Text(plane.name),
+                      selected: plane.id == selectedPlaneId,
+                      subtitle: Text(
+                        'Grado minimo ${plane.minimumGrade} · ${plane.elements.toSet().join(', ')}',
+                      ),
+                      onTap: () => Navigator.pop(dialog, plane.id),
                     ),
-                    onTap: () => Navigator.pop(dialog, plane.id),
                   ),
               ],
             ),
@@ -369,6 +405,7 @@ extension _OculumPlanes on _OculumHomePageState {
   }
 
   void ensurePlaneOffers() {
+    ensureMicroRealmOffers();
     final plane = selectedPlane;
     final elements = plane.id == 'foresta_elementale'
         ? allDamageElementIds()
@@ -446,6 +483,14 @@ extension _OculumPlanes on _OculumHomePageState {
           ? 'Vestiario'
           : 'Armatura';
       final visual = switch (plane.id) {
+        'deserto_divoratore' =>
+          'Vetro azzurro, arenaria crepata e fibre delle piante divoratrici: bordi taglienti, impugnature isolate e protezioni dalla sabbia umida.',
+        'reame_cristallo' =>
+          'Quarzo risonante, prismarite e gemme del reame, lavorati secondo le proprietà dei loro giacimenti; nessun Metallo runico di Postea.',
+        'orea_zalira' =>
+          'Fibre morbide e legno flessibile, forme asimmetriche color malva e verde acqua, riflessi dei due soli senza occhi. Nessun simbolo attribuito al sovrano ignoto.',
+        'carne_viva' =>
+          'Placche ossee, membrane trattate e tendini intrecciati, rosso sangue e avorio. Manufatti organici isolati dalle secrezioni del regno.',
         'foresta_elementale' =>
           'Corteccia viva, cristalli e fili di foglia intrecciano rune di ogni elemento della foresta.',
         'morti' =>

@@ -1880,7 +1880,7 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     category: OculumConditionCategory.special,
     polarity: OculumConditionPolarity.negative,
     descriptionIt:
-        'Il mostro resta corrotto finché il Master non rimuove la condizione o termina lo scontro. Il proprietario indicato nei metadati guida il 90% dei suoi attacchi e può scegliere il bersaglio reale. Padrone della Corruzione aggiunge +50 punti percentuali alla resistenza alla Corruzione già presente; il bonus è modificabile.',
+        'La Corruzione Viola degli Oculiani precede la Rossa e le altre forme. La Rossa alimenta l’aggressività e rende succubi dopo tre notti effettive. L’Anti-corruzione rinvia il controllo di una notte per dose e cura con tre dosi cumulative la Rossa, sei la Viola. Il corruttore può comandare attacchi o Skill usando risorse reali; i valori sono modificabili. Padrone della Corruzione conserva il proprio bonus alla resistenza al contagio.',
     descriptionEn:
         'The monster remains corrupted until the Master removes this condition or the encounter ends. The owner recorded in its metadata guides 90% of its attacks and can choose the actual target. Corruption Mastery adds 50 percentage points to existing Corruption resistance; the bonus is editable.',
     defaultDuration: 0,

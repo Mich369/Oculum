@@ -147,6 +147,13 @@ class OculumMonsterTheme {
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
   String? get illustration => switch (monster.id) {
+    'mostro_lunare' => 'assets/oculum/home_art/creature_mostro_lunare_v1.png',
+    'mostro_lunare_demoniaco' =>
+      'assets/oculum/home_art/creature_mostro_lunare_demoniaco_v1.png',
+    'scostubandito_errato' =>
+      'assets/oculum/home_art/creature_scostubandito_errato_v1.png',
+    'scostubandito_veterano_errato' =>
+      'assets/oculum/home_art/creature_scostubandito_veterano_errato_v1.png',
     'fuocherelli' =>
       'assets/oculum/theme_stories/webp/creature_fuocherelli.webp',
     'feralis_ancestrale' =>
@@ -188,7 +195,7 @@ class OculumMonsterTheme {
       return 'plate';
     }
     if (RegExp(
-      'coniglio|lepre|top|ogle|rascalume|scostubanditi',
+      'coniglio|lepre|top|ogle|rascalume|scostubandit',
     ).hasMatch(text)) {
       return 'ears';
     }

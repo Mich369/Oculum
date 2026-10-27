@@ -111,7 +111,7 @@ void main() {
       probe.convertItemTitle(item);
       expect(item.craftData['titleItem'], isTrue);
       expect(item.buff, restored.buff);
-      expect(state.ascensionDustController.text, '93');
+      expect(state.ascensionDustController.text, '97');
       final convertedJson = InventoryItem.fromJson(item.toJson());
       expect(convertedJson.craftData['evolvable'], isTrue);
       if (state.schedePersonaggio.isEmpty) {

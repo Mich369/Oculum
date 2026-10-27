@@ -1,7 +1,7 @@
 part of '../../main.dart';
 
 const _oculumAbilityResourcePattern =
-    r'(?:Scudo\s+Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo|Fortuna|Obser|Follia|Reazioni?|Azioni?)';
+    r'(?:Scudo\s+Oculum|Oculum|OCU|Volont[aà]|VOL|Materia|MAT|Resilienza|RES|Vita|HP|Scudo|Fortuna\s+magica|Fortuna|Obser|Follia|Ki\s+Mortale|Reazioni?|Azioni?)';
 
 List<OculumStructuredEffect> oculumResolveAbilityEffects(
   Iterable<OculumStructuredEffect> configured,
@@ -24,6 +24,7 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
             .where(
               (effect) =>
                   !(effect.recipient == 'se_stesso' &&
+                      !oculumFormulaUsesTotalPower(effect.valueExpression) &&
                       effect.narrativeText.contains('@') &&
                       const {
                         'danno',
@@ -39,6 +40,65 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
 ({int minimum, int maximum, String resource})? oculumParseAbilityCost(
   String raw,
 ) {
+  // A dedicated cost field can contain only its resource: the editor's
+  // separate Minimum/Maximum controls then supply the quantity.
+  final resourceOnly = RegExp(
+    '^\\s*(?:costo\\s*:?\\s*)?($_oculumAbilityResourcePattern)\\s*\\.?\\s*\$',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (resourceOnly != null) {
+    return (
+      minimum: 0,
+      maximum: 0,
+      resource: oculumNormalizeArtSkillCostResource(resourceOnly.group(1)),
+    );
+  }
+  final resourceFirst = RegExp(
+    '^\\s*(?:costo\\s*:?\\s*)?($_oculumAbilityResourcePattern)\\s*:?\\s*(\\d+)(?:\\s*[/–-]\\s*(\\d+))?\\s*\\.?\\s*\$',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (resourceFirst != null) {
+    final minimum = int.parse(resourceFirst.group(2)!);
+    final maximum = int.parse(
+      resourceFirst.group(3) ?? resourceFirst.group(2)!,
+    );
+    if (maximum < minimum) return null;
+    return (
+      minimum: minimum,
+      maximum: maximum,
+      resource: oculumNormalizeArtSkillCostResource(resourceFirst.group(1)),
+    );
+  }
+  final standaloneAmount = RegExp(
+    '^\\s*(\\d+)(?:\\s*[/–-]\\s*(\\d+))?\\s*($_oculumAbilityResourcePattern)\\s*\\.?\\s*\$',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (standaloneAmount != null) {
+    final minimum = int.parse(standaloneAmount.group(1)!);
+    final maximum = int.parse(
+      standaloneAmount.group(2) ?? standaloneAmount.group(1)!,
+    );
+    if (maximum < minimum) return null;
+    return (
+      minimum: minimum,
+      maximum: maximum,
+      resource: oculumNormalizeArtSkillCostResource(standaloneAmount.group(3)),
+    );
+  }
+  final itemOnly = RegExp(
+    r'^\s*(?:costo\s*:?\s*)?(item|oggett[oi]|consumabile|materiale)\s*:\s*["“]?([^"”\n.;,]+)["”]?\s*$',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (itemOnly != null) {
+    final name = oculumNormalizeText(itemOnly.group(2)!).replaceAll(' ', '');
+    if (name.isEmpty) return null;
+    return (
+      minimum: 0,
+      maximum: 0,
+      resource:
+          '${itemOnly.group(1)!.toLowerCase() == 'materiale' ? 'material' : 'item'}:$name',
+    );
+  }
   if (RegExp(
     r'\b(?:nessun\s+costo|senza\s+costo|gratuit[oa])\b',
     caseSensitive: false,

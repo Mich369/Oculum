@@ -1491,7 +1491,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     void Function(int naturalRoll, int total)? onResolved,
   }) async {
     oculumProfileMark('roll_subtrait');
-    if (stat.id == 'percezione' && actionLabel == null && onResolved == null) {
+    if (oculumScoutReadingStatIds.contains(stat.id) &&
+        actionLabel == null &&
+        onResolved == null) {
       await scoutCombatTarget(requestedStat: stat);
       return;
     }
@@ -1538,6 +1540,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         fractureRollPenalty(stat.id) +
         consumeCombatHelp() +
         hiddenEyeStatRollQuickBonus(stat) +
+        racialSubtraitRollBonus(stat.id) +
         tiroGlobaleBonus() +
         oculumSpend.bonus +
         reactionRollBonus +
@@ -2308,6 +2311,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   int masterInitiativeReactionMax(Map<String, dynamic> token) {
     if (totalPowerTokenExhausted(token)) return 0;
+    if (token['senkaClone'] == true) return 1;
     if (token['outsideFight'] == true) {
       return max(0, readIntValue(token['outsideNormal']));
     }
@@ -2322,6 +2326,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   int masterInitiativeFastReactionMax(Map<String, dynamic> token) {
     if (totalPowerTokenExhausted(token)) return 0;
+    if (token['senkaClone'] == true) return token['senkaCloneFirstTurn'] == true ? 1 : 0;
     if (token['outsideFight'] == true) {
       return max(0, readIntValue(token['outsideFast']));
     }
@@ -2374,6 +2379,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final poolInitialized = readBoolValue(token['reactionPoolInitialized']);
     final poolRound = readIntValue(token['reactionPoolRound']);
     if (!poolInitialized) return 0;
+    if (token['senkaClone'] == true && token['senkaCloneFirstTurn'] == true) return 0;
     if (poolRound == 0 &&
         token['mechaReactionOnly'] != true &&
         readBoolValue(token['reactionNormalFirstRoundLocked'])) {
@@ -2553,6 +2559,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       token['actionTurnRound'] = masterInitiativeRound;
       cycleTurnReactions(token);
+      if (token['senkaClone'] == true) {
+        token['senkaCloneFirstTurn'] = false;
+        token['reactionNormalFirstRoundLocked'] = false;
+        token['reactionUsed'] = 0;
+        token['reactionUsedRound'] = masterInitiativeRound;
+        token['reactionFastUsed'] = 1;
+        token['actionUsed'] = true;
+      }
       refreshEscapeTurn(token);
       if (totalPowerTokenExhausted(token)) clearExhaustedTokenReactions(token);
       final tag = publicInitiativeSourceTag(token);
@@ -2573,6 +2587,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         );
       }
     }
+    referenceCreatureTurn(token);
     resetLocalMapMovementForInitiativeToken(token);
   }
 
@@ -3099,6 +3114,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'reactionFastUsed': 0,
       'reactionFastTurnKey': '',
       'actionUsed': false,
+      if ((schedePersonaggio[index]['planarRuntime'] as Map? ?? {})['senkaClone'] == true) ...{
+        'senkaClone': true,
+        'senkaCloneFirstTurn': true,
+        'meccanioReactionsOnly': true,
+        'actionUsed': true,
+        'reactionUsed': 1,
+      },
       'currentHp': sheetCurrentHpForDeathAt(index),
       'maxHp': sheetMaxHpForDeathAt(index),
       if (readBoolValue(schedePersonaggio[index]['oculumShadowClone'])) ...{
@@ -4598,6 +4620,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'fragilità': 'Fragilità',
       'fragilita bassa': 'Bassa Fragilità',
       'fragilità bassa': 'Bassa Fragilità',
+      'debolezza': 'Fragilità',
+      'weakness': 'Fragilità',
+      'vulnerabile': 'Fragilità',
       'bassa fragilita': 'Bassa Fragilità',
       'bassa fragilità': 'Bassa Fragilità',
       'normale': 'Normale',
@@ -4783,8 +4808,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       case 'immunita':
         return 0.0;
       case 'fragilitabassa':
+      case 'bassafragilita':
         return 1.10;
       case 'fragilita':
+      case 'debolezza':
+      case 'weakness':
+      case 'vulnerabile':
         return 1.25;
       case 'fragilitavera':
       case 'altafragilita':
@@ -5363,6 +5392,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int extraFragilityPercent = 0,
     double incomingDamageMultiplier = 1,
     int incomingPacketPercent = 100,
+    int mantleProtectionPercent = 0,
+    int magicShieldAbsorptionPercent = 0,
     bool bypassDefense = false,
     bool bypassShields = false,
     int shieldDamageBonusPercent = 0,
@@ -5374,6 +5405,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int? enemyLevel,
     int? enemyGrade,
     String attackKind = '',
+    String? hitBodyPart,
     bool magicalAttack = false,
     bool nonLethal = false,
     int nonLethalRobberyPercent = 75,
@@ -5394,6 +5426,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     var dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
+    if (isConstructCharacter &&
+        (hitBodyPart != null || attackKind.isNotEmpty)) {
+      constructCore['lastAttackCore'] = hitBodyPart == 'core';
+    }
     if (isMeccanio) {
       final element = oculumNormalizeElementId(selectedIncomingDamageElement());
       final percent = meccanioElementPercent(activeCriticalLevel());
@@ -5495,8 +5531,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       setState(() {
         fortuna += fortunaOttenuta;
         risultato = t(
-          'Fortuna: danno schivato (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} su ${fortunaSchivataChance.toStringAsFixed(2)}%). Ottieni 1d3 Fortuna consumabile: $fortunaOttenuta (Risorse).',
-          'Luck: damage dodged (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} against ${fortunaSchivataChance.toStringAsFixed(2)}%). Gain 1d3 consumable Luck: $fortunaOttenuta (Resources).',
+          'Fortuna: danno schivato (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} su ${fortunaSchivataChance.toStringAsFixed(2)}%). Ottieni 1d3 Fortuna magica: $fortunaOttenuta (Risorse).',
+          'Luck: damage dodged (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} against ${fortunaSchivataChance.toStringAsFixed(2)}%). Gain 1d3 Magical Luck: $fortunaOttenuta (Resources).',
         );
         dannoSubitoController.clear();
         aggiungiLog(risultato);
@@ -5744,6 +5780,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 '${elementalAdaptation.changed ? ' → ${elementalAdaptation.resistanceAfterHit}% dal prossimo' : ''}; danno dopo Difesa $dannoPrimaAdattamento → $dannoDopoDifesa.';
       var passiveReductionLogIt = '';
       var passiveReductionLogEn = '';
+      dannoDopoDifesa = referenceAbsorbDamage(
+        dannoDopoDifesa,
+        mantleProtectionPercent,
+        magicShieldAbsorptionPercent,
+      );
       if (dannoDopoDifesa > 0 && fortunaTotale > 0) {
         final chance = oculumLuckMitigationChancePercent(
           resistance: resistenzaTotale,
@@ -5860,9 +5901,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final dannoDopoRegoleElementali = dannoModificatoBase > 0
           ? applicaParserDanniSubiti(dannoModificatoBase, elementoAttivo)
           : dannoModificatoBase;
+      final abilityResistance = abilityElementResistancePercent(elementoAttivo);
+      final afterAbilityResistance = oculumAbilityResistanceDamage(
+        unmodifiedDamage: dannoDopoDifesa,
+        modifiedDamage: dannoDopoRegoleElementali,
+        bonusPercent: abilityResistance,
+      );
+      if (abilityResistance > 0 && afterAbilityResistance != dannoDopoRegoleElementali) {
+        aggiungiLog('[AFFINITÀ] $abilityResistance punti percentuali di resistenza a ${elementDisplayName(elementoAttivo)}: $dannoDopoRegoleElementali → $afterAbilityResistance (limite 90%).');
+      }
       var dannoModificato = resolvedResistance
           ? 1
-          : applyConditionIncomingDamage(dannoDopoRegoleElementali);
+          : applyConditionIncomingDamage(afterAbilityResistance);
       final parserRulesLog = incomingElementRules.isEmpty
           ? ''
           : ' Parser ${incomingDamageRulesSummary(elementoAttivo)}: $dannoModificatoBase -> $dannoModificato.';
@@ -6047,6 +6097,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 item.equipaggiata &&
                 canEquipInventoryItem(item) &&
                 (item.craftData['clothing'] == true ||
+                    item.craftData['titleItem'] == true ||
+                    item.craftData['senkaMask'] == true ||
                     item.effettoIntegritaScudo.trim().isNotEmpty ||
                     item.effettoRotturaScudo.isNotEmpty) &&
                 itemIntegrityShieldCurrent(item) > 0,
@@ -6059,6 +6111,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 item.equipaggiata &&
                 canEquipInventoryItem(item) &&
                 (item.craftData['clothing'] == true ||
+                    item.craftData['titleItem'] == true ||
+                    item.craftData['senkaMask'] == true ||
                     item.effettoIntegritaScudo.trim().isNotEmpty ||
                     item.effettoRotturaScudo.isNotEmpty) &&
                 itemIntegrityOculumShieldCurrent(item) > 0,
@@ -6161,6 +6215,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (temp > 0 && rimanente > 0) {
         final assorbito = min(temp, rimanente);
         temp -= assorbito;
+        if(senkaMaskItem!=null || senkaIsClone) {
+          senkaRuntime['fusionTemporaryHpRemaining']=max(0,
+            readIntValue(senkaRuntime['fusionTemporaryHpRemaining'])-assorbito);
+        }
         rimanente -= assorbito;
       }
 
@@ -6199,6 +6257,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         }
         pawnDamageLog =
             '\nPawn intercetta ${beforePawn - rimanente} danni destinati agli HP; $rimanente raggiungono la scheda.';
+      }
+      if (rimanente > 0 && isConstructCharacter && hitBodyPart == 'core') {
+        rimanente = applyConstructCoreDamage(rimanente);
       }
       if (rimanente > 0) {
         hp = max(0, hp - rimanente);
@@ -6320,6 +6381,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         impostaScudoTotale(shield);
         impostaHpTempTotali(temp);
         currentHpController.text = hp.toString();
+        if (attackKind.isNotEmpty || dannoEsplicito == null) {
+          planarState['lastAttackHp'] = {
+            'before': hpPrima,
+            'after': hp,
+            'id': DateTime.now().microsecondsSinceEpoch.toString(),
+            'rewound': false,
+          };
+        }
         pawnPendingDamage = {};
         if (dannoModificato > 0) interruptArtAwakening();
         registerVitalMemoryDamage(hpPrima - hp);
@@ -6345,7 +6414,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 '\nNucleo Rotto: tiro ${(brokenCoreRoll / 100).toStringAsFixed(2)}% su ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, nessun danno aggiuntivo.',
                 '\nBroken Core: roll ${(brokenCoreRoll / 100).toStringAsFixed(2)}% against ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, no additional damage.',
               );
-        if (scudoCriticoSpezzato) {
+        if (scudoCriticoSpezzato && lunarLinkedCriticalShields == 0) {
           scudoCriticoController.text = max(
             0,
             scudoCriticoPrima - 1,
@@ -6662,6 +6731,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void rompiScudoCritico() {
+    if (lunarLinkedCriticalShields > 0) {
+      aggiungiLog(
+        '[CRISTALLI] Gli Scudi critici collegati scompaiono distruggendo i cristalli.',
+      );
+      return;
+    }
     setState(() {
       if (scudoCritico() > 0) {
         scudoCriticoController.text = max(0, scudoCritico() - 1).toString();

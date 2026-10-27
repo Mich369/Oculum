@@ -2,6 +2,7 @@ part of '../../main.dart';
 
 // New campaign defaults, kept separate from the author's original materials.
 const oculumAdditionalCraftingMaterials = <OculumAuthoredMaterial>[
+  ...oculumRealmMaterials,
   ...oculumFantasyCraftingMaterials,
   OculumAuthoredMaterial(
     'seta_magica',

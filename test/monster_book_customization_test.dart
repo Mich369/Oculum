@@ -202,9 +202,11 @@ void main() {
       expect(entry.formTags, contains('Creatura Minore'), reason: id);
       expect(entry.stats['level'], 0, reason: id);
       expect(entry.stats['resilienza'], 1, reason: id);
-      expect(entry.skillIds, isEmpty, reason: id);
-      expect(monsterBookUsableSkillIds(entry), isEmpty, reason: id);
-      expect(oculumMonsterBookArt(entry).skills, isEmpty, reason: id);
+      // The authored kit remains empty; the new player-choice pool adds twelve
+      // techniques without raising the creature's level-zero stats.
+      expect(entry.skillIds.where((s) => !s.startsWith(oculumMonsterProgressionPrefix)), isEmpty, reason: id);
+      expect(monsterBookUsableSkillIds(entry), hasLength(12), reason: id);
+      expect(oculumMonsterBookArt(entry).skills, hasLength(12), reason: id);
       expect(entry.imageBase64, isEmpty, reason: id);
       // Oculum derives HP from Resilienza x 10, so these start at 10 HP.
       expect((entry.stats['resilienza'] as int) * 10, lessThan(16), reason: id);
@@ -439,8 +441,9 @@ void main() {
       expect(entry.stats['hp'], inInclusiveRange(5, 10), reason: id);
       expect(entry.stats['atk'], inInclusiveRange(4, 6), reason: id);
       expect(entry.stats['def'], inInclusiveRange(3, 4), reason: id);
-      expect(monsterBookUsableSkillIds(entry), hasLength(3), reason: id);
-      expect(oculumMonsterBookArt(entry).skills, hasLength(3), reason: id);
+      expect(monsterBookUsableSkillIds(entry).where((s) => !s.startsWith(oculumMonsterProgressionPrefix)), hasLength(3), reason: id);
+      expect(monsterBookUsableSkillIds(entry), hasLength(15), reason: id);
+      expect(oculumMonsterBookArt(entry).skills, hasLength(15), reason: id);
     }
   });
 

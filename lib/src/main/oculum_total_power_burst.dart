@@ -6,6 +6,51 @@ int oculumPowerBurstTurns(int power, int die) =>
     max(1, die) + max(0, power) ~/ 160;
 int oculumPowerBurstAccuracy(int adaptation) => max(2, 10 - adaptation);
 
+bool oculumFormulaUsesTotalPower(String expression) => RegExp(
+  r'\b(?:pt|potenza_totale|potenzatotale|total_power|totalpower)\b',
+  caseSensitive: false,
+).hasMatch(expression);
+
+/// Passive quick commands cannot grant a cost-free power-based benefit.
+/// Their original text is preserved in the editor and in the save.
+String oculumPassiveQuickTextWithoutTotalPower(String text) =>
+    text.replaceAllMapped(
+      RegExp(r'@[^@;,\n]+'),
+      (match) => oculumFormulaUsesTotalPower(match[0]!) ? '' : match[0]!,
+    );
+
+/// Sum the PT contribution of all effects, excluding fixed additive values.
+/// The same activation makes one roll, even when split between damage/shield.
+double oculumTotalPowerExhaustionChance(
+  Iterable<OculumStructuredEffect> effects,
+  Map<String, num> variables,
+) {
+  final power = max(1, (variables['potenza_totale'] ?? 0).toDouble());
+  var fraction = 0.0;
+  for (final effect in effects.where((e) => e.enabled)) {
+    // The historical burst already applies its own longer exhaustion.
+    if (effect.target == 'total_power_burst') continue;
+    for (final expression in [effect.valueExpression, effect.duration]) {
+      if (!oculumFormulaUsesTotalPower(expression)) continue;
+      try {
+        final withPower = oculumEvaluateFormula(expression, {
+          ...variables,
+          'potenza_totale': power,
+        });
+        final withoutPower = oculumEvaluateFormula(expression, {
+          ...variables,
+          'potenza_totale': 0,
+        });
+        fraction += ((withPower - withoutPower) / power).abs();
+      } on FormatException {
+        // A formula using PT as a divisor still uses the full reference.
+        fraction += 1;
+      }
+    }
+  }
+  return (fraction * 100).clamp(0, 100).toDouble();
+}
+
 ArtSkill oculumTotalPowerBurstSkill({bool will = false}) {
   final name = will ? 'Impeto totale' : 'Scarica totale';
   final resource = will ? 'volonta' : 'oculum';

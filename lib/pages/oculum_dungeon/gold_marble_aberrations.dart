@@ -1,9 +1,9 @@
 part of 'monster_book.dart';
 
 /// Golden marble aberrations born from the Solar and Angelic powers. The
-/// Solar variants spend their tier budget on offense; Angelic variants are
-/// balanced and carry two extra level-zero stat points.
-const List<MonsterBookEntry> _goldMarbleAberrationEntries = [
+/// Solar variants spend their tier budget on offense; Angelic variants carry
+/// two extra level-zero stat points. Keep the authored tier budgets intact.
+const List<MonsterBookEntry> _goldMarbleAberrationProfiles = [
   MonsterBookEntry(
     id: 'aberrazione_oro_marmo_minore_solare',
     nameIt: 'Aberrazione Minore d’Oro e Marmo · Solare',
@@ -230,4 +230,24 @@ const List<MonsterBookEntry> _goldMarbleAberrationEntries = [
       'Tre fasi',
     ],
   ),
+];
+
+final List<MonsterBookEntry> _goldMarbleAberrationEntries = [
+  for (final entry in _goldMarbleAberrationProfiles)
+    entry.copyWith(
+      nameIt: entry.nameIt.replaceAll('d’Oro e Marmo', 'd’Oro e Ossa Marmoree'),
+      descIt:
+          '${entry.descIt} Il corpo combina oro vivo e ossa marmoree bianche: costole sovrapposte, un collo allungato e una testa protetta da lamelle ossee, sormontata da una calotta chiara. È un’aberrazione rapida e resistente. ${entry.elementId == 'solare' ? 'La variante del Sole sacrifica resistenza per essere più aggressiva: cerca attivamente lo scontro.' : 'La variante angelica è molto resistente e segue gli ordini del proprio angelo.'}',
+      descEn:
+          '${entry.descEn} Its body combines living gold and white marble bones, overlapping ribs and an elongated, bone-plated head. The aberration is swift and resilient. ${entry.elementId == 'solare' ? 'The Solar variant is less resilient and more aggressive.' : 'The Angelic variant is very resilient and follows its angel’s orders.'}',
+      encounterRules: {
+        ...entry.encounterRules,
+        'authoredCanonical': true,
+        'dispositions': entry.elementId == 'solare'
+            ? ['ostile', 'aggressivo']
+            : ['obbediente'],
+        if (entry.elementId != 'solare') 'followsOwnAngelOrders': true,
+      },
+      classificationTags: [...entry.classificationTags, 'Ossa marmoree'],
+    ),
 ];

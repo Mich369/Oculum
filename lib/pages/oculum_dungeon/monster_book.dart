@@ -9,8 +9,15 @@ part 'necromancer_monsters.dart';
 part 'runic_acid_monsters.dart';
 part 'withered_construct_white_larva.dart';
 part 'gold_marble_aberrations.dart';
+part 'sand_and_half_demon.dart';
+part 'illness_metal_time_creatures.dart';
+part 'october_creatures.dart';
+part 'celestial_reference_creatures.dart';
+part 'micro_realm_creatures.dart';
+part 'solar_guards_and_grofix.dart';
 part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
+part 'monster_progression_pool.dart';
 part 'planar_monsters.dart';
 part 'canonical_monster_variants.dart';
 part 'masked_monsters.dart';
@@ -289,19 +296,22 @@ String oculumMonsterBookWeakPointDescription(
 Map<String, String> oculumMonsterBookDamageResistancePresets(
   MonsterBookEntry entry,
 ) {
-  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn} ${entry.descIt}'
+  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn} ${oculumMonsterPhysicalDescription(entry)}'
       .toLowerCase();
   final presets = <String, String>{};
   final shell = RegExp(
     r'guscio|carapace|shell|conchiglia|corazza|corazzat|placca|crosta',
   ).hasMatch(identity);
   final construct = RegExp(
-    r'golem|costrutto|construct|pietra|metallo|runic|runic[oa]',
+    r'golem|costrutto|construct|pietra|metallo|metallic|robot|automa|runic',
   ).hasMatch(identity);
   final incorporeal = RegExp(
     r'incorpore|spettro|fantasma|wraith|ghost|phantom|spirit|spirito',
   ).hasMatch(identity);
   final slime = RegExp(r'slime|gelatina|melma').hasMatch(identity);
+  final plant = RegExp(
+    r'\blegno\b|\balbero\b|\bpianta\b|\brovo\b|\bfungo\b|\bmicelio\b|corpo vegetale',
+  ).hasMatch(identity);
   if (incorporeal) {
     presets.addAll({
       'taglio': 'Alta Resistenza',
@@ -331,12 +341,24 @@ Map<String, String> oculumMonsterBookDamageResistancePresets(
       'contundente': 'Normale',
       'fuoco': 'Fragilità Bassa',
     });
+  } else if (plant) {
+    presets.addAll({'fuoco': 'Fragilità', 'natura': 'Resistenza Leggera'});
   }
   final element = entry.elementId.trim().toLowerCase();
+  // A cutting weapon or explosive attack does not make its bearer resistant
+  // to cuts/explosions. Physical protection follows the body above.
+  const physicalElements = {'fisico', 'taglio', 'tagliente', 'perforante', 'contundente', 'esplosivo'};
   if (element.isNotEmpty &&
-      element != 'fisico' &&
+      !physicalElements.contains(element) &&
       !presets.containsKey(element)) {
     presets[element] = 'Resistenza Leggera';
+  }
+  if (!incorporeal) {
+    if (element == 'gelo' || element == 'ghiaccio') {
+      presets.putIfAbsent('fuoco', () => 'Fragilità');
+    } else if (element == 'fuoco' || element == 'lava') {
+      presets.putIfAbsent('gelo', () => 'Fragilità');
+    }
   }
   presets.addAll(entry.damageResistancePresets);
   return Map<String, String>.unmodifiable(presets);
@@ -5439,41 +5461,49 @@ List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
 final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
   _withoutDefaultMonsterImages(
     _withMonsterSkillNarration(
-      _withMonsterVariants(
-        _withFallbackMonsterSkills(
-          _humanizeLegacyMonsterEntries([
-            ..._craftedMonsterBookEntries,
-            ..._inspiredMonsterBookEntries,
-            ..._weakHorrorMonsterBookEntries,
-            ..._spineHedgehogEntries,
-            ..._spineHedgehogVariantEntries,
-            ..._packLeaderMonsterBookEntries,
-            ..._lavaMonsterEntries,
-            ..._necromancerMonsterEntries,
-            ..._runicAcidMonsterEntries,
-            ...oculumPlanarMonsterEntries,
-            ...oculumCycleMonsterEntries,
-            ..._suggestedGiantEntries,
-            ..._witheredConstructWhiteLarvaEntries,
-            ..._goldMarbleAberrationEntries,
-            ..._elementalCollectorEntries,
-            ..._manualMonsterBookEntries,
-            ..._heroPathMonsterBookEntries(),
-            ..._generateMonsterTier(
-              count: targetNormalMonsterCount - _staticNormalMonsterCount < 2
-                  ? 2
-                  : targetNormalMonsterCount - _staticNormalMonsterCount,
-              tier: _GeneratedMonsterTier.normal,
-            ),
-            ..._generateMonsterTier(
-              count: targetMiniBossMonsterCount - _staticMiniBossMonsterCount,
-              tier: _GeneratedMonsterTier.miniBoss,
-            ),
-            ..._generateMonsterTier(
-              count: targetBossMonsterCount - _staticBossMonsterCount,
-              tier: _GeneratedMonsterTier.boss,
-            ),
-          ]),
+      _withMonsterProgressionPools(
+        _withMonsterVariants(
+          _withFallbackMonsterSkills(
+            _humanizeLegacyMonsterEntries([
+              ..._craftedMonsterBookEntries,
+              ..._inspiredMonsterBookEntries,
+              ..._weakHorrorMonsterBookEntries,
+              ..._sandAndHalfDemonEntries,
+              ..._tacticalCreatureEntries,
+              ..._octoberCreatureEntries,
+              ..._celestialReferenceEntries,
+              ..._microRealmCreatureEntries,
+              ..._solarGuardAndGrofixEntries,
+              ..._spineHedgehogEntries,
+              ..._spineHedgehogVariantEntries,
+              ..._packLeaderMonsterBookEntries,
+              ..._lavaMonsterEntries,
+              ..._necromancerMonsterEntries,
+              ..._runicAcidMonsterEntries,
+              ...oculumPlanarMonsterEntries,
+              ...oculumCycleMonsterEntries,
+              ..._suggestedGiantEntries,
+              ..._witheredConstructWhiteLarvaEntries,
+              ..._goldMarbleAberrationEntries,
+              ..._elementalCollectorEntries,
+              ..._manualMonsterBookEntries,
+              ..._heroPathMonsterBookEntries(),
+              ..._generateMonsterTier(
+                count: targetNormalMonsterCount - _staticNormalMonsterCount < 2
+                    ? 2
+                    : targetNormalMonsterCount - _staticNormalMonsterCount,
+                tier: _GeneratedMonsterTier.normal,
+              ),
+              ..._generateMonsterTier(
+                count: targetMiniBossMonsterCount - _staticMiniBossMonsterCount,
+                tier: _GeneratedMonsterTier.miniBoss,
+              ),
+              ..._generateMonsterTier(
+                count: targetBossMonsterCount - _staticBossMonsterCount,
+                tier: _GeneratedMonsterTier.boss,
+              ),
+            ]),
+          ),
         ),
       ),
     ),
@@ -5693,6 +5723,12 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _elementalCollectorEntries;
   yield* _inspiredMonsterBookEntries;
   yield* _weakHorrorMonsterBookEntries;
+  yield* _sandAndHalfDemonEntries;
+  yield* _tacticalCreatureEntries;
+  yield* _octoberCreatureEntries;
+  yield* _celestialReferenceEntries;
+  yield* _microRealmCreatureEntries;
+  yield* _solarGuardAndGrofixEntries;
   yield* _spineHedgehogEntries;
   yield* _spineHedgehogVariantEntries;
   yield* _packLeaderMonsterBookEntries;

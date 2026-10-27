@@ -1014,7 +1014,16 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final effectiveStage = wet != null && type == 'gelo'
         ? max(1, stage) + 1
         : stage;
-    final existing = getCondition(type);
+    final isolatedSource = metadata?['referenceCurseSource'];
+    final existing = isolatedSource == null
+        ? getCondition(type)
+        : activeConditions
+              .where(
+                (c) =>
+                    c.conditionType == type &&
+                    c.metadata['referenceCurseSource'] == isolatedSource,
+              )
+              .firstOrNull;
     final override = conditionOverrideFor(type);
     if (!canApplyControlCondition(
       definition,

@@ -16,11 +16,16 @@ class OculumSettingsNavigation extends StatefulWidget {
     required this.onSelect,
     required this.onSearch,
     this.english = false,
+    this.keyPrefix = 'settings',
+    this.searchLabel,
+    this.searchHint,
   });
   final List<OculumSettingsCategory> categories;
   final String selected, query;
   final ValueChanged<String> onSelect, onSearch;
   final bool english;
+  final String keyPrefix;
+  final String? searchLabel, searchHint;
   @override
   State<OculumSettingsNavigation> createState() =>
       _OculumSettingsNavigationState();
@@ -47,17 +52,19 @@ class _OculumSettingsNavigationState extends State<OculumSettingsNavigation> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       TextField(
-        key: const ValueKey('settings-search'),
+        key: ValueKey('${widget.keyPrefix}-search'),
         controller: search,
         onChanged: widget.onSearch,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
-          labelText: widget.english
-              ? 'Search settings'
-              : 'Cerca nelle impostazioni',
-          hintText: widget.english
-              ? 'Transparency, backups, dice…'
-              : 'Trasparenza, backup, dadi…',
+          labelText:
+              widget.searchLabel ??
+              (widget.english ? 'Search settings' : 'Cerca nelle impostazioni'),
+          hintText:
+              widget.searchHint ??
+              (widget.english
+                  ? 'Transparency, backups, dice…'
+                  : 'Trasparenza, backup, dadi…'),
           prefixIcon: const Icon(Icons.search),
           suffixIcon: widget.query.isEmpty
               ? null
@@ -77,7 +84,7 @@ class _OculumSettingsNavigationState extends State<OculumSettingsNavigation> {
         builder: (context, constraints) {
           if (constraints.maxWidth < 560) {
             return DropdownButtonFormField<String>(
-              key: ValueKey('settings-category-${widget.selected}'),
+              key: ValueKey('${widget.keyPrefix}-category-${widget.selected}'),
               initialValue: widget.selected,
               isExpanded: true,
               decoration: InputDecoration(
@@ -110,7 +117,7 @@ class _OculumSettingsNavigationState extends State<OculumSettingsNavigation> {
             children: [
               for (final category in widget.categories)
                 ChoiceChip(
-                  key: ValueKey('settings-category-${category.id}'),
+                  key: ValueKey('${widget.keyPrefix}-category-${category.id}'),
                   avatar: Icon(category.icon, size: 18),
                   label: Text(category.label),
                   selected:

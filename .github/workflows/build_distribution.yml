@@ -38,6 +38,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m unittest discover -s scripts/tests -p test_windows_update.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s scripts/tests -p test_android_signing.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - run: flutter analyze --no-pub
       - name: Verify manual build and publication command
         shell: pwsh
@@ -427,6 +429,11 @@ jobs:
     needs: validate
     name: Build Android
     runs-on: ubuntu-latest
+    env:
+      OCULUM_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/oculum-release.keystore
+      OCULUM_ANDROID_STORE_PASSWORD: ${{ secrets.OCULUM_ANDROID_STORE_PASSWORD || 'android' }}
+      OCULUM_ANDROID_KEY_PASSWORD: ${{ secrets.OCULUM_ANDROID_KEY_PASSWORD || 'android' }}
+      OCULUM_ANDROID_KEY_ALIAS: ${{ secrets.OCULUM_ANDROID_KEY_ALIAS || 'androiddebugkey' }}
 
     steps:
       - name: Checkout repository
@@ -454,9 +461,9 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$OCULUM_ANDROID_KEYSTORE_BASE64" || { echo "Missing stable Android signing secret"; exit 1; }
-          mkdir -p "$HOME/.android"
-          printf '%s' "$OCULUM_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
-          chmod 600 "$HOME/.android/debug.keystore"
+          umask 077
+          printf '%s' "$OCULUM_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$OCULUM_ANDROID_KEYSTORE_PATH"
+          echo "OCULUM_ANDROID_BUILD_NUMBER=$((100000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
 
       - name: Build Android release APK
         shell: bash
@@ -465,12 +472,17 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build apk --release \
+            "--build-number=${OCULUM_ANDROID_BUILD_NUMBER}" \
             "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Package Android release
         run: |
+          python3 scripts/verify_android_signing.py \
+            --apk build/app/outputs/flutter-apk/app-release.apk \
+            --min-version-code "$OCULUM_ANDROID_BUILD_NUMBER" \
+            --report build/android-update-compatibility.json
           mkdir -p build/distribution/android
           cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
 
@@ -480,6 +492,7 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build appbundle --release \
+            "--build-number=${OCULUM_ANDROID_BUILD_NUMBER}" \
             "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
@@ -494,6 +507,7 @@ jobs:
           path: |
             build/distribution/Oculum-Android-release.apk
             build/distribution/Oculum-Android-release.aab
+            build/android-update-compatibility.json
           if-no-files-found: error
           retention-days: 30
 

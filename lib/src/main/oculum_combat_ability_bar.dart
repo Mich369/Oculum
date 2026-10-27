@@ -562,6 +562,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   }
 
   bool combatNaturalFormAvailable(CharacterSkillForm form) =>
+      progressionRequirementsMet(form.unlockRequirements) &&
       leggiNumero(livelloController) >= (int.tryParse(form.livello) ?? 0) &&
       !form.tipo.toLowerCase().contains('passiv') &&
       (form.cooldownStrutturato?.ready ?? true) &&
@@ -580,6 +581,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           currentOculum() >= form.oculumMinimoUtilizzabile);
 
   bool combatArtFormAvailable(CharacterArt art, ArtSkill skill, int form) =>
+      progressionRequirementsMet(skill.unlockRequirementsPerLevel[form - 1]) &&
       !skill.tipoPerLivello(form).toLowerCase().contains('passiv') &&
       skill.cooldownPerLivello[form - 1].ready &&
       !oculumCombatTextHasUnresolvedRequirement(skill.testoEvoluzione(form)) &&
@@ -1752,72 +1754,81 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       ));
     }
     for (final item in inventario.where(
-      (i) => i.equipaggiata && i.quantita > 0 && i.ability != null,
+      (i) =>
+          i.equipaggiata &&
+          i.quantita > 0 &&
+          (i.ability != null || i.titleAbility != null),
     )) {
-      final ability = item.ability!;
-      ability.ensureForms();
-      for (final (index, form) in ability.forme.indexed) {
-        if (onlyRole != null && form.cooldownStrutturato?.ready == false) {
+      for (final ability in oculumAllEquipmentAbilities(item)) {
+        if (oculumItemTitleAbilities(item).contains(ability) &&
+            !oculumItemTitleEvolutionReady(item)) {
           continue;
         }
-        if (form.tipo.toLowerCase().contains('passiv')) continue;
-        final effects = form.effettiStrutturati.isNotEmpty
-            ? form.effettiStrutturati
-            : oculumParseStructuredEffectsFromText(
-                form.descrizione,
-                subtraits: hiddenEyeStats,
-              ).effects;
-        final roles = rolesFor(effects, explicitType: form.tipo);
-        final itemSkillLevelReady = oculumEquipmentSkillLevelAvailable(
-          characterLevel: leggiNumero(livelloController),
-          itemLevel: item.livelloOggetto,
-          formLevel: form.livello,
-        );
-        final requiredEquipmentLevel = oculumEquipmentRequiredSkillLevel(
-          itemLevel: item.livelloOggetto,
-          formLevel: form.livello,
-        );
-        entries.add((
-          name: '${ability.nome} ${index + 1} · ${item.nome}',
-          roles: roles,
-          color: combatAbilityResourceColor([
-            form.costoStrutturato?.resource ?? form.costo,
-          ]),
-          enabled:
-              canEquipInventoryItem(item) &&
-              combatNaturalFormAvailable(form) &&
-              (form.cooldownStrutturato?.ready ?? true) &&
-              oculumEquipmentSkillLevelAvailable(
-                characterLevel: leggiNumero(livelloController),
-                itemLevel: item.livelloOggetto,
-                formLevel: form.livello,
-              ),
-          hint:
-              '${itemSkillLevelReady ? '' : 'Richiede livello $requiredEquipmentLevel dell’oggetto/personaggio.\n'}${form.descrizione}',
-          details: () => showCombatAbilityDetails(
-            name: '${ability.nome} ${index + 1}',
-            description: form.descrizione,
+        ability.ensureForms();
+        for (final (index, form) in ability.forme.indexed) {
+          if (onlyRole != null && form.cooldownStrutturato?.ready == false) {
+            continue;
+          }
+          if (form.tipo.toLowerCase().contains('passiv')) continue;
+          final effects = form.effettiStrutturati.isNotEmpty
+              ? form.effettiStrutturati
+              : oculumParseStructuredEffectsFromText(
+                  form.descrizione,
+                  subtraits: hiddenEyeStats,
+                ).effects;
+          final roles = rolesFor(effects, explicitType: form.tipo);
+          final itemSkillLevelReady = oculumEquipmentSkillLevelAvailable(
+            characterLevel: leggiNumero(livelloController),
+            itemLevel: oculumEquipmentSkillItemLevel(item, form),
+            formLevel: form.livello,
+          );
+          final requiredEquipmentLevel = oculumEquipmentRequiredSkillLevel(
+            itemLevel: oculumEquipmentSkillItemLevel(item, form),
+            formLevel: form.livello,
+          );
+          entries.add((
+            name: '${ability.nome} ${index + 1} · ${item.nome}',
+            roles: roles,
             color: combatAbilityResourceColor([
               form.costoStrutturato?.resource ?? form.costo,
             ]),
-            effects: effects,
-            cost: form.costo,
-            cooldown: form.cooldownStrutturato?.ready == false
-                ? '${form.cooldownStrutturato!.remaining} ${form.cooldownStrutturato!.unit}'
-                : '',
-            locked:
-                !itemSkillLevelReady ||
-                oculumCombatTextHasUnresolvedRequirement(form.descrizione),
-          ),
-          use: () => unawaited(
-            useEquipmentQuickAbility(
-              item,
-              form,
-              onlyRole ??
-                  oculumCombatAbilityRole(effects, explicitType: form.tipo),
+            enabled:
+                canEquipInventoryItem(item) &&
+                itemTitleFormAvailable(item, form) &&
+                combatNaturalFormAvailable(form) &&
+                (form.cooldownStrutturato?.ready ?? true) &&
+                oculumEquipmentSkillLevelAvailable(
+                  characterLevel: leggiNumero(livelloController),
+                  itemLevel: oculumEquipmentSkillItemLevel(item, form),
+                  formLevel: form.livello,
+                ),
+            hint:
+                '${itemSkillLevelReady ? '' : 'Richiede livello $requiredEquipmentLevel dell’oggetto/personaggio.\n'}${item.titleAbility?.forme.contains(form) == true ? '${oculumItemTitleSummary(item)}\n' : ''}${form.descrizione}',
+            details: () => showCombatAbilityDetails(
+              name: '${ability.nome} ${index + 1}',
+              description: form.descrizione,
+              color: combatAbilityResourceColor([
+                form.costoStrutturato?.resource ?? form.costo,
+              ]),
+              effects: effects,
+              cost: form.costo,
+              cooldown: form.cooldownStrutturato?.ready == false
+                  ? '${form.cooldownStrutturato!.remaining} ${form.cooldownStrutturato!.unit}'
+                  : '',
+              locked:
+                  !itemSkillLevelReady ||
+                  oculumCombatTextHasUnresolvedRequirement(form.descrizione),
             ),
-          ),
-        ));
+            use: () => unawaited(
+              useEquipmentQuickAbility(
+                item,
+                form,
+                onlyRole ??
+                    oculumCombatAbilityRole(effects, explicitType: form.tipo),
+              ),
+            ),
+          ));
+        }
       }
     }
     final activeSheet =

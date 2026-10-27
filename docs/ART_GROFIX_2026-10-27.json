@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-27",
+  "id": "grofix",
+  "asset": "assets/oculum/home_art/creature_grofix_v1.png",
+  "generator": "image_gen.imagegen",
+  "status": "generated_candidate_not_yet_runtime_theme",
+  "canon": [
+    "docs/OCULUM_LORE_VISIVA.md",
+    "docs/OCULUM_REGOLE_CONFERMATE.md",
+    "docs/DICITURE_UTENTE_2026-10-27.md",
+    "design/OCULUM-VISUAL-BIBLE.md"
+  ],
+  "styleReference": "assets/oculum/home_art/amber_shore.png",
+  "prompt": "Create an original Oculum fantasy character-sheet THEME BACKGROUND, wide landscape 16:9, a fully illustrated underground scene. Subject: GROFIX, a living invasive material awakened as a monster. Canon: it grows around mineral deposits left unharvested, steals their grade/power, reduces useful mineral mass, and absorbs Oculum. Its lower body is a low asymmetrical creeping mass of dark green and grey moss, dense fibrous rhizoids and damp fronds wrapping a partly depleted mineral seam. Its upper body transitions progressively from soft tangled moss to spectacular long, very sharp, irregular variegated mineral crystals in subdued emerald, amethyst and smoky quartz hues, reflecting the different minerals it has consumed. Show a compact vulnerable knot/core at the root of the crystal cluster, partly sheltered by the plates. Do NOT make a generic humanoid golem, no human face, armor, weapons, clothing, fairy, copper boulder or cute pet. It has a distinctive predatory rooting posture with thin flexible absorbing filaments touching the seam. Nearby drained stones are visibly brittle, pale and crumbling; a few mineral fragments are carried in the moss. Its threatening identity is ecological and mineral, not random teeth everywhere. Art direction mandatory: Rame fatato Oculum painting technique, soft matte hand-painted anime dark-fantasy, velvety gouache/oil brush texture, broad readable painted shapes with fine edges selectively emphasized, atmospheric depth. No photorealism, glossy 3D, cinematic rendering or plastic surfaces. Place the complete creature toward the right third with safe margins around every crystal tip and root; foreground root shapes lead to it. Keep the left and middle spacious, softly shadowed and low contrast so real RPG sheet text can be overlaid later. The cavern roof must be clearly rock: no sky, sun, moon, stars or beams from celestial bodies. Local dim mineral light and faint violet Oculum threads illuminate the rock and moss coherently. Full opaque background, no painted frames, UI, text, stats, lettering, labels, logos, watermark or titles. This is a scene for a sheet theme, never a Monster Book portrait. Keep its anatomy clearly legible even when viewed smaller."
+}

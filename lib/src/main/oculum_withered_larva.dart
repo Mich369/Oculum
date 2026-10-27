@@ -170,6 +170,16 @@ List<CharacterSkill> oculumWitheredLarvaSkills(MonsterBookEntry monster) => [
                   : id == 'withered_strike'
                   ? '${f + 1}'
                   : '1',
+              minimum: id.startsWith('white_larva')
+                  ? 0
+                  : id == 'withered_strike'
+                  ? f + 1
+                  : 1,
+              maximum: id.startsWith('white_larva')
+                  ? 0
+                  : id == 'withered_strike'
+                  ? f + 1
+                  : 1,
             ),
             cooldown: '${oculumWitheredLarvaCooldown(id, f)} turni',
             cooldownStrutturato: OculumAbilityCooldown(

@@ -1,8 +1,31 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/game/oculum_opposed_attack.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'positive double critical grants Magical Luck once after JSON restore',
+    () {
+      var sheet = <String, dynamic>{'fortuna': 2};
+      bool resolve(String id, int natural, int total) =>
+          oculumGrantDoubleCriticalMagicalLuck(
+            sheet,
+            receiptId: id,
+            natural: natural,
+            total: total,
+            opposingTotal: 15,
+          );
+      expect(resolve('attack:one-roll-many-targets', 20, 30), isTrue);
+      expect(sheet['fortuna'], 3);
+      sheet = Map<String, dynamic>.from(jsonDecode(jsonEncode(sheet)));
+      expect(resolve('attack:one-roll-many-targets', 20, 40), isFalse);
+      expect(resolve('attack:not-a-critical', 19, 40), isFalse);
+      expect(resolve('attack:ordinary-critical', 20, 29), isFalse);
+      expect(resolve('defense:other-roll', 20, 31), isTrue);
+      expect(sheet['fortuna'], 4);
+    },
+  );
   test(
     'double critical requires natural twenty and twice the opposing total',
     () {

@@ -73,6 +73,13 @@ class MonsterConcreteTechnique {
           'materia' => 'Materia',
           'resilienza' => 'Resilienza',
           'vita' => 'Vita',
+          'hp' => 'Vita',
+          'scudo' => 'Scudo',
+          'scudo_oculum' => 'Scudo Oculum',
+          'obser' => 'Obser',
+          'fortuna' => 'Fortuna magica',
+          'follia' => 'Follia',
+          'ki_mortale' => 'Ki Mortale',
           'item' => 'oggetto',
           'material' => 'materiale',
           _ => 'Oculum',
@@ -120,6 +127,8 @@ final Map<String, MonsterBookEntry> _concreteTechniqueOwners = () {
 final Map<String, MonsterConcreteTechnique?> _concreteTechniqueCache = {};
 
 MonsterConcreteTechnique? monsterBookConcreteTechnique(String rawId) {
+  final progression = _monsterProgressionTechnique(rawId);
+  if (progression != null) return progression;
   final id = rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), '');
   final planar = oculumPlanarTechnique(id);
   if (planar != null) return planar;

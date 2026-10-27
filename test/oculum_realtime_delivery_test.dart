@@ -75,6 +75,9 @@ class _Client extends SupabaseClient {
             };
           } else if (path.endsWith('/oculum_open_room') ||
               path.endsWith('/oculum_open_room_with_password')) {
+            final stalled = backend.stalledOpenRoom;
+            backend.stalledOpenRoom = null;
+            if (stalled != null) await stalled.future;
             final input = jsonDecode(request.body) as Map;
             backend.openRoomCalls++;
             backend.lastRoomInput = input;
@@ -211,6 +214,9 @@ class _Client extends SupabaseClient {
                     );
               body = (body as List).firstOrNull;
             } else {
+              final stalled = backend.stalledEventReplay;
+              backend.stalledEventReplay = null;
+              if (stalled != null) await stalled.future;
               final after =
                   int.tryParse(
                     request.url.queryParameters['sequence']?.replaceFirst(
@@ -268,6 +274,8 @@ class _Client extends SupabaseClient {
 }
 
 class _Backend {
+  Completer<void>? stalledOpenRoom;
+  Completer<void>? stalledEventReplay;
   String roomStatus = 'approved';
   String? roomRole;
   String? roomAccessError;
@@ -288,6 +296,157 @@ class _Backend {
 }
 
 void main() {
+  for (final large in [false, true]) {
+    test(
+      'a transient consumer failure retries the ${large ? 'assembled large sheet' : 'verified event'} without blocking later events',
+      () async {
+        final previous = OculumRealtimeService.supabaseAvailable;
+        OculumRealtimeService.supabaseAvailable = true;
+        final client = _Client();
+        final received = <Map<String, dynamic>>[];
+        final failed = Completer<void>();
+        var attempts = 0;
+        var laterEvents = 0;
+        final service = OculumRealtimeService(
+          client: client,
+          roomId: 'retry-consumer',
+          playerName: 'Player',
+          onPresenceChanged: (_) {},
+          onStatusChanged: (_) {},
+          onEvent: (event, payload) {
+            if (event == 'permission_request') laterEvents++;
+            if (event != 'sheet_shared') return;
+            if (++attempts == 1) {
+              failed.complete();
+              (payload['sheet'] as Map)['nome'] = 'partially imported';
+              throw StateError('temporary consumer failure');
+            }
+            received.add(payload);
+          },
+        );
+        addTearDown(() async {
+          await service.dispose();
+          await client.dispose();
+          OculumRealtimeService.supabaseAvailable = previous;
+        });
+        await service.connect();
+        await service.refreshPresence();
+        final sheet = {
+          'nome': 'Preserved',
+          'imageBase64': large ? 'x' * 300000 : '',
+        };
+        expect(
+          await service.sendSharedSheetConfirmed(
+            sheet: sheet,
+            campaignId: 'c',
+            campaignName: 'Campaign',
+            sheetId: 'OWNER',
+            sheetName: 'Preserved',
+            ownerTag: 'OWNER',
+            senderRole: 'player',
+            targetAudience: 'master_coMaster',
+            fromMaster: false,
+            masterParty: false,
+            deliveryId: 'retry-sheet',
+          ),
+          isTrue,
+        );
+        for (final part in client.testChannel.broadcasts.toList()) {
+          client.testChannel.callbacks['${part['event']}']!({
+            'serverEventId': part['id'],
+          });
+        }
+        await failed.future.timeout(const Duration(seconds: 3));
+        expect(received, isEmpty);
+        expect(
+          await service.sendPermissionEvent('permission_request', {
+            'id': 'later-event',
+          }),
+          isTrue,
+        );
+        final later = client.testChannel.broadcasts.last;
+        client.testChannel.callbacks['permission_request']!({
+          'serverEventId': later['id'],
+        });
+        for (var i = 0; laterEvents == 0 && i < 100; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+        expect(laterEvents, 1);
+        await service.refreshPresence();
+        expect(received, hasLength(1));
+        expect(received.single['sheet'], sheet);
+        expect(received.single['authenticatedRole'], 'player');
+        expect(received.single['deliveryId'], 'retry-sheet');
+        await service.refreshPresence();
+        expect(received, hasLength(1));
+      },
+    );
+  }
+  test(
+    'a stalled room opening times out and a new connection can succeed',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      final stalled = Completer<void>();
+      final backend = _Backend()..stalledOpenRoom = stalled;
+      final client = _Client(backend);
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'open-timeout',
+        playerName: 'Player',
+        connectionRequestTimeout: const Duration(milliseconds: 30),
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: printOnFailure,
+      );
+      addTearDown(() async {
+        if (!stalled.isCompleted) stalled.complete();
+        await service.dispose();
+        await client.dispose();
+        OculumRealtimeService.supabaseAvailable = previous;
+      });
+      await service.connect().timeout(const Duration(seconds: 2));
+      expect(service.isConnecting, isFalse);
+      expect(service.isConnected, isFalse);
+      await service.connect().timeout(const Duration(seconds: 2));
+      expect(service.isConnected, isTrue);
+    },
+  );
+  test(
+    'connection becomes ready while optional event history is still waiting',
+    () async {
+      final previous = OculumRealtimeService.supabaseAvailable;
+      OculumRealtimeService.supabaseAvailable = true;
+      final stalled = Completer<void>();
+      final backend = _Backend()..stalledEventReplay = stalled;
+      final client = _Client(backend);
+      final service = OculumRealtimeService(
+        client: client,
+        roomId: 'history-slow',
+        playerName: 'Player',
+        onEvent: (_, _) {},
+        onPresenceChanged: (_) {},
+        onStatusChanged: printOnFailure,
+      );
+      addTearDown(() async {
+        if (!stalled.isCompleted) stalled.complete();
+        await service.dispose();
+        await client.dispose();
+        OculumRealtimeService.supabaseAvailable = previous;
+      });
+      await service.connect().timeout(const Duration(seconds: 2));
+      expect(service.isConnected, isTrue);
+      expect(service.isConnecting, isFalse);
+      stalled.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        await service.sendPermissionEvent('permission_request', {
+          'id': 'after-ready',
+        }),
+        isTrue,
+      );
+    },
+  );
   test(
     'a stalled presence read releases refresh and permits recovery',
     () async {

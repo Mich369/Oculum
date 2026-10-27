@@ -67,6 +67,7 @@ import 'widgets/oculum_combat_theme.dart';
 import 'widgets/oculum_theme_relic.dart';
 import 'widgets/oculum_theme_sheet_art.dart';
 import 'widgets/oculum_monster_theme.dart';
+import 'widgets/oculum_monster_book_page.dart';
 import 'widgets/oculum_narrative_background.dart';
 import 'widgets/oculum_theme_asset_packs.dart';
 import 'widgets/oculum_hex_color_field.dart';
@@ -116,6 +117,8 @@ part 'src/main/oculum_home_resources_rest_titles_data.dart';
 part 'src/main/oculum_design_system.dart';
 part 'src/main/oculum_element_themes.dart';
 part 'src/main/oculum_reference_sheet.dart';
+part 'src/main/oculum_combat_turn_status.dart';
+part 'src/main/oculum_sheet_assignments.dart';
 part 'src/main/oculum_reference_campaign.dart';
 part 'src/main/oculum_art_loadout.dart';
 part 'src/main/oculum_home_colors_and_base_widgets.dart';
@@ -145,8 +148,14 @@ part 'src/main/oculum_combat_scout.dart';
 part 'src/main/oculum_master_roll_requests.dart';
 part 'src/main/oculum_encounter_rewards.dart';
 part 'src/main/oculum_party_chest.dart';
+part 'src/main/oculum_item_titles.dart';
+part 'src/main/oculum_micro_realms.dart';
+part 'src/main/oculum_blacksmith.dart';
+part 'src/main/oculum_recipe_books.dart';
 part 'src/main/oculum_party_quests.dart';
 part 'src/main/oculum_planar_runtime.dart';
+part 'src/main/oculum_reference_creatures.dart';
+part 'src/main/oculum_celestial_runtime.dart';
 part 'src/main/oculum_mecha.dart';
 part 'src/main/oculum_will_inventory.dart';
 part 'src/main/oculum_masked_men.dart';
@@ -203,6 +212,14 @@ part 'src/main/oculum_home_dialogs_quick_edit.dart';
 part 'src/main/oculum_fallen_eyes.dart';
 part 'src/main/oculum_summoning_emblem.dart';
 part 'src/main/oculum_starter_creation.dart';
+part 'src/main/oculum_creation_progression.dart';
+part 'src/main/oculum_ability_element_resistance.dart';
+part 'src/main/oculum_senka_runtime.dart';
+part 'src/main/oculum_lusier.dart';
+part 'src/main/oculum_explosive_cards.dart';
+part 'src/main/oculum_racial_runtime.dart';
+part 'src/main/oculum_corruption_chronicle.dart';
+part 'src/main/oculum_corruption_commands.dart';
 part 'src/main/oculum_painters.dart';
 part 'src/main/oculum_necromancers.dart';
 
@@ -795,6 +812,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   void notifyDiceOverlayChanged() {
     if (!mounted) return;
     if (!mostraOverlayDado) {
+      for (final spend in pendingOnlineCombatTurnResourceSpends) {
+        spend['activityComplete'] = true;
+      }
       currentScreenDiceOverlay?.remove();
       currentScreenDiceOverlay?.dispose();
       currentScreenDiceOverlay = null;
@@ -1430,7 +1450,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   }
 
   String cleanUiText(String value) {
-    return oculumCleanMojibakeText(value);
+    return oculumCleanMojibakeText(value).replaceAll(
+      RegExp(r'\bcaos\b', caseSensitive: false), 'Chaos',
+    );
   }
 
   String t(String it, String en) => cleanUiText(linguaInglese ? en : it);
@@ -1628,6 +1650,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Set<String> auraObservedTargets = <String>{};
   String monsterBookTierFilter = 'Tutti';
   String monsterBookHabitatFilter = '';
+  String monsterBookKnowledgeFilter = 'all';
   String partyBookHabitatFilter = '';
   final recipeSearchController = TextEditingController();
 
@@ -2155,6 +2178,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool settingsAppearanceExpanded = false;
   String settingsCategory = 'general';
   String settingsQuery = '';
+  String masterCategory = 'overview';
+  String masterQuery = '';
   bool mostraBorsaCompatta = true;
   bool mostraPartyScheda = true;
   bool mostraTastiRapidiIndice = true;
@@ -2299,6 +2324,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   OculumRealtimeService? realtimeService;
   bool applyingRealtimeRemoteSheet = false;
   bool realtimeAutoReconnectEnabled = false;
+  Future<void>? sheetAssignmentsSync;
+  late final Future<void> initialSheetLoad;
+  bool sheetAssignmentsSyncRequested = false;
   int realtimeReconnectAttempt = 0;
 
   String modificatoreDannoSelezionato = 'Normale';
@@ -3920,19 +3948,18 @@ class _OculumHomePageState extends State<OculumHomePage>
     WidgetsBinding.instance.addObserver(this);
     assicuraArtiBase();
     ensureCoreOculumRecipes();
-    unawaited(
-      caricaDati().then((_) {
-        if (!mounted) return;
-        var coreRecipesAdded = false;
-        setState(() {
-          modalitaMaster = oculumStartupRole == OculumStartupRole.master;
-          coreRecipesAdded = ensureCoreOculumRecipes();
-        });
-        if (coreRecipesAdded) {
-          programmaSalvataggio();
-        }
-      }),
-    );
+    initialSheetLoad = caricaDati().then((_) {
+      if (!mounted) return;
+      var coreRecipesAdded = false;
+      setState(() {
+        modalitaMaster = oculumStartupRole == OculumStartupRole.master;
+        coreRecipesAdded = ensureCoreOculumRecipes();
+      });
+      if (coreRecipesAdded) {
+        programmaSalvataggio();
+      }
+    });
+    unawaited(initialSheetLoad);
     avviaControlloConnessioneOnline();
     if (oculumSourceCommit.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -5344,6 +5371,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                             sheetId: currentSheetScrollId(),
                           ),
                         ),
+                        Positioned.fill(child: corruptionBackdrop()),
                         desktopSideMenuShell(
                           visiblePages: visiblePages,
                           pageLabels: pageLabels,

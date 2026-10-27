@@ -345,6 +345,7 @@ extension _OculumAuthoredCrafting on _OculumHomePageState {
   bool ensureAuthoredCraftingRecipes() {
     final now = DateTime.now().toIso8601String();
     final defaults = [
+      ...oculumRealmCraftingRecipes(now),
       ...oculumUsefulCoreRecipes(now),
       for (final material in oculumAuthoredMaterials)
         OculumRecipe(
@@ -388,7 +389,10 @@ extension _OculumAuthoredCrafting on _OculumHomePageState {
       return null;
     }
     final name = recipe.ingredients.first.name.toLowerCase();
-    for (final material in oculumAuthoredMaterials) {
+    for (final material in [
+      ...oculumAuthoredMaterials,
+      ...oculumRealmMaterials,
+    ]) {
       if (material.name.toLowerCase() == name) return material;
     }
     return null;
@@ -419,7 +423,9 @@ extension _OculumAuthoredCrafting on _OculumHomePageState {
       protegge: armor,
       gradoOggetto: grade + (material?.id == 'stray' ? 1 : 0),
       gradoRichiesto: grade + (material?.id == 'stray' ? 1 : 0),
-      buff: weapon ? passive : '',
+      buff: weapon || oculumRealmMaterials.any((m) => m.id == material?.id)
+          ? passive
+          : '',
       bonusDifesa: material?.id == 'tarium' ? 10 + grade : 0,
       bonusScudo: material?.id == 'tarium'
           ? 30 + grade

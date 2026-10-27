@@ -279,45 +279,70 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     ],
   );
 
-  Widget referenceTurnControls() {
-    final remote =
-        !realtimeIsMasterRole && realtimeService?.isConnected == true;
-    final hasFight = remote
-        ? (realtimeVisibleInitiativeSnapshot['tokens'] as List? ?? const [])
-              .isNotEmpty
-        : masterInitiativeTokens.isNotEmpty;
-    final round = remote
-        ? readIntValue(realtimeVisibleInitiativeSnapshot['round'], fallback: 0)
-        : masterInitiativeRound;
-    return Container(
+  Widget referenceTurnControls() => ListenableBuilder(
+    listenable: Listenable.merge([
+      diceOverlayRevision,
+      activeSheetSummaryRevision,
+    ]),
+    builder: (_, _) => referenceTurnControlsBody(),
+  );
+
+  Widget referenceTurnControlsBody() {
+    final remote = !referenceUsesLocalTurnState;
+    final encounter = referenceTurnEncounter();
+    final hasFight = (encounter['tokens'] as List? ?? const []).isNotEmpty;
+    final round = readIntValue(encounter['round']);
+    final label = hasFight
+        ? referenceTurnStatusText()
+        : t('Turno $playerReportedTurn', 'Turn $playerReportedTurn');
+    final canStep = !remote || realtimeIsCoMasterRole;
+    void step(int delta) {
+      if (hasFight) {
+        stepReferenceTurn(delta, '${encounter['encounterId'] ?? ''}');
+      } else {
+        setPlayerReportedTurn(playerReportedTurn + delta);
+      }
+    }
+
+    final turnBar = Container(
+      key: const ValueKey('reference_combat_turn_status'),
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         color: Color(0xff14212e),
         border: Border.all(color: Color(0xff51718f)),
         borderRadius: BorderRadius.circular(5),
       ),
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Row(
         children: [
+          realmIndicator(),
           IconButton(
             tooltip: remote
                 ? 'Il Master gestisce il turno'
                 : 'Turno precedente',
             visualDensity: VisualDensity.compact,
-            onPressed: remote
-                ? realtimeIsCoMasterRole && hasFight
-                      ? () => requestVisibleEncounterStep(-1)
-                      : null
-                : () => hasFight
-                      ? nextMasterInitiativeTurn(delta: -1)
-                      : setPlayerReportedTurn(playerReportedTurn - 1),
+            onPressed: canStep ? () => step(-1) : null,
             icon: Icon(Icons.chevron_left),
           ),
-          turnResetGesture(
-            Text(
-              hasFight
-                  ? 'Round $round · Tuo turno $playerReportedTurn'
-                  : 'Turno $playerReportedTurn',
+          Expanded(
+            child: Tooltip(
+              message: label,
+              child: turnResetGesture(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(label, softWrap: true),
+                    if (hasFight)
+                      Text(
+                        t('Round $round', 'Round $round'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: primaryColor.withValues(alpha: .7),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
           IconButton(
@@ -325,17 +350,34 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                 ? 'Il Master gestisce il turno'
                 : 'Turno successivo',
             visualDensity: VisualDensity.compact,
-            onPressed: remote
-                ? realtimeIsCoMasterRole && hasFight
-                      ? () => requestVisibleEncounterStep(1)
-                      : null
-                : () => hasFight
-                      ? nextMasterInitiativeTurn()
-                      : setPlayerReportedTurn(playerReportedTurn + 1),
+            onPressed: canStep ? () => step(1) : null,
             icon: Icon(Icons.chevron_right),
           ),
         ],
       ),
+    );
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final remaining = currentSheetInitiativeRemaining(compact: true);
+        if (constraints.maxWidth < 560) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              turnBar,
+              const SizedBox(height: 6),
+              Align(alignment: Alignment.centerRight, child: remaining),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: turnBar),
+            const SizedBox(width: 10),
+            remaining,
+          ],
+        );
+      },
     );
   }
 
@@ -951,14 +993,21 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                         ),
                       ],
                     ),
-                    knownPowerBadge(sheetTagAt(schedaCorrente)),
-                    Text(
-                      '${tipoSchedaPersonaggio(schedaCorrente)} · ${t('Livello', 'Level')} ${leggiNumero(livelloController)} · ${t('Grado', 'Grade')} ${leggiNumero(gradoController)}',
-                      style: TextStyle(
-                        color: primaryColor.withValues(alpha: .72),
-                        fontSize: 12,
-                      ),
+                    Wrap(
+                      spacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '${tipoSchedaPersonaggio(schedaCorrente)} · ${t('Livello', 'Level')} ${leggiNumero(livelloController)} · ${t('Grado', 'Grade')} ${leggiNumero(gradoController)}',
+                          style: TextStyle(
+                            color: primaryColor.withValues(alpha: .72),
+                            fontSize: 12,
+                          ),
+                        ),
+                        knownPowerBadge(sheetTagAt(schedaCorrente)),
+                      ],
                     ),
+                    racialCapabilitiesPanel(),
                     meter(
                       healthShieldLabel(),
                       hpReadoutProtetto(),
@@ -1216,6 +1265,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                     masterRequestedRollsPanel(),
                     onlineCombatRequestsPanel(),
                     escapeRequestsPanel(),
+                    criticalEscapeRescuePanel(),
+                    corruptionCommandsPanel(),
                     Text(
                       '${t('Danni inflitti', 'Damage dealt')}: ${dannoTotale()} · ${t('Difesa totale', 'Total defense')}: ${difesa()} · ${t('I Sottotratti sono tiri alternativi', 'Subtraits are alternative rolls')}',
                       style: TextStyle(fontSize: 12),
@@ -1534,66 +1585,79 @@ extension _OculumReferenceSheet on _OculumHomePageState {
 }
 
 extension _OculumReferenceEncounters on _OculumHomePageState {
-  Widget currentSheetInitiativeRemaining({bool compact = false}) {
+  Map<String, int> currentSheetTurnResourceCounts() {
     final tag = sheetTagAt(schedaCorrente);
-    final raw = realtimeIsMasterRole
-        ? masterInitiativeTokens
-        : realtimeVisibleInitiativeSnapshot['tokens'];
-    if (tag.isEmpty || raw is! List) return const SizedBox.shrink();
+    final encounter = referenceTurnEncounter();
+    final raw = encounter['tokens'];
+    if (tag.isEmpty || raw is! List) return const {};
     final tokens = raw.whereType<Map>().toList();
     final index = tokens.indexWhere(
-      (token) => '${token['sheetTag'] ?? token['id'] ?? ''}' == tag,
+      (token) => oculumSameSheetIdentity(token['sheetTag'] ?? token['id'], tag),
     );
-    if (index < 0) return const SizedBox.shrink();
+    if (index < 0) return const {};
     final token = Map<String, dynamic>.from(tokens[index]);
-    final activeIndex =
-        (realtimeIsMasterRole
-                ? masterInitiativeActiveIndex
-                : readIntValue(
-                    realtimeVisibleInitiativeSnapshot['activeIndex'],
-                  ))
-            .clamp(0, tokens.length - 1);
-    final round = realtimeIsMasterRole
-        ? masterInitiativeRound
-        : readIntValue(realtimeVisibleInitiativeSnapshot['round']);
+    final activeIndex = readIntValue(encounter['activeIndex'], fallback: -1);
+    final round = readIntValue(encounter['round']);
     final activeTurnKey = '$round';
     final actionRemaining =
         index == activeIndex &&
-            !readBoolValue(token['actionUsed']) &&
+            !masterInitiativeActionUsed(token) &&
+            token['mechaReactionOnly'] != true &&
+            token['meccanioReactionsOnly'] != true &&
             masterInitiativeTokenCanAct(token) &&
             artDebtForToken(token, 'action') == 0
-        ? 1
+        ? (readBoolValue(token['actionUsed']) ? 0 : 1) +
+              max(0, readIntValue(token['kiExtraActions']))
         : 0;
-    final normalRemaining = masterInitiativeNormalReactionRemaining(
-      token,
-      round: round,
-    );
-    final fastRemaining = max(
-      0,
-      masterInitiativeFastReactionMax(token) -
-          masterInitiativeFastReactionUsedThisTurn(
-            token,
-            turnKey: activeTurnKey,
-          ),
-    );
+    final canReact =
+        masterInitiativeTokenCanAct(token) &&
+        !masterInitiativeTokenIsTemporary(token) &&
+        artDebtForToken(token, 'reaction') == 0;
+    final normalRemaining = canReact
+        ? masterInitiativeNormalReactionRemaining(token, round: round)
+        : 0;
+    final fastRemaining = canReact
+        ? max(
+            0,
+            masterInitiativeFastReactionMax(token) -
+                masterInitiativeFastReactionUsedThisTurn(
+                  token,
+                  turnKey: activeTurnKey,
+                ),
+          )
+        : 0;
+    return {
+      'actions': actionRemaining.toInt(),
+      'reactions': normalRemaining,
+      'fast': fastRemaining,
+    };
+  }
+
+  Widget currentSheetInitiativeRemaining({bool compact = false}) {
+    final counts = currentSheetTurnResourceCounts();
+    if (counts.isEmpty) return const SizedBox.shrink();
+    final actionRemaining = counts['actions']!;
+    final normalRemaining = counts['reactions']!;
+    final fastRemaining = counts['fast']!;
     final resources =
-        'A:$actionRemaining · R:$normalRemaining · RV:$fastRemaining';
+        'A$actionRemaining / R$normalRemaining / RV$fastRemaining';
     return Tooltip(
       message: t(
         'Risorse rimanenti della tua scheda: Azioni $actionRemaining, Reazioni $normalRemaining, Reazioni veloci $fastRemaining.',
         'Remaining resources for your sheet: Actions $actionRemaining, Reactions $normalRemaining, Fast reactions $fastRemaining.',
       ),
       child: Container(
+        key: const ValueKey('current_sheet_turn_resources'),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: tertiaryColor.withValues(alpha: 0.10),
+          color: const Color(0xff14212e),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: tertiaryColor.withValues(alpha: 0.35)),
         ),
         child: Text(
           compact ? resources : 'Le tue rimanenti · $resources',
           style: TextStyle(
-            color: tertiaryColor,
+            color: Colors.white,
             fontSize: compact ? 11 : 12,
             fontWeight: FontWeight.w700,
           ),
@@ -2000,6 +2064,9 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           sectionTitle('Resistenze'),
+          Text('Affinità: +3% per Skill, Art e Titolo equipaggiati/in uso; forme contate una volta, Art e Skill separate, massimo 90% complessivo. Gli equipaggiamenti normali non contano.'),
+          for (final row in abilityElementResistanceSources())
+            Text('${row.source}: ${row.elements.map(elementDisplayName).join(', ')} +3%'),
           Text(
             'Fragilità, resistenze, immunità e rigenerazione sono salvate per elemento. Una percentuale libera sostituisce il preset di quell’elemento.',
           ),

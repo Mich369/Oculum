@@ -109,6 +109,13 @@ extension _OculumMonsterDossier on _OculumHomePageState {
       children: [
         monsterReadingHeading('Aspetto', Icons.visibility_outlined),
         SelectableText(oculumMonsterReadableProse(appearance)),
+        monsterReadingHeading(
+          'Atteggiamento naturale',
+          Icons.psychology_outlined,
+        ),
+        SelectableText(
+          '${oculumMonsterNaturalAttitude(monster)}\nma esistono sempre l’eccezioni',
+        ),
         if (behaviour.isNotEmpty) ...[
           monsterReadingHeading(
             'Comportamento e particolarità',

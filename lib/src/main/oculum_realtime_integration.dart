@@ -778,6 +778,16 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return;
     }
 
+    if (realtimeReconnectAttempt >= 8) {
+      setState(() {
+        realtimeConnecting = false;
+        realtimeStatus = t(
+          'Connessione non riuscita dopo 8 tentativi. Premi Connetti per riprovare; i dati locali sono conservati.',
+          'Connection failed after 8 attempts. Press Connect to retry; local data is preserved.',
+        );
+      });
+      return;
+    }
     realtimeReconnectAttempt = (realtimeReconnectAttempt + 1)
         .clamp(1, 8)
         .toInt();
@@ -933,11 +943,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         syncPawnPresence();
         startPermissionRetry();
         unawaited(replayOnlineCombatRequests());
+        unawaited(syncSheetAssignments());
       },
       presenceDataProvider: () => <String, dynamic>{
         'role': realtimeLocalRole(),
         'activeSheetTag': sheetTagAt(schedaCorrente),
         'localSheetTags': ownedOculumTags(),
+        'sheetAssignmentVersion': 1,
         'revokedSheetAccess': [
           for (final friend in blockedOculumFriends)
             {'targetTag': '${friend['tag'] ?? ''}'},
@@ -1156,6 +1168,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'sheet_assignment') {
+      // This is a database-verified private notification. Fetch the bodies
+      // through their own RLS policy; never import bodies from a broadcast.
+      unawaited(syncSheetAssignments());
+      return;
+    }
     if (event == 'party_log' && payload['merchantRosterSnapshot'] == true) {
       final merged = receiveRealtimeMerchantRosterSnapshot(payload);
       if (merged) unawaited(sendRealtimeMerchantRosterSnapshot());
@@ -2777,6 +2795,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'campaignId': activeCampaignId,
       'campaignName': activeCampaignName(),
       'encounterId': group['id'],
+      'fightOrdinal': max(
+        1,
+        masterInitiativeGroups.indexWhere((item) => item['id'] == group['id']) +
+            1,
+      ),
       'completedFightCount': readIntValue(group['completedFightCount']),
       'combatEnded': group['combatEnded'] == true,
       if (group.containsKey('fightStarted'))
@@ -2931,6 +2954,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'imageBase64': '${tokens[i]['imageBase64'] ?? ''}'.length <= 4096
                 ? '${tokens[i]['imageBase64'] ?? ''}'
                 : '',
+            ...referencePublicCopyMask(tokens[i]),
           },
       ],
     };
@@ -5246,6 +5270,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          sheetAssignmentControls(),
           Row(
             children: [
               Expanded(

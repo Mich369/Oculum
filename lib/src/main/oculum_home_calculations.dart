@@ -1,5 +1,16 @@
 part of '../../main.dart';
 
+int oculumSpendableResilienceForSkill({
+  required int currentResilience,
+  required int maximumHp,
+  required int currentHp,
+  required int hpPerResilience,
+}) {
+  final unit = max(1, hpPerResilience);
+  final missing = max(0, maximumHp - max(0, currentHp));
+  return max(0, currentResilience - (missing + unit - 1) ~/ unit);
+}
+
 int oculumDirectSubtraitQuickBonus({
   required String subtraitId,
   required String subtraitName,
@@ -9,6 +20,7 @@ int oculumDirectSubtraitQuickBonus({
     oculumDynamicFormulaKey(subtraitId),
     oculumDynamicFormulaKey(subtraitName),
   }..remove('');
+  targets.addAll(targets.toList().map((key) => key.replaceAll('_', '')));
   if (targets.isEmpty) return 0;
   var total = 0;
   final command = RegExp(
@@ -16,7 +28,8 @@ int oculumDirectSubtraitQuickBonus({
   );
   for (final text in texts) {
     for (final match in command.allMatches(text)) {
-      if (!targets.contains(oculumDynamicFormulaKey(match.group(1) ?? ''))) {
+      final key = oculumDynamicFormulaKey(match.group(1) ?? '');
+      if (!targets.contains(key) && !targets.contains(key.replaceAll('_', ''))) {
         continue;
       }
       final amount = int.tryParse(match.group(3) ?? '') ?? 0;
@@ -1505,7 +1518,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     });
     formulaParserCacheRevision = derivedDataRevision;
     formulaValueContextCache = context;
-    return context;
+    // Publish the recursion-safe context before reading real totals. Passive
+    // PT commands are excluded, so PT cannot bootstrap its own statistics.
+    if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
+      formulaValueContextCache = Map<String, num>.unmodifiable({
+        ...context,
+        'potenza_totale': scoutTotalPowerAt(schedaCorrente),
+      });
+    }
+    return formulaValueContextCache!;
   }
 
   Map<String, int> parseTitleQuickCommands(String text) {
@@ -1540,7 +1561,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       return cached;
     }
     final parsed = List<OculumFormulaCommand>.unmodifiable(
-      oculumParseFormulaCommands(text, formulaValueContext()),
+      oculumParseFormulaCommands(
+        oculumPassiveQuickTextWithoutTotalPower(text),
+        formulaValueContext(),
+      ),
     );
     while (formulaCommandCache.length >= 512) {
       formulaCommandCache.remove(formulaCommandCache.keys.first);
@@ -2592,6 +2616,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
     if (item.equipaggiata &&
         canEquipInventoryItem(item) &&
+        item.craftData['senkaMask'] != true &&
         (item.arma || item.protegge)) {
       final stat =
           const {
@@ -3897,7 +3922,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       case 'scudo_oculum':
         return max(0, scudoOculum());
       case 'resilienza':
-        return currentSpendableStatValue('resilienza');
+        return oculumSpendableResilienceForSkill(
+          currentResilience: currentSpendableStatValue('resilienza'),
+          maximumHp: maxHp(),
+          currentHp: hpCorrenti(),
+          hpPerResilience: moltiplicatoreHp(),
+        );
       case 'volonta':
         return currentSpendableStatValue('volonta');
       case 'materia':
@@ -3979,6 +4009,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (normalized == 'fortuna') {
       if (fortuna < amount) return 0;
       fortuna -= amount;
+      invalidateHiddenEyeDerivedCaches();
       return amount;
     }
     if (normalized == 'hp') {
@@ -3997,6 +4028,21 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       final before = scudoOculum();
       if (before < amount) return 0;
       scudoOculumController.text = (before - amount).toString();
+      return amount;
+    }
+    if (normalized == 'resilienza') {
+      if (artSkillCostResourceAvailable(normalized) < amount) return 0;
+      final beforeHp = hpCorrenti();
+      currentResilienzaController.text = '${currentResilienza() - amount}';
+      syncVisibleCurrentStatEditor(normalized);
+      invalidateDerivedDataCaches();
+      currentHpController.text = '${min(beforeHp, maxHp())}';
+      notifyActiveSheetSummaryChanged();
+      adjustRecordedStatSpentFromDelta(normalized, -amount);
+      grantTrueSoulBurnSpendBenefits(
+        spent: amount,
+        source: t('Skill', 'Skill'),
+      );
       return amount;
     }
     if (normalized == 'oculum') {
@@ -4337,6 +4383,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int maxHp() {
+    if (planarState['doppioneCopy'] == true) return 1;
     if (readIntValue(planarState['lavastrelloNestMaxHp']) > 0) {
       return readIntValue(planarState['lavastrelloNestMaxHp']);
     }
@@ -4361,7 +4408,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final massimo = maxHp();
 
     if (hp < 0) return 0;
-    if (hp > massimo) return massimo;
+    if (hp > massimo &&
+        !(isConstructCharacter && constructCore['overflowAllowed'] == true)) {
+      return massimo;
+    }
 
     return hp;
   }
@@ -4397,6 +4447,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int scudoAutomaticoTipoScheda() {
+    if (isLunarOrderCreature) return lunarNormalShield;
+    if (faunaPassive('minor_construct_shield') != null) {
+      return referenceRule('naturalShieldBase', 60) +
+          max(0, leggiNumero(livelloController)) *
+              referenceRule('naturalShieldPerLevel', 30);
+    }
     final tipo = cleanUiText(tipoSchedaController.text).trim().toLowerCase();
     if (!tipo.contains('mostro')) return 0;
     final livello = max(1, leggiNumero(livelloController));
@@ -4463,7 +4519,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         id: 'fortuna',
         nome: 'Fortuna',
         descrizione:
-            'Totale: Karma + Fortuna nelle Risorse + Livello/2. Può schivare, attenuare danni e guida i tiri drop.',
+            'Totale: Karma + Fortuna magica nelle Risorse + Livello/2. Ogni punto di Fortuna magica vale +1 Fortuna. Può schivare, attenuare danni e guida i tiri drop.',
       ),
       HiddenEyeStat(
         id: 'drop',
@@ -5031,7 +5087,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int scudoCritico() {
-    return max(0, leggiNumero(scudoCriticoController));
+    return max(0, leggiNumero(scudoCriticoController)) +
+        lunarLinkedCriticalShields;
   }
 
   int scudoOculumBonusMassimo() {
@@ -5170,6 +5227,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (isThunderBot) return 0;
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
+        referenceHaloDefense +
         cycleNaturalFlightBonus +
         spineMaterialDefense +
         maskedShadowDefense +
@@ -5291,14 +5349,21 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   void applicaScudoItemAttuale(InventoryItem item, int segno) {
     if (!item.protegge || !canEquipInventoryItem(item)) return;
-    final shieldBonus = itemShieldBonus(item);
+    final titleItem = item.craftData['titleItem'] == true;
+    if (titleItem) {
+      // Manifestation preserves the remaining shield, rather than minting the
+      // full shield each time the same title is summoned again.
+      item.scudoIntegritaCorrente = itemIntegrityShieldCurrent(item);
+      item.scudoIntegritaOculumCorrente = itemIntegrityOculumShieldCurrent(item);
+    }
+    final shieldBonus = titleItem ? item.scudoIntegritaCorrente : itemShieldBonus(item);
     if (shieldBonus != 0) {
       scudoController.text = max(
         0,
         leggiNumero(scudoController) + shieldBonus * segno,
       ).toString();
     }
-    final oculumShieldBonus = itemOculumShieldBonus(item);
+    final oculumShieldBonus = titleItem ? item.scudoIntegritaOculumCorrente : itemOculumShieldBonus(item);
     if (oculumShieldBonus != 0) {
       scudoOculumController.text = max(
         0,
@@ -5389,6 +5454,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int dannoTotale() {
+    if (planarState['doppioneCopy'] == true) {
+      return max(0, readIntValue(planarState['doppioneDamage']));
+    }
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         dannoTotaleBaseSenzaComandi() +
@@ -5409,6 +5477,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           oculumDamageWithPercentage(
             applicaBonusDanniPotenzaNucleo(conditioned + maskedShadowDamage),
             activeStructuredEffectBonus('danni_percentuale') +
+                (isWrongBandit && planarState['wrongBanditEmpowered'] == true
+                    ? 6
+                    : 0) +
                 (dustFusionTier * 5),
           ),
         ),
@@ -5582,10 +5653,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   String elementoDannoDominante() {
+    final specific = specificStructuredActionElement();
+    if (specific.isNotEmpty) return specific;
+    final manual = activeTypeSwitchElement();
+    if (manual.isNotEmpty) return manual;
     final parts = danniPerElemento();
     if (parts.isEmpty) return 'sconosciuto';
-    var best = parts.entries.first;
-    for (final entry in parts.entries.skip(1)) {
+    final typed = parts.entries.where((e) =>
+      !const {'fisico', 'magia', 'sconosciuto'}.contains(e.key));
+    final entries = typed.isEmpty ? parts.entries : typed;
+    var best = entries.first;
+    for (final entry in entries.skip(1)) {
       if (entry.value > best.value) best = entry;
     }
     return best.key;
@@ -5698,6 +5776,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   String elementoDifesaDominante() {
+    final specific = specificStructuredActionElement(defense: true);
+    if (specific.isNotEmpty) return specific;
     final parts = difesaPerElemento();
     if (parts.isEmpty || (parts.length == 1 && parts.containsKey('fisico'))) {
       return '';
@@ -5709,6 +5789,39 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (entry.value > best.value) best = entry;
     }
     return best.key;
+  }
+
+  /// A prepared technique's element belongs to that action. Generic equipment
+  /// bonuses and manual selections cannot change a Fire skill into Ice.
+  String specificStructuredActionElement({bool defense = false}) {
+    for (final row in activeStructuredEffects.reversed) {
+      if (row['type'] == 'pending_target' && row['effect'] is Map) {
+        final effect = row['effect'] as Map;
+        final type = '${effect['type'] ?? ''}';
+        if (!defense && const {'danno', 'danno_percentuale', 'planar'}.contains(type)) {
+          final element = '${effect['elementType'] ?? ''}'.trim();
+          if (element.isNotEmpty) return oculumNormalizeElementId(element);
+        }
+      }
+      if (row['mode'] != 'prossima_azione') continue;
+      if (!(defense
+          ? row['type'] == 'difesa'
+          : const {'danno', 'danno_percentuale'}.contains(row['type']))) {
+        continue;
+      }
+      final element = '${row['element'] ?? ''}'.trim();
+      if (element.isNotEmpty) return oculumNormalizeElementId(element);
+    }
+    return '';
+  }
+
+  String resolveCombatDefenseElement(Map request) {
+    final specific = specificStructuredActionElement(defense: true);
+    if (specific.isNotEmpty) return specific;
+    final chosen = '${request['defenseElement'] ?? ''}'.trim();
+    if (chosen.isNotEmpty) return oculumNormalizeElementId(chosen);
+    final automatic = elementoDifesaDominante();
+    return automatic.isEmpty ? 'fisico' : automatic;
   }
 
   String elementiDifesaTesto() {
@@ -5751,7 +5864,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int vc() {
-    return (coreMasteryPoints['vc'] ?? 0) +
+    if (planarState['doppioneCopy'] == true) {
+      return readIntValue(planarState['doppioneAttackBonus']);
+    }
+    return lunarAttackBonus +
+        referenceAttackBonus +
+        (coreMasteryPoints['vc'] ?? 0) +
         bonusLivelloGrado() +
         leggiNumero(vcRapidoController) +
         (volontaTotale() ~/ 3) +
@@ -5767,7 +5885,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int cm() {
-    return (faunaCurrentMonsterId == 'torretta_oculum' ? -9 : 0) +
+    if (planarState['doppioneCopy'] == true) {
+      return readIntValue(planarState['doppioneCm']);
+    }
+    return lunarDefenseRollBonus +
+        referenceDefenseRollBonus +
+        (faunaCurrentMonsterId == 'torretta_oculum' ? -9 : 0) +
         (coreMasteryPoints['cm'] ?? 0) +
         bonusLivelloGrado() +
         (materiaTotale() ~/ 2) +

@@ -316,6 +316,20 @@ extension _OculumPartyQuests on _OculumHomePageState {
         if (!received.add(receipt)) continue;
         sheet['receivedPartyQuestRewards'] = received.toList();
         final bonus = reward['bonus'] as Map? ?? {};
+        final shieldGain = max(0, readIntValue(bonus['scudo']));
+        if (shieldGain > 0) {
+          scudoController.text =
+              '${max(0, leggiNumero(scudoController)) + shieldGain}';
+          aggiungiLog('[SCUDO] +$shieldGain Scudo fino a consumo.');
+        }
+        final magicalLuck = max(0, readIntValue(bonus['fortunaMagica']));
+        if (magicalLuck > 0) {
+          fortuna += magicalLuck;
+          invalidateHiddenEyeDerivedCaches();
+          aggiungiLog(
+            '[FORTUNA MAGICA] +$magicalLuck · ${reward['message'] ?? ''}',
+          );
+        }
         ispirazioniController.text =
             '${leggiNumero(ispirazioniController) + readIntValue(bonus['ispirazioni'])}';
         superIspirazioniController.text =

@@ -291,6 +291,25 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     };
     final resolvedLevel = max(0, level ?? activeCriticalLevel());
     final resolvedGrade = max(0, grade ?? activeCriticalGrade());
+    final ptChance = oculumTotalPowerExhaustionChance(
+      effects,
+      resolvedVariables,
+    );
+    if (ptChance > 0) {
+      final roll = Random.secure().nextInt(10000) / 100 + .01;
+      if (roll <= ptChance) {
+        planarState['totalPowerExhaustionTurns'] = max(
+          1,
+          readIntValue(planarState['totalPowerExhaustionTurns']),
+        );
+        clearTotalPowerReactions();
+        messages.add(
+          'PT: Sfinimento per almeno 1 turno personale ($roll ≤ $ptChance%).',
+        );
+      } else {
+        messages.add('PT: nessuno Sfinimento ($roll > $ptChance%).');
+      }
+    }
     int? slimeBounces;
 
     for (final effect in effects.where((item) => item.enabled)) {
@@ -428,7 +447,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ..diceExpression = ''
             ..includeLevel = false
             ..includeGrade = false;
-          if (effect.target == 'cycle_fate_gift') {
+          if (effect.target == 'cycle_fate_gift' ||
+              effect.target.contains('malicious_shaman_') ||
+              effect.target == 'strange_presence_push') {
             frozen.resource = sheetTagAt(schedaCorrente);
           }
           if (effect.id.startsWith('corrosive_acid_spit_') &&
@@ -793,6 +814,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'mode': effect.mode,
             'target': target,
             'resource': effect.resource,
+            if (effect.elementType.trim().isNotEmpty)
+              'element': oculumNormalizeElementId(effect.elementType),
             if (effect.type == 'elemental_resistance') ...<String, dynamic>{
               'element': oculumNormalizeElementId(effect.elementType),
               'preset': canonicalDamageModifierName(effect.customDisplayText),
@@ -999,6 +1022,12 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             (item) => '${item['sheetTag'] ?? ''}' == actualTag,
             orElse: () => <String, dynamic>{},
           );
+          if (token.isNotEmpty && asSummon) {
+            final ownerToken = masterInitiativeTokens
+                .where((t) => publicInitiativeSourceTag(t) == ownerTag)
+                .firstOrNull;
+            if (ownerToken != null) token['side'] = ownerToken['side'];
+          }
           if (token.isNotEmpty && !asSummon) {
             token['oculumShadowClone'] = true;
             token['shadowCloneTurnsRemaining'] = duration;

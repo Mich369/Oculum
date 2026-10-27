@@ -886,7 +886,7 @@ const oculumElementPresets = <OculumColorPreset>[
   ),
   OculumColorPreset(
     id: 'element_caos',
-    nameIt: 'Elemento · Caos',
+    nameIt: 'Elemento · Chaos',
     nameEn: 'Element · Chaos',
     descriptionIt:
         'Frammenti discordanti. Cornici incise e dettagli animati dedicati all’elemento. Colori personalizzabili.',

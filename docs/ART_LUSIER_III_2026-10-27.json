@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-27",
+  "subject": "Lusier III",
+  "status": "user_approved_canonical",
+  "method": "built_in_imagegen",
+  "file": "assets/oculum/home_art/character_lusier_iii_v1.png",
+  "source": "C:/Users/michy/.codex/generated_images/01a17946-004a-78d1-93b9-7cf8449aef29/exec-670bd0d8-90ac-4d6e-8d43-d6a4d41e68af.png",
+  "references": [
+    {
+      "file": "C:/Users/michy/AppData/Local/Temp/codex-clipboard-c6ed1de3-b064-48df-adae-78e7702ef6e1.png",
+      "role": "appearance and costume reference; explicit brown hair overrides purple reference"
+    },
+    {
+      "file": "assets/oculum/home_art/amber_shore.png",
+      "role": "matte Rame fatato painting technique only"
+    }
+  ],
+  "prompt": "Create one original character artwork for OCULUM: LUSIER III, a male Solar elite guard commander of Grade I. This is an artwork proposal awaiting the user's visual approval, not a character sheet with text.\n\nREFERENCE ROLES:\n1) First supplied image: character appearance and costume inspiration. Preserve the handsome refined face, warm slightly darker olive/tan skin, intense golden irises, confident composure, ornate Solar garments. Follow the user's explicit correction: hair is BROWN, not purple, wavy and moderately short, around ears/nape, never long.\n2) Second supplied image amber_shore.png (Oculum Rame fatato): STRICT PAINTING TECHNIQUE reference only. Matte soft visible brushwork, textured painted pigments, gentle blended edges, fantasy/anime painted illustration. Do NOT copy its scenery, rock, copper palette, insects or fairies.\n\nCHARACTER: remarkably beautiful adult man, poised and unsettlingly self-assured. His irises are exceptionally rich metallic gold, visibly brighter and more golden than those of other Solars, with clear dark pupils and readable iris structure, not blank glowing eyes. Brown hair with subtle warm highlights, natural eyebrows, a slight superior restrained smile. The face should remain appealing and human, no horns, no wings, no extra eyes on his face. Let the cold authority beneath his beauty suggest a commander who directs battles.\n\nCLOTHING: elegant protective Solar military vestments, not a bulky plate suit. Layered luxurious ivory, warm burgundy and gold silk, with dense gold-thread embroidery, reinforced woven bands, and raised solar seals that make their protective strength apparent. A high tailored collar, an embroidered shoulder drape and a structured robe; flowing lengths of silk embellished with gold surround him in broad graceful folds, like a protective mantle stirred by a mild magical breeze. Show distinct matte fabric and restrained real metallic-gold accents, not plastic shine. Reinterpret the reference's ceremonial sun motifs in Oculum canon: small radiant sun disks with a single almond-shaped golden Solar eye in their center. No moon motifs.\n\nCOMPOSITION: vertical three-quarter-length portrait from head to mid-thigh, enough space around the head and all visible silk folds; no accidental cropping of essential costume. Lusier occupies the central two thirds, face large enough to appreciate golden eyes. One hand rests lightly at his collar or holds a fold of the silk; relaxed commanding posture, anatomically correct hands. A quiet understated palace or military command-hall background in pale stone and muted warm tones supports the figure; no other people, no battle scene, no weapons added, no written labels. No visible sky or astronomical bodies; light is ambient interior light. Painterly depth and graceful silhouette, recognizable character design, rich but controlled detail, clear face and cloth hierarchy.\n\nCANON AND NEGATIVES: Oculum matte Rame fatato brushwork, NOT photorealism, NOT cinematic photo or 3D render, no lens effects, no neon, no hyper-gloss, no hard vector-flat anime cel shading. Never put a normal sun or moon in the background. No text, watermark, logo, UI, borders, stat blocks, names or insignia lettering. The artwork is elegant fantasy portraiture; no violence or gore.",
+  "confirmation": "Sì, approvata: descrivilo da questa",
+  "rules": "No Monster Book portrait; approved character reference. Clothes protection has no new numeric bonus assigned."
+}

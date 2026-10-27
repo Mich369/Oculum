@@ -1,0 +1,11 @@
+{
+  "totalPower": 277,
+  "coreStats": {
+    "resilienza": 40,
+    "volonta": 110,
+    "materia": 51,
+    "oculum": 60
+  },
+  "maximumHp": 600,
+  "haniel": "Quando avrai una potenza totale pari o superiore a 277 sarai pronta."
+}

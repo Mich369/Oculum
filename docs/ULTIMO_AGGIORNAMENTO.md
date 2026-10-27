@@ -1,24 +1,9 @@
-# Aggiornamento cumulativo dal 25–26 ottobre 2026
+# Ultimo aggiornamento — 27 ottobre 2026
 
-- Stabilizzati cambio turno e menu durante le animazioni: le decorazioni sfumano senza ricostruire continuamente i controlli; feedback al tocco dopo il tap e compatibile con le finestre aperte.
+- Assegnazione delle schede dal Master al giocatore, con selezione iniziale vuota, salvataggio locale e copia online conservando proprietà e personalizzazioni. Pagina Master riordinata.
+- Costi generici e parser PT; Senka organizzata con maschera, riserve, cloni e Titoli del Fato. Lusier III con equipaggiamento, carte esplosive, Derisione e PT misurata277.
+- Carte con tre evoluzioni e vendita soltanto al Mercato Nero; letture facilitate a50/30/20/10 PT e rivelazione con margine+5 fino a50 PT.
+- Elementi automatici distinti per attacco/difesa, resistenza3% per abilità/Art/Titoli attivi, Titoli Item senza consumo di Azioni per evocazione e conservazione dell’integrità.
+- Correzioni ai costi dei Titoli Item dopo salvataggio JSON. Parametri, descrizioni, requisiti, costi, CD ed effetti modificabili.
 
-- Corrette richieste d'ingresso, tiri richiesti dal Master, Azioni supplementari e rientro dopo la fuga. Trasparenze evidenziate progressivamente in tre secondi; EXP personale della fuga assegnata senza duplicati e conservata nel JSON. Dettagli in `docs/VERIFICA_BUG_2026-10-26.md`.
-
-Tutte le modifiche successive alla build `b917217d98d16861a5bbaf1706d78825d883c970` (run `40242640717`), incluse quelle di `12cbe566` e `73cce878`.
-
-- 37 specie e 77 tecniche dopo la build di riferimento; 231 equipaggiamenti derivati (77 armi, 77 armature, 77 scudi), 693 forme delle skill sugli oggetti. Monster Book 1.157 voci, ordinate per Potenza crescente nella vista Master. Fasi, luoghi, anatomie, drop, scroll e Open; regole Slime Roccioso, Nuvola, Golem, Fuga e Role aggiornate.
-- Scudo del provocatore I/II/III con attrazione, riserva separata e riflesso; tecniche speciali in Attacco senza doppio consumo della risorsa, compatibilità Morso Lunare salvato; risoluzione online di attacchi, difese e aiuti, ordinamento turni e conservazione delle schede.
-- Aura +20: Potenza nota accanto ai nomi e nella turnistica, confronti e valori scoperti aggiornati automaticamente; letture facilitate sotto 100 e probabilità sottotratto% di osservazione gratuita (max95%). Mercanti: offerte adatte anche alla Potenza totale; rilevatori alchemici e Postea con cariche persistenti, portata e letture stimate.
-- Scarica totale e Impeto totale: +Potenza totale ai Danni di un singolo colpo; +max(2,10−Adattamento) al prossimo tiro per colpire e al primo tiro nemico contro di te. Sfinimento azzera e blocca tutte le Reazioni per 1d3 + Potenza/160 per difetto turni personali.
-- Connessioni nuove con codice stanza esplicito e nuovo codice per il Master; eliminato il collegamento implicito alla stanza test. Restano approvazione del Master, privacy e codici già salvati.
-- 61 temi elemento, 162 scene e Impostazioni riordinate con ricerca; trasparenza separata per statistiche e comandi, personalizzazioni e JSON conservati.
-- Log completo soltanto al primo avvio di ogni nuova versione, chiudibile con clic fuori dalla finestra. Avvio web e build Windows più robusti, menu download pubblico aggiornato dal commit compilato. Windows normale e Windows Test separati anche negli artifact delle cartelle.
-- Nomi, costi, cooldown, formule, effetti, bersagli, oggetti, mercanti, temi e impostazioni restano modificabili negli editor esistenti. Verifiche e pacchetti effettivamente consegnati sono indicati separatamente nel resoconto.
-
-## Consegna online con tag salvati
-
-Corretto il confronto tra il tag autenticato restituito in maiuscolo dal server e i tag salvati con maiuscole/minuscole: attacchi, difese, aiuti, risposte Aura e conferme di consegna mantengono la stessa identità. Anche i frammenti delle schede confrontano l’identità senza cambiare il tag salvato. Ruoli, sessioni, proprietari, approvazione del Master e controlli contro mittenti falsificati restano verificati. La prova con quattro profili e il test Supabase autenticato includono ora tag con maiuscole/minuscole.
-
-Le schede ricevute mantengono il tag originale anche oltre il terzo posto nell’archivio del Master. L’installazione locale riutilizza gli artifact di cartella verificati per evitare copie temporanee dei runtime, preservando la distribuzione precedente fino alla verifica finale.
-
-Aura: anche una modifica salvata dal Master aggiorna la revisione pubblica della Potenza; chi aveva già scoperto il numero lo riceve automaticamente con Aura +20. Salvataggi senza variazioni di Potenza non inviano nuove snapshot. Il numero nascosto resta escluso dalla turnistica pubblica.
+Il [registro cumulativo](REGISTRO_AGGIORNAMENTI.md) mantiene la base b917217d98d16861a5bbaf1706d78825d883c970/run40242640717. Evoluzioni e grandi espansioni ancora in lavorazione sono distinte dalle funzioni verificate; la telepatia richiesta per il prossimo commit non fa parte di questa versione.

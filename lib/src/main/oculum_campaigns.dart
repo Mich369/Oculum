@@ -1098,6 +1098,7 @@ extension _OculumCampaigns on _OculumHomePageState {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue:
                 campagneOculum.any(
                   (x) => '${x['id'] ?? ''}' == activeCampaignId,

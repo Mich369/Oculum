@@ -332,7 +332,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     setState(() {
       fortuna = max(0, fortuna + delta);
       invalidateHiddenEyeDerivedCaches();
-      risultato = t('Fortuna aggiornata: $fortuna.', 'Luck updated: $fortuna.');
+      risultato = t(
+        'Fortuna magica aggiornata: $fortuna.',
+        'Magical Luck updated: $fortuna.',
+      );
       aggiungiLog(risultato);
     });
 
@@ -342,13 +345,19 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   void usaFortunaRapida() {
     if (fortuna <= 0) {
       setState(() {
-        risultato = t('Nessuna Fortuna disponibile.', 'No Luck available.');
+        risultato = t(
+          'Nessuna Fortuna magica disponibile.',
+          'No Magical Luck available.',
+        );
         aggiungiLog(risultato);
       });
       return;
     }
 
-    setState(() => fortuna = max(0, fortuna - 1));
+    setState(() {
+      fortuna = max(0, fortuna - 1);
+      invalidateHiddenEyeDerivedCaches();
+    });
 
     final bonusTargets = <({String rawKey, String label})>[
       (rawKey: 'TiroStats', label: t('Tiri stats', 'Stat rolls')),
@@ -369,8 +378,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     setState(() {
       risultato = t(
-        'Fortuna consumata: +1 a stats, attacco, difesa e iniziativa tramite bonus rapidi. Fortuna rimasta: $fortuna.',
-        'Luck consumed: +1 to stats, attack, defense and initiative through quick bonuses. Luck left: $fortuna.',
+        'Fortuna magica consumata: +1 a stats, attacco, difesa e iniziativa tramite bonus rapidi. Fortuna magica rimasta: $fortuna.',
+        'Magical Luck consumed: +1 to stats, attack, defense and initiative through quick bonuses. Magical Luck left: $fortuna.',
       );
       aggiungiLog(risultato);
     });
@@ -1949,6 +1958,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
     setState(() {
       final cenere = leggiNumero(cenereController);
+      referenceShortRest();
+      senkaRest();
+      planarState['ascensionDustFightWindowEarned'] = 0;
+      restConstructCore();
       final rimuoveMalusEsplosione = malusTiriOculumPostEsplosione < 0;
       final hpPrima = hpCorrenti();
       final tiroCuraHp = Random.secure().nextInt(100) + 1;
@@ -2057,6 +2070,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
     if (longRestInProgress) return;
     longRestInProgress = true;
+    referenceLongRest();
+    senkaRest();
+    planarState['ascensionDustFightWindowEarned'] = 0;
+    restConstructCore();
+    advanceCorruptionNight();
     final changedArtIndexes = <int>[];
     var limitedArtRecoveries = 0;
     final aggiustaNucleoEraUsato = aggiustaNucleoUsato;
@@ -2068,6 +2086,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
       for (final item in inventario) {
+        if (item.craftData['titleItem'] == true) {
+          item.craftData = {...item.craftData, 'titleOpenUsedSinceLongRest': false, 'titleOpenUsedStages': <int>[]};
+        }
         if (item.craftData['necromancyKind'] == 'skull_amulet') {
           item.craftData = {...item.craftData, 'usedSinceLongRest': false};
         }

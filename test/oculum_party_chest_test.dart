@@ -94,7 +94,7 @@ void main() {
       ], 'fight4').earned,
       0,
     );
-    expect(oculumItemTitleDustCost(0), 1);
+    expect(oculumItemTitleDustCost(0), 3);
     expect(oculumItemTitleDustCost(3), 3);
   });
 }

@@ -46,7 +46,8 @@ Set<String> oculumInventoryCatalogCategories(InventoryItem item) {
       item.craftData['creatureCore'] == true) {
     categories.addAll({'companion', 'consumable'});
   }
-  if (item.craftData['powerScanner'] == true || item.statGemStat.isNotEmpty ||
+  if (item.craftData['powerScanner'] == true ||
+      item.statGemStat.isNotEmpty ||
       item.craftData['fateSign'] is Map ||
       item.craftData['chaosSign'] is Map ||
       item.craftData['smokingHerbs'] is Map) {
@@ -1744,13 +1745,20 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     if (formIndex < 0 || formIndex >= skill.forme.length) return;
     final form = skill.forme[formIndex];
     final structuredCooldown = form.cooldownStrutturato;
+    if (!progressionRequirementsMet(form.unlockRequirements)) {
+      aggiungiLog(
+        '${skill.nome}: requisiti non raggiunti — ${oculumSkillRequirementDescription(form.unlockRequirements)}',
+      );
+      return;
+    }
     if (skill.passiva || form.tipo.toLowerCase().contains('passiv')) {
       aggiungiLog(
         '${skill.nome}: passiva automatica, nessun costo di attivazione.',
       );
       return;
     }
-    if (form.costoStrutturato != null) {
+    final effectiveCost = oculumCharacterSkillFormCost(form);
+    if (effectiveCost != null) {
       if (leggiNumero(livelloController) < readIntValue(form.livello)) {
         aggiungiLog('${skill.nome}: richiede livello ${form.livello}.');
         return;
@@ -1764,7 +1772,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           investedOculum: true,
           legacyQuickCommands: true,
         ),
-        cost: form.costoStrutturato,
+        cost: effectiveCost,
         cooldown: structuredCooldown,
         valid: () => skills.contains(skill) && skill.forme.contains(form),
       );
@@ -1940,7 +1948,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                 inputFormatters:
                                     oculumNonNegativeIntegerFormatters,
                                 decoration: fieldDecoration(
-                                  t('Oculum minimo', 'Minimum Oculum'),
+                                  t('Minimo', 'Minimum'),
                                 ),
                                 onChanged: (_) => setLocalState(() {
                                   transientError = '';
@@ -1956,10 +1964,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                                 inputFormatters:
                                     oculumNonNegativeIntegerFormatters,
                                 decoration: fieldDecoration(
-                                  t(
-                                    'Oculum massimo attuale',
-                                    'Current maximum Oculum',
-                                  ),
+                                  t('Massimo attuale', 'Current maximum'),
                                 ),
                                 onChanged: (_) => setLocalState(() {
                                   transientError = '';
@@ -2266,6 +2271,134 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ],
             ),
             const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              key: ValueKey(
+                'skill-cost-resource-$skillIndex-$formIndex-${form.costoStrutturato?.resource ?? 'text'}',
+              ),
+              isExpanded: true,
+              initialValue: form.costoStrutturato == null
+                  ? 'text'
+                  : form.costoStrutturato!.resource.startsWith('item:')
+                  ? 'item'
+                  : form.costoStrutturato!.resource.startsWith('material:')
+                  ? 'material'
+                  : oculumEffectConsumableResourceKeys.contains(
+                      form.costoStrutturato!.resource,
+                    )
+                  ? form.costoStrutturato!.resource
+                  : 'text',
+              decoration: fieldDecoration(
+                t('Risorsa del costo', 'Cost resource'),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'text',
+                  child: Text(t('Scrittura libera', 'Free text')),
+                ),
+                for (final resource
+                    in oculumEffectConsumableResourceKeys.toSet())
+                  DropdownMenuItem(
+                    value: resource,
+                    child: Text(structuredEffectResourceLabel(resource)),
+                  ),
+                DropdownMenuItem(
+                  value: 'item',
+                  child: Text(t('Oggetto dell’inventario', 'Inventory item')),
+                ),
+                DropdownMenuItem(
+                  value: 'material',
+                  child: Text(
+                    t('Materiale dell’inventario', 'Inventory material'),
+                  ),
+                ),
+              ],
+              onChanged: (resource) {
+                if (resource == null) return;
+                setState(() {
+                  if (resource == 'text') {
+                    form.costoStrutturato = null;
+                  } else {
+                    final none = resource == 'nessuna';
+                    final minimum = none
+                        ? 0
+                        : max(1, form.oculumMinimoUtilizzabile);
+                    final maximum = none
+                        ? 0
+                        : max(minimum, form.oculumMassimoUtilizzabile);
+                    final key = const {'item', 'material'}.contains(resource)
+                        ? '$resource:'
+                        : resource;
+                    form.costoStrutturato = OculumSkillCost(
+                      resource: key,
+                      minimum: minimum,
+                      maximum: maximum,
+                      amountExpression: '$minimum',
+                      variable: minimum != maximum,
+                      additionalCosts: form.costoStrutturato?.additionalCosts,
+                    );
+                    form.costo = key;
+                    form.oculumMinimoUtilizzabile = minimum;
+                    form.oculumMassimoUtilizzabile = maximum;
+                    form.oculumMassimoMaestriaIniziale = maximum;
+                    form.oculumLimitiConfiguratiManualmente = true;
+                  }
+                  syncSkillLegacyFromForm(skill, formIndex);
+                });
+                programmaSalvataggio();
+              },
+            ),
+            if (form.costoStrutturato?.resource.startsWith('item:') == true ||
+                form.costoStrutturato?.resource.startsWith('material:') ==
+                    true) ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                key: ValueKey(
+                  'skill-cost-inventory-$skillIndex-$formIndex-${form.costoStrutturato!.resource}',
+                ),
+                isExpanded: true,
+                initialValue: null,
+                decoration:
+                    fieldDecoration(
+                      t(
+                        'Scegli dal tuo inventario',
+                        'Choose from your inventory',
+                      ),
+                    ).copyWith(
+                      helperText:
+                          '${t('Selezionato', 'Selected')}: ${form.costoStrutturato!.resource.split(':').skip(1).join(':')}',
+                    ),
+                items: [
+                  for (final name
+                      in inventario
+                          .where((i) => i.quantita > 0)
+                          .map((i) => i.nome)
+                          .toSet())
+                    DropdownMenuItem(
+                      value: name,
+                      child: Text(
+                        name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onChanged: (name) {
+                  if (name == null) return;
+                  setState(() {
+                    final prefix = form.costoStrutturato!.resource
+                        .split(':')
+                        .first;
+                    final key =
+                        '$prefix:${oculumNormalizeText(name).replaceAll(' ', '')}';
+                    form.costoStrutturato!.resource = key;
+                    form.costo = key;
+                    syncSkillLegacyFromForm(skill, formIndex);
+                  });
+                  programmaSalvataggio();
+                },
+              ),
+            ],
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -2276,14 +2409,12 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: t('Costo', 'Cost'),
                     value: form.costo,
                     onChanged: (value) {
-                      form.costo = value;
-                      if (form.aggiornaLimitiOculumDaDescrizione()) {
-                        scheduleInputUiRefresh();
-                      }
+                      oculumSetCharacterSkillCostText(form, value);
+                      scheduleInputUiRefresh();
                     },
                     helper: t(
-                      'Descrivi il costo. Esempio: @OculumSpeso+5',
-                      'Describe the cost. Example: @OculumSpeso+5',
+                      'Risorsa: Oculum, Resilienza, Materia, Obser, Volontà oppure Oggetto: nome. Imposta sotto Minimo e Massimo.',
+                      'Resource: Oculum, Resilience, Matter, Obser, Will, or Item: name. Set Minimum and Maximum below.',
                     ),
                     showCommandHelp: true,
                   ),
@@ -2309,10 +2440,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     skill: skill,
                     form: form,
                     formIndex: formIndex,
-                    label: t(
-                      'Oculum minimo utilizzabile',
-                      'Minimum usable Oculum',
-                    ),
+                    label: t('Minimo utilizzabile', 'Minimum usable'),
                     value: '${form.oculumMinimoUtilizzabile}',
                     onChanged: (value) {
                       form.oculumMinimoUtilizzabile = max(
@@ -2332,10 +2460,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     skill: skill,
                     form: form,
                     formIndex: formIndex,
-                    label: t(
-                      'Oculum massimo utilizzabile',
-                      'Maximum usable Oculum',
-                    ),
+                    label: t('Massimo utilizzabile', 'Maximum usable'),
                     value: '${form.oculumMassimoUtilizzabile}',
                     onChanged: (value) {
                       final parsed = max(0, readIntValue(value));
@@ -2355,7 +2480,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               value: !form.oculumLimitiConfiguratiManualmente,
               title: Text(t('Costo dal testo', 'Cost from text')),
               subtitle: const Text(
-                'Costo: (1/10) Oculum; massimo crescita: 20',
+                'Esempi: Materia 1, 1 Materia, @mat-1; oppure Obser 2/5. I limiti sono validi per la risorsa scelta.',
               ),
               onChanged: (value) {
                 setState(() {
@@ -2519,11 +2644,25 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               maxLines: 3,
               onChanged: (value) => form.note = value,
             ),
+            progressionRequirementsEditor(
+              form.unlockRequirements,
+              storageId: 'skill_${skillIndex}_$formIndex',
+            ),
             structuredCostEditor(
               cost: form.costoStrutturato,
               storageId: 'skill_${skillIndex}_form_$formIndex',
               onChanged: (value) {
-                setState(() => form.costoStrutturato = value);
+                setState(() {
+                  form.costoStrutturato = value;
+                  if (value != null) {
+                    form.oculumMinimoUtilizzabile = value.minimum;
+                    form.oculumMassimoUtilizzabile = value.maximum;
+                    form.oculumMassimoMaestriaIniziale = value.maximum;
+                    form.oculumLimitiConfiguratiManualmente = true;
+                    form.costo = value.resource;
+                    syncSkillLegacyFromForm(skill, formIndex);
+                  }
+                });
               },
             ),
             structuredCooldownEditor(
@@ -2685,6 +2824,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         sectionTitle(t('Skill Scritte', 'Written Skills')),
+        creationSkillLearningPanel(),
         gothicPanel(
           borderColor: tertiaryColor,
           child: Column(
@@ -5238,6 +5378,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           nome: material.name,
           peso: material.minKg,
           quantita: 1,
+          livelloOggetto: oculumDefaultMaterialLevels()[material.id] ?? 0,
           note:
               '${material.effect} Grado: ${material.grade < 0 ? 'variabile' : material.grade}. '
               'Peso configurabile: ${material.minKg}–${material.maxKg} kg.',
@@ -5246,6 +5387,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           craftData: {
             'material': material.id,
             'materialGrade': max(0, material.grade),
+            'materialLevel': oculumDefaultMaterialLevels()[material.id] ?? 0,
             'active': false,
             'activeBuff': material.active,
             'effect': material.effect,
@@ -5934,6 +6076,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
 
     void setItemEquipped(bool value) {
       if (!inventario.contains(item)) return;
+      if (item.craftData['senkaMask'] == true) {
+        setSenkaMaskManifested(item, value);
+        return;
+      }
+      if (item.craftData['titleItem'] == true) {
+        setTitleItemManifested(item, value);
+        return;
+      }
       if (value && weaponEquipLimitReached(item)) {
         aggiungiLog(
           'Limite armi: ${oculumWeaponLimit(leggiNumero(gradoController))}. Rimuovi prima un’arma.',
@@ -6007,6 +6157,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (item.craftData['recipeBook'] is Map)
+            const PopupMenuItem<String>(
+              value: 'read_recipe_book',
+              child: Text('Leggi · sblocca ricette per il party'),
+            ),
           if (item.craftData['dollCostume'] == true)
             const PopupMenuItem<String>(
               value: 'costume_jump',
@@ -6037,7 +6192,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               value: 'equipment_forms',
               child: Text('Modifica abilità / evoluzioni oggetto'),
             ),
-          if (item.craftData['titleItem'] != true)
+          if (item.craftData['titleItem'] != true &&
+              oculumEquipmentCanBecomeTitle(item))
             PopupMenuItem<String>(
               value: 'convert_title',
               enabled:
@@ -6106,7 +6262,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     : Icons.check_circle_outline,
               ),
               title: Text(
-                item.equipaggiata
+                item.craftData['titleItem'] == true
+                    ? item.equipaggiata ? 'Disevoca · gratuito' : 'Evoca · gratuito'
+                    : item.equipaggiata
                     ? t('Rimuovi equipaggiamento', 'Unequip')
                     : t('Equipaggia', 'Equip'),
               ),
@@ -6212,6 +6370,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           break;
         case 'use':
           await useMerchantConsumable(item);
+          break;
+        case 'read_recipe_book':
+          await readRecipeBook(item);
           break;
         case 'restore_pawn_core':
           await restorePawnCore(item);
@@ -7466,7 +7627,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 SwitchListTile(
                   value: inventario[i].equipaggiata,
                   activeThumbColor: tertiaryColor,
-                  title: Text(t('Equipaggiata', 'Equipped')),
+                  title: Text(inventario[i].craftData['titleItem'] == true
+                      ? 'Evocata · nessuna Azione o Reazione' : t('Equipaggiata', 'Equipped')),
                   subtitle: Text(
                     t(
                       'Attiva arma/protezione e buff @ dell\'oggetto.',
@@ -7474,6 +7636,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ),
                   ),
                   onChanged: (value) {
+                    if (inventario[i].craftData['senkaMask'] == true) {
+                      setSenkaMaskManifested(inventario[i], value);
+                      return;
+                    }
+                    if (inventario[i].craftData['titleItem'] == true) {
+                      setTitleItemManifested(inventario[i], value);
+                      return;
+                    }
                     if (value && weaponEquipLimitReached(inventario[i])) {
                       aggiungiLog(
                         'Limite armi: ${oculumWeaponLimit(leggiNumero(gradoController))}. Rimuovi prima un’arma.',

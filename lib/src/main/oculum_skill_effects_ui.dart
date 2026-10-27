@@ -36,8 +36,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       }
     }
     for (final item in inventario) {
-      for (final (i, form)
-          in (item.ability?.forme ?? <CharacterSkillForm>[]).indexed) {
+      for (final (i, form) in [
+        ...?item.ability?.forme,
+        ...item.materialAbilities.expand((s) => s.forme),
+        ...oculumItemTitleAbilities(item).expand((s) => s.forme),
+      ].indexed) {
         if (form.cooldownStrutturato case final cooldown?) {
           yield (name: '${item.nome} · ${i + 1}', cooldown: cooldown);
         }
@@ -200,7 +203,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       }
     }
     for (final item in inventario) {
-      for (final form in item.ability?.forme ?? <CharacterSkillForm>[]) {
+      for (final form in [
+        ...?item.ability?.forme,
+        ...item.materialAbilities.expand((s) => s.forme),
+        ...oculumItemTitleAbilities(item).expand((s) => s.forme),
+      ]) {
         changed = (form.cooldownStrutturato?.tick(unit) ?? false) || changed;
       }
       if (item.craftData['jumpAbility'] is Map) {

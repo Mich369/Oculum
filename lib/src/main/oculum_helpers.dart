@@ -2483,6 +2483,16 @@ String oculumDynamicFormulaKey(String value) {
 }
 
 String oculumFormulaVariableKey(String value, Map<String, num> vars) {
+  if (const {
+        'pt',
+        'potenzatotale',
+        'potenza_totale',
+        'totalpower',
+        'total_power',
+      }.contains(oculumDynamicFormulaKey(value)) &&
+      vars.containsKey('potenza_totale')) {
+    return 'potenza_totale';
+  }
   final builtIn = oculumStatKey(value);
   if (builtIn.isNotEmpty) return builtIn;
   final dynamicKey = oculumDynamicFormulaKey(value);
@@ -2886,7 +2896,9 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
           oculumExpandGroupedFormulaCommand(
             OculumFormulaCommand(
               key: key,
-              value: oculumRoundFormulaResult(value),
+              value: oculumFormulaUsesTotalPower(expression)
+                  ? value.floor()
+                  : oculumRoundFormulaResult(value),
               elementId: element,
               triggerRaw: triggerRaw,
               valid: true,

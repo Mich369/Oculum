@@ -128,6 +128,14 @@ String oculumMonsterBookSkillBaseId(String id) =>
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
   return base == 'nuvi_flight' ||
+      const {
+        'doppione_illness_passive',
+        'metallic_quick_passive',
+        'time_cyclops_halo',
+        'minor_construct_shield',
+        'wrong_bandit_sword',
+        'strange_presence_watch',
+      }.contains(base) ||
       base == 'bone_kill_regen' ||
       base == 'ogor_core' ||
       base == 'monk_ki_hunt' ||
@@ -243,7 +251,9 @@ final _naturalMonsterTechniqueIds = <String>{
 };
 
 bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
-    id.startsWith('masked_')
+    id.startsWith(oculumMonsterProgressionPrefix)
+    ? true
+    : id.startsWith('masked_')
     ? monsterBookConcreteTechnique(id)?.costResource != 'oculum'
     : !const {
             'fiaccolata',
@@ -276,9 +286,30 @@ bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
 
 List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) {
   if (oculumWitheredLarvaMonster(monster)) {
-    return oculumWitheredLarvaSkills(monster);
+    return [
+      ...oculumWitheredLarvaSkills(monster),
+      for (final id in monster.skillIds.where(
+        (id) => id.startsWith(oculumMonsterProgressionPrefix),
+      ))
+        _naturalMonsterSkill(
+          monster,
+          id,
+          oculumProgressionArtSkill(monster, id),
+        ),
+    ];
   }
-  if (monster.id.startsWith('pawn_guardiano')) return [];
+  if (monster.id.startsWith('pawn_guardiano')) {
+    return [
+      for (final id in monster.skillIds.where(
+        (id) => id.startsWith(oculumMonsterProgressionPrefix),
+      ))
+        _naturalMonsterSkill(
+          monster,
+          id,
+          oculumProgressionArtSkill(monster, id),
+        ),
+    ];
+  }
   final art = oculumMonsterBookArt(monster);
   final ids = monsterBookUsableSkillIds(monster);
   return [
@@ -332,23 +363,30 @@ CharacterSkillForm _naturalMonsterSkillForm({
   required String fallbackResource,
 }) {
   final sourceText = source.testoEvoluzione(form + 1);
-  final technique = _activeConcreteMonsterTechnique(id);
-  final parsedCost = oculumParseAbilityCost(sourceText);
   final resource = passive || sacrificial
       ? 'nessuna'
-      : technique?.costResource ?? parsedCost?.resource ?? fallbackResource;
+      : source.risorsaCostoPerLivello(form + 1);
   final noResource = resource == 'nessuna';
-  final defaultAmount = monster.id == 'mosca_campana' ? 3 : form + 1;
   final minimum = passive || sacrificial || noResource
       ? 0
-      : technique?.minimums[form] ?? parsedCost?.minimum ?? defaultAmount;
+      : source.oculumMinimoPerLivello(form + 1);
   final maximum = passive || sacrificial || noResource
       ? 0
-      : technique?.maximums[form] ?? parsedCost?.maximum ?? defaultAmount;
+      : source.oculumMassimoPerLivello(form + 1);
   final resourceLabel = oculumArtSkillCostResourceLabel(resource);
   final spendsOculum = resource == 'oculum';
   return CharacterSkillForm(
     nome: const ['I', 'II', 'III'][form],
+    unlockRequirements: id.startsWith(oculumMonsterProgressionPrefix)
+        ? {
+            ...oculumProgressionRequirements(
+              id,
+              form,
+              (monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3,
+            ),
+            'element': monster.elementId,
+          }
+        : null,
     tipo: passive ? 'Passiva mostro' : 'Skill naturale mostro',
     livello:
         '${switch (oculumMonsterBookSkillBaseId(id)) {
@@ -558,6 +596,52 @@ List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
 }
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
+  final extra = monster.skillIds
+      .where((id) => id.startsWith(oculumMonsterProgressionPrefix))
+      .toList();
+  final art = _oculumAuthoredMonsterBookArt(
+    extra.isEmpty
+        ? monster
+        : monster.copyWith(
+            skillIds: monster.skillIds
+                .where((id) => !id.startsWith(oculumMonsterProgressionPrefix))
+                .toList(),
+          ),
+  );
+  art.skills.addAll(extra.map((id) => oculumProgressionArtSkill(monster, id)));
+  return art;
+}
+
+ArtSkill oculumProgressionArtSkill(MonsterBookEntry monster, String id) {
+  final technique = monsterBookConcreteTechnique(id)!;
+  final forms = monsterBookSkillForms(id);
+  return ArtSkill(
+    nome: technique.name,
+    evo1: forms[0],
+    evo2: forms[1],
+    evo3: forms[2],
+    risorseCostoPerLivello: List.filled(3, technique.costResource),
+    oculumMinimiPerLivello: technique.minimums,
+    oculumMassimiPerLivello: technique.maximums,
+    cooldownPerLivello: technique.cooldowns.map(
+      (n) => OculumAbilityCooldown(amount: n),
+    ),
+    effettiPerLivello: _monsterBookGenericEffects(id),
+    unlockRequirementsPerLevel: [
+      for (var i = 0; i < 3; i++)
+        {
+          ...oculumProgressionRequirements(
+            id,
+            i,
+            technique.requiredLevel + i * 3,
+          ),
+          'element': monster.elementId,
+        },
+    ],
+  );
+}
+
+CharacterArt _oculumAuthoredMonsterBookArt(MonsterBookEntry monster) {
   if (oculumWitheredLarvaMonster(monster)) {
     return oculumCompleteMonsterOpen(
       oculumWitheredLarvaArt(monster),
@@ -823,12 +907,15 @@ CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
       }
       final text = skill.testoEvoluzione(form);
       if (text.isEmpty || text == '???') continue;
-      final passive = skill
-          .tipoPerLivello(form)
-          .toLowerCase()
-          .contains('passiv');
+      final passive =
+          oculumMonsterBookSkillIsPassive(id) ||
+          skill.tipoPerLivello(form).toLowerCase().contains('passiv');
       final index = form - 1;
-      if (passive) {
+      final sacrificial = const {
+        'goblin_kamikaze_explosion',
+        'thunder_bot_explosion',
+      }.contains(oculumMonsterBookSkillBaseId(id));
+      if (passive || sacrificial) {
         skill.impostaRisorsaCostoPerLivello(form, 'nessuna');
         skill.impostaLimitiOculumPerLivello(form, minimo: 0, massimo: 0);
         continue;
@@ -1754,6 +1841,14 @@ CharacterArt oculumCompleteMonsterOpen(
     art.openDescription =
         'Richiede livello $level. Risveglia le capacità di $name. Il Buff potenzia la creatura e la Skill Open; attivazione e Skill hanno cooldown separati.';
     art.openDescriptionEffects = [
+      if (attack != null)
+        OculumStructuredEffect(
+          type: 'danno',
+          valueExpression: '${oculumItemTitleOpenPower(grade).flat}',
+          diceExpression: '1d${oculumItemTitleOpenPower(grade).faces}',
+          mode: 'prossima_azione',
+          elementType: attack.elementType,
+        ),
       OculumStructuredEffect(
         id: 'monster_open_ultimate_${art.nome}',
         type: 'modifica_statistica',
@@ -2229,7 +2324,7 @@ const List<OculumStarterChoice> oculumStarterRaces = [
     id: 'figli_madre_natura',
     nome: 'Figli di Madre Natura',
     descrizione:
-        'Nati dalla vita del mondo: pelle, foglie, cortecce o piccoli tratti animali. Scegli aspetto e legame naturale; nessun bonus aggiuntivo imposto, tratti modificabili con il Master.',
+        'Nati dalla vita del mondo: pelle, foglie, cortecce o piccoli tratti animali. Custodiscono la memoria dei materiali viventi; curiosità e rispetto della vita sono inclinazioni, non obblighi. Vantaggio nelle prove alchemiche e di Crafting.\n@RazzaVantaggio alchimia 3\n@RazzaVantaggio crafting 3',
   ),
   OculumStarterChoice(
     id: 'demone_maggiore',
@@ -2274,6 +2369,120 @@ const List<OculumStarterChoice> oculumStarterRaces = [
     descrizione:
         'Occhi del bosco spezzato: +1 MAT, riconosci sentieri e piante ostili.',
     materia: 1,
+  ),
+  OculumStarterChoice(
+    id: 'slime',
+    nome: 'Slime',
+    materia: 1,
+    descrizione:
+        'Creatura gelatinosa cosciente. Scegli colore, trasparenza, consistenza e forma abituale; il corpo può ricordare una piccola massa oppure una sagoma umanoide. Curiosità e imitazione ne influenzano spesso la cultura. Non ottiene automaticamente immunità fisiche o le Skill degli altri Slime.',
+  ),
+  OculumStarterChoice(
+    id: 'mezzo_slime',
+    nome: 'Mezzo Slime',
+    materia: 2,
+    descrizione:
+        'Retaggio umano e gelatinoso: consistenza, colore e tratti visibili restano una scelta personale. Il corpo flessibile sostiene Controllo corporeo e Riflessi. +2 Materia, +2 Controllo corporeo e +2 Riflessi. Fuoco ed Esplosioni infliggono il 25% di danni in più. Come lo Slime puro, impara permanentemente Forma Slime raggiungendo Materia base 12 senza buff temporanei; non concede immunità fisiche.\n@ControlloCorporeo+2\n@Riflessi+2\n@DanniSubiti+25% Fuoco\n@DanniSubiti+25% Esplosivo',
+    puntoCieco:
+        'Il calore disperde la consistenza gelatinosa; le esplosioni la lacerano: +25% Danni da Fuoco e da Esplosioni.',
+  ),
+  OculumStarterChoice(
+    id: 'marino',
+    nome: 'Marino',
+    materia: 1,
+    descrizione:
+        'Branchie discrete, pelle madreperlacea e mani adatte alle correnti. Respira sott’acqua e all’aria. Spesso paziente nell’attesa e diretto nei legami.\n@RespiraAcqua',
+  ),
+  OculumStarterChoice(
+    id: 'lunare',
+    nome: 'Lunare',
+    volonta: 1,
+    descrizione:
+        'Occhi luminosi e segni pallidi sulla pelle. Vede perfettamente al buio naturale; le tenebre magiche conservano le proprie regole. Custodisce promesse e ricordi con attenzione.\n@VisioneBuio',
+  ),
+  OculumStarterChoice(
+    id: 'costrutto',
+    nome: 'Costrutto',
+    resilienza: 1,
+    descrizione:
+        'Corpo artificiale e coscienza personale: materiali, voce e scopo sono scelti dal giocatore. Nucleo con Vita separata pari a un quarto della Vita massima, minimo 15. Ultime forze automatica a 0 Vita, una volta per Riposo Breve o Lungo, se il nucleo è integro e l’ultimo attacco non l’ha colpito.\n@Costrutto',
+  ),
+  OculumStarterChoice(
+    id: 'mezzo_mostro',
+    nome: 'Mezzo Mostro',
+    resilienza: 1,
+    descrizione:
+        'Aspetto umano con tratti della specie scelta: corna, pelo, scaglie o occhi insoliti. Scegli origine e rapporto con l’istinto; non eredita automaticamente le Skill di ogni mostro.',
+  ),
+  OculumStarterChoice(
+    id: 'mezzo_demone',
+    nome: 'Mezzo Demone',
+    volonta: 1,
+    descrizione:
+        'Eredità umana e demoniaca, segni incandescenti e volontà inquieta. Può essere aggressivo, riflessivo o protettivo: il sangue non decide le sue scelte.',
+  ),
+  OculumStarterChoice(
+    id: 'mezzo_marino',
+    nome: 'Mezzo Marino',
+    materia: 1,
+    descrizione:
+        'Tratti acquatici lievi e branchie funzionali; respira nell’acqua. Porta spesso con sé ricordi di due comunità.\n@RespiraAcqua',
+  ),
+  OculumStarterChoice(
+    id: 'mezzo_lunare',
+    nome: 'Mezzo Lunare',
+    volonta: 1,
+    descrizione:
+        'Retaggio umano e lunare, pupille argentee e vista perfetta nel buio naturale. Vive il rapporto con la Luna a modo proprio.\n@VisioneBuio',
+  ),
+  OculumStarterChoice(
+    id: 'petrino',
+    nome: 'Petrino',
+    resilienza: 1,
+    descrizione:
+        'Pelle minerale, venature e voce profonda. Tende a ricordare luoghi e impegni più dei titoli; può essere lento a fidarsi senza essere lento nei gesti.',
+  ),
+  OculumStarterChoice(
+    id: 'micelio',
+    nome: 'Micelio',
+    materia: 1,
+    descrizione:
+        'Corpo fungino cosciente con colori e cappello scelti dal giocatore. Cerca connessioni e comprende il valore del decadimento; non è automaticamente velenoso.',
+  ),
+  OculumStarterChoice(
+    id: 'vitreo',
+    nome: 'Vitreo',
+    materia: 1,
+    descrizione:
+        'Pelle traslucida e riflessi interni, ma corpo solido e visibile. Ama custodire dettagli e rifrangere idee: trasparenza e fragilità non sono imposte come poteri o malus.',
+  ),
+  OculumStarterChoice(
+    id: 'ramato',
+    nome: 'Ramato Fatato',
+    volonta: 1,
+    descrizione:
+        'Retaggio fatato con pigmenti di rame opaco e dettagli ambrati. Bargugni, promesse e curiosità ne segnano spesso la cultura; il carattere individuale resta libero.',
+  ),
+  OculumStarterChoice(
+    id: 'alato',
+    nome: 'Alato delle Correnti',
+    materia: 1,
+    descrizione:
+        'Piume e ali di forma scelta dal giocatore. Cerca spazio e prospettiva; volo e planata richiedono le capacità concordate e non rendono automaticamente immuni alle cadute.',
+  ),
+  OculumStarterChoice(
+    id: 'ferino',
+    nome: 'Ferino',
+    resilienza: 1,
+    descrizione:
+        'Umanoide con tratti animali scelti: muso, coda, mantello o artigli. I legami possono essere di branco o solitari; nessun istinto sostituisce la sua coscienza.',
+  ),
+  OculumStarterChoice(
+    id: 'innestato',
+    nome: 'Innestato',
+    materia: 1,
+    descrizione:
+        'Persona vivente con protesi e innesti scelti. La storia degli interventi conta quanto il materiale. Non è un Costrutto finché non possiede coscienza e corpo legati a un nucleo.',
   ),
   OculumStarterChoice(
     id: 'crea_master',
@@ -2335,6 +2544,8 @@ List<CharacterArt> oculumStarterArtChoices() => [
     'luce',
     'buio',
     'natura',
+    'luna',
+    'spirituale',
   ])
     oculumStarterElementArt(element),
   oculumStarterWaterArt(),
@@ -2655,6 +2866,8 @@ CharacterArt oculumStarterElementArt(String element) {
     'luce': 'Lanterna Interiore',
     'buio': 'Velo del Crepuscolo',
     'natura': 'Linfa Risvegliata',
+    'luna': 'Custodia della Luna',
+    'spirituale': 'Risonanza dell’Anima',
   };
   return CharacterArt(
     nome: names[element] ?? element,

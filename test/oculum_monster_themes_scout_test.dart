@@ -128,7 +128,7 @@ void main() {
           ].fold<int>(0, (n, k) => n + (m.stats[k] ?? 0)),
           3,
         );
-        expect(m.skillIds.length, 2);
+        expect(m.skillIds.length, 14); // Two authored + twelve growth techniques.
         expect(m.dropIds, isNotEmpty);
         expect(m.planeIds.every(oculumMonsterHabitats.containsKey), isTrue);
       }

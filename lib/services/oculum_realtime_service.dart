@@ -38,6 +38,14 @@ bool oculumSameSheetIdentity(dynamic left, dynamic right) {
   return identity.isNotEmpty && identity == canonical(right);
 }
 
+// A completed chunk transfer cannot be reassembled a second time. If the UI
+// rejects its final notification, retry that verified, assembled notification.
+class _OculumVerifiedConsumerFailure {
+  const _OculumVerifiedConsumerFailure(this.event, this.payload);
+  final String event;
+  final Map<String, dynamic> payload;
+}
+
 class OculumRealtimeService {
   /// Keep presence and durable-event reconciliation responsive without
   /// continuously querying PostgREST when Realtime is already connected.
@@ -57,6 +65,7 @@ class OculumRealtimeService {
     this.onIdleClosed,
     this.httpPollingOnly = false,
     this.roomPassword = '',
+    this.connectionRequestTimeout = const Duration(seconds: 20),
     SupabaseClient? client,
   }) : _client = client,
        _presenceKey = _newSessionId();
@@ -68,8 +77,10 @@ class OculumRealtimeService {
 
   static bool supabaseAvailable = false;
   static String startupStatus = 'Supabase non inizializzato.';
+  final Duration connectionRequestTimeout;
 
   static const Set<String> supportedEvents = <String>{
+    'sheet_assignment',
     'room_member_removed',
     'combat_attack',
     'initiative_control',
@@ -160,6 +171,7 @@ class OculumRealtimeService {
   bool _connectionPublished = false;
   bool _disposed = false;
   Future<void>? _connecting;
+  Completer<void>? _subscriptionReady;
   bool _awaitingApproval = false;
   bool _masterRoleUnavailable = false;
   bool _requiresUserAction = false;
@@ -188,6 +200,7 @@ class OculumRealtimeService {
   Future<void> _incomingEvents = Future<void>.value();
   bool _presenceRegistered = false;
   final _deliveredEvents = <String>{};
+  final _pendingVerifiedEvents = <String, Map<String, dynamic>>{};
   final _appliedAccessRevocations = <String>{};
   int _replaySequence = 0;
   int _initiativeRestoredGeneration = -1;
@@ -251,17 +264,19 @@ class OculumRealtimeService {
       if (_disposed || generation != _generation) return;
       final requestedRole = presenceDataProvider?.call()['role'];
       var membership = Map<String, dynamic>.from(
-        await client.rpc(
-              roomPassword.isEmpty
-                  ? 'oculum_open_room'
-                  : 'oculum_open_room_with_password',
-              params: {
-                'p_code': normalizedRoomId,
-                'p_name': _displayName,
-                'p_as_master': requestedRole == 'master',
-                if (roomPassword.isNotEmpty) 'p_password': roomPassword,
-              },
-            )
+        await client
+                .rpc(
+                  roomPassword.isEmpty
+                      ? 'oculum_open_room'
+                      : 'oculum_open_room_with_password',
+                  params: {
+                    'p_code': normalizedRoomId,
+                    'p_name': _displayName,
+                    'p_as_master': requestedRole == 'master',
+                    if (roomPassword.isNotEmpty) 'p_password': roomPassword,
+                  },
+                )
+                .timeout(connectionRequestTimeout)
             as Map,
       );
       if (_disposed || generation != _generation) return;
@@ -344,6 +359,7 @@ class OculumRealtimeService {
       channel.onPresenceLeave((_) => _emitPresence());
 
       final subscribed = Completer<void>();
+      _subscriptionReady = subscribed;
       channel.subscribe((status, error) {
         if (_disposed || _channel != channel) return;
 
@@ -405,7 +421,9 @@ class OculumRealtimeService {
         }
       });
 
-      await subscribed.future.timeout(const Duration(seconds: 12));
+      await subscribed.future.timeout(
+        connectionRequestTimeout + const Duration(seconds: 12),
+      );
     } catch (error) {
       if (_disposed || generation != _generation) return;
       await disconnect(notify: false);
@@ -513,6 +531,11 @@ class OculumRealtimeService {
     _generation++;
     _sheetSendTail = Future<void>.value();
     final approvalCancelled = _approvalCancelled;
+    final ready = _subscriptionReady;
+    _subscriptionReady = null;
+    if (ready != null && !ready.isCompleted) {
+      ready.complete();
+    }
     _approvalCancelled = null;
     _awaitingApproval = false;
     if (approvalCancelled != null && !approvalCancelled.isCompleted) {
@@ -1131,6 +1154,108 @@ class OculumRealtimeService {
 
   Future<void> refreshPresence() => _trackPresence();
 
+  String? get authenticatedUserId =>
+      (_client ?? Supabase.instance.client).auth.currentUser?.id;
+
+  String newSheetTransferId() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    final hex = bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+  }
+
+  Future<Map<String, dynamic>> assignSheetsToPlayer({
+    required String transferId,
+    required String targetUserId,
+    required String campaignId,
+    required String campaignName,
+    required List<Map<String, dynamic>> sheets,
+  }) async {
+    if (!isConnected ||
+        _secureRoomId == null ||
+        authenticatedRole != 'master') {
+      throw StateError(
+        'Per assegnare le schede occorre essere il Master connesso.',
+      );
+    }
+    final result = await (_client ?? Supabase.instance.client)
+        .rpc(
+          'oculum_assign_room_sheets',
+          params: {
+            'p_room': _secureRoomId,
+            'p_session': _presenceKey,
+            'p_transfer': transferId,
+            'p_target_user': targetUserId,
+            'p_campaign_id': campaignId,
+            'p_campaign_name': campaignName,
+            'p_sheets': sheets,
+          },
+        )
+        .timeout(const Duration(seconds: 30));
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  Future<List<Map<String, dynamic>>> pendingSheetAssignments() async {
+    final room = _secureRoomId;
+    final userId = authenticatedUserId;
+    if (!isConnected || room == null || userId == null) return [];
+    // Read only small routing receipts here. Load each body once, separately.
+    final result = await (_client ?? Supabase.instance.client)
+        .from('oculum_sheet_assignments')
+        .select(
+          'room_id,transfer_id,sheet_tag,source_user_id,target_user_id,source_name,target_name,sheet_name,campaign_id,campaign_name,created_at,source_saved_at,target_saved_at',
+        )
+        .eq('room_id', room)
+        .or(
+          'and(source_user_id.eq.$userId,source_saved_at.is.null),and(target_user_id.eq.$userId,target_saved_at.is.null)',
+        )
+        .order('created_at')
+        .limit(50)
+        .timeout(const Duration(seconds: 15));
+    return result.map((row) => Map<String, dynamic>.from(row)).toList();
+  }
+
+  Future<Map<String, dynamic>> assignedSheetBody(
+    Map<String, dynamic> receipt,
+  ) async {
+    final room = _secureRoomId;
+    if (!isConnected || room == null) {
+      throw StateError('Connessione non disponibile.');
+    }
+    final row = await (_client ?? Supabase.instance.client)
+        .from('oculum_sheet_assignments')
+        .select('sheet')
+        .eq('room_id', room)
+        .eq('transfer_id', '${receipt['transfer_id']}')
+        .eq('sheet_tag', '${receipt['sheet_tag']}')
+        .single()
+        .timeout(const Duration(seconds: 20));
+    if (row['sheet'] is! Map) {
+      throw StateError('La scheda è già stata salvata dai destinatari.');
+    }
+    return Map<String, dynamic>.from(row['sheet'] as Map);
+  }
+
+  Future<void> acknowledgeSheetAssignment(Map<String, dynamic> receipt) async {
+    if (!isConnected || _secureRoomId == null) {
+      throw StateError('Connessione non disponibile.');
+    }
+    await (_client ?? Supabase.instance.client)
+        .rpc(
+          'oculum_ack_sheet_assignment',
+          params: {
+            'p_room': _secureRoomId,
+            'p_transfer': '${receipt['transfer_id']}',
+            'p_sheet_tag': '${receipt['sheet_tag']}',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+  }
+
   Future<void> revokeSheetEditor(String targetTag, {String? sheetTag}) async {
     if (!isConnected || _secureRoomId == null) return;
     await (_client ?? Supabase.instance.client).rpc(
@@ -1572,6 +1697,14 @@ class OculumRealtimeService {
       // permissions. Otherwise the UI can reject an event, then mark it seen.
       await _emitPresence();
       if (stale()) return;
+      if (_presenceRegistered) _notifyConnectedOnce();
+      // Resolve roles and owned-sheet conflicts before callers observe a
+      // ready connection. Optional history does not hold this latch.
+      final ready = _subscriptionReady;
+      if (ready != null && !ready.isCompleted) {
+        ready.complete();
+      }
+      _retryVerifiedEvents();
       await _replayEvents(client, channel);
       if (stale()) return;
       if (_initiativeRestoredGeneration != _generation &&
@@ -1612,7 +1745,11 @@ class OculumRealtimeService {
         ? payload['payload'] as Map
         : payload;
     final id = header['serverEventId'];
-    if (id is! String || _deliveredEvents.contains(id)) return;
+    if (id is! String ||
+        _deliveredEvents.contains(id) ||
+        _pendingVerifiedEvents.containsKey(id)) {
+      return;
+    }
     final channel = _channel;
     try {
       final record = await (_client ?? Supabase.instance.client)
@@ -1629,11 +1766,7 @@ class OculumRealtimeService {
           record['payload'] is! Map) {
         return;
       }
-      if (!_deliveredEvents.add(id)) return;
-      if (_deliveredEvents.length > 4000) {
-        _deliveredEvents.remove(_deliveredEvents.first);
-      }
-      _deliverVerifiedEvent(event, {
+      _applyVerifiedEvent(id, event, {
         ...Map<String, dynamic>.from(record['payload'] as Map),
         'serverSequence': record['sequence'],
       });
@@ -1662,17 +1795,15 @@ class OculumRealtimeService {
     for (final record in records) {
       if (_disposed || _generation != generation || _channel != channel) return;
       final id = '${record['id']}';
-      if (_deliveredEvents.add(id)) {
-        if (_deliveredEvents.length > 4000) {
-          _deliveredEvents.remove(_deliveredEvents.first);
-        }
+      if (!_deliveredEvents.contains(id) &&
+          !_pendingVerifiedEvents.containsKey(id)) {
         final event = '${record['event']}';
         final payload = Map<String, dynamic>.from(record['payload'] as Map);
         payload['serverSequence'] = record['sequence'];
         if (event == 'initiative_shared') {
           payload['restoredSnapshot'] = true;
         }
-        _deliverVerifiedEvent(event, payload);
+        _applyVerifiedEvent(id, event, payload);
       }
       if (_disposed || _generation != generation || _channel != channel) return;
       _replaySequence = (record['sequence'] as num).toInt();
@@ -1707,15 +1838,11 @@ class OculumRealtimeService {
         return true;
       }
       final id = '${record['id']}';
-      if (!_deliveredEvents.add(id)) return true;
-      if (_deliveredEvents.length > 4000) {
-        _deliveredEvents.remove(_deliveredEvents.first);
-      }
+      if (_deliveredEvents.contains(id)) return true;
       final payload = Map<String, dynamic>.from(record['payload'] as Map)
         ..['serverSequence'] = record['sequence']
         ..['restoredSnapshot'] = true;
-      _deliverVerifiedEvent('initiative_shared', payload);
-      return true;
+      return _applyVerifiedEvent(id, 'initiative_shared', payload);
     } catch (_) {
       // The realtime transport stays connected even if historical state cannot
       // be restored; the next heartbeat retries without discarding local data.
@@ -1723,6 +1850,58 @@ class OculumRealtimeService {
         _safeStatus('Turnistica condivisa in attesa di sincronizzazione.');
       }
       return false;
+    }
+  }
+
+  // Only database-verified bodies enter this retry buffer. One failing UI
+  // handler must not mark a roll as delivered or block subsequent events.
+  bool _applyVerifiedEvent(
+    String id,
+    String event,
+    Map<String, dynamic> payload,
+  ) {
+    if (_deliveredEvents.contains(id)) return true;
+    try {
+      _deliverVerifiedEvent(event, payload);
+      _pendingVerifiedEvents.remove(id);
+      _deliveredEvents.add(id);
+      if (_deliveredEvents.length > 4000) {
+        _deliveredEvents.remove(_deliveredEvents.first);
+      }
+      return true;
+    } catch (error) {
+      _pendingVerifiedEvents[id] = {
+        'event': error is _OculumVerifiedConsumerFailure ? error.event : event,
+        'payload': Map<String, dynamic>.from(
+          error is _OculumVerifiedConsumerFailure ? error.payload : payload,
+        ),
+      };
+      _safeStatus(
+        'Evento non ancora applicato: riprovo senza riavviare l’app.',
+      );
+      return false;
+    }
+  }
+
+  void _retryVerifiedEvents() {
+    for (final entry in _pendingVerifiedEvents.entries.take(16).toList()) {
+      _applyVerifiedEvent(
+        entry.key,
+        '${entry.value['event']}',
+        Map<String, dynamic>.from(entry.value['payload'] as Map),
+      );
+    }
+  }
+
+  void _notifyVerifiedConsumer(String event, Map<String, dynamic> payload) {
+    final verifiedBody = jsonEncode(payload);
+    try {
+      onEvent(event, payload);
+    } catch (_) {
+      throw _OculumVerifiedConsumerFailure(
+        event,
+        jsonDecode(verifiedBody) as Map<String, dynamic>,
+      );
     }
   }
 
@@ -1767,7 +1946,7 @@ class OculumRealtimeService {
             'session_notes_snapshot',
           }.contains(assembled['event']) &&
           assembled['sheet'] is Map) {
-        onEvent(
+        _notifyVerifiedConsumer(
           '${assembled['event']}',
           Map<String, dynamic>.from(assembled['sheet']),
         );
@@ -1781,7 +1960,7 @@ class OculumRealtimeService {
             assembled['sheetId'],
             normalized['authenticatedSheetId'],
           )) {
-        onEvent('sheet_shared', {
+        _notifyVerifiedConsumer('sheet_shared', {
           ...assembled,
           if (normalized['authenticatedRole'] == 'player') 'fromMaster': false,
           if (normalized['authenticatedRole'] == 'player') 'masterParty': false,
@@ -1798,7 +1977,7 @@ class OculumRealtimeService {
       }
       return;
     }
-    onEvent(event, normalized);
+    _notifyVerifiedConsumer(event, normalized);
   }
 
   Future<void> _emitPresence() {

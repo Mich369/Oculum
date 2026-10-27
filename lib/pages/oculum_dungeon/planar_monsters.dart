@@ -20,6 +20,10 @@ const oculumMonsterHabitats = <String, String>{
   'morti': 'Regno dei Morti',
   'ghiaccio': 'Terre di ghiaccio',
   'nuvole_rocciose': 'Nuvole rocciose',
+  'deserto_divoratore': 'Deserto Divoratore–Deserto di Vetro',
+  'reame_cristallo': 'Reame Cristallo',
+  'orea_zalira': 'Orea Zalira',
+  'carne_viva': 'Regno di Carne Viva',
 };
 const oculumMicroRealityIds = <String>{
   'postea',
@@ -28,6 +32,10 @@ const oculumMicroRealityIds = <String>{
   'morti',
   'ghiaccio',
   'nuvole_rocciose',
+  'deserto_divoratore',
+  'reame_cristallo',
+  'orea_zalira',
+  'carne_viva',
 };
 
 const _planarSpeciesNames = <String, List<String>>{

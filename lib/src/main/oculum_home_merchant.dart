@@ -923,6 +923,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         kind == 'nurse_service' || offer['nurseCatalog'] == true,
       'alchimista' =>
         const {
+              'anti_corruption',
+              'corruption_page',
               'power_scanner',
               'fallen_eye',
               'smoking_herbs',
@@ -1004,6 +1006,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         final pet = firstWhere((offer) => offer['kind'] == 'alchemy_pet');
         if (fate != null) reserved.add(fate);
         if (pet != null) reserved.add(pet);
+        final anti = firstWhere((offer) => offer['kind'] == 'anti_corruption');
+        if (anti != null && antiCorruptionReservedForMerchant()) {
+          reserved.add(anti);
+        }
         break;
       case 'fabbro':
         final pawn = firstWhere(
@@ -1290,6 +1296,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         icon: const Icon(Icons.public),
         label: Text('Piano: ${selectedPlane.name}'),
       ),
+      if (oculumMicroRealmLore.containsKey(selectedPlaneId))
+        OutlinedButton.icon(onPressed: showCurrentMicroRealm, icon: const Icon(Icons.explore_outlined), label: const Text('Esplora questa realtà')),
       if (planeNeedsAdaptation)
         OutlinedButton(
           onPressed: rollPlaneAdaptation,
@@ -1394,6 +1402,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       max(0, leggiNumero(gradoController)),
     );
     merchantStock = <Map<String, dynamic>>[
+      if (leggiNumero(gradoController) >= 1)
+        {'id':'explosive_cards_grade_i','name':'Mazzo di carte esplosive',
+          'kind':'explosive_cards','cost':430,
+          'desc':oculumExplosiveCards().note},
       {
         'id': 'raw_vitalium',
         'name': 'Vitalium Grezzo',
@@ -1788,6 +1800,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureMerchantSpecialOffers() {
+    ensureRecipeBookOffers();
     ensurePowerScannerOffers();
     ensurePosteaOffers();
     ensureDustCrystalOffers();
@@ -1847,6 +1860,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       for (final offer in offers) {
         if (ids.add('${offer['id']}')) merchantStock.add(offer);
       }
+    }
+
+    add(
+      Map<String, dynamic>.from(_OculumCorruptionChronicle.antiCorruptionOffer),
+    );
+    if (!ownsCorruptionPage) {
+      add(
+        Map<String, dynamic>.from(
+          _OculumCorruptionChronicle.corruptionPageOffer,
+        ),
+      );
     }
 
     if (merchantShopType == 'mercato_nero') {
@@ -2937,6 +2961,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool merchantOfferUnavailable(Map<String, dynamic> offer) {
+    if (offer['kind'] == 'corruption_page' && ownsCorruptionPage) return true;
     if (offer['kind'] == 'black_market_ascension_dust') {
       return merchantDustPurchaseCount >=
           readIntValue(offer['purchaseLimit'], fallback: 3);
@@ -3042,6 +3067,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             // ignore: invalid_use_of_protected_member
             setState(() => merchantIsOpen = open);
             if (open) {
+              // Entering a merchant is a full short rest, not just a Dust reset.
+              riposoBreve();
               _rollNurseRefillBuffForShopOpen();
               // ignore: invalid_use_of_protected_member
               if (mounted) setState(() {});
@@ -3093,6 +3120,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ),
           children: [
             merchantProfileControls(),
+            if (merchantShopType == 'fabbro')
+              OutlinedButton.icon(onPressed: showBlacksmithCombine, icon: const Icon(Icons.handyman_outlined), label: const Text('Combina · armi, armature e scudi')),
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
@@ -3287,6 +3316,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         broadcast: true,
       );
       _saveActiveMerchantProfileStock();
+      programmaSalvataggio();
+      return;
+    }
+    if (kind == 'corruption_page') {
+      if (ownsCorruptionPage) return;
+      // ignore: invalid_use_of_protected_member
+      setState(() {
+        obserController.text = '${leggiNumero(obserController) - cost}';
+        planarState['corruptionPagePurchased'] = true;
+        offer['remaining'] = 0;
+      });
       programmaSalvataggio();
       return;
     }
@@ -3788,6 +3828,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   /// Il mercante paga circa un sesto del valore stimato: utile, ma spilorcio.
   int merchantSaleValue(InventoryItem item) {
+    if(item.craftData['explosiveCards']==true) {
+      return readIntValue(item.craftData['marketValue'],fallback:215).clamp(180,250)*max(1,item.quantita);
+    }
     if (item.craftData['monsterRelic'] == true &&
         readIntValue(item.craftData['monsterRelicMarketPrice']) > 0) {
       return oculumMonsterRelicSaleValueForMarketPrice(
@@ -3813,7 +3856,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void sellInventoryItemToMerchant(InventoryItem item) {
-    if (!merchantIsOpen || !inventario.contains(item)) return;
+    if (!merchantIsOpen || !inventario.contains(item) || item.quantita <= 0) return;
+    if(item.craftData['explosiveCards']==true && merchantShopType!='mercato_nero') {
+      aggiungiLog('Le carte esplosive sono vendibili soltanto al Mercato Nero.');
+      return;
+    }
     final payment = merchantSaleValue(item);
     // ignore: invalid_use_of_protected_member
     setState(() {
@@ -3856,6 +3903,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'explosive_cards') return oculumExplosiveCards();
+    if (offer['kind'] == 'anti_corruption') {
+      return InventoryItem(
+        nome: 'Anti-corruzione',
+        peso: .1,
+        quantita: 1,
+        note: '${offer['desc']}',
+        craftData: {'antiCorruption': true},
+      );
+    }
     if (const {
       'power_scanner',
       'postea_power_scanner',
@@ -3864,6 +3921,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (offer['kind'] == 'dust_crystal') {
       return oculumDustCrystal('${offer['size']}');
+    }
+    if (offer['kind'] == 'recipe_book') {
+      return InventoryItem(nome: '${offer['name']}', peso:.3, quantita:1, note:'${offer['desc']}', craftData:{'recipeBook': {'id':offer['id'], 'recipeIds':List<String>.from((offer['recipeIds'] as List? ?? []).map((s)=>'$s'))}, 'recipeBookInstance':'${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1<<30)}'});
     }
     if (const {
       'postea_companion',
@@ -4334,6 +4394,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['antiCorruption'] == true ||
+      item.craftData['redcapBody'] == true ||
       item.craftData['powerScanner'] == true ||
       item.craftData['dustCrystal'] != null ||
       item.craftData['posteaAntimalus'] == true ||
@@ -4368,6 +4430,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (item.craftData['powerScanner'] == true) {
       await usePowerScanner(item);
+      return;
+    }
+    if (item.craftData['antiCorruption'] == true) {
+      useAntiCorruption(item);
+      return;
+    }
+    if (item.craftData['redcapBody'] == true) {
+      await useRedcapBody(item);
       return;
     }
     if (item.craftData['dustCrystal'] != null) {

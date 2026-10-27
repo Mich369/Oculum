@@ -15,6 +15,8 @@ extension _OculumStormBandits on _OculumHomePageState {
   bool get isBanditFamily => const {
     'scostubanditi',
     'scostubanditi_empatico',
+    'scostubandito_errato',
+    'scostubandito_veterano_errato',
     'granscostumato',
     'granscostumato_empatico',
   }.contains(faunaCurrentMonsterId);
