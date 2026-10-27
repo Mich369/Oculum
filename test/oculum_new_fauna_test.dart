@@ -153,7 +153,9 @@ void main() {
         expect(art.openSkillEffects, isNotEmpty, reason: id);
         expect(art.openBuffEffects, isNotEmpty, reason: id);
         final skills = oculumMonsterBookSkills(m);
-        for (final move in m.skillIds) {
+        for (final move in m.skillIds.where(
+          (id) => !id.startsWith(oculumMonsterProgressionPrefix),
+        )) {
           final t = oculumPlanarTechnique(move)!;
           expect(
             [...skills.map((s) => s.nome), ...art.skills.map((s) => s.nome)],

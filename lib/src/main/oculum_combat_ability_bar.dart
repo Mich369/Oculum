@@ -577,7 +577,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                     ? form.costoStrutturato!.minimum
                     : readIntValue(form.costoStrutturato!.amountExpression))
           : combatAbilityCostAvailable(form.costoStrutturato, form.costo)) &&
-      (form.oculumMinimoUtilizzabile <= 0 ||
+      (!form.usaOculumConfigurabile ||
           currentOculum() >= form.oculumMinimoUtilizzabile);
 
   bool combatArtFormAvailable(CharacterArt art, ArtSkill skill, int form) =>

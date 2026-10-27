@@ -52,8 +52,9 @@ void main() {
     'Kamikaze has only its explosion, initial two-turn cooldown and editable HP formula',
     () {
       final monster = monsterById('goblin_kamikaze')!;
-      expect(monster.skillIds, ['goblin_kamikaze_explosion']);
-      final skill = oculumMonsterBookSkills(monster).single;
+      expect(monster.skillIds.first, 'goblin_kamikaze_explosion');
+      expect(monster.skillIds, hasLength(13));
+      final skill = oculumMonsterBookSkills(monster).first;
       for (final form in skill.forme) {
         expect(form.cooldownStrutturato!.remaining, 2);
         expect(form.cooldownStrutturato!.tick('turni'), isTrue);
@@ -81,8 +82,8 @@ void main() {
       expect(monster.stats['materia'], 6);
       expect(monster.stats['oculum'], 0);
       final skills = oculumMonsterBookSkills(monster);
-      expect(skills, hasLength(3));
-      expect(skills.every((s) => s.passiva), isTrue);
+      expect(skills, hasLength(15));
+      expect(skills.take(3).every((s) => s.passiva), isTrue);
       final art = oculumMonsterBookArt(monster);
       expect(
         art.openSkillEffects.single.valueExpression,

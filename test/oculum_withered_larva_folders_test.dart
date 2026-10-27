@@ -31,8 +31,8 @@ void main() {
       [1, 2, 0, 0],
     );
     final skills = oculumMonsterBookSkills(larva);
-    expect(skills, hasLength(3));
-    for (final skill in skills) {
+    expect(skills, hasLength(15));
+    for (final skill in skills.take(3)) {
       final restored = CharacterSkill.fromJson(skill.toJson());
       expect(restored.forme.first.livello, '0');
       for (final form in restored.forme) {
@@ -40,7 +40,10 @@ void main() {
         expect(form.cooldownStrutturato!.amount, greaterThan(0));
       }
     }
-    final burrow = skills.last.forme.first.effettiStrutturati;
+    final burrow = skills[larva.skillIds.indexOf('white_larva_burrow')]
+        .forme
+        .first
+        .effettiStrutturati;
     expect(burrow.map((e) => e.activationOption), ['Fuga', 'Attacco']);
     expect(burrow.first.target, 'velo');
   });

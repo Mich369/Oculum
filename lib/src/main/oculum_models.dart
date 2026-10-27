@@ -1870,6 +1870,7 @@ class CharacterSkillForm {
     List<OculumStructuredEffect>? effettiStrutturati,
     this.costoStrutturato,
     this.cooldownStrutturato,
+    bool costDerivedFromDescription = false,
   }) : unlockRequirements = Map<String, dynamic>.from(
          unlockRequirements ?? const {},
        ),
@@ -1883,6 +1884,9 @@ class CharacterSkillForm {
        effettiStrutturati = List<OculumStructuredEffect>.from(
          effettiStrutturati ?? const <OculumStructuredEffect>[],
        ) {
+    _costoDerivatoDaDescrizione =
+        costDerivedFromDescription ||
+        costo.trim().isEmpty && costoStrutturato == null;
     if (costo.trim().isEmpty && costoStrutturato == null) {
       costoStrutturato = oculumStructuredCostFromText(descrizione);
     }
@@ -1893,6 +1897,23 @@ class CharacterSkillForm {
           : structured.variable
           ? '${structured.minimum}/${structured.maximum} ${structured.resource}'
           : '${structured.amountExpression}/${structured.amountExpression} ${structured.resource}';
+    }
+    if (!_costoDerivatoDaDescrizione &&
+        oculumMinimoUtilizzabile == 0 &&
+        oculumMassimoUtilizzabile == 0 &&
+        structured != null) {
+      final amount = int.tryParse(structured.amountExpression);
+      final costMinimum = structured.variable
+          ? structured.minimum
+          : amount ?? 0;
+      final costMaximum = structured.variable
+          ? structured.maximum
+          : amount ?? 0;
+      if (costMaximum > 0) {
+        oculumMinimoUtilizzabile = max(0, costMinimum);
+        oculumMassimoUtilizzabile = costMaximum;
+        oculumMassimoMaestriaIniziale = costMaximum;
+      }
     }
     aggiornaLimitiOculumDaDescrizione();
   }
@@ -1918,19 +1939,28 @@ class CharacterSkillForm {
   List<OculumStructuredEffect> effettiStrutturati;
   OculumSkillCost? costoStrutturato;
   OculumAbilityCooldown? cooldownStrutturato;
+  bool _costoDerivatoDaDescrizione = false;
 
   bool get usaOculumConfigurabile =>
-      oculumMinimoUtilizzabile > 0 || oculumMassimoUtilizzabile > 0;
+      (costoStrutturato?.resource ??
+              oculumParseAbilityCost(costo)?.resource ??
+              'oculum') ==
+          'oculum' &&
+      (oculumMinimoUtilizzabile > 0 || oculumMassimoUtilizzabile > 0);
 
   bool aggiornaLimitiOculumDaDescrizione() {
     if (oculumLimitiConfiguratiManualmente) return false;
-    final generic = oculumParseAbilityCost(costo);
+    final generic = oculumParseAbilityCost(
+      _costoDerivatoDaDescrizione ? descrizione : costo,
+    );
     final parsed = generic != null && generic.maximum > 0
         ? OculumSkillTextLimits(
             minimum: generic.minimum,
             maximum: generic.maximum,
           )
-        : costoStrutturato != null && costoStrutturato!.resource != 'oculum'
+        : !_costoDerivatoDaDescrizione &&
+              costoStrutturato != null &&
+              costoStrutturato!.resource != 'oculum'
         ? null
         : oculumSkillTextCostLimits(descrizione) ??
               oculumSkillTextCostLimits(costo);
@@ -1986,6 +2016,7 @@ class CharacterSkillForm {
       'oculumMassimoMaestriaIniziale': oculumMassimoMaestriaIniziale,
       'oculumLimitiConfiguratiManualmente': oculumLimitiConfiguratiManualmente,
       'aumentoMassimoOculumAttivo': aumentoMassimoOculumAttivo,
+      if (_costoDerivatoDaDescrizione) 'costDerivedFromDescription': true,
       if (unlockRequirements.isNotEmpty)
         'unlockRequirements': unlockRequirements,
       if (effettiStrutturati.isNotEmpty)
@@ -2072,6 +2103,9 @@ class CharacterSkillForm {
     }
     return CharacterSkillForm(
       nome: '${json['nome'] ?? json['name'] ?? ''}',
+      costDerivedFromDescription: readBoolValue(
+        json['costDerivedFromDescription'],
+      ),
       unlockRequirements: json['unlockRequirements'] is Map
           ? Map<String, dynamic>.from(json['unlockRequirements'])
           : null,
@@ -2223,6 +2257,7 @@ class OculumSkillMasteryPreview {
 
 class CharacterSkill {
   CharacterSkill({
+    this.id = '',
     required this.nome,
     required this.tipo,
     required this.costo,
@@ -2243,6 +2278,7 @@ class CharacterSkill {
     ensureForms();
   }
 
+  String id;
   String nome;
   final Map<String, dynamic> scrollData;
   final Map<String, dynamic> thresholdData;
@@ -2302,6 +2338,7 @@ class CharacterSkill {
   Map<String, dynamic> toJson() {
     ensureForms();
     return {
+      if (id.isNotEmpty) 'id': id,
       'nome': nome,
       'tipo': tipo,
       'costo': costo,
@@ -2353,6 +2390,7 @@ class CharacterSkill {
     }
 
     return CharacterSkill(
+      id: '${json['id'] ?? ''}',
       nome: json['nome'] ?? '',
       thresholdData: json['thresholdData'] is Map
           ? Map<String, dynamic>.from(json['thresholdData'] as Map)

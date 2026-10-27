@@ -142,13 +142,13 @@ void main() {
     },
   );
   test(
-    'both lunar variants retain exactly twelve editable techniques and the approved resistances',
+    'both lunar variants retain twelve original and twelve progression techniques and the approved resistances',
     () {
       for (final id in ['mostro_lunare', 'mostro_lunare_demoniaco']) {
         final monster = defaultMonsterBookEntries.firstWhere(
           (entry) => entry.id == id,
         );
-        expect(monster.skillIds, hasLength(12));
+        expect(monster.skillIds, hasLength(24));
         expect(monster.incomingDamageResistancePresets['taglio'], 'Immunità');
         expect(
           monster.incomingDamageResistancePresets['solare'],

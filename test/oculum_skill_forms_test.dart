@@ -120,10 +120,10 @@ void main() {
     expect(skill.forme.single.costo, '3 Oculum');
     expect(skill.forme.single.cooldown, '1 turno');
     expect(skill.forme.single.descrizione, '@Danni+2 Fuoco');
-    expect(skill.forme.single.oculumMinimoUtilizzabile, 0);
-    expect(skill.forme.single.oculumMassimoUtilizzabile, 0);
-    expect(skill.forme.single.oculumMassimoMaestriaIniziale, 0);
-    expect(skill.forme.single.usaOculumConfigurabile, isFalse);
+    expect(skill.forme.single.oculumMinimoUtilizzabile, 3);
+    expect(skill.forme.single.oculumMassimoUtilizzabile, 3);
+    expect(skill.forme.single.oculumMassimoMaestriaIniziale, 3);
+    expect(skill.forme.single.usaOculumConfigurabile, isTrue);
   });
 
   test('Forme vengono salvate e ricaricate fino a massimo 12', () {

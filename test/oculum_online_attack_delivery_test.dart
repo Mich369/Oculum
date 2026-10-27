@@ -262,6 +262,9 @@ void main() {
         'livello': 12,
         'grado': 3,
         'materia': 10,
+        'resilienza': 20,
+        'volonta': 20,
+        'oculum': 20,
         'derivedCM': 35,
         'hiddenEyeStats': [
           {'id': 'velo', 'valore': 0, 'unlocked': true},

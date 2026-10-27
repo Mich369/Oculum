@@ -46,9 +46,12 @@ void main() {
       const Size(1440, 1000),
     );
     state.datiCaricati = false;
+    state.modalitaMaster = true;
     state.monsterBookSearchController.text = 'ciclo_';
     state.monsterBookTierFilter = 'Tutti';
     state.monsterBookHabitatFilter = '';
+    state.monsterBookTierFilter = 'Tutti';
+    state.monsterBookKnowledgeFilter = 'all';
     final p = OculumPerformanceProbe(state);
     final panel = p.masterMonsterBook();
     final expected =
@@ -62,6 +65,10 @@ void main() {
     );
     await tester.pump();
     expect(tester.takeException(), isNull);
+    await tester.ensureVisible(
+      find.byKey(const PageStorageKey<String>('master_monster_book_list')),
+    );
+    await tester.pump();
     expect(find.text(expected.first.nameIt), findsOneWidget);
     expect(find.text(expected[1].nameIt), findsOneWidget);
     expect(

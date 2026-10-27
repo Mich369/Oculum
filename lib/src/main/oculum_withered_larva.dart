@@ -123,7 +123,9 @@ OculumStructuredEffect oculumLarvalBroodScrollEffect(int scrollRank) {
 }
 
 List<CharacterSkill> oculumWitheredLarvaSkills(MonsterBookEntry monster) => [
-  for (final id in monster.skillIds)
+  for (final id in monster.skillIds.where(
+    (id) => !id.startsWith(oculumMonsterProgressionPrefix),
+  ))
     CharacterSkill(
       nome: switch (id) {
         'withered_shield' => 'Scudo di rami',

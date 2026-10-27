@@ -12,7 +12,7 @@ void main() {
         (m) => m.id.startsWith('necromante_'),
       )) {
         final art = oculumMonsterBookArt(monster);
-        expect(art.skills, hasLength(3));
+        expect(art.skills, hasLength(15));
         for (final (index, id) in monster.skillIds.indexed) {
           final canonical = oculumMonsterBookSkillBaseId(id);
           if (!canonical.startsWith('necromancer_') ||

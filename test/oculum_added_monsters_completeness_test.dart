@@ -126,7 +126,7 @@ void main() {
         });
       }
       expect(rows, hasLength(37));
-      expect(techniqueIds, hasLength(77));
+      expect(techniqueIds, hasLength(101)); // Original 77 + twelve per Giant.
       final addedIds = addedMonsters().map((m) => m.id).toSet();
       final includingVariants = defaultMonsterBookEntries
           .where(
@@ -161,9 +161,10 @@ void main() {
     'saved Lunar Bite without a planar marker keeps customized damage and enables adaptation',
     (tester) async {
       final (_, p) = await fixtures.mountFight(tester);
+      final monster = monsterBookEntryById('ciclo_lupo_lunare')!;
       final skill = oculumMonsterBookArt(
-        monsterBookEntryById('ciclo_lupo_lunare')!,
-      ).skills.last;
+        monster,
+      ).skills[monster.skillIds.indexOf('cycle_lunar_bite')];
       final effect = OculumStructuredEffect.fromJson(
         skill.effettiEvoluzione(1).first.toJson(),
       )..valueExpression = '97';
@@ -182,7 +183,7 @@ void main() {
   );
 
   testWidgets(
-    'all 231 added skill forms execute through the application effect runtime',
+    'all 303 added skill forms execute through the application effect runtime',
     (tester) async {
       final (state, p) = await fixtures.mountFight(tester);
       final base = p.snapshot();
@@ -314,7 +315,7 @@ void main() {
           }
         }
       }
-      expect(results, hasLength(231));
+      expect(results, hasLength(303));
       File(
         'build/added-monster-skill-runtime.json',
       ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(results));

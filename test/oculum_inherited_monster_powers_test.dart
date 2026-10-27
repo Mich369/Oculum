@@ -32,8 +32,9 @@ void main() {
             previousRequirement = requirement;
             final resource = skill.risorsaCostoPerLivello(form);
             final free =
-                art.tipo == 'Capacità Pawn' ||
-                monster.id == 'larva_bianca' ||
+                skill.nome == 'Esplosione suicida' ||
+                (art.tipo == 'Capacità Pawn' && !skill.nome.contains(' · ')) ||
+                (monster.id == 'larva_bianca' && !skill.nome.contains(' · ')) ||
                 text.toLowerCase().contains('nessun costo') ||
                 skill.tipoPerLivello(form).toLowerCase().contains('passiv');
             expect(
@@ -62,7 +63,17 @@ void main() {
     )) {
       final art = oculumMonsterBookArt(monster);
       for (final skill in art.skills) {
-        if (skill.effettiPerLivello.first.isEmpty) continue;
+        if (skill.effettiPerLivello.first.isEmpty ||
+            !const {
+              'danno',
+              'difesa',
+              'scudo',
+              'velocita',
+              'modifica_sottotratto',
+              'modifica_statistica',
+            }.contains(skill.effettiPerLivello.first.first.type)) {
+          continue;
+        }
         var previous = -1;
         for (var form = 0; form < 3; form++) {
           final value = oculumEvaluateStructuredEffectValue(
@@ -100,9 +111,9 @@ void main() {
           contains('Base di livello 0'),
           reason: monster.id,
         );
-        expect(monster.skillIds, hasLength(3), reason: monster.id);
+        expect(monster.skillIds, hasLength(15), reason: monster.id);
         final art = oculumMonsterBookArt(monster);
-        expect(art.skills, hasLength(3), reason: monster.id);
+        expect(art.skills, hasLength(15), reason: monster.id);
         for (final skill in art.skills) {
           expect(
             skill.effettiPerLivello

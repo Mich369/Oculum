@@ -1,5 +1,9 @@
 # Oculum — registro delle regole confermate
 
+## Log degli aggiornamenti — conferma 27 ottobre 2026
+
+La prossima grande espansione con le aggiunte concordate sarà l'ultima con log cumulativo, completo fino alle indicazioni più recenti. Dalla patch successiva i log saranno separati per versione; chi aggiorna saltando versioni dovrà vedere anche i log intermedi, distinti. Conservare lo storico. Questa è una transizione futura: la versione stabile attualmente in preparazione mantiene il registro cumulativo e la sua base originaria.
+
 ## Lusier III e consegna delle schede — ultime conferme 27 ottobre
 
 - Osservazione: bersagli fino a30 PT più facili di quelli fino a50; fino a20 ancora più facili; fino a10 molto più facili. Ultima conferma: **con PT50 o inferiore, superare la DT di osservazione di almeno5 rivela sia punto debole sia PT esatta, senza naturale minimo**. Il bilanciamento iniziale riduce livello+Velo con divisori2/3/5/8 per le fasce50/30/20/10; i valori derivati sono proposte, non ulteriori numeri dettati dall’utente.

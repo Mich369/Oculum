@@ -149,7 +149,7 @@ void main() {
         index++
       ) {
         state.masterInitiativeTokens[index]['sheetTag'] =
-            '${state.schedePersonaggio[index]['sheetTag']}';
+            '${state.schedePersonaggio.firstWhere((sheet) => sheet['nome'] == state.masterInitiativeTokens[index]['name'])['sheetTag']}';
       }
       probe.recordCurrentEncounter();
 

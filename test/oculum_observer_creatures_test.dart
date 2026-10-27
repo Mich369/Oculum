@@ -104,9 +104,12 @@ void main() {
       'famelico_oblio',
     ]) {
       final monster = defaultMonsterBookEntries.singleWhere((m) => m.id == id);
-      expect(monster.skillIds.length, 2);
+      expect(monster.skillIds.length, 14);
       expect(monster.dropIds, isNotEmpty);
-      for (final skill in oculumMonsterBookSkills(monster)) {
+      // The two authored techniques belong to the Art; natural skills now
+      // include a separate progression pool and need not spend the same pool.
+      for (final source in oculumMonsterBookArt(monster).skills.take(2)) {
+        final skill = oculumEquipmentAbilityFromArt(source);
         final saved = CharacterSkill.fromJson(skill.toJson());
         for (final form in saved.forme) {
           expect(form.effettiStrutturati, isNotEmpty);

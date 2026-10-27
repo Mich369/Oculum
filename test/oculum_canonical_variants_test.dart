@@ -21,14 +21,16 @@ void main() {
       for (final creature in baseCreatures) {
         expect(creature.nameIt, isNotEmpty);
         expect(creature.dropIds, hasLength(1), reason: creature.id);
-        expect(creature.skillIds, hasLength(2), reason: creature.id);
+        expect(creature.skillIds, hasLength(14), reason: creature.id);
         expect(creature.stats['resilienza'] ?? 0, inInclusiveRange(1, 6));
         expect(creature.stats['volonta'] ?? 0, inInclusiveRange(1, 3));
         expect(creature.stats['materia'] ?? 0, inInclusiveRange(2, 6));
         expect(creature.stats['oculum'] ?? 0, inInclusiveRange(0, 2));
         final skills = oculumMonsterBookSkills(creature);
-        expect(skills, hasLength(2), reason: creature.id);
-        for (final skill in skills) {
+        expect(skills, hasLength(14), reason: creature.id);
+        // Preserve the original pair's exact rules; the twelve added growth
+        // techniques have their own costs and catalogue-wide validation.
+        for (final skill in skills.take(2)) {
           for (final form in skill.forme) {
             expect(form.costoStrutturato, isNotNull);
             expect(form.costoStrutturato!.isValid(), isTrue);
@@ -139,10 +141,10 @@ void main() {
         }
         final restored = MonsterBookEntry.fromJson(monster.toJson());
         expect(restored.encounterRules, monster.encounterRules);
-        expect(monster.skillIds, hasLength(2));
+        expect(monster.skillIds, hasLength(14));
         expect(monster.dropIds, isNotEmpty);
         final skills = oculumMonsterBookArt(monster).skills;
-        expect(skills, hasLength(2));
+        expect(skills, hasLength(14));
         for (final skill in skills) {
           expect(skill.effettiPerLivello, hasLength(5));
           for (var form = 0; form < 3; form++) {
@@ -158,8 +160,8 @@ void main() {
           'goblin_incendiario',
         }.contains(id)) {
           final naturalSkills = oculumMonsterBookSkills(monster);
-          expect(naturalSkills, hasLength(2), reason: id);
-          for (final skill in naturalSkills) {
+          expect(naturalSkills, hasLength(14), reason: id);
+          for (final skill in naturalSkills.take(2)) {
             for (final form in skill.forme) {
               expect(
                 form.costoStrutturato!.resource,
@@ -204,15 +206,16 @@ void main() {
     },
   );
   test(
-    'Thunder Bot has only a free suicide skill with independent unlimited area damage',
+    'Thunder Bot retains its free suicide skill beside the twelve new techniques',
     () {
       final bot = monsterById('thunder_bot')!;
       expect(bot.stats['oculum'], 0);
-      expect(bot.skillIds, ['thunder_bot_explosion']);
+      expect(bot.skillIds.first, 'thunder_bot_explosion');
+      expect(bot.skillIds, hasLength(13));
       expect(oculumMonsterBookImportArt(bot), isNull);
       final skills = oculumMonsterBookSkills(bot);
-      expect(skills, hasLength(1));
-      for (final form in skills.single.forme) {
+      expect(skills, hasLength(13));
+      for (final form in skills.first.forme) {
         expect(form.costoStrutturato!.resource, 'nessuna');
         final effect = form.effettiStrutturati.single;
         expect(effect.killSource, isTrue);
@@ -240,8 +243,8 @@ void main() {
       expect(runic.planeIds, ['postea']);
       for (final variant in [snow, infernal, shadow, runic]) {
         expect(oculumPartyHuntSpeciesId(variant.id), 'lupo_delle_nevi');
-        expect(variant.skillIds, hasLength(2));
-        for (final id in variant.skillIds) {
+        expect(variant.skillIds, hasLength(14));
+        for (final id in variant.skillIds.take(2)) {
           final technique = oculumPlanarTechnique(id)!;
           expect(technique.requiredLevel, greaterThan(0));
           expect(
@@ -278,7 +281,7 @@ void main() {
           ),
         );
       }
-      expect(rewards.where((i) => i.craftData['scroll'] is Map), hasLength(8));
+      expect(rewards.where((i) => i.craftData['scroll'] is Map), hasLength(56));
       final equipment = rewards.where(
         (i) => i.craftData['wolfFamily'] == 'lupo_delle_nevi',
       );

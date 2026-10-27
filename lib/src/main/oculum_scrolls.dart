@@ -444,7 +444,9 @@ final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
   };
   for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
     final skills = oculumMonsterBookSkills(monster);
-    final ids = monsterBookUsableSkillIds(monster);
+    final ids = monsterBookUsableSkillIds(
+      monster,
+    ).where((id) => oculumMonsterTechniqueIsNatural(monster, id)).toList();
     for (final (index, skill) in skills.indexed) {
       final name = skill.nome.trim();
       if (skill.tipo.toLowerCase().contains('passiv') ||
@@ -467,6 +469,7 @@ final List<OculumTechniqueScrollProfile> oculumTechniqueScrolls = () {
                   'modifica_sottotratto',
                   'hp_temporanei',
                   'aggiungi_reazioni',
+                  'aggiungi_reazioni_rapide',
                 }.contains(effect.type),
           )
           .toList();

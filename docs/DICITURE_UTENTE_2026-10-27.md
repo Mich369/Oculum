@@ -433,3 +433,9 @@ Titolo Evoluto
 Richiesta estetica: «mi migliori l'estetica di quest'arma la parte stellata deve essere uno scudo con due lame e puoi lanciarlo tipo boomerang».
 Chiarimento: «esplodere significa che se fa 3 si tira 1d3 se fa tre anche quello 1d3».
 Interpretazione operativa: il dado esplode sul3, con massimo tre esplosioni/rilanci; non significa esplosione fisica dell'arma. Definizione e runtime del Titolo Item non ancora implementati.
+
+## Log dopo la prossima grande espansione — testo dell'utente
+
+«la prossima espansione grande con tutte le cose che abbiamo definito sarà l'ultima col log fino a quello detto ultimamente poi ci saranno i log di ogni patch separati dalle versioni che hai saltato con l'update»
+
+Transizione futura registrata: ultimo cumulativo nella prossima grande espansione, poi log per patch e recupero dei log intermedi saltati. La build stabile attualmente in preparazione conserva il cumulativo esistente.

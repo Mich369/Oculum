@@ -11,11 +11,11 @@ void main() {
     expect(monster.skillIds, contains('legno_marcio_rami_secchi'));
 
     final art = oculumMonsterBookArt(monster);
-    expect(art.skills, hasLength(1));
-    expect(art.skills.single.livello, 0);
-    expect(art.skills.single.evo1, contains('metà Danni'));
-    expect(art.skills.single.evo1, contains('Rinsecchito I'));
-    expect(art.skills.single.evo3, contains('Rinsecchito a III'));
+    expect(art.skills, hasLength(13));
+    expect(art.skills.first.livello, 0);
+    expect(art.skills.first.evo1, contains('metà Danni'));
+    expect(art.skills.first.evo1, contains('Rinsecchito I'));
+    expect(art.skills.first.evo3, contains('Rinsecchito a III'));
   });
 
   test('Rotwood damage and status advance only on successful rolls', () {

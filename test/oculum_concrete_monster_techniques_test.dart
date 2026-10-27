@@ -262,8 +262,8 @@ void main() {
   test('a Goblin opening and an Orc charge have different tactical costs', () {
     final goblin = oculumMonsterBookSkills(monsterById('goblin_base')!);
     final orc = oculumMonsterBookSkills(monsterById('orco_base')!);
-    expect(goblin, hasLength(3));
-    expect(orc, hasLength(3));
+    expect(goblin, hasLength(15));
+    expect(orc, hasLength(15));
     expect(
       goblin.first.forme.first.effettiStrutturati.map((e) => e.type),
       contains('modifica_statistica'),
@@ -366,6 +366,10 @@ void main() {
             continue;
           }
           expect(timer.activate(), isTrue);
+          if (timer.amount == 0) {
+            expect(timer.activate(), isTrue, reason: '$id has no cooldown');
+            continue;
+          }
           expect(
             timer.activate(),
             isFalse,
@@ -422,7 +426,7 @@ void main() {
       final frost = monsterById('demone_glaciale_$grade')!;
       expect(fire.skillIds, contains('inferno_in_corpo'));
       expect(frost.skillIds, contains('inverno_in_corpo'));
-      expect(frost.skillIds, hasLength(3));
+      expect(frost.skillIds, hasLength(15));
       final passive = oculumMonsterBookArt(frost).skills.first;
       expect(passive.risorsaCostoPerLivello(1), 'nessuna');
       expect(

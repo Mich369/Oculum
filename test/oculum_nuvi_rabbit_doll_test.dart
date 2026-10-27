@@ -77,7 +77,7 @@ void main() {
         if (id == 'nuvi') {
           expect(oculumEnemyAbilityVariants(monster, seed: 19), isEmpty);
           expect(art.openName, isEmpty);
-          expect(art.skills.single.nome, 'Volo naturale');
+          expect(art.skills.first.nome, 'Volo naturale');
         }
         if (id == 'coniglio_plasma') {
           expect(monster.stats['oculum'], 0);

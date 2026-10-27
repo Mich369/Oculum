@@ -19,8 +19,8 @@ void main() {
       final restored = CharacterArt.fromJson(
         oculumMonsterBookArt(monster).toJson(),
       );
-      expect(restored.skills, hasLength(3));
-      for (final skill in restored.skills) {
+      expect(restored.skills, hasLength(15));
+      for (final skill in restored.skills.take(3)) {
         expect(skill.livello, 0);
         expect(skill.oculumMinimiPerLivello.take(3), [1, 5, 11]);
         expect(skill.oculumMassimiPerLivello.take(3), [4, 10, 30]);

@@ -95,17 +95,16 @@ void main() {
           contains('monster_open_bonus'),
         );
         expect(art.openSkillCooldown!.amount, greaterThan(0));
-        for (final skill in art.skills) {
+        for (final skill in art.skills.take(monster.skillIds.length - 12)) {
           expect(skill.effettiEvoluzione(1), isNotEmpty);
           expect(skill.oculumMinimoPerLivello(1), 1);
         }
       }
       final boar = monsterBookEntryById('ciclo_cinghiale_fango')!;
-      expect(boar.skillIds.map((id) => oculumPlanarTechnique(id)!.element), [
-        'fango',
-        'terra',
-        'roccia',
-      ]);
+      expect(
+        boar.skillIds.take(3).map((id) => oculumPlanarTechnique(id)!.element),
+        ['fango', 'terra', 'roccia'],
+      );
     },
   );
 

@@ -188,6 +188,7 @@ void main() {
     await measure('master_open_ms', () async {
       state.updateOculumHomeUi(() {
         state.paginaCorrente = 9;
+        state.masterCategory = 'party';
       });
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

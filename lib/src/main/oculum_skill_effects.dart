@@ -294,6 +294,8 @@ String oculumNormalizeEffectResource(dynamic raw) {
       return 'vita';
     case 'obser':
       return 'obser';
+    case 'follia':
+      return 'follia';
     case 'fortuna':
     case 'fortunamagica':
     case 'magicalluck':
@@ -704,8 +706,8 @@ bool oculumShouldRestoreActiveStructuredEffect(Map<String, dynamic> state) {
   return remaining > 0 ||
       (remaining < 0 &&
           (oculumStructuredEffectFrequency(state['frequency']) > 0 ||
-           state['mode'] == 'prossima_azione' ||
-           state['type'] == 'pending_target'));
+              state['mode'] == 'prossima_azione' ||
+              state['type'] == 'pending_target'));
 }
 
 List<OculumStructuredEffect> oculumReadStructuredEffects(dynamic raw) {

@@ -15,3 +15,12 @@ I test di trasporto e salvataggio non sono una prova di due app realmente colleg
 La telepatia con soglia6 Oculum e il−3 dopo dichiarazione ad alta voce sono riservati esplicitamente AL PROSSIMO COMMIT, nel checkpoint locale escluso dalla build.
 
 Build GitHub, pacchetti locali, download anonimi e sessioni reali vanno attestati separatamente, con commit e run effettivi. Questo documento attesta le verifiche locali sopra elencate.
+
+## Recupero delle regressioni della CI 40556507431
+
+La CI del commit a3529403 ha passato l'analisi ma fallito 45 test (1.248 passati, 6 saltati). Il controllo locale dei file coinvolti ha successivamente passato 188 test; i casi ancora falliti sono stati affrontati separatamente. Il gruppo successivo ha passato 54 test, compresi Senka e Lusier, restando sul caso degli ID delle Skill nei drop. I conteggi si sovrappongono e non vanno sommati. La fixture del Master ora seleziona Party/permessi Master espliciti; i test storici verificano le tecniche originarie separatamente dalle dodici tecniche aggiuntive. Le quattro micro realtà annunciate restano in lavorazione e non sono certificate dai test dei sei reami precedenti.
+
+Correzioni reali: tecniche Larva duplicate, costi non Oculum bloccati dalla riserva Oculum, configurazioni dei costi cambiate al caricamento, Maestria testuale, risorsa Follia, indicizzazione delle scroll di crescita e mantenimento degli ID delle Skill salvate. L'esito della nuova CI e la distribuzione devono essere verificati sul nuovo commit prima di dichiarare la pubblicazione riuscita.
+
+Controllo finale locale: build/oct27-drop-characters-final.log, 7 test passati; include il drop con ID preservati e le due schede corrette. Ultimo gruppo precedente: gli altri 54 test sono passati. L'analisi lib+test aveva segnalato una sola parentesi graffa nel test, corretta prima del commit.
+

@@ -11,7 +11,7 @@ void main() {
       final monster = monsterById('slime_roccioso')!;
       final art = CharacterArt.fromJson(oculumMonsterBookArt(monster).toJson());
       expect(monster.dropIds, contains('roccia_slime'));
-      expect(art.skills, hasLength(3));
+      expect(art.skills, hasLength(15));
       final minimums = [
         [1, 5, 11],
         [1, 4, 7],

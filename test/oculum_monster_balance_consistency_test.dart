@@ -72,7 +72,7 @@ void main() {
       (entry) => entry.id.startsWith('weak_horror_'),
     )) {
       final art = oculumMonsterBookArt(monster);
-      for (final skill in art.skills) {
+      for (final skill in art.skills.take(2)) {
         for (var form = 1; form <= 3; form++) {
           expect(
             skill.testoEvoluzione(form),

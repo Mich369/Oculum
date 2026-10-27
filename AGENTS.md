@@ -1,6 +1,6 @@
 # Oculum
 
-- Il log per i giocatori deve essere sempre cumulativo dalla build `b917217d98d16861a5bbaf1706d78825d883c970`, run `40242640717`: mantieni `docs/REGISTRO_AGGIORNAMENTI.md` completo di tutti gli aggiornamenti successivi e collegalo da GitHub e dal menu download web. Non spostare la base alla patch precedente.
+- Fino alla prossima grande espansione inclusa, il log per i giocatori resta cumulativo dalla build `b917217d98d16861a5bbaf1706d78825d883c970`, run `40242640717`: mantieni `docs/REGISTRO_AGGIORNAMENTI.md` completo e collegato da GitHub e dal menu download web. Quella espansione sarà l'ultimo log cumulativo, comprensivo delle ultime conferme. Dalla patch successiva usa log separati per versione e mostra anche quelli intermedi se l'utente ha saltato aggiornamenti; conserva lo storico cumulativo. Non anticipare questa transizione nella versione attualmente in preparazione.
 - A ogni aggiornamento mantieni `docs/ULTIMO_AGGIORNAMENTO.md` breve e fedele ai conteggi verificati; la pubblicazione legge il log dal commit realmente compilato.
 
 - Lavora in questo repository preservando salvataggi, immagini, funzionalità online e compatibilità desktop, tablet e telefono.

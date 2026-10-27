@@ -15,7 +15,20 @@ void main() {
       final base = monsterBookEntryById(
         leader.id.substring('pack_leader_'.length),
       )!;
-      expect(leader.skillIds, base.skillIds);
+      expect(
+        leader.skillIds.where(
+          (id) => !id.startsWith(oculumMonsterProgressionPrefix),
+        ),
+        base.skillIds.where(
+          (id) => !id.startsWith(oculumMonsterProgressionPrefix),
+        ),
+      );
+      expect(
+        leader.skillIds.where(
+          (id) => id.startsWith(oculumMonsterProgressionPrefix),
+        ),
+        hasLength(12),
+      );
       expect(leader.dropIds, base.dropIds);
       expect(leader.isMiniBoss, true);
       expect(leader.descIt, contains('Ricordo vitale'));
@@ -70,7 +83,7 @@ void main() {
       expect(oculumFallenEyeEffectiveArtLimit(eye), 1);
       final body = eye['sheetData'] as Map;
       expect((body['arti'] as List).first['sbloccata'], true);
-      expect(body['skills'], hasLength(2));
+      expect(body['skills'], hasLength(14));
       expect((body['arti'] as List).first['skills'], original['skills']);
     },
   );

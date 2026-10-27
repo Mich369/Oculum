@@ -234,7 +234,7 @@ void main() {
         characterGrade: 1,
         characterStats: 100,
       ),
-      (obser: 50, dust: 0),
+      (obser: 50, dust: 1),
     );
     expect(
       oculumEncounterResourcesForEnemies(

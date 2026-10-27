@@ -15,7 +15,7 @@ void main() {
       (m) => m.id == 'pinepine',
     );
     final art = oculumMonsterBookArt(monster);
-    final skin = art.skills.single;
+    final skin = art.skills.first;
     for (final form in [skin.evo1, skin.evo2, skin.evo3]) {
       expect(form, contains('Vita rimanente + Danni'));
     }

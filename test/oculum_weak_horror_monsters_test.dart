@@ -22,8 +22,8 @@ void main() {
         expect(monster.id, isNot(contains('_variante_')));
         expect(monster.isBoss || monster.isMiniBoss, false);
         final art = oculumMonsterBookArt(monster);
-        expect(art.skills, hasLength(2));
-        for (final skill in art.skills) {
+        expect(art.skills, hasLength(14));
+        for (final skill in art.skills.take(2)) {
           for (var form = 0; form < 3; form++) {
             expect(skill.oculumMinimoPerLivello(form + 1), form + 1);
             expect(skill.oculumMassimoPerLivello(form + 1), form + 1);

@@ -624,18 +624,25 @@ void oculumFallenEyeApplyInheritedPowers(Map<String, dynamic> eye) {
   }
   eye['activeArts'] = arts.take(limit).map(oculumCopyJsonTree).toList();
   final known = <String, dynamic>{};
+  String skillKey(Map skill) {
+    final id = '${skill['id'] ?? ''}'.trim();
+    if (id.isNotEmpty) return 'id:$id';
+    final name = '${skill['nome'] ?? ''}'.trim();
+    return name.isNotEmpty ? 'name:$name' : 'json:${jsonEncode(skill)}';
+  }
+
   for (final skill in eye['originalSkills'] as List? ?? const []) {
-    if (skill is Map) known['${skill['nome']}'] = skill;
+    if (skill is Map) known[skillKey(skill)] = skill;
   }
   for (final skill in data['skills'] as List? ?? const []) {
-    if (skill is Map) known['${skill['nome']}'] = skill;
+    if (skill is Map) known[skillKey(skill)] = skill;
   }
   // Monster Book creatures define their real techniques inside the first
   // monster Art. Keep those same Skill objects in the sheet Skill list too,
   // so an Eye learns exactly the monster's opening techniques.
   for (final art in original) {
     for (final skill in (art['skills'] as List? ?? const [])) {
-      if (skill is Map) known['${skill['nome']}'] = skill;
+      if (skill is Map) known[skillKey(skill)] = skill;
     }
   }
   eye['originalSkills'] = oculumCopyJsonTree(known.values.toList());
