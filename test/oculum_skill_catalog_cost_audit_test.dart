@@ -40,8 +40,9 @@ void main() {
             final naturalResource = oculumNormalizeArtSkillCostResource(
               naturalCost?.resource ?? artResource,
             );
-            if (naturalResource != artResource)
+            if (naturalResource != artResource) {
               problems.add('$key: natural=$naturalResource Art=$artResource');
+            }
             if (skill.oculumMinimoPerLivello(form + 1) !=
                     equipmentCost.minimum ||
                 skill.oculumMassimoPerLivello(form + 1) !=

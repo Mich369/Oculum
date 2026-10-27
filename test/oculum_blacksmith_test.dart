@@ -11,7 +11,9 @@ void main() {
     final levels = oculumDefaultMaterialLevels();
     final bands = [for (final (a,b) in [(0,6),(7,12),(13,20),(21,30),(31,100)]) levels.values.where((v) => v >= a && v <= b).length];
     expect(bands.first, (levels.length * .6).ceil());
-    for (var i = 1; i < bands.length; i++) expect(bands[i], lessThan(bands[i-1]));
+    for (var i = 1; i < bands.length; i++) {
+      expect(bands[i], lessThan(bands[i-1]));
+    }
     File('build/material-level-audit.json').writeAsStringSync(jsonEncode({'count': levels.length, 'bands': bands, 'levels': levels}));
   });
   test('combine consumes exact aliased material, splits once, preserves and boosts old powers and gates new ones', () {

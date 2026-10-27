@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
@@ -254,7 +253,9 @@ void main() {
         saved.titleAbility!.forme.last.cooldownStrutturato!.ready,
         isFalse,
       );
-      for (var i = 0; i < 3; i++) p.tickEquipmentCooldowns();
+      for (var i = 0; i < 3; i++) {
+        p.tickEquipmentCooldowns();
+      }
       expect(reduced.cooldownStrutturato!.ready, isTrue);
       await p.useEquipment(item, open);
       expect(
