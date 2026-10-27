@@ -10,6 +10,11 @@ CERT = "a" * 64
 
 
 class AndroidSigningTests(unittest.TestCase):
+    def test_release_certificate_pin_exists_and_has_valid_sha256(self):
+        pin = ROOT / "android/signing-certificate.sha256"
+        self.assertTrue(pin.is_file(), "The public signing certificate pin must ship with the checkout")
+        self.assertRegex(pin.read_text(encoding="utf-8").strip(), r"^[a-f0-9]{64}$")
+
     def test_runner_signing_path_is_defined_in_a_step_not_job_env(self):
         workflow = (ROOT / '.github/workflows/build_distribution.yml').read_text(encoding='utf-8')
         self.assertNotIn('OCULUM_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}', workflow)

@@ -2,6 +2,8 @@
 
 ## Versione stabile del 27 ottobre — schede, costi e personaggi
 
+- Firma Android: il repository include l'impronta pubblica del certificato stabile per permettere il controllo della firma anche su GitHub; la chiave privata non cambia e rimane separata dal codice.
+
 - Corretta la duplicazione delle tecniche aggiuntive della Larva. I costi in Obser o statistiche non richiedono anche Oculum per apparire fra le mosse disponibili; la risorsa Follia viene riconosciuta nei costi strutturati. Conservati i costi dopo il salvataggio e la Maestria nelle descrizioni aggiornate. Scroll delle tecniche di crescita collegate alla tecnica naturale corretta, comprese le Reazioni veloci; gli Occhi dei Caduti mantengono distinte le tecniche prive di nome.
 
 - Il Master può assegnare una o più proprie schede a un giocatore. Selezione iniziale vuota; salvataggio locale del destinatario prima della conferma e copia online per il Master, senza cambiare il tag della scheda né duplicare consegne già ricevute. Immagini, personalizzazioni e ricevute dei premi restano conservate.
