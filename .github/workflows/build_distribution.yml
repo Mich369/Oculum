@@ -430,7 +430,6 @@ jobs:
     name: Build Android
     runs-on: ubuntu-latest
     env:
-      OCULUM_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/oculum-release.keystore
       OCULUM_ANDROID_STORE_PASSWORD: ${{ secrets.OCULUM_ANDROID_STORE_PASSWORD || 'android' }}
       OCULUM_ANDROID_KEY_PASSWORD: ${{ secrets.OCULUM_ANDROID_KEY_PASSWORD || 'android' }}
       OCULUM_ANDROID_KEY_ALIAS: ${{ secrets.OCULUM_ANDROID_KEY_ALIAS || 'androiddebugkey' }}
@@ -462,7 +461,9 @@ jobs:
           set -euo pipefail
           test -n "$OCULUM_ANDROID_KEYSTORE_BASE64" || { echo "Missing stable Android signing secret"; exit 1; }
           umask 077
+          OCULUM_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/oculum-release.keystore"
           printf '%s' "$OCULUM_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$OCULUM_ANDROID_KEYSTORE_PATH"
+          echo "OCULUM_ANDROID_KEYSTORE_PATH=$OCULUM_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
           echo "OCULUM_ANDROID_BUILD_NUMBER=$((100000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
 
       - name: Build Android release APK

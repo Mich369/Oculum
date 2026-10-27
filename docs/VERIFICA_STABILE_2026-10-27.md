@@ -2,7 +2,7 @@
 
 - `dart analyze lib`: No issues found. Nessun errore, avviso o segnalazione informativa rimasta.
 - `build/oct27-stable-final-tests.log`:55 test passati in13 file, compresi assegnazioni, trasferimenti, patch, risorse, elementi, personaggi e audit Titoli Item.
-- Audit nuovo:51.039 equipaggiamenti da1.183 creature;17.013 per famiglia arma/armatura/scudo. Conversione costo3, conservazione delle capacità originali, bonus e materiali, crescita positiva, blocco quest, JSON e upgrade idempotente.
+- Audit nuovo:51.327 equipaggiamenti da1.189 creature;17.109 per famiglia arma/armatura/scudo. Conversione costo3, conservazione delle capacità originali, bonus e materiali, crescita positiva, blocco quest, JSON e upgrade idempotente.
 - Dopo la correzione dei costi come malus passivi:20 test mirati ripassati in `build/oct27-final-cost-scout-transfer.log`, comprendenti Senka, Lusier, osservazione e invio schede.
 - Senka attuale senza maschera: RES9/VOL9/MAT8/OCU9,90/90 Vita. Maschera gratuita, riserve e Scudo riparabile, cloni con Vita separata e limite totale, fusione verificati localmente.
 - Lusier III: livello13/GradoI, PT effettiva277 con equipaggiamenti attivi, Vita massima600,1 Scudo critico,150 Scudo Oculum. Budget core222 prima dei bonus degli oggetti. La PT è il totale delle quattro statistiche effettive più livello e3×Grado, non include direttamente il Danno della spada.

@@ -10,6 +10,12 @@ CERT = "a" * 64
 
 
 class AndroidSigningTests(unittest.TestCase):
+    def test_runner_signing_path_is_defined_in_a_step_not_job_env(self):
+        workflow = (ROOT / '.github/workflows/build_distribution.yml').read_text(encoding='utf-8')
+        self.assertNotIn('OCULUM_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}', workflow)
+        self.assertIn('OCULUM_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/oculum-release.keystore"', workflow)
+        self.assertIn('echo "OCULUM_ANDROID_KEYSTORE_PATH=$OCULUM_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"', workflow)
+
     def test_verified_update_keeps_same_package_and_certificate(self):
         package = signing.package_identity("package: name='com.mich.oculum' versionCode='100112' versionName='1.0.0'")
         certificate = signing.certificate_digest(f"Signer #1 certificate DN: CN=Android Debug\r\r\nSigner #1 certificate SHA-256 digest: {CERT}\r\r\n")
