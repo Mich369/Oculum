@@ -1,0 +1,47 @@
+{
+  "formatVersion": 1,
+  "targetCharacter": "erik_i",
+  "sourceCommit": "bb7e021b3ef0e2cf6dabf1c72083c04ea7b6b7dc",
+  "userConfirmedException": "Eccezione personale: Erik I resta livello 8/Grado 0, ma circa 130 PT; la Guardia Solare Elite generica resta invariata.",
+  "baseStats": {
+    "resilienza": 26,
+    "volonta": 29,
+    "materia": 22,
+    "oculum": 21
+  },
+  "expectedEffectiveCoreStats": {
+    "resilienza": 26,
+    "volonta": 37,
+    "materia": 38,
+    "oculum": 21
+  },
+  "expectedTotalPower": 130,
+  "custodiaDelGirone": {
+    "shieldByForm": [
+      8,
+      14,
+      22
+    ],
+    "defenseByForm": [
+      5,
+      8,
+      11
+    ],
+    "costsUnchanged": [
+      3,
+      4,
+      6
+    ],
+    "cooldownPersonalTurnsUnchanged": 3
+  },
+  "preserved": [
+    "canonicalNpc",
+    "identityCelestial",
+    "livello",
+    "grado",
+    "inventario",
+    "arti",
+    "hiddenEyeStats",
+    "background"
+  ]
+}

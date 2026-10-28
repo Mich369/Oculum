@@ -1,7 +1,5 @@
 # Kamaria Senka
 
-*Bozza narrativa in revisione: l'utente la modificherà e invierà la versione canonica. I dettagli esplicitamente confermati restano vincolanti; la formulazione non è definitiva.*
-
 Sedici anni. Mhunan lunare. Abita con la sorellina Sky nei piani più bassi di Lost Town.
 
 Prima della piazza, per Senka i suoi genitori erano tutto. Erano persone semplici. Suo padre era un tuttofare, molto affettuoso con la famiglia; ripudiava i Solari per ciò che avevano fatto e continuavano a fare alla loro gente. Sua madre cuciva vestiti ed era una donna estremamente gentile e cordiale. Dipingeva anche fantastici ritratti lunari: uno di quei ritratti è ancora appeso nella locanda. Guardarlo restituisce a Senka il ricordo di sua madre intenta a creare qualcosa di bello, e di una casa nella quale si sentiva amata.
@@ -36,7 +34,7 @@ Senka conserva due nomi al centro della propria vita. Sky, che deve restare al s
 
 ## Appunti per giocatore e Master
 
-- **Erik I:** fratello di Lusier, Guardia Solare Elité livello8 Grado0; più misurato, ma fedele al fratello. La sua scheda attuale misura **184 PT**. È annotato che **Haniel conosce questa misura**; non è ancora stato stabilito se l'abbia già comunicata a Senka.
+- **Erik I:** fratello di Lusier, Guardia Solare Elité livello8 Grado0; più misurato, ma fedele al fratello. La sua scheda attuale misura **130 PT**. È annotato che **Haniel conosce questa misura**; non è ancora stato stabilito se l'abbia già comunicata a Senka.
 - Aspetto normale di Senka ancora volutamente aperto. I segreti di Haniel restano misteriosi. Nessuna scheda di Sky o Haniel è inclusa nei codici richiesti.
 - Nel tema personale approvato la Luna resta un segno buono: il piccolo spicchio è un'apparizione inspiegabile ed eccezione per quell'artwork. Non significa che la Luna sia ricomparsa normalmente nel cielo di tutto il mondo.
 - I valori PT provengono dai report locali delle schede, non attestano la pubblicazione della nuova build.

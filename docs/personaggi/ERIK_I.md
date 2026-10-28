@@ -46,3 +46,7 @@ Al livello 8 è disponibile la prima forma; le successive rimangono sviluppi fut
 ## Stato della consegna
 
 Costruttore, esportazione e misura della PT sono locali. Questo documento non dichiara una nuova pubblicazione GitHub, una nuova installazione o una prova con dispositivi online indipendenti. Solo Erik riceve questa nuova scheda: non sono state create schede di Sky o Haniel.
+
+## Versione personale depotenziata confermata
+
+Livello8, Grado0, **130PT**; RES26/VOL37/MAT38/OCU21,260Vita. Eccezione personale alla precedente scheda184PT, senza cambiare la crescita delle guardie generiche. Custodia del Girone: Scudo8/14/22 eDifesa5/8/11; costi3/4/6 eCD3 conservati. Haniel conosce la nuova misura130. L’overlay `Erik_I.overlay_personale.json` conserva questa scelta anche nelle verifiche/generazioni future.

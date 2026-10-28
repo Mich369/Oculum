@@ -1,12 +1,14 @@
 {
-  "totalPower": 184,
+  "totalPower": 130,
   "level": 8,
   "grade": 0,
   "coreStats": {
-    "resilienza": 40,
-    "volonta": 51,
-    "materia": 54,
-    "oculum": 31
+    "resilienza": 26,
+    "volonta": 37,
+    "materia": 38,
+    "oculum": 21
   },
-  "knownBy": "Haniel"
+  "maximumHp": 260,
+  "knownBy": "Haniel",
+  "personalException": true
 }
