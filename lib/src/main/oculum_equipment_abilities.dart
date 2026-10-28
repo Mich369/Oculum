@@ -776,22 +776,57 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     OculumAbilityCooldown? cooldown,
     bool Function()? valid,
     bool paymentOnly = false,
+    String? turnResourceOverride,
     void Function(Map<String, int>)? onPaid,
   }) async {
     if (skillOculumUseDialogOpen || !mounted || (valid != null && !valid())) {
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
-    if(effects.any((e)=>e.target=='explosive_cards_damage')) {
-      final selected=await prepareExplosiveCards(effects);
-      if(selected==null) return false;
-      effects=selected;
+    if (effects.any((e) => e.target == 'senka_shadow_step')) {
+      if (!senkaMaskActive || cooldown?.ready == false) return false;
+      final incoming = onlineCombatRequests.values
+          .where(
+            (r) =>
+                r['targetTag'] == sheetTagAt(schedaCorrente) &&
+                r['status'] == 'pending' &&
+                r['encounterId'] == onlineCombatEncounterId &&
+                r['kind'] != 'help' &&
+                r['kind'] != 'scout',
+          )
+          .firstOrNull;
+      if (incoming != null) {
+        return defendSenkaStep(incoming, effects, cost, cooldown);
+      }
+      final step = effects.firstWhere((e) => e.target == 'senka_shadow_step');
+      if (!await confirmSenkaStepEnvironment(
+            max(1, readIntValue(step.resource, fallback: 6)),
+          ) ||
+          !mounted) {
+        return false;
+      }
     }
-    if (effects.any((e) => e.target == 'senka_shadow_clone') && !senkaCanCreateClone) {
-      aggiungiLog('Clone non disponibile: limite totale del fight raggiunto, nessun fight attivo oppure sei già un clone.');
+    final lusierEffects = prepareLusierTitleEffects(effects);
+    if (lusierEffects == null) return false;
+    effects = lusierEffects;
+    final senkaEffects = prepareSenkaEffects(effects);
+    if (senkaEffects == null) return false;
+    effects = senkaEffects;
+    if (effects.any((e) => e.target == 'explosive_cards_damage')) {
+      final selected = await prepareExplosiveCards(effects);
+      if (selected == null) return false;
+      effects = selected;
+    }
+    if (effects.any((e) => e.target == 'senka_shadow_clone') &&
+        !senkaCanCreateClone) {
+      aggiungiLog(
+        'Clone non disponibile: limite totale del fight raggiunto, nessun fight attivo oppure sei già un clone.',
+      );
       return false;
     }
-    if (effects.any((e) => e.target.startsWith('senka_')) && !senkaMaskActive && !senkaIsClone) {
+    if (effects.any((e) => e.target.startsWith('senka_')) &&
+        !senkaMaskActive &&
+        !senkaIsClone) {
       aggiungiLog('Manifesta prima la maschera di Senka.');
       return false;
     }
@@ -982,9 +1017,10 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     final origin = currentSheetScrollId();
     skillOculumUseDialogOpen = true;
     int? paid;
+    DialogRoute<int>? costDialogRoute;
     if (!mounted) return false;
     try {
-      paid = await showDialog<int>(
+      costDialogRoute = DialogRoute<int>(
         context: context,
         builder: (dialog) => StatefulBuilder(
           builder: (dialog, refresh) {
@@ -1223,12 +1259,27 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
           },
         ),
       );
+      paid = await Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<int>(costDialogRoute);
     } finally {
       skillOculumUseDialogOpen = false;
-      input.dispose();
-      oculumInput.dispose();
-      for (final controller in extraInputs) {
-        controller.dispose();
+      void disposeInputs() {
+        input.dispose();
+        oculumInput.dispose();
+        for (final controller in extraInputs) {
+          controller.dispose();
+        }
+      }
+
+      // The pop result arrives before the closing transition unmounts fields.
+      // Clone creation can rebuild them immediately after payment.
+      final route = costDialogRoute;
+      if (route == null) {
+        disposeInputs();
+      } else {
+        unawaited(route.completed.then((_) => disposeInputs()));
       }
     }
     if (!mounted ||
@@ -1242,7 +1293,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         .where((e) => e.type == 'meccanio')
         .firstOrNull;
     final preparesAttack =
-        effects.any((e)=>e.id.startsWith('senka_grapple_')) ||
+        effects.any((e) => e.id.startsWith('senka_grapple_')) ||
         effects.any(
           (e) =>
               e.type == 'planar' &&
@@ -1262,6 +1313,12 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 'total_power_accuracy',
                 'explosive_cards_damage',
                 'lusier_derision',
+                'lusier_regal_strike',
+                'lusier_open_ray',
+                'lusier_thin_ray',
+                'senka_thousand_cuts',
+                'senka_moon_cuts',
+                'senka_shadow_step',
               }.contains(e.target),
         ) ||
         robotTechnique != null &&
@@ -1304,18 +1361,23 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       if (effects.any(
             (e) =>
                 e.type == 'preparazione' ||
-                const {'rabbit_hat', 'deadly_regen', 'senka_shadow_fusion'}.contains(e.target),
+                const {
+                  'rabbit_hat',
+                  'deadly_regen',
+                  'senka_shadow_fusion',
+                }.contains(e.target),
           ) &&
           !ownTurn) {
         aggiungiLog('Preparazione: serve la tua Azione nel tuo turno.');
         return false;
       }
       if (!await requestUtilitySpend(
-        isMeccanio
-            ? 'reazione'
-            : ownTurn
-            ? 'azione'
-            : 'reazione',
+        turnResourceOverride ??
+            (isMeccanio
+                ? 'reazione'
+                : ownTurn
+                ? 'azione'
+                : 'reazione'),
         preferFreeReaction: !effects.any((e) => e.target == 'rabbit_hat'),
       )) {
         return false;
@@ -1353,6 +1415,13 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       },
     );
     cooldown?.activate();
+    if (cooldown != null &&
+        cooldown.amount == 3 &&
+        cooldown.unit == 'turni' &&
+        senkaMoonOpenActive &&
+        effects.any((e) => e.target == 'senka_moon_cuts')) {
+      cooldown.remaining = 2;
+    }
     activateSharedFaunaCooldown(effects, cooldown);
     if (effects.any((e) => e.id.startsWith('planar:party_heal:'))) {
       final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));

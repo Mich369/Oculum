@@ -10,8 +10,18 @@ bool oculumSkillRequirementsMet(
   required Map<String, int> elementalKills,
   required Map<String, int> skillCriticals,
   bool open = false,
+  int grade = 0,
+  Map<String, int> stats = const {},
+  Map<String, int> speciesKills = const {},
+  Map<String, int> namedNpcKills = const {},
 }) {
   if (level < readIntValue(requirements['level'])) return false;
+  if (grade < readIntValue(requirements['grade'])) return false;
+  final stat = oculumStatKey('${requirements['stat'] ?? ''}');
+  if (stat.isNotEmpty &&
+      (stats[stat] ?? 0) < readIntValue(requirements['statValue'])) {
+    return false;
+  }
   final trait = '${requirements['subtrait'] ?? ''}';
   if (trait.isNotEmpty &&
       (subtraits[trait] ?? 0) < readIntValue(requirements['subtraitValue'])) {
@@ -31,6 +41,25 @@ bool oculumSkillRequirementsMet(
     return false;
   }
   final criticalSkill = '${requirements['criticalSkill'] ?? ''}';
+  if (requirements['namedNpcKills'] is Map) {
+    for (final entry in (requirements['namedNpcKills'] as Map).entries) {
+      if ((namedNpcKills['${entry.key}'] ?? 0) < readIntValue(entry.value)) {
+        return false;
+      }
+    }
+  }
+  final species = '${requirements['species'] ?? ''}';
+  if (requirements['speciesKills'] is Map) {
+    for (final entry in (requirements['speciesKills'] as Map).entries) {
+      if ((speciesKills['${entry.key}'] ?? 0) < readIntValue(entry.value)) {
+        return false;
+      }
+    }
+  } else if (species.isNotEmpty &&
+      (speciesKills[species] ?? 0) <
+          readIntValue(requirements['speciesKills'], fallback: 1)) {
+    return false;
+  }
   if (readIntValue(requirements['criticals']) > 0 &&
       (skillCriticals[criticalSkill] ?? 0) <
           readIntValue(requirements['criticals'])) {
@@ -41,6 +70,8 @@ bool oculumSkillRequirementsMet(
 
 String oculumSkillRequirementDescription(Map r) => [
   if (readIntValue(r['level']) > 0) 'Livello ${r['level']}',
+  if (readIntValue(r['grade']) > 0) 'Grado ${r['grade']}',
+  if ('${r['stat'] ?? ''}'.isNotEmpty) '${r['stat']} ${r['statValue'] ?? 0}',
   if ('${r['subtrait'] ?? ''}'.isNotEmpty)
     '${r['subtrait']} +${r['subtraitValue'] ?? 0}',
   if (readIntValue(r['kills']) > 0 || readIntValue(r['elementKills']) > 0)
@@ -51,6 +82,20 @@ String oculumSkillRequirementDescription(Map r) => [
     ].join(r['killsEither'] == true ? ' oppure ' : ' e '),
   if (readIntValue(r['criticals']) > 0)
     '${r['criticals']} critici riusciti con ${r['criticalSkill']}',
+  if (r['speciesKills'] is Map)
+    for (final entry in (r['speciesKills'] as Map).entries)
+      '${entry.value} ${entry.key} sconfitti validi per la tua Potenza',
+  if (r['namedNpcKills'] is Map)
+    for (final entry in (r['namedNpcKills'] as Map).entries)
+      'Uccidi ${entry.value} ${entry.key == 'erik_i' ? 'Erik I' : entry.key} (identità specifica)',
+  if ('${r['species'] ?? ''}'.isNotEmpty && r['speciesKills'] is! Map)
+    '${readIntValue(r['speciesKills'], fallback: 1)} ${r['species']} sconfitti validi per la tua Potenza',
+  if ('${r['material'] ?? ''}'.isNotEmpty)
+    '${switch (r['materialKind']) {
+      'collect' => 'Raccogli',
+      'consume' => 'Consuma',
+      _ => 'Possiedi',
+    }} ${r['materialGrams']} g di ${r['material']}',
   if (r['open'] == true) 'Open attiva',
 ].join(' · ');
 
@@ -149,6 +194,292 @@ ArtSkill oculumArtSkillFromCharacter(CharacterSkill skill) => ArtSkill(
 );
 
 extension _OculumCreationProgression on _OculumHomePageState {
+  String progressionMaterialKey(String value) =>
+      oculumNormalizeText(value).trim();
+
+  void recordProgressionMaterialCollection(
+    String material,
+    int grams,
+    String receipt, {
+    String name = '',
+  }) {
+    if (material.trim().isEmpty || grams <= 0 || receipt.isEmpty) return;
+    final seen = (planarState['progressionCollectionReceipts'] as List? ?? [])
+        .map((e) => '$e')
+        .toSet();
+    if (!seen.add(receipt)) return;
+    final totals = Map<String, dynamic>.from(
+      planarState['progressionCollectedMaterials'] as Map? ?? {},
+    );
+    for (final key in {
+      progressionMaterialKey(material),
+      if (name.isNotEmpty) progressionMaterialKey(name),
+    }) {
+      totals[key] = readIntValue(totals[key]) + grams;
+    }
+    planarState['progressionCollectedMaterials'] = totals;
+    planarState['progressionCollectionReceipts'] = seen.toList();
+  }
+
+  List<InventoryItem> progressionMaterialStacks(String material) => inventario
+      .where(
+        (i) =>
+            i.quantita > 0 &&
+            !i.arma &&
+            !i.protegge &&
+            i.craftData['titleItem'] != true &&
+            (progressionMaterialKey(i.nome) ==
+                    progressionMaterialKey(material) ||
+                progressionMaterialKey('${i.craftData['material'] ?? ''}') ==
+                    progressionMaterialKey(material)),
+      )
+      .toList();
+
+  int progressionMaterialUnitGrams(InventoryItem item) => max(
+    0,
+    readIntValue(item.craftData['grams'], fallback: (item.peso * 1000).round()),
+  );
+
+  String progressionConsumptionKey(Map r) => jsonEncode([
+    '${r['consumptionKey'] ?? ''}',
+    progressionMaterialKey('${r['material'] ?? ''}'),
+    readIntValue(r['materialGrams']),
+  ]);
+
+  bool progressionMaterialRequirementMet(Map r) {
+    final material = '${r['material'] ?? ''}';
+    final grams = readIntValue(r['materialGrams']);
+    if (material.isEmpty || grams <= 0) return true;
+    if (r['materialKind'] == 'collect') {
+      return readIntValue(
+            (planarState['progressionCollectedMaterials']
+                as Map?)?[progressionMaterialKey(material)],
+          ) >=
+          grams;
+    }
+    if (r['materialKind'] == 'consume') {
+      return '${r['consumptionKey'] ?? ''}'.isNotEmpty &&
+          (planarState['progressionConsumptionReceipts'] as List? ?? [])
+              .contains(progressionConsumptionKey(r));
+    }
+    return progressionMaterialStacks(material).fold<int>(
+          0,
+          (n, i) => n + progressionMaterialUnitGrams(i) * i.quantita,
+        ) >=
+        grams;
+  }
+
+  bool consumeProgressionRequirement(Map r) {
+    if (r['materialKind'] != 'consume' ||
+        '${r['consumptionKey'] ?? ''}'.isEmpty) {
+      return false;
+    }
+    if (progressionMaterialRequirementMet(r)) return true;
+    final stacks = progressionMaterialStacks('${r['material'] ?? ''}');
+    var remaining = readIntValue(r['materialGrams']);
+    if (remaining <= 0 ||
+        stacks.fold<int>(
+              0,
+              (n, i) => n + progressionMaterialUnitGrams(i) * i.quantita,
+            ) <
+            remaining) {
+      return false;
+    }
+    for (final item in stacks) {
+      if (remaining <= 0) break;
+      final unit = progressionMaterialUnitGrams(item);
+      if (unit <= 0) continue;
+      final total = unit * item.quantita;
+      final taken = min(total, remaining);
+      remaining -= taken;
+      final left = total - taken;
+      // Material lots are saved by exact mass; split the stack without losing
+      // the unconsumed remainder or rounding a gram into another full item.
+      item.quantita = left > 0 ? 1 : 0;
+      item.peso = left / 1000;
+      item.craftData = {...item.craftData, 'grams': left};
+      if (item.quantita == 0) inventario.remove(item);
+    }
+    planarState['progressionConsumptionReceipts'] = [
+      ...(planarState['progressionConsumptionReceipts'] as List? ?? []),
+      progressionConsumptionKey(r),
+    ];
+    aggiungiLog(
+      '[SBLOCCO] Consumati ${r['materialGrams']} g di ${r['material']}; pagamento registrato una sola volta.',
+    );
+    programmaSalvataggio();
+    return true;
+  }
+
+  /// Personal progress is deliberately separate from the public Monster Book.
+  /// The Book remembers all party kills, including enemies too weak for this PG.
+  void recordPersonalProgressionKills(
+    Iterable<Map> enemies,
+    String encounter, {
+    int? ownerPower,
+  }) {
+    final power = ownerPower ?? scoutTotalPowerAt(schedaCorrente);
+    planarState['progressionKills'] = oculumRecordPersonalProgressionKills(
+      planarState['progressionKills'] as Map? ?? {},
+      enemies,
+      encounter,
+      power,
+    );
+    planarState['progressionNamedNpcKills'] =
+        oculumRecordNamedNpcProgressionKills(
+          planarState['progressionNamedNpcKills'] as Map? ?? {},
+          enemies,
+          encounter,
+          power,
+        );
+    refreshAuthoredTitleUnlocks();
+  }
+
+  void refreshAuthoredTitleUnlocks() {
+    final ledger = planarState['progressionKills'] as Map? ?? {};
+    final configured = Map<String, dynamic>.from(
+      planarState['authoredTitleRequirements'] as Map? ?? {},
+    );
+    for (final title in titoli.where(
+      (t) =>
+          !t.evoluto && t.openEffects.any((e) => e.target == 'senka_moon_open'),
+    )) {
+      final key = title.chiaveSistema;
+      final raw = configured.putIfAbsent(
+        key,
+        () => <String, dynamic>{
+          'speciesAny': ['guardia_solare', 'guardia_solare_elite'],
+          'kills': 3,
+        },
+      );
+      if (raw is! Map) {
+        continue;
+      }
+      final requirement = Map<String, dynamic>.from(raw);
+      // Authored metadata is explicit. Unknown/empty custom goals never evolve
+      // a title merely because an unrelated kill was delivered.
+      if (requirement['speciesAny'] is! List &&
+          requirement['speciesKills'] is! Map &&
+          requirement['namedNpcKills'] is! Map) {
+        continue;
+      }
+      final counts = <String, int>{};
+      for (final entry in ledger.entries) {
+        final amount = entry.value is Map
+            ? max(0, readIntValue(entry.value['count']))
+            : 0;
+        final family = oculumPartyHuntSpeciesId('${entry.key}');
+        counts[family] = (counts[family] ?? 0) + amount;
+      }
+      final selected = (requirement['speciesAny'] as List? ?? [])
+          .map((v) => '$v')
+          .toSet();
+      final kills = counts.entries
+          .where((e) => selected.isEmpty || selected.contains(e.key))
+          .fold<int>(0, (n, e) => n + e.value);
+      final permanent = permanentProgressionStats();
+      if (!oculumSkillRequirementsMet(
+        requirement,
+        level: leggiNumero(livelloController),
+        grade: leggiNumero(gradoController),
+        stats: permanent,
+        subtraits: permanentProgressionSubtraits(permanent),
+        kills: kills,
+        elementalKills: {},
+        skillCriticals: {},
+        speciesKills: counts,
+        namedNpcKills: {
+          for (final e
+              in (planarState['progressionNamedNpcKills'] as Map? ?? {})
+                  .entries)
+            '${e.key}': e.value is Map ? readIntValue(e.value['count']) : 0,
+        },
+      )) {
+        continue;
+      }
+      title.evoluto = true;
+      aggiungiLog(
+        '[SBLOCCO] ${title.nome}: requisito raggiunto, Open e Skill Open disponibili.',
+      );
+      invalidateDerivedDataCaches();
+    }
+    planarState['authoredTitleRequirements'] = configured;
+  }
+
+  void recordPersonalProgressionCritical(String receipt, String skill) {
+    if (receipt.trim().isEmpty || skill.trim().isEmpty) return;
+    final seen = (planarState['skillCriticalReceipts'] as List? ?? [])
+        .map((e) => '$e')
+        .toSet();
+    if (!seen.add('$receipt:$skill')) return;
+    final progress = Map<String, dynamic>.from(
+      planarState['skillCriticalProgress'] as Map? ?? {},
+    );
+    progress[skill] = readIntValue(progress[skill]) + 1;
+    planarState['skillCriticalProgress'] = progress;
+    planarState['skillCriticalReceipts'] = seen.toList();
+  }
+
+  Map<String, int> permanentProgressionStats() {
+    final values = <String, int>{
+      'resilienza': max(0, leggiNumero(resilienzaController)),
+      'volonta': max(0, leggiNumero(volontaController)),
+      'materia': max(0, leggiNumero(materiaController)),
+      'oculum': max(0, leggiNumero(oculumController)),
+    };
+    final context = <String, num>{
+      ...values,
+      'livello': leggiNumero(livelloController),
+      'grado': leggiNumero(gradoController),
+    };
+    for (final title in titoliCalcolabili.where((t) => t.equipaggiato)) {
+      final fields = {
+        'resilienza': title.resilienza,
+        'volonta': title.volonta,
+        'materia': title.materia,
+        'oculum': title.oculum,
+      };
+      for (final key in values.keys) {
+        values[key] =
+            values[key]! + fields[key]! + titleGradeStatBonus(title, key);
+      }
+      for (final command in oculumParseFormulaCommands(title.buff, context)) {
+        if (command.valid &&
+            command.triggerRaw.isEmpty &&
+            values.containsKey(command.key)) {
+          values[command.key] = values[command.key]! + command.value;
+        }
+      }
+    }
+    return values;
+  }
+
+  Map<String, int> permanentProgressionSubtraits(Map<String, int> stats) {
+    final texts = titoliCalcolabili
+        .where((t) => t.equipaggiato)
+        .map((t) => t.buff)
+        .toList();
+    return {
+      for (final s in hiddenEyeStats)
+        s.id:
+            s.valore +
+            oculumHiddenEyeDerivedBonusFor(
+              level: leggiNumero(livelloController),
+              id: s.id,
+              resilienza: stats['resilienza']!,
+              volonta: stats['volonta']!,
+              materia: stats['materia']!,
+              oculum: stats['oculum']!,
+              karma: leggiNumero(karmaController),
+            ) +
+            oculumDirectSubtraitQuickBonus(
+              subtraitId: s.id,
+              subtraitName: s.nome,
+              texts: texts,
+            ),
+    };
+  }
+
   Map<String, dynamic> get creationDraft {
     if (planarState['creationDraft'] is! Map<String, dynamic>) {
       planarState['creationDraft'] = Map<String, dynamic>.from(
@@ -159,25 +490,74 @@ extension _OculumCreationProgression on _OculumHomePageState {
   }
 
   bool progressionRequirementsMet(Map r) {
-    final ledger = partyChest['monsterKillCounts'] as Map? ?? {};
+    refreshAuthoredTitleUnlocks();
+    final ledger = planarState['progressionKills'] as Map? ?? {};
     var kills = 0;
     final elemental = <String, int>{};
+    final species = <String, int>{};
     for (final entry in ledger.entries) {
-      final count = entry.value is Map ? readIntValue(entry.value['count']) : 0;
+      final count = entry.value is Map
+          ? max(0, readIntValue(entry.value['count']))
+          : 0;
       final monster = monsterBookEntryById('${entry.key}');
       kills += count;
+      species['${entry.key}'] = (species['${entry.key}'] ?? 0) + count;
+      final family = oculumPartyHuntSpeciesId('${entry.key}');
+      if (family != '${entry.key}') {
+        species[family] = (species[family] ?? 0) + count;
+      }
       if (monster != null) {
         elemental[monster.elementId] =
             (elemental[monster.elementId] ?? 0) + count;
       }
     }
     final progress = planarState['skillCriticalProgress'] as Map? ?? {};
+    final stats = permanentProgressionStats();
+    final traits = permanentProgressionSubtraits(stats);
+    final history = Map<String, dynamic>.from(
+      planarState['progressionGrowth'] as Map? ?? {},
+    );
+    final previousStats = history['stats'] as Map? ?? {};
+    final previousTraits = history['subtraits'] as Map? ?? {};
+    final reachedStats = {
+      for (final e in stats.entries)
+        e.key: max(e.value, readIntValue(previousStats[e.key])),
+    };
+    final reachedTraits = {
+      for (final e in traits.entries)
+        e.key: max(e.value, readIntValue(previousTraits[e.key])),
+    };
+    final reachedLevel = max(
+      leggiNumero(livelloController),
+      readIntValue(history['level']),
+    );
+    final reachedGrade = max(
+      leggiNumero(gradoController),
+      readIntValue(history['grade']),
+    );
+    planarState['progressionGrowth'] = {
+      'level': reachedLevel,
+      'grade': reachedGrade,
+      'stats': reachedStats,
+      'subtraits': reachedTraits,
+    };
+    if (!progressionMaterialRequirementMet(r)) return false;
     return oculumSkillRequirementsMet(
       r,
-      level: leggiNumero(livelloController),
-      subtraits: {for (final s in hiddenEyeStats) s.id: hiddenEyeTotal(s)},
+      level: reachedLevel,
+      grade: reachedGrade,
+      stats: reachedStats,
+      subtraits: reachedTraits,
       kills: kills,
       elementalKills: elemental,
+      speciesKills: species,
+      namedNpcKills: {
+        for (final entry
+            in (planarState['progressionNamedNpcKills'] as Map? ?? {}).entries)
+          '${entry.key}': entry.value is Map
+              ? max(0, readIntValue(entry.value['count']))
+              : 0,
+      },
       skillCriticals: {
         for (final e in progress.entries) '${e.key}': readIntValue(e.value),
       },
@@ -844,10 +1224,13 @@ extension _OculumCreationProgression on _OculumHomePageState {
     children: [
       for (final pair in const [
         ('level', 'Livello minimo'),
+        ('grade', 'Grado minimo'),
+        ('statValue', 'Valore minimo della statistica permanente'),
         ('subtraitValue', 'Valore minimo del sottotratto'),
         ('kills', 'Mostri da sconfiggere'),
         ('elementKills', 'Mostri dell’elemento da sconfiggere'),
         ('criticals', 'Critici riusciti richiesti'),
+        ('speciesKills', 'Uccisioni valide della specie'),
       ])
         campoModello(
           label: pair.$2,
@@ -857,6 +1240,99 @@ extension _OculumCreationProgression on _OculumHomePageState {
             r[pair.$1] = max(0, readIntValue(v));
             programmaSalvataggio();
           },
+        ),
+      DropdownButtonFormField<String>(
+        initialValue:
+            const [
+              'resilienza',
+              'volonta',
+              'materia',
+              'oculum',
+            ].contains(r['stat'])
+            ? '${r['stat']}'
+            : '',
+        decoration: const InputDecoration(
+          labelText: 'Statistica permanente richiesta',
+        ),
+        items: [
+          const DropdownMenuItem(value: '', child: Text('Nessuna')),
+          for (final key in const [
+            'resilienza',
+            'volonta',
+            'materia',
+            'oculum',
+          ])
+            DropdownMenuItem(value: key, child: Text(key)),
+        ],
+        onChanged: (v) {
+          r['stat'] = v ?? '';
+          programmaSalvataggio();
+        },
+      ),
+      campoModello(
+        label: 'Specie richiesta (ID Monster Book)',
+        initialValue: '${r['species'] ?? ''}',
+        onChanged: (v) {
+          r['species'] = v.trim();
+          programmaSalvataggio();
+        },
+      ),
+      DropdownButtonFormField<String>(
+        initialValue:
+            const ['collect', 'possess', 'consume'].contains(r['materialKind'])
+            ? '${r['materialKind']}'
+            : 'possess',
+        decoration: const InputDecoration(labelText: 'Requisito del materiale'),
+        items: const [
+          DropdownMenuItem(
+            value: 'collect',
+            child: Text('Raccogli: progresso storico'),
+          ),
+          DropdownMenuItem(
+            value: 'possess',
+            child: Text('Possiedi: inventario attuale'),
+          ),
+          DropdownMenuItem(
+            value: 'consume',
+            child: Text('Consuma: pagamento unico'),
+          ),
+        ],
+        onChanged: (v) {
+          r['materialKind'] = v;
+          r['consumptionKey'] = storageId;
+          programmaSalvataggio();
+        },
+      ),
+      campoModello(
+        label: 'Materiale richiesto: nome esatto o ID',
+        initialValue: '${r['material'] ?? ''}',
+        onChanged: (v) {
+          r['material'] = v.trim();
+          r['consumptionKey'] = storageId;
+          programmaSalvataggio();
+        },
+      ),
+      campoModello(
+        label: 'Quantità richiesta (grammi)',
+        initialValue: '${readIntValue(r['materialGrams'])}',
+        keyboardType: TextInputType.number,
+        onChanged: (v) {
+          r['materialGrams'] = max(0, readIntValue(v));
+          r['consumptionKey'] = storageId;
+          programmaSalvataggio();
+        },
+      ),
+      if (r['materialKind'] == 'consume')
+        TextButton(
+          onPressed: () => setState(() {
+            r['consumptionKey'] = storageId;
+            consumeProgressionRequirement(r);
+          }),
+          child: Text(
+            progressionMaterialRequirementMet(r)
+                ? 'Materiale già consumato per questo requisito'
+                : 'Consuma il materiale richiesto per sbloccare',
+          ),
         ),
       DropdownButtonFormField<String>(
         isExpanded: true,

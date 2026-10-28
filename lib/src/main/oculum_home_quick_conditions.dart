@@ -962,6 +962,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }) {
     final definition = oculumConditionDefinition(type);
     if (definition == null) return false;
+    if (lusierPreventsNegativeCondition(type, source)) return false;
     if (planarState['posteaImmuneCondition'] == type) {
       aggiungiLog(
         '[ANTI MALUS] ${definition.nameIt} bloccato dalla protezione di Rusty.',

@@ -23,10 +23,15 @@ class OculumNarrativeBackground extends StatelessWidget {
       final presentation = oculumThemePresentationForSheet(sheetId);
       final monster = oculumMonsterThemeById(presentation.artPackId);
       final pack = oculumResolveThemeArt(spec, presentation);
+      final mobile = MediaQuery.sizeOf(context).width < 600;
       final image =
-          monster?.illustration ??
+          (mobile
+              ? monster?.illustrationMobile ?? monster?.illustration
+              : monster?.illustration) ??
           (monster != null
               ? 'assets/oculum/theme_stories/webp/plane_${monster.monster.planeIds.firstOrNull ?? 'mezzano'}.webp'
+              : mobile
+              ? pack.storySceneMobileAsset ?? pack.storyScene
               : pack.storyScene);
       return IgnorePointer(
         child: ExcludeSemantics(
@@ -39,7 +44,9 @@ class OculumNarrativeBackground extends StatelessWidget {
                   key: ValueKey(
                     'narrative-background-${monster?.id ?? pack.id}',
                   ),
-                  fit: BoxFit.cover,
+                  fit: pack.preserveStoryFraming
+                      ? BoxFit.contain
+                      : BoxFit.cover,
                   alignment: monster?.illustration != null
                       ? Alignment.centerRight
                       : pack.id == 'plane_diabolico'

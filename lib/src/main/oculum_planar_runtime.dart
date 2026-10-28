@@ -414,6 +414,11 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     String source,
   ) {
     final state = planarState;
+    if (effect.target == 'lusier_condition_guard') return;
+    if (effect.target == 'lusier_solar_vitalium') {
+      grantLusierSolarVitalium();
+      return;
+    }
     if (activateSenkaEffect(effect, value)) return;
     if (activateReferenceCreatureEffect(effect, value, duration, source)) {
       return;
@@ -979,13 +984,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     final state = planarState;
     damage = (damage * silkResistanceMultiplier(element)).round();
     damage = feralisAdaptDamage(damage, element);
-    if (senkaMaskActive && magical && oculumNormalizeElementId(element) == 'solare') {
+    if (senkaMaskActive &&
+        magical &&
+        oculumNormalizeElementId(element) == 'solare') {
       damage = (damage * 1.15).round();
-    }
-    if (senkaMaskActive && readIntValue(senkaRuntime['shadowUntilTurn']) > playerReportedTurn &&
-        const {'fisico','taglio','perforante','contundente'}.contains(oculumNormalizeElementId(element))) {
-      aggiungiLog('Forma ombra di Senka: il colpo fisico attraversa la sagoma.');
-      return 0;
     }
     if (feralisFuryActive) damage = (damage / 2).ceil();
     if (damage <= 0) return damage;

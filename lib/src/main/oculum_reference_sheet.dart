@@ -316,7 +316,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
         children: [
           realmIndicator(),
           IconButton(
-            tooltip: remote
+            tooltip: !canStep
                 ? 'Il Master gestisce il turno'
                 : 'Turno precedente',
             visualDensity: VisualDensity.compact,
@@ -346,7 +346,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
             ),
           ),
           IconButton(
-            tooltip: remote
+            tooltip: !canStep
                 ? 'Il Master gestisce il turno'
                 : 'Turno successivo',
             visualDensity: VisualDensity.compact,
@@ -2064,9 +2064,13 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           sectionTitle('Resistenze'),
-          Text('Affinità: +3% per Skill, Art e Titolo equipaggiati/in uso; forme contate una volta, Art e Skill separate, massimo 90% complessivo. Gli equipaggiamenti normali non contano.'),
+          Text(
+            'Affinità: +3% per Skill, Art e Titolo equipaggiati/in uso; forme contate una volta, Art e Skill separate, massimo 90% complessivo. Gli equipaggiamenti normali non contano.',
+          ),
           for (final row in abilityElementResistanceSources())
-            Text('${row.source}: ${row.elements.map(elementDisplayName).join(', ')} +3%'),
+            Text(
+              '${row.source}: ${row.elements.map(elementDisplayName).join(', ')} +3%',
+            ),
           Text(
             'Fragilità, resistenze, immunità e rigenerazione sono salvate per elemento. Una percentuale libera sostituisce il preset di quell’elemento.',
           ),

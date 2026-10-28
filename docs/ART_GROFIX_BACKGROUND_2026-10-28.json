@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-28",
+  "provider": "image_gen builtin",
+  "style": "Rame fatato",
+  "status": "generated and visually inspected; awaiting final user approval and UI verification",
+  "kind": "full creature background, not portrait and not relic",
+  "monsterId": "grofix",
+  "sourceCatalogue": "lib/pages/oculum_dungeon/solar_guards_and_grofix.dart:85",
+  "anatomy": "Low asymmetric gray/green moss, absorbing roots, long varied mineral crown; fibrous knot beneath crown weak point",
+  "environment": "Underground with rock ceiling, no sky or celestial bodies",
+  "dedicatedReadingArea": true,
+  "sourceDocuments": [
+    "docs/OCULUM_LORE_VISIVA.md",
+    "docs/DICITURE_UTENTE_2026-10-27.md",
+    "design/OCULUM-VISUAL-BIBLE.md",
+    "docs/OCULUM_REGOLE_CONFERMATE.md",
+    "docs/DA_FARE_PATCH_E_SUCCESSIVI.md",
+    "docs/creature-art-inventory.json"
+  ],
+  "assets": [
+    {
+      "asset": "assets/oculum/home_art/theme_grofix_v1.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a181f8-d0b7-7070-95fb-c9365b113ec7\\exec-87bedf0f-84e1-4f37-934b-c7f70ee7aaf1.png",
+      "reference": "assets/oculum/home_art/amber_shore.png",
+      "prompt": "Use case: stylized-concept. Create an ORIGINAL full painted BACKGROUND THEME for the creature GROFIX in Oculum, wide landscape 16:9, not a portrait card or a cutout. Reference image amber_shore defines ONLY the exact Rame fatato PAINTING TECHNIQUE: soft matte anime dark-fantasy pigment, visible purposeful brushwork and slightly irregular edges, restrained local highlights, not glossy CGI, not photoreal, not cinematic plastic AI rendering. Do NOT copy its sea, sunset, fairies or composition.\nCANONICAL CREATURE read from its actual description/anatomy: Grofix is an awakened MINERAL-INFESTING MOSS. Its body is LOW, ASYMMETRIC and organic, a tangled mound of GRAY AND GREEN MOSS, fine absorbing threads and roots clinging to neglected ore deposits. It is NOT a humanoid, ordinary rock golem, muscular person or generic monster with a human face. Where it has stolen more power, very LONG SHARP VARIEGATED CRYSTALS grow out of the moss; their forms and colors derive from absorbed minerals. Show a few restrained pale green, smoky quartz and violet mineral shards emerging in an irregular crown, not a perfectly symmetrical crystal statue. The FIBROUS ROOT KNOT beneath the crown is subtly visible as its canonical weak point, not an exaggerated glowing eyeball. Thin absorbing fibers draw a small dim violet Oculum glimmer inward from the ore. Depleted ore nearby crumbles into dusty dull grains, visually explaining the infestation. It guards the neglected vein possessively, roots curling around it, no humanoid attack pose.\nENVIRONMENT: ENTIRELY UNDERGROUND. A real cavern with an uninterrupted heavy ROCK CEILING and uneven rock walls, old neglected mineral veins, damp stone and a little gray-green moss. Absolutely NO sky, horizon opening, celestial starfield, Sun, Moon, clouds, forest canopy or fairy. Local faint crystal light and a soft muted reflected warm light reveal material texture; no dramatic laser beams, rainbow floodlight or global neon. Subtle depth through receding low-detail cave rock.\nCOMPOSITION FOR A REAL CHARACTER SHEET UI: the complete Grofix occupies the OUTER RIGHT quarter/third, toward the lower right, its longest crystal tips, roots and entire low body kept well inside generous margins. Left lower edge can contain a small secondary crumbling mineral deposit and sparse root threads, but leave the CENTRAL55% quiet, darker, low-detail atmospheric rock with soft values suitable for actual overlaid controls. Do not paint a flat rectangle or a UI panel there. Broad natural organic negative space, not a central monster blocking text. The monster is integrated into its habitat and reads clearly on the margin; all important anatomy and the root knot visible, no cropped crystal tips. Scene fills the whole image. No text, typography, numbers, captions, logo, watermark, frame, rune writing, UI, gold coins, weapons or invented loot.",
+      "sha256": "88a75ebf568784f0e0e9e42f1d9532b996fea35840392c596740b2f68cd6ee3a",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "asset": "assets/oculum/home_art/theme_grofix_mobile_v1.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a181f8-d0b7-7070-95fb-c9365b113ec7\\exec-3ba51ad1-f073-49e2-ae27-a9bf3b797fcd.png",
+      "reference": "assets/oculum/home_art/theme_grofix_v1.png",
+      "prompt": "Recompose THIS approved-direction GROFIX scene into a VERTICAL 9:16 phone character-sheet BACKGROUND, not a cropped landscape. Preserve the exact creature identity, materials and matte Rame fatato hand-painted pigment style: a low asymmetric awake infestation of gray/green moss and absorbing roots, irregular very long pale green/quartz/violet crystal crown, fibrous root knot weak point subtly holding a dim violet Oculum glimmer, neighboring depleted ore becoming dusty. No human face, limbs, eyes, rock golem body or added equipment. The image must remain entirely UNDERGROUND with a rock ceiling visible across the top, rock walls and a dim cavern interior; no sky/Sun/Moon/stars/clouds or daylight opening. Keep the COMPLETE creature and crystal tips in the lower-right outer region, contained within safe margins, and a small crumbling deposit at lower-left. Let a quiet dark low-detail rock atmosphere occupy the upper/central60% as real UI reading space; no painted UI, panel, rectangle, text, rune writing, logo or watermark. The cave fills the canvas, tactile matte broad soft brushwork, no glossyCGI. Preserve asymmetric mineral forms and subdued local light; neither neon fantasy floodlights nor a flat pattern. This is a faithful PHONE RECOMPOSITION of the same scene, not a different species or invented variation.",
+      "sha256": "66738cffce2fabc7860f3f793dc8e55a152dd652fce0cc86bf466c8fb7bd9e70",
+      "width": 941,
+      "height": 1672
+    }
+  ]
+}

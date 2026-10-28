@@ -1297,7 +1297,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         label: Text('Piano: ${selectedPlane.name}'),
       ),
       if (oculumMicroRealmLore.containsKey(selectedPlaneId))
-        OutlinedButton.icon(onPressed: showCurrentMicroRealm, icon: const Icon(Icons.explore_outlined), label: const Text('Esplora questa realtà')),
+        OutlinedButton.icon(
+          onPressed: showCurrentMicroRealm,
+          icon: const Icon(Icons.explore_outlined),
+          label: const Text('Esplora questa realtà'),
+        ),
       if (planeNeedsAdaptation)
         OutlinedButton(
           onPressed: rollPlaneAdaptation,
@@ -1403,9 +1407,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
     merchantStock = <Map<String, dynamic>>[
       if (leggiNumero(gradoController) >= 1)
-        {'id':'explosive_cards_grade_i','name':'Mazzo di carte esplosive',
-          'kind':'explosive_cards','cost':430,
-          'desc':oculumExplosiveCards().note},
+        {
+          'id': 'explosive_cards_grade_i',
+          'name': 'Mazzo di carte esplosive',
+          'kind': 'explosive_cards',
+          'cost': 430,
+          'desc': oculumExplosiveCards().note,
+        },
       {
         'id': 'raw_vitalium',
         'name': 'Vitalium Grezzo',
@@ -3121,7 +3129,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           children: [
             merchantProfileControls(),
             if (merchantShopType == 'fabbro')
-              OutlinedButton.icon(onPressed: showBlacksmithCombine, icon: const Icon(Icons.handyman_outlined), label: const Text('Combina · armi, armature e scudi')),
+              OutlinedButton.icon(
+                onPressed: showBlacksmithCombine,
+                icon: const Icon(Icons.handyman_outlined),
+                label: const Text('Combina · armi, armature e scudi'),
+              ),
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
@@ -3828,8 +3840,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   /// Il mercante paga circa un sesto del valore stimato: utile, ma spilorcio.
   int merchantSaleValue(InventoryItem item) {
-    if(item.craftData['explosiveCards']==true) {
-      return readIntValue(item.craftData['marketValue'],fallback:215).clamp(180,250)*max(1,item.quantita);
+    if (item.craftData['explosiveCards'] == true) {
+      return readIntValue(
+            item.craftData['marketValue'],
+            fallback: 215,
+          ).clamp(180, 250) *
+          max(1, item.quantita);
     }
     if (item.craftData['monsterRelic'] == true &&
         readIntValue(item.craftData['monsterRelicMarketPrice']) > 0) {
@@ -3856,9 +3872,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void sellInventoryItemToMerchant(InventoryItem item) {
-    if (!merchantIsOpen || !inventario.contains(item) || item.quantita <= 0) return;
-    if(item.craftData['explosiveCards']==true && merchantShopType!='mercato_nero') {
-      aggiungiLog('Le carte esplosive sono vendibili soltanto al Mercato Nero.');
+    if (!merchantIsOpen || !inventario.contains(item) || item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['explosiveCards'] == true &&
+        merchantShopType != 'mercato_nero') {
+      aggiungiLog(
+        'Le carte esplosive sono vendibili soltanto al Mercato Nero.',
+      );
       return;
     }
     final payment = merchantSaleValue(item);
@@ -3923,7 +3944,22 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return oculumDustCrystal('${offer['size']}');
     }
     if (offer['kind'] == 'recipe_book') {
-      return InventoryItem(nome: '${offer['name']}', peso:.3, quantita:1, note:'${offer['desc']}', craftData:{'recipeBook': {'id':offer['id'], 'recipeIds':List<String>.from((offer['recipeIds'] as List? ?? []).map((s)=>'$s'))}, 'recipeBookInstance':'${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1<<30)}'});
+      return InventoryItem(
+        nome: '${offer['name']}',
+        peso: .3,
+        quantita: 1,
+        note: '${offer['desc']}',
+        craftData: {
+          'recipeBook': {
+            'id': offer['id'],
+            'recipeIds': List<String>.from(
+              (offer['recipeIds'] as List? ?? []).map((s) => '$s'),
+            ),
+          },
+          'recipeBookInstance':
+              '${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1 << 30)}',
+        },
+      );
     }
     if (const {
       'postea_companion',
@@ -4413,6 +4449,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       const <String>{
         'Vitalium Grezzo',
         'Vitalium Ridefinito',
+        'Vitalium Solare',
         'Fiala di Oculum',
         'Pergamena della Prigione d Ossa',
         'Pinna di Pesce Alato',
@@ -4797,6 +4834,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           refullaStatsAttuali();
           risultato =
               'Vitalium Ridefinito: HP, statistiche attuali e integrità delle Art ripristinati ai massimali.';
+          break;
+        case 'Vitalium Solare':
+          useLusierSolarVitalium();
+          risultato =
+              'Vitalium Solare: metà dei deficit recuperata per eccesso e +1 Scudo critico.';
           break;
         case 'Fiala di Oculum':
           amount = Random().nextInt(4) + 1;

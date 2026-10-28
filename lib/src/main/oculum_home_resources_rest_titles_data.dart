@@ -2087,7 +2087,11 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     setState(() {
       for (final item in inventario) {
         if (item.craftData['titleItem'] == true) {
-          item.craftData = {...item.craftData, 'titleOpenUsedSinceLongRest': false, 'titleOpenUsedStages': <int>[]};
+          item.craftData = {
+            ...item.craftData,
+            'titleOpenUsedSinceLongRest': false,
+            'titleOpenUsedStages': <int>[],
+          };
         }
         if (item.craftData['necromancyKind'] == 'skull_amulet') {
           item.craftData = {...item.craftData, 'usedSinceLongRest': false};
@@ -2997,6 +3001,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void usaOpen(OculumTitle titolo, {TitleOpenEntry? openExtra}) {
+    final active = openExtra?.attiva ?? titolo.openAttiva;
+    final used = openExtra?.usedSinceLongRest ?? titolo.openUsedSinceLongRest;
+    if (!active && used) {
+      aggiungiLog(
+        'Open già usata: occorre un Riposo Lungo. La Skill Open resta utilizzabile con i suoi costi e cooldown.',
+      );
+      return;
+    }
     if (parasiteInfested && !parasiteOwnerLocked) {
       aggiungiLog('[PARASSITA] Il controllore non può usare Open.');
       return;
@@ -3084,6 +3096,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    syncSenkaMoonToFight();
+    effectsToActivate = prepareLusierTitleEffects(effectsToActivate) ?? [];
     if (effectsToActivate.isNotEmpty) {
       final messages = applyStructuredEffectsOnActivation(
         effectsToActivate,
@@ -3103,6 +3117,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
     scheduleRealtimeOculumChanged();
     programmaSalvataggio();
+    if (effectsToActivate.any((e) => e.target == 'lusier_open_ray') &&
+        onlineAttackTokens().isNotEmpty) {
+      unawaited(
+        planOnlineAttack(maximumTargets: max(1, onlineAttackTokens().length)),
+      );
+    }
   }
 
   Future<void> usaSkillTitolo(

@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-28",
+  "provider": "image_gen builtin",
+  "style": "Rame fatato",
+  "status": "user approved both relics; six local widget tests passed, publication separate",
+  "decorativeOnly": true,
+  "notes": [
+    "No new inventory item, drop or power.",
+    "Source themes retained unchanged.",
+    "Dedicated art uses contain and padding; pointer and semantics excluded.",
+    "Real alpha audit: build/oct28-solar-relic-alpha.json"
+  ],
+  "sourceDocuments": [
+    "docs/OCULUM_LORE_VISIVA.md",
+    "docs/DICITURE_UTENTE_2026-10-27.md",
+    "design/OCULUM-VISUAL-BIBLE.md",
+    "docs/OCULUM_REGOLE_CONFERMATE.md",
+    "docs/DA_FARE_PATCH_E_SUCCESSIVI.md",
+    "docs/creature-art-inventory.json"
+  ],
+  "assets": [
+    {
+      "monsterId": "guardia_solare",
+      "asset": "assets/oculum/home_art/relic_guardia_solare_v1.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a181f8-d0b7-7070-95fb-c9365b113ec7\\exec-23571081-b3b1-4384-aa9b-c536b483e584.png",
+      "prompt": "Use case: stylized-concept. Asset type: a PERSONAL DECORATIVE RELIC cutout for an Oculum character sheet, no new item/drop or game power is implied. Original fantasy equipment emblem, isolated on a genuinely TRANSPARENT background with transparent holes, no background rectangle, paper, floor, pedestal, scenery, cast ground shadow, words, writing, logo, watermark, UI, border or frame. Input image 1 is the creature's already approved theme: use ONLY its recognizable equipment/material identity, NOT its scene. Input image 2 amber_shore is the exact painting-technique reference: matte hand-painted Rame fatato, soft tactile pigment, restrained soft edges and broad purposeful strokes; NOT shiny CGI, photographic metal, glossy AI-rendered filigree, oversharpening or generic ornament repetition. A compact vertical 3:4 emblem with the entire silhouette safely within generous transparent margins, clear at small UI scale, authored visual hierarchy and asymmetry. This depicts objects only, no human body, severed parts, visible skin, hair, face, wings, Moon or actual Sun in a sky. The Solar insignia is ONE stylized EYE engraved INSIDE A RADIAL SUN DISK, not a featureless star. Warm restrained highlights from the left, honest material texture, nuanced worn edges. Subject: ORDINARY GUARDIA SOLARE. A modest COMPLETE enclosed solar helmet of worn dark bronze and burnished iron, practical and relatively small, full skull crown/sides/back and simple solid front mask. A single understated eye-in-sun-disk sigil engraved on its forehead; narrow dark visor slits contain no exposed eyes or human face. Helmet three-quarter view turned slightly left, as a crafted hollow object. Behind and slightly lower left, its SMALL ROUND lightly battered dark bronze buckler with the same restrained eye-sun mark; a SHORT SPEAR with simple pointed leaf blade rises diagonally behind at right, all its tip and shaft ends within margins. A short faded burgundy cloth strip binds the equipment into one quiet decorative cluster, with a little rough ivory fabric at its base. Sparse engraving, workmanlike straps, light protection and modest materials: must read as a weaker ordinary patrolling guard, clearly simpler and less imposing than a gold Elite. Do not change this into a crown, a giant shield, a golden knight or a soldier portrait.",
+      "references": [
+        "C:\\Oculum App\\oculum\\assets\\oculum\\home_art\\theme_guardia_solare_v2.png",
+        "C:\\Oculum App\\oculum\\assets\\oculum\\home_art\\amber_shore.png"
+      ]
+    },
+    {
+      "monsterId": "guardia_solare_elite",
+      "asset": "assets/oculum/home_art/relic_guardia_solare_elite_v1.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a181f8-d0b7-7070-95fb-c9365b113ec7\\exec-20cfc7a2-8e3b-44af-ada0-cb6380636c3f.png",
+      "prompt": "Use case: stylized-concept. Asset type: a PERSONAL DECORATIVE RELIC cutout for an Oculum character sheet, no new item/drop or game power is implied. Original fantasy equipment emblem, isolated on a genuinely TRANSPARENT background with transparent holes, no background rectangle, paper, floor, pedestal, scenery, cast ground shadow, words, writing, logo, watermark, UI, border or frame. Input image 1 is the creature's already approved theme: use ONLY its recognizable equipment/material identity, NOT its scene. Input image 2 amber_shore is the exact painting-technique reference: matte hand-painted Rame fatato, soft tactile pigment, restrained soft edges and broad purposeful strokes; NOT shiny CGI, photographic metal, glossy AI-rendered filigree, oversharpening or generic ornament repetition. A compact vertical 3:4 emblem with the entire silhouette safely within generous transparent margins, clear at small UI scale, authored visual hierarchy and asymmetry. This depicts objects only, no human body, severed parts, visible skin, hair, face, wings, Moon or actual Sun in a sky. The Solar insignia is ONE stylized EYE engraved INSIDE A RADIAL SUN DISK, not a featureless star. Warm restrained highlights from the left, honest material texture, nuanced worn edges. Subject: GUARDIA SOLARE ELITÉ. A strong, elegant COMPLETE enclosed SOLAR HELMET of MATTE GOLD, with crown/sides/back fully present and a closed front golden mask. It is unmistakably the rich, disciplined Elite equipment from its theme, not Erik or Lusier. A prominent sculpted eye-inside-radial-disk solar seal on its brow, narrow dark visor slits without a visible face or exposed eyes. A broad golden SHIELD with one large solar eye crest dominates the lower foreground in front of and below the helmet, both helmet and shield individually legible. One straight SWORD crosses diagonally behind them; the complete blade tip, crossguard and hilt remain within transparent margins. A thick muted burgundy fabric fold and narrow ivory cloth edge connect the cluster below. More substantial gold protection and deliberate layered plating than the ordinary Guard, commanding and balanced, no royal crown added. Use limited deliberate sculptural relief and painterly matte gold rather than ubiquitous shiny filigree. Full compact asymmetric emblem safely contained, no solar flame explosion, glowing aura or sparks leaking across a background.",
+      "references": [
+        "C:\\Oculum App\\oculum\\assets\\oculum\\home_art\\theme_guardia_solare_elite_v2.png",
+        "C:\\Oculum App\\oculum\\assets\\oculum\\home_art\\amber_shore.png"
+      ]
+    }
+  ],
+  "alphaIntegrityAudit": [
+    {
+      "Path": "C:\\Oculum App\\oculum\\assets\\oculum\\home_art\\relic_guardia_solare_v1.png",
+      "Width": 1086,
+      "Height": 1448,
+      "PixelFormat": "Format32bppArgb",
+      "TransparentPixels": 827677,
+      "PartialAlphaPixels": 744245,
+      "Sha256": "d3b538f9023157dd5c68ccb42363e49093c915a76882c87c2f395ed4dc32a6df"
+    },
+    {
+      "Path": "C:\\Oculum App\\oculum\\assets\\oculum\\home_art\\relic_guardia_solare_elite_v1.png",
+      "Width": 1086,
+      "Height": 1448,
+      "PixelFormat": "Format32bppArgb",
+      "TransparentPixels": 713238,
+      "PartialAlphaPixels": 858677,
+      "Sha256": "953efde3c82c3f2b44bc5352ca48bd6df4a7c5a1febb384e0f2de7fda8dc58db"
+    }
+  ],
+  "userApproval": "Explicit approval relayed by coordinator on 2026-10-28",
+  "localValidation": "6 widget tests passed: 320/834/1440px, asset decode and decorative click-through. Coordinator executed."
+}

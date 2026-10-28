@@ -1668,9 +1668,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             (onlyRole == null ||
                 art.openAttiva ||
                 ((art.openDescriptionCooldown?.ready ?? true) &&
-                    (art.openBuffCooldown?.ready ?? true) &&
-                    (art.monsterOpenSkill ||
-                        (art.openSkillCooldown?.ready ?? true))))) {
+                    (art.openBuffCooldown?.ready ?? true)))) {
           entries.add((
             name: '${art.openAttiva ? 'Chiudi' : 'Apri'} ${art.openName}',
             roles: roles,
@@ -1681,8 +1679,6 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 art.switchPhase.isEmpty &&
                 (art.openDescriptionCooldown?.ready ?? true) &&
                 (art.openBuffCooldown?.ready ?? true) &&
-                (art.monsterOpenSkill ||
-                    (art.openSkillCooldown?.ready ?? true)) &&
                 (oculumRecognizedArtKind(art) == 'emblem' ||
                     oculumArtCanActivate(
                       art.integritaCorrente,
@@ -1693,8 +1689,8 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             details: null,
           ));
         }
-        if (art.monsterOpenSkill &&
-            art.openAttiva &&
+        if ((art.openSkill.trim().isNotEmpty ||
+                art.openSkillEffects.isNotEmpty) &&
             (onlyRole == null || (art.openSkillCooldown?.ready ?? true))) {
           entries.add((
             name: '${art.openName} · Skill Open',

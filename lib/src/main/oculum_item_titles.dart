@@ -112,9 +112,10 @@ bool oculumReforgeItemTitle(InventoryItem item, {required int ownerPower}) {
       'requiredKills': required + max(2, (required * .3).ceil()),
       'progress': 0,
       'minimumPower': max(0, ownerPower),
+      'minimumPowerOwnerSnapshot': true,
       'killReceipts': <String>[],
       'description':
-          '${quest['description']} Nuovo ciclo $count: bersagli con Potenza Totale almeno pari alla tua; requisito quantitativo aumentato.',
+          '${quest['description']} Nuovo ciclo $count: bersagli con Potenza Totale non oltre 25 punti sotto la tua; requisito quantitativo aumentato. Questa soglia aggiornata prevale sulle diciture dei cicli precedenti.',
     },
   };
   return true;
@@ -318,10 +319,13 @@ bool oculumAdvanceItemTitleKills(
     if (!(enemy['titleItemIds'] as List? ?? []).contains(id)) continue;
     final enemyPower = readIntValue(enemy['totalPower'], fallback: -1);
     final ownerPower = readIntValue(enemy['killerTotalPower'], fallback: -1);
-    if (enemyPower < 0 ||
-        ownerPower < 0 ||
-        enemyPower < ownerPower ||
-        enemyPower < readIntValue(quest['minimumPower'])) {
+    final minimumPower = max(
+      0,
+      readIntValue(quest['minimumPower']) -
+          (quest['minimumPowerOwnerSnapshot'] == true ? 25 : 0),
+    );
+    if (!oculumProgressionEnemyPowerEligible(enemyPower, ownerPower) ||
+        enemyPower < minimumPower) {
       continue;
     }
     final species = '${quest['species'] ?? ''}';

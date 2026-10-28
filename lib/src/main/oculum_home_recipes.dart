@@ -1190,6 +1190,7 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         .where(
           (recipe) =>
               recipe.recipeKind != 'forge' &&
+              recipeKnown(recipe) &&
               favoriteRecipeIds.contains(recipe.id),
         )
         .toList(growable: false);

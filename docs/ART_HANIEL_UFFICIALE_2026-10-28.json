@@ -1,0 +1,17 @@
+{
+  "provider": "image_gen builtin",
+  "asset": "assets/oculum/home_art/character_haniel_v4.png",
+  "date": "2026-10-28",
+  "prompt": "Edit the provided original Oculum Haniel illustration with ONLY these precise character design corrections. REMOVE HIS GLASSES COMPLETELY: no lenses, frame, temples, eyewear or monocle; preserve his same handsome mature gentle face, observant eyes, soft reassuring yet mysterious smile and facial proportions. Replace the current swept-back/tied hair with clearly SILVER-COLORED shoulder-length hair in a soft layered WOLF CUT: tousled layered crown with natural volume, feathered uneven face-framing strands around the temples and cheeks, longer loose layers reaching approximately the shoulders at both sides and behind, a light shaggy fringe that does not hide his eyes. ALL HAIR IS LOOSE, NO ponytail, bun, tie, braid, hairband, pulled-back knot or undercut. The hair's base color must be cool silver/argent, not brown or blond; warm lamplight may kiss only its edges. Preserve the original character's identity and EVERYTHING else: exact full-body seated crossed-leg pose, open welcoming gloved hand, black elegant medieval fantasy longcoat and tunic, blackened-silver pauldrons/back armor/greaves with silver edges, straps and ornamentation, black boots, unmarked closed notebook, stool, wooden tavern counter and original warm-lantern/cool-indigo Lost Town inn background. Soft matte hand-painted Oculum Rame fatato style, same painterly quality, not photo or glossy 3D. No text, logos, watermark or added people. Keep full hair, body and feet inside the image margins.",
+  "reference": "codex-clipboard-5dd5105c-1eef-4a05-b05d-56f30124321e.png",
+  "status": "canonical; explicitly approved",
+  "approval": "confermo l'aspetto ufficiale è questo",
+  "canonicalDetails": [
+    "no glasses",
+    "silver shoulder-length loose wolf cut",
+    "elegant black medieval fantasy clothes",
+    "blackened-silver shoulder/back/leg armor",
+    "same reassuring yet mysterious identity"
+  ],
+  "supersedes": "character_haniel_v3.png (historical image retained)"
+}

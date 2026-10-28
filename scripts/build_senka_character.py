@@ -45,6 +45,30 @@ def title(template, **kwargs):
     return result
 
 
+def readable_skill_costs(sheet):
+    """Keep display text and the authoritative editable cost fields aligned."""
+    labels = {'oculum': 'Oculum', 'materia': 'Materia', 'resilienza': 'Resilienza',
+              'volonta': 'Volontà', 'nessuna': ''}
+    for ability in sheet.get('skills', []):
+        for form in ability.get('forme', []):
+            cost = form.get('costoStrutturato')
+            if not cost:
+                continue
+            resource = cost['resource']
+            minimum = cost.get('minimum', 0)
+            maximum = cost.get('maximum', minimum)
+            amount = (f'{minimum}–{maximum}' if cost.get('variable')
+                      else str(cost.get('amountExpression', minimum)))
+            form['costo'] = ('Nessun costo' if resource == 'nessuna'
+                             else f'{amount} {labels.get(resource, resource)}')
+            form['oculumMinimoUtilizzabile'] = minimum
+            form['oculumMassimoUtilizzabile'] = maximum
+            form['oculumMassimoMaestriaIniziale'] = maximum
+            form['oculumLimitiConfiguratiManualmente'] = True
+        if ability.get('forme'):
+            ability['costo'] = ability['forme'][0]['costo']
+
+
 def build():
     example = json.loads((ROOT / 'docs/chatgpt_handoff/prefab_character_generator/example_prefab_character.json').read_text(encoding='utf-8'))['sheets'][0]
     art = copy.deepcopy(example['arti'][0])
@@ -81,6 +105,10 @@ def build():
         [dict(id=f'senka_grapple_{i+1}',type='stato',appliedState='immobilizzato',target='immobilizzato',valueExpression='1',
               recipient='nemico',duration='1',mode='finche_attivo',elementType='ombra',maximumTargets=i+1)]
         for i in range(3)] + [[],[]]
+    art['skills'][2]['effettiPerLivello'] = [[dict(id=f'senka_shadow_step_{i}',type='planar',
+        target='senka_shadow_step',valueExpression='0',resource=str(meters),
+        elementType='ombra',recipient='nemico',mode='prossima_azione')]
+        for i,meters in enumerate([6,9,12])] + [[],[]]
     base_title = example['titoli'][0]
     mask = title(base_title,
         nome='La maschera di Senka', tipo='Titolo del Fato', chiaveSistema='senka_latent_mask_v1', equipaggiato=False,
@@ -104,21 +132,30 @@ def build():
         puntoCieco='Devi salvarla anche al costo di te stessa, Sky è tutto.',
         openName='Un Ricordo della Luna',
         openDescription='Da sbloccare uccidendo tre Guardie Solari valide. La Luna compare nel cielo per tutta la Open, fino a fine fight, poi scompare. Senka ottiene +25% a RES/VOL/MAT/OCU più il +5% ricevuto da tutti i Lunari: +30% totale per lei, +5% per gli altri Lunari. Manifestazione temporanea: non riscrive la scomparsa della Luna dal cielo attuale.',
-        openBuff='@Danni+10 Luna\n@Difesa+6 Luna\nLa Skill Open passa da CD 3 a CD 2 e da 1d6 a 1d8 tagli.',
+        openBuff='Statistiche effettive +30% durante questa Open (gestione percentuale dedicata).\n@Danni+10 Luna\n@Difesa+6 Luna\nLa Skill Open passa da CD 3 a CD 2 e da 1d6 a 1d8 tagli.',
         openSkill='Tagli lunari: 1d6 tagli, ciascuno pari a un sesto dei Danni attuali; contro i Solari infliggono il doppio. CD 3 turni. Con Buff Open attivo: 1d8 tagli e CD 2. Ogni taglio conserva difese, resistenze e Scudi del bersaglio.',
-        openEffects=[dict(type='planar', target='senka_moon_open', valueExpression='25', duration='1', durationUnit='fight', mode='finche_attivo', elementType='lunare')])
+        openEffects=[dict(type='planar', target='senka_moon_open', valueExpression='25', resource='5', duration='1', durationUnit='fight', mode='finche_attivo', elementType='lunare')])
+    fate['skillExtra'] = [dict(nome='Tagli lunari — Skill Open',
+        descrizione=fate['openSkill'], combatRole='attacco',
+        cost=dict(resource='nessuna',amountExpression='0'), cooldown=cooldown(3,'turni'),
+        effects=[dict(id='senka_moon_cuts',type='planar',target='senka_moon_cuts',
+            valueExpression='floor(danni/6)',diceExpression='1d6',recipient='nemico',
+            mode='prossima_azione',elementType='lunare')])]
     revenge = title(base_title, nome='Vendetta', tipo='Titolo del Fato',
         chiaveSistema='senka_fate_vendetta',
         ottenimento='Il ricordo della famiglia sterminata dai Solari.',
         leggenda='Lusier III Guardia Elité di Grado I, dirige battaglie, stermina popoli proprio come ha fatto con la mia famiglia, proprio come io farò con lui.',
         buff='@Volonta+1', richiede='Confrontati con il passato di Senka e con Lusier III.')
     thousand = dict(nome='Mille Tagli', tipo='Attiva · Attacco', costo='1 Materia', cooldown='1 Riposo Lungo',
-        descrizione='Da sbloccare: livello 6 e Riflessi +6. Richiede maschera attiva e coltello. Usa Riflessi per il tiro della Skill. Se il colpo riesce infligge SUBITO come UNICO danno: Danni attuali di Senka + totale del tiro Riflessi effettivamente usato + Potenza totale attuale. Non aggiungere nuovamente il danno base e non usare un tiro Riflessi aggiuntivo. Dopo l’uso SENKA riceve Sfinimento per UN turno personale: perde/blocca le Reazioni secondo le regole di Sfinimento. Non è danno di tipo Sfinimento e non è un effetto sul nemico. Una volta per Riposo Lungo. Costo iniziale modificabile: 1 Materia.',
-        equipaggiata=False, forme=[dict(nome='Mille Tagli', tipo='Attiva · Attacco', livello='6', costo='1 Materia', cooldown='1 Riposo Lungo',
-            descrizione='', unlockRequirements={'level': 6, 'subtrait': 'riflessi', 'subtraitValue': 6},
+        descrizione='Da sbloccare: Riflessi permanenti +9 e uccisione di Erik I, valida anche quando Erik ha PT inferiore a Senka; nessun livello minimo. Richiede maschera attiva e coltello. Usa Riflessi per il tiro della Skill. Se il colpo riesce infligge SUBITO come UNICO danno: Danni attuali di Senka + totale del tiro Riflessi effettivamente usato + Potenza totale attuale. Non aggiungere nuovamente il danno base e non usare un tiro Riflessi aggiuntivo. Dopo l’uso SENKA riceve Sfinimento per UN turno personale: perde/blocca le Reazioni secondo le regole di Sfinimento. Non è danno di tipo Sfinimento e non è un effetto sul nemico. Una volta per Riposo Lungo. Costo iniziale modificabile: 1 Materia.',
+        equipaggiata=False, forme=[dict(nome='Mille Tagli', tipo='Attiva · Attacco', livello='1', costo='1 Materia', cooldown='1 Riposo Lungo',
+            descrizione='', unlockRequirements={'subtrait': 'riflessi', 'subtraitValue': 9, 'namedNpcKills': {'erik_i': 1}},
             costoStrutturato=dict(resource='materia', amountExpression='1', minimum=1, maximum=1, variable=False),
             cooldownStrutturato=cooldown(1, 'riposi_lunghi'))])
     thousand['forme'][0]['descrizione'] = thousand['descrizione']
+    thousand['forme'][0]['effettiStrutturati'] = [dict(id='senka_thousand_cuts',
+        type='planar', target='senka_thousand_cuts', valueExpression='0',
+        recipient='nemico', mode='prossima_azione', elementType='tagliente')]
     # The mask is now wearable equipment, not a second passive Fate Title.
     mask_item = dict(nome='Maschera di Senka — L’Ombra Mascherata', peso=.1, quantita=1,
         note=mask['leggenda']+'\n'+mask['buff']+'\n'+mask['skill']+'\n'+mask['puntoCieco'],
@@ -150,11 +187,11 @@ def build():
             recipient='se_stesso', enabled=True, narrativeText=clone['descrizione'])])]
     clone['descrizione'] += ' Limite TOTALE per fight: max(1, min(16, 2 × livello)). Livello 0: 1; livello 1: 2; livello 4: 8; dal livello 8: 16. Contano anche i cloni morti o assorbiti: la fusione non libera nuovi utilizzi.'
     clone['forme'][0]['descrizione'] = clone['descrizione']
-    fusion_text = 'Richiede Velo +6 raggiunto senza buff temporanei. Usa UN’Azione, senza altri costi, per fondere Senka con TUTTI i suoi Cloni d’ombra attualmente presenti nel fight. I cloni assorbiti scompaiono e non generano morte nemica, EXP o Drop. Senka riceve come HP temporanei la somma della loro Vita ATTUALE. Riceve inoltre floor(somma Volontà dei cloni/10), floor(somma Materia/10) e floor(somma Oculum/10): prima somma, poi arrotonda per difetto. Nessun bonus Resilienza. Tutti questi benefici durano fino a fine fight. Esempio: due cloni con 7 Volontà ciascuno danno +1 Volontà. I cloni assorbiti contano ancora nel limite totale evocabile per fight. Runtime personale della nuova versione; verificare separatamente i fight condivisi.'
+    fusion_text = 'Richiede Velo permanente 13 raggiunto senza buff temporanei. Usa UN’Azione, senza altri costi, per fondere Senka con TUTTI i suoi Cloni d’ombra attualmente presenti nel fight. I cloni assorbiti scompaiono e non generano morte nemica, EXP o Drop. Senka riceve come HP temporanei la somma della loro Vita ATTUALE. Riceve inoltre floor(somma Volontà dei cloni/10), floor(somma Materia/10) e floor(somma Oculum/10): prima somma, poi arrotonda per difetto. Nessun bonus Resilienza. Tutti questi benefici durano fino a fine fight. Esempio: due cloni con 7 Volontà ciascuno danno +1 Volontà. I cloni assorbiti contano ancora nel limite totale evocabile per fight. Runtime personale della nuova versione; verificare separatamente i fight condivisi.'
     fusion = dict(nome='Confluenza delle Ombre', tipo='Attiva · Supporto', costo='Nessun costo',
         cooldown='', descrizione=fusion_text, equipaggiata=False,
         forme=[dict(nome='Confluenza delle Ombre', tipo='Attiva · Supporto', livello='1', costo='Nessun costo',
-            descrizione=fusion_text, unlockRequirements={'subtrait':'velo','subtraitValue':6,'permanentOnly':True},
+            descrizione=fusion_text, unlockRequirements={'subtrait':'velo','subtraitValue':13,'permanentOnly':True},
             costoStrutturato=dict(resource='nessuna',amountExpression='0',minimum=0,maximum=0,variable=False),
             effettiStrutturati=[dict(id='senka_shadow_fusion_v1',type='planar',target='senka_shadow_fusion',
                 valueExpression='1',mode='immediato',duration='1',durationUnit='fight',recipient='se_stesso',enabled=True,
@@ -181,8 +218,15 @@ def build():
     )
     sheet['notePersonaggio'] = sheet['notePersonaggio'].replace('I bonus della maschera sono nel Titolo separato omonimo, inizialmente non equipaggiato', 'I bonus della maschera sono nell’ITEM indossabile omonimo, inizialmente non equipaggiato')
     sheet['notePersonaggio'] = sheet['notePersonaggio'].replace('BASE NUMERICA PROPOSTA, MODIFICABILE: RES 3, VOL 1, MAT 1, OCU 4', 'BASE NUMERICA CONFERMATA, MODIFICABILE: RES 3, VOL 1, MAT 2, OCU 4 (10 punti), più @Stats+4 a ciascuna statistica da Un Ricordo della Luna e +1 VOL da Vendetta')
-    sheet['notePersonaggio'] = 'Femmina, 16 anni; Mhunan lunare di Lost Town. Aspetto normale volutamente aperto. Dieci punti base confermati: RES3/VOL1/MAT2/OCU4, più i bonus razziali e dei Titoli. Maschera ITEM indossabile, inizialmente disattivata: applica i bonus una sola volta. Le nuove riserve della trasformazione, lo Scudo Oculum, i cloni e la fusione richiedono la nuova build: importare il codice non aggiorna il motore di una vecchia app. Impalamento disponibile subito, separato dalla presa e con costo 2 Oculum. Teletrasporto, Mille Tagli e Open sono registrati come evoluzioni future: i loro automatismi completi restano in lavorazione e vanno verificati prima dello sblocco. Ogni costo, durata, requisito, effetto e statistica resta modificabile. Nessuna scheda di Sky inclusa.'
+    sheet['notePersonaggio'] = 'Femmina, 16 anni; Mhunan lunare di Lost Town. Aspetto normale volutamente aperto. Dieci punti base confermati: RES3/VOL1/MAT2/OCU4, più i bonus razziali e dei Titoli. Maschera ITEM indossabile, inizialmente disattivata: applica i bonus una sola volta. Le nuove riserve della trasformazione, lo Scudo Oculum, i cloni e la fusione richiedono la nuova build: importare il codice non aggiorna il motore di una vecchia app. Impalamento disponibile subito, separato dalla presa e con costo 2 Oculum. Teletrasporto, Mille Tagli e Open si sbloccano con i requisiti registrati nella scheda e richiedono la nuova versione del motore. I test di combattimento e quelli della rete sono riportati separatamente nel rapporto della patch. Ogni costo, durata, requisito, effetto e statistica resta modificabile. Nessuna scheda di Sky inclusa.'
+    sheet['background'] += '\n\nI GENITORI\nPer Senka i suoi genitori erano tutto. Erano persone semplici: il padre era un tuttofare, molto affettuoso, che ripudiava i Solari per ciò che avevano fatto e continuavano a fare alla loro gente. La madre cuciva vestiti, era estremamente gentile e cordiale e dipingeva fantastici ritratti lunari. Uno dei suoi ritratti è ancora appeso nella locanda. I loro nomi e il soggetto preciso del quadro restano da definire.'
+    sheet['notePersonaggio'] += '\nBackground e incubo: bozza narrativa modificabile, in attesa della versione canonica che invierà il giocatore. Per Senka i genitori erano tutto; padre tuttofare affettuoso, madre sarta e pittrice gentile e cordiale. Un suo ritratto lunare resta appeso nella locanda.'
+    sheet['planarRuntime']['authoredTitleRequirements'] = {fate['chiaveSistema']: {'speciesAny':['guardia_solare','guardia_solare_elite'], 'kills':3}}
+    sheet['planarRuntime']['senkaBackgroundStatus'] = 'draft_awaiting_user_canon'
     sheet['background'] += '\n\nINCUBO RICORRENTE — IL GIORNO DELLA PIAZZA\n' + (ROOT / 'docs/personaggi/SENKA_INCUBO.txt').read_text(encoding='utf-8').strip()
+    sheet['background'] += '\n\nSenka e Sky abitano nei piani più bassi di Lost Town, in una modesta stanza doppia della taverna pagata da Haniel, sotto i circoli solari di Erik e Lusier.'
+    sheet['relicArtPackId'] = 'senka_kamaria'
+    readable_skill_costs(sheet)
     power_file = ROOT / 'output/characters/lusier_iii/potenza.json'
     if power_file.exists():
         measured = json.loads(power_file.read_text(encoding='utf-8'))

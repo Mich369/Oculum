@@ -2299,6 +2299,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'inMasterParty': sheetInMasterPartyAt(index),
       'realtimeRestrictedByMaster': true,
       'publicTokenSide': sheetSideAt(index),
+      'senkaMoonSource': index == schedaCorrente
+          ? senkaMoonOpenActive
+          : oculumSenkaMoonActiveInSheet(schedePersonaggio[index]),
       'publicInitiativeBase': base,
       'publicInitiativeTotal': readIntValue(token['initiativeTotal']),
       'publicInitiativeRollHidden': token.isNotEmpty,
@@ -2828,6 +2831,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'side': '${tokens[i]['side'] ?? 'ally'}',
             'status': '${tokens[i]['status'] ?? 'ready'}',
             'corruptedByTag': corruptionOwnerForToken(tokens[i]),
+            'downed': masterInitiativeTokenIsDowned(tokens[i]),
             'targetControlChancePercent': corruptionControlChanceForToken(
               tokens[i],
             ),
@@ -2848,6 +2852,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               'provokerTurns',
               'totalPowerExhaustionTurns',
               'auraPowerRevision',
+              'scostuFocusTarget',
+              'scostuFocusTurn',
+              'senkaMoonSource',
+              'senkaClone',
+              'senkaCloneFirstTurn',
+              'meccanioReactionsOnly',
             ])
               if (tokens[i].containsKey(key)) key: tokens[i][key],
             for (final key in [
@@ -2872,11 +2882,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'reportedTurn': max(0, readIntValue(tokens[i]['reportedTurn'])),
             'actionUsed': readBoolValue(tokens[i]['actionUsed']),
             'reactionMax': max(
-              1,
+              tokens[i]['senkaClone'] == true ? 0 : 1,
               readIntValue(tokens[i]['reactionMax'], fallback: 1),
             ),
             'reactionFastMax': max(
-              1,
+              tokens[i]['senkaClone'] == true ? 0 : 1,
               readIntValue(tokens[i]['reactionFastMax'], fallback: 1),
             ),
             'extraFastReactionCurrent': readIntValue(

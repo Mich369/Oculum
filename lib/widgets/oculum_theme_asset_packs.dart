@@ -9,24 +9,48 @@ class OculumThemeAssetPack {
     this.motif,
     this.motion, {
     this.framePackId,
+    this.identityPrefix = 'identity',
+    this.storySceneAsset,
+    this.storySceneMobileAsset,
+    this.relicAsset,
+    this.preserveStoryFraming = false,
   });
   final String id, name, motif, motion;
   final String? framePackId;
+  final String identityPrefix;
+  final String? storySceneAsset, storySceneMobileAsset, relicAsset;
+  final bool preserveStoryFraming;
   String get _frameId => framePackId ?? id;
   String buttonFrame(String state) =>
-      "assets/themes/$_frameId/frames/identity-$state.png";
+      "assets/themes/$_frameId/frames/$identityPrefix-$state.png";
   String get identityFrame => buttonFrame('normal');
   String get identitySurface =>
-      "assets/themes/$_frameId/frames/identity-surface.png";
-  String get relic => "assets/themes/$_frameId/overlays/relic.png";
-  String get storyScene => 'assets/oculum/theme_stories/webp/$id.webp';
+      "assets/themes/$_frameId/frames/$identityPrefix-surface.png";
+  String get relic =>
+      relicAsset ?? "assets/themes/$_frameId/overlays/relic.png";
+  String get storyScene =>
+      storySceneAsset ?? 'assets/oculum/theme_stories/webp/$id.webp';
   String frame(String role, {String variant = ""}) =>
       "assets/themes/$_frameId/frames/$role${variant.isEmpty ? "" : "-$variant"}.png";
   String scene({required bool mobile, String variant = ""}) =>
+      relicAsset ??
       "assets/themes/$_frameId/decorations/scene${mobile ? "-mobile" : ""}${variant.isEmpty ? "" : "-$variant"}.png";
 }
 
 const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
+  'senka_kamaria': OculumThemeAssetPack(
+    'senka_kamaria',
+    'Senka · Un Ricordo della Luna',
+    'Lost Town, Sky al sicuro e Haniel tra le ombre',
+    'Filamenti d’ombra e riflesso lunare protettivo',
+    framePackId: 'moon_iron',
+    identityPrefix: 'senka-identity',
+    storySceneAsset: 'assets/oculum/home_art/theme_senka_kamaria_v3.png',
+    storySceneMobileAsset:
+        'assets/oculum/home_art/theme_senka_kamaria_mobile_v2.png',
+    relicAsset: 'assets/oculum/home_art/relic_senka_kamaria_v1.png',
+    preserveStoryFraming: true,
+  ),
   ...oculumStoryThemePacks,
   ...oculumAdditionalElementArtPacks,
   'canva_ice': OculumThemeAssetPack(

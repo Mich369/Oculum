@@ -573,6 +573,26 @@ dynamic oculumCopyJsonTree(dynamic value) {
   return value;
 }
 
+Map<String, dynamic> oculumFallenEyeInheritedSkill(Map skill) {
+  final raw = Map<String, dynamic>.from(oculumCopyJsonTree(skill) as Map);
+  if ((raw['forme'] as List? ?? const []).isNotEmpty ||
+      (raw['forms'] as List? ?? const []).isNotEmpty) {
+    return raw;
+  }
+  // ArtSkill and CharacterSkill have different JSON schemas. Passing an Art
+  // directly to CharacterSkill.fromJson silently creates one empty form.
+  if (!raw.containsKey('evo1') && !raw.containsKey('effettiPerLivello')) {
+    return raw;
+  }
+  final adapted = oculumEquipmentAbilityFromArt(ArtSkill.fromJson(raw));
+  return {
+    ...raw,
+    ...adapted.toJson(),
+    if ('${raw['id'] ?? ''}'.isNotEmpty) 'id': raw['id'],
+    'fallenEyeArtSkill': true,
+  };
+}
+
 void oculumFallenEyeApplyInheritedPowers(Map<String, dynamic> eye) {
   final data = eye['sheetData'] as Map<String, dynamic>;
   final nativeMonster =
@@ -632,17 +652,26 @@ void oculumFallenEyeApplyInheritedPowers(Map<String, dynamic> eye) {
   }
 
   for (final skill in eye['originalSkills'] as List? ?? const []) {
-    if (skill is Map) known[skillKey(skill)] = skill;
+    if (skill is Map) {
+      final inherited = oculumFallenEyeInheritedSkill(skill);
+      known[skillKey(inherited)] = inherited;
+    }
   }
   for (final skill in data['skills'] as List? ?? const []) {
-    if (skill is Map) known[skillKey(skill)] = skill;
+    if (skill is Map) {
+      final inherited = oculumFallenEyeInheritedSkill(skill);
+      known[skillKey(inherited)] = inherited;
+    }
   }
   // Monster Book creatures define their real techniques inside the first
   // monster Art. Keep those same Skill objects in the sheet Skill list too,
   // so an Eye learns exactly the monster's opening techniques.
   for (final art in original) {
     for (final skill in (art['skills'] as List? ?? const [])) {
-      if (skill is Map) known[skillKey(skill)] = skill;
+      if (skill is Map) {
+        final inherited = oculumFallenEyeInheritedSkill(skill);
+        known.putIfAbsent(skillKey(inherited), () => inherited);
+      }
     }
   }
   eye['originalSkills'] = oculumCopyJsonTree(known.values.toList());
@@ -764,7 +793,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'monsterBookSourceId',
       'derivedMaxHp',
       'hpGradeMultiplier',
+      'manualHpMaximumAdjustment',
       'conditionImmunities',
+      'hiddenEyeStats',
       'resilienza',
       'currentResilienza',
       'volonta',
@@ -776,6 +807,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'maxOculum',
       'cmRapido',
       'attaccoRapido',
+      'difesaRapida',
+      'vcRapido',
+      'movimentoRapido',
+      'fortuna',
       'immaginePersonaggioBase64',
       'spriteAssetPath',
       'primaryColor',
@@ -787,7 +822,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'colorGuiPresetId',
       'themeDecorationIntensityScale',
     ]) {
-      if (source.containsKey(key)) body[key] = source[key];
+      if (source.containsKey(key)) body[key] = oculumCopyJsonTree(source[key]);
     }
     body['arti'] = <dynamic>[];
     body['skills'] = <dynamic>[];

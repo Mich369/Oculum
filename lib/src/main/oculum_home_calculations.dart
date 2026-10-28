@@ -29,7 +29,8 @@ int oculumDirectSubtraitQuickBonus({
   for (final text in texts) {
     for (final match in command.allMatches(text)) {
       final key = oculumDynamicFormulaKey(match.group(1) ?? '');
-      if (!targets.contains(key) && !targets.contains(key.replaceAll('_', ''))) {
+      if (!targets.contains(key) &&
+          !targets.contains(key.replaceAll('_', ''))) {
         continue;
       }
       final amount = int.tryParse(match.group(3) ?? '') ?? 0;
@@ -1051,7 +1052,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'oculum' => OculumConditionTarget.oculum,
       _ => null,
     };
-    return max(
+    final subtotal = max(
       0,
       current +
           runtimeCurrentStatBonus(key) +
@@ -1064,6 +1065,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
               ? 0
               : conditionFlatModifier(conditionTarget)),
     );
+    return subtotal + senkaMoonStatBonus(key, subtotal);
   }
 
   int resilienzaTotale() => max(
@@ -1076,7 +1078,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   );
   int volontaTotale() => max(
     0,
-    currentStatWithRuntimeBuffs('volonta', currentVolonta()) -
+    currentStatWithRuntimeBuffs('volonta', currentVolonta()) +
+        scostuVeteranWillBonus(
+          currentStatWithRuntimeBuffs('volonta', currentVolonta()),
+        ) -
         planePressurePenalty,
   );
   int materiaTotale() => max(
@@ -1088,18 +1093,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   // Oculum addormentato blocks the whole available pool, including temporary
   // and runtime bonuses. The raw controller value remains intact so waking
   // does not destroy recoveries or saved bonuses.
-  int oculumTotale() => isMeccanio || isThunderBot
-      ? 0
-      : max(
-          0,
-          oculumVisibleTotal(
-                storedCurrent: currentOculum(),
-                runtimeBonus:
-                    runtimeCurrentStatBonus('oculum') + cycleFateGiftBonus,
-                sleeping: oculumAddormentato,
-              ) -
-              planePressurePenalty,
-        );
+  int oculumTotale() {
+    if (isMeccanio || isThunderBot) return 0;
+    final subtotal = max(
+      0,
+      oculumVisibleTotal(
+            storedCurrent: currentOculum(),
+            runtimeBonus:
+                runtimeCurrentStatBonus('oculum') + cycleFateGiftBonus,
+            sleeping: oculumAddormentato,
+          ) -
+          planePressurePenalty,
+    );
+    return subtotal + senkaMoonStatBonus('oculum', subtotal);
+  }
 
   String? titleQuickCommandKey(String rawCommand) {
     final command = rawCommand.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
@@ -5354,16 +5361,22 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       // Manifestation preserves the remaining shield, rather than minting the
       // full shield each time the same title is summoned again.
       item.scudoIntegritaCorrente = itemIntegrityShieldCurrent(item);
-      item.scudoIntegritaOculumCorrente = itemIntegrityOculumShieldCurrent(item);
+      item.scudoIntegritaOculumCorrente = itemIntegrityOculumShieldCurrent(
+        item,
+      );
     }
-    final shieldBonus = titleItem ? item.scudoIntegritaCorrente : itemShieldBonus(item);
+    final shieldBonus = titleItem
+        ? item.scudoIntegritaCorrente
+        : itemShieldBonus(item);
     if (shieldBonus != 0) {
       scudoController.text = max(
         0,
         leggiNumero(scudoController) + shieldBonus * segno,
       ).toString();
     }
-    final oculumShieldBonus = titleItem ? item.scudoIntegritaOculumCorrente : itemOculumShieldBonus(item);
+    final oculumShieldBonus = titleItem
+        ? item.scudoIntegritaOculumCorrente
+        : itemOculumShieldBonus(item);
     if (oculumShieldBonus != 0) {
       scudoOculumController.text = max(
         0,
@@ -5659,8 +5672,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (manual.isNotEmpty) return manual;
     final parts = danniPerElemento();
     if (parts.isEmpty) return 'sconosciuto';
-    final typed = parts.entries.where((e) =>
-      !const {'fisico', 'magia', 'sconosciuto'}.contains(e.key));
+    final typed = parts.entries.where(
+      (e) => !const {'fisico', 'magia', 'sconosciuto'}.contains(e.key),
+    );
     final entries = typed.isEmpty ? parts.entries : typed;
     var best = entries.first;
     for (final entry in entries.skip(1)) {
@@ -5798,7 +5812,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (row['type'] == 'pending_target' && row['effect'] is Map) {
         final effect = row['effect'] as Map;
         final type = '${effect['type'] ?? ''}';
-        if (!defense && const {'danno', 'danno_percentuale', 'planar'}.contains(type)) {
+        if (!defense &&
+            const {'danno', 'danno_percentuale', 'planar'}.contains(type)) {
           final element = '${effect['elementType'] ?? ''}'.trim();
           if (element.isNotEmpty) return oculumNormalizeElementId(element);
         }

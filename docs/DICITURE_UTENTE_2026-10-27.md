@@ -439,3 +439,61 @@ Interpretazione operativa: il dado esplode sul3, con massimo tre esplosioni/rila
 «la prossima espansione grande con tutte le cose che abbiamo definito sarà l'ultima col log fino a quello detto ultimamente poi ci saranno i log di ogni patch separati dalle versioni che hai saltato con l'update»
 
 Transizione futura registrata: ultimo cumulativo nella prossima grande espansione, poi log per patch e recupero dei log intermedi saltati. La build stabile attualmente in preparazione conserva il cumulativo esistente.
+
+
+## Aggiunte del 28 ottobre 2026 — diciture più recenti
+
+> open buff si attiva con open | open skill si può usare sempre anche usando un'altra open ma si potenzia solo se si usa la sua open
+
+> ci sono le eccezioni
+
+> solo la maschera non deve essere equipaggiata
+
+> Titolo Lusier "Io, Padrone del Io"
+
+Conferme numeriche e domande risolte riportate integralmente nella sezione «Conferme 28 ottobre 2026 — Skill Open, Lusier e Scostubanditi» di OCULUM_REGOLE_CONFERMATE.md e nel manuale: protezione15/30%; Skill aggiunge ai Danni il maggiore Riflessi/Precisione; Scudo Oculum anche oltre150; Open colpisce tutti gli avversari; 91–100 potenzia solo quel raggio; Buff contemporaneo, Vitalium metà deficit per eccesso e1 Scudo critico; +15 dopo il raggio preciso ignora Difesa ma non Scudi.
+
+> simula anche un combattimento simulato tra loro due ma con lei che ha il suo stesso potere totale essendo lvl 12
+
+Conferma: nella copia di simulazione Senka dispone di tutte le evoluzioni compatibili; il personaggio originale resta livello1.
+
+> i due nuovi scostubanditi se veterano uccide e deruba del tutto a fine fight se solo errante a loro deruba di più sempre a fine fight
+
+Conferma: sono Errato e Veterano dell'Errato, non una rinomina. Solo vittime sconfitte rimaste nelle mani della squadra vincitrice; Veterano100%, Errato75%, Titoli Item esclusi, nessuna rapina di chi fugge o vince.
+
+> se c'è un veterano insieme agli errati avranno +5% volontà te il veterano +15% e quando riuscirà a colpire qualcuno avranno +2 per colpirlo fino a turno successivo o una sua difesa riuscita
+
+Conferma: aura non cumulativa, persa quando il Veterano muore/fugge; +2 solo agli Errati, fino al turno successivo del Veterano o alla difesa riuscita del bersaglio; si rinnova, non si accumula.
+
+## Ultime conferme del 28 ottobre — Vitalium e temi
+
+> ogni mostro deve avere il suo tema con la sua reliquia ricordatelo stile artwork come accordato
+
+Tema e reliquia visiva specifici per ciascun mostro e variante, Rame fatato; non trasformare questa indicazione visiva in nuovi drop automatici. Il Monster Book conserva l'assenza di ritratti imposti.
+
+> si ferma alla vita massima e facciamo 65% attuale e 10% totale
+
+Vitalium Solare: cura aggiuntiva 65% Vita attuale +10% Vita massima, entro il massimo. Altre risorse/Art metà mancante per eccesso, +1 Scudo critico: confermato «Sì, cambia solo la cura Vita». Questa è la correzione finale rispetto alla precedente metà del deficit e alla proposta intermedia 50%+25%.
+
+### Tema di Senka e codici — 28 ottobre
+
+> migliora i codici dei personaggi, per mettere costi leggibili e funzionanti, tutto nel punto giusto [...] in basso a destra Sky felice nella stanza [...] nella foresta nascosto si vede Haniel molto nello scuro e poco visibile
+
+> luna comunque segno buono
+
+> loro stanno a lost town nei piani più bassi
+
+Risposte esplicite: spicchio come «Apparizione: eccezione per questo tema». Composizione approvata: foresta ai margini, Haniel quasi nascosto fra alberi, piccola apertura sulla stanza di Sky in basso a destra, centro libero. Non estendere l'eccezione a tutti i temi. Stile Rame fatato e nessuna fata associata alla Luna. Costi leggibili e dati strutturati coerenti, JSON modificabile.
+
+Riga P03a Vitalium: approvazione locale esplicita dopo riga intera, adattamento e 13 test passati; pubblicazione separata.
+
+Conferme aggiuntive: «PT uguale con maschera attiva», «Si riattiva automaticamente», «Ruba tre dei quattro oggetti». Immagini Senka: «Sì, approvo queste immagini». Per il testo del background l'ordine richiesto è cognome prima: «Kamaria Senka»; ciò non rinomina automaticamente gli identificativi o i codici del personaggio.
+
+
+## Conferme del 28 ottobre — crescita personale di Senka
+
+Ultima correzione esplicita: Confluenza delle Ombre richiede **Velo permanente 13**, senza requisito aggiuntivo di livello; sostituisce Velo6 e le proposte12. Nei requisiti conta il totale permanente della scheda, comprese derivata e bonus fissi, escludendo maschera e buff temporanei. Mille Tagli richiede livello6, Riflessi permanenti6 e uccisione di **Erik I**, registrata per i partecipanti aventi diritto con confronto PT personale. Una Guardia Elité anonima non sostituisce Erik. Uso: maschera e coltello,1 Materia, una volta/Riposo Lungo, un turno di Sfinimento a Senka.
+
+Ultima correzione utente del28 ottobre: **Mille Tagli richiede Riflessi permanenti9 e uccisione di Erik I, nessun livello minimo**. L’uccisione di Erik sblocca questa Skill anche se Erik è più debole di Senka alla sconfitta: eccezione nominale, non deroga generale ai requisiti delle altre uccisioni. Sostituisce livello6/Riflessi6 e confronto PT per questo requisito. Fusione resta Velo permanente13, senza livello minimo aggiuntivo.
+
+Correzione generale successiva del28 ottobre: le uccisioni richieste per la progressione valgono anche quando il nemico ha fino a25 PT in meno del partecipante: nemicoPT >= propriaPT−25. Differenza26 o maggiore non vale. PT sconosciuta, evocati e duplicati restano esclusi. L’obiettivo nominale Erik I per Mille Tagli conserva la sua eccezione anche oltre questa tolleranza.

@@ -4,6 +4,103 @@ part of '../../main.dart';
 
 int oculumScostuRobbedObser(int obser, {int percent = 75}) =>
     (max(0, obser) * percent.clamp(0, 100) / 100).floor();
+const oculumErratoMonsterId = 'scostubandito_errato';
+const oculumVeteranErratoMonsterId = 'scostubandito_veterano_errato';
+bool oculumIsErratoBandit(String id) =>
+    id == oculumErratoMonsterId || id == oculumVeteranErratoMonsterId;
+String _oculumBanditSide(Map token) =>
+    token['side'] == 'enemy' ? 'enemy' : 'party';
+bool _oculumBanditPresent(Map token) =>
+    !const {'dead', 'fled', 'expired'}.contains('${token['status']}') &&
+    token['dead'] != true &&
+    token['summonExpired'] != true &&
+    token['shadowCloneExpired'] != true &&
+    token['outsideFight'] != true;
+bool _oculumBanditDefeated(Map token) =>
+    token['downed'] == true ||
+    token['dead'] == true ||
+    token['scostuNonLethalDowned'] == true ||
+    const {'dead', 'downed'}.contains('${token['status']}') ||
+    token['currentHp'] != null && readIntValue(token['currentHp']) <= 0;
+
+/// Pure resolution for a finished encounter. Unknown or still contestable
+/// outcomes never take inventory away from a player.
+List<Map<String, dynamic>> oculumErratoFightSettlements(Iterable<Map> tokens) {
+  final all = tokens.toList();
+  final settlements = <Map<String, dynamic>>[];
+  for (final side in const ['enemy', 'party']) {
+    final winners = all
+        .where(
+          (t) =>
+              _oculumBanditSide(t) == side &&
+              _oculumBanditPresent(t) &&
+              !_oculumBanditDefeated(t) &&
+              oculumIsErratoBandit(
+                '${t['monsterBookId'] ?? t['monsterBookSourceId'] ?? ''}',
+              ),
+        )
+        .toList();
+    if (winners.isEmpty) continue;
+    final opponents = all
+        .where(
+          (t) =>
+              _oculumBanditSide(t) != side &&
+              t['encounterObject'] != true &&
+              t['isSummon'] != true,
+        )
+        .toList();
+    if (opponents.any(
+      (t) => _oculumBanditPresent(t) && !_oculumBanditDefeated(t),
+    )) {
+      continue;
+    }
+    final veteran = winners.any(
+      (t) =>
+          '${t['monsterBookId'] ?? t['monsterBookSourceId'] ?? ''}' ==
+          oculumVeteranErratoMonsterId,
+    );
+    for (final victim in opponents.where(
+      (t) =>
+          t['status'] != 'fled' &&
+          t['status'] != 'expired' &&
+          t['outsideFight'] != true &&
+          _oculumBanditDefeated(t),
+    )) {
+      final tag =
+          '${victim['sheetTag'] ?? victim['sourceTag'] ?? victim['id'] ?? ''}';
+      if (tag.isEmpty) continue;
+      settlements.add({
+        'victimTag': tag,
+        'percent': veteran ? 100 : 75,
+        'lethal': veteran,
+        'winnerSide': side,
+      });
+    }
+  }
+  return settlements;
+}
+
+int oculumErratoVeteranWillPercent(
+  String monsterId,
+  String side,
+  Iterable<Map> tokens,
+) {
+  if (!oculumIsErratoBandit(monsterId)) return 0;
+  final alliedVeteran = tokens.any(
+    (t) =>
+        _oculumBanditSide(t) == side &&
+        _oculumBanditPresent(t) &&
+        !_oculumBanditDefeated(t) &&
+        '${t['monsterBookId'] ?? t['monsterBookSourceId'] ?? ''}' ==
+            oculumVeteranErratoMonsterId,
+  );
+  return !alliedVeteran
+      ? 0
+      : monsterId == oculumVeteranErratoMonsterId
+      ? 15
+      : 5;
+}
+
 bool oculumThunderTeleportWins(int natural, int total, int opposing) =>
     natural > 10 && total > opposing;
 bool oculumScostuPacketCritical(Map request) =>
@@ -12,6 +109,155 @@ bool oculumScostuPacketCritical(Map request) =>
     readIntValue(request['scostuCriticalRoll'], fallback: 100) < 25;
 
 extension _OculumStormBandits on _OculumHomePageState {
+  List<Map<String, dynamic>> scostuEnrichedTokens(Iterable<Map> tokens) => [
+    for (final raw in tokens)
+      {
+        ...Map<String, dynamic>.from(raw),
+        'monsterBookId': monsterBookIdForCombatToken(
+          Map<String, dynamic>.from(raw),
+        ),
+      },
+  ];
+
+  int scostuVeteranWillBonus(int base) {
+    if (!currentCombatIsActive() ||
+        !oculumIsErratoBandit(faunaCurrentMonsterId)) {
+      return 0;
+    }
+    final mine = onlineCombatTokens()
+        .where((t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente))
+        .firstOrNull;
+    if (mine == null) return 0;
+    final percent = oculumErratoVeteranWillPercent(
+      faunaCurrentMonsterId,
+      _oculumBanditSide(mine),
+      scostuEnrichedTokens(onlineCombatTokens()),
+    );
+    return (max(0, base) * percent / 100).floor();
+  }
+
+  List<Map<String, dynamic>> scostuFightSettlements(Iterable<Map> tokens) =>
+      oculumErratoFightSettlements(scostuEnrichedTokens(tokens));
+
+  void receiveScostuFightSettlements(Map reward) {
+    final fight = '${reward['id'] ?? ''}';
+    if (fight.isEmpty) return;
+    for (final raw
+        in (reward['scostuSettlements'] as List? ?? []).whereType<Map>()) {
+      final tag = '${raw['victimTag'] ?? ''}';
+      faunaForOwnedSheet(tag, () {
+        // This receipt remains in the sheet even after another fight/rest.
+        final sheet = schedePersonaggio[schedaCorrente];
+        final claimed =
+            (planarState['claimedScostuSettlementIds'] as List? ?? [])
+                .map((e) => '$e')
+                .toSet();
+        if (!claimed.add('$fight:$tag')) return;
+        planarState['claimedScostuSettlementIds'] = claimed.toList();
+        final percent = readIntValue(raw['percent']).clamp(0, 100);
+        final money = max(0, leggiNumero(obserController));
+        final lost = oculumScostuRobbedObser(money, percent: percent);
+        obserController.text = '${money - lost}';
+        final eligible = inventario
+            .where(
+              (i) =>
+                  i.quantita > 0 &&
+                  i.craftData['titleItem'] != true &&
+                  i.craftData['senkaMask'] != true &&
+                  i.craftData['unstealable'] != true,
+            )
+            .toList();
+        final total = eligible.fold<int>(0, (n, i) => n + i.quantita);
+        var remaining = oculumScostuRobbedObser(total, percent: percent);
+        final removed = remaining;
+        for (final item in eligible) {
+          final take = min(remaining, item.quantita);
+          if (take == item.quantita && item.equipaggiata) {
+            applicaScudoItemAttuale(item, -1);
+            removeConditionsFromSource(item.nome);
+          }
+          item.quantita -= take;
+          remaining -= take;
+          if (remaining == 0) break;
+        }
+        inventario.removeWhere((i) => i.quantita <= 0);
+        if (raw['lethal'] == true) {
+          currentHpController.text = '0';
+          feriteMorte = max(3, feriteMorte);
+          personaggioCaduto = false;
+          sheet['personaggioMorto'] = true;
+          for (final token in _writableOnlineCombatTokens().where(
+            (t) => onlineCombatTokenTag(t) == tag,
+          )) {
+            token['status'] = 'dead';
+            token['dead'] = true;
+            token['currentHp'] = 0;
+          }
+        } else if (hpCorrenti() <= 0) {
+          currentHpController.text = '1';
+        }
+        invalidateDerivedDataCaches();
+        aggiungiLog(
+          '[SCOSTUBANDITI · FINE FIGHT] ${raw['lethal'] == true ? 'Il Veterano uccide la vittima rimasta nelle sue mani.' : 'L’Errato lascia la vittima in vita.'} Rubati $lost Obser e $removed oggetti ($percent%); Titoli Item esclusi.',
+        );
+        programmaSalvataggio();
+      });
+    }
+  }
+
+  void scostuResolveCoordination(Map<String, dynamic> request) {
+    final target = '${request['targetTag'] ?? ''}';
+    if (target.isEmpty) return;
+    if ('${request['encounterId'] ?? ''}'.isNotEmpty &&
+        request['encounterId'] != onlineCombatEncounterId) {
+      return;
+    }
+    final id = '${request['id'] ?? ''}';
+    if (id.isNotEmpty && !faunaReceipt('errato-coordination:$id')) return;
+    final tokens = _writableOnlineCombatTokens();
+    if (request['outcome'] == 'avoided' ||
+        readIntValue(request['defense']) >= readIntValue(request['attack'])) {
+      for (final token in tokens.where(
+        (t) => t['scostuFocusTarget'] == target,
+      )) {
+        token.remove('scostuFocusTarget');
+        token.remove('scostuFocusTurn');
+      }
+      return;
+    }
+    if (request['sourceMonsterBookId'] != oculumVeteranErratoMonsterId ||
+        readIntValue(request['attack']) <= readIntValue(request['defense'])) {
+      return;
+    }
+    for (final token in tokens.where(
+      (t) => onlineCombatTokenTag(t) == request['sourceTag'],
+    )) {
+      token['scostuFocusTarget'] = target;
+      token['scostuFocusTurn'] = readIntValue(token['reportedTurn']);
+    }
+  }
+
+  int scostuVeteranAccuracyAgainst(String target) {
+    if (faunaCurrentMonsterId != oculumErratoMonsterId) return 0;
+    final tokens = onlineCombatTokens();
+    final mine = tokens
+        .where((t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente))
+        .firstOrNull;
+    if (mine == null) return 0;
+    return tokens.any(
+          (t) =>
+              monsterBookIdForCombatToken(t) == oculumVeteranErratoMonsterId &&
+              _oculumBanditSide(t) == _oculumBanditSide(mine) &&
+              _oculumBanditPresent(t) &&
+              !_oculumBanditDefeated(t) &&
+              t['scostuFocusTarget'] == target &&
+              readIntValue(t['scostuFocusTurn']) ==
+                  readIntValue(t['reportedTurn']),
+        )
+        ? 2
+        : 0;
+  }
+
   bool get isBanditFamily => const {
     'scostubanditi',
     'scostubanditi_empatico',
@@ -365,8 +611,12 @@ extension _OculumStormBandits on _OculumHomePageState {
     }
   }
 
-  void scostuNonLethalDefeat({int robberyPercent = 75}) {
-    if (faunaReceipt('scostu-robbery:$onlineCombatEncounterId')) {
+  void scostuNonLethalDefeat({
+    int robberyPercent = 75,
+    String banditSourceId = '',
+  }) {
+    if (!oculumIsErratoBandit(banditSourceId) &&
+        faunaReceipt('scostu-robbery:$onlineCombatEncounterId')) {
       final money = max(0, leggiNumero(obserController));
       final lost = oculumScostuRobbedObser(money, percent: robberyPercent);
       obserController.text = '${money - lost}';
@@ -379,6 +629,9 @@ extension _OculumStormBandits on _OculumHomePageState {
     )) {
       token['downed'] = true;
       token['scostuNonLethalDowned'] = true;
+      if (oculumIsErratoBandit(banditSourceId)) {
+        token['scostuDeferredDefeat'] = true;
+      }
     }
   }
 
@@ -552,6 +805,9 @@ extension _OculumStormBandits on _OculumHomePageState {
       if (token.remove('scostuNonLethalDowned') == true) {
         token['downed'] = false;
       }
+      token.remove('scostuDeferredDefeat');
+      token.remove('scostuFocusTarget');
+      token.remove('scostuFocusTurn');
     }
   }
 }

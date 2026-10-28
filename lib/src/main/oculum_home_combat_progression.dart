@@ -2326,7 +2326,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   int masterInitiativeFastReactionMax(Map<String, dynamic> token) {
     if (totalPowerTokenExhausted(token)) return 0;
-    if (token['senkaClone'] == true) return token['senkaCloneFirstTurn'] == true ? 1 : 0;
+    if (token['senkaClone'] == true) {
+      return token['senkaCloneFirstTurn'] == true ? 1 : 0;
+    }
     if (token['outsideFight'] == true) {
       return max(0, readIntValue(token['outsideFast']));
     }
@@ -2379,7 +2381,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final poolInitialized = readBoolValue(token['reactionPoolInitialized']);
     final poolRound = readIntValue(token['reactionPoolRound']);
     if (!poolInitialized) return 0;
-    if (token['senkaClone'] == true && token['senkaCloneFirstTurn'] == true) return 0;
+    if (token['senkaClone'] == true && token['senkaCloneFirstTurn'] == true) {
+      return 0;
+    }
     if (poolRound == 0 &&
         token['mechaReactionOnly'] != true &&
         readBoolValue(token['reactionNormalFirstRoundLocked'])) {
@@ -3084,6 +3088,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'tieBreaker': Random().nextInt(1 << 31),
       'status': 'ready',
       'notes': sheetNotes,
+      'senkaMoonSource': index == schedaCorrente
+          ? senkaMoonOpenActive
+          : oculumSenkaMoonActiveInSheet(schedePersonaggio[index]),
       'visibleTitleName': titoloPubblico?.nome ?? '',
       'visibleTitleLegend': titoloPubblico?.leggenda ?? '',
       if (schedePersonaggio[index]['planarRuntime'] is Map &&
@@ -3114,7 +3121,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'reactionFastUsed': 0,
       'reactionFastTurnKey': '',
       'actionUsed': false,
-      if ((schedePersonaggio[index]['planarRuntime'] as Map? ?? {})['senkaClone'] == true) ...{
+      if ((schedePersonaggio[index]['planarRuntime'] as Map? ??
+              {})['senkaClone'] ==
+          true) ...{
         'senkaClone': true,
         'senkaCloneFirstTurn': true,
         'meccanioReactionsOnly': true,
@@ -3195,6 +3204,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['vitalWills'] = previous['vitalWills'] ?? token['vitalWills'];
       token['downed'] = previous['downed'] ?? token['downed'];
       token['reportedTurn'] = previous['reportedTurn'] ?? token['reportedTurn'];
+      if (previous.containsKey('scostuFocusTarget')) {
+        token['scostuFocusTarget'] = previous['scostuFocusTarget'];
+        token['scostuFocusTurn'] = previous['scostuFocusTurn'];
+      }
+      for (final key in ['scostuDeferredDefeat', 'scostuNonLethalDowned']) {
+        if (previous.containsKey(key)) token[key] = previous[key];
+      }
       token['reflexExperience'] = previous['reflexExperience'] ?? 0;
       token['reflexTieAwardKey'] = previous['reflexTieAwardKey'];
       if (readBoolValue(previous['oculumShadowClone'])) {
@@ -5409,6 +5425,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool magicalAttack = false,
     bool nonLethal = false,
     int nonLethalRobberyPercent = 75,
+    String nonLethalBanditSourceId = '',
     bool criticalShieldAlreadyBroken = false,
   }) async {
     if (parasiteHiddenInHost) {
@@ -5907,8 +5924,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         modifiedDamage: dannoDopoRegoleElementali,
         bonusPercent: abilityResistance,
       );
-      if (abilityResistance > 0 && afterAbilityResistance != dannoDopoRegoleElementali) {
-        aggiungiLog('[AFFINITÀ] $abilityResistance punti percentuali di resistenza a ${elementDisplayName(elementoAttivo)}: $dannoDopoRegoleElementali → $afterAbilityResistance (limite 90%).');
+      if (abilityResistance > 0 &&
+          afterAbilityResistance != dannoDopoRegoleElementali) {
+        aggiungiLog(
+          '[AFFINITÀ] $abilityResistance punti percentuali di resistenza a ${elementDisplayName(elementoAttivo)}: $dannoDopoRegoleElementali → $afterAbilityResistance (limite 90%).',
+        );
       }
       var dannoModificato = resolvedResistance
           ? 1
@@ -6215,9 +6235,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (temp > 0 && rimanente > 0) {
         final assorbito = min(temp, rimanente);
         temp -= assorbito;
-        if(senkaMaskItem!=null || senkaIsClone) {
-          senkaRuntime['fusionTemporaryHpRemaining']=max(0,
-            readIntValue(senkaRuntime['fusionTemporaryHpRemaining'])-assorbito);
+        if (senkaMaskItem != null || senkaIsClone) {
+          senkaRuntime['fusionTemporaryHpRemaining'] = max(
+            0,
+            readIntValue(senkaRuntime['fusionTemporaryHpRemaining']) -
+                assorbito,
+          );
         }
         rimanente -= assorbito;
       }
@@ -6325,7 +6348,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       if (nonLethal && hp <= 0 && hpPrima > 0) {
         hp = 1;
-        scostuNonLethalDefeat(robberyPercent: nonLethalRobberyPercent);
+        scostuNonLethalDefeat(
+          robberyPercent: nonLethalRobberyPercent,
+          banditSourceId: nonLethalBanditSourceId,
+        );
       }
       if (hp <= 0 && hpPrima > 0 && !nonLethal) {
         final revived = tryFuocherelliSecondLife(

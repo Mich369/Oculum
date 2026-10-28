@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-28",
+  "kind": "code-native authored SVG UI identity",
+  "sourceRenderer": "scripts/build_theme_identities.cjs (bounded reuse of SVG renderer only)",
+  "motif": "Maschera nera a due fori/circoli, filamenti d’ombra, spicchio lunare buono",
+  "material": "astral",
+  "readingCenter": "transparent, same safe UI rail as existing theme",
+  "existingAssetsOverwritten": false,
+  "gameplayChanged": false,
+  "assets": [
+    {
+      "state": "normal",
+      "asset": "assets/themes/moon_iron/frames/senka-identity-normal.png",
+      "sha256": "16d24ef6a03593f6a706faed09e152c3959768b8b56d5d192f768634341c8be6"
+    },
+    {
+      "state": "hover",
+      "asset": "assets/themes/moon_iron/frames/senka-identity-hover.png",
+      "sha256": "2a344eb0fff5464b59115460d6049db76cd005dfc83107a55f0e6456c9aaf181"
+    },
+    {
+      "state": "pressed",
+      "asset": "assets/themes/moon_iron/frames/senka-identity-pressed.png",
+      "sha256": "a2d392ea38505c87966b959ff9916409d41ae019eb963e995c3ea721be28135d"
+    },
+    {
+      "state": "selected",
+      "asset": "assets/themes/moon_iron/frames/senka-identity-selected.png",
+      "sha256": "0f3e424ac142e0e6186c67616b2d604d5fb4c6ba5f332fdc275ffefe78b9dbe8"
+    },
+    {
+      "state": "disabled",
+      "asset": "assets/themes/moon_iron/frames/senka-identity-disabled.png",
+      "sha256": "316759d301ce4189d2b0e6e552aa166ddbbb988c1e681c9ed898a2b6fc771d0a"
+    },
+    {
+      "state": "surface",
+      "asset": "assets/themes/moon_iron/frames/senka-identity-surface.png",
+      "sha256": "a9180920bf7fc432f32971ef1500632fd2524b68f8e408a5f9cc9101da526880"
+    }
+  ]
+}

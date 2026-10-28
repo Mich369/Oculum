@@ -76,12 +76,12 @@ String oculumCombatTurnStatus(
   }
 
   final encounterId = '${encounter['encounterId'] ?? encounter['id'] ?? ''}';
+  bool belongsToEncounter(Object? id) =>
+      encounter['combatEnded'] != true &&
+      ('$id' == encounterId ||
+          (encounter['mergedEncounterIds'] as List? ?? const []).contains(id));
   for (final request in requests) {
-    if (encounter['combatEnded'] == true ||
-        ('${request['encounterId'] ?? ''}' != encounterId &&
-            !(encounter['mergedEncounterIds'] as List? ?? const []).contains(
-              request['encounterId'],
-            )) ||
+    if (!belongsToEncounter(request['encounterId']) ||
         !const {
           'pending',
           'rolling',
@@ -96,7 +96,7 @@ String oculumCombatTurnStatus(
     }
   }
   for (final spend in rollingSpends) {
-    if (spend['encounterId'] == encounterId) addSpend(spend);
+    if (belongsToEncounter(spend['encounterId'])) addSpend(spend);
   }
   return [
     fight,

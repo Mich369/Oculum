@@ -1,5 +1,49 @@
 part of '../../main.dart';
 
+bool oculumProgressionEnemyPowerEligible(int enemyPower, int ownerPower) =>
+    enemyPower >= 0 && ownerPower >= 0 && enemyPower >= ownerPower - 25;
+
+/// Only a confirmed death delivered to a participant can call this recorder.
+/// Unknown power is not silently treated as an eligible enemy.
+Map<String, dynamic> oculumRecordPersonalProgressionKills(
+  Map previous,
+  Iterable<Map> enemies,
+  String encounter,
+  int ownerPower,
+) => oculumRecordMonsterKills(
+  previous,
+  enemies.where(
+    (enemy) =>
+        oculumProgressionEnemyPowerEligible(
+          readIntValue(enemy['totalPower'], fallback: -1),
+          ownerPower,
+        ) &&
+        ('${enemy['monsterSheetTag'] ?? ''}'.trim().isNotEmpty ||
+            '${enemy['id'] ?? ''}'.trim().isNotEmpty),
+  ),
+  encounter,
+);
+
+/// Named objectives use authored identity metadata, never a display name or
+/// the generic monster species that the NPC was built from.
+Map<String, dynamic> oculumRecordNamedNpcProgressionKills(
+  Map previous,
+  Iterable<Map> enemies,
+  String encounter,
+  int ownerPower,
+) => oculumRecordMonsterKills(previous, [
+  for (final enemy in enemies)
+    if ('${enemy['canonicalNpc'] ?? ''}'.trim().isNotEmpty &&
+        // Authored exception: Erik's death unlocks Senka's technique even when
+        // she has already surpassed his power. Other named NPCs retain the gate.
+        ('${enemy['canonicalNpc']}'.trim() == 'erik_i' ||
+            oculumProgressionEnemyPowerEligible(
+              readIntValue(enemy['totalPower'], fallback: -1),
+              ownerPower,
+            )))
+      {...enemy, 'monsterBookId': '${enemy['canonicalNpc']}'.trim()},
+], encounter);
+
 Map<String, dynamic> oculumRecordMonsterKills(
   Map previous,
   Iterable<Map> enemies,
@@ -14,7 +58,12 @@ Map<String, dynamic> oculumRecordMonsterKills(
     if (id.isEmpty) continue;
     final current = Map<String, dynamic>.from(result[id] as Map? ?? {});
     final ids = (current['killIds'] as List? ?? []).map((e) => '$e').toSet();
-    final key = '$encounter:${enemy['monsterSheetTag'] ?? enemy['id']}';
+    final sheetTag = '${enemy['monsterSheetTag'] ?? ''}'.trim();
+    final enemyId = sheetTag.isNotEmpty
+        ? sheetTag
+        : '${enemy['id'] ?? ''}'.trim();
+    if (enemyId.isEmpty) continue;
+    final key = '$encounter:$enemyId';
     if (!ids.add(key)) continue;
     result[id] = {
       ...current,

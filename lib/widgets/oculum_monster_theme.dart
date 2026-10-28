@@ -146,7 +146,17 @@ class OculumMonsterTheme {
   int get seed => oculumMonsterArtSeed(monster.id);
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
+  String? get relicIllustration => switch (monster.id) {
+    'guardia_solare' => 'assets/oculum/home_art/relic_guardia_solare_v1.png',
+    'guardia_solare_elite' =>
+      'assets/oculum/home_art/relic_guardia_solare_elite_v1.png',
+    _ => null,
+  };
   String? get illustration => switch (monster.id) {
+    'grofix' => 'assets/oculum/home_art/theme_grofix_v1.png',
+    'guardia_solare' => 'assets/oculum/home_art/theme_guardia_solare_v2.png',
+    'guardia_solare_elite' =>
+      'assets/oculum/home_art/theme_guardia_solare_elite_v2.png',
     'mostro_lunare' => 'assets/oculum/home_art/creature_mostro_lunare_v1.png',
     'mostro_lunare_demoniaco' =>
       'assets/oculum/home_art/creature_mostro_lunare_demoniaco_v1.png',
@@ -174,6 +184,10 @@ class OculumMonsterTheme {
     'uomo_maschera_angelica' => 'assets/oculum/home_art/creature_angelico.png',
     'uomo_maschera_viola' => 'assets/oculum/home_art/creature_viola.png',
     'nuvi' => 'assets/oculum/home_art/creature_nuvi.png',
+    _ => null,
+  };
+  String? get illustrationMobile => switch (monster.id) {
+    'grofix' => 'assets/oculum/home_art/theme_grofix_mobile_v1.png',
     _ => null,
   };
   String get shape {
@@ -243,10 +257,25 @@ class OculumMonsterRelic extends StatelessWidget {
   const OculumMonsterRelic({super.key, required this.theme});
   final OculumMonsterTheme theme;
   @override
-  Widget build(BuildContext context) => RepaintBoundary(
-    child: CustomPaint(
-      painter: OculumMonsterRelicPainter(theme),
-      size: const Size(240, 280),
+  Widget build(BuildContext context) => IgnorePointer(
+    child: ExcludeSemantics(
+      child: RepaintBoundary(
+        child: SizedBox(
+          width: 240,
+          height: 280,
+          child: theme.relicIllustration == null
+              ? CustomPaint(painter: OculumMonsterRelicPainter(theme))
+              : Padding(
+                  padding: const EdgeInsets.all(19.2),
+                  child: Image.asset(
+                    theme.relicIllustration!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) =>
+                        CustomPaint(painter: OculumMonsterRelicPainter(theme)),
+                  ),
+                ),
+        ),
+      ),
     ),
   );
 }

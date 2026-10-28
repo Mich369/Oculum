@@ -5,6 +5,24 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Conferme del 28 ottobre — personaggi e progressione',
+    titleEn: 'October 28 confirmations — characters and progression',
+    contentIt: r'''
+Queste correzioni prevalgono sulle diciture storiche successive. I requisiti di crescita considerano il totale permanente della scheda, inclusi derivata e bonus fissi, escludendo maschera e buff temporanei; lo sblocco raggiunto resta acquisito. Le uccisioni richieste valgono anche con un nemico fino a25 PT inferiore al partecipante; PT sconosciuta ed evocati sono esclusi.
+
+Senka: Confluenza delle Ombre richiede Velo permanente13, senza livello minimo aggiuntivo. Mille Tagli richiede Riflessi permanenti9 e uccisione di Erik I, senza livello minimo; Erik vale anche oltre la tolleranza25 PT come eccezione nominale. La Skill usa maschera e coltello,1 Materia, una volta/Riposo Lungo; unico danno Danni attuali + tiro Riflessi + PT, Sfinimento a Senka. Le Open attivano insieme il Buff; le Skill Open restano utilizzabili anche a Open spenta o diversa, potenziate soltanto dalla propria Open, rispettando sblocchi, costi e cooldown.
+
+Lusier III: PT attuale misurata298; Erik I livello8/Grado0:184. Sono valori delle schede distribuite, da ricalcolare se personalizzate. Vitalium Solare: aggiunge65% Vita attuale +10% Vita massima, per eccesso entro il massimo, senza cancellare un eccesso già presente; altre risorse e integrità Art metà del mancante per eccesso, più1 Scudo critico. Il mazzo personale di Lusier è dorato come eccezione; il generico acquistabile non è d'oro.
+
+Errato e Veterano dell'Errato risolvono il furto soltanto a fine fight vittorioso sugli sconfitti rimasti:75% per Errato,100% e morte per Veterano; Titoli Item esclusi. Il75% degli oggetti riguarda il numero, non il valore:quattro oggetti singoli ne perdono tre. Aura Veterano non cumulativa: Errati+5% VOL,Veterano+15%; colpo riuscito concede solo agli Errati+2 contro quel bersaglio, rinnovato senza accumulo fino al turno seguente del Veterano o prima difesa riuscita del bersaglio.
+
+Raccogli conserva lo storico del materiale; Possiedi controlla l'inventario attuale; Consuma paga davvero la quantità una volta per requisito. Un libro di ricette si consuma alla lettura e sblocca le sue ricette agli alleati del party; il Master può vedere tutte le ricette. Gli Occhi dei Caduti conservano statistiche, sottotratti, Skill e Art della creatura viva, rispettando i limiti della rarità e le personalizzazioni salvate.
+''',
+    contentEn: r'''
+Latest confirmations override older wording. Growth uses permanent sheet totals, including derived and fixed bonuses, excluding the mask and temporary buffs. Eligible enemies may be up to25 total power below the participant. Unknown power and summons do not count. Senka's fusion requires permanent Veil13; Thousand Cuts requires permanent Reflexes9 and Erik I's confirmed death, with no level gate. Erik is a named exception to the power limit. Open and its Buff activate together; Open Skills remain usable without their own Open, retaining costs, unlocks and cooldowns. Current measured powers: Lusier298,Erik184. Solar Vitalium adds65% current HP plus10% maximum HP, capped; other resources recover half missing, rounded up, plus one critical shield. Recipe books are consumed and share their unlocks with the party. Fallen Eyes preserve the living creature's actual powers and stats within the existing rarity limits.
+''',
+  ),
+  ManualSection(
     titleIt: 'Lusier III, carte e lettura delle potenze basse',
     titleEn: 'Lusier III, cards and low-power readings',
     contentIt: r'''
@@ -26,7 +44,8 @@ Lusier III is a level13 GradeI Elite Solar Guard with all growth points assigned
   ),
   ManualSection(
     titleIt: 'PT, costi generici e varianti personali — 27 ottobre 2026',
-    titleEn: 'Total Power, generic costs and personal variants — October 27, 2026',
+    titleEn:
+        'Total Power, generic costs and personal variants — October 27, 2026',
     contentIt: r'''
 PT indica la Potenza totale effettiva della scheda. Il parser riconosce @Danni+PT e formule frazionarie. PT non è consentita nelle passive. Usare tutto PT causa Sfinimento per almeno un turno personale, a qualsiasi livello e Grado; una quota causa la stessa probabilità: PT/2 50%, PT/4 25%. Le quote di tutti gli effetti della medesima attivazione si sommano fino al 100%, con un solo controllo. Durate maggiori già previste restano maggiori e uno Sfinimento in corso non viene accorciato.
 

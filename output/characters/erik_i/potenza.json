@@ -1,0 +1,12 @@
+{
+  "totalPower": 184,
+  "level": 8,
+  "grade": 0,
+  "coreStats": {
+    "resilienza": 40,
+    "volonta": 51,
+    "materia": 54,
+    "oculum": 31
+  },
+  "knownBy": "Haniel"
+}

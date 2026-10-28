@@ -8,8 +8,11 @@ part of '../../main.dart';
     };
 
 InventoryItem oculumExplosiveCards({bool lusier = false}) {
-  const description =
-      'Carte flessibili di fibra scura, bordi incisi e sigilli da impatto; non sono d’oro. Grado I. Ogni carta esplode al contatto per 1d25 + floor(Danni attuali del portatore/5), senza aggiungere di nuovo il Danno base. Massimo 5 carte per attacco. I livello 10: 5 carte, recupero 1/turno. II livello 12: 10 carte, recupero 2/turno. III livello 20: 15 carte, recupero 3/turno. Recupero automatico delle carte consumate al proprio turno, entro la capienza; nessuna ricarica togliendo e rimettendo il mazzo. Ogni lancio paga la normale Azione o Reazione di attacco.';
+  final appearance = lusier
+      ? 'Carte dorate del mazzo personale di Lusier III, con bordi incisi e sigilli da impatto. Eccezione personale: il mazzo generico dello shop resta non d’oro.'
+      : 'Carte flessibili di fibra scura, bordi incisi e sigilli da impatto; non sono d’oro.';
+  final description =
+      '$appearance Grado I. Ogni carta esplode al contatto per 1d25 + floor(Danni attuali del portatore/5), senza aggiungere di nuovo il Danno base. Massimo 5 carte per attacco. I livello 10: 5 carte, recupero 1/turno. II livello 12: 10 carte, recupero 2/turno. III livello 20: 15 carte, recupero 3/turno. Recupero automatico delle carte consumate al proprio turno, entro la capienza; nessuna ricarica togliendo e rimettendo il mazzo. Ogni lancio paga la normale Azione o Reazione di attacco.';
   return InventoryItem(
     nome: 'Mazzo di carte esplosive',
     peso: .3,
@@ -28,11 +31,12 @@ InventoryItem oculumExplosiveCards({bool lusier = false}) {
       'marketValueMinimum': 180,
       'marketValueMaximum': 250,
       if (lusier) 'cardsRechargeOverride': 3,
+      if (lusier) 'personalGoldenDeck': true,
     },
     ability: CharacterSkill(
       nome: 'Lancio delle carte esplosive',
       tipo: 'Attacco',
-      costo: 'Nessuna risorsa',
+      costo: 'Nessun costo',
       cooldown: '0',
       descrizione: description,
       equipaggiata: true,

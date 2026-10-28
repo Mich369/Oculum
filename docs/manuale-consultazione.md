@@ -2,6 +2,18 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Conferme del 28 ottobre — personaggi e progressione
+
+Queste correzioni prevalgono sulle diciture storiche successive. I requisiti di crescita considerano il totale permanente della scheda, inclusi derivata e bonus fissi, escludendo maschera e buff temporanei; lo sblocco raggiunto resta acquisito. Le uccisioni richieste valgono anche con un nemico fino a25 PT inferiore al partecipante; PT sconosciuta ed evocati sono esclusi.
+
+Senka: Confluenza delle Ombre richiede Velo permanente13, senza livello minimo aggiuntivo. Mille Tagli richiede Riflessi permanenti9 e uccisione di Erik I, senza livello minimo; Erik vale anche oltre la tolleranza25 PT come eccezione nominale. La Skill usa maschera e coltello,1 Materia, una volta/Riposo Lungo; unico danno Danni attuali + tiro Riflessi + PT, Sfinimento a Senka. Le Open attivano insieme il Buff; le Skill Open restano utilizzabili anche a Open spenta o diversa, potenziate soltanto dalla propria Open, rispettando sblocchi, costi e cooldown.
+
+Lusier III: PT attuale misurata298; Erik I livello8/Grado0:184. Sono valori delle schede distribuite, da ricalcolare se personalizzate. Vitalium Solare: aggiunge65% Vita attuale +10% Vita massima, per eccesso entro il massimo, senza cancellare un eccesso già presente; altre risorse e integrità Art metà del mancante per eccesso, più1 Scudo critico. Il mazzo personale di Lusier è dorato come eccezione; il generico acquistabile non è d'oro.
+
+Errato e Veterano dell'Errato risolvono il furto soltanto a fine fight vittorioso sugli sconfitti rimasti:75% per Errato,100% e morte per Veterano; Titoli Item esclusi. Il75% degli oggetti riguarda il numero, non il valore:quattro oggetti singoli ne perdono tre. Aura Veterano non cumulativa: Errati+5% VOL,Veterano+15%; colpo riuscito concede solo agli Errati+2 contro quel bersaglio, rinnovato senza accumulo fino al turno seguente del Veterano o prima difesa riuscita del bersaglio.
+
+Raccogli conserva lo storico del materiale; Possiedi controlla l'inventario attuale; Consuma paga davvero la quantità una volta per requisito. Un libro di ricette si consuma alla lettura e sblocca le sue ricette agli alleati del party; il Master può vedere tutte le ricette. Gli Occhi dei Caduti conservano statistiche, sottotratti, Skill e Art della creatura viva, rispettando i limiti della rarità e le personalizzazioni salvate.
+
 ## Lusier III, carte e lettura delle potenze basse
 
 Lusier III è una Guardia Solare Élite livello13, Grado I: base56 più i punti di livello e Grado distribuiti una sola volta, Volontà primaria e Oculum secondario. Possiede un abito protettivo di seta ricamata d’oro, una spada sacra +20 Danni Solari, un Vitalium Ridefinito separato, 1 Scudo critico e150 Scudo Oculum. La Potenza Totale va letta dalla scheda effettiva con gli equipaggiamenti attivi.

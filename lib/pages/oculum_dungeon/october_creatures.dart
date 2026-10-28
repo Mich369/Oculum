@@ -29,7 +29,12 @@ final _octoberCreatureEntries = <MonsterBookEntry>[
         'magicShieldDefenseBase': 5,
         'magicShieldDefensePerLevel': 2,
         'nonLethal': true,
-        'robberyPercent': 50,
+        'robberyPercent': veteran ? 100 : 75,
+        'robberyAtFightEnd': true,
+        'killsDefeatedAtFightEnd': veteran,
+        'titleItemsUnstealable': true,
+        'veteranWillAuraPercent': veteran ? 15 : 5,
+        'veteranFocusAccuracyBonus': 2,
       },
       const {},
     ).copyWith(

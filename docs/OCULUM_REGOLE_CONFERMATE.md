@@ -1,5 +1,32 @@
 # Oculum — registro delle regole confermate
 
+## Conferme 28 ottobre 2026 — Skill Open, Lusier e Scostubanditi
+
+### Regola generale delle Open
+
+- **Open e Open Buff si attivano insieme. Le Skill Open sono utilizzabili anche con Open spenta e durante un'altra Open; si potenziano soltanto con la PROPRIA Open/Buff.** Restano requisiti di sblocco, costi, turnistica e cooldown. Questo sostituisce la vecchia restrizione del codice che richiedeva Open attiva: non costituisce un'eccezione personale di Lusier.
+- Un attacco, Skill o Art aggiunge normalmente i Danni attuali del personaggio. Le eccezioni confermate restano: Mille Tagli usa soltanto Danni attuali + tiro Riflessi + PT, senza un secondo Danno base; ciascuna carta esplosiva usa soltanto 1d25 + floor(Danni attuali/5).
+
+### Lusier — «Io, Padrone del Io»
+
+- Titolo equipaggiato, con Open già sbloccata per Lusier. Buff: Difesa +1×livello e 15% di evitare maledizioni/condizioni negative altrimenti riuscite, aggiuntivo al normale tiro difensivo. Con la propria Open: protezione 30% e un ulteriore +1×livello Difesa.
+- Skill con un'arma equipaggiata: ai DANNI aggiunge il maggiore fra Riflessi e Precisione, non al tiro per colpire. Se colpisce ottiene Scudo Oculum pari a 5 + metà per difetto del sottotratto scelto, anche oltre il massimo (150 +12 →162).
+- Punto cieco: mania di grandezza; −5 al tiro per colpire chi è a metà Vita o meno mentre lui è sopra metà Vita. Non è pietà: non vuole perdere altro tempo.
+- Open: dalla mano aperta un raggio solare spesso, capace di inseguire e bersagliare TUTTI gli avversari del fight; +5 per colpire. Danni attuali +1d100+45 Solari. Con 91–100 sul dado, il danno di QUEL raggio aumenta del 25%; nessun aumento permanente dei Danni di Lusier.
+- Open Buff insieme alla Open: un Vitalium Solare per fight. All'uso cura il 65% della Vita attuale +10% della Vita massima, aggiunti alla Vita attuale e fermandosi al massimo; l'arrotondamento resta per eccesso. Recupera metà per eccesso delle altre risorse e dell'integrità Art mancanti e concede +1 Scudo critico; non riduce riserve già oltre il massimo. Ultima correzione esplicita del 28 ottobre: sostituisce la cura precedente e la proposta intermedia 50% attuale +25% massima. L'oggetto si consuma all'uso.
+- Skill Open dal dito: Danni attuali +1d25+15 Solari; con la propria Open diventa Danni attuali +1d50+25 e può colpire fino a due bersagli. Su uno solo NON raddoppia i Danni: usa Precisione +10; se conosce il punto debole lo mira e, se lo centra, aggiunge 15 Danni DOPO il raggio, ignorando soltanto la Difesa e rispettando gli Scudi.
+- Senka: soltanto la maschera inizia non equipaggiata; il coltello è equipaggiato. Lusier indossa abito, spada e mazzo; il Vitalium è un consumabile nell'inventario.
+- Simulazione richiesta: copia separata di Senka a livello12 con la stessa PT effettiva di Lusier, tutte le evoluzioni compatibili e Open sbloccata. Non sostituisce il codice originale di Senka livello1. Riportare scenari e risultati effettivamente verificati, senza dichiarare assenza assoluta di bug.
+
+### Scostubandito Errato e Veterano dell'Errato
+
+- «Errante» nell'ultimo messaggio indicava l'Errato esistente: NON rinominare specie o identificativi.
+- A FINE fight, soltanto se gli Scostubanditi vincono e la vittima sconfitta rimane nelle loro mani: il Veterano uccide e deruba il 100% di Obser e oggetti rubabili; l'Errato normale lascia in vita la vittima e deruba il 75%. I Titoli Item sono esclusi. Chi fugge con successo o vince contro di loro non subisce questa risoluzione. Non sottrarre il bottino durante il singolo attacco; consegna idempotente a fine fight.
+- Con Veterano presente e vivo/non fuggito: Errati alleati +5% Volontà, Veterano +15%. Più Veterani NON moltiplicano l'aura; termina se non ne rimane nessuno valido.
+- Se il Veterano colpisce un bersaglio, SOLO gli Errati alleati (non il Veterano) hanno +2 per colpirlo fino al successivo turno del Veterano o fino a una difesa riuscita del bersaglio, se precedente. Altri colpi rinnovano il +2, non lo accumulano.
+
+Questa sezione registra conferme dell'utente. Le nuove implementazioni e la simulazione sono in lavorazione; le verifiche devono essere registrate separatamente.
+
 ## Log degli aggiornamenti — conferma 27 ottobre 2026
 
 La prossima grande espansione con le aggiunte concordate sarà l'ultima con log cumulativo, completo fino alle indicazioni più recenti. Dalla patch successiva i log saranno separati per versione; chi aggiorna saltando versioni dovrà vedere anche i log intermedi, distinti. Conservare lo storico. Questa è una transizione futura: la versione stabile attualmente in preparazione mantiene il registro cumulativo e la sua base originaria.
@@ -7,7 +34,7 @@ La prossima grande espansione con le aggiunte concordate sarà l'ultima con log 
 ## Lusier III e consegna delle schede — ultime conferme 27 ottobre
 
 - Osservazione: bersagli fino a30 PT più facili di quelli fino a50; fino a20 ancora più facili; fino a10 molto più facili. Ultima conferma: **con PT50 o inferiore, superare la DT di osservazione di almeno5 rivela sia punto debole sia PT esatta, senza naturale minimo**. Il bilanciamento iniziale riduce livello+Velo con divisori2/3/5/8 per le fasce50/30/20/10; i valori derivati sono proposte, non ulteriori numeri dettati dall’utente.
-- PT attuale di Lusier misurata dal motore con equipaggiamenti attivi: **277**. Haniel: «Quando avrai una potenza totale pari o superiore a277, sarai pronta.» In caso di personalizzazioni a Lusier ricalcolare il valore anziché mantenere una soglia ormai vecchia.
+- PT di Lusier misurata dal motore con equipaggiamenti attivi: **298** dopo il nuovo Titolo del28 ottobre; prima era277. Haniel: «Quando avrai una potenza totale pari o superiore a298, sarai pronta.» In caso di personalizzazioni ricalcolare il valore. Misura locale, non certificazione di distribuzione.
 
 - Lusier III è una Guardia Solare Élite di livello 13 e Grado I: tutti i punti di crescita assegnati, priorità Volontà e poi Oculum; 1 Scudo critico e 150 Scudo Oculum. Abito protettivo di seta avorio/bordò ricamata d’oro, coerente con l’artwork approvato. Spada sacra: **+20 Danni Solari**, NON +20 al tiro. Possiede un Vitalium Ridefinito separato dall’arma.
 - Derisione, confronto mentale: difesa persa −5 VOL; pareggio vinto dalla difesa o vittoria entro 5 di margine −3 VOL; vittoria oltre 5 +3 VOL e Vantaggio per colpire Lusier. Variazione VOL e Vantaggio fino a fine fight. Critico negativo suo o positivo della difesa: +5 al prossimo tiro contro di lui. Doppio critico positivo difensivo: +9 **sostituisce** +5 e +10 Danni oltre Difesa nel prossimo attacco; gli Scudi restano applicabili. Non duplicare anche il +9 generico del contrattacco.
@@ -903,3 +930,19 @@ La maggiore facilità delle prove di Percezione o alternative coerenti per scopr
 - Baghest reinterpretato approvato: decorazione in basso a destra durante la Rossa; tema rosso che scurisce al bordò con le notti. Oculiano: bello, occhi aggiuntivi armonici non eccessivi, capelli e occhi viola; equivalente tema Viola che scurisce al viola scuro. Rispettare tutte le regole visive di Oculum/Rame fatato; figure nei temi, non ritratti del Monster Book.
 
 Valori implementativi iniziali delegati, da distinguere dai numeri dell'utente: requisiti e dodici tecniche aggiuntive per ogni variante; Rossa rischio iniziale15 +25 per notte, Viola25 +30 con dominio dopo2 notti, base5 +12 con dominio dopo6; Anti-corruzione reperibile con riserva alchimista90% contro15% normale, prezzo20; pagina30 Obser; riparazione nucleo DT15+livello. Tutti questi valori richiedono verifica finale e rimangono proposte iniziali modificabili, non pubblicazione completata.
+
+## Precisazioni del 28 ottobre — simulazione, maschera e furto
+
+- Simulazione: copia Senka livello12 con PT pari a Lusier CON MASCHERA ATTIVA, tutte le evoluzioni compatibili; originale livello1 invariato.
+- Dopo il turno di disattivazione per critico valido alla maschera, la trasformazione si riattiva AUTOMATICAMENTE.
+- Errato: quattro oggetti singoli rubabili diventano tre rubati, non75% del valore; Titoli Item esclusi. Risoluzione a fine fight vittorioso, sconfitti rimasti soltanto. Arrotondamenti diversi da questo caso non ancora fissati.
+- Tema e reliquia Senka approvati: Lost Town in salita, Sky felice nella stanza dei piani più bassi, Haniel quasi nascosto nella foresta, spicchio di Luna buono come eccezione personale del tema.
+
+
+## Conferme del 28 ottobre — crescita personale di Senka
+
+Ultima correzione esplicita: Confluenza delle Ombre richiede **Velo permanente 13**, senza requisito aggiuntivo di livello; sostituisce Velo6 e le proposte12. Nei requisiti conta il totale permanente della scheda, comprese derivata e bonus fissi, escludendo maschera e buff temporanei. Mille Tagli richiede livello6, Riflessi permanenti6 e uccisione di **Erik I**, registrata per i partecipanti aventi diritto con confronto PT personale. Una Guardia Elité anonima non sostituisce Erik. Uso: maschera e coltello,1 Materia, una volta/Riposo Lungo, un turno di Sfinimento a Senka.
+
+Ultima correzione utente del28 ottobre: **Mille Tagli richiede Riflessi permanenti9 e uccisione di Erik I, nessun livello minimo**. L’uccisione di Erik sblocca questa Skill anche se Erik è più debole di Senka alla sconfitta: eccezione nominale, non deroga generale ai requisiti delle altre uccisioni. Sostituisce livello6/Riflessi6 e confronto PT per questo requisito. Fusione resta Velo permanente13, senza livello minimo aggiuntivo.
+
+Correzione generale successiva del28 ottobre: le uccisioni richieste per la progressione valgono anche quando il nemico ha fino a25 PT in meno del partecipante: nemicoPT >= propriaPT−25. Differenza26 o maggiore non vale. PT sconosciuta, evocati e duplicati restano esclusi. L’obiettivo nominale Erik I per Mille Tagli conserva la sua eccezione anche oltre questa tolleranza.

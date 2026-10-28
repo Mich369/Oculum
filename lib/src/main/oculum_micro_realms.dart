@@ -329,6 +329,12 @@ extension _OculumMicroRealms on _OculumHomePageState {
         },
       ),
     );
+    recordProgressionMaterialCollection(
+      material.id,
+      grams,
+      'realm:$selectedPlaneId:$id:${raw['remainingGrams']}',
+      name: material.name,
+    );
     aggiungiLog(
       '[ESTRAZIONE] ${material.name}: ${grams / 1000} kg. Restano ${readIntValue(raw['remainingGrams']) / 1000} kg nel giacimento.',
     );

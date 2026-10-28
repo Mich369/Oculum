@@ -1,11 +1,297 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'oculum_escape_provoker_test.dart' as fixtures;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 
 void main() {
+  testWidgets(
+    'moon boosts the full transformed core once and ends without restoring its spent Open',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      final sheet =
+          Map<String, dynamic>.from(
+              jsonDecode(
+                    File(
+                      'output/characters/senka_kamaria/Senka_Kamaria.json',
+                    ).readAsStringSync(),
+                  )
+                  as Map,
+            )
+            ..['id'] = p.ownerTag()
+            ..['sheetTag'] = p.ownerTag();
+      p.load(sheet);
+      final title = (state.titoli as List).cast<OculumTitle>().singleWhere(
+        (t) => t.openEffects.any((e) => e.target == 'senka_moon_open'),
+      );
+      title.evoluto = true;
+      final mask = (state.inventario as List).cast<InventoryItem>().singleWhere(
+        (i) => i.craftData['senkaMask'] == true,
+      );
+      p.manifestSenkaMask(mask, true);
+      p.invalidateDerivedCaches();
+      final before = p.coreStats();
+      title.openAttiva = true;
+      title.openUsedSinceLongRest = true;
+      p.invalidateDerivedCaches();
+      final boosted = p.coreStats();
+      for (final key in before.keys) {
+        expect(
+          boosted[key],
+          before[key]! + (before[key]! * .30).floor(),
+          reason: key,
+        );
+      }
+      p.load(p.snapshot());
+      p.invalidateDerivedCaches();
+      expect(p.coreStats(), boosted);
+      p.senkaEndFight();
+      p.invalidateDerivedCaches();
+      expect(p.coreStats(), before);
+      final restored = (state.titoli as List).cast<OculumTitle>().singleWhere(
+        (t) => t.openEffects.any((e) => e.target == 'senka_moon_open'),
+      );
+      expect(restored.openAttiva, false);
+      expect(restored.openUsedSinceLongRest, true);
+      await closeFixture(tester, p);
+    },
+  );
+  testWidgets(
+    'lunar cuts require the evolved title and only its own Open upgrades the frozen volley',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      final sheet =
+          Map<String, dynamic>.from(
+              jsonDecode(
+                    File(
+                      'output/characters/senka_kamaria/Senka_Kamaria.json',
+                    ).readAsStringSync(),
+                  )
+                  as Map,
+            )
+            ..['id'] = p.ownerTag()
+            ..['sheetTag'] = p.ownerTag();
+      p.load(sheet);
+      final title = (state.titoli as List).cast<OculumTitle>().singleWhere(
+        (t) => t.openEffects.any((e) => e.target == 'senka_moon_open'),
+      );
+      final effects = title.skillExtra.single.effects;
+      expect(p.prepareSenka(effects), isNull);
+      title.evoluto = true;
+      final weak = p.prepareSenka(effects)!.single;
+      final weakData = jsonDecode(weak.narrativeText) as Map;
+      expect(readIntValue(weakData['cuts']), inInclusiveRange(1, 6));
+      expect(readIntValue(weakData['damagePerCut']), p.damageTotal() ~/ 6);
+      expect(weak.maximumTargets, weakData['cuts']);
+      title.openAttiva = true;
+      final strong = p.prepareSenka(effects)!.single;
+      final strongData = jsonDecode(strong.narrativeText) as Map;
+      expect(readIntValue(strongData['cuts']), inInclusiveRange(1, 8));
+      expect(strongData['ownOpen'], true);
+      expect(
+        effects.single.diceExpression,
+        '1d6',
+        reason: 'the editable definition is never overwritten',
+      );
+      title.openAttiva = false;
+      expect(
+        (jsonDecode(p.prepareSenka(effects)!.single.narrativeText)
+            as Map)['ownOpen'],
+        false,
+      );
+      await closeFixture(tester, p);
+    },
+  );
+  testWidgets(
+    'mask protects only the aimed mask and resumes after a valid critical; Mille Tagli is one packet',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      final sheet =
+          Map<String, dynamic>.from(
+              jsonDecode(
+                    File(
+                      'output/characters/senka_kamaria/Senka_Kamaria.json',
+                    ).readAsStringSync(),
+                  )
+                  as Map,
+            )
+            ..['id'] = p.ownerTag()
+            ..['sheetTag'] = p.ownerTag();
+      p.load(sheet);
+      final mask = (state.inventario as List).cast<InventoryItem>().singleWhere(
+        (i) => i.craftData['senkaMask'] == true,
+      );
+      p.manifestSenkaMask(mask, true);
+      expect(
+        p.senkaShadowEvades({'targetBodyPart': 'mask', 'element': 'tagliente'}),
+        true,
+      );
+      expect(
+        p.senkaShadowEvades({
+          'targetBodyPart': 'torso',
+          'element': 'tagliente',
+        }),
+        false,
+      );
+      expect(
+        p.senkaShadowEvades({
+          'targetBodyPart': 'mask',
+          'element': 'spirituale',
+        }),
+        false,
+      );
+      expect(
+        p.senkaShadowEvades({
+          'targetBodyPart': 'mask',
+          'canHitIntangible': true,
+        }),
+        false,
+      );
+      p.senkaMaskHit({
+        'id': 'body',
+        'targetBodyPart': 'torso',
+        'canHitIntangible': true,
+      });
+      expect(mask.equipaggiata, true);
+      final hit = <String, dynamic>{
+        'id': 'mask-critical',
+        'targetBodyPart': 'mask',
+        'canHitIntangible': true,
+      };
+      p.senkaMaskHit(hit);
+      expect(mask.equipaggiata, false);
+      expect(p.manifestSenkaMask(mask, true), false);
+      p.senkaStartTurn();
+      expect(mask.equipaggiata, true);
+      p.senkaMaskHit(hit);
+      expect(
+        mask.equipaggiata,
+        true,
+        reason: 'a replay cannot break the restored mask again',
+      );
+      final expected =
+          p.damageTotal() + 23 + p.totalPower(state.schedaCorrente as int);
+      final attack = <String, dynamic>{
+        'id': 'cuts',
+        'sourceTag': p.ownerTag(),
+        'attack': 23,
+        'effects': [
+          {'target': 'senka_thousand_cuts'},
+        ],
+      };
+      p.claimSenkaAttack(attack);
+      expect(attack['damage'], expected);
+      expect(attack['baseAttack'], false);
+      expect(p.exhausted(), true);
+      p.claimSenkaAttack(attack);
+      expect(attack['damage'], expected);
+      await closeFixture(tester, p);
+    },
+  );
+  testWidgets(
+    'readable Senka costs pay Oculum and variable Matter through the confirmation dialog',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      final sheet =
+          Map<String, dynamic>.from(
+              jsonDecode(
+                    File(
+                      'output/characters/senka_kamaria/Senka_Kamaria.json',
+                    ).readAsStringSync(),
+                  )
+                  as Map,
+            )
+            ..['id'] = p.ownerTag()
+            ..['sheetTag'] = p.ownerTag();
+      p.load(sheet);
+      final mask = (state.inventario as List).cast<InventoryItem>().singleWhere(
+        (i) => i.craftData['senkaMask'] == true,
+      );
+      p.manifestSenkaMask(mask, true);
+      final art = (state.arti as List).cast<CharacterArt>().firstWhere(
+        (a) => a.nome == "L'Ombra Mascherata",
+      );
+      final mantle = oculumEquipmentAbilityFromArt(
+        art.skills.first,
+      ).forme.first;
+      expect(oculumParseAbilityCost(mantle.costo)!.resource, 'oculum');
+      final oculum = p.availableArtResource('oculum');
+      final matter = p.availableArtResource('materia');
+      final useMantle = p.useConfiguredForTest(mantle);
+      var mantleComplete = false;
+      useMantle.then((_) => mantleComplete = true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Conferma').last,
+            )
+            .onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.text('Conferma').last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+        mantleComplete,
+        true,
+        reason: tester
+            .widgetList<Text>(find.byType(Text))
+            .map((t) => t.data)
+            .join(' | '),
+      );
+      expect(await useMantle, true);
+      expect(p.availableArtResource('oculum'), oculum - 3);
+      expect(p.availableArtResource('materia'), matter);
+      final clone = (state.skills as List)
+          .cast<CharacterSkill>()
+          .singleWhere((s) => s.nome == 'Clone d’ombra di Senka')
+          .forme
+          .first;
+      final useClone = p.useConfiguredForTest(clone);
+      var cloneComplete = false;
+      useClone.then((_) => cloneComplete = true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(matter, greaterThanOrEqualTo(2));
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Quantità da spendere'),
+        '2',
+      );
+      await tester.pump();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Conferma').last,
+            )
+            .onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.text('Conferma').last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+        cloneComplete,
+        true,
+        reason: tester
+            .widgetList<Text>(find.byType(Text))
+            .map((t) => t.data)
+            .join(' | '),
+      );
+      expect(await useClone, true);
+      expect(p.availableArtResource('materia'), matter - 2);
+      expect(p.availableArtResource('oculum'), oculum - 3);
+      final summoned = (state.schedePersonaggio as List)
+          .cast<Map>()
+          .singleWhere((s) => s['summonKind'] == 'senka_shadow');
+      expect(readIntValue(summoned['currentHp']), 5);
+      await closeFixture(tester, p);
+    },
+  );
+
   testWidgets(
     'mask refills only transformation reserves; shield repair, damage claims and save are exact',
     (tester) async {
@@ -35,6 +321,10 @@ void main() {
           'coreStats': before,
           'hp': p.currentHp(),
           'maximumHp': p.maximumHp(),
+          'audit': {
+            for (final key in ['resilienza', 'volonta', 'materia', 'oculum'])
+              key: p.coreBonusAudit(key),
+          },
         }),
       );
       final turn = p.combatTurnResources();

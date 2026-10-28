@@ -6,13 +6,392 @@ int oculumSenkaCloneLimit(int level) => max(1, min(16, 2 * max(0, level)));
 int oculumSenkaShieldRecovery(int ownerLevel, int enemyLevel) =>
     min(6, 1 + max(0, enemyLevel - ownerLevel));
 int oculumSenkaBrokenRepair(int roll) => (max(0, roll) * 3 + 3) ~/ 4;
+bool oculumSenkaMoonActiveInSheet(Map sheet) =>
+    sheet['senkaMoonSource'] == true ||
+    (sheet['titoli'] as List? ?? []).whereType<Map>().any(
+      (t) =>
+          t['openAttiva'] == true &&
+          (t['openEffects'] as List? ?? []).whereType<Map>().any(
+            (e) => e['target'] == 'senka_moon_open',
+          ),
+    );
 
 extension _OculumSenkaRuntime on _OculumHomePageState {
+  OculumTitle? get senkaMoonTitle => titoli
+      .where((t) => t.openEffects.any((e) => e.target == 'senka_moon_open'))
+      .firstOrNull;
+  bool get senkaMoonOpenActive => senkaMoonTitle?.openAttiva == true;
+  Map<String, dynamic>? get senkaMoonVolleyPending {
+    for (final entry in activeStructuredEffects) {
+      final effect = entry['effect'];
+      if (entry['type'] == 'pending_target' &&
+          effect is Map &&
+          effect['target'] == 'senka_moon_cuts') {
+        try {
+          return Map<String, dynamic>.from(
+            jsonDecode('${effect['narrativeText']}') as Map,
+          );
+        } on FormatException {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  List<OculumStructuredEffect>? prepareSenkaEffects(
+    List<OculumStructuredEffect> effects, {
+    Random? random,
+  }) {
+    if (!effects.any((e) => e.target == 'senka_moon_cuts')) return effects;
+    final title = senkaMoonTitle;
+    if (title == null || !title.evoluto) {
+      aggiungiLog(
+        'Tagli lunari: devi prima sbloccare l’evoluzione del Ricordo della Luna.',
+      );
+      return null;
+    }
+    return [
+      for (final original in effects)
+        (() {
+          if (original.target != 'senka_moon_cuts') return original;
+          final e = OculumStructuredEffect.fromJson(original.toJson());
+          if (senkaMoonOpenActive && e.diceExpression == '1d6') {
+            e.diceExpression = '1d8';
+          }
+          final roll = oculumResolveStructuredEffectRoll(
+            e,
+            variables: {...formulaValueContext(), 'danni': dannoTotale()},
+            subtraits: hiddenEyeStats,
+            random: random,
+          );
+          final cuts = max(1, roll.dice.rolls.fold<int>(0, (a, b) => a + b));
+          e.maximumTargets = cuts;
+          e.narrativeText = jsonEncode({
+            'cuts': cuts,
+            // The die counts cuts; it is not part of the damage formula.
+            'damagePerCut': max(
+              0,
+              oculumEvaluateFormula(e.valueExpression, {
+                ...formulaValueContext(),
+                'danni': dannoTotale(),
+              }).floor(),
+            ),
+            'ownOpen': senkaMoonOpenActive,
+          });
+          e.valueExpression = '0';
+          e.diceExpression = '';
+          e.includeLevel = e.includeGrade = false;
+          return e;
+        })(),
+    ];
+  }
+
+  Future<List<String>?> selectSenkaMoonCuts(
+    List<String> targets,
+    Map<String, Map<String, dynamic>> byId,
+    int cuts,
+  ) async {
+    if (targets.isEmpty || targets.length > cuts) return null;
+    if (targets.length == 1) return List.filled(cuts, targets.single);
+    final amounts = [
+      cuts - targets.length + 1,
+      for (var i = 1; i < targets.length; i++) 1,
+    ];
+    return showDialog<List<String>>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, update) => AlertDialog(
+          title: Text('Distribuisci $cuts tagli lunari'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Un unico tiro d’attacco. Ogni taglio conserva la difesa del bersaglio.',
+                ),
+                for (var i = 0; i < targets.length; i++)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${byId[targets[i]]?['name'] ?? 'Bersaglio'}: ${amounts[i]}',
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: amounts[i] > 1
+                            ? () => update(() => amounts[i]--)
+                            : null,
+                        icon: const Icon(Icons.remove),
+                      ),
+                      IconButton(
+                        onPressed: amounts.fold<int>(0, (a, b) => a + b) < cuts
+                            ? () => update(() => amounts[i]++)
+                            : null,
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: amounts.fold<int>(0, (a, b) => a + b) == cuts
+                  ? () => Navigator.pop(dialog, [
+                      for (var i = 0; i < targets.length; i++)
+                        ...List.filled(amounts[i], targets[i]),
+                    ])
+                  : null,
+              child: const Text('Conferma'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void syncSenkaMoonToFight() {
+    final own = sheetTagAt(schedaCorrente);
+    for (final token in masterInitiativeTokens) {
+      if (onlineCombatTokenTag(token) == own) {
+        token['senkaMoonSource'] = senkaMoonOpenActive;
+      }
+    }
+    sendRealtimeInitiativeSnapshotIfPublished();
+  }
+
+  int senkaMoonAllyBonus(String key, int base) {
+    if (senkaMoonOpenActive || !currentCombatIsActive()) return 0;
+    final lunar = trattiRazziali.any(
+      (t) => RegExp(
+        'lunare|mhunan|figli.*luna',
+      ).hasMatch('${t.nome} ${t.ottenimento}'.toLowerCase()),
+    );
+    if (!lunar ||
+        !onlineCombatTokens().any(
+          (t) =>
+              t['senkaMoonSource'] == true &&
+              !const {'dead', 'fled', 'expired'}.contains(t['status']),
+        )) {
+      return 0;
+    }
+    return (max(0, base) * .05).floor();
+  }
+
+  int senkaMoonStatBonus(String key, int subtotal) {
+    if (senkaMoonOpenActive) {
+      final effect = senkaMoonTitle!.openEffects.firstWhere(
+        (e) => e.target == 'senka_moon_open',
+      );
+      final percent =
+          max(0, readIntValue(effect.valueExpression, fallback: 25)) +
+          max(0, readIntValue(effect.resource, fallback: 5));
+      return (max(0, subtotal) * percent / 100).floor();
+    }
+    return senkaMoonAllyBonus(key, subtotal);
+  }
+
   InventoryItem? get senkaMaskItem => inventario
       .where((i) => i.quantita > 0 && i.craftData['senkaMask'] == true)
       .firstOrNull;
   bool get senkaMaskActive => senkaMaskItem?.equipaggiata == true;
   bool get senkaIsClone => planarState['senkaClone'] == true;
+  bool get senkaStepPending => activeStructuredEffects.any(
+    (e) =>
+        e['type'] == 'pending_target' &&
+        (e['effect'] as Map?)?['target'] == 'senka_shadow_step',
+  );
+
+  Future<bool> confirmSenkaStepEnvironment(int meters) async =>
+      await showDialog<bool>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: const Text('Passo nell’Ombra'),
+          content: Text(
+            'Conferma un’ombra dell’ambiente visibile entro $meters metri. Il mantello non crea una destinazione valida.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog, false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialog, true),
+              child: const Text('Ombra presente'),
+            ),
+          ],
+        ),
+      ) ==
+      true;
+
+  void grantSenkaStepReward(String receipt, {required bool defense}) {
+    if (!faunaReceipt('senka-step:$receipt')) return;
+    if (!totalPowerExhausted) {
+      unawaited(
+        requestUtilitySpend('speed_grant_fast', preferFreeReaction: false),
+      );
+    }
+    if (!defense) senkaRuntime['stepRollBonus'] = 5;
+    aggiungiLog(
+      'Passo nell’Ombra riuscito: una Reazione veloce e +5 ${defense ? 'alla difesa in arrivo' : 'al prossimo tiro per colpire o difendersi'}.',
+    );
+    programmaSalvataggio();
+  }
+
+  int consumeSenkaStepBonus() =>
+      readIntValue(senkaRuntime.remove('stepRollBonus'));
+
+  void confirmSenkaStepAttack(Map request) {
+    if (request['sourceTag'] != sheetTagAt(schedaCorrente) ||
+        request['senkaShadowStep'] != true ||
+        request['outcome'] == OculumAttackOutcome.avoided.name ||
+        readIntValue(request['attack']) <= readIntValue(request['defense'])) {
+      return;
+    }
+    grantSenkaStepReward('${request['id']}', defense: false);
+  }
+
+  Future<bool> defendSenkaStep(
+    Map<String, dynamic> request,
+    List<OculumStructuredEffect> effects,
+    OculumSkillCost? cost,
+    OculumAbilityCooldown? cooldown,
+  ) async {
+    final origin = sheetTagAt(schedaCorrente);
+    final id = '${request['id']}';
+    bool validStep() =>
+        mounted &&
+        sheetTagAt(schedaCorrente) == origin &&
+        request['status'] == 'pending' &&
+        request['targetTag'] == origin &&
+        request['scope'] == permissionScope &&
+        request['encounterId'] == onlineCombatEncounterId &&
+        controlsOnlineCombatSheet(origin) &&
+        pawnPendingDamage.isEmpty &&
+        senkaMaskActive &&
+        request['referenceMadnessWave'] != true &&
+        !isLusierDerision(request) &&
+        (request['firstDefense'] == null ||
+            request['defenseRetryUsed'] != true);
+    if (!validStep() || !onlineCombatResolving.add(id)) return false;
+    try {
+      final step = effects.firstWhere((e) => e.target == 'senka_shadow_step');
+      if (!await confirmSenkaStepEnvironment(
+            max(1, readIntValue(step.resource, fallback: 6)),
+          ) ||
+          !validStep()) {
+        return false;
+      }
+      if (!await useConfiguredAbility(
+        source: 'Passo nell’Ombra · Difesa',
+        effects: [],
+        cost: cost,
+        cooldown: cooldown,
+        turnResourceOverride: 'reazione',
+        valid: validStep,
+      )) {
+        return false;
+      }
+      if (request['firstDefense'] != null) {
+        request['defenseRetryUsed'] = true;
+        request['defenseRetryApproved'] = true;
+      }
+      request['senkaStepDefense'] = true;
+      onlineCombatResolving.remove(id);
+      await defendOnlineAttack(request, 'velo');
+      return true;
+    } finally {
+      onlineCombatResolving.remove(id);
+    }
+  }
+
+  bool senkaAttackReachesShadow(Map request) =>
+      request['canHitIntangible'] == true ||
+      const {
+        'spirituale',
+        'anima',
+        'ombra',
+        'buio',
+      }.contains(oculumNormalizeElementId('${request['element'] ?? ''}'));
+
+  bool senkaEvadesAsShadow(Map request) {
+    if (!senkaMaskActive || senkaAttackReachesShadow(request)) return false;
+    if (request['targetBodyPart'] == 'mask') return true;
+    return readIntValue(senkaRuntime['shadowUntilTurn']) > playerReportedTurn &&
+        !onlineCombatRequests.values.any(
+          (r) =>
+              r['sourceTag'] == sheetTagAt(schedaCorrente) &&
+              r['status'] == 'pending' &&
+              r['encounterId'] == onlineCombatEncounterId,
+        );
+  }
+
+  void senkaResolveMaskHit(
+    Map<String, dynamic> request, {
+    required bool critical,
+  }) {
+    final item = senkaMaskItem;
+    if (item == null ||
+        !item.equipaggiata ||
+        !critical ||
+        request['targetBodyPart'] != 'mask' ||
+        !senkaAttackReachesShadow(request) ||
+        !faunaReceipt('senka-mask:${request['id']}')) {
+      return;
+    }
+    setSenkaMaskManifested(item, false);
+    senkaRuntime['disabledTurns'] = 1;
+    senkaRuntime['resumeMaskAfterCritical'] = true;
+    aggiungiLog(
+      'La maschera si scheggia: trasformazione interrotta per un turno personale, poi si ricompone automaticamente.',
+    );
+  }
+
+  bool get senkaThousandCutsPending => activeStructuredEffects.any(
+    (e) =>
+        e['type'] == 'pending_target' &&
+        (e['effect'] as Map?)?['target'] == 'senka_thousand_cuts',
+  );
+
+  void claimSenkaAttack(Map<String, dynamic> request) {
+    if (request['sourceTag'] != sheetTagAt(schedaCorrente) ||
+        request['senkaAttackPrepared'] == true) {
+      return;
+    }
+    final effects = (request['effects'] as List? ?? []).whereType<Map>();
+    if (effects.any((e) => e['target'] == 'senka_shadow_step')) {
+      request['damage'] = 0;
+      request['baseAttack'] = false;
+      request['senkaShadowStep'] = true;
+      request['senkaAttackPrepared'] = true;
+      request['abilityName'] = 'Passo nell’Ombra · confronto di Velo';
+    }
+    if (effects.any((e) => e['target'] == 'senka_thousand_cuts')) {
+      request['damage'] = max(
+        0,
+        dannoTotale() +
+            readIntValue(request['attack']) +
+            scoutTotalPowerAt(schedaCorrente),
+      );
+      request['baseAttack'] = false;
+      request['senkaAttackPrepared'] = true;
+      request['abilityName'] = 'Mille Tagli';
+      planarState['totalPowerExhaustionTurns'] = max(
+        1,
+        readIntValue(planarState['totalPowerExhaustionTurns']),
+      );
+      clearTotalPowerReactions();
+      aggiungiLog(
+        'Mille Tagli: unico danno Danni + tiro Riflessi + PT. Senka riceve Sfinimento.',
+      );
+    }
+  }
+
   Map<String, dynamic> get senkaRuntime {
     if (planarState['senka'] is! Map<String, dynamic>) {
       planarState['senka'] = Map<String, dynamic>.from(
@@ -340,6 +719,9 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
       case 'senka_shadow_form':
         senkaRuntime['shadowUntilTurn'] = playerReportedTurn + 1;
         return true;
+      case 'senka_moon_open':
+        syncSenkaMoonToFight();
+        return true;
     }
     return false;
   }
@@ -350,6 +732,11 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
     if (readIntValue(senkaRuntime['disabledTurns']) > 0) {
       senkaRuntime['disabledTurns'] =
           readIntValue(senkaRuntime['disabledTurns']) - 1;
+      if (readIntValue(senkaRuntime['disabledTurns']) == 0 &&
+          senkaRuntime.remove('resumeMaskAfterCritical') == true &&
+          senkaMaskItem != null) {
+        setSenkaMaskManifested(senkaMaskItem!, true);
+      }
     }
     if (readIntValue(senkaRuntime['shadowUntilTurn']) <= playerReportedTurn) {
       senkaRuntime.remove('shadowUntilTurn');
@@ -357,6 +744,13 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
   }
 
   void senkaFightEnd() {
+    final moon = senkaMoonTitle;
+    if (moon?.openAttiva == true) {
+      moon!.openAttiva = false;
+      invalidateDerivedDataCaches();
+      syncSenkaMoonToFight();
+      notifyActiveSheetSummaryChanged();
+    }
     if (senkaMaskItem == null && !senkaIsClone) return;
     senkaRuntime.remove('cloneFight');
     senkaRuntime.remove('cloneCount');

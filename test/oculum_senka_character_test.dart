@@ -64,11 +64,25 @@ void main() {
         attack.toJson(),
       );
       expect(oculumCharacterSkillFormCost(attack.forme.single)!.minimum, 1);
+      expect(attack.costo, '1 Materia');
+      expect(sheet['relicArtPackId'], 'senka_kamaria');
+      expect(sheet['background'], contains('piani più bassi di Lost Town'));
       final clone = abilities.firstWhere(
         (s) => s.nome == 'Clone d’ombra di Senka',
       );
       final cost = oculumCharacterSkillFormCost(clone.forme.single)!;
       expect([cost.resource, cost.minimum, cost.maximum], ['materia', 1, 10]);
+      expect(clone.costo, '1–10 Materia');
+      for (final ability in abilities) {
+        for (final form in ability.forme) {
+          final parsed = oculumParseAbilityCost(form.costo);
+          final actual = oculumCharacterSkillFormCost(form);
+          expect(parsed, isNotNull, reason: '${ability.nome}: ${form.costo}');
+          expect(parsed!.resource, actual!.resource);
+          expect(parsed.minimum, actual.minimum);
+          expect(parsed.maximum, actual.maximum);
+        }
+      }
       expect(clone.descrizione, contains('0 Azioni e 1 Reazione normale'));
     },
   );

@@ -1,0 +1,170 @@
+{
+  "scenario": "bounded production combat resolver",
+  "initialSenka": {
+    "power": 298,
+    "core": {
+      "resilienza": 61,
+      "volonta": 59,
+      "materia": 84,
+      "oculum": 82
+    },
+    "hp": 610,
+    "maxHp": 610
+  },
+  "lusierInitialPower": 298,
+  "allocation": {
+    "resilienza": 42,
+    "volonta": 42,
+    "materia": 63,
+    "oculum": 65
+  },
+  "scriptedCardDice": [
+    7,
+    11,
+    17,
+    19,
+    23
+  ],
+  "trace": [
+    {
+      "id": "duel-cards",
+      "attack": 48,
+      "defense": 39,
+      "damage": 292,
+      "outcome": "full",
+      "receipt": {
+        "oculumShieldLost": 20,
+        "shieldLost": 10,
+        "temporaryHpLost": 0,
+        "hpLost": 183,
+        "pawnPending": false
+      },
+      "shadowAvoided": null,
+      "before": {
+        "hp": 610,
+        "normalShield": 10,
+        "oculumShield": 20,
+        "turn": "Fight I | Azione Kamaria Senka",
+        "resources": {
+          "actions": 1,
+          "reactions": 1,
+          "fast": 0
+        }
+      },
+      "after": {
+        "hp": 427,
+        "normalShield": 0,
+        "oculumShield": 0,
+        "turn": "Fight I | Azione Kamaria Senka",
+        "resources": {
+          "actions": 1,
+          "reactions": 1,
+          "fast": 0
+        }
+      }
+    },
+    {
+      "stage": "turn advancement after the resolved cards",
+      "turn": "Fight I | Azione Lusier III",
+      "resources": {
+        "actions": 0,
+        "reactions": 1,
+        "fast": 0
+      }
+    },
+    {
+      "id": "duel-shadow",
+      "attack": 48,
+      "defense": 20,
+      "damage": 75,
+      "outcome": "avoided",
+      "receipt": {
+        "oculumShieldLost": 0,
+        "shieldLost": 0,
+        "temporaryHpLost": 0,
+        "hpLost": 0,
+        "pawnPending": false
+      },
+      "shadowAvoided": true,
+      "before": {
+        "hp": 427,
+        "normalShield": 0,
+        "oculumShield": 0,
+        "turn": "Fight I | Azione Lusier III",
+        "resources": {
+          "actions": 0,
+          "reactions": 0,
+          "fast": 0
+        }
+      },
+      "after": {
+        "hp": 427,
+        "normalShield": 0,
+        "oculumShield": 0,
+        "turn": "Fight I | Azione Lusier III",
+        "resources": {
+          "actions": 0,
+          "reactions": 0,
+          "fast": 0
+        }
+      }
+    },
+    {
+      "stage": "Open lunare",
+      "cuts": 7,
+      "damagePerCut": 32,
+      "note": "preparazione reale; distribuzione bersagli non simulata in questo scenario"
+    },
+    {
+      "stage": "Mille Tagli",
+      "powerBeforeCost": 402,
+      "powerUsed": 400,
+      "exhausted": true
+    },
+    {
+      "id": "duel-mille",
+      "attack": 47,
+      "defense": 44,
+      "damage": 642,
+      "outcome": "reduced",
+      "receipt": {
+        "oculumShieldLost": 150,
+        "shieldLost": 45,
+        "temporaryHpLost": 0,
+        "hpLost": 23,
+        "pawnPending": false
+      },
+      "shadowAvoided": null,
+      "before": {
+        "hp": 690,
+        "normalShield": 0,
+        "oculumShield": 150,
+        "turn": "Fight I | Azione Lusier III",
+        "resources": {
+          "actions": 1,
+          "reactions": 1,
+          "fast": 0
+        }
+      },
+      "after": {
+        "hp": 667,
+        "normalShield": 0,
+        "oculumShield": 0,
+        "turn": "Fight I | Azione Lusier III",
+        "resources": {
+          "actions": 1,
+          "reactions": 1,
+          "fast": 0
+        }
+      }
+    }
+  ],
+  "limits": [
+    "controlled totals, not dice UI",
+    "no independent network clients",
+    "bounded scenario: no winner or balance estimate",
+    "lunar volley preparation only",
+    "grapple/teleport covered by separate regressions"
+  ],
+  "originalSenkaLevel": 1
+}

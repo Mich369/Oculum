@@ -2,13 +2,33 @@
 part 'oculum_story_theme_identities.dart';
 
 class OculumThemeIdentity {
-  const OculumThemeIdentity(this.id, this.material, this.motion, this.motif);
+  const OculumThemeIdentity(
+    this.id,
+    this.material,
+    this.motion,
+    this.motif, {
+    this.framePackId,
+    this.identityPrefix = 'identity',
+  });
   final String id, material, motion, motif;
-  String get surface => 'assets/themes/$id/frames/identity-surface.png';
-  String frame(String state) => 'assets/themes/$id/frames/identity-$state.png';
+  final String? framePackId;
+  final String identityPrefix;
+  String get _frameId => framePackId ?? id;
+  String get surface =>
+      'assets/themes/$_frameId/frames/$identityPrefix-surface.png';
+  String frame(String state) =>
+      'assets/themes/$_frameId/frames/$identityPrefix-$state.png';
 }
 
 const oculumThemeIdentities = <String, OculumThemeIdentity>{
+  'senka_kamaria': OculumThemeIdentity(
+    'senka_kamaria',
+    'astral',
+    'orbit',
+    'Maschera d’ombra, spicchio lunare protettivo e ricordo di Sky',
+    framePackId: 'moon_iron',
+    identityPrefix: 'senka-identity',
+  ),
   ...oculumStoryThemeIdentities,
   "classic_reliquary": OculumThemeIdentity(
     "classic_reliquary",

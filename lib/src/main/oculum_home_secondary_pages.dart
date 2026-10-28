@@ -328,15 +328,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     ensureArtIntegrityValue(artIndex);
     final maximum = artIntegrityMaximum();
     final current = arti[artIndex].integritaCorrente.clamp(0, maximum).toInt();
-    final senkaRepair = senkaMaskItem != null &&
-        arti[artIndex].nome == "L'Ombra Mascherata";
+    final senkaRepair =
+        senkaMaskItem != null && arti[artIndex].nome == "L'Ombra Mascherata";
     if (current >= maximum && !senkaRepair) return;
 
     final targetArt = arti[artIndex];
     final targetSheetTag = sheetTagAt(schedaCorrente);
     final artName = nomeArtPerAggiustaNucleo(artIndex);
     final medicine = senkaRepair
-        ? hiddenEyeStats.where((s) => s.id == 'velo').map(hiddenEyeTotal).firstOrNull ?? hiddenEyeDerivedBonus('velo')
+        ? hiddenEyeStats
+                  .where((s) => s.id == 'velo')
+                  .map(hiddenEyeTotal)
+                  .firstOrNull ??
+              hiddenEyeDerivedBonus('velo')
         : medicinaAttualeAggiustaNucleo();
     final maximumIntegrityBonus = oculumRepairCoreMaximumIntegrityBonus(
       maximum,
@@ -396,8 +400,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               const SizedBox(height: 12),
               smallInfoText(
                 t(
-                  senkaRepair ? 'Tiri 1d10 + Velo. Lo Scudo Oculum sotto il massimo recupera il totale effettivo, anche oltre 20; se spezzato, tre quarti per eccesso. L’integrità Art segue il suo arrotondamento ordinario.' : 'Confermando tiri una sola volta 1d10 + Medicina. Il totale viene arrotondato alla decina: unità 0–5 in basso, 6–9 in alto.',
-                  senkaRepair ? 'Roll 1d10 + Veil. The mask shield recovers the actual total, or three quarters rounded up if broken; Art integrity keeps its usual rounding.' : 'Confirming rolls 1d10 + Medicine once. The total is rounded to tens: units 0–5 down, 6–9 up.',
+                  senkaRepair
+                      ? 'Tiri 1d10 + Velo. Lo Scudo Oculum sotto il massimo recupera il totale effettivo, anche oltre 20; se spezzato, tre quarti per eccesso. L’integrità Art segue il suo arrotondamento ordinario.'
+                      : 'Confermando tiri una sola volta 1d10 + Medicina. Il totale viene arrotondato alla decina: unità 0–5 in basso, 6–9 in alto.',
+                  senkaRepair
+                      ? 'Roll 1d10 + Veil. The mask shield recovers the actual total, or three quarters rounded up if broken; Art integrity keeps its usual rounding.'
+                      : 'Confirming rolls 1d10 + Medicine once. The total is rounded to tens: units 0–5 down, 6–9 up.',
                 ),
                 color: Colors.grey.shade300,
               ),
@@ -10487,7 +10495,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       }
       final blockedCooldowns = <OculumAbilityCooldown>[
         ?targetArt.openDescriptionCooldown,
-        if (!targetArt.monsterOpenSkill) ?targetArt.openSkillCooldown,
         ?targetArt.openBuffCooldown,
       ].where((cooldown) => !cooldown.ready).toList();
       if (blockedCooldowns.isNotEmpty) {
@@ -10563,7 +10570,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         clearParasite(killed: true);
         art.openUsedSinceLongRest = true;
         art.openDescriptionCooldown?.activate();
-        if (!art.monsterOpenSkill) art.openSkillCooldown?.activate();
         art.openBuffCooldown?.activate();
         dtDebuff = consumeArtIntegrityAndResolveDebuff(
           artIndex,
@@ -10601,13 +10607,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               subtraits: hiddenEyeStats,
               legacyQuickCommands: true,
             ),
-            if (!art.monsterOpenSkill)
-              ...oculumResolveAbilityEffects(
-                art.openSkillEffects,
-                art.openSkill,
-                subtraits: hiddenEyeStats,
-                legacyQuickCommands: true,
-              ),
             ...oculumResolveAbilityEffects(
               art.openBuffEffects,
               art.openBuff,
@@ -10637,10 +10636,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   Future<void> usaSkillOpenMostro(int artIndex) async {
     if (artIndex < 0 || artIndex >= arti.length) return;
     final art = arti[artIndex];
-    if (!art.monsterOpenSkill ||
-        !art.sbloccata ||
-        !art.openAttiva ||
-        !artOpenSbloccata(art)) {
+    if (!art.sbloccata || !art.inUso || !artOpenSbloccata(art)) {
       return;
     }
     final cooldown = art.openSkillCooldown;
@@ -10727,7 +10723,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         sheetTagAt(schedaCorrente) != sourceTag ||
         artIndex >= arti.length ||
         !identical(arti[artIndex], art) ||
-        !art.openAttiva ||
+        !art.inUso ||
         (cooldown != null && !cooldown.ready)) {
       return;
     }
@@ -10876,7 +10872,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         selected < 1 ||
         selected > oculumTotale() ||
         sheetTagAt(schedaCorrente) != sourceTag ||
-        !art.openAttiva ||
+        !art.inUso ||
         !artOpenSbloccata(art) ||
         (art.openSkillCooldown != null && !art.openSkillCooldown!.ready)) {
       return;
@@ -11313,11 +11309,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               initialValue: art.openSkillType,
               onChanged: (value) => art.openSkillType = value,
             ),
-            if (art.monsterOpenSkill) ...[
+            if (art.openSkill.trim().isNotEmpty ||
+                art.openSkillEffects.isNotEmpty) ...[
               FilledButton.icon(
                 onPressed:
                     art.sbloccata &&
-                        art.openAttiva &&
+                        art.inUso &&
                         artOpenSbloccata(art) &&
                         (art.openSkillCooldown?.ready ?? true)
                     ? () => usaSkillOpenMostro(artIndex)
@@ -11326,11 +11323,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 label: const Text('Usa Skill Open'),
               ),
               Text(
-                !art.openAttiva
-                    ? 'Attiva prima l’Open.'
-                    : !(art.openSkillCooldown?.ready ?? true)
+                !(art.openSkillCooldown?.ready ?? true)
                     ? 'Recupero: ${art.openSkillCooldown!.remaining} ${art.openSkillCooldown!.unit}.'
-                    : 'Skill pronta. Il cooldown parte quando la usi.',
+                    : art.openAttiva
+                    ? 'Skill pronta, potenziata dalla propria Open.'
+                    : 'Skill pronta nella forma base, anche durante altre Open.',
               ),
             ],
             structuredCooldownEditor(

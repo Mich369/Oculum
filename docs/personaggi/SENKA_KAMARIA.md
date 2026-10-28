@@ -1,6 +1,16 @@
 # Senka Kamaria — L’Ombra Mascherata
 
+## Aggiornamento 28 ottobre — codice e tema personale
+
+Senka e Sky abitano nei **piani più bassi di Lost Town**, nella modesta stanza doppia della taverna pagata da Haniel. Tema: foresta notturna ai margini, Haniel quasi invisibile fra gli alberi, Sky felice nella stanza in basso a destra; centro leggibile. Lo spicchio di Luna è un'apparizione inspiegabile, **eccezione esplicita solo per questo tema**, segno buono e protettivo. Rame fatato, niente fate associate alla Luna. La reliquia è decorativa e non cambia i poteri della maschera.
+
+Il codice usa costi leggibili come **1 Materia**, **1–10 Materia**, **2 Oculum**, con risorsa strutturata e limiti nei campi effettivi dell'editor. Effetti, descrizione, requisiti e cooldown restano separati e modificabili. Le stringhe non sostituiscono le regole di attivazione del motore.
+
 ## Identità e legami
+
+**Genitori, ultime indicazioni:** per Senka erano tutto; persone semplici, padre tuttofare molto affettuoso che ripudiava i Solari per ciò che fecero e fanno alla loro gente, madre sarta estremamente gentile e cordiale, autrice di fantastici ritratti lunari. Uno è ancora appeso nella locanda. Nomi e soggetto del ritratto restano aperti. La morte conserva la sequenza fissata dall'utente: padre decapitato di netto per non essersi inginocchiato; madre accorre disperata, quattro carte le recidono gli arti e la quinta colpisce al centro della gola, causandone la morte. Cinque colpi di carte **dorate**, eccezione confermata del mazzo personale di Lusier; il mazzo generico dello shop resta non d'oro.
+
+**Stato editoriale:** `SENKA_BACKGROUND_LEGAMI.md` e la resa dell'incubo sono bozze narrative; l'utente le modificherà e invierà la propria versione canonica. Conservare le conferme, senza dichiarare definitiva la prosa attuale.
 
 Femmina, 16 anni; Mhunan lunare di Lost Town. Livello1, Grado0. Aspetto normale intenzionalmente aperto. Nella vita quotidiana è impacciata e deboluccia; indossando la maschera interpreta coscientemente L’Ombra Mascherata: è sempre Senka, senza un’altra coscienza stabilita.
 
@@ -12,7 +22,7 @@ Senka ruba ai ricchi e ai Solari e compie incarichi mascherata per Haniel. Egli 
 
 La morte dei genitori è narrata integralmente come incubo ricorrente in [SENKA_INCUBO.txt](SENKA_INCUBO.txt) e nel Background del codice. Lusier decapitò il padre perché non si inchinò; la madre fu colpita dalle cinque carte mentre accorreva. Kamaria teneva Sky fra le braccia, paralizzata dallo shock. La folla nascose la scena; Haniel prese la sua mano e le portò via.
 
-**Haniel:** «Quando avrai una potenza totale pari o superiore a **277**, sarai pronta.» Il numero proviene dalla misurazione del motore sulla scheda attuale di Lusier con gli equipaggiamenti attivi; il riferimento è `output/characters/lusier_iii/potenza.json`.
+**Haniel:** «Quando avrai una potenza totale pari o superiore a **298**, sarai pronta.» Misura locale del 28 ottobre dopo il nuovo Titolo di Lusier, con equipaggiamenti attivi; sostituisce il precedente277. Riferimento: `output/characters/lusier_iii/potenza.json`. Non certifica la pubblicazione della build.
 
 ## Base e Titoli del Fato
 
@@ -60,3 +70,15 @@ Costi, CD e valori non fissati direttamente sono bilanciamenti iniziali modifica
 Nome, aspetto lasciato aperto, storia, legami, statistiche, sottotratti, inventario, Titoli, requisiti, costi min/max, durate, CD ed effetti rimangono modificabili e conservati nel JSON. Le future capacità sono registrate nel codice; l’importazione non aggiorna il motore di una vecchia app. Il codice non include una scheda separata di Sky né identità/account online privati.
 
 Prove locali, build, pubblicazione GitHub e sessioni online reali sono attestazioni distinte. Consultare i log della versione prima di considerare automatizzato un comportamento descritto soltanto nel testo.
+
+
+## Verifica del 28 ottobre
+
+La maschera è l'unico equipaggiamento iniziale disattivato; il coltello è indossato. La simulazione usa una copia livello12 con PT pari a Lusier e tutte le evoluzioni compatibili: non altera la scheda originale livello1. Regola generale corretta: la Skill Open del Ricordo è utilizzabile anche a Open spenta dopo lo sblocco; soltanto la propria Open ne cambia tagli e CD. Costi e requisiti restano validi. Implementazione completa e simulazione sono ancora in verifica.
+
+
+## Conferme del 28 ottobre — crescita personale di Senka
+
+Ultima correzione esplicita: Confluenza delle Ombre richiede **Velo permanente 13**, senza requisito aggiuntivo di livello; sostituisce Velo6 e le proposte12. Nei requisiti conta il totale permanente della scheda, comprese derivata e bonus fissi, escludendo maschera e buff temporanei. Mille Tagli richiede livello6, Riflessi permanenti6 e uccisione di **Erik I**, registrata per i partecipanti aventi diritto con confronto PT personale. Una Guardia Elité anonima non sostituisce Erik. Uso: maschera e coltello,1 Materia, una volta/Riposo Lungo, un turno di Sfinimento a Senka.
+
+Ultima correzione utente del28 ottobre: **Mille Tagli richiede Riflessi permanenti9 e uccisione di Erik I, nessun livello minimo**. L’uccisione di Erik sblocca questa Skill anche se Erik è più debole di Senka alla sconfitta: eccezione nominale, non deroga generale ai requisiti delle altre uccisioni. Sostituisce livello6/Riflessi6 e confronto PT per questo requisito. Fusione resta Velo permanente13, senza livello minimo aggiuntivo.

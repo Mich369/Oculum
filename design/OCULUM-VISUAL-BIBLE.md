@@ -17,6 +17,8 @@ Natura dispone di due composizioni selezionabili: steli secchi con petali caduti
 Simboli incisi piccoli, bordi sottili e rune incompiute. Nessuna icona ornamentale sostituisce un'azione. Le icone funzionali esistenti conservano significato e area cliccabile.
 
 ## Creature Language
+
+Conferma del 28 ottobre 2026: ogni mostro e variante ha un tema e una reliquia visiva specifici, in stile Rame fatato. Materiali, anatomia, colori ed ambiente devono renderli riconoscibili, evitando il riuso di un generico segnaposto come lavoro definitivo. La reliquia visiva è decorativa e non attribuisce da sola nuovi drop. Mostri e reliquie rispettano i margini e gli spazi dei controlli; nel Monster Book niente ritratto imposto.
 Le illustrazioni originali dei temi possono emergere nei margini e negli spazi scenografici. Nessuna creatura invade i valori o si sovrappone alle etichette. Classic Oculum mantiene il sigillo inciso senza reintrodurre l'occhio nel reliquiario.
 
 ## Background Language

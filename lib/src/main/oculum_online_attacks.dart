@@ -1833,6 +1833,25 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
     }
     final tokens = onlineAttackTokens();
+    final moonVolley = senkaMoonVolleyPending;
+    if (moonVolley != null) {
+      maximumTargets = max(1, readIntValue(moonVolley['cuts']));
+      final side = combatScoutSide(sheetTagAt(schedaCorrente));
+      tokens.removeWhere(
+        (t) => combatScoutSide(onlineCombatTokenTag(t)) == side,
+      );
+    }
+    if (activeStructuredEffects.any(
+      (e) =>
+          e['type'] == 'pending_target' &&
+          e['effect'] is Map &&
+          (e['effect'] as Map)['target'] == 'lusier_open_ray',
+    )) {
+      final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
+      tokens.removeWhere(
+        (t) => combatScoutSide(onlineCombatTokenTag(t)) == ownSide,
+      );
+    }
     if (incomingAttack != null) {
       tokens.removeWhere(
         (token) => onlineCombatTokenTag(token) != incomingAttack['sourceTag'],
@@ -2010,6 +2029,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .where((e) => e['type'] == 'pending_target' && e['effect'] is Map)
         .map((e) => e['effect'] as Map)
         .toList();
+    if (senkaThousandCutsPending) {
+      initialChoice = 'riflessi';
+      choices.removeWhere((choice) => choice.id != 'riflessi');
+      if (choices.isEmpty) return;
+      minimumTargets = maximumTargets = 1;
+    }
+    if (senkaStepPending) {
+      initialChoice = 'velo';
+      choices.removeWhere((choice) => choice.id != 'velo');
+      if (choices.isEmpty) return;
+      minimumTargets = maximumTargets = 1;
+    }
     if (preparedEffects.any((e) => e['target'] == 'lusier_derision')) {
       choices.removeWhere(
         (choice) => !const {
@@ -2185,15 +2216,28 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             incomingAttack == null
         ? redirectProvokedAttack(plan)
         : plan;
-    final controlledPlan = forcedCommand != null || freeReactionId != null
+    final redirectedPlan = forcedCommand != null || freeReactionId != null
         ? plan
         : await redirectCorruptedAttack(provokedPlan);
     if (!mounted ||
-        controlledPlan == null ||
+        redirectedPlan == null ||
         currentSheetScrollId() != origin ||
         encounter != onlineCombatEncounterId) {
       return;
     }
+    final controlledPlan =
+        lusierThinRayPending &&
+            lusierOpenActive &&
+            redirectedPlan.targetIds.length == 1
+        ? OculumAttackPlan(
+            redirectedPlan.targetId,
+            combatTokenWeakPointKnown(byId[redirectedPlan.targetId] ?? const {})
+                ? 'precisione_punto_debole'
+                : 'precisione',
+            redirectedPlan.reason,
+            element: redirectedPlan.element,
+          )
+        : redirectedPlan;
     final currentIds = {
       for (final token in onlineAttackTokens()) onlineCombatTokenTag(token),
     };
@@ -2233,6 +2277,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     final chosenBodyParts = <String, Map<String, dynamic>>{};
+    final moonTargets = moonVolley == null
+        ? null
+        : await selectSenkaMoonCuts(
+            controlledPlan.targetIds,
+            byId,
+            readIntValue(moonVolley['cuts']),
+          );
+    if (moonVolley != null && moonTargets == null) return;
     if (const {
       'precisione',
       'precisione_punto_debole',
@@ -2418,24 +2470,27 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final laerSword =
         planarState['laerSword'] == true ||
         sourceMonsterId == 'laer' && controlledPlan.choiceId == 'vc';
-    final hatTargets = cycleSpines > 0
-        ? oculumRabbitHatHits(controlledPlan.targetIds, cycleSpines)
-        : boneVolley
-        ? List<String>.filled(4, controlledPlan.targetIds.first)
-        : maskedArrows
-        ? oculumRabbitHatHits(controlledPlan.targetIds, maskedArrowCount)
-        : maskedVolley
-        ? oculumMaskedVolleyOrder(
-            controlledPlan.targetIds,
-            readIntValue(
-              masked[maskedPrecision ? 'precisionHits' : 'reflexHits'],
-            ),
-            '${planarState['lastMaskedAttacker'] ?? ''}',
-          )
-        : rabbitHat
-        ? oculumRabbitHatHits(controlledPlan.targetIds, hatStage)
-        : controlledPlan.targetIds;
+    final hatTargets =
+        moonTargets ??
+        (cycleSpines > 0
+            ? oculumRabbitHatHits(controlledPlan.targetIds, cycleSpines)
+            : boneVolley
+            ? List<String>.filled(4, controlledPlan.targetIds.first)
+            : maskedArrows
+            ? oculumRabbitHatHits(controlledPlan.targetIds, maskedArrowCount)
+            : maskedVolley
+            ? oculumMaskedVolleyOrder(
+                controlledPlan.targetIds,
+                readIntValue(
+                  masked[maskedPrecision ? 'precisionHits' : 'reflexHits'],
+                ),
+                '${planarState['lastMaskedAttacker'] ?? ''}',
+              )
+            : rabbitHat
+            ? oculumRabbitHatHits(controlledPlan.targetIds, hatStage)
+            : controlledPlan.targetIds);
     void resolved(int natural, int total) {
+      if (!senkaStepPending) total += consumeSenkaStepBonus();
       final maskedPackets = <Map<String, dynamic>>[];
       final deferredCounterHits = <Map<String, dynamic>>[];
       Future<void>? firstCounterResolution;
@@ -2726,7 +2781,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'attack':
               total -
               readIntValue(chosenBodyParts[selectedTag]?['penalty']) +
-              lusierReplyBonus(selectedTag).accuracy,
+              lusierReplyBonus(selectedTag).accuracy +
+              scostuVeteranAccuracyAgainst(selectedTag),
           'natural': natural,
           if (rabbitHat) 'rabbitHatAdaptRoll': Random.secure().nextInt(100),
           'damage':
@@ -2927,6 +2983,22 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           applyTotalPowerBurstAttack(request);
         }
         if (!claimExplosiveCards(request)) return;
+        claimLusierTitleAttack(request, controlledPlan.targetIds.length);
+        claimSenkaAttack(request);
+        if (moonVolley != null) {
+          final solar =
+              monsterBookIdForCombatToken(selectedToken).contains('solare') ||
+              '${selectedToken['race'] ?? ''} ${selectedToken['type'] ?? ''}'
+                  .toLowerCase()
+                  .contains('solare');
+          request['damage'] =
+              readIntValue(moonVolley['damagePerCut']) * (solar ? 2 : 1);
+          request['element'] = 'lunare';
+          request['baseAttack'] = false;
+          request['senkaMoonCut'] = true;
+          request['abilityName'] =
+              'Tagli lunari · ${hit + 1}/${hatTargets.length}';
+        }
         if (oculumFateCoreReflects(
           monsterBookEntryById(monsterBookIdForCombatToken(byId[selectedTag]!)),
           '${request['targetBodyPart']}',
@@ -2949,7 +3021,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             total + readIntValue(request['totalPowerBurstAccuracy']),
             defenseNatural: natural,
           );
-        } else if (maskedVolley || boneVolley || cycleSpines > 0) {
+        } else if (moonVolley != null ||
+            maskedVolley ||
+            boneVolley ||
+            cycleSpines > 0) {
           maskedPackets.add(request);
         } else {
           onlineCombatRequests[requestId] = request;
@@ -2957,7 +3032,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           unawaited(sendOnlineCombatRequest(request));
         }
       }
-      if (maskedVolley || boneVolley || cycleSpines > 0) {
+      if (moonVolley != null || maskedVolley || boneVolley || cycleSpines > 0) {
         startMaskedVolley(maskedPackets);
       }
       planarState.remove('boneFourSlash');
@@ -3702,6 +3777,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         return;
       }
       final defense = readIntValue(payload['defense']);
+      if (payload['lusierDisdainPenalty'] == 5 &&
+          request.containsKey('lusierDisdainSourceHp') &&
+          request['lusierDisdainChecked'] != true) {
+        request['attack'] = readIntValue(request['attack']) - 5;
+        request['lusierDisdainChecked'] = true;
+        request['lusierDisdainPenalty'] = 5;
+      }
       acceptEscapeReturnReply(request, payload);
       if (!request.containsKey('totalPowerExposureAccuracy') &&
           payload.containsKey('totalPowerExposureAccuracy')) {
@@ -3726,7 +3808,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       final counterPercent = counterAttackDamagePercent(request, defense);
       final isCounter = counterPercent != null;
-      final outcome = isCounter
+      final shadowAvoided =
+          payload['senkaShadowAvoided'] == true ||
+          payload['senkaImpaleUnavailable'] == true;
+      if (shadowAvoided) request['senkaShadowAvoided'] = true;
+      final outcome = shadowAvoided
+          ? OculumAttackOutcome.avoided
+          : isCounter
           ? (counterPercent > 0
                 ? OculumAttackOutcome.full
                 : OculumAttackOutcome.avoided)
@@ -3935,10 +4023,28 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       claimOnlineVampirism(request);
       senkaConfirmDamage(request);
+      confirmLusierRegalStrike(request);
+      confirmSenkaStepAttack(request);
+      if (outcome != OculumAttackOutcome.avoided &&
+          readIntValue(request['natural']) == 20) {
+        faunaForOwnedSheet('${request['sourceTag']}', () {
+          final receiptId = '${request['attackGroupId'] ?? request['id']}';
+          final names = <String>{
+            '${request['abilityName'] ?? ''}',
+            for (final e
+                in (request['effects'] as List? ?? []).whereType<Map>())
+              '${e['id'] ?? ''}',
+          };
+          for (final name in names.where((s) => s.isNotEmpty)) {
+            recordPersonalProgressionCritical(receiptId, name);
+          }
+        });
+      }
       recordEscapeDamage(request);
       claimPlanarBellHealing(request);
       claimMeccanioResults(request);
       claimStormBanditAttack(request);
+      scostuResolveCoordination(request);
       if (isCounter) unawaited(applyCounterAttackReplyDamage(request));
       combatLogFor(
         source,
@@ -4092,13 +4198,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           () => consumePendingFastReactionConsequenceBonus(),
         );
         defenseNatural = natural;
-        final penalized =
+        var penalized =
             total +
             emergencyBonus -
             collectorDefensePenalty +
             (choice == 'cm'
                 ? max(0, readIntValue(request['posteaCmBonus'])).toInt()
                 : 0);
+        penalized += consumeSenkaStepBonus();
+        if (request['senkaStepDefense'] == true &&
+            penalized > readIntValue(request['attack'])) {
+          grantSenkaStepReward('${request['id']}', defense: true);
+          penalized += 5;
+        }
         if (collectorDefensePenalty > 0) {
           request['collectorDefensePenalty'] = collectorDefensePenalty;
           aggiungiLog(
@@ -4339,6 +4451,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .where((e) => e['type'] == 'planar')
         .toList();
     final bell = incomingPlanar.any((e) => e['target'] == 'bell_paralysis');
+    applyLusierDisdain(request);
     final attack = bell ? 25 : readIntValue(request['attack']);
     final defenderMonster = monsterBookEntryById(
       '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}',
@@ -4422,6 +4535,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             difficulty: '${request['difficulty'] ?? 'normale'}',
           );
     if (mantleDefense) outcome = OculumAttackOutcome.full;
+    if (senkaEvadesAsShadow(request)) {
+      outcome = OculumAttackOutcome.avoided;
+      request['senkaShadowAvoided'] = true;
+      aggiungiLog(
+        'La forma ombra attraversa il colpo, incapace di raggiungere immateriali.',
+      );
+    }
     final senkaImpale = (request['effects'] as List? ?? [])
         .whereType<Map>()
         .any((e) => e['target'] == 'senka_shadow_impale');
@@ -4429,6 +4549,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         !(activeConditions.any((c) => c.conditionType == 'immobilizzato') &&
             planarState['senkaHeldBy'] == request['sourceTag'])) {
       outcome = OculumAttackOutcome.avoided;
+      request['senkaImpaleUnavailable'] = true;
       aggiungiLog(
         'Impalamento: manca una presa ancora attiva dei Tentacoli di questo attaccante.',
       );
@@ -4662,7 +4783,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           (resolvedAttackBaseDamage * (1 + percent / 100)).floor();
       aggiungiLog('[ASSASSINO ANGELICO] +$percent% Danni contro Chaos.');
     }
-    var damage = maskedCriticalStop
+    var damage = outcome == OculumAttackOutcome.avoided || maskedCriticalStop
         ? 0
         : isCounter
         ? (counterPercent > 0 ? resolvedAttackBaseDamage : 0)
@@ -4697,6 +4818,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           .where((p) => p['id'] == request['targetBodyPart'])
           .firstOrNull;
       if (point?['weak'] == true) request['targetWeakPointPrecision'] = true;
+    }
+    if (request['lusierThinPrecision'] == true &&
+        request['targetWeakPointPrecision'] == true &&
+        outcome != OculumAttackOutcome.avoided &&
+        request['lusierThinExtraPrepared'] != true) {
+      request['lusierThinExtraPrepared'] = true;
+      request['lusierBeyondDefense'] =
+          readIntValue(request['lusierBeyondDefense']) + 15;
     }
     final elementalDefenseMultiplier = oculumElementalDefenseMultiplier(
       incomingElement: incomingElement,
@@ -4859,7 +4988,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           magicalAttack: (request['effects'] as List? ?? []).isNotEmpty,
           nonLethal:
               request['sourceMonsterBookId'] == 'scostubanditi' ||
+              const {
+                'scostubandito_errato',
+                'scostubandito_veterano_errato',
+              }.contains(request['sourceMonsterBookId']) ||
               request['faunaNonLethal'] == true,
+          nonLethalBanditSourceId: '${request['sourceMonsterBookId'] ?? ''}',
           nonLethalRobberyPercent: readIntValue(
             request['faunaRobberyPercent'],
             fallback: 75,
@@ -5093,6 +5227,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     boneRuneAfterHpDamage();
     request['damageReceipt'] = receipt;
+    // The hit is absorbed with the equipment that was active when it landed.
+    // Only then may the critical interrupt the transformation.
+    if (outcome != OculumAttackOutcome.avoided) {
+      senkaResolveMaskHit(request, critical: critical);
+    }
+    faunaForOwnedSheet(
+      '${request['sourceTag']}',
+      () => confirmLusierRegalStrike(request),
+    );
     queueCloudBarrierResponse(request, receipt);
     claimCloudBarrierCritical(request);
     recordEscapeDamage(request);
@@ -5156,6 +5299,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     scostuShieldResponse(request, receipt);
     claimStormBanditAttack(request);
+    scostuResolveCoordination(request);
+    faunaForOwnedSheet(
+      '${request['sourceTag']}',
+      () => confirmSenkaStepAttack(request),
+    );
+    if (critical && outcome != OculumAttackOutcome.avoided) {
+      faunaForOwnedSheet('${request['sourceTag']}', () {
+        final receiptId = '${request['attackGroupId'] ?? request['id']}';
+        final names = <String>{
+          '${request['abilityName'] ?? ''}',
+          for (final e in (request['effects'] as List? ?? []).whereType<Map>())
+            '${e['id'] ?? ''}',
+        };
+        for (final name in names.where((s) => s.isNotEmpty)) {
+          recordPersonalProgressionCritical(receiptId, name);
+        }
+      });
+    }
     if (localMeccanioCombat) claimMeccanioResults(request);
     aggiungiLog(
       '[DANNO RISOLTO] ${request['sourceName']} → ${request['targetName'] ?? nomeController.text}: ${combatDamageReceiptText(receipt)}.',
@@ -5188,7 +5349,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             continue;
           }
           if (effect.type == 'danno' ||
-              effect.target == 'explosive_cards_damage') {
+              const {
+                'explosive_cards_damage',
+                'lusier_regal_strike',
+                'lusier_open_ray',
+                'lusier_thin_ray',
+                'senka_thousand_cuts',
+                'senka_moon_cuts',
+                'senka_shadow_step',
+              }.contains(effect.target)) {
             continue; // Included in the single damage packet.
           }
           if (criticalShieldBlocksDebuffs(request) &&

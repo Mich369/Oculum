@@ -311,6 +311,7 @@ int oculumEncounterExperienceForEnemies(
 extension _OculumEncounterRewards on _OculumHomePageState {
   void receiveEncounterRewards(Iterable<Map> rewards) {
     for (final reward in rewards) {
+      receiveScostuFightSettlements(reward);
       resolveCorruptionFightEnd('${reward['endedEncounterId'] ?? ''}');
       for (final pawn in pawnGuardians.where(
         (p) => (reward['participants'] as List? ?? []).contains(p.ownerTag),
@@ -424,6 +425,10 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             'kind': 'encounter_reward',
             'status': 'queued',
             'targetTag': tag,
+            'participantTotalPower': readIntValue(
+              (reward['participantPowers'] as Map?)?[tag],
+              fallback: scoutTotalPowerAt(i),
+            ),
             'amount': amount,
             'discoveryEnemies': [
               for (final enemy in escapeAmounts != null ? <Map>[] : defeated)
@@ -517,6 +522,14 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       final amount =
           (readIntValue(reward['amount']) + discovery.bonus) *
           readIntValue(reward['multiplier'], fallback: 1);
+      recordPersonalProgressionKills(
+        (reward['discoveryEnemies'] as List? ?? []).whereType<Map>(),
+        '${reward['id']}',
+        ownerPower: readIntValue(
+          reward['participantTotalPower'],
+          fallback: scoutTotalPowerAt(schedaCorrente),
+        ),
+      );
       final message = applicaEsperienzaFlat(
         amount,
         motivo: 'Fine scontro ${reward['encounterName'] ?? ''}',
@@ -677,8 +690,9 @@ extension _OculumEncounterRewards on _OculumHomePageState {
                 .isNotEmpty)
           'experienceFamilyId': schedePersonaggio[index]['experienceFamilyId'],
         'monsterSheetTag': index >= 0 ? sheetTagAt(index) : '',
-        if(index >= 0 && (schedePersonaggio[index]['planarRuntime'] as Map?)?['canonicalNpc']=='lusier_iii')
-          'canonicalNpc':'lusier_iii',
+        'canonicalNpc': index >= 0
+            ? '${(schedePersonaggio[index]['planarRuntime'] as Map?)?['canonicalNpc'] ?? ''}'
+            : '${token['canonicalNpc'] ?? ''}',
         'level': level,
         'killerTag': index >= 0
             ? schedePersonaggio[index]['lastDamageSourceTag']
@@ -687,10 +701,18 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             ? schedePersonaggio[index]['lastDamageTitleItemIds'] ?? const []
             : token['lastDamageTitleItemIds'] ?? const [],
         'totalPower': index >= 0
-            ? readIntValue((schedePersonaggio[index]['lastDamagePowerRecord'] as Map?)?['totalPower'], fallback: scoutTotalPowerAt(index))
+            ? readIntValue(
+                (schedePersonaggio[index]['lastDamagePowerRecord']
+                    as Map?)?['totalPower'],
+                fallback: scoutTotalPowerAt(index),
+              )
             : readIntValue(token['totalPower'], fallback: -1),
         'killerTotalPower': index >= 0
-            ? readIntValue((schedePersonaggio[index]['lastDamagePowerRecord'] as Map?)?['killerTotalPower'], fallback: -1)
+            ? readIntValue(
+                (schedePersonaggio[index]['lastDamagePowerRecord']
+                    as Map?)?['killerTotalPower'],
+                fallback: -1,
+              )
             : readIntValue(token['killerTotalPower'], fallback: -1),
         'finisher': index >= 0
             ? schedePersonaggio[index]['lastPlanarFinisher']
@@ -869,15 +891,24 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         finishingSkillId: '${(enemy['finisher'] as Map?)?['skillId'] ?? ''}',
         combatHistory: enemy['finisher'] as Map? ?? const {},
       );
-      if(enemy['canonicalNpc']=='lusier_iii' && !oculumEncounterEnemyIsSummon(enemy)) {
-        final sourceIndex=localSheetIndexForOculumTag('${enemy['monsterSheetTag'] ?? ''}');
-        final sourceDeck=sourceIndex<0?null:
-          (schedePersonaggio[sourceIndex]['inventario'] as List? ?? []).whereType<Map>()
-            .where((i)=>(i['craftData'] as Map?)?['explosiveCards']==true).firstOrNull;
-        final deck=sourceDeck==null?oculumExplosiveCards(lusier:true):
-          InventoryItem.fromJson(Map<String,dynamic>.from(sourceDeck));
-        deck.equipaggiata=false;
-        deck.craftData['namedDropKillId']=killId;
+      if (enemy['canonicalNpc'] == 'lusier_iii' &&
+          !oculumEncounterEnemyIsSummon(enemy)) {
+        final sourceIndex = localSheetIndexForOculumTag(
+          '${enemy['monsterSheetTag'] ?? ''}',
+        );
+        final sourceDeck = sourceIndex < 0
+            ? null
+            : (schedePersonaggio[sourceIndex]['inventario'] as List? ?? [])
+                  .whereType<Map>()
+                  .where(
+                    (i) => (i['craftData'] as Map?)?['explosiveCards'] == true,
+                  )
+                  .firstOrNull;
+        final deck = sourceDeck == null
+            ? oculumExplosiveCards(lusier: true)
+            : InventoryItem.fromJson(Map<String, dynamic>.from(sourceDeck));
+        deck.equipaggiata = false;
+        deck.craftData['namedDropKillId'] = killId;
         dropped.add(deck);
       }
       final rollerLevel = participantLevels[rollerTag] ?? 0;
@@ -1018,6 +1049,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
                 }.contains('${token['status']}'),
           ),
       'endedEncounterId': id,
+      'scostuSettlements': scostuFightSettlements(masterInitiativeTokens),
       'id': '$id:${DateTime.now().microsecondsSinceEpoch}',
       'name': group['name'],
       'amount': group['escapeExperience'] is Map
@@ -1029,6 +1061,11 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       'defeated': defeated,
       'participants': participants.toList(),
       'participantLevels': participantLevels,
+      'participantPowers': {
+        for (final tag in participants)
+          if (localSheetIndexForOculumTag(tag) >= 0)
+            tag: scoutTotalPowerAt(localSheetIndexForOculumTag(tag)),
+      },
       'lootByParticipant': lootByParticipant,
       'fallenEyesByParticipant': fallenEyesByParticipant,
       'fateActive':

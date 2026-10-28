@@ -1,5 +1,17 @@
 # Registro cumulativo per i giocatori
 
+## Patch del 28 ottobre — sessioni, personaggi e sblocchi
+
+- Combattimento: corretti il mantenimento di Reazioni/RV nei fight uniti, lo stato a fight concluso e i permessi del Co-Master. Gli esiti di intangibilità non applicano più Danni o consumo degli Scudi e vengono mantenuti nelle conferme online; gli attacchi capaci di colpire immateriali restano validi.
+- Senka: costi leggibili e reali, maschera inizialmente non indossata, riattivazione dopo il critico valido, Passo nell’Ombra con confronto e Reazione veloce, Mille Tagli come unico pacchetto e Sfinimento a lei. Fusione richiede Velo permanente13; Mille Tagli Riflessi permanenti9 e Erik I, senza livello minimo. Erik vale anche se più debole.
+- Ricordo della Luna: sblocco dal progresso personale; Open e Buff insieme, +30% sulle statistiche effettive di Senka e +5% ai Lunari nel fight. Tagli lunari disponibili dopo lo sblocco anche a Open spenta, con un unico tiro e distribuzione dei tagli; potenziamento soltanto della propria Open. I bonus personali terminano a fine fight senza restituire l’uso della Open.
+- Lusier III: Titolo Io, Padrone del Io, raggi, protezione e Vitalium Solare; cura65% della Vita attuale +10% della massima, entro il massimo, senza eliminare riserve preesistenti. PT misurata298. Erik I: nuova scheda Elité Lv8 Grado0, PT184 e Custodia del Girone. Equipaggiamenti e tecniche conservano i propri campi modificabili.
+- Scostubanditi: rapina solo a fine fight vittorioso sugli sconfitti rimasti, Errato75% e Veterano100% con uccisione; Titoli Item esclusi. Aura5%/15% e coordinazione+2 non cumulativa, sincronizzata anche con difesa remota. Una vittima curata può rientrare nel fight.
+- Sblocchi permanenti da statistiche e sottotratti senza buff temporanei; progressi personali su specie, elementi, critici e obiettivi nominali. Un nemico fino a25 PT sotto il partecipante conta, da26 sotto non conta; esclusi evocati e duplicati. Raccogli, Possiedi e Consuma restano distinti.
+- Libri: consumo alla lettura, ricette condivise e conservate sulle schede alleate locali anche non attive; preferiti bloccati non rivelano ingredienti. Il Master conserva la vista completa.
+- Occhi dei Caduti: conservati sottotratti e statistiche della creatura viva; le Skill ereditate dalle Art hanno forme, costi, cooldown ed effetti utilizzabili. Preservati limiti della rarità e personalizzazioni già salvate.
+- Temi: nuovo scenario personale di Senka nei gironi poveri di Lost Town, Haniel aggiornato e Sky nella stanza; reliquie delle Guardie Solari approvate e sfondo sotterraneo Grofix. Cornice personale di Senka con centro libero e asset separati per telefono dove previsti. Inventario dei temi mancanti separato dalle aggiunte effettive.
+
 ## Versione stabile del 27 ottobre — schede, costi e personaggi
 
 - Attacco nella barra del fight: bersagli e tiro seguono il fight della scheda, anche quando il Master ne ha selezionato un altro o ci sono fight condivisi. Corretto il riconoscimento del partecipante con maiuscole/spazi diversi nei tag. Senza bersagli validi compare un avviso e non si consumano Azioni o Reazioni; il tiro non ripiega silenziosamente su un dado generico senza bersaglio.

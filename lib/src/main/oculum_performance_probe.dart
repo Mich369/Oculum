@@ -523,7 +523,8 @@ class OculumPerformanceProbe {
       _state.applicaParserDanniSubiti(damage, element);
   double resistanceCommandMultiplier(String command) =>
       _state.damageRuleMultiplierForCommand(command);
-  int abilityResistance(String element) => _state.abilityElementResistancePercent(element);
+  int abilityResistance(String element) =>
+      _state.abilityElementResistancePercent(element);
   bool manifestTitleItem(InventoryItem item, bool manifested) =>
       _state.setTitleItemManifested(item, manifested);
   bool manifestSenkaMask(InventoryItem item, bool active) =>
@@ -533,11 +534,59 @@ class OculumPerformanceProbe {
   int senkaClone(int hp) => _state.createSenkaShadowClone(hp);
   int senkaFusion() => _state.absorbSenkaShadows();
   int senkaCloneCount() => _state.senkaClonesCreated;
+  bool senkaShadowEvades(Map request) => _state.senkaEvadesAsShadow(request);
+  void senkaMaskHit(Map<String, dynamic> request, {bool critical = true}) =>
+      _state.senkaResolveMaskHit(request, critical: critical);
+  void senkaStartTurn() => _state.senkaTurnStart();
+  void senkaEndFight() => _state.senkaFightEnd();
+  void claimSenkaAttack(Map<String, dynamic> request) =>
+      _state.claimSenkaAttack(request);
+  List<OculumStructuredEffect>? prepareSenka(
+    List<OculumStructuredEffect> effects, {
+    int seed = 1,
+  }) => _state.prepareSenkaEffects(effects, random: Random(seed));
+  void scostuCoordination(Map<String, dynamic> request) =>
+      _state.scostuResolveCoordination(request);
+  int scostuAccuracy(String target) =>
+      _state.scostuVeteranAccuracyAgainst(target);
+  void scostuNonLethal(String id) =>
+      _state.scostuNonLethalDefeat(banditSourceId: id);
+  void scostuSyncDeath() => _state.syncCurrentSheetDeathStateToInitiative();
+  Future<void> readRecipeBook(InventoryItem item) =>
+      _state.readRecipeBook(item);
+  bool recipeKnown(OculumRecipe recipe) => _state.recipeKnown(recipe);
+  void retainRecipes() => _state.retainPartyRecipeKnowledge();
+  void recordPersonalKills(Iterable<Map> enemies, String id, {int? power}) =>
+      _state.recordPersonalProgressionKills(enemies, id, ownerPower: power);
+  Widget recipeDemandPanel() => _state._craftingDemandPanel();
+  void progressionCollect(String material, int grams, String receipt) =>
+      _state.recordProgressionMaterialCollection(material, grams, receipt);
+  bool progressionConsume(Map requirement) => _state
+      .consumeProgressionRequirement(Map<String, dynamic>.from(requirement));
   void cardsTurnStart() => _state.rechargeExplosiveCards();
   bool claimCards(Map request) => _state.claimExplosiveCards(request);
+  List<OculumStructuredEffect>? prepareLusierTitle(
+    List<OculumStructuredEffect> effects, {
+    int seed = 1,
+  }) => _state.prepareLusierTitleEffects(effects, random: Random(seed));
+  void claimLusierTitle(Map<String, dynamic> request, {int targets = 1}) =>
+      _state.claimLusierTitleAttack(request, targets);
+  void confirmLusierTitle(Map request) =>
+      _state.confirmLusierRegalStrike(request);
+  int lusierConditionGuard() => _state.lusierConditionGuard;
+  bool lusierConditionResisted(String type, int roll) =>
+      _state.lusierPreventsNegativeCondition(
+        type,
+        'Nemico di prova',
+        percentile: roll,
+      );
+  void grantSolarVitalium() => _state.grantLusierSolarVitalium();
+  void applySolarVitalium() => _state.useLusierSolarVitalium();
   int itemSaleValue(InventoryItem item) => _state.merchantSaleValue(item);
-  ({int accuracy,int beyondDefense}) lusierReply(String target,{bool consume=false}) =>
-    _state.lusierReplyBonus(target,consume:consume);
+  ({int accuracy, int beyondDefense}) lusierReply(
+    String target, {
+    bool consume = false,
+  }) => _state.lusierReplyBonus(target, consume: consume);
   void setIncomingDamagePreset(String element, String preset) =>
       _state.incomingDamagePresets[element] = preset;
   double corruptionResistance() => _state.currentCorruptionResistancePercent();
@@ -562,11 +611,22 @@ class OculumPerformanceProbe {
       _state.defendCorruptionApplication(request, choice);
   void convertItemTitle(InventoryItem item) =>
       _state.convertInventoryItemToTitle(item);
-  bool itemTitleAvailable(InventoryItem item, CharacterSkillForm form) => _state.itemTitleFormAvailable(item, form);
-  Future<void> useEquipment(InventoryItem item, CharacterSkillForm form) => _state.useEquipmentQuickAbility(item, form, oculumCombatAbilityRole(form.effettiStrutturati, explicitType: form.tipo));
-  Widget itemTitleEditor(InventoryItem item) => _state.equipmentAbilityEditor(item);
+  bool itemTitleAvailable(InventoryItem item, CharacterSkillForm form) =>
+      _state.itemTitleFormAvailable(item, form);
+  Future<void> useEquipment(InventoryItem item, CharacterSkillForm form) =>
+      _state.useEquipmentQuickAbility(
+        item,
+        form,
+        oculumCombatAbilityRole(
+          form.effettiStrutturati,
+          explicitType: form.tipo,
+        ),
+      );
+  Widget itemTitleEditor(InventoryItem item) =>
+      _state.equipmentAbilityEditor(item);
   void repairItemTitles() => _state.repairConvertedItemTitles();
-  void tickEquipmentCooldowns() => _state.tickStructuredAbilityCooldowns('turni', scheduleSave: false);
+  void tickEquipmentCooldowns() =>
+      _state.tickStructuredAbilityCooldowns('turni', scheduleSave: false);
   int itemShield(InventoryItem item) => _state.itemShieldBonus(item);
   String get planeId => _state.selectedPlaneId;
   Future<void> useNecromancy(InventoryItem item) =>
@@ -836,6 +896,23 @@ class OculumPerformanceProbe {
   int defenseCm() => _state.cm();
   int hpMultiplier() => _state.moltiplicatoreHp();
   int outgoingDamage() => _state.dannoTotale();
+  Map<String, int> coreBonusAudit(String key) => {
+    'raw': readIntValue(_state.currentStatController(key).text),
+    'total': _state.currentStatValue(key),
+    'visibleTitle': _state.visibleTitleStatBonus(key),
+    'titleText': _state.titleQuickBonus(key),
+    'artText': _state.artQuickBonus(key),
+    'itemText': _state.itemQuickBonus(key),
+    'globalText': _state.globalQuickBonus(key),
+    'conditional': _state.conditionalBuffStatBonus(key),
+    'skillText': _state.skillTextQuickBonus(key),
+    'temporary': _state.tempStatBonus(key),
+    'herbs': _state.merchantHerbalStatBonus(key),
+    'strengthState': _state.statoForzaQuickBonus(key),
+    'rebirth': _state.rebirthLevelBonus(),
+    'emblem': _state.summoningEmblemBonus(key),
+    'structured': _state.activeStructuredEffectBonus(key),
+  };
   String damageFormula() => _state.formulaDannoDettagliata();
   Map<String, num> formulaContext() => _state.formulaValueContext();
   InventoryItem merchantItem(

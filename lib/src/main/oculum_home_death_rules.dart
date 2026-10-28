@@ -205,6 +205,12 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         : readIntValue(
             schedePersonaggio[index]['volontaVitale'],
           ).clamp(0, vitalWillLimit).toInt();
+    if (token['scostuDeferredDefeat'] == true &&
+        readIntValue(token['currentHp']) > 1 &&
+        !downed) {
+      token.remove('scostuDeferredDefeat');
+      token.remove('scostuNonLethalDowned');
+    }
     token['downed'] = downed || token['scostuNonLethalDowned'] == true;
     if (oculumCombatConfirmedDeath(
       hp: readIntValue(token['currentHp']),
