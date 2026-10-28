@@ -127,3 +127,7 @@ ART03 aggiornamento tecnico: Grofix desktop/telefono collegati al renderer con s
 - Duello del motore riuscito: copia SenkaLv12 con maschera attiva PT298 e LusierPT298, tiri riproducibili, carte, difese, Scudi, intangibilità, clone/fusione e Mille Tagli. È uno scenario circoscritto, senza vincitore artificiale; non è una prova grafica con tre client. Report output/simulation/Senka_Lv12_vs_Lusier_III.json.
 - ART02 reliquie Guardia/Elité:100% approvazione visiva e locale dell’utente dopo riga completa e6 test passati. Altri completamenti tecnici rimangono in attesa della conferma richiesta; pubblicazione e pacchetti sono separati.
 - Nuovi test e codici mantengono costi leggibili, forme, durata, min/max, risorse, requisiti, bersagli ed effetti modificabili; il roster e i JSON personalizzati non vengono sostituiti con le definizioni del catalogo.
+
+### Ultima chiusura cloni e CI
+
+Risolto il Mantello d’ombra copiato dal clone senza maschera, preservando durata e vulnerabilità agli elementi compatibili e senza ereditare la passiva dell’item assente. Quattordici regressioni locali passate, incluso il Passo copiato; nessuna chiusura100% senza approvazione. GitHub34746826:1.340 test passati,6 saltati,4 online passati; compilazione finale della correzione separata.

@@ -24,3 +24,7 @@ Danno realmente nullo per l’intangibilità e relativo ACK; coordinazione Veter
 ## Distinzioni e arretrato
 
 Le app reali su dispositivi separati richiedono una prova distinta dai test di trasporto. Le grandi aggiunte restano nel [registro attività](DA_FARE_PATCH_E_SUCCESSIVI.md). Non recuperare inventando sottotratti personalizzati che un vecchio Occhio abbia già perso senza conservarne lo snapshot originale. Senka non esporta il segreto di Haniel nelle proprie note.
+
+## Ultima regressione sui cloni
+
+Corretto il controllo del Mantello copiato: il clone con forma attiva evita un vero pacchetto fisico anche senza item maschera; attacchi spirituali e fine durata restano validi, senza passiva gratuita sulla maschera assente. Gruppo conclusivo14/14 test locali passati in `build/oct28-final-clone-shadow.log`, compresi Passo nell’Ombra copiato offensivo/difensivo, annullamento senza pagamento e log di versione. La prima fixture non registrava il clone nel roster effettivamente usato dal risolutore: corretta e rieseguita. Il commit precedente34746826 ha superato su GitHub1.340 test,6 saltati e4 verifiche online; la correzione finale richiede la propria build verificata.

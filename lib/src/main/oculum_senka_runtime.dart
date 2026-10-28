@@ -273,7 +273,7 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
         request['encounterId'] == onlineCombatEncounterId &&
         controlsOnlineCombatSheet(origin) &&
         pawnPendingDamage.isEmpty &&
-        senkaMaskActive &&
+        (senkaMaskActive || senkaIsClone) &&
         request['referenceMadnessWave'] != true &&
         !isLusierDerision(request) &&
         (request['firstDefense'] == null ||
@@ -320,8 +320,11 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
       }.contains(oculumNormalizeElementId('${request['element'] ?? ''}'));
 
   bool senkaEvadesAsShadow(Map request) {
-    if (!senkaMaskActive || senkaAttackReachesShadow(request)) return false;
-    if (request['targetBodyPart'] == 'mask') return true;
+    if ((!senkaMaskActive && !senkaIsClone) ||
+        senkaAttackReachesShadow(request)) {
+      return false;
+    }
+    if (senkaMaskActive && request['targetBodyPart'] == 'mask') return true;
     return readIntValue(senkaRuntime['shadowUntilTurn']) > playerReportedTurn &&
         !onlineCombatRequests.values.any(
           (r) =>

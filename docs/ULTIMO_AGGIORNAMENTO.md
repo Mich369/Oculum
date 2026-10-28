@@ -1,6 +1,6 @@
 # Ultimo aggiornamento — 28 ottobre 2026
 
-- Combattimento e online: conferme coerenti con intangibilità, Reazioni/RV nei fight condivisi, permessi Co-Master e coordinazione del Veterano.
+- Combattimento e online: conferme coerenti con intangibilità e poteri copiati dai cloni, Reazioni/RV nei fight condivisi, permessi Co-Master e coordinazione del Veterano.
 - Senka, Lusier III ed Erik I: tecniche e costi reali, equipaggiamento, nuove evoluzioni e codici aggiornati. PT attuali Lusier298 ed Erik184.
 - Sblocchi personali persistenti, tolleranza25 PT, requisiti materiali distinti; libri di ricette condivisi e Occhi dei Caduti con forme/costi/effetti ereditati.
 - Nuovi temi e reliquie mirati; il catalogo completo degli artwork mancanti resta in lavorazione.

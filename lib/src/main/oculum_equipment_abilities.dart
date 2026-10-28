@@ -784,7 +784,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     }
     if (!meccanioSkillAllowed(effects)) return false;
     if (effects.any((e) => e.target == 'senka_shadow_step')) {
-      if (!senkaMaskActive || cooldown?.ready == false) return false;
+      if ((!senkaMaskActive && !senkaIsClone) || cooldown?.ready == false) {
+        return false;
+      }
       final incoming = onlineCombatRequests.values
           .where(
             (r) =>
