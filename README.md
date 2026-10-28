@@ -1,5 +1,7 @@
 # oculum
 
+[Download pubblici](https://github.com/Mich369/Oculum/releases/tag/oculum-downloads) · [Installazione e aggiornamento](docs/AGGIORNARE_OCULUM.md) · [Ultima patch](docs/ULTIMO_AGGIORNAMENTO.md) · [Registro cumulativo](docs/REGISTRO_AGGIORNAMENTI.md)
+
 A new Flutter project.
 
 ## Getting Started

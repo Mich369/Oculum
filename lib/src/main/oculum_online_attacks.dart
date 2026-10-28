@@ -1693,6 +1693,25 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool rabbitHat = false,
   }) async {
     alignCombatEncounterForRoll();
+    final escapeInterception = escapeReactionOf == null
+        ? null
+        : onlineCombatRequests[escapeReactionOf];
+    final attackRollFaces = escapeReactionOf == null ? 20 : 16;
+    if (escapeReactionOf != null) {
+      final actor = sheetTagAt(schedaCorrente);
+      if (escapeInterception == null ||
+          escapeInterception['kind'] != 'escape' ||
+          escapeInterception['status'] != 'pending' ||
+          escapeInterception['scope'] != permissionScope ||
+          escapeInterception['encounterId'] != onlineCombatEncounterId ||
+          !escapeRequestIsCurrent(escapeInterception) ||
+          escapeInterception['lastAggressor'] != actor ||
+          (escapeInterception['noticed'] as Map? ?? {})[actor] != true ||
+          (escapeInterception['answers'] as Map? ?? {}).containsKey(actor)) {
+        return;
+      }
+      targetId = '${escapeInterception['sourceTag']}';
+    }
     if (totalPowerExhausted &&
         (freeReactionId != null ||
             schiantoReactionId != null ||
@@ -1855,6 +1874,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (incomingAttack != null) {
       tokens.removeWhere(
         (token) => onlineCombatTokenTag(token) != incomingAttack['sourceTag'],
+      );
+    }
+    if (escapeInterception != null) {
+      // The free interception belongs to this fleeing opponent only. Do not
+      // offer unrelated targets that the escape ledger would reject on send.
+      minimumTargets = maximumTargets = 1;
+      tokens.removeWhere(
+        (token) =>
+            onlineCombatTokenTag(token) != escapeInterception['sourceTag'],
       );
     }
     final freeReaction = onlineCombatRequests[freeReactionId];
@@ -2170,8 +2198,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 final defense = readIntValue(known['cm']);
                 final forecast = OculumAttackForecast.fromRolls(
                   [
-                    for (var die = 1; die <= 20; die++)
-                      rollTotalWithCritical(die, 20, [option.bonus]),
+                    for (var die = 1; die <= attackRollFaces; die++)
+                      rollTotalWithCritical(die, attackRollFaces, [
+                        option.bonus,
+                      ]),
                   ],
                   [
                     for (var die = 1; die <= 20; die++)
@@ -2322,7 +2352,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .map((tag) => '${byId[tag]!['name'] ?? '???'}')
         .join(', ');
     final label =
-        'Attacco contro $target${controlledPlan.reason.isEmpty ? '' : ' · ${controlledPlan.reason}'}';
+        'Attacco contro $target${escapeInterception == null ? '' : ' · 1d16 contro la Fuga'}${controlledPlan.reason.isEmpty ? '' : ' · ${controlledPlan.reason}'}';
     final preparedDamage = robotAttack.isEmpty
         ? dannoTotale()
         : readIntValue(robotAttack['damage']);
@@ -2784,6 +2814,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               lusierReplyBonus(selectedTag).accuracy +
               scostuVeteranAccuracyAgainst(selectedTag),
           'natural': natural,
+          'dieFaces': attackRollFaces,
           if (rabbitHat) 'rabbitHatAdaptRoll': Random.secure().nextInt(100),
           'damage':
               (rabbitHat
@@ -3102,6 +3133,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             ? volontaTotale() ~/ 2 + (sourceMonsterId == 'laer' ? 10 : 0)
             : vc(),
         applyGlobalRollModifier: false,
+        rollFaces: attackRollFaces,
         actionLabel: label,
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
         onResolved: resolved,
@@ -3120,6 +3152,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (stat == null) return;
       await tiraSottotrattoOcchio(
         stat,
+        rollFaces: attackRollFaces,
         actionLabel: label,
         appliesAttackDamageBonus: true,
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
@@ -3164,6 +3197,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     required int natural,
     required int total,
     required int opposingTotal,
+    int naturalMaximum = 20,
   }) {
     if (!controlsOnlineCombatSheet(tag)) return;
     final index = localSheetIndexForOculumTag(tag);
@@ -3176,6 +3210,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       natural: natural,
       total: total,
       opposingTotal: opposingTotal,
+      naturalMaximum: naturalMaximum,
     )) {
       return;
     }
@@ -3577,6 +3612,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     String event,
     Map<String, dynamic> payload,
   ) {
+    // Reject malformed interception dice before acknowledging or mirroring any
+    // claimed resource expenditure into the Master's authoritative tracker.
+    if (event == 'combat_attack' && !oculumEscapeAttackDieIsValid(payload)) {
+      return;
+    }
     if (const {
           'combat_help',
           'combat_attack',
@@ -3877,6 +3917,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         natural: readIntValue(request['natural']),
         total: attack,
         opposingTotal: defense,
+        naturalMaximum: oculumAttackRollFaces(request),
       );
       if (controlsOnlineCombatSheet('${request['sourceTag']}') &&
           sheetTagAt(schedaCorrente) == request['sourceTag'] &&
@@ -3884,6 +3925,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             natural: readIntValue(request['natural']),
             total: attack,
             opposingTotal: defense,
+            naturalMaximum: oculumAttackRollFaces(request),
           )) {
         recoverPlanePressureCritical(
           doubleCritical: true,
@@ -4026,7 +4068,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       confirmLusierRegalStrike(request);
       confirmSenkaStepAttack(request);
       if (outcome != OculumAttackOutcome.avoided &&
-          readIntValue(request['natural']) == 20) {
+          readIntValue(request['natural']) == oculumAttackRollFaces(request)) {
         faunaForOwnedSheet('${request['sourceTag']}', () {
           final receiptId = '${request['attackGroupId'] ?? request['id']}';
           final names = <String>{
@@ -4573,6 +4615,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       natural: readIntValue(request['natural']),
       total: attack,
       opposingTotal: defense,
+      naturalMaximum: oculumAttackRollFaces(request),
     );
     final doubleDefense =
         !isCounter &&

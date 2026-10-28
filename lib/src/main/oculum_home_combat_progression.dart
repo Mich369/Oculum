@@ -1185,10 +1185,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     _scheduleDadoCentraleOverlayTimers(reduceEffects: reduceEffects);
   }
 
-  bool resolveSlotMachineSuccess({required int naturalRoll}) {
+  bool resolveSlotMachineSuccess({
+    required int naturalRoll,
+    int naturalMaximum = 20,
+  }) {
     if (!slotMachineRollsEnabled) return true;
     if (naturalRoll == 1) return false;
-    if (naturalRoll == 20) return true;
+    if (naturalRoll == naturalMaximum) return true;
     return Random.secure().nextInt(100) < slotMachineSuccessChance;
   }
 
@@ -1323,6 +1326,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   Future<void> tiraValoreSpeciale(
     String nome,
     int bonus, {
+    int rollFaces = 20,
     bool applyGlobalRollModifier = true,
     bool resourceAlreadySpent = false,
     String? actionLabel,
@@ -1351,7 +1355,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             )
         ? dannoTotale()
         : null;
-    final dado = tiraD20();
+    final faces = max(2, rollFaces);
+    final dado = tiraDado(faces);
     final oculumSpend = consumaOculumTiro(forAttack: attack);
     final reactionRollBonus = consumePendingReactionRollBonus();
     final bonusTotale =
@@ -1361,10 +1366,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         (applyGlobalRollModifier ? tiroGlobaleBonus() : 0) +
         oculumSpend.bonus +
         reactionRollBonus;
-    final totale = rollTotalWithCritical(dado, 20, [bonusTotale]);
+    final totale = rollTotalWithCritical(dado, faces, [bonusTotale]);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
-      faces: 20,
+      faces: faces,
       bonuses: [bonusTotale],
     );
     var gerinResonanceText = '';
@@ -1416,10 +1421,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         break;
       }
     }
-    slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
+    slotMachineLastSucceeded = resolveSlotMachineSuccess(
+      naturalRoll: dado,
+      naturalMaximum: faces,
+    );
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
-      faces: 20,
+      faces: faces,
       rollSucceeded: slotMachineRollsEnabled
           ? slotMachineLastSucceeded
           : totale > 0,
@@ -1435,6 +1443,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             key: nome.toLowerCase(),
             dado: dado,
             totale: totale,
+            faces: faces,
           )
         : '';
     final preparedDamageText =
@@ -1445,9 +1454,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           )
         : '';
     dadoMostrato = testoDado;
-    dadoMostratoFacce = 20;
+    dadoMostratoFacce = faces;
     tiroCriticoUno = dado == 1;
-    tiroCriticoVenti = dado == 20;
+    tiroCriticoVenti = dado == faces;
     risultato =
         '${actionLabel ?? nome}: $testoDado$statoForzaLog$expText$coreExpText$gerinResonanceText$preparedDamageText';
     aggiungiLog(
@@ -1462,7 +1471,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     mostraDadoCentrale(
       valore: testoDado,
       criticoUno: dado == 1,
-      criticoVenti: dado == 20,
+      criticoVenti: dado == faces,
+      facce: faces,
     );
     scheduleCombatRollRealtime(
       label: preparedDamageText.isEmpty
@@ -1471,17 +1481,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       roll: dado,
       bonus:
           bonusTotale +
-          criticalDieModifier(dado, 20) +
+          criticalDieModifier(dado, faces) +
           modificatoreDifficoltaTiro(),
       total: totale,
     );
     onOculumDamageBonus?.call(oculumSpend.damageBonus);
-    if (dado == 20) recoverPlanePressureCritical();
+    if (dado == faces) recoverPlanePressureCritical();
     onResolved?.call(dado, totale);
   }
 
   Future<void> tiraSottotrattoOcchio(
     HiddenEyeStat stat, {
+    int rollFaces = 20,
     String? actionLabel,
     bool resourceAlreadySpent = false,
     int? opposingTotal,
@@ -1519,7 +1530,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         scheduleCombatRollSave();
       }
     }
-    final dado = tiraD20();
+    final faces = max(2, rollFaces);
+    final dado = tiraDado(faces);
     final schivataOculumOttenuta =
         stat.id == 'riflessi' &&
         dado == 20 &&
@@ -1556,7 +1568,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       usage[stat.id] = max(0, readIntValue(usage[stat.id])) + 1;
       usageSheet['subtraitRollUseCounts'] = usage;
     }
-    final totale = rollTotalWithCritical(dado, 20, [bonus]);
+    final totale = rollTotalWithCritical(dado, faces, [bonus]);
     final utilityCombat =
         actionLabel?.toLowerCase().contains('utility') ?? false;
     if (utilityCombat &&
@@ -1583,11 +1595,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
     onOculumDamageBonus?.call(oculumSpend.damageBonus);
-    if (dado == 20) recoverPlanePressureCritical();
+    if (dado == faces) recoverPlanePressureCritical();
     onResolved?.call(dado, totale);
     final testoDado = rollFormulaWithCritical(
       roll: dado,
-      faces: 20,
+      faces: faces,
       bonuses: [bonus],
     );
     final label = actionLabel == null
@@ -1622,10 +1634,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       dado,
       leggiNumero(gradoController),
     );
-    slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
+    slotMachineLastSucceeded = resolveSlotMachineSuccess(
+      naturalRoll: dado,
+      naturalMaximum: faces,
+    );
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
-      faces: 20,
+      faces: faces,
       rollSucceeded: slotMachineRollsEnabled
           ? slotMachineLastSucceeded
           : totale > 0,
@@ -1742,16 +1757,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         ? '\nCRITICO RIFLESSI: +1 Schivata Oculum.'
         : '';
     dadoMostrato = testoDado;
-    dadoMostratoFacce = 20;
+    dadoMostratoFacce = faces;
     tiroCriticoUno = dado == 1;
-    tiroCriticoVenti = dado == 20;
+    tiroCriticoVenti = dado == faces;
     risultato =
         '$label: $testoDado$consumoBaseLog$masteryText$statoForzaLog$adaptationCriticalText$expText$dustText$dropGemText$dropObserText$dropScrollText$dodgeText';
     _applyDadoCentraleOverlayState(
       valore: testoDado,
       criticoUno: dado == 1,
-      criticoVenti: dado == 20,
-      facce: 20,
+      criticoVenti: dado == faces,
+      facce: faces,
       reduceEffects: reduceDiceEffects,
     );
     aggiungiLog(
@@ -1809,7 +1824,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         roll: dado,
         bonus:
             bonus +
-            criticalDieModifier(dado, 20) +
+            criticalDieModifier(dado, faces) +
             modificatoreDifficoltaTiro(),
         total: totale,
         afterCurrentFrame: false,

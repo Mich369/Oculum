@@ -20,6 +20,18 @@ int oculumEscapeExperience(
 bool oculumEscapePrecisionStops(int attack, int fleeTotal) =>
     attack * 5 >= max(0, fleeTotal) * 4;
 
+/// New interception packets must contain a real d16 natural. Older saved
+/// pending attacks omit this metadata and keep their original d20 semantics.
+bool oculumEscapeAttackDieIsValid(Map packet) {
+  if ('${packet['escapeReactionOf'] ?? ''}'.isEmpty ||
+      !packet.containsKey('dieFaces')) {
+    return true;
+  }
+  final faces = int.tryParse('${packet['dieFaces']}');
+  final natural = int.tryParse('${packet['natural']}');
+  return faces == 16 && natural != null && natural >= 1 && natural <= 16;
+}
+
 extension _OculumEscape on _OculumHomePageState {
   void moveEncounterMemberToRole(String encounterId, Map token) {
     if (!escapeAuthority || !haPermessiMaster) return;
@@ -367,6 +379,9 @@ extension _OculumEscape on _OculumHomePageState {
   bool escapeAttackAllowed(Map<String, dynamic> packet) {
     final id = '${packet['escapeReactionOf'] ?? ''}';
     if (id.isEmpty) return true;
+    // Missing metadata belongs to an already-saved legacy d20 interception.
+    // New attacks carry the actual d16 natural, never a converted/fake d20.
+    if (!oculumEscapeAttackDieIsValid(packet)) return false;
     final record = onlineCombatRequests[id];
     if (record == null ||
         record['kind'] != 'escape' ||
@@ -429,6 +444,7 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> attemptEscape() async {
+    alignCombatEncounterForRoll();
     if (!currentCombatIsActive() || outsideFight) return;
     final tag = sheetTagAt(schedaCorrente), origin = currentSheetScrollId();
     if (onlineCombatRequests.values.any(
@@ -480,8 +496,15 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> answerEscape(Map<String, dynamic> record, String kind) async {
+    // The reference panel follows the current sheet's fight even when another
+    // encounter is selected in the Master board or the shared snapshot. Spend
+    // the reply in that same fight, as the attack planner already does.
+    alignCombatEncounterForRoll();
     final tag = sheetTagAt(schedaCorrente), source = '${record['sourceTag']}';
     if (record['status'] != 'pending' ||
+        !escapeRequestIsCurrent(record) ||
+        record['scope'] != permissionScope ||
+        record['encounterId'] != onlineCombatEncounterId ||
         (record['answers'] as Map? ?? {}).containsKey(tag) ||
         (record['noticed'] as Map? ?? {})[tag] != true) {
       return;
@@ -844,6 +867,7 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> returnToFight(String mode) async {
+    alignCombatEncounterForRoll();
     if (!outsideFight || !const {'velo', 'riflessi'}.contains(mode)) return;
     if (!await requestUtilitySpend('azione', preferFreeReaction: false)) return;
     final tag = sheetTagAt(schedaCorrente),
@@ -931,22 +955,37 @@ extension _OculumEscape on _OculumHomePageState {
                           onPressed: () =>
                               unawaited(answerEscape(record, 'block')),
                           child: Text(
-                            record['lastAggressor'] == tag
+                            record['lastAggressor'] == tag &&
+                                    !totalPowerExhausted
                                 ? 'Blocca · Reazione gratuita'
                                 : 'Blocca · Azione/Reazione',
                           ),
                         ),
-                      if (record['lastAggressor'] == tag)
-                        TextButton(
-                          onPressed: () =>
-                              unawaited(answerEscape(record, 'attack')),
-                          child: const Text('Colpisci · Reazione gratuita'),
+                      if (combatScoutSide(tag) != record['sourceSide'] &&
+                          record['lastAggressor'] == tag)
+                        Tooltip(
+                          message: totalPowerExhausted
+                              ? 'Sfinimento: le Reazioni gratuite sono bloccate.'
+                              : 'Un tentativo contro chi sta fuggendo, senza avanzare il turno.',
+                          child: TextButton(
+                            onPressed: totalPowerExhausted
+                                ? null
+                                : () =>
+                                      unawaited(answerEscape(record, 'attack')),
+                            child: const Text(
+                              'Colpisci · 1d16 · Reazione gratuita',
+                            ),
+                          ),
                         ),
                       TextButton(
                         onPressed: () =>
                             unawaited(answerEscape(record, 'help')),
                         child: Text(
-                          record['freeHelper'] == tag
+                          (combatScoutSide(tag) == record['sourceSide']
+                                          ? record['freeHelper']
+                                          : record['lastAggressor']) ==
+                                      tag &&
+                                  !totalPowerExhausted
                               ? 'Aiuta · Reazione gratuita'
                               : 'Aiuta · Azione/Reazione',
                         ),

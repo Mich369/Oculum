@@ -150,6 +150,8 @@ class OculumMonsterTheme {
     'guardia_solare' => 'assets/oculum/home_art/relic_guardia_solare_v1.png',
     'guardia_solare_elite' =>
       'assets/oculum/home_art/relic_guardia_solare_elite_v1.png',
+    'guardiano_solare' =>
+      'assets/oculum/home_art/relic_guardiano_solare_v2.png',
     _ => null,
   };
   String? get illustration => switch (monster.id) {
@@ -157,6 +159,8 @@ class OculumMonsterTheme {
     'guardia_solare' => 'assets/oculum/home_art/theme_guardia_solare_v2.png',
     'guardia_solare_elite' =>
       'assets/oculum/home_art/theme_guardia_solare_elite_v2.png',
+    'guardiano_solare' =>
+      'assets/oculum/home_art/theme_guardiano_solare_v4.png',
     'mostro_lunare' => 'assets/oculum/home_art/creature_mostro_lunare_v1.png',
     'mostro_lunare_demoniaco' =>
       'assets/oculum/home_art/creature_mostro_lunare_demoniaco_v1.png',
@@ -188,9 +192,12 @@ class OculumMonsterTheme {
   };
   String? get illustrationMobile => switch (monster.id) {
     'grofix' => 'assets/oculum/home_art/theme_grofix_mobile_v1.png',
+    'guardiano_solare' =>
+      'assets/oculum/home_art/theme_guardiano_solare_mobile_v2.png',
     _ => null,
   };
   String get shape {
+    if (monster.id == 'guardiano_solare') return 'plate';
     final text = '${monster.id} ${monster.nameIt} ${monster.formTags.join(' ')}'
         .toLowerCase();
     if (text.contains('maschera') || monster.id == 'ombra_ignota') {
@@ -220,22 +227,24 @@ class OculumMonsterTheme {
     return 'fang';
   }
 
-  String get motif => switch (shape) {
-    'mask' =>
-      monster.id == 'ombra_ignota'
-          ? 'Spirale d’ossidiana · un solo occhio viola'
-          : 'Maschera incisa · ${color.name.toLowerCase()}',
-    'tear' => 'Lacrima d’Obser · fenditure e iride',
-    'core' => 'Nucleo runico · ottone e giunti bruniti',
-    'wing' => 'Piume e nervature · argento consumato',
-    'skull' => 'Osso inciso · filo funerario',
-    'claw' => 'Artigli ricurvi · cuciture e legature',
-    'plate' => 'Scaglie sovrapposte · pietra levigata',
-    'ears' => 'Orecchie sottili · talismano intagliato',
-    'root' => 'Radici intrecciate · nodi di corteccia',
-    'drop' => 'Goccia sospesa · vetro e filamenti',
-    _ => 'Zanne legate · incisioni della creatura',
-  };
+  String get motif => monster.id == 'guardiano_solare'
+      ? 'Elmo del colosso · arco e due frecce d’oro'
+      : switch (shape) {
+          'mask' =>
+            monster.id == 'ombra_ignota'
+                ? 'Spirale d’ossidiana · un solo occhio viola'
+                : 'Maschera incisa · ${color.name.toLowerCase()}',
+          'tear' => 'Lacrima d’Obser · fenditure e iride',
+          'core' => 'Nucleo runico · ottone e giunti bruniti',
+          'wing' => 'Piume e nervature · argento consumato',
+          'skull' => 'Osso inciso · filo funerario',
+          'claw' => 'Artigli ricurvi · cuciture e legature',
+          'plate' => 'Scaglie sovrapposte · pietra levigata',
+          'ears' => 'Orecchie sottili · talismano intagliato',
+          'root' => 'Radici intrecciate · nodi di corteccia',
+          'drop' => 'Goccia sospesa · vetro e filamenti',
+          _ => 'Zanne legate · incisioni della creatura',
+        };
 }
 
 OculumMonsterTheme? oculumMonsterThemeById(String key) {

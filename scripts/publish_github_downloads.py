@@ -142,6 +142,7 @@ def notes(catalog):
                   f"Commit `{item['commit'][:7]}` · [Build verificata]({item['runUrl']})", ""]
         if item.get("changelogPath") == "docs/REGISTRO_AGGIORNAMENTI.md":
             lines += [f"[Registro completo dalla build b917217](https://github.com/{REPO}/blob/{item['commit']}/docs/REGISTRO_AGGIORNAMENTI.md) · [Versione di partenza](https://github.com/{REPO}/actions/runs/40242640717)", ""]
+            lines += [f"[Come installare e aggiornare](https://github.com/{REPO}/blob/main/docs/AGGIORNARE_OCULUM.md)", ""]
         if item.get("changes"):
             lines += ["Log aggiornamento:", ""]
             lines += ["- " + change for change in item["changes"]]

@@ -25,7 +25,20 @@ bool oculumIsDoubleCritical({
   required int natural,
   required int total,
   required int opposingTotal,
-}) => natural == 20 && total > 0 && total >= max(1, opposingTotal) * 2;
+  int naturalMaximum = 20,
+}) =>
+    naturalMaximum >= 2 &&
+    natural == naturalMaximum &&
+    total > 0 &&
+    total >= max(1, opposingTotal) * 2;
+
+/// New escape interceptions use d16; saves made before die metadata keep d20.
+/// Ordinary attacks retain d20 even if a foreign packet supplies another die.
+int oculumAttackRollFaces(Map request) =>
+    '${request['escapeReactionOf'] ?? ''}'.isNotEmpty &&
+        int.tryParse('${request['dieFaces'] ?? ''}') == 16
+    ? 16
+    : 20;
 
 /// Credits one resolved roll, even after replay or restoring its saved sheet.
 bool oculumGrantDoubleCriticalMagicalLuck(
@@ -34,12 +47,14 @@ bool oculumGrantDoubleCriticalMagicalLuck(
   required int natural,
   required int total,
   required int opposingTotal,
+  int naturalMaximum = 20,
 }) {
   if (receiptId.trim().isEmpty ||
       !oculumIsDoubleCritical(
         natural: natural,
         total: total,
         opposingTotal: opposingTotal,
+        naturalMaximum: naturalMaximum,
       )) {
     return false;
   }

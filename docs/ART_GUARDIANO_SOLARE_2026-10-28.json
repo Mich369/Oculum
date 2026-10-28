@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-28",
+  "provider": "image_gen builtin",
+  "style": "Rame fatato",
+  "monsterId": "guardiano_solare",
+  "status": "v4 desktop approved by user; faithful mobile v2 and simple-bow relic v2 integrated; final renderer tests pending coordinated run",
+  "sourceCatalogue": "lib/pages/oculum_dungeon/solar_guards_and_grofix.dart",
+  "kind": "dedicated desktop and phone backgrounds plus decorative relic, no Monster Book portrait",
+  "sourceDocuments": [
+    "docs/OCULUM_LORE_VISIVA.md",
+    "docs/DICITURE_UTENTE_2026-10-27.md",
+    "design/OCULUM-VISUAL-BIBLE.md",
+    "docs/OCULUM_REGOLE_CONFERMATE.md",
+    "docs/manuale-consultazione.md"
+  ],
+  "references": [
+    {"asset": "assets/oculum/home_art/amber_shore.png", "role": "matte Rame fatato brush technique only"},
+    {"asset": "assets/oculum/home_art/theme_guardia_solare_elite_v2.png", "role": "latest approved Solar full helmet, gold/ivory/burgundy material and dark indigo visual language"},
+    {"asset": "assets/oculum/home_art/creature_guardiano_solare_v1.png", "role": "prior Guardian colossus anatomy and two-arrow golden bow; preserved as history"}
+  ],
+  "canonicalAnatomy": "Very slow massive humanoid colossus, broad shoulders and heavy weight-bearing legs, thick worn gold armor with dark bronze recesses, fully closed helmet with one solar eye, no exposed face/hair, chest ray channels, one gold bow and exactly two arrows, no wings.",
+  "environment": "Fortified rich Solar mountain ring, dark indigo/violet atmosphere, gold and marble. Distant rings separated by broad bare rock, no bridges, spiral roads or stairs connecting rings. No sky Sun or Moon.",
+  "bowstringReview": "User rejected v2 and the replacement v3 side-profile drawn bow, then explicitly approved v4. v4 completely changes the pose: bow at rest, one straight dark vertical string joining only the two limb tips, two loose gold arrows held separately in the other hand with visible heads and fletchings. Mobile v2 and relic v2 preserve that simple functional bow. Automated renderer tests do not prove archery anatomy.",
+  "userApproval": {
+    "scope": "v4 desktop background with bow at rest and one straight tip-to-tip string",
+    "answer": "Sì, questa va bene",
+    "finalGeometryApproval": "v4 explicitly approved; v2 and v3 rejected and retained only as local history. Mobile v2 faithfully recomposed from approved v4; not claimed as a separate explicit approval."
+  },
+  "runtime": {
+    "mapping": "lib/widgets/oculum_monster_theme.dart",
+    "motif": "Elmo del colosso · arco e due frecce d’oro",
+    "savedSelectionsPreserved": true,
+    "statsAndDropChanges": false,
+    "newRelicMeansLoot": false,
+    "testFile": "test/oculum_guardian_solar_art_test.dart",
+    "testStatus": "8 passed locally for prior assets; rerun pending on final v4/mobile-v2/relic-v2. CI/public distribution remain separate",
+    "alphaInspection": {
+      "edgeSamples": 5120,
+      "edgeAlpha0": 5101,
+      "edgeAlpha1": 19,
+      "maxEdgeAlpha": 1,
+      "cornerAlpha": [0, 0, 0, 0],
+      "fullyTransparentFraction": 0.7276814778645834,
+      "maxSubjectAlpha": 254,
+      "pixelsAlphaAtLeast250": 351403,
+      "nearOpaqueFraction": 0.22341601053873697,
+      "explanation": "Final relic v2: 19 antialiased edge samples retain alpha 1/255 (0.39 percent opacity); all other edge samples and all corners have alpha zero. Solid subject is quantized to alpha 250–254, so tests require over 60 percent exactly-zero background and over 15 percent near-opaque coverage (alpha at least 250), rather than an arbitrary alpha-255 sample. Background removal was performed by ImageGen; no raster pixels were edited locally."
+    }
+  },
+  "revision4Approved": {
+    "asset": "assets/oculum/home_art/theme_guardiano_solare_v4.png",
+    "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-09cc0272-f0ca-43f0-a2d4-fc72d2afbdf2.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "3d8bb720872832a1912f3968008131613a3cc0f655b939850694666637286f4d",
+    "prompt": "NEWPOSE, completely replace previous archery action. Oculum GUARDIANO SOLARE background landscape1536x1024. Reference1ONLYsoftmatteRamefatato brushtechnique;2latestapprovedgold Solarclosedhelm/ivory/burgundy identity;3colossusarmor/scene identity ONLY, doNOTcopyhisdrawn-bowpose. Heavy slow powerful colossus, thick layered scratched mattegold armor, massive shoulders/heavylegs, closedhelmet withONEgold-orange solar EYE, no face/hair/wings, ivory/burgundycloth. Calm planted guarding stance in outerRIGHT third. He is NOT SHOOTING and NOT DRAWING bowstring. He CARRIES ONE simple GOLD RECURVE BOW AT REST in one hand. Bow is upright and held slightly OUTWARD AWAY FROM HIS TORSO, allpartsfitinsidegenerousmargins. The bow is a single C-SHAPED curvedgoldenstave, clearlyrecognizedtoplimbtipandbottomlimbtip, centralgrip. EXACTLY ONE SINGLE STRAIGHT DARK BROWN STRING joins those TWO TIP ENDPOINTS fromtopallthewaytobottom. NoV, noangledstring,noextraorsecondaryline,no connectiontohelmet/hand/armor/no magicalstrand. OneCcurveandoneSTRAIGHTchordonly. Keepthisstringagainst SIMPLE QUIET DARK AIR so itis entirely visibleunbroken fromendtoend. The handtouchesONLYsolidgoldgrip, NEVERTHESTRING. His OTHERHAND carries exactly TWO separate GOLD ARROWS together DOWN BESIDE HIS HIP, NOT NOCKED, NOT TOUCHING BOWSTRING. Two distinct straight parallel shafts, two arrowheads and two fletchings; held visiblyaslooseammunitionreadyfornextvolley. No arrows inbow, no attackbeam, no shootingaction, no strings toarrows. Make physicallyclearfunctionalbow, reduceornamentationespeciallyaroundstave/string; nospikes/arcswiresmistakenasstrings. Fullhelmet/feet/entirebow/twoarrowscontainedwithinmargins. LargebodyheavierthanordinaryElite. RichSolarfortressgateononeLostTownmountainring, weatheredmarbleandgold, darkblue-indigo-violetmist, restrainedwarmbraziersforedges. Faintseparateringfarleftbehindbroadbarerock,nobridges/spiralroads/connectingstairs. Quietcenterleft60%forrealUI,nodetailoverthevalues. Softmatte handpainted fantasyanime pigment withimperfections; noglossyCGI/photo/cinemalook/repetitiveAIfiligree. NoMoon,skySun,text,UI,stats,frame,logo,watermark. PriorityisONEstraightcordbetweenTWOtipsandTWOarrowsintheOTHERhand,notnocked.",
+    "arrowCorrectionPrompt": "Precise small edit of this Oculum Solar Guardian painting. The bow and its ONE STRAIGHT VERTICAL STRING ARE CORRECT: keep their exact silhouette/geometry/positions untouched, includingboth limbtipattachments, and keep the hand onsolidgoldgrip. Leave entirebackground, closedsolar-eyehelmet, heavygoldarmor, pose,palette,matteRamefatato brushtechnique and quietleftspaceunchanged. Fix ONLY the loose ammunition in his OTHER hand at his RIGHT HIP (viewer right). Replace the confusing sticks there with EXACTLY TWO clear separate full GOLD ARROWS held together near their middle by thatglovedhand, NOT nocked inbow. Place two straightPARALLEL goldshafts on a diagonal from upperRIGHT to lowerLEFT across the FRONT of the thigh, both golden triangularARROWHEADS visibly point DOWNLEFT, both red/ivoryFLETCHINGS visibly above/behindhand towardUPPERRIGHT. Wholearrowsincludingtwoheadsandtwofletchings fitinsideframeandremainseparatefromcloak/patterns. Make eacharrowasimplephysicallycoherenthead+straightshaft+fletching, no bends, no fragments or unnecessary details. Foregroundarrows may contrast subtly againstdarkburgundycloth; do not hidearrowheadsbehindcape. No thirdarrow/no otherweapons/no newstring, no text/logo/UI. Preserve exactlyONEverticalstraightbowstringandbowatrest."
+  },
+  "revision3Rejected": {
+    "asset": "build/guardiano-art-history/theme_guardiano_solare_v3.png",
+    "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-6dc6969f-f78b-455f-ba0d-7e152fd9c055.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "89404a56e8101900f65755d87ec8bf5cefd8ef92bd436c5b999a7d1861c2e8ef",
+    "prompt": "Create a NEW original Oculum Solar Guardian theme background, landscape1536x1024, wholefigureatright, quietdarkindigocenterleft55%. User rejected previous bowstring, so REPLACE THE POSE COMPLETELY. Reference1=matte Ramefatato pigment technique only;reference2=approved solar gold/ivory/burgundy/closedhelmet aesthetic only;reference3=massive colossus identity only, DO NOT COPY HIS POSE OR BOW. The subject is a veryheavy slow powerful Guardian in layered scratched mattegold armor, huge shoulders and sturdy legs, closedhelmet with ONE goldenorange solar EYE, no face/hair/wings. NEW POSE: TRUE SIDE PROFILE facing LEFT. Bow held at full arm's length forward to LEFT of torso. RIGHT drawhand pulled back to justunderhelmetcheek, elbowbehindtorso. Left arm extended straightleft, left hand grips exactlymiddleofbow. The ONE BOW is a SIMPLE, clean, broad, solid golden recurve stave with NO extra spikes or decorative secondary arcs. Both bowlimb endpoints are clearly visible, entirebowwith15%verticalmargin. Strong negative space behind BOW AND STRING so mechanics entirelylegible; no torso,cloak,armororarchitecture hides string. Show ONE THIN DARKBROWN STRING, exactly TWO TAUT STRAIGHT SEGMENTS forming > from upperbowtip -> ONEsingle nockingpoint in rightdrawfingers -> lowerbowtip. Continuous V alltheway, NOT three lines, not slack, no duplicatedwire, no stringtohelmetorbowgrip. To clarify scene geometry: bowatabout68%canvaswidth, torso/helmetat88%, drawhandat83%;upperbowtiparoundy20%, lowerbowtipy65%, drawhandy38%. String triangle remains in OPEN AIR between bowanddrawhand, not behindbody. Exactly TWO straight GOLDARROWS nockedsidebyside atthatdrawpoint and restingonbowcenter: tips point LEFT beyondbow atabout58%canvaswidth, shafts straightandparallel allthewaytodrawfingers, fletching atrear nexttohand. No arrowheads onright,nofloatingnocks,nofusedfingers, no sparearrows, no extraarms. Full bow, botharrowheads, helmet, elbowsandfeet insidegenerousmargins. Physically coherent medievalarchery is MORE IMPORTANT than decoration or an actioneffect. Plantedwidestance onrichSolar white-marbleandagedgoldmountainringgate, dark bluevioletambience, smallwarmbraziersfarRight; distantseparatering faintleft, broadbarerockbetween, noconnectingbridgesorstairs. Heavycolossus NOT normalathleticknight. Mattehandpaintedsoftanimefantasypigmentbrushes,restrainedpurposedetails,noCGI/photo/gloss/cinema. NoMoon,Sundisc,text,logo,UI,border,labels. Readabilityatcenterleft55%muststayquietandlowcontrast."
+  },
+  "assets": [
+    {
+      "asset": "assets/oculum/home_art/theme_guardiano_solare_v4.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-09cc0272-f0ca-43f0-a2d4-fc72d2afbdf2.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3d8bb720872832a1912f3968008131613a3cc0f655b939850694666637286f4d",
+      "promptReference": "revision4Approved"
+    },
+    {
+      "asset": "assets/oculum/home_art/theme_guardiano_solare_mobile_v2.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-d3bf2697-daf8-4439-94fd-bc4f54c1f386.png",
+      "width": 1024,
+      "height": 1536,
+      "sha256": "3ea555d2b6cc1ca39fef406d064d4e96eb8142b667b12283b199e5ebde9da163",
+      "prompt": "Faithful PHONE vertical portrait1024x1536 recomposition of THIS USER-APPROVED Oculum GUARDIANO SOLARE painting. Keep EXACT SAME approved RELAXED GUARDINGPOSE, CLOSED SOLAR-EYEHELMET, enormousheavygoldarmor, ivory/burgundycloth, TWOLOOSEGOLDARROWSinotherhand, simplegoldBOWATREST. DoNOTinventanattackposeanddonotdrawbowstringback. BowmustretainONEcurvedC-shapedstaveandEXACTLYONESTRAIGHTVERTICALthinDARKBROWNSTRINGfromUPPERLIMBTIPtoLOWERLIMBTIP, physicallyattachedatbothends, noV,noadditionalstrand,no connectiontoarrows/helmet/hand. HandtouchesONLYsolidgoldbowgrip. Stringisclearagainstquietdarkair andcontinuouslyvisibleendtoend, nothiddenbehindtorso. OtherhandholdsexactlyTWOseparateparallelGOLDARROWSneartheirmiddle, fletchingsUPRIGHTandtwoarrowheadsDOWNLEFTacrossthigh, wholeheads/shafts/fletchingsinsideframe. Preservearmor/anatomy/colors fromreference, nohumanface/hair/wings. NEWVERTICALCOMPOSITIONnotcrop: wholeGuardianaroundbottomRIGHT40-45%ofportrait, entirebowtoleftoffigurewithinbottomhalf, generousmarginsallaroundhelmet/feet/bowtips/arrows. Upper/central60%quietlowdetaildarkblue-indigo-violetmountainmistforrealUI, figuredoesnotcovercentralreadingregion. SamewealthySolarfortifiedmarble-andagedgoldmountainringgatealongrightedge,bare-rockmountainandonefaintseparateringfarleft, no bridges/spiralroads/stairconnectionsbetweenrings. Matte soft hand-paintedRamefatatoanimefantasypigment, broadimperfectsoftbrushstrokes, restrainedwarmbrazierlightonright. NoglossyCGI,photoreal,cinemaoroversharpAIornament. NoMoon,skySun,text,UI,logo,watermark,frame. Mainconstraint: APPROVEDBOWATRESTWITHONEsimplestraightcordandtwoarrowssafelyseparate."
+    },
+    {
+      "asset": "assets/oculum/home_art/relic_guardiano_solare_v2.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-b3532b6f-23c9-4898-846e-f29b777566cf.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "dd96eb71349b798fa507b64d0b3c6f8f58ad0e7f2afda5fa2c071f50007c2359",
+      "pngColorType": "RGBA, genuine alpha output verified",
+      "prompt": "Create a decorative Oculum GUARDIANO SOLARE relic TRANSPARENT PNG matching this APPROVED painting, not newlootandnotportrait. THREEPARTSonly:1heavyCLOSEDGOLDHELMETwithONEsolar-eyeengraving,2EXACTLYONEsimplegoldBOWATREST,3EXACTLYTWOloosegoldarrowscrossedbehindhelmet. Helmetatcenterleftwithsmallivory/burgundyclothends; simpleverticalbowtotheright separatedfromhelmet, botharrowheadspointdownandfletchingup, allclear. BowmustCOPYapprovedplainFUNCTIONALGEOMETRY: oneC-SHAPEDgoldenSTAVE onrightcurvedoutward, EXACTLYONEperfectlySTRAIGHTdarkstringconnectingUPPERmostlimbTIPtoLOWERmostlimbTIP, TWOendpointsONLY. NoV,noextracord,no angledconnections,nobrokenstring,noconnectiontohelmet/arrows. BothlimbTIPSbendbacktowardstringendpointssoactualcordfitsbothends, notstucktomiddleoflimb. Showopenairinsidethebowsofullstraightcordvisible. No person,hands,arms,facialskin,wingsorlegs. Simplifyarmorornamentation: wornbrushedmattegoldwithbronzecrevices,purposelypaintedfewsolarEYEs,nolargespikehalos/excessivefiligree. Same softRamefatatoanimefantasypigmentbrushtechniqueasreference, noglossy3D/photoreal/cinema. Allobjectsandbowtipsfullyinsidecanvaswith20%transparentpadding. REALALPHAoutsideobjects, noflatbackground/checkerboard/groundshadow/fog/glowwash. No text/logo/UI/watermark/border. Onehelmet,onebow,twostraightarrows. Exacttip-to-tipstraightbowcordismostimportant.",
+      "backgroundRemovalPrompt": "Background removal ONLY. Preserve exactlyallsolidobjectpixels/identity/design: CLOSED solar-eye goldhelmet, TWOcrossedgoldarrows, ONEplain goldbowwithONEperfectlystraightverticalcordattachedtopandbottomtips. Remove EVERY background color, black/brownrectangle,goldfoganddiffuseglowingwash. Output genuinealphaTRANSPARENCY outside objectsANDintheopenarea INSIDETHEBOW. Nohalo,nohaze,noglows,nofloor,noambientshadow,noopaqueortranslucentcolorwash. Don'tpaintcheckerboard; makebackgroundactualzeroalpha. Isolateonlysolidelm/arrows/bow/cordandsmallclothwithcleanantialiasededges. No redesign,cropping,text,logo,UI. Allobjectsfullyinsidecanvaswithsafe transparentmargins."
+    }
+  ],
+  "historicalAssetsNotMapped": [
+    {
+      "asset": "build/guardiano-art-history/theme_guardiano_solare_v2.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-42b5c1c0-e4a6-4457-bf49-dd3752177ca8.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a21257da76b1fd5f775265ef55a9e49579f2a92633a69d030e3fbdebd48e43bd",
+      "initialPrompt": "Create ONE finished new Oculum GUARDIANO SOLARE character-sheet background, wide landscape 1536x1024. Inputs: Image1 is ONLY the mandatory soft matte Rame fatato pigment technique, not its subject or orange palette. Image2 is ONLY approved new SOLAR visual vocabulary: full golden helmets, solar EYE inside radiating gold disc, ivory/burgundy cloth, restrained dark indigo atmosphere; do not copy human-sized Elite body, sword/shield or its bridge city. Image3 is only the canonical GUARDIAN anatomy/equipment reference: tremendously massive, very slow powerful armored humanoid colossus, broad thick weight-bearing legs and huge layered shoulders, huge GOLD BOW with exactly TWO golden arrows nocked together; reinterpret composition. Completely CLOSED golden helmet with ONE golden-orange iris and dark pupil in a clearly legible solar eye front, absolutely NO exposed face/hair. Thick worn gold plate armor with dark bronze seams and little ivory/burgundy military cloth, narrow restrained solar ray channels in chest. Only TWO hands/two arms: left hand holds coherent bow grip, right hand draws both arrows together correctly. Arms/weapons must read clearly, no fused fingers, no extra limbs. Pose: planted broad stance, preparing a heavy diagonal shot to the left; full helmet, bow ends, TWO arrowheads and feet comfortably within margins. Guardian must look far bulkier/stronger than the Elite reference, not an agile normal knight. Put him entirely in OUTER RIGHT 30% of the frame; leave middle and left 60% low-detail, quiet dark blue-indigo negative space for real UI. Scene: fortified gate on one wealthy Solar ring hollowed into the mountain of Lost Town, white marble and aged gold, gargantuan masonry gives scale; a distant separate ring with ample bare mountain rock between rings may appear subtly at far left. NO bridges, spiral roads, ramps or stairs connecting rings. No ordinary stacked terrace-city. Warm small braziers on far edges, blue violet ambient mist; no bloom/gloss or repetitive AI filigree. Strong local silhouette, restrained hand-painted detail, visible imperfect gouache/oil brushwork, softly drawn matte anime fantasy, tangible materials, entirely illustrated not photorealistic/3D/cinematic. No companions, wings, moon, sky sun disc, ordinary sun symbols without an EYE, writing, text, stats, captions, logo, watermark, border, UI panel or flat text rectangle. Keep broad central space quiet but still part of full painted environment.",
+      "framingCorrection": "Precise composition edit of this Oculum Solar Guardian theme. Preserve exactly the Guardian's canonical design, gold helmet solar EYE, massive armor, TWO gold arrows, anatomically coherent hands on the large golden bow, palette, matte soft brushwork, separate mountain rings, no bridges. Correct ONLY the framing: zoom out enough that the ENTIRE tip of the bow is visible with at least 7% image-height clear margin above, and both feet have comfortable bottom margin. The colossus and bow occupy the rightmost 34%, complete silhouette, slightly smaller relative to background. Keep left and central 60% calm low-contrast dark indigo/blue/violet mist with broad soft pigment strokes for text readability. Render1536x1024. No text/UI/logo/watermark, no moon or sky sun. Do not crop bow, arrowheads, feet or helmet.",
+      "finalCorrectionPrompt": "PRECISION EDIT: user approves this Oculum Solar Guardian background and wants careful BOWSTRING mechanics. Preserve the entire painting, figure identity/scale, armor/closed eye helmet, exactly TWO arrows, gold/ivory/burgundy palette, dark center, mountain fortress, matte Rame fatato brushwork, composition and generous margins. Correct ONLY bowstring/hand/arrow nock geometry. The drawn bow on viewerRIGHT has exactly ONE taut thin DARK BROWN twisted string, visibly continuous and distinct against gold armor, shaped as TWO STRAIGHT SEGMENTS: upper bow limb tip -> the draw hand just LEFT of chest at tail ends/nocks of BOTH arrowshafts -> lower bow limb tip. No string segment through helmet/eye; adjust drawhand/upperbow angle minimally so string path stays to viewerRIGHT of helmet and is readable. Both arrows are horizontal parallel, their reartailnocks seated TOGETHER on the same drawstring at the drawing fingers, their pointedheads face viewerRIGHT beyond bowgrip. Left hand holds centralbowgrip, right hand drawsstring back to chest. No loose/crossed/extra string, no string attached to arrowheads or middleofshaft, no disconnected floating line, no extra arrows or hands. One natural mechanically plausible drawn bow, no diagram or labels. Everythingelse unchanged, no text/UI/logo."
+    },
+    {
+      "asset": "build/guardiano-art-history/theme_guardiano_solare_mobile_v1.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-41c08e44-861b-4154-94d1-d47a98e4e551.png",
+      "width": 1024,
+      "height": 1536,
+      "sha256": "576cad109a9859d5f4b8078fedb37b56de0ad55f2577630fca479af08cd7f10d",
+      "initialPrompt": "Recompose the supplied Oculum GUARDIANO SOLARE background for a PHONE vertical portrait 1024x1536. SAME exact canonical colossus: huge worn golden armor, broad shoulders/heavy legs, closed solar eye helmet, huge golden bow with TWO gold arrows, onlytwo hands/arms, no human face/hair, no wings. This must be a new vertical composition, not a center crop. Place his COMPLETE body, entire bow including both tips and both arrowheads in bottom-right quadrant, generous clean margins, rightmost part around35% width but clearly legible; the looming lower right fortress lets him look enormous. Keep upper65% and center-left almost empty dark indigo-blue-violet mountain mist and broad soft painted distant stone as calm readable real-UI space. Fortified gate of one wealthy Solar ring hollowed inside mountain, separated distant ring faint at far left behind broad bare rock, NO connecting bridges/spiral roads/stairs between rings. Soft matte hand-painted Rame fatato anime fantasy brushwork matching source, gold/ivory/burgundy and dark indigo; no glossy3D/photo/cinema look or repetitive filigree. No actual sky sun, no Moon, no text/UI/logo/watermark/painted frame. Full opaque background. Entire helmet, feet, arrowheads and tallbowfitwithin margins.",
+      "finalCorrectionPrompt": "PRECISION EDIT to Image1 PHONE background only. Image2 shows intended drawn bowstring mechanics/style but preserve Image1 portraitcomposition and allarchitecture/figure/quiet upper65%. User specifically requests a physically coherent BOWSTRING. Maintain identical golden armored colossus, full closed solar-eye helmet, exactlyTWOarrows, same colors and soft matteRamefatato painting. Correct only bowstring and minimal drawfingers/nock alignment. ONE taut thin DARK BROWN bowstring in a clear V: upperlimbtip -> the fingers of RIGHT drawhand at tails of BOTH arrowshafts justleftofchest -> lowerlimbtip. TheseareTWOstraightsegments andmustbevisiblycontinuous againstarmor, eachattachedatlimbtips. RouteuppersegmenttoRIGHTofhelmet, not throughhelmetorface. Arrowtailsnocked togetheratdrawhand, tips point viewerRIGHTpastthebowgrip. LEFThand holdssinglecentralgrip. No extrastrings, ghostlines, disconnectedpieces, floatingarrows, extraarms. Allbowtips, arrowheadsandfeetfullyinsideframemargins. Don't change image1's portraitratio, don't add text/UI/logo/watermark orcelestialbodies."
+    },
+    {
+      "asset": "build/guardiano-art-history/relic_guardiano_solare_v1.png",
+      "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1838f-a577-7212-af4f-308cf4ab1067\\exec-634bf488-db17-48a7-849c-4d3d35b94866.png",
+      "width": 1161,
+      "height": 1355,
+      "sha256": "25adf07608945af7c9299b258ce7075c1c4c8742059077cf0493325035233418",
+      "pngColorType": "RGBA, genuine alpha output requested",
+      "prompt": "One TRANSPARENT PNG Oculum Guardian Solar decorative relic assemblage. Keep SIMPLEASYMMETRIC composition: exactly ONE very large coherent GOLD RECURVE BOW standing vertically on the RIGHT, and exactly TWO slender GOLD ARROWS crossed diagonally behind a heavy CLOSED SOLAR-EYE HELMET at center-left. ONE bow ONLY: a single curved gold stave with a single straight dark string joining its two ends, one central grip. Do NOT mirror or duplicate the bow. The helmet is solid worn matte gold with one EYE in radiant solar emblem, no face/hair; small worn ivory/burgundy cloth ends beneath. Objects form a compact triangular silhouette with ample transparent margin20%allsides. SAME Rame fatato matte soft painterly brushwork as reference, dark warm bronze recesses, localized gold accents. Arrow shafts straight, goldheads distinct, clear object boundaries appropriate to240x280 UI. No full body, person,arms,wings or background, no fog/floor/drop-shadow/backplate, no excessive spikes or glossy3D, no text/logo/watermark/UI. Real alpha transparent outside objects; do not paintcheckerboard. ExactlyONEbow, TWOarrows, ONEhelmet, allfullywithinframe."
+    }
+  ]
+}

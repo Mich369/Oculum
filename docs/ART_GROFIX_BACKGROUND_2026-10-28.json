@@ -2,7 +2,7 @@
   "date": "2026-10-28",
   "provider": "image_gen builtin",
   "style": "Rame fatato",
-  "status": "generated and visually inspected; awaiting final user approval and UI verification",
+  "status": "user-approved background; three renderer regressions passed locally and in CI34746826; final distribution tracked separately",
   "kind": "full creature background, not portrait and not relic",
   "monsterId": "grofix",
   "sourceCatalogue": "lib/pages/oculum_dungeon/solar_guards_and_grofix.dart:85",
@@ -36,5 +36,10 @@
       "width": 941,
       "height": 1672
     }
-  ]
+  ],
+  "userApproval": {
+    "date": "2026-10-28",
+    "answer": "Sì, approvo lo sfondo",
+    "scope": "desktop and separate mobile background"
+  }
 }

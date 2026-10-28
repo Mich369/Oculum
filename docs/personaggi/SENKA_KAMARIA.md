@@ -10,7 +10,7 @@ Il codice usa costi leggibili come **1 Materia**, **1–10 Materia**, **2 Oculum
 
 **Genitori, ultime indicazioni:** per Senka erano tutto; persone semplici, padre tuttofare molto affettuoso che ripudiava i Solari per ciò che fecero e fanno alla loro gente, madre sarta estremamente gentile e cordiale, autrice di fantastici ritratti lunari. Uno è ancora appeso nella locanda. Nomi e soggetto del ritratto restano aperti. La morte conserva la sequenza fissata dall'utente: padre decapitato di netto per non essersi inginocchiato; madre accorre disperata, quattro carte le recidono gli arti e la quinta colpisce al centro della gola, causandone la morte. Cinque colpi di carte **dorate**, eccezione confermata del mazzo personale di Lusier; il mazzo generico dello shop resta non d'oro.
 
-**Stato editoriale:** `SENKA_BACKGROUND_LEGAMI.md` e la resa dell'incubo sono bozze narrative; l'utente le modificherà e invierà la propria versione canonica. Conservare le conferme, senza dichiarare definitiva la prosa attuale.
+**Stato editoriale:** gli avvenimenti e la proposta di background sono confermati; la stesura di `SENKA_BACKGROUND_LEGAMI.md` e dell’incubo resta personalizzabile dal giocatore, che potrà inviare la propria versione canonica. Conservare gli avvenimenti concordati anche durante le revisioni.
 
 Femmina, 16 anni; Mhunan lunare di Lost Town. Livello1, Grado0. Aspetto normale intenzionalmente aperto. Nella vita quotidiana è impacciata e deboluccia; indossando la maschera interpreta coscientemente L’Ombra Mascherata: è sempre Senka, senza un’altra coscienza stabilita.
 
@@ -57,13 +57,13 @@ Costi, CD e valori non fissati direttamente sono bilanciamenti iniziali modifica
 
 ## Crescita ed evoluzioni
 
-**Confluenza delle Ombre — Velo+6 senza buff temporanei:** un’Azione, nessun altro costo, assorbe TUTTI i propri cloni vivi nel fight. Scompaiono dalla turnistica senza EXP/Drop. HP temporanei pari alla loro Vita ATTUALE sommata; VOL/MAT/OCU pari a un decimo delle rispettive somme, arrotondando per difetto solo alla fine. Nessuna RES. Fino a fine fight, senza liberare evocazioni già consumate.
+**Confluenza delle Ombre — Velo permanente13 senza buff temporanei:** un’Azione, nessun altro costo, assorbe TUTTI i propri cloni vivi nel fight. Scompaiono dalla turnistica senza EXP/Drop. HP temporanei pari alla loro Vita ATTUALE sommata; VOL/MAT/OCU pari a un decimo delle rispettive somme, arrotondando per difetto solo alla fine. Nessuna RES. Fino a fine fight, senza liberare evocazioni già consumate.
 
-**Teletrasporto nell’Ombra — proposta Lv3 e Velo+5:** ombra ambientale visibile entro6m; il mantello non basta. Confronto vinto: una RV e +5 al prossimo tiro per colpire OPPURE difendersi, già valido contro il colpo in arrivo se usato in difesa. Il medesimo +5 non vale due volte. Costo iniziale3 Oculum, CD3; modificabili. Automatismo completo ancora in lavorazione.
+**Teletrasporto nell’Ombra — proposta Lv3 e Velo+5:** ombra ambientale visibile entro6m; il mantello non basta. Confronto vinto: una RV e +5 al prossimo tiro per colpire OPPURE difendersi, già valido contro il colpo in arrivo se usato in difesa. Il medesimo +5 non vale due volte. Costo iniziale3 Oculum, CD3; modificabili. Runtime verificato nella patch del28 ottobre; richiede il motore aggiornato.
 
-**Mille Tagli — proposta Lv6 e Riflessi+6:** una volta per Riposo Lungo, costo iniziale1 Materia. Un solo danno immediato: **Danni attuali + totale del tiro Riflessi effettivamente usato + PT attuale**. Poi SENKA riceve un turno personale di Sfinimento. Non sommare un altro danno base né applicare Sfinimento al nemico. Automatismo completo ancora in lavorazione.
+**Mille Tagli — Riflessi permanenti9 e uccisione di Erik I, nessun livello minimo:** una volta per Riposo Lungo, costo iniziale1 Materia. Un solo danno immediato: **Danni attuali + totale del tiro Riflessi effettivamente usato + PT attuale**. Poi SENKA riceve un turno personale di Sfinimento. Non sommare un altro danno base né applicare Sfinimento al nemico. Runtime verificato nella patch del28 ottobre; richiede il motore aggiornato.
 
-**Open del Ricordo — tre Guardie Solari valide:** la Luna compare fino a fine fight, poi scompare, come eccezione temporanea al cielo attuale. Senka riceve +25% alle quattro statistiche più il +5% dei Lunari: **+30% totale**, +5% agli altri Lunari. Buff Open +10 Danni Luna/+6 Difesa Luna; la Skill Open passa da CD3 e1d6 tagli a CD2 e1d8 tagli. Ogni taglio vale un sesto dei Danni attuali, doppio contro i Solari. Distribuibili fra più avversari, **un solo tiro d’attacco per la raffica**, difese individuali. Automatismi e riconoscimento completo della quest restano da verificare prima dello sblocco.
+**Open del Ricordo — tre Guardie Solari valide:** la Luna compare fino a fine fight, poi scompare, come eccezione temporanea al cielo attuale. Senka riceve +25% alle quattro statistiche più il +5% dei Lunari: **+30% totale**, +5% agli altri Lunari. Buff Open +10 Danni Luna/+6 Difesa Luna; la Skill Open passa da CD3 e1d6 tagli a CD2 e1d8 tagli. Ogni taglio vale un sesto dei Danni attuali, doppio contro i Solari. Distribuibili fra più avversari, **un solo tiro d’attacco per la raffica**, difese individuali. Riconoscimento verificato dal progresso personale; contano Guardie comuni ed Elité, con tolleranza25 PT. Richiede il motore aggiornato.
 
 ## Modifica e verifica
 
@@ -74,11 +74,11 @@ Prove locali, build, pubblicazione GitHub e sessioni online reali sono attestazi
 
 ## Verifica del 28 ottobre
 
-La maschera è l'unico equipaggiamento iniziale disattivato; il coltello è indossato. La simulazione usa una copia livello12 con PT pari a Lusier e tutte le evoluzioni compatibili: non altera la scheda originale livello1. Regola generale corretta: la Skill Open del Ricordo è utilizzabile anche a Open spenta dopo lo sblocco; soltanto la propria Open ne cambia tagli e CD. Costi e requisiti restano validi. Implementazione completa e simulazione sono ancora in verifica.
+La maschera è l'unico equipaggiamento iniziale disattivato; il coltello è indossato. La simulazione usa una copia livello12 con PT pari a Lusier e tutte le evoluzioni compatibili: non altera la scheda originale livello1. Regola generale corretta: la Skill Open del Ricordo è utilizzabile anche a Open spenta dopo lo sblocco; soltanto la propria Open ne cambia tagli e CD. Costi e requisiti restano validi. Scenario del motore verificato con entrambe a298 PT; app reali su dispositivi separati sono una prova distinta.
 
 
 ## Conferme del 28 ottobre — crescita personale di Senka
 
-Ultima correzione esplicita: Confluenza delle Ombre richiede **Velo permanente 13**, senza requisito aggiuntivo di livello; sostituisce Velo6 e le proposte12. Nei requisiti conta il totale permanente della scheda, comprese derivata e bonus fissi, escludendo maschera e buff temporanei. Mille Tagli richiede livello6, Riflessi permanenti6 e uccisione di **Erik I**, registrata per i partecipanti aventi diritto con confronto PT personale. Una Guardia Elité anonima non sostituisce Erik. Uso: maschera e coltello,1 Materia, una volta/Riposo Lungo, un turno di Sfinimento a Senka.
+Ultima correzione esplicita: Confluenza delle Ombre richiede **Velo permanente 13**, senza requisito aggiuntivo di livello; sostituisce Velo6 e le proposte12. Nei requisiti conta il totale permanente della scheda, comprese derivata e bonus fissi, escludendo maschera e buff temporanei. Mille Tagli richiede Riflessi permanenti9 e uccisione di **Erik I**, nessun livello minimo; Erik vale anche se più debole, come eccezione nominale. Una Guardia Elité anonima non sostituisce Erik. Uso: maschera e coltello,1 Materia, una volta/Riposo Lungo, un turno di Sfinimento a Senka.
 
 Ultima correzione utente del28 ottobre: **Mille Tagli richiede Riflessi permanenti9 e uccisione di Erik I, nessun livello minimo**. L’uccisione di Erik sblocca questa Skill anche se Erik è più debole di Senka alla sconfitta: eccezione nominale, non deroga generale ai requisiti delle altre uccisioni. Sostituisce livello6/Riflessi6 e confronto PT per questo requisito. Fusione resta Velo permanente13, senza livello minimo aggiuntivo.

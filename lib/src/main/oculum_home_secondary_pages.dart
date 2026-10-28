@@ -9333,6 +9333,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'mask_solar_arrows',
                 'mask_shadow_form',
                 'mask_shadow_teleport',
+                'guardian_golden_mace',
                 'feralis_fury',
                 'monk_ki',
                 'monk_seal',

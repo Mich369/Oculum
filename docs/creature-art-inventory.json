@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "exportedAtUtc": "2026-10-28T10:25:06.160780Z",
-  "baseCommit": "8b89ca9a4b8cef4aafb7eac9647e81032b3f757a",
+  "exportedAtUtc": "2026-10-28T18:40:25.869611Z",
+  "baseCommit": "d05853405ea0bcdcdc5d0c65cda3bcd04fac6df4",
   "scope": "working tree catalog; includes uncommitted source definitions; not publication proof",
   "entriesIncludingVariants": 1193,
   "entriesWithoutGeneratedVariantSuffix": 722,
   "generatedVariants": 471,
-  "dedicatedThemeAssetsPresentAndMapped": 20,
-  "missingDedicatedThemeAssets": 1173,
-  "dedicatedRelicsMapped": 2,
+  "dedicatedThemeAssetsPresentAndMapped": 21,
+  "missingDedicatedThemeAssets": 1172,
+  "dedicatedRelicsMapped": 3,
   "proceduralRelicsAreNotFinal": true,
-  "catalogueSha256": "ca4488e8f52f2abaf2153f43c8f561994689a13bb7940dd84f3b401e27ed54b9",
-  "themeMappingSha256": "2097bff8b37d9cd47a6f736ee3657e67d0acbe3fc4d734b0c0076fdb9ca99678",
+  "catalogueSha256": "f688b895a329d11ad62508717fb959ee435c6ee80805b2b0d43ca705de5f97c6",
+  "themeMappingSha256": "20f321386ccbe2f86b6a065308e9eafd9f6d95693877314bee1d60f235c8f812",
   "entries": [
     {
       "id": "pawn_guardiano",
@@ -24446,7 +24446,12 @@
         "magicShieldDefenseBase": 5,
         "magicShieldDefensePerLevel": 2,
         "nonLethal": true,
-        "robberyPercent": 50,
+        "robberyPercent": 75,
+        "robberyAtFightEnd": true,
+        "killsDefeatedAtFightEnd": false,
+        "titleItemsUnstealable": true,
+        "veteranWillAuraPercent": 5,
+        "veteranFocusAccuracyBonus": 2,
         "naturalAttitude": "Prudente e disciplinato. Combina spada e magia spirituale, protegge la propria posizione e resta in silenzio durante il combattimento.",
         "additionalProgressionSkills": [
           "growth__scostubandito_errato__0",
@@ -24583,7 +24588,12 @@
         "magicShieldDefenseBase": 5,
         "magicShieldDefensePerLevel": 2,
         "nonLethal": true,
-        "robberyPercent": 50,
+        "robberyPercent": 100,
+        "robberyAtFightEnd": true,
+        "killsDefeatedAtFightEnd": true,
+        "titleItemsUnstealable": true,
+        "veteranWillAuraPercent": 15,
+        "veteranFocusAccuracyBonus": 2,
         "naturalAttitude": "Prudente e disciplinato. Combina spada e magia spirituale, protegge la propria posizione e resta in silenzio durante il combattimento.",
         "additionalProgressionSkills": [
           "growth__scostubandito_veterano_errato__0",
@@ -27823,7 +27833,7 @@
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
       "relicAsset": "assets/oculum/home_art/relic_guardia_solare_v1.png",
-      "relicStatus": "asset dedicato collegato, presente e approvato esplicitamente; sei test widget passati, pubblicazione separata",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [
         "assets/oculum/home_art/relic_guardia_solare_elite_v1.png",
         "assets/oculum/home_art/relic_guardia_solare_v1.png",
@@ -27831,7 +27841,7 @@
         "assets/oculum/home_art/theme_guardia_solare_elite_v2.png",
         "assets/oculum/home_art/theme_guardia_solare_v1.png"
       ],
-      "approval": "Reliquia v1 approvata esplicitamente il 28 ottobre 2026; tema v2 preservato.",
+      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -27982,12 +27992,12 @@
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
       "relicAsset": "assets/oculum/home_art/relic_guardia_solare_elite_v1.png",
-      "relicStatus": "asset dedicato collegato, presente e approvato esplicitamente; sei test widget passati, pubblicazione separata",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [
         "assets/oculum/home_art/relic_guardia_solare_elite_v1.png",
         "assets/oculum/home_art/theme_guardia_solare_elite_v1.png"
       ],
-      "approval": "Reliquia v1 approvata esplicitamente il 28 ottobre 2026; tema v2 preservato.",
+      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -28130,13 +28140,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/solar_guards_and_grofix.dart:25",
       "isGeneratedVariant": false,
       "baseId": "guardiano_solare",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
+      "themeAsset": "assets/oculum/home_art/theme_guardiano_solare_v4.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "relicAsset": "assets/oculum/home_art/relic_guardiano_solare_v2.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [
-        "assets/oculum/home_art/creature_guardiano_solare_v1.png"
+        "assets/oculum/home_art/creature_guardiano_solare_v1.png",
+        "assets/oculum/home_art/relic_guardiano_solare_v2.png",
+        "assets/oculum/home_art/theme_guardiano_solare_mobile_v2.png"
       ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
@@ -28519,7 +28531,7 @@
           "growth__grofix__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/solar_guards_and_grofix.dart:84",
+      "sourceLocation": "lib/pages/oculum_dungeon/solar_guards_and_grofix.dart:87",
       "isGeneratedVariant": false,
       "baseId": "grofix",
       "themeAsset": "assets/oculum/home_art/theme_grofix_v1.png",

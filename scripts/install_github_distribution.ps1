@@ -12,6 +12,9 @@ $stagingRoot = Join-Path $buildRoot "distribution-fresh-$RunId"
 $downloadRoot = Join-Path $buildRoot "distribution-download-$RunId"
 $verifier = Join-Path $PSScriptRoot 'verify_distribution.ps1'
 if (!(Test-Path -LiteralPath $verifier -PathType Leaf)) { throw 'Distribution verifier missing' }
+$swapHelper = Join-Path $PSScriptRoot 'oculum_distribution_swap.ps1'
+if (!(Test-Path -LiteralPath $swapHelper -PathType Leaf)) { throw 'Distribution swap helper missing' }
+. $swapHelper
 
 function Assert-BuildChild([string]$Path) {
   $resolved = [IO.Path]::GetFullPath($Path)
@@ -31,8 +34,15 @@ $commit = (& git -C $projectRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $run.head_sha -ne $commit -or $run.conclusion -ne 'success') {
   throw 'Only a successful build of the current commit can be installed'
 }
-$pendingSources = @(& git -C $projectRoot status --porcelain -- lib assets windows android web pubspec.yaml pubspec.lock)
-if ($LASTEXITCODE -ne 0 -or $pendingSources.Count) { throw 'Commit the current build sources before installing GitHub packages' }
+function Assert-CurrentBuildSources {
+  $currentCommit = (& git -C $projectRoot rev-parse HEAD).Trim()
+  if ($LASTEXITCODE -ne 0 -or $currentCommit -ne $commit) {
+    throw 'Repository commit changed while preparing distribution; verified packages remain in staging'
+  }
+  $pendingSources = @(& git -C $projectRoot status --porcelain -- lib assets windows android ios macos linux web pubspec.yaml pubspec.lock)
+  if ($LASTEXITCODE -ne 0 -or $pendingSources.Count) { throw 'Commit the current build sources before installing GitHub packages' }
+}
+Assert-CurrentBuildSources
 foreach ($path in @($distRoot, $stagingRoot, $downloadRoot)) { Assert-BuildChild $path }
 if ((Test-Path -LiteralPath $stagingRoot) -or (Test-Path -LiteralPath $downloadRoot)) {
   throw 'Fresh staging path already exists; inspect it before retrying'
@@ -192,21 +202,17 @@ foreach ($record in $manifest.files) {
     throw "Staging changed before replacement: $($record.path)"
   }
 }
-$backupRoot = Join-Path $buildRoot ("distribution-backup-$RunId-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$backupRoot = Join-Path $buildRoot ("distribution-backup-$RunId-" + (Get-Date -Format 'yyyyMMdd-HHmmssfff'))
 foreach ($path in @($distRoot, $stagingRoot, $backupRoot)) { Assert-BuildChild $path }
-if (Test-Path -LiteralPath $distRoot) { Move-Item -LiteralPath $distRoot -Destination $backupRoot }
-try {
-  Move-Item -LiteralPath $stagingRoot -Destination $distRoot
+Invoke-OculumDistributionSwap -BuildRoot $buildRoot -DistributionRoot $distRoot -StagingRoot $stagingRoot -BackupRoot $backupRoot -BeforeSwap {
+  Assert-CurrentBuildSources
+  $activeBeforeSwap = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
+    $_.Path -and $_.Path.StartsWith($distRoot + '\', [StringComparison]::OrdinalIgnoreCase)
+  })
+  if ($activeBeforeSwap.Count) { throw 'Save and close the app running from distribution before replacing it. Fresh packages are ready in staging.' }
+} -VerifyInstalled {
   & $verifier -ExpectedCommit $commit -DistributionRoot $distRoot
-}
-catch {
-  if ((Test-Path -LiteralPath $distRoot) -and !(Test-Path -LiteralPath $stagingRoot)) {
-    Move-Item -LiteralPath $distRoot -Destination $stagingRoot
-  }
-  if (!(Test-Path -LiteralPath $distRoot) -and (Test-Path -LiteralPath $backupRoot)) {
-    Move-Item -LiteralPath $backupRoot -Destination $distRoot
-  }
-  throw
+  Assert-CurrentBuildSources
 }
 Assert-BuildChild $downloadRoot
 Remove-Item -LiteralPath $downloadRoot -Recurse -Force

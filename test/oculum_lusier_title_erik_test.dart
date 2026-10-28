@@ -198,10 +198,9 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Erik allocates elite level growth once, exports a separate private-data-free code and measures his actual power',
-    (tester) async {
-      final (state, p) = await fixtures.mountFight(tester);
+  test(
+    'generic elite builder retains its original level growth despite Erik personal exception',
+    () {
       final sheet = oculumBuildErikSheet();
       expect(sheet['livello'], '8');
       expect(sheet['grado'], '0');
@@ -221,23 +220,82 @@ void main() {
         true,
       );
       expect(jsonEncode(sheet), isNot(contains('lusier_self_mastery')));
+    },
+  );
+  testWidgets(
+    'Erik authored personal overlay imports at 130 PT and retains editable Custodia costs and cooldowns',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      const folder = 'output/characters/erik_i';
+      final jsonFile = File('$folder/Erik_I.json');
+      final codeFile = File('$folder/Erik_I.codice.txt');
+      final originalJson = jsonFile.readAsStringSync();
+      final originalCode = codeFile.readAsStringSync();
+      final sheet = Map<String, dynamic>.from(jsonDecode(originalJson) as Map);
+      final overlay = jsonDecode(
+        File('$folder/Erik_I.overlay_personale.json').readAsStringSync(),
+      ) as Map;
+      expect(overlay['targetCharacter'], 'erik_i');
+      expect(overlay['expectedTotalPower'], 130);
+      expect(overlay['baseStats'], {
+        'resilienza': 26,
+        'volonta': 29,
+        'materia': 22,
+        'oculum': 21,
+      });
+      expect(overlay['expectedEffectiveCoreStats'], {
+        'resilienza': 26,
+        'volonta': 37,
+        'materia': 38,
+        'oculum': 21,
+      });
+      for (final key in (overlay['baseStats'] as Map).keys) {
+        expect(readIntValue(sheet[key]), overlay['baseStats'][key]);
+      }
+      expect(sheet['livello'], '8');
+      expect(sheet['grado'], '0');
+      expect(sheet['planarRuntime']['canonicalNpc'], 'erik_i');
+      expect(oculumDecodeSheetShareText(originalCode).single, sheet);
       final input = {...sheet, 'id': p.ownerTag(), 'sheetTag': p.ownerTag()};
+      state.schedePersonaggio[state.schedaCorrente] = input;
       p.load(input);
       p.invalidateDerivedCaches();
       p.refillStatsAndHealth();
+      state.schedePersonaggio[state.schedaCorrente] = p.snapshot();
       final power = p.totalPower(state.schedaCorrente as int);
-      final folder = Directory('output/characters/erik_i')
-        ..createSync(recursive: true);
-      File('${folder.path}/Erik_I.json').writeAsStringSync(
-        '${const JsonEncoder.withIndent('  ').convert(sheet)}\n',
-      );
+      expect(power, 130);
+      expect(p.coreStats(), overlay['expectedEffectiveCoreStats']);
+      final personal = (state.skills as List)
+          .cast<CharacterSkill>()
+          .singleWhere((s) => s.nome == 'Custodia del Girone');
+      final roundTrip = CharacterSkill.fromJson(personal.toJson());
+      for (var i = 0; i < 3; i++) {
+        final form = roundTrip.forme[i];
+        expect(
+          form.effettiStrutturati
+              .singleWhere((e) => e.type == 'scudo')
+              .valueExpression,
+          ['8', '14', '22'][i],
+        );
+        expect(
+          form.effettiStrutturati
+              .singleWhere((e) => e.type == 'difesa')
+              .valueExpression,
+          ['5', '8', '11'][i],
+        );
+        expect(form.costoStrutturato!.resource, 'oculum');
+        expect(form.costoStrutturato!.amountExpression, ['3', '4', '6'][i]);
+        expect(form.cooldownStrutturato!.amount, 3);
+      }
       final code = oculumEncodeSheetShareText([sheet]);
-      File('${folder.path}/Erik_I.codice.txt').writeAsStringSync('$code\n');
       expect(oculumDecodeSheetShareText(code).single, sheet);
-      File('${folder.path}/potenza.json').writeAsStringSync(
-        '${const JsonEncoder.withIndent('  ').convert({'totalPower': power, 'level': 8, 'grade': 0, 'coreStats': p.coreStats(), 'knownBy': 'Haniel'})}\n',
-      );
-      expect(power, lessThan(277));
+      final saved = p.snapshot();
+      state.schedePersonaggio[state.schedaCorrente] = saved;
+      p.load(saved);
+      p.invalidateDerivedCaches();
+      expect(p.totalPower(state.schedaCorrente as int), 130);
+      expect(jsonFile.readAsStringSync(), originalJson);
+      expect(codeFile.readAsStringSync(), originalCode);
       await closeFixture(tester, p);
     },
   );

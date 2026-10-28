@@ -63,7 +63,10 @@ final _solarGuardAndGrofixEntries = <MonsterBookEntry>[
       0,
       false,
       seed.$4,
-      [for (var i = 0; i < 4; i++) '${seed.$1}_tech_$i'],
+      [
+        for (var i = 0; i < 4; i++) '${seed.$1}_tech_$i',
+        if (seed.$1 == 'guardiano_solare') 'guardiano_solare_mazza_oro',
+      ],
       {
         'authoredCanonical': true,
         'naturalAttitude': seed.$7,
@@ -111,6 +114,47 @@ final _solarGuardAndGrofixEntries = <MonsterBookEntry>[
 ];
 
 final _solarGuardAndGrofixTechniques = <String, MonsterConcreteTechnique>{
+  'guardiano_solare_mazza_oro': _planarMove(
+    'Mazza d’oro',
+    'Evoca nelle mani una pesante mazza dorata di energia solare. '
+        'La forma I moltiplica i Danni per ×1,2 per 1d3 turni personali; '
+        'la II per ×1,3 per 1d3+2 turni personali; '
+        'la III per ×1,5 per 1d3+3 turni personali. '
+        'La durata viene tirata una sola volta all’attivazione. '
+        'È un potenziamento temporaneo, non un attacco aggiuntivo né un oggetto da raccogliere; '
+        'la mazza scompare alla scadenza. Riattivarla rinnova il bonus senza accumularlo.',
+    'solare',
+    'potenziamento',
+    const [
+      [
+        MonsterTechniqueEffect(
+          'danno_percentuale',
+          '20',
+          target: 'guardian_golden_mace',
+          duration: '1d3',
+        ),
+      ],
+      [
+        MonsterTechniqueEffect(
+          'danno_percentuale',
+          '30',
+          target: 'guardian_golden_mace',
+          duration: '1d3+2',
+        ),
+      ],
+      [
+        MonsterTechniqueEffect(
+          'danno_percentuale',
+          '50',
+          target: 'guardian_golden_mace',
+          duration: '1d3+3',
+        ),
+      ],
+    ],
+    minimums: const [2, 4, 6],
+    maximums: const [2, 4, 6],
+    cd: const [4, 6, 8],
+  ),
   for (final id in [
     'guardia_solare',
     'guardia_solare_elite',

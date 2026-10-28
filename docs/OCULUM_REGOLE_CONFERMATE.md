@@ -826,6 +826,8 @@ Utility Fuga: 1d20 + Movimento + max(Riflessi, Velo). Costa Azione nel proprio t
 
 L'ultimo aggressore che ha tolto Vita ha un tentativo gratuito di colpire oppure bloccare solo se nota. Il colpo non ferma la Fuga salvo critico riuscito o Precisione con totale almeno quattro quinti del tiro di Fuga. Gli aiutanti spendono Azione/Reazione: +3 se nell'ultimo colpo, +2 altrimenti. Dal lato di chi fugge, il compagno con il più alto precedente Aiuto ha un tentativo gratuito.
 
+Correzione esplicita successiva alla sessione del28 ottobre: **tutti gli attacchi contro la fuga usano1d16 per colpire al posto di1d20**. D16 è già nel set extra; la richiesta riguarda il colpo d’intercettazione, non gli attacchi ordinari né il tiro di blocco. Il blocco rimane1d20 + Movimento + Riflessi. Modificatori e condizioni di arresto del colpo restano quelli sopra.
+
 Fuori fight: non attaccabile, ma conserva il turno; una Azione e due Reazioni, con singola estrazione al 50% che converte una in veloce. Fuga critica: tre Reazioni veloci al primo turno fuori fight. Solo cure, riparazioni e utilità su di sé oppure rientro, che costa una Azione. Rientro con Velo: +3 al prossimo tiro per colpire e +Velo ai Danni contro ciascun bersaglio con Percezione passiva non superiore al Velo; possono aiutare solo coloro che percepiscono chi rientra. I membri Fato dello stesso party si percepiscono sempre. Rientro con Riflessi: visibile, una Reazione veloce ora e nel successivo turno. Reinvii senza duplicazione dei benefici.
 
 Tutto il party vivo fuggito conclude il fight. EXP personale = max(Vita reale persa personalmente, Vita reale tolta ai nemici ÷ membri per difetto − propria statistica Danni). Scudi esclusi; ricevute duplicate non ricontano Vita. Nessun nuovo bonus prima sconfitta o Chained Fate su questa ricompensa.
@@ -950,3 +952,19 @@ Correzione generale successiva del28 ottobre: le uccisioni richieste per la prog
 ### Chiarimento implementativo dei cloni personali di Senka
 
 La copia delle Skill comprende il Mantello d’ombra attivato dal clone: non richiede che il clone possieda l’item maschera. Il clone non riceve però la passiva della maschera contro i colpi mirati all’oggetto assente; l’intangibilità termina normalmente e gli attacchi spirituali o esplicitamente capaci di colpire immateriali restano validi. È applicazione della copia già confermata, non una nuova immunità permanente.
+
+### Conferma finale — Guardie per il Ricordo della Luna
+
+Risposta esplicita dell’utente: **Comuni ed Elité** contano entrambe per le tre uccisioni richieste dalla Open di Un Ricordo della Luna. Conservare tolleranza25 PT e progresso personale già confermati. I dati esportati già contengono entrambe le specie; nessuna nuova eccezione per altre creature solari.
+
+### Ultima eccezione personale di Erik I
+
+L’utente conferma Erik livello8/Grado0 circa130PT, con riduzione anche del potere personale, lasciando invariata la Guardia Solare Elité generica. La condizione successiva «se Senka è già vicina o superiore, lascia come prima» non si verifica: misura reale SenkaLv1/G0 senza Open36PT, con maschera62PT; distanza68 daErik130. Override personale verificato nel motore: PT130 esatta, RES26/VOL37/MAT38/OCU21 e260Vita. Custodia: Scudo8/14/22 eDifesa5/8/11, costi3/4/6Oculum eCD3 invariati. Dati JSON/OC3 e overlay persistente; importabili dall’app bb7e021b senza nuovo motore.
+
+Il resto del background proposto è approvato dall’utente e resta personalizzabile; il documento separato per il giocatore esclude appunti riservati del Master.
+
+### Guardiano Solare — Mazza d’oro
+
+Nuova Skill confermata dopo la sessione. Evoca una mazza dorata e aumenta temporaneamente i Danni: Forma I **×1,2 per1d3 turni personali** (senza+1, ultima correzione esplicita); Forma II **×1,3 per1d3+2**; Forma III **×1,5 per1d3+3**. Le forme I/III e il bilanciamento di costi/cooldown sono stati delegati e approvati, con correzione finale della Forma I.
+
+Bilanciamento iniziale modificabile: costo2/4/6Oculum, cooldown4/6/8turni personali, forme ai livelli0/3/6 secondo il catalogo. Si applica il bonus percentuale temporaneo ai Danni, senza sommare il moltiplicatore completo come bonus. Esempio100Danni diventano120/130/150. Durata estratta all’attivazione e conservata, senza ritirarla al caricamento. L’illustrazione dell’arco e la nuova Skill restano elementi distinti.

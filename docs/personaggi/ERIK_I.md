@@ -6,18 +6,18 @@ Lusier gli ha concesso i circoli solari inferiori del proprio dominio, intermedi
 
 ## Scheda e potenza misurata
 
-La Potenza Totale effettiva dell’esportazione locale è **184**, letta dal report [potenza.json](../../output/characters/erik_i/potenza.json). È una misura del motore con l’equipaggiamento attivo, non una somma manuale dei punti da riassegnare.
+La Potenza Totale effettiva dell’esportazione aggiornata è **130**, letta dal report [potenza.json](../../output/characters/erik_i/potenza.json). È una misura del motore con l’equipaggiamento attivo, non una somma manuale dei punti da riassegnare. Il depotenziamento è un’eccezione personale approvata per Erik.
 
 | Statistica effettiva | Valore |
 |---|---:|
-| Resilienza | 40 |
-| Volontà | 51 |
-| Materia | 54 |
-| Oculum | 31 |
+| Resilienza | 26 |
+| Volontà | 37 |
+| Materia | 38 |
+| Oculum | 21 |
 
-La crescita usa la base della Guardia Solare Elité da 56 punti e gli aumenti fino al livello 8, distribuiti una sola volta. Il bilanciamento personale è stato delegato dall’utente; non estendere a Erik la priorità Volontà/Oculum fissata specificamente per Lusier. I valori effettivi comprendono i bonus applicabili dell’equipaggiamento e vanno ricalcolati dopo ogni personalizzazione.
+La Guardia Solare Elité generica conserva base56 e crescita ordinaria. Erik resta livello8/Grado0 ma usa l’overlay personale depotenziato: non applicarlo a tutte le guardie. Non estendere a Erik la priorità Volontà/Oculum fissata specificamente per Lusier. I valori effettivi comprendono i bonus applicabili dell’equipaggiamento e vanno ricalcolati dopo ogni personalizzazione.
 
-**Haniel conosce la PT 184 di Erik.** Non è stata ancora fissata una scena in cui comunichi quel numero a Senka. La soglia di 298 pronunciata a Senka rimane riferita a Lusier III, non a Erik.
+**Haniel conosce la PT130 di Erik.** Non è stata ancora fissata una scena in cui comunichi quel numero a Senka. La soglia di298 pronunciata a Senka rimane riferita a Lusier III, non a Erik.
 
 - Scheda: [Erik_I.json](../../output/characters/erik_i/Erik_I.json).
 - Codice importabile: [Erik_I.codice.txt](../../output/characters/erik_i/Erik_I.codice.txt).
@@ -37,9 +37,9 @@ Tecnica personale difensiva, distinta dai poteri di Lusier: Erik concentra un si
 
 | Forma / livello richiesto | Costo | Scudo ottenuto | Difesa Solare al prossimo tiro | Cooldown |
 |---|---:|---:|---:|---|
-| I / 8 | 3 Oculum | 12 | +8 | 3 turni personali |
-| II / 12 | 4 Oculum | 20 | +11 | 3 turni personali |
-| III / 18 | 6 Oculum | 30 | +15 | 3 turni personali |
+| I / 8 | 3 Oculum | 8 | +5 | 3 turni personali |
+| II / 12 | 4 Oculum | 14 | +8 | 3 turni personali |
+| III / 18 | 6 Oculum | 22 | +11 | 3 turni personali |
 
 Al livello 8 è disponibile la prima forma; le successive rimangono sviluppi futuri con requisiti. La scheda conserva anche l’Art della Guardia Solare Elité. Costi, effetti, bersagli, durata, requisiti, cooldown, statistiche ed equipaggiamento sono mantenuti nei campi del JSON e modificabili attraverso gli editor.
 

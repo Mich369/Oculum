@@ -292,6 +292,13 @@ class OculumPerformanceProbe {
   void escapeEvent(Map<String, dynamic> payload) =>
       _state.receiveEscapeEvent(payload);
   Future<void> attemptEscape() => _state.attemptEscape();
+  Widget escapeRequests() => _state.escapeRequestsPanel();
+  Future<void> answerEscape(Map<String, dynamic> record, String kind) =>
+      _state.answerEscape(record, kind);
+  bool escapeAttackAllowed(Map<String, dynamic> packet) =>
+      _state.escapeAttackAllowed(packet);
+  int criticalModifier(int natural, int faces) =>
+      _state.criticalDieModifier(natural, faces);
   Future<void> returnToFight(String mode) => _state.returnToFight(mode);
   void escapeDamage(Map<String, dynamic> request) =>
       _state.recordEscapeDamage(request);
@@ -786,11 +793,14 @@ class OculumPerformanceProbe {
     int maximum = 1,
     int? total,
     int? natural,
+    String? escapeReactionOf,
   }) => _state.planOnlineAttack(
     minimumTargets: minimum,
     maximumTargets: maximum,
     preparedAttackTotal: total,
     preparedAttackNatural: natural,
+    escapeReactionOf: escapeReactionOf,
+    resourceAlreadySpent: escapeReactionOf != null,
   );
   String gainCoreMastery(String key, int natural, {int faces = 20}) =>
       _state.registraEsperienzaCriticaStat(

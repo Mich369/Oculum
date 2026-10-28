@@ -56,7 +56,7 @@ for entry in catalogue['entries']:
                        else 'collegamento asset mancante su disco' if artwork
                        else 'scena dedicata mancante; fallback procedurale',
         'relicAsset': relics.get(monster_id),
-        'relicStatus': 'asset dedicato collegato, presente e approvato; sei test widget passati, pubblicazione separata' if monster_id in relics and (ROOT / relics[monster_id]).is_file() else 'reliquia dedicata mancante; OculumMonsterRelicPainter generico',
+        'relicStatus': 'asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata' if monster_id in relics and (ROOT / relics[monster_id]).is_file() else 'reliquia dedicata mancante; OculumMonsterRelicPainter generico',
         'unlinkedArtworkCandidates': [p for p in candidates if p != artwork],
         'approval': 'non attestata automaticamente: verificare canone, manifest e conferma utente',
         'anatomyLabels': [p.get('label', p.get('id', '')) for p in anatomy],
@@ -91,7 +91,7 @@ out = [
     '## Fotografia del catalogo attuale', '',
     f'- Esportazione reale `defaultMonsterBookEntries`: **{entries} voci**, comprese **{entries-base_count} varianti generate**. Le **{base_count} voci senza suffisso `_variante_`** includono già specie e varianti scritte a mano: non equivalgono automaticamente a specie biologiche uniche.',
     f'- **{linked} scene dedicate collegate ed esistenti**, **{entries-linked} voci senza una scena dedicata collegata**.',
-    f'- **{len(relics)} reliquie artwork dedicate collegate nel renderer dei mostri**, generate con alpha reale per Guardia Solare/Elité, approvate esplicitamente; sei test widget locali passati. Le altre usano `OculumMonsterRelicPainter`: silhouette vettoriali di famiglia con colori/seme, fallback funzionanti non definitivi.',
+    f'- **{len(relics)} reliquie artwork dedicate collegate nel renderer dei mostri**. Conferme e test sono documentati nei manifest specifici: la presenza di un file non assegna automaticamente un’approvazione. Le altre usano `OculumMonsterRelicPainter`: silhouette vettoriali di famiglia con colori/seme, fallback funzionanti non definitivi.',
     f'- Data export UTC: `{catalogue["exportedAtUtc"]}`. Commit base `{commit}`; contiene le definizioni locali successive, non prova una pubblicazione.',
     '- Inventario completo leggibile da strumenti: [creature-art-inventory.json](creature-art-inventory.json), con descrizione fisica integrale, anatomia, punti deboli, atteggiamento, elementi, piani, drop, inventario e regole di ogni voce.',
     '- I colori casuali di una stessa specie non sono contati qui come nuove specie. Per ogni futura variante cromatica verificare se richiede una scena separata o una variazione approvata; non usare una ricolorazione come sostituto delle differenze anatomiche/ambientali.', '',

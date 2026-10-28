@@ -54,7 +54,7 @@ class MonsterConcreteTechnique {
           return switch (e.type) {
             'planar' || 'meccanio' || 'preparazione' => '',
             'danno' => '+$value Danni al prossimo attacco; si consuma una sola volta',
-            'danno_percentuale' => '+$value% Danni al prossimo attacco; si consuma una sola volta',
+            'danno_percentuale' => e.mode == 'prossima_azione' ? '+$value% Danni al prossimo attacco; si consuma una sola volta' : '+$value% Danni per ${e.duration} turni',
             'difesa' => '${e.mode == 'diminuzione' ? '-' : '+'}$value Difesa per ${e.duration} turno',
             'scudo' => '+$value Scudo, fino a esaurimento',
             'cura' => 'recuperi $value Vita, entro il massimo',

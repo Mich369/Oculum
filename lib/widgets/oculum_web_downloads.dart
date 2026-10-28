@@ -128,6 +128,15 @@ class _OculumWebDownloadsState extends State<OculumWebDownloads> {
           onPressed: () => _open(Uri.parse(oculumBuildDownloadsUrl)),
           child: const Text('Apri tutti i download su GitHub'),
         ),
+        MenuItemButton(
+          onPressed: () => _open(
+            Uri.parse(
+              'https://github.com/Mich369/Oculum/blob/main/docs/AGGIORNARE_OCULUM.md',
+            ),
+          ),
+          leadingIcon: const Icon(Icons.help_outline),
+          child: const Text('Installazione e aggiornamento'),
+        ),
         const Padding(
           padding: EdgeInsets.all(12),
           child: SizedBox(

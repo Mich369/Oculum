@@ -70,3 +70,11 @@ Gli sfondi riempiono la pagina. Testi, barre e comandi sono widget reali sopra l
 - Oculiani: generalmente belli, molti occhi ma disposti armoniosamente senza eccessi. Nuovo riferimento con capelli e iridi viola, occhio frontale e nelle due palme: `assets/oculum/home_art/creature_oculian_purple_corruption_v1.png`. Decorazione equivalente per la Viola, da viola a viola scuro. Non modificare i temi personali salvati per simulare questa condizione; sovrapposizione derivata dallo stato.
 - Ancient Desert Dragon Claw: centro stellato chiaramente SCUDO e due grandi lame ricurve da artiglio, impugnatura difensiva dietro, ossa di drago e arenaria crepata; lanciabile come boomerang. Anteprima `assets/oculum/home_art/item_ancient_desert_dragon_claw_v1.png`. «Esplodere» indica il rilancio di 1d3 quando esce3, non esplosioni fisiche. La direzione pittorica resta quella sopra, non un obbligo di applicare rame o fate a ogni soggetto.
 - Tutte le altre regole di disegno restano valide. Prompt esatti e provenienza in ART_CORRUZIONE_2026-10-27.json.
+
+### Grofix — approvazione del 28 ottobre
+
+L’utente approva lo sfondo completo Grofix e la composizione separata per telefono: grotta senza cielo, muschio e radici che assorbono il deposito, cristalli irregolari, nucleo fibroso visibile e centro libero per la scheda. Asset `theme_grofix_v1.png` e `theme_grofix_mobile_v1.png`; non è un ritratto nel Monster Book né una revisione automatica di tutte le reliquie.
+
+### Guardiano Solare — aggiornamento dopo la sessione
+
+L’utente approva la direzione del nuovo sfondo del Guardiano e precisa «attenzione filo arco»: colosso massiccio d’oro con elmo chiuso a occhio solare, arco e due frecce, centro libero. Rifiutate le pose v2/v3 per la corda incoerente. **V4 approvata esplicitamente**: arco a riposo con una sola corda dritta collegata alle due estremità; le due frecce sono nell’altra mano, separate dall’arco. La versione telefono riprende questa struttura. Reliquia visiva dedicata con gli stessi materiali. Il nuovo tema non cambia statistiche, equipaggiamenti o drop; Mazza d’oro è una Skill richiesta separatamente. Prompt, fonti e stato dei controlli nel manifest `ART_GUARDIANO_SOLARE_2026-10-28.json`.

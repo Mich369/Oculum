@@ -1,11 +1,21 @@
 # Registro cumulativo per i giocatori
 
+## Patch del 28 ottobre — fuga, aggiornamento e Guardiano Solare
+
+- Aggiornamento Windows: tentativi separati, avanzamento download/verifica/installazione, controllo integrità in background e diagnostica persistente. Il successo richiede conferma di avvio della nuova versione; backup e ripristino preservano i file precedenti.
+- Installazione locale: correzione dello spostamento parziale delle cartelle bloccate; le verifiche distinguono app precedente ancora aperta, pacchetto scaricato e nuova versione effettivamente avviata.
+- Salvataggi prima dell’aggiornamento: controllo dell’ultima scrittura e rilettura verificata, ripetuto dopo il download. Un vecchio backup valido non basta se il nuovo salvataggio fallisce; l’app resta aperta senza avviare l’installer. Guida di installazione raggiungibile dai download pubblici e dal menu web.
+- Fuga: «Blocca» e «Aiuta» usano il fight della scheda anche se ne era selezionato un altro. Il colpo gratuito d’intercettazione conserva come bersaglio chi sta fuggendo. Richieste scadute non consumano risorse e le Reazioni non avanzano il turno.
+- Gli attacchi contro chi fugge usano1d16 per colpire; il tiro di blocco e gli attacchi ordinari conservano1d20.
+- Guardiano Solare: sfondo illustrato dedicato per desktop e telefono, reliquia coerente con elmo del colosso, arco e due frecce d’oro; controllata la corda dell’arco. Nessun ritratto imposto nel Monster Book e nessuna modifica alle statistiche.
+- Guardiano Solare, nuova Skill Mazza d’oro: Danni×1,2 per1d3 turni nella Forma I, ×1,3 per1d3+2 nella II, ×1,5 per1d3+3 nella III. Costi2/4/6Oculum e cooldown4/6/8turni personali, modificabili; durata e bonus persistono nel salvataggio.
+
 ## Patch del 28 ottobre — sessioni, personaggi e sblocchi
 
 - Combattimento: corretti il mantenimento di Reazioni/RV nei fight uniti, lo stato a fight concluso e i permessi del Co-Master. Gli esiti di intangibilità non applicano più Danni o consumo degli Scudi e vengono mantenuti nelle conferme online; gli attacchi capaci di colpire immateriali restano validi.
 - Senka: corretto anche il Mantello d’ombra copiato dai cloni, che funziona senza la maschera dell’originale e conserva durata e limiti. Costi leggibili e reali, maschera inizialmente non indossata, riattivazione dopo il critico valido, Passo nell’Ombra con confronto e Reazione veloce, Mille Tagli come unico pacchetto e Sfinimento a lei. Fusione richiede Velo permanente13; Mille Tagli Riflessi permanenti9 e Erik I, senza livello minimo. Erik vale anche se più debole.
 - Ricordo della Luna: sblocco dal progresso personale; Open e Buff insieme, +30% sulle statistiche effettive di Senka e +5% ai Lunari nel fight. Tagli lunari disponibili dopo lo sblocco anche a Open spenta, con un unico tiro e distribuzione dei tagli; potenziamento soltanto della propria Open. I bonus personali terminano a fine fight senza restituire l’uso della Open.
-- Lusier III: Titolo Io, Padrone del Io, raggi, protezione e Vitalium Solare; cura65% della Vita attuale +10% della massima, entro il massimo, senza eliminare riserve preesistenti. PT misurata298. Erik I: nuova scheda Elité Lv8 Grado0, PT184 e Custodia del Girone. Equipaggiamenti e tecniche conservano i propri campi modificabili.
+- Lusier III: Titolo Io, Padrone del Io, raggi, protezione e Vitalium Solare; cura65% della Vita attuale +10% della massima, entro il massimo, senza eliminare riserve preesistenti. PT misurata298. Erik I: scheda personale Elité Lv8 Grado0, depotenziata a PT130 come eccezione confermata, con Custodia del Girone ridotta; la Guardia Elité generica conserva la propria crescita. Equipaggiamenti e tecniche conservano i propri campi modificabili.
 - Scostubanditi: rapina solo a fine fight vittorioso sugli sconfitti rimasti, Errato75% e Veterano100% con uccisione; Titoli Item esclusi. Aura5%/15% e coordinazione+2 non cumulativa, sincronizzata anche con difesa remota. Una vittima curata può rientrare nel fight.
 - Sblocchi permanenti da statistiche e sottotratti senza buff temporanei; progressi personali su specie, elementi, critici e obiettivi nominali. Un nemico fino a25 PT sotto il partecipante conta, da26 sotto non conta; esclusi evocati e duplicati. Raccogli, Possiedi e Consuma restano distinti.
 - Libri: consumo alla lettura, ricette condivise e conservate sulle schede alleate locali anche non attive; preferiti bloccati non rivelano ingredienti. Il Master conserva la vista completa.

@@ -7,6 +7,7 @@ import 'dart:math';
 import 'dart:ui' show FrameTiming;
 import 'package:http/http.dart' as http;
 import 'services/oculum_app_update.dart';
+import 'services/oculum_update_runtime.dart';
 import 'services/oculum_update_log.dart';
 import 'widgets/oculum_update_log_dialog.dart';
 import 'game/meccanio_rules.dart';
@@ -311,9 +312,27 @@ Future<void> main([List<String> arguments = const []]) async {
   );
   _configureOculumRuntimeCaches();
   runApp(const OculumApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!kIsWeb && Platform.isWindows) {
+      unawaited(_acknowledgeOculumUpdatedStartup());
+    }
+  });
   // Auth/cloud startup is optional and must not leave the web loader visible
   // when a hosted browser cannot reach the backend immediately.
   unawaited(_initializeOculumOptionalStartupServices());
+}
+
+Future<void> _acknowledgeOculumUpdatedStartup() async {
+  try {
+    final cache = await getApplicationCacheDirectory();
+    await oculumWriteUpdateStartupAck(
+      cacheRoot: cache.path,
+      commit: oculumSourceCommit,
+      edition: oculumUsesIsolatedSaveProfile ? 'test' : 'normal',
+    );
+  } catch (_) {
+    // A missing optional update receipt must never prevent local startup.
+  }
 }
 
 Future<void> _initializeOculumOptionalStartupServices() async {
