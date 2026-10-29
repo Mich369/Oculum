@@ -768,7 +768,6 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
       fullWidthIndexes: const {0, 1},
       maxColumns: 2,
       minColumnWidth: 340,
-      cacheExtent: 420,
     );
   }
 
@@ -1078,206 +1077,371 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
     if (realtimeIsMasterRole) unawaited(drainRealtimeDirtySheets());
   }
 
-  Widget referenceInventoryPage() {
-    final selected = inventario.contains(referenceSelectedItem)
-        ? referenceSelectedItem
-        : null;
-    return CustomScrollView(
-      key: sheetScrollKey('inventory'),
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      slivers: [
-        SliverPadding(
-          padding: responsivePagePadding(),
-          sliver: SliverList.list(
-            children: [
-              functionAnchor(
-                'inventory_root',
-                sectionTitle(
-                  t('Inventario e crafting', 'Inventory and crafting'),
-                ),
-              ),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+  Widget referenceInventoryPage() => _OculumInventoryWorkspace(
+    key: ValueKey('inventory_workspace_${currentSheetScrollId()}'),
+    builder: (query, category, changeQuery, changeCategory, adding, toggleAdding) {
+      final selected = inventario.contains(referenceSelectedItem)
+          ? referenceSelectedItem
+          : null;
+      final visible = OculumInventorySearchIndex(
+        inventario,
+      ).search(query: query, category: category);
+      return CustomScrollView(
+        key: sheetScrollKey('inventory'),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        slivers: [
+          SliverPadding(
+            padding: responsivePagePadding(),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: showMerchantDialog,
-                    icon: Icon(Icons.storefront),
-                    label: Text(t('Mercato', 'Market')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => vaiAllaFunzione(
-                      page: _OculumHomePageState.recipesPageIndex,
-                    ),
-                    icon: Icon(Icons.handyman),
-                    label: Text(t('Ricette', 'Recipes')),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12),
-              if (haPermessiMaster)
-                masterItemGiftPanel(initiallyExpanded: true),
-              pawnGuardiansPanel(),
-              if (inventario.isEmpty)
-                Text(
-                  t(
-                    'Il tuo inventario è vuoto. Aggiungi un oggetto o visita il mercato.',
-                    'Your inventory is empty. Add an item or visit the market.',
-                  ),
-                ),
-              merchantQuickPanel(),
-            ],
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          sliver: SliverGrid.builder(
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 116,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: .94,
-            ),
-            itemCount: inventario.length,
-            itemBuilder: (context, i) {
-              final item = inventario[i];
-              return Tooltip(
-                message: item.nome,
-                child: Material(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(7),
-                    side: BorderSide(
-                      color: identical(item, selected)
-                          ? tertiaryColor
-                          : primaryColor.withValues(alpha: .25),
+                  functionAnchor(
+                    'inventory_root',
+                    sectionTitle(
+                      t('Inventario e crafting', 'Inventory and crafting'),
                     ),
                   ),
-                  child: InkWell(
-                    onTap: () => setState(() => referenceSelectedItem = item),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: Icon(
-                              item.arma
-                                  ? Icons.gavel
-                                  : item.protegge
-                                  ? Icons.shield
-                                  : isMerchantConsumable(item)
-                                  ? Icons.science_outlined
-                                  : Icons.diamond_outlined,
-                              color: item.equipaggiata
-                                  ? tertiaryColor
-                                  : primaryColor,
-                              size: 32,
-                            ),
-                          ),
-                          Text(
-                            item.nome,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          Text(
-                            '×${item.quantita}',
-                            style: TextStyle(
-                              color: tertiaryColor,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        SliverPadding(
-          padding: responsivePagePadding(),
-          sliver: SliverList.list(
-            children: [
-              if (selected != null) ...[
-                gothicPanel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      sectionTitle(selected.nome),
-                      if (selected.note.isNotEmpty) Text(selected.note),
-                      SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (isMerchantConsumable(selected))
-                            FilledButton(
-                              onPressed: () => useMerchantConsumable(selected),
-                              child: Text(t('Usa', 'Use')),
-                            ),
-                          OutlinedButton(
-                            onPressed: () => donateReferenceItem(selected),
-                            child: Text(t('Dona', 'Give')),
-                          ),
-                          OutlinedButton(
-                            onPressed: merchantIsOpen
-                                ? () => sellInventoryItemToMerchant(selected)
-                                : null,
-                            child: Text(
-                              '${t('Vendi', 'Sell')} · ${merchantSaleValue(selected)} Obser',
-                            ),
-                          ),
-                          if (!merchantIsOpen)
-                            TextButton(
-                              onPressed: showMerchantDialog,
-                              child: Text(
-                                t(
-                                  'Apri il mercato per vendere',
-                                  'Open market to sell',
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      Text(
-                        t(
-                          'La vendita usa il prezzo ridotto del Negoziante.',
-                          'Selling uses the merchant’s reduced price.',
+                      FilledButton.icon(
+                        key: const ValueKey('inventory_add_button'),
+                        onPressed: toggleAdding,
+                        icon: Icon(
+                          adding ? Icons.close : Icons.add_box_outlined,
                         ),
-                        style: TextStyle(fontSize: 11),
+                        label: Text(
+                          adding
+                              ? t('Chiudi aggiunta', 'Close add item')
+                              : t('Aggiungi oggetto', 'Add item'),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: showMerchantDialog,
+                        icon: const Icon(Icons.storefront),
+                        label: Text(t('Mercato', 'Market')),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => vaiAllaFunzione(
+                          page: _OculumHomePageState.recipesPageIndex,
+                        ),
+                        icon: const Icon(Icons.handyman),
+                        label: Text(t('Ricette', 'Recipes')),
                       ),
                     ],
                   ),
-                ),
-                inventoryItemCardEfficient(inventario.indexOf(selected)),
-              ],
-              inventoryAddItemPanelEfficient(),
-              dropdownSection(
-                title: t('Capacità e comandi', 'Capacity and commands'),
-                sectionId: 'reference_inventory_capacity',
-                borderColor: tertiaryColor,
-                icon: Icons.scale,
-                child: Column(
-                  children: [
-                    inventoryCapacityPanelEfficient(),
-                    inventoryQuickDropdownPanel(),
+                  const SizedBox(height: 12),
+                  if (adding) ...[
+                    if (haPermessiMaster)
+                      masterItemGiftPanel(initiallyExpanded: true),
+                    inventoryAddItemPanelEfficient(
+                      initiallyExpanded: !haPermessiMaster,
+                    ),
+                    const SizedBox(height: 12),
                   ],
-                ),
+                  gothicPanel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        inventoryFieldGrid([
+                          TextField(
+                            key: const ValueKey('inventory_search'),
+                            onChanged: changeQuery,
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(Icons.search),
+                              labelText: t(
+                                'Cerca nel tuo inventario',
+                                'Search your inventory',
+                              ),
+                            ),
+                          ),
+                          DropdownButtonFormField<String>(
+                            key: const ValueKey('inventory_category'),
+                            initialValue: category,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: t('Mostra', 'Show'),
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                value: 'equipped',
+                                child: Text(t('Equipaggiati', 'Equipped')),
+                              ),
+                              for (final entry
+                                  in oculumInventoryCatalogCategoryLabels
+                                      .entries)
+                                DropdownMenuItem(
+                                  value: entry.key,
+                                  child: Text(entry.value),
+                                ),
+                            ],
+                            onChanged: (value) =>
+                                changeCategory(value ?? 'all'),
+                          ),
+                        ], minWidth: 260),
+                        const SizedBox(height: 8),
+                        smallInfoText(
+                          '${visible.length} / ${inventario.length} ${t('oggetti', 'items')}',
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (inventario.isEmpty)
+                    smallInfoText(
+                      t(
+                        'Il tuo inventario è vuoto. Aggiungi un oggetto o visita il mercato.',
+                        'Your inventory is empty. Add an item or visit the market.',
+                      ),
+                    )
+                  else if (visible.isEmpty)
+                    smallInfoText(
+                      t(
+                        'Nessun oggetto corrisponde ai filtri.',
+                        'No items match these filters.',
+                      ),
+                    ),
+                  if (selected != null) ...[
+                    gothicPanel(
+                      borderColor: tertiaryColor,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: sectionTitle(selected.nome)),
+                              IconButton(
+                                tooltip: t('Chiudi dettaglio', 'Close details'),
+                                onPressed: () => setState(
+                                  () => referenceSelectedItem = null,
+                                ),
+                                icon: const Icon(Icons.close),
+                              ),
+                            ],
+                          ),
+                          if (selected.note.isNotEmpty) Text(selected.note),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilledButton.icon(
+                                onPressed: () => setInventoryItemEquipped(
+                                  selected,
+                                  !selected.equipaggiata,
+                                ),
+                                icon: Icon(
+                                  selected.equipaggiata
+                                      ? Icons.remove_circle_outline
+                                      : Icons.check_circle_outline,
+                                ),
+                                label: Text(
+                                  selected.equipaggiata
+                                      ? t('Rimuovi equipaggiamento', 'Unequip')
+                                      : t('Equipaggia', 'Equip'),
+                                ),
+                              ),
+                              if (isMerchantConsumable(selected))
+                                OutlinedButton(
+                                  onPressed: () =>
+                                      useMerchantConsumable(selected),
+                                  child: Text(t('Usa', 'Use')),
+                                ),
+                              OutlinedButton(
+                                onPressed: () => donateReferenceItem(selected),
+                                child: Text(t('Dona', 'Give')),
+                              ),
+                              OutlinedButton(
+                                onPressed: merchantIsOpen
+                                    ? () =>
+                                          sellInventoryItemToMerchant(selected)
+                                    : null,
+                                child: Text(
+                                  '${t('Vendi', 'Sell')} · ${merchantSaleValue(selected)} Obser',
+                                ),
+                              ),
+                              if (!merchantIsOpen)
+                                TextButton(
+                                  onPressed: showMerchantDialog,
+                                  child: Text(
+                                    t(
+                                      'Apri il mercato per vendere',
+                                      'Open market to sell',
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          smallInfoText(
+                            t(
+                              'La vendita usa il prezzo ridotto del Negoziante.',
+                              'Selling uses the merchant’s reduced price.',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    inventoryItemCardEfficient(inventario.indexOf(selected)),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ],
-    );
-  }
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: SliverGrid.builder(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 116,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: .94,
+              ),
+              itemCount: visible.length,
+              itemBuilder: (context, i) {
+                final item = visible[i];
+                return Tooltip(
+                  message: item.nome,
+                  child: Material(
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(7),
+                      side: BorderSide(
+                        color: identical(item, selected)
+                            ? tertiaryColor
+                            : primaryColor.withValues(alpha: .25),
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () => setState(() => referenceSelectedItem = item),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Center(
+                                    child: Icon(
+                                      item.arma
+                                          ? Icons.gavel
+                                          : item.protegge
+                                          ? Icons.shield
+                                          : isMerchantConsumable(item)
+                                          ? Icons.science_outlined
+                                          : Icons.diamond_outlined,
+                                      color: item.equipaggiata
+                                          ? tertiaryColor
+                                          : primaryColor,
+                                      size: 32,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: -6,
+                                    top: -6,
+                                    child: IconButton(
+                                      tooltip: item.equipaggiata
+                                          ? t(
+                                              'Rimuovi equipaggiamento',
+                                              'Unequip',
+                                            )
+                                          : t('Equipaggia', 'Equip'),
+                                      onPressed: () => setInventoryItemEquipped(
+                                        item,
+                                        !item.equipaggiata,
+                                      ),
+                                      iconSize: 18,
+                                      padding: const EdgeInsets.all(5),
+                                      constraints:
+                                          const BoxConstraints.tightFor(
+                                            width: 32,
+                                            height: 32,
+                                          ),
+                                      icon: Icon(
+                                        item.equipaggiata
+                                            ? Icons.check_circle
+                                            : Icons.radio_button_unchecked,
+                                        color: item.equipaggiata
+                                            ? tertiaryColor
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              item.nome,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            Text(
+                              '×${item.quantita}',
+                              style: TextStyle(
+                                color: tertiaryColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SliverPadding(
+            padding: responsivePagePadding(),
+            sliver: SliverList.list(
+              children: [
+                dropdownSection(
+                  title: t('Capacità e comandi', 'Capacity and commands'),
+                  sectionId: 'reference_inventory_capacity',
+                  borderColor: tertiaryColor,
+                  icon: Icons.scale,
+                  childBuilder: (_) => Column(
+                    children: [
+                      inventoryCapacityPanelEfficient(),
+                      inventoryQuickDropdownPanel(),
+                    ],
+                  ),
+                ),
+                dropdownSection(
+                  title: t(
+                    'Mercato, party e guardiani',
+                    'Market, party and guardians',
+                  ),
+                  sectionId: 'reference_inventory_services',
+                  borderColor: primaryColor,
+                  icon: Icons.groups_outlined,
+                  childBuilder: (_) => Column(
+                    children: [
+                      merchantQuickPanel(),
+                      partyChestPanel(),
+                      pawnGuardiansPanel(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    },
+  );
 
   Widget referenceEncounterPanel({
     required List<Map<String, dynamic>> tokens,
     required int activeIndex,
     bool master = false,
   }) {
+    final menuEncounterId = master
+        ? selectedMasterInitiativeGroupId
+        : '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
     final shown = tokens
         .where((token) => token['outsideFight'] != true)
         .map((token) {
@@ -1342,6 +1506,14 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 ? (token) => moveEncounterMemberToRole(
                     selectedMasterInitiativeGroupId,
                     token,
+                  )
+                : null,
+            onParticipantMenu:
+                haPermessiMaster && (master || realtimeIsCoMasterRole)
+                ? (token, position) => showMasterParticipantMenu(
+                    menuEncounterId,
+                    token,
+                    position: position,
                   )
                 : null,
             onOpenSheet: realtimeCanBrowseOtherSheets

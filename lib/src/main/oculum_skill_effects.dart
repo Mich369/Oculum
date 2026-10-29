@@ -287,6 +287,11 @@ List<OculumAbilityCooldown> oculumReadCooldownsPerLevel(dynamic raw) {
 }
 
 String oculumNormalizeEffectResource(dynamic raw) {
+  final text = '$raw'.trim();
+  if (text.contains('+') ||
+      RegExp(r'^(item|material)\s*:', caseSensitive: false).hasMatch(text)) {
+    return oculumNormalizeArtSkillCostResource(text);
+  }
   final normalized = oculumNormalizeText('$raw').replaceAll(' ', '');
   switch (normalized) {
     case 'hp':
@@ -357,6 +362,14 @@ bool oculumIsConsumableEffectResource(
     }
   }
   final normalized = oculumNormalizeArtSkillCostResource(resource);
+  if (normalized.contains('+')) {
+    return normalized
+        .split('+')
+        .every(
+          (part) =>
+              oculumIsConsumableEffectResource(part, subtraits: subtraits),
+        );
+  }
   if (normalized.startsWith('item:') || normalized.startsWith('material:')) {
     return normalized.substring(normalized.indexOf(':') + 1).isNotEmpty;
   }

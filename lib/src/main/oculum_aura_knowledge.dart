@@ -311,7 +311,11 @@ extension _OculumAuraKnowledge on _OculumHomePageState {
   }
 
   Widget knownPowerBadge(String tag) {
-    final record = knownPowerFor(tag);
+    if (hideOwnPowerBadge(tag)) return const SizedBox.shrink();
+    final override = powerBadgeOverride(tag);
+    final record = override == null
+        ? knownPowerFor(tag)
+        : {'exactPower': override};
     final exact = record['exactPower'], estimate = record['scannerEstimate'];
     final band = oculumPowerReadPhrases['${record['powerBand'] ?? ''}'];
     if (exact is! num && estimate is! num && band == null) {
@@ -322,7 +326,11 @@ extension _OculumAuraKnowledge on _OculumHomePageState {
         : estimate is num
         ? 'Potenza ≈ ${estimate.toInt()}'
         : band!;
-    final detail = exact is num
+    final detail = override != null
+        ? haPermessiMaster
+              ? 'Potenza totale visibile al Master'
+              : 'La tua Potenza totale attuale'
+        : exact is num
         ? 'Ultima Potenza totale esatta scoperta'
         : estimate is num
         ? 'Ultima stima del rilevatore (±10%)'

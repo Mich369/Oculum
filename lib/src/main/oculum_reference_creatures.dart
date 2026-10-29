@@ -472,7 +472,10 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
           copy['manualHpMaximumAdjustment'] =
               1 -
               readIntValue(copy['resilienza']) *
-                  oculumHpMultiplierForGrade(readIntValue(copy['grado']));
+                  oculumHpMultiplierForGrade(
+                    readIntValue(copy['grado']),
+                    level: readIntValue(copy['livello']),
+                  );
           copy['planarRuntime'] = {
             'doppioneCopy': true,
             'doppioneAttackBonus': originalVc,

@@ -1,11 +1,10 @@
-# Ultimo aggiornamento — 28 ottobre 2026
+# Ultimo aggiornamento — 29 ottobre 2026
 
-- Aggiornamento Windows: tentativi separati, verifica in background, errori persistenti e conferma di avvio prima del successo.
-- Aggiornamento interrotto prima dell’installer se l’ultimo salvataggio non è confermato; guida pubblica anche per le versioni precedenti.
-- Fuga: risposte nel fight della scheda, intercettazioni con1d16 sul bersaglio corretto; Reazioni senza cambio turno.
-- Combattimento e online: conferme coerenti con intangibilità e poteri copiati dai cloni, Reazioni/RV nei fight condivisi, permessi Co-Master e coordinazione del Veterano.
-- Senka, Lusier III ed Erik I: tecniche e costi reali, equipaggiamento, nuove evoluzioni e codici aggiornati. PT attuali Lusier298 ed Erik130 (eccezione personale).
-- Sblocchi personali persistenti, tolleranza25 PT, requisiti materiali distinti; libri di ricette condivisi e Occhi dei Caduti con forme/costi/effetti ereditati.
-- Guardiano Solare: sfondi/reliquia dedicati e Mazza d’oro, tre forme di potenziamento temporaneo; artwork restanti in lavorazione.
+- Premi a fine intero fight: EXP comune, ultimo colpo e aiuti, Obser, sottotratti e Cristalli Dust; PT media per turno e ricevute contro i doppioni. EXP e livelli nel log.
+- Vita iniziale per Grado e relativo bonus PT; ferite rallentano Movimento e Iniziativa senza penalità cumulative. Selezione manuale del turno senza ricarica delle risorse; reset online con proprietà verificata.
+- Nuove durate Open, contatori indipendenti per Skill Open ed eccezione Defiled Art. Potere dell'oro e sei creature lunari/Ik con proprie tecniche e nucleo protetto dei Guardiani.
+- Orologio per campagna, viaggi e coda privata degli eventi al Master; riposi dai mercanti limitati. Inventario con catalogo caricato su richiesta e visibilità PT separata per scheda.
+- Dieci pack desktop/telefono/reliquia, aspetti approvati e anatomie coerenti; danni alle parti con eccezioni specifiche conservate. Gli artwork restanti sono censiti in lavorazione.
+- Personaggi aggiornati: Lusier301 PT, Erik131 PT; Senka81 Vita,135 mascherata. Crescita di Pawn e degli Occhi dei Caduti corretta.
 
 Costi, quantità, minimi/massimi, cooldown, requisiti ed effetti rimangono personalizzabili negli editor e nel JSON. Test locali, CI, pacchetti e prove online sono riportati separatamente nel rapporto della patch. Il [registro cumulativo](REGISTRO_AGGIORNAMENTI.md) conserva la base b917217d98d16861a5bbaf1706d78825d883c970/run40242640717; questa patch non avvia ancora i log separati della futura espansione.

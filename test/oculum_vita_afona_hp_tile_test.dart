@@ -75,6 +75,8 @@ void main() {
     final dynamic state = homeKey.currentState!;
     final probe = OculumPerformanceProbe(homeKey.currentState!);
     state.activeGameMod = '';
+    state.livelloController.text = '0';
+    state.gradoController.text = '0';
     state.resilienzaController.text = '4';
     state.currentResilienzaController.text = '4';
     state.currentHpController.text = '10';
@@ -83,7 +85,7 @@ void main() {
     tile = probe.hpConditionTile();
     await tester.pumpWidget(app());
     expect(
-      find.descendant(of: find.byKey(tileKey), matching: find.text('10/40')),
+      find.descendant(of: find.byKey(tileKey), matching: find.text('10/24')),
       findsOneWidget,
     );
     state.activeConditions.add(
@@ -98,11 +100,11 @@ void main() {
     tile = probe.hpConditionTile();
     await tester.pumpWidget(app());
     expect(
-      find.descendant(of: find.byKey(tileKey), matching: find.text('???/40')),
+      find.descendant(of: find.byKey(tileKey), matching: find.text('???/24')),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: find.byKey(tileKey), matching: find.text('10/40')),
+      find.descendant(of: find.byKey(tileKey), matching: find.text('10/24')),
       findsNothing,
     );
     expect(state.currentHpController.text, '10');
@@ -111,7 +113,7 @@ void main() {
     tile = probe.hpConditionTile();
     await tester.pumpWidget(app());
     expect(
-      find.descendant(of: find.byKey(tileKey), matching: find.text('10/40')),
+      find.descendant(of: find.byKey(tileKey), matching: find.text('10/24')),
       findsOneWidget,
     );
     probe.cancelPendingSave();

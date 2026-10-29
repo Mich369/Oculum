@@ -81,6 +81,10 @@ import 'widgets/oculum_monster_picker.dart';
 import 'widgets/oculum_attack_planner.dart';
 import 'game/oculum_opposed_attack.dart';
 import 'game/oculum_combat_scout_rules.dart';
+import 'game/oculum_hp_rules.dart';
+import 'game/oculum_anatomical_parts.dart';
+export 'game/oculum_anatomical_parts.dart';
+export 'game/oculum_hp_rules.dart';
 import 'pages/oculum_dungeon/monster_book.dart';
 import 'pages/oculum_dungeon_game.dart';
 import 'pages/hero_path_page.dart';
@@ -148,6 +152,19 @@ part 'src/main/oculum_corruption_runtime.dart';
 part 'src/main/oculum_combat_scout.dart';
 part 'src/main/oculum_master_roll_requests.dart';
 part 'src/main/oculum_encounter_rewards.dart';
+part 'src/main/oculum_progression_log.dart';
+part 'src/main/oculum_master_participant_menu.dart';
+part 'src/main/oculum_reward_support_tracking.dart';
+part 'src/main/oculum_guardian_gold.dart';
+part 'src/main/oculum_secondary_guardian_attacks.dart';
+part 'src/main/oculum_open_lifecycle.dart';
+part 'src/main/oculum_wounded_mobility.dart';
+part 'src/main/oculum_fight_reward_power.dart';
+part 'src/main/oculum_world_clock.dart';
+part 'src/main/oculum_world_travel.dart';
+part 'src/main/oculum_lunar_guardians.dart';
+part 'src/main/oculum_lunar_guardian_core.dart';
+part 'src/main/oculum_own_power_visibility.dart';
 part 'src/main/oculum_party_chest.dart';
 part 'src/main/oculum_item_titles.dart';
 part 'src/main/oculum_micro_realms.dart';
@@ -170,6 +187,7 @@ part 'src/main/oculum_bone_runes.dart';
 part 'src/main/oculum_deadly_sins.dart';
 part 'src/main/oculum_weak_points.dart';
 part 'src/main/oculum_wing_damage.dart';
+part 'src/main/oculum_anatomical_parts.dart';
 part 'src/main/oculum_quick_npc_skills.dart';
 part 'src/main/oculum_mobile_sheet.dart';
 part 'src/main/oculum_fauna_crafting.dart';
@@ -1057,6 +1075,17 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   void notifyActiveSheetSummaryChanged() {
     if (!mounted) return;
+    if (schedaCorrente >= 0 &&
+        schedaCorrente < schedePersonaggio.length &&
+        masterInitiativeGroups.any(
+          (group) =>
+              group['fightStarted'] == true && group['combatEnded'] != true,
+        )) {
+      recordFightRewardPowerSample(
+        sheetTagAt(schedaCorrente),
+        currentEncounterRewardTotalPower(),
+      );
+    }
     activeSheetSummaryRevision.value++;
   }
 
@@ -1469,9 +1498,9 @@ class _OculumHomePageState extends State<OculumHomePage>
   }
 
   String cleanUiText(String value) {
-    return oculumCleanMojibakeText(value).replaceAll(
-      RegExp(r'\bcaos\b', caseSensitive: false), 'Chaos',
-    );
+    return oculumCleanMojibakeText(
+      value,
+    ).replaceAll(RegExp(r'\bcaos\b', caseSensitive: false), 'Chaos');
   }
 
   String t(String it, String en) => cleanUiText(linguaInglese ? en : it);

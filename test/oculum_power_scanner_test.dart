@@ -8,7 +8,7 @@ import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
   test('total power includes grade, threshold and chance caps', () {
-    expect(oculumScoutPower(12, [10, 20, 30, 40], grade: 3), 121);
+    expect(oculumScoutPower(12, [10, 20, 30, 40], grade: 3), 125);
     expect(oculumExactPowerChance(40, success: true), 0);
     expect(oculumExactPowerChance(41, success: true), 5);
     expect(oculumExactPowerChance(59, success: true), 95);
@@ -94,8 +94,8 @@ void main() {
       });
       state.schedePersonaggio.add(npc);
       final targetIndex = state.schedePersonaggio.length - 1 as int;
-      expect(p.totalPower(targetIndex), 96);
-      expect(p.powerReading(targetIndex, 60)['exactPower'], 96);
+      expect(p.totalPower(targetIndex), 99);
+      expect(p.powerReading(targetIndex, 60)['exactPower'], 99);
       expect(
         p
             .powerReading(targetIndex, 60, success: false)

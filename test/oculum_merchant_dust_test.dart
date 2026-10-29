@@ -587,8 +587,29 @@ void main() {
     final activeMerchantName = state.merchantProfiles.firstWhere(
       (profile) => profile['id'] == secondMerchantId,
     )['name'];
-    await tester.tap(find.text(activeMerchantName as String));
+    // Inventory services are deliberately built only after opening this panel.
+    final services = find.text('Mercato, party e guardiani');
+    final inventoryScroll = find
+        .descendant(
+          of: find.byType(CustomScrollView).last,
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(services, 300, scrollable: inventoryScroll);
+    await tester.tap(services);
+    await tester.pump(const Duration(milliseconds: 350));
+    final merchantHeader = find
+        .ancestor(
+          of: find.text(activeMerchantName as String),
+          matching: find.byType(ListTile),
+        )
+        .first;
+    await tester.ensureVisible(merchantHeader);
+    // The scroll jump needs a layout frame before the nested header is hit-tested.
     await tester.pumpAndSettle();
+    await tester.tap(merchantHeader);
+    await tester.pumpAndSettle();
+    expect(state.merchantIsOpen, isTrue);
     probe.shopType('alchimista');
     await tester.pumpAndSettle();
     final dustPrice = probe.dustPrice;

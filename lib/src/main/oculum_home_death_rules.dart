@@ -22,10 +22,20 @@ String oculumCombatTokenHealthLabel(Map token) {
   return const {'Ferito', 'Morente'}.contains(label) ? label : '';
 }
 
-int oculumHpMultiplierForGrade(int grade) =>
-    10 + 5 * grade.clamp(0, 12).toInt();
+int? oculumSheetFixedCloneHpMaximum(Map<String, dynamic> sheet) {
+  final runtime = sheet['planarRuntime'];
+  if (runtime is Map && runtime['doppioneCopy'] == true) return 1;
+  final clone =
+      sheet['oculumShadowClone'] == true ||
+      '${sheet['shadowCloneOwnerTag'] ?? ''}'.isNotEmpty ||
+      (runtime is Map && runtime['senkaClone'] == true);
+  final saved = readIntValue(sheet['derivedMaxHp']);
+  return clone && saved > 0 ? saved : null;
+}
 
 int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
+  final fixedCloneHp = oculumSheetFixedCloneHpMaximum(sheet);
+  if (fixedCloneHp != null) return fixedCloneHp;
   final runtime = sheet['planarRuntime'];
   if (runtime is Map && readIntValue(runtime['mechaBodyMaxHp']) > 0) {
     return readIntValue(runtime['mechaBodyMaxHp']);
@@ -40,7 +50,10 @@ int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
       ),
     ),
   );
-  final multiplier = oculumHpMultiplierForGrade(readIntValue(sheet['grado']));
+  final multiplier = oculumHpMultiplierForGrade(
+    readIntValue(sheet['grado']),
+    level: sheet.containsKey('livello') ? readIntValue(sheet['livello']) : null,
+  );
   final saved = readIntValue(sheet['derivedMaxHp']);
   if (saved > 0) {
     return max(

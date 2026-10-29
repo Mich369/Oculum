@@ -55,8 +55,8 @@ Map<String, int> oculumPawnStats([Map<String, int>? values]) {
   return stats;
 }
 
-const oculumPawnDescription =
-    'Livello 0 · Resilienza 3 · Volontà 3 · Materia 5 · Oculum 0 · 30 HP iniziali. '
+String get oculumPawnDescription =>
+    'Livello 0 · Resilienza 3 · Volontà 3 · Materia 5 · Oculum 0 · ${3 * oculumHpMultiplierForGrade(0, level: 0)} HP iniziali. '
     'Protegge una o più schede selezionate, intercettando solo il danno che raggiungerebbe gli HP. '
     'Gli scudi dei bersagli si consumano normalmente; poi si applicano Difesa e Scudo del Pawn. Alla fine del proprio turno: cura 10 HP oppure, '
     'se già a vita piena, +5 Scudo. Da 20 Scudo ottiene Scudo di Salvataggio.';
@@ -190,7 +190,8 @@ class OculumPawnGuardian {
       ? max(1, readIntValue(summoningEmblem['hp'], fallback: 120))
       : creatureSheetTag.isNotEmpty && creatureMaxHp > 0
       ? creatureMaxHp
-      : max(1, stats['resilienza'] ?? 3) * oculumHpMultiplierForGrade(grade);
+      : max(1, stats['resilienza'] ?? 3) *
+            oculumHpMultiplierForGrade(grade, level: isV2 ? ownerLevel : level);
   int get experiencePerTurn =>
       isV2 ? oculumPawnV2ExperiencePerTurn : oculumPawnExperiencePerTurn;
   int get statPointsPerLevel => oculumPawnStatPointsPerLevel;
@@ -256,13 +257,21 @@ class OculumPawnGuardian {
     final spent = allocation.values.fold<int>(0, (sum, value) => sum + value);
     if (spent <= 0 || spent > unspentStatPoints) return false;
     final resilience = allocation['resilienza'] ?? 0;
+    final maximumBefore = maxHp;
     stats.updateAll((key, value) => value + (allocation[key] ?? 0));
     allocatedStats.updateAll((key, value) => value + (allocation[key] ?? 0));
     unspentStatPoints -= spent;
     if (creatureSheetTag.isNotEmpty && creatureMaxHp > 0) {
-      creatureMaxHp += 10 * resilience;
+      creatureMaxHp +=
+          resilience *
+          oculumHpMultiplierForGrade(grade, level: isV2 ? ownerLevel : level);
     }
-    if (resilience > 0 && alive) hp = min(maxHp, hp + 10 * resilience);
+    if (resilience > 0 && alive) {
+      final maximumAfter = maxHp;
+      final growth = max(0, maximumAfter - maximumBefore);
+      // Preserve wounds; an already permitted excess keeps the same surplus.
+      hp = hp > maximumBefore ? hp + growth : min(maximumAfter, hp + growth);
+    }
     return true;
   }
 
@@ -495,7 +504,10 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           1,
           pawn.creatureMaxHp +
               (resilience - pawn.stats['resilienza']!) *
-                  oculumHpMultiplierForGrade(pawn.grade),
+                  oculumHpMultiplierForGrade(
+                    pawn.grade,
+                    level: pawn.isV2 ? pawn.ownerLevel : pawn.level,
+                  ),
         );
       }
       for (final key in pawn.stats.keys.toList()) {
@@ -785,10 +797,10 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           ? 100
           : isV2
           ? max(1, inherited['resilienza'] ?? 0) *
-                oculumHpMultiplierForGrade(ownerGrade)
+                oculumHpMultiplierForGrade(ownerGrade, level: ownerLevel)
           : recoveryLevel > 0
           ? recoveryStats['resilienza']! *
-                oculumHpMultiplierForGrade(recoveryGrade)
+                oculumHpMultiplierForGrade(recoveryGrade, level: recoveryLevel)
           : 30,
       level: recoveryLevel,
       conscious: item.craftData['conscious'] == true,

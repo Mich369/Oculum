@@ -643,10 +643,18 @@ void main() {
       expect(probe.receiveStaffSheet(edit), isTrue);
       expect(probe.currentHp(), 11);
       expect(state.schedePersonaggio[0]['realtimeOwnerEditSequence'], 100);
-      state.currentHpController.text = '22';
+      final locallyChangedHp = (probe.maximumHp() - 1).clamp(
+        1,
+        probe.maximumHp(),
+      );
+      state.currentHpController.text = '$locallyChangedHp';
       expect(probe.receiveStaffSheet(edit), isFalse);
       expect(probe.receiveStaffSheet({...edit, 'serverSequence': 99}), isFalse);
-      expect(probe.currentHp(), 22, reason: 'A replay cannot restore old HP');
+      expect(
+        probe.currentHp(),
+        locallyChangedHp,
+        reason: 'A replay cannot restore old HP',
+      );
       expect(
         probe.receiveStaffSheet({
           ...edit,

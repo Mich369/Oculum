@@ -21,6 +21,8 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
       .where((t) => t.openEffects.any((e) => e.target == 'senka_moon_open'))
       .firstOrNull;
   bool get senkaMoonOpenActive => senkaMoonTitle?.openAttiva == true;
+  bool get senkaMoonSkillEmpowered =>
+      senkaMoonTitle != null && titleOwnOpenSkillEmpowered(senkaMoonTitle!);
   Map<String, dynamic>? get senkaMoonVolleyPending {
     for (final entry in activeStructuredEffects) {
       final effect = entry['effect'];
@@ -56,7 +58,7 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
         (() {
           if (original.target != 'senka_moon_cuts') return original;
           final e = OculumStructuredEffect.fromJson(original.toJson());
-          if (senkaMoonOpenActive && e.diceExpression == '1d6') {
+          if (senkaMoonSkillEmpowered && e.diceExpression == '1d6') {
             e.diceExpression = '1d8';
           }
           final roll = oculumResolveStructuredEffectRoll(
@@ -77,7 +79,7 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
                 'danni': dannoTotale(),
               }).floor(),
             ),
-            'ownOpen': senkaMoonOpenActive,
+            'ownOpen': senkaMoonSkillEmpowered,
           });
           e.valueExpression = '0';
           e.diceExpression = '';
@@ -747,13 +749,8 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
   }
 
   void senkaFightEnd() {
-    final moon = senkaMoonTitle;
-    if (moon?.openAttiva == true) {
-      moon!.openAttiva = false;
-      invalidateDerivedDataCaches();
-      syncSenkaMoonToFight();
-      notifyActiveSheetSummaryChanged();
-    }
+    // Open Buff follows its recovery cycle, independently of fight completion.
+    syncSenkaMoonToFight();
     if (senkaMaskItem == null && !senkaIsClone) return;
     senkaRuntime.remove('cloneFight');
     senkaRuntime.remove('cloneCount');

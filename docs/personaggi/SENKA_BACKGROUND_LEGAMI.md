@@ -1,5 +1,7 @@
 # Kamaria Senka
 
+> Aggiornamento del29ottobre: il riferimento attuale di Haniel per Lusier è301 PT; Erik misura131 PT, senza una nuova scena di comunicazione alle sorelle. Prevalgono [Vita/PT](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#vita-per-livello-bonus-pt-e-visibilità--ultima-conferma) e [ciclo Open](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#nuova-regola-generale-open). Le misure precedenti del28ottobre restano storico nelle rispettive verifiche.
+
 Sedici anni. Mhunan lunare. Abita con la sorellina Sky nei piani più bassi di Lost Town.
 
 Prima della piazza, per Senka i suoi genitori erano tutto. Erano persone semplici. Suo padre era un tuttofare, molto affettuoso con la famiglia; ripudiava i Solari per ciò che avevano fatto e continuavano a fare alla loro gente. Sua madre cuciva vestiti ed era una donna estremamente gentile e cordiale. Dipingeva anche fantastici ritratti lunari: uno di quei ritratti è ancora appeso nella locanda. Guardarlo restituisce a Senka il ricordo di sua madre intenta a creare qualcosa di bello, e di una casa nella quale si sentiva amata.
@@ -28,13 +30,13 @@ Senka conserva due nomi al centro della propria vita. Sky, che deve restare al s
 - **Sky — sorella minore, cinque anni.** Gentile, vivace, prova a mostrarsi coraggiosa per sostenere Senka. Non conosce la sua identità mascherata. Senka non la porta negli incarichi. Il punto cieco di *Un Ricordo della Luna* è: «Devi salvarla anche al costo di te stessa, Sky è tutto».
 - **Haniel — protettore, informatore e maestro.** Ha custodito entrambe e pagato la stanza in taverna. Addestra Senka, le affida missioni e conosce il suo desiderio di vendetta. Le sue intenzioni profonde e i suoi segreti non sono stati rivelati: non considerarli già noti al personaggio.
 - **Lusier III — responsabile della morte dei genitori.** Guardia Solare Elité di livello13 e GradoI, comandante di battaglie. Senka conosce la sua spada sacra e le carte esplosive attraverso ciò che ha visto nella piazza. La leggenda confermata è: «Lusier III Guardia Elité di Grado I, dirige battaglie, stermina popoli proprio come ha fatto con la mia famiglia, proprio come io farò con lui.»
-- **La soglia indicata da Haniel.** Sulla scheda attuale di Lusier, dopo l'aggiunta del suo Titolo, la misura del motore è **298 PT**. «Quando avrai una potenza totale pari o superiore a 298, sarai pronta.» È un riferimento da aggiornare se cambia Lusier, non una garanzia di vittoria.
+- **La soglia indicata da Haniel.** Sulla scheda attuale di Lusier, con il bonus Vita alla PT confermato il29ottobre, la misura del motore è **301 PT**. «Quando avrai una potenza totale pari o superiore a301, sarai pronta.» È un riferimento da aggiornare se cambia Lusier, non una garanzia di vittoria.
 - **Lost Town.** Senka e Sky vivono nei livelli più bassi. I Solari ricchi occupano quelli superiori; Lusier domina più in alto, Erik governa i circoli solari intermedi rispetto ai quartieri contaminati. L'Oculum esausto viene scaricato dall'alto nei circoli lunari inferiori per purificare l'aria dei piani alti.
 - **La propria maschera.** Senka sa di rimanere sé stessa quando la indossa. Sa manifestare la forma d'ombra e usare i tentacoli per trattenere e poi infilzare con un'altra azione. Teletrasporto, Mille Tagli e ulteriori evoluzioni sono capacità da sviluppare: non sono tutte già sbloccate nella scheda iniziale di livello1.
 
 ## Appunti per giocatore e Master
 
-- **Erik I:** fratello di Lusier, Guardia Solare Elité livello8 Grado0; più misurato, ma fedele al fratello. La sua scheda attuale misura **130 PT**. È annotato che **Haniel conosce questa misura**; non è ancora stato stabilito se l'abbia già comunicata a Senka.
+- **Erik I:** fratello di Lusier, Guardia Solare Elité livello8 Grado0; più misurato, ma fedele al fratello. La sua scheda attuale misura **131 PT**, rispetto a130 prima del bonus Vita alla PT. È annotato che **Haniel conosce questa misura**; non è ancora stato stabilito se l'abbia già comunicata a Senka.
 - Aspetto normale di Senka ancora volutamente aperto. I segreti di Haniel restano misteriosi. Nessuna scheda di Sky o Haniel è inclusa nei codici richiesti.
 - Nel tema personale approvato la Luna resta un segno buono: il piccolo spicchio è un'apparizione inspiegabile ed eccezione per quell'artwork. Non significa che la Luna sia ricomparsa normalmente nel cielo di tutto il mondo.
 - I valori PT provengono dai report locali delle schede, non attestano la pubblicazione della nuova build.

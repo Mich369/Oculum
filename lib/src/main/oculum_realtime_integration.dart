@@ -944,6 +944,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         startPermissionRetry();
         unawaited(replayOnlineCombatRequests());
         unawaited(syncSheetAssignments());
+        unawaited(flushProgressionLogs());
       },
       presenceDataProvider: () => <String, dynamic>{
         'role': realtimeLocalRole(),
@@ -1028,6 +1029,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           syncPawnPresence();
           startPermissionRetry();
           unawaited(replayOnlineCombatRequests());
+          unawaited(flushProgressionLogs());
           if (realtimeIsMasterRole) {
             replayPendingEncounterJoins('');
             for (final record in realtimeSharedSheets) {
@@ -1168,6 +1170,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void handleRealtimeEvent(String event, Map<String, dynamic> payload) {
+    if (event == 'party_log' && payload['progressionLog'] == true) {
+      receiveProgressionLog(payload);
+      return;
+    }
     if (event == 'sheet_assignment') {
       // This is a database-verified private notification. Fetch the bodies
       // through their own RLS policy; never import bodies from a broadcast.
@@ -2798,6 +2804,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'campaignId': activeCampaignId,
       'campaignName': activeCampaignName(),
       'encounterId': group['id'],
+      'worldClock': worldClockPublicSnapshot(),
+      'fightInstanceId':
+          group['fightInstanceId'] ??
+          tokens
+              .map((token) => token['fightInstanceId'])
+              .firstWhere(
+                (value) => value != null && '$value'.isNotEmpty,
+                orElse: () => null,
+              ),
       'fightOrdinal': max(
         1,
         masterInitiativeGroups.indexWhere((item) => item['id'] == group['id']) +
@@ -3227,6 +3242,16 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void receiveEncounterControl(Map<String, dynamic> payload) {
+    if (payload.containsKey('worldClockCommand') ||
+        payload['worldClockSnapshot'] is Map ||
+        payload['worldMerchantRestGrant'] is Map) {
+      receiveWorldClockControl(payload);
+      return;
+    }
+    if (payload.containsKey('participantCommand')) {
+      unawaited(receiveMasterParticipantControl(payload));
+      return;
+    }
     if (!realtimeIsMasterRole || !validPermissionSender(payload, staff: true)) {
       return;
     }

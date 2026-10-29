@@ -1,21 +1,21 @@
 {
   "scenario": "bounded production combat resolver",
   "initialSenka": {
-    "power": 298,
+    "power": 301,
     "core": {
-      "resilienza": 61,
-      "volonta": 59,
-      "materia": 84,
+      "resilienza": 62,
+      "volonta": 60,
+      "materia": 85,
       "oculum": 82
     },
-    "hp": 610,
-    "maxHp": 610
+    "hp": 558,
+    "maxHp": 558
   },
-  "lusierInitialPower": 298,
+  "lusierInitialPower": 301,
   "allocation": {
-    "resilienza": 42,
-    "volonta": 42,
-    "materia": 63,
+    "resilienza": 43,
+    "volonta": 43,
+    "materia": 64,
     "oculum": 65
   },
   "scriptedCardDice": [
@@ -36,12 +36,12 @@
         "oculumShieldLost": 20,
         "shieldLost": 10,
         "temporaryHpLost": 0,
-        "hpLost": 183,
+        "hpLost": 182,
         "pawnPending": false
       },
       "shadowAvoided": null,
       "before": {
-        "hp": 610,
+        "hp": 558,
         "normalShield": 10,
         "oculumShield": 20,
         "turn": "Fight I | Azione Kamaria Senka",
@@ -52,7 +52,7 @@
         }
       },
       "after": {
-        "hp": 427,
+        "hp": 376,
         "normalShield": 0,
         "oculumShield": 0,
         "turn": "Fight I | Azione Kamaria Senka",
@@ -87,7 +87,7 @@
       },
       "shadowAvoided": true,
       "before": {
-        "hp": 427,
+        "hp": 376,
         "normalShield": 0,
         "oculumShield": 0,
         "turn": "Fight I | Azione Lusier III",
@@ -98,7 +98,7 @@
         }
       },
       "after": {
-        "hp": 427,
+        "hp": 376,
         "normalShield": 0,
         "oculumShield": 0,
         "turn": "Fight I | Azione Lusier III",
@@ -112,26 +112,26 @@
     {
       "stage": "Open lunare",
       "cuts": 7,
-      "damagePerCut": 32,
+      "damagePerCut": 33,
       "note": "preparazione reale; distribuzione bersagli non simulata in questo scenario"
     },
     {
       "stage": "Mille Tagli",
-      "powerBeforeCost": 402,
-      "powerUsed": 400,
+      "powerBeforeCost": 406,
+      "powerUsed": 405,
       "exhausted": true
     },
     {
       "id": "duel-mille",
       "attack": 47,
       "defense": 44,
-      "damage": 642,
+      "damage": 650,
       "outcome": "reduced",
       "receipt": {
         "oculumShieldLost": 150,
         "shieldLost": 45,
         "temporaryHpLost": 0,
-        "hpLost": 23,
+        "hpLost": 27,
         "pawnPending": false
       },
       "shadowAvoided": null,
@@ -147,7 +147,7 @@
         }
       },
       "after": {
-        "hp": 667,
+        "hp": 663,
         "normalShield": 0,
         "oculumShield": 0,
         "turn": "Fight I | Azione Lusier III",

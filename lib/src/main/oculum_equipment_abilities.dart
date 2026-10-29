@@ -598,7 +598,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     final titleOwner = oculumItemTitleAbilityForForm(item, form);
     if (titleOwner != null &&
         titleOwner.forme.firstOrNull != form &&
-        oculumItemTitleOpenIsActive(item, titleOwner)) {
+        itemOwnOpenSkillEmpowered(item, titleOwner)) {
       final percent = max(
         0,
         readIntValue(
@@ -636,6 +636,15 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         effects: effects,
         cost: form.costoStrutturato,
         cooldown: form.cooldownStrutturato,
+        onPaid: titleOwner?.forme.firstOrNull == form
+            ? (_) {
+                if (!recordItemOpenCycleActivation(item, titleOwner!)) return;
+                disattivaTutteLeOpen(
+                  exceptItem: item,
+                  exceptItemOpen: titleOwner,
+                );
+              }
+            : null,
         valid: () =>
             inventario.contains(item) &&
             item.quantita > 0 &&
@@ -653,8 +662,8 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       combatSupportTargeting = previousSupport;
     }
     if (!mounted || !used || currentSheetScrollId() != origin) return;
-    if (titleOwner?.forme.firstOrNull == form) {
-      final index = oculumItemTitleAbilities(item).indexOf(titleOwner!);
+    if (titleOwner != null && titleOwner.forme.firstOrNull == form) {
+      final index = oculumItemTitleAbilities(item).indexOf(titleOwner);
       item.craftData = {
         ...item.craftData,
         if (index == 0) 'titleOpenUsedSinceLongRest': true,
@@ -664,6 +673,10 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         }.toList(),
       };
       programmaSalvataggio();
+      tagOpenLifecycleBuffEffects(
+        itemOpenLifecycle(item, titleOwner).id,
+        '${item.nome} · ${form.nome}',
+      );
     }
     if (item.craftData.containsKey('posteaUses')) {
       item.craftData = {
@@ -814,6 +827,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     final senkaEffects = prepareSenkaEffects(effects);
     if (senkaEffects == null) return false;
     effects = senkaEffects;
+    effects = prepareLunarGuardianEffects(effects);
     if (effects.any((e) => e.target == 'explosive_cards_damage')) {
       final selected = await prepareExplosiveCards(effects);
       if (selected == null) return false;
@@ -1070,7 +1084,8 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             }
             final allAvailable =
                 extrasValid &&
-                payments.entries.every(
+                payments.values.every((value) => value >= 0) &&
+                normalizedArtSkillPayments(payments).entries.every(
                   (entry) =>
                       entry.value >= 0 &&
                       artSkillCostResourceAvailable(entry.key) >= entry.value,
@@ -1291,6 +1306,16 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         (cooldown != null && !cooldown.ready)) {
       return false;
     }
+    if (selectedPayments.isEmpty && resource != 'nessuna') {
+      selectedPayments = {
+        resource: paid - oculumPaid,
+        if (oculumPaid > 0) 'oculum': oculumPaid,
+      };
+    }
+    selectedPayments = normalizedArtSkillPayments(selectedPayments);
+    // Validate the complete payment before consuming a turn resource. A
+    // composite primary cost and an additional cost may name the same stat.
+    if (!canPayArtSkillPayments(selectedPayments)) return false;
     final robotTechnique = effects
         .where((e) => e.type == 'meccanio')
         .firstOrNull;
@@ -1385,23 +1410,10 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         return false;
       }
     }
-    if (selectedPayments.isEmpty && resource != 'nessuna') {
-      selectedPayments = {
-        resource: paid - oculumPaid,
-        if (oculumPaid > 0) 'oculum': oculumPaid,
-      };
-    }
-    if (!selectedPayments.entries.every(
-      (entry) => artSkillCostResourceAvailable(entry.key) >= entry.value,
-    )) {
+    if (!canPayArtSkillPayments(selectedPayments)) {
       return false;
     }
-    // Synchronous preflight above makes this one transaction on the UI isolate.
-    for (final entry in selectedPayments.entries) {
-      if (spendArtSkillCostResource(entry.key, entry.value) != entry.value) {
-        return false;
-      }
-    }
+    if (!spendArtSkillPayments(selectedPayments)) return false;
     onPaid?.call(selectedPayments);
     if (paymentOnly) return true;
     // Consume existing one-action conditions before adding new self effects.

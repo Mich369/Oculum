@@ -270,7 +270,8 @@ Map<String, dynamic> oculumBuildLusierSheet() {
       'current${e.key[0].toUpperCase()}${e.key.substring(1)}': '${e.value}',
     'maxOculum': stats['oculum'],
     'normalCurrentOculum': stats['oculum'],
-    'currentHp': '${stats['resilienza']! * oculumHpMultiplierForGrade(1)}',
+    'currentHp':
+        '${stats['resilienza']! * oculumHpMultiplierForGrade(1, level: 13)}',
     'hpTemp': '0',
     'scudo': '0',
     'scudoCritico': '1',
@@ -401,7 +402,8 @@ Map<String, dynamic> oculumBuildErikSheet() {
       'current${e.key[0].toUpperCase()}${e.key.substring(1)}': '${e.value}',
     'maxOculum': stats['oculum'],
     'normalCurrentOculum': stats['oculum'],
-    'currentHp': '${stats['resilienza']! * oculumHpMultiplierForGrade(0)}',
+    'currentHp':
+        '${stats['resilienza']! * oculumHpMultiplierForGrade(0, level: 8)}',
     'scudo': '35',
     'scudoCritico': '0',
     'scudoOculum': '40',
@@ -478,6 +480,9 @@ extension _OculumLusierRuntime on _OculumHomePageState {
       .firstOrNull;
 
   bool get lusierOpenActive => lusierSelfMastery?.openAttiva == true;
+  bool get lusierOpenSkillEmpowered =>
+      lusierSelfMastery != null &&
+      titleOwnOpenSkillEmpowered(lusierSelfMastery!);
 
   int get lusierConditionGuard {
     final title = lusierSelfMastery;
@@ -547,7 +552,8 @@ extension _OculumLusierRuntime on _OculumHomePageState {
           (() {
             if (!targets.contains(original.target)) return original;
             final effect = OculumStructuredEffect.fromJson(original.toJson());
-            if (effect.target == 'lusier_thin_ray' && lusierOpenActive) {
+            if (effect.target == 'lusier_thin_ray' &&
+                lusierOpenSkillEmpowered) {
               // The upgraded definition remains editable in the title's extra skill.
               effect.valueExpression = effect.valueExpression.replaceAll(
                 '+15',
@@ -576,7 +582,7 @@ extension _OculumLusierRuntime on _OculumHomePageState {
               'shieldRecovery': recovery,
               'dice': die,
               'surgePercent': readIntValue(effect.resource),
-              'buff': lusierOpenActive,
+              'buff': lusierOpenSkillEmpowered,
             });
             effect.valueExpression = '${roll.value}';
             effect.diceExpression = '';

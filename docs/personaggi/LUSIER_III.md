@@ -1,5 +1,11 @@
 # Lusier III
 
+## Aggiornamento del29ottobre — misure e ciclo Open attuali
+
+Il [report del motore](../../output/characters/lusier_iii/potenza.json) misura **301 PT e690 Vita massima**, con RES46/VOL115/MAT56/OCU65 ed equipaggiamenti attivi. A livello13/GradoI il moltiplicatore Vita è15: il relativo bonus alla PT è3 e aggiorna la precedente misura298, senza riassegnare le statistiche. La soglia attuale indicata da Haniel è301. Il [report della simulazione](../../output/simulation/Senka_Lv12_vs_Lusier_III.json) misura301 anche per la copia mascherata di Senka livello12.
+
+Prevalgono [Vita e bonus PT](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#vita-per-livello-bonus-pt-e-visibilità--ultima-conferma) e il [ciclo Open del29ottobre](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#nuova-regola-generale-open): recupero con due Riposi Lunghi oppure un Lungo e tre Brevi; Buff fino al recupero della propria Open, attraversando i fight. Il potenziamento della Open Skill termina separatamente dopo tre battaglie concluse oppure due Brevi e un Lungo, al primo traguardo raggiunto. Restano costi, requisiti e cooldown. Le note del28ottobre sotto conservano le conferme storiche; queste misure locali non certificano la distribuzione.
+
 Guardia Solare Élite, livello13 e Grado I. Base56 più il budget di livello/Grado calcolato dal generatore. Volontà primaria, Oculum secondario; 1 Scudo critico e 150 Scudo Oculum.
 
 L’artwork approvato è `assets/oculum/home_art/character_lusier_iii_v1.png`: pelle calda olivastra, capelli castani mossi non troppo lunghi e occhi d’oro eccezionalmente intenso. Le sete avorio e bordò ricamate d’oro, il colletto alto e la stola recano occhi solari e formano l’abito protettivo. Rimane bello e inquietante, senza aggiungere caratteristiche non approvate.

@@ -1003,7 +1003,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int runtimeCurrentStatBonus(String key) {
-    return (key == 'materia'
+    return (const ['resilienza', 'volonta', 'materia', 'oculum'].contains(key)
+            ? worldMonsterCoreBonusAt(schedaCorrente)
+            : 0) +
+        (key == 'materia'
             ? readIntValue(planarState['plasmaTemporaryMatter'])
             : 0) +
         visibleTitleStatBonus(key) +
@@ -2345,8 +2348,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         ? -activeTitleOpenRuntimeResilienzaBonus(titolo)
         : 0;
     titolo.openAttiva = false;
+    deactivateTitleOpenBuffCycle(titolo);
     for (final open in titolo.openExtra) {
       open.attiva = false;
+      deactivateTitleOpenBuffCycle(titolo, extra: open);
     }
     if (deltaRes != 0) rimarginaHpDaAumentoResilienza(deltaRes);
   }
@@ -2385,6 +2390,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     OculumTitle? exceptTitle,
     TitleOpenEntry? exceptOpenExtra,
     CharacterArt? exceptArt,
+    InventoryItem? exceptItem,
+    CharacterSkill? exceptItemOpen,
   }) {
     void scanTitles(List<OculumTitle> list) {
       for (final titolo in list) {
@@ -2400,6 +2407,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
             );
           }
           titolo.openAttiva = false;
+          deactivateTitleOpenBuffCycle(titolo);
         }
 
         for (final open in titolo.openExtra) {
@@ -2416,6 +2424,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
               );
             }
             open.attiva = false;
+            deactivateTitleOpenBuffCycle(titolo, extra: open);
           }
         }
       }
@@ -2437,8 +2446,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           rimarginaHpDaAumentoResilienza(-artOpenQuickResilienzaBonus(art));
         }
         art.openAttiva = false;
+        deactivateArtOpenBuffCycle(art);
       }
     }
+    deactivateItemOpenBuffs(
+      exceptItem: exceptItem,
+      exceptAbility: exceptItemOpen,
+    );
   }
 
   void normalizzaOpenAttiveSingole() {
@@ -2447,8 +2461,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     void scanTitles(List<OculumTitle> list) {
       for (final titolo in list) {
         if (!titolo.evoluto || !titolo.equipaggiato) {
+          if (titolo.openAttiva || titolo.openLifecycle['buffActive'] == true) {
+            deactivateTitleOpenBuffCycle(titolo);
+          }
           titolo.openAttiva = false;
           for (final open in titolo.openExtra) {
+            if (open.attiva || open.openLifecycle['buffActive'] == true) {
+              deactivateTitleOpenBuffCycle(titolo, extra: open);
+            }
             open.attiva = false;
           }
           continue;
@@ -2456,6 +2476,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
         if (titolo.openAttiva) {
           if (activeFound) {
+            deactivateTitleOpenBuffCycle(titolo);
             titolo.openAttiva = false;
           } else {
             activeFound = true;
@@ -2465,6 +2486,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         for (final open in titolo.openExtra) {
           if (!open.attiva) continue;
           if (activeFound) {
+            deactivateTitleOpenBuffCycle(titolo, extra: open);
             open.attiva = false;
           } else {
             activeFound = true;
@@ -2478,6 +2500,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     for (final art in arti) {
       if (!art.sbloccata || !artOpenSbloccata(art)) {
+        if (art.openAttiva || art.openLifecycle['buffActive'] == true) {
+          deactivateArtOpenBuffCycle(art);
+        }
         if (art.openAttiva) {
           if (art.sbloccata) {
             rimarginaHpDaAumentoResilienza(-artOpenQuickResilienzaBonus(art));
@@ -2496,6 +2521,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (!art.openAttiva) continue;
       if (isDefiledArt(art)) continue;
       if (activeFound) {
+        deactivateArtOpenBuffCycle(art);
         art.openAttiva = false;
         final artIndex = arti.indexOf(art);
         if (artIndex >= 0) {
@@ -2507,6 +2533,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         activeFound = true;
       }
     }
+    normalizeItemOpenBuffs(anotherNormalBuffActive: activeFound);
   }
 
   Map<String, int> artQuickBonuses(CharacterArt art) {
@@ -3016,6 +3043,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
     applyTemporaryOculumState(next);
     final spent = max(0, before - oculumTotale()).toInt();
+    if (spent > 0) recordCombatOculumSpent(spent);
     if (scheduleSave && spent > 0) {
       recordCurrentOculumProgress();
       programmaSalvataggio(invalidateCaches: false);
@@ -3947,6 +3975,64 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
   }
 
+  Map<String, int> normalizedArtSkillPayments(Map<String, int> payments) {
+    final result = <String, int>{};
+    for (final entry in payments.entries) {
+      if (entry.value <= 0) continue;
+      for (final resource in oculumNormalizeArtSkillCostResource(
+        entry.key,
+      ).split('+')) {
+        if (resource == 'nessuna') continue;
+        result[resource] = (result[resource] ?? 0) + entry.value;
+      }
+    }
+    // RES changes the HP maximum, so every mixed payment uses the same order
+    // as the projection below instead of depending on editor insertion order.
+    return {
+      if (result.containsKey('resilienza')) 'resilienza': result['resilienza']!,
+      for (final entry in result.entries)
+        if (entry.key != 'resilienza') entry.key: entry.value,
+    };
+  }
+
+  bool canPayArtSkillPayments(Map<String, int> payments) {
+    final costs = normalizedArtSkillPayments(payments);
+    if (!costs.entries.every(
+      (entry) => artSkillCostResourceAvailable(entry.key) >= entry.value,
+    )) {
+      return false;
+    }
+    // RES can lower the HP maximum before a separate HP cost is paid. Project
+    // that maximum without spending, notifying the UI, or recording any XP.
+    final resilienceCost = costs['resilienza'] ?? 0;
+    final hpCost = costs['hp'] ?? 0;
+    if (resilienceCost > 0 && hpCost > 0) {
+      final before = currentResilienzaController.value;
+      final hpBefore = hpCorrenti();
+      try {
+        currentResilienzaController.text =
+            '${currentResilienza() - resilienceCost}';
+        invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+        if (min(hpBefore, maxHp()) < hpCost) return false;
+      } finally {
+        currentResilienzaController.value = before;
+        invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+      }
+    }
+    return true;
+  }
+
+  bool spendArtSkillPayments(Map<String, int> payments) {
+    final costs = normalizedArtSkillPayments(payments);
+    if (!canPayArtSkillPayments(costs)) return false;
+    for (final entry in costs.entries) {
+      if (spendArtSkillCostResource(entry.key, entry.value) != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   int spendArtSkillCostResource(String resource, int amount) {
     final normalized = oculumNormalizeArtSkillCostResource(resource);
     if (normalized == 'ki_mortale') return spendMortalKi(amount);
@@ -3977,14 +4063,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       return amount;
     }
     if (normalized.contains('+')) {
-      final parts = normalized.split('+');
-      if (parts.any((part) => artSkillCostResourceAvailable(part) < amount)) {
-        return 0;
-      }
-      for (final part in parts) {
-        if (spendArtSkillCostResource(part, amount) != amount) return 0;
-      }
-      return amount;
+      return spendArtSkillPayments({normalized: amount}) ? amount : 0;
     }
     if (normalized.startsWith('material:')) {
       if (artSkillCostResourceAvailable(normalized) < amount) return 0;
@@ -4046,6 +4125,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       currentHpController.text = '${min(beforeHp, maxHp())}';
       notifyActiveSheetSummaryChanged();
       adjustRecordedStatSpentFromDelta(normalized, -amount);
+      recordCombatStatSpent(normalized, amount);
       grantTrueSoulBurnSpendBenefits(
         spent: amount,
         source: t('Skill', 'Skill'),
@@ -4053,6 +4133,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       return amount;
     }
     if (normalized == 'oculum') {
+      if (artSkillCostResourceAvailable(normalized) < amount) return 0;
       final spent = spendOculum(amount, scheduleSave: false);
       adjustRecordedStatSpentFromDelta('oculum', -spent);
       grantTrueSoulBurnSpendBenefits(spent: spent, source: t('Skill', 'Skill'));
@@ -4070,6 +4151,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       invalidateDerivedDataCaches();
       notifyActiveSheetSummaryChanged();
       adjustRecordedStatSpentFromDelta('materia', -(amount - fromTemporary));
+      recordCombatStatSpent('materia', amount);
       return amount;
     }
     final before = currentSpendableStatValue(normalized);
@@ -4078,6 +4160,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     syncVisibleCurrentStatEditor(normalized);
     notifyActiveSheetSummaryChanged();
     adjustRecordedStatSpentFromDelta(normalized, -amount);
+    recordCombatStatSpent(normalized, amount);
     grantTrueSoulBurnSpendBenefits(spent: amount, source: t('Skill', 'Skill'));
     return amount;
   }
@@ -4301,8 +4384,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return -(difficulty ?? difficoltaTiro()) - extra;
   }
 
-  int moltiplicatoreHp() =>
-      oculumHpMultiplierForGrade(leggiNumero(gradoController));
+  int moltiplicatoreHp() => oculumHpMultiplierForGrade(
+    leggiNumero(gradoController),
+    level: leggiNumero(livelloController),
+  );
 
   int globalQuickBonus(String key) {
     return parseTitleQuickCommands(buffMalusRapidiController.text)[key] ?? 0;
@@ -4391,6 +4476,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int maxHp() {
     if (planarState['doppioneCopy'] == true) return 1;
+    if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
+      final fixedCloneHp = oculumSheetFixedCloneHpMaximum(
+        schedePersonaggio[schedaCorrente],
+      );
+      if (fixedCloneHp != null) return fixedCloneHp;
+    }
     if (readIntValue(planarState['lavastrelloNestMaxHp']) > 0) {
       return readIntValue(planarState['lavastrelloNestMaxHp']);
     }
@@ -5849,6 +5940,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int iniziativa() {
+    return oculumWoundedInitiative(
+      iniziativaNonFerita(),
+      hp: hpCorrenti(),
+      maxHp: maxHp(),
+    );
+  }
+
+  int iniziativaNonFerita() {
     return max(
       0,
       (coreMasteryPoints['iniziativa'] ?? 0) +
@@ -5863,6 +5962,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int movimento() {
+    return oculumWoundedMovement(
+      movimentoNonFerito(),
+      hp: hpCorrenti(),
+      maxHp: maxHp(),
+    );
+  }
+
+  int movimentoNonFerito() {
     final beforeConditions = max(
       0,
       30 +

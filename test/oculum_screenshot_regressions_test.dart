@@ -121,7 +121,7 @@ void main() {
         'currentVolonta': '5',
         'currentMateria': '8',
         'currentOculum': '0',
-        'currentHp': '140',
+        'currentHp': '84',
       });
       probe.saveSheet();
       unawaited(probe.showCreateFallenEye());
@@ -143,7 +143,7 @@ void main() {
       expect(total(), 27 + 9);
       expect(stat('Oculum'), 0);
       final firstRes = stat('Resilienza');
-      expect(stat('Vita'), firstRes * 10);
+      expect(stat('Vita'), firstRes * 9);
       await tester.enterText(field('Livello'), '2');
       await tester.pump();
       expect(total(), 27 + 18);
@@ -154,7 +154,7 @@ void main() {
       await tester.enterText(field('Livello'), '0');
       await tester.pump();
       expect(total(), 27);
-      expect(stat('Vita'), 140);
+      expect(stat('Vita'), 84);
       await tester.enterText(field('Livello'), '1');
       await tester.pump();
       expect(total(), 36);
@@ -188,15 +188,15 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       expect(total(), 36);
-      expect(stat('Vita'), firstRes * 10 - 7);
+      expect(stat('Vita'), firstRes * 9 - 7);
       await tester.enterText(field('Livello'), '2');
       await tester.pump();
       expect(total(), 45);
-      expect(stat('Vita'), stat('Resilienza') * 10 - 7);
+      expect(stat('Vita'), stat('Resilienza') * 9 - 7);
       await tester.enterText(field('Livello'), '0');
       await tester.pump();
       expect(total(), 27);
-      expect(stat('Vita'), 133);
+      expect(stat('Vita'), 77);
       await tester.tap(find.text('Annulla'));
       await tester.pump(const Duration(milliseconds: 350));
       // A legacy Eye with all nine points manually assigned to Will keeps them.

@@ -3327,11 +3327,13 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required String title,
     required IconData icon,
     required Color borderColor,
-    required Widget child,
+    Widget? child,
+    WidgetBuilder? childBuilder,
     bool initiallyExpanded = false,
     String? subtitle,
     String? sectionId,
   }) {
+    assert((child == null) != (childBuilder == null));
     final cleanTitle = cleanUiText(title);
     final cleanSubtitle = subtitle == null ? null : cleanUiText(subtitle);
     final compact = lightweightUi;
@@ -3417,7 +3419,12 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               ),
               child: Icon(Icons.expand_more, color: borderColor, size: 20),
             ),
-            children: [child],
+            children: [
+              if (childBuilder != null)
+                Builder(builder: childBuilder)
+              else
+                child!,
+            ],
           ),
         ),
       ),

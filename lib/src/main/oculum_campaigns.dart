@@ -17,6 +17,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     return <String, dynamic>{
       'id': activeCampaignId.isEmpty ? generateCampaignId() : activeCampaignId,
       'name': activeCampaignName(),
+      'worldClock': worldClockCampaignJson(),
       'pawnGuardians': pawnGuardians.map((pawn) => pawn.toJson()).toList(),
       'pawnDamageReceipts': pawnDamageReceipts,
       'pawnPendingDamage': pawnPendingDamage,
@@ -216,6 +217,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     }
     sheetSidebarRevision.value++;
     activeCampaignId = '${campaign['id'] ?? generateCampaignId()}';
+    loadWorldClockCampaign(campaign);
     loadPawnCampaignState(campaign);
     campaignNameController.text =
         '${campaign['name'] ?? 'Campagna principale'}';

@@ -611,6 +611,22 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     group['escapeLedger'] = <String, dynamic>{};
     group.remove('escapeExperience');
     group.remove('escapeFinishing');
+    group.remove('enemyEscapeFinishing');
+    for (final key in const [
+      'rewardFightInstanceId',
+      'pendingRewardSettlementId',
+      'rewardSettlementState',
+      'rewardOutcome',
+      'rewardSupportHistory',
+      'rewardSettlementSequence',
+    ]) {
+      group.remove(key);
+    }
+    group['rewardPreexistingDeadTokenIds'] = masterInitiativeTokens
+        .where((token) => masterInitiativeTokenIsDead(token))
+        .map((token) => '${token['id'] ?? token['sheetTag'] ?? ''}')
+        .where((id) => id.isNotEmpty)
+        .toList();
     for (final request in onlineCombatRequests.values) {
       if (request['encounterId'] == id && request['kind'] == 'escape') {
         request['status'] = 'closed';
@@ -634,6 +650,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token.remove(key);
       }
       token['fightInstanceId'] = fightInstanceId;
+      for (final key in const [
+        'rewardPowerTurnMaxima',
+        'rewardPowerTurnSerial',
+        'rewardPowerHasPersonalTurn',
+        'rewardPowerFightInstanceId',
+        'rewardPowerTurnReceipts',
+      ]) {
+        token.remove(key);
+      }
       if (token['status'] == 'fled') token['status'] = 'ready';
       for (final key in [
         'extraNormalReactionCurrent',
@@ -645,6 +670,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
     rollMasterInitiativeTokens();
+    for (final token in masterInitiativeTokens) {
+      sampleFightRewardPowerToken(token);
+    }
+    if (masterInitiativeTokens.isNotEmpty) {
+      beginFightRewardPowerTurn(
+        masterInitiativeTokens[masterInitiativeActiveIndex],
+      );
+    }
     captureActiveMasterInitiativeGroup();
     sendRealtimeInitiativeSnapshotIfPublished();
     aggiungiLog(
@@ -711,6 +744,345 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   // DADO / TIRI
   // =====================================================
+
+  String combatSubtraitExperienceFightId(
+    String encounterId, {
+    String? ownerTag,
+  }) {
+    final owner = ownerTag ?? sheetTagAt(schedaCorrente);
+    final groups = referenceUsesLocalTurnState
+        ? masterInitiativeGroups
+        : realtimeEncounterSnapshots;
+    final group = groups
+        .where((g) => '${g['encounterId'] ?? g['id'] ?? ''}' == encounterId)
+        .firstOrNull;
+    final encounter = group ?? referenceTurnEncounter();
+    final tokens =
+        encounterId == selectedMasterInitiativeGroupId &&
+            referenceUsesLocalTurnState
+        ? masterInitiativeTokens
+        : (encounter['tokens'] as List? ?? const []).whereType<Map>();
+    final token = tokens
+        .where(
+          (t) => combatTokenMatchesSheet(Map<String, dynamic>.from(t), owner),
+        )
+        .firstOrNull;
+    final instance = '${token?['fightInstanceId'] ?? ''}';
+    return instance.isNotEmpty
+        ? instance
+        : 'legacy:$encounterId:${readIntValue(encounter['completedFightCount'])}';
+  }
+
+  Map<String, dynamic>? currentCombatSubtraitExperienceContext() {
+    if (schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length ||
+        schedePersonaggio[schedaCorrente]['realtimeSharedSheet'] == true) {
+      return null;
+    }
+    final encounter = referenceTurnEncounter();
+    if (encounter['combatEnded'] == true ||
+        encounter['fightStarted'] == false) {
+      return null;
+    }
+    final owner = sheetTagAt(schedaCorrente);
+    if (!(encounter['tokens'] as List? ?? const []).whereType<Map>().any(
+      (t) => combatTokenMatchesSheet(Map<String, dynamic>.from(t), owner),
+    )) {
+      return null;
+    }
+    final id = '${encounter['encounterId'] ?? encounter['id'] ?? ''}';
+    if (id.isEmpty) return null;
+    return {
+      'encounterId': id,
+      'fightInstanceId': combatSubtraitExperienceFightId(id, ownerTag: owner),
+      'ownerTag': owner,
+    };
+  }
+
+  Map<String, dynamic>? combatSubtraitExperienceEntry({
+    required String encounterId,
+    required String fightInstanceId,
+    String? ownerTag,
+    bool create = false,
+  }) {
+    final owner = ownerTag ?? sheetTagAt(schedaCorrente);
+    final index = localSheetIndexForOculumTag(owner);
+    if (index < 0 || schedePersonaggio[index]['realtimeSharedSheet'] == true) {
+      return null;
+    }
+    final runtime = index == schedaCorrente
+        ? planarState
+        : Map<String, dynamic>.from(
+            schedePersonaggio[index]['planarRuntime'] as Map? ?? {},
+          );
+    final ledger = Map<String, dynamic>.from(
+      runtime['combatSubtraitExperienceLedger'] as Map? ?? {},
+    );
+    var key = fightInstanceId.isNotEmpty
+        ? fightInstanceId
+        : combatSubtraitExperienceFightId(encounterId, ownerTag: owner);
+    // Old anonymous counters must not share earned XP across distinct boards.
+    if (RegExp(r'^legacy:\d+$').hasMatch(key)) {
+      key = 'legacy:$encounterId:${key.substring('legacy:'.length)}';
+    }
+    if (ledger[key] is! Map && key.startsWith('legacy:')) {
+      final alias = 'legacy:${key.substring(key.lastIndexOf(':') + 1)}';
+      final previous = ledger[alias];
+      if (previous is Map &&
+          '${previous['encounterId'] ?? ''}' == encounterId) {
+        ledger[key] = Map<String, dynamic>.from(previous)
+          ..['fightInstanceId'] = key;
+        ledger.remove(alias);
+      }
+    }
+    if (ledger[key] is! Map && !create) return null;
+    final entry = Map<String, dynamic>.from(
+      ledger[key] as Map? ??
+          {
+            'encounterId': encounterId,
+            'fightInstanceId': key,
+            'earned': <String, dynamic>{},
+            'receipts': <String>[],
+            'bonusClaims': <String>[],
+          },
+    );
+    ledger[key] = entry;
+    runtime['combatSubtraitExperienceLedger'] = ledger;
+    if (index != schedaCorrente) {
+      schedePersonaggio[index]['planarRuntime'] = runtime;
+    }
+    return entry;
+  }
+
+  void recordCombatSubtraitExperience(
+    String traitId,
+    int amount, {
+    required String receiptId,
+    Map<String, dynamic>? context,
+  }) {
+    if (amount <= 0 || receiptId.isEmpty || traitId.isEmpty) return;
+    final battle = context ?? currentCombatSubtraitExperienceContext();
+    if (battle == null) return;
+    final entry = combatSubtraitExperienceEntry(
+      encounterId: '${battle['encounterId']}',
+      fightInstanceId: '${battle['fightInstanceId']}',
+      ownerTag: '${battle['ownerTag']}',
+      create: true,
+    );
+    if (entry == null) return;
+    final receipts = (entry['receipts'] as List? ?? const [])
+        .map((id) => '$id')
+        .toSet();
+    if (!receipts.add(receiptId)) return;
+    final earned = Map<String, dynamic>.from(entry['earned'] as Map? ?? {});
+    earned[traitId] = max(0, readIntValue(earned[traitId])) + amount;
+    entry['earned'] = earned;
+    entry['receipts'] = receipts.toList();
+  }
+
+  Map<String, int> combatSubtraitExperienceSnapshot({
+    required String encounterId,
+    required String fightInstanceId,
+  }) {
+    final entry = combatSubtraitExperienceEntry(
+      encounterId: encounterId,
+      fightInstanceId: fightInstanceId,
+    );
+    return {
+      for (final e in (entry?['earned'] as Map? ?? const {}).entries)
+        '${e.key}': max(0, readIntValue(e.value)),
+    };
+  }
+
+  void recordCombatOculumSpent(int amount, {String? ownerTag}) {
+    recordCombatStatSpent('oculum', amount, ownerTag: ownerTag);
+  }
+
+  void recordCombatStatSpent(String stat, int amount, {String? ownerTag}) {
+    if (!const {'resilienza', 'volonta', 'materia', 'oculum'}.contains(stat)) {
+      return;
+    }
+    if (amount <= 0) return;
+    Map<String, dynamic>? battle = currentCombatSubtraitExperienceContext();
+    if (ownerTag != null && ownerTag != sheetTagAt(schedaCorrente)) {
+      final groups = referenceUsesLocalTurnState
+          ? masterInitiativeGroups
+          : realtimeEncounterSnapshots;
+      final group = groups
+          .where(
+            (group) =>
+                group['combatEnded'] != true &&
+                group['fightStarted'] != false &&
+                (group['tokens'] as List? ?? const []).whereType<Map>().any(
+                  (token) => combatTokenMatchesSheet(
+                    Map<String, dynamic>.from(token),
+                    ownerTag,
+                  ),
+                ),
+          )
+          .firstOrNull;
+      final id = '${group?['encounterId'] ?? group?['id'] ?? ''}';
+      battle = id.isEmpty
+          ? null
+          : <String, dynamic>{
+              'encounterId': id,
+              'fightInstanceId': combatSubtraitExperienceFightId(
+                id,
+                ownerTag: ownerTag,
+              ),
+              'ownerTag': ownerTag,
+            };
+    }
+    if (battle == null) return;
+    final entry = combatSubtraitExperienceEntry(
+      encounterId: '${battle['encounterId']}',
+      fightInstanceId: '${battle['fightInstanceId']}',
+      ownerTag: '${battle['ownerTag']}',
+      create: true,
+    );
+    if (entry == null) return;
+    final spent = Map<String, dynamic>.from(
+      entry['statsSpentByResource'] as Map? ?? const {},
+    );
+    spent[stat] = max(0, readIntValue(spent[stat])) + amount;
+    entry['statsSpentByResource'] = spent;
+    if (stat == 'oculum') {
+      entry['oculumSpent'] =
+          max(0, readIntValue(entry['oculumSpent'])) + amount;
+    }
+  }
+
+  void recordCombatHpLost(int amount) {
+    if (amount <= 0) return;
+    final battle = currentCombatSubtraitExperienceContext();
+    if (battle == null) return;
+    final entry = combatSubtraitExperienceEntry(
+      encounterId: '${battle['encounterId']}',
+      fightInstanceId: '${battle['fightInstanceId']}',
+      ownerTag: '${battle['ownerTag']}',
+      create: true,
+    );
+    if (entry != null) {
+      entry['hpLost'] = max(0, readIntValue(entry['hpLost'])) + amount;
+    }
+  }
+
+  Map<String, int> combatResourceExperienceSnapshot({
+    required String encounterId,
+    required String fightInstanceId,
+  }) {
+    final entry = combatSubtraitExperienceEntry(
+      encounterId: encounterId,
+      fightInstanceId: fightInstanceId,
+    );
+    final saved = planarState['escapeHpLoss'] as Map? ?? const {};
+    final hpKey = '$encounterId:$fightInstanceId';
+    final own = sheetTagAt(schedaCorrente);
+    final group = masterInitiativeGroups
+        .where((g) => '${g['id']}' == encounterId)
+        .firstOrNull;
+    final damage =
+        ((group?['escapeLedger'] as Map?)?['damage'] as Map? ?? const {}).values
+            .whereType<Map>();
+    final recordedHp = damage
+        .where((d) => d['target'] == own)
+        .fold<int>(0, (n, d) => n + max(0, readIntValue(d['hp'])));
+    return {
+      'oculumSpent': max(0, readIntValue(entry?['oculumSpent'])),
+      'statsSpent': (entry?['statsSpentByResource'] as Map? ?? const {}).values
+          .fold<int>(0, (sum, value) => sum + max(0, readIntValue(value))),
+      for (final stat in const ['resilienza', 'volonta', 'materia', 'oculum'])
+        'statsSpent_$stat': max(
+          0,
+          readIntValue((entry?['statsSpentByResource'] as Map?)?[stat]),
+        ),
+      'hpLost': max(
+        max(0, readIntValue(entry?['hpLost'])),
+        max(
+          recordedHp,
+          saved['fight'] == hpKey ||
+                  fightInstanceId.isNotEmpty &&
+                      '${saved['fight'] ?? ''}'.endsWith(':$fightInstanceId')
+              ? max(0, readIntValue(saved['amount']))
+              : 0,
+        ),
+      ),
+    };
+  }
+
+  void recordCombatSuccessfulEscapeTrait(Map<String, dynamic> escape) {
+    final owner = '${escape['sourceTag'] ?? ''}';
+    final trait =
+        '${escape['subtraitId'] ?? (escape['stealth'] == true ? 'velo' : 'riflessi')}';
+    if (!const {'velo', 'riflessi'}.contains(trait)) return;
+    final encounterId = '${escape['encounterId'] ?? ''}';
+    final entry = combatSubtraitExperienceEntry(
+      encounterId: encounterId,
+      fightInstanceId: '${escape['fightInstanceId'] ?? ''}',
+      ownerTag: owner,
+      create: true,
+    );
+    if (entry == null) return;
+    entry['escapeTraits'] = <String>{
+      ...(entry['escapeTraits'] as List? ?? const []).map((id) => '$id'),
+      trait,
+    }.toList();
+  }
+
+  Set<String> combatEscapeSubtraitsSnapshot({
+    required String encounterId,
+    required String fightInstanceId,
+  }) =>
+      (combatSubtraitExperienceEntry(
+                    encounterId: encounterId,
+                    fightInstanceId: fightInstanceId,
+                  )?['escapeTraits']
+                  as List? ??
+              const [])
+          .map((id) => '$id')
+          .toSet();
+
+  Map<String, int> grantCombatSubtraitExperienceBonus({
+    required String settlementId,
+    required String encounterId,
+    required String fightInstanceId,
+    double multiplier = 1.3,
+    Set<String> escapeBonusTraits = const {},
+  }) {
+    if (settlementId.isEmpty || !multiplier.isFinite) return const {};
+    final entry = combatSubtraitExperienceEntry(
+      encounterId: encounterId,
+      fightInstanceId: fightInstanceId,
+    );
+    if (entry == null) return const {};
+    final claims = (entry['bonusClaims'] as List? ?? const [])
+        .map((id) => '$id')
+        .toSet();
+    if (claims.isNotEmpty) return const {};
+    claims.add(settlementId);
+    final extraBasis = max(0, (multiplier * 1000).round() - 1000);
+    final awarded = <String, int>{};
+    final earned = entry['earned'] as Map? ?? const {};
+    for (final stat in hiddenEyeStats) {
+      final baseEarned = max(0, readIntValue(earned[stat.id]));
+      var bonus = baseEarned * extraBasis ~/ 1000;
+      if (escapeBonusTraits.contains(stat.id)) {
+        bonus += (baseEarned + bonus) ~/ 4;
+      }
+      if (bonus <= 0) continue;
+      oculusSubtraitMasteryApplyGain(stat, bonus);
+      notifyHiddenEyeStatChanged(stat);
+      awarded[stat.id] = bonus;
+    }
+    entry['bonusClaims'] = claims.toList();
+    if (awarded.isNotEmpty) {
+      aggiungiLog(
+        '[EXP SOTTOTRATTI] Bonus fine fight: ${awarded.entries.map((e) => '${e.key} +${e.value}').join(', ')}.',
+      );
+    }
+    programmaSalvataggio();
+    return awarded;
+  }
 
   int tiraDado(int faces, {bool countsAsCooldownRoll = true}) {
     final safeFaces = max(2, faces);
@@ -1348,6 +1720,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'danno',
       'damage',
     }.contains(nome.trim().toLowerCase());
+    final initiativeRoll = const {
+      'iniziativa',
+      'initiative',
+    }.contains(nome.trim().toLowerCase());
     final preparedDamage =
         attack &&
             activeStructuredEffects.any(
@@ -1360,18 +1736,28 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final oculumSpend = consumaOculumTiro(forAttack: attack);
     final reactionRollBonus = consumePendingReactionRollBonus();
     final bonusTotale =
-        bonus -
+        bonus +
+        (initiativeRoll ? iniziativaNonFerita() - iniziativa() : 0) -
         fractureRollPenalty(nome) +
         consumeCombatHelp() +
         (applyGlobalRollModifier ? tiroGlobaleBonus() : 0) +
         oculumSpend.bonus +
         reactionRollBonus;
-    final totale = rollTotalWithCritical(dado, faces, [bonusTotale]);
-    final testoDado = rollFormulaWithCritical(
+    final rawTotal = rollTotalWithCritical(dado, faces, [bonusTotale]);
+    final woundPercent = initiativeRoll
+        ? oculumWoundedInitiativePercent(hp: hpCorrenti(), maxHp: maxHp())
+        : 100;
+    final totale = initiativeRoll
+        ? oculumWoundedInitiative(rawTotal, hp: hpCorrenti(), maxHp: maxHp())
+        : rawTotal;
+    final rawFormula = rollFormulaWithCritical(
       roll: dado,
       faces: faces,
       bonuses: [bonusTotale],
     );
+    final testoDado = woundPercent == 100
+        ? rawFormula
+        : '$rawFormula ×$woundPercent% = $totale';
     var gerinResonanceText = '';
     if ((nome.trim().toLowerCase() == 'danno' ||
             nome.trim().toLowerCase() == 'damage' ||
@@ -1530,6 +1916,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         scheduleCombatRollSave();
       }
     }
+    final combatXpContext = currentCombatSubtraitExperienceContext();
+    final combatXpReceipt =
+        'subtrait:${sheetTagAt(schedaCorrente)}:${DateTime.now().microsecondsSinceEpoch}:${stat.id}';
     final faces = max(2, rollFaces);
     final dado = tiraDado(faces);
     final schivataOculumOttenuta =
@@ -1656,6 +2045,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         stat,
         masteryGain,
       );
+      if (combatXpContext != null) {
+        recordCombatSubtraitExperience(
+          stat.id,
+          masteryGain,
+          receiptId: combatXpReceipt,
+          context: combatXpContext,
+        );
+      }
       notifyHiddenEyeStatChanged(stat);
     }
     final masteryText = masteryGain <= 0
@@ -2063,8 +2460,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (index == schedaCorrente) {
       if (key == 'vc') return vc();
       if (key == 'cm') return cm();
-      if (key == 'iniziativa') return iniziativa();
+      if (key == 'iniziativa') return iniziativaNonFerita();
     }
+    if (key == 'iniziativa') return sheetUnwoundedInitiativeAt(index);
     final derived = sheetDerivedRollBonusAt(index, key);
     if (derived != null) {
       return key == 'iniziativa' ? max(0, derived) : derived;
@@ -2791,6 +3189,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             : 'Partecipante';
       }
       refreshAuraPowerRevision(token, sheetIndex);
+      refreshWoundedInitiativeToken(token, sheetIndex: sheetIndex);
+      sampleFightRewardPowerToken(token);
       if (sheetIndex >= 0) token['reflexes'] = sheetReflexesAt(sheetIndex);
       if (sheetIndex >= 0 &&
           isMeccanioBookId(
@@ -2896,8 +3296,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
   }
 
-  void sortMasterInitiativeTokens({bool forceInitiative = false}) {
+  void sortMasterInitiativeTokens({
+    bool forceInitiative = false,
+    bool allowWoundedOrderUpdate = false,
+  }) {
     normalizeMasterInitiativeTokens();
+    final group = masterInitiativeGroups
+        .where((group) => '${group['id']}' == selectedMasterInitiativeGroupId)
+        .firstOrNull;
+    if (!allowWoundedOrderUpdate &&
+        group?['fightStarted'] == true &&
+        group?['woundedInitiativeOrderPending'] == true) {
+      return;
+    }
     final activeId = masterInitiativeTokens
         .where((token) => token['status'] == 'active')
         .map((token) => '${token['id']}')
@@ -3099,6 +3510,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'initiativeRoll': roll,
       'initiativeBase': base,
       'initiativeTotal': total,
+      'initiativeUnwoundedTotal': total,
       'initiativeRevision': DateTime.now().microsecondsSinceEpoch.toString(),
       'tieBreaker': Random().nextInt(1 << 31),
       'status': 'ready',
@@ -3238,7 +3650,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           previous['shadowCloneExpired'],
         );
       }
-      masterInitiativeTokens[existingIndex] = token;
+      masterInitiativeTokens[existingIndex] = {...previous, ...token};
     } else {
       masterInitiativeTokens.add(token);
     }
@@ -3494,6 +3906,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           grade: grade,
           difficulty: difficulty,
         );
+        token['initiativeUnwoundedTotal'] = token['initiativeTotal'];
+        refreshWoundedInitiativeToken(token);
         token['status'] = 'ready';
         token['reactionUsed'] = 0;
         token['reactionUsedRound'] = 0;
@@ -3514,7 +3928,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token['updatedAt'] = DateTime.now().toIso8601String();
         rolled++;
       }
-      sortMasterInitiativeTokens(forceInitiative: true);
+      sortMasterInitiativeTokens(
+        forceInitiative: true,
+        allowWoundedOrderUpdate: true,
+      );
       masterInitiativeRound = 0;
       masterInitiativeActiveIndex = masterInitiativeTokens.isEmpty ? 0 : 0;
       if (masterInitiativeTokens.isNotEmpty) {
@@ -3649,7 +4066,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       masterInitiativeActiveIndex = index;
       masterInitiativeTokens[index]['status'] = 'active';
-      restoreMasterInitiativeTurnResources(masterInitiativeTokens[index]);
+      // Selecting the active participant is an administrative correction,
+      // not a new personal turn. Preserve marked A/R/RV, movement and fauna
+      // effects, including on legacy tokens with no action-turn epoch.
+      masterInitiativeTokens[index]['actionTurnRound'] = masterInitiativeRound;
       risultato =
           '${t('Turno attivo', 'Active turn')}: ${masterInitiativeTokens[index]['name']}.';
       aggiungiLog(risultato);
@@ -3824,6 +4244,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void nextMasterInitiativeTurn({int delta = 1}) {
     if (masterInitiativeTokens.isEmpty) return;
+    final oldRound = masterInitiativeRound;
+    final oldToken =
+        masterInitiativeTokens[masterInitiativeActiveIndex
+            .clamp(0, masterInitiativeTokens.length - 1)
+            .toInt()];
+    final oldActiveTag = publicInitiativeSourceTag(oldToken);
+    final fightInstanceId = '${oldToken['fightInstanceId'] ?? ''}';
+    var advanced = false;
     if (delta > 0) maskedAnyTurnEnded();
     final group = masterInitiativeGroups
         .where((g) => g['id'] == selectedMasterInitiativeGroupId)
@@ -3850,6 +4278,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final current = masterInitiativeActiveIndex
           .clamp(0, masterInitiativeTokens.length - 1)
           .toInt();
+      if (delta > 0) {
+        sampleFightRewardPowerToken(masterInitiativeTokens[current]);
+      }
       if (delta > 0) advanceEncounterParticipantTurn(current);
       if (masterInitiativeTokenCanAct(masterInitiativeTokens[current])) {
         masterInitiativeTokens[current]['status'] =
@@ -3874,6 +4305,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         for (final token in masterInitiativeTokens) {
           if (masterInitiativeTokenCanAct(token)) {
             token['status'] = token['outsideFight'] == true ? 'fled' : 'ready';
+          }
+        }
+        if (group?['woundedInitiativeOrderPending'] == true) {
+          group?.remove('woundedInitiativeOrderPending');
+          if (!masterInitiativeManualOrder) {
+            sortMasterInitiativeTokens(
+              forceInitiative: true,
+              allowWoundedOrderUpdate: true,
+            );
           }
         }
         next = 0;
@@ -3901,6 +4341,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : 'active';
       if (delta > 0) advanceArtSwitchForToken(masterInitiativeTokens[next]);
       restoreMasterInitiativeTurnResources(masterInitiativeTokens[next]);
+      if (delta > 0) {
+        beginFightRewardPowerTurn(masterInitiativeTokens[next]);
+        advanced = true;
+      }
       risultato =
           '${t('Turno', 'Turn')} $masterInitiativeRound: ${oculumReferenceEncounterTokenName(masterInitiativeTokens[next])}.';
       aggiungiLog(risultato);
@@ -3911,6 +4355,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         );
       }
     });
+    if (delta > 0 &&
+        advanced &&
+        group?['fightStarted'] == true &&
+        fightInstanceId.isNotEmpty) {
+      final newTag = publicInitiativeSourceTag(
+        masterInitiativeTokens[masterInitiativeActiveIndex],
+      );
+      advanceWorldClockTurn(
+        selectedMasterInitiativeGroupId,
+        '$fightInstanceId:$oldRound:$oldActiveTag:$newTag',
+      );
+    }
     programmaSalvataggio();
     notifyActiveSheetSummaryChanged();
     sendRealtimeInitiativeSnapshotIfPublished();
@@ -3920,6 +4376,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     setState(() {
       normalizeMasterInitiativeTokens();
       if (increment) {
+        if (masterInitiativeTokens.isNotEmpty) {
+          sampleFightRewardPowerToken(
+            masterInitiativeTokens[masterInitiativeActiveIndex
+                .clamp(0, masterInitiativeTokens.length - 1)
+                .toInt()],
+          );
+        }
         masterInitiativeRound++;
       } else {
         for (final token in masterInitiativeTokens) {
@@ -3960,6 +4423,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (alive >= 0) {
         masterInitiativeTokens[alive]['status'] = 'active';
         restoreMasterInitiativeTurnResources(masterInitiativeTokens[alive]);
+        if (increment) beginFightRewardPowerTurn(masterInitiativeTokens[alive]);
       }
       risultato = increment
           ? t('Nuovo round iniziativa.', 'New initiative round.')
@@ -5437,6 +5901,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int? enemyGrade,
     String attackKind = '',
     String? hitBodyPart,
+    String? damagePacketId,
     bool magicalAttack = false,
     bool nonLethal = false,
     int nonLethalRobberyPercent = 75,
@@ -5759,8 +6224,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final ignoraDifesa =
           bypassDefense || dannoOltreDifesa || difficultyBypasses.beyondDefense;
       final ignoraScudi =
-          !resolvedResistance &&
-          (bypassShields || dannoOltreScudi || difficultyBypasses.beyondShield);
+          bypassShields ||
+          (!resolvedResistance &&
+              (dannoOltreScudi || difficultyBypasses.beyondShield));
       final bonusScudiManuale =
           bonusDannoScudiPercentuale() +
           shieldDamageBonusPercent.clamp(0, 1000);
@@ -6296,12 +6762,27 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         pawnDamageLog =
             '\nPawn intercetta ${beforePawn - rimanente} danni destinati agli HP; $rimanente raggiungono la scheda.';
       }
-      if (rimanente > 0 && isConstructCharacter && hitBodyPart == 'core') {
+      if (rimanente > 0 &&
+          isLunarGuardianCoreCreature &&
+          hitBodyPart == 'core') {
+        rimanente = applyLunarGuardianCoreDamage(
+          rimanente,
+          requestId: damagePacketId,
+        );
+      } else if (rimanente > 0 &&
+          isConstructCharacter &&
+          hitBodyPart == 'core') {
         rimanente = applyConstructCoreDamage(rimanente);
       }
       if (rimanente > 0) {
         hp = max(0, hp - rimanente);
       }
+      final lunarGuardianCoreDestroyed =
+          isLunarGuardianCoreCreature &&
+          hitBodyPart == 'core' &&
+          lunarGuardianCoreExposed &&
+          readIntValue(lunarGuardianCoreState['coreHp']) <= 0;
+      if (lunarGuardianCoreDestroyed) hp = 0;
 
       final brokenCoreActive = arti.any(
         (art) => art.sbloccata && art.integritaCorrente == 0,
@@ -6361,14 +6842,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           );
         }
       }
-      if (nonLethal && hp <= 0 && hpPrima > 0) {
+      if (nonLethal && !lunarGuardianCoreDestroyed && hp <= 0 && hpPrima > 0) {
         hp = 1;
         scostuNonLethalDefeat(
           robberyPercent: nonLethalRobberyPercent,
           banditSourceId: nonLethalBanditSourceId,
         );
       }
-      if (hp <= 0 && hpPrima > 0 && !nonLethal) {
+      if (lunarGuardianCoreDestroyed && hpPrima > 0) {
+        recordFaunaFallenTurn();
+      } else if (hp <= 0 && hpPrima > 0 && !nonLethal) {
         final revived = tryFuocherelliSecondLife(
           hp,
           incomingElement,
@@ -6381,7 +6864,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           recordFaunaFallenTurn();
         }
       }
-      if (safeHpPronto && hp <= 0 && hpPrima > 0) {
+      if (safeHpPronto &&
+          !lunarGuardianCoreDestroyed &&
+          hp <= 0 &&
+          hpPrima > 0) {
         hp = 1;
         safeHpAttivato = true;
         consumeOneShotParserCommand('safehp');
@@ -7134,11 +7620,26 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int amount, {
     required String motivo,
     bool applyChainedFate = true,
+    String? progressionReceiptId,
   }) {
+    if (progressionReceiptId != null &&
+        characterProgressionReceiptRecorded(progressionReceiptId)) {
+      return '';
+    }
+    final previousLevel = max(0, leggiNumero(livelloController));
     final expAggiunta =
         max(0, amount) *
         (applyChainedFate ? chainedFateExperienceMultiplier() : 1);
-    if (expAggiunta == 0) return '';
+    if (expAggiunta == 0) {
+      if (progressionReceiptId == null) return '';
+      recordCharacterProgressionLog(
+        amount: 0,
+        beforeLevel: previousLevel,
+        reason: motivo,
+        receiptId: progressionReceiptId,
+      );
+      return '\n$motivo: +0 EXP.';
+    }
 
     final expPrima = expCorrente();
     final expTotale = expPrima + expAggiunta;
@@ -7157,6 +7658,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       recordExperienceProgress();
       notifyExperienceChanged();
       scheduleInputUiRefresh(delay: Duration.zero);
+      recordCharacterProgressionLog(
+        amount: expAggiunta,
+        beforeLevel: previousLevel,
+        reason: motivo,
+        receiptId: progressionReceiptId,
+      );
       return '\n$motivo: +$expAggiunta EXP. Totale: ${expController.text}.$recuperoCento$recupero';
     }
 
@@ -7194,6 +7701,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     recordExperienceProgress();
     notifyExperienceChanged();
     scheduleInputUiRefresh(delay: Duration.zero);
+    recordCharacterProgressionLog(
+      amount: expAggiunta,
+      beforeLevel: previousLevel,
+      reason: motivo,
+      receiptId: progressionReceiptId,
+    );
     return '\n$motivo: +$expAggiunta EXP. EXP attuale: $expRimasta/$expPerLivello.$livelloText$recuperoCento$recupero';
   }
 
@@ -7209,6 +7722,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void aggiungiEsperienza() {
+    final previousLevel = max(0, leggiNumero(livelloController));
     final expBase = leggiNumero(expDaAggiungereController);
     final expAggiunta = expFinalePreview();
 
@@ -7261,6 +7775,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
 
       recordExperienceProgress();
+      recordCharacterProgressionLog(
+        amount: expRealeAggiunta,
+        beforeLevel: previousLevel,
+        reason: 'Esperienza assegnata',
+      );
       notifyExperienceChanged();
       notifyDiceResultChanged();
       scheduleInputUiRefresh(delay: Duration.zero);
@@ -7320,12 +7839,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     aggiungiLog(risultato);
 
     recordExperienceProgress();
+    recordCharacterProgressionLog(
+      amount: expRealeAggiunta,
+      beforeLevel: previousLevel,
+      reason: 'Esperienza assegnata',
+    );
     notifyExperienceChanged();
     notifyDiceResultChanged();
     scheduleInputUiRefresh(delay: Duration.zero);
   }
 
   void aggiungiLivelliRapidi() {
+    final previousLevel = max(0, leggiNumero(livelloController));
     final livelli = leggiNumero(livelliRapidiController);
 
     if (livelli <= 0) {
@@ -7372,6 +7897,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     invalidateHiddenEyeDerivedCaches();
     recordExperienceProgress(immediate: true);
+    recordCharacterProgressionLog(
+      amount: 0,
+      beforeLevel: previousLevel,
+      reason: 'Livelli assegnati',
+    );
     notifyExperienceChanged();
     scheduleInputUiRefresh(delay: Duration.zero);
     programmaSalvataggio();

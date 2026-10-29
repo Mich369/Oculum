@@ -655,6 +655,16 @@ class OculumRealtimeService {
     });
   }
 
+  /// Compact, idempotent character progress notification on the existing log
+  /// channel. The database still verifies the sender's registered sheet.
+  Future<bool> sendProgressionLog(Map<String, dynamic> payload) =>
+      _sendConfirmed('party_log', {
+        ...payload,
+        'progressionLog': true,
+        'sessionId': _presenceKey,
+        'playerName': _displayName,
+      });
+
   Future<void> moderateRoomSheet(
     String sheetTag, {
     required String action,

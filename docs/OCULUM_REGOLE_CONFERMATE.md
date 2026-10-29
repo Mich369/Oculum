@@ -1,5 +1,9 @@
 # Oculum — registro delle regole confermate
 
+## Conferme del29ottobre — premi, Guardiani e Open
+
+[Regole complete del29ottobre](CONFERME_2026-10-29_PREMI_GUARDIANI.md): nuova assegnazione EXP, contributi10/25/50%, turnistica Master e fuga NPC, Potere dell’oro e Concentrazione, Lunari/Ik/Devil Moon, Iris StarEyes e nuove durate generali Open. Le conferme più recenti sostituiscono i precedenti valori nello stesso ambito. Implementazione e test in lavorazione, distinti dalla patch e188eafe già pubblicata.
+
 ## Conferme 28 ottobre 2026 — Skill Open, Lusier e Scostubanditi
 
 ### Regola generale delle Open

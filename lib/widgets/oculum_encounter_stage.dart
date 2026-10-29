@@ -13,6 +13,7 @@ class OculumEncounterStage extends StatefulWidget {
     this.onReveal,
     this.onOpenSheet,
     this.onMoveToRole,
+    this.onParticipantMenu,
     this.events = const [],
   });
   final List<Map<String, dynamic>> tokens;
@@ -24,6 +25,7 @@ class OculumEncounterStage extends StatefulWidget {
   final void Function(Map<String, dynamic>)? onReveal;
   final void Function(Map<String, dynamic>)? onOpenSheet;
   final void Function(Map<String, dynamic>)? onMoveToRole;
+  final void Function(Map<String, dynamic>, Offset)? onParticipantMenu;
   final List<String> events;
   @override
   State<OculumEncounterStage> createState() => _OculumEncounterStageState();
@@ -97,29 +99,46 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
               padding: const EdgeInsets.only(right: 9),
               child: Tooltip(
                 message: '${widget.tokens[i]['name'] ?? '???'}',
-                child: InkWell(
-                  onTap: () => _browse(i),
-                  onLongPress: widget.onMoveToRole == null
+                child: GestureDetector(
+                  onLongPressStart: widget.onParticipantMenu == null
                       ? null
-                      : () => widget.onMoveToRole!(widget.tokens[i]),
-                  borderRadius: BorderRadius.circular(30),
-                  child: Container(
-                    width: 54,
-                    height: 54,
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: i == _selected
-                            ? widget.accent
-                            : widget.tokens[i]['side'] == 'enemy'
-                            ? const Color(0xff8a3539)
-                            : const Color(0xff657a9c),
-                        width: i == _selected ? 2 : 1,
+                      : (details) => widget.onParticipantMenu!(
+                          widget.tokens[i],
+                          details.globalPosition,
+                        ),
+                  child: InkWell(
+                    key: ValueKey('encounter-avatar-${widget.tokens[i]['id']}'),
+                    onTap: () => _browse(i),
+                    onSecondaryTapDown: widget.onParticipantMenu == null
+                        ? null
+                        : (details) => widget.onParticipantMenu!(
+                            widget.tokens[i],
+                            details.globalPosition,
+                          ),
+                    onLongPress:
+                        widget.onParticipantMenu != null ||
+                            widget.onMoveToRole == null
+                        ? null
+                        : () => widget.onMoveToRole!(widget.tokens[i]),
+                    borderRadius: BorderRadius.circular(30),
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: i == _selected
+                              ? widget.accent
+                              : widget.tokens[i]['side'] == 'enemy'
+                              ? const Color(0xff8a3539)
+                              : const Color(0xff657a9c),
+                          width: i == _selected ? 2 : 1,
+                        ),
                       ),
-                    ),
-                    child: ClipOval(
-                      child: widget.portraitBuilder(widget.tokens[i]),
+                      child: ClipOval(
+                        child: widget.portraitBuilder(widget.tokens[i]),
+                      ),
                     ),
                   ),
                 ),
@@ -137,73 +156,119 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
             itemBuilder: (context, i) {
               final token = widget.tokens[i];
               final blindSpot = '${token['discoveredBlindSpot'] ?? ''}'.trim();
-              return Container(
-                margin: const EdgeInsets.only(right: 4),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xff0b0b0e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: widget.accent.withValues(alpha: .5),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 74,
-                      height: 94,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: widget.portraitBuilder(token),
+              return GestureDetector(
+                key: ValueKey('encounter-card-${token['id']}'),
+                onSecondaryTapDown: widget.onParticipantMenu == null
+                    ? null
+                    : (details) => widget.onParticipantMenu!(
+                        token,
+                        details.globalPosition,
                       ),
+                onLongPressStart: widget.onParticipantMenu == null
+                    ? null
+                    : (details) => widget.onParticipantMenu!(
+                        token,
+                        details.globalPosition,
+                      ),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff0b0b0e),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: widget.accent.withValues(alpha: .5),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '${token['name'] ?? '???'}',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Text(
-                              'Lv. ${token['level'] ?? 0} · ${token['status'] == 'dead' ? 'Morto' : 'In combattimento'}',
-                            ),
-                            if (blindSpot.isNotEmpty)
-                              Text(
-                                'Punto Cieco: $blindSpot',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: widget.accent),
-                              ),
-                            if (widget.onIdentify != null)
-                              TextButton(
-                                onPressed: () => widget.onIdentify!(token),
-                                child: const Text('Assegna nome e immagine'),
-                              ),
-                            if (widget.onReveal != null)
-                              TextButton(
-                                onPressed: () => widget.onReveal!(token),
-                                child: const Text('Informazioni per i Player'),
-                              ),
-                            if (widget.onOpenSheet != null)
-                              TextButton.icon(
-                                onPressed: () => widget.onOpenSheet!(token),
-                                icon: const Icon(Icons.menu_book_outlined),
-                                label: const Text('Apri scheda'),
-                              ),
-                          ],
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 74,
+                        height: 94,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: widget.portraitBuilder(token),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${token['name'] ?? '???'}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  if (widget.onParticipantMenu != null)
+                                    Builder(
+                                      builder: (buttonContext) => IconButton(
+                                        key: ValueKey(
+                                          'participant-menu-${token['id']}',
+                                        ),
+                                        tooltip: 'Gestisci partecipante',
+                                        onPressed: () =>
+                                            widget.onParticipantMenu!(
+                                              token,
+                                              (buttonContext.findRenderObject()!
+                                                      as RenderBox)
+                                                  .localToGlobal(Offset.zero),
+                                            ),
+                                        icon: const Icon(Icons.more_vert),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              Text(
+                                'Lv. ${token['level'] ?? 0} · Grado ${token['grade'] ?? 0} · ${token['status'] == 'dead'
+                                    ? 'Morto'
+                                    : token['status'] == 'fled'
+                                    ? 'Fuggito'
+                                    : token['side'] == 'enemy'
+                                    ? 'Nemico'
+                                    : 'In combattimento'}',
+                              ),
+                              if (blindSpot.isNotEmpty)
+                                Text(
+                                  'Punto Cieco: $blindSpot',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: widget.accent),
+                                ),
+                              if (widget.onIdentify != null)
+                                TextButton(
+                                  onPressed: () => widget.onIdentify!(token),
+                                  child: const Text('Assegna nome e immagine'),
+                                ),
+                              if (widget.onReveal != null)
+                                TextButton(
+                                  onPressed: () => widget.onReveal!(token),
+                                  child: const Text(
+                                    'Informazioni per i Player',
+                                  ),
+                                ),
+                              if (widget.onOpenSheet != null)
+                                TextButton.icon(
+                                  onPressed: () => widget.onOpenSheet!(token),
+                                  icon: const Icon(Icons.menu_book_outlined),
+                                  label: const Text('Apri scheda'),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

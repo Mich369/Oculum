@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/services/oculum_realtime_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'oculum_escape_provoker_test.dart' as fixtures;
+import 'oculum_october27_resources_test.dart' show closeFixture;
 
 class _PendingRoomService extends OculumRealtimeService {
   _PendingRoomService()
@@ -40,6 +42,88 @@ class _ReadyMasterService extends OculumRealtimeService {
 }
 
 void main() {
+  testWidgets(
+    'reset request validates the authenticated owner of the named sheet and retains staff authority',
+    (tester) async {
+      final (state, probe) = await fixtures.mountFight(tester);
+      final service = _ReadyMasterService();
+      state.realtimeService = service;
+      state.masterInitiativePublished = true;
+      state.masterInitiativeTokens.addAll(<Map<String, dynamic>>[
+        {
+          'id': 'FOREIGN',
+          'sheetTag': 'FOREIGN',
+          'side': 'party',
+          'status': 'ready',
+        },
+        {
+          'id': 'PLAYER-SECOND',
+          'sheetTag': 'PLAYER-SECOND',
+          'side': 'party',
+          'status': 'ready',
+        },
+      ]);
+      probe.recordCurrentEncounter();
+      state.realtimeUsers.addAll(<Map<String, dynamic>>[
+        {
+          'sessionId': 'owner-session',
+          'role': 'player',
+          'localSheetTags': ['PLAYER-A', 'PLAYER-SECOND'],
+        },
+        {
+          'sessionId': 'staff-session',
+          'role': 'coMaster',
+          'localSheetTags': ['CO'],
+        },
+      ]);
+      Map<String, dynamic> packet(String id, String sheet) => {
+        'id': id,
+        'action': 'encounter_reset',
+        'encounterId': 'encounter_1',
+        'sheetTag': sheet,
+        'scope': probe.permissionScope,
+        'campaignId': probe.permissionCampaignId,
+        'senderTag': 'PLAYER-A',
+        'requesterTag': 'PLAYER-A',
+        'senderRole': 'player',
+        'sessionId': 'owner-session',
+        'requesterName': 'Player',
+        'description': 'Reset controllato',
+        'createdAt': '2026-10-29T16:00:00',
+      };
+      probe.receivePermission(
+        'permission_request',
+        packet('foreign-sheet', 'FOREIGN'),
+      );
+      expect(
+        state.onlinePermissionRequests.containsKey('foreign-sheet'),
+        false,
+      );
+      probe.receivePermission(
+        'permission_request',
+        packet('owned-second', 'player-second'),
+      );
+      expect(
+        state.onlinePermissionRequests['owned-second']['encounterId'],
+        'encounter_1',
+      );
+      probe.receivePermission('permission_request', {
+        ...packet('staff-foreign', 'FOREIGN'),
+        'senderTag': 'CO',
+        'requesterTag': 'CO',
+        'senderRole': 'coMaster',
+        'sessionId': 'staff-session',
+      });
+      expect(
+        state.onlinePermissionRequests['staff-foreign']['encounterId'],
+        'encounter_1',
+      );
+      await tester.pump();
+      state.realtimeService = null;
+      await service.dispose();
+      await closeFixture(tester, probe);
+    },
+  );
   testWidgets(
     'pending room shows cancel instead of another Connect and keeps password out of saves',
     (tester) async {
@@ -163,8 +247,23 @@ void main() {
           'localSheetTags': ['PLAYER-TAG'],
         },
       ];
+      // An authenticated player can request a reset only for the published
+      // fight in which its owned sheet actually participates.
+      probe.ensureEncounters();
+      state.selectedMasterInitiativeGroupId = 'encounter_1';
+      state.masterInitiativePublished = true;
+      state.masterInitiativeTokens.add(<String, dynamic>{
+        'id': 'PLAYER-TAG',
+        'sheetTag': 'PLAYER-TAG',
+        'name': 'Player',
+        'side': 'party',
+        'status': 'ready',
+      });
+      probe.recordCurrentEncounter();
       probe.receivePermission('permission_request', {
         'id': 'test-scope:PLAYER-TAG:encounter_reset',
+        'encounterId': 'encounter_1',
+        'sheetTag': 'PLAYER-TAG',
         'action': 'encounter_reset',
         'scope': probe.permissionScope,
         'campaignId': state.activeCampaignId,

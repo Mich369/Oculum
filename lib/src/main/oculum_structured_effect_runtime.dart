@@ -280,6 +280,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     int? grade,
     Map<String, num> spentResources = const <String, num>{},
     bool applyFusionBonus = true,
+    Map<String, dynamic>? rewardRequest,
   }) {
     if (applyFusionBonus) effects = dustFusionArtEffects(effects);
     final messages = <String>[];
@@ -314,6 +315,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
 
     for (final effect in effects.where((item) => item.enabled)) {
       try {
+        final rewardHpBefore = rewardRequest == null ? 0 : hpCorrenti();
+        final rewardHpMaximum = rewardRequest == null ? 0 : maxHp();
+        final rewardFingerprint = rewardRequest == null
+            ? ''
+            : rewardSupportEffectFingerprint();
         var resolvedEffect = effect;
         if (effect.id.startsWith('rock_slime_bounce_') &&
             effect.diceExpression == '1d3') {
@@ -834,6 +840,16 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           });
         }
 
+        if (rewardRequest != null) {
+          recordRewardSupportAppliedEffect(
+            request: rewardRequest,
+            effect: effect,
+            value: value,
+            hpBefore: rewardHpBefore,
+            hpMaximum: rewardHpMaximum,
+            beforeFingerprint: rewardFingerprint,
+          );
+        }
         final diceText = roll.dice.rolls.isEmpty
             ? ''
             : ' [${roll.dice.expression}: ${roll.dice.rolls.join(', ')}'
@@ -934,9 +950,13 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     clone['hpTemp'] = '0';
     clone['scudo'] = '0';
     clone['scudoOculum'] = '0';
-    clone['manualHpMaximumAdjustment'] = hp - oculumHpMultiplierForGrade(grade);
+    clone['manualHpMaximumAdjustment'] =
+        hp - oculumHpMultiplierForGrade(grade, level: level);
     clone['derivedMaxHp'] = hp;
-    clone['hpGradeMultiplier'] = oculumHpMultiplierForGrade(grade);
+    clone['hpGradeMultiplier'] = oculumHpMultiplierForGrade(
+      grade,
+      level: level,
+    );
     clone['oculumShadowClone'] = !asSummon;
     clone['shadowCloneOwnerTag'] = ownerTag;
     clone['shadowCloneSource'] = source;
@@ -1091,7 +1111,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       ..['currentMateria'] = '0'
       ..['oculum'] = '0'
       ..['currentOculum'] = '0'
-      ..['manualHpMaximumAdjustment'] = hp - oculumHpMultiplierForGrade(0)
+      ..['manualHpMaximumAdjustment'] =
+          hp - oculumHpMultiplierForGrade(0, level: 0)
+      ..['hpGradeMultiplier'] = oculumHpMultiplierForGrade(0, level: 0)
       ..['currentHp'] = '$hp'
       ..['derivedMaxHp'] = hp;
     programmaSalvataggio();
@@ -1458,6 +1480,18 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     final effect = OculumStructuredEffect.fromJson(
       Map<String, dynamic>.from(pending['effect'] as Map),
     )..recipient = 'se_stesso';
+    final rewardRequest = <String, dynamic>{
+      'id': pending.putIfAbsent(
+        'rewardRequestId',
+        () => 'local-effect:${DateTime.now().microsecondsSinceEpoch}',
+      ),
+      'encounterId':
+          referenceTurnEncounter()['encounterId'] ??
+          referenceTurnEncounter()['id'],
+      'sourceTag': sheetTagAt(source),
+      'targetTag': sheetTagAt(target),
+      'effects': [effect.toJson()],
+    };
     activeStructuredEffects.remove(pending);
     aggiungiLog(
       'Effetto ${pending['source']} assegnato a ${schedePersonaggio[target]['nome']}.',
@@ -1495,6 +1529,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           [effect],
           source: '${pending['source']}',
           applyFusionBonus: false,
+          rewardRequest: rewardRequest,
         )) {
           aggiungiLog(message);
         }

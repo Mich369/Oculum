@@ -726,10 +726,12 @@ extension _OculumHomeRecipes on _OculumHomePageState {
           );
         }
         if (recipe.oculumCost > 0) {
+          final before = oculumTotale();
           currentOculumController.text = max(
             0,
             leggiNumero(currentOculumController) - recipe.oculumCost,
           ).toString();
+          recordCombatOculumSpent(max(0, before - oculumTotale()));
         }
         risultato = t(
           'Forgiatura fallita: ${check.stat.nome} ${check.total} contro DT ${check.difficulty}. Nessun bonus applicato; perso il 25% dei materiali${recipe.oculumCost > 0 ? ' e ${recipe.oculumCost} Oculum' : ''}.',
@@ -752,9 +754,11 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         rebirthed: rebirthato,
       );
       if (error == null) {
+        final before = oculumTotale();
         currentOculumController.text =
             (leggiNumero(currentOculumController) - max(0, recipe.oculumCost))
                 .toString();
+        recordCombatOculumSpent(max(0, before - oculumTotale()));
         aggiungiLog(
           'Forgiatura ${recipe.name} su ${selected.nome}: ${check.stat.nome} ${check.total} contro DT ${check.difficulty}, superata; materiali della ricetta consumati.',
         );
@@ -1013,10 +1017,12 @@ extension _OculumHomeRecipes on _OculumHomePageState {
         );
       }
       if (oculumRequired > 0) {
+        final before = oculumTotale();
         currentOculumController.text = max(
           0,
           leggiNumero(currentOculumController) - oculumRequired,
         ).toString();
+        recordCombatOculumSpent(max(0, before - oculumTotale()));
       }
       final herbalOffer = merchantCraftedHerbalOffer(recipe.resultName);
       InventoryItem? craftedHerbal;

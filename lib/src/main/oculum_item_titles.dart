@@ -53,6 +53,8 @@ CharacterSkill? oculumItemTitleAbilityForForm(
 
 bool oculumItemTitleOpenIsActive(InventoryItem item, CharacterSkill ability) {
   final index = oculumItemTitleAbilities(item).indexOf(ability);
+  final cycle = (item.craftData['titleOpenLifecycle'] as Map?)?['$index'];
+  if (cycle is Map) return cycle['buffActive'] == true;
   return index >= 0 &&
       ((item.craftData['titleOpenUsedStages'] as List? ?? []).contains(index) ||
           index == 0 && item.craftData['titleOpenUsedSinceLongRest'] == true);
@@ -213,14 +215,14 @@ CharacterSkill oculumItemTitleOpen(InventoryItem item) {
       nome: 'Open · Risveglio di ${item.nome}',
       tipo: weapon ? 'Attacco' : 'Difesa',
       livello: '${item.livelloOggetto}',
-      costo: 'Gratuito · una volta per Riposo Lungo',
+      costo: 'Gratuito · recupero: 2 Riposi Lunghi oppure 1 Lungo e 3 Brevi',
       costoStrutturato: OculumSkillCost(
         resource: 'nessuna',
         amountExpression: '0',
       ),
       descrizione: weapon
-          ? 'Risveglia il potere $element: il prossimo attacco aggiunge 1d${power.faces}+${power.flat} Danni. Buff: +${2 + max(0, item.gradoOggetto)} Materia fino al Riposo Lungo. Sblocca la Skill Open.'
-          : 'Risveglia il potere $element: ottieni 1d${power.faces}+${power.flat} Scudo e +${2 + max(0, item.gradoOggetto)} Difesa fino al Riposo Lungo. Sblocca la Skill Open.',
+          ? 'Risveglia il potere $element: il prossimo attacco aggiunge 1d${power.faces}+${power.flat} Danni. Buff: +${2 + max(0, item.gradoOggetto)} Materia fino al recupero di questa Open o alla sua sostituzione. La Skill Open resta sempre usabile; potenziata per 3 fight conclusi oppure 2 Riposi Brevi e 1 Lungo.'
+          : 'Risveglia il potere $element: ottieni 1d${power.faces}+${power.flat} Scudo e +${2 + max(0, item.gradoOggetto)} Difesa fino al recupero di questa Open o alla sua sostituzione. La Skill Open resta sempre usabile; potenziata per 3 fight conclusi oppure 2 Riposi Brevi e 1 Lungo.',
       effettiStrutturati: [
         OculumStructuredEffect(
           type: weapon ? 'danno' : 'scudo',
@@ -451,7 +453,7 @@ extension _OculumItemTitles on _OculumHomePageState {
     if (ability == null) return true;
     if (!oculumItemTitleEvolutionReady(item)) return false;
     return ability.forme.indexOf(form) == 0
-        ? !oculumItemTitleOpenIsActive(item, ability)
+        ? canStartItemOpenCycle(item, ability)
         : true;
   }
 

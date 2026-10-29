@@ -291,7 +291,104 @@ class OculumPerformanceProbe {
   Map<String, dynamic> escapeLedger() => _state.escapeLedger;
   void escapeEvent(Map<String, dynamic> payload) =>
       _state.receiveEscapeEvent(payload);
+  void rewardCombatResult(Map<String, dynamic> request) =>
+      _state.recordEncounterRewardCombatResult(request);
+  List<String> applyRewardEffects(
+    List<OculumStructuredEffect> effects,
+    Map<String, dynamic> request,
+  ) => _state.applyStructuredEffectsOnActivation(
+    effects,
+    source: 'Supporto test',
+    applyFusionBonus: false,
+    rewardRequest: request,
+  );
+  void rewardSupportReceipt(Map<String, dynamic> payload) =>
+      _state.receiveRewardSupportReceipt(payload);
+  Map<String, dynamic> rewardSupportOutbox() =>
+      _state.rewardSupportOutbox(_state.sheetTagAt(_state.schedaCorrente));
+  Future<void> replayRewardSupportReceipts() =>
+      _state.replayRewardSupportReceipts();
+  void attachRewardSupportReceipts(Map<String, dynamic> request) =>
+      _state.attachRewardSupportReceipts(request);
+  void rewardSupportAck(Map<String, dynamic> payload) =>
+      _state.receiveRewardSupportAcknowledgement(payload);
+  void rewardSupportReply(Map<String, dynamic> payload) =>
+      _state.receiveRewardSupportReceiptsFromReply(payload);
   Future<void> attemptEscape() => _state.attemptEscape();
+  Future<void> escapeForToken(String encounterId, String tag) =>
+      _state.attemptEscapeForToken(encounterId, tag);
+  Future<void> answerEscapeForToken(
+    String encounterId,
+    String escapeId,
+    String actorTag,
+    String kind,
+  ) => _state.answerEscapeForToken(encounterId, escapeId, actorTag, kind);
+  Map<String, int> resourceFightXp({
+    required String encounterId,
+    required String fightInstanceId,
+  }) => _state.combatResourceExperienceSnapshot(
+    encounterId: encounterId,
+    fightInstanceId: fightInstanceId,
+  );
+  Map<String, int> subtraitFightXp({
+    required String encounterId,
+    required String fightInstanceId,
+  }) => _state.combatSubtraitExperienceSnapshot(
+    encounterId: encounterId,
+    fightInstanceId: fightInstanceId,
+  );
+  Map<String, int> claimSubtraitFightXp({
+    required String settlementId,
+    required String encounterId,
+    required String fightInstanceId,
+    double multiplier = 1.3,
+    Set<String> escapeBonusTraits = const {},
+  }) => _state.grantCombatSubtraitExperienceBonus(
+    settlementId: settlementId,
+    encounterId: encounterId,
+    fightInstanceId: fightInstanceId,
+    multiplier: multiplier,
+    escapeBonusTraits: escapeBonusTraits,
+  );
+  void recordSubtraitFightXp(String trait, int gain, String receipt) =>
+      _state.recordCombatSubtraitExperience(trait, gain, receiptId: receipt);
+  String subtraitFightId(String encounterId) =>
+      _state.combatSubtraitExperienceFightId(encounterId);
+  Set<String> escapeFightTraits({
+    required String encounterId,
+    required String fightInstanceId,
+  }) => _state.combatEscapeSubtraitsSnapshot(
+    encounterId: encounterId,
+    fightInstanceId: fightInstanceId,
+  );
+  Widget masterEncounterStage() => _state.referenceEncounterPanel(
+    tokens: _state.masterInitiativeTokens,
+    activeIndex: _state.masterInitiativeActiveIndex,
+    master: true,
+  );
+  void openMasterEncounterStage() => _state.openReferenceDetail(
+    'Scontro',
+    'master_participant_fixture',
+    () => _state.referenceEncounterPanel(
+      tokens: _state.masterInitiativeTokens,
+      activeIndex: _state.masterInitiativeActiveIndex,
+      master: true,
+    ),
+  );
+  Future<void> participantMenu(
+    String encounterId,
+    Map<String, dynamic> token,
+  ) => _state.showMasterParticipantMenu(encounterId, token);
+  Future<void> participantCommand(
+    String encounterId,
+    Map<String, dynamic> token,
+    String command,
+  ) => _state.applyMasterParticipantCommand(
+    _state.masterParticipantAnchor(encounterId, token),
+    command,
+  );
+  Future<void> receiveParticipantControl(Map<String, dynamic> payload) =>
+      _state.receiveMasterParticipantControl(payload);
   Widget escapeRequests() => _state.escapeRequestsPanel();
   Future<void> answerEscape(Map<String, dynamic> record, String kind) =>
       _state.answerEscape(record, kind);
@@ -299,6 +396,8 @@ class OculumPerformanceProbe {
       _state.escapeAttackAllowed(packet);
   int criticalModifier(int natural, int faces) =>
       _state.criticalDieModifier(natural, faces);
+  int rollTotal(int natural, int faces, Iterable<int> bonuses) =>
+      _state.rollTotalWithCritical(natural, faces, bonuses);
   Future<void> returnToFight(String mode) => _state.returnToFight(mode);
   void escapeDamage(Map<String, dynamic> request) =>
       _state.recordEscapeDamage(request);
@@ -404,7 +503,20 @@ class OculumPerformanceProbe {
   void expireEmblems(String encounterId) =>
       _state.expireSummoningEmblems(encounterId);
   void useTitleOpen(OculumTitle title) => _state.usaOpen(title);
-  Widget masterCatalog() => _state.masterItemGiftPanel(initiallyExpanded: true);
+  Widget inventory() => _state.referenceInventoryPage();
+  Widget deferredInventorySection(WidgetBuilder builder) =>
+      _state.dropdownSection(
+        title: 'Lazy inventory test',
+        icon: Icons.inventory_2_outlined,
+        borderColor: _state.tertiaryColor,
+        childBuilder: builder,
+      );
+  Widget masterCatalog({bool initiallyExpanded = true}) =>
+      _state.masterItemGiftPanel(initiallyExpanded: initiallyExpanded);
+  Widget catalogBrowserForTest(List<InventoryItem> Function() loadItems) =>
+      _OculumMasterCatalogBrowser(owner: _state, loadItems: loadItems);
+  void equipItem(InventoryItem item, bool value) =>
+      _state.setInventoryItemEquipped(item, value);
   List<InventoryItem> masterCatalogItems() => _state._masterGiftCatalog();
   void advanceHerbs(String trigger) => _state.advanceSmokingHerbs(trigger);
   int difficultyRollModifier() => _state.modificatoreDifficoltaTiro();
@@ -641,7 +753,8 @@ class OculumPerformanceProbe {
   void skullHit() => _state.advanceSkullFormHit();
   Widget dicePanel() => _state.sheetDiceRollPanel(dense: true);
   Widget subtraitsPanel() => _state.referenceSubtraitsPanel();
-  void resetEncounter() => _state.resetMasterInitiativeRound();
+  void resetEncounter({bool increment = false}) =>
+      _state.resetMasterInitiativeRound(increment: increment);
   void reportedTurn(int value) =>
       _state.setPlayerReportedTurn(value, broadcast: false);
   void removeParticipant(int index) =>
@@ -736,8 +849,14 @@ class OculumPerformanceProbe {
   Future<void> resolveCombatDefense(
     Map<String, dynamic> request,
     String choice,
-    int total,
-  ) => _state.applyResolvedOnlineDefense(request, choice, total);
+    int total, {
+    int natural = 0,
+  }) => _state.applyResolvedOnlineDefense(
+    request,
+    choice,
+    total,
+    defenseNatural: natural,
+  );
   Future<void> applyLocalTargetEffect(Map<String, dynamic> pending) =>
       _state.applyPendingTargetEffectLocally(pending);
   void receiveRole(Map<String, dynamic> payload) =>
@@ -837,6 +956,141 @@ class OculumPerformanceProbe {
       );
   Future<void> useOpen(int index) => _state.usaOpenArt(index);
   Future<void> useOpenSkill(int index) => _state.usaSkillOpenMostro(index);
+  Map<String, dynamic> worldClockPrivate() => _state.worldClockCampaignJson();
+  Map<String, dynamic> worldClockPublic() => _state.worldClockPublicSnapshot();
+  int worldSeconds() => _state.worldClockSeconds;
+  void setWorldClock(Map<String, dynamic> value) =>
+      _state.loadWorldClockCampaign({
+        'id': _state.activeCampaignId,
+        'worldClock': value,
+      });
+  void worldTurn(String encounter, String receipt) =>
+      _state.advanceWorldClockTurn(encounter, receipt);
+  void worldControl(Map<String, dynamic> payload) =>
+      _state.receiveWorldClockControl(payload);
+  void worldRest(bool longRest) =>
+      _state.notifyWorldRestState(longRest: longRest);
+  bool worldConfirmRest(String id, int minutes) =>
+      _state.confirmWorldPartyRest(id, minutes);
+  bool worldTravel(
+    String receipt,
+    double metres,
+    List<int> members, {
+    bool chaos = false,
+    String mode = 'walk',
+    double percent = 100,
+    Random? random,
+  }) => _state.commitWorldTravel(
+    receipt: receipt,
+    metres: metres,
+    members: members,
+    chaos: chaos,
+    mode: mode,
+    totalSpeedPercent: percent,
+    random: random,
+  );
+  bool worldChooseEvent(
+    String id,
+    String choice, {
+    String? monsterId,
+    int count = 1,
+    List<int> merchants = const [],
+    Random? random,
+  }) => _state.chooseWorldTravelEvent(
+    id,
+    choice,
+    monsterId: monsterId,
+    enemyCount: count,
+    merchantIndexes: merchants,
+    random: random,
+  );
+  String worldPrepareEncounter(String id) =>
+      _state.prepareWorldTravelEncounter(id);
+  int worldMonsterBonus(int index) => _state.worldMonsterCoreBonusAt(index);
+  Widget worldClockWidget() => _state.worldClockBar();
+  Future<void> showWorldClock() => _state.showWorldClockPanel();
+  void merchantVisitAt(String id, DateTime now) =>
+      _state.receiveWorldMerchantVisit(
+        _state.permissionEnvelope({
+          'id': id,
+          'sourceTag': _state.sheetTagAt(_state.schedaCorrente),
+        }),
+        local: true,
+        now: now,
+      );
+  void replayMerchantRest(Map<String, dynamic> grant) =>
+      _state.sendWorldMerchantRestGrant(grant);
+  bool recordArtOpenCycle(int index) =>
+      _state.recordArtOpenCycleActivation(_state.arti[index]);
+  List<OculumStructuredEffect> prepareLunarGuardian(
+    List<OculumStructuredEffect> effects, {
+    Random? random,
+  }) => _state.prepareLunarGuardianEffects(effects, random: random);
+  Map<String, dynamic>? lunarGuardianVolley() =>
+      _state.lunarGuardianVolleyPending;
+  void lunarGuardianIncoming(Map<String, dynamic> request) =>
+      _state.lunarGuardianResolveIncomingElement(request);
+  Map<String, dynamic>? lunarGuardianEruption(
+    Map<String, dynamic> request, {
+    required bool hit,
+  }) => _state.lunarGuardianPendingEruption(request, hit: hit);
+  Future<void> guardianSecondaryDispatch(Map original, {Map? reflection}) =>
+      _state.dispatchGuardianSecondaryAttack(original, reflection: reflection);
+  Future<void> guardianSecondaryReceive(
+    Map<String, dynamic> payload, {
+    bool local = false,
+  }) => _state.receiveGuardianSecondaryAttack(payload, local: local);
+  Future<void> guardianSecondaryRetryOffers() =>
+      _state.retryGuardianSecondaryOffers();
+  Future<void> guardianSecondaryDefend(
+    Map<String, dynamic> request, {
+    bool retry = false,
+    bool acceptDamage = false,
+    int? natural,
+  }) => _state.guardianSecondaryDefense(
+    request,
+    retry: retry,
+    acceptDamage: acceptDamage,
+    naturalOverride: natural,
+  );
+  Widget guardianSecondaryPanel() => _state.guardianSecondaryPanel();
+  Map<String, dynamic> guardianGoldState() => _state.guardianGoldState;
+  double guardianGoldAttempt(String id, {bool melee = true}) =>
+      _state.guardianGoldBeforeOutgoingAttack(actionId: id, melee: melee);
+  Map<String, dynamic> guardianGoldMetadata({bool melee = true}) =>
+      _state.guardianGoldAttackMetadata(melee: melee);
+  int guardianGoldDefense(Map<String, dynamic> request) =>
+      _state.guardianGoldDefenseBonus(request);
+  int guardianGoldPenalty(Map<String, dynamic> request) =>
+      _state.guardianGoldIncomingRollPenalty(request);
+  Map<String, dynamic>? guardianGoldIncoming(
+    Map<String, dynamic> request, {
+    required bool hit,
+    int damage = 0,
+    bool melee = true,
+    bool lunar = false,
+    int? natural,
+  }) => _state.guardianGoldAfterIncomingAttack(
+    request,
+    hit: hit,
+    receivedDamage: damage,
+    melee: melee,
+    lunar: lunar,
+    concentrationNatural: natural,
+  );
+  void guardianGoldCritical(
+    Map<String, dynamic> request,
+    int criticalCount, {
+    String bodyPart = '',
+  }) => _state.receiveGuardianGoldCritical(
+    request,
+    criticalCount: criticalCount,
+    bodyPart: bodyPart,
+  );
+  int guardianGoldPartPenalty(String part) =>
+      _state.guardianGoldPartPenalty(part);
+  void guardianGoldTurn() => _state.tickGuardianGoldTurn();
+  void guardianGoldReset() => _state.resetGuardianGoldFight();
   void enterEncounter(String id) => _state.enterLocalReferenceEncounter(id);
   void ensureEncounters() => _state.ensureMasterInitiativeGroups();
   void selectEncounter(String id) => _state.selectMasterInitiativeGroup(id);
@@ -888,6 +1142,8 @@ class OculumPerformanceProbe {
       _state.spendArtSkillCostResource(resource, amount);
   int availableArtResource(String resource) =>
       _state.artSkillCostResourceAvailable(resource);
+  bool payArtResources(Map<String, int> payments) =>
+      _state.spendArtSkillPayments(payments);
   void settleMonsterRewards(
     Iterable<Map> enemies,
     String encounterId,
@@ -989,6 +1245,13 @@ class OculumPerformanceProbe {
   void activateInitiative(int index) =>
       _state.setMasterInitiativeActiveIndex(index);
   void normalizeInitiative() => _state.normalizeMasterInitiativeTokens();
+  void normalizeOpenCycles() => _state.normalizzaOpenAttiveSingole();
+  int initiative() => _state.iniziativa();
+  int rawInitiative() => _state.iniziativaNonFerita();
+  void rewardPowerSample(String tag, int value) =>
+      _state.recordFightRewardPowerSample(tag, value);
+  void beginRewardPowerTurn(Map<String, dynamic> token) =>
+      _state.beginFightRewardPowerTurn(token);
   void showTutorial() => _state.mostraTutorial();
   Map<String, dynamic> get creationDraft => _state.creationDraft;
   List<CharacterSkill> creationPool() => _state.tutorialSkillPool();
@@ -1006,7 +1269,8 @@ class OculumPerformanceProbe {
       _state.applicaDannoSubito(dannoEsplicito: amount, hitBodyPart: 'core');
   void sortInitiative() =>
       _state.sortMasterInitiativeTokens(forceInitiative: true);
-  void longRest() => _state.riposoLungo();
+  void longRest({bool advanceWorldClock = true}) =>
+      _state.riposoLungo(advanceWorldClock: advanceWorldClock);
   void recoverLongRestStats() => _state.ripristinaStatsRiposoLungo();
   void restoreStatsAndHp() => _state.ripristinaStatisticheEVita();
   String? changeAsh(int delta, {bool checkFainting = true}) => _state
@@ -1040,6 +1304,12 @@ class OculumPerformanceProbe {
       _state.currentStatController(key).text = '$value';
   int recoverOculum(int value) => _state.addOculum(value, scheduleSave: false);
   void shortRest() => _state.riposoBreve();
+  void tickOpenRest({required bool longRest}) =>
+      _state.tickOpenLifecycleRest(longRest: longRest);
+  void completeOpenFight(String id) => _state.completeOpenLifecycleFight(id);
+  bool artOpenBoost(CharacterArt art) => _state.artOwnOpenSkillEmpowered(art);
+  bool titleOpenBoost(OculumTitle title) =>
+      _state.titleOwnOpenSkillEmpowered(title);
   String ownerTag() => _state.sheetTagAt(_state.schedaCorrente);
   Widget fallenEyesPage() => _state.fallenEyesPage();
   Widget diaryEntryTile(int index) => _state.storyDiaryDatabaseTile(index);

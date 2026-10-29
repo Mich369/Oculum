@@ -1,5 +1,13 @@
 # Senka Kamaria — L’Ombra Mascherata
 
+## Aggiornamento del29ottobre — misure e ciclo Open attuali
+
+Questa nota prevale sulle misure e sulle durate Open delle verifiche del28ottobre, conservate sotto come storico. Regole: [Vita e bonus PT](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#vita-per-livello-bonus-pt-e-visibilità--ultima-conferma), [ciclo Open](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#nuova-regola-generale-open).
+
+Senka livello1/Grado0, prima della Open: **81 Vita massima senza maschera,135 con maschera**. RES9 e RES15 moltiplicate per9; nessuna riassegnazione dei punti base. Lusier misura ora **301 PT e690 Vita massima** nel [report del motore](../../output/characters/lusier_iii/potenza.json). Il riferimento attuale di Haniel è: **«Quando avrai una potenza totale pari o superiore a301, sarai pronta.»** Erik misura **131 PT**, rispetto a130 prima del bonus Vita alla PT.
+
+L’Open Buff del Ricordo attraversa i fight e termina al recupero della Open: due Riposi Lunghi oppure, per un Titolo del Fato, un Lungo e due Brevi. Il potenziamento della Open Skill termina separatamente al primo traguardo fra tre battaglie concluse e due Brevi più un Lungo, in qualsiasi ordine. La Skill resta utilizzabile con Open spenta o diversa, rispettando requisiti, costi e cooldown. Le misure sono locali; esportazioni e pubblicazione richiedono le proprie verifiche.
+
 ## Aggiornamento 28 ottobre — codice e tema personale
 
 Senka e Sky abitano nei **piani più bassi di Lost Town**, nella modesta stanza doppia della taverna pagata da Haniel. Tema: foresta notturna ai margini, Haniel quasi invisibile fra gli alberi, Sky felice nella stanza in basso a destra; centro leggibile. Lo spicchio di Luna è un'apparizione inspiegabile, **eccezione esplicita solo per questo tema**, segno buono e protettivo. Rame fatato, niente fate associate alla Luna. La reliquia è decorativa e non cambia i poteri della maschera.
@@ -26,7 +34,7 @@ La morte dei genitori è narrata integralmente come incubo ricorrente in [SENKA_
 
 ## Base e Titoli del Fato
 
-Dieci punti base confermati: **RES3 / VOL1 / MAT2 / OCU4**, prima dei bonus razziali, dei Titoli e della maschera. Nessun punto viene riassegnato implicitamente per bilanciare i nuovi poteri. Nella scheda attuale, con bonus permanenti ed equipaggiamento iniziale ma SENZA maschera: **RES9 / VOL9 / MAT8 / OCU9, Vita90/90**. Un costo scritto `@mat-1` o `@ocu-2` non è un malus permanente: si paga solo attivando la tecnica.
+Dieci punti base confermati: **RES3 / VOL1 / MAT2 / OCU4**, prima dei bonus razziali, dei Titoli e della maschera. Nessun punto viene riassegnato implicitamente per bilanciare i nuovi poteri. Nella scheda attuale, con bonus permanenti ed equipaggiamento iniziale ma SENZA maschera: **RES9 / VOL9 / MAT8 / OCU9, Vita81/81**; con maschera la Vita massima è135. Un costo scritto `@mat-1` o `@ocu-2` non è un malus permanente: si paga solo attivando la tecnica.
 
 **Un Ricordo della Luna:** `@Stats+4` significa +4 a OGNUNA delle quattro statistiche; +2 Velo, +3×livello Danni Luna e +1×livello Difesa Luna. Punto cieco: «Devi salvarla anche al costo di te stessa, Sky è tutto.»
 
@@ -63,7 +71,7 @@ Costi, CD e valori non fissati direttamente sono bilanciamenti iniziali modifica
 
 **Mille Tagli — Riflessi permanenti9 e uccisione di Erik I, nessun livello minimo:** una volta per Riposo Lungo, costo iniziale1 Materia. Un solo danno immediato: **Danni attuali + totale del tiro Riflessi effettivamente usato + PT attuale**. Poi SENKA riceve un turno personale di Sfinimento. Non sommare un altro danno base né applicare Sfinimento al nemico. Runtime verificato nella patch del28 ottobre; richiede il motore aggiornato.
 
-**Open del Ricordo — tre Guardie Solari valide:** la Luna compare fino a fine fight, poi scompare, come eccezione temporanea al cielo attuale. Senka riceve +25% alle quattro statistiche più il +5% dei Lunari: **+30% totale**, +5% agli altri Lunari. Buff Open +10 Danni Luna/+6 Difesa Luna; la Skill Open passa da CD3 e1d6 tagli a CD2 e1d8 tagli. Ogni taglio vale un sesto dei Danni attuali, doppio contro i Solari. Distribuibili fra più avversari, **un solo tiro d’attacco per la raffica**, difese individuali. Riconoscimento verificato dal progresso personale; contano Guardie comuni ed Elité, con tolleranza25 PT. Richiede il motore aggiornato.
+**Open del Ricordo — tre Guardie Solari valide:** la comparsa della Luna resta un’eccezione temporanea al cielo attuale. Senka riceve +25% alle quattro statistiche più il +5% dei Lunari: **+30% totale**, +5% agli altri Lunari. Buff Open +10 Danni Luna/+6 Difesa Luna, fino al recupero della Open secondo il ciclo del29ottobre. La Skill Open passa da CD3 e1d6 tagli a CD2 e1d8 tagli fino al termine del proprio potenziamento separato. Ogni taglio vale un sesto dei Danni attuali, doppio contro i Solari. Distribuibili fra più avversari, **un solo tiro d’attacco per la raffica**, difese individuali. Riconoscimento verificato dal progresso personale; contano Guardie comuni ed Elité, con tolleranza25 PT. Richiede il motore aggiornato.
 
 ## Modifica e verifica
 

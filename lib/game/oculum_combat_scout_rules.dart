@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'oculum_hp_rules.dart';
 
 const oculumScoutReadingStatIds = <String>{
   'percezione',
@@ -21,6 +22,7 @@ const oculumPowerReadPhrases = <String, String>{
 int oculumScoutPower(int level, Iterable<int> statistics, {int grade = 0}) =>
     max(0, level) +
     max(0, grade) * 3 +
+    oculumHpTotalPowerBonusForGrade(grade, level: level) +
     statistics.fold(0, (sum, stat) => sum + max(0, stat));
 
 ({int divisor, int threshold, int chancePerPoint, int weakPointNatural})

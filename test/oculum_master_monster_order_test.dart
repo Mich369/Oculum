@@ -29,7 +29,10 @@ void main() {
           'oculum': 4,
         },
       );
-      expect(oculumMonsterBookPower(sample), 26);
+      expect(
+        oculumMonsterBookPower(sample),
+        29,
+      ); // Includes floor(16 / 5) HP power.
       final ties = [
         sample.copyWith(id: 'z', nameIt: 'Zeta'),
         sample.copyWith(id: 'a', nameIt: 'Alfa'),

@@ -99,6 +99,45 @@ void main() {
     );
   });
 
+  test('declared costs prevail over free rolls and turn actions in prose', () {
+    expect(
+      oculumParseAbilityCost(
+        'Costo: 8 Oculum. Il bersaglio esegue un tiro Riflessi gratuito.',
+      ),
+      (minimum: 8, maximum: 8, resource: 'oculum'),
+    );
+    expect(
+      oculumParseAbilityCost('Esegui una Azione gratuita. Costo: 1 Materia.'),
+      (minimum: 1, maximum: 1, resource: 'materia'),
+    );
+    expect(oculumParseAbilityCost('Costo: 3 Obser. Spostamento gratuito.'), (
+      minimum: 3,
+      maximum: 3,
+      resource: 'obser',
+    ));
+    expect(
+      oculumParseAbilityCost(
+        'Costo: 1 oggetto:Fiaccola. Il tiro successivo è gratuito.',
+      ),
+      (minimum: 1, maximum: 1, resource: 'item:fiaccola'),
+    );
+    expect(oculumParseAbilityCost('Costo: gratis. Infliggi 1d8 Danni.'), (
+      minimum: 0,
+      maximum: 0,
+      resource: 'nessuna',
+    ));
+    expect(oculumParseAbilityCost('Senza costo. Tiri Riflessi gratuiti.'), (
+      minimum: 0,
+      maximum: 0,
+      resource: 'nessuna',
+    ));
+    expect(oculumParseAbilityCost('Costo: 2/5 Oculum. Azione gratuita.'), (
+      minimum: 2,
+      maximum: 5,
+      resource: 'oculum',
+    ));
+  });
+
   test('bracketed Richiede markers keep a skill locked until resolved', () {
     expect(
       oculumCombatTextHasUnresolvedRequirement(

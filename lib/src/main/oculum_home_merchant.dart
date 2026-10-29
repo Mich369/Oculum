@@ -1136,6 +1136,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         .where((p) => p['id'] == merchantActiveProfileId)
         .firstOrNull;
     if (profile == null) return;
+    final changedShop = '${profile['shopType'] ?? 'tutti'}' != type;
     // ignore: invalid_use_of_protected_member
     setState(() => profile['shopType'] = type);
     ensureMerchantStock();
@@ -1145,6 +1146,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     _saveActiveMerchantProfileStock();
     programmaSalvataggio();
     unawaited(sendRealtimeMerchantRosterSnapshot());
+    if (changedShop && merchantIsOpen) notifyWorldMerchantVisit();
   }
 
   String merchantRecommendation(Map<String, dynamic> offer) {
@@ -1267,6 +1269,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     setState(() {});
     programmaSalvataggio();
     unawaited(sendRealtimeMerchantRosterSnapshot());
+    if (merchantIsOpen) notifyWorldMerchantVisit();
   }
 
   void createRandomMerchantProfile() {
@@ -1285,6 +1288,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     // ignore: invalid_use_of_protected_member
     setState(() {});
     programmaSalvataggio();
+    if (merchantIsOpen) notifyWorldMerchantVisit();
   }
 
   Widget merchantProfileControls() => Wrap(
@@ -3075,8 +3079,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             // ignore: invalid_use_of_protected_member
             setState(() => merchantIsOpen = open);
             if (open) {
-              // Entering a merchant is a full short rest, not just a Dust reset.
-              riposoBreve();
+              notifyWorldMerchantVisit();
               _rollNurseRefillBuffForShopOpen();
               // ignore: invalid_use_of_protected_member
               if (mounted) setState(() {});
@@ -3215,6 +3218,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   // ignore: unused_element
   Future<void> showMerchantDialog() async {
+    notifyWorldMerchantVisit();
     final stock = recommendedMerchantStock();
     _rollNurseRefillBuffForShopOpen();
     await showDialog<void>(

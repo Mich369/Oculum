@@ -15,7 +15,7 @@
     "materia": 38,
     "oculum": 21
   },
-  "expectedTotalPower": 130,
+  "expectedTotalPower": 131,
   "custodiaDelGirone": {
     "shieldByForm": [
       8,
@@ -43,5 +43,7 @@
     "arti",
     "hiddenEyeStats",
     "background"
-  ]
+  ],
+  "expectedTotalPowerBeforeHpBonus": 130,
+  "hpMultiplierPowerBonus": 1
 }

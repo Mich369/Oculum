@@ -152,6 +152,10 @@ void main() {
             '${state.schedePersonaggio.firstWhere((sheet) => sheet['nome'] == state.masterInitiativeTokens[index]['name'])['sheetTag']}';
       }
       probe.recordCurrentEncounter();
+      // This regression covers the selectable historical assignment method.
+      // New fights default to the separate permanent-stat difference method.
+      state.masterInitiativeGroups.first['rewardAssignmentMethod'] =
+          oculumEncounterRewardMethodLegacy;
 
       var seed = 0;
       while (true) {

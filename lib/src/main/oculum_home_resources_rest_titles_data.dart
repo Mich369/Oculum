@@ -1945,7 +1945,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     modificaConsumoRegistrato(key, value - current);
   }
 
-  void riposoBreve() {
+  void riposoBreve({bool advanceWorldClock = true}) {
     resetOgorCoreRest();
     final activeSheet =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
@@ -2057,10 +2057,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     });
 
     processConditionTick(OculumConditionTickTrigger.shortRest);
+    tickOpenLifecycleRest(longRest: false);
+    if (advanceWorldClock) notifyWorldRestState(longRest: false);
     programmaSalvataggio();
   }
 
-  void riposoLungo() {
+  void riposoLungo({bool advanceWorldClock = true}) {
     final eye = fallenEyeForId(
       '${schedePersonaggio[schedaCorrente]['occhioCadutoId'] ?? ''}',
     );
@@ -2086,28 +2088,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     final potenzaNucleoDaRimuovere = <int>[];
     setState(() {
       for (final item in inventario) {
-        if (item.craftData['titleItem'] == true) {
-          item.craftData = {
-            ...item.craftData,
-            'titleOpenUsedSinceLongRest': false,
-            'titleOpenUsedStages': <int>[],
-          };
-        }
         if (item.craftData['necromancyKind'] == 'skull_amulet') {
           item.craftData = {...item.craftData, 'usedSinceLongRest': false};
         }
       }
       merchantDustPurchasedSinceLongRest = false;
       merchantDustPurchaseCount = 0;
-      for (final art in arti) {
-        art.openUsedSinceLongRest = false;
-      }
-      for (final title in [...titoli, ...trattiRazziali]) {
-        title.openUsedSinceLongRest = false;
-        for (final open in title.openExtra) {
-          open.usedSinceLongRest = false;
-        }
-      }
       restThresholdTemporaryHp();
       schedePersonaggio[schedaCorrente]['packLeaderPhaseTriggered'] = false;
       advanceSmokingHerbs('long_rest');
@@ -2366,6 +2352,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
     recordAggiustaNucleoProgress(immediate: true);
     processConditionTick(OculumConditionTickTrigger.longRest);
+    tickOpenLifecycleRest(longRest: true);
+    if (advanceWorldClock) notifyWorldRestState(longRest: true);
     unawaited(salvaDati());
   }
 
@@ -3002,10 +2990,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
   void usaOpen(OculumTitle titolo, {TitleOpenEntry? openExtra}) {
     final active = openExtra?.attiva ?? titolo.openAttiva;
-    final used = openExtra?.usedSinceLongRest ?? titolo.openUsedSinceLongRest;
-    if (!active && used) {
+    final ready = openExtra == null
+        ? canStartTitleOpenCycle(titolo)
+        : canStartExtraOpenCycle(titolo, openExtra);
+    if (!active && !ready) {
       aggiungiLog(
-        'Open già usata: occorre un Riposo Lungo. La Skill Open resta utilizzabile con i suoi costi e cooldown.',
+        'Open non recuperata: servono 2 Riposi Lunghi oppure 1 Riposo Lungo e '
+        '${normalizeTitleCategory(titolo.tipo) == 'Titoli del Fato' ? 2 : 3} Riposi Brevi. '
+        'La Skill Open resta utilizzabile con i suoi costi e cooldown.',
       );
       return;
     }
@@ -3030,7 +3022,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
             );
           }
           openExtra.attiva = false;
+          deactivateTitleOpenBuffCycle(titolo, extra: openExtra);
         } else {
+          if (!recordExtraOpenCycleActivation(titolo, openExtra)) return;
           disattivaTutteLeOpen(exceptTitle: titolo, exceptOpenExtra: openExtra);
           equipaggiaTitoloPerOpen(titolo);
           openExtra.attiva = true;
@@ -3067,7 +3061,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
           );
         }
         titolo.openAttiva = false;
+        deactivateTitleOpenBuffCycle(titolo);
       } else {
+        if (!recordTitleOpenCycleActivation(titolo)) return;
         disattivaTutteLeOpen(exceptTitle: titolo);
         equipaggiaTitoloPerOpen(titolo);
         titolo.openAttiva = true;
@@ -3102,6 +3098,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       final messages = applyStructuredEffectsOnActivation(
         effectsToActivate,
         source: effectSource,
+      );
+      tagOpenLifecycleBuffEffects(
+        openExtra == null
+            ? titleOpenLifecycle(titolo).id
+            : extraOpenLifecycle(openExtra).id,
+        effectSource,
       );
       if (messages.isNotEmpty) {
         setState(() {

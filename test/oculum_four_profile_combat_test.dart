@@ -134,6 +134,7 @@ void main() {
         'AiutoOcu:413FD5G',
       ];
       final transports = List.generate(4, (i) => _ProfileTransport(i, bus));
+      final fixtureMaximumHp = 100 * oculumHpMultiplierForGrade(0, level: 0);
       final tokens = [
         for (var i = 0; i < 4; i++)
           <String, dynamic>{
@@ -142,8 +143,8 @@ void main() {
             'name': 'Profile $i',
             'side': i == 2 ? 'enemy' : 'ally',
             'status': 'ready',
-            'currentHp': 1000,
-            'maxHp': 1000,
+            'currentHp': fixtureMaximumHp,
+            'maxHp': fixtureMaximumHp,
             'reactionMax': 1,
             'reactionUsed': 0,
             'reactionFastMax': 0,
@@ -176,7 +177,9 @@ void main() {
             },
         ]);
         state.schedaCorrente = i;
-        state.currentHpController.text = '1000';
+        state.livelloController.text = '0';
+        state.gradoController.text = '0';
+        state.currentHpController.text = '$fixtureMaximumHp';
         state.resilienzaController.text = '100';
         state.currentResilienzaController.text = '100';
         state.currentMateriaController.text = '0';
@@ -331,7 +334,8 @@ void main() {
         20,
       );
       expect(request['status'], 'resolved');
-      expect(bus.probes[2].currentHp(), 1000);
+      expect(bus.probes[2].maximumHp(), fixtureMaximumHp);
+      expect(bus.probes[2].currentHp(), fixtureMaximumHp);
       expect(master.masterInitiativeTokens[2]['reactionUsed'], 0);
       expect(master.masterInitiativeTokens[2]['reactionFastUsed'], 1);
       // B's action advances to C; C can use an action after its quick reaction.

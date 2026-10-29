@@ -15,6 +15,7 @@ part 'october_creatures.dart';
 part 'celestial_reference_creatures.dart';
 part 'micro_realm_creatures.dart';
 part 'solar_guards_and_grofix.dart';
+part 'lunar_guards.dart';
 part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
 part 'monster_progression_pool.dart';
@@ -296,8 +297,9 @@ String oculumMonsterBookWeakPointDescription(
 Map<String, String> oculumMonsterBookDamageResistancePresets(
   MonsterBookEntry entry,
 ) {
-  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn} ${oculumMonsterPhysicalDescription(entry)}'
-      .toLowerCase();
+  final identity =
+      '${entry.id} ${entry.nameIt} ${entry.nameEn} ${oculumMonsterPhysicalDescription(entry)}'
+          .toLowerCase();
   final presets = <String, String>{};
   final shell = RegExp(
     r'guscio|carapace|shell|conchiglia|corazza|corazzat|placca|crosta',
@@ -347,7 +349,14 @@ Map<String, String> oculumMonsterBookDamageResistancePresets(
   final element = entry.elementId.trim().toLowerCase();
   // A cutting weapon or explosive attack does not make its bearer resistant
   // to cuts/explosions. Physical protection follows the body above.
-  const physicalElements = {'fisico', 'taglio', 'tagliente', 'perforante', 'contundente', 'esplosivo'};
+  const physicalElements = {
+    'fisico',
+    'taglio',
+    'tagliente',
+    'perforante',
+    'contundente',
+    'esplosivo',
+  };
   if (element.isNotEmpty &&
       !physicalElements.contains(element) &&
       !presets.containsKey(element)) {
@@ -515,7 +524,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Pawn',
     nameEn: 'Pawn',
     descIt:
-        'Creatura meccanica senza Oculum Art. Base livello 0: Resilienza 3, Volontà 3, Materia 5, Oculum 0. Protegge una o più schede selezionate: intercetta solo i danni che raggiungerebbero la Vita, dopo Difesa e Scudi del bersaglio. A fine turno cura 10 Vita oppure, se già al massimo, ottiene 5 Scudo. A 20 Scudo attiva Scudo di Salvataggio. Guadagna 25 EXP per turno e 6 punti per livello. Usa il pannello Pawn · Guardiani per bersagli, turni e crescita. Alla morte lascia un Nucleo rotto di Pawn.',
+        'Pedina degli scacchi meccanica alta circa 50 cm, dal corpo brunoviolaceo e dalle finiture dorate in ottone. Due mani fluttuanti sono staccate dal corpo: una porta uno scudo, l’altra una spada. Creatura senza Oculum Art. Base livello 0: Resilienza 3, Volontà 3, Materia 5, Oculum 0. Protegge una o più schede selezionate: intercetta solo i danni che raggiungerebbero la Vita, dopo Difesa e Scudi del bersaglio. A fine turno cura 10 Vita oppure, se già al massimo, ottiene 5 Scudo. A 20 Scudo attiva Scudo di Salvataggio. Guadagna 25 EXP per turno e 6 punti per livello. Usa il pannello Pawn · Guardiani per bersagli, turni e crescita. Alla morte lascia un Nucleo rotto di Pawn.',
     descEn:
         'Mechanical creature without Oculum Art. Level 0: Resilience 3, Will 3, Matter 5, Oculum 0. Intercepts HP damage for selected sheets after their defenses and shields. Each own turn heals 10 HP or gains 5 shield when already full; 20 shield activates Saving Shield. Gains 25 XP per turn and six points per level. Use the Pawn guardian panel. Leaves a broken Pawn core on death.',
     elementId: 'metallo',
@@ -536,6 +545,16 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'pawn_guardiano_salvataggio',
     ],
     dropIds: ['nucleo_rotto_pawn'],
+    encounterRules: {
+      'precisionBodyParts': [
+        {'id': 'body', 'label': 'Corpo del pedone', 'group': 'body'},
+        {'id': 'head', 'label': 'Testa del pedone', 'group': 'head'},
+        {'id': 'hands_1', 'label': 'Mano sospesa con scudo', 'group': 'hands'},
+        {'id': 'hands_2', 'label': 'Mano sospesa con spada', 'group': 'hands'},
+        {'id': 'core', 'label': 'Nucleo meccanico', 'group': 'core'},
+        {'id': 'joint', 'label': 'Giuntura di manutenzione', 'group': 'joint'},
+      ],
+    },
     classificationTags: ['Costrutto', 'Meccanico'],
   ),
   MonsterBookEntry(
@@ -935,7 +954,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Pinepine',
     nameEn: 'Pinepine',
     descIt:
-        'Mostro intermedio, livello 0. Base: Resilienza 6, Volontà 3, Materia 10, Oculum 0, Scudo Critico 1 e Resistenza 50%. Punto debole: Ferite Aperte e Fuoco. Se viene colpito dal Fuoco, la pelle esplode: il Pinepine subisce i danni della propria esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Con critico sul drop ottieni 20 Scudo Pigna: dimezza i danni non di fuoco; contro fuoco o simili esplode, coinvolgendo anche chi lo indossa.',
+        'Pigna umanoide alta circa due metri, con tratti morbidi e due occhi piccoli visibili. La corazza è la sua stessa pigna: squame legnose sovrapposte, ciuffi di aghi verdi davanti e anche dietro la testa e lungo la nuca. Buffo e curioso, tranquillo finché non provocato. Mostro intermedio, livello 0. Base: Resilienza 6, Volontà 3, Materia 10, Oculum 0, Scudo Critico 1 e Resistenza 50%. Punto debole: Ferite Aperte e Fuoco. Se viene colpito dal Fuoco, la pelle esplode: il Pinepine subisce i danni della propria esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Con critico sul drop ottieni 20 Scudo Pigna: dimezza i danni non di fuoco; contro fuoco o simili esplode, coinvolgendo anche chi lo indossa.',
     descEn:
         'Intermediate creature with 50% resistance, weak to open wounds and fire. Fire detonates its cone skin, dealing its remaining Life + Damage to Pinepine itself and every creature within 2 metres, including allies.',
     elementId: 'natura',
@@ -4016,7 +4035,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Ogle',
     nameEn: 'Ogle',
     descIt:
-        'Corpo basso e grassoccio color malva, quattro zampe corte con piccoli artigli gialli e grandi orecchie laterali. Numerosi occhi rossi lucidi circondano la fronte; la bocca larga mostra denti minuti. Si atteggia come un cane emotivo: cerca attenzione e abbaia attraverso copie psicoillusorie. Nel Regno mezzano esce di notte.',
+        'Corpo basso e grassoccio color malva, quattro zampe corte con piccoli artigli gialli e grandi orecchie laterali. Cinque occhi rossi lucidi circondano la fronte; il suo aspetto è prevalentemente buffo, con una nota inquietante; la bocca larga mostra denti minuti. Si atteggia come un cane emotivo: cerca attenzione e abbaia attraverso copie psicoillusorie. Nel Regno mezzano esce di notte.',
     descEn: 'Emotional illusion hound.',
     elementId: 'psichico',
     spriteAssetPath: '',
@@ -5474,6 +5493,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
               ..._celestialReferenceEntries,
               ..._microRealmCreatureEntries,
               ..._solarGuardAndGrofixEntries,
+              ..._lunarGuardEntries,
               ..._spineHedgehogEntries,
               ..._spineHedgehogVariantEntries,
               ..._packLeaderMonsterBookEntries,
@@ -5729,6 +5749,7 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _celestialReferenceEntries;
   yield* _microRealmCreatureEntries;
   yield* _solarGuardAndGrofixEntries;
+  yield* _lunarGuardEntries;
   yield* _spineHedgehogEntries;
   yield* _spineHedgehogVariantEntries;
   yield* _packLeaderMonsterBookEntries;

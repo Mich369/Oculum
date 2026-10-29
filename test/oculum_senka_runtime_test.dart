@@ -8,7 +8,7 @@ import 'oculum_october27_resources_test.dart' show closeFixture;
 
 void main() {
   testWidgets(
-    'moon boosts the full transformed core once and ends without restoring its spent Open',
+    'moon boosts the transformed core once across fights until its own Open recovers',
     (tester) async {
       final (state, p) = await fixtures.mountFight(tester);
       final sheet =
@@ -33,8 +33,8 @@ void main() {
       p.manifestSenkaMask(mask, true);
       p.invalidateDerivedCaches();
       final before = p.coreStats();
-      title.openAttiva = true;
-      title.openUsedSinceLongRest = true;
+      p.useTitleOpen(title);
+      expect(p.titleOpenBoost(title), true);
       p.invalidateDerivedCaches();
       final boosted = p.coreStats();
       for (final key in before.keys) {
@@ -48,18 +48,33 @@ void main() {
       p.invalidateDerivedCaches();
       expect(p.coreStats(), boosted);
       p.senkaEndFight();
+      p.completeOpenFight('senka-moon-one');
       p.invalidateDerivedCaches();
-      expect(p.coreStats(), before);
+      expect(p.coreStats(), boosted);
       final restored = (state.titoli as List).cast<OculumTitle>().singleWhere(
         (t) => t.openEffects.any((e) => e.target == 'senka_moon_open'),
       );
-      expect(restored.openAttiva, false);
+      expect(restored.openAttiva, true);
       expect(restored.openUsedSinceLongRest, true);
+      p.tickOpenRest(longRest: true);
+      p.invalidateDerivedCaches();
+      expect(restored.openAttiva, true);
+      expect(p.coreStats(), boosted);
+      p.tickOpenRest(longRest: true);
+      p.invalidateDerivedCaches();
+      expect(restored.openAttiva, false);
+      expect(restored.openUsedSinceLongRest, false);
+      expect(p.coreStats(), before);
+      expect(
+        p.titleOpenBoost(restored),
+        true,
+        reason: 'recovery and Skill boost have independent clocks',
+      );
       await closeFixture(tester, p);
     },
   );
   testWidgets(
-    'lunar cuts require the evolved title and only its own Open upgrades the frozen volley',
+    'lunar cuts require evolution and retain their own three-fight boost while another Open is active',
     (tester) async {
       final (state, p) = await fixtures.mountFight(tester);
       final sheet =
@@ -85,7 +100,8 @@ void main() {
       expect(readIntValue(weakData['cuts']), inInclusiveRange(1, 6));
       expect(readIntValue(weakData['damagePerCut']), p.damageTotal() ~/ 6);
       expect(weak.maximumTargets, weakData['cuts']);
-      title.openAttiva = true;
+      p.useTitleOpen(title);
+      expect(p.titleOpenBoost(title), true);
       final strong = p.prepareSenka(effects)!.single;
       final strongData = jsonDecode(strong.narrativeText) as Map;
       expect(readIntValue(strongData['cuts']), inInclusiveRange(1, 8));
@@ -95,12 +111,43 @@ void main() {
         '1d6',
         reason: 'the editable definition is never overwritten',
       );
-      title.openAttiva = false;
+      final other = OculumTitle(
+        nome: 'Altra Open',
+        tipo: 'Standard',
+        ottenimento: '',
+        buff: '',
+        puntoCieco: '',
+        skill: '',
+        richiede: '',
+        evoluto: true,
+        equipaggiato: true,
+        openName: 'Altro potere',
+      );
+      state.titoli.add(other);
+      p.useTitleOpen(other);
+      expect(title.openAttiva, false);
+      expect(other.openAttiva, true);
       expect(
         (jsonDecode(p.prepareSenka(effects)!.single.narrativeText)
             as Map)['ownOpen'],
-        false,
+        true,
       );
+      p.completeOpenFight('senka-cuts-one');
+      p.completeOpenFight('senka-cuts-one');
+      p.completeOpenFight('senka-cuts-two');
+      expect(p.titleOpenBoost(title), true);
+      p.completeOpenFight('senka-cuts-three');
+      final expired = p.prepareSenka(effects)!.single;
+      final expiredData = jsonDecode(expired.narrativeText) as Map;
+      expect(expiredData['ownOpen'], false);
+      expect(readIntValue(expiredData['cuts']), inInclusiveRange(1, 6));
+      expect(
+        strongData['ownOpen'],
+        true,
+        reason: 'a prepared volley retains its original snapshot',
+      );
+      expect(other.openAttiva, true);
+      expect(effects.single.diceExpression, '1d6');
       await closeFixture(tester, p);
     },
   );
@@ -331,7 +378,7 @@ void main() {
       expect(p.manifestSenkaMask(item, true), true);
       expect(p.coreStats()['resilienza'], before['resilienza']! + 6);
       expect(p.coreStats()['materia'], before['materia']! + 10);
-      expect(p.currentHp(), hp + 60);
+      expect(p.currentHp(), hp + 54);
       expect(p.coreStats()['oculum'], oculum + 5);
       expect(p.combatTurnResources(), turn);
       final shield = state.scudoController.text;
@@ -341,7 +388,7 @@ void main() {
       expect(p.coreStats()['oculum'], oculum);
       expect(p.currentHp(), hp);
       p.manifestSenkaMask(item, true);
-      expect(p.currentHp(), hp + 60);
+      expect(p.currentHp(), hp + 54);
       expect(p.coreStats()['oculum'], oculum + 5);
       expect(state.scudoController.text, shield);
       item.scudoIntegritaOculumCorrente = 0;

@@ -651,6 +651,15 @@ CharacterArt _oculumAuthoredMonsterBookArt(MonsterBookEntry monster) {
     );
   }
   final art = _rawMonsterBookArt(monster);
+  if (monster.id == 'guardiano_solare') {
+    return oculumConfigureGuardianGoldArt(art);
+  }
+  if (monster.encounterRules['lunarGuardian'] == true) {
+    return oculumConfigureLunarGuardianArt(
+      art,
+      infernal: monster.encounterRules['infernalIk'] == true,
+    );
+  }
   if (monster.encounterRules['cycleOpenName'] != null) {
     final phase = oculumMonsterCyclePhaseName(monster).isEmpty
         ? 'propria natura'

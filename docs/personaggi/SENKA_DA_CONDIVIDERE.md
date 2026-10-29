@@ -1,5 +1,7 @@
 # Kamaria Senka
 
+> Aggiornamento del29ottobre: la soglia attuale pronunciata da Haniel per Lusier è301 PT. Riferimenti: [Vita/PT](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#vita-per-livello-bonus-pt-e-visibilità--ultima-conferma) e [ciclo Open](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#nuova-regola-generale-open). Gli avvenimenti del background rimangono invariati e personalizzabili.
+
 Sedici anni. Mhunan lunare. Abita con la sorellina Sky nei piani più bassi di Lost Town.
 
 Prima della piazza, per Senka i suoi genitori erano tutto. Erano persone semplici. Suo padre era un tuttofare, molto affettuoso con la famiglia; ripudiava i Solari per ciò che avevano fatto e continuavano a fare alla loro gente. Sua madre cuciva vestiti ed era una donna estremamente gentile e cordiale. Dipingeva anche fantastici ritratti lunari: uno di quei ritratti è ancora appeso nella locanda. Guardarlo restituisce a Senka il ricordo di sua madre intenta a creare qualcosa di bello, e di una casa nella quale si sentiva amata.
@@ -26,6 +28,6 @@ Senka conserva due nomi al centro della propria vita. Sky, che deve restare al s
 
 - Sky ha cinque anni, è gentile e vivace, e prova a mostrarsi coraggiosa per sostenerti. Non sa che sei L’Ombra Mascherata: crede che sia un’altra persona che vi protegge. Non viene mai con te nelle missioni.
 - Haniel è il vostro protettore, un informatore e il tuo maestro. Ti affida missioni e allenamenti, conosce il tuo desiderio di vendetta; le sue intenzioni profonde restano misteriose.
-- Lusier III ha ucciso i tuoi genitori. È una Guardia Solare Elité di livello13, GradoI. Haniel ti ha detto: «Quando avrai una potenza totale pari o superiore a298, sarai pronta.»
+- Lusier III ha ucciso i tuoi genitori. È una Guardia Solare Elité di livello13, GradoI. Haniel ti ha detto: «Quando avrai una potenza totale pari o superiore a301, sarai pronta.»
 - Erik I è suo fratello, più misurato ma fedele a lui; governa i circoli solari intermedi, sopra quelli contaminati.
 - L’aspetto normale di Senka, i nomi dei genitori e il soggetto del ritratto rimangono da decidere.

@@ -14,9 +14,9 @@
   "currentVolonta": "84",
   "currentMateria": "38",
   "currentOculum": "60",
-  "maxOculum": 60,
+  "maxOculum": 65,
   "normalCurrentOculum": 60,
-  "currentHp": "600",
+  "currentHp": "690",
   "hpTemp": "0",
   "scudo": "0",
   "scudoCritico": "1",
@@ -687,7 +687,7 @@
           "combatRole": "attacco",
           "effects": [
             {
-              "id": "effect_1793189193904992",
+              "id": "effect_1793284141214194",
               "type": "planar",
               "target": "lusier_thin_ray",
               "resource": "",
@@ -726,7 +726,7 @@
       "openConditionalBuffs": [],
       "openEffects": [
         {
-          "id": "effect_1793189193904992",
+          "id": "effect_1793284141214194",
           "type": "planar",
           "target": "lusier_condition_guard",
           "resource": "",
@@ -759,7 +759,7 @@
           "allOpponents": false
         },
         {
-          "id": "effect_1793189193904992",
+          "id": "effect_1793284141214194",
           "type": "planar",
           "target": "lusier_solar_vitalium",
           "resource": "",
@@ -792,7 +792,7 @@
           "allOpponents": false
         },
         {
-          "id": "effect_1793189193904992",
+          "id": "effect_1793284141214194",
           "type": "planar",
           "target": "lusier_open_ray",
           "resource": "25",
@@ -827,7 +827,7 @@
       ],
       "skillEffects": [
         {
-          "id": "effect_1793189193904992",
+          "id": "effect_1793284141214194",
           "type": "planar",
           "target": "lusier_condition_guard",
           "resource": "",
@@ -860,7 +860,7 @@
           "allOpponents": false
         },
         {
-          "id": "effect_1793189193904992",
+          "id": "effect_1793284141214194",
           "type": "planar",
           "target": "lusier_regal_strike",
           "resource": "5+floor(agilita_arma/2)",

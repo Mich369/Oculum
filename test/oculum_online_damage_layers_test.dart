@@ -95,6 +95,7 @@ void main() {
     state.sonoCoMaster = false;
     final transport = _LayerTransport();
     state.realtimeService = transport;
+    final fixtureMaximumHp = 100 * oculumHpMultiplierForGrade(0, level: 0);
     state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
       'encounterId': 'fight',
       'campaignId': state.activeCampaignId,
@@ -106,8 +107,8 @@ void main() {
           'sheetTag': owner,
           'name': 'Rose',
           'status': 'ready',
-          'currentHp': 1000,
-          'maxHp': 1000,
+          'currentHp': fixtureMaximumHp,
+          'maxHp': fixtureMaximumHp,
           'actionUsed': false,
           'reactionMax': 1,
           'reactionUsed': 0,
@@ -184,7 +185,7 @@ void main() {
     state.scudoOculumController.text = '0';
     state.scudoController.text = '0';
     state.hpTempController.text = '0';
-    state.currentHpController.text = '1000';
+    state.currentHpController.text = '$fixtureMaximumHp';
     state.incomingDamageElement = 'fisico';
     state.dannoSubitoPercentPerTipo.clear();
     state.incomingDamagePresets['fisico'] = 'Immunità';
@@ -193,7 +194,7 @@ void main() {
       probe.defense() + 115,
       resistanceBypassDamage: 15,
     );
-    expect(int.parse(state.currentHpController.text), 985);
+    expect(int.parse(state.currentHpController.text), fixtureMaximumHp - 15);
     expect(
       state.logEventi.any((dynamic e) => '$e'.contains('[MITRA RUNICO] +15')),
       isTrue,
@@ -214,7 +215,7 @@ void main() {
       state.scudoOculumController.text = '10';
       state.scudoController.text = '20';
       state.hpTempController.text = '20';
-      state.currentHpController.text = '1000';
+      state.currentHpController.text = '$fixtureMaximumHp';
       probe.invalidateDerivedCaches();
       final defense = probe.defense();
       final raw = defense + result.$3;
@@ -282,7 +283,7 @@ void main() {
       );
       expect(state.scudoController.text, '${20 - spentShield}');
       expect(state.hpTempController.text, '${20 - spentTemp}');
-      final expectedHp = 1000 - remaining;
+      final expectedHp = fixtureMaximumHp - remaining;
       expect(state.currentHpController.text, '$expectedHp');
       expect(request['damageReceipt'], {
         'oculumShieldLost': spentOculumShield,
@@ -306,13 +307,13 @@ void main() {
     state.scudoOculumController.text = '10';
     state.scudoController.text = '20';
     state.hpTempController.text = '0';
-    state.currentHpController.text = '1000';
+    state.currentHpController.text = '$fixtureMaximumHp';
     state.dannoOltreDifesa = true;
     state.dannoOltreScudi = true;
     state.dannoBonusScudoPercentController.text = '25';
     probe.invalidateDerivedCaches();
     await tester.runAsync(() => probe.damageResolved(40));
-    expect(state.currentHpController.text, '960');
+    expect(state.currentHpController.text, '${fixtureMaximumHp - 40}');
     expect(state.scudoController.text, '20');
     expect(state.dannoOltreDifesa, isFalse);
     expect(state.dannoOltreScudi, isFalse);
@@ -370,7 +371,7 @@ void main() {
     state.schedePersonaggio[0].remove('monsterBookSourceId');
     state.activeStructuredEffects.clear();
     state.livelloController.text = '0';
-    state.currentHpController.text = '1000';
+    state.currentHpController.text = '$fixtureMaximumHp';
     final last = state.onlineCombatRequests.values.last as Map<String, dynamic>;
     last['status'] = 'pending';
     last['damage'] = 0;
@@ -554,7 +555,7 @@ void main() {
       (state.logEventi as List).join('\n'),
       contains('[AIUTO CONSUMATO] -4'),
     );
-    state.currentHpController.text = '900';
+    state.currentHpController.text = '${fixtureMaximumHp - 100}';
     final hpBeforeSupport = int.parse(state.currentHpController.text as String);
     final supportPacket = {
       ...helpPacket,

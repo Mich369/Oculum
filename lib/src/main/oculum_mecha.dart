@@ -82,7 +82,8 @@ Map<String, dynamic> oculumMechaRobotSource(
 ) {
   final stats = oculumMonsterCreationStats(monster, level);
   final hp =
-      max(1, stats['resilienza'] ?? 1) * oculumHpMultiplierForGrade(grade);
+      max(1, stats['resilienza'] ?? 1) *
+      oculumHpMultiplierForGrade(grade, level: level);
   return {
     'nome': monster.nameIt,
     'livello': '$level',

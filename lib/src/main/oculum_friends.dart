@@ -16,13 +16,21 @@ extension _OculumFriends on _OculumHomePageState {
     var bestScore = -1;
 
     for (int i = 0; i < schedePersonaggio.length; i++) {
-      final score =
-          sheetIntValueAt(i, 'resilienza') +
-          sheetIntValueAt(i, 'volonta') +
-          sheetIntValueAt(i, 'materia') +
-          sheetIntValueAt(i, 'oculum');
+      // Identity is needed before runtime buffs can inspect a fight. Asking
+      // for derived stats here would re-enter sheetTagAt through Moon auras,
+      // recursively trying to create the same missing identity.
+      final score = i == schedaCorrente
+          ? max(0, leggiNumero(resilienzaController)) +
+                max(0, leggiNumero(volontaController)) +
+                max(0, leggiNumero(materiaController)) +
+                max(0, leggiNumero(oculumController))
+          : const ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(
+              0,
+              (sum, key) =>
+                  sum + max(0, readIntValue(schedePersonaggio[i][key])),
+            );
       if (score > bestScore) {
-        bestScore = score;
+        bestScore = score.toInt();
         bestIndex = i;
       }
     }

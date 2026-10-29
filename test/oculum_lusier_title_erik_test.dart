@@ -87,7 +87,7 @@ void main() {
   );
 
   testWidgets(
-    'own Open upgrades the thin ray; another Open does not; large-ray critical damage never compounds',
+    'own Open starts a three-fight thin-ray boost that survives another Open; large-ray damage never compounds',
     (tester) async {
       final (state, p) = await fixtures.mountFight(tester);
       final sheet = oculumBuildLusierSheet()..['id'] = p.ownerTag();
@@ -103,7 +103,12 @@ void main() {
       final weakData = jsonDecode(weak.single.narrativeText) as Map;
       expect(weakData['buff'], false);
       expect(readIntValue(weakData['dice']), inInclusiveRange(1, 25));
-      title.openAttiva = true;
+      // Keep the real activation/lifecycle and isolate the attack planner UI.
+      state.masterInitiativeTokens.clear();
+      p.recordCurrentEncounter();
+      p.useTitleOpen(title);
+      expect(title.openLifecycle['used'], true);
+      expect(p.titleOpenBoost(title), true);
       p.invalidateDerivedCaches();
       expect(p.lusierConditionGuard(), 30);
       expect(p.lusierConditionResisted('vita_afona', 30), true);
@@ -143,17 +148,41 @@ void main() {
       p.claimLusierTitle(packet, targets: 2);
       expect(packet['attack'], 35);
       expect(packet['damage'], expected);
-      title.openAttiva = false;
-      final other = OculumTitle.fromJson(title.toJson())
-        ..chiaveSistema = 'other_open'
-        ..openAttiva = true;
+      final other = OculumTitle(
+        nome: 'Altra Open',
+        tipo: 'Standard',
+        ottenimento: '',
+        buff: '',
+        puntoCieco: '',
+        skill: '',
+        richiede: '',
+        evoluto: true,
+        equipaggiato: true,
+        openName: 'Altro potere',
+      );
       state.titoli.add(other);
+      p.useTitleOpen(other);
       p.invalidateDerivedCaches();
+      expect(title.openAttiva, false);
+      expect(other.openAttiva, true);
+      expect(p.lusierConditionGuard(), 15);
       expect(
         (jsonDecode(p.prepareLusierTitle(thin.effects)!.single.narrativeText)
             as Map)['buff'],
-        false,
+        true,
       );
+      p.completeOpenFight('lusier-one');
+      p.completeOpenFight('lusier-one');
+      p.completeOpenFight('lusier-two');
+      expect(p.titleOpenBoost(title), true);
+      p.completeOpenFight('lusier-three');
+      final recoveredWeak = p.prepareLusierTitle(thin.effects)!.single;
+      final recoveredData = jsonDecode(recoveredWeak.narrativeText) as Map;
+      expect(recoveredData['buff'], false);
+      expect(readIntValue(recoveredData['dice']), inInclusiveRange(1, 25));
+      expect(title.openUsedSinceLongRest, true);
+      expect(other.openAttiva, true);
+      expect(thin.effects.single.diceExpression, '1d25');
       await closeFixture(tester, p);
     },
   );
@@ -223,7 +252,7 @@ void main() {
     },
   );
   testWidgets(
-    'Erik authored personal overlay imports at 130 PT and retains editable Custodia costs and cooldowns',
+    'Erik personal overlay retains its 130-point budget plus 1 HP-multiplier PT and editable Custodia',
     (tester) async {
       final (state, p) = await fixtures.mountFight(tester);
       const folder = 'output/characters/erik_i';
@@ -232,11 +261,16 @@ void main() {
       final originalJson = jsonFile.readAsStringSync();
       final originalCode = codeFile.readAsStringSync();
       final sheet = Map<String, dynamic>.from(jsonDecode(originalJson) as Map);
-      final overlay = jsonDecode(
-        File('$folder/Erik_I.overlay_personale.json').readAsStringSync(),
-      ) as Map;
+      final overlay =
+          jsonDecode(
+                File(
+                  '$folder/Erik_I.overlay_personale.json',
+                ).readAsStringSync(),
+              )
+              as Map;
       expect(overlay['targetCharacter'], 'erik_i');
-      expect(overlay['expectedTotalPower'], 130);
+      expect(overlay['expectedTotalPower'], 131);
+      expect(overlay['expectedTotalPowerBeforeHpBonus'], 130);
       expect(overlay['baseStats'], {
         'resilienza': 26,
         'volonta': 29,
@@ -263,8 +297,17 @@ void main() {
       p.refillStatsAndHealth();
       state.schedePersonaggio[state.schedaCorrente] = p.snapshot();
       final power = p.totalPower(state.schedaCorrente as int);
-      expect(power, 130);
+      expect(
+        power,
+        131,
+        reason: '130 authored points plus floor(HP multiplier 10 / 10)',
+      );
       expect(p.coreStats(), overlay['expectedEffectiveCoreStats']);
+      final exportFolder = Directory('build/verified-character-exports/erik_i')
+        ..createSync(recursive: true);
+      File('${exportFolder.path}/potenza.json').writeAsStringSync(
+        '${const JsonEncoder.withIndent('  ').convert({'totalPower': power, 'level': 8, 'grade': 0, 'coreStats': p.coreStats(), 'maximumHp': p.maximumHp(), 'knownBy': 'Haniel', 'personalException': true})}\n',
+      );
       final personal = (state.skills as List)
           .cast<CharacterSkill>()
           .singleWhere((s) => s.nome == 'Custodia del Girone');
@@ -293,7 +336,7 @@ void main() {
       state.schedePersonaggio[state.schedaCorrente] = saved;
       p.load(saved);
       p.invalidateDerivedCaches();
-      expect(p.totalPower(state.schedaCorrente as int), 130);
+      expect(p.totalPower(state.schedaCorrente as int), 131);
       expect(jsonFile.readAsStringSync(), originalJson);
       expect(codeFile.readAsStringSync(), originalCode);
       await closeFixture(tester, p);

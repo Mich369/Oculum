@@ -57,6 +57,261 @@ Set<String> oculumInventoryCatalogCategories(InventoryItem item) {
   return categories;
 }
 
+/// Disposable search metadata. It never mutates or serializes its source items.
+class OculumInventorySearchIndex {
+  OculumInventorySearchIndex(Iterable<InventoryItem> items)
+    : _entries = [
+        for (final item in items)
+          (
+            item: item,
+            text: '${item.nome} ${item.note} ${item.buff} ${item.elementoDanno}'
+                .toLowerCase(),
+            grade: oculumInventoryCatalogGrade(item),
+            categories: oculumInventoryCatalogCategories(item),
+          ),
+      ];
+
+  final List<
+    ({InventoryItem item, String text, int grade, Set<String> categories})
+  >
+  _entries;
+
+  List<InventoryItem> search({
+    String query = '',
+    String category = 'all',
+    int grade = -1,
+  }) {
+    final terms = query.toLowerCase().trim().split(RegExp(r'\s+'))
+      ..removeWhere((term) => term.isEmpty);
+    return [
+      for (final entry in _entries)
+        if ((grade < 0 || entry.grade == grade) &&
+            (category == 'all' ||
+                (category == 'equipped' && entry.item.equipaggiata) ||
+                entry.categories.contains(category)) &&
+            terms.every(entry.text.contains))
+          entry.item,
+    ];
+  }
+}
+
+class _OculumInventoryWorkspace extends StatefulWidget {
+  const _OculumInventoryWorkspace({super.key, required this.builder});
+  final Widget Function(
+    String query,
+    String category,
+    ValueChanged<String> changeQuery,
+    ValueChanged<String> changeCategory,
+    bool adding,
+    VoidCallback toggleAdding,
+  )
+  builder;
+
+  @override
+  State<_OculumInventoryWorkspace> createState() =>
+      _OculumInventoryWorkspaceState();
+}
+
+class _OculumInventoryWorkspaceState extends State<_OculumInventoryWorkspace> {
+  Timer? _debounce;
+  String _query = '';
+  String _category = 'all';
+  bool _adding = false;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(
+    _query,
+    _category,
+    (value) {
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 180), () {
+        if (mounted) setState(() => _query = value);
+      });
+    },
+    (value) => setState(() => _category = value),
+    _adding,
+    () => setState(() => _adding = !_adding),
+  );
+}
+
+class _OculumMasterCatalogBrowser extends StatefulWidget {
+  const _OculumMasterCatalogBrowser({
+    required this.owner,
+    required this.loadItems,
+  });
+  final _OculumHomePageState owner;
+  final List<InventoryItem> Function() loadItems;
+
+  @override
+  State<_OculumMasterCatalogBrowser> createState() =>
+      _OculumMasterCatalogBrowserState();
+}
+
+class _OculumMasterCatalogBrowserState
+    extends State<_OculumMasterCatalogBrowser> {
+  late OculumInventorySearchIndex _index;
+  late String _query;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _query = widget.owner.masterItemSearchController.text;
+    _index = OculumInventorySearchIndex(widget.loadItems());
+  }
+
+  @override
+  void didUpdateWidget(covariant _OculumMasterCatalogBrowser oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A parent rebuild can follow an item edit, recipe update or new online
+    // sheet. Refresh then; typing and filtering rebuild only this local State.
+    _index = OculumInventorySearchIndex(widget.loadItems());
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final owner = widget.owner;
+    final items = _index.search(
+      query: _query,
+      grade: owner.masterItemGradeFilter,
+      category: owner.masterItemCategoryFilter,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          key: const ValueKey('master_catalog_search'),
+          controller: owner.masterItemSearchController,
+          onChanged: (value) {
+            _debounce?.cancel();
+            _debounce = Timer(const Duration(milliseconds: 180), () {
+              if (mounted) setState(() => _query = value);
+            });
+          },
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            labelText: owner.t(
+              'Cerca oggetti e homebrew',
+              'Search items and homebrew',
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        owner.inventoryFieldGrid([
+          DropdownButtonFormField<int>(
+            initialValue: owner.masterItemGradeFilter,
+            isExpanded: true,
+            decoration: InputDecoration(labelText: owner.t('Grado', 'Grade')),
+            items: [
+              DropdownMenuItem(
+                value: -1,
+                child: Text(owner.t('Tutti i gradi', 'All grades')),
+              ),
+              for (var grade = 0; grade <= 12; grade++)
+                DropdownMenuItem(
+                  value: grade,
+                  child: Text(
+                    'Grado ${grade == 0 ? '0' : owner.artLevelRoman(grade)}',
+                  ),
+                ),
+            ],
+            onChanged: (value) =>
+                setState(() => owner.masterItemGradeFilter = value ?? -1),
+          ),
+          DropdownButtonFormField<String>(
+            initialValue: owner.masterItemCategoryFilter,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: owner.t('Categoria', 'Category'),
+            ),
+            items: [
+              for (final entry in oculumInventoryCatalogCategoryLabels.entries)
+                DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+            ],
+            onChanged: (value) =>
+                setState(() => owner.masterItemCategoryFilter = value ?? 'all'),
+          ),
+        ], minWidth: 220),
+        const SizedBox(height: 10),
+        if (owner.schedePersonaggio.isEmpty &&
+            owner._masterOnlinePlayers().isEmpty)
+          owner.smallInfoText(
+            owner.t(
+              'Nessun giocatore online nella campagna attiva.',
+              'No players online in the active campaign.',
+            ),
+            color: Colors.orangeAccent,
+          ),
+        owner.smallInfoText(
+          '${items.length} ${owner.t('oggetti nel catalogo', 'catalog items')}',
+        ),
+        if (items.isEmpty)
+          owner.smallInfoText(
+            owner.t('Nessun oggetto trovato.', 'No items found.'),
+          )
+        else
+          SizedBox(
+            height: min(480.0, max(180.0, items.length * 88.0)),
+            child: ListView.builder(
+              key: const ValueKey('master_catalog_results'),
+              primary: false,
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return Card(
+                  color: const Color(0xFF11131A),
+                  child: ListTile(
+                    title: Text(
+                      item.nome,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      [
+                        if (item.note.isNotEmpty) item.note,
+                        if (item.buff.isNotEmpty) item.buff,
+                        if (item.arma) owner.t('Offensivo', 'Offensive'),
+                        if (item.protegge) owner.t('Protettivo', 'Defensive'),
+                      ].join(' · '),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    trailing: IconButton(
+                      tooltip: owner.t(
+                        'Aggiungi a una scheda locale o online',
+                        'Add to a local or online sheet',
+                      ),
+                      icon: Icon(
+                        Icons.add_circle_outline,
+                        color: owner.tertiaryColor,
+                      ),
+                      onPressed: () => owner._chooseCatalogDestination(item),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _StoryConstellationPainter extends CustomPainter {
   _StoryConstellationPainter(this.center, this.points);
   final Offset center;
@@ -5281,7 +5536,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     );
   }
 
-  List<InventoryItem> _masterGiftCatalog() {
+  List<InventoryItem> _masterGiftCatalog({bool applyFilters = true}) {
     final unique = <String, InventoryItem>{};
     void add(InventoryItem item) {
       if (item.nome.trim().isEmpty) return;
@@ -5319,7 +5574,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       add(oculumShadowLivingScrollItem(grade));
     }
 
+    for (final item in inventario) {
+      add(item);
+    }
     for (var sheet = 0; sheet < schedePersonaggio.length; sheet++) {
+      if (sheet == schedaCorrente) continue;
       for (final raw in _sheetMapList(sheet, 'inventario')) {
         try {
           add(InventoryItem.fromJson(raw));
@@ -5443,6 +5702,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     final needle = masterItemSearchController.text.trim().toLowerCase();
     final items = unique.values.toList()
       ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+    if (!applyFilters) return items;
     return items
         .where(
           (item) =>
@@ -5468,154 +5728,22 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       )
       .toList();
 
-  Widget masterItemGiftPanel({
-    bool initiallyExpanded = false,
-  }) => dropdownSection(
-    title: t('Catalogo completo del Master', 'Complete Master catalog'),
-    subtitle: t(
-      'Oggetti delle schede, mercante, ricette, materiali canonici, gemme e drop del Manuale dei Mostri. Aggiungi una quantità a qualsiasi scheda locale o inviala a un giocatore online.',
-      'Sheet items, merchant stock, recipes, canonical materials, gems and Monster Book drops. Add a quantity to any local sheet or send it to an online player.',
-    ),
-    icon: Icons.card_giftcard,
-    borderColor: tertiaryColor,
-    sectionId: 'master_item_gifts',
-    initiallyExpanded: initiallyExpanded,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: masterItemSearchController,
-          onChanged: (_) => setState(() {}),
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search),
-            hintText: t(
-              'Cerca oggetti e homebrew',
-              'Search items and homebrew',
-            ),
-            hintStyle: const TextStyle(color: Colors.white54),
-            filled: true,
-            fillColor: const Color(0xFF10121A),
-            border: const OutlineInputBorder(),
-          ),
+  Widget masterItemGiftPanel({bool initiallyExpanded = false}) =>
+      dropdownSection(
+        title: t('Aggiungi oggetto', 'Add item'),
+        subtitle: t(
+          'Apri il catalogo completo solo quando vuoi assegnare un oggetto.',
+          'Open the complete catalog when you want to grant an item.',
         ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 12,
-          runSpacing: 10,
-          children: [
-            SizedBox(
-              width: 190,
-              child: DropdownButtonFormField<int>(
-                initialValue: masterItemGradeFilter,
-                decoration: const InputDecoration(labelText: 'Grado'),
-                items: [
-                  const DropdownMenuItem(
-                    value: -1,
-                    child: Text('Tutti i gradi'),
-                  ),
-                  for (var grade = 0; grade <= 12; grade++)
-                    DropdownMenuItem(
-                      value: grade,
-                      child: Text(
-                        'Grado ${grade == 0 ? '0' : artLevelRoman(grade)}',
-                      ),
-                    ),
-                ],
-                onChanged: (value) =>
-                    setState(() => masterItemGradeFilter = value ?? -1),
-              ),
-            ),
-            SizedBox(
-              width: 220,
-              child: DropdownButtonFormField<String>(
-                initialValue: masterItemCategoryFilter,
-                decoration: const InputDecoration(labelText: 'Categoria'),
-                items: [
-                  for (final entry
-                      in oculumInventoryCatalogCategoryLabels.entries)
-                    DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    ),
-                ],
-                onChanged: (value) =>
-                    setState(() => masterItemCategoryFilter = value ?? 'all'),
-              ),
-            ),
-          ],
+        icon: Icons.add_box_outlined,
+        borderColor: tertiaryColor,
+        sectionId: 'master_item_gifts',
+        initiallyExpanded: initiallyExpanded,
+        childBuilder: (_) => _OculumMasterCatalogBrowser(
+          owner: this,
+          loadItems: () => _masterGiftCatalog(applyFilters: false),
         ),
-        const SizedBox(height: 10),
-        if (schedePersonaggio.isEmpty && _masterOnlinePlayers().isEmpty)
-          smallInfoText(
-            t(
-              'Nessun giocatore online nella campagna attiva.',
-              'No players online in the active campaign.',
-            ),
-            color: Colors.orangeAccent,
-          ),
-        Builder(
-          builder: (context) {
-            final items = _masterGiftCatalog();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                smallInfoText(
-                  '${items.length} ${t('oggetti nel catalogo', 'catalog items')}',
-                ),
-                if (items.isEmpty)
-                  smallInfoText(t('Nessun oggetto trovato.', 'No items found.'))
-                else
-                  SizedBox(
-                    height: min(560.0, max(180.0, items.length * 88.0)),
-                    child: ListView.builder(
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        return Card(
-                          color: const Color(0xFF11131A),
-                          child: ListTile(
-                            title: Text(
-                              item.nome,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              [
-                                if (item.note.isNotEmpty) item.note,
-                                if (item.buff.isNotEmpty) item.buff,
-                                if (item.arma) t('Offensivo', 'Offensive'),
-                                if (item.protegge) t('Protettivo', 'Defensive'),
-                              ].join(' · '),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                            trailing: IconButton(
-                              tooltip: t(
-                                'Aggiungi a una scheda locale o online',
-                                'Add to a local or online sheet',
-                              ),
-                              icon: Icon(
-                                Icons.add_circle_outline,
-                                color: tertiaryColor,
-                              ),
-                              onPressed: () => _chooseCatalogDestination(item),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
-    ),
-  );
+      );
 
   Future<void> _chooseCatalogDestination(InventoryItem item) async {
     final quantityController = TextEditingController(text: '1');
@@ -5856,7 +5984,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     );
   }
 
-  Widget inventoryAddItemPanelEfficient() {
+  Widget inventoryAddItemPanelEfficient({bool initiallyExpanded = false}) {
     return dropdownSection(
       title: t('Aggiungi Oggetto', 'Add Item'),
       subtitle: t(
@@ -5866,8 +5994,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       icon: Icons.add_box,
       borderColor: tertiaryColor,
       sectionId: 'inventory_add_item',
-      initiallyExpanded: inventario.isEmpty,
-      child: Column(
+      initiallyExpanded: initiallyExpanded,
+      childBuilder: (_) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           campoTesto(
@@ -6029,6 +6157,44 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     );
   }
 
+  void setInventoryItemEquipped(InventoryItem item, bool value) {
+    if (!inventario.contains(item)) return;
+    if (item.craftData['senkaMask'] == true) {
+      setSenkaMaskManifested(item, value);
+      return;
+    }
+    if (item.craftData['titleItem'] == true) {
+      setTitleItemManifested(item, value);
+      return;
+    }
+    if (value && weaponEquipLimitReached(item)) {
+      aggiungiLog(
+        'Limite armi: ${oculumWeaponLimit(leggiNumero(gradoController))}. Rimuovi prima un’arma.',
+      );
+      return;
+    }
+    setState(() {
+      if (value && !canEquipInventoryItem(item)) {
+        risultato = t(
+          'Non puoi equipaggiare ${item.nome}: richiede Grado ${requiredItemGrade(item)}.',
+          'You cannot equip ${item.nome}: requires Grade ${requiredItemGrade(item)}.',
+        );
+        aggiungiLog(risultato);
+        return;
+      }
+      if (item.equipaggiata != value) {
+        applicaScudoItemAttuale(item, value ? 1 : -1);
+      }
+      item.equipaggiata = value;
+    });
+    if (item.equipaggiata) {
+      applyEffectCommandsFromText(item.toJson().toString(), source: item.nome);
+    } else {
+      removeConditionsFromSource(item.nome);
+    }
+    programmaSalvataggio();
+  }
+
   Widget inventoryItemCardEfficient(int i) {
     if (i < 0 || i >= inventario.length) {
       return const SizedBox.shrink();
@@ -6072,47 +6238,6 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           ],
         ),
       );
-    }
-
-    void setItemEquipped(bool value) {
-      if (!inventario.contains(item)) return;
-      if (item.craftData['senkaMask'] == true) {
-        setSenkaMaskManifested(item, value);
-        return;
-      }
-      if (item.craftData['titleItem'] == true) {
-        setTitleItemManifested(item, value);
-        return;
-      }
-      if (value && weaponEquipLimitReached(item)) {
-        aggiungiLog(
-          'Limite armi: ${oculumWeaponLimit(leggiNumero(gradoController))}. Rimuovi prima un’arma.',
-        );
-        return;
-      }
-      setState(() {
-        if (value && !canEquipInventoryItem(item)) {
-          risultato = t(
-            'Non puoi equipaggiare ${item.nome}: richiede Grado ${requiredItemGrade(item)}.',
-            'You cannot equip ${item.nome}: requires Grade ${requiredItemGrade(item)}.',
-          );
-          aggiungiLog(risultato);
-          return;
-        }
-        if (item.equipaggiata != value) {
-          applicaScudoItemAttuale(item, value ? 1 : -1);
-        }
-        item.equipaggiata = value;
-      });
-      if (item.equipaggiata) {
-        applyEffectCommandsFromText(
-          item.toJson().toString(),
-          source: item.nome,
-        );
-      } else {
-        removeConditionsFromSource(item.nome);
-      }
-      programmaSalvataggio();
     }
 
     void deleteItem() {
@@ -6263,7 +6388,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ),
               title: Text(
                 item.craftData['titleItem'] == true
-                    ? item.equipaggiata ? 'Disevoca · gratuito' : 'Evoca · gratuito'
+                    ? item.equipaggiata
+                          ? 'Disevoca · gratuito'
+                          : 'Evoca · gratuito'
                     : item.equipaggiata
                     ? t('Rimuovi equipaggiamento', 'Unequip')
                     : t('Equipaggia', 'Equip'),
@@ -6378,7 +6505,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           await restorePawnCore(item);
           break;
         case 'equip':
-          setItemEquipped(!item.equipaggiata);
+          setInventoryItemEquipped(item, !item.equipaggiata);
           break;
         case 'send':
           await mostraDialogCopiaOggetto(item);
@@ -6440,6 +6567,24 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
                   ),
+                ),
+              ),
+              IconButton(
+                tooltip: item.equipaggiata
+                    ? t('Rimuovi equipaggiamento', 'Unequip')
+                    : t('Equipaggia', 'Equip'),
+                onPressed: () =>
+                    setInventoryItemEquipped(item, !item.equipaggiata),
+                constraints: const BoxConstraints.tightFor(
+                  width: 30,
+                  height: 30,
+                ),
+                padding: EdgeInsets.zero,
+                icon: Icon(
+                  item.equipaggiata
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: item.equipaggiata ? tertiaryColor : Colors.grey,
                 ),
               ),
               IconButton(
@@ -6573,294 +6718,312 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
             ),
           ),
           children: [
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: item.equipaggiata,
-              activeThumbColor: tertiaryColor,
-              title: Text(t('Equipaggiata', 'Equipped')),
-              subtitle: Text(
-                t(
-                  'Attiva arma/protezione e buff @ dell oggetto.',
-                  'Enables weapon/protection and this item\'s @ buffs.',
-                ),
-              ),
-              onChanged: setItemEquipped,
-            ),
-            const SizedBox(height: 6),
-            if (item.protegge &&
-                (itemShieldBonus(item) > 0 ||
-                    itemOculumShieldBonus(item) > 0)) ...[
-              campoModello(
-                label: t(
-                  'Effetto di integrità dello Scudo',
-                  'Shield integrity effect',
-                ),
-                fieldKey: ObjectKey(item),
-                initialValue: item.effettoIntegritaScudo,
-                onChanged: (value) => item.effettoIntegritaScudo = value,
-                maxLines: 2,
-                helper: t(
-                  'Parser ed effetto attivi finché resta lo Scudo o lo Scudo Oculum dell oggetto. Quando viene ricaricato, il buff torna attivo.',
-                  'Parser and effect stay active while this item has Shield or Oculum Shield. Recharging it activates the buff again.',
-                ),
-                showCommandHelp: true,
-              ),
-              const SizedBox(height: 6),
-            ],
-            if (item.arma || item.protegge) equipmentAbilityEditor(item),
-            campoModello(
-              label: t('Nome Oggetto', 'Item Name'),
-              initialValue: item.nome,
-              onChanged: (value) => item.nome = value,
-            ),
-            const SizedBox(height: 6),
-            if (item.arma || item.protegge)
-              OutlinedButton.icon(
-                onPressed:
-                    item.gradoOggetto >= 12 ||
-                        item.gradoOggetto >= leggiNumero(gradoController)
-                    ? null
-                    : () async {
-                        final allocation = await chooseGradeStatPoints(10);
-                        if (allocation == null) return;
+            Builder(
+              builder: (_) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: item.equipaggiata,
+                    activeThumbColor: tertiaryColor,
+                    title: Text(t('Equipaggiata', 'Equipped')),
+                    subtitle: Text(
+                      t(
+                        'Attiva arma/protezione e buff @ dell oggetto.',
+                        'Enables weapon/protection and this item\'s @ buffs.',
+                      ),
+                    ),
+                    onChanged: (value) => setInventoryItemEquipped(item, value),
+                  ),
+                  const SizedBox(height: 6),
+                  if (item.protegge &&
+                      (itemShieldBonus(item) > 0 ||
+                          itemOculumShieldBonus(item) > 0)) ...[
+                    campoModello(
+                      label: t(
+                        'Effetto di integrità dello Scudo',
+                        'Shield integrity effect',
+                      ),
+                      fieldKey: ObjectKey(item),
+                      initialValue: item.effettoIntegritaScudo,
+                      onChanged: (value) => item.effettoIntegritaScudo = value,
+                      maxLines: 2,
+                      helper: t(
+                        'Parser ed effetto attivi finché resta lo Scudo o lo Scudo Oculum dell oggetto. Quando viene ricaricato, il buff torna attivo.',
+                        'Parser and effect stay active while this item has Shield or Oculum Shield. Recharging it activates the buff again.',
+                      ),
+                      showCommandHelp: true,
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                  if (item.arma || item.protegge) equipmentAbilityEditor(item),
+                  campoModello(
+                    label: t('Nome Oggetto', 'Item Name'),
+                    initialValue: item.nome,
+                    onChanged: (value) => item.nome = value,
+                  ),
+                  const SizedBox(height: 6),
+                  if (item.arma || item.protegge)
+                    OutlinedButton.icon(
+                      onPressed:
+                          item.gradoOggetto >= 12 ||
+                              item.gradoOggetto >= leggiNumero(gradoController)
+                          ? null
+                          : () async {
+                              final allocation = await chooseGradeStatPoints(
+                                10,
+                              );
+                              if (allocation == null) return;
+                              setState(() {
+                                item.gradoOggetto++;
+                                item.gradoRichiesto = max(
+                                  item.gradoRichiesto,
+                                  item.gradoOggetto,
+                                );
+                                final previous =
+                                    item.craftData['gradeStatAllocation'];
+                                final cumulative = previous is Map
+                                    ? Map<String, int>.from(
+                                        previous.map(
+                                          (key, value) => MapEntry(
+                                            '$key',
+                                            readIntValue(value),
+                                          ),
+                                        ),
+                                      )
+                                    : <String, int>{};
+                                for (final entry in allocation.entries) {
+                                  cumulative[entry.key] =
+                                      (cumulative[entry.key] ?? 0) +
+                                      entry.value;
+                                }
+                                final commands = [
+                                  for (final entry in cumulative.entries)
+                                    if (entry.value > 0)
+                                      '@${entry.key == 'volonta' ? 'Volontà' : entry.key[0].toUpperCase()}${entry.key.substring(1)}+${entry.value}',
+                                ].join(' ');
+                                final oldCommands =
+                                    '${item.craftData['gradeStatBuffCommands'] ?? ''}';
+                                if (oldCommands.isNotEmpty) {
+                                  item.buff = item.buff
+                                      .replaceAll(oldCommands, '')
+                                      .trim();
+                                }
+                                item.buff = [
+                                  item.buff,
+                                  commands,
+                                ].where((text) => text.isNotEmpty).join(' ');
+                                item.craftData = {
+                                  ...item.craftData,
+                                  'gradeStatAllocation': cumulative,
+                                  'gradeStatBuffCommands': commands,
+                                };
+                              });
+                              programmaSalvataggio();
+                            },
+                      icon: const Icon(Icons.upgrade),
+                      label: Text(
+                        t(
+                          'Aumenta grado e assegna 10 punti',
+                          'Raise grade and allocate 10 points',
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  inventoryFieldGrid([
+                    campoModello(
+                      label: t('Peso kg', 'Weight kg'),
+                      initialValue: item.peso.toString(),
+                      onChanged: (value) {
+                        item.peso =
+                            double.tryParse(
+                              value.trim().replaceAll(',', '.'),
+                            ) ??
+                            0;
+                      },
+                    ),
+                    campoModello(
+                      label: t('Quantita', 'Quantity'),
+                      initialValue: item.quantita.toString(),
+                      onChanged: (value) {
+                        item.quantita = max(1, int.tryParse(value.trim()) ?? 1);
+                      },
+                    ),
+                    campoModello(
+                      label: t('Grado oggetto', 'Item grade'),
+                      initialValue: item.gradoOggetto.toString(),
+                      onChanged: (value) {
+                        item.gradoOggetto = (int.tryParse(value.trim()) ?? 0)
+                            .clamp(0, 12)
+                            .toInt();
+                      },
+                    ),
+                    campoModello(
+                      label: t('Grado richiesto', 'Required grade'),
+                      initialValue: item.gradoRichiesto.toString(),
+                      onChanged: (value) {
+                        item.gradoRichiesto = (int.tryParse(value.trim()) ?? 0)
+                            .clamp(0, 12)
+                            .toInt();
+                      },
+                    ),
+                    campoModello(
+                      label: t('Putrefazione giorni', 'Rot days'),
+                      initialValue: item.putrefazioneSessioni.toString(),
+                      onChanged: (value) {
+                        final previous = item.putrefazioneSessioni;
+                        item.putrefazioneSessioni = max(
+                          0,
+                          int.tryParse(value.trim()) ?? 0,
+                        );
+                        if (item.putrefazioneSessioni > 0 &&
+                            (item.putrefazioneGiornoInizio <= 0 ||
+                                previous == 0)) {
+                          item.putrefazioneGiornoInizio = oculumCurrentDay();
+                          item.sessioniSegnate = 0;
+                        }
+                      },
+                    ),
+                  ]),
+                  const SizedBox(height: 6),
+                  inventoryFieldGrid([
+                    inventoryModeToggle(
+                      label: t('Danneggia', 'Deals damage'),
+                      subtitle: t(
+                        'Conta come arma o fonte offensiva.',
+                        'Counts as a weapon or offensive source.',
+                      ),
+                      value: item.arma,
+                      icon: Icons.gavel,
+                      color: tertiaryColor,
+                      onChanged: (value) {
                         setState(() {
-                          item.gradoOggetto++;
-                          item.gradoRichiesto = max(
-                            item.gradoRichiesto,
-                            item.gradoOggetto,
-                          );
-                          final previous =
-                              item.craftData['gradeStatAllocation'];
-                          final cumulative = previous is Map
-                              ? Map<String, int>.from(
-                                  previous.map(
-                                    (key, value) =>
-                                        MapEntry('$key', readIntValue(value)),
-                                  ),
-                                )
-                              : <String, int>{};
-                          for (final entry in allocation.entries) {
-                            cumulative[entry.key] =
-                                (cumulative[entry.key] ?? 0) + entry.value;
+                          item.arma = value;
+                          if (!item.arma &&
+                              !item.protegge &&
+                              item.buff.trim().isEmpty) {
+                            item.equipaggiata = false;
                           }
-                          final commands = [
-                            for (final entry in cumulative.entries)
-                              if (entry.value > 0)
-                                '@${entry.key == 'volonta' ? 'Volontà' : entry.key[0].toUpperCase()}${entry.key.substring(1)}+${entry.value}',
-                          ].join(' ');
-                          final oldCommands =
-                              '${item.craftData['gradeStatBuffCommands'] ?? ''}';
-                          if (oldCommands.isNotEmpty) {
-                            item.buff = item.buff
-                                .replaceAll(oldCommands, '')
-                                .trim();
-                          }
-                          item.buff = [
-                            item.buff,
-                            commands,
-                          ].where((text) => text.isNotEmpty).join(' ');
-                          item.craftData = {
-                            ...item.craftData,
-                            'gradeStatAllocation': cumulative,
-                            'gradeStatBuffCommands': commands,
-                          };
                         });
                         programmaSalvataggio();
                       },
-                icon: const Icon(Icons.upgrade),
-                label: Text(
-                  t(
-                    'Aumenta grado e assegna 10 punti',
-                    'Raise grade and allocate 10 points',
+                    ),
+                    inventoryModeToggle(
+                      label: t('Protegge', 'Protects'),
+                      subtitle: t(
+                        'Conta come armatura, scudo o barriera.',
+                        'Counts as armor, shield or barrier.',
+                      ),
+                      value: item.protegge,
+                      icon: Icons.shield,
+                      color: primaryColor,
+                      onChanged: (value) {
+                        setState(() {
+                          final wasProtecting = item.protegge;
+                          if (item.equipaggiata && wasProtecting && !value) {
+                            applicaScudoItemAttuale(item, -1);
+                          }
+                          item.protegge = value;
+                          if (item.equipaggiata && !wasProtecting && value) {
+                            applicaScudoItemAttuale(item, 1);
+                          }
+                          if (!item.arma &&
+                              !item.protegge &&
+                              item.buff.trim().isEmpty) {
+                            item.equipaggiata = false;
+                          }
+                        });
+                        programmaSalvataggio();
+                      },
+                    ),
+                  ]),
+                  const SizedBox(height: 6),
+                  inventoryFieldGrid([
+                    campoModello(
+                      label: t('Bonus Danno', 'Damage Bonus'),
+                      initialValue: item.bonusDanno.toString(),
+                      onChanged: (value) {
+                        item.bonusDanno = int.tryParse(value.trim()) ?? 0;
+                      },
+                      liveRefresh: true,
+                    ),
+                    campoModello(
+                      label: t('Bonus Difesa', 'Defense Bonus'),
+                      initialValue: item.bonusDifesa.toString(),
+                      onChanged: (value) {
+                        item.bonusDifesa = int.tryParse(value.trim()) ?? 0;
+                      },
+                      liveRefresh: true,
+                    ),
+                    campoModello(
+                      label: t('Bonus Scudo', 'Shield Bonus'),
+                      initialValue: item.bonusScudo.toString(),
+                      onChanged: (value) {
+                        final nuovo = int.tryParse(value.trim()) ?? 0;
+                        if (item.equipaggiata && item.protegge) {
+                          scudoController.text = max(
+                            0,
+                            leggiNumero(scudoController) +
+                                (nuovo + itemGrade(item) * 5) -
+                                itemShieldBonus(item),
+                          ).toString();
+                        }
+                        item.bonusScudo = nuovo;
+                      },
+                      liveRefresh: true,
+                    ),
+                    campoModello(
+                      label: t('Bonus Scudo Oculum', 'Oculum Shield Bonus'),
+                      initialValue: item.bonusScudoOculum.toString(),
+                      onChanged: (value) {
+                        final nuovo = max(0, int.tryParse(value.trim()) ?? 0);
+                        if (item.equipaggiata && item.protegge) {
+                          scudoOculumController.text = max(
+                            0,
+                            leggiNumero(scudoOculumController) +
+                                nuovo -
+                                itemOculumShieldBonus(item),
+                          ).toString();
+                        }
+                        item.bonusScudoOculum = nuovo;
+                      },
+                      liveRefresh: true,
+                    ),
+                  ]),
+                  const SizedBox(height: 6),
+                  campoModello(
+                    label: t(
+                      'Tipo danno / protezione',
+                      'Damage / protection type',
+                    ),
+                    initialValue: item.elementoDanno,
+                    helper: t(
+                      'Libero: vale per danno e difesa elementale, e puoi colorarlo dalle Impostazioni.',
+                      'Free: used for damage and elemental defense, and can be colored from Settings.',
+                    ),
+                    onChanged: (value) => item.elementoDanno =
+                        value.trim().isEmpty ? 'Fisico' : value.trim(),
+                    liveRefresh: true,
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  campoModello(
+                    label: t('Buff @ Oggetto', 'Item @ Buff'),
+                    initialValue: item.buff,
+                    onChanged: (value) => item.buff = value,
+                    maxLines: 2,
+                    helper:
+                        '@HP+5 @HPTemp+Vol1/6 @Scudo+3 @ScudoOculum+5 @TiroAttacco+1',
+                    liveRefresh: true,
+                  ),
+                  const SizedBox(height: 6),
+                  campoModello(
+                    label: t('Note', 'Notes'),
+                    initialValue: item.note,
+                    onChanged: (value) => item.note = value,
+                    maxLines: 2,
+                  ),
+                ],
               ),
-            const SizedBox(height: 6),
-            inventoryFieldGrid([
-              campoModello(
-                label: t('Peso kg', 'Weight kg'),
-                initialValue: item.peso.toString(),
-                onChanged: (value) {
-                  item.peso =
-                      double.tryParse(value.trim().replaceAll(',', '.')) ?? 0;
-                },
-              ),
-              campoModello(
-                label: t('Quantita', 'Quantity'),
-                initialValue: item.quantita.toString(),
-                onChanged: (value) {
-                  item.quantita = max(1, int.tryParse(value.trim()) ?? 1);
-                },
-              ),
-              campoModello(
-                label: t('Grado oggetto', 'Item grade'),
-                initialValue: item.gradoOggetto.toString(),
-                onChanged: (value) {
-                  item.gradoOggetto = (int.tryParse(value.trim()) ?? 0)
-                      .clamp(0, 12)
-                      .toInt();
-                },
-              ),
-              campoModello(
-                label: t('Grado richiesto', 'Required grade'),
-                initialValue: item.gradoRichiesto.toString(),
-                onChanged: (value) {
-                  item.gradoRichiesto = (int.tryParse(value.trim()) ?? 0)
-                      .clamp(0, 12)
-                      .toInt();
-                },
-              ),
-              campoModello(
-                label: t('Putrefazione giorni', 'Rot days'),
-                initialValue: item.putrefazioneSessioni.toString(),
-                onChanged: (value) {
-                  final previous = item.putrefazioneSessioni;
-                  item.putrefazioneSessioni = max(
-                    0,
-                    int.tryParse(value.trim()) ?? 0,
-                  );
-                  if (item.putrefazioneSessioni > 0 &&
-                      (item.putrefazioneGiornoInizio <= 0 || previous == 0)) {
-                    item.putrefazioneGiornoInizio = oculumCurrentDay();
-                    item.sessioniSegnate = 0;
-                  }
-                },
-              ),
-            ]),
-            const SizedBox(height: 6),
-            inventoryFieldGrid([
-              inventoryModeToggle(
-                label: t('Danneggia', 'Deals damage'),
-                subtitle: t(
-                  'Conta come arma o fonte offensiva.',
-                  'Counts as a weapon or offensive source.',
-                ),
-                value: item.arma,
-                icon: Icons.gavel,
-                color: tertiaryColor,
-                onChanged: (value) {
-                  setState(() {
-                    item.arma = value;
-                    if (!item.arma &&
-                        !item.protegge &&
-                        item.buff.trim().isEmpty) {
-                      item.equipaggiata = false;
-                    }
-                  });
-                  programmaSalvataggio();
-                },
-              ),
-              inventoryModeToggle(
-                label: t('Protegge', 'Protects'),
-                subtitle: t(
-                  'Conta come armatura, scudo o barriera.',
-                  'Counts as armor, shield or barrier.',
-                ),
-                value: item.protegge,
-                icon: Icons.shield,
-                color: primaryColor,
-                onChanged: (value) {
-                  setState(() {
-                    final wasProtecting = item.protegge;
-                    if (item.equipaggiata && wasProtecting && !value) {
-                      applicaScudoItemAttuale(item, -1);
-                    }
-                    item.protegge = value;
-                    if (item.equipaggiata && !wasProtecting && value) {
-                      applicaScudoItemAttuale(item, 1);
-                    }
-                    if (!item.arma &&
-                        !item.protegge &&
-                        item.buff.trim().isEmpty) {
-                      item.equipaggiata = false;
-                    }
-                  });
-                  programmaSalvataggio();
-                },
-              ),
-            ]),
-            const SizedBox(height: 6),
-            inventoryFieldGrid([
-              campoModello(
-                label: t('Bonus Danno', 'Damage Bonus'),
-                initialValue: item.bonusDanno.toString(),
-                onChanged: (value) {
-                  item.bonusDanno = int.tryParse(value.trim()) ?? 0;
-                },
-                liveRefresh: true,
-              ),
-              campoModello(
-                label: t('Bonus Difesa', 'Defense Bonus'),
-                initialValue: item.bonusDifesa.toString(),
-                onChanged: (value) {
-                  item.bonusDifesa = int.tryParse(value.trim()) ?? 0;
-                },
-                liveRefresh: true,
-              ),
-              campoModello(
-                label: t('Bonus Scudo', 'Shield Bonus'),
-                initialValue: item.bonusScudo.toString(),
-                onChanged: (value) {
-                  final nuovo = int.tryParse(value.trim()) ?? 0;
-                  if (item.equipaggiata && item.protegge) {
-                    scudoController.text = max(
-                      0,
-                      leggiNumero(scudoController) +
-                          (nuovo + itemGrade(item) * 5) -
-                          itemShieldBonus(item),
-                    ).toString();
-                  }
-                  item.bonusScudo = nuovo;
-                },
-                liveRefresh: true,
-              ),
-              campoModello(
-                label: t('Bonus Scudo Oculum', 'Oculum Shield Bonus'),
-                initialValue: item.bonusScudoOculum.toString(),
-                onChanged: (value) {
-                  final nuovo = max(0, int.tryParse(value.trim()) ?? 0);
-                  if (item.equipaggiata && item.protegge) {
-                    scudoOculumController.text = max(
-                      0,
-                      leggiNumero(scudoOculumController) +
-                          nuovo -
-                          itemOculumShieldBonus(item),
-                    ).toString();
-                  }
-                  item.bonusScudoOculum = nuovo;
-                },
-                liveRefresh: true,
-              ),
-            ]),
-            const SizedBox(height: 6),
-            campoModello(
-              label: t('Tipo danno / protezione', 'Damage / protection type'),
-              initialValue: item.elementoDanno,
-              helper: t(
-                'Libero: vale per danno e difesa elementale, e puoi colorarlo dalle Impostazioni.',
-                'Free: used for damage and elemental defense, and can be colored from Settings.',
-              ),
-              onChanged: (value) => item.elementoDanno = value.trim().isEmpty
-                  ? 'Fisico'
-                  : value.trim(),
-              liveRefresh: true,
-            ),
-            const SizedBox(height: 6),
-            campoModello(
-              label: t('Buff @ Oggetto', 'Item @ Buff'),
-              initialValue: item.buff,
-              onChanged: (value) => item.buff = value,
-              maxLines: 2,
-              helper:
-                  '@HP+5 @HPTemp+Vol1/6 @Scudo+3 @ScudoOculum+5 @TiroAttacco+1',
-              liveRefresh: true,
-            ),
-            const SizedBox(height: 6),
-            campoModello(
-              label: t('Note', 'Notes'),
-              initialValue: item.note,
-              onChanged: (value) => item.note = value,
-              maxLines: 2,
             ),
           ],
         ),
@@ -7627,8 +7790,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 SwitchListTile(
                   value: inventario[i].equipaggiata,
                   activeThumbColor: tertiaryColor,
-                  title: Text(inventario[i].craftData['titleItem'] == true
-                      ? 'Evocata · nessuna Azione o Reazione' : t('Equipaggiata', 'Equipped')),
+                  title: Text(
+                    inventario[i].craftData['titleItem'] == true
+                        ? 'Evocata · nessuna Azione o Reazione'
+                        : t('Equipaggiata', 'Equipped'),
+                  ),
                   subtitle: Text(
                     t(
                       'Attiva arma/protezione e buff @ dell\'oggetto.',

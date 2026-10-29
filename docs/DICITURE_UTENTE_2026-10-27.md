@@ -497,3 +497,23 @@ Ultima correzione esplicita: Confluenza delle Ombre richiede **Velo permanente 1
 Ultima correzione utente del28 ottobre: **Mille Tagli richiede Riflessi permanenti9 e uccisione di Erik I, nessun livello minimo**. L’uccisione di Erik sblocca questa Skill anche se Erik è più debole di Senka alla sconfitta: eccezione nominale, non deroga generale ai requisiti delle altre uccisioni. Sostituisce livello6/Riflessi6 e confronto PT per questo requisito. Fusione resta Velo permanente13, senza livello minimo aggiuntivo.
 
 Correzione generale successiva del28 ottobre: le uccisioni richieste per la progressione valgono anche quando il nemico ha fino a25 PT in meno del partecipante: nemicoPT >= propriaPT−25. Differenza26 o maggiore non vale. PT sconosciuta, evocati e duplicati restano esclusi. L’obiettivo nominale Erik I per Mille Tagli conserva la sua eccezione anche oltre questa tolleranza.
+
+## Conferme aggiuntive del 29 ottobre — Bramble e Vita delle parti
+
+> devono essere le quattro zampe i tentacoli
+>
+> si deve spostare tramite essi
+>
+> va bene
+
+Bramble v3 approvato: busto umanoide, due braccia, quattro tentacoli di rovi che sono le appendici locomotorie; niente zampe bestiali ulteriori. Successivamente approvati anche telefono e reliquia v3 («Sì, entrambi canonici»). Ogle e Pawn: approvati tutti e quattro gli adattamenti telefono/reliquia («Sì, tutti e quattro»); i desktop erano già canonici.
+
+Per le parti anatomiche senza eccezione specifica, alla domanda se un colpo debba danneggiare parte e corpo oppure solo la parte:
+
+> Parte e corpo
+
+Alla domanda se conservare la frattura da critico mirato valido oppure attendere sempre lo zero della Vita separata:
+
+> Critico oppure parte a 0
+
+Le eccezioni già definite (cristalli, nuclei, maschere e corazze speciali) restano prioritarie. Danno dopo le normali protezioni, anatomia/materiali coerenti; recuperi e soglie non ancora implementati integralmente per tutte le specie.

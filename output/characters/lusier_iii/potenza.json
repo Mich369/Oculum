@@ -1,5 +1,5 @@
 {
-  "totalPower": 298,
+  "totalPower": 301,
   "coreStats": {
     "resilienza": 46,
     "volonta": 115,
@@ -7,5 +7,5 @@
     "oculum": 65
   },
   "maximumHp": 690,
-  "haniel": "Quando avrai una potenza totale pari o superiore a 298 sarai pronta."
+  "haniel": "Quando avrai una potenza totale pari o superiore a 301 sarai pronta."
 }

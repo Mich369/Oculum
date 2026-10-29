@@ -415,6 +415,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   ) {
     final state = planarState;
     if (effect.target == 'lusier_condition_guard') return;
+    if (activateGuardianGoldEffect(effect, value)) return;
     if (effect.target == 'lusier_solar_vitalium') {
       grantLusierSolarVitalium();
       return;
@@ -804,6 +805,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    tickGuardianGoldTurn();
     tickTotalPowerExhaustion();
     tickProvokerShield();
     if (readIntValue(planarState['deadlyEmpoweredTurns']) > 0) {
@@ -864,6 +866,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void resetPlanarFight() {
+    resetGuardianGoldFight();
     planarState.remove('provokerShield');
     planarState.remove('provokerTurns');
     planarState.remove('provokerPendingReflection');

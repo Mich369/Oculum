@@ -1050,12 +1050,14 @@ class TitleOpenEntry {
     this.openSkill = '',
     this.attiva = false,
     this.usedSinceLongRest = false,
+    Map<String, dynamic>? openLifecycle,
     this.combatRole = '',
     List<ConditionalBuffEntry>? conditionalBuffs,
     List<OculumStructuredEffect>? effects,
   }) {
     this.conditionalBuffs = conditionalBuffs ?? [];
     this.effects = effects ?? [];
+    this.openLifecycle = Map<String, dynamic>.from(openLifecycle ?? const {});
   }
 
   String nome;
@@ -1064,6 +1066,7 @@ class TitleOpenEntry {
   String openSkill;
   bool attiva;
   bool usedSinceLongRest;
+  late Map<String, dynamic> openLifecycle;
   String combatRole;
 
   late List<ConditionalBuffEntry> conditionalBuffs;
@@ -1077,6 +1080,7 @@ class TitleOpenEntry {
       'openSkill': openSkill,
       'attiva': attiva,
       'usedSinceLongRest': usedSinceLongRest,
+      if (openLifecycle.isNotEmpty) 'openLifecycle': openLifecycle,
       if (combatRole.isNotEmpty) 'combatRole': combatRole,
       'conditionalBuffs': conditionalBuffs.map((x) => x.toJson()).toList(),
       if (effects.isNotEmpty)
@@ -1094,6 +1098,9 @@ class TitleOpenEntry {
       usedSinceLongRest: readBoolValue(
         json['usedSinceLongRest'],
         fallback: readBoolValue(json['attiva']),
+      ),
+      openLifecycle: Map<String, dynamic>.from(
+        json['openLifecycle'] as Map? ?? const {},
       ),
       combatRole: '${json['combatRole'] ?? ''}',
       conditionalBuffs: ((json['conditionalBuffs'] ?? []) as List)
@@ -1184,6 +1191,7 @@ class OculumTitle {
     this.openSkill = '',
     this.openAttiva = false,
     this.openUsedSinceLongRest = false,
+    Map<String, dynamic>? openLifecycle,
     this.openCombatRole = '',
     this.chiaveSistema = '',
     this.openExperienceClaimed = 0,
@@ -1206,6 +1214,7 @@ class OculumTitle {
     this.openConditionalBuffs = openConditionalBuffs ?? [];
     this.openEffects = openEffects ?? [];
     this.skillEffects = skillEffects ?? [];
+    this.openLifecycle = Map<String, dynamic>.from(openLifecycle ?? const {});
     gradeStatAllocation = Map<String, int>.from(gradeStatAllocation);
   }
 
@@ -1242,6 +1251,7 @@ class OculumTitle {
   String openSkill;
   bool openAttiva;
   bool openUsedSinceLongRest;
+  late Map<String, dynamic> openLifecycle;
   String openCombatRole;
   String chiaveSistema;
   int openExperienceClaimed;
@@ -1296,6 +1306,7 @@ class OculumTitle {
       'openSkill': openSkill,
       'openAttiva': openAttiva,
       'openUsedSinceLongRest': openUsedSinceLongRest,
+      if (openLifecycle.isNotEmpty) 'openLifecycle': openLifecycle,
       if (openCombatRole.isNotEmpty) 'openCombatRole': openCombatRole,
       'chiaveSistema': chiaveSistema,
       'openExperienceClaimed': openExperienceClaimed,
@@ -1349,6 +1360,9 @@ class OculumTitle {
       openUsedSinceLongRest: readBoolValue(
         json['openUsedSinceLongRest'],
         fallback: readBoolValue(json['openAttiva']),
+      ),
+      openLifecycle: Map<String, dynamic>.from(
+        json['openLifecycle'] as Map? ?? const {},
       ),
       openCombatRole: '${json['openCombatRole'] ?? ''}',
       chiaveSistema: json['chiaveSistema'] ?? '',
@@ -2840,9 +2854,11 @@ String oculumNormalizeArtSkillCostResource(
   dynamic raw, {
   bool legacyOculumDisabled = false,
 }) {
-  final normalized = oculumNormalizeText('$raw').replaceAll(' ', '');
-  if (normalized.contains('+')) {
-    final parts = normalized
+  // Normalize resource names after reading syntax: text normalization removes
+  // punctuation and would otherwise erase composite and inventory costs.
+  final text = '$raw'.trim();
+  if (text.contains('+')) {
+    final parts = text
         .split('+')
         .map(oculumNormalizeArtSkillCostResource)
         .where((part) => part != 'nessuna')
@@ -2850,14 +2866,23 @@ String oculumNormalizeArtSkillCostResource(
         .toList(growable: false);
     return parts.isEmpty ? 'nessuna' : parts.join('+');
   }
-  if (normalized.startsWith('material:')) {
-    final material = normalized.substring('material:'.length).trim();
+  final separator = text.indexOf(':');
+  final prefix = separator < 0
+      ? ''
+      : oculumNormalizeText(text.substring(0, separator)).replaceAll(' ', '');
+  if (prefix == 'material') {
+    final material = oculumNormalizeText(
+      text.substring(separator + 1),
+    ).replaceAll(' ', '');
     return material.isEmpty ? 'nessuna' : 'material:$material';
   }
-  if (normalized.startsWith('item:')) {
-    final item = normalized.substring('item:'.length).trim();
+  if (prefix == 'item') {
+    final item = oculumNormalizeText(
+      text.substring(separator + 1),
+    ).replaceAll(' ', '');
     return item.isEmpty ? 'nessuna' : 'item:$item';
   }
+  final normalized = oculumNormalizeText(text).replaceAll(' ', '');
   switch (normalized) {
     case 'obser':
       return 'obser';
@@ -3493,6 +3518,7 @@ class CharacterArt {
     this.openSkill = '',
     this.openAttiva = false,
     this.openUsedSinceLongRest = false,
+    Map<String, dynamic>? openLifecycle,
     this.monsterOpenSkill = false,
     this.openDescriptionType = '',
     this.openSkillType = '',
@@ -3517,7 +3543,8 @@ class CharacterArt {
     this.switchPhase = '',
     this.occhiCoinvolti = '',
     this.weakPointLocation = '',
-  }) : runeWordsKnown = List<String>.from(runeWordsKnown ?? const <String>[]),
+  }) : openLifecycle = Map<String, dynamic>.from(openLifecycle ?? const {}),
+       runeWordsKnown = List<String>.from(runeWordsKnown ?? const <String>[]),
        runeQuickWordIds = List<String>.from(
          runeQuickWordIds ?? const <String>[],
        ),
@@ -3548,6 +3575,7 @@ class CharacterArt {
   String openSkill;
   bool openAttiva;
   bool openUsedSinceLongRest;
+  Map<String, dynamic> openLifecycle;
   bool monsterOpenSkill;
   String openDescriptionType;
   String openSkillType;
@@ -3589,6 +3617,7 @@ class CharacterArt {
       'openSkill': openSkill,
       'openAttiva': openAttiva,
       'openUsedSinceLongRest': openUsedSinceLongRest,
+      if (openLifecycle.isNotEmpty) 'openLifecycle': openLifecycle,
       if (monsterOpenSkill) 'monsterOpenSkill': true,
       if (openDescriptionType.trim().isNotEmpty)
         'openDescriptionType': openDescriptionType,
@@ -3649,6 +3678,9 @@ class CharacterArt {
       openUsedSinceLongRest: readBoolValue(
         json['openUsedSinceLongRest'],
         fallback: readBoolValue(json['openAttiva']),
+      ),
+      openLifecycle: Map<String, dynamic>.from(
+        json['openLifecycle'] as Map? ?? const {},
       ),
       monsterOpenSkill: readBoolValue(json['monsterOpenSkill']),
       openDescriptionType: '${json['openDescriptionType'] ?? ''}',

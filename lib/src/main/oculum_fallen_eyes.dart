@@ -1005,7 +1005,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'oculum': '$ocu',
       'currentOculum': '$ocu',
       'maxOculum': ocu,
-      'currentHp': '${max(1, res * (10 + oculumGradeForLevel(level) * 5))}',
+      'currentHp':
+          '${max(1, res * oculumHpMultiplierForGrade(oculumGradeForLevel(level), level: level))}',
       'spriteAssetPath': monster.spriteAssetPath,
       'immaginePersonaggioBase64': monster.imageBase64,
       'background': monster.descIt,
@@ -1466,15 +1467,25 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final cost = oculumFallenEyeSummonCostForDifficulty(
       fallenEyeDifficulty(eye),
     );
-    final currentOculum = readIntValue(owner['currentOculum']);
+    final currentOculum = ownerIndex == schedaCorrente
+        ? oculumTotale()
+        : readIntValue(owner['currentOculum']);
     final currentWill = readIntValue(owner['currentVolonta']);
     if (currentOculum >= cost) {
-      owner['currentOculum'] = '${currentOculum - cost}';
+      if (ownerIndex == schedaCorrente) {
+        if (spendOculum(cost, scheduleSave: false) != cost) return false;
+        owner['currentOculum'] = currentOculumController.text;
+        owner['normalCurrentOculum'] = normalCurrentOculum();
+        owner['temporaryOculum'] = temporaryOculum;
+      } else {
+        owner['currentOculum'] = '${currentOculum - cost}';
+        recordCombatOculumSpent(
+          cost,
+          ownerTag: '${owner['sheetTag'] ?? owner['id']}',
+        );
+      }
       eye['summonPayment'] = 'oculum';
       eye['willMaintenanceDebt'] = 0;
-      if (ownerIndex == schedaCorrente) {
-        currentOculumController.text = '${currentOculum - cost}';
-      }
       return true;
     }
     if (currentOculum == 0 && currentWill >= cost) {
@@ -1602,12 +1613,11 @@ extension _OculumFallenEyes on _OculumHomePageState {
           // Il tiro richiesto dalla Vita persa fallisce: l'evocazione cede.
           dismiss = true;
         } else {
-          final before = currentOculum();
-          currentOculumController.text = '${max(0, before - 1)}';
+          final lost = spendOculum(1, scheduleSave: false);
           schedePersonaggio[schedaCorrente]['currentOculum'] =
               currentOculumController.text;
           eye['maintenanceOculumLost'] =
-              readIntValue(eye['maintenanceOculumLost']) + (before > 0 ? 1 : 0);
+              readIntValue(eye['maintenanceOculumLost']) + lost;
           // La perdita di controllo non è certa, ma resta davvero pericolosa.
           dismiss = Random.secure().nextBool();
         }
@@ -2191,18 +2201,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
           eye['ownerSheetId'] == ownerId &&
           oculumFallenEyeIsDead(eye)) {
         final data = eye['sheetData'] as Map? ?? const {};
-        final maximumHp = max(
-          1,
-          readIntValue(
-            data['derivedMaxHp'],
-            fallback: readIntValue(
-              eye['deathMaxHp'],
-              fallback:
-                  max(1, readIntValue(data['resilienza'])) *
-                  oculumHpMultiplierForGrade(readIntValue(data['grado'])),
-            ),
-          ),
-        );
+        final maximumHp = data.isEmpty
+            ? max(1, readIntValue(eye['deathMaxHp'], fallback: 1))
+            : oculumSheetHpMaximum(Map<String, dynamic>.from(data));
         if (oculumFallenEyeRebirthOnOwnerRest(
           eye,
           ownerSheetId: ownerId,
@@ -2266,13 +2267,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     );
     eye['deathMaxHp'] = sheetIndex >= 0
         ? sheetMaxHpForDeathAt(sheetIndex)
-        : max(
-            1,
-            readIntValue(
-              sheet['derivedMaxHp'],
-              fallback: readIntValue(sheet['resilienza']) * 10,
-            ),
-          );
+        : oculumSheetHpMaximum(sheet);
     eye['perdutoPerSempre'] = true;
     eye['perdutoIl'] = DateTime.now().toIso8601String();
     eye['deathWounds'] = 3;
@@ -2895,8 +2890,18 @@ extension _OculumFallenEyes on _OculumHomePageState {
       }
       final newRes = max(1, int.tryParse(res.text) ?? 1);
       // Preserve wounds and manual HP adjustments while updating the maximum.
-      final oldMax = oldRes * (10 + oculumGradeForLevel(growthLevel) * 5);
-      final newMax = newRes * (10 + oculumGradeForLevel(nextLevel) * 5);
+      final oldMax =
+          oldRes *
+          oculumHpMultiplierForGrade(
+            oculumGradeForLevel(growthLevel),
+            level: growthLevel,
+          );
+      final newMax =
+          newRes *
+          oculumHpMultiplierForGrade(
+            oculumGradeForLevel(nextLevel),
+            level: nextLevel,
+          );
       hp.text =
           '${max(0, (int.tryParse(hp.text) ?? oldMax) + newMax - oldMax)}';
       growthLevel = nextLevel;

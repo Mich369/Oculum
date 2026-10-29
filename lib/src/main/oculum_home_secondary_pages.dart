@@ -3629,7 +3629,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               masterInitiativeTokens.length]
         : <String, dynamic>{};
 
-    Widget tokenRow(int i) => Container(
+    Widget legacyTokenRow(int i) => Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -3729,163 +3729,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              PopupMenuButton<String>(
-                tooltip: t('Stato turno', 'Turn state'),
-                color: const Color(0xFF10121A),
-                icon: Icon(Icons.more_vert, color: tertiaryColor),
-                onSelected: (value) {
-                  if (value.startsWith('side:')) {
-                    unawaited(
-                      setMasterInitiativeTokenSide(i, value.substring(5)),
-                    );
-                    return;
-                  }
-                  if (value == 'remove') {
-                    removeMasterInitiativeTokenAt(i);
-                    return;
-                  }
-                  if (value == 'up') {
-                    moveMasterInitiativeToken(i, -1);
-                    return;
-                  }
-                  if (value == 'down') {
-                    moveMasterInitiativeToken(i, 1);
-                    return;
-                  }
-                  if (value == 'active') {
-                    setMasterInitiativeActiveIndex(i);
-                    return;
-                  }
-                  setState(() {
-                    masterInitiativeTokens[i]['status'] = value;
-                    if (value == 'fled') {
-                      recordPlanarMonsterEscape(masterInitiativeTokens[i]);
-                    }
-                    if (value == 'dead') {
-                      masterInitiativeTokens[i]['automaticDeath'] = false;
-                      aggiungiLog(
-                        '[MORTE] '
-                        '${masterInitiativeTokens[i]['name'] ?? '???'}'
-                        ' · segnata dal Master.',
-                      );
-                    }
-                    if (value == 'active') {
-                      masterInitiativeActiveIndex = i;
-                    }
-                  });
-                  programmaSalvataggio();
-                  sendRealtimeInitiativeSnapshotIfPublished();
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'active',
-                    child: Text(masterInitiativeStatusLabel('active')),
-                  ),
-                  PopupMenuItem(
-                    value: 'ready',
-                    child: Text(masterInitiativeStatusLabel('ready')),
-                  ),
-                  PopupMenuItem(
-                    value: 'acted',
-                    child: Text(masterInitiativeStatusLabel('acted')),
-                  ),
-                  PopupMenuItem(
-                    value: 'skipped',
-                    child: Text(masterInitiativeStatusLabel('skipped')),
-                  ),
-                  PopupMenuItem(
-                    value: 'downed',
-                    child: Text(masterInitiativeStatusLabel('downed')),
-                  ),
-                  PopupMenuItem(
-                    value: 'dead',
-                    child: Text(masterInitiativeStatusLabel('dead')),
-                  ),
-                  PopupMenuItem(
-                    value: 'fled',
-                    child: Text(masterInitiativeStatusLabel('fled')),
-                  ),
-                  if (haPermessiMaster) ...[
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: 'side:ally',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.remove_red_eye,
-                            color: masterInitiativeSideEyeColor('ally'),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              t('Occhio azzurro · Alleato', 'Blue eye · Ally'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'side:enemy',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.remove_red_eye,
-                            color: masterInitiativeSideEyeColor('enemy'),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              t('Occhio rosso · Nemico', 'Red eye · Enemy'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'side:neutral',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.remove_red_eye,
-                            color: masterInitiativeSideEyeColor('neutral'),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              t(
-                                'Occhio ambra · Neutrale',
-                                'Amber eye · Neutral',
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'up',
-                    child: Text(t('Sposta su', 'Move up')),
-                  ),
-                  PopupMenuItem(
-                    value: 'down',
-                    child: Text(t('Sposta giu', 'Move down')),
-                  ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'remove',
-                    child: Text(t('Rimuovi', 'Remove')),
-                  ),
-                ],
+              masterParticipantMenuButton(
+                selectedMasterInitiativeGroupId,
+                masterInitiativeTokens[i],
               ),
             ],
           ),
@@ -4176,6 +4022,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           ],
         ],
       ),
+    );
+
+    Widget tokenRow(int i) => masterParticipantContextArea(
+      encounterId: selectedMasterInitiativeGroupId,
+      token: masterInitiativeTokens[i],
+      child: legacyTokenRow(i),
     );
 
     return gothicPanel(
@@ -8124,6 +7976,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ),
           const SizedBox(height: 8),
+          masterPartyPowerSummary(),
           smallInfoText(
             t(
               'Il Master può mettere nel party quante schede vuole. Ogni scheda resta salvata nella lista schede, con tag unico e tiri rapidi.',
@@ -10472,10 +10325,22 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
     if (artIndex < 0 || artIndex >= arti.length) return;
     final targetArt = arti[artIndex];
+    if (oculumGuardianGoldArt(targetArt)) {
+      await useGuardianGoldOpen(targetArt, artIndex);
+      return;
+    }
+    if (oculumLunarGuardianArt(targetArt)) {
+      await useLunarGuardianOpen(targetArt, artIndex);
+      return;
+    }
+    if (!targetArt.openAttiva && !canStartArtOpenCycle(targetArt)) {
+      aggiungiLog('Open non ancora recuperata con i riposi.');
+      return;
+    }
     if (!targetArt.openAttiva &&
         (!targetArt.inUso || targetArt.switchPhase.isNotEmpty)) {
       risultato =
-          'Potere risvegliato non disponibile: seleziona l’Art e completa il turno senza essere colpito.';
+          'Open non disponibile: seleziona l’Art e completa il turno senza essere colpito.';
       aggiungiLog(risultato);
       notifyDiceResultChanged();
       return;
@@ -10489,7 +10354,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             '',
       );
       if (required != null && leggiNumero(livelloController) < required) {
-        risultato = 'Apertura bloccata: richiede livello $required.';
+        risultato = 'Open bloccata: richiede livello $required.';
         aggiungiLog(risultato);
         notifyDiceResultChanged();
         return;
@@ -10557,6 +10422,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       }
 
       if (art.openAttiva) {
+        deactivateArtOpenBuffCycle(art);
         rimarginaHpDaAumentoResilienza(-artOpenQuickResilienzaBonus(art));
         art.openAttiva = false;
         removeActiveStructuredEffectsForSourcePrefix(
@@ -10564,6 +10430,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         );
         art.openBuffCooldown?.remaining = 0;
       } else {
+        recordArtOpenCycleActivation(art);
         if (!isDefiledArt(art)) {
           disattivaTutteLeOpen(exceptArt: art);
         }
@@ -10615,6 +10482,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               legacyQuickCommands: true,
             ),
           ], source: artOpenDisplayName(art, artIndex));
+      tagOpenLifecycleBuffEffects(
+        artOpenLifecycle(art).id,
+        artOpenDisplayName(art, artIndex),
+      );
       if (structuredMessages.isNotEmpty) {
         setState(() {
           risultato +=
@@ -10666,13 +10537,18 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       return;
     }
     {
-      final effects = oculumResolveAbilityEffects(
-        art.openSkillEffects,
-        art.openSkill,
-        subtraits: hiddenEyeStats,
-        legacyQuickCommands: true,
+      final effects = bindArtOpenSkillEffects(
+        art,
+        oculumResolveAbilityEffects(
+          art.openSkillEffects,
+          art.openSkill,
+          subtraits: hiddenEyeStats,
+          legacyQuickCommands: true,
+        ),
       );
       if (effects.isNotEmpty) {
+        final skillOrigin = currentSheetScrollId();
+        final skillEncounter = onlineCombatEncounterId;
         final parsedCost = oculumParseAbilityCost(art.openSkill);
         final used = await useConfiguredAbility(
           source: '${artOpenDisplayName(art, artIndex)} · Skill Open',
@@ -10687,7 +10563,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   maximum: parsedCost.maximum,
                 ),
           cooldown: cooldown,
-          valid: () => arti.contains(art) && art.openAttiva,
+          valid: () =>
+              currentSheetScrollId() == skillOrigin &&
+              onlineCombatEncounterId == skillEncounter &&
+              arti.contains(art) &&
+              art.sbloccata &&
+              art.inUso &&
+              artOpenSbloccata(art),
         );
         if (used && mounted) {
           if (runicOpen && runicFight.isNotEmpty) {

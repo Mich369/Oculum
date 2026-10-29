@@ -107,7 +107,16 @@ void main() {
     expect(saved.intercept(70), 20);
     expect(saved.hp, 0);
     expect(oculumSummoningSlimeApplies(saved, 'a', 'fight'), isFalse);
-    expect(OculumPawnGuardian(id: 'legacy', ownerTag: 'owner').maxHp, 30);
+    final legacy = OculumPawnGuardian(id: 'legacy', ownerTag: 'owner');
+    final legacyMaximum =
+        legacy.stats['resilienza']! *
+        oculumHpMultiplierForGrade(legacy.grade, level: legacy.level);
+    expect(legacy.maxHp, legacyMaximum);
+    expect(
+      legacy.hp,
+      legacyMaximum,
+      reason: 'Legacy Pawn starts at its level-adjusted maximum',
+    );
   });
 
   test(

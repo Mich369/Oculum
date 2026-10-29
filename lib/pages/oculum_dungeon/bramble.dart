@@ -9,7 +9,7 @@ final _brambleEntry =
       'natura',
       [7, 4, 5, 6],
       3,
-      'Un custode vegetale dal corpo sottile di corteccia intrecciata, spesso appeso a testa in giù ai rami più alti. Il volto appuntito ricorda una maschera di legno; gli occhi verde pallido osservano fra le fenditure, mentre dita lunghe come radici cercano un appiglio. Grossi tralci spinosi partono dalla schiena e dalle spalle, avvolgendosi ai tronchi in archi irregolari. Fra le costole di legno pulsa un cuore ambrato. Difende i vecchi passaggi del bosco e richiude con i rovi le tracce lasciate da chi li danneggia. Il Fuoco brucia il corpo e attraversa lo Scudo di rovi; l’Acqua può spegnere il cuore senza consumare i semi da cui nasce la sua pergamena rara.',
+      'Un custode vegetale di corteccia intrecciata, con un busto umanoide e due braccia dalle lunghe dita-radici. Sotto il busto si allargano quattro tentacoli di rovi: sono le sue appendici locomotorie, che si piegano e fanno presa sul terreno per spostarlo, senza zampe bestiali aggiuntive. Può anche restare appeso a testa in giù ai rami più alti. Il volto appuntito ricorda una maschera di legno; gli occhi verde pallido osservano fra le fenditure, mentre dita lunghe come radici cercano un appiglio. Numerosi tentacoli di rovi, grossi tralci spinosi, partono dalla schiena e dalle spalle, avvolgendosi ai tronchi in archi irregolari. Fra le costole di legno pulsa un cuore ambrato. Difende i vecchi passaggi del bosco e richiude con i rovi le tracce lasciate da chi li danneggia. Il Fuoco brucia il corpo e attraversa lo Scudo di rovi; l’Acqua può spegnere il cuore senza consumare i semi da cui nasce la sua pergamena rara.',
       'Il cuore visibile fra le costole di legno; vulnerabile al Fuoco.',
       ['bramble_lash', 'bramble_thorn_shield', 'bramble_arduous_challenge'],
       'fibra_rovo_bramble',
@@ -18,6 +18,43 @@ final _brambleEntry =
       classificationTags: ['Vegetale', 'Custode'],
       encounterRules: {
         'authoredCanonical': true,
+        'precisionBodyParts': [
+          {"id": "body", "label": "Corpo", "group": "body"},
+          {"id": "head", "label": "Testa a maschera lignea", "group": "head"},
+          {"id": "torso", "label": "Busto di corteccia", "group": "torso"},
+          {
+            "id": "heart",
+            "label": "Cuore ambrato",
+            "group": "heart",
+            "weak": true,
+          },
+          {"id": "arms_1", "label": "Braccio destro", "group": "arms"},
+          {"id": "arms_2", "label": "Braccio sinistro", "group": "arms"},
+          {
+            "id": "legs_1",
+            "label": "Tentacolo locomotore di rovi 1",
+            "group": "tendrils",
+            "locomotor": true,
+          },
+          {
+            "id": "legs_2",
+            "label": "Tentacolo locomotore di rovi 2",
+            "group": "tendrils",
+            "locomotor": true,
+          },
+          {
+            "id": "legs_3",
+            "label": "Tentacolo locomotore di rovi 3",
+            "group": "tendrils",
+            "locomotor": true,
+          },
+          {
+            "id": "legs_4",
+            "label": "Tentacolo locomotore di rovi 4",
+            "group": "tendrils",
+            "locomotor": true,
+          },
+        ],
         'dispositions': ['neutrale', 'ostile'],
         'naturalScrollDrops': {
           'bramble_thorn_shield': {'minimum': 20, 'maximum': 20},

@@ -340,12 +340,12 @@ void main() {
       expect(find.text('Turno attivo: Sentinella dei turni'), findsOneWidget);
       expect(find.text('HP 100/100'), findsWidgets);
       expect(find.text('OCU 2/5'), findsOneWidget);
-      final sideMenu = find.byTooltip('Stato turno').last;
+      final sideMenu = find.byTooltip('Gestisci partecipante').last;
       await tester.ensureVisible(sideMenu);
       await tester.pumpAndSettle();
       await tester.tap(sideMenu);
       await tester.pumpAndSettle();
-      final markEnemy = find.text('Occhio rosso · Nemico').last;
+      final markEnemy = find.text('Cattivo · Nemico').last;
       expect(markEnemy, findsOneWidget);
       await tester.tap(markEnemy);
       await tester.pumpAndSettle();

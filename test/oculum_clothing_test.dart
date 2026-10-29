@@ -131,7 +131,13 @@ void main() {
         craftData: {'necromancyKind': 'skull_amulet'},
       );
       state.inventario.add(amulet);
-      final originalHp = state.currentHpController.text;
+      final originalMaximumHp = probe.maximumHp();
+      // Use valid wounded HP. The raw startup controller can still contain the
+      // old 30 HP while Level 0 / Grade 0 / Resilience 3 now has 18 maximum HP.
+      final originalHp = (originalMaximumHp - 3)
+          .clamp(1, originalMaximumHp)
+          .toString();
+      state.currentHpController.text = originalHp;
       final originalTag = probe.ownerTag();
       await probe.useNecromancy(amulet);
       expect(
@@ -142,6 +148,7 @@ void main() {
       state.currentHpController.text = '0';
       probe.skullHit();
       expect(state.currentHpController.text, originalHp);
+      expect(probe.maximumHp(), originalMaximumHp);
       expect(probe.ownerTag(), originalTag);
       expect(
         state.schedePersonaggio[state.schedaCorrente]['skullFormOriginal'],

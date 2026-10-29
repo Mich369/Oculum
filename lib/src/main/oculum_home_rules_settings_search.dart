@@ -6314,7 +6314,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     }
     if (query.isEmpty
         ? settingsCategory == 'sheet'
-        : 'scheda sheet layout scudo shield hp vita danno cura colpito valori borsa party indice rapidi manuale'
+        : 'scheda sheet layout scudo shield hp vita danno cura colpito valori borsa party indice rapidi manuale potenza totale pt total power'
               .contains(query)) {
       panels.add(
         functionAnchor(
@@ -6331,6 +6331,10 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         ),
       );
       panels.addAll(<Widget>[
+        gothicPanel(
+          borderColor: tertiaryColor,
+          child: ownPowerVisibilitySetting(),
+        ),
         functionAnchor(
           'settings_oculum_shield',
           gothicPanel(

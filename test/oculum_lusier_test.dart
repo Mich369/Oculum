@@ -6,19 +6,71 @@ import 'oculum_escape_provoker_test.dart' as fixtures;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 
 void main() {
-  testWidgets('Lusier export measures current Total Power in the production sheet', (tester) async {
-    final (state,p)=await fixtures.mountFight(tester);
-    final sheet=oculumBuildLusierSheet();
-    sheet['id']=sheet['sheetTag']=p.ownerTag();
-    p.load(sheet);p.invalidateDerivedCaches();
-    p.refillStatsAndHealth();
-    final power=p.totalPower(state.schedaCorrente as int);
-    expect(power,greaterThanOrEqualTo(222));
-    final report={'totalPower':power,'coreStats':p.coreStats(),'maximumHp':p.maximumHp(),
-      'haniel':'Quando avrai una potenza totale pari o superiore a $power sarai pronta.'};
-    File('output/characters/lusier_iii/potenza.json').writeAsStringSync('${const JsonEncoder.withIndent('  ').convert(report)}\n');
-    await closeFixture(tester,p);
-  });
+  testWidgets(
+    'Lusier export measures current Total Power in the production sheet',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      final sheet = oculumBuildLusierSheet();
+      sheet['id'] = sheet['sheetTag'] = p.ownerTag();
+      p.load(sheet);
+      p.invalidateDerivedCaches();
+      p.refillStatsAndHealth();
+      final power = p.totalPower(state.schedaCorrente as int);
+      expect(power, 301);
+      final fullState = p.snapshot();
+      p.refillStatsAndHealth();
+      expect(
+        p.totalPower(state.schedaCorrente as int),
+        power,
+        reason: 'refill cannot stack core bonuses',
+      );
+      final portable = oculumBuildLusierSheet();
+      for (final key in [
+        'currentResilienza',
+        'currentVolonta',
+        'currentMateria',
+        'currentOculum',
+        'normalCurrentOculum',
+        'maxOculum',
+        'currentHp',
+        'scudoOculum',
+        'scudoOculumMax',
+      ]) {
+        if (fullState.containsKey(key)) portable[key] = fullState[key];
+      }
+      // Tests can run beside other suites importing the canonical characters.
+      // Stage exports separately; only promote them after the suite succeeds.
+      final folder = Directory('build/verified-character-exports/lusier_iii')
+        ..createSync(recursive: true);
+      File('${folder.path}/Lusier_III.json').writeAsStringSync(
+        '${const JsonEncoder.withIndent('  ').convert(portable)}\n',
+      );
+      final portableCode = oculumEncodeSheetShareText([portable]);
+      File(
+        '${folder.path}/Lusier_III.codice.txt',
+      ).writeAsStringSync('$portableCode\n');
+      expect(oculumDecodeSheetShareText(portableCode).single, portable);
+      expect(readIntValue(portable['currentHp']), p.maximumHp());
+      expect(portable.containsKey('sheetTag'), false);
+      final report = {
+        'totalPower': power,
+        'coreStats': p.coreStats(),
+        'maximumHp': p.maximumHp(),
+        'haniel':
+            'Quando avrai una potenza totale pari o superiore a $power sarai pronta.',
+      };
+      File('${folder.path}/potenza.json').writeAsStringSync(
+        '${const JsonEncoder.withIndent('  ').convert(report)}\n',
+      );
+      final imported = oculumDecodeSheetShareText(portableCode).single;
+      p.load({...imported, 'id': p.ownerTag(), 'sheetTag': p.ownerTag()});
+      p.invalidateDerivedCaches();
+      expect(p.currentHp(), 690);
+      expect(p.maximumHp(), 690);
+      expect(p.totalPower(state.schedaCorrente as int), 301);
+      await closeFixture(tester, p);
+    },
+  );
   test(
     'Lusier preserves the elite base and assigns every level and grade point once',
     () {
@@ -50,13 +102,7 @@ void main() {
           greaterThan(0),
         );
       }
-      final folder = Directory('output/characters/lusier_iii')
-        ..createSync(recursive: true);
-      File(
-        '${folder.path}/Lusier_III.json',
-      ).writeAsStringSync('${const JsonEncoder.withIndent('  ').convert(s)}\n');
       final code = oculumEncodeSheetShareText([s]);
-      File('${folder.path}/Lusier_III.codice.txt').writeAsStringSync('$code\n');
       expect(oculumDecodeSheetShareText(code).single, s);
       final items = (s['inventario'] as List)
           .map((i) => InventoryItem.fromJson(Map<String, dynamic>.from(i)))

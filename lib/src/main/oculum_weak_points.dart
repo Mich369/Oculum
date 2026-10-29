@@ -1,5 +1,7 @@
 part of '../../main.dart';
 
+bool oculumPrecisionMayChooseBodyPart(int precision) => precision >= 3;
+
 // ignore_for_file: invalid_use_of_protected_member
 
 List<({String label, int penalty})> oculumArtWeakPoints(
@@ -116,37 +118,41 @@ extension _OculumWeakPoints on _OculumHomePageState {
     );
   }
 
-  List<Map<String, dynamic>> get currentPrecisionBodyParts =>
-      oculumPrecisionBodyParts(
-            monster: monsterBookEntryById(faunaCurrentMonsterId),
-            arts: arti,
-            description:
-                '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['razza'] ?? ''} ${backgroundController.text}',
-          )
-          .followedBy(
-            isConstructCharacter
-                ? [
-                    {
-                      'id': 'core',
-                      'label': 'Nucleo del Costrutto',
-                      'penalty': 0,
-                      'weak': true,
-                    },
-                  ].where(
-                    (p) => !oculumPrecisionBodyParts(
-                      monster: monsterBookEntryById(faunaCurrentMonsterId),
-                      arts: arti,
-                    ).any((part) => part['id'] == 'core'),
-                  )
-                : <Map<String, dynamic>>[],
-          )
-          .where(
-            (part) =>
-                !isLunarOrderCreature ||
-                !oculumLunarCrystalIds.contains(part['id']) ||
-                intactLunarCrystalIds.contains(part['id']),
-          )
-          .toList();
+  List<Map<String, dynamic>>
+  get currentPrecisionBodyParts => oculumLunarGuardianCorePrecisionParts(
+    oculumPrecisionBodyParts(
+          monster: monsterBookEntryById(faunaCurrentMonsterId),
+          arts: arti,
+          description:
+              '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['razza'] ?? ''} ${backgroundController.text}',
+        )
+        .followedBy(
+          isConstructCharacter
+              ? [
+                  {
+                    'id': 'core',
+                    'label': 'Nucleo del Costrutto',
+                    'penalty': 0,
+                    'weak': true,
+                  },
+                ].where(
+                  (p) => !oculumPrecisionBodyParts(
+                    monster: monsterBookEntryById(faunaCurrentMonsterId),
+                    arts: arti,
+                  ).any((part) => part['id'] == 'core'),
+                )
+              : <Map<String, dynamic>>[],
+        )
+        .where(
+          (part) =>
+              !isLunarOrderCreature ||
+              !oculumLunarCrystalIds.contains(part['id']) ||
+              intactLunarCrystalIds.contains(part['id']),
+        )
+        .toList(),
+    monsterId: faunaCurrentMonsterId,
+    coreExposed: lunarGuardianCoreExposed,
+  );
   List<Map<String, dynamic>> get publicPrecisionBodyParts => [
     for (final p in currentPrecisionBodyParts)
       {
@@ -162,8 +168,24 @@ extension _OculumWeakPoints on _OculumHomePageState {
     Map<String, dynamic> token,
   ) {
     final monster = monsterBookEntryById(monsterBookIdForCombatToken(token));
-    if (monster != null) return oculumPrecisionBodyParts(monster: monster);
     final index = localSheetIndexForOculumTag(onlineCombatTokenTag(token));
+    if (monster != null) {
+      final publicCore = (token['faunaPublic'] as Map?)?['lunarGuardianCore'];
+      final savedCore = index < 0
+          ? null
+          : (schedePersonaggio[index]['planarRuntime']
+                as Map?)?['lunarGuardianCore'];
+      final exposed = publicCore is Map
+          ? publicCore['coreExposed'] == true
+          : index == schedaCorrente
+          ? lunarGuardianCoreExposed
+          : savedCore is Map && savedCore['coreExposed'] == true;
+      return oculumLunarGuardianCorePrecisionParts(
+        oculumPrecisionBodyParts(monster: monster),
+        monsterId: monster.id,
+        coreExposed: exposed,
+      );
+    }
     final raw = index >= 0
         ? schedaJsonAt(index)['precisionBodyParts']
         : token['precisionBodyParts'];
@@ -437,6 +459,7 @@ extension _OculumWeakPoints on _OculumHomePageState {
           ),
           const SizedBox(height: 4),
           SelectableText(text, style: const TextStyle(fontSize: 12)),
+          anatomicalPartsSummary(),
           if (damagedWingIds.isNotEmpty)
             Text(
               'Ali danneggiate: ${damagedWingIds.length} · ${wingsGrounded ? 'volo impossibile' : 'bonus volo dimezzati'}',

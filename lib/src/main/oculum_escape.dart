@@ -33,6 +33,15 @@ bool oculumEscapeAttackDieIsValid(Map packet) {
 }
 
 extension _OculumEscape on _OculumHomePageState {
+  bool get escapeUsesMasterTokens =>
+      escapeAuthority && _usesLocalMasterInitiative;
+  String get escapeEventEncounterId => escapeUsesMasterTokens
+      ? selectedMasterInitiativeGroupId
+      : onlineCombatEncounterId;
+  List<Map<String, dynamic>> escapeCombatTokens() =>
+      escapeUsesMasterTokens ? masterInitiativeTokens : onlineCombatTokens();
+  String escapeCombatSide(String tag) =>
+      '${escapeCombatTokens().where((t) => onlineCombatTokenTag(t) == tag).firstOrNull?['side'] ?? 'ally'}';
   void moveEncounterMemberToRole(String encounterId, Map token) {
     if (!escapeAuthority || !haPermessiMaster) return;
     final group = masterInitiativeGroups
@@ -109,7 +118,7 @@ extension _OculumEscape on _OculumHomePageState {
       realtimeService?.isConnected != true || realtimeIsMasterRole;
   Map<String, dynamic> get escapeLedger {
     final group = masterInitiativeGroups
-        .where((g) => g['id'] == onlineCombatEncounterId)
+        .where((g) => g['id'] == escapeEventEncounterId)
         .firstOrNull;
     final owner = group ?? planarState;
     if (owner['escapeLedger'] is! Map<String, dynamic>) {
@@ -210,9 +219,7 @@ extension _OculumEscape on _OculumHomePageState {
   int escapeSubtraitAt(int index, String id) {
     if (index < 0 || index >= schedePersonaggio.length) return 0;
     if (index == schedaCorrente) {
-      final stat = hiddenEyeStats
-          .where((s) => s.id == id && s.unlocked)
-          .firstOrNull;
+      final stat = hiddenEyeStats.where((s) => s.id == id).firstOrNull;
       return stat == null ? 0 : hiddenEyeTotal(stat);
     }
     final sheet = schedePersonaggio[index];
@@ -239,8 +246,8 @@ extension _OculumEscape on _OculumHomePageState {
         b = localSheetIndexForOculumTag(target);
     if (a < 0 ||
         b < 0 ||
-        combatScoutSide(observer) == 'enemy' ||
-        combatScoutSide(target) == 'enemy') {
+        escapeCombatSide(observer) == 'enemy' ||
+        escapeCombatSide(target) == 'enemy') {
       return false;
     }
     bool fate(int i) =>
@@ -305,6 +312,7 @@ extension _OculumEscape on _OculumHomePageState {
 
   void recordEscapeHpLoss(int amount) {
     if (amount <= 0 || !currentCombatIsActive()) return;
+    recordCombatHpLost(amount);
     final token = escapeToken(sheetTagAt(schedaCorrente));
     final key = '$onlineCombatEncounterId:${token?['fightInstanceId'] ?? ''}';
     final previous = Map<String, dynamic>.from(
@@ -399,9 +407,9 @@ extension _OculumEscape on _OculumHomePageState {
   Future<void> emitEscape(Map<String, dynamic> payload) async {
     payload['escapeEvent'] = true;
     payload.putIfAbsent('scope', () => permissionScope);
-    payload.putIfAbsent('encounterId', () => onlineCombatEncounterId);
+    payload.putIfAbsent('encounterId', () => escapeEventEncounterId);
     final envelope = permissionEnvelope(payload);
-    receiveEscapeEvent(envelope);
+    receiveEscapeEvent(envelope, locallyAuthored: true);
     await realtimeService?.sendCombatEvent('combat_scout', envelope);
   }
 
@@ -421,14 +429,16 @@ extension _OculumEscape on _OculumHomePageState {
     final noticed = <String, bool>{};
     final lastAttack =
         (escapeLedger['lastAttack'] as Map? ?? {})[source] as Map? ?? {};
-    for (final token in onlineCombatTokens()) {
+    for (final token in escapeCombatTokens()) {
       final tag = onlineCombatTokenTag(token);
       if (tag == source ||
           const {'dead', 'fled', 'expired'}.contains(token['status'])) {
         continue;
       }
       final index = localSheetIndexForOculumTag(tag);
-      var perception = escapeSubtraitAt(index, 'percezione');
+      var perception = index >= 0
+          ? escapeSubtraitAt(index, 'percezione')
+          : readIntValue(token['perception'] ?? token['percezione']);
       if (lastAttack['source'] == tag &&
           readIntValue((escapeLedger['lastTargeted'] as Map? ?? {})[tag]) <=
               readIntValue(lastAttack['sequence'])) {
@@ -482,6 +492,7 @@ extension _OculumEscape on _OculumHomePageState {
           'total': total,
           'movement': movement,
           'stealth': stealth,
+          'subtraitId': stealth ? 'velo' : 'riflessi',
           'noticeDt': natural + veil,
           'answers': <String, dynamic>{},
         };
@@ -493,6 +504,470 @@ extension _OculumEscape on _OculumHomePageState {
     aggiungiLog(
       '[FUGA] Totale ${record!['total']}; gli avversari che ti notano possono tentare di fermarti. Il Master conclude il confronto dopo le risposte.',
     );
+  }
+
+  /// The Master may roll for a real NPC token without loading that NPC over
+  /// the currently open character or spending the Master's own resources.
+  Future<void> attemptEscapeForToken(String encounterId, String tag) async {
+    if (!escapeAuthority || !haPermessiMaster || !_usesLocalMasterInitiative) {
+      return;
+    }
+    final group = masterInitiativeGroups
+        .where((g) => '${g['id']}' == encounterId)
+        .firstOrNull;
+    if (group == null ||
+        group['fightStarted'] != true ||
+        group['combatEnded'] == true) {
+      return;
+    }
+    final previous = selectedMasterInitiativeGroupId;
+    if (previous != encounterId) selectMasterInitiativeGroup(encounterId);
+    try {
+      final token = masterInitiativeTokens
+          .where((t) => combatTokenMatchesSheet(t, tag))
+          .firstOrNull;
+      if (token == null ||
+          token['outsideFight'] == true ||
+          const {
+            'dead',
+            'fled',
+            'expired',
+            'downed',
+          }.contains(token['status']) ||
+          masterInitiativeTokenIsTemporary(token) ||
+          token['encounterObject'] == true) {
+        return;
+      }
+      final actor = publicInitiativeSourceTag(token);
+      if (!escapeMasterControlsNpc(token)) return;
+      if (onlineCombatRequests.values.any(
+        (r) =>
+            r['kind'] == 'escape' &&
+            r['status'] == 'pending' &&
+            r['sourceTag'] == actor &&
+            r['encounterId'] == encounterId &&
+            escapeRequestIsCurrent(r),
+      )) {
+        return;
+      }
+      final index = localSheetIndexForOculumTag(actor);
+      int subtrait(String id, String alias) => index >= 0
+          ? escapeSubtraitAt(index, id)
+          : readIntValue(token[id] ?? token[alias]);
+      final reflex = subtrait('riflessi', 'reflexes');
+      final veil = subtrait('velo', 'veil');
+      final movement =
+          (index >= 0
+                  ? sheetMovementAt(index)
+                  : max(
+                      0,
+                      readIntValue(
+                        token['movement'] ?? token['movimento'],
+                        fallback: 30 + readIntValue(token['materia']) ~/ 6,
+                      ),
+                    ))
+              .toInt();
+      final active =
+          masterInitiativeTokens.indexOf(token) == masterInitiativeActiveIndex;
+      final free = !totalPowerExhaustedForTag(actor)
+          ? onlineCombatRequests.entries
+                .where(
+                  (entry) =>
+                      entry.value['targetTag'] == actor &&
+                      entry.value['freeReaction'] == true &&
+                      entry.value['reactionUsed'] != true,
+                )
+                .firstOrNull
+          : null;
+      final resource =
+          free?.key ??
+          (active &&
+                  (!readBoolValue(token['actionUsed']) ||
+                      readIntValue(token['kiExtraActions']) > 0) &&
+                  artDebtForToken(token, 'action') == 0
+              ? 'azione'
+              : 'reazione');
+      if (!_consumeLocalCombatTurnResource(actor, resource)) {
+        aggiungiLog(
+          '[FUGA] ${token['name']}: nessuna Azione/Reazione disponibile.',
+        );
+        return;
+      }
+      final natural = Random.secure().nextInt(20) + 1;
+      final bonus = (movement + max(reflex, veil)).toInt();
+      final level = index >= 0
+          ? sheetCriticalLevelAt(index)
+          : readIntValue(token['level']);
+      final grade = index >= 0
+          ? sheetIntValueAt(index, 'grado')
+          : readIntValue(token['grade']);
+      final difficulty = index >= 0
+          ? sheetDifficoltaTiroAt(index)
+          : readIntValue(token['rollDifficulty']);
+      final total = rollTotalWithCritical(
+        natural,
+        20,
+        [bonus],
+        level: level,
+        grade: grade,
+        difficulty: difficulty,
+      );
+      final stealth = veil > reflex;
+      final record = <String, dynamic>{
+        'id': 'escape:$actor:${DateTime.now().microsecondsSinceEpoch}',
+        'kind': 'escape',
+        'stage': 'offer',
+        'status': 'pending',
+        'sourceTag': actor,
+        'targetTag': actor,
+        'encounterId': encounterId,
+        'fightInstanceId': token['fightInstanceId'],
+        'sourceName': oculumReferenceEncounterTokenName(token),
+        'sourceSide': token['side'] ?? 'enemy',
+        'natural': natural,
+        'total': total,
+        'movement': movement,
+        'stealth': stealth,
+        'subtraitId': stealth ? 'velo' : 'riflessi',
+        'noticeDt': natural + veil,
+        'answers': <String, dynamic>{},
+      };
+      await emitEscape(record);
+      aggiungiLog(
+        '[FUGA NPC] ${record['sourceName']}: 1d20 $natural + $bonus = $total; confronto in attesa.',
+      );
+      mostraDadoCentrale(
+        valore: rollFormulaWithCritical(
+          roll: natural,
+          faces: 20,
+          bonuses: [bonus],
+          level: level,
+          grade: grade,
+          difficulty: difficulty,
+        ),
+        criticoUno: natural == 1,
+        criticoVenti: natural == 20,
+      );
+      captureActiveMasterInitiativeGroup();
+      sendRealtimeInitiativeSnapshotIfPublished();
+      programmaSalvataggio();
+    } finally {
+      if (previous != encounterId &&
+          mounted &&
+          selectedMasterInitiativeGroupId == encounterId) {
+        captureActiveMasterInitiativeGroup();
+        selectMasterInitiativeGroup(previous);
+      }
+    }
+  }
+
+  bool escapeMasterControlsNpc(Map<String, dynamic> token) {
+    if (!escapeAuthority || !haPermessiMaster || !_usesLocalMasterInitiative) {
+      return false;
+    }
+    final index = localSheetIndexForOculumTag(publicInitiativeSourceTag(token));
+    if (index < 0) {
+      return token['side'] != 'party' || token['npc'] == true;
+    }
+    final type = tipoSchedaPersonaggio(index).toLowerCase();
+    return type.contains('mostro') ||
+        type.contains('boss') ||
+        schedePersonaggio[index]['npc'] == true;
+  }
+
+  List<Map<String, dynamic>> escapeRequestsForToken(
+    String encounterId,
+    String actorTag,
+  ) => onlineCombatRequests.values
+      .where(
+        (record) =>
+            record['kind'] == 'escape' &&
+            record['status'] == 'pending' &&
+            record['encounterId'] == encounterId &&
+            record['sourceTag'] != actorTag &&
+            (record['noticed'] as Map? ?? {})[actorTag] == true &&
+            !(record['answers'] as Map? ?? {}).containsKey(actorTag),
+      )
+      .toList();
+
+  bool canAnswerEscapeForToken(
+    String encounterId,
+    String escapeId,
+    String actorTag,
+    String kind,
+  ) {
+    if (!const {'block', 'help', 'attack', 'pass'}.contains(kind)) return false;
+    final group = masterInitiativeGroups
+        .where((g) => '${g['id']}' == encounterId)
+        .firstOrNull;
+    if (group == null ||
+        group['fightStarted'] != true ||
+        group['combatEnded'] == true) {
+      return false;
+    }
+    final tokens = encounterId == selectedMasterInitiativeGroupId
+        ? masterInitiativeTokens
+        : (group['tokens'] as List? ?? const [])
+              .whereType<Map>()
+              .map((t) => Map<String, dynamic>.from(t))
+              .toList();
+    final actor = tokens
+        .where((t) => combatTokenMatchesSheet(t, actorTag))
+        .firstOrNull;
+    final record = onlineCombatRequests[escapeId];
+    if (actor == null ||
+        !escapeMasterControlsNpc(actor) ||
+        !masterInitiativeTokenCanAct(actor) ||
+        actor['outsideFight'] == true ||
+        masterInitiativeTokenIsTemporary(actor) ||
+        actor['encounterObject'] == true ||
+        record == null ||
+        record['kind'] != 'escape' ||
+        record['status'] != 'pending' ||
+        record['encounterId'] != encounterId ||
+        record['scope'] != permissionScope ||
+        record['sourceTag'] == actorTag ||
+        (record['noticed'] as Map? ?? {})[actorTag] != true ||
+        (record['answers'] as Map? ?? {}).containsKey(actorTag)) {
+      return false;
+    }
+    final source = tokens
+        .where((t) => combatTokenMatchesSheet(t, '${record['sourceTag']}'))
+        .firstOrNull;
+    if (source == null ||
+        source['outsideFight'] == true ||
+        '${source['fightInstanceId'] ?? ''}'.isNotEmpty &&
+            '${record['fightInstanceId'] ?? ''}'.isNotEmpty &&
+            source['fightInstanceId'] != record['fightInstanceId']) {
+      return false;
+    }
+    final friendly = actor['side'] == record['sourceSide'];
+    if (kind == 'pass') return true;
+    if (kind == 'block' && friendly) return false;
+    final free =
+        !totalPowerTokenExhausted(actor) &&
+        (friendly ? record['freeHelper'] : record['lastAggressor']) == actorTag;
+    if (kind == 'attack') return !friendly && free;
+    if (free) return true;
+    final active = tokens.indexOf(actor) == readIntValue(group['activeIndex']);
+    if (active &&
+        (!readBoolValue(actor['actionUsed']) ||
+            readIntValue(actor['kiExtraActions']) > 0) &&
+        artDebtForToken(actor, 'action') == 0) {
+      return true;
+    }
+    final round = readIntValue(group['round']);
+    return artDebtForToken(actor, 'reaction') == 0 &&
+        (masterInitiativeNormalReactionRemaining(actor, round: round) > 0 ||
+            masterInitiativeFastReactionUsedThisTurn(actor, turnKey: '$round') <
+                masterInitiativeFastReactionMax(actor));
+  }
+
+  bool escapeNpcStaffAttack(Map<String, dynamic> packet) {
+    if (packet['escapeNpcInterception'] != true ||
+        !const {'master', 'coMaster'}.contains(packet['senderRole']) ||
+        !oculumEscapeAttackDieIsValid(packet)) {
+      return false;
+    }
+    final record = onlineCombatRequests['${packet['escapeReactionOf'] ?? ''}'];
+    if (record == null || !escapeAttackAllowed(packet)) return false;
+    final source = onlineCombatTokens()
+        .where((t) => combatTokenMatchesSheet(t, '${packet['sourceTag']}'))
+        .firstOrNull;
+    if (source == null ||
+        source['side'] == record['sourceSide'] ||
+        source['outsideFight'] == true ||
+        !masterInitiativeTokenCanAct(source)) {
+      return false;
+    }
+    final index = localSheetIndexForOculumTag('${packet['sourceTag']}');
+    final type = index >= 0
+        ? tipoSchedaPersonaggio(index)
+        : '${source['type'] ?? ''}';
+    return source['side'] != 'party' ||
+        source['npc'] == true ||
+        type.toLowerCase().contains('mostro') ||
+        type.toLowerCase().contains('boss');
+  }
+
+  Future<void> answerEscapeForToken(
+    String encounterId,
+    String escapeId,
+    String actorTag,
+    String kind,
+  ) async {
+    if (!canAnswerEscapeForToken(encounterId, escapeId, actorTag, kind)) return;
+    final previous = selectedMasterInitiativeGroupId;
+    if (previous != encounterId) selectMasterInitiativeGroup(encounterId);
+    try {
+      // Revalidate after selecting, using the live authoritative counters.
+      if (!canAnswerEscapeForToken(encounterId, escapeId, actorTag, kind)) {
+        return;
+      }
+      final actor = masterInitiativeTokens.firstWhere(
+        (t) => combatTokenMatchesSheet(t, actorTag),
+      );
+      final record = onlineCombatRequests[escapeId]!;
+      final friendly = actor['side'] == record['sourceSide'];
+      final free =
+          !totalPowerTokenExhausted(actor) &&
+          (friendly ? record['freeHelper'] : record['lastAggressor']) ==
+              actorTag;
+      if (kind != 'pass' && !free) {
+        final active =
+            masterInitiativeTokens.indexOf(actor) ==
+            masterInitiativeActiveIndex;
+        final resource =
+            active &&
+                (!readBoolValue(actor['actionUsed']) ||
+                    readIntValue(actor['kiExtraActions']) > 0) &&
+                artDebtForToken(actor, 'action') == 0
+            ? 'azione'
+            : 'reazione';
+        if (!_consumeLocalCombatTurnResource(actorTag, resource)) return;
+      }
+      final index = localSheetIndexForOculumTag(actorTag);
+      final reflex = index >= 0
+          ? escapeSubtraitAt(index, 'riflessi')
+          : readIntValue(actor['riflessi'] ?? actor['reflexes']);
+      final movement =
+          (index >= 0
+                  ? sheetMovementAt(index)
+                  : max(
+                      0,
+                      readIntValue(
+                        actor['movement'] ?? actor['movimento'],
+                        fallback: 30 + readIntValue(actor['materia']) ~/ 6,
+                      ),
+                    ))
+              .toInt();
+      final level = index >= 0
+          ? sheetCriticalLevelAt(index)
+          : masterInitiativeTokenLevel(actor);
+      final grade = index >= 0
+          ? sheetIntValueAt(index, 'grado')
+          : masterInitiativeTokenGrade(actor);
+      final difficulty = index >= 0
+          ? sheetDifficoltaTiroAt(index)
+          : readIntValue(actor['rollDifficulty']);
+      final source = '${record['sourceTag']}';
+      if (kind == 'attack') {
+        final natural = Random.secure().nextInt(16) + 1;
+        final bonus = index >= 0
+            ? sheetRollBonusAt(index, 'vc')
+            : readIntValue(actor['vc']);
+        final total = rollTotalWithCritical(
+          natural,
+          16,
+          [bonus],
+          level: level,
+          grade: grade,
+          difficulty: difficulty,
+        );
+        final damage = index >= 0
+            ? escapeDamageStat(actorTag)
+            : max(0, readIntValue(actor['damage'] ?? actor['danno']));
+        final monsterId = monsterBookIdForCombatToken(actor);
+        final packet = <String, dynamic>{
+          'id': 'escape-npc-attack:$escapeId:$actorTag',
+          'scope': permissionScope,
+          'encounterId': encounterId,
+          'sourceTag': actorTag,
+          'sourceName': oculumReferenceEncounterTokenName(actor),
+          'targetTag': source,
+          'targetName': record['sourceName'],
+          'choice': 'vc',
+          'attack': total,
+          'natural': natural,
+          'dieFaces': 16,
+          'damage': max(0, damage),
+          'damageTotal': max(0, damage),
+          'baseAttack': true,
+          'element': actor['attackElement'] ?? actor['element'] ?? 'fisico',
+          'level': level,
+          'grade': grade,
+          'difficulty': difficulty,
+          'sourceMonsterBookId': monsterId,
+          if (monsterBookEntryById(
+                monsterId,
+              )?.encounterRules['canHitIntangible'] ==
+              true)
+            'canHitIntangible': true,
+          'effects': <Map<String, dynamic>>[],
+          'status': 'pending',
+          'turnResourceSpends': <Map<String, dynamic>>[],
+          'escapeReactionOf': escapeId,
+          'escapeNpcInterception': true,
+          'abilityName': 'Intercettazione · VC',
+          'createdAt': DateTime.now().toIso8601String(),
+        };
+        if (!escapeAttackAllowed(packet)) return;
+        onlineCombatRequests['${packet['id']}'] = packet;
+        receiveLocalCombatAttack(packet);
+        await sendOnlineCombatRequest(packet);
+        mostraDadoCentrale(
+          valore: rollFormulaWithCritical(
+            roll: natural,
+            faces: 16,
+            bonuses: [bonus],
+            level: level,
+            grade: grade,
+            difficulty: difficulty,
+          ),
+          criticoUno: natural == 1,
+          criticoVenti: natural == 16,
+          facce: 16,
+        );
+      } else {
+        final payload = <String, dynamic>{
+          'id': 'escape-answer:$escapeId:$actorTag',
+          'escapeId': escapeId,
+          'stage': 'answer',
+          'encounterId': encounterId,
+          'sourceTag': actorTag,
+          'targetTag': source,
+          'answer': kind,
+          'friendly': friendly,
+          'movement': movement,
+          'total': 0,
+        };
+        if (kind == 'block') {
+          final natural = Random.secure().nextInt(20) + 1;
+          payload['natural'] = natural;
+          payload['total'] = rollTotalWithCritical(
+            natural,
+            20,
+            [movement + reflex],
+            level: level,
+            grade: grade,
+            difficulty: difficulty,
+          );
+          mostraDadoCentrale(
+            valore: rollFormulaWithCritical(
+              roll: natural,
+              faces: 20,
+              bonuses: [movement + reflex],
+              level: level,
+              grade: grade,
+              difficulty: difficulty,
+            ),
+            criticoUno: natural == 1,
+            criticoVenti: natural == 20,
+          );
+        }
+        await emitEscape(payload);
+      }
+      captureActiveMasterInitiativeGroup();
+      sendRealtimeInitiativeSnapshotIfPublished();
+      programmaSalvataggio();
+    } finally {
+      if (mounted &&
+          previous != encounterId &&
+          selectedMasterInitiativeGroupId == encounterId) {
+        captureActiveMasterInitiativeGroup();
+        selectMasterInitiativeGroup(previous);
+      }
+    }
   }
 
   Future<void> answerEscape(Map<String, dynamic> record, String kind) async {
@@ -509,7 +984,7 @@ extension _OculumEscape on _OculumHomePageState {
         (record['noticed'] as Map? ?? {})[tag] != true) {
       return;
     }
-    final friendly = combatScoutSide(tag) == record['sourceSide'];
+    final friendly = escapeCombatSide(tag) == record['sourceSide'];
     final free =
         !totalPowerExhausted &&
         (friendly
@@ -558,6 +1033,26 @@ extension _OculumEscape on _OculumHomePageState {
 
   Future<void> concludeEscape(Map<String, dynamic> record) async {
     if (!escapeAuthority || record['status'] != 'pending') return;
+    final encounterId = '${record['encounterId'] ?? ''}';
+    final previous = selectedMasterInitiativeGroupId;
+    if (escapeUsesMasterTokens &&
+        encounterId.isNotEmpty &&
+        previous != encounterId) {
+      if (!masterInitiativeGroups.any((g) => '${g['id']}' == encounterId)) {
+        return;
+      }
+      selectMasterInitiativeGroup(encounterId);
+      try {
+        await concludeEscape(record);
+      } finally {
+        if (mounted && selectedMasterInitiativeGroupId == encounterId) {
+          captureActiveMasterInitiativeGroup();
+          selectMasterInitiativeGroup(previous);
+        }
+      }
+      return;
+    }
+    if (!escapeRequestIsCurrent(record)) return;
     final answers = (record['answers'] as Map? ?? {}).values
         .whereType<Map>()
         .toList();
@@ -682,17 +1177,57 @@ extension _OculumEscape on _OculumHomePageState {
     );
   }
 
-  void receiveEscapeEvent(Map<String, dynamic> payload) {
+  void receiveEscapeEvent(
+    Map<String, dynamic> payload, {
+    bool locallyAuthored = false,
+  }) {
+    if (realtimeService?.isConnected == true &&
+        !locallyAuthored &&
+        !validPermissionSender(payload)) {
+      return;
+    }
+    final requested = '${payload['encounterId'] ?? ''}';
+    final previous = selectedMasterInitiativeGroupId;
+    if (escapeUsesMasterTokens &&
+        requested.isNotEmpty &&
+        requested != previous) {
+      final known = masterInitiativeGroups.any(
+        (group) => '${group['id']}' == requested,
+      );
+      if (!known) return;
+      selectMasterInitiativeGroup(requested);
+      try {
+        _receiveEscapeEventForSelectedEncounter(
+          payload,
+          locallyAuthored: locallyAuthored,
+        );
+      } finally {
+        captureActiveMasterInitiativeGroup();
+        selectMasterInitiativeGroup(previous);
+      }
+      return;
+    }
+    _receiveEscapeEventForSelectedEncounter(
+      payload,
+      locallyAuthored: locallyAuthored,
+    );
+  }
+
+  void _receiveEscapeEventForSelectedEncounter(
+    Map<String, dynamic> payload, {
+    required bool locallyAuthored,
+  }) {
     final eventId = '${payload['id'] ?? ''}';
     if (eventId.isEmpty || eventId.length > 160) return;
     if (payload['scope'] != permissionScope ||
-        payload['encounterId'] != onlineCombatEncounterId ||
+        payload['encounterId'] != escapeEventEncounterId ||
         realtimeService?.isConnected == true &&
+            !locallyAuthored &&
             !validPermissionSender(payload)) {
       return;
     }
     final source = '${payload['sourceTag']}', stage = '${payload['stage']}';
-    if (!onlineCombatTokens().any((t) => onlineCombatTokenTag(t) == source)) {
+    if (!escapeCombatTokens().any((t) => onlineCombatTokenTag(t) == source)) {
       return;
     }
     final staff = const {'master', 'coMaster'}.contains(payload['senderRole']);
@@ -740,7 +1275,7 @@ extension _OculumEscape on _OculumHomePageState {
       final answers = Map<String, dynamic>.from(
         record['answers'] as Map? ?? {},
       );
-      final friendly = combatScoutSide(source) == record['sourceSide'];
+      final friendly = escapeCombatSide(source) == record['sourceSide'];
       payload['friendly'] = friendly;
       if (payload['answer'] == 'help') {
         payload['bonus'] =
@@ -759,13 +1294,14 @@ extension _OculumEscape on _OculumHomePageState {
       if (record == null || record['status'] != 'pending') return;
       record['status'] = payload['success'] == true ? 'escaped' : 'failed';
       if (payload['success'] == true) {
+        recordCombatSuccessfulEscapeTrait(record);
         markOutsideFight(source, critical: payload['critical'] == true);
       }
       aggiungiLog(
         '[FUGA] ${record['sourceName']}: ${payload['success'] == true ? 'fuori fight' : 'fuga fermata'}.',
       );
       if (escapeAuthority && payload['success'] == true) {
-        unawaited(finishIfPartyEscaped());
+        scheduleEscapeFightEnd('${payload['encounterId']}');
       }
     } else if (stage == 'rescue_request' || stage == 'rescue_result') {
       final hero = onlineCombatRequests['${payload['escapeId']}'];
@@ -797,7 +1333,7 @@ extension _OculumEscape on _OculumHomePageState {
       aggiungiLog(
         '[FUGA CRITICA] ${hero['sourceName']} porta fuori ${companion['sourceName']}: nessun altro tiro o costo.',
       );
-      if (escapeAuthority) unawaited(finishIfPartyEscaped());
+      if (escapeAuthority) scheduleEscapeFightEnd('${payload['encounterId']}');
     } else if (stage == 'return') {
       if (!const {'velo', 'riflessi'}.contains(payload['mode'])) return;
       final token = escapeToken(source);
@@ -836,6 +1372,7 @@ extension _OculumEscape on _OculumHomePageState {
       'outsideFirstPending': true,
       'outsideCritical': critical,
     });
+    if (token['side'] == 'enemy') recordPlanarMonsterEscape(token);
   }
 
   void refreshEscapeTurn(Map<String, dynamic> token, {int? percentile}) {
@@ -1016,7 +1553,7 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Map<String, int> escapeExperienceByParticipant() {
-    final tokens = onlineCombatTokens();
+    final tokens = escapeCombatTokens();
     final party = tokens
         .where(
           (t) =>
@@ -1062,6 +1599,61 @@ extension _OculumEscape on _OculumHomePageState {
     };
   }
 
+  void scheduleEscapeFightEnd(String encounterId) {
+    unawaited(
+      Future<void>.microtask(() async {
+        if (!mounted || !escapeAuthority) return;
+        final previous = selectedMasterInitiativeGroupId;
+        final group = masterInitiativeGroups
+            .where((g) => '${g['id']}' == encounterId)
+            .firstOrNull;
+        if (group == null ||
+            group['combatEnded'] == true ||
+            group['fightStarted'] == false) {
+          return;
+        }
+        if (previous != encounterId) selectMasterInitiativeGroup(encounterId);
+        try {
+          await finishIfPartyEscaped();
+          if (mounted && group['combatEnded'] != true) {
+            await finishIfEnemiesEscaped();
+          }
+        } finally {
+          if (mounted &&
+              previous != encounterId &&
+              selectedMasterInitiativeGroupId == encounterId) {
+            captureActiveMasterInitiativeGroup();
+            selectMasterInitiativeGroup(previous);
+          }
+        }
+      }),
+    );
+  }
+
+  Future<void> finishIfEnemiesEscaped() async {
+    if (!escapeUsesMasterTokens || !currentCombatIsActive()) return;
+    final enemies = masterInitiativeTokens
+        .where(
+          (token) =>
+              token['side'] == 'enemy' &&
+              !masterInitiativeTokenIsTemporary(token) &&
+              token['encounterObject'] != true,
+        )
+        .toList();
+    if (enemies.isEmpty ||
+        enemies.any(
+          (t) => !const {'dead', 'fled', 'expired'}.contains('${t['status']}'),
+        )) {
+      return;
+    }
+    final group = masterInitiativeGroups
+        .where((g) => '${g['id']}' == escapeEventEncounterId)
+        .firstOrNull;
+    if (group == null || group['enemyEscapeFinishing'] == true) return;
+    group['enemyEscapeFinishing'] = true;
+    await finishEncounter(escapeEventEncounterId, automatic: true);
+  }
+
   Future<void> finishIfPartyEscaped() async {
     if (!escapeAuthority || !currentCombatIsActive()) return;
     final party = masterInitiativeTokens
@@ -1079,11 +1671,11 @@ extension _OculumEscape on _OculumHomePageState {
       return;
     }
     final group = masterInitiativeGroups
-        .where((g) => g['id'] == onlineCombatEncounterId)
+        .where((g) => g['id'] == escapeEventEncounterId)
         .firstOrNull;
     if (group == null || group['escapeFinishing'] == true) return;
     group['escapeFinishing'] = true;
     group['escapeExperience'] = escapeExperienceByParticipant();
-    await finishEncounter(onlineCombatEncounterId, automatic: true);
+    await finishEncounter(escapeEventEncounterId, automatic: true);
   }
 }

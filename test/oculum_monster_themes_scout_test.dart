@@ -59,7 +59,10 @@ void main() {
   test(
     'power reading exposes only categories and failed reading only the dominant stat',
     () {
-      expect(oculumScoutPower(3, [5, 2, 1, 0]), 11);
+      expect(
+        oculumScoutPower(3, [5, 2, 1, 0]),
+        12,
+      ); // Grade 0, HP multiplier 10 adds 1.
       expect(oculumScoutPowerBand(0, 0), 'equal');
       expect(oculumScoutPowerBand(0, 1), 'impossible');
       for (final (target, expected) in [
@@ -128,7 +131,10 @@ void main() {
           ].fold<int>(0, (n, k) => n + (m.stats[k] ?? 0)),
           3,
         );
-        expect(m.skillIds.length, 14); // Two authored + twelve growth techniques.
+        expect(
+          m.skillIds.length,
+          14,
+        ); // Two authored + twelve growth techniques.
         expect(m.dropIds, isNotEmpty);
         expect(m.planeIds.every(oculumMonsterHabitats.containsKey), isTrue);
       }

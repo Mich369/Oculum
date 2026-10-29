@@ -1,12 +1,18 @@
 # Erik I
 
+## Aggiornamento del29ottobre — misura attuale prevalente
+
+La misura attuale del [report del motore](../../output/characters/erik_i/potenza.json) è **131 PT**, rispetto a130 prima del [bonus Vita alla PT](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#vita-per-livello-bonus-pt-e-visibilità--ultima-conferma). A livello8/Grado0 il moltiplicatore10 aggiunge1 alla PT; **260 Vita massima** e RES26/VOL37/MAT38/OCU21 restano invariati. La verifica conserva l’eccezione personale e la Custodia del Girone, senza alterare le guardie generiche. Esportazione e distribuzione richiedono le rispettive verifiche.
+
+Questa nota prevale sulle misure del28ottobre conservate sotto come storico. Per le Open si applica il [ciclo del29ottobre](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#nuova-regola-generale-open), rispettando i poteri effettivamente posseduti e senza assegnare a Erik quelli di Lusier.
+
 Soldato / Guardia Solare Elité, **livello 8, Grado 0**. Fratello di Lusier III e molto più debole di lui. È più misurato, ma rimane fedele al fratello: questa differenza di carattere non lo rende automaticamente alleato dei Lunari.
 
 Lusier gli ha concesso i circoli solari inferiori del proprio dominio, intermedi rispetto ai gironi contaminati ancora più in basso. La disposizione confermata è: **Lusier sopra, Erik nella fascia intermedia, circoli lunari contaminati sotto**. L’Oculum esausto viene scaricato dall’alto nei circoli lunari per purificare l’aria dei quartieri superiori.
 
 ## Scheda e potenza misurata
 
-La Potenza Totale effettiva dell’esportazione aggiornata è **130**, letta dal report [potenza.json](../../output/characters/erik_i/potenza.json). È una misura del motore con l’equipaggiamento attivo, non una somma manuale dei punti da riassegnare. Il depotenziamento è un’eccezione personale approvata per Erik.
+La Potenza Totale attuale è **131**, letta dal report [potenza.json](../../output/characters/erik_i/potenza.json); la misura precedente130 non comprendeva il bonus Vita alla PT. È una misura del motore con l’equipaggiamento attivo, non una somma manuale dei punti da riassegnare. Il depotenziamento è un’eccezione personale approvata per Erik.
 
 | Statistica effettiva | Valore |
 |---|---:|
@@ -17,7 +23,7 @@ La Potenza Totale effettiva dell’esportazione aggiornata è **130**, letta dal
 
 La Guardia Solare Elité generica conserva base56 e crescita ordinaria. Erik resta livello8/Grado0 ma usa l’overlay personale depotenziato: non applicarlo a tutte le guardie. Non estendere a Erik la priorità Volontà/Oculum fissata specificamente per Lusier. I valori effettivi comprendono i bonus applicabili dell’equipaggiamento e vanno ricalcolati dopo ogni personalizzazione.
 
-**Haniel conosce la PT130 di Erik.** Non è stata ancora fissata una scena in cui comunichi quel numero a Senka. La soglia di298 pronunciata a Senka rimane riferita a Lusier III, non a Erik.
+**Haniel conosce la PT131 di Erik.** Non è stata ancora fissata una scena in cui comunichi quel numero a Senka. La soglia attuale301 pronunciata a Senka rimane riferita a Lusier III, non a Erik.
 
 - Scheda: [Erik_I.json](../../output/characters/erik_i/Erik_I.json).
 - Codice importabile: [Erik_I.codice.txt](../../output/characters/erik_i/Erik_I.codice.txt).
@@ -47,6 +53,6 @@ Al livello 8 è disponibile la prima forma; le successive rimangono sviluppi fut
 
 Costruttore, esportazione e misura della PT sono locali. Questo documento non dichiara una nuova pubblicazione GitHub, una nuova installazione o una prova con dispositivi online indipendenti. Solo Erik riceve questa nuova scheda: non sono state create schede di Sky o Haniel.
 
-## Versione personale depotenziata confermata
+## Versione personale depotenziata confermata il28ottobre — storico
 
 Livello8, Grado0, **130PT**; RES26/VOL37/MAT38/OCU21,260Vita. Eccezione personale alla precedente scheda184PT, senza cambiare la crescita delle guardie generiche. Custodia del Girone: Scudo8/14/22 eDifesa5/8/11; costi3/4/6 eCD3 conservati. Haniel conosce la nuova misura130. L’overlay `Erik_I.overlay_personale.json` conserva questa scelta anche nelle verifiche/generazioni future.

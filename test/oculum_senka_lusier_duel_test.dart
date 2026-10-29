@@ -77,7 +77,7 @@ void main() {
       p.refillStatsAndHealth();
       final lusierPower = p.totalPower(1);
       save();
-      expect(lusierPower, 298);
+      expect(lusierPower, 301); // Grade I HP multiplier 15 adds 3 PT.
       load(0);
       for (final art in (state.arti as List).cast<CharacterArt>()) {
         for (final skill in art.skills) {

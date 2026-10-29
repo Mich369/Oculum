@@ -6316,6 +6316,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             difficulty: difficulty,
           )
         : base;
+    initiativeToken['initiativeUnwoundedTotal'] =
+        initiativeToken['initiativeTotal'];
+    refreshWoundedInitiativeToken(initiativeToken);
     initiativeToken['reactionMax'] = localMapTokenReactionMax(token);
     initiativeToken['reactionFastMax'] = localMapTokenFastReactionMax(token);
     initiativeToken['reactionManual'] = true;
@@ -7328,11 +7331,17 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     if (index < 0 || index >= schedePersonaggio.length) return 0;
     if (index == schedaCorrente) return movimento();
     final derived = readIntValue(
-      schedePersonaggio[index]['derivedMovimento'],
+      schedePersonaggio[index]['derivedUnwoundedMovimento'] ??
+          schedePersonaggio[index]['derivedMovimento'],
       fallback: -1,
     );
-    if (derived >= 0) return derived;
-    return max(0, 30 + sheetIntValueAt(index, 'materia') ~/ 6);
+    return oculumWoundedMovement(
+      derived >= 0
+          ? derived
+          : max(0, 30 + sheetIntValueAt(index, 'materia') ~/ 6),
+      hp: sheetCurrentHpForDeathAt(index),
+      maxHp: sheetMaxHpForDeathAt(index),
+    );
   }
 
   Map<String, dynamic>? initiativeTokenForLocalMapToken(

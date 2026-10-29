@@ -102,7 +102,11 @@ void main() {
           'oculum': 0,
         });
         expect(pawn.creatureSheetTag, isNotEmpty);
-        expect(pawn.hp, 30);
+        final pawnMaximum =
+            pawn.stats['resilienza']! *
+            oculumHpMultiplierForGrade(pawn.grade, level: pawn.level);
+        expect(pawn.maxHp, pawnMaximum);
+        expect(pawn.hp, pawnMaximum);
         expect(pawn.defense, probe.defense());
         final restored = OculumPawnGuardian.fromJson(pawn.toJson());
         expect(restored.creatureSheetTag, pawn.creatureSheetTag);

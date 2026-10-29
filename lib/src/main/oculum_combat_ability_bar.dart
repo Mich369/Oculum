@@ -1020,9 +1020,13 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (isLunarGuardianCoreCreature &&
+                    role != OculumCombatAbilityRole.attack)
+                  lunarGuardianCorePanel(),
                 if (role == OculumCombatAbilityRole.support) ...[
                   totalPowerBurstStatus(),
                   provokerShieldStatus(),
+                  guardianGoldificationControls(),
                   escapeUtilityControls(),
                   escapeRequestsPanel(),
                 ],

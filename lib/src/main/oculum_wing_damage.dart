@@ -16,11 +16,12 @@ extension _OculumWingDamage on _OculumHomePageState {
     Map<String, dynamic> request, {
     required int hpLost,
     required bool critical,
+    bool partDestroyed = false,
     int? percentile,
   }) {
     if (hpLost <= 0 ||
-        criticalShieldBlocksDebuffs(request) ||
-        !critical ||
+        (!partDestroyed && criticalShieldBlocksDebuffs(request)) ||
+        (!critical && !partDestroyed) ||
         !faunaReceipt('fracture:${request['id']}')) {
       return;
     }
@@ -30,6 +31,8 @@ extension _OculumWingDamage on _OculumHomePageState {
         .map((p) => Map<String, dynamic>.from(p))
         .toList();
     if (condition != null && locations.length >= 3) {
+      // Structural zero is not an additional critical after the three limbs.
+      if (!critical || criticalShieldBlocksDebuffs(request)) return;
       final extra = readIntValue(condition.metadata['extraCriticals']) + 1;
       final penalty = 3 + extra;
       final target = (percentile ?? Random.secure().nextInt(100)) < 50
@@ -66,7 +69,8 @@ extension _OculumWingDamage on _OculumHomePageState {
     });
     applyCondition(
       'frattura',
-      source: 'Critico · ${locations.map((p) => p['label']).join(', ')}',
+      source:
+          '${partDestroyed ? 'Integrità esaurita' : 'Critico'} · ${locations.map((p) => p['label']).join(', ')}',
       metadata: {'limbs': locations},
     );
     aggiungiLog(
@@ -76,8 +80,9 @@ extension _OculumWingDamage on _OculumHomePageState {
 
   int fractureRollPenalty(String roll) {
     if (statoForzaRimuoveMalus()) return 0;
+    final structural = anatomicalPartRollPenalty(roll);
     final condition = getCondition('frattura');
-    if (condition == null) return 0;
+    if (condition == null) return structural;
     final key = oculumNormalizeText(roll);
     final arms = const {
       'vc',
@@ -103,10 +108,12 @@ extension _OculumWingDamage on _OculumHomePageState {
           (p) => arms && p['group'] == 'arms' || legs && p['group'] == 'legs',
         )
         .length;
-    return relevant > 0
+    final fracture = relevant > 0
         ? condition.stacks.clamp(1, 3).toInt() +
               readIntValue(condition.metadata['extraCriticals'])
         : 0;
+    // Different material representations never double-count the same injury.
+    return max(fracture, structural);
   }
 
   List<String> get damagedWingIds =>
@@ -124,12 +131,13 @@ extension _OculumWingDamage on _OculumHomePageState {
     Map<String, dynamic> request, {
     required int hpLost,
     required bool critical,
+    bool partDestroyed = false,
     int? fallRoll,
   }) async {
     final part = '${request['targetBodyPart'] ?? ''}';
     if (hpLost <= 0 ||
-        !critical ||
-        criticalShieldBlocksDebuffs(request) ||
+        (!critical && !partDestroyed) ||
+        (!partDestroyed && criticalShieldBlocksDebuffs(request)) ||
         !part.startsWith('wings')) {
       return;
     }
@@ -169,6 +177,7 @@ extension _OculumWingDamage on _OculumHomePageState {
   }
 
   void restoreDamagedWings() {
+    restoreAnatomicalPartsByRecovery('long_rest');
     if (damagedWingIds.isEmpty) return;
     planarState.remove('damagedWings');
     invalidateDerivedDataCaches();

@@ -1221,6 +1221,12 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final definition = oculumConditionDefinition(instance.conditionType);
     final affectedTargets = conditionTargetsFor(instance);
     if (!activeConditions.remove(instance)) return false;
+    if (instance.conditionType == 'frattura') {
+      restoreAnatomicalPartsByRecovery(
+        'appropriate_treatment',
+        fracturesOnly: true,
+      );
+    }
     if (instance.conditionType == 'massima_potenza') {
       removeMaximumPowerBonuses(instance);
     }

@@ -2,16 +2,132 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  for (final phase in [
+    (level: 0, grade: 0, before: 18, after: 30, hpAfter: 23),
+    (level: 1, grade: 0, before: 27, after: 45, hpAfter: 38),
+    (level: 10, grade: 1, before: 33, after: 55, hpAfter: 48),
+    (level: 12, grade: 1, before: 42, after: 70, hpAfter: 63),
+    (level: 13, grade: 1, before: 45, after: 75, hpAfter: 68),
+  ]) {
+    test(
+      'Pawn allocation preserves7 wounds at Lv${phase.level}/G${phase.grade}',
+      () {
+        final pawn = OculumPawnGuardian(
+          id: 'phase_${phase.level}',
+          ownerTag: 'owner',
+          level: phase.level,
+          grade: phase.grade,
+          hp: phase.before - 7,
+          unspentStatPoints: 2,
+        );
+        expect(pawn.maxHp, phase.before);
+        expect(pawn.allocateStatPoints({'resilienza': 2}), isTrue);
+        expect(pawn.maxHp, phase.after);
+        expect(pawn.hp, phase.hpAfter);
+        expect(pawn.maxHp - pawn.hp, 7);
+        final restored = OculumPawnGuardian.fromJson(pawn.toJson());
+        expect(restored.hp, phase.hpAfter);
+        expect(restored.maxHp, phase.after);
+      },
+    );
+  }
+
+  test('Pawn V2 allocation follows owner level phase', () {
+    final pawn = OculumPawnGuardian(
+      id: 'v2_phase',
+      ownerTag: 'owner',
+      isV2: true,
+      level: 2,
+      ownerLevel: 10,
+      ownerGrade: 1,
+      grade: 1,
+      hp: 26,
+      unspentStatPoints: 2,
+    );
+    expect(pawn.maxHp, 33);
+    expect(pawn.allocateStatPoints({'resilienza': 2}), isTrue);
+    expect(pawn.maxHp, 55);
+    expect(pawn.hp, 48);
+  });
+
+  test(
+    'linked Pawn allocation retains its custom maximum and existing wounds',
+    () {
+      final pawn = OculumPawnGuardian(
+        id: 'linked_custom',
+        ownerTag: 'owner',
+        creatureSheetTag: 'custom_body',
+        creatureMaxHp: 71,
+        level: 1,
+        hp: 64,
+        unspentStatPoints: 2,
+      );
+      expect(pawn.allocateStatPoints({'resilienza': 2}), isTrue);
+      expect(pawn.maxHp, 89);
+      expect(pawn.hp, 82);
+      expect(pawn.maxHp - pawn.hp, 7);
+    },
+  );
+
+  test(
+    'Pawn growth preserves current excess and does not revive a dead Pawn',
+    () {
+      final overflow = OculumPawnGuardian(
+        id: 'overflow',
+        ownerTag: 'owner',
+        unspentStatPoints: 2,
+      )..hp = 22;
+      expect(overflow.allocateStatPoints({'resilienza': 2}), isTrue);
+      expect(overflow.maxHp, 30);
+      expect(overflow.hp, 34);
+      final dead = OculumPawnGuardian(
+        id: 'dead_growth',
+        ownerTag: 'owner',
+        hp: 0,
+        unspentStatPoints: 2,
+      );
+      expect(dead.allocateStatPoints({'resilienza': 2}), isTrue);
+      expect(dead.maxHp, 30);
+      expect(dead.hp, 0);
+    },
+  );
+
+  test(
+    'fixed Slime and healer pools do not heal from Resilience allocation',
+    () {
+      final slime = OculumPawnGuardian(
+        id: 'fixed_slime',
+        ownerTag: 'owner',
+        hp: 50,
+        summoningEmblem: {...oculumSummoningEmblemDefaults},
+        unspentStatPoints: 2,
+      );
+      expect(slime.allocateStatPoints({'resilienza': 2}), isTrue);
+      expect(slime.maxHp, 120);
+      expect(slime.hp, 50);
+      final healer = OculumPawnGuardian(
+        id: 'fixed_healer',
+        ownerTag: 'owner',
+        posteaType: 'healer',
+        hp: 50,
+        unspentStatPoints: 2,
+      );
+      expect(healer.allocateStatPoints({'resilienza': 2}), isTrue);
+      expect(healer.maxHp, 100);
+      expect(healer.hp, 50);
+    },
+  );
+
   test('Pawn applies its own defense before its own shield and HP', () {
     final pawn = OculumPawnGuardian(id: 'pawn_defense', ownerTag: 'owner');
     expect(pawn.defense, 4);
     expect(pawn.intercept(4), 0);
-    expect(pawn.hp, 30);
+    expect(pawn.hp, 18);
     pawn.shield = 5;
     expect(pawn.intercept(11), 0);
     expect(pawn.shield, 0);
-    expect(pawn.hp, 28);
-    expect(pawn.intercept(40), 8);
+    expect(pawn.hp, 16);
+    expect(pawn.intercept(40), 20);
     expect(pawn.hp, 0);
     expect(pawn.intercept(7), 7);
   });
@@ -39,17 +155,17 @@ void main() {
       savingShield: true,
     );
     expect(pawn.intercept(20 + pawn.defense), 0);
-    expect(pawn.hp, 30);
+    expect(pawn.hp, 18);
     expect(pawn.shield, 0);
     expect(pawn.savingShield, isFalse);
     expect(pawn.intercept(5 + pawn.defense), 0);
-    expect(pawn.hp, 25);
+    expect(pawn.hp, 13);
   });
   test('Pawn starts at level zero with fixed stats and full health', () {
     final pawn = OculumPawnGuardian(id: 'pawn_test', ownerTag: 'sheet_a');
 
     expect(oculumPawnPrice, 100);
-    expect(pawn.hp, 30);
+    expect(pawn.hp, 18);
     expect(pawn.shield, 0);
     expect(pawn.alive, isTrue);
     expect(pawn.targets, isEmpty);
@@ -57,6 +173,7 @@ void main() {
     expect(oculumPawnDescription, contains('Volontà 3'));
     expect(oculumPawnDescription, contains('Materia 5'));
     expect(oculumPawnDescription, contains('Oculum 0'));
+    expect(oculumPawnDescription, contains('18 HP iniziali'));
   });
 
   test('Pawn intercepts target HP damage only after target shields', () {
@@ -65,7 +182,7 @@ void main() {
 
     expect(pawn.intercept(8 + pawn.defense), 0);
     expect(pawn.shield, 0);
-    expect(pawn.hp, 27);
+    expect(pawn.hp, 15);
   });
 
   test('Saving shield blocks overflow after Pawn shield is depleted', () {
@@ -78,7 +195,7 @@ void main() {
 
     expect(pawn.intercept(25 + pawn.defense), 0);
     expect(pawn.shield, 0);
-    expect(pawn.hp, 30);
+    expect(pawn.hp, 18);
     expect(pawn.savingShield, isFalse);
   });
 
@@ -86,14 +203,14 @@ void main() {
     final pawn = OculumPawnGuardian(
       id: 'pawn_test',
       ownerTag: 'sheet_a',
-      hp: 15,
+      hp: 3, // 15 HP missing: two healing turns before Shield growth.
     );
 
     expect(pawn.advanceTo(1), isTrue);
-    expect(pawn.hp, 25);
+    expect(pawn.hp, 13);
     expect(pawn.advanceTo(1), isFalse, reason: 'A turn cannot be repeated');
     expect(pawn.advanceTo(2), isTrue);
-    expect(pawn.hp, 30);
+    expect(pawn.hp, 18);
     expect(pawn.shield, 0);
     expect(pawn.advanceTo(3), isTrue);
     expect(pawn.shield, 5);
@@ -122,7 +239,7 @@ void main() {
     final pawn = OculumPawnGuardian(
       id: 'pawn_test',
       ownerTag: 'sheet_a',
-      hp: 20,
+      hp: 8, // 10 wounds at the Level 0 maximum of18.
       unspentStatPoints: 9,
     );
 
@@ -141,8 +258,8 @@ void main() {
       'materia': 8,
       'oculum': 2,
     });
-    expect(pawn.maxHp, 50);
-    expect(pawn.hp, 40);
+    expect(pawn.maxHp, 30);
+    expect(pawn.hp, 20); // The same10 wounds remain after gaining12 maximum HP.
     expect(pawn.unspentStatPoints, 0);
   });
 
@@ -245,7 +362,7 @@ void main() {
     final original = OculumPawnGuardian(
       id: 'pawn_test',
       ownerTag: 'sheet_a',
-      hp: 24,
+      hp: 12, // Valid wounded HP below the Level 0 maximum of18.
       shield: 10,
       savingShield: true,
       turn: 3,
@@ -253,7 +370,7 @@ void main() {
     );
 
     final restored = OculumPawnGuardian.fromJson(original.toJson());
-    expect(restored.hp, 24);
+    expect(restored.hp, 12);
     expect(restored.shield, 10);
     expect(restored.savingShield, isTrue);
     expect(restored.turn, 3);
@@ -269,7 +386,7 @@ void main() {
     expect(grown.experience, 250);
     expect(grown.unspentStatPoints, 4);
     expect(grown.stats['materia'], 7);
-    expect(grown.maxHp, 40);
+    expect(grown.maxHp, 36);
     final legacy = OculumPawnGuardian.fromJson({'id': 'old', 'ownerTag': 'a'});
     expect(legacy.stats, {
       'resilienza': 3,

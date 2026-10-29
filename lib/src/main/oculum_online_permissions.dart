@@ -116,14 +116,20 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     String action,
     String description, {
     String? sheetTag,
+    String? encounterId,
   }) {
     ensureCampaignsReady();
     final tag = sheetTag ?? sheetTagAt(schedaCorrente);
+    final resetEncounterId = action == 'encounter_reset'
+        ? encounterId ??
+              '${referenceTurnEncounter()['encounterId'] ?? selectedMasterInitiativeGroupId}'
+        : '';
     if (canActWithoutMasterApproval) {
-      applyApprovedMasterAction(action, tag);
+      applyApprovedMasterAction(action, tag, encounterId: resetEncounterId);
       return;
     }
-    final id = '$permissionScope:$tag:$action';
+    final id =
+        '$permissionScope:$tag:$action${resetEncounterId.isEmpty ? '' : ':$resetEncounterId'}';
     final existing = onlinePermissionRequests[id];
     if (existing != null && existing['status'] == 'pending') {
       unawaited(replayPermissionRequests());
@@ -133,6 +139,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       'id': id,
       'scope': permissionScope,
       'action': action,
+      if (resetEncounterId.isNotEmpty) 'encounterId': resetEncounterId,
       'sheetTag': tag,
       'requesterTag': sheetTagAt(schedaCorrente),
       'requesterName': realtimeDisplayName(),
@@ -147,7 +154,11 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     unawaited(replayPermissionRequests());
   }
 
-  void applyApprovedMasterAction(String action, String tag) {
+  void applyApprovedMasterAction(
+    String action,
+    String tag, {
+    String encounterId = '',
+  }) {
     if (action == 'monster_entry') {
       final index = localSheetIndexForOculumTag(tag);
       if (index >= 0) {
@@ -155,7 +166,50 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         schedePersonaggio[index]['monsterBookApprovedScope'] = permissionScope;
       }
     } else if (action == 'encounter_reset') {
+      applyApprovedEncounterReset(encounterId, tag: tag);
+    }
+  }
+
+  String requestedResetEncounter(Map request) {
+    final explicit = '${request['encounterId'] ?? ''}';
+    final tag = '${request['sheetTag'] ?? request['requesterTag'] ?? ''}';
+    final matches = masterInitiativeGroups.where((group) {
+      if (explicit.isNotEmpty && '${group['id']}' != explicit) return false;
+      if (group['published'] != true) return false;
+      final tokens = '${group['id']}' == selectedMasterInitiativeGroupId
+          ? masterInitiativeTokens
+          : group['tokens'];
+      return (tokens is List ? tokens : const []).whereType<Map>().any(
+        (token) => oculumSameSheetIdentity(
+          publicInitiativeSourceTag(Map<String, dynamic>.from(token)),
+          tag,
+        ),
+      );
+    }).toList();
+    return matches.length == 1 ? '${matches.single['id']}' : '';
+  }
+
+  void applyApprovedEncounterReset(String encounterId, {String tag = ''}) {
+    // The connected owner waits for the authoritative Master snapshot.
+    if (realtimeService?.isConnected == true && !realtimeIsMasterRole) return;
+    final target = encounterId.isNotEmpty
+        ? encounterId
+        : requestedResetEncounter({'sheetTag': tag});
+    if (target.isEmpty ||
+        !masterInitiativeGroups.any((g) => '${g['id']}' == target)) {
+      return;
+    }
+    final previous = selectedMasterInitiativeGroupId;
+    captureActiveMasterInitiativeGroup();
+    selectMasterInitiativeGroup(target);
+    try {
       resetMasterInitiativeRound();
+      captureActiveMasterInitiativeGroup();
+    } finally {
+      if (selectedMasterInitiativeGroupId != previous) {
+        selectMasterInitiativeGroup(previous);
+      }
+      sendRealtimeInitiativeSnapshotIfPublished();
     }
   }
 
@@ -194,7 +248,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         onlinePermissionRequests.remove(request['id']);
         request['scope'] = permissionScope;
         request['id'] =
-            '$permissionScope:${request['sheetTag']}:${request['action']}';
+            '$permissionScope:${request['sheetTag']}:${request['action']}${request['action'] == 'encounter_reset' && '${request['encounterId'] ?? ''}'.isNotEmpty ? ':${request['encounterId']}' : ''}';
         onlinePermissionRequests['${request['id']}'] = request;
       }
     }
@@ -292,6 +346,21 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
           payload['requesterTag'] != payload['senderTag']) {
         return;
       }
+      if (action == 'encounter_reset' &&
+          !const {'master', 'coMaster'}.contains(payload['senderRole']) &&
+          !validPermissionSender({
+            ...payload,
+            'senderTag': payload['sheetTag'] ?? payload['requesterTag'],
+          })) {
+        // Presence already authenticates this session's owned sheet tags.
+        // A player may request for another owned sheet, never an arbitrary
+        // participant used to gain access to that participant's encounter.
+        return;
+      }
+      final resetTarget = action == 'encounter_reset'
+          ? requestedResetEncounter(payload)
+          : '';
+      if (action == 'encounter_reset' && resetTarget.isEmpty) return;
       final existing = onlinePermissionRequests[id];
       if (existing != null && existing['createdAt'] == payload['createdAt']) {
         if (existing['status'] != 'pending') {
@@ -301,6 +370,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       }
       onlinePermissionRequests[id] = {
         ...payload,
+        if (resetTarget.isNotEmpty) 'encounterId': resetTarget,
         'status': 'pending',
         'unread': true,
       };
@@ -320,12 +390,21 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       onlinePermissionRequests[id] = {...existing, ...payload, 'unread': false};
       if (allowed &&
           ownPermissionTags.contains('${existing['requesterTag']}')) {
-        applyApprovedMasterAction(action, '${existing['sheetTag']}');
+        applyApprovedMasterAction(
+          action,
+          '${existing['sheetTag']}',
+          encounterId: '${existing['encounterId'] ?? ''}',
+        );
       }
       if (allowed &&
           haPermessiMaster &&
           !ownPermissionTags.contains('${existing['requesterTag']}')) {
-        if (action == 'encounter_reset') resetMasterInitiativeRound();
+        if (action == 'encounter_reset') {
+          applyApprovedEncounterReset(
+            '${existing['encounterId'] ?? ''}',
+            tag: '${existing['sheetTag']}',
+          );
+        }
         if (action == 'monster_entry') {
           final index = schedePersonaggio.indexWhere(
             (sheet) =>
@@ -1213,7 +1292,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         if (index >= 0) schedePersonaggio[index]['monsterBookApproved'] = true;
       }
       if (allowed && request['action'] == 'encounter_reset') {
-        resetMasterInitiativeRound();
+        applyApprovedEncounterReset(
+          '${request['encounterId'] ?? ''}',
+          tag: '${request['sheetTag']}',
+        );
       }
       aggiungiLog(
         '${request['requesterName']}: ${request['description']} · ${allowed ? 'consentito' : 'rifiutato'} da ${realtimeDisplayName()}.',

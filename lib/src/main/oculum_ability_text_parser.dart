@@ -99,12 +99,6 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
           '${itemOnly.group(1)!.toLowerCase() == 'materiale' ? 'material' : 'item'}:$name',
     );
   }
-  if (RegExp(
-    r'\b(?:nessun\s+costo|senza\s+costo|gratuit[oa])\b',
-    caseSensitive: false,
-  ).hasMatch(raw)) {
-    return (minimum: 0, maximum: 0, resource: 'nessuna');
-  }
   // The cost editor also accepts the existing quick-command spelling
   // (for example, @mat-1). Only a standalone cost field is expenditure:
   // a negative stat command inside prose, such as @res-30%, is an effect.
@@ -218,13 +212,23 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
     '(?:spendi|costa|costo\\s*:?|consumi)\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)',
     caseSensitive: false,
   ).firstMatch(raw);
-  if (fixed == null) return null;
-  final amount = int.parse(fixed.group(1)!);
-  return (
-    minimum: amount,
-    maximum: amount,
-    resource: oculumNormalizeArtSkillCostResource(fixed.group(2)!),
-  );
+  if (fixed != null) {
+    final amount = int.parse(fixed.group(1)!);
+    return (
+      minimum: amount,
+      maximum: amount,
+      resource: oculumNormalizeArtSkillCostResource(fixed.group(2)!),
+    );
+  }
+  // A free roll or turn action is an effect, not a waiver of a declared
+  // resource/item cost elsewhere in the ability description.
+  if (RegExp(
+    r'\b(?:nessun\s+costo|senza\s+costo|gratuit[oaie]|gratis)\b',
+    caseSensitive: false,
+  ).hasMatch(raw)) {
+    return (minimum: 0, maximum: 0, resource: 'nessuna');
+  }
+  return null;
 }
 
 /// Parses executable clauses, never costs/requirements or arbitrary prose.

@@ -1,0 +1,1059 @@
+{
+  "schemaVersion": 1,
+  "title": "Oculum approved runtime artwork batch of2026-10-29",
+  "date": "2026-10-29",
+  "checkedAtUtc": "2026-10-29T14:35:24.543347+00:00",
+  "selfContained": true,
+  "scope": "Exactly ten approved creature packs, each with desktop, phone and decorative relic. This index embeds the selected-file identity, current SHA256, canonical requirements and recorded human approval evidence; original local manifests and duplicate source PNGs are not commit dependencies.",
+  "packCount": 10,
+  "runtimeAssetCount": 30,
+  "countsByKind": {
+    "desktop": 10,
+    "phone": 10,
+    "relic": 10
+  },
+  "verification": {
+    "kind": "Fresh read-only filesystem SHA256, PNG header and static source mapping verification",
+    "matchingApprovedSourceCopies": 30,
+    "missingFiles": 0,
+    "mappedFiles": 30,
+    "mappingSource": "lib/widgets/oculum_monster_theme.dart",
+    "mappingSourceSha256": "864d74c22b5267a0b7266315c9243f1b473f78bcd3ce07a9d42f1835e5c0ba7a",
+    "prior27FileAudit": {
+      "historicalReference": "output/artwork/APPROVED_RUNTIME_COPY_AUDIT_2026-10-29.json",
+      "sha256": "586457214da0ebcd70a8d45447ecf271ebc35b39055d73f13358023ecc82f1f6",
+      "selectedFiles": 27
+    },
+    "additionalPinepineFiles": 3,
+    "runtimeControlsVerifiedByThisIndex": false,
+    "publicationVerifiedByThisIndex": false
+  },
+  "sharedCanon": {
+    "style": "Rame fatato: matte soft hand-painted anime/fantasy, tactile gouache/oil-like brushwork; no photographic/cinematic or glossy3D treatment.",
+    "paintingReference": {
+      "runtimePath": "assets/oculum/home_art/amber_shore.png",
+      "sha256": "3385b8c0b21a784041ab960ebdd8c3657d77c35c041e2a338e608043e2177cd2",
+      "use": "Painting technique only; do not copy its scene or add fairies to lunar subjects."
+    },
+    "composition": "Quiet readable centre for real UI controls; phone images are dedicated recompositions; relics are decorative with transparent margins. No text, logos, watermark or painted controls.",
+    "world": "The Moon is good, dead and absent from the current sky. Carved lunar symbols do not restore it. Subterranean settings have no sky, Sun, Moon or clouds. Iris StarEyes governs stars, not the Sun.",
+    "gameBoundary": "No forced Monster Book portrait. A visual relic adds no new item, loot, power, statistic or mechanic.",
+    "references": [
+      {
+        "path": "docs/OCULUM_LORE_VISIVA.md",
+        "sha256": "e1716a7b5215f50610f0602357b04e0581f649948bf418c2946929c61a25fb49",
+        "scope": "Latest October29 approved anatomy, selected versions and derivative approvals"
+      },
+      {
+        "path": "docs/DICITURE_UTENTE_2026-10-27.md",
+        "sha256": "bfbcf70912719ae60def33a35c97c9832e6aa70d820cef5e83de0f8c2a5cdf5a",
+        "scope": "Painting and world guardrails; later October29 corrections take precedence"
+      },
+      {
+        "path": "design/OCULUM-VISUAL-BIBLE.md",
+        "sha256": "b54255aa72e433fe915e506cd5905d73dafd9ba88884244109d43736cce229d0",
+        "scope": "Oculum art direction and readable real-control space"
+      }
+    ]
+  },
+  "approvals": {
+    "pine_desktop_v2": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Only Pinepine desktop version2",
+      "recordedConfirmation": "User approved the denser green needle tufts behind the head and along the nape; version2 is canonical.",
+      "references": [
+        {
+          "manifestRef": "manifest_1",
+          "record": "/approval"
+        }
+      ]
+    },
+    "pine_phone_relic": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Only the selected Pinepine phone and relic images",
+      "recordedConfirmation": "Phone and relic explicitly user-approved, as recorded in the Pinepine manifest and current visual canon.",
+      "references": [
+        {
+          "manifestRef": "manifest_1",
+          "record": "/approval"
+        }
+      ]
+    },
+    "lunar_six_desktops": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Six exact selected desktop files, not older superseded generations",
+      "recordedConfirmation": "Historical explicit user approval of all six exact desktop references, relayed by root before derivative generation and recorded separately in each manifest.",
+      "references": [
+        {
+          "manifestRef": "manifest_2",
+          "record": "/approvalHistory/0"
+        },
+        {
+          "manifestRef": "manifest_3",
+          "record": "/approvalHistory/0"
+        },
+        {
+          "manifestRef": "manifest_4",
+          "record": "/approvalHistory/0"
+        }
+      ]
+    },
+    "lunar_six_phone_relic": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "All six named phone/relic pairs, exactly twelve selected derivative files",
+      "recordedConfirmation": "Explicit user approval of all six Lunar/Ik phone and relic pairs in the root chat, preserved by the canonical-approval and approval-history records.",
+      "references": [
+        {
+          "manifestRef": "manifest_5",
+          "record": "/userCanonicalApproval"
+        },
+        {
+          "manifestRef": "manifest_5",
+          "record": "/approvalHistory/0"
+        }
+      ]
+    },
+    "bramble_desktop_v3": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Only Bramble desktop version3 with the corrected four thorn-tentacle locomotors",
+      "humanReply": "va bene",
+      "recordedConfirmation": "Root relayed this explicit user reply for the exact desktopv3. Older quadruped versions are superseded.",
+      "references": [
+        {
+          "manifestRef": "manifest_7",
+          "record": "/assets/0"
+        },
+        "docs/OCULUM_LORE_VISIVA.md: Ulteriori anatomie e approvazioni"
+      ]
+    },
+    "bramble_phone_relic_v3": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Only selected Bramble phonev3 and relicv3 derivatives, approved separately from desktop",
+      "humanReply": "Sì, entrambi canonici",
+      "recordedConfirmation": "Explicit derivative approval recorded in the current visual canon and relayed by root in the version3 manifest.",
+      "references": [
+        {
+          "manifestRef": "manifest_7",
+          "record": "/approvalHistory/0"
+        },
+        "docs/OCULUM_LORE_VISIVA.md: Ulteriori anatomie e approvazioni"
+      ]
+    },
+    "ogle_desktop_v4": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Only selected Ogle desktop version4",
+      "recordedConfirmation": "Ogle desktopv4 explicitly approved as canonical; exact-file feedback recorded as approved canonical.",
+      "references": [
+        {
+          "manifestRef": "manifest_6",
+          "record": "/assets/4"
+        },
+        {
+          "manifestRef": "manifest_6",
+          "record": "/rootUserFeedback/ogle_background_draft_v4.png"
+        }
+      ]
+    },
+    "ogle_pawn_phone_relic": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Four selected derivatives: Ogle phone/relic and Pawn phone/relic",
+      "humanReply": "Sì, tutti e quattro",
+      "recordedConfirmation": "Separate explicit approval of these derivatives, relayed by root; it does not extend approval to other or superseded assets.",
+      "references": [
+        {
+          "manifestRef": "manifest_6",
+          "record": "/approvalHistory/0"
+        },
+        {
+          "manifestRef": "manifest_8",
+          "record": "/approvalHistory/0"
+        },
+        "docs/OCULUM_LORE_VISIVA.md: Ulteriori anatomie e approvazioni"
+      ]
+    },
+    "pawn_desktop_v2": {
+      "date": "2026-10-29",
+      "humanApproved": true,
+      "scope": "Pawn selected desktopv2 with two detached floating hands and no connecting arms",
+      "humanReply": "Sì, canonico",
+      "recordedConfirmation": "Earlier human reply in root chat explicitly approved the50cm chess-pawn design, detached hands, dark brown-violet body and gold/brass trim.",
+      "sourceHumanReplyCallId": "call_9b54dd66ba4c4302bec3a048b81b20ff",
+      "references": [
+        {
+          "manifestRef": "manifest_8",
+          "record": "/assets/1/approvalEvidence"
+        }
+      ]
+    }
+  },
+  "packs": [
+    {
+      "creatureId": "pinepine",
+      "name": "Pinepine",
+      "canonicalDesign": "Pinecone humanoid about2m tall; soft rounded features and two visible small eyes. Its pinecone body is its own armor. Denser green needle tufts in front, behind the head and along the nape. Curious and peaceful unless provoked. Forest setting.",
+      "selectedVersions": {
+        "desktop": "v2",
+        "phone": "v1",
+        "relic": "v1"
+      },
+      "approvals": {
+        "desktop": "pine_desktop_v2",
+        "phone": "pine_phone_relic",
+        "relic": "pine_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "guardia_lunare",
+      "name": "Guardia Lunare comune",
+      "canonicalDesign": "Pale lunar common guard; blackened silver with normal violet details#6a4cb0. Preserve the individually approved common-guard design and its distinction from the Elite.",
+      "selectedVersions": {
+        "desktop": "draft_v1",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "lunar_six_desktops",
+        "phone": "lunar_six_phone_relic",
+        "relic": "lunar_six_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "guardia_lunare_elite",
+      "name": "Guardia Lunare Elité",
+      "canonicalDesign": "Pale lunar Elite guard, visibly distinct from the approved common guard; blackened silver and violet details#6a4cb0. Do not replace its design with a Solar sibling portrait.",
+      "selectedVersions": {
+        "desktop": "draft_v1",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "lunar_six_desktops",
+        "phone": "lunar_six_phone_relic",
+        "relic": "lunar_six_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "guardiano_lunare",
+      "name": "Guardiano Lunare",
+      "canonicalDesign": "Massive lunar-stone colossus, not a metal-armored human. Selected desktopv3 is less destroyed, with a solid chest and no exposed hole or core. Intermediate violet-blue, blackened-silver bindings and lunar identity. The core is revealed by the game only after armor breaks and a later grave chest hit.",
+      "selectedVersions": {
+        "desktop": "draft_v3",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "lunar_six_desktops",
+        "phone": "lunar_six_phone_relic",
+        "relic": "lunar_six_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "guardian_devil_moon",
+      "name": "Guardiano della Devil Moon",
+      "canonicalDesign": "Superior devilish lunar-stone colossus with infernal details#8f1b5b and blackened-silver fittings. Solid chest; no already exposed core or chest hole. Keep stone material and selected desktopv2 anatomy.",
+      "selectedVersions": {
+        "desktop": "draft_v2",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "lunar_six_desktops",
+        "phone": "lunar_six_phone_relic",
+        "relic": "lunar_six_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "guardia_infernale_ik",
+      "name": "Guardia Infernale Ik",
+      "canonicalDesign": "Individually approved Infernal Ik guard. Preserve its selected soldier design, blackened silver and infernal details#8f1b5b; Ik belongs to the royal family of Iris StarEyes, who governs stars rather than the Sun.",
+      "selectedVersions": {
+        "desktop": "draft_v1",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "lunar_six_desktops",
+        "phone": "lunar_six_phone_relic",
+        "relic": "lunar_six_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "guardia_infernale_ik_elite",
+      "name": "Guardia Infernale Ik Elité",
+      "canonicalDesign": "Individually approved higher-rank Infernal Ik Elite, distinct from the common Ik; blackened silver with infernal details#8f1b5b. Preserve the selected design without inferring new character lineage or mechanics.",
+      "selectedVersions": {
+        "desktop": "draft_v1",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "lunar_six_desktops",
+        "phone": "lunar_six_phone_relic",
+        "relic": "lunar_six_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "bramble",
+      "name": "Bramble",
+      "canonicalDesign": "Upright humanoid bark bust and exactly two upper arms; exactly four locomotor appendages are the flexible thorny bramble tentacles themselves. No additional animal legs, centaur body, hooves, feet or paws. Pointed wooden mask, two pale-green eyes, amber upper-chest heart, bark, roots and moss.",
+      "selectedVersions": {
+        "desktop": "draft_v3",
+        "phone": "draft_v3",
+        "relic": "draft_v3"
+      },
+      "approvals": {
+        "desktop": "bramble_desktop_v3",
+        "phone": "bramble_phone_relic_v3",
+        "relic": "bramble_phone_relic_v3"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "ogle",
+      "name": "Ogle",
+      "canonicalDesign": "Exactly five red eyes, mauve body, four short legs, yellow claws and large ears. About65percent funny and35percent unsettling. Preserve selected desktopv4 identity in the separately approved derivatives.",
+      "selectedVersions": {
+        "desktop": "draft_v4",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "ogle_desktop_v4",
+        "phone": "ogle_pawn_phone_relic",
+        "relic": "ogle_pawn_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    },
+    {
+      "creatureId": "pawn_guardiano",
+      "name": "Pawn",
+      "canonicalDesign": "Mechanical chess pawn about50cm tall; dark brownish-violet body, gold/brass trim, exactly two detached floating hands, one holding a sword and one a shield. Clear gaps between wrists and armless pawn torso; no connected physical arms or humanoid legs. Identity reference: existing assets/oculum/sprites/Pawn.png.",
+      "selectedVersions": {
+        "desktop": "draft_v2",
+        "phone": "draft_v1",
+        "relic": "draft_v1"
+      },
+      "approvals": {
+        "desktop": "pawn_desktop_v2",
+        "phone": "ogle_pawn_phone_relic",
+        "relic": "ogle_pawn_phone_relic"
+      },
+      "canonicalReferences": [
+        "docs/OCULUM_LORE_VISIVA.md",
+        "docs/CONFERME_2026-10-29_PREMI_GUARDIANI.md"
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "creatureId": "pinepine",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_pinepine_v2.png",
+      "selectedApprovedSource": "output/artwork/pinepine_2026-10-29/pinepine_background_v2.png",
+      "sha256": "1b2ee0557085c7dbd9ccab5107d89453345c7a60a213037098ef044b8028123f",
+      "approvalRef": "pine_desktop_v2",
+      "canonicalVersion": "v2",
+      "bytes": 2336649,
+      "png": {
+        "width": 1586,
+        "height": 992,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "1b2ee0557085c7dbd9ccab5107d89453345c7a60a213037098ef044b8028123f",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "pinepine",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_pinepine_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/pinepine_2026-10-29/pinepine_mobile_v1.png",
+      "sha256": "581214c8f3a66a2b0ab6f5213ef734c4d47d7454121cc1e985525501118fee5d",
+      "approvalRef": "pine_phone_relic",
+      "canonicalVersion": "v1",
+      "bytes": 2615081,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "581214c8f3a66a2b0ab6f5213ef734c4d47d7454121cc1e985525501118fee5d",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "pinepine",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_pinepine_v1.png",
+      "selectedApprovedSource": "output/artwork/pinepine_2026-10-29/pinepine_relic_v1.png",
+      "sha256": "baac008f3ac40d863b975fe35ec3a64d15440db7599e9c3bdfd59d351a340399",
+      "approvalRef": "pine_phone_relic",
+      "canonicalVersion": "v1",
+      "bytes": 1328883,
+      "png": {
+        "width": 1331,
+        "height": 1182,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "baac008f3ac40d863b975fe35ec3a64d15440db7599e9c3bdfd59d351a340399",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_lunare",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_lunare_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_guards_2026-10-29/guardia_lunare_background_draft_v1.png",
+      "sha256": "a0d2d847381e0f483e8c6d5a0d1cfed2d258139c1e88f2b9382a2a74a62b5ef8",
+      "approvalRef": "lunar_six_desktops",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2510583,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "a0d2d847381e0f483e8c6d5a0d1cfed2d258139c1e88f2b9382a2a74a62b5ef8",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_lunare",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_lunare_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_lunare_mobile_draft_v1.png",
+      "sha256": "5db3ef8abf6a76923795ed99b3502917d95c732f6a47c3df0dcf8646b37aabb0",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2420375,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "5db3ef8abf6a76923795ed99b3502917d95c732f6a47c3df0dcf8646b37aabb0",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_lunare",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_guardia_lunare_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_lunare_relic_draft_v1.png",
+      "sha256": "aef1870409f9db0973b2c6cc27b7205f3b25348eb5cbc8c99c15f94245bff199",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1195257,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "aef1870409f9db0973b2c6cc27b7205f3b25348eb5cbc8c99c15f94245bff199",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_lunare_elite",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_lunare_elite_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_guards_2026-10-29/guardia_lunare_elite_background_draft_v1.png",
+      "sha256": "2ac1a4b5bd3ad4288425886aa2bf261fe3081915dedd0e28df92a29a2485e650",
+      "approvalRef": "lunar_six_desktops",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2851738,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "2ac1a4b5bd3ad4288425886aa2bf261fe3081915dedd0e28df92a29a2485e650",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_lunare_elite",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_lunare_elite_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_lunare_elite_mobile_draft_v1.png",
+      "sha256": "9238e5cddbebb41267b523405c7009328cf739dd81199dc5ea57026d4b9d0ec9",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2680200,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "9238e5cddbebb41267b523405c7009328cf739dd81199dc5ea57026d4b9d0ec9",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_lunare_elite",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_guardia_lunare_elite_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_lunare_elite_relic_draft_v1.png",
+      "sha256": "8b829f6b7e8c99809d1ee250504ddf2ffab4088b865525afb248197deef316e7",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1668917,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "8b829f6b7e8c99809d1ee250504ddf2ffab4088b865525afb248197deef316e7",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardiano_lunare",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_guardiano_lunare_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_guardians_2026-10-29/guardiano_lunare_background_draft_v3.png",
+      "sha256": "3346fff81a25dfbccd320d4658e4800c1e979ff6616dd5acbafa883576ea4feb",
+      "approvalRef": "lunar_six_desktops",
+      "canonicalVersion": "draft_v3",
+      "bytes": 2431932,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "3346fff81a25dfbccd320d4658e4800c1e979ff6616dd5acbafa883576ea4feb",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardiano_lunare",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_guardiano_lunare_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardiano_lunare_mobile_draft_v1.png",
+      "sha256": "ec700937fb3e5a34fd00c2b1aae20c9946cf9da6a485030f88b45739561a6b5e",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2374890,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "ec700937fb3e5a34fd00c2b1aae20c9946cf9da6a485030f88b45739561a6b5e",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardiano_lunare",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_guardiano_lunare_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardiano_lunare_relic_draft_v1.png",
+      "sha256": "1325863990ce73b6ee3e2e55d3a43de45214193da87d16c36dbcccfe4a61dc6c",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1700160,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "1325863990ce73b6ee3e2e55d3a43de45214193da87d16c36dbcccfe4a61dc6c",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardian_devil_moon",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_guardian_devil_moon_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_guardians_2026-10-29/guardian_devil_moon_background_draft_v2.png",
+      "sha256": "8434e766f2df15ad59bbe3198069db85cd854204cb8564d9108fe0e887d96066",
+      "approvalRef": "lunar_six_desktops",
+      "canonicalVersion": "draft_v2",
+      "bytes": 2630187,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "8434e766f2df15ad59bbe3198069db85cd854204cb8564d9108fe0e887d96066",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardian_devil_moon",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_guardian_devil_moon_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardian_devil_moon_mobile_draft_v1.png",
+      "sha256": "952cd5bcca4875cc2432cd71837267a41634f25d5a300dd8f21d3ca62e475a63",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2474949,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "952cd5bcca4875cc2432cd71837267a41634f25d5a300dd8f21d3ca62e475a63",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardian_devil_moon",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_guardian_devil_moon_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardian_devil_moon_relic_draft_v1.png",
+      "sha256": "c4ae440058c1e1eaf9533dc3739c44eab2b0b62cb929ca96ce307c6364e17a35",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1784260,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "c4ae440058c1e1eaf9533dc3739c44eab2b0b62cb929ca96ce307c6364e17a35",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_infernale_ik",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_infernale_ik_v1.png",
+      "selectedApprovedSource": "output/artwork/ik_guards_2026-10-29/guardia_infernale_ik_background_draft_v1.png",
+      "sha256": "c645ac2cd742a6fbf875fbae5d1a45fb6d37eac5804d25961977f94adc93a44d",
+      "approvalRef": "lunar_six_desktops",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2943794,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "c645ac2cd742a6fbf875fbae5d1a45fb6d37eac5804d25961977f94adc93a44d",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_infernale_ik",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_infernale_ik_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_infernale_ik_mobile_draft_v1.png",
+      "sha256": "1a60afd44da1b283af595dff918e7111f225ea3c84a3b770c4885579b9128d9e",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2662904,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "1a60afd44da1b283af595dff918e7111f225ea3c84a3b770c4885579b9128d9e",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_infernale_ik",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_guardia_infernale_ik_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_infernale_ik_relic_draft_v1.png",
+      "sha256": "5f6e6fae560c3e997fd604315b058f98c0e231d5e5b7a54cbe731eb37cbb2c80",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1695161,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "5f6e6fae560c3e997fd604315b058f98c0e231d5e5b7a54cbe731eb37cbb2c80",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_infernale_ik_elite",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_infernale_ik_elite_v1.png",
+      "selectedApprovedSource": "output/artwork/ik_guards_2026-10-29/guardia_infernale_ik_elite_background_draft_v1.png",
+      "sha256": "fe3434bbfe0559d45662f98c30c52d1479f1bfbe3b4fcdbed3365746bdf93884",
+      "approvalRef": "lunar_six_desktops",
+      "canonicalVersion": "draft_v1",
+      "bytes": 3036531,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "fe3434bbfe0559d45662f98c30c52d1479f1bfbe3b4fcdbed3365746bdf93884",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_infernale_ik_elite",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_guardia_infernale_ik_elite_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_infernale_ik_elite_mobile_draft_v1.png",
+      "sha256": "fe9fcc07ef225080b8f10f88bf40c64f4d2285e77f5741c35083697e5090d08a",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2450851,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "fe9fcc07ef225080b8f10f88bf40c64f4d2285e77f5741c35083697e5090d08a",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "guardia_infernale_ik_elite",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_guardia_infernale_ik_elite_v1.png",
+      "selectedApprovedSource": "output/artwork/lunar_six_phone_relic_2026-10-29/guardia_infernale_ik_elite_relic_draft_v1.png",
+      "sha256": "3079612685d2fa786a20596e1283b96f2abf0a9e9bfc684c15fb2ceba66a814b",
+      "approvalRef": "lunar_six_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1856593,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "3079612685d2fa786a20596e1283b96f2abf0a9e9bfc684c15fb2ceba66a814b",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "bramble",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_bramble_v3.png",
+      "selectedApprovedSource": "output/artwork/bramble_ogle_2026-10-29/bramble_background_draft_v3.png",
+      "sha256": "8f9ce11fa94c3d5d2502585cd10ccc95014c60277ec6249a1da880afe73cc29b",
+      "approvalRef": "bramble_desktop_v3",
+      "canonicalVersion": "draft_v3",
+      "bytes": 2706325,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "8f9ce11fa94c3d5d2502585cd10ccc95014c60277ec6249a1da880afe73cc29b",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "bramble",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_bramble_mobile_v3.png",
+      "selectedApprovedSource": "output/artwork/bramble_ogle_2026-10-29/bramble_mobile_draft_v3.png",
+      "sha256": "a7c25596be8271e98801d8e9de01ef7697635ce662b31ec5b34e094dd457b841",
+      "approvalRef": "bramble_phone_relic_v3",
+      "canonicalVersion": "draft_v3",
+      "bytes": 2774084,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "a7c25596be8271e98801d8e9de01ef7697635ce662b31ec5b34e094dd457b841",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "bramble",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_bramble_v3.png",
+      "selectedApprovedSource": "output/artwork/bramble_ogle_2026-10-29/bramble_relic_draft_v3.png",
+      "sha256": "4fd50956141997fa7fd612b44df022e88e2867414648f1a0489d1752315d7406",
+      "approvalRef": "bramble_phone_relic_v3",
+      "canonicalVersion": "draft_v3",
+      "bytes": 1830997,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "4fd50956141997fa7fd612b44df022e88e2867414648f1a0489d1752315d7406",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "ogle",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_ogle_v1.png",
+      "selectedApprovedSource": "output/artwork/bramble_ogle_2026-10-29/ogle_background_draft_v4.png",
+      "sha256": "9dc10535266719ffdd14222154a14f1c28a64b2b054604fb01e2f21ea249ba6e",
+      "approvalRef": "ogle_desktop_v4",
+      "canonicalVersion": "draft_v4",
+      "bytes": 2164926,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "9dc10535266719ffdd14222154a14f1c28a64b2b054604fb01e2f21ea249ba6e",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "ogle",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_ogle_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/bramble_ogle_2026-10-29/ogle_mobile_draft_v1.png",
+      "sha256": "cc6923d40623dfc36b5820b5c9d2dcd1d8377aea7868c3a6e87cfe5191b5b145",
+      "approvalRef": "ogle_pawn_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2304185,
+      "png": {
+        "width": 941,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "cc6923d40623dfc36b5820b5c9d2dcd1d8377aea7868c3a6e87cfe5191b5b145",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "ogle",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_ogle_v1.png",
+      "selectedApprovedSource": "output/artwork/bramble_ogle_2026-10-29/ogle_relic_draft_v1.png",
+      "sha256": "b233ec7728182cf8dbe42d54cdae1ad195e6ae6dfd3ce7b4622849856dd9672a",
+      "approvalRef": "ogle_pawn_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1307467,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "b233ec7728182cf8dbe42d54cdae1ad195e6ae6dfd3ce7b4622849856dd9672a",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "pawn_guardiano",
+      "kind": "desktop",
+      "runtimePath": "assets/oculum/home_art/theme_pawn_v1.png",
+      "selectedApprovedSource": "output/artwork/pawn_2026-10-29/pawn_background_draft_v2.png",
+      "sha256": "78921132442e5fe85b30f4f716fa0915e5ad7d3348b1e48e72823a43b1fadfd3",
+      "approvalRef": "pawn_desktop_v2",
+      "canonicalVersion": "draft_v2",
+      "bytes": 2197745,
+      "png": {
+        "width": 1536,
+        "height": 1024,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "78921132442e5fe85b30f4f716fa0915e5ad7d3348b1e48e72823a43b1fadfd3",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "pawn_guardiano",
+      "kind": "phone",
+      "runtimePath": "assets/oculum/home_art/theme_pawn_mobile_v1.png",
+      "selectedApprovedSource": "output/artwork/pawn_2026-10-29/pawn_mobile_draft_v1.png",
+      "sha256": "6107e23c65cdc5d1db865c78eb16a0f9f261e2d83d12ce8c3a855bd82ccc4660",
+      "approvalRef": "ogle_pawn_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 2200526,
+      "png": {
+        "width": 940,
+        "height": 1672,
+        "bitDepth": 8,
+        "colorType": 2
+      },
+      "sourceSha256": "6107e23c65cdc5d1db865c78eb16a0f9f261e2d83d12ce8c3a855bd82ccc4660",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    },
+    {
+      "creatureId": "pawn_guardiano",
+      "kind": "relic",
+      "runtimePath": "assets/oculum/home_art/relic_pawn_v1.png",
+      "selectedApprovedSource": "output/artwork/pawn_2026-10-29/pawn_relic_draft_v1.png",
+      "sha256": "44ee91992a21b6098e8e1e4872efa40a48e9d0d054a50605e6f5d8e14c793f0e",
+      "approvalRef": "ogle_pawn_phone_relic",
+      "canonicalVersion": "draft_v1",
+      "bytes": 1210601,
+      "png": {
+        "width": 1254,
+        "height": 1254,
+        "bitDepth": 8,
+        "colorType": 6
+      },
+      "sourceSha256": "44ee91992a21b6098e8e1e4872efa40a48e9d0d054a50605e6f5d8e14c793f0e",
+      "matchesSelectedApprovedSource": true,
+      "mappedInSource": true
+    }
+  ],
+  "historicalManifestReferences": [
+    {
+      "id": "manifest_1",
+      "path": "output/artwork/pinepine_2026-10-29/manifest.json",
+      "sha256": "c8ba9e689c95e92696f60fc7d442ed567f1c927e3028e2e58fc2024355a239a0",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    },
+    {
+      "id": "manifest_2",
+      "path": "output/artwork/lunar_guards_2026-10-29/manifest.json",
+      "sha256": "e185d56528a14cf973bf1b24f260ee2ffadfe1f9372b2f08183f76e57347d943",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    },
+    {
+      "id": "manifest_3",
+      "path": "output/artwork/lunar_guardians_2026-10-29/manifest.json",
+      "sha256": "90524e212443614fce78d389a617a3709a572025bdba65c8360b054088da39c7",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    },
+    {
+      "id": "manifest_4",
+      "path": "output/artwork/ik_guards_2026-10-29/manifest.json",
+      "sha256": "e0a78994573bca22c54f2192a67fc6c5196ff44083e4076785e6297f9b00bbd0",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    },
+    {
+      "id": "manifest_5",
+      "path": "output/artwork/lunar_six_phone_relic_2026-10-29/manifest.json",
+      "sha256": "6b81db0c7b90b094db6c7897887b717efd989ed253965a494c30f1fa704e7db4",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    },
+    {
+      "id": "manifest_6",
+      "path": "output/artwork/bramble_ogle_2026-10-29/manifest.json",
+      "sha256": "301c6cbba6fc946ee42a60c716c9906abffe474b84484b92d450fa014ecf52ae",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    },
+    {
+      "id": "manifest_7",
+      "path": "output/artwork/bramble_ogle_2026-10-29/bramble_v3_manifest.json",
+      "sha256": "487a741c85d5716a4854d8a310c3cc81497cc661a0098227b9253a5ec18a9487",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    },
+    {
+      "id": "manifest_8",
+      "path": "output/artwork/pawn_2026-10-29/manifest.json",
+      "sha256": "9b92bfd666d523ab56c41785d8ca8925caa272f20e54f9653dbcc5d58adac165",
+      "commitRequired": false,
+      "role": "Historical local evidence; selected approval and canonical details are embedded above. Raw generator paths, private local references and superseded files are not copied into this index."
+    }
+  ],
+  "staging": {
+    "metadataFilesRequired": [
+      "output/artwork/PATCH_2026-10-29_APPROVED_ASSETS.json"
+    ],
+    "additionalJsonOrMarkdownRequiredForThisAssetProvenance": [],
+    "runtimeFilesRequired": [
+      "assets/oculum/home_art/theme_pinepine_v2.png",
+      "assets/oculum/home_art/theme_pinepine_mobile_v1.png",
+      "assets/oculum/home_art/relic_pinepine_v1.png",
+      "assets/oculum/home_art/theme_guardia_lunare_v1.png",
+      "assets/oculum/home_art/theme_guardia_lunare_mobile_v1.png",
+      "assets/oculum/home_art/relic_guardia_lunare_v1.png",
+      "assets/oculum/home_art/theme_guardia_lunare_elite_v1.png",
+      "assets/oculum/home_art/theme_guardia_lunare_elite_mobile_v1.png",
+      "assets/oculum/home_art/relic_guardia_lunare_elite_v1.png",
+      "assets/oculum/home_art/theme_guardiano_lunare_v1.png",
+      "assets/oculum/home_art/theme_guardiano_lunare_mobile_v1.png",
+      "assets/oculum/home_art/relic_guardiano_lunare_v1.png",
+      "assets/oculum/home_art/theme_guardian_devil_moon_v1.png",
+      "assets/oculum/home_art/theme_guardian_devil_moon_mobile_v1.png",
+      "assets/oculum/home_art/relic_guardian_devil_moon_v1.png",
+      "assets/oculum/home_art/theme_guardia_infernale_ik_v1.png",
+      "assets/oculum/home_art/theme_guardia_infernale_ik_mobile_v1.png",
+      "assets/oculum/home_art/relic_guardia_infernale_ik_v1.png",
+      "assets/oculum/home_art/theme_guardia_infernale_ik_elite_v1.png",
+      "assets/oculum/home_art/theme_guardia_infernale_ik_elite_mobile_v1.png",
+      "assets/oculum/home_art/relic_guardia_infernale_ik_elite_v1.png",
+      "assets/oculum/home_art/theme_bramble_v3.png",
+      "assets/oculum/home_art/theme_bramble_mobile_v3.png",
+      "assets/oculum/home_art/relic_bramble_v3.png",
+      "assets/oculum/home_art/theme_ogle_v1.png",
+      "assets/oculum/home_art/theme_ogle_mobile_v1.png",
+      "assets/oculum/home_art/relic_ogle_v1.png",
+      "assets/oculum/home_art/theme_pawn_v1.png",
+      "assets/oculum/home_art/theme_pawn_mobile_v1.png",
+      "assets/oculum/home_art/relic_pawn_v1.png"
+    ],
+    "totalAssetAndProvenanceFiles": 31,
+    "exclude": "Duplicate draft/original PNGs, raw generation manifests with local absolute paths, unapproved or superseded versions, private character inputs and full chat payloads."
+  }
+}

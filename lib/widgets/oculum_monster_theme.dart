@@ -15,6 +15,18 @@ int oculumMonsterArtSeed(String value) =>
     value.codeUnits.fold(17, (seed, unit) => (seed * 31 + unit) & 0x7fffffff);
 
 List<OculumCreatureColor> oculumMonsterColors(MonsterBookEntry monster) {
+  if (monster.encounterRules['lunarGuardFamily'] == true) {
+    return [
+      OculumCreatureColor(
+        'canonico',
+        'Argento annerito · ${monster.encounterRules['infernalIk'] == true ? 'Rosa infernale' : 'Viola lunare'}',
+        monster.encounterRules['infernalIk'] == true
+            ? const Color(0xff8f1b5b)
+            : const Color(0xff6a4cb0),
+        100,
+      ),
+    ];
+  }
   const violet = Color(0xffab91cf);
   const gold = Color(0xffc4a365);
   final id = monster.id;
@@ -147,6 +159,21 @@ class OculumMonsterTheme {
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
   String? get relicIllustration => switch (monster.id) {
+    'bramble' => 'assets/oculum/home_art/relic_bramble_v3.png',
+    'pawn_guardiano' => 'assets/oculum/home_art/relic_pawn_v1.png',
+    'ogle' => 'assets/oculum/home_art/relic_ogle_v1.png',
+    'guardia_lunare' => 'assets/oculum/home_art/relic_guardia_lunare_v1.png',
+    'guardia_lunare_elite' =>
+      'assets/oculum/home_art/relic_guardia_lunare_elite_v1.png',
+    'guardiano_lunare' =>
+      'assets/oculum/home_art/relic_guardiano_lunare_v1.png',
+    'guardian_devil_moon' =>
+      'assets/oculum/home_art/relic_guardian_devil_moon_v1.png',
+    'guardia_infernale_ik' =>
+      'assets/oculum/home_art/relic_guardia_infernale_ik_v1.png',
+    'guardia_infernale_ik_elite' =>
+      'assets/oculum/home_art/relic_guardia_infernale_ik_elite_v1.png',
+    'pinepine' => 'assets/oculum/home_art/relic_pinepine_v1.png',
     'guardia_solare' => 'assets/oculum/home_art/relic_guardia_solare_v1.png',
     'guardia_solare_elite' =>
       'assets/oculum/home_art/relic_guardia_solare_elite_v1.png',
@@ -155,6 +182,20 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'pawn_guardiano' => 'assets/oculum/home_art/theme_pawn_v1.png',
+    'ogle' => 'assets/oculum/home_art/theme_ogle_v1.png',
+    'guardia_lunare' => 'assets/oculum/home_art/theme_guardia_lunare_v1.png',
+    'guardia_lunare_elite' =>
+      'assets/oculum/home_art/theme_guardia_lunare_elite_v1.png',
+    'guardiano_lunare' =>
+      'assets/oculum/home_art/theme_guardiano_lunare_v1.png',
+    'guardian_devil_moon' =>
+      'assets/oculum/home_art/theme_guardian_devil_moon_v1.png',
+    'guardia_infernale_ik' =>
+      'assets/oculum/home_art/theme_guardia_infernale_ik_v1.png',
+    'guardia_infernale_ik_elite' =>
+      'assets/oculum/home_art/theme_guardia_infernale_ik_elite_v1.png',
+    'pinepine' => 'assets/oculum/home_art/theme_pinepine_v2.png',
     'grofix' => 'assets/oculum/home_art/theme_grofix_v1.png',
     'guardia_solare' => 'assets/oculum/home_art/theme_guardia_solare_v2.png',
     'guardia_solare_elite' =>
@@ -182,7 +223,7 @@ class OculumMonsterTheme {
       'assets/oculum/theme_stories/webp/creature_thunderbird.webp',
     'scostubanditi' =>
       'assets/oculum/theme_stories/webp/creature_scostubanditi.webp',
-    'bramble' => 'assets/oculum/theme_stories/webp/creature_bramble.webp',
+    'bramble' => 'assets/oculum/home_art/theme_bramble_v3.png',
     'ombra_ignota' => 'assets/oculum/home_art/creature_ombra_v2.png',
     'uomo_maschera_solare' => 'assets/oculum/home_art/creature_solare_v2.png',
     'uomo_maschera_angelica' => 'assets/oculum/home_art/creature_angelico.png',
@@ -191,12 +232,29 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustrationMobile => switch (monster.id) {
+    'bramble' => 'assets/oculum/home_art/theme_bramble_mobile_v3.png',
+    'pawn_guardiano' => 'assets/oculum/home_art/theme_pawn_mobile_v1.png',
+    'ogle' => 'assets/oculum/home_art/theme_ogle_mobile_v1.png',
+    'guardia_lunare' =>
+      'assets/oculum/home_art/theme_guardia_lunare_mobile_v1.png',
+    'guardia_lunare_elite' =>
+      'assets/oculum/home_art/theme_guardia_lunare_elite_mobile_v1.png',
+    'guardiano_lunare' =>
+      'assets/oculum/home_art/theme_guardiano_lunare_mobile_v1.png',
+    'guardian_devil_moon' =>
+      'assets/oculum/home_art/theme_guardian_devil_moon_mobile_v1.png',
+    'guardia_infernale_ik' =>
+      'assets/oculum/home_art/theme_guardia_infernale_ik_mobile_v1.png',
+    'guardia_infernale_ik_elite' =>
+      'assets/oculum/home_art/theme_guardia_infernale_ik_elite_mobile_v1.png',
+    'pinepine' => 'assets/oculum/home_art/theme_pinepine_mobile_v1.png',
     'grofix' => 'assets/oculum/home_art/theme_grofix_mobile_v1.png',
     'guardiano_solare' =>
       'assets/oculum/home_art/theme_guardiano_solare_mobile_v2.png',
     _ => null,
   };
   String get shape {
+    if (monster.id == 'pinepine') return 'root';
     if (monster.id == 'guardiano_solare') return 'plate';
     final text = '${monster.id} ${monster.nameIt} ${monster.formTags.join(' ')}'
         .toLowerCase();
@@ -227,7 +285,27 @@ class OculumMonsterTheme {
     return 'fang';
   }
 
-  String get motif => monster.id == 'guardiano_solare'
+  String get motif => switch (monster.id) {
+    'bramble' => 'Cuore del custode · corteccia e quattro tralci di rovi',
+    'pawn_guardiano' => 'Sigillo del pedone · spada e scudo sospesi',
+    'ogle' => 'Occhi del sottobosco · malva e artigli gialli',
+    'guardia_lunare' =>
+      'Sigillo della ronda pallida · argento annerito e pietra lunare',
+    'guardia_lunare_elite' =>
+      'Cimiero dei custodi antichi · argento annerito e viola lunare',
+    'guardiano_lunare' =>
+      'Corazza del colosso lunare · pietra integra e vene viola-blu',
+    'guardian_devil_moon' =>
+      'Sigillo della Devil Moon · pietra diabolica e luce infernale',
+    'guardia_infernale_ik' =>
+      'Emblema della ronda Ik · argento annerito e rosa infernale',
+    'guardia_infernale_ik_elite' =>
+      'Cimiero reale Ik · corazza e scudo della guardia Elité',
+    _ => _fallbackMotif,
+  };
+  String get _fallbackMotif => monster.id == 'pinepine'
+      ? 'Squame della pigna curiosa · aghi e seme del bosco'
+      : monster.id == 'guardiano_solare'
       ? 'Elmo del colosso · arco e due frecce d’oro'
       : switch (shape) {
           'mask' =>

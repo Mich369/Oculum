@@ -315,6 +315,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
       child: Row(
         children: [
           realmIndicator(),
+          worldClockBar(),
           IconButton(
             tooltip: !canStep
                 ? 'Il Master gestisce il turno'
@@ -1764,81 +1765,84 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                           itemCount: tokens.length,
                           itemBuilder: (context, row) {
                             final token = tokens[row];
-                            return ListTile(
-                              dense: true,
-                              onLongPress: local && haPermessiMaster
-                                  ? () => moveEncounterMemberToRole(id, token)
-                                  : null,
-                              title: Text(
-                                '${oculumReferenceEncounterTokenName(token)}'
-                                '${oculumCombatTokenHealthLabel(token).isEmpty ? '' : ' · ${oculumCombatTokenHealthLabel(token)}'}',
-                              ),
-                              trailing: canRemoveOwnEncounterToken(token)
-                                  ? IconButton(
-                                      tooltip: 'Esci dallo scontro',
-                                      icon: Icon(Icons.person_remove_outlined),
-                                      onPressed: () =>
-                                          removeReferenceEncounterMember(
-                                            id,
-                                            token,
-                                            local: local,
-                                          ),
-                                    )
-                                  : null,
-                              subtitle: Wrap(
-                                spacing: 6,
-                                runSpacing: 3,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  knownPowerBadge(
-                                    '${token['sheetTag'] ?? token['id'] ?? ''}',
-                                  ),
-                                  Text(
-                                    [
-                                      '${token['type'] ?? "Partecipante"}',
-                                      oculumReferenceEncounterInitiativeText(
-                                        token,
-                                      ),
-                                      'Riflessi ${readIntValue(token['reflexes'])}',
-                                      masterInitiativeStatusLabel(
-                                        "${token['status'] ?? 'ready'}",
-                                      ),
-                                    ].where((value) => value.isNotEmpty).join(' · '),
-                                  ),
-                                  for (final badge
-                                      in oculumReferenceEncounterResourceUsageBadges(
-                                        token,
-                                        round: round,
-                                        activeTurnKey: activeTurnKey,
-                                      ))
-                                    Tooltip(
-                                      message: badge.value,
-                                      child: Chip(
-                                        visualDensity: VisualDensity.compact,
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        labelPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 4,
+                            return masterParticipantContextArea(
+                              encounterId: id,
+                              token: Map<String, dynamic>.from(token),
+                              child: ListTile(
+                                dense: true,
+                                title: Text(
+                                  '${oculumReferenceEncounterTokenName(token)}'
+                                  '${oculumCombatTokenHealthLabel(token).isEmpty ? '' : ' · ${oculumCombatTokenHealthLabel(token)}'}',
+                                ),
+                                trailing: canRemoveOwnEncounterToken(token)
+                                    ? IconButton(
+                                        tooltip: 'Esci dallo scontro',
+                                        icon: Icon(
+                                          Icons.person_remove_outlined,
+                                        ),
+                                        onPressed: () =>
+                                            removeReferenceEncounterMember(
+                                              id,
+                                              token,
+                                              local: local,
                                             ),
-                                        side: BorderSide(
-                                          color: tertiaryColor.withValues(
-                                            alpha: 0.55,
-                                          ),
+                                      )
+                                    : null,
+                                subtitle: Wrap(
+                                  spacing: 6,
+                                  runSpacing: 3,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    knownPowerBadge(
+                                      '${token['sheetTag'] ?? token['id'] ?? ''}',
+                                    ),
+                                    Text(
+                                      [
+                                        '${token['type'] ?? "Partecipante"}',
+                                        oculumReferenceEncounterInitiativeText(
+                                          token,
                                         ),
-                                        backgroundColor: tertiaryColor
-                                            .withValues(alpha: 0.10),
-                                        label: Text(
-                                          badge.key,
-                                          style: TextStyle(
-                                            color: tertiaryColor,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
+                                        'Riflessi ${readIntValue(token['reflexes'])}',
+                                        masterInitiativeStatusLabel(
+                                          "${token['status'] ?? 'ready'}",
+                                        ),
+                                      ].where((value) => value.isNotEmpty).join(' · '),
+                                    ),
+                                    for (final badge
+                                        in oculumReferenceEncounterResourceUsageBadges(
+                                          token,
+                                          round: round,
+                                          activeTurnKey: activeTurnKey,
+                                        ))
+                                      Tooltip(
+                                        message: badge.value,
+                                        child: Chip(
+                                          visualDensity: VisualDensity.compact,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          labelPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 4,
+                                              ),
+                                          side: BorderSide(
+                                            color: tertiaryColor.withValues(
+                                              alpha: 0.55,
+                                            ),
+                                          ),
+                                          backgroundColor: tertiaryColor
+                                              .withValues(alpha: 0.10),
+                                          label: Text(
+                                            badge.key,
+                                            style: TextStyle(
+                                              color: tertiaryColor,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -2277,6 +2281,8 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
   }
 
   Future<void> requestEncounterReset() async {
+    final encounterId =
+        '${referenceTurnEncounter()['encounterId'] ?? selectedMasterInitiativeGroupId}';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -2296,7 +2302,13 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         ],
       ),
     );
-    if (confirmed == true && mounted) resetMasterInitiativeRound();
+    if (confirmed == true && mounted) {
+      requestMasterAction(
+        'encounter_reset',
+        'Reset round e turni',
+        encounterId: encounterId,
+      );
+    }
   }
 
   void removeReferenceEncounterMember(
@@ -2402,16 +2414,22 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
           .firstOrNull;
       if (sheet != null) {
         sheet['playerReportedTurn'] = next;
-        for (final raw
-            in (sheet['activeStructuredEffects'] as List? ?? [])
-                .whereType<Map>()) {
+        final effects = [
+          for (final raw in (sheet['activeStructuredEffects'] as List? ?? []))
+            raw is Map ? Map<String, dynamic>.from(raw) : raw,
+        ];
+        for (final raw in effects.whereType<Map>()) {
           if (oculumTurnUnit('${raw['unit']}') != 'turni') continue;
           final remaining = readIntValue(raw['remaining']);
           if (remaining > 0) raw['remaining'] = remaining - 1;
         }
-        (sheet['activeStructuredEffects'] as List?)?.removeWhere(
-          (raw) => raw is Map && readIntValue(raw['remaining']) == 0,
+        effects.removeWhere(
+          (raw) =>
+              raw is Map &&
+              oculumTurnUnit('${raw['unit']}') == 'turni' &&
+              readIntValue(raw['remaining']) == 0,
         );
+        sheet['activeStructuredEffects'] = effects;
       }
     }
     token['updatedAt'] = DateTime.now().toIso8601String();

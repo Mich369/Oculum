@@ -2,6 +2,44 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+/// Explicit Master overrides are already final PT; otherwise use all four
+/// visible core values, including the canonical HP multiplier contribution.
+int? oculumTokenDisplayTotalPower(Map token) {
+  for (final key in const ['totalPower', 'derivedTotalPower']) {
+    if (token[key] is num || int.tryParse('${token[key]}') != null) {
+      return max(0, readIntValue(token[key]));
+    }
+  }
+  final core = token['rewardPermanentCoreStats'] is Map
+      ? token['rewardPermanentCoreStats'] as Map
+      : token['statsTotal'] is Map
+      ? token['statsTotal'] as Map
+      : token;
+  final values = <int>[];
+  for (final key in const ['resilienza', 'volonta', 'materia', 'oculum']) {
+    final value =
+        token['derived${key[0].toUpperCase()}${key.substring(1)}Total'] ??
+        core[key];
+    if (value is! num && int.tryParse('$value') == null) {
+      if (token['statsTotal'] is num ||
+          int.tryParse('${token['statsTotal']}') != null) {
+        return oculumScoutPower(
+          readIntValue(token['level'] ?? token['livello']),
+          [readIntValue(token['statsTotal'])],
+          grade: readIntValue(token['grade'] ?? token['grado']),
+        );
+      }
+      return null;
+    }
+    values.add(readIntValue(value));
+  }
+  return oculumScoutPower(
+    readIntValue(token['level'] ?? token['livello']),
+    values,
+    grade: readIntValue(token['grade'] ?? token['grado']),
+  );
+}
+
 extension _OculumPowerScanner on _OculumHomePageState {
   int scoutTotalPowerAt(int index) => oculumScoutPower(
     sheetCriticalLevelAt(index),
