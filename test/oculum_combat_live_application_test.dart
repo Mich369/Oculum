@@ -53,7 +53,13 @@ void main() {
           false; // Do not write synthetic combat to user saves.
       state.schedePersonaggio.clear();
       state.schedePersonaggio.addAll(<Map<String, dynamic>>[
-        {'id': 'LIVE_PLAYER', 'sheetTag': 'LIVE_PLAYER', 'nome': 'Player'},
+        {
+          'id': 'LIVE_PLAYER',
+          'sheetTag': 'LIVE_PLAYER',
+          'nome': 'Player',
+          'livello': '0',
+          'grado': '0',
+        },
         {
           'id': 'LIVE_MASTER',
           'sheetTag': 'LIVE_MASTER',
@@ -74,6 +80,8 @@ void main() {
       state.pawnGuardians.clear();
       state.activeConditions.clear();
       state.activeStructuredEffects.clear();
+      state.livelloController.text = '0';
+      state.gradoController.text = '0';
       state.resilienzaController.text = '100';
       state.currentResilienzaController.text = '100';
       state.materiaController.text = '0';
@@ -82,7 +90,7 @@ void main() {
       state.currentVolontaController.text = '0';
       state.oculumController.text = '0';
       state.currentOculumController.text = '0';
-      state.currentHpController.text = '1000';
+      state.currentHpController.text = '600';
       state.scudoOculumMaxController.text = '10';
       state.scudoOculumController.text = '10';
       state.scudoController.text = '20';
@@ -95,6 +103,12 @@ void main() {
         if (stat.id == 'fortuna') stat.unlocked = false;
       }
       probe.invalidateDerivedCaches();
+      expect(
+        probe.maximumHp(),
+        600,
+        reason: 'Level 0 / Grade 0 gives 6 HP per Resilience point.',
+      );
+      expect(probe.currentHp(), 600);
       final playerTag = probe.ownerTag();
       state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
         'encounterId': 'live-fight',
@@ -413,7 +427,7 @@ void main() {
           );
           expect(
             probe.currentHp(),
-            1000 - readIntValue(damageReceipt['hpLost']),
+            600 - readIntValue(damageReceipt['hpLost']),
             reason:
                 'Only damage left after the ordered protection layers may reduce HP.',
           );
@@ -451,7 +465,7 @@ void main() {
           await probe.resolveCombatDefense(request, 'cm', 10);
           expect(
             probe.currentHp(),
-            1000 - readIntValue(damageReceipt['hpLost']),
+            600 - readIntValue(damageReceipt['hpLost']),
             reason: 'Duplicate defense must not repeat damage',
           );
           final support = <String, dynamic>{

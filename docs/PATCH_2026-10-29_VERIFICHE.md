@@ -4,6 +4,10 @@ Questo rapporto riguarda le modifiche successive a e188eafe. Le prove di quel co
 
 ## Verifiche locali
 
+**Ripetizione finale completa:1690 test passati,6 saltati,nessun fallimento** in27minuti8secondi (`build/oct29-final-full-suite.log`). Anche le **quattro prove online autenticate passano tutte** (`build/oct29-live-authenticated-retest.log`,2minuti18secondi), inclusi quattro client del combattimento. Non sono quattro dispositivi fisici indipendenti.
+
+Il primo run GitHub40893678834 ha superato analisi e suite ordinaria, poi una sola prova online usava ancora1000HP per RES100/livello0/Grado0. Con il nuovo moltiplicatore×6, il massimo è600: i34Danni verificati lasciavano566HP, mentre il test si aspettava966. Corretta soltanto la fixture: livello/Grado espliciti, precondizioni sul massimo600 e attese600−hpLost. Protezioni, cure, autenticazione e idempotenza restano intatte. Il run fallito non viene distribuito; la nuova CI va verificata separatamente.
+
 | Prova | Risultato ed evidenza |
 |---|---|
 | Prima suite completa |1615 passati,36 falliti,6 saltati; i fallimenti sono stati esaminati singolarmente. Log locale `build/oct29-full-patch-tests.log`. Non è una suite verde. |
