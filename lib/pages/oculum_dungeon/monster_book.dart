@@ -4007,7 +4007,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Sharp',
     nameEn: 'Sharp',
     descIt:
-        'Corpo bianco a sacco, enorme bocca verde con denti triangolari e piccole zampe. Una calotta nera con due razzetti rossi abbraccia la testa; spuntoni metallici emergono dal dorso. È buono e curioso, mangia roccia per scavare, poi fugge in volo sfrecciante.',
+        'Corpo bianco a sacco, due occhi visibili, enorme bocca verde con denti triangolari e quattro piccole zampe. Una calotta nera con due razzetti rossi abbraccia la testa; spuntoni metallici emergono dal dorso. È buono e curioso, mangia roccia per scavare, poi fugge in volo sfrecciante.',
     descEn: 'Kind rocket miner.',
     elementId: 'metallo',
     spriteAssetPath: '',
@@ -4076,7 +4076,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Topino Avventuroso',
     nameEn: 'Adventurous Mouse',
     descIt:
-        'Topino minuscolo dalla pelliccia color miele, grandi orecchie e mantello verde sfrangiato. Regge una fiaccola più alta di lui, ha una cintura di corda e un piccolo coltello nascosto. Esplora in gruppo, indietreggia dai pericoli e cura i compagni. Livelli 1–9, Senza Grado.',
+        'Topino bipede alto circa 25 cm, dalla pelliccia color miele, due occhi, grandi orecchie e lunga coda sottile. Ha due braccia e due gambe, con un mantellino tortora consumato e sfrangiato. Regge una fiaccola più alta di lui, ha una cintura di corda e un piccolo coltello nascosto. Esplora in gruppo, indietreggia dai pericoli e cura i compagni. Livelli 1–9, Senza Grado.',
     descEn: 'Adventurous mouse.',
     elementId: 'fisico',
     spriteAssetPath: '',
@@ -4120,7 +4120,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Mosca Campana',
     nameEn: 'Bell Fly',
     descIt:
-        'Una pallina nera e pelosa con grandi occhi bianchi, quattro piccole ali trasparenti e zampe appuntite. Porta sulla testa una campana di bronzo ossidato; una seconda campanella pende sotto il corpo. Il rintocco paralizza per quattro turni; un critico stordisce per un turno e cura gli alleati della sua Volontà.',
+        'Una pallina nera e pelosa con due grandi occhi bianchi senza pupille, quattro piccole ali trasparenti e sei zampe sottili appuntite. La testa è integrata nel corpo globoso e porta una campana di bronzo ossidato; una seconda campanella pende sotto il corpo. Il rintocco paralizza per quattro turni; un critico stordisce per un turno e cura gli alleati della sua Volontà.',
     descEn: 'Bell fly.',
     elementId: 'sonoro',
     spriteAssetPath: '',

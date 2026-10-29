@@ -1,5 +1,15 @@
 # Oculum — registro delle regole confermate
 
+## Anatomia dai disegni confermati — revisione successiva del 29 ottobre
+
+Richiesta esplicita: «dai disegni confermati poi rivedi anatomia e punti colpibili». I riferimenti approvati guidano quantità, posizione e materiale delle parti; proposte A/B/C ancora da valutare non cambiano il canone o le capacità. Le anatomie personalizzate del Master prevalgono sulle nuove definizioni predefinite. La revisione locale aggiunge gli arti mancanti di Mostro di sabbia, Costrutto Minore, Funghetto e Topino, sei zampe e quattro ali per Mosca Campana e due occhi a Sharp. Shadow Devil resta senza occhi. L’occhio dell’elmo solare è una visiera metallica, non un occhio biologico scoperto; i fratelli a volto visibile restano eccezioni. I quattro cristalli del Mostro lunare conservano le meccaniche native, mentre braccia e gambe vengono distinte per lato. Sabbia e fibre non ricevono etichette di frattura ossea. Nessun nucleo viene inventato nel Gigante. Test e distribuzione della revisione ancora da eseguire, vedi `PROSSIMA_PATCH_2026-10-29.md`.
+
+Precisazione sulla coda: attacco gratuito **anche fuori turno**; parata senza dado confrontata con **Resistenza** per riconoscere il doppio critico, compresa la risoluzione Lava del Gigante. Entrambi gli impieghi condividono due turni personali di recupero.
+
+## Conferme successive del 29 ottobre — prossimo intervento
+
+[Sonno, bisogni, tempo e nuovi temi](CONFERME_SUCCESSIVE_2026-10-29_SONNO_E_TEMI.md): **conferme per il prossimo intervento**, senza nuova implementazione attestata. Sonno: durata scelta rispettata, minimo 90 minuti e prima Mattina sempre trascorsa, un solo evento di Riposo Lungo. Bisogni separati; Costrutti non biologici esenti da cibo/acqua ma non dal riposo. Riposo Breve: scelta esplicita **«Un quarto, come il codice attuale»**, con **1d100 Vita separato**; conflitto precedente chiuso. Corruzione per Notti effettive anche da svegli, non per sonno diurno. Registrati comando Master ore/minuti, calo graduale dei bonus notturni e nuove meccaniche di coda per entrambe le specie di sabbia; solo il Gigante senza punto debole anatomico, fragile al Fuoco e soggetto alla risoluzione Lava. Dettagli e limiti nella nota. CI `40904083210` riuscita per tutte le piattaforme di `dcb5bb4e`; pubblicazione `40913133550` e Pages `40913133658` riuscite; 11 download anonimi e origine web verificati. Installazione locale di `dcb5bb4e` completata: 16.088 file senza differenze, firma APK e avvio normale/Test verificati; precedente `e188eafe` conservata nel backup. Nessuna nuova riga al 100% senza la conferma richiesta.
+
 ## Conferme del29ottobre — premi, Guardiani e Open
 
 [Regole complete del29ottobre](CONFERME_2026-10-29_PREMI_GUARDIANI.md): nuova assegnazione EXP, contributi10/25/50%, turnistica Master e fuga NPC, Potere dell’oro e Concentrazione, Lunari/Ik/Devil Moon, Iris StarEyes e nuove durate generali Open. Le conferme più recenti sostituiscono i precedenti valori nello stesso ambito. Implementazione e test in lavorazione, distinti dalla patch e188eafe già pubblicata.

@@ -1,5 +1,17 @@
 # Registro cumulativo per i giocatori
 
+## Patch successiva del 29 ottobre — sonno, bisogni e creature di sabbia
+
+- Corretto il canale delle richieste online dei giocatori per riposi, viaggi e visite ai mercanti: conferme, tempo e recuperi restano autorizzati dal Master. La coda gratuita dei mostri di sabbia rispetta ora anche il blocco delle Skill durante Sfinimento.
+- Dormire usa una durata scelta dal Master: minimo90minuti e, iniziando di Notte, almeno fino alla prima Mattina. Una dormita più lunga rigenera di più ma conta sempre un solo Riposo Lungo. Online la richiesta conserva le risorse fino alla conferma; le ricevute impediscono cure duplicate e il tempo condiviso resiste a snapshot ricevuti fuori ordine.
+- Fame, sete e sonno avanzano con la campagna e hanno penalità distinte. Cibo, acqua e sonno rimuovono soltanto i rispettivi effetti. I Costrutti non biologici richiedono manutenzione/riposo ma sono esenti da cibo e acqua; il cambio di fisiologia ricalcola i valori automatici preservando le impostazioni esplicite. Fame e bonus notturni non creano punti risorsa permanenti dopo il recupero.
+- Il Master può far passare ore e minuti della sola campagna. Nell'ultima mezz'ora della Notte il Sole risbuca scendendo dall'Oblio presso le Isole volanti e i bonus delle creature calano gradualmente fino a zero. Corruzione e calendario contano le Notti effettivamente trascorse, anche restando svegli; dormire di giorno non aggiunge una Notte.
+- Mostro e Gigante di sabbia condividono attacco e parata gratuiti di coda, anche fuori turno, con recupero comune di due turni personali. La parata senza dado usa Resistenza come riferimento e riceve il65%dei Danni dopo Difesa e prima degli Scudi. Il Gigante non ha un punto debole anatomico: resta fragile al Fuoco. Un doppio critico valido di Lava che arriva alla Vita ha50%di vetrificarlo; se sopravvive, Materia dimezzata per tre turni, con rinnovo senza accumulo.
+- Corretta la parata senza tiro delle Aberrazioni metalliche: il confronto contrapposto non annulla più il colpo prima della percentuale del mantello. Restano usura già sul colpo critico, Resistenza passiva, costi e protezioni degli Scudi.
+- Tredici nuovi sfondi desktop e dieci coppie telefono/reliquia approvati: Funghetto Cappuccio Rosso, Costrutto Minore, Shadow Devil, Mostro e Gigante di sabbia, Mezzo Demone Cosciente, Nuvola in bottiglia, Il Doppione e le due Aberrazioni metalliche hanno un pack completo; Sharp, Topino Avventuroso e Mosca Campana ricevono il desktop approvato. Non attribuiscono nuovi poteri o drop.
+- Parti colpibili riviste sui disegni confermati: numero di occhi/arti/ali, materiali e protezioni coerenti; elmi solari metallici e volti scoperti dei due fratelli distinti. Nuclei nascosti, cristalli e anatomie personalizzate mantengono le proprie eccezioni. Importazione dei runtime migliorata anche per mappe create internamente prima dell'esportazione JSON.
+
+
 ## Patch del 29 ottobre — combattimento, premi e viaggio
 
 - Turnistica Master: menu del partecipante per ostilità e morte; mostri e NPC possono fuggire. Selezionare manualmente un partecipante conserva Azioni, Reazioni, Reazioni veloci e Movimento già consumati. Le richieste online di reset verificano anche la proprietà della scheda indicata.

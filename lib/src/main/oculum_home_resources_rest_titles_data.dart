@@ -1052,6 +1052,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void impostaGiornoOculum(int day, {bool annuncia = true}) {
+    if (worldClockProgress.calendarOriginDay > 0) {
+      rebaseWorldCalendar(day);
+      return;
+    }
     final normalized = normalizzaGiornoOculum(day);
     cycleCalendarChanged(oculumCurrentDay(), normalized);
     setState(() {
@@ -1075,6 +1079,16 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void avanzaGiorniOculum(int delta) {
+    if (worldClockProgress.calendarOriginDay > 0) {
+      if (delta > 0) {
+        advanceWorldTime(
+          receipt: 'manual-days:${DateTime.now().microsecondsSinceEpoch}',
+          seconds: delta * oculumWorldDaySeconds,
+          campaignId: activeCampaignId,
+        );
+      }
+      return;
+    }
     if (delta == 0) return;
     final before = oculumCurrentDay();
     final after = normalizzaGiornoOculum(before + delta);
@@ -1100,6 +1114,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void segnaSessioneSenzaBisogni() {
+    if (worldClockProgress.calendarOriginDay > 0) {
+      syncOwnedWorldCalendarAndNeeds(worldClockPublicSnapshot());
+      return;
+    }
     final giorni = leggiNumero(sessioniSenzaBisogniController) + 1;
     final nuovoGiorno = normalizzaGiornoOculum(oculumCurrentDay() + 1);
     cycleCalendarChanged(oculumCurrentDay(), nuovoGiorno, delta: 1);
@@ -1139,6 +1157,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void segnaGiornoSenzaCiboAcqua() {
+    if (worldClockProgress.calendarOriginDay > 0) {
+      syncOwnedWorldCalendarAndNeeds(worldClockPublicSnapshot());
+      return;
+    }
     final stat = Random().nextInt(4);
 
     setState(() {
@@ -1179,15 +1201,19 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void mangiaEBevi() {
+    satisfyPersonalNeed('food');
+    satisfyPersonalNeed('water');
     setState(() {
       modificaBuffTemporaneo('resilienza', 2, salva: false);
 
       modificaCenereControllata(-1, controllaSvenimento: false);
 
-      sessioniSenzaBisogniController.text = '0';
+      if (!automaticWorldNeedsEnabled) {
+        sessioniSenzaBisogniController.text = '0';
+      }
 
       ultimoEventoRiposo = t(
-        'Hai mangiato e bevuto a sufficienza: +2 Resilienza temporanea per il giorno, -1 Cenere e reset giorni senza bisogni.',
+        'Hai mangiato e bevuto a sufficienza: +2 Resilienza temporanea per il giorno, -1 Cenere e fame/sete soddisfatte; il sonno resta indipendente.',
         'You ate and drank enough: +2 temporary Resilience for the day, -1 Ash and reset days without needs.',
       );
 
@@ -1946,6 +1972,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void riposoBreve({bool advanceWorldClock = true}) {
+    if (advanceWorldClock && realtimeService?.isConnected == true) {
+      requestWorldPartyRest(longRest: false);
+      return;
+    }
     resetOgorCoreRest();
     final activeSheet =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
@@ -2058,11 +2088,23 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
     processConditionTick(OculumConditionTickTrigger.shortRest);
     tickOpenLifecycleRest(longRest: false);
-    if (advanceWorldClock) notifyWorldRestState(longRest: false);
+    if (advanceWorldClock && worldClockProgress.calendarOriginDay > 0) {
+      notifyWorldRestState(longRest: false);
+    }
     programmaSalvataggio();
   }
 
-  void riposoLungo({bool advanceWorldClock = true}) {
+  void riposoLungo({
+    bool advanceWorldClock = true,
+    int sleepMinutes = 90,
+    bool fulfillSleepNeed = true,
+  }) {
+    if (advanceWorldClock && realtimeService?.isConnected == true) {
+      requestWorldPartyRest(longRest: true);
+      return;
+    }
+    sleepMinutes = max(90, sleepMinutes);
+    final recovery = personalSleepRecoveryRules;
     final eye = fallenEyeForId(
       '${schedePersonaggio[schedaCorrente]['occhioCadutoId'] ?? ''}',
     );
@@ -2076,7 +2118,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     senkaRest();
     planarState['ascensionDustFightWindowEarned'] = 0;
     restConstructCore();
-    advanceCorruptionNight();
+    if (worldClockProgress.calendarOriginDay <= 0) advanceCorruptionNight();
     final changedArtIndexes = <int>[];
     var limitedArtRecoveries = 0;
     final aggiustaNucleoEraUsato = aggiustaNucleoUsato;
@@ -2185,7 +2227,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ascensionDustUsataOggi = 0;
       ascensionDustPermanentiInAttesa = 0;
 
-      ripristinaStatsRiposoLungo();
+      ripristinaStatsRiposoLungo(sleepMinutes: sleepMinutes);
       ricaricaScudoOculum();
 
       restDustFusion();
@@ -2200,11 +2242,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       presaMaterialiBonusTemporaneoGrammi = 0;
       presaMaterialiGrammi = presaMaterialiMassimoBaseGrammi();
 
-      sessioniSenzaBisogniController.text = '0';
+      if (fulfillSleepNeed) satisfyPersonalNeed('sleep');
 
-      currentHpController.text = oculumLongRestHpTarget(
-        currentHp: hpCorrenti(),
-        maxHp: maxHp(),
+      currentHpController.text = oculumSleepHpTarget(
+        hpCorrenti(),
+        maxHp(),
+        sleepMinutes,
+        rules: recovery,
       ).toString();
       malusTiriOculumPostEsplosione = 0;
       aggiustaNucleoUsato = false;
@@ -2239,10 +2283,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         ensureArtIntegrityValue(i);
         final maximum = artIntegrityMaximum();
         final limitedRecovery = art.esaurimentoCompleto;
-        final recovered = oculumArtRecoveredValue(
-          current: art.integritaCorrente,
-          maximum: maximum,
-          limitedAfterFullExhaustion: limitedRecovery,
+        final recovered = oculumSleepArtTarget(
+          art.integritaCorrente,
+          maximum,
+          sleepMinutes,
+          exhausted: limitedRecovery,
+          rules: recovery,
         );
         var artChanged = false;
         if (recovered != art.integritaCorrente) {
@@ -2261,8 +2307,17 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       );
 
       ultimoEventoRiposo = t(
-        'Riposo lungo completato: dura 1 ora e mezza. Recupera metà della Resilienza totale mancante, ripristina tutto l’Oculum e tutte le statistiche attuali spese in raccolta o creazione, recupera il 50% di Cenere/Fatica (minimo 3) e porta gli HP ad almeno il 75% del massimale.',
-        'Long rest completed: it lasts 1.5 hours. It recovers half of missing total Resilience, restores all Oculum and current stats spent on gathering or crafting, recovers 50% Ash/Fatigue (minimum 3), and brings HP to at least 75% of maximum.',
+        'Riposo lungo completato: $sleepMinutes minuti. '
+            'Recupera ${recovery.resiliencePercent(sleepMinutes)}% della Resilienza mancante; '
+            'Vita almeno ${recovery.hpPercent(sleepMinutes)}%, Art +${recovery.artPercent(sleepMinutes)}% '
+            '(esaurite +${recovery.artPercent(sleepMinutes, exhausted: true)}%). '
+            'VOL/MAT/OCU fino ai massimi; Cenere ordinaria −50%, minimo 3. '
+            'Un solo Riposo Lungo per Open e usi.',
+        'Long rest completed: $sleepMinutes minutes. Missing Resilience recovery '
+            '${recovery.resiliencePercent(sleepMinutes)}%; HP at least '
+            '${recovery.hpPercent(sleepMinutes)}%; Arts +${recovery.artPercent(sleepMinutes)}% '
+            '(exhausted +${recovery.artPercent(sleepMinutes, exhausted: true)}%). '
+            'One Long Rest for Open and ability uses; no free overflow.',
       );
       ultimoEventoRiposo += t(
         '\nPresa materiali ricaricata al massimo: ${formatoPesoMateriali(presaMaterialiGrammi)}; bonus temporanei rimossi.',
@@ -2305,8 +2360,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       }
       if (limitedArtRecoveries > 0) {
         ultimoEventoRiposo += t(
-          '\n$limitedArtRecoveries Art completamente esaurite hanno recuperato solo il 10%; dai prossimi riposi torneranno al recupero normale.',
-          '\n$limitedArtRecoveries fully exhausted Arts recovered only 10%; normal recovery resumes from the next rests.',
+          '\n$limitedArtRecoveries Art completamente esaurite hanno recuperato il ${recovery.artPercent(sleepMinutes, exhausted: true)}%; dai prossimi riposi torneranno al recupero normale.',
+          '\n$limitedArtRecoveries fully exhausted Arts recovered ${recovery.artPercent(sleepMinutes, exhausted: true)}%; normal recovery resumes from the next rests.',
         );
       }
       if (risonanzeGerinRicaricate > 0) {
@@ -2353,7 +2408,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     recordAggiustaNucleoProgress(immediate: true);
     processConditionTick(OculumConditionTickTrigger.longRest);
     tickOpenLifecycleRest(longRest: true);
-    if (advanceWorldClock) notifyWorldRestState(longRest: true);
+    if (advanceWorldClock && worldClockProgress.calendarOriginDay > 0) {
+      notifyWorldRestState(longRest: true);
+    }
     unawaited(salvaDati());
   }
 
@@ -3508,6 +3565,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void segnaSessioneInventario() {
+    if (worldClockProgress.calendarOriginDay > 0) {
+      syncOwnedWorldCalendarAndNeeds(worldClockPublicSnapshot());
+      return;
+    }
     if (inventario.isEmpty) return;
 
     setState(() {

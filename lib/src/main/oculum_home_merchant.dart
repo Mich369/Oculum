@@ -2771,6 +2771,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       if (existing == null) {
         offer.addAll(food);
         offer['kind'] = 'food';
+        final id = '${offer['id'] ?? ''}';
+        offer.putIfAbsent(
+          'satisfiesNeeds',
+          () => id.startsWith('drink_')
+              ? ['water']
+              : id.startsWith('food_') || id.startsWith('meal_')
+              ? ['food']
+              : [],
+        );
         offer['desc'] = merchantFoodOfferDescription(food);
         merchantStock.add(offer);
       } else {
@@ -4160,6 +4169,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final kind = '${offer['kind'] ?? ''}';
     if (kind == 'food') {
       final effects = <String, dynamic>{
+        'satisfiesNeeds':
+            offer['satisfiesNeeds'] ??
+            ('${offer['id']}'.startsWith('drink_')
+                ? ['water']
+                : '${offer['id']}'.startsWith('food_') ||
+                      '${offer['id']}'.startsWith('meal_')
+                ? ['food']
+                : []),
         for (final key in [
           'resilienza',
           'volonta',
@@ -4179,6 +4196,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'damagePercent',
           'defensePercent',
           'learnMonsterId',
+          'satisfiesNeeds',
         ])
           if (offer.containsKey(key)) key: offer[key],
       };
@@ -4655,6 +4673,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             effects.add(condition);
           }
           tryLearnMonsterFood(food);
+          satisfyConsumedFoodNeeds(food);
           item.quantita--;
           if (item.quantita <= 0) inventario.remove(item);
           invalidateDerivedDataCaches();
@@ -4683,6 +4702,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               (key == 'oculum' ? oculumBonus : readIntValue(food[key]));
         }
         tryLearnMonsterFood(food);
+        satisfyConsumedFoodNeeds(food);
         item.quantita--;
         if (item.quantita <= 0) inventario.remove(item);
         invalidateDerivedDataCaches();

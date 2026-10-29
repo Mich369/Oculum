@@ -1,6 +1,29 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+## Prosecuzione mentre l'utente riposa — 29 ottobre
+
+- «procedi in questa direzione finché non ti rispondo facendo più cose possibili e più domande»; poi «ora ti lascio fare il resto mentre dormo».
+- Cinque desktop: «Sì, queste cinque sono canoniche»; il Mezzo Demone scelto è C atletico con bocca verticale, dopo «anzi», al posto di A tozzo.
+- Dieci derivati dei cinque desktop: «Approvo tutti e dieci». Le altre bozze non diventano canoniche per estensione.
+- Attacco gratuito della coda: «Attacco anche fuori turno».
+- Doppio critico contro parata della coda: «Resistenza, come il mantello».
+
+
+## Nuove indicazioni dalla galleria — 29 ottobre
+
+«dai disegni confermati poi rivedi anatomia e punti colpibili».
+
+«falli un po' diversi dalla foto»; «ancora troppo simili»; «cambia il possibile demone»; «ma tieni la bocca».
+
+Le tre proposte del Mezzo Demone richiedono quindi un nuovo design riconoscibilmente diverso dal riferimento, conservando la grande bocca. Non trattare una revisione generata come approvata né applicare le sue ipotesi di aspetto alle statistiche o anatomie canoniche prima della conferma.
+
 Trascrizione per conservare i requisiti di questa lavorazione. Le citazioni sono dell'utente, con ortografia originale. Le intestazioni e le note fuori dalle citazioni sono redazionali. Una precisazione successiva prevale sull'ipotesi precedente. Questo documento NON certifica che tutti i requisiti siano già implementati, testati o pubblicati.
+
+## Precisazioni successive del 29 ottobre — prossimo intervento
+
+Le [nuove conferme su sonno, bisogni e temi](CONFERME_SUCCESSIVE_2026-10-29_SONNO_E_TEMI.md) sono registrate come **requisiti futuri**. CI `40904083210` di `dcb5bb4e` riuscita per tutte le piattaforme; pubblicazione `40913133550` e Pages `40913133658` riuscite, 11 download pubblici senza login e commit web verificati; installazione locale completata con binari attivi `dcb5bb4e`, 16.088 file senza differenze, firma APK e avvio normale/Test verificati; `e188eafe` conservata nel backup. L’utente ha scelto **«Un quarto, come il codice attuale»** per il Riposo Breve, con 1d100 Vita separato: il conflitto ¼/½ è chiuso. Costrutti non biologici senza bisogni di cibo/acqua, ma con necessità di riposo; dormita lunga secondo durata scelta, minimo 90 minuti e prima Mattina sempre trascorsa. Corruzione per Notti effettive della campagna anche da svegli; dormire di giorno non aggiunge una Notte. È una sintesi redazionale delle ultime risposte, non una trascrizione inventata della chat completa.
+
+Diciture brevi esplicitamente riportate dal coordinamento: per il mantellino di Topino, **«grigio o colore più carino non lunare né solare»**; dopo l’edit tortora v2, **«confermo»**. V2 prevalente sul verde storico. Sharp v3 e Mosca Campana v3 approvati. **Tutti gli otto derivati dei quattro pack sono approvati separatamente**; ultime risposte per Shadow Devil e Mostro di Sabbia, ciascuna **«Sì, entrambi canonici»**. Gigante di sabbia distinto, v1–v5 rifiutati e v6 approvata canonica; volto con ispirazione parziale Gaara/Shukaku e anatomia originale. Coda e nuove meccaniche esclusive del Gigante restano da implementare, come dettagliato nella nota. Le fonti precedenti sotto restano storico dove superate dalle ultime correzioni.
 
 ## Direzione visiva da applicare prima di generare
 

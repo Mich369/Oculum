@@ -19,10 +19,21 @@ switch = mapping_source.split('String? get illustration => switch (monster.id)',
 illustrations = dict(re.findall(r"'([^']+)'\s*=>\s*'([^']+)'", switch))
 relic_switch = mapping_source.split('String? get relicIllustration => switch (monster.id)', 1)[1].split('String? get illustration', 1)[0]
 relics = dict(re.findall(r"'([^']+)'\s*=>\s*'([^']+)'", relic_switch))
+mobile_switch = mapping_source.split('String? get illustrationMobile => switch (monster.id)', 1)[1].split('};', 1)[0]
+mobiles = dict(re.findall(r"'([^']+)'\s*=>\s*'([^']+)'", mobile_switch))
 sources = {p: p.read_text(encoding='utf-8') for p in (ROOT / 'lib/pages/oculum_dungeon').glob('*.dart')}
 
 def source_location(monster_id):
     base = monster_id.split('_variante_')[0]
+    # Family profiles use short IDs; a literal in the pack-leader generator
+    # is a reference, not the definition of the base creature.
+    if base.startswith('weak_horror_'):
+        family = ROOT / 'lib/pages/oculum_dungeon/weak_horror_monsters.dart'
+        source = sources.get(family, '')
+        short_id = base.removeprefix('weak_horror_')
+        found = re.search(rf"\bid:\s*'{re.escape(short_id)}'", source)
+        if found:
+            return f'{family.relative_to(ROOT).as_posix()}:{source[:found.start()].count(chr(10)) + 1}'
     patterns = [rf"\bid:\s*'{re.escape(base)}'", rf"'id'\s*:\s*'{re.escape(base)}'", rf"\(\s*'{re.escape(base)}'\s*,"]
     for path, source in sources.items():
         for pattern in patterns:
@@ -55,12 +66,46 @@ for entry in catalogue['entries']:
         'themeStatus': 'asset dedicato collegato, presente' if artwork and (ROOT / artwork).is_file()
                        else 'collegamento asset mancante su disco' if artwork
                        else 'scena dedicata mancante; fallback procedurale',
+        'mobileThemeAsset': mobiles.get(monster_id),
+        'mobileThemeAssetExists': bool(mobiles.get(monster_id) and (ROOT / mobiles[monster_id]).is_file()),
         'relicAsset': relics.get(monster_id),
         'relicStatus': 'asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata' if monster_id in relics and (ROOT / relics[monster_id]).is_file() else 'reliquia dedicata mancante; OculumMonsterRelicPainter generico',
         'unlinkedArtworkCandidates': [p for p in candidates if p != artwork],
         'approval': 'non attestata automaticamente: verificare canone, manifest e conferma utente',
         'anatomyLabels': [p.get('label', p.get('id', '')) for p in anatomy],
     })
+
+# Human approvals are evidence tied to exact bytes, never inferred from a name.
+approved_hashes = set()
+for receipt_name in ['APPROVED_RUNTIME_COPY_AUDIT_2026-10-29.json',
+                     'APPROVED_NEXT_PATCH_ASSETS_2026-10-29.json']:
+    receipt = ROOT / 'output/artwork' / receipt_name
+    if not receipt.is_file():
+        continue
+    evidence = json.loads(receipt.read_text(encoding='utf-8-sig'))
+    for item in evidence.get('files', []):
+        if item.get('userApproved') and item.get('matchesCanonicalSource'):
+            approved_hashes.add((item['mappedAssetPath'], item['mappedSha256']))
+    for item in evidence.get('selections', []):
+        if item.get('humanApproved'):
+            approved_hashes.add((item['runtimeAsset'], item['sha256']))
+asset_hashes = {}
+for row in rows:
+    row['artworkEvidence'] = {}
+    for kind, key in [('desktop', 'themeAsset'), ('phone', 'mobileThemeAsset'), ('relic', 'relicAsset')]:
+        asset = row[key]
+        exists = bool(asset and (ROOT / asset).is_file())
+        if exists and asset not in asset_hashes:
+            asset_hashes[asset] = hashlib.sha256((ROOT / asset).read_bytes()).hexdigest()
+        sha = asset_hashes.get(asset)
+        row['artworkEvidence'][kind] = {
+            'path': asset, 'exists': exists, 'sha256': sha,
+            'approvalEvidence': 'VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH' if (asset, sha) in approved_hashes else 'NOT_VERIFIED_BY_THIS_AUDIT',
+            'uiVerifiedByThisAudit': False,
+        }
+    row['missingDedicatedArtwork'] = [kind for kind, item in row['artworkEvidence'].items() if not item['exists']]
+    row['completeDedicatedArtworkSetMapped'] = not row['missingDedicatedArtwork']
+    row['anatomyEvidenceBoundary'] = 'Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.'
 
 entries = len(rows)
 base_count = sum(not r['isGeneratedVariant'] for r in rows)
@@ -80,6 +125,14 @@ report = {
     'proceduralRelicsAreNotFinal': True,
     'catalogueSha256': hashlib.sha256((ROOT / 'build/creature-art-catalogue.json').read_bytes()).hexdigest(),
     'themeMappingSha256': hashlib.sha256(mapping_path.read_bytes()).hexdigest(),
+    'catalogueSourceHashes': {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
+    'dedicatedMobileThemeAssetsPresentAndMapped': sum(r['mobileThemeAssetExists'] for r in rows),
+    'missingDedicatedMobileThemeAssets': sum(not r['mobileThemeAssetExists'] for r in rows),
+    'dedicatedRelicAssetsPresentAndMapped': sum(r['artworkEvidence']['relic']['exists'] for r in rows),
+    'missingDedicatedRelicAssets': sum(not r['artworkEvidence']['relic']['exists'] for r in rows),
+    'completeDedicatedArtworkSetsMapped': sum(r['completeDedicatedArtworkSetMapped'] for r in rows),
+    'entriesMissingAtLeastOneDedicatedArtwork': sum(bool(r['missingDedicatedArtwork']) for r in rows),
+    'runtimeUiVerifiedByThisAudit': False,
     'entries': rows,
 }
 target = ROOT / 'docs/creature-art-inventory.json'
@@ -92,6 +145,7 @@ out = [
     f'- Esportazione reale `defaultMonsterBookEntries`: **{entries} voci**, comprese **{entries-base_count} varianti generate**. Le **{base_count} voci senza suffisso `_variante_`** includono già specie e varianti scritte a mano: non equivalgono automaticamente a specie biologiche uniche.',
     f'- **{linked} scene dedicate collegate ed esistenti**, **{entries-linked} voci senza una scena dedicata collegata**.',
     f'- **{len(relics)} reliquie artwork dedicate collegate nel renderer dei mostri**. Conferme e test sono documentati nei manifest specifici: la presenza di un file non assegna automaticamente un’approvazione. Le altre usano `OculumMonsterRelicPainter`: silhouette vettoriali di famiglia con colori/seme, fallback funzionanti non definitivi.',
+    f"- **{report['dedicatedMobileThemeAssetsPresentAndMapped']} scene telefono**, **{report['dedicatedRelicAssetsPresentAndMapped']} reliquie presenti**, **{report['completeDedicatedArtworkSetsMapped']} set completi**; **{report['entriesMissingAtLeastOneDedicatedArtwork']} voci hanno almeno un asset dedicato mancante**.",
     f'- Data export UTC: `{catalogue["exportedAtUtc"]}`. Commit base `{commit}`; contiene le definizioni locali successive, non prova una pubblicazione.',
     '- Inventario completo leggibile da strumenti: [creature-art-inventory.json](creature-art-inventory.json), con descrizione fisica integrale, anatomia, punti deboli, atteggiamento, elementi, piani, drop, inventario e regole di ogni voce.',
     '- I colori casuali di una stessa specie non sono contati qui come nuove specie. Per ogni futura variante cromatica verificare se richiede una scena separata o una variazione approvata; non usare una ricolorazione come sostituto delle differenze anatomiche/ambientali.', '',

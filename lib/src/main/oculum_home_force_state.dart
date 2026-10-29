@@ -621,15 +621,17 @@ extension _OculumHomeForceState on _OculumHomePageState {
   }) {
     final before = max(0, precedente ?? leggiNumero(cenereController));
     final next = max(0, value);
+    final effectiveBefore = before + worldNeedAsh();
+    final effectiveNext = next + worldNeedAsh();
     final penaltyBefore = oculumFatigueRollPenalty(
-      ash: before,
+      ash: effectiveBefore,
       grade: leggiNumero(gradoController),
       suppressPenalty: statoForzaRimuoveMalus(),
     );
     cenereController.text = next.toString();
     if (next != before) {
       final penaltyAfter = oculumFatigueRollPenalty(
-        ash: next,
+        ash: effectiveNext,
         grade: leggiNumero(gradoController),
         suppressPenalty: statoForzaRimuoveMalus(),
       );
@@ -640,8 +642,8 @@ extension _OculumHomeForceState on _OculumHomePageState {
         'soglia senza malus $threshold. Il nuovo malus decorre dal turno $playerReportedTurn; non sottrae statistiche attuali.',
       );
     }
-    if (next < 3) {
-      cenereSvenimentoUltimoControllo = next;
+    if (effectiveNext < 3) {
+      cenereSvenimentoUltimoControllo = effectiveNext;
       if (personaggioSvenuto) {
         personaggioSvenuto = false;
       }
@@ -650,11 +652,11 @@ extension _OculumHomeForceState on _OculumHomePageState {
     if (!controllaSvenimento || next <= before) {
       cenereSvenimentoUltimoControllo = max(
         cenereSvenimentoUltimoControllo,
-        next,
+        effectiveNext,
       );
       return null;
     }
-    return controllaSvenimentoPerCenere(before, next);
+    return controllaSvenimentoPerCenere(effectiveBefore, effectiveNext);
   }
 
   String? modificaCenereControllata(
@@ -670,7 +672,7 @@ extension _OculumHomeForceState on _OculumHomePageState {
   }
 
   String? controllaCenereModificataManualmente() {
-    final current = max(0, leggiNumero(cenereController));
+    final current = worldNeedsEffectiveAsh();
     if (current < 3) {
       cenereSvenimentoUltimoControllo = current;
       if (personaggioSvenuto) personaggioSvenuto = false;

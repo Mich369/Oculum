@@ -108,7 +108,8 @@ void main() {
     for (final monster in [sand, demon, shadow]) {
       expect(monster.spriteAssetPath, isEmpty);
       final art = oculumMonsterBookArt(monster);
-      expect(art.skills, hasLength(14)); // Original pair plus twelve additions.
+      // Sand now has separate attack/parry techniques sharing one tail charge.
+      expect(art.skills, hasLength(monster.id == 'mostro_sabbia' ? 16 : 14));
       expect(oculumMonsterEquipmentCatalogue(source: monster), isNotEmpty);
       for (final skill in art.skills) {
         expect(

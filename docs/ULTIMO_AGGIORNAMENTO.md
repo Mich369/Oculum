@@ -1,12 +1,11 @@
-# Ultimo aggiornamento — 29 ottobre 2026
+# Ultimo aggiornamento — 30 ottobre 2026
 
-- Premi a fine intero fight: EXP comune, ultimo colpo e aiuti, Obser, sottotratti e Cristalli Dust; PT media per turno e ricevute contro i doppioni. EXP e livelli nel log.
-- Vita iniziale per Grado e relativo bonus PT; ferite rallentano Movimento e Iniziativa senza penalità cumulative. Selezione manuale del turno senza ricarica delle risorse; reset online con proprietà verificata.
-- Nuove durate Open, contatori indipendenti per Skill Open ed eccezione Defiled Art. Potere dell'oro e sei creature lunari/Ik con proprie tecniche e nucleo protetto dei Guardiani.
-- Orologio per campagna, viaggi e coda privata degli eventi al Master; riposi dai mercanti limitati. Inventario con catalogo caricato su richiesta e visibilità PT separata per scheda.
-- Dieci pack desktop/telefono/reliquia, aspetti approvati e anatomie coerenti; danni alle parti con eccezioni specifiche conservate. Gli artwork restanti sono censiti in lavorazione.
-- Personaggi aggiornati: Lusier301 PT, Erik131 PT; Senka81 Vita,135 mascherata. Crescita di Pawn e degli Occhi dei Caduti corretta.
+- Sonno con durata scelta, prima alba e recupero progressivo; fame, sete e bisogno di riposo separati. Costrutti non biologici senza cibo/acqua.
+- Tempo condiviso controllato dal Master, Corruzione per Notti trascorse e bonus notturni che calano prima della Mattina. Riposi, viaggi e visite online usano il canale autorizzato per i giocatori.
+- Gigante di sabbia e coda gratuita per entrambe le specie: attacco o parata al 65%, recupero condiviso di due turni personali. Doppio critico Lava: probabilità di vetrificazione e Materia dimezzata ai superstiti.
+- Corretto il mantello senza tiro e il blocco della coda durante Sfinimento; salvataggi, ricevute e massimi naturali delle risorse preservati.
+- Collegati 33 PNG approvati: 13 sfondi desktop, 10 per telefono e 10 reliquie. Anatomie riviste sui disegni confermati, senza imporre modifiche alle personalizzazioni. Le nuove proposte A/B/C restano da approvare.
 
-Verifiche locali:1690 test passati,6 saltati;4 prove online autenticate passate; analisi statica senza problemi. CI e pacchetti del commit distribuito restano verifiche separate.
+Verifiche locali alla preparazione del commit: analisi app senza problemi; suite completa con 1.830 passati, 6 saltati e due errori nelle fixture, poi corretti e riprovati con 12/12 test passati. Quattro prove autenticate e 32 test degli strumenti di distribuzione passati. CI, pacchetti e accessibilità dei download sono attestati separatamente nel rapporto di consegna, dopo la build del commit.
 
-Costi, quantità, minimi/massimi, cooldown, requisiti ed effetti rimangono personalizzabili negli editor e nel JSON. Test locali, CI, pacchetti e prove online sono riportati separatamente nel rapporto della patch. Il [registro cumulativo](REGISTRO_AGGIORNAMENTI.md) conserva la base b917217d98d16861a5bbaf1706d78825d883c970/run40242640717; questa patch non avvia ancora i log separati della futura espansione.
+Costi, cooldown, bersagli, durate, profili di recupero, bisogni, parti anatomiche e temi rimangono personalizzabili negli editor e nel JSON. Dettagli e limiti nel [rapporto della patch](PATCH_2026-10-29_SONNO_TEMI_VERIFICHE.md). Il [registro cumulativo](REGISTRO_AGGIORNAMENTI.md) conserva lo storico previsto da AGENTS.md; i log separati della futura espansione non iniziano con questa patch.

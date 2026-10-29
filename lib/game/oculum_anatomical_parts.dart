@@ -56,6 +56,10 @@ const oculumAnatomicalPartDefaultFractions = <String, double>{
   'wound': .20,
   'rim': .20,
   'fold': .25,
+  'ears': .10,
+  'cap': .30,
+  'crest': .20,
+  'receivers': .20,
 };
 
 /// Conservative material recognition from PHYSICAL description only. An
@@ -68,6 +72,17 @@ String oculumAnatomicalPartMaterial({
   if ('${part['material'] ?? ''}'.isNotEmpty) return '${part['material']}';
   final text = physicalDescription.toLowerCase();
   bool has(String pattern) => RegExp(pattern).hasMatch(text);
+  if (const {'mostro_sabbia', 'gigante_sabbia'}.contains(monsterId)) {
+    return 'sand';
+  }
+  if (monsterId == 'costrutto_minore') return 'metal';
+  if (monsterId == 'funghetto_cappuccio_rosso') return 'fiber';
+  if (monsterId == 'shadow_devil') return 'spectral';
+  if (monsterId.startsWith('aberrazione_metallica_')) return 'metal';
+  if (monsterId == 'nuvola_in_bottiglia') return 'spectral';
+  if (const {'mostro_lunare', 'mostro_lunare_demoniaco'}.contains(monsterId)) {
+    return 'metal';
+  }
   if (monsterId == 'pawn_guardiano' ||
       has(
         r'corpo (?:interamente )?(?:meccanico|metallico|di metallo)|automa|robot',
@@ -153,17 +168,21 @@ List<String> oculumAnatomicalPartAffectedRolls(
   'legs' ||
   'root' ||
   'tentacles' => ['riflessi', 'iniziativa', 'movimento', 'agilita'],
-  'eyes' || 'sensor' || 'antennae' => ['percezione', 'investigazione'],
+  'eyes' ||
+  'ears' ||
+  'sensor' ||
+  'antennae' => ['percezione', 'investigazione'],
   _ => [],
 };
 
 String oculumAnatomicalInjuryLabel(String material) => switch (material) {
   'wood' || 'fiber' => 'Fibre lacerate',
   'metal' => 'Meccanismo danneggiato',
-  'stone' || 'crystal' => 'Crepa strutturale',
+  'stone' || 'crystal' || 'glass' => 'Crepa strutturale',
   'chitin' => 'Carapace lesionato',
   'gel' => 'Massa destabilizzata',
   'spectral' => 'Contorno disperso',
+  'sand' => 'Sabbia disgregata',
   _ => 'Lesione',
 };
 

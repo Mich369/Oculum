@@ -1755,6 +1755,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool rabbitHat = false,
   }) async {
     alignCombatEncounterForRoll();
+    final sandTailPrepared =
+        freeReactionId == null &&
+            schiantoReactionId == null &&
+            counterAttackId == null &&
+            !rabbitHat
+        ? pendingSandTailAttack
+        : const <String, dynamic>{};
     final escapeInterception = escapeReactionOf == null
         ? null
         : onlineCombatRequests[escapeReactionOf];
@@ -2417,7 +2424,38 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
     }
     final artWeakPenalty = preparedArtWeakPointPenalty;
+    // The nonce is captured before opening the planner. Revalidate the actor,
+    // encounter and single target before claiming the one shared tail charge.
+    // Another click/dialog cannot turn this into a reusable resource bypass.
+    final sandTailAttack = sandTailPrepared.isNotEmpty;
+    if (!mounted ||
+        currentSheetScrollId() != origin ||
+        encounter != onlineCombatEncounterId) {
+      return;
+    }
+    if (sandTailAttack &&
+        (controlledPlan.targetIds.length != 1 ||
+            masked.isNotEmpty ||
+            robotAttack.isNotEmpty ||
+            moonVolley != null ||
+            readIntValue(planarState['boneFourSlash']) > 0 ||
+            cycleSpines > 0 ||
+            cycleStomp > 0 ||
+            cycleBite ||
+            cycleThrow ||
+            allOpponents)) {
+      aggiungiLog(
+        '[CODA DI SABBIA] La sferzata gratuita è un solo colpo di '
+        'coda, separato dalle raffiche e dalle altre tecniche preparate.',
+      );
+      return;
+    }
+    if (sandTailAttack &&
+        !claimSandTail('attack', nonce: '${sandTailPrepared['nonce']}')) {
+      return;
+    }
     if (!maskedPunch &&
+        !sandTailAttack &&
         !resourceAlreadySpent &&
         freeReactionId == null &&
         schiantoReactionId == null &&
@@ -2448,7 +2486,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           effect['type'] == 'danno' &&
           oculumIsAngelRayEffectId('${effect['effectId'] ?? ''}'),
     );
-    final element = robotAttack.isNotEmpty
+    final element = sandTailAttack
+        ? 'terra'
+        : robotAttack.isNotEmpty
         ? '${robotAttack['element']}'
         : angelicRayPrepared
         ? 'angelico'
@@ -2775,6 +2815,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               );
         final request = <String, dynamic>{
           'id': requestId,
+          if (sandTailAttack) ...{
+            'sandTailAttack': true,
+            'sandTailClaim': sandTailPrepared['nonce'],
+            'meleeAttack': true,
+            'melee': true,
+          },
           if (boneVolley) ...{
             'boneVolley': true,
             'boneSlashPercent': readIntValue(planarState['boneFourSlash']),
@@ -4357,6 +4403,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         await applyResolvedOnlineDefense(request, 'nube_rigida', -1000000);
         return;
       }
+      if (choice == 'coda_sabbia') {
+        await applyResolvedOnlineDefense(
+          request,
+          choice,
+          sandParryCriticalReference,
+        );
+        return;
+      }
       if (readIntValue(request['cycleLunarStomp']) > 0) choice = 'resistenza';
       if (request['firstDefense'] == null) {
         recordMeccanioAggression(request);
@@ -4657,6 +4711,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     );
     request['targetLevel'] = leggiNumero(livelloController);
     final mantleDefense = choice == 'mantello';
+    final tailDefense = choice == 'coda_sabbia';
     if (mantleDefense && !referenceMantleAvailable) return;
     if ((request['referenceMadnessWave'] == true ||
             isLusierDerision(request)) &&
@@ -4670,10 +4725,22 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         }.contains(choice)) {
       return;
     }
+    if (tailDefense) {
+      if (!canPrepareSandTail('parry')) return;
+      if ((sandTailState['mode'] != 'parry' ||
+              sandTailState['fight'] != sandFightKey) &&
+          !prepareSandTail('parry')) {
+        return;
+      }
+      if (!claimSandTail('parry', packetId: id)) return;
+      defense = sandParryCriticalReference;
+      defenseNatural = 0;
+      request['sandTailParry'] = true;
+    }
     applyEscapeReturnBonus(request);
     final counterPercent = counterAttackDamagePercent(request, defense);
     final isCounter = counterPercent != null;
-    final unusedFastDefenseBonus = isCounter
+    final unusedFastDefenseBonus = isCounter || tailDefense
         ? 0
         : readIntValue(
             request.putIfAbsent(
@@ -4681,7 +4748,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               () => consumePendingFastReactionConsequenceBonus(),
             ),
           );
-    if (!isCounter && !mantleDefense) {
+    if (!isCounter && !mantleDefense && !tailDefense) {
       defense -= preparedArtWeakPointPenalty;
       if (choice == 'riflessi' &&
           readIntValue(planarState['evergreenDodge']) > 0) {
@@ -4696,10 +4763,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       planarState.remove('maskedTeleport');
       planarState.remove('defenseRollPenalty');
     }
-    if (!isCounter && !mantleDefense && choice != 'cm') {
+    if (!isCounter && !mantleDefense && !tailDefense && choice != 'cm') {
       defense += lunarDefenseRollBonus + referenceDefenseRollBonus;
     }
-    if (!isCounter && !mantleDefense && planarState['doppioneCopy'] == true) {
+    if (!isCounter &&
+        !mantleDefense &&
+        !tailDefense &&
+        planarState['doppioneCopy'] == true) {
       defense = (defense / 4).floor();
     }
     if (mantleDefense) defense = referenceResistanceValue;
@@ -4791,7 +4861,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             defense,
             difficulty: '${request['difficulty'] ?? 'normale'}',
           );
-    if (mantleDefense) outcome = OculumAttackOutcome.full;
+    if (mantleDefense || tailDefense) outcome = OculumAttackOutcome.full;
     if (isLunarGuardianCoreCreature &&
         request['targetBodyPart'] == 'core' &&
         !lunarGuardianCoreExposed) {
@@ -4975,6 +5045,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['freeReaction'] =
         !totalPowerExhausted &&
         !isCounter &&
+        !tailDefense &&
         request['reactionOf'] == null &&
         (oculumDefenseGrantsFreeReaction(attack, defense) ||
             resisted ||
@@ -4982,6 +5053,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     request['criticalReaction'] =
         !totalPowerExhausted &&
         !isCounter &&
+        !tailDefense &&
         oculumDefenseGrantsFreeReaction(attack, defense);
     aggiungiLog(
       isCounter
@@ -5057,6 +5129,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     var damage = outcome == OculumAttackOutcome.avoided || maskedCriticalStop
         ? 0
+        : (tailDefense || mantleDefense)
+        ? resolvedAttackBaseDamage
         : isCounter
         ? (counterPercent > 0 ? resolvedAttackBaseDamage : 0)
         : resisted && isMeccanio
@@ -5173,11 +5247,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final previousElement = incomingDamageElement;
       incomingDamageElement = '${request['element'] ?? 'fisico'}';
       final discoveredWeakPoint =
+          oculumMonsterHasAnatomicalWeakPoint(
+            monsterBookEntryById(faunaCurrentMonsterId),
+          ) &&
+          (!oculumLunarGuardianCoreMonsterIds.contains(faunaCurrentMonsterId) ||
+              lunarGuardianCoreExposed) &&
           combatDiscoveries[combatDiscoveryKey(
-            tag,
-            combatScoutSide('${request['sourceTag']}'),
-          )]?['weakPoint'] ==
-          true;
+                tag,
+                combatScoutSide('${request['sourceTag']}'),
+              )]?['weakPoint'] ==
+              true;
       final precisionBasePreset = configuredIncomingDamagePreset();
       final precisionPreset = precisionStages > 0
           ? oculumAdvanceDamagePreset(
@@ -5277,6 +5356,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           additionalDefense: transparencyDefense + unusedFastDefenseBonus,
           dannoEsplicito: precisionAdjustedDamage,
           critico: critical,
+          doubleCritical: doubleCritical,
           criticalBonusMultiplier: critical ? 2 : 1,
           criticalDamageBonusOverride: doubleCritical
               ? oculumDoubleCriticalDamageBonus(
@@ -6208,6 +6288,26 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
+                          if (request['firstDefense'] == null &&
+                              request['referenceMadnessWave'] != true &&
+                              !isLusierDerision(request) &&
+                              canPrepareSandTail('parry'))
+                            OutlinedButton.icon(
+                              key: ValueKey('sand_tail_parry_${request['id']}'),
+                              onPressed:
+                                  onlineCombatResolving.contains(
+                                    '${request['id']}',
+                                  )
+                                  ? null
+                                  : () => defendOnlineAttack(
+                                      request,
+                                      'coda_sabbia',
+                                    ),
+                              icon: const Icon(Icons.shield_outlined),
+                              label: const Text(
+                                'Coda · parata gratuita senza tiro',
+                              ),
+                            ),
                           if (request['firstDefense'] == null &&
                               request['referenceMadnessWave'] != true)
                             Tooltip(

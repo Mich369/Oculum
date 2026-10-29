@@ -345,8 +345,7 @@ extension _OculumWorldTravel on _OculumHomePageState {
         totalSpeedPercent: mode == 'walk' ? 100 : percent ?? 500,
       );
     } else {
-      await realtimeService?.sendCombatEvent(
-        'initiative_control',
+      await sendWorldClockRequest(
         permissionEnvelope({
           'id': receipt,
           'worldClockCommand': 'travel_request',

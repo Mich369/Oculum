@@ -34,6 +34,20 @@ List<List<OculumStructuredEffect>>? oculumPlanarSkillEffects(
   String id,
   List<List<OculumStructuredEffect>>? base,
 ) {
+  if (const {'sand_tail_attack', 'sand_tail_parry'}.contains(id)) {
+    return List.generate(
+      3,
+      (form) => [
+        OculumStructuredEffect(
+          id: 'planar:$id:$form',
+          type: 'planar',
+          target: id,
+          valueExpression: '65',
+          duration: '2',
+        ),
+      ],
+    );
+  }
   final own = _planarSelfRules[id];
   final target = _planarTargetRules[id];
   if (own == null &&
@@ -414,6 +428,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     String source,
   ) {
     final state = planarState;
+    if (activateSandEffect(effect, value, duration)) return;
     if (effect.target == 'lusier_condition_guard') return;
     if (activateGuardianGoldEffect(effect, value)) return;
     if (effect.target == 'lusier_solar_vitalium') {
@@ -805,6 +820,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    tickSandTurn();
     tickGuardianGoldTurn();
     tickTotalPowerExhaustion();
     tickProvokerShield();
@@ -866,6 +882,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void resetPlanarFight() {
+    resetSandFight();
     resetGuardianGoldFight();
     planarState.remove('provokerShield');
     planarState.remove('provokerTurns');

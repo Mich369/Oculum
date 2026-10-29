@@ -1430,6 +1430,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'faunaPublic': {
         'evergreenDisguiseProtected': evergreenDisguiseProtected,
         'banditVendetta': planarState['banditVendetta'] == true,
+        'solarFaceUncovered': solarFaceUncovered,
       },
       'precisionBodyParts': publicPrecisionBodyParts,
       'homeArtworkFollowsTheme': homeArtworkFollowsTheme,
@@ -1729,6 +1730,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
   void _caricaStatoDaJsonConSoglia(Map<String, dynamic> json) {
     statThresholdReward = '${json['statThresholdReward'] ?? ''}';
     oculumRepairMojibakeJsonInPlace(json);
+    // Internal builders can supply narrow Dart literals (Map<String, bool>
+    // or Map<String, int>) before JSON encoding. Normalize the extensible
+    // runtime once at this boundary so new ledgers remain writable without
+    // changing or discarding custom keys.
+    if (json['planarRuntime'] is Map) {
+      json['planarRuntime'] = Map<String, dynamic>.from(
+        json['planarRuntime'] as Map,
+      );
+    }
     temporaryOculum = 0;
     temporaryOculumRollsRemaining = 0;
     oculumAddormentato = false;

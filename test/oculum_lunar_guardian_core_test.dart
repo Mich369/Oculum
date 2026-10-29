@@ -12,6 +12,11 @@ Future<(dynamic, OculumPerformanceProbe)> _mount(WidgetTester tester) async {
   state.livelloController.text = '3';
   state.resilienzaController.text = '30';
   state.currentResilienzaController.text = '30';
+  // This suite isolates proportional core damage, not the independent random
+  // half-HP awakening that can add RES and immediately restore body HP.
+  state.schedePersonaggio[state
+          .schedaCorrente]['partialAwakeningHalfHpTriggered'] =
+      true;
   state.arti.clear();
   state.inventario.clear();
   state.activeStructuredEffects.clear();
@@ -20,6 +25,16 @@ Future<(dynamic, OculumPerformanceProbe)> _mount(WidgetTester tester) async {
   state.scudoOculumMaxController.text = '100';
   probe.invalidateDerivedCaches();
   state.currentHpController.text = '${probe.maximumHp()}';
+  // Isolate the exact shield/core transfer from independent random passive
+  // mitigation and the quarter-HP force-state lottery. Their own suites keep
+  // exercising those mechanics; the expected 20 core / 60 body HP stays exact.
+  for (final dynamic stat in state.hiddenEyeStats) {
+    if (const {'fortuna', 'resistenza', 'riflessi'}.contains(stat.id)) {
+      stat.unlocked = false;
+    }
+  }
+  state.statoForzaAttivo = '';
+  state.statoForzaPronto = false;
   return (state, probe);
 }
 
@@ -244,7 +259,14 @@ void main() {
         ],
       };
       state.onlineCombatRequests[request['id']] = request;
+      final resilienceBefore = state.resilienzaController.text;
       await p.resolveCombatDefense(request, 'difesa', 15);
+      expect(
+        state.resilienzaController.text,
+        resilienceBefore,
+        reason:
+            'The core damage fixture must not trigger unrelated awakening healing.',
+      );
       expect(p.shieldTotal(), 0);
       expect(state.scudoOculumController.text, '0');
       expect(core['coreHp'], 20);

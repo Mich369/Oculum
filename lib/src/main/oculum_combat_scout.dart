@@ -223,6 +223,9 @@ extension _OculumCombatScout on _OculumHomePageState {
   }
 
   bool combatTokenWeakPointKnown(Map<String, dynamic> token) {
+    if (!combatTokenHasAccessibleAnatomicalWeakPoint(token)) {
+      return false;
+    }
     final targetTag = onlineCombatTokenTag(token);
     final discovery =
         combatDiscoveries[combatDiscoveryKey(

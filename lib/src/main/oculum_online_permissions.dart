@@ -286,6 +286,19 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   }
 
   void receivePermissionEvent(String event, Map<String, dynamic> payload) {
+    if (payload['action'] == 'world_clock') {
+      if (event == 'permission_request' &&
+          !payload.containsKey('worldClockSnapshot') &&
+          !payload.containsKey('worldMerchantRestGrant') &&
+          const {
+            'rest_request',
+            'travel_request',
+            'merchant_visit',
+          }.contains(payload['worldClockCommand'])) {
+        receiveWorldClockControl(payload);
+      }
+      return;
+    }
     if (payload['action'] == 'party_chest') {
       unawaited(receivePartyChestEvent(event, payload));
       return;

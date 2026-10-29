@@ -88,8 +88,10 @@ final _celestialReferenceBaseEntries = <MonsterBookEntry>[
         for (final part in const [
           ('body', 'Corpo', false),
           ('head', 'Testa', false),
-          ('arms', 'Braccia a lama', false),
-          ('legs', 'Gambe corazzate', false),
+          ('arms_1', 'Braccio a lama destro', false),
+          ('arms_2', 'Braccio a lama sinistro', false),
+          ('legs_1', 'Gamba corazzata destra', false),
+          ('legs_2', 'Gamba corazzata sinistra', false),
           ('lunar_crystal_forehead', 'Cristallo della fronte', true),
           (
             'lunar_crystal_sternum',
@@ -104,7 +106,13 @@ final _celestialReferenceBaseEntries = <MonsterBookEntry>[
             'label': part.$2,
             'weak': part.$3,
             'penalty': 0,
-            'group': part.$1,
+            'group': part.$1.startsWith('arms_')
+                ? 'arms'
+                : part.$1.startsWith('legs_')
+                ? 'legs'
+                : part.$1,
+            if (part.$1.startsWith('arms_') || part.$1.startsWith('legs_'))
+              'side': part.$1.endsWith('_1') ? 'right' : 'left',
           },
       ],
       'crystalHits': 3,

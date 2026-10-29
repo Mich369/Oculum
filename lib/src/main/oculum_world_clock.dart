@@ -44,6 +44,18 @@ Map<String, dynamic> oculumWorldMerchantVisit(
 }
 
 extension _OculumWorldMerchantRest on _OculumHomePageState {
+  // The backend reserves initiative_control for staff. A player's request
+  // travels on the existing permission channel; only the Master publishes
+  // clock snapshots and recovery grants on initiative_control.
+  Future<bool> sendWorldClockRequest(Map<String, dynamic> payload) async {
+    final service = realtimeService;
+    if (service?.isConnected != true) return false;
+    return service!.sendPermissionEvent('permission_request', {
+      ...payload,
+      'action': 'world_clock',
+    });
+  }
+
   void notifyWorldMerchantVisit() {
     final tag = sheetTagAt(schedaCorrente);
     final payload = permissionEnvelope({
@@ -56,9 +68,7 @@ extension _OculumWorldMerchantRest on _OculumHomePageState {
     if (worldClockAuthority || !onlineMasterApprovalRequired) {
       receiveWorldMerchantVisit(payload, local: true);
     } else if (realtimeService?.isConnected == true) {
-      unawaited(
-        realtimeService?.sendCombatEvent('initiative_control', payload),
-      );
+      unawaited(sendWorldClockRequest(payload));
     }
   }
 
@@ -113,6 +123,7 @@ extension _OculumWorldMerchantRest on _OculumHomePageState {
             'worldClockCommand': 'rest_request',
             'restTargetTag': tag,
             'longRest': false,
+            'effectsAlreadyApplied': true,
           }),
         );
       }
@@ -213,11 +224,16 @@ int oculumWorldMonsterCoreBonus(
   int level,
   int grade, {
   required bool isMonster,
+  int dawnFadeSeconds = 1800,
 }) {
   if (!isMonster) return 0;
   return (switch (oculumWorldPhase(seconds)) {
     'buio' => 1,
-    'notte' => 5 + max(0, level) + 3 * max(0, grade),
+    'notte' => oculumNightBonusAfterDawnFade(
+      (5 + max(0, level) + 3 * max(0, grade)).toInt(),
+      seconds,
+      fadeSeconds: dawnFadeSeconds,
+    ),
     _ => 0,
   }).toInt();
 }
@@ -253,6 +269,9 @@ class OculumWorldClockProgress {
     this.revision = 0,
     this.travelRemainder = 0,
     this.travelChecks = 0,
+    this.calendarOriginDay = 0,
+    this.calendarOriginOrdinal = 0,
+    Map<String, dynamic>? rules,
     Set<String>? receipts,
     List<Map<String, dynamic>>? events,
     List<Map<String, dynamic>>? checks,
@@ -264,13 +283,27 @@ class OculumWorldClockProgress {
        checks = [...?checks],
        rests = [...?rests],
        travelSettings = {...?travelSettings},
-       merchantVisits = {...?merchantVisits};
+       merchantVisits = {...?merchantVisits},
+       rules = {...?rules};
 
   factory OculumWorldClockProgress.fromJson(Map raw) {
     List<Map<String, dynamic>> rows(String key) => [
       for (final value in raw[key] is List ? raw[key] as List : const [])
         if (value is Map) Map<String, dynamic>.from(value),
     ];
+    final restoredRests = raw['rests'] is List
+        ? rows('rests')
+        : rows('restGrants');
+    if (raw['rests'] is List) {
+      for (final rest in restoredRests) {
+        if (rest['requestIds'] == null) {
+          // Older versions recovered on the initial click, before confirming
+          // party time. Their history must never become a new recovery grant.
+          rest['effectsAlreadyAppliedTags'] = rest['requestedBy'] ?? [];
+          rest['requestIds'] = [rest['id']];
+        }
+      }
+    }
     return OculumWorldClockProgress(
       seconds: max(0, readIntValue(raw['seconds'])),
       revision: max(0, readIntValue(raw['revision'])),
@@ -278,13 +311,18 @@ class OculumWorldClockProgress {
         raw['travelRemainder'],
       ).clamp(0, oculumTravelEventSeconds - 1).toInt(),
       travelChecks: max(0, readIntValue(raw['travelChecks'])),
+      calendarOriginDay: readIntValue(raw['calendarOriginDay']),
+      calendarOriginOrdinal: readIntValue(raw['calendarOriginOrdinal']),
+      rules: Map<String, dynamic>.from(
+        raw['rules'] is Map ? raw['rules'] as Map : const {},
+      ),
       receipts: (raw['receipts'] is List ? raw['receipts'] as List : const [])
           .map((value) => '$value')
           .where((id) => id.isNotEmpty)
           .toSet(),
       events: rows('events'),
       checks: rows('checks'),
-      rests: rows('rests'),
+      rests: restoredRests,
       travelSettings: raw['travelSettings'] is Map
           ? Map<String, dynamic>.from(raw['travelSettings'] as Map)
           : null,
@@ -295,6 +333,8 @@ class OculumWorldClockProgress {
   }
 
   int seconds, revision, travelRemainder, travelChecks;
+  int calendarOriginDay, calendarOriginOrdinal;
+  final Map<String, dynamic> rules;
   final Set<String> receipts;
   final List<Map<String, dynamic>> events, checks, rests;
   final Map<String, dynamic> travelSettings;
@@ -360,9 +400,35 @@ class OculumWorldClockProgress {
     'revision': revision,
     'day': seconds ~/ oculumWorldDaySeconds + 1,
     'phase': oculumWorldPhase(seconds),
+    'calendarOriginDay': calendarOriginDay,
+    'calendarOriginOrdinal': calendarOriginOrdinal,
+    'rules': {
+      'dawnFadeSeconds': readIntValue(
+        rules['dawnFadeSeconds'],
+        fallback: 1800,
+      ).clamp(1, 10800),
+    },
+    'restGrants': [
+      for (final rest in rests)
+        if (rest['status'] == 'confirmed')
+          {
+            for (final key in const [
+              'id',
+              'status',
+              'minutes',
+              'longRest',
+              'requestedBy',
+              'effectsAlreadyAppliedTags',
+              'endSeconds',
+              'requestIds',
+            ])
+              key: rest[key],
+          },
+    ],
   };
   Map<String, dynamic> toJson() => {
     ...publicJson(),
+    'rules': rules,
     'travelRemainder': travelRemainder,
     'travelChecks': travelChecks,
     'receipts': receipts.toList(),
@@ -394,16 +460,43 @@ extension _OculumWorldClock on _OculumHomePageState {
             : const {},
       );
 
-  Map<String, dynamic> worldClockCampaignJson() => worldClockProgress.toJson();
+  Map<String, dynamic> worldClockCampaignJson() {
+    final clock = worldClockProgress;
+    ensureWorldCalendarOrigin(clock);
+    worldClockCampaigns[activeCampaignId] = clock.toJson();
+    return clock.toJson();
+  }
+
   void loadWorldClockCampaign(Map<String, dynamic> campaign) {
     final id = '${campaign['id'] ?? activeCampaignId}';
-    worldClockCampaigns[id] = OculumWorldClockProgress.fromJson(
+    final clock = OculumWorldClockProgress.fromJson(
       campaign['worldClock'] is Map ? campaign['worldClock'] as Map : const {},
-    ).toJson();
+    );
+    if (clock.calendarOriginDay <= 0 &&
+        campaign['schedePersonaggio'] is List &&
+        (campaign['schedePersonaggio'] as List).isNotEmpty) {
+      final sheets = campaign['schedePersonaggio'] as List;
+      final selected = readIntValue(
+        campaign['schedaCorrente'],
+      ).clamp(0, sheets.length - 1).toInt();
+      final sheet = sheets[selected];
+      clock.calendarOriginDay = normalizzaGiornoOculum(
+        readIntValue(
+          sheet is Map
+              ? sheet['oculumCurrentDay'] ?? sheet['giornoOculum']
+              : null,
+          fallback: 1,
+        ),
+      );
+      clock.calendarOriginOrdinal = clock.seconds ~/ oculumWorldDaySeconds;
+    } else {
+      ensureWorldCalendarOrigin(clock);
+    }
+    worldClockCampaigns[id] = clock.toJson();
   }
 
   Map<String, dynamic> worldClockPublicSnapshot() =>
-      worldClockProgress.publicJson();
+      OculumWorldClockProgress.fromJson(worldClockCampaignJson()).publicJson();
 
   int get worldClockSeconds {
     if (realtimeService?.isConnected == true && !realtimeIsMasterRole) {
@@ -414,7 +507,9 @@ extension _OculumWorldClock on _OculumHomePageState {
   }
 
   void storeWorldClock(OculumWorldClockProgress clock, {bool publish = true}) {
+    ensureWorldCalendarOrigin(clock);
     worldClockCampaigns[activeCampaignId] = clock.toJson();
+    syncOwnedWorldCalendarAndNeeds(clock.publicJson());
     invalidateDerivedDataCaches();
     notifyActiveSheetSummaryChanged();
     programmaSalvataggio();
@@ -425,6 +520,7 @@ extension _OculumWorldClock on _OculumHomePageState {
   void advanceWorldClockTurn(String encounterId, String receipt) {
     if (!worldClockAuthority || encounterId.isEmpty || receipt.isEmpty) return;
     final clock = worldClockProgress;
+    prepareOwnedWorldTimeAdvance(clock);
     if (clock.advance(10, 'turn:$encounterId:$receipt')) storeWorldClock(clock);
   }
 
@@ -440,6 +536,19 @@ extension _OculumWorldClock on _OculumHomePageState {
         sheet['isSummon'] == true && sheet['summonType'] == 'monster';
   }
 
+  int get worldDawnFadeSeconds {
+    final remote = realtimeVisibleInitiativeSnapshot['worldClock'];
+    final rules = realtimeService?.isConnected == true && !realtimeIsMasterRole
+        ? remote is Map
+              ? remote['rules']
+              : null
+        : worldClockProgress.rules;
+    return readIntValue(
+      rules is Map ? rules['dawnFadeSeconds'] : null,
+      fallback: 1800,
+    );
+  }
+
   int worldMonsterCoreBonusAt(int index) =>
       index < 0 || index >= schedePersonaggio.length
       ? 0
@@ -448,23 +557,11 @@ extension _OculumWorldClock on _OculumHomePageState {
           sheetIntValueAt(index, 'livello'),
           sheetIntValueAt(index, 'grado'),
           isMonster: worldClockSheetIsMonster(index),
+          dawnFadeSeconds: worldDawnFadeSeconds,
         );
 
-  void notifyWorldRestState({required bool longRest}) {
-    final payload = permissionEnvelope({
-      'id':
-          'world-rest:${sheetTagAt(schedaCorrente)}:$longRest:${DateTime.now().microsecondsSinceEpoch}:${Random.secure().nextInt(1 << 30)}',
-      'worldClockCommand': 'rest_request',
-      'longRest': longRest,
-    });
-    if (worldClockAuthority) {
-      receiveWorldClockControl(payload);
-    } else if (realtimeService?.isConnected == true) {
-      unawaited(
-        realtimeService?.sendCombatEvent('initiative_control', payload),
-      );
-    }
-  }
+  void notifyWorldRestState({required bool longRest}) =>
+      requestWorldPartyRest(longRest: longRest, effectsAlreadyApplied: true);
 
   Future<void> publishWorldClock() async {
     if (!worldClockAuthority) return;
@@ -491,15 +588,12 @@ extension _OculumWorldClock on _OculumHomePageState {
       }
       final raw = payload['worldClockSnapshot'] as Map;
       final old = realtimeVisibleInitiativeSnapshot['worldClock'];
-      if (old is Map &&
-          readIntValue(raw['revision']) <= readIntValue(old['revision'])) {
-        return;
-      }
-      realtimeVisibleInitiativeSnapshot['worldClock'] = {
-        'seconds': max(0, readIntValue(raw['seconds'])),
-        'revision': max(0, readIntValue(raw['revision'])),
-        'phase': oculumWorldPhase(readIntValue(raw['seconds'])),
-      };
+      final public = newestWorldClockSnapshot(
+        raw,
+        previous: old is Map ? old : null,
+      );
+      realtimeVisibleInitiativeSnapshot['worldClock'] = public;
+      syncOwnedWorldCalendarAndNeeds(public);
       invalidateDerivedDataCaches();
       if (mounted) setState(() {});
       return;
@@ -524,34 +618,53 @@ extension _OculumWorldClock on _OculumHomePageState {
     if (payload['worldClockCommand'] != 'rest_request') return;
     final id = '${payload['id'] ?? ''}';
     if (id.isEmpty || id.length > 240) return;
+    final restTag = '${payload['restTargetTag'] ?? payload['senderTag'] ?? ''}';
+    if (restTag.isEmpty ||
+        realtimeService?.isConnected == true &&
+            !const {'master', 'coMaster'}.contains(payload['senderRole']) &&
+            !validPermissionSender({...payload, 'senderTag': restTag})) {
+      return;
+    }
     final clock = worldClockProgress;
-    if (clock.receipts.contains(id)) return;
+    ensureWorldCalendarOrigin(clock);
+    if (clock.receipts.contains(id)) {
+      unawaited(publishWorldClock()); // Reliable grant retry, no second rest.
+      return;
+    }
     clock.receipts.add(id);
     final longRest = payload['longRest'] == true;
-    final restTag =
-        payload['senderRole'] == 'master' &&
-            '${payload['restTargetTag'] ?? ''}'.isNotEmpty
-        ? '${payload['restTargetTag']}'
-        : '${payload['senderTag'] ?? ''}';
     final pending = clock.rests
         .where(
           (rest) => rest['status'] == 'pending' && rest['longRest'] == longRest,
         )
         .firstOrNull;
+    final already = payload['effectsAlreadyApplied'] == true;
     if (pending == null) {
       clock.rests.add({
         'id': id,
         'longRest': longRest,
         'status': 'pending',
+        'requestIds': [id],
         'requestedBy': [restTag],
+        'effectsAlreadyAppliedTags': already ? [restTag] : <String>[],
       });
     } else {
+      pending['requestIds'] = {
+        ...(pending['requestIds'] as List? ?? [pending['id']]).map((v) => '$v'),
+        id,
+      }.toList();
       pending['requestedBy'] = {
-        ...(pending['requestedBy'] as List? ?? const []).map(
-          (value) => '$value',
-        ),
+        ...(pending['requestedBy'] as List? ?? []).map((v) => '$v'),
         restTag,
       }.toList();
+      if (already) {
+        pending['effectsAlreadyAppliedTags'] = {
+          ...(pending['effectsAlreadyAppliedTags'] as List? ?? []).map(
+            (v) => '$v',
+          ),
+          restTag,
+        }.toList();
+      }
     }
     storeWorldClock(clock, publish: false);
   }
@@ -560,14 +673,23 @@ extension _OculumWorldClock on _OculumHomePageState {
     if (!worldClockAuthority) return false;
     final clock = worldClockProgress;
     final rest = clock.rests
-        .where((rest) => rest['id'] == id && rest['status'] == 'pending')
+        .where((row) => row['id'] == id && row['status'] == 'pending')
         .firstOrNull;
-    if (rest == null || minutes < (rest['longRest'] == true ? 90 : 30)) {
+    if (rest == null ||
+        minutes < (rest['longRest'] == true ? 90 : 30) ||
+        minutes > 30 * 540) {
       return false;
     }
-    if (!clock.advance(minutes * 60, 'party-rest:$id')) return false;
-    rest['status'] = 'confirmed';
-    rest['minutes'] = minutes;
+    final duration = rest['longRest'] == true
+        ? oculumSleepDurationMinutes(clock.seconds, minutes)
+        : minutes;
+    prepareOwnedWorldTimeAdvance(clock);
+    if (!clock.advance(duration * 60, 'party-rest:$id')) return false;
+    rest.addAll({
+      'status': 'confirmed',
+      'minutes': duration,
+      'endSeconds': clock.seconds,
+    });
     storeWorldClock(clock);
     return true;
   }
@@ -611,6 +733,7 @@ extension _OculumWorldClock on _OculumHomePageState {
       return false;
     }
     final clock = worldClockProgress;
+    prepareOwnedWorldTimeAdvance(clock);
     bool changed;
     try {
       changed = clock.travel(
@@ -644,8 +767,10 @@ extension _OculumWorldClock on _OculumHomePageState {
     final phase = oculumWorldPhase(seconds);
     return Tooltip(
       message:
-          'Giorno ${seconds ~/ oculumWorldDaySeconds + 1} · '
-          '${oculumWorldPhaseName(phase)} · $text\nIl tempo è gestito dal Master della campagna.',
+          'Giorno $currentWorldCalendarDay · '
+          '${oculumWorldPhaseName(phase)} · $text\n'
+          '${selectedPlaneId == 'mezzano' && phase == 'notte' && dayTime >= 8 * 3600 + 1800 ? 'Il Sole risbuca dall’Oblio presso le isole volanti.\n' : ''}'
+          'Il tempo è gestito dal Master della campagna.',
       child: TextButton.icon(
         key: const ValueKey('campaign_world_clock'),
         onPressed: worldClockAuthority || realtimeIsCoMasterRole
@@ -680,7 +805,7 @@ extension _OculumWorldClock on _OculumHomePageState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Giorno ${worldClockSeconds ~/ oculumWorldDaySeconds + 1} · '
+                      'Giorno $currentWorldCalendarDay · '
                       '${oculumWorldPhaseName(oculumWorldPhase(worldClockSeconds))} · '
                       '${oculumWorldDuration(worldClockSeconds % oculumWorldDaySeconds)}',
                     ),
@@ -698,6 +823,14 @@ extension _OculumWorldClock on _OculumHomePageState {
                       label: const Text('Prepara viaggio'),
                     ),
                     if (worldClockAuthority) ...[
+                      TextButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(dialog);
+                          await showWorldTimeAdvanceDialog();
+                        },
+                        icon: const Icon(Icons.update),
+                        label: const Text('Fai passare tempo'),
+                      ),
                       for (final rest in clock.rests.where(
                         (rest) => rest['status'] == 'pending',
                       ))

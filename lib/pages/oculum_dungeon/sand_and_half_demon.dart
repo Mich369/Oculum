@@ -14,7 +14,12 @@ final _sandAndHalfDemonEntries = <MonsterBookEntry>[
     4,
     false,
     true,
-    ['sand_beast_claw', 'sand_beast_armor'],
+    [
+      'sand_beast_claw',
+      'sand_beast_armor',
+      'sand_tail_attack',
+      'sand_tail_parry',
+    ],
     {
       'authoredCanonical': true,
       'dispositions': ['ostile', 'territoriale'],
@@ -27,11 +32,54 @@ final _sandAndHalfDemonEntries = <MonsterBookEntry>[
     classificationTags: ['Bestia', 'Miniboss', 'Sabbia'],
   ),
   _authoredPlanar(
+    'gigante_sabbia',
+    'Gigante di sabbia',
+    ['mezzano'],
+    'terra',
+    'Gigante umanoide molto largo e bestiale, composto di sabbia ocra compatta '
+        'con segni scuri. Possiede due braccia massicce artigliate, due gambe, '
+        'due corna e la grande coda stratificata della specie. Il volto compatto '
+        'ha segni scuri attorno agli occhi, muso corto, espressione vigile e '
+        'denti grigio carbone. Il petto è pieno e solido, senza nucleo esposto. '
+        'La coda può colpire o parare gratuitamente con un solo recupero condiviso. '
+        'Teme il Fuoco; un doppio critico di Lava che raggiunge la Vita può '
+        'vetrificarlo e altrimenti ne dimezza temporaneamente la Materia.',
+    'Nessun punto debole anatomico. La sua fragilità è il Fuoco.',
+    [14, 7, 12, 4],
+    6,
+    false,
+    true,
+    [
+      'sand_beast_claw',
+      'sand_beast_armor',
+      'sand_tail_attack',
+      'sand_tail_parry',
+    ],
+    {
+      'authoredCanonical': true,
+      'dispositions': ['ostile', 'territoriale'],
+      'habitats': ['dune', 'rovine insabbiate'],
+      'sandRules': {
+        'cooldownPersonalTurns': 2,
+        'receivedDamagePercent': 65,
+        'lavaKillPercent': 50,
+        'matterDurationTurns': 3,
+        'matterDivisor': 2,
+        'parryCriticalReference': 'resistenza',
+      },
+    },
+    const {'fuoco': 'Fragilità'},
+  ).copyWith(
+    dropIds: ['sabbia_compatta_bestia'],
+    dropChances: {'sabbia_compatta_bestia': 50},
+    classificationTags: ['Gigante', 'Miniboss', 'Sabbia'],
+  ),
+  _authoredPlanar(
     'mezzo_demone_cosciente',
     'Mezzo demone cosciente',
     ['mezzano', 'demoniaco'],
     'taglio',
-    'Creatura cosciente per metà demone: corpo umanoide muscoloso, corna chiare, capelli neri ritti e mani artigliate. Un ampio apparato di mascelle e pieghe carnose occupa il collo e il torace superiore; il ventre reca segni luminosi. Può essere incontrato aggressivo, ma conserva coscienza e capacità di scegliere: non è una bestia priva di volontà.',
+    'Creatura cosciente per metà demone, dal corpo umanoide atletico con pelle oliva opaca e rilievi angolari sulle spalle. La testa glabra ha lineamenti severi, due occhi vigili e due grandi corna chiare a lama, rivolte all’indietro. Possiede due braccia artigliate e due gambe robuste. Una grande bocca organica verticale occupa il centro del collo e del torace, bordata da denti chiari; il volto superiore rimane distinto e cosciente. Fasce di tessuto chiaro consumato gli avvolgono la vita. Può essere incontrato aggressivo, ma conserva coscienza e capacità di scegliere: non è una bestia priva di volontà.',
     'La bocca dello stomaco: la zona epigastrica al centro dell’addome superiore, sotto lo sterno.',
     [3, 4, 3, 2],
     2,
@@ -78,6 +126,36 @@ final _sandAndHalfDemonEntries = <MonsterBookEntry>[
 ];
 
 const _sandAndHalfDemonTechniques = <String, MonsterConcreteTechnique>{
+  'sand_tail_attack': MonsterConcreteTechnique(
+    name: 'Sferzata della coda',
+    action:
+        'Prepara una sferzata a contatto: il prossimo attacco singolo con '
+        'la coda è gratuito anche fuori turno. Condivide con la parata una '
+        'disponibilità ogni due turni personali, senza avanzare la turnistica.',
+    element: 'terra',
+    kind: 'danno',
+    requiredLevel: 0,
+    costResource: 'nessuna',
+    minimums: [0, 0, 0],
+    maximums: [0, 0, 0],
+    cooldownValues: [0, 0, 0],
+    forms: [[], [], []],
+  ),
+  'sand_tail_parry': MonsterConcreteTechnique(
+    name: 'Riparo della coda',
+    action:
+        'Para un colpo senza tiro e senza Azioni o Reazioni, ricevendo '
+        'il 65% dei Danni dopo la Difesa e prima degli Scudi. Condivide con '
+        'la sferzata una disponibilità ogni due turni personali.',
+    element: 'terra',
+    kind: 'difesa',
+    requiredLevel: 0,
+    costResource: 'nessuna',
+    minimums: [0, 0, 0],
+    maximums: [0, 0, 0],
+    cooldownValues: [0, 0, 0],
+    forms: [[], [], []],
+  ),
   'shadow_devil_claws': MonsterConcreteTechnique(
     name: 'Artigli contaminati',
     action: 'Sferra gli artigli contro un solo bersaglio a contatto',

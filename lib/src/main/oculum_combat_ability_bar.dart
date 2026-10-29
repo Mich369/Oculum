@@ -150,6 +150,7 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
           'skeleton_giant_throw',
           'total_power_burst',
           'total_power_accuracy',
+          'sand_tail_attack',
         }.contains(e.target),
   )) {
     return {OculumCombatAbilityRole.attack};
@@ -269,6 +270,7 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
           'skeleton_giant_throw',
           'total_power_burst',
           'total_power_accuracy',
+          'sand_tail_attack',
         }.contains(e.target),
   )) {
     return OculumCombatAbilityRole.attack;
@@ -701,6 +703,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     final oculumBefore = currentOculum();
     final beforeEffects = jsonEncode(activeStructuredEffects);
     final beforeMasked = jsonEncode(pendingMaskedAttack);
+    final beforeSandTail = jsonEncode(pendingSandTailAttack);
     final beforeCycleAttack = cyclePreparedAttackSignature;
     final declaredEffects =
         natural?.forme[chosen].effettiStrutturati ??
@@ -731,6 +734,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       }
     } finally {
       combatSupportTargeting = false;
+    }
+
+    if (mounted &&
+        currentSheetScrollId() == origin &&
+        pendingSandTailAttack.isNotEmpty &&
+        beforeSandTail != jsonEncode(pendingSandTailAttack) &&
+        onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack(maximumTargets: 1);
+      return;
     }
 
     if (mounted &&

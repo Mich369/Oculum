@@ -1,0 +1,492 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-29",
+  "provider": "Built-in image_gen only",
+  "scope": "Five phone backgrounds and five transparent decorative relic drafts derived from explicitly approved desktops",
+  "counts": {
+    "canonical_source_desktops": 5,
+    "selected_phone_drafts": 5,
+    "selected_relic_drafts": 5,
+    "selected_derivatives": 10,
+    "saved_png_including_relic_history": 15,
+    "historical_relic_versions": 5,
+    "derivative_user_approved": 10,
+    "fully_approved_new_packs": 5,
+    "runtime_integrated": 0
+  },
+  "source_approval": {
+    "quote": "Sì, queste cinque sono canoniche",
+    "scope": "Desktops only; derivative approval separate"
+  },
+  "entries": [
+    {
+      "id": "mezzo_demone_cosciente",
+      "canonical_desktop": {
+        "path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/mezzo_demone_cosciente_C_radicale_v3.png",
+        "sha256": "7a81fd57ec2b18ae6df366045b624c18c45f1f835aac0227f24455063ce1a104",
+        "approved": true,
+        "approval_quote": "Sì, queste cinque sono canoniche"
+      },
+      "derivatives": [
+        {
+          "kind": "phone",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/mezzo_demone_cosciente_phone_draft_v1.png",
+          "sha256": "225dcd2bea81a05e60e4f76bc3a05fcc60e192f811d394dde4e08f98f4a5a472",
+          "prompt": "Use case: precise-environment-adaptation. Input1 is the explicitly APPROVED CANONICAL Oculum desktop. Derive ONE PORTRAIT PHONE BACKGROUND, 9:16 tall, opaque full environment. Preserve the exact chosen creature identity, anatomy, head/face, material/color palette, clothing, defining details and same environment. Do not redesign it or add organs, limbs, equipment, creature, reward or power. Input2 is only soft matte Rame fatato painting technique; never copy its insects or other scene motifs. Broad soft hand-painted matte tonal masses, gentle atmospheric edges, no plastic shine, 3D rendering, photographic pores or busy new greebles.\nRecompose specifically for phone: entire canonical subject or group SMALL along the LOWER edge/side, fully contained including horns, hands, feet, bottles and mantle, with at least8% clear side/bottom margins. Subject height around35–40% of canvas. The TOP two-thirds and central reading column must be DARK, quiet, low contrast environment with very little detail, so real controls and values remain legible. Continue the canonical environment naturally upward, do not merely crop the desktop or stretch the subject. No painted words, symbols, text, UI, cards, frames, borders, watermark, logo. No sun, moon, halo or new celestial sign. No sky/clouds in roofed interiors. This derivative is an UNAPPROVED DRAFT: desktop approval does not approve the derivative.\nSPECIFIC CANON: Preserve EXACTLY the chosen olive-gray angular athletic demon with broad swept-back pale blade horns, intelligent wedge face, TWO claw arms/TWO legs, cream knee-wrap trousers, and the VERTICAL large organic toothed mouth from lower neck down upper sternum. Latest explicit user choice is this VERTICAL MOUTH; do not convert it to horizontal. No extra stomach mouth. Keep the same fully roofed mossy gray-green stone hall with arches. Place whole figure low RIGHT with wide margins; giant quiet dark upper hall. Skin is matte organic, not newly armored.",
+          "file_audit": {
+            "id": "mezzo_demone_cosciente",
+            "kind": "phone",
+            "filename": "mezzo_demone_cosciente_phone_draft_v1.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/mezzo_demone_cosciente_phone_draft_v1.png",
+            "sha256": "225dcd2bea81a05e60e4f76bc3a05fcc60e192f811d394dde4e08f98f4a5a472",
+            "width": 941,
+            "height": 1672,
+            "mode": "RGB",
+            "bytes": 2107938,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {}
+          },
+          "visual_inspection": "C verticale: pelle oliva, testa e corna a lama, bocca verticale collo/torace, due braccia/due gambe, pantaloni crema; figura intera in basso a destra e grande spazio scuro superiore.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        },
+        {
+          "kind": "relic",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/mezzo_demone_cosciente_relic_draft_v2.png",
+          "sha256": "70962920dd1eadcb95c47cf9b8672750d7a92cd55bad2e571b0a73f13ab1167b",
+          "prompt": "Use case: decorative-transparent-asset. Input1 is the approved canonical Oculum desktop, used ONLY for thematic materials and specific shapes. Create ONE small isolated DECORATIVE RELIC ORNAMENT for that visual theme on a TRUE TRANSPARENT background. This is non-diegetic theme decoration, NOT a newly invented loot item, reward, ability, equipment or power, and NOT a Monster Book portrait or a creature cutout. No whole creature, head, face or eyes. Input2 supplies ONLY soft matte Rame fatato hand-painted brush texture, never copy its insects/motifs. Make a coherent compact diagonal ornamental cluster in the middle, no border/frame or UI.\nCRITICAL ALPHA AND MARGINS: all ornament must lie inside central50–55% of canvas with at least22% completely EMPTY TRANSPARENT padding on EVERY side. TRUE alpha-zero background, including entire outer border. No fake checkerboard, no white/black/colored background, no paper, ground, cast shadow, haze or smoke spread into margins, no sparse floating pixels or fragments beyond compact cluster. Soft painted edges but clean isolated silhouette. Matte tactile painting, no gloss/plastic/photoreal/3D/jewel shine. No text/logo/label/runes/sun/moon/halo or new thematic symbol. No weapons unless already a canonical thematic element (none requested here). Unapproved derivative DRAFT.\nSPECIFIC ORNAMENT: Use ONLY an abstract arrangement of two swept-back pale BONE blade-like horn motifs from the canonical head, a small curved row of irregular ivory TOOTH motifs and soft muted OLIVE folded organic edging, bound visually by a short faded CREAM cloth knot/fold recalling the canonical trousers. Abstract coherent ornament, no living mouth, jaw/head portrait, torso, eye, blood, severed-body scene, weapon or extra organ. No gold magic spiral.",
+          "repair_prompt": "Use case: precise-object-edit. Edit this exact TRANSPARENT decorative Oculum ornament. Preserve its design, all motifs, material colors and soft matte hand-painted texture. Change ONLY SIZE and POSITION on canvas: REDUCE the whole ornament to about60% of its CURRENT width/height and CENTER it. It must be visibly SMALL in a much larger empty transparent canvas, with a generous UNIFORM margin of at least25% of total canvas width and height on EVERY side. Do NOT enlarge it to fit the canvas. ALL outer25% on four sides must be empty alpha ZERO, no haze, shadow, smoke, dust, tiny fragments or stray faint pixels. Keep interior holes transparent too. No opaque backdrop or fakecheckerboard; true transparent background. Do not add/remove any ornamental part, head, face, eyes, whole creature, weapons, new symbol, text, UI or frame. No gloss/3D/photo finish; preserve broad matte painted texture. This is an unapproved derivative draft. Keep the same overall canvas aspect and reconstruct transparent empty space around the smaller ornament.",
+          "repair_reason": "Wider transparent padding; original ornament preserved",
+          "historical_version": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/mezzo_demone_cosciente_relic_draft_v1.png",
+          "file_audit": {
+            "id": "mezzo_demone_cosciente",
+            "kind": "relic",
+            "filename": "mezzo_demone_cosciente_relic_draft_v2.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/mezzo_demone_cosciente_relic_draft_v2.png",
+            "sha256": "70962920dd1eadcb95c47cf9b8672750d7a92cd55bad2e571b0a73f13ab1167b",
+            "width": 1312,
+            "height": 1199,
+            "mode": "RGBA",
+            "bytes": 328724,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {
+              "extrema": [
+                0,
+                255
+              ],
+              "transparent_ratio": 0.9353863229520536,
+              "bbox_nonzero": [
+                113,
+                86,
+                1261,
+                980
+              ],
+              "bbox_alpha_gt16": [
+                396,
+                371,
+                953,
+                846
+              ],
+              "outer_border_alpha_max": 0,
+              "visible_padding_ratio": [
+                0.3018292682926829,
+                0.3094245204336947,
+                0.2736280487804878,
+                0.2944120100083403
+              ]
+            }
+          },
+          "visual_inspection": "Ornamento astratto di forme cornee chiare, denti, pieghe oliva e nodo crema; nessun ritratto, occhio o nuovo drop.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        }
+      ]
+    },
+    {
+      "id": "nuvola_in_bottiglia",
+      "canonical_desktop": {
+        "path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/nuvola_in_bottiglia_B_originale_v1.png",
+        "sha256": "7811328e9bb35c0887ed013c1e780634bad6f3f037309f1b612828972dc4a1fd",
+        "approved": true,
+        "approval_quote": "Sì, queste cinque sono canoniche"
+      },
+      "derivatives": [
+        {
+          "kind": "phone",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/nuvola_in_bottiglia_phone_draft_v1.png",
+          "sha256": "6cc378e2a6c304839786e57aacc2de2e08dcc0ef77cede8649ed7140ff3350d2",
+          "prompt": "Use case: precise-environment-adaptation. Input1 is the explicitly APPROVED CANONICAL Oculum desktop. Derive ONE PORTRAIT PHONE BACKGROUND, 9:16 tall, opaque full environment. Preserve the exact chosen creature identity, anatomy, head/face, material/color palette, clothing, defining details and same environment. Do not redesign it or add organs, limbs, equipment, creature, reward or power. Input2 is only soft matte Rame fatato painting technique; never copy its insects or other scene motifs. Broad soft hand-painted matte tonal masses, gentle atmospheric edges, no plastic shine, 3D rendering, photographic pores or busy new greebles.\nRecompose specifically for phone: entire canonical subject or group SMALL along the LOWER edge/side, fully contained including horns, hands, feet, bottles and mantle, with at least8% clear side/bottom margins. Subject height around35–40% of canvas. The TOP two-thirds and central reading column must be DARK, quiet, low contrast environment with very little detail, so real controls and values remain legible. Continue the canonical environment naturally upward, do not merely crop the desktop or stretch the subject. No painted words, symbols, text, UI, cards, frames, borders, watermark, logo. No sun, moon, halo or new celestial sign. No sky/clouds in roofed interiors. This derivative is an UNAPPROVED DRAFT: desktop approval does not approve the derivative.\nSPECIFIC CANON: Preserve the chosen taller compact pear/curled WHITE-GRAY vapor creature with exactly ONE PURPLE eye, TWO slim vapor arms/hands, TWO rose-COPPER receiver rods with ribs and disc ends, and SMALL INTACT teardrop bottle linked by vapor neck. No mouth, legs or extra eye/antenna. Same abandoned fully roofed stone conservatory, dark cool blue-green glass/stone hall and shallow pool, no celestial sky through roof. Full cloud, hardware, hands and vial low LEFT, calm dark upper hall.",
+          "file_audit": {
+            "id": "nuvola_in_bottiglia",
+            "kind": "phone",
+            "filename": "nuvola_in_bottiglia_phone_draft_v1.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/nuvola_in_bottiglia_phone_draft_v1.png",
+            "sha256": "6cc378e2a6c304839786e57aacc2de2e08dcc0ef77cede8649ed7140ff3350d2",
+            "width": 941,
+            "height": 1672,
+            "mode": "RGB",
+            "bytes": 2279788,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {}
+          },
+          "visual_inspection": "Nuvola B con un occhio viola, due mani, due ricettori di rame e ampolla integra; figura bassa a sinistra, conservatorio e lettura centrale quieta.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        },
+        {
+          "kind": "relic",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/nuvola_in_bottiglia_relic_draft_v2.png",
+          "sha256": "b8807cc7a735dc6a3f75c275bcaff8ea96f7b808a5e8ee7698b3019efb088a47",
+          "prompt": "Use case: decorative-transparent-asset. Input1 is the approved canonical Oculum desktop, used ONLY for thematic materials and specific shapes. Create ONE small isolated DECORATIVE RELIC ORNAMENT for that visual theme on a TRUE TRANSPARENT background. This is non-diegetic theme decoration, NOT a newly invented loot item, reward, ability, equipment or power, and NOT a Monster Book portrait or a creature cutout. No whole creature, head, face or eyes. Input2 supplies ONLY soft matte Rame fatato hand-painted brush texture, never copy its insects/motifs. Make a coherent compact diagonal ornamental cluster in the middle, no border/frame or UI.\nCRITICAL ALPHA AND MARGINS: all ornament must lie inside central50–55% of canvas with at least22% completely EMPTY TRANSPARENT padding on EVERY side. TRUE alpha-zero background, including entire outer border. No fake checkerboard, no white/black/colored background, no paper, ground, cast shadow, haze or smoke spread into margins, no sparse floating pixels or fragments beyond compact cluster. Soft painted edges but clean isolated silhouette. Matte tactile painting, no gloss/plastic/photoreal/3D/jewel shine. No text/logo/label/runes/sun/moon/halo or new thematic symbol. No weapons unless already a canonical thematic element (none requested here). Unapproved derivative DRAFT.\nSPECIFIC ORNAMENT: An ornamental miniature of the canonical small INTACT teardrop glass vial with rose-COPPER collar, accompanied by TWO short ribbed copper receiver-disc motifs arranged compactly behind, a few soft WHITE-GRAY curled vapor wisps contained tightly around the vial. NO purple eye, face, hands, living cloud creature or new spell. No label and no smoke trail spreading into padding. Everything compact, matte copper and softly painted glass.",
+          "repair_prompt": "Use case: precise-object-edit. Edit this exact TRANSPARENT decorative Oculum ornament. Preserve its design, all motifs, material colors and soft matte hand-painted texture. Change ONLY SIZE and POSITION on canvas: REDUCE the whole ornament to about60% of its CURRENT width/height and CENTER it. It must be visibly SMALL in a much larger empty transparent canvas, with a generous UNIFORM margin of at least25% of total canvas width and height on EVERY side. Do NOT enlarge it to fit the canvas. ALL outer25% on four sides must be empty alpha ZERO, no haze, shadow, smoke, dust, tiny fragments or stray faint pixels. Keep interior holes transparent too. No opaque backdrop or fakecheckerboard; true transparent background. Do not add/remove any ornamental part, head, face, eyes, whole creature, weapons, new symbol, text, UI or frame. No gloss/3D/photo finish; preserve broad matte painted texture. This is an unapproved derivative draft. Keep the same overall canvas aspect and reconstruct transparent empty space around the smaller ornament.",
+          "repair_reason": "Wider transparent padding; original ornament preserved",
+          "historical_version": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/nuvola_in_bottiglia_relic_draft_v1.png",
+          "file_audit": {
+            "id": "nuvola_in_bottiglia",
+            "kind": "relic",
+            "filename": "nuvola_in_bottiglia_relic_draft_v2.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/nuvola_in_bottiglia_relic_draft_v2.png",
+            "sha256": "b8807cc7a735dc6a3f75c275bcaff8ea96f7b808a5e8ee7698b3019efb088a47",
+            "width": 1312,
+            "height": 1199,
+            "mode": "RGBA",
+            "bytes": 333118,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {
+              "extrema": [
+                0,
+                255
+              ],
+              "transparent_ratio": 0.9210921448768282,
+              "bbox_nonzero": [
+                145,
+                299,
+                1162,
+                1150
+              ],
+              "bbox_alpha_gt16": [
+                465,
+                375,
+                877,
+                861
+              ],
+              "outer_border_alpha_max": 0,
+              "visible_padding_ratio": [
+                0.3544207317073171,
+                0.3127606338615513,
+                0.3315548780487805,
+                0.2819015846538782
+              ]
+            }
+          },
+          "visual_inspection": "Ampolla a goccia con rame rosato, due motivi dei ricettori e vapori compatti; nessun occhio o creatura intera.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        }
+      ]
+    },
+    {
+      "id": "il_doppione",
+      "canonical_desktop": {
+        "path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/il_doppione_C_originale_v1.png",
+        "sha256": "a1a8c477c0bcc7cf8fcf97abca19c77771832146e693edd08ef33444c1b61849",
+        "approved": true,
+        "approval_quote": "Sì, queste cinque sono canoniche"
+      },
+      "derivatives": [
+        {
+          "kind": "phone",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/il_doppione_phone_draft_v1.png",
+          "sha256": "291fb120506ec93ba5b1f05ce03971c72768176b54171b5f377277dd1fe99cb3",
+          "prompt": "Use case: precise-environment-adaptation. Input1 is the explicitly APPROVED CANONICAL Oculum desktop. Derive ONE PORTRAIT PHONE BACKGROUND, 9:16 tall, opaque full environment. Preserve the exact chosen creature identity, anatomy, head/face, material/color palette, clothing, defining details and same environment. Do not redesign it or add organs, limbs, equipment, creature, reward or power. Input2 is only soft matte Rame fatato painting technique; never copy its insects or other scene motifs. Broad soft hand-painted matte tonal masses, gentle atmospheric edges, no plastic shine, 3D rendering, photographic pores or busy new greebles.\nRecompose specifically for phone: entire canonical subject or group SMALL along the LOWER edge/side, fully contained including horns, hands, feet, bottles and mantle, with at least8% clear side/bottom margins. Subject height around35–40% of canvas. The TOP two-thirds and central reading column must be DARK, quiet, low contrast environment with very little detail, so real controls and values remain legible. Continue the canonical environment naturally upward, do not merely crop the desktop or stretch the subject. No painted words, symbols, text, UI, cards, frames, borders, watermark, logo. No sun, moon, halo or new celestial sign. No sky/clouds in roofed interiors. This derivative is an UNAPPROVED DRAFT: desktop approval does not approve the derivative.\nSPECIFIC CANON: Preserve the chosen group of THREE SEPARATE identical thin pale GRAY-OLIVE folded organic humanoids: each TWO arms/TWO legs and a toothed mouth beneath layered rolled-back head flaps, NO eyes. One standing foreground-left of group, one crouched/seated, one standing rear-right; keep all three independent complete bodies, never one merged multi-headed body. Same roofed abandoned stone arch hall, worn mossy stones. Fit group compactly across LOWER RIGHT/LOWER edge, not across central column, each limb and crown contained; upper hall calm dark.",
+          "file_audit": {
+            "id": "il_doppione",
+            "kind": "phone",
+            "filename": "il_doppione_phone_draft_v1.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/il_doppione_phone_draft_v1.png",
+            "sha256": "291fb120506ec93ba5b1f05ce03971c72768176b54171b5f377277dd1fe99cb3",
+            "width": 940,
+            "height": 1672,
+            "mode": "RGB",
+            "bytes": 2140066,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {}
+          },
+          "visual_inspection": "Tre corpi separati della C, pose canoniche adattate nella parte bassa; nessun occhio o corpo fuso.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        },
+        {
+          "kind": "relic",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/il_doppione_relic_draft_v2.png",
+          "sha256": "9cec5a41ff8f5db8e104efa5097584db46dbd168cae0ec15933a30596a08eae9",
+          "prompt": "Use case: decorative-transparent-asset. Input1 is the approved canonical Oculum desktop, used ONLY for thematic materials and specific shapes. Create ONE small isolated DECORATIVE RELIC ORNAMENT for that visual theme on a TRUE TRANSPARENT background. This is non-diegetic theme decoration, NOT a newly invented loot item, reward, ability, equipment or power, and NOT a Monster Book portrait or a creature cutout. No whole creature, head, face or eyes. Input2 supplies ONLY soft matte Rame fatato hand-painted brush texture, never copy its insects/motifs. Make a coherent compact diagonal ornamental cluster in the middle, no border/frame or UI.\nCRITICAL ALPHA AND MARGINS: all ornament must lie inside central50–55% of canvas with at least22% completely EMPTY TRANSPARENT padding on EVERY side. TRUE alpha-zero background, including entire outer border. No fake checkerboard, no white/black/colored background, no paper, ground, cast shadow, haze or smoke spread into margins, no sparse floating pixels or fragments beyond compact cluster. Soft painted edges but clean isolated silhouette. Matte tactile painting, no gloss/plastic/photoreal/3D/jewel shine. No text/logo/label/runes/sun/moon/halo or new thematic symbol. No weapons unless already a canonical thematic element (none requested here). Unapproved derivative DRAFT.\nSPECIFIC ORNAMENT: An abstract compact ornament of THREE interlocking folded organic ribbon/pleat motifs in the canonical pale GRAY-OLIVE matte material, echoing the head's rolled-back layered flaps and diagonal torso folds. Distinct folded layers, no actual living head, tooth-mouth portrait, eyes, whole body, arms or legs. No new plant/leaves/vines/flowers, bone skull, magical diagram or copying glow. Pure decorative fold arrangement, all inside generous transparent padding.",
+          "repair_prompt": "Use case: precise-object-edit. Edit this exact TRANSPARENT decorative Oculum ornament. Preserve its design, all motifs, material colors and soft matte hand-painted texture. Change ONLY SIZE and POSITION on canvas: REDUCE the whole ornament to about60% of its CURRENT width/height and CENTER it. It must be visibly SMALL in a much larger empty transparent canvas, with a generous UNIFORM margin of at least25% of total canvas width and height on EVERY side. Do NOT enlarge it to fit the canvas. ALL outer25% on four sides must be empty alpha ZERO, no haze, shadow, smoke, dust, tiny fragments or stray faint pixels. Keep interior holes transparent too. No opaque backdrop or fakecheckerboard; true transparent background. Do not add/remove any ornamental part, head, face, eyes, whole creature, weapons, new symbol, text, UI or frame. No gloss/3D/photo finish; preserve broad matte painted texture. This is an unapproved derivative draft. Keep the same overall canvas aspect and reconstruct transparent empty space around the smaller ornament.",
+          "repair_reason": "Wider transparent padding; original ornament preserved",
+          "historical_version": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/il_doppione_relic_draft_v1.png",
+          "file_audit": {
+            "id": "il_doppione",
+            "kind": "relic",
+            "filename": "il_doppione_relic_draft_v2.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/il_doppione_relic_draft_v2.png",
+            "sha256": "9cec5a41ff8f5db8e104efa5097584db46dbd168cae0ec15933a30596a08eae9",
+            "width": 1312,
+            "height": 1199,
+            "mode": "RGBA",
+            "bytes": 479012,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {
+              "extrema": [
+                0,
+                255
+              ],
+              "transparent_ratio": 0.8958399021542343,
+              "bbox_nonzero": [
+                35,
+                71,
+                1282,
+                1110
+              ],
+              "bbox_alpha_gt16": [
+                374,
+                333,
+                1001,
+                911
+              ],
+              "outer_border_alpha_max": 0,
+              "visible_padding_ratio": [
+                0.2850609756097561,
+                0.27773144286905754,
+                0.23704268292682926,
+                0.24020016680567138
+              ]
+            }
+          },
+          "visual_inspection": "Tre motivi organici ripiegati interconnessi grigio-oliva; nessuna testa, pianta, arma o nuovo effetto.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        }
+      ]
+    },
+    {
+      "id": "aberrazione_metallica_angelica",
+      "canonical_desktop": {
+        "path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/aberrazione_metallica_angelica_B_originale_v1.png",
+        "sha256": "a45d646734cb23f3edbfc7368b597a82c1b63dfd846f0339f8ec180fbabbc734",
+        "approved": true,
+        "approval_quote": "Sì, queste cinque sono canoniche"
+      },
+      "derivatives": [
+        {
+          "kind": "phone",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_angelica_phone_draft_v1.png",
+          "sha256": "71fe0e7dade5fb8758a06d4f464296e0c8a027286d49586925bafaf7abbb0738",
+          "prompt": "Use case: precise-environment-adaptation. Input1 is the explicitly APPROVED CANONICAL Oculum desktop. Derive ONE PORTRAIT PHONE BACKGROUND, 9:16 tall, opaque full environment. Preserve the exact chosen creature identity, anatomy, head/face, material/color palette, clothing, defining details and same environment. Do not redesign it or add organs, limbs, equipment, creature, reward or power. Input2 is only soft matte Rame fatato painting technique; never copy its insects or other scene motifs. Broad soft hand-painted matte tonal masses, gentle atmospheric edges, no plastic shine, 3D rendering, photographic pores or busy new greebles.\nRecompose specifically for phone: entire canonical subject or group SMALL along the LOWER edge/side, fully contained including horns, hands, feet, bottles and mantle, with at least8% clear side/bottom margins. Subject height around35–40% of canvas. The TOP two-thirds and central reading column must be DARK, quiet, low contrast environment with very little detail, so real controls and values remain legible. Continue the canonical environment naturally upward, do not merely crop the desktop or stretch the subject. No painted words, symbols, text, UI, cards, frames, borders, watermark, logo. No sun, moon, halo or new celestial sign. No sky/clouds in roofed interiors. This derivative is an UNAPPROVED DRAFT: desktop approval does not approve the derivative.\nSPECIFIC CANON: Preserve exact canonical B: faceless WHITE angelic METAL humanoid with angular asymmetric/trapezoid-like blind helmet and side extensions, narrow torso, physical curved overlapping white lamellar mantle, ALL nonwhite parts/joints/grooves GOLD. TWO arms/TWO legs; one hand holds mantle across chest. NO face/eyes/nose/mouth, skin, wings, halo or weapons. Same fully roofed old ochre stone gallery, dark empty central depth. Full figure plus short ankle mantle low LEFT, no cropped or trailing train.",
+          "file_audit": {
+            "id": "aberrazione_metallica_angelica",
+            "kind": "phone",
+            "filename": "aberrazione_metallica_angelica_phone_draft_v1.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_angelica_phone_draft_v1.png",
+            "sha256": "71fe0e7dade5fb8758a06d4f464296e0c8a027286d49586925bafaf7abbb0738",
+            "width": 940,
+            "height": 1672,
+            "mode": "RGB",
+            "bytes": 1997038,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {}
+          },
+          "visual_inspection": "B bianco/oro, casco cieco asimmetrico e mantello lamellare; figura intera bassa a sinistra, corridoio scuro.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        },
+        {
+          "kind": "relic",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_angelica_relic_draft_v2.png",
+          "sha256": "27dd1828f1b54dd357e26dbb65273c5aca586d52488e5cda99440d44bccfff5f",
+          "prompt": "Use case: decorative-transparent-asset. Input1 is the approved canonical Oculum desktop, used ONLY for thematic materials and specific shapes. Create ONE small isolated DECORATIVE RELIC ORNAMENT for that visual theme on a TRUE TRANSPARENT background. This is non-diegetic theme decoration, NOT a newly invented loot item, reward, ability, equipment or power, and NOT a Monster Book portrait or a creature cutout. No whole creature, head, face or eyes. Input2 supplies ONLY soft matte Rame fatato hand-painted brush texture, never copy its insects/motifs. Make a coherent compact diagonal ornamental cluster in the middle, no border/frame or UI.\nCRITICAL ALPHA AND MARGINS: all ornament must lie inside central50–55% of canvas with at least22% completely EMPTY TRANSPARENT padding on EVERY side. TRUE alpha-zero background, including entire outer border. No fake checkerboard, no white/black/colored background, no paper, ground, cast shadow, haze or smoke spread into margins, no sparse floating pixels or fragments beyond compact cluster. Soft painted edges but clean isolated silhouette. Matte tactile painting, no gloss/plastic/photoreal/3D/jewel shine. No text/logo/label/runes/sun/moon/halo or new thematic symbol. No weapons unless already a canonical thematic element (none requested here). Unapproved derivative DRAFT.\nSPECIFIC ORNAMENT: A compact asymmetrical fan/cluster of canonical curved WHITE METAL lamellae, with GOLD seams, undersides and small gold articulated joints, echoing the chosen mantle and blind helmet's beveled geometric planes. WHITE+GOLD only for material; shading remains subdued. No full helmet/head/face, eyes, whole humanoid, wing/feather anatomy, shield, sword, halo, gem core or new equipment. Physically overlapping metal ornaments with softly worn matte surfaces.",
+          "repair_prompt": "Use case: precise-object-edit. Edit this exact TRANSPARENT decorative Oculum ornament. Preserve its design, all motifs, material colors and soft matte hand-painted texture. Change ONLY SIZE and POSITION on canvas: REDUCE the whole ornament to about60% of its CURRENT width/height and CENTER it. It must be visibly SMALL in a much larger empty transparent canvas, with a generous UNIFORM margin of at least25% of total canvas width and height on EVERY side. Do NOT enlarge it to fit the canvas. ALL outer25% on four sides must be empty alpha ZERO, no haze, shadow, smoke, dust, tiny fragments or stray faint pixels. Keep interior holes transparent too. No opaque backdrop or fakecheckerboard; true transparent background. Do not add/remove any ornamental part, head, face, eyes, whole creature, weapons, new symbol, text, UI or frame. No gloss/3D/photo finish; preserve broad matte painted texture. This is an unapproved derivative draft. Keep the same overall canvas aspect and reconstruct transparent empty space around the smaller ornament.",
+          "repair_reason": "Wider transparent padding; original ornament preserved",
+          "historical_version": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_angelica_relic_draft_v1.png",
+          "file_audit": {
+            "id": "aberrazione_metallica_angelica",
+            "kind": "relic",
+            "filename": "aberrazione_metallica_angelica_relic_draft_v2.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_angelica_relic_draft_v2.png",
+            "sha256": "27dd1828f1b54dd357e26dbb65273c5aca586d52488e5cda99440d44bccfff5f",
+            "width": 1312,
+            "height": 1199,
+            "mode": "RGBA",
+            "bytes": 358958,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {
+              "extrema": [
+                0,
+                255
+              ],
+              "transparent_ratio": 0.924004251510405,
+              "bbox_nonzero": [
+                370,
+                86,
+                1252,
+                992
+              ],
+              "bbox_alpha_gt16": [
+                374,
+                344,
+                941,
+                874
+              ],
+              "outer_border_alpha_max": 0,
+              "visible_padding_ratio": [
+                0.2850609756097561,
+                0.28690575479566305,
+                0.28277439024390244,
+                0.27105921601334443
+              ]
+            }
+          },
+          "visual_inspection": "Lamelle curve di metallo bianco con giunti e interstizi in oro, senza corpo, volto, ala o attrezzatura nuova.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        }
+      ]
+    },
+    {
+      "id": "aberrazione_metallica_solare",
+      "canonical_desktop": {
+        "path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/aberrazione_metallica_solare_C_originale_v1.png",
+        "sha256": "33069a46cd0d4abd618e3e3796d3db172c0f38a9f3bf67d58858311f71108b11",
+        "approved": true,
+        "approval_quote": "Sì, queste cinque sono canoniche"
+      },
+      "derivatives": [
+        {
+          "kind": "phone",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_solare_phone_draft_v1.png",
+          "sha256": "12022351e528f8f1d7b65e88490c3d7c5de0e74be9772efe7a276685cc329ee0",
+          "prompt": "Use case: precise-environment-adaptation. Input1 is the explicitly APPROVED CANONICAL Oculum desktop. Derive ONE PORTRAIT PHONE BACKGROUND, 9:16 tall, opaque full environment. Preserve the exact chosen creature identity, anatomy, head/face, material/color palette, clothing, defining details and same environment. Do not redesign it or add organs, limbs, equipment, creature, reward or power. Input2 is only soft matte Rame fatato painting technique; never copy its insects or other scene motifs. Broad soft hand-painted matte tonal masses, gentle atmospheric edges, no plastic shine, 3D rendering, photographic pores or busy new greebles.\nRecompose specifically for phone: entire canonical subject or group SMALL along the LOWER edge/side, fully contained including horns, hands, feet, bottles and mantle, with at least8% clear side/bottom margins. Subject height around35–40% of canvas. The TOP two-thirds and central reading column must be DARK, quiet, low contrast environment with very little detail, so real controls and values remain legible. Continue the canonical environment naturally upward, do not merely crop the desktop or stretch the subject. No painted words, symbols, text, UI, cards, frames, borders, watermark, logo. No sun, moon, halo or new celestial sign. No sky/clouds in roofed interiors. This derivative is an UNAPPROVED DRAFT: desktop approval does not approve the derivative.\nSPECIFIC CANON: Preserve exact canonical C: ENTIRELY GOLD faceless metallic humanoid crouched in a low defensive pose, low rounded bowl-like blind helmet, broad curved layered gold mantle, TWO arms/TWO legs, both hands low, compact gold feet. No white/silver plates, skin, eyes, nose or mouth; helmet rim/recess stays faceless. Same roofed old dark ochre stone gatehouse. Full crouched figure and all mantle low LEFT, ample margins. No sun/halo/solar disk/flame or new weapon/power.",
+          "file_audit": {
+            "id": "aberrazione_metallica_solare",
+            "kind": "phone",
+            "filename": "aberrazione_metallica_solare_phone_draft_v1.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_solare_phone_draft_v1.png",
+            "sha256": "12022351e528f8f1d7b65e88490c3d7c5de0e74be9772efe7a276685cc329ee0",
+            "width": 941,
+            "height": 1672,
+            "mode": "RGB",
+            "bytes": 2002268,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {}
+          },
+          "visual_inspection": "C interamente oro accovacciata e cieca; mantello e arti contenuti in basso a sinistra, nessun simbolo solare.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        },
+        {
+          "kind": "relic",
+          "status": "EXPLICITLY_APPROVED_ARTWORK_ONLY",
+          "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_solare_relic_draft_v2.png",
+          "sha256": "d52c56bf7fbc27847927107ea96c434003080a40a3eca441dd6d18e8899f66c0",
+          "prompt": "Use case: decorative-transparent-asset. Input1 is the approved canonical Oculum desktop, used ONLY for thematic materials and specific shapes. Create ONE small isolated DECORATIVE RELIC ORNAMENT for that visual theme on a TRUE TRANSPARENT background. This is non-diegetic theme decoration, NOT a newly invented loot item, reward, ability, equipment or power, and NOT a Monster Book portrait or a creature cutout. No whole creature, head, face or eyes. Input2 supplies ONLY soft matte Rame fatato hand-painted brush texture, never copy its insects/motifs. Make a coherent compact diagonal ornamental cluster in the middle, no border/frame or UI.\nCRITICAL ALPHA AND MARGINS: all ornament must lie inside central50–55% of canvas with at least22% completely EMPTY TRANSPARENT padding on EVERY side. TRUE alpha-zero background, including entire outer border. No fake checkerboard, no white/black/colored background, no paper, ground, cast shadow, haze or smoke spread into margins, no sparse floating pixels or fragments beyond compact cluster. Soft painted edges but clean isolated silhouette. Matte tactile painting, no gloss/plastic/photoreal/3D/jewel shine. No text/logo/label/runes/sun/moon/halo or new thematic symbol. No weapons unless already a canonical thematic element (none requested here). Unapproved derivative DRAFT.\nSPECIFIC ORNAMENT: A compact low curved cluster of ENTIRELY GOLD layered lamellae and short articulated gold fittings, echoing the chosen crouching mantle's broad curved overlapping shapes and rounded bowl contours. All surfaces and joints gold in muted ochre shadows, no white or silver. No full helmet/head/face/eyes, living humanoid, wing, halo, sun symbol, flame, weapon or new core/equipment. Coherent matte decorative fan-like shape, broad transparent margins.",
+          "repair_prompt": "Use case: precise-object-edit. Edit this exact TRANSPARENT decorative Oculum ornament. Preserve its design, all motifs, material colors and soft matte hand-painted texture. Change ONLY SIZE and POSITION on canvas: REDUCE the whole ornament to about60% of its CURRENT width/height and CENTER it. It must be visibly SMALL in a much larger empty transparent canvas, with a generous UNIFORM margin of at least25% of total canvas width and height on EVERY side. Do NOT enlarge it to fit the canvas. ALL outer25% on four sides must be empty alpha ZERO, no haze, shadow, smoke, dust, tiny fragments or stray faint pixels. Keep interior holes transparent too. No opaque backdrop or fakecheckerboard; true transparent background. Do not add/remove any ornamental part, head, face, eyes, whole creature, weapons, new symbol, text, UI or frame. No gloss/3D/photo finish; preserve broad matte painted texture. This is an unapproved derivative draft. Keep the same overall canvas aspect and reconstruct transparent empty space around the smaller ornament.",
+          "repair_reason": "Wider transparent padding; original ornament preserved",
+          "historical_version": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_solare_relic_draft_v1.png",
+          "file_audit": {
+            "id": "aberrazione_metallica_solare",
+            "kind": "relic",
+            "filename": "aberrazione_metallica_solare_relic_draft_v2.png",
+            "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_solare_relic_draft_v2.png",
+            "sha256": "d52c56bf7fbc27847927107ea96c434003080a40a3eca441dd6d18e8899f66c0",
+            "width": 1584,
+            "height": 993,
+            "mode": "RGBA",
+            "bytes": 261954,
+            "png_decodable": true,
+            "copy_sha_matches": true,
+            "alpha": {
+              "extrema": [
+                0,
+                255
+              ],
+              "transparent_ratio": 0.9471413531081205,
+              "bbox_nonzero": [
+                95,
+                52,
+                1506,
+                933
+              ],
+              "bbox_alpha_gt16": [
+                514,
+                337,
+                1078,
+                686
+              ],
+              "outer_border_alpha_max": 0,
+              "visible_padding_ratio": [
+                0.3244949494949495,
+                0.3393756294058409,
+                0.3194444444444444,
+                0.30916414904330314
+              ]
+            }
+          },
+          "visual_inspection": "Lamelle curve e snodi tutti oro come ornamento compatto, senza testa, simbolo solare o arma.",
+          "user_approved": true,
+          "runtime_integrated": false,
+          "ui_verified": false,
+          "approval_quote": "Approvo tutti e dieci"
+        }
+      ]
+    }
+  ],
+  "audit_notes": [
+    "No image editing/conversion via Python or code; only ImageGen generations and byte-for-byte copies.",
+    "All 15 PNGs decoded successfully and SHA256 matched generated originals.",
+    "Selected relic v2 files are RGBA with alpha extrema0–255 and entire outer border alpha0.",
+    "Visible ornament margins at alpha>16 are at least23.7% on every side across selected relics.",
+    "Faint native alpha1–16 pixels may extend farther into transparent padding; strict nonzero-alpha bounding boxes are recorded, not silently cleaned.",
+    "Desktop/mobile renderer, interactive readability and online behavior have not been tested by this artwork-only task."
+  ],
+  "derivative_approval": {
+    "quote": "Approvo tutti e dieci",
+    "date": "2026-10-29",
+    "scope": "The ten selected outputs only: five phone v1 and five relic v2; historical relic v1 excluded",
+    "source": "Explicit user confirmation relayed by parent agent"
+  }
+}

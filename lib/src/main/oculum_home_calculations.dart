@@ -1003,7 +1003,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int runtimeCurrentStatBonus(String key) {
-    return (const ['resilienza', 'volonta', 'materia', 'oculum'].contains(key)
+    return worldNeedStatPenalty(key) +
+        (const ['resilienza', 'volonta', 'materia', 'oculum'].contains(key)
             ? worldMonsterCoreBonusAt(schedaCorrente)
             : 0) +
         (key == 'materia'
@@ -1087,11 +1088,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         ) -
         planePressurePenalty,
   );
-  int materiaTotale() => max(
-    0,
-    currentStatWithRuntimeBuffs('materia', currentMateria()) -
-        (planeColdUnprotected ? 1 : 0) -
-        planePressurePenalty,
+  int materiaTotale() => sandAdjustedMatter(
+    max(
+      0,
+      currentStatWithRuntimeBuffs('materia', currentMateria()) -
+          (planeColdUnprotected ? 1 : 0) -
+          planePressurePenalty,
+    ),
   );
   // Oculum addormentato blocks the whole available pool, including temporary
   // and runtime bonuses. The raw controller value remains intact so waking
@@ -1456,8 +1459,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'livello_grado': livelloGrado,
       'vantaggio_tiro': vantaggio,
       'vantaggio': vantaggio,
-      'fatica': max(0, leggiNumero(cenereController)),
-      'cenere': max(0, leggiNumero(cenereController)),
+      'fatica': worldNeedsEffectiveAsh(),
+      'cenere': worldNeedsEffectiveAsh(),
       'hp': max(1, baseHp),
       'hp_current': max(0, leggiNumero(currentHpController)),
       'hp_temp': max(0, leggiNumero(hpTempController)),
@@ -3523,7 +3526,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   /// Regola del riposo lungo: Resilienza recupera solo metà del divario verso
   /// il totale; Oculum, Volontà e Materia attuali tornano invece al massimo.
-  void ripristinaStatsRiposoLungo() {
+  void ripristinaStatsRiposoLungo({int sleepMinutes = 90}) {
     for (final key in statGemOverflow.keys.toList()) {
       if ((statGemOverflow[key] ?? 0) <= 0) continue;
       final controller = currentStatController(key);
@@ -3542,15 +3545,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       }
     }
     statGemOverflow.clear();
-    recuperaStatAttuale(
-      currentResilienzaController,
+    currentResilienzaController.text = oculumSleepResilienceTarget(
+      readIntValue(currentResilienzaController.text),
       currentStatNaturalControllerMax('resilienza'),
-    );
-    currentVolontaController.text = currentStatNaturalControllerMax(
-      'volonta',
+      sleepMinutes,
+      rules: personalSleepRecoveryRules,
     ).toString();
-    currentMateriaController.text = currentStatNaturalControllerMax(
-      'materia',
+    currentVolontaController.text = max(
+      readIntValue(currentVolontaController.text),
+      currentStatNaturalControllerMax('volonta'),
+    ).toString();
+    currentMateriaController.text = max(
+      readIntValue(currentMateriaController.text),
+      currentStatNaturalControllerMax('materia'),
     ).toString();
     final massimoOculum = currentStatNaturalControllerMax('oculum');
     if (currentOculum() < massimoOculum) {
@@ -4182,10 +4189,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int currentStatNaturalControllerMax(String key) {
     final visibleMax = statMassimoNaturale(key);
     final runtimeBonus = runtimeCurrentStatBonus(key);
+    // Campaign modifiers are absent from the natural maximum. Subtracting
+    // them again would turn hunger into recoverable points and make Night
+    // reduce the underlying capacity. Temporary plasma follows the same rule.
+    final campaignRuntimeOnly =
+        worldNeedStatPenalty(key) +
+        (const ['resilienza', 'volonta', 'materia', 'oculum'].contains(key)
+            ? worldMonsterCoreBonusAt(schedaCorrente)
+            : 0);
     return max(
       0,
       visibleMax -
           runtimeBonus +
+          campaignRuntimeOnly +
           (key == 'materia'
               ? readIntValue(planarState['plasmaTemporaryMatter'])
               : 0),
@@ -4357,7 +4373,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int malusFaticaTiri() {
     return oculumFatigueRollPenalty(
-      ash: leggiNumero(cenereController),
+      ash: worldNeedsEffectiveAsh(),
       grade: leggiNumero(gradoController),
       suppressPenalty: statoForzaRimuoveMalus(),
     );

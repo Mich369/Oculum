@@ -660,7 +660,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       staff: realtimeIsCoMasterRole,
     );
     realtimeSelectedEncounterId = '${selected['encounterId'] ?? ''}';
+    final clock = realtimeVisibleInitiativeSnapshot['worldClock'];
+    final campaignId = realtimeVisibleInitiativeSnapshot['campaignId'];
+    final campaignName = realtimeVisibleInitiativeSnapshot['campaignName'];
     realtimeVisibleInitiativeSnapshot = Map<String, dynamic>.from(selected);
+    if (clock is Map) realtimeVisibleInitiativeSnapshot['worldClock'] = clock;
+    if (campaignId != null) {
+      realtimeVisibleInitiativeSnapshot['campaignId'] = campaignId;
+    }
+    if (campaignName != null) {
+      realtimeVisibleInitiativeSnapshot['campaignName'] = campaignName;
+    }
     syncCurrentSheetEncounterTurn();
   }
 
@@ -945,6 +955,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         unawaited(replayOnlineCombatRequests());
         unawaited(syncSheetAssignments());
         unawaited(flushProgressionLogs());
+        unawaited(flushWorldRestRequests());
       },
       presenceDataProvider: () => <String, dynamic>{
         'role': realtimeLocalRole(),
@@ -1030,6 +1041,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           startPermissionRetry();
           unawaited(replayOnlineCombatRequests());
           unawaited(flushProgressionLogs());
+          unawaited(flushWorldRestRequests());
           if (realtimeIsMasterRole) {
             replayPendingEncounterJoins('');
             for (final record in realtimeSharedSheets) {
@@ -3065,12 +3077,28 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (serverSequence > 0) realtimeInitiativeServerSequence = serverSequence;
 
     if (oculumInitiativePayloadClosesFight(payload)) {
+      final previousClock = realtimeVisibleInitiativeSnapshot['worldClock'];
+      final previousCampaign = realtimeVisibleInitiativeSnapshot['campaignId'];
+      final previousCampaignName =
+          realtimeVisibleInitiativeSnapshot['campaignName'];
       expireSummoningEmblems(onlineCombatEncounterId);
       realtimeOutgoingEncounterJoins.clear();
       realtimeEncounterJoinRetryTimer?.cancel();
       realtimeEncounterJoinRetryTimer = null;
       forgetCombatDiscoveries(onlineCombatEncounterId);
       realtimeVisibleInitiativeSnapshot = <String, dynamic>{};
+      // Closing a fight does not close the shared campaign or rewind its
+      // clock. Keep only these public campaign fields, never combat tokens.
+      if (previousClock is Map) {
+        realtimeVisibleInitiativeSnapshot['worldClock'] = previousClock;
+        if (previousCampaign != null) {
+          realtimeVisibleInitiativeSnapshot['campaignId'] = previousCampaign;
+        }
+        if (previousCampaignName != null) {
+          realtimeVisibleInitiativeSnapshot['campaignName'] =
+              previousCampaignName;
+        }
+      }
       realtimeEncounterSnapshots = <Map<String, dynamic>>[];
       realtimeSelectedEncounterId = '';
       clearTemporaryCombatResistanceEffects();
@@ -3105,6 +3133,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeSelectedEncounterId = '${selectedSnapshot['encounterId'] ?? ''}';
     }
     final previous = realtimeVisibleInitiativeSnapshot['tokens'];
+    final previousClock =
+        realtimeVisibleInitiativeSnapshot['campaignId'] == payload['campaignId']
+        ? realtimeVisibleInitiativeSnapshot['worldClock']
+        : null;
     final deadBefore = previous is List
         ? previous
               .whereType<Map>()
@@ -3133,6 +3165,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               }),
             )
             as Map<String, dynamic>;
+    if (snapshotRaw['worldClock'] is Map) {
+      final clock = newestWorldClockSnapshot(
+        snapshotRaw['worldClock'] as Map,
+        previous: previousClock is Map ? previousClock : null,
+      );
+      realtimeVisibleInitiativeSnapshot['worldClock'] = clock;
+      syncOwnedWorldCalendarAndNeeds(clock);
+    }
     if (realtimeVisibleInitiativeSnapshot['combatEnded'] == true) {
       clearTemporaryCombatResistanceEffects();
     }

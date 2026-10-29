@@ -40,10 +40,22 @@ class _ClockTransport extends OculumRealtimeService {
   @override
   bool get isConnected => true;
   @override
+  Future<bool> sendPermissionEvent(
+    String event,
+    Map<String, dynamic> payload,
+  ) async {
+    messages.add({'event': event, ...payload});
+    return true;
+  }
+
+  @override
   Future<bool> sendCombatEvent(
     String event,
     Map<String, dynamic> payload,
   ) async {
+    if (authenticatedRole == 'player' && event == 'initiative_control') {
+      throw StateError('The backend reserves this event for staff.');
+    }
     messages.add({'event': event, ...payload});
     return true;
   }
@@ -229,6 +241,10 @@ void main() {
           'revision',
           'day',
           'phase',
+          'calendarOriginDay',
+          'calendarOriginOrdinal',
+          'rules',
+          'restGrants',
         });
         expect(jsonEncode(clock.publicJson()), isNot(contains('Segreto')));
         expect(jsonEncode(clock.publicJson()), isNot(contains('mimic')));

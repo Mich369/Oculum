@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/widgets/oculum_goth_ornaments.dart';
+import 'write_fresh_capture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -119,7 +120,7 @@ void main() {
           image.dispose();
           final file = File(filename);
           await file.parent.create(recursive: true);
-          await file.writeAsBytes(bytes!.buffer.asUint8List());
+          writeFreshCapture(file, bytes!.buffer.asUint8List());
         });
       }
       await tester.pumpWidget(const SizedBox.shrink());

@@ -33,8 +33,14 @@ List<Map<String, dynamic>> oculumPrecisionBodyParts({
   MonsterBookEntry? monster,
   Iterable<CharacterArt> arts = const [],
   String description = '',
+  bool solarFaceUncovered = false,
 }) {
-  if (monster != null) return oculumMonsterPrecisionAnatomy(monster);
+  if (monster != null) {
+    return oculumMonsterPrecisionAnatomy(
+      monster,
+      solarFaceUncovered: solarFaceUncovered,
+    );
+  }
   final result = <String, Map<String, dynamic>>{};
   final body = oculumNormalizeText(monster?.descIt ?? description);
   final weak = oculumNormalizeText(monster?.weakPointDescriptionIt ?? '');
@@ -98,7 +104,23 @@ List<Map<String, dynamic>> oculumPrecisionBodyParts({
   return result.values.toList();
 }
 
+bool oculumSolarFaceUncovered(Map runtime) =>
+    runtime['solarFaceUncovered'] is bool
+    ? runtime['solarFaceUncovered'] == true
+    : const {'lusier_iii', 'erik_i'}.contains(runtime['canonicalNpc']);
+
 extension _OculumWeakPoints on _OculumHomePageState {
+  bool get solarFaceUncovered => oculumSolarFaceUncovered(planarState);
+  bool combatTokenHasAccessibleAnatomicalWeakPoint(Map<String, dynamic> token) {
+    final id = monsterBookIdForCombatToken(token);
+    if (!oculumMonsterHasAnatomicalWeakPoint(monsterBookEntryById(id))) {
+      return false;
+    }
+    // Knowing a purchased page does not open the Guardian's intact chest.
+    return !oculumLunarGuardianCoreMonsterIds.contains(id) ||
+        precisionPartsForToken(token).any((part) => part['weak'] == true);
+  }
+
   Future<void> applyFateCoreReflection(Map<String, dynamic> request) async {
     final source = '${request['sourceTag']}';
     if (!controlsOnlineCombatSheet(source) ||
@@ -122,6 +144,7 @@ extension _OculumWeakPoints on _OculumHomePageState {
   get currentPrecisionBodyParts => oculumLunarGuardianCorePrecisionParts(
     oculumPrecisionBodyParts(
           monster: monsterBookEntryById(faunaCurrentMonsterId),
+          solarFaceUncovered: solarFaceUncovered,
           arts: arti,
           description:
               '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['razza'] ?? ''} ${backgroundController.text}',
@@ -170,6 +193,15 @@ extension _OculumWeakPoints on _OculumHomePageState {
     final monster = monsterBookEntryById(monsterBookIdForCombatToken(token));
     final index = localSheetIndexForOculumTag(onlineCombatTokenTag(token));
     if (monster != null) {
+      final public = token['faunaPublic'];
+      final runtime = index == schedaCorrente
+          ? planarState
+          : index >= 0
+          ? schedePersonaggio[index]['planarRuntime']
+          : null;
+      final uncovered = public is Map && public['solarFaceUncovered'] is bool
+          ? public['solarFaceUncovered'] == true
+          : runtime is Map && oculumSolarFaceUncovered(runtime);
       final publicCore = (token['faunaPublic'] as Map?)?['lunarGuardianCore'];
       final savedCore = index < 0
           ? null
@@ -181,7 +213,10 @@ extension _OculumWeakPoints on _OculumHomePageState {
           ? lunarGuardianCoreExposed
           : savedCore is Map && savedCore['coreExposed'] == true;
       return oculumLunarGuardianCorePrecisionParts(
-        oculumPrecisionBodyParts(monster: monster),
+        oculumPrecisionBodyParts(
+          monster: monster,
+          solarFaceUncovered: uncovered,
+        ),
         monsterId: monster.id,
         coreExposed: exposed,
       );
@@ -199,6 +234,9 @@ extension _OculumWeakPoints on _OculumHomePageState {
     Map<String, dynamic> token, {
     bool weakOnly = false,
   }) async {
+    if (weakOnly && !combatTokenHasAccessibleAnatomicalWeakPoint(token)) {
+      return null;
+    }
     final parts = precisionPartsForToken(token);
     final known = combatTokenWeakPointKnown(token);
     final knownIds =

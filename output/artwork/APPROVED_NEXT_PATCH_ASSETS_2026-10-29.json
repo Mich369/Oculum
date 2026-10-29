@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "selections": [
+    {
+      "monsterId": "funghetto_cappuccio_rosso",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/funghetto_cappuccio_rosso_background_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_funghetto_cappuccio_rosso_v1.png",
+      "sha256": "f5ce9cda43c9cdecdfcc4480f35ac1b595e39547b93d8580ee5e881dccf9bb27",
+      "bytes": 2317931,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "funghetto_cappuccio_rosso",
+      "kind": "phone",
+      "approvedSource": "output/artwork/drafts_2026-10-29/funghetto_cappuccio_rosso_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_funghetto_cappuccio_rosso_mobile_v1.png",
+      "sha256": "7840236ce31dfa2dedbb0ff9a95a6148c8627812b5a5a5926402519c9fe77711",
+      "bytes": 2311647,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "funghetto_cappuccio_rosso",
+      "kind": "relic",
+      "approvedSource": "output/artwork/drafts_2026-10-29/funghetto_cappuccio_rosso_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_funghetto_cappuccio_rosso_v1.png",
+      "sha256": "057e3898c754e9627edf86354d14f2dc3c06fe47bf3f17c1d9446f95ebef2606",
+      "bytes": 817435,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "costrutto_minore",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/costrutto_minore_background_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_costrutto_minore_v1.png",
+      "sha256": "03b34192b69c0727a749a344854cfa3f0a3bfc9bd71ca7cb1b48fd8477a0697c",
+      "bytes": 2327915,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "costrutto_minore",
+      "kind": "phone",
+      "approvedSource": "output/artwork/drafts_2026-10-29/costrutto_minore_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_costrutto_minore_mobile_v1.png",
+      "sha256": "1f04d2804deaaa65a2c5023a17bdf3c625081fb7434a5c262c463ff1637232da",
+      "bytes": 2531323,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "costrutto_minore",
+      "kind": "relic",
+      "approvedSource": "output/artwork/drafts_2026-10-29/costrutto_minore_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_costrutto_minore_v1.png",
+      "sha256": "9867ea520dc00f3803933831fefd5251f333d09596b22c602e604cc0b3c29758",
+      "bytes": 843763,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "shadow_devil",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/shadow_devil_background_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_shadow_devil_v1.png",
+      "sha256": "0a200bdbf2f0991facb3f04685d495a75bd208a3bb3c6fc137c99cc6c5d36993",
+      "bytes": 2768521,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "shadow_devil",
+      "kind": "phone",
+      "approvedSource": "output/artwork/drafts_2026-10-29/shadow_devil_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_shadow_devil_mobile_v1.png",
+      "sha256": "6a0771d0f7d0bb7a1b0141567c622b03cb6cd4b8d0c7e73bcfd87cd1e0fca85d",
+      "bytes": 2587767,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "shadow_devil",
+      "kind": "relic",
+      "approvedSource": "output/artwork/drafts_2026-10-29/shadow_devil_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_shadow_devil_v1.png",
+      "sha256": "7a7e526e3328d7537ab3d67e55a929f8cb79f629c15790cda951d8b23c9b9a1c",
+      "bytes": 787523,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "mostro_sabbia",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/mostro_sabbia_background_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_mostro_sabbia_v1.png",
+      "sha256": "a30701fb9e55ceef07e66ea9ef33085cf43e05433db36b88ba16532a43d3b714",
+      "bytes": 2280863,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "mostro_sabbia",
+      "kind": "phone",
+      "approvedSource": "output/artwork/drafts_2026-10-29/mostro_sabbia_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_mostro_sabbia_mobile_v1.png",
+      "sha256": "e225ffb8ecf59cf4c833074531aa172d5023e4d84c58b27d00a8f15e70573a92",
+      "bytes": 2276930,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "mostro_sabbia",
+      "kind": "relic",
+      "approvedSource": "output/artwork/drafts_2026-10-29/mostro_sabbia_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_mostro_sabbia_v1.png",
+      "sha256": "7739f0691a9c2ff7cd1683c7fc769194d4944119032200ab5102530b02a58472",
+      "bytes": 619712,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "gigante_sabbia",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/gigante_sabbia_background_draft_v6.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_gigante_sabbia_v1.png",
+      "sha256": "02fc39190ba5aca7e383c1409cb06fb0d13aadadf028eca3673984807e8de5bf",
+      "bytes": 1968874,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "gigante_sabbia",
+      "kind": "phone",
+      "approvedSource": "output/artwork/drafts_2026-10-29/gigante_sabbia_mobile_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_gigante_sabbia_mobile_v1.png",
+      "sha256": "eec21bae79f5b14b24447b81ff7c7998ee52412d10fc7af473f179e1a214c778",
+      "bytes": 2264032,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "gigante_sabbia",
+      "kind": "relic",
+      "approvedSource": "output/artwork/drafts_2026-10-29/gigante_sabbia_relic_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_gigante_sabbia_v1.png",
+      "sha256": "f22ad9ccd40f3c5ef4759177624e521093c50b851be0c92cad71f03744c3c956",
+      "bytes": 1281026,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "sharp",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/sharp_background_draft_v3.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_sharp_v1.png",
+      "sha256": "8940b6042ad87f950c2e3ad93b67c8a43af5cf92238bae49572dfd57f2e8a4e7",
+      "bytes": 2243970,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "topino_avventuroso",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/topino_avventuroso_background_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_topino_avventuroso_v1.png",
+      "sha256": "2d75cb4e8e3d71f67ddc22b8e63fb8855dc86999070c9c5f65a411e5f6574890",
+      "bytes": 2162188,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "mosca_campana",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/drafts_2026-10-29/mosca_campana_background_draft_v3.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_mosca_campana_v1.png",
+      "sha256": "c9bb6eeb9bf1bd86f2e49211b4b9739cca6d8ec01c5c72b93b1abb795920e6e7",
+      "bytes": 2017831,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "mezzo_demone_cosciente",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/mezzo_demone_cosciente_C_radicale_v3.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_mezzo_demone_cosciente_v1.png",
+      "sha256": "7a81fd57ec2b18ae6df366045b624c18c45f1f835aac0227f24455063ce1a104",
+      "bytes": 2155355,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "nuvola_in_bottiglia",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/nuvola_in_bottiglia_B_originale_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_nuvola_in_bottiglia_v1.png",
+      "sha256": "7811328e9bb35c0887ed013c1e780634bad6f3f037309f1b612828972dc4a1fd",
+      "bytes": 2418452,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "il_doppione",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/il_doppione_C_originale_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_il_doppione_v1.png",
+      "sha256": "a1a8c477c0bcc7cf8fcf97abca19c77771832146e693edd08ef33444c1b61849",
+      "bytes": 2309603,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "aberrazione_metallica_angelica",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/aberrazione_metallica_angelica_B_originale_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_aberrazione_metallica_angelica_v1.png",
+      "sha256": "a45d646734cb23f3edbfc7368b597a82c1b63dfd846f0339f8ec180fbabbc734",
+      "bytes": 2210119,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "aberrazione_metallica_solare",
+      "kind": "desktop",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/aberrazione_metallica_solare_C_originale_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_aberrazione_metallica_solare_v1.png",
+      "sha256": "33069a46cd0d4abd618e3e3796d3db172c0f38a9f3bf67d58858311f71108b11",
+      "bytes": 2159268,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "mezzo_demone_cosciente",
+      "kind": "phone",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/mezzo_demone_cosciente_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_mezzo_demone_cosciente_mobile_v1.png",
+      "sha256": "225dcd2bea81a05e60e4f76bc3a05fcc60e192f811d394dde4e08f98f4a5a472",
+      "bytes": 2107938,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "mezzo_demone_cosciente",
+      "kind": "relic",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/mezzo_demone_cosciente_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_mezzo_demone_cosciente_v1.png",
+      "sha256": "70962920dd1eadcb95c47cf9b8672750d7a92cd55bad2e571b0a73f13ab1167b",
+      "bytes": 328724,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "nuvola_in_bottiglia",
+      "kind": "phone",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/nuvola_in_bottiglia_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_nuvola_in_bottiglia_mobile_v1.png",
+      "sha256": "6cc378e2a6c304839786e57aacc2de2e08dcc0ef77cede8649ed7140ff3350d2",
+      "bytes": 2279788,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "nuvola_in_bottiglia",
+      "kind": "relic",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/nuvola_in_bottiglia_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_nuvola_in_bottiglia_v1.png",
+      "sha256": "b8807cc7a735dc6a3f75c275bcaff8ea96f7b808a5e8ee7698b3019efb088a47",
+      "bytes": 333118,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "il_doppione",
+      "kind": "phone",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/il_doppione_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_il_doppione_mobile_v1.png",
+      "sha256": "291fb120506ec93ba5b1f05ce03971c72768176b54171b5f377277dd1fe99cb3",
+      "bytes": 2140066,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "il_doppione",
+      "kind": "relic",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/il_doppione_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_il_doppione_v1.png",
+      "sha256": "9cec5a41ff8f5db8e104efa5097584db46dbd168cae0ec15933a30596a08eae9",
+      "bytes": 479012,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "aberrazione_metallica_angelica",
+      "kind": "phone",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_angelica_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_aberrazione_metallica_angelica_mobile_v1.png",
+      "sha256": "71fe0e7dade5fb8758a06d4f464296e0c8a027286d49586925bafaf7abbb0738",
+      "bytes": 1997038,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "aberrazione_metallica_angelica",
+      "kind": "relic",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_angelica_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_aberrazione_metallica_angelica_v1.png",
+      "sha256": "27dd1828f1b54dd357e26dbb65273c5aca586d52488e5cda99440d44bccfff5f",
+      "bytes": 358958,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "aberrazione_metallica_solare",
+      "kind": "phone",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_solare_phone_draft_v1.png",
+      "runtimeAsset": "assets/oculum/home_art/theme_aberrazione_metallica_solare_mobile_v1.png",
+      "sha256": "12022351e528f8f1d7b65e88490c3d7c5de0e74be9772efe7a276685cc329ee0",
+      "bytes": 2002268,
+      "humanApproved": true
+    },
+    {
+      "monsterId": "aberrazione_metallica_solare",
+      "kind": "relic",
+      "approvedSource": "output/artwork/proposte_prossima_patch_2026-10-29/derivati_canonici_cinque/aberrazione_metallica_solare_relic_draft_v2.png",
+      "runtimeAsset": "assets/oculum/home_art/relic_aberrazione_metallica_solare_v1.png",
+      "sha256": "d52c56bf7fbc27847927107ea96c434003080a40a3eca441dd6d18e8899f66c0",
+      "bytes": 261954,
+      "humanApproved": true
+    }
+  ],
+  "note": "Byte copy only; only explicitly approved selections are canonical. Renderer/CI/package checks are separate."
+}

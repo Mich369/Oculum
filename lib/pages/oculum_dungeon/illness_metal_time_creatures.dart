@@ -6,7 +6,7 @@ final _tacticalCreatureEntries = <MonsterBookEntry>[
     'Il Doppione',
     ['mezzano', 'shadow_hell'],
     'mentale',
-    'Figura alta e sottile, dal corpo segnato da pieghe, mani lunghe e testa aperta in una corona di lembi sopra una bocca dentata. Possiede Illness Art: guadagna 1 Follia a ogni proprio turno. Ogni tre turni propri emette un’onda mentale contro tutti gli avversari, ciascuno con una difesa coerente: chi fallisce riceve 1 Follia. Spende 1 o 2 Follia per creare rispettivamente una o due copie indistinguibili, con il suo tiro d’attacco ma un quarto dei Danni e del totale difensivo; un colpo riuscito distrugge una copia.',
+    'Figura umanoide alta e sottile, avorio spento, dalla superficie segnata da lunghe pieghe sovrapposte. Possiede due braccia dalle mani lunghe e due gambe; la testa si allarga in una corona asimmetrica di lembi sopra una bocca dentata, senza occhi visibili. Le copie hanno corpi interi separati e la stessa anatomia dell’originale. Possiede Illness Art: guadagna 1 Follia a ogni proprio turno. Ogni tre turni propri emette un’onda mentale contro tutti gli avversari, ciascuno con una difesa coerente: chi fallisce riceve 1 Follia. Spende 1 o 2 Follia per creare rispettivamente una o due copie indistinguibili, con il suo tiro d’attacco ma un quarto dei Danni e del totale difensivo; un colpo riuscito distrugge una copia.',
     'La piega centrale della corona, aperta quando emette l’onda mentale.',
     [3, 6, 3, 1],
     3,
@@ -34,8 +34,8 @@ final _tacticalCreatureEntries = <MonsterBookEntry>[
       solar ? ['sacro'] : ['angelico', 'sacro'],
       solar ? 'solare' : 'luce',
       solar
-          ? 'Aberrazione interamente d’oro, avvolta in un mantello di lamelle metalliche. Il mantello para senza tiro il 45% dei danni e usa anche la normale Resistenza passiva. Ogni proprio turno ha il 90% di ottenere una Reazione veloce extra.'
-          : 'Aberrazione di metallo angelico bianco; giunti, fessure e ogni parte di altro colore sono d’oro. Il mantello di acciaio angelico para senza tiro il 90% dei danni e usa anche la normale Resistenza passiva. Ogni proprio turno ha il 90% di ottenere una Reazione veloce extra.',
+          ? 'Aberrazione umanoide interamente d’oro, con due braccia e due gambe metalliche, torso compatto e testa cieca a coppa inclinata. Un mantello di larghe lamelle sovrapposte scende dalle spalle, mentre le mani articolate restano pronte davanti al corpo; avanza raccolta e aggressiva. Non ha ali. Il mantello para senza tiro il 45% dei danni e usa anche la normale Resistenza passiva. Ogni proprio turno ha il 90% di ottenere una Reazione veloce extra.'
+          : 'Aberrazione umanoide di metallo angelico bianco, alta e sottile, con due braccia e due gambe articolate. La testa cieca ha una maschera a cuneo e appendici lamellari angolari; lunghe placche del mantello si sovrappongono sulle spalle e scendono ai lati. Giunti, fessure e ogni parte di altro colore sono d’oro; non ha ali. Il mantello di acciaio angelico para senza tiro il 90% dei danni e usa anche la normale Resistenza passiva. Ogni proprio turno ha il 90% di ottenere una Reazione veloce extra.',
       'I giunti d’oro del collo, visibili fra le lamelle del mantello.',
       solar ? [2, 6, 2, 3] : [4, 3, 5, 1],
       2,

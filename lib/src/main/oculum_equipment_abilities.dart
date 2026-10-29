@@ -796,6 +796,12 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
+    final sandTailMode = effects.any((e) => e.target == 'sand_tail_attack')
+        ? 'attack'
+        : effects.any((e) => e.target == 'sand_tail_parry')
+        ? 'parry'
+        : null;
+    if (sandTailMode != null && !canPrepareSandTail(sandTailMode)) return false;
     if (effects.any((e) => e.target == 'senka_shadow_step')) {
       if ((!senkaMaskActive && !senkaIsClone) || cooldown?.ready == false) {
         return false;
@@ -1316,6 +1322,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     // Validate the complete payment before consuming a turn resource. A
     // composite primary cost and an additional cost may name the same stat.
     if (!canPayArtSkillPayments(selectedPayments)) return false;
+    if (sandTailMode != null && !canPrepareSandTail(sandTailMode)) return false;
     final robotTechnique = effects
         .where((e) => e.type == 'meccanio')
         .firstOrNull;
@@ -1346,6 +1353,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 'senka_thousand_cuts',
                 'senka_moon_cuts',
                 'senka_shadow_step',
+                'sand_tail_attack',
               }.contains(e.target),
         ) ||
         robotTechnique != null &&
@@ -1367,6 +1375,8 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             'mask_shadow_teleport',
             'gran_unstun',
             'monk_ki',
+            'sand_tail_attack',
+            'sand_tail_parry',
           }.contains(effect.target),
     );
     if (!paymentOnly &&
@@ -1418,7 +1428,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     if (paymentOnly) return true;
     // Consume existing one-action conditions before adding new self effects.
     // A condition just granted by this ability starts with its full duration.
-    processConditionTick(OculumConditionTickTrigger.action);
+    if (sandTailMode == null) {
+      processConditionTick(OculumConditionTickTrigger.action);
+    }
     referenceBeforeMagic(effects);
     final messages = applyStructuredEffectsOnActivation(
       effects,

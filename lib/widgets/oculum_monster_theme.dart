@@ -159,6 +159,22 @@ class OculumMonsterTheme {
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
   String? get relicIllustration => switch (monster.id) {
+    'mezzo_demone_cosciente' =>
+      'assets/oculum/home_art/relic_mezzo_demone_cosciente_v1.png',
+    'nuvola_in_bottiglia' =>
+      'assets/oculum/home_art/relic_nuvola_in_bottiglia_v1.png',
+    'il_doppione' => 'assets/oculum/home_art/relic_il_doppione_v1.png',
+    'aberrazione_metallica_angelica' =>
+      'assets/oculum/home_art/relic_aberrazione_metallica_angelica_v1.png',
+    'aberrazione_metallica_solare' =>
+      'assets/oculum/home_art/relic_aberrazione_metallica_solare_v1.png',
+    'funghetto_cappuccio_rosso' =>
+      'assets/oculum/home_art/relic_funghetto_cappuccio_rosso_v1.png',
+    'costrutto_minore' =>
+      'assets/oculum/home_art/relic_costrutto_minore_v1.png',
+    'shadow_devil' => 'assets/oculum/home_art/relic_shadow_devil_v1.png',
+    'mostro_sabbia' => 'assets/oculum/home_art/relic_mostro_sabbia_v1.png',
+    'gigante_sabbia' => 'assets/oculum/home_art/relic_gigante_sabbia_v1.png',
     'bramble' => 'assets/oculum/home_art/relic_bramble_v3.png',
     'pawn_guardiano' => 'assets/oculum/home_art/relic_pawn_v1.png',
     'ogle' => 'assets/oculum/home_art/relic_ogle_v1.png',
@@ -182,6 +198,26 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'mezzo_demone_cosciente' =>
+      'assets/oculum/home_art/theme_mezzo_demone_cosciente_v1.png',
+    'nuvola_in_bottiglia' =>
+      'assets/oculum/home_art/theme_nuvola_in_bottiglia_v1.png',
+    'il_doppione' => 'assets/oculum/home_art/theme_il_doppione_v1.png',
+    'aberrazione_metallica_angelica' =>
+      'assets/oculum/home_art/theme_aberrazione_metallica_angelica_v1.png',
+    'aberrazione_metallica_solare' =>
+      'assets/oculum/home_art/theme_aberrazione_metallica_solare_v1.png',
+    'funghetto_cappuccio_rosso' =>
+      'assets/oculum/home_art/theme_funghetto_cappuccio_rosso_v1.png',
+    'costrutto_minore' =>
+      'assets/oculum/home_art/theme_costrutto_minore_v1.png',
+    'shadow_devil' => 'assets/oculum/home_art/theme_shadow_devil_v1.png',
+    'mostro_sabbia' => 'assets/oculum/home_art/theme_mostro_sabbia_v1.png',
+    'gigante_sabbia' => 'assets/oculum/home_art/theme_gigante_sabbia_v1.png',
+    'sharp' => 'assets/oculum/home_art/theme_sharp_v1.png',
+    'topino_avventuroso' =>
+      'assets/oculum/home_art/theme_topino_avventuroso_v1.png',
+    'mosca_campana' => 'assets/oculum/home_art/theme_mosca_campana_v1.png',
     'pawn_guardiano' => 'assets/oculum/home_art/theme_pawn_v1.png',
     'ogle' => 'assets/oculum/home_art/theme_ogle_v1.png',
     'guardia_lunare' => 'assets/oculum/home_art/theme_guardia_lunare_v1.png',
@@ -232,6 +268,24 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustrationMobile => switch (monster.id) {
+    'mezzo_demone_cosciente' =>
+      'assets/oculum/home_art/theme_mezzo_demone_cosciente_mobile_v1.png',
+    'nuvola_in_bottiglia' =>
+      'assets/oculum/home_art/theme_nuvola_in_bottiglia_mobile_v1.png',
+    'il_doppione' => 'assets/oculum/home_art/theme_il_doppione_mobile_v1.png',
+    'aberrazione_metallica_angelica' =>
+      'assets/oculum/home_art/theme_aberrazione_metallica_angelica_mobile_v1.png',
+    'aberrazione_metallica_solare' =>
+      'assets/oculum/home_art/theme_aberrazione_metallica_solare_mobile_v1.png',
+    'funghetto_cappuccio_rosso' =>
+      'assets/oculum/home_art/theme_funghetto_cappuccio_rosso_mobile_v1.png',
+    'costrutto_minore' =>
+      'assets/oculum/home_art/theme_costrutto_minore_mobile_v1.png',
+    'shadow_devil' => 'assets/oculum/home_art/theme_shadow_devil_mobile_v1.png',
+    'mostro_sabbia' =>
+      'assets/oculum/home_art/theme_mostro_sabbia_mobile_v1.png',
+    'gigante_sabbia' =>
+      'assets/oculum/home_art/theme_gigante_sabbia_mobile_v1.png',
     'bramble' => 'assets/oculum/home_art/theme_bramble_mobile_v3.png',
     'pawn_guardiano' => 'assets/oculum/home_art/theme_pawn_mobile_v1.png',
     'ogle' => 'assets/oculum/home_art/theme_ogle_mobile_v1.png',
@@ -254,6 +308,13 @@ class OculumMonsterTheme {
     _ => null,
   };
   String get shape {
+    if (const {
+      'aberrazione_metallica_angelica',
+      'aberrazione_metallica_solare',
+    }.contains(monster.id)) {
+      return 'plate';
+    }
+    if (monster.id == 'nuvola_in_bottiglia') return 'drop';
     if (monster.id == 'pinepine') return 'root';
     if (monster.id == 'guardiano_solare') return 'plate';
     final text = '${monster.id} ${monster.nameIt} ${monster.formTags.join(' ')}'
@@ -286,6 +347,24 @@ class OculumMonsterTheme {
   }
 
   String get motif => switch (monster.id) {
+    'mezzo_demone_cosciente' =>
+      'Fauci del risveglio · corna a lama e pelle oliva',
+    'nuvola_in_bottiglia' =>
+      'Ampolla dei temporali · vetro e ricevitori color rame',
+    'il_doppione' => 'Corona dell’illusione · lembi e copie',
+    'aberrazione_metallica_angelica' =>
+      'Mantello angelico · metallo bianco e oro',
+    'aberrazione_metallica_solare' => 'Lamelle del mantello solare · oro',
+    'funghetto_cappuccio_rosso' =>
+      'Cappello rosso del sottobosco · muschio e foglie',
+    'costrutto_minore' => 'Scudo del piccolo costrutto · bronzo consumato',
+    'shadow_devil' => 'Resti dello Shadow Hell · corna e filamenti d’ombra',
+    'mostro_sabbia' => 'Coda delle dune · strati di sabbia e artigli',
+    'gigante_sabbia' => 'Coda del gigante · sabbia stratificata e artigli',
+    'sharp' => 'Calotta dello scavatore · metallo e denti triangolari',
+    'topino_avventuroso' =>
+      'Ricordo del viandante · fiaccola e mantello tortora',
+    'mosca_campana' => 'Rintocco del bosco · bronzo ossidato e ali sottili',
     'bramble' => 'Cuore del custode · corteccia e quattro tralci di rovi',
     'pawn_guardiano' => 'Sigillo del pedone · spada e scudo sospesi',
     'ogle' => 'Occhi del sottobosco · malva e artigli gialli',

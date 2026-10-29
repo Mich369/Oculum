@@ -5879,6 +5879,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   Future<void> applicaDannoSubito({
     bool critico = false,
+    bool doubleCritical = false,
+    int? sandLavaPercentile,
     int criticalBonusMultiplier = 1,
     double defenseMultiplier = 1,
     int additionalDefense = 0,
@@ -5923,6 +5925,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     var dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
+    if (sandLavaPacketAlreadyResolved(damagePacketId)) return;
     if (isConstructCharacter &&
         (hitBodyPart != null || attackKind.isNotEmpty)) {
       constructCore['lastAttackCore'] = hitBodyPart == 'core';
@@ -6570,6 +6573,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           '[MITRA RUNICO] +$protectedRunicDamage danni oltre le resistenze; resto dell’attacco dopo le resistenze: ${dannoFinale - protectedRunicDamage}. Scudi applicati normalmente.',
         );
       }
+      // A no-roll tail parry reduces the actual post-Defense packet once,
+      // before any shield layer. It never changes the defensive die or A/R/RV.
+      dannoFinale = applySandTailParry(dannoFinale, packetId: damagePacketId);
+
       if (scudoCriticoAttivo) {
         dannoFinale = max(1, (dannoFinale / 2).ceil());
       }
@@ -6784,6 +6791,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           readIntValue(lunarGuardianCoreState['coreHp']) <= 0;
       if (lunarGuardianCoreDestroyed) hp = 0;
 
+      // Keep the kill in the normal HP/receipt pipeline: owner ACKs and fight
+      // rewards then retain the real attacker and cannot pay a second kill.
+      final sandLavaHit = resolveSandLavaHit(
+        hpBefore: hpPrima,
+        hpAfter: hp,
+        element: incomingElement,
+        doubleCritical: doubleCritical,
+        criticalProtected: criticalDebuffsBlocked,
+        packetId: damagePacketId,
+        percentile: sandLavaPercentile,
+      );
+      hp = sandLavaHit.hp;
+
       final brokenCoreActive = arti.any(
         (art) => art.sbloccata && art.integritaCorrente == 0,
       );
@@ -6880,6 +6900,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         saveShieldAttivato = true;
         consumeOneShotParserCommand('saveShield');
       }
+
+      finishSandLavaHit(sandLavaHit.receiptId, hp);
 
       setState(() {
         if (elementalAdaptation != null) {

@@ -1034,6 +1034,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final currentPhase = oculumPhaseForDay(currentDay);
     final phaseDay = oculumDayInPhase(currentDay);
     final phases = oculumCalendarPhases();
+    // Migrated campaign time belongs to its Master. Preserve manual editing
+    // only for legacy calendars that have no campaign origin yet.
+    final canEditCalendar =
+        worldClockProgress.calendarOriginDay <= 0 || worldClockAuthority;
 
     return gothicPanel(
       borderColor: primaryColor,
@@ -1063,6 +1067,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               'Day = 9 hours. Tremana = 3 days, Semana = 6 days, Dodemana = 12 days. New Phase = mutable season. Full Cycle = 369 days.',
             ),
           ),
+          if (!canEditCalendar)
+            smallInfoText(
+              t(
+                'Il tempo della campagna è gestito dal Master.',
+                'Campaign time is controlled by its Master.',
+              ),
+            ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
@@ -1072,6 +1083,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               SizedBox(
                 width: 220,
                 child: DropdownButtonFormField<String>(
+                  key: ValueKey(
+                    'calendar_phase_${currentSheetScrollId()}_${currentPhase.id}_$canEditCalendar',
+                  ),
+                  isExpanded: true,
                   initialValue: currentPhase.id,
                   dropdownColor: const Color(0xFF10121A),
                   decoration: fieldDecoration(t('Nuova Fase', 'New Phase')),
@@ -1085,19 +1100,25 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         ),
                       ),
                   ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    final phase = phases.firstWhere(
-                      (item) => item.id == value,
-                      orElse: () => phases.first,
-                    );
-                    impostaGiornoOculum(phase.startDay);
-                  },
+                  onChanged: !canEditCalendar
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          final phase = phases.firstWhere(
+                            (item) => item.id == value,
+                            orElse: () => phases.first,
+                          );
+                          impostaGiornoOculum(phase.startDay);
+                        },
                 ),
               ),
               SizedBox(
                 width: 150,
                 child: DropdownButtonFormField<int>(
+                  key: ValueKey(
+                    'calendar_day_${currentSheetScrollId()}_${currentDay}_$canEditCalendar',
+                  ),
+                  isExpanded: true,
                   initialValue: phaseDay
                       .clamp(1, currentPhase.duration)
                       .toInt(),
@@ -1110,35 +1131,54 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         child: Text('$i/${currentPhase.duration}'),
                       ),
                   ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    impostaGiornoOculum(currentPhase.startDay + value - 1);
-                  },
+                  onChanged: !canEditCalendar
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          impostaGiornoOculum(
+                            currentPhase.startDay + value - 1,
+                          );
+                        },
                 ),
               ),
               SizedBox(
                 width: 150,
-                child: campoTesto(
-                  label: t('Giorno ciclo', 'Cycle day'),
-                  controller: oculumCurrentDayController,
-                  helper: '1-369',
-                ),
+                child: canEditCalendar
+                    ? campoTesto(
+                        label: t('Giorno ciclo', 'Cycle day'),
+                        controller: oculumCurrentDayController,
+                        helper: '1-369',
+                      )
+                    : TextField(
+                        controller: oculumCurrentDayController,
+                        readOnly: true,
+                        enabled: false,
+                        decoration: fieldDecoration(
+                          t('Giorno ciclo', 'Cycle day'),
+                        ),
+                      ),
               ),
               IconButton.filledTonal(
                 tooltip: t('Applica giorno', 'Apply day'),
-                onPressed: () => impostaGiornoOculum(
-                  leggiNumero(oculumCurrentDayController),
-                ),
+                onPressed: !canEditCalendar
+                    ? null
+                    : () => impostaGiornoOculum(
+                        leggiNumero(oculumCurrentDayController),
+                      ),
                 icon: const Icon(Icons.check),
               ),
               IconButton.filledTonal(
                 tooltip: t('Giorno precedente', 'Previous day'),
-                onPressed: () => avanzaGiorniOculum(-1),
+                onPressed: !canEditCalendar
+                    ? null
+                    : () => avanzaGiorniOculum(-1),
                 icon: const Icon(Icons.remove),
               ),
               IconButton.filledTonal(
                 tooltip: t('Giorno successivo', 'Next day'),
-                onPressed: () => avanzaGiorniOculum(1),
+                onPressed: !canEditCalendar
+                    ? null
+                    : () => avanzaGiorniOculum(1),
                 icon: const Icon(Icons.add),
               ),
             ],
@@ -1697,7 +1737,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
               const SizedBox(height: 12),
               campoTesto(
-                label: 'Cenere',
+                label: t('Cenere da altre fonti', 'Ash from other sources'),
                 controller: cenereController,
                 onChanged: (_) {
                   setState(() {
@@ -1713,26 +1753,27 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 },
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: campoTesto(
-                      label: t('Giorni senza bisogni', 'Days without needs'),
-                      controller: sessioniSenzaBisogniController,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: campoTesto(
-                      label: t(
-                        'Giorni senza cibo/acqua',
-                        'Days without food/water',
+              if (worldClockProgress.calendarOriginDay <= 0)
+                Row(
+                  children: [
+                    Expanded(
+                      child: campoTesto(
+                        label: t('Giorni senza bisogni', 'Days without needs'),
+                        controller: sessioniSenzaBisogniController,
                       ),
-                      controller: giorniSenzaCiboAcquaController,
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: campoTesto(
+                        label: t(
+                          'Giorni senza cibo/acqua',
+                          'Days without food/water',
+                        ),
+                        controller: giorniSenzaCiboAcquaController,
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -1740,32 +1781,38 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         gothicPanel(
           borderColor: primaryColor,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              restButton(
-                label: t('Mangia e Bevi', 'Eat and Drink'),
-                icon: Icons.restaurant,
-                color: Colors.green.shade700,
-                onPressed: mangiaEBevi,
+              Wrap(
+                spacing: 12,
+                runSpacing: 6,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => satisfyPersonalNeed('food'),
+                    icon: const Icon(Icons.restaurant),
+                    label: Text(t('Mangia', 'Eat')),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => satisfyPersonalNeed('water'),
+                    icon: const Icon(Icons.water_drop),
+                    label: Text(t('Bevi', 'Drink')),
+                  ),
+                  TextButton.icon(
+                    onPressed: mangiaEBevi,
+                    icon: const Icon(Icons.restaurant_menu),
+                    label: Text(t('Mangia e Bevi', 'Eat and Drink')),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
-              restButton(
-                label: t(
-                  'Segna Giorno senza Mangiare / Bere / Dormire',
-                  'Mark Day without Eating / Drinking / Sleeping',
+              personalNeedsSummary(),
+              smallInfoText(
+                t(
+                  'I bisogni avanzano con il tempo della campagna. Soddisfarne uno '
+                      'non cancella gli altri; il Riposo Breve non è un sonno o un pasto.',
+                  'Needs follow campaign time. Meeting one does not clear the others; '
+                      'a Short Rest is not sleep or a meal.',
                 ),
-                icon: Icons.warning_amber,
-                color: Colors.deepOrange.shade700,
-                onPressed: segnaSessioneSenzaBisogni,
-              ),
-              const SizedBox(height: 10),
-              restButton(
-                label: t(
-                  'Giorno senza Cibo o Acqua',
-                  'Day without Food or Water',
-                ),
-                icon: Icons.dangerous,
-                color: Colors.red.shade800,
-                onPressed: segnaGiornoSenzaCiboAcqua,
               ),
             ],
           ),
@@ -1787,17 +1834,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 label: t('Riposo Breve', 'Short Rest'),
                 icon: Icons.nightlight_round,
                 color: secondaryColor,
-                onPressed: riposoBreve,
+                onPressed: () => requestWorldPartyRest(longRest: false),
               ),
               const SizedBox(height: 10),
               restButton(
                 label: t(
-                  'Riposo Lungo — 1 ora e mezza',
-                  'Long Rest — 1.5 hours',
+                  'Dormire — minimo 90 minuti',
+                  'Sleep — minimum 90 minutes',
                 ),
                 icon: Icons.hotel,
                 color: tertiaryColor,
-                onPressed: riposoLungo,
+                onPressed: () => requestWorldPartyRest(longRest: true),
               ),
             ],
           ),
@@ -9187,6 +9234,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'mask_shadow_form',
                 'mask_shadow_teleport',
                 'guardian_golden_mace',
+                'sand_tail_attack',
+                'sand_tail_parry',
                 'feralis_fury',
                 'monk_ki',
                 'monk_seal',

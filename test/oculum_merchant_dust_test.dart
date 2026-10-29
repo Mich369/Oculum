@@ -650,7 +650,7 @@ void main() {
     expect(state.merchantDustPurchasedSinceLongRest, isTrue);
     final longRest = find.widgetWithText(
       ElevatedButton,
-      'Riposo Lungo — 1 ora e mezza',
+      'Dormire — minimo 90 minuti',
     );
     final dropGem = oculumCreateTemporaryDropGem(
       subtraitId: 'drop',

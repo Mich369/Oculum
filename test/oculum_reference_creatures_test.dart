@@ -216,4 +216,111 @@ void main() {
       await closeFixture(tester, p);
     },
   );
+
+  for (final resource in ['azione', 'reazione']) {
+    testWidgets(
+      'no-die mantle takes percentage damage below Resistance and spends $resource once',
+      (tester) async {
+        final (state, p) = await fixtures.mountFight(tester);
+        state.schedePersonaggio[state.schedaCorrente]['monsterBookSourceId'] =
+            'aberrazione_metallica_angelica';
+        state.titoli.clear();
+        state.trattiRazziali.clear();
+        state.arti.clear();
+        state.skills.clear();
+        state.inventario.clear();
+        state.activeConditions.clear();
+        state.activeStructuredEffects.clear();
+        state.livelloController.text = '0';
+        state.gradoController.text = '0';
+        state.resilienzaController.text = '100';
+        state.currentResilienzaController.text = '100';
+        state.volontaController.text = '0';
+        state.currentVolontaController.text = '0';
+        state.materiaController.text = '0';
+        state.currentMateriaController.text = '0';
+        state.oculumController.text = '0';
+        state.currentOculumController.text = '0';
+        state.currentHpController.text = '600';
+        state.scudoController.text = '5000';
+        state.scudoOculumController.text = '0';
+        state.scudoCriticoController.text = '0';
+        state.hpTempController.text = '0';
+        state.scudoSalvataggioAttivo = false;
+        state.incomingDamagePresets.clear();
+        state.modificatoreDannoSelezionato = 'Normale';
+        for (final dynamic stat in state.hiddenEyeStats) {
+          stat.valore = stat.id == 'resistenza' ? 100 : 0;
+          stat.unlocked = stat.id == 'resistenza';
+        }
+        state.masterInitiativeActiveIndex = resource == 'azione' ? 0 : 1;
+        final token = state.masterInitiativeTokens.first as Map;
+        token.addAll(<String, dynamic>{
+          'actionUsed': false,
+          'actionTurnRound': state.masterInitiativeRound,
+          'reactionPoolInitialized': true,
+          'reactionPoolRound': state.masterInitiativeRound,
+          'reactionNormalFirstRoundLocked': false,
+          'reactionMax': 1,
+          'reactionUsed': 0,
+          'reactionUsedRound': state.masterInitiativeRound,
+          'reactionFastMax': 1,
+          'reactionFastUsed': 0,
+        });
+        p.recordCurrentEncounter();
+        p.invalidateDerivedCaches();
+        final request = <String, dynamic>{
+          'id': 'mantle-below-resistance-$resource',
+          'scope': p.permissionScope,
+          'encounterId': 'encounter_1',
+          'status': 'pending',
+          'sourceTag': 'ENEMY',
+          'sourceName': 'Avversario',
+          'targetTag': p.ownerTag(),
+          'choice': 'vc',
+          'attack': 1,
+          'natural': 1,
+          'damage': p.defense() + 20000,
+          'level': 0,
+          'grade': 0,
+          'element': 'fisico',
+          'difficulty': 'normale',
+        };
+        state.onlineCombatRequests[request['id']] = request;
+        final hpBefore = p.currentHp();
+        await tester.runAsync(() => p.defendReferenceMantle(request, resource));
+        expect(request['status'], 'resolved');
+        expect(request['outcome'], 'full');
+        expect(readIntValue(request['defense']), greaterThan(1));
+        expect(request['mantleProtectionPercent'], 90);
+        final receipt = request['damageReceipt'] as Map;
+        expect(
+          readIntValue(receipt['shieldLost']),
+          greaterThan(0),
+          reason:
+              'The mantle percentage and passive Resistance do not turn a no-die parry into an avoided opposed roll.',
+        );
+        expect(p.currentHp(), hpBefore);
+        expect(token['actionUsed'], resource == 'azione');
+        expect(
+          readIntValue(token['reactionUsed']),
+          resource == 'reazione' ? 1 : 0,
+        );
+        final shieldAfter = state.scudoController.text;
+        final spent = [
+          token['actionUsed'],
+          token['reactionUsed'],
+          token['reactionFastUsed'],
+        ];
+        await tester.runAsync(() => p.defendReferenceMantle(request, resource));
+        expect(state.scudoController.text, shieldAfter);
+        expect([
+          token['actionUsed'],
+          token['reactionUsed'],
+          token['reactionFastUsed'],
+        ], spent);
+        await closeFixture(tester, p);
+      },
+    );
+  }
 }

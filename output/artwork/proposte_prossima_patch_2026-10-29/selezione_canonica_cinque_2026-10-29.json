@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-29",
+  "approval_quote": "Sì, queste cinque sono canoniche",
+  "approval_scope": "Five selected desktop PNGs only; derivatives unapproved",
+  "files": [
+    {
+      "id": "mezzo_demone_cosciente",
+      "variant": "C",
+      "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/mezzo_demone_cosciente_C_radicale_v3.png",
+      "sha256": "7a81fd57ec2b18ae6df366045b624c18c45f1f835aac0227f24455063ce1a104",
+      "user_attachment_basename": "codex-clipboard-7d46a7f3-350f-4298-8373-ef630f824197.png",
+      "attachment_pixel_exact": true,
+      "attachment_file_sha_matches": false,
+      "attachment_sha256": "ee409c45a1c3736f53650bd7b373ef4854c25a72d7a37e3bd6abb60336793341"
+    },
+    {
+      "id": "nuvola_in_bottiglia",
+      "variant": "B",
+      "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/nuvola_in_bottiglia_B_originale_v1.png",
+      "sha256": "7811328e9bb35c0887ed013c1e780634bad6f3f037309f1b612828972dc4a1fd",
+      "user_attachment_basename": "codex-clipboard-a4cc7597-0238-4a83-a7d1-1682848d7c18.png",
+      "attachment_pixel_exact": true,
+      "attachment_file_sha_matches": false,
+      "attachment_sha256": "8be3ffaebdb7965cf2bd9317a49b8a18f6c06a8285c7d170f541ad1bb8305a0f"
+    },
+    {
+      "id": "il_doppione",
+      "variant": "C",
+      "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/il_doppione_C_originale_v1.png",
+      "sha256": "a1a8c477c0bcc7cf8fcf97abca19c77771832146e693edd08ef33444c1b61849",
+      "user_attachment_basename": "codex-clipboard-da51737f-47c2-4f9f-82b1-128af5e19d20.png",
+      "attachment_pixel_exact": true,
+      "attachment_file_sha_matches": false,
+      "attachment_sha256": "d07b9b5385e20b99de6c5b0d9529cd67ffdeb09198d72019315eb70a330680ff"
+    },
+    {
+      "id": "aberrazione_metallica_angelica",
+      "variant": "B",
+      "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/aberrazione_metallica_angelica_B_originale_v1.png",
+      "sha256": "a45d646734cb23f3edbfc7368b597a82c1b63dfd846f0339f8ec180fbabbc734",
+      "user_attachment_basename": "codex-clipboard-3ad57928-5c9a-4046-968d-69f11c5b490b.png",
+      "attachment_pixel_exact": true,
+      "attachment_file_sha_matches": false,
+      "attachment_sha256": "ca6535be30227cef25de0dcc133203672e1d1fb281e24cd37909a0d9e281573c"
+    },
+    {
+      "id": "aberrazione_metallica_solare",
+      "variant": "C",
+      "output_path": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_01_redesign_originale/aberrazione_metallica_solare_C_originale_v1.png",
+      "sha256": "33069a46cd0d4abd618e3e3796d3db172c0f38a9f3bf67d58858311f71108b11",
+      "user_attachment_basename": null,
+      "identification": "Visual inspection: crouched entirely gold faceless C; root matched user image without attachment path."
+    }
+  ],
+  "temp_references_copied": false,
+  "runtime_integrated": false
+}

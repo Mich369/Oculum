@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +15,7 @@ class _LiveNetwork extends HttpOverrides {}
 
 void main() {
   testWidgets(
-    'four authenticated clients share Master initiative, attack, defense and companion help',
+    'four authenticated clients share combat and confirmed idempotent party rest',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 1000);
       tester.view.devicePixelRatio = 1;
@@ -35,20 +36,45 @@ void main() {
         const MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
         (_) async => null,
       );
+      const playerAppKey = ValueKey('authenticated-player-app');
+      const masterAppKey = ValueKey('authenticated-master-app');
       await tester.pumpWidget(
-        MaterialApp(theme: ThemeData.dark(), home: const OculumHomePage()),
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: const Stack(
+            fit: StackFit.expand,
+            children: [
+              OculumHomePage(key: playerAppKey),
+              Offstage(child: OculumHomePage(key: masterAppKey)),
+            ],
+          ),
+        ),
       );
-      final dynamic state = tester.state(find.byType(OculumHomePage));
+      final dynamic state = tester.state(find.byKey(playerAppKey));
+      final dynamic masterState = tester.state(
+        find.byKey(masterAppKey, skipOffstage: false),
+      );
       state.tutorialDialogPending = true;
+      masterState.tutorialDialogPending = true;
       final probe = OculumPerformanceProbe(state);
+      final masterProbe = OculumPerformanceProbe(masterState);
       await tester.runAsync(() async {
         state.saveBlobDirectoryFuture = Future<Directory>.value(directory);
         state.sharedPreferencesFuture = Future<SharedPreferences>.value(
           await SharedPreferences.getInstance(),
         );
         await probe.reloadSave();
+        masterState.saveBlobDirectoryFuture = Future<Directory>.value(
+          directory,
+        );
+        masterState.sharedPreferencesFuture = Future<SharedPreferences>.value(
+          await SharedPreferences.getInstance(),
+        );
+        await masterProbe.reloadSave();
       });
       expect(state.datiCaricati, isTrue);
+      expect(masterState.datiCaricati, isTrue);
+      masterState.datiCaricati = false;
       state.datiCaricati =
           false; // Do not write synthetic combat to user saves.
       state.schedePersonaggio.clear();
@@ -110,11 +136,30 @@ void main() {
       );
       expect(probe.currentHp(), 600);
       final playerTag = probe.ownerTag();
+      final masterSheet =
+          jsonDecode(jsonEncode(probe.snapshot())) as Map<String, dynamic>;
+      masterSheet.addAll(<String, dynamic>{
+        'id': 'LIVE_MASTER',
+        'sheetTag': 'LIVE_MASTER',
+        'nome': 'Master',
+        'realtimeSharedSheet': false,
+      });
+      masterState.schedePersonaggio
+        ..clear()
+        ..add(masterSheet);
+      masterState.schedaCorrente = 0;
+      masterProbe.load(masterSheet);
+      final masterTag = masterProbe.ownerTag().toUpperCase();
+      expect(masterTag, isNotEmpty);
+      masterState.activeCampaignId = state.activeCampaignId;
+      masterState.modalitaMaster = true;
+      masterState.isMasterHost = true;
+      masterState.sonoCoMaster = false;
       state.realtimeVisibleInitiativeSnapshot = <String, dynamic>{
         'encounterId': 'live-fight',
         'tokens': [
           {'id': playerTag},
-          {'id': 'LIVE_MASTER'},
+          {'id': masterTag},
           {'id': 'Live_Attacker'},
         ],
       };
@@ -174,6 +219,15 @@ void main() {
       Map<String, dynamic>? attackerInitiative;
       final attackerReceipts = <Map<String, dynamic>>[];
       Map<String, dynamic>? helperInitiative;
+      final masterRestRequests = <Map<String, dynamic>>[];
+      final playerRestSnapshots = <Map<String, dynamic>>[];
+      final attackerRestSnapshots = <Map<String, dynamic>>[];
+      final helperRestSnapshots = <Map<String, dynamic>>[];
+      bool containsGrant(Map<String, dynamic> payload, String id) =>
+          ((payload['worldClockSnapshot'] as Map?)?['restGrants'] as List? ??
+                  [])
+              .whereType<Map>()
+              .any((row) => row['id'] == id && row['status'] == 'confirmed');
       final helper = OculumRealtimeService(
         client: helperClient,
         roomId: room,
@@ -188,6 +242,10 @@ void main() {
         onStatusChanged: (s) => debugPrint('Companion: $s'),
         onEvent: (event, payload) {
           if (event == 'initiative_shared') helperInitiative = payload;
+          if (event == 'initiative_control' &&
+              payload['worldClockSnapshot'] is Map) {
+            helperRestSnapshots.add(payload);
+          }
         },
       );
       final attacker = OculumRealtimeService(
@@ -206,6 +264,10 @@ void main() {
         onEvent: (event, payload) {
           if (event == 'initiative_shared') attackerInitiative = payload;
           if (event == 'combat_defense') attackerReceipts.add(payload);
+          if (event == 'initiative_control' &&
+              payload['worldClockSnapshot'] is Map) {
+            attackerRestSnapshots.add(payload);
+          }
         },
       );
       final master = OculumRealtimeService(
@@ -214,15 +276,24 @@ void main() {
         playerName: 'Synthetic Master',
         presenceDataProvider: () => {
           'role': 'master',
-          'activeSheetTag': 'LIVE_MASTER',
-          'localSheetTags': ['LIVE_MASTER'],
+          'activeSheetTag': masterTag,
+          'localSheetTags': [masterTag],
           'campaignId': state.activeCampaignId,
         },
         onAccessRequested: (_, _) async => true,
-        onPresenceChanged: (_) {},
+        onPresenceChanged: (users) => masterState.realtimeUsers = users,
         onStatusChanged: (s) => debugPrint('Master: $s'),
         onEvent: (event, payload) {
           if (event == 'combat_defense') receipts.add(payload);
+          if (event == 'initiative_control') {
+            masterProbe.receiveEncounterControl(payload);
+          }
+          if (event == 'permission_request') {
+            if (payload['worldClockCommand'] == 'rest_request') {
+              masterRestRequests.add(payload);
+            }
+            masterProbe.receivePermission(event, payload);
+          }
         },
       );
       final player = OculumRealtimeService(
@@ -239,6 +310,12 @@ void main() {
         onStatusChanged: (s) => debugPrint('Player: $s'),
         onEvent: (event, payload) {
           if (event == 'initiative_shared') probe.receiveInitiative(payload);
+          if (event == 'initiative_control') {
+            if (payload['worldClockSnapshot'] is Map) {
+              playerRestSnapshots.add(payload);
+            }
+            probe.receiveEncounterControl(payload);
+          }
           if (event.startsWith('combat_')) probe.receiveCombat(event, payload);
           if (event == 'sheet_shared') {
             final applied = probe.receiveStaffSheet(payload);
@@ -255,6 +332,7 @@ void main() {
         },
       );
       state.realtimeService = player;
+      masterState.realtimeService = master;
       addTearDown(() async {
         await helper.dispose();
         await player.dispose();
@@ -320,7 +398,7 @@ void main() {
           );
           await waitFor(
             () => (state.realtimeUsers as List).any(
-              (dynamic p) => p['activeSheetTag'] == 'LIVE_MASTER',
+              (dynamic p) => p['activeSheetTag'] == masterTag,
             ),
           );
           final sharedFight = <String, dynamic>{
@@ -330,7 +408,7 @@ void main() {
             'activeIndex': 2,
             'tokens': [
               {'id': playerTag},
-              {'id': 'LIVE_MASTER'},
+              {'id': masterTag},
               {'id': 'Live_Attacker'},
               {'id': 'Live_Helper'},
             ],
@@ -470,8 +548,8 @@ void main() {
           );
           final support = <String, dynamic>{
             ...packet,
-            'senderTag': 'LIVE_MASTER',
-            'sourceTag': 'LIVE_MASTER',
+            'senderTag': masterTag,
+            'sourceTag': masterTag,
             'sourceName': 'Master',
             'id': 'live-help',
             'kind': 'help',
@@ -559,6 +637,150 @@ void main() {
             playerTag,
             reason: 'Master editing does not transfer character ownership',
           );
+          // New protocol phase in this same fourth authenticated test.
+          // Both sides execute real application handlers, not a fabricated
+          // grant applied directly to the player. Other clients observe the
+          // authenticated Master publication as well.
+          await master.refreshPresence();
+          expect(
+            (masterState.realtimeUsers as List).any(
+              (dynamic row) =>
+                  [
+                    row['activeSheetTag'],
+                    ...(row['localSheetTags'] as List? ?? const []),
+                  ].any(
+                    (tag) =>
+                        '${tag ?? ''}'.toUpperCase() == playerTag.toUpperCase(),
+                  ),
+            ),
+            true,
+            reason:
+                'The actual authenticated Master presence must own the player tag: '
+                '${(masterState.realtimeUsers as List).map((dynamic row) => {'tag': row['activeSheetTag'], 'tags': row['localSheetTags'], 'campaign': row['campaignId']}).toList()}',
+          );
+          masterProbe.setWorldClock(<String, dynamic>{
+            'seconds': 0,
+            'revision': 0,
+            'calendarOriginDay': 1,
+            'calendarOriginOrdinal': 0,
+          });
+          final hpBeforeRest = probe.currentHp();
+          expect(hpBeforeRest, 11);
+          expect(probe.maximumHp(), 600);
+          probe.requestSleepRest();
+          final outgoingRequests =
+              probe.needsSnapshot()['restRequests'] as List;
+          expect(outgoingRequests, hasLength(1));
+          final originalRestRequest = Map<String, dynamic>.from(
+            outgoingRequests.single as Map,
+          );
+          final restId = '${originalRestRequest['id']}';
+          expect(originalRestRequest['effectsAlreadyApplied'], false);
+          expect(
+            probe.currentHp(),
+            hpBeforeRest,
+            reason:
+                'Requesting sleep never grants recovery before Master confirmation.',
+          );
+          await probe.flushRestRequests();
+          await waitFor(
+            () => (masterProbe.worldClockPrivate()['rests'] as List? ?? [])
+                .whereType<Map>()
+                .any(
+                  (row) => row['id'] == restId && row['status'] == 'pending',
+                ),
+          );
+          expect(
+            masterRestRequests.any(
+              (row) =>
+                  row['id'] == restId && row['authenticatedRole'] == 'player',
+            ),
+            true,
+          );
+          expect(masterProbe.worldSeconds(), 0);
+          expect(probe.currentHp(), hpBeforeRest);
+          expect(masterProbe.worldConfirmRest(restId, 89), false);
+          expect(masterProbe.worldConfirmRest(restId, 90), true);
+          await waitFor(
+            () =>
+                (probe.needsSnapshot()['restReceipts'] as List? ?? []).contains(
+                  restId,
+                ) &&
+                playerRestSnapshots.any((row) => containsGrant(row, restId)) &&
+                attackerRestSnapshots.any(
+                  (row) => containsGrant(row, restId),
+                ) &&
+                helperRestSnapshots.any((row) => containsGrant(row, restId)),
+          );
+          expect(probe.worldSeconds(), 5400);
+          expect(masterProbe.worldSeconds(), 5400);
+          expect(
+            probe.currentHp(),
+            450,
+            reason:
+                'Confirmed 90 minute sleep recovers to 75% of actual maximum HP.',
+          );
+          expect(probe.needsSnapshot()['restRequests'], isEmpty);
+          expect(playerRestSnapshots.last['authenticatedRole'], 'master');
+          // Persist the real grant receipt, lower HP, then force a new network
+          // envelope containing the SAME rest ID. A backend/message deduper
+          // alone must not make this idempotency assertion pass.
+          final afterRest =
+              jsonDecode(jsonEncode(probe.snapshot())) as Map<String, dynamic>;
+          state.schedePersonaggio[state.schedaCorrente] = afterRest;
+          probe.load(afterRest);
+          state.currentHpController.text = '400';
+          state.longRestInProgress = false;
+          final beforeReplayCount = playerRestSnapshots.length;
+          expect(
+            await player.sendPermissionEvent('permission_request', {
+              ...originalRestRequest,
+              'action': 'world_clock',
+            }),
+            true,
+          );
+          expect(masterProbe.worldConfirmRest(restId, 90), false);
+          expect(
+            await master
+                .sendCombatEvent('initiative_control', <String, dynamic>{
+                  'id': 'rest-live-replay:$restId',
+                  'scope': masterProbe.permissionScope,
+                  'campaignId': state.activeCampaignId,
+                  'senderTag': masterTag,
+                  'senderRole': 'master',
+                  'worldClockSnapshot': masterProbe.worldClockPublic(),
+                }),
+            true,
+          );
+          await waitFor(
+            () =>
+                playerRestSnapshots.length > beforeReplayCount &&
+                containsGrant(playerRestSnapshots.last, restId),
+          );
+          expect(
+            probe.currentHp(),
+            400,
+            reason:
+                'A repeated confirmed rest must not recover HP again after JSON reload.',
+          );
+          expect(probe.worldSeconds(), 5400);
+          expect(masterProbe.worldSeconds(), 5400);
+          expect(
+            (probe.needsSnapshot()['restReceipts'] as List).where(
+              (receipt) => receipt == restId,
+            ),
+            hasLength(1),
+          );
+          expect(
+            (masterProbe.worldClockPrivate()['rests'] as List)
+                .whereType<Map>()
+                .where((row) => row['id'] == restId),
+            hasLength(1),
+          );
+          debugPrint(
+            'LIVE REST VERIFIED: pending without recovery; Master confirmed90min; '
+            'four authenticated clients received grant; reload/replay gave no second recovery.',
+          );
           await player.dispose();
           await helper.dispose();
           await attacker.dispose();
@@ -567,8 +789,11 @@ void main() {
         }, _LiveNetwork()),
       );
       state.realtimeService = null;
+      masterState.realtimeService = null;
       state.realtimeAutoReconnectEnabled = false;
+      masterState.realtimeAutoReconnectEnabled = false;
       state.autosaveTimer?.cancel();
+      masterState.autosaveTimer?.cancel();
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 1));
     },

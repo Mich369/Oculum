@@ -123,7 +123,10 @@ void main() {
       state.schedaCorrente = 0;
       p.load(sheet);
       p.chooseChaos(false);
+      state.modalitaMaster = true;
+      state.isMasterHost = true;
       p.cycleDay(190);
+      expect(state.oculumCurrentDayController.text, '190');
       final before = p.coreStats();
       expect(p.cycleGift('donor-a', 0), true);
       expect(p.cycleGift('donor-a', 0), false);
@@ -209,6 +212,149 @@ void main() {
       expect(p.cycleCloud({'sourceName': 'Dopo'}, 0), false);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'migrated player calendar cannot type or select a different phase; Master still can',
+    (tester) async {
+      final dynamic state = await fixtures.mountSheet(
+        tester,
+        const Size(1440, 1000),
+      );
+      final p = OculumPerformanceProbe(state);
+      // Startup includes delayed work created in the fake clock. Advance
+      // frames as well as real IO rather than awaiting it in runAsync alone.
+      var loaded = false;
+      p.initialSheetLoad().then((_) => loaded = true);
+      for (var i = 0; i < 50 && !loaded; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+      }
+      expect(loaded, true, reason: 'The calendar fixture must finish startup.');
+      state.datiCaricati = false;
+      final sheet = p.snapshot()
+        ..['planarRuntime'] = <String, dynamic>{}
+        ..['realtimeSharedSheet'] = false
+        ..['sheetTag'] = 'CALENDAR_OWNER';
+      state.schedePersonaggio
+        ..clear()
+        ..add(sheet);
+      state.schedaCorrente = 0;
+      p.load(sheet);
+      p.ensureSheetTags();
+      expect(p.ownerTag(), isNotEmpty);
+      state.modalitaMaster = true;
+      state.isMasterHost = true;
+      p.setWorldClock(<String, dynamic>{
+        'seconds': 0,
+        'calendarOriginDay': 1,
+        'calendarOriginOrdinal': 0,
+      });
+      p.chooseChaos(false);
+      state.modalitaMaster = false;
+      state.isMasterHost = false;
+      state.sonoCoMaster = false;
+      const panelKey = ValueKey('calendar-under-test');
+      final entry = OverlayEntry(
+        builder: (_) => Align(
+          alignment: Alignment.topCenter,
+          child: Material(
+            child: SizedBox(
+              width: 900,
+              child: KeyedSubtree(key: panelKey, child: p.restCalendarWidget()),
+            ),
+          ),
+        ),
+      );
+      Overlay.of(tester.element(find.byType(OculumHomePage))).insert(entry);
+      await tester.pump();
+      final panel = find.byKey(panelKey);
+      Finder phaseField() => find.descendant(
+        of: panel,
+        matching: find.byType(DropdownButtonFormField<String>),
+      );
+      Finder phaseDayField() => find.descendant(
+        of: panel,
+        matching: find.byType(DropdownButtonFormField<int>),
+      );
+      Finder dayField() => find.descendant(
+        of: panel,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              identical(widget.controller, state.oculumCurrentDayController),
+        ),
+      );
+      expect(
+        tester.widget<DropdownButtonFormField<String>>(phaseField()).onChanged,
+        isNull,
+      );
+      expect(
+        tester.widget<DropdownButtonFormField<int>>(phaseDayField()).onChanged,
+        isNull,
+      );
+      final lockedDay = tester.widget<TextField>(dayField());
+      expect(lockedDay.readOnly, true);
+      expect(lockedDay.enabled, false);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.tap(dayField(), warnIfMissed: false);
+      await tester.pump();
+      final editable = tester.widget<EditableText>(
+        find.descendant(of: dayField(), matching: find.byType(EditableText)),
+      );
+      expect(editable.focusNode.hasFocus, false);
+      // Send platform text as an attempted entry after tapping the locked
+      // field. No input client may edit the actual campaign day.
+      tester.testTextInput.enterText('190');
+      await tester.pump();
+      await tester.tap(phaseField(), warnIfMissed: false);
+      await tester.pump();
+      expect(state.oculumCurrentDayController.text, '1');
+      expect(p.cycleGift('unauthorized-fate-gift', 0), false);
+      final buttons = find.descendant(
+        of: panel,
+        matching: find.byType(IconButton),
+      );
+      expect(
+        tester
+            .widgetList<IconButton>(buttons)
+            .every((button) => button.onPressed == null),
+        true,
+      );
+      // Runtime guard remains independently effective even if a caller
+      // bypasses the disabled controls.
+      p.cycleDay(190);
+      expect(state.oculumCurrentDayController.text, '1');
+      state.modalitaMaster = true;
+      state.isMasterHost = true;
+      entry.markNeedsBuild();
+      await tester.pump();
+      final allowedPhase = tester.widget<DropdownButtonFormField<String>>(
+        phaseField(),
+      );
+      expect(allowedPhase.onChanged, isNotNull);
+      allowedPhase.onChanged!('the_fate');
+      expect(p.worldClockPrivate()['calendarOriginDay'], 190);
+      await tester.pump();
+      expect(state.oculumCurrentDayController.text, '190');
+      expect(
+        p.worldSeconds(),
+        0,
+        reason: 'Rebasing day does not grant elapsed travel/rest time.',
+      );
+      expect(p.cycleGift('master-confirmed-fate-gift', 0), true);
+      p.cycleDay(226);
+      expect(p.cycleGiftBonus(), 0);
+      expect(tester.takeException(), isNull);
+      entry.remove();
+      entry.dispose();
+      await tester.pump();
+      p.cancelPendingSave();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 4));
     },
   );
 }

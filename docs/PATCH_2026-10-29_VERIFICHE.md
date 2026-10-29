@@ -41,6 +41,22 @@ Statistiche e sottotratti; costi e loro risorse, minimi e massimi; requisiti e c
 
 ## Verifiche distinte e lavoro ancora aperto
 
-CI, quattro prove online autenticate, pacchetti locali, avvio dell'EXE, firma APK e download pubblici sono passaggi distinti da completare per questa patch. Non costituiscono una prova di tre sessioni su dispositivi indipendenti o di assenza assoluta di bug.
+CI, quattro prove online autenticate, pacchetti locali, avvio degli EXE, firma APK e download pubblici sono stati verificati separatamente per dcb5bb4e. Non costituiscono una prova di tre sessioni su dispositivi indipendenti o di assenza assoluta di bug.
 
 Sono collegati dieci pack completi approvati, non tutti i temi del catalogo:1199 voci comprese varianti,1188 con almeno un artwork dedicato mancante nell'inventario tecnico. Le domande anatomiche delle creature successive restano da risolvere prima di canonizzarne i nuovi disegni. La proiezione pubblica degli stati anatomici remoti ha un modello con campi consentiti, ma la sua interfaccia nemica remota non è certificata da questi test locali.
+
+## Consegna verificata del commit dcb5bb4e
+
+- Build GitHub `40904083210` riuscita su tutte le piattaforme; pubblicazione `40913133550` e Pages `40913133658` riuscite. Ricontrollo finale: tutti gli 11 artifact pubblici accessibili senza autenticazione e index/bootstrap/main web dello stesso commit. Accessibilità e intestazioni archivio verificate; non è un nuovo download anonimo completo di tutti i byte né una nuova prova grafica.
+- Installati in `build/distribution`: EXE con runtime completo, cartelle e ZIP separati Windows/Windows Test, APK e AAB, macOS ZIP e iOS unsigned IPA. Linux/Web ed evidenze aggiuntive restano disponibili fra gli 11 download pubblici; non sono dichiarati presenti in questa cartella locale.
+- Recupero dopo spazio esaurito: cartella normale confrontata con tutti i 5.357 file del suo ZIP; versione Test confrontata con il suo ZIP. Asset nuovi identici condividono collegamenti fisici soltanto fra le nuove cartelle; 10 file Test distinti estratti separatamente, app.so diverso. Nessun collegamento alla vecchia distribuzione.
+- Verificatore prima e dopo lo scambio: **16.088 file, zero differenze**. Vecchia distribuzione e188eafe conservata in un backup integrale; nessuna cancellazione di salvataggi.
+- APK: package com.mich.oculum, versionCode **100254**, certificato SHA256 **f883a37f4be2b4f038bac52c9e247021e2bb9dd2a9fe45e857b8f5572e40b876**, verifica firma riuscita. La compatibilità richiede comunque che l’APK già installato usi questa stessa chiave.
+- Avvio nascosto di entrambi gli EXE: rimasti attivi dopo 8 secondi, poi chiusi solo i processi della prova. Non equivale a una nuova verifica di tutti i controlli UI.
+- Rapporti locali: build/installed-40904083210.json, build/startup-smoke-40904083210.json, build/android-signing-40904083210.json, build/public-release-verified-dcb5bb4e.json.
+
+Le nuove conferme su sonno/bisogni e il pack Gigante di sabbia approvato successivamente non appartengono al binario dcb5bb4e. Restano nel registro del prossimo intervento. La pulizia dei soli output ricostruibili è descritta in [Pulizia del progetto](PULIZIA_PROGETTO_2026-10-29.md). Nessuna riga viene chiusa al 100% prima della conferma dell’utente.
+
+### Approvazione finale P09
+
+Il29ottobre l’utente ha confermato **«Sì, P09 conclusa per questa consegna»** dopo la presentazione della riga integrale, dell’adattamento e delle verifiche. **P09 è chiusa al100% per il commit dcb5bb4e/run40904083210**. La chiusura non comprende sonno/bisogni, Gigante di sabbia o altre conferme successive non presenti in quel binario, né estende le prove a tre dispositivi fisici o a una nuova verifica grafica completa.

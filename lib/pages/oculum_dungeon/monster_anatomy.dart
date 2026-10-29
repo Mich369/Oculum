@@ -15,6 +15,18 @@ bool oculumFateCoreReflects(MonsterBookEntry? entry, String part) =>
     (entry.id == 'fate_golem' || entry.id.startsWith('fate_golem_variante_')) &&
     part == 'fairy_core';
 
+/// An elemental vulnerability is not automatically a body location to aim at.
+/// Explicit Master rules can still define a different, saved custom anatomy.
+bool oculumMonsterHasAnatomicalWeakPoint(MonsterBookEntry? entry) {
+  if (entry == null) return true;
+  final explicit = entry.encounterRules['hasAnatomicalWeakPoint'];
+  if (explicit is bool) return explicit;
+  if (entry.id.split('_variante_').first != 'gigante_sabbia') return true;
+  final custom = entry.encounterRules['precisionBodyParts'];
+  return custom is List &&
+      custom.whereType<Map>().any((p) => p['weak'] == true);
+}
+
 String oculumLogicalMonsterWeakPoint(
   MonsterBookEntry entry, {
   bool english = false,
@@ -132,15 +144,35 @@ String oculumLogicalMonsterWeakPoint(
 
 /// Stable, separate hit locations. Saved Master anatomy overrides win.
 List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
-  MonsterBookEntry entry,
-) {
+  MonsterBookEntry entry, {
+  bool solarFaceUncovered = false,
+}) {
   final custom = entry.encounterRules['precisionBodyParts'];
   if (custom is List && custom.isNotEmpty) {
     return [
       for (final p in custom.whereType<Map>()) Map<String, dynamic>.from(p),
     ];
   }
-  final physical = oculumMonsterPhysicalDescription(entry);
+  // Confirmed artwork supplies missing physical facts, never new powers or
+  // weak points. An explicit saved anatomy above remains authoritative.
+  final confirmedPhysical = switch (entry.id) {
+    'mostro_sabbia' => 'quadrupede, quattro zampe, due corna, testa e coda',
+    'gigante_sabbia' => 'umanoide, due braccia, due gambe, due corna e coda',
+    'costrutto_minore' =>
+      'umanoide meccanico, due braccia, due gambe, due occhi',
+    'funghetto_cappuccio_rosso' =>
+      'umanoide fungino, due braccia, due gambe, testa, due occhi',
+    'topino_avventuroso' =>
+      'bipede umanoide, due braccia, due gambe, testa, due occhi, due orecchie e coda',
+    'sharp' => 'quattro zampe, due occhi',
+    'mosca_campana' => 'sei zampe, quattro ali, due occhi',
+    'shadow_devil' => 'due corna, senza occhi',
+    'mezzo_demone_cosciente' =>
+      'umanoide, due braccia, due gambe, due corna e due occhi',
+    _ => '',
+  };
+  final physical =
+      '${oculumMonsterPhysicalDescription(entry)} $confirmedPhysical';
   final identity = '${entry.id} ${entry.nameIt} $physical'.toLowerCase();
   final weak = entry.weakPointDescriptionIt.toLowerCase();
   bool has(String pattern) => RegExp(pattern).hasMatch(identity);
@@ -176,6 +208,30 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     'dieci': 10,
   };
   int count(String noun, int fallback) {
+    // Do not count the same limbs twice when the description already contains
+    // a number and the approved-art facts repeat it.
+    final canonicalCounts = switch (entry.id) {
+      'mostro_sabbia' => {'legs': 4, 'eyes': 2, 'horns': 2},
+      'gigante_sabbia' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
+      'costrutto_minore' ||
+      'funghetto_cappuccio_rosso' ||
+      'topino_avventuroso' => {'arms': 2, 'legs': 2, 'eyes': 2},
+      'sharp' => {'legs': 4, 'eyes': 2},
+      'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
+      'shadow_devil' => {'horns': 2},
+      'mezzo_demone_cosciente' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
+      'nuvola_in_bottiglia' => {'eyes': 1},
+      _ => <String, int>{},
+    };
+    final group = switch (noun) {
+      'braccia|braccio' => 'arms',
+      'gambe|zampe' => 'legs',
+      'occhi|occhio|lenti' => 'eyes',
+      'ali' => 'wings',
+      'corna|corno' => 'horns',
+      _ => noun,
+    };
+    if (canonicalCounts.containsKey(group)) return canonicalCounts[group]!;
     final pattern = RegExp(
       '(\\d+|${numbers.keys.join('|')})\\s+(?:(coppie|paia)\\s+di\\s+)?(?:piccol[ei]\\s+|grand[ei]\\s+|lunghe\\s+|corte\\s+|principali\\s+|posteriori\\s+|anteriori\\s+)?(?:$noun)\\b',
     );
@@ -215,7 +271,11 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     for (var i = 0; i < n; i++) {
       final side = i.isEven ? 'destro' : 'sinistro';
       final feminine =
-          id == 'wings' || id == 'legs' || id == 'tail' || id == 'head';
+          id == 'wings' ||
+          id == 'legs' ||
+          id == 'tail' ||
+          id == 'head' ||
+          id == 'hands';
       final sideLabel = feminine ? (i.isEven ? 'destra' : 'sinistra') : side;
       final pair = n <= 2
           ? ''
@@ -245,7 +305,8 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       r'piega|fianco|pelle|corpo|contorno|condensazione|parte centrale',
     ).hasMatch(weak),
   );
-  if (!spherical &&
+  if (entry.id != 'mosca_campana' &&
+      !spherical &&
       !has(r'headless|decapitat|senza testa|nessuna testa') &&
       (humanoid ||
           quadruped ||
@@ -310,6 +371,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     );
   }
   if (!spherical &&
+      !has(r'senza ali|non ha ali|non hanno ali|nessuna ala|priv[oa] di ali') &&
       (has(
             r'\bali\b|alato|alata|arpia|uccello|rapace|angelo|grifone|drago|fata|falena|vespa',
           ) ||
@@ -324,6 +386,35 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   }
   if (!spherical && has(r'\bcoda\b|\bcode\b')) {
     group('tail', 'Coda', 'Code', count('code|coda', 1), r'coda|code');
+  }
+  if (confirmedPhysical.contains('corna')) {
+    group('horns', 'Corno', 'Corna', count('corna|corno', 2), r'corna|corno');
+  }
+  if (entry.id == 'topino_avventuroso' || entry.id == 'ogle') {
+    group('ears', 'Orecchio', 'Orecchie', 2, r'orecchio|orecchie');
+  }
+  if (entry.id == 'funghetto_cappuccio_rosso') {
+    add('cap', 'Cappello fungino', 'cap', false);
+  }
+  if (entry.id == 'il_doppione') {
+    add('crest', 'Corona di lembi', 'crest', true);
+    parts.firstWhere((p) => p['id'] == 'body')['weak'] = false;
+  }
+  if (entry.id.startsWith('aberrazione_metallica_')) {
+    for (final part in parts.where((p) => p['group'] == 'head')) {
+      part['weak'] = false;
+    }
+    add('joint', 'Giunti d’oro del collo', 'joint', true);
+    parts.last['material'] = 'metal';
+  }
+  if (entry.id == 'nuvola_in_bottiglia') {
+    group('hands', 'Mano vaporosa', 'Mani', 2, r'mani|mano');
+    group('receivers', 'Ricevitore di fulmini', 'Ricevitori', 2, r'ricevitor');
+    for (final part in parts.where((p) => p['group'] == 'receivers')) {
+      part['material'] = 'metal';
+    }
+    add('bottle', 'Bottiglia', 'bottle', true);
+    parts.last['material'] = 'glass';
   }
   const details = [
     ('torso', 'Torace', r'petto|torace|costole'),
@@ -345,6 +436,34 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   for (final d in details) {
     if (RegExp(d.$3).hasMatch('$physical $weak')) {
       add(d.$1, d.$2, d.$1, RegExp(d.$3).hasMatch(weak));
+    }
+  }
+  if (entry.id == 'il_doppione') {
+    for (final part in parts) {
+      part['weak'] = part['id'] == 'crest';
+    }
+  }
+  if (const {
+    'guardia_solare',
+    'guardia_solare_elite',
+    'guardiano_solare',
+  }.contains(entry.id)) {
+    // Lusier and Erik are confirmed personal exceptions to the full helmet.
+    parts.removeWhere((p) => p['group'] == 'eyes');
+    if (solarFaceUncovered) {
+      group('eyes', 'Occhio', 'Occhi', 2, r'occhi|occhio');
+    } else {
+      add('helmet_visor', 'Visiera dell’elmo solare', 'sensor', false);
+      parts.last['material'] = 'metal';
+    }
+  }
+  if (entry.id == 'gigante_sabbia') {
+    // Its only confirmed vulnerabilities are elemental, not an exposed core.
+    parts.removeWhere(
+      (p) => const {'core', 'heart', 'wound'}.contains(p['group']),
+    );
+    for (final part in parts) {
+      part['weak'] = false;
     }
   }
   if (oculumFateCoreReflects(entry, 'fairy_core')) {

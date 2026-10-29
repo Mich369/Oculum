@@ -47,8 +47,9 @@ class OculumPerformanceProbe {
       )]?['weakPoint'] ==
       true;
   Future<Map<String, dynamic>?> selectPrecisionPart(
-    Map<String, dynamic> token,
-  ) => _state.selectPrecisionBodyPart(token);
+    Map<String, dynamic> token, {
+    bool weakOnly = false,
+  }) => _state.selectPrecisionBodyPart(token, weakOnly: weakOnly);
   Future<void> wingHit(
     Map<String, dynamic> request, {
     int hpLost = 1,
@@ -763,6 +764,10 @@ class OculumPerformanceProbe {
   Future<void> damageResolved(
     int amount, {
     bool critical = false,
+    bool doubleCritical = false,
+    bool criticalShieldAlreadyBroken = false,
+    String? packetId,
+    int? sandLavaPercentile,
     int criticalMultiplier = 1,
     double defenseMultiplier = 1,
     int enemyLevel = 0,
@@ -775,6 +780,10 @@ class OculumPerformanceProbe {
   }) => _state.applicaDannoSubito(
     dannoEsplicito: amount,
     critico: critical,
+    doubleCritical: doubleCritical,
+    criticalShieldAlreadyBroken: criticalShieldAlreadyBroken,
+    damagePacketId: packetId,
+    sandLavaPercentile: sandLavaPercentile,
     criticalBonusMultiplier: criticalMultiplier,
     defenseMultiplier: defenseMultiplier,
     enemyDifficulty: difficulty,
@@ -846,6 +855,10 @@ class OculumPerformanceProbe {
       _state.combatAbilityResourceColor([resource]);
   Future<void> defendCombat(Map<String, dynamic> request, String choice) =>
       _state.defendOnlineAttack(request, choice);
+  Future<void> defendReferenceMantle(
+    Map<String, dynamic> request,
+    String resource,
+  ) => _state.defendWithReferenceMantle(request, resource);
   Future<void> resolveCombatDefense(
     Map<String, dynamic> request,
     String choice,
@@ -921,6 +934,12 @@ class OculumPerformanceProbe {
     escapeReactionOf: escapeReactionOf,
     resourceAlreadySpent: escapeReactionOf != null,
   );
+  bool prepareSandTail(String mode, {int? percent, int? cooldown}) => _state
+      .prepareSandTail(mode, receivedPercent: percent, cooldown: cooldown);
+  bool get sandTailReady => _state.sandTailReady;
+  int defenseTotal() => _state.difesa();
+  Map<String, dynamic> sandRuntime() =>
+      Map<String, dynamic>.from(_state.planarState);
   String gainCoreMastery(String key, int natural, {int faces = 20}) =>
       _state.registraEsperienzaCriticaStat(
         key: key,
@@ -968,6 +987,8 @@ class OculumPerformanceProbe {
       _state.advanceWorldClockTurn(encounter, receipt);
   void worldControl(Map<String, dynamic> payload) =>
       _state.receiveWorldClockControl(payload);
+  void selectSharedEncounterForSheet() =>
+      _state.selectSharedEncounterForCurrentSheet();
   void worldRest(bool longRest) =>
       _state.notifyWorldRestState(longRest: longRest);
   bool worldConfirmRest(String id, int minutes) =>
@@ -1007,7 +1028,23 @@ class OculumPerformanceProbe {
   String worldPrepareEncounter(String id) =>
       _state.prepareWorldTravelEncounter(id);
   int worldMonsterBonus(int index) => _state.worldMonsterCoreBonusAt(index);
+  void requestSleepRest({bool longRest = true}) =>
+      _state.requestWorldPartyRest(longRest: longRest);
+  void satisfyNeed(String need) => _state.satisfyPersonalNeed(need);
+  Future<void> flushRestRequests() => _state.flushWorldRestRequests();
+  Map<String, dynamic> needsSnapshot() => _state.worldNeedsData;
+  int needsStatPenalty(String stat) => _state.worldNeedStatPenalty(stat);
+  int effectiveAsh() => _state.worldNeedsEffectiveAsh();
+  void syncWorldNeeds(Map<String, dynamic> clock) =>
+      _state.syncOwnedWorldCalendarAndNeeds(clock);
+  bool advanceWorldTime(String receipt, int seconds, String campaignId) =>
+      _state.advanceWorldTime(
+        receipt: receipt,
+        seconds: seconds,
+        campaignId: campaignId,
+      );
   Widget worldClockWidget() => _state.worldClockBar();
+  Widget restCalendarWidget() => _state.restCalendarPanel();
   Future<void> showWorldClock() => _state.showWorldClockPanel();
   void merchantVisitAt(String id, DateTime now) =>
       _state.receiveWorldMerchantVisit(
