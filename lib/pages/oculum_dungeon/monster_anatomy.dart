@@ -159,28 +159,34 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       for (final p in custom.whereType<Map>()) Map<String, dynamic>.from(p),
     ];
   }
+  final pinepine =
+      entry.id == 'pinepine' || entry.id.startsWith('pinepine_variante_');
   // Confirmed artwork supplies missing physical facts, never new powers or
   // weak points. An explicit saved anatomy above remains authoritative.
-  final confirmedPhysical = switch (entry.id) {
-    'mostro_sabbia' => 'quadrupede, quattro zampe, due corna, testa e coda',
-    'gigante_sabbia' => 'umanoide, due braccia, due gambe, due corna e coda',
-    'costrutto_minore' =>
-      'umanoide meccanico, due braccia, due gambe, due occhi',
-    'funghetto_cappuccio_rosso' =>
-      'umanoide fungino, due braccia, due gambe, testa, due occhi',
-    'topino_avventuroso' =>
-      'bipede umanoide, due braccia, due gambe, testa, due occhi, due orecchie e coda',
-    'sharp' => 'quattro zampe, due occhi',
-    'mosca_campana' => 'sei zampe, quattro ali, due occhi',
-    'shadow_devil' => 'due corna, senza occhi',
-    'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' =>
-      'umanoide, due braccia, due gambe, due corna e due occhi',
-    'forest_demon' =>
-      'rettile quadrupede, quattro zampe, due occhi, tre corna e coda',
-    'ciclo_forest_demon_blu' =>
-      'rettile quadrupede, quattro zampe, due occhi, due corna e coda, senza ali',
-    _ => '',
-  };
+  final confirmedPhysical = pinepine
+      ? 'umanoide, due braccia, due gambe, testa e due occhi'
+      : switch (entry.id) {
+          'mostro_sabbia' =>
+            'quadrupede, quattro zampe, due corna, testa e coda',
+          'gigante_sabbia' =>
+            'umanoide, due braccia, due gambe, due corna e coda',
+          'costrutto_minore' =>
+            'umanoide meccanico, due braccia, due gambe, due occhi',
+          'funghetto_cappuccio_rosso' =>
+            'umanoide fungino, due braccia, due gambe, testa, due occhi',
+          'topino_avventuroso' =>
+            'bipede umanoide, due braccia, due gambe, testa, due occhi, due orecchie e coda',
+          'sharp' => 'quattro zampe, due occhi',
+          'mosca_campana' => 'sei zampe, quattro ali, due occhi',
+          'shadow_devil' => 'due corna, senza occhi',
+          'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' =>
+            'umanoide, due braccia, due gambe, due corna e due occhi',
+          'forest_demon' =>
+            'rettile quadrupede, quattro zampe, due occhi, tre corna e coda',
+          'ciclo_forest_demon_blu' =>
+            'rettile quadrupede, quattro zampe, due occhi, due corna e coda, senza ali',
+          _ => '',
+        };
   final physical =
       '${oculumMonsterPhysicalDescription(entry)} $confirmedPhysical';
   final identity = '${entry.id} ${entry.nameIt} $physical'.toLowerCase();
@@ -189,9 +195,9 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   final spherical = has(
     r'thunder_bot|observer.?s.?tear|obser_sunshine|torretta_oculum|slime|gelatina|melma|occhio_caduto|plomp',
   );
-  final incorporeal = has(
-    r'incorporeo|incorporea|senza corpo|elementale|spettro|fantasma',
-  );
+  final incorporeal =
+      !pinepine &&
+      has(r'incorporeo|incorporea|senza corpo|elementale|spettro|fantasma');
   final humanoid =
       !spherical &&
       !incorporeal &&
@@ -220,22 +226,28 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   int count(String noun, int fallback) {
     // Do not count the same limbs twice when the description already contains
     // a number and the approved-art facts repeat it.
-    final canonicalCounts = switch (entry.id) {
-      'mostro_sabbia' => {'legs': 4, 'eyes': 2, 'horns': 2},
-      'gigante_sabbia' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
-      'costrutto_minore' ||
-      'funghetto_cappuccio_rosso' ||
-      'topino_avventuroso' => {'arms': 2, 'legs': 2, 'eyes': 2},
-      'sharp' => {'legs': 4, 'eyes': 2},
-      'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
-      'shadow_devil' => {'horns': 2},
-      'mezzo_demone_cosciente' ||
-      'mezzo_demone_massiccio' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
-      'nuvola_in_bottiglia' => {'eyes': 1},
-      'forest_demon' => {'legs': 4, 'eyes': 2, 'horns': 3},
-      'ciclo_forest_demon_blu' => {'legs': 4, 'eyes': 2, 'horns': 2},
-      _ => <String, int>{},
-    };
+    final canonicalCounts = pinepine
+        ? {'arms': 2, 'legs': 2, 'eyes': 2}
+        : switch (entry.id) {
+            'mostro_sabbia' => {'legs': 4, 'eyes': 2, 'horns': 2},
+            'gigante_sabbia' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
+            'costrutto_minore' ||
+            'funghetto_cappuccio_rosso' ||
+            'topino_avventuroso' => {'arms': 2, 'legs': 2, 'eyes': 2},
+            'sharp' => {'legs': 4, 'eyes': 2},
+            'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
+            'shadow_devil' => {'horns': 2},
+            'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' => {
+              'arms': 2,
+              'legs': 2,
+              'eyes': 2,
+              'horns': 2,
+            },
+            'nuvola_in_bottiglia' => {'eyes': 1},
+            'forest_demon' => {'legs': 4, 'eyes': 2, 'horns': 3},
+            'ciclo_forest_demon_blu' => {'legs': 4, 'eyes': 2, 'horns': 2},
+            _ => <String, int>{},
+          };
     final group = switch (noun) {
       'braccia|braccio' => 'arms',
       'gambe|zampe' => 'legs',
@@ -450,6 +462,10 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     if (RegExp(d.$3).hasMatch('$physical $weak')) {
       add(d.$1, d.$2, d.$1, RegExp(d.$3).hasMatch(weak));
     }
+  }
+  if (pinepine) {
+    add('soft_scale', 'Squama tenera', 'scale', true);
+    parts.last['material'] = 'wood';
   }
   if (entry.id == 'il_doppione') {
     for (final part in parts) {

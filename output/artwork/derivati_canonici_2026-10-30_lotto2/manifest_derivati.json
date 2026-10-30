@@ -1,0 +1,1082 @@
+{
+  "date": "2026-10-30",
+  "status": "USER_APPROVED_2026_10_30",
+  "selected_derivatives": 22,
+  "generated_originals": 28,
+  "older_margin_revisions_preserved": 6,
+  "source_desktop_approvals": 11,
+  "scope": "All eleven desktops and these twenty-two selected phone/relic derivatives are explicitly approved. Runtime integration and UI verification are separate.",
+  "limitations": [
+    "PNG and source/alpha checks are local only.",
+    "Four existing species are connected in the runtime; widget and package verification are recorded separately.",
+    "Transparent pixel RGB can appear colored in viewers ignoring alpha; compare in the HTML gallery.",
+    "Decorative relics do not add powers, equipment or drops."
+  ],
+  "files": [
+    {
+      "id": "icerose_phone",
+      "species": "icerose",
+      "name": "IceRose",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/icerose_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-ed39edcd-2fd0-45f9-8322-f8b0a2d0d807.png",
+      "original_sha256": "8b73fb4bd737f16a13e872f76a8c37c715489861cee7c304d37ebaef7b9c37c3",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/icerose_desktop_canonico.png",
+      "source_desktop_sha256": "7a834ac69927e6fd81b3a711210440b3f7e5e21a690e6a010271c83ada196400",
+      "expected_source_sha256": "7a834ac69927e6fd81b3a711210440b3f7e5e21a690e6a010271c83ada196400",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: IceRose: the exact slender armored plant humanoid from image 1, its head is a faceted pale blue-white ice rose with NO face or eyes; dark woody/fibrous body, ice petal armor, exactly two arms, two legs and TWO distinct handheld scythes, one per hand. Keep both full blades, dark handles and their separate grips. Scene: a closed blue-grey ice cavern with solid ice/rock ceiling, stalactites and snowy stone ledges; no sky. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/icerose_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "8b73fb4bd737f16a13e872f76a8c37c715489861cee7c304d37ebaef7b9c37c3",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "icerose_relic_v2",
+      "species": "icerose",
+      "name": "IceRose",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/icerose_reliquia_proposta_v2.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-a9a0fb45-06b6-474a-99a9-10a6b662f6f0.png",
+      "original_sha256": "94e184957e9360132561f8b877fbddfbdb8dff915e480530631228c27f327b2e",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/icerose_desktop_canonico.png",
+      "source_desktop_sha256": "7a834ac69927e6fd81b3a711210440b3f7e5e21a690e6a010271c83ada196400",
+      "expected_source_sha256": "7a834ac69927e6fd81b3a711210440b3f7e5e21a690e6a010271c83ada196400",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative icy rose rosette above a small asymmetrical arrangement of TWO miniature scythe-shaped ice blades and dark plant fibers; derived exclusively from the plant armor and paired weapons, no face or eyes. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/icerose_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "94e184957e9360132561f8b877fbddfbdb8dff915e480530631228c27f327b2e",
+        "transparent_pixels": 1269501,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          372,
+          187,
+          1077,
+          1091
+        ],
+        "minimum_solid_margin_fraction": 0.12998
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "firerose_phone",
+      "species": "firerose",
+      "name": "FireRose",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/firerose_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-5fbb23e1-844c-4316-be3f-f539c3eb6404.png",
+      "original_sha256": "40aabe18f6afa9a79ee8a32116ac82cd9dce2584634a8aa0ada55677e1fda0e4",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/firerose_desktop_canonico.png",
+      "source_desktop_sha256": "ed388d77b2c5cff735399e6ff78e28e4997a54b58ee9f6d2a823cc334ea87d0f",
+      "expected_source_sha256": "ed388d77b2c5cff735399e6ff78e28e4997a54b58ee9f6d2a823cc334ea87d0f",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: FireRose: the exact slender angular armored plant humanoid from image 1, layered charcoal bark/leaf armor with dark red inner fibers, a large scarlet rose head with NO face or eyes, exactly two arms and two legs, TWO distinct handheld scythes in the same slender carved bark and ember-red blade design, one per hand. Scene: the same misty dark forest with red foliage, old mossy boulders and twisting tree trunks; no visible celestial objects. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/firerose_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "40aabe18f6afa9a79ee8a32116ac82cd9dce2584634a8aa0ada55677e1fda0e4",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "firerose_relic_v2",
+      "species": "firerose",
+      "name": "FireRose",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/firerose_reliquia_proposta_v2.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-5737a95b-e2f4-4719-b763-5f1df20e0748.png",
+      "original_sha256": "495027af3c9d0e7a900f88fb663e0533de0217e625c80771991b3c17280c279c",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/firerose_desktop_canonico.png",
+      "source_desktop_sha256": "ed388d77b2c5cff735399e6ff78e28e4997a54b58ee9f6d2a823cc334ea87d0f",
+      "expected_source_sha256": "ed388d77b2c5cff735399e6ff78e28e4997a54b58ee9f6d2a823cc334ea87d0f",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative scarlet rose with charcoal leaf-armor framing and TWO small curved ember-red scythe-blade motifs, made of the exact bark, petals and fibers of the approved design; no added face, crown or gems. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/firerose_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "495027af3c9d0e7a900f88fb663e0533de0217e625c80771991b3c17280c279c",
+        "transparent_pixels": 1292692,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          363,
+          161,
+          944,
+          1102
+        ],
+        "minimum_solid_margin_fraction": 0.12121
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "maledizione_chaos_phone",
+      "species": "maledizione_chaos",
+      "name": "Maledizione Chaos",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_chaos_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-8966ce0b-7075-426c-a404-c445d5415022.png",
+      "original_sha256": "4d370b7e068fe5f8bd6ac59e5b3210b5a7c7cf54d72fa96568af19f5e1aa8e31",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/maledizione_chaos_desktop_canonico.png",
+      "source_desktop_sha256": "bb5f44d5acac61a7f4fec12cbee283b1f188b064d5e5341b6b570e462c0df675",
+      "expected_source_sha256": "bb5f44d5acac61a7f4fec12cbee283b1f188b064d5e5341b6b570e462c0df675",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Maledizione Chaos: preserve the exact asymmetrical oblique crouched body from image 1, mottled muted lilac/grey folded organic hide, two amber-brown eyes above a broad tooth-filled mouth, the same numerous long thin humanlike arms and five-fingered hands at distinct heights. Do not simplify into a regular biped or add horns, crystals or wings. Scene: the same tall misty grey-mauve rocky canyon, mossy ledges and enclosing rock overhang; no celestial bodies. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/maledizione_chaos_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "4d370b7e068fe5f8bd6ac59e5b3210b5a7c7cf54d72fa96568af19f5e1aa8e31",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "maledizione_chaos_relic_v2",
+      "species": "maledizione_chaos",
+      "name": "Maledizione Chaos",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_chaos_reliquia_proposta_v2.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-47ed501b-1c29-4722-9d93-1e0b86e6956e.png",
+      "original_sha256": "db17268d01c5b3965ed79e3a52cd94542725299a83554e5ced5a3e2412eec67a",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/maledizione_chaos_desktop_canonico.png",
+      "source_desktop_sha256": "bb5f44d5acac61a7f4fec12cbee283b1f188b064d5e5341b6b570e462c0df675",
+      "expected_source_sha256": "bb5f44d5acac61a7f4fec12cbee283b1f188b064d5e5341b6b570e462c0df675",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a small decorative sculptural knot of the creature's muted lilac-grey folded hide with its broad toothy mouth motif and layered thin five-fingered hand silhouettes curling around the edge; eerie organic ornament, no new crystals, dice, clock or magical symbols. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/maledizione_chaos_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "db17268d01c5b3965ed79e3a52cd94542725299a83554e5ced5a3e2412eec67a",
+        "transparent_pixels": 1095563,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          217,
+          211,
+          1068,
+          1092
+        ],
+        "minimum_solid_margin_fraction": 0.12919
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "osservatore_del_tempo_phone",
+      "species": "osservatore_del_tempo",
+      "name": "Osservatore del Tempo",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/osservatore_del_tempo_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-ed7fee7f-f6e6-4319-9d47-dffc0087ecc3.png",
+      "original_sha256": "b21561e27bac93570223f79c90213959bcdaf83b8f05b037a5bd33f1db6ec60f",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/osservatore_del_tempo_desktop_canonico.png",
+      "source_desktop_sha256": "a1e584fccdb2e6d60b4f62a0a3e8af26d418d0a25940f7dd27c3cf3327e431af",
+      "expected_source_sha256": "a1e584fccdb2e6d60b4f62a0a3e8af26d418d0a25940f7dd27c3cf3327e431af",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Osservatore del Tempo: the exact squat low reptilian creature from image 1, grey/lilac scales and dark dorsal spines, long curled tail, four short limbs ending in handlike digits; wide open crocodilian mouth contains ONE large yellow eye, purple tongue; exactly FOUR more yellow eyes down the pale belly. All FIVE irises are yellow, no blue/red eyes. Preserve handlike forelimbs and full tail. Scene: the same misty rocky purple-flowered ravine and shallow stream, low crouched scale with no new sky objects. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/osservatore_del_tempo_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "b21561e27bac93570223f79c90213959bcdaf83b8f05b037a5bd33f1db6ec60f",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "osservatore_del_tempo_relic_v2",
+      "species": "osservatore_del_tempo",
+      "name": "Osservatore del Tempo",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/osservatore_del_tempo_reliquia_proposta_v2.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-3ee76a3c-4a51-4c91-b93c-84f732499ca0.png",
+      "original_sha256": "339cc90c771c937c22840847ab5ca2169476a3308a09dfae4c6b996d88e2d113",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/osservatore_del_tempo_desktop_canonico.png",
+      "source_desktop_sha256": "a1e584fccdb2e6d60b4f62a0a3e8af26d418d0a25940f7dd27c3cf3327e431af",
+      "expected_source_sha256": "a1e584fccdb2e6d60b4f62a0a3e8af26d418d0a25940f7dd27c3cf3327e431af",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative relic motif of layered grey-lilac reptile scales framing ONE yellow slit eye and a small purple tongue curling below, with FOUR small yellow eye motifs along the base; no clock face, hourglass, wings or added machinery. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/osservatore_del_tempo_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "339cc90c771c937c22840847ab5ca2169476a3308a09dfae4c6b996d88e2d113",
+        "transparent_pixels": 1314331,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          353,
+          183,
+          979,
+          1074
+        ],
+        "minimum_solid_margin_fraction": 0.14354
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "mezzo_demone_massiccio_phone",
+      "species": "mezzo_demone_massiccio",
+      "name": "Mezzo Demone Massiccio",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/mezzo_demone_massiccio_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-0a68f770-6466-44c8-bc82-610196ad69ed.png",
+      "original_sha256": "7e1da8f1056009cf71da8b228608201f09a528f5ef19887d16fa204a7b405f12",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/mezzo_demone_massiccio_desktop_canonico.png",
+      "source_desktop_sha256": "21b254f30b4c6d7f79eddfd2e8c8b4fc0fe513be657bf71e93a2d38381cd5058",
+      "expected_source_sha256": "21b254f30b4c6d7f79eddfd2e8c8b4fc0fe513be657bf71e93a2d38381cd5058",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Mezzo Demone Massiccio: the exact short broad muscular grey-skinned conscious demon from image 1, bald heavy humanlike head with alert amber eyes, TWO thick beige curved horns extending sideways, huge horizontal tooth-filled mouth across the neck/upper torso under the small normal head, massive arms with thick fingers, two stocky legs, rough worn ochre-brown cloth tied at waist. Not the athletic olive vertical-mouth version. Scene: the same enclosed mossy ancient stone dungeon/ruined vault, earth ochre lighting and dark arched recesses, no sky. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/mezzo_demone_massiccio_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "7e1da8f1056009cf71da8b228608201f09a528f5ef19887d16fa204a7b405f12",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/theme_mezzo_demone_massiccio_mobile_v1.png"
+    },
+    {
+      "id": "mezzo_demone_massiccio_relic_v2",
+      "species": "mezzo_demone_massiccio",
+      "name": "Mezzo Demone Massiccio",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/mezzo_demone_massiccio_reliquia_proposta_v2.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-366407ec-7c78-4e66-92f6-a5d65e040038.png",
+      "original_sha256": "23fc67f43b9ace1d5a54f83156aadb1d6515807146ea11833a6362e109f69716",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/mezzo_demone_massiccio_desktop_canonico.png",
+      "source_desktop_sha256": "21b254f30b4c6d7f79eddfd2e8c8b4fc0fe513be657bf71e93a2d38381cd5058",
+      "expected_source_sha256": "21b254f30b4c6d7f79eddfd2e8c8b4fc0fe513be657bf71e93a2d38381cd5058",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative compact fragment-like motif of grey hide and the wide horizontal neck-mouth with uneven beige teeth, flanked by the TWO thick curved beige side-horn motifs and a short coarse brown cloth binding; no humanoid face portrait, no vertical mouth. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/mezzo_demone_massiccio_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "23fc67f43b9ace1d5a54f83156aadb1d6515807146ea11833a6362e109f69716",
+        "transparent_pixels": 1237160,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          90,
+          443,
+          1166,
+          902
+        ],
+        "minimum_solid_margin_fraction": 0.07018
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/relic_mezzo_demone_massiccio_v1.png"
+    },
+    {
+      "id": "ciclope_del_tempo_phone",
+      "species": "ciclope_del_tempo",
+      "name": "Ciclope del Tempo",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclope_del_tempo_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-f0db56b9-d5d2-4734-867b-5bc9490f60ba.png",
+      "original_sha256": "43e368327bff861bd795182f137b63030445f2cd5237718124cee774cd1af351",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/ciclope_del_tempo_desktop_canonico.png",
+      "source_desktop_sha256": "493fa81b8d2dc57779c4d7c493a3abfadf5c0f2ba4b03004802e348772b364e5",
+      "expected_source_sha256": "493fa81b8d2dc57779c4d7c493a3abfadf5c0f2ba4b03004802e348772b364e5",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Ciclope del Tempo: the exact tall very thin hunched figure from image 1, worn ragged BORDO/wine-red robes, pale bony hands and bare feet, hood framing ONE amber clock-eye face, round tarnished silver halo behind the hood, and ONE heavy blackened-silver scythe with a dark shaft held in both hands. Preserve burgundy cloth and blackened silver; no gold armor, extra eyes, ordinary human face or wings. Scene: the same tall roofed gothic stone ruins with moss/ivy and a blue-black vaulted recess, no sky, no celestial objects. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/ciclope_del_tempo_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "43e368327bff861bd795182f137b63030445f2cd5237718124cee774cd1af351",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "ciclope_del_tempo_relic_v2",
+      "species": "ciclope_del_tempo",
+      "name": "Ciclope del Tempo",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclope_del_tempo_reliquia_proposta_v2.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-778ee9e2-93d1-4c9c-aef8-7cdaa69b2eb5.png",
+      "original_sha256": "0de88b9cd533ebcf19bef59e2bd839d7582603f821a94e3ddcca43026c93e233",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/ciclope_del_tempo_desktop_canonico.png",
+      "source_desktop_sha256": "493fa81b8d2dc57779c4d7c493a3abfadf5c0f2ba4b03004802e348772b364e5",
+      "expected_source_sha256": "493fa81b8d2dc57779c4d7c493a3abfadf5c0f2ba4b03004802e348772b364e5",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative amber clock-eye medallion within the exact tarnished-silver halo, framed by ragged burgundy fabric folds and a small curved blackened-silver scythe blade below; single eye, no sun rays, wings or new runes. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/ciclope_del_tempo_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "0de88b9cd533ebcf19bef59e2bd839d7582603f821a94e3ddcca43026c93e233",
+        "transparent_pixels": 1243731,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          292,
+          221,
+          931,
+          1086
+        ],
+        "minimum_solid_margin_fraction": 0.13397
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "maledizione_maggiore_phone",
+      "species": "maledizione_maggiore",
+      "name": "Maledizione Maggiore",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_maggiore_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-c2e0fe9f-8b37-4908-956d-ec7bedba6758.png",
+      "original_sha256": "fd41fa1310b6f4a8627e9fa6c9a7cee7d3ca46a60aaa92969d50387fa5b51830",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/maledizione_maggiore_desktop_canonico.png",
+      "source_desktop_sha256": "af551074522040d47501f06476b69aac87da68348803a392e2d38484263c132d",
+      "expected_source_sha256": "af551074522040d47501f06476b69aac87da68348803a392e2d38484263c132d",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Maledizione Maggiore: the exact low very wide flattened fleshy lavender-pink creature from image 1, one huge horizontal toothy mouth, TWO small amber eyes at its ends, several thin articulated arm-like limbs with humanlike hands supporting it and arching above its squat body. Keep the chosen low spread silhouette and all clearly separated hands; no tall humanoid, horn or shell. Scene: the same mossy root-arched gorge with scattered ochre leaves and a shallow stream, misty blue-grey distance. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/maledizione_maggiore_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "fd41fa1310b6f4a8627e9fa6c9a7cee7d3ca46a60aaa92969d50387fa5b51830",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "maledizione_maggiore_relic",
+      "species": "maledizione_maggiore",
+      "name": "Maledizione Maggiore",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_maggiore_reliquia_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-508bf888-0493-4a77-8485-9e363bec69c9.png",
+      "original_sha256": "f6c2f11e722ddbd019633ad235f77396b841ad786824af2e9a2bb0638febcff3",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/maledizione_maggiore_desktop_canonico.png",
+      "source_desktop_sha256": "af551074522040d47501f06476b69aac87da68348803a392e2d38484263c132d",
+      "expected_source_sha256": "af551074522040d47501f06476b69aac87da68348803a392e2d38484263c132d",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a small decorative lavender-pink broad mouth motif with TWO tiny amber eyes at the outer corners and a few thin five-fingered hands curling around its lower edge; low and wide organic ornament, no added skulls, horns or gems. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/maledizione_maggiore_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "f6c2f11e722ddbd019633ad235f77396b841ad786824af2e9a2bb0638febcff3",
+        "transparent_pixels": 1291810,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          140,
+          383,
+          1128,
+          947
+        ],
+        "minimum_solid_margin_fraction": 0.10048
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "maledizione_di_legno_phone",
+      "species": "maledizione_di_legno",
+      "name": "Maledizione di Legno",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_di_legno_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-57decc96-8208-49fc-8e88-6fec67978d53.png",
+      "original_sha256": "80d2455de483e2fd879983af4401196ae9f865f765ecf9be8a3bbeaf2ccfc653",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/maledizione_di_legno_desktop_canonico.png",
+      "source_desktop_sha256": "fba50983b866720fe750124196a14bb48b1133cea1b9fe7e68dd7e2d43f6a405",
+      "expected_source_sha256": "fba50983b866720fe750124196a14bb48b1133cea1b9fe7e68dd7e2d43f6a405",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Maledizione di Legno: the exact compact knot of pale split weathered roots from image 1, slanted ridged root head with TWO small amber eyes and a diagonal jagged toothy wooden mouth, many thin jointed branch arms ending in twiglike five-fingered hands. Preserve the natural root-groove construction and low crouched silhouette; no flesh, metal armor or extra face. Scene: the same muted ochre/brown root cave by a shallow stream, roof formed by interlacing roots and rock, no sky. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/maledizione_di_legno_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "80d2455de483e2fd879983af4401196ae9f865f765ecf9be8a3bbeaf2ccfc653",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "maledizione_di_legno_relic",
+      "species": "maledizione_di_legno",
+      "name": "Maledizione di Legno",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_di_legno_reliquia_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-82306e11-501c-48fb-b36f-26765552224d.png",
+      "original_sha256": "f5169296d2a1aa6481fa30c50b7912838eda384c6b06cb5bd2feab4996e57cf7",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/maledizione_di_legno_desktop_canonico.png",
+      "source_desktop_sha256": "fba50983b866720fe750124196a14bb48b1133cea1b9fe7e68dd7e2d43f6a405",
+      "expected_source_sha256": "fba50983b866720fe750124196a14bb48b1133cea1b9fe7e68dd7e2d43f6a405",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative small tangled knot of pale cracked root wood shaped around the diagonal toothy mouth motif, TWO amber eye insets and twiglike hand silhouettes; actual dry wood texture, no living flesh, crystals, coins or new magical insignia. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/maledizione_di_legno_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": false,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "f5169296d2a1aa6481fa30c50b7912838eda384c6b06cb5bd2feab4996e57cf7",
+        "transparent_pixels": 1101677,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          217,
+          227,
+          1100,
+          1053
+        ],
+        "minimum_solid_margin_fraction": 0.12281
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22"
+    },
+    {
+      "id": "weak_horror_mastino_phone",
+      "species": "weak_horror_mastino",
+      "name": "Mastino della Cripta",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/weak_horror_mastino_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-3f0830db-d19c-4a85-b46f-7a5f30644882.png",
+      "original_sha256": "76525016c48bfe01546d52fed877f6b062123bf8eb04881271be211ec5236924",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/weak_horror_mastino_desktop_canonico.png",
+      "source_desktop_sha256": "d9960cd6a2503c315ebeddf9c6f37b3dd51de687da70e6ed9d7c562d1b07b07d",
+      "expected_source_sha256": "d9960cd6a2503c315ebeddf9c6f37b3dd51de687da70e6ed9d7c562d1b07b07d",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Mastino della Cripta: the exact massive crouching mastiff-like monster from image 1, approximately FIVE METRES tall-scale against crypt arches, dusty brown-grey bare wrinkled skin, heavy sloping muscular shoulders, doglike blunt muzzle and small dark eyes, TWO pointed ears, FOUR huge clawed paws and a single long thin tail. Alert and low, no horns, no extra mouth, no fur mane or armor. Scene: the same enclosed immense old stone crypt, warm low ochre light at one side, cold shadowed arches at the other, solid roof and no sky. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/weak_horror_mastino_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "76525016c48bfe01546d52fed877f6b062123bf8eb04881271be211ec5236924",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/theme_mastino_cripta_mobile_v1.png"
+    },
+    {
+      "id": "weak_horror_mastino_relic",
+      "species": "weak_horror_mastino",
+      "name": "Mastino della Cripta",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/weak_horror_mastino_reliquia_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-b9881bdd-6047-4a02-8328-bea9b1f10cd1.png",
+      "original_sha256": "4e7740c13b4f1b34273c2c602b69ca5c3a5dabed1c3377ea7ac942e5a1654588",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/weak_horror_mastino_desktop_canonico.png",
+      "source_desktop_sha256": "d9960cd6a2503c315ebeddf9c6f37b3dd51de687da70e6ed9d7c562d1b07b07d",
+      "expected_source_sha256": "d9960cd6a2503c315ebeddf9c6f37b3dd51de687da70e6ed9d7c562d1b07b07d",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative ornament composed of dusty brown-grey folded mastiff hide, a compact canine fang cluster and broad claw tips with an understated pointed-ear silhouette; no head portrait, no collar or new equipment. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/weak_horror_mastino_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "4e7740c13b4f1b34273c2c602b69ca5c3a5dabed1c3377ea7ac942e5a1654588",
+        "transparent_pixels": 1221873,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          333,
+          105,
+          951,
+          1155
+        ],
+        "minimum_solid_margin_fraction": 0.07895
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/relic_mastino_cripta_v1.png"
+    },
+    {
+      "id": "forest_demon_phone",
+      "species": "forest_demon",
+      "name": "Forest Demon",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/forest_demon_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-3e6d3de4-edbb-403c-9f61-1a2d4b2d0e7a.png",
+      "original_sha256": "f2dedef154dfceed9bcdc274c886e46f91f2181928837bd9cee94a6594e6dcdb",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/forest_demon_desktop_canonico.png",
+      "source_desktop_sha256": "269e24929e493fd2bc26a39c6b9036dccff5d3f0be254f6894b28614892764cd",
+      "expected_source_sha256": "269e24929e493fd2bc26a39c6b9036dccff5d3f0be254f6894b28614892764cd",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Forest Demon common: the exact enormous LOW MASSIVE quadrupedal brown-ochre scaled reptile in image 1, approximately TEN METRES scale against thick trees and stump. Broad chunky body with layered irregular scaly plates, FOUR short thick clawed legs, long heavy tail, alert amber eyes, TWO curved lateral horns and ONE strong RHINOCEROS-LIKE FRONT HORN centered on the nose. Exactly three horns total, especially retain the front horn. No canine muzzle or extra limbs. Scene: the same dim dense ancient forest with huge mossy trunks and leaf-covered rocks; scale must be legible, no moon/sun. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/forest_demon_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "f2dedef154dfceed9bcdc274c886e46f91f2181928837bd9cee94a6594e6dcdb",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/theme_forest_demon_mobile_v1.png"
+    },
+    {
+      "id": "forest_demon_relic",
+      "species": "forest_demon",
+      "name": "Forest Demon",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/forest_demon_reliquia_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-31c3f679-4395-46a5-9da9-f8cc369b5cad.png",
+      "original_sha256": "503ffcb0983f8caa9b7f6dbaa881878eef89ba4491d35c01bf05a1d75fcb1ff9",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/forest_demon_desktop_canonico.png",
+      "source_desktop_sha256": "269e24929e493fd2bc26a39c6b9036dccff5d3f0be254f6894b28614892764cd",
+      "expected_source_sha256": "269e24929e493fd2bc26a39c6b9036dccff5d3f0be254f6894b28614892764cd",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative arrangement of layered ochre-brown reptile plates and three horn motifs, ONE prominent central rhinoceros front horn and TWO shorter curved lateral horns, with moss at the base; no canine head, wings or new jewels. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/forest_demon_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "503ffcb0983f8caa9b7f6dbaa881878eef89ba4491d35c01bf05a1d75fcb1ff9",
+        "transparent_pixels": 1206398,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          118,
+          281,
+          1135,
+          983
+        ],
+        "minimum_solid_margin_fraction": 0.0941
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/relic_forest_demon_v1.png"
+    },
+    {
+      "id": "ciclo_forest_demon_blu_phone",
+      "species": "ciclo_forest_demon_blu",
+      "name": "Forest Demon Blu dalle Corna Rosa",
+      "kind": "phone",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclo_forest_demon_blu_telefono_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-884668f2-d9a8-42dc-b9c9-705b1011aa44.png",
+      "original_sha256": "24170db5f606fea49567cbb704ed6dbd69c4c7759eb77d6c1c4482326ff6a2e7",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/ciclo_forest_demon_blu_desktop_canonico.png",
+      "source_desktop_sha256": "0e044576bc8e2c552662a0292620033649f88ec6ad9f47dc37175da94b06516a",
+      "expected_source_sha256": "0e044576bc8e2c552662a0292620033649f88ec6ad9f47dc37175da94b06516a",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: identity-preserve. Asset type: vertical PHONE background for an Oculum character sheet. Recompose the approved horizontal scene into a PORTRAIT 2:3 painting (1024x1536), not a crop or a collage. Subject: Forest Demon Blue with Pink Horns: preserve the exact low stocky pastel-blue scaled quadrupedal REPTILE from image 1, FOUR short clawed legs, long curling tail, TWO tall slender dusty-PINK upward curving horns, pale semi-translucent peach/blue dorsal membrane continuing down the tail. Pale blue eyes and gentle alert face. Larger than small fauna but distinctly smaller than the ten-metre common Forest Demon. No nose horn; not mammalian. Scene: the same dense mossy blue-green forest with enormous trunks, ferns and leaf litter, no moon or sun. Composition: the complete creature and its identifying equipment are entirely within the lower 43% of the image, slightly toward the lower right or left as in the reference. Top and middle 55% remain quiet low-contrast atmospheric rock/forest depth, broad uncluttered tonal space for real UI. Keep a generous 5% safe margin all around and no clipped horns, limbs, tails or weapon tips; adjust scale to fit without changing anatomy. Full-bleed opaque scene, no transparency or blank white/black bars. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/ciclo_forest_demon_blu_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1024,
+        "height": 1536,
+        "mode": "RGB",
+        "sha256": "24170db5f606fea49567cbb704ed6dbd69c4c7759eb77d6c1c4482326ff6a2e7",
+        "transparent_pixels": 0,
+        "total_pixels": 1572864,
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "solid_bbox": [
+          0,
+          0,
+          1024,
+          1536
+        ],
+        "minimum_solid_margin_fraction": 0.0
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/theme_forest_demon_blu_mobile_v1.png"
+    },
+    {
+      "id": "ciclo_forest_demon_blu_relic",
+      "species": "ciclo_forest_demon_blu",
+      "name": "Forest Demon Blu dalle Corna Rosa",
+      "kind": "relic",
+      "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclo_forest_demon_blu_reliquia_proposta_v1.png",
+      "generated_original": "C:/Users/michy/.codex/generated_images/01a18b7f-f444-7822-864d-90c568052b8c/exec-4e26f5c7-d8b0-4067-bd61-2f73dbe3e2b9.png",
+      "original_sha256": "830269014013f5d0d66acdcd8a9bc7af78083db8816d83387b488f179ddee5d6",
+      "generated_copy_identical": true,
+      "source_desktop": "output/artwork/approvazioni_2026-10-30/ciclo_forest_demon_blu_desktop_canonico.png",
+      "source_desktop_sha256": "0e044576bc8e2c552662a0292620033649f88ec6ad9f47dc37175da94b06516a",
+      "expected_source_sha256": "0e044576bc8e2c552662a0292620033649f88ec6ad9f47dc37175da94b06516a",
+      "source_desktop_hash_matches": true,
+      "prompt": "Use case: stylized-concept. Asset type: isolated DECORATIVE RELIC overlay for the margin of an Oculum character sheet. Make ONE compact crafted painterly ornament, not a portrait, not a full scene, not an item card and not an equipment/drop claim. Relic motif: a decorative small assembly of pastel-blue reptile scales, TWO high curling dusty-pink horns, and a delicate pale blue-peach dorsal membrane fold; no nose horn, wings, canine teeth or new magical gems. Derive its specific shapes and exact material colors from image 1. Place the complete ornament near the centre of a square 1024x1024 PNG, only 45% of the canvas width and 55% of its height, like a SMALL ornamental emblem floating in a LARGE empty transparent canvas. Leave at least 20% EMPTY TRANSPARENT margin on all four sides; do not zoom to fill the square. Actual TRANSPARENT alpha outside the ornament and through any gaps, no checkerboard painted in, no background plane, no shadow rectangle or vignette. Style/medium: Oculum Rame fatato, original handmade matte gouache/oil anime-fantasy painting, soft visible brushwork, restrained local light, thoughtful irregular material shapes, not photography, not glossy 3D, not generic AI-polished fantasy. Image 1 is the approved creature/design and local palette; image 2 controls ONLY matte painting technique, not its amber scene or fairy subjects; image 3 controls ONLY quiet-space visual hierarchy, NEVER copy its text, eyes, frame or plants. No text, letters, logos, UI, border or watermark. Preserve canonical anatomy, chosen materials and colors; add no new powers, loot, mutations, extra limbs or wounds. Do not include the creatures/faeries from images 2 or 3.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/approvazioni_2026-10-30/ciclo_forest_demon_blu_desktop_canonico.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "user_approved": true,
+      "runtime_integrated": true,
+      "metadata": {
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "830269014013f5d0d66acdcd8a9bc7af78083db8816d83387b488f179ddee5d6",
+        "transparent_pixels": 1267489,
+        "total_pixels": 1572516,
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "solid_bbox": [
+          320,
+          229,
+          1028,
+          1041
+        ],
+        "minimum_solid_margin_fraction": 0.16986
+      },
+      "technical_checks": {
+        "valid_png": true,
+        "alpha_as_requested": true,
+        "safe_solid_margin": true
+      },
+      "approval_quote": "Approvo tutti e 22",
+      "runtime_asset": "assets/oculum/home_art/relic_forest_demon_blu_v1.png"
+    }
+  ],
+  "approval_quote": "Approvo tutti e 22"
+}

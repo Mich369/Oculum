@@ -1,6 +1,6 @@
 {
   "date": "2026-10-30",
-  "scope": "Explicit desktop approvals only; Massiccio is a SEPARATE variant and does not replace athletic C. Ciclope uses tall B shape with recolor B.",
+  "scope": "Eleven desktops plus twenty-two selected phone/relic derivatives explicitly approved. Integration and UI checks remain separate.",
   "files": [
     {
       "id": "icerose",
@@ -12,14 +12,27 @@
       "height": 992,
       "approval_quote": "ice rose già ti dico che questa va bene",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": null,
-      "phone_approved": false,
-      "relic_approved": false,
+      "phone_approved": true,
+      "relic_approved": true,
       "runtime_integrated": false,
       "user_attachment_basename": "codex-clipboard-5e649ba9-8453-4117-a41a-3f56edb4cc33.png",
       "attachment_pixel_exact": true,
-      "attachment_sha256": "452ac7029c693abb9ed530db4554e1ac21dfd11578440bba098980ca47f2b120"
+      "attachment_sha256": "452ac7029c693abb9ed530db4554e1ac21dfd11578440bba098980ca47f2b120",
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/icerose_telefono_proposta_v1.png",
+          "original_sha256": "8b73fb4bd737f16a13e872f76a8c37c715489861cee7c304d37ebaef7b9c37c3"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/icerose_reliquia_proposta_v2.png",
+          "original_sha256": "94e184957e9360132561f8b877fbddfbdb8dff915e480530631228c27f327b2e"
+        }
+      ]
     },
     {
       "id": "firerose",
@@ -31,11 +44,24 @@
       "height": 992,
       "approval_quote": "C — Slanciata",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": null,
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": false,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/firerose_telefono_proposta_v1.png",
+          "original_sha256": "40aabe18f6afa9a79ee8a32116ac82cd9dce2584634a8aa0ada55677e1fda0e4"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/firerose_reliquia_proposta_v2.png",
+          "original_sha256": "495027af3c9d0e7a900f88fb663e0533de0217e625c80771991b3c17280c279c"
+        }
+      ]
     },
     {
       "id": "maledizione_chaos",
@@ -47,14 +73,27 @@
       "height": 992,
       "approval_quote": "C — Obliqua e molto bracciuta",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": null,
-      "phone_approved": false,
-      "relic_approved": false,
+      "phone_approved": true,
+      "relic_approved": true,
       "runtime_integrated": false,
       "user_attachment_basename": "codex-clipboard-24d1372e-74e0-4a33-96a2-eed1426bf619.png",
       "attachment_pixel_exact": true,
-      "attachment_sha256": "f2f4e7cb92650164b88fef8dff8b09c7e30be8c6ba87831443ecc732d502075b"
+      "attachment_sha256": "f2f4e7cb92650164b88fef8dff8b09c7e30be8c6ba87831443ecc732d502075b",
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_chaos_telefono_proposta_v1.png",
+          "original_sha256": "4d370b7e068fe5f8bd6ac59e5b3210b5a7c7cf54d72fa96568af19f5e1aa8e31"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_chaos_reliquia_proposta_v2.png",
+          "original_sha256": "db17268d01c5b3965ed79e3a52cd94542725299a83554e5ced5a3e2412eec67a"
+        }
+      ]
     },
     {
       "id": "osservatore_del_tempo",
@@ -66,11 +105,24 @@
       "height": 992,
       "approval_quote": "C — Basso e rettiliano",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": null,
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": false,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/osservatore_del_tempo_telefono_proposta_v1.png",
+          "original_sha256": "b21561e27bac93570223f79c90213959bcdaf83b8f05b037a5bd33f1db6ec60f"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/osservatore_del_tempo_reliquia_proposta_v2.png",
+          "original_sha256": "339cc90c771c937c22840847ab5ca2169476a3308a09dfae4c6b996d88e2d113"
+        }
+      ]
     },
     {
       "id": "mezzo_demone_massiccio",
@@ -82,11 +134,24 @@
       "height": 992,
       "approval_quote": "crea questa variante con più res; ma meno alle altre stats",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": "mezzo_demone_massiccio",
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": true,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/mezzo_demone_massiccio_telefono_proposta_v1.png",
+          "original_sha256": "7e1da8f1056009cf71da8b228608201f09a528f5ef19887d16fa204a7b405f12"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/mezzo_demone_massiccio_reliquia_proposta_v2.png",
+          "original_sha256": "23fc67f43b9ace1d5a54f83156aadb1d6515807146ea11833a6362e109f69716"
+        }
+      ]
     },
     {
       "id": "ciclope_del_tempo",
@@ -98,11 +163,24 @@
       "height": 992,
       "approval_quote": "B — Alto e sottile; B — Bordò e argento annerito",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": null,
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": false,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclope_del_tempo_telefono_proposta_v1.png",
+          "original_sha256": "43e368327bff861bd795182f137b63030445f2cd5237718124cee774cd1af351"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclope_del_tempo_reliquia_proposta_v2.png",
+          "original_sha256": "0de88b9cd533ebcf19bef59e2bd839d7582603f821a94e3ddcca43026c93e233"
+        }
+      ]
     },
     {
       "id": "maledizione_maggiore",
@@ -114,11 +192,24 @@
       "height": 992,
       "approval_quote": "A — Bassa e larga",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": null,
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": false,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_maggiore_telefono_proposta_v1.png",
+          "original_sha256": "fd41fa1310b6f4a8627e9fa6c9a7cee7d3ca46a60aaa92969d50387fa5b51830"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_maggiore_reliquia_proposta_v1.png",
+          "original_sha256": "f6c2f11e722ddbd019633ad235f77396b841ad786824af2e9a2bb0638febcff3"
+        }
+      ]
     },
     {
       "id": "maledizione_di_legno",
@@ -130,11 +221,24 @@
       "height": 992,
       "approval_quote": "B — Groppo di radici",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": null,
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": false,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_di_legno_telefono_proposta_v1.png",
+          "original_sha256": "80d2455de483e2fd879983af4401196ae9f865f765ecf9be8a3bbeaf2ccfc653"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/maledizione_di_legno_reliquia_proposta_v1.png",
+          "original_sha256": "f5169296d2a1aa6481fa30c50b7912838eda384c6b06cb5bd2feab4996e57cf7"
+        }
+      ]
     },
     {
       "id": "weak_horror_mastino",
@@ -146,11 +250,24 @@
       "height": 992,
       "approval_quote": "B — Massiccio e accovacciato",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": "weak_horror_mastino",
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": true,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/weak_horror_mastino_telefono_proposta_v1.png",
+          "original_sha256": "76525016c48bfe01546d52fed877f6b062123bf8eb04881271be211ec5236924"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/weak_horror_mastino_reliquia_proposta_v1.png",
+          "original_sha256": "4e7740c13b4f1b34273c2c602b69ca5c3a5dabed1c3377ea7ac942e5a1654588"
+        }
+      ]
     },
     {
       "id": "forest_demon",
@@ -162,11 +279,24 @@
       "height": 992,
       "approval_quote": "a ma anche corno frontale stile rinoceronte; Sì, canonica così",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": "forest_demon",
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": true,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/forest_demon_telefono_proposta_v1.png",
+          "original_sha256": "f2dedef154dfceed9bcdc274c886e46f91f2181928837bd9cee94a6594e6dcdb"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/forest_demon_reliquia_proposta_v1.png",
+          "original_sha256": "503ffcb0983f8caa9b7f6dbaa881878eef89ba4491d35c01bf05a1d75fcb1ff9"
+        }
+      ]
     },
     {
       "id": "ciclo_forest_demon_blu",
@@ -178,11 +308,24 @@
       "height": 992,
       "approval_quote": "B — Basso e corna alte",
       "user_approved": true,
-      "approval_scope": "DESKTOP_ONLY",
+      "approval_scope": "DESKTOP_PHONE_RELIC",
       "runtime_id": "ciclo_forest_demon_blu",
-      "phone_approved": false,
-      "relic_approved": false,
-      "runtime_integrated": false
+      "phone_approved": true,
+      "relic_approved": true,
+      "runtime_integrated": true,
+      "derivatives_approval_quote": "Approvo tutti e 22",
+      "approved_derivatives": [
+        {
+          "kind": "phone",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclo_forest_demon_blu_telefono_proposta_v1.png",
+          "original_sha256": "24170db5f606fea49567cbb704ed6dbd69c4c7759eb77d6c1c4482326ff6a2e7"
+        },
+        {
+          "kind": "relic",
+          "output_path": "C:/Oculum App/oculum/output/artwork/derivati_canonici_2026-10-30_lotto2/ciclo_forest_demon_blu_reliquia_proposta_v1.png",
+          "original_sha256": "830269014013f5d0d66acdcd8a9bc7af78083db8816d83387b488f179ddee5d6"
+        }
+      ]
     }
   ]
 }

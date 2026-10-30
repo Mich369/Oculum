@@ -1,5 +1,7 @@
 # Domande accumulate — prossima patch e artwork
 
+**Aggiornamento30ottobre:** per i prossimi mostri l'utente vuole cinque possibilità A–E molto diverse, anche nei colori. I22derivati della galleria lotto2 sono tutti approvati. Le domande aperte riguardano le nuove proposte, non riconferme dei desktop/derivati già accettati. Le indicazioni precedenti su tre proposte restano storico dei primi lotti.
+
 Richiesta del 29 ottobre: produrre gli artwork, **tre proposte visive A/B/C per ogni nuovo mostro da illustrare**, da valutare successivamente. Le proposte non diventano canone automaticamente. I disegni già confermati restano i riferimenti; telefono e reliquia seguono la scelta del desktop. Non sono tre nuove specie o tre evoluzioni di gioco.
 
 La coda completa è `output/artwork/proposte_prossima_patch_2026-10-29/coda_artwork.json`. I conteggi sono pianificazione, non immagini già generate. Ogni generatore deve leggere descrizione, anatomia e documenti visivi prima della sua voce. Nessuna figura nuova, parte debole o abilità deriva automaticamente da una proposta.

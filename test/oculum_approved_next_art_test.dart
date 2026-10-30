@@ -20,16 +20,12 @@ const _complete = [
   'il_doppione',
   'aberrazione_metallica_angelica',
   'aberrazione_metallica_solare',
-];
-const _desktopOnly = [
-  'sharp',
-  'topino_avventuroso',
-  'mosca_campana',
   'mezzo_demone_massiccio',
   'weak_horror_mastino',
   'forest_demon',
   'ciclo_forest_demon_blu',
 ];
+const _desktopOnly = ['sharp', 'topino_avventuroso', 'mosca_campana'];
 
 void main() {
   for (final id in [..._complete, ..._desktopOnly]) {

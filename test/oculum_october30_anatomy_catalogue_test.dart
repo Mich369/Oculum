@@ -29,6 +29,32 @@ void main() {
       expect(pine.descIt, isNot(contains('Ferite Aperte')));
       expect(pine.descEn, isNot(contains('open wounds')));
       expect(pine.descIt, contains('Fuoco'));
+      final anatomy = oculumMonsterPrecisionAnatomy(pine);
+      expect(anatomy.where((p) => p['group'] == 'arms'), hasLength(2));
+      expect(anatomy.where((p) => p['group'] == 'legs'), hasLength(2));
+      final weak = anatomy.where((p) => p['weak'] == true).toList();
+      expect(weak, hasLength(1));
+      expect(weak.single['id'], 'soft_scale');
+      expect(weak.single['material'], 'wood');
+      expect(anatomy.where((p) => p['group'] == 'wound'), isEmpty);
+      final variant = pine.copyWith(id: 'pinepine_variante_gelo');
+      final variantAnatomy = oculumMonsterPrecisionAnatomy(variant);
+      expect(variantAnatomy.where((p) => p['group'] == 'legs'), hasLength(2));
+      expect(
+        variantAnatomy.where((p) => p['id'] == 'soft_scale'),
+        hasLength(1),
+      );
+      final custom = pine.copyWith(
+        encounterRules: {
+          ...pine.encounterRules,
+          'precisionBodyParts': [
+            {'id': 'master_scale', 'label': 'Squama scelta', 'weak': true},
+          ],
+        },
+      );
+      expect(oculumMonsterPrecisionAnatomy(custom), [
+        {'id': 'master_scale', 'label': 'Squama scelta', 'weak': true},
+      ]);
       expect(
         pine.copyWith(weakPointIt: 'Scelta del Master').weakPointDescriptionIt,
         'Scelta del Master',

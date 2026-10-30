@@ -1,5 +1,15 @@
 # Oculum — attività, conferme e consegne
 
+## Ultimo aggiornamento operativo del30ottobre
+
+- **ART33:** richiesta attuale: cinque proposte A–E per nuovo mostro, molto diverse anche nei colori, rispettando canone/anatomia. Lotti precedenti e approvazioni conservati. Armadillo base e ulteriori due specie in produzione; nessuna scelta inventata.
+- **ART34:** tutti22derivati del lotto2 approvati esplicitamente con «Approvo tutti e22». Otto file collegati per Massiccio, Mastino e due Forest Demon; altri14conservati per sette specie ancora senza voce runtime. PNG/SHA/alpha verificati; nuova verifica renderer/CI/pacchetti in corso, nessuna chiusura100%.
+- **AN30b, correzione successiva:** la parola «elementale» nella fragilità di Pinepine lo classificava incorporeo e nascondeva gli arti; aggiunti fatti canonici2braccia/2gambe e parte mirabile `soft_scale` in legno, senza ferita preesistente. Personalizzazioni Master precedenti ancora prioritarie. Regressione aggiunta, esecuzione e distribuzione successive distinte.
+
+Prova successiva AN30b/ART34:113test locali mirati passati, analisi senza problemi; include JSON personalizzati, arti/squama, varianti e renderer320/834/1440px. PNG approvati copiati identici SHA, reliquie con alpha e margini. Nessuna nuova riga100% né attestazione di pacchetti/CI/tre dispositivi fisici; vedi rapporto della patch.
+
+Le righe sottostanti mantengono la fotografia precedente; il rapporto della patch raccoglie le prove più recenti.
+
 ## Tranche successiva del30ottobre — implementazione distinta da bb403888
 
 |ID|Riga completa e adattamento|Verifica corrente|

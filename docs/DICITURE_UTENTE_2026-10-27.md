@@ -1,5 +1,10 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+## Ultime diciture del30ottobre — prevalenza sui precedenti lotti
+
+- «intanto continua anche con gli altri temi»; «questa volta5diverse possibilità della stessa art e diversificali molto anche nei colori e facendo cose simili a quelle mostrate per non avere problemi». Adattamento: cinque alternative originali della stessa specie, con differenze sostanziali di sagoma/posa/palette/ambiente e dettagli canonici conservati. Non cinque specie o cinque evoluzioni.
+- Alla domanda esplicita sui22adattamenti telefono/reliquia degli11desktop scelti: **«Approvo tutti e22»**. Sono approvati gli esatti file selezionati in `output/artwork/derivati_canonici_2026-10-30_lotto2/manifest_derivati.json`; le sei precedenti revisioni dei margini restano storico, non file selezionati.
+
 ## Risposte e scelte del 30 ottobre
 
 - Ciclope del Tempo: «B — Alto e sottile», poi «cambiagli i colori», infine «B — Bordò e argento annerito».

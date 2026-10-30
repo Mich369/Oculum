@@ -1,5 +1,11 @@
 # Oculum — canone visivo confermato
 
+## Ultima conferma — cinque alternative e22derivati
+
+Il30ottobre l'utente richiede **cinque proposte A/B/C/D/E della stessa creatura**, molto diverse per sagoma, posa, colori e ambiente. Questa modifica vale per i nuovi lotti e sostituisce il precedente minimo di tre proposte; non annulla i disegni già approvati. Materiali, anatomia e dettagli canonici restano vincoli. Reinterpretazioni originali, tecnica Rame fatato, centro leggibile; domande accumulate prima di inventare dettagli mancanti.
+
+Con «Approvo tutti e22» sono ora canonici anche **tutti gli11sfondi telefono e11reliquie** della galleria `output/artwork/derivati_canonici_2026-10-30_lotto2/GALLERIA_LOTTO2.html`: IceRose, FireRose, Maledizione Chaos, Osservatore del Tempo, Mezzo Demone Massiccio, Ciclope del Tempo, Maledizione Maggiore, Maledizione di Legno, Mastino della Cripta, Forest Demon e Forest Demon Blu. Ricevute, prompt e SHA nel manifest del lotto e in quello delle approvazioni. L'approvazione visiva non aggiunge poteri/drop e non certifica il renderer o la pubblicazione. Collegate le quattro specie già nel runtime; le altre sette conservano il pack approvato per la successiva integrazione.
+
 ## Scelte e correzioni del 30 ottobre
 
 - **Il Ciclope del Tempo:** sagoma B alta e sottile; palette B successiva, **bordò e argento annerito**. Occhio-orologio unico, aureola e falce pesante conservati. La scelta della sagoma non approva le altre palette.

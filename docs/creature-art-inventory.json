@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "exportedAtUtc": "2026-10-30T14:41:54.399454Z",
-  "baseCommit": "bb4038885e762ee4ebfa500bab1ad1d6ad41bcee",
+  "exportedAtUtc": "2026-10-30T15:47:55.992283Z",
+  "baseCommit": "b721422c0546ba3be5e014ddb82cdf1a300cb2ae",
   "scope": "working tree catalog; includes uncommitted source definitions; not publication proof",
   "entriesIncludingVariants": 1205,
   "entriesWithoutGeneratedVariantSuffix": 734,
   "generatedVariants": 471,
   "dedicatedThemeAssetsPresentAndMapped": 47,
   "missingDedicatedThemeAssets": 1158,
-  "dedicatedRelicsMapped": 23,
+  "dedicatedRelicsMapped": 27,
   "proceduralRelicsAreNotFinal": true,
-  "catalogueSha256": "ee04800f08eb791ec6bebf09d19f578d9930cb6958c6e6d97c32a3c687bd8cc1",
-  "themeMappingSha256": "1accc743d152e87da586d2f58b2c5e0c8381745f24bb8eaf258e42d978410544",
+  "catalogueSha256": "6311915f86d8af1369f52910f0ae2a5558cdfa7d323841bab4036d84f04d1927",
+  "themeMappingSha256": "d1eaf095374503e678ad7eb825d874dd3f063803f6b5595d748c72ae1a47ef61",
   "catalogueSourceHashes": {
     "lib/pages/oculum_dungeon/armadillo_creatures.dart": "301e031c7e27aa8503b1f9c7602adcf1c3f12677bd1493397bbff829cf64cd8f",
     "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart": "03f43ce67155bbbb6fdf44eb6aba57fcc359951e7b2cd86f22574dc70b5109e6",
@@ -34,7 +34,7 @@
     "lib/pages/oculum_dungeon/lunar_guards.dart": "551c367426af8469fa6347fe4c2e0fc120ade3b6be5159863c80cc80727d2f4f",
     "lib/pages/oculum_dungeon/masked_monsters.dart": "f7c2a41507b32b7914b6ff7145233a8bf2c6e7f7ec66d25020da6fecb23f6c69",
     "lib/pages/oculum_dungeon/micro_realm_creatures.dart": "3a3d5266862b1180bd5af7fa4951c76e2b5b22453767e1f63026b4ad9c5b6f62",
-    "lib/pages/oculum_dungeon/monster_anatomy.dart": "acc2a4c853660fcf81fdbda0865eb118a03ee257853900532db91e62f8ed7906",
+    "lib/pages/oculum_dungeon/monster_anatomy.dart": "a83e7caccb83aa11e26d740371c97ea561a0a17fb836e0102f06d93b140047f0",
     "lib/pages/oculum_dungeon/monster_book.dart": "17a6c36e1afe3e5c23c19ba5d10728281a2c56462878e448614cd39d08249119",
     "lib/pages/oculum_dungeon/monster_progression_pool.dart": "b19b524ad22550de4254996766fc6df2447ca424f01b6975239d418e8de6ac68",
     "lib/pages/oculum_dungeon/monster_registry.dart": "1c3a7570937bd0bc139cf4b825eea9285475ba0eb3f81091cd15345e92aff000",
@@ -62,12 +62,12 @@
     "lib/pages/oculum_dungeon/weak_horror_monsters.dart": "709795387b576760747fcb766bfd28c39989c5740531df291dfe83db2ed4697f",
     "lib/pages/oculum_dungeon/withered_construct_white_larva.dart": "92ebd772cc3b47c053eeb051e1cd8e61d2606edcb1b12e0ad74fc51b0cc5846d"
   },
-  "dedicatedMobileThemeAssetsPresentAndMapped": 22,
-  "missingDedicatedMobileThemeAssets": 1183,
-  "dedicatedRelicAssetsPresentAndMapped": 23,
-  "missingDedicatedRelicAssets": 1182,
-  "completeDedicatedArtworkSetsMapped": 21,
-  "entriesMissingAtLeastOneDedicatedArtwork": 1184,
+  "dedicatedMobileThemeAssetsPresentAndMapped": 26,
+  "missingDedicatedMobileThemeAssets": 1179,
+  "dedicatedRelicAssetsPresentAndMapped": 27,
+  "missingDedicatedRelicAssets": 1178,
+  "completeDedicatedArtworkSetsMapped": 25,
+  "entriesMissingAtLeastOneDedicatedArtwork": 1180,
   "runtimeUiVerifiedByThisAudit": false,
   "entries": [
     {
@@ -4441,6 +4441,50 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
+        },
+        {
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_1",
+          "label": "Gamba destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Gamba sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "soft_scale",
+          "label": "Squama tenera",
+          "group": "scale",
+          "weak": true,
+          "penalty": 0,
+          "material": "wood"
         }
       ],
       "weakPoint": "Una squama naturalmente più tenera fra le protezioni della pigna integra.",
@@ -4485,7 +4529,12 @@
         "Corpo",
         "Testa",
         "Occhio destro",
-        "Occhio sinistro"
+        "Occhio sinistro",
+        "Braccio destro",
+        "Braccio sinistro",
+        "Gamba destra",
+        "Gamba sinistra",
+        "Squama tenera"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -4555,6 +4604,50 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
+        },
+        {
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_1",
+          "label": "Gamba destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Gamba sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "soft_scale",
+          "label": "Squama tenera",
+          "group": "scale",
+          "weak": true,
+          "penalty": 0,
+          "material": "wood"
         }
       ],
       "weakPoint": "Una squama naturalmente più tenera fra le protezioni della pigna integra.",
@@ -4597,7 +4690,12 @@
         "Corpo",
         "Testa",
         "Occhio destro",
-        "Occhio sinistro"
+        "Occhio sinistro",
+        "Braccio destro",
+        "Braccio sinistro",
+        "Gamba destra",
+        "Gamba sinistra",
+        "Squama tenera"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -19427,12 +19525,16 @@
       "themeAsset": "assets/oculum/home_art/theme_forest_demon_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_forest_demon_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_forest_demon_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [
-        "assets/oculum/home_art/theme_forest_demon_blu_v1.png"
+        "assets/oculum/home_art/relic_forest_demon_blu_v1.png",
+        "assets/oculum/home_art/relic_forest_demon_v1.png",
+        "assets/oculum/home_art/theme_forest_demon_blu_mobile_v1.png",
+        "assets/oculum/home_art/theme_forest_demon_blu_v1.png",
+        "assets/oculum/home_art/theme_forest_demon_mobile_v1.png"
       ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
@@ -19459,25 +19561,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_forest_demon_mobile_v1.png",
+          "exists": true,
+          "sha256": "f2dedef154dfceed9bcdc274c886e46f91f2181928837bd9cee94a6594e6dcdb",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_forest_demon_v1.png",
+          "exists": true,
+          "sha256": "503ffcb0983f8caa9b7f6dbaa881878eef89ba4491d35c01bf05a1d75fcb1ff9",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -31816,10 +31915,10 @@
       "themeAsset": "assets/oculum/home_art/theme_mastino_cripta_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_mastino_cripta_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_mastino_cripta_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
@@ -31843,25 +31942,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_mastino_cripta_mobile_v1.png",
+          "exists": true,
+          "sha256": "76525016c48bfe01546d52fed877f6b062123bf8eb04881271be211ec5236924",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_mastino_cripta_v1.png",
+          "exists": true,
+          "sha256": "4e7740c13b4f1b34273c2c602b69ca5c3a5dabed1c3377ea7ac942e5a1654588",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -32996,11 +33092,14 @@
       "themeAsset": "assets/oculum/home_art/theme_mezzo_demone_massiccio_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_mezzo_demone_massiccio_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_mezzo_demone_massiccio_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_mezzo_demone_massiccio_v1.png",
+        "assets/oculum/home_art/theme_mezzo_demone_massiccio_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -33025,25 +33124,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_mezzo_demone_massiccio_mobile_v1.png",
+          "exists": true,
+          "sha256": "7e1da8f1056009cf71da8b228608201f09a528f5ef19887d16fa204a7b405f12",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_mezzo_demone_massiccio_v1.png",
+          "exists": true,
+          "sha256": "23fc67f43b9ace1d5a54f83156aadb1d6515807146ea11833a6362e109f69716",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -135909,10 +136005,10 @@
       "themeAsset": "assets/oculum/home_art/theme_forest_demon_blu_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_forest_demon_blu_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_forest_demon_blu_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
@@ -135939,25 +136035,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_forest_demon_blu_mobile_v1.png",
+          "exists": true,
+          "sha256": "24170db5f606fea49567cbb704ed6dbd69c4c7759eb77d6c1c4482326ff6a2e7",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_forest_demon_blu_v1.png",
+          "exists": true,
+          "sha256": "830269014013f5d0d66acdcd8a9bc7af78083db8816d83387b488f179ddee5d6",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
