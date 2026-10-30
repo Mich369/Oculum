@@ -34,6 +34,12 @@ List<List<OculumStructuredEffect>>? oculumPlanarSkillEffects(
   String id,
   List<List<OculumStructuredEffect>>? base,
 ) {
+  if (id == 'bottled_cloud_stop') {
+    return List.generate(
+      3,
+      (form) => [oculumBottledCloudStopEffect(id: 'bottled_cloud_stop_$form')],
+    );
+  }
   if (const {'sand_tail_attack', 'sand_tail_parry'}.contains(id)) {
     return List.generate(
       3,
@@ -428,6 +434,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     String source,
   ) {
     final state = planarState;
+    if (activateArmadilloEffect(effect, value)) return;
     if (activateSandEffect(effect, value, duration)) return;
     if (effect.target == 'lusier_condition_guard') return;
     if (activateGuardianGoldEffect(effect, value)) return;

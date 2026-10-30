@@ -1,5 +1,21 @@
 # Oculum — canone visivo confermato
 
+## Scelte e correzioni del 30 ottobre
+
+- **Il Ciclope del Tempo:** sagoma B alta e sottile; palette B successiva, **bordò e argento annerito**. Occhio-orologio unico, aureola e falce pesante conservati. La scelta della sagoma non approva le altre palette.
+- **Maledizione Maggiore:** nuova A bassa e larga; **Maledizione di Legno:** nuova B a groppo di radici. Entrambe confermate per desktop, telefono/reliquia separati.
+- **Mastino della Cripta:** nuova B massiccia e accovacciata, scala circa5metri. **Forest Demon comune:** rettile quadrupede massiccio, circa10metri, scelta esplicita che risolve la discordanza con il vecchio sprite canino; Blu sempre rettile quadrupede e più piccolo.
+- **Forest Demon comune:** nuova A bassa e massiccia, poi correzione approvata con **un corno frontale da rinoceronte** oltre ai due laterali. Il nuovo desktop è A con corno frontale v2, non la vecchia A senza quel corno. **Forest Demon Blu dalle Corna Rosa:** nuova B bassa, con corna alte rosa, quattro zampe corte e membrana dorsale chiara. Conferme desktop separate da telefono e reliquie.
+
+- **IceRose:** proposta C del lotto02, grotta glaciale, rosa di ghiaccio sul capo, corpo corazzato con fibre scure e due falci distinte. L'allegato approvato è identico nei pixel al PNG C; ricevuta e copie in `output/artwork/approvazioni_2026-10-30/manifest_approvazioni.json`. Approvazione del desktop, telefono e reliquia ancora distinti.
+- **FireRose:** nuova C slanciata, dal corpo vegetale corazzato, rosa rossa senza volto e due falci tenute con le mani. Sostituisce le vecchie proposte visive come scelta, senza inventare nuovi poteri.
+- **Maledizione Chaos:** nuova C obliqua e molto bracciuta, bocca ampia, corpo di pieghe organiche e numerose mani; immagine confermata anche con allegato identico nei pixel. Non fissare bonus o nuove parti deboli dal solo disegno.
+- **Osservatore del Tempo:** nuova C bassa e rettiliana; grande occhio nella bocca e quattro occhi ventrali, tutti **gialli**, lingua viola, coda e arti a mano. Disegno scelto esplicitamente.
+- **Mezzo Demone Massiccio:** il vecchio A tozzo con pelle grigia, corna ricurve ai lati e bocca orizzontale al collo/torace diventa una **variante separata**, più orientata alla Resilienza. Non sostituisce il Mezzo Demone atletico C olivastro con bocca verticale già canonico.
+- **Mastino della Cripta:** circa5metri; **Forest Demon comune:** circa10metri. Anche il Blu va reso più grosso conservando una scala inferiore al comune. Il riferimento di grandezza deve emergere da alberi, archi e rocce, conservando la zona leggibile; non basta far invadere i controlli dalla creatura. Le nuove scene restano proposte finché mostrate e scelte.
+- Richiesta di reinterpretare un po' di più Maledizione di Legno, Maledizione Maggiore, Osservatore del Tempo, FireRose, Maledizione Chaos e Ciclope del Tempo. Le versioni nuove non sono approvate per estensione: le scelte esplicite sono elencate sopra. Mantieni stile matte Rame fatato e anime, materiali ed anatomie specifiche; non copiare la scena dei riferimenti.
+
+
 ## Cinque scelte canoniche e dieci derivati — conferme più recenti
 
 L'utente ha selezionato e confermato cinque desktop della galleria con «Sì, queste cinque sono canoniche»: **Mezzo Demone atletico C con bocca verticale nel collo/torace** (sostituisce la precedente scelta A tozza), Nuvola B con bottiglia e ricevitori color rame, Doppione C con copie distinte, Aberrazione Angelica B bianca/oro e Solare C interamente d'oro. La successiva conferma «Approvo tutti e dieci» riguarda i loro cinque telefoni e cinque reliquie, non gli altri derivati ancora in bozza. Riferimenti e SHA sono nei manifest della galleria; copie runtime identiche nel rapporto `APPROVED_NEXT_PATCH_ASSETS_2026-10-29.json`. La revisione orizzontale della bocca del Demone non è la scelta dell'utente e non sostituisce C.

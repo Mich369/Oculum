@@ -1,5 +1,15 @@
 # Registro cumulativo per i giocatori
 
+## Patch del 30 ottobre — Nuvola, corazze e nuove varianti
+
+- Nuvola in bottiglia cambia fase solo se sopravvive. Il critico mirato rompe la bottiglia soltanto danneggiando la Vita; recuperi40/75% e bersaglio bottiglia rimosso nella seconda fase. La scarica Open cresce dal secondo bersaglio; Fulmine ferma Azione interrompe l'Azione in corso o consuma la prossima, preservando Reazioni e Reazioni veloci. Le nuove Art usano effetti e valori modificabili; le personalizzazioni salvate restano conservate.
+- Costrutto Minore: prima si rompe la scatola, poi si può mirare il nucleo. I colpi alla scatola danneggiano corpo e integrità; Ultime forze non cancella più il danno strutturale appena ricevuto. Pacchetti vecchi non possono colpire un nucleo ancora nascosto.
+- Quattro Armadilli — base, Sabbia, Cristallo e Legno — con appallottolamento tramite Azione o Reazione: +6/+9/+16CM nelle tre forme, rotolamento e speronamento consentiti. Regole, costi, anatomia, materiali e drop rimangono modificabili; gli attacchi già preparati non possono mirare parti ormai coperte.
+- Mezzo Demone Massiccio come variante distinta: più Resilienza, meno Volontà/Materia/Oculum, a parità di totale base; non sostituisce la versione atletica. Pinepine mantiene la pigna integra con una squama più tenera, senza ferita preesistente.
+- Nuovi desktop approvati di Massiccio, Mastino della Cripta, Forest Demon e Forest Demon Blu. Anatomie allineate: comune quadrupede con corno frontale e due laterali; Blu quadrupede con due corna rosa. Le altre immagini scelte e i derivati da valutare restano separati dall'integrazione nel gioco.
+
+Verifiche locali alla preparazione:34nuovi test,141regressioni e32controlli di catalogo/personalizzazioni passati, analisi senza problemi. CI, pacchetti e pubblicazione sono controlli distinti, documentati nella consegna quando completati.
+
 ## Patch successiva del 29 ottobre — sonno, bisogni e creature di sabbia
 
 - Corretto il canale delle richieste online dei giocatori per riposi, viaggi e visite ai mercanti: conferme, tempo e recuperi restano autorizzati dal Master. La coda gratuita dei mostri di sabbia rispetta ora anche il blocco delle Skill durante Sfinimento.

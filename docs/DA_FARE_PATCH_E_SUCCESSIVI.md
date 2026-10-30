@@ -1,5 +1,21 @@
 # Oculum — attività, conferme e consegne
 
+## Tranche successiva del30ottobre — implementazione distinta da bb403888
+
+|ID|Riga completa e adattamento|Verifica corrente|
+|---|---|---|
+|NU30|Nuvola: fase senza resurrezione letale, critico bottiglia deve danneggiare Vita; recupero40/75%, scarica dal secondo bersaglio, Stop prossima Azione con R/RV conservate, ricevute e planner modificabili.|Sorgenti e test preparati; analisi, prove, CI e pacchetti ancora da eseguire.|
+|AN30b|Costrutto Minore: rompere scatola prima del nucleo, integrità separata35%/min3 modificabile, corpo+parte, anatomie Master conservate; danno strutturale prima di Ultime forze. Pinepine: squama tenera nella pigna integra.|Sorgenti e test preparati, nessuna nuova approvazione100%.|
+|MD30|Mezzo Demone Massiccio separato: piùRES e meno altre statistiche,6/3/2/1 a parità totale e livello della base; desktop A già confermato, nessuna sostituzione del C atletico.|Catalogo e desktop collegati; test da eseguire; telefono/reliquia da produrre e approvare.|
+|AR30|Armadilli base/Sabbia/Cristallo/Legno: appallottolamento A oppure R, forme+6/+9/+16CM, rotolare/speronare consentiti, statistiche/materiali/costi e regole modificabili.|Catalogo/runtime e10 test preparati, non ancora eseguiti. Artwork da produrre come proposte.|
+|ART32|Nuovi ridisegni e palette, copie originali e ricevute di scelta; desktop canonici distinti da telefono/reliquia, anatomia e pubblicazione.|Scelte aggiornate nella galleria del30ottobre e nel canone visivo; non equivale a integrazione completa nel gioco.|
+
+## Evidenze successive della nuova consegna —30ottobre
+
+**bb403888 / build40976486947:** analisi e tutti i9job riusciti,1832test passati/6saltati,4prove online autenticate. Pubblicazione ePages riuscite;11download pubblici senza login,commit web corretto. Distribuzione locale con16310file/0differenze,APKfirmato100255,EXE normale eTest avviati separatamente. Precedente distribuzione e copia dei salvataggi conservate. Dettaglio, limiti e campi modificabili in [CONSEGNA_BB403888_2026-10-30.md](CONSEGNA_BB403888_2026-10-30.md).
+
+SON29/BIS29/TEM29/COR29/SAB29/ART30/ANA30 sono **verificate tecnicamente — attesa conferma dell'utente**, non100%. ART31 resta in lavorazione: tre proposte per creatura, selezioni da approvare, poi telefono/reliquia e revisione anatomica. Nuvola e i confronti non risolti restano nel documento domande. Le fotografie storiche sottostanti non sostituiscono queste evidenze successive.
+
 ## Nuova patch dopo P09 — sonno, coda e artwork (29 ottobre)
 
 La consegna P09 di dcb5bb4e è conclusa e approvata. Le seguenti righe sono una nuova lavorazione: **nessuna è al 100%** senza la conferma richiesta dopo adattamento e prove.

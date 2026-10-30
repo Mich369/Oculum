@@ -734,6 +734,7 @@ final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
   ..._faunaVariantTechniques,
   ..._maskedTechniques,
   ..._ordinaryCreatureTechniques,
+  ..._armadilloTechniques,
   ..._brambleTechniques,
   ..._lavastrelloTechniques,
   ..._boneRuneTechniques,

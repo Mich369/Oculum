@@ -1,5 +1,20 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+## Risposte e scelte del 30 ottobre
+
+- Ciclope del Tempo: «B — Alto e sottile», poi «cambiagli i colori», infine «B — Bordò e argento annerito».
+- Maledizione Maggiore: «A — Bassa e larga». Maledizione di Legno: «B — Groppo di radici».
+- Mastino della Cripta: «B — Massiccio e accovacciato», scala circa5metri. Forest Demon comune: «Rettile quadrupede massiccio, Blu più piccolo», scala comune circa10metri; nuova A, «a ma anche corno frontale stile rinoceronte», poi «Sì, canonica così». Forest Demon Blu: «B — Basso e corna alte».
+
+- Nuvola: «Il colpo letale la uccide»; critico bottiglia «Deve danneggiare la Vita»; +15% «Dal secondo bersaglio in poi»; Fulmine ferma Azione «Consuma la prossima Azione».
+- Pinepine: «Squama tenera, pigna integra». Costrutto Minore: «Prima esporre il nucleo», poi «Rompere la scatola».
+- IceRose: «ice rose già ti dico che questa va bene», immagine del lotto02 C identica nei pixel.
+- Ridisegni: «un po' diversi e osservatore occhi gialli». FireRose: «C — Slanciata»; Osservatore: «C — Basso e rettiliano»; Chaos: «C — Obliqua e molto bracciuta», confermata anche con «canonico» e allegato.
+- Armadilli: «Base più varianti ambientali»; appallottolamento «Un’Azione o Reazione»; «Può rotolare e speronare». Bonus richiesti: «+6/+9/+16 cm».
+- Mezzo Demone A tozzo: «crea questa variante con più res», poi «ma meno alle altre stats».
+- Scale artwork: «Mastino circa 5 m, Forest Demon 10 m»; per comune/Blu «Entrambi, mantenendo il Blu più piccolo».
+
+
 ## Prosecuzione mentre l'utente riposa — 29 ottobre
 
 - «procedi in questa direzione finché non ti rispondo facendo più cose possibili e più domande»; poi «ora ti lascio fare il resto mentre dormo».

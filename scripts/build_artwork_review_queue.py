@@ -3,6 +3,7 @@ import json
 import html
 import re
 import hashlib
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +28,11 @@ def main():
     selections = (json.loads(selection_file.read_text(encoding='utf-8')).get('files', [])
                   if selection_file.exists() else [])
     canonical = {entry['id']: entry for entry in selections}
+    recent_selections = ROOT / 'output/artwork/approvazioni_2026-10-30/manifest_approvazioni.json'
+    if recent_selections.exists():
+        for entry in json.loads(recent_selections.read_text(encoding='utf-8'))['files']:
+            if entry.get('user_approved') is True:
+                canonical[entry['id']] = entry
     derivatives_file = OUT / 'derivati_canonici_cinque/manifest_derivati_cinque.json'
     derivative_data = (json.loads(derivatives_file.read_text(encoding='utf-8'))
                        if derivatives_file.exists() else {})
@@ -115,7 +121,7 @@ def main():
         'additionalConfirmedCreaturesOutsideLastExport': additional,
         'requestedDesignsNotYetInRuntimeCatalogue': [
             {'name': creature['name'], 'artworkKey': creature['artwork_key'],
-             'runtimeId': None, 'canonical': False,
+             'runtimeId': None, 'canonical': creature['artwork_key'] in canonical,
              'manifest': manifest.relative_to(ROOT).as_posix()}
             for manifest, batch in batches for creature in batch.get('entries', [])
             if creature.get('catalogue_entry_present') is False
@@ -130,13 +136,18 @@ def main():
             cards = []
             for proposal in creature.get('proposals', []):
                 path = proposal.get('output_path', '')
-                choice = canonical.get(creature.get('id'))
-                approved_choice = bool(choice and choice['variant'] == proposal.get('variant'))
+                choice = canonical.get(creature.get('id') or creature.get('artwork_key'))
+                # A later redesign may use the same letter for a different image.
+                # The selected design is shown in the separate redesign gallery;
+                # never relabel the historical image as newly approved.
+                approved_choice = bool(choice and choice['variant'] == proposal.get('variant')
+                                       and 'ridisegni_2026-10-30' not in choice.get('source_path', '')
+                                       and '_origine_' not in choice.get('source_path', ''))
                 if approved_choice:
                     path = choice['output_path']
                 if not path or not (ROOT / path).is_file():
                     continue
-                filename = html.escape(Path(path).relative_to(OUT.relative_to(ROOT)).as_posix(), quote=True)
+                filename = html.escape(Path(os.path.relpath(ROOT / path, OUT)).as_posix(), quote=True)
                 label = html.escape(str(proposal.get('variant', '')))
                 if approved_choice:
                     label += ' · CANONICO'
@@ -149,7 +160,7 @@ def main():
                 sections.append(f'<section><h2>{title}</h2><div class="choices">{"".join(cards)}</div></section>')
     page = '''<!doctype html><html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Oculum — proposte artwork</title>
 <style>body{background:#15141a;color:#e4d4b0;font:17px system-ui;margin:24px auto;max-width:1600px;padding:0 16px}h1,h2{font-family:Georgia,serif}p{max-width:80ch;line-height:1.6}.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}figure{margin:0;background:#242129;border:1px solid #645337;border-radius:8px;overflow:hidden}img{display:block;width:100%;height:auto}figcaption{padding:12px}section{margin:42px 0}a{color:inherit}@media(max-width:800px){.choices{grid-template-columns:1fr}}</style>
-<h1>Proposte artwork — Oculum</h1><p>Tre interpretazioni A/B/C per ciascuna creatura. Soltanto le immagini segnate CANONICO hanno la tua approvazione esplicita; le altre restano proposte. Premi un’immagine per aprirla intera; per la valutazione basta indicare il nome del mostro e A, B o C, con eventuali correzioni.</p><p><a href="GALLERIA_DERIVATI.html">Telefono e reliquie delle cinque creature scelte</a></p>'''+''.join(sections)+'</html>\n'
+<h1>Proposte artwork — Oculum</h1><p>Tre interpretazioni A/B/C per ciascuna creatura. Soltanto le immagini segnate CANONICO hanno la tua approvazione esplicita; le altre restano proposte. Premi un’immagine per aprirla intera; per la valutazione basta indicare il nome del mostro e A, B o C, con eventuali correzioni.</p><p><a href="../ridisegni_2026-10-30/GALLERIA.html">NUOVI RIDISEGNI E SCELTE DEL 30 OTTOBRE</a></p><p><a href="GALLERIA_DERIVATI.html">Telefono e reliquie delle cinque creature scelte</a></p>'''+''.join(sections)+'</html>\n'
     (OUT / 'GALLERIA.html').write_text(page, encoding='utf-8')
     print(json.dumps({key: report[key] for key in ['exportedEntries', 'newDesktopProposalSlots', 'sourceCatalogueRefreshPending']}, ensure_ascii=False))
 

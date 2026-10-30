@@ -75,7 +75,7 @@ const _weakHorrorProfiles = [
     element: 'fisico',
     stats: [3, 1, 4, 1],
     description:
-        'Cane magro dalla pelle color cenere e denti consumati, spesso legato a una tomba. Cerca avversari isolati ma arretra davanti a una linea compatta; il morso non provoca emorragie permanenti.',
+        'Enorme cane lungo circa5metri, massiccio ma scarno, dalla pelle color cenere e denti consumati, quattro zampe, due occhi e una coda sottile; spesso legato a una tomba. Cerca avversari isolati ma arretra davanti a una linea compatta; il morso non provoca emorragie permanenti.',
     attack: 'Morso della soglia',
     action: 'Mordi un solo bersaglio a contatto senza trascinarlo',
     guard: 'Costole raccolte',

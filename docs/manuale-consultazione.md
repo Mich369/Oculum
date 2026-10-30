@@ -2,6 +2,15 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Nuvola, scatole e armadilli — 30 ottobre
+
+Nuvola in bottiglia: un colpo letale la uccide prima che possa cambiare fase. Sopravvivendo, al 15% della Vita recupera il 75% della massima entro il massimo; rompere prima la bottiglia con un critico mirato che danneggia la Vita avvia invece la fase con recupero aggiuntivo del 40%. Difesa, Scudi e Scudi critici conservano la loro protezione. La bottiglia non rimane un bersaglio dopo il cambio di fase.
+La scarica Open aggiunge i normali Danni attuali e 2d50+25 Fulmine, su massimo12 bersagli. L'aumento del15% per persona parte dal secondo bersaglio: uno0%, due15%, tre30%. Una Reazione veloce aggiuntiva per turno personale con il Buff. Fulmine ferma Azione è sempre utilizzabile: un quarto dei Danni attuali e20% di fermare un'Azione, oppure metà e60% con il potenziamento della propria Open. Se non c'è un'Azione in corso, consuma la prossima disponibile; non sottrae Reazioni o Reazioni veloci. Costi, probabilità, bersagli e recuperi restano modificabili.
+Costrutto Minore: il nucleo è dentro la scatola e non è mirabile finché la scatola non viene rotta. Colpi mirati alla scatola danneggiano corpo e integrità dopo Difesa e Scudi. Vita scatola iniziale delegata:35% della massima, minimo3, modificabile nell'editor parti; un critico non la apre automaticamente. Le anatomie e gli override espliciti del Master sono conservati.
+Pinepine ha la pigna integra e una squama naturalmente più tenera, non una ferita preesistente. Fragilità al Fuoco ed esplosione rimangono.
+Mezzo Demone Massiccio: variante distinta e cosciente, più resistente e meno dotata nelle altre statistiche; base iniziale modificabile6RES/3VOL/2MAT/1OCU a livello2, stesso totale base del Mezzo Demone atletico3/4/3/2.
+Armadilli: specie base e varianti Sabbia, Cristallo e Legno. Appallottolamento usa un'Azione oppure una Reazione e concede +6/+9/+16CM nelle formeI/II/III finché chiusi. Possono rotolare e speronare; non attaccare con gli artigli esposti finché chiusi. Il bilanciamento iniziale e i materiali restano modificabili, senza inventare immunità o eccezioni degli altri mostri.
+
 ## Sonno, bisogni e giorni automatici — 29 ottobre
 
 Il Master fa passare ore/minuti nella campagna corrente, con un'unica conferma per tutto il party. L'attesa avanza calendario, putrefazione e bisogni; non concede riposi, recuperi o eventi riservati ai viaggi. La giornata resta di nove ore. Il calendario di 369 giorni conserva la data salvata alla migrazione.

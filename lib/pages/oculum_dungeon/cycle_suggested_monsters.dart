@@ -275,6 +275,23 @@ List<Map<String, dynamic>> _suggestedCycleAnatomy(String id) {
           'side': i == 0 ? 'right' : 'left',
           'sideIndex': 1,
         },
+    if (id == 'ciclo_forest_demon_blu')
+      for (var i = 0; i < 2; i++) ...[
+        {
+          'id': 'eyes_${i + 1}',
+          'label': 'Occhio ${i == 0 ? 'destro' : 'sinistro'}',
+          'group': 'eyes',
+          'side': i == 0 ? 'right' : 'left',
+          'sideIndex': 1,
+        },
+        {
+          'id': 'horns_${i + 1}',
+          'label': 'Corno rosa ${i == 0 ? 'destro' : 'sinistro'}',
+          'group': 'horns',
+          'side': i == 0 ? 'right' : 'left',
+          'sideIndex': 1,
+        },
+      ],
     {
       'id': 'cycle_weak_point',
       'label': _suggestedCycleSpecs.firstWhere((s) => s.id == id).weak,

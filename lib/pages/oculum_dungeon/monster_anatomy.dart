@@ -36,6 +36,12 @@ String oculumLogicalMonsterWeakPoint(
           .toLowerCase();
   String pair(String it, String en) => english ? en : it;
   bool has(String pattern) => RegExp(pattern).hasMatch(text);
+  if (entry.id == 'pinepine' || entry.id.startsWith('pinepine_variante_')) {
+    return pair(
+      'Una squama naturalmente più tenera fra le protezioni della pigna integra.',
+      'A naturally softer scale among the plates of its intact pine-cone shell.',
+    );
+  }
   if (has(r'headless|decapitat|senza testa')) {
     return pair(
       'Il moncone del collo, dove la forza che muove il corpo rimane esposta.',
@@ -167,8 +173,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     'sharp' => 'quattro zampe, due occhi',
     'mosca_campana' => 'sei zampe, quattro ali, due occhi',
     'shadow_devil' => 'due corna, senza occhi',
-    'mezzo_demone_cosciente' =>
+    'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' =>
       'umanoide, due braccia, due gambe, due corna e due occhi',
+    'forest_demon' =>
+      'rettile quadrupede, quattro zampe, due occhi, tre corna e coda',
+    'ciclo_forest_demon_blu' =>
+      'rettile quadrupede, quattro zampe, due occhi, due corna e coda, senza ali',
     _ => '',
   };
   final physical =
@@ -219,8 +229,11 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       'sharp' => {'legs': 4, 'eyes': 2},
       'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
       'shadow_devil' => {'horns': 2},
-      'mezzo_demone_cosciente' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
+      'mezzo_demone_cosciente' ||
+      'mezzo_demone_massiccio' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
       'nuvola_in_bottiglia' => {'eyes': 1},
+      'forest_demon' => {'legs': 4, 'eyes': 2, 'horns': 3},
+      'ciclo_forest_demon_blu' => {'legs': 4, 'eyes': 2, 'horns': 2},
       _ => <String, int>{},
     };
     final group = switch (noun) {

@@ -1,6 +1,12 @@
 # Prossima patch — lavorazione autorizzata
 
-Base distribuita e approvata P09: **dcb5bb4e / run40904083210**. Quella distribuzione resta disponibile e conservata mentre la nuova patch viene verificata. Le prove descritte sotto sono locali e non certificano una nuova pubblicazione.
+## Tranche30ottobre successiva a bb403888
+
+Nuvola, scatola del Costrutto Minore, Armadilli e Mezzo Demone Massiccio sono ora sorgenti in verifica locale, non una consegna pubblicata. Le ultime conferme sono nel registro e nel manuale interno. Nuvola: letale uccide, bottiglia critica solo con Vita persa, Open dal secondo bersaglio, Stop prossima Azione senza sottrarre R/RV. Costrutto: scatola prima del nucleo, danni strutturali conservati attraverso Ultime forze. Armadilli: quattro specie, appallottolamentoA/R con+6/+9/+16CM, rotolamento e speronamento, materiali e drop. Pinepine integro con squama tenera.
+
+Undici desktop scelti esplicitamente nel manifest del30ottobre. Quattro sono collegati a specie già presenti o alla nuova variante Massiccio; le sette specie richieste senza voce runtime restano chiaramente distinte dall'approvazione della loro immagine. Telefono e reliquia delle nuove scelte sono un lotto separato da approvare. La galleria locale conserva tutte le alternative e i prompt originali: [ridisegni30ottobre](../output/artwork/ridisegni_2026-10-30/GALLERIA.html). Nessuna riga chiusa100%; CI e nuova distribuzione non ancora eseguite.
+
+Base precedente distribuita e approvata P09: **dcb5bb4e / run40904083210**, conservata nel backup. **Aggiornamento tecnico successivo al commit:** la nuova patch **bb403888 / run40976486947** è ora compilata e pubblicata:1832testCI passati,6saltati,4prove online autenticate;11download anonimi,16310file installati senza differenze,APK100255firmato e avvio dei dueEXE riuscito. [Rapporto della consegna](CONSEGNA_BB403888_2026-10-30.md). Nessuna nuova riga viene chiusa al100%senza la conferma dell'utente. La tabella sotto conserva la fotografia della preparazione del commit; la galleria continua separatamente con nuove proposte non approvate.
 
 | Ambito | Lavoro | Stato iniziale |
 |---|---|---|
@@ -11,6 +17,8 @@ Base distribuita e approvata P09: **dcb5bb4e / run40904083210**. Quella distribu
 | ART31 | Tre proposte visive A/B/C per ogni nuovo desktop mancante, comprese varianti ambientali; coda completa del catalogo. | Primi due lotti: 36 proposte selezionate; cinque desktop scelti esplicitamente, con tutti i dieci derivati approvati. Fotografia alla preparazione del commit: nove lotti, 162 proposte per 54 creature; i lotti successivi proseguono nella galleria locale; storico e domande cumulative conservati. |
 
 Domande cumulative: [DOMANDE_ARTWORK_PROSSIMA_PATCH.md](DOMANDE_ARTWORK_PROSSIMA_PATCH.md). Le righe non diventano 100% senza la presentazione dell’adattamento, delle verifiche effettive e la conferma richiesta dall’utente.
+
+**Avanzamento artwork successivo al commit, 30 ottobre:** 17 lotti desktop, 99 voci e 297 selezioni A/B/C; le cinque scelte canoniche già ricevute restano segnalate e non vengono richieste di nuovo. Audit indipendente su 426 PNG contando derivati e revisioni, 558 confronti SHA senza differenze e 659 collegamenti HTML risolti. I dieci adattamenti del lotto13 restano da approvare. Galleria e [audit](../output/artwork/AUDIT_REVISIONE_NOTTURNA_2026-10-30.md) sono locali; non è un'integrazione automatica nel runtime, una prova grafica indipendente o la copertura conclusa delle 1.200 voci del catalogo.
 
 Le nuove regole e le immagini dovranno restare modificabili tramite editor e JSON. Prima della pubblicazione: verifiche mirate, analisi e suite completa coordinate con i lavori attivi; CI del commit compilato, EXE completo/ZIP/APK, Windows Test separato e download pubblici anonimi verificati. Il log resta cumulativo secondo AGENTS.md finché l’utente non identifica la grande espansione prevista come conclusa.
 

@@ -2885,6 +2885,11 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               'senkaClone',
               'senkaCloneFirstTurn',
               'meccanioReactionsOnly',
+              'bottledCloudActionEncounter',
+              'bottledCloudPendingActions',
+              'bottledCloudActionReceipts',
+              'bottledCloudInterruptedGroups',
+              'bottledCloudFastReactionTurn',
             ])
               if (tokens[i].containsKey(key)) key: tokens[i][key],
             for (final key in [
@@ -2919,6 +2924,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'extraFastReactionCurrent': readIntValue(
               tokens[i]['extraFastReactionCurrent'],
             ),
+            'faunaPublic':
+                tokens[i]['faunaPublic'] ?? const <String, dynamic>{},
             'extraNormalReactionCurrent': readIntValue(
               tokens[i]['extraNormalReactionCurrent'],
             ),

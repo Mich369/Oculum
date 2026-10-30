@@ -1,5 +1,23 @@
 # Oculum — registro delle regole confermate
 
+## Conferme del 30 ottobre — Nuvola e anatomie
+
+Le seguenti risposte chiudono NU01–NU04 e AN01; la loro implementazione e verifica sono una lavorazione successiva alla build bb403888.
+
+- **Nuvola in bottiglia:** un colpo letale prima della seconda fase la uccide. Nessuna resurrezione tramite il cambio di fase. La bottiglia si rompe con un critico mirato che danneggia la Vita dopo Difesa e Scudi; gli Scudi critici conservano la loro protezione.
+- La scarica Open mantiene il limite di dodici bersagli e il danno previsto; il +15% per persona parte **dal secondo bersaglio**: uno +0%, due +15%, tre +30%, fino al limite. La regola generale aggiunge i Danni attuali salvo eccezioni già confermate.
+- **Fulmine ferma Azione:** se non c'è un'Azione in corso, il successo consuma la **prossima Azione disponibile**. Non è un consumo di Reazione o Reazione Veloce. Restano probabilità 20% base/60% con la propria Open e Danni comunque un quarto/metà del totale.
+- **Pinepine:** pigna integra; punto debole in una squama naturalmente più tenera da scoprire, non una ferita già presente. La fragilità al Fuoco e le altre meccaniche non sono state modificate.
+- **Costrutto Minore:** il nucleo deve essere esposto **rompendo la scatola**. Non basta mirarlo attraverso la scatola integra. Vita della scatola e relativo bilanciamento devono essere coerenti, modificabili e verificati; nessun foro nel tema canonico.
+
+## Conferme del 30 ottobre — famiglia degli armadilli e variante massiccia
+
+- Nuovi mostri simili ad armadilli: base e varianti ambientali di Sabbia, Cristallo e Legno, con anatomia, materiali e drop coerenti.
+- Appallottolamento nelle tre forme: **+6 / +9 / +16 CM**, finché chiusi. L'attivazione usa **un'Azione oppure una Reazione**; possono ancora rotolare e speronare. I costi e i valori non dettati restano bilanciamento delegato, modificabile.
+- **Mezzo Demone Massiccio:** variante distinta costruita sul disegno A tozzo/grigio, con bocca orizzontale al collo/torace e corna laterali ricurve. Più Resilienza e meno Volontà, Materia e Oculum. La variante atletica C già approvata rimane distinta. Redistribuzione iniziale proposta a parità di punti: RES6/VOL3/MAT2/OCU1, invece di3/4/3/2; non è un nuovo valore numerico dettato dall'utente.
+
+
+
 ## Anatomia dai disegni confermati — revisione successiva del 29 ottobre
 
 Richiesta esplicita: «dai disegni confermati poi rivedi anatomia e punti colpibili». I riferimenti approvati guidano quantità, posizione e materiale delle parti; proposte A/B/C ancora da valutare non cambiano il canone o le capacità. Le anatomie personalizzate del Master prevalgono sulle nuove definizioni predefinite. La revisione locale aggiunge gli arti mancanti di Mostro di sabbia, Costrutto Minore, Funghetto e Topino, sei zampe e quattro ali per Mosca Campana e due occhi a Sharp. Shadow Devil resta senza occhi. L’occhio dell’elmo solare è una visiera metallica, non un occhio biologico scoperto; i fratelli a volto visibile restano eccezioni. I quattro cristalli del Mostro lunare conservano le meccaniche native, mentre braccia e gambe vengono distinte per lato. Sabbia e fibre non ricevono etichette di frattura ossea. Nessun nucleo viene inventato nel Gigante. Test e distribuzione della revisione ancora da eseguire, vedi `PROSSIMA_PATCH_2026-10-29.md`.

@@ -610,6 +610,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     var usedFastReaction = false;
     if (resource == 'ki_grant_action') {
       token['kiExtraActions'] = readIntValue(token['kiExtraActions']) + 1;
+      if (index == activeIndex) oculumConsumeBottledCloudPendingActions(token);
     } else if (resource == 'speed_grant_fast') {
       token['extraFastReactionCurrent'] =
           readIntValue(token['extraFastReactionCurrent']) + 1;
@@ -630,11 +631,26 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         return false;
       }
       token['actionAnticipatedRound'] = expectedRound;
+      if (readIntValue(token['bottledCloudPendingActions']) > 0) {
+        token['bottledCloudPendingActions'] =
+            readIntValue(token['bottledCloudPendingActions']) - 1;
+        aggiungiLog(
+          '[FULMINE] La prossima Azione era interrotta: anticipo consumato, senza spendere risorse della Skill.',
+        );
+        programmaSalvataggio();
+        return false;
+      }
     } else if (resource == 'azione') {
       if (index != activeIndex ||
           (readBoolValue(token['actionUsed']) &&
               readIntValue(token['kiExtraActions']) <= 0) ||
           artDebtForToken(token, 'action') > 0) {
+        return false;
+      }
+      if (readIntValue(token['bottledCloudPendingActions']) > 0 &&
+          oculumConsumeBottledCloudPendingActions(token) > 0) {
+        aggiungiLog('[FULMINE] Azione interrotta; Reazioni conservate.');
+        programmaSalvataggio();
         return false;
       }
       if (readBoolValue(token['actionUsed'])) {

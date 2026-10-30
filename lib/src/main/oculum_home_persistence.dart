@@ -1431,6 +1431,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'evergreenDisguiseProtected': evergreenDisguiseProtected,
         'banditVendetta': planarState['banditVendetta'] == true,
         'solarFaceUncovered': solarFaceUncovered,
+        if (isArmadilloCreature) 'armadillo': armadilloPublicState,
+        'bottledCloudFastReactions': bottledCloudFastReactionBonus,
+        if (faunaCurrentMonsterId == 'nuvola_in_bottiglia')
+          'bottledCloudPhase': bottledCloudPhaseNumber,
+        if (faunaCurrentMonsterId == 'costrutto_minore')
+          'minorConstructCoreExposed': minorConstructCoreExposed,
       },
       'precisionBodyParts': publicPrecisionBodyParts,
       'homeArtworkFollowsTheme': homeArtworkFollowsTheme,
@@ -7950,7 +7956,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 costo: 'Passivo',
                 cooldown: 'Sempre',
                 descrizione:
-                    'Dimezza i danni non di Fuoco. Se il Fuoco colpisce il Pinepine, la pelle esplode: anche il Pinepine subisce i danni dell’esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Debole a Ferite Aperte e Fuoco. Con critico sul drop: Scudo Pigna +20.',
+                    'Dimezza i danni non di Fuoco. Se il Fuoco colpisce il Pinepine, la pelle esplode: anche il Pinepine subisce i danni dell’esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Punto debole nella squama tenera della pigna integra; fragile al Fuoco. Con critico sul drop: Scudo Pigna +20.',
                 equipaggiata: true,
               ),
             );

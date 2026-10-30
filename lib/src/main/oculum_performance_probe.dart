@@ -870,6 +870,30 @@ class OculumPerformanceProbe {
     total,
     defenseNatural: natural,
   );
+  List<OculumStructuredEffect> prepareBottledCloud(
+    List<OculumStructuredEffect> effects, {
+    Random? random,
+  }) => _state.prepareBottledCloudEffects(effects, random: random);
+  void claimBottledCloud(Map<String, dynamic> request, int targets) =>
+      _state.claimBottledCloudAttack(request, targets);
+  void bottledCloudPhase(
+    Map<String, dynamic> request, {
+    required bool critical,
+  }) => _state.resolveBottledCloudPhase(request, critical: critical);
+  void bottledCloudStop(
+    Map<String, dynamic> request, {
+    bool hit = true,
+    Map<String, dynamic>? resolution,
+  }) => _state.applyBottledCloudStopResult(
+    request,
+    hit: hit,
+    resolution: resolution,
+  );
+  bool bottledCloudInterrupted(Map<String, dynamic> request) =>
+      _state.bottledCloudAttackInterrupted(request);
+  void bottledCloudTurn(Map<String, dynamic> token, String stamp) =>
+      _state.bottledCloudPersonalTurn(token, stamp);
+  int bottledCloudPhaseNumber() => _state.bottledCloudPhaseNumber;
   Future<void> applyLocalTargetEffect(Map<String, dynamic> pending) =>
       _state.applyPendingTargetEffectLocally(pending);
   void receiveRole(Map<String, dynamic> payload) =>

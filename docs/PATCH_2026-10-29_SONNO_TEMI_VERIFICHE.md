@@ -36,4 +36,4 @@ Costi, durate, recuperi, bersagli e cooldown negli editor e nel JSON. sleepRecov
 
 Le due fixture finali conservano tutte le asserzioni: il nucleo deve restare a 20 Vita e il corpo a 60, senza una nuova mitigazione passiva casuale; le catture usano il fallback esistente solo per Windows 1224. La ripetizione precedente interrotta per il difetto della coda non viene conteggiata. I 32 test Python di pubblicazione/updater/swap/firma e il comando PowerShell di pubblicazione simulata sono passati; nessun dispatch reale è stato eseguito da quelle prove.
 
-CI, distribuzione EXE/ZIP/APK, firma, download anonimi e avvio della nuova versione verranno registrati soltanto dopo il loro completamento.
+Aggiornamento successivo al commit compilato: CI **bb403888** completa con1832passati/6saltati e4prove autenticate, tutti i9job riusciti; pubblicazione/Pages riuscite,11download anonimi verificati. Distribuzione16310file/0differenze,APK100255con firma stabile e due avviiEXE passati. [Evidenze e limiti della consegna](CONSEGNA_BB403888_2026-10-30.md). Nessuna riga chiusa al100%senza conferma dell'utente.

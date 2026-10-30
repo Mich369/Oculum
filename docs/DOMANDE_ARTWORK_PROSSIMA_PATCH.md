@@ -4,23 +4,23 @@ Richiesta del 29 ottobre: produrre gli artwork, **tre proposte visive A/B/C per 
 
 La coda completa è `output/artwork/proposte_prossima_patch_2026-10-29/coda_artwork.json`. I conteggi sono pianificazione, non immagini già generate. Ogni generatore deve leggere descrizione, anatomia e documenti visivi prima della sua voce. Nessuna figura nuova, parte debole o abilità deriva automaticamente da una proposta.
 
-## Questioni aperte, da presentare insieme
+## Risposte ricevute il 30 ottobre — anatomie
 
 | ID | Creatura e contesto precedente | Domanda da valutare | Comportamento prudente nel frattempo |
 |---|---|---|---|
-| AN01 | Pinepine: pigna stessa come corazza, due occhi, circa 2 metri; artwork approvato integro. Il catalogo precedente menziona una zona tenera come ferita aperta. | Il punto debole è una squama naturalmente più tenera da scoprire, oppure una vera ferita già presente? | Non dipingere ferite nuove o attribuire un nucleo. Conservare la regola esistente finché chiarita; separare aspetto integro da conoscenza del punto debole. |
-| AN02 | Costrutto Minore: scatola bronzea di 20–50 cm, due arti superiori e due inferiori, grande scudo. Non mostra un nucleo esterno. | Il nucleo interno deve diventare colpibile solo aprendo/rompendo la scatola, oppure basta Precisione secondo le regole generali dei Costrutti? | Nessun nucleo esposto nel tema; non inventare una nuova soglia di apertura della scatola. |
+| AN01 | Pinepine: pigna stessa come corazza, due occhi, circa 2 metri; disegno integro. | **Squama tenera, pigna integra. Risolta.** | Correggere i default e le descrizioni; conservare fragilità Fuoco e personalizzazioni. |
+| AN02 | Costrutto Minore: nucleo interno alla scatola. | **Prima esporre il nucleo rompendo la scatola. Risolta.** | Scatola con integrità coerente e modificabile; il nucleo non è selezionabile finché chiuso. Nessun foro nel tema. |
 
-## Nuvola in bottiglia — scelte di combattimento ancora aperte
+## Nuvola in bottiglia — quattro risposte ricevute il 30 ottobre
 
 | ID | Regola già confermata | Scelta richiesta |
 |---|---|---|
-| NU01 | Seconda fase al 15% Vita con recupero aggiuntivo del 75%; critico alla bottiglia anticipa la fase con recupero del 40%, entro il massimo. | Un colpo direttamente letale prima della seconda fase la fa comunque iniziare, oppure uccide la Nuvola? |
-| NU02 | La bottiglia è il primo punto debole; il critico la rompe. Scudi critici conservano la loro protezione. | Serve arrivare alla Vita dopo Difesa/Scudi, come per le parti comuni, oppure basta il critico riuscito anche se gli Scudi assorbono tutto? |
-| NU03 | Open fino a 12 bersagli, 2d50+25 e +15% Danni per persona. | Il primo bersaglio conta già (+15%, poi +30%) oppure l'aumento parte dal secondo? |
-| NU04 | Fulmine ferma Azione: interruzione20%,60%con la propria Open; Danni comunque¼o½del totale. Nessuno Stordito generico imposto. | Quando non è in corso un'Azione, interrompe solo un'Azione già iniziata oppure consuma la prossima Azione disponibile? |
+| NU01 | Seconda fase al 15% Vita con recupero aggiuntivo del 75%; critico alla bottiglia anticipa la fase con recupero del 40%, entro il massimo. | **Il colpo letale la uccide. Risolta.** |
+| NU02 | La bottiglia è il primo punto debole; il critico la rompe. Scudi critici conservano la loro protezione. | **Deve danneggiare la Vita dopo Difesa e Scudi. Risolta.** |
+| NU03 | Open fino a 12 bersagli, 2d50+25 e +15% Danni per persona. | **Dal secondo bersaglio: uno +0%, due +15%. Risolta.** |
+| NU04 | Fulmine ferma Azione: interruzione20%,60%con la propria Open; Danni comunque¼o½del totale. Nessuno Stordito generico imposto. | **Se non c'è un'Azione in corso, consuma la prossima Azione disponibile. Risolta.** |
 
-Le quattro domande Nuvola sono state presentate in chat e restano aperte mentre l'utente riposa. I file del secondo e terzo lotto raccolgono anche le scelte visive: `domande_batch2.json` e `lotto_03/domande_batch3.json` nella cartella delle proposte. Non confondere queste scelte con l'approvazione dei cinque desktop e dei dieci derivati, già esplicita.
+Le quattro risposte sono ora confermate e l'implementazione è in corso; non costituiscono già una prova del runtime o una nuova distribuzione. I file del secondo e terzo lotto raccolgono anche le scelte visive. Le selezioni del 30 ottobre — IceRose C, nuova FireRose C, nuova Maledizione Chaos C e nuovo Osservatore C con occhi gialli — sono registrate separatamente dalle cinque scelte e dai dieci derivati precedenti.
 
 ## Scelte creative accumulate dai lotti
 
@@ -47,6 +47,70 @@ FireRose senza volto umano e con due falci distinte è già stabilita dal riferi
 | B8-02 | Cervo delle Radure Miti e Rospo delle Gronde Marce: descrizioni con palchi, gola e cosce, ma l'elenco precedente comprende solo il Corpo. | Dopo la scelta degli artwork, completiamo le parti naturali conservando i punti deboli già descritti, senza ricavarne fragilità nuove dal solo disegno? |
 
 Le proposte seguono le descrizioni fisiche esplicite. Nessuno di questi confronti ha modificato anatomia, resistenze o parti colpibili nel runtime; la revisione di gioco segue la scelta canonica.
+
+### Avanzamento successivo al commit bb403888
+
+| ID | Contesto | Scelta dopo aver visto A/B/C |
+|---|---|---|
+| B10-01 | Tartaruga della Pioggia Chiara: la descrizione specifica quattro zampe palmate; l'elenco anatomico precedente assegna due zampe e ali. | Confermi quattro zampe palmate e nessuna ala anche per le parti colpibili, dopo aver scelto il disegno? |
+| B10-02 | Airone del Guado Quieto: uccello dalle lunghe zampe color rame, piume d'ardesia e becco a cucchiaio; l'elenco precedente gli assegna quattro zampe. | Allineiamo le parti colpibili a due zampe e due ali, mantenendo collo, testa e becco? |
+| B10-03 | Scrutatore delle Febbri: la descrizione esplicita un occhio verticale e quattro sostegni; l'elenco precedente indica due occhi. | Dopo la scelta canonica, confermi un solo occhio anche fra i bersagli anatomici? |
+
+Queste note sono successive al commit della patch in compilazione. Le proposte seguono le descrizioni; nessuna di queste correzioni anatomiche è stata inserita di nascosto nella build.
+
+## Incrocio di regole da chiarire nella prossima revisione
+
+| ID | Comportamento precedente osservato nel codice | Domanda |
+|---|---|---|
+| QA-FORZA-0 | Il controllo automatico degli Stati di Forza scatta a un quarto Vita o meno e non esclude 0; alcuni esiti possono recuperare Vita. Le prove di danno esatto isolano questa lotteria, lasciandola invariata nel gioco. | Vuoi che gli Stati di Forza possano ancora salvare un'entità già portata a 0 dal colpo, oppure devono attivarsi soltanto se resta almeno 1 Vita? Da questa risposta dipende anche il loro rapporto con la vetrificazione del Gigante e i relativi premi. |
+
+È un confronto col comportamento precedente, non una nuova eccezione già confermata né una correzione applicata nella patch. Le protezioni esplicite come Scudi critici e `@safehp` restano distinte.
+
+## Ulteriori confronti anatomici — lotti11/12/14/15
+
+Le immagini restano proposte. Le seguenti scelte serviranno soltanto dopo la selezione del disegno; nessuna parte colpibile o regola è stata cambiata per anticiparle.
+
+| ID | Descrizione precedente e differenza trovata | Domanda |
+|---|---|---|
+| B11-01 | Gnoll delle Nevi: iena umanoide con falce e gambali; il punto debole parla di zampa posteriore e l'export gli assegna due braccia più quattro gambe. | Deve avere due gambe come la base, oppure quattro zampe sotto il busto? Il disegno è rinviato, senza fissare l'anatomia. |
+| B12-01 | ObserSunshine: disco grigio con un occhio centrale inciso, crepe e luce dorata; la lista precedente contiene due occhi. | Dopo la scelta A/B/C, confermi un solo occhio centrale anche nei bersagli colpibili? La pietra non diventa tutta d'oro. |
+| B12-02 | Ragno Saldatore Recuperatore: sei zampe e due pinze disuguali nella variante, ma l'export aggiunge ali; la base ha otto zampe e coda. | Confermi sei zampe, due pinze e corpo a tamburo con cerniera, senza ali e coda, per questa variante? |
+| B14-01 | Nocciolo Corazzato: zampe da coleottero nel testo, soltanto quattro nell'elenco colpibile. Le proposte ne hanno sei. | Conserviamo l'anatomia naturale da coleottero, oppure quattro zampe è una caratteristica voluta della specie? |
+| B14-02 | Saltalungo Maculato: descrizione con arti posteriori da salto; l'elenco precedente non comprende le gambe. | Scelto il disegno, aggiungiamo due gambe e manteniamo due braccia elastiche? |
+| B14-03 | Lepre Scattobrina: proposte a quattro zampe con piccoli cristalli alle caviglie; lista precedente con due sole zampe. | La vuoi quadrupede naturale oppure bipede? |
+| B14-04 | Famelico dell'Oblio: corpo nero/violaceo, corna sottili, dita uncinate, lingua rossa lunghissima e coda a uncino ad anello. La lista gli attribuisce due braccia, quattro gambe e due ali non chiarite. | Come lo vuoi: bipede, quadrupede oppure busto con braccia sopra quattro zampe? Deve avere davvero ali? Generazione rinviata per non inventarle. |
+| B15-01 | Carne Falciante: descrizione umanoide, volto nella spalla e un braccio a falce organica; l'elenco precedente lo tratta come quadrupede. | Confermi due braccia e due gambe dopo la scelta A/B/C? Le proposte seguono la descrizione umanoide. |
+| B15-02 | Cervo dalla Carne Aperta: quattro zampe naturali con dita deformate nelle proposte, bocca verticale e due palchi ossei; l'export contiene due sole zampe. | Confermi queste quattro zampe anche nei bersagli colpibili, mantenendo il punto debole già scritto alla base del collo? |
+| B15-03 | Velario Uncinato e Scheletrico del Sudario: membrana/sudario coprono la parte inferiore, non precisata completamente nelle descrizioni. | Vuoi definirne gli arti nascosti oppure mantenerli da scoprire? I disegni non aggiungono arti o nuove fragilità. |
+
+## Orea Zalira — lotto17
+
+| ID | Descrizione già fissata | Scelta dopo A/B/C |
+|---|---|---|
+| B17-01 | Floscocorno: corpo malva morbido e corna che si piegano come steli; il numero degli arti non è precisato nel testo, elenco attuale con due zampe. | Confermi due zampe e due corna morbide per il disegno scelto, oppure preferisci una variante quadrupede da ridisegnare prima della revisione anatomica? |
+| B17-02 | Fioripasso ha fiori arancio/bulbi verde acqua; Velocilento rosa ha orecchie a disco e sfere azzurre dorsali. Numero di fiori/bulbi/sfere non fissato. | Vuoi fissarne il numero al disegno scelto oppure lasciare variazioni naturali fra esemplari? Nessuna sfera diventa un nuovo Scudo o punto debole separato senza una tua regola. |
+
+Tutte le proposte conservano l'eccezione dei due soli senza occhi e non identificano il sovrano ignoto. La coda non prevista comparsa nella prima Velocilento C è stata rimossa con ImageGen nella C2 selezionata; storico conservato, nessuna modifica dei pixel via script.
+
+## Lotto18 — Geco Turbina
+
+| ID | Descrizione precedente e differenza | Domanda dopo A/B/C |
+|---|---|---|
+| B18-01 | Geco meccanico grande come un gatto, turbine ai fianchi e coda di rame; punto debole già descritto nel condotto fra le turbine. L'elenco colpibile precedente ha soltanto Corpo e Coda. Le proposte mantengono quattro zampe con dita aderenti, due occhi e due turbine. | Completiamo le parti colpibili con testa, quattro zampe, turbine e condotto già previsto dopo la scelta canonica? Nessuna debolezza nuova deriva dal disegno. |
+
+Nuvì conserva quattro ali; Pupazzo Artigliato tre artigli per manica e corpo vuoto; Observer's Tear un solo occhio e pietra grigia. La corda duplicata nella prima proposta B del Goblin Arciere è stata corretta con ImageGen: versione selezionata con arco a riposo e singola corda coerente fra le estremità, storico conservato.
+
+## Mostri ancora poco descritti — dettagli da chiedere prima dei temi
+
+Queste voci non ricevono un'anatomia inventata soltanto per riempire la coda.
+
+| ID | Cosa è già definito | Dettagli che servono |
+|---|---|---|
+| ASP01 | Snorlo: quattro braccia e conversione di Oculum in potere fisico. | Come lo vuoi per volto, materiale/pelle, colore, gambe, altezza e atteggiamento? |
+| ASP02 | Legno Marcio: corpo di legno degradato, applica Rinsecchito. | È un tronco umanoide, un quadrupede di radici o un'altra sagoma? Ha volto, occhi e foglie? |
+| ASP03 | Demoni Minore/Intermedio/Maggiore: forza, fame e intelligenza differenziate; non sono il Mezzo Demone già approvato. | Vuoi una stessa famiglia anatomica che cresce oppure corpi differenti? Quali corna, bocca, arti e materiali li distinguono? |
+| ASP04 | Angeli Fustigatore e Protettore: ruoli distinti; gerarchia ali già confermata, Solare e Angelico non vanno confusi. | Vuoi armature complete, volti visibili o maschere? Quali strumenti e proporzioni rendono riconoscibili i due ruoli? |
+| ASP05 | Osservatore Bianco: figura bianca, magra e quasi scheletrica. | Quanti occhi, quale volto, arti e vestiti? Il suo aspetto deve risultare più umano oppure più astratto? |
 
 ## Questioni risolte da conservare
 

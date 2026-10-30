@@ -6027,6 +6027,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       return readIntValue(planarState['doppioneCm']);
     }
     return lunarDefenseRollBonus +
+        armadilloCmBonus +
         referenceDefenseRollBonus +
         (faunaCurrentMonsterId == 'torretta_oculum' ? -9 : 0) +
         (coreMasteryPoints['cm'] ?? 0) +

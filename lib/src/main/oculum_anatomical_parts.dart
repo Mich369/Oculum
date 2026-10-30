@@ -2,6 +2,61 @@ part of '../../main.dart';
 
 // Targeted-part state is applied after the normal body-damage settlement.
 extension _OculumAnatomicalParts on _OculumHomePageState {
+  /// Separate from the existing net-HP reward receipt: recovery such as
+  /// Ultime forze must not erase structural damage already suffered.
+  void recordStructuralHpDamage(String? packetId, int before, int after) {
+    if (packetId == null || packetId.isEmpty || packetId.length > 240) return;
+    final raw = planarState['structuralDamageReceipts'];
+    final ledger = Map<String, dynamic>.from(raw is Map ? raw : const {});
+    final key = jsonEncode([
+      permissionScope,
+      permissionCampaignId,
+      onlineCombatEncounterId,
+      sheetTagAt(schedaCorrente),
+      packetId,
+    ]);
+    if (ledger.containsKey(key)) return;
+    ledger[key] = {
+      'id': packetId,
+      'scope': permissionScope,
+      'campaignId': permissionCampaignId,
+      'encounterId': onlineCombatEncounterId,
+      'targetTag': sheetTagAt(schedaCorrente),
+      'hpLost': min(max(0, before), max(0, before - after)),
+      'lethalBeforeRecovery': before > 0 && after <= 0,
+    };
+    // Old attack settlement and anatomical receipts already prevent replay.
+    // This bounded cache only bridges the immediate damage/recovery boundary.
+    while (ledger.length > 128) {
+      ledger.remove(ledger.keys.first);
+    }
+    planarState['structuralDamageReceipts'] = ledger;
+  }
+
+  Map<String, dynamic>? structuralDamageReceiptFor(Map request) {
+    if (request['scope'] != permissionScope ||
+        request['encounterId'] != onlineCombatEncounterId ||
+        request['targetTag'] != sheetTagAt(schedaCorrente)) {
+      return null;
+    }
+    final raw = planarState['structuralDamageReceipts'];
+    if (raw is! Map) return null;
+    final key = jsonEncode([
+      permissionScope,
+      permissionCampaignId,
+      onlineCombatEncounterId,
+      sheetTagAt(schedaCorrente),
+      '${request['id'] ?? ''}',
+    ]);
+    final value = raw[key];
+    return value is Map ? Map<String, dynamic>.from(value) : null;
+  }
+
+  int structuralHpLostForRequest(Map request, int netHpLost) {
+    final receipt = structuralDamageReceiptFor(request);
+    return max(max(0, netHpLost), max(0, readIntValue(receipt?['hpLost'])));
+  }
+
   Map<String, dynamic> get anatomicalPartState =>
       Map<String, dynamic>.from(planarState['anatomicalParts'] as Map? ?? {});
 
@@ -35,6 +90,14 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
     required bool critical,
   }) async {
     final monster = monsterBookEntryById(faunaCurrentMonsterId);
+    if (monster?.id == 'costrutto_minore' &&
+        const {'box', 'core'}.contains(request['targetBodyPart']) &&
+        (request['targetTag'] != sheetTagAt(schedaCorrente) ||
+            !controlsOnlineCombatSheet(sheetTagAt(schedaCorrente)) ||
+            request['scope'] != permissionScope ||
+            request['encounterId'] != onlineCombatEncounterId)) {
+      return;
+    }
     final point = currentPrecisionBodyParts
         .where((p) => p['id'] == request['targetBodyPart'])
         .firstOrNull;
@@ -76,6 +139,9 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
     if (result.duplicate) return;
     planarState['anatomicalParts'] = result.state;
     if (!result.applied) return;
+    if (faunaCurrentMonsterId == 'costrutto_minore' && point['id'] == 'box') {
+      publishReferenceCreatureAnatomyState();
+    }
     // Preserve the confirmed critical shortcut AND add zero-integrity damage.
     // Non-bony appendages use structural penalties rather than Frattura.
     if (rule['legacyCriticalFracture'] == true) {
@@ -143,6 +209,7 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
       );
     }
     planarState['anatomicalParts'] = state;
+    publishReferenceCreatureAnatomyState();
     invalidateDerivedDataCaches();
     programmaSalvataggio();
   }
@@ -275,6 +342,15 @@ extension OculumAnatomicalPartsProbe on OculumPerformanceProbe {
   Map<String, dynamic> anatomicalPartsSnapshot() => _state.anatomicalPartState;
   List<Map<String, dynamic>> anatomicalPartsForCurrentSheet() =>
       _state.currentPrecisionBodyParts;
+  List<Map<String, dynamic>> anatomicalPartsForTarget(
+    Map<String, dynamic> token,
+  ) => _state.precisionPartsForToken(token);
+  bool anatomicalWeakPointAccessible(Map<String, dynamic> token) =>
+      _state.combatTokenHasAccessibleAnatomicalWeakPoint(token);
+  bool anatomicalTargetAvailable(String part) =>
+      _state.referenceAnatomicalTargetAvailable(part);
+  void recordStructuralDamage(String id, int before, int after) =>
+      _state.recordStructuralHpDamage(id, before, after);
   Future<void> anatomicalTargetHit(
     Map<String, dynamic> request, {
     required int hpLost,

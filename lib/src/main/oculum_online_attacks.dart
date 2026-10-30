@@ -2142,6 +2142,33 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .where((e) => e['type'] == 'pending_target' && e['effect'] is Map)
         .map((e) => e['effect'] as Map)
         .toList();
+    if (preparedEffects.any(
+      (e) => const {
+        'bottled_cloud_open',
+        'bottled_cloud_stop',
+      }.contains(e['target']),
+    )) {
+      final cloud = preparedEffects.firstWhere(
+        (e) => const {
+          'bottled_cloud_open',
+          'bottled_cloud_stop',
+        }.contains(e['target']),
+      );
+      maximumTargets = max(
+        1,
+        readIntValue(cloud['maximumTargets'], fallback: 1),
+      );
+      minimumTargets = readIntValue(
+        cloud['minimumTargets'],
+        fallback: 1,
+      ).clamp(1, maximumTargets);
+      final side = combatScoutSide(sheetTagAt(schedaCorrente));
+      tokens.removeWhere(
+        (t) => combatScoutSide(onlineCombatTokenTag(t)) == side,
+      );
+      byId.removeWhere((key, value) => !tokens.contains(value));
+      if (tokens.isEmpty) return;
+    }
     if (senkaThousandCutsPending) {
       initialChoice = 'riflessi';
       choices.removeWhere((choice) => choice.id != 'riflessi');
@@ -2836,6 +2863,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'scope': permissionScope,
           'encounterId': encounter,
           'sourceTag': sourceTag,
+          'activityResource': _writableOnlineCombatTokens()
+              .where((t) => combatTokenMatchesSheet(t, sourceTag))
+              .firstOrNull?['lastTurnResource'],
           'titleItemIds': equippedItemTitleIds(),
           'sourceTotalPower': scoutTotalPowerAt(schedaCorrente),
           if (eligibleCorruptionPassive)
@@ -3176,6 +3206,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         }
         if (!claimExplosiveCards(request)) return;
         claimLusierTitleAttack(request, controlledPlan.targetIds.length);
+        claimBottledCloudAttack(request, controlledPlan.targetIds.length);
         claimSenkaAttack(request);
         if (guardianSword) {
           request['damage'] =
@@ -3403,6 +3434,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   Future<void> sendOnlineCombatRequest(Map<String, dynamic> request) async {
+    if (bottledCloudAttackInterrupted(request)) return;
     if (!escapeAttackAllowed(request)) return;
     attachPendingCombatTurnResources(request);
     if (realtimeService?.isConnected != true && localTurnCombat) {
@@ -3685,6 +3717,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   void receiveLocalCombatAttack(Map<String, dynamic> request) {
+    if (bottledCloudAttackInterrupted(request)) return;
     if (!escapeAttackAllowed(request) ||
         escapeTokenIsOut('${request['targetTag']}')) {
       request['status'] = 'cancelled';
@@ -4073,8 +4106,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final shadowAvoided =
           payload['senkaShadowAvoided'] == true ||
           payload['senkaImpaleUnavailable'] == true;
+      final anatomicalUnavailable =
+          payload['referenceAnatomicalTargetUnavailable'] == true;
+      if (anatomicalUnavailable) {
+        request['referenceAnatomicalTargetUnavailable'] = true;
+      }
       if (shadowAvoided) request['senkaShadowAvoided'] = true;
-      final outcome = shadowAvoided
+      final outcome = shadowAvoided || anatomicalUnavailable
           ? OculumAttackOutcome.avoided
           : isCounter
           ? (counterPercent > 0
@@ -4208,6 +4246,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['schiantoReactionAvailable'] =
           payload['schiantoReactionAvailable'] == true;
       final rawReceipt = payload['damageReceipt'];
+      final rawStructuralReceipt = payload['structuralDamageReceipt'];
+      if (rawStructuralReceipt is Map &&
+          rawStructuralReceipt['id'] == request['id'] &&
+          rawStructuralReceipt['scope'] == request['scope'] &&
+          rawStructuralReceipt['encounterId'] == request['encounterId'] &&
+          rawStructuralReceipt['targetTag'] == request['targetTag']) {
+        request['structuralDamageReceipt'] = {
+          'id': request['id'],
+          'scope': request['scope'],
+          'encounterId': request['encounterId'],
+          'targetTag': request['targetTag'],
+          'hpLost': readIntValue(
+            rawStructuralReceipt['hpLost'],
+          ).clamp(0, 100000000),
+          'lethalBeforeRecovery':
+              rawStructuralReceipt['lethalBeforeRecovery'] == true,
+        };
+      }
       if (rawReceipt is Map) {
         request['damageReceipt'] = <String, dynamic>{
           for (final key in const [
@@ -4251,6 +4307,17 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         );
       }
       recordEncounterRewardCombatResult(request);
+      applyBottledCloudStopResult(
+        request,
+        hit:
+            outcome != OculumAttackOutcome.avoided &&
+            !(payload['defenseChoice'] == 'resistenza' && defense >= attack),
+        resolution: payload['bottledCloudStopReceipt'] is Map
+            ? Map<String, dynamic>.from(
+                payload['bottledCloudStopReceipt'] as Map,
+              )
+            : null,
+      );
       receiveRewardSupportReceiptsFromReply(payload);
       unawaited(retryGuardianSecondaryOffers());
       if (request['guardianSecondaryEvent'] != true &&
@@ -4699,6 +4766,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['status'] = 'cancelled';
       return;
     }
+    if (bottledCloudAttackInterrupted(request)) return;
     if (request['guardianSecondaryEvent'] != true) {
       prepareGuardianGoldIncomingAttack(request);
     }
@@ -4862,6 +4930,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             difficulty: '${request['difficulty'] ?? 'normale'}',
           );
     if (mantleDefense || tailDefense) outcome = OculumAttackOutcome.full;
+    if (!referenceAnatomicalTargetAvailable(
+      '${request['targetBodyPart'] ?? ''}',
+    )) {
+      outcome = OculumAttackOutcome.avoided;
+      request['referenceAnatomicalTargetUnavailable'] = true;
+      aggiungiLog(
+        '[ANATOMIA] La parte mirata è nascosta o non più presente; nessun danno.',
+      );
+    }
     if (isLunarGuardianCoreCreature &&
         request['targetBodyPart'] == 'core' &&
         !lunarGuardianCoreExposed) {
@@ -5604,6 +5681,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     boneRuneAfterHpDamage();
     request['damageReceipt'] = receipt;
+    final structuralReceipt = structuralDamageReceiptFor(request);
+    if (structuralReceipt != null) {
+      request['structuralDamageReceipt'] = structuralReceipt;
+    }
+    resolveBottledCloudPhase(request, critical: critical);
+    applyBottledCloudStopResult(
+      request,
+      hit: !resisted && outcome != OculumAttackOutcome.avoided,
+    );
     recordEncounterRewardCombatResult(request);
     // The hit is absorbed with the equipment that was active when it landed.
     // Only then may the critical interrupt the transformation.
@@ -5618,18 +5704,26 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     claimCloudBarrierCritical(request);
     recordEscapeDamage(request);
     if (outcome != OculumAttackOutcome.avoided &&
-        const [
-              'hpLost',
-              'shieldLost',
-              'oculumShieldLost',
-              'temporaryHpLost',
-            ].fold<int>(0, (n, k) => n + readIntValue(receipt[k])) >
-            0) {
+        (const [
+                  'hpLost',
+                  'shieldLost',
+                  'oculumShieldLost',
+                  'temporaryHpLost',
+                ].fold<int>(0, (n, k) => n + readIntValue(receipt[k])) >
+                0 ||
+            structuralHpLostForRequest(
+                  request,
+                  readIntValue(receipt['hpLost']),
+                ) >
+                0)) {
       resolvePrecisionBodyHit(request);
       rememberPrecisionBodyDiscovery(request);
       await resolveAnatomicalTargetHit(
         request,
-        hpLost: readIntValue(receipt['hpLost']),
+        hpLost: structuralHpLostForRequest(
+          request,
+          readIntValue(receipt['hpLost']),
+        ),
         critical: critical,
       );
     }
@@ -5727,6 +5821,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 'lusier_regal_strike',
                 'lusier_open_ray',
                 'lusier_thin_ray',
+                'bottled_cloud_open',
+                'bottled_cloud_stop',
                 'senka_thousand_cuts',
                 'senka_moon_cuts',
                 'senka_shadow_step',

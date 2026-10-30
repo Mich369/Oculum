@@ -8,7 +8,7 @@ final _celestialReferenceBaseEntries = <MonsterBookEntry>[
     'Nuvola in bottiglia',
     ['mezzano', 'nuvole_rocciose'],
     'fulmine',
-    'Una creatura di nube compatta, con un grande occhio centrale viola e mani vaporose. Due ricevitori di fulmini emergono dalla parte alta; una piccola bottiglia è collegata al corpo da un collo di vapore. La bottiglia è il primo punto debole: un critico la rompe e libera la seconda fase, recuperando il 40% della Vita massima. Senza rottura anticipata, la seconda fase inizia al 15% Vita e recupera il 75% della Vita massima, entro il massimo. Usa attacchi di Fulmine. All’Open una folgore raggiunge i ricevitori e alimenta una scarica 2d50+25 su massimo 12 avversari, con +15% Danni per persona. Il Buff Open dà una Reazione veloce a ogni nuovo turno e potenzia Fulmine ferma-azione dal 20% e un quarto dei Danni al 60% e metà Danni; la porzione di danno viene inflitta anche quando l’interruzione fallisce.',
+    'Una creatura di nube compatta, con un grande occhio centrale viola e mani vaporose. Due ricevitori di rame emergono dalla parte alta; una piccola bottiglia è collegata al corpo da un collo di vapore. La bottiglia è il primo punto debole: un critico mirato che danneggia la Vita la rompe e libera la seconda fase, recuperando il 40% della Vita massima. Senza rottura anticipata, la seconda fase inizia al 15% Vita e recupera il 75% della Vita massima, entro il massimo. Il colpo letale la uccide senza trasformarla; gli Scudi critici proteggono la bottiglia. Usa attacchi di Fulmine. All’Open una folgore raggiunge i ricevitori e alimenta una scarica Danni attuali + 2d50+25 su massimo 12 avversari, con +15% Danni per ogni persona dopo la prima. Il Buff Open dà una Reazione veloce a ogni nuovo turno personale e potenzia Fulmine ferma-azione dal 20% e un quarto dei Danni al 60% e metà Danni; la porzione di danno viene inflitta anche quando l’interruzione fallisce. Se non c’è un’Azione in corso, l’interruzione consuma la prossima Azione disponibile senza togliere Reazioni.',
     'La bottiglia che lo contiene, prima che venga rotta nella prima fase.',
     [3, 3, 5, 4],
     3,
@@ -23,6 +23,9 @@ final _celestialReferenceBaseEntries = <MonsterBookEntry>[
       'bottleCriticalHealPercent': 40,
       'openMaximumTargets': 12,
       'openDamagePerTargetPercent': 15,
+      'bottleCriticalRequiresHpDamage': true,
+      'lethalHitSkipsSecondPhase': true,
+      'openBonusStartsAtSecondTarget': true,
     },
     const {},
   ).copyWith(
@@ -223,11 +226,12 @@ final _celestialReferenceTechniques = <String, MonsterConcreteTechnique>{
   ),
   'bottled_cloud_stop': _octoberMove(
     'Fulmine ferma-azione',
-    '20% di fermare un’Azione, infliggendo comunque un quarto dei Danni totali. Con Buff Open: 60% e metà dei Danni totali',
+    '20% di fermare un’Azione, infliggendo comunque un quarto dei Danni attuali. Con il potenziamento della propria Open: 60% e metà Danni. Se nessuna Azione è in corso, consuma la prossima disponibile; le Reazioni restano disponibili',
     'bottled_cloud_stop',
     [1, 1, 1],
     element: 'fulmine',
     costs: [2, 3, 4],
+    recipient: 'nemico',
   ),
   'solar_beast_horn': _celestialDamage(
     'Affondo del corno solare',

@@ -1038,12 +1038,15 @@ CharacterArt _oculumAuthoredMonsterBookArt(MonsterBookEntry monster) {
       }
     }
   }
-  return oculumCompleteMonsterOpen(
+  final completed = oculumCompleteMonsterOpen(
     art,
     name: monster.nameIt,
     level: monster.stats['level'] ?? 0,
     grade: oculumGradeForLevel(monster.stats['level'] ?? 0),
   );
+  return monster.id == 'nuvola_in_bottiglia'
+      ? oculumConfigureBottledCloudArt(completed)
+      : completed;
 }
 
 CharacterArt _rawMonsterBookArt(MonsterBookEntry monster) =>
@@ -1824,7 +1827,8 @@ CharacterArt oculumCompleteMonsterOpen(
   required int level,
   required int grade,
 }) {
-  if (name.startsWith('Nuvì') ||
+  if (oculumBottledCloudArt(art) ||
+      name.startsWith('Nuvì') ||
       name == 'Thunder Bot' ||
       art.skills.any((s) => s.nome == 'Volo naturale')) {
     return art;

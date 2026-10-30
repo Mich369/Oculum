@@ -151,6 +151,8 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
           'total_power_burst',
           'total_power_accuracy',
           'sand_tail_attack',
+          'bottled_cloud_stop',
+          'bottled_cloud_open',
         }.contains(e.target),
   )) {
     return {OculumCombatAbilityRole.attack};
@@ -271,6 +273,8 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
           'total_power_burst',
           'total_power_accuracy',
           'sand_tail_attack',
+          'bottled_cloud_stop',
+          'bottled_cloud_open',
         }.contains(e.target),
   )) {
     return OculumCombatAbilityRole.attack;

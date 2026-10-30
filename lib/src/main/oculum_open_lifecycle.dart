@@ -176,7 +176,14 @@ extension _OculumOpenLifecycle on _OculumHomePageState {
           ..valueExpression = effect.valueExpression.replaceAll(
             RegExp(r'\bmonster_open_bonus\b'),
             '$bonus',
-          ),
+          )
+          ..narrativeText = effect.target == 'bottled_cloud_stop'
+              ? jsonEncode({
+                  ...oculumBottledCloudEffectData(effect.narrativeText),
+                  'ownOpenEmpowered': state.skillEmpowered,
+                  'ownOpenLifecycleId': state.id,
+                })
+              : effect.narrativeText,
     ];
   }
 

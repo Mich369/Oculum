@@ -198,6 +198,13 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'weak_horror_mastino' =>
+      'assets/oculum/home_art/theme_mastino_cripta_v1.png',
+    'forest_demon' => 'assets/oculum/home_art/theme_forest_demon_v1.png',
+    'ciclo_forest_demon_blu' =>
+      'assets/oculum/home_art/theme_forest_demon_blu_v1.png',
+    'mezzo_demone_massiccio' =>
+      'assets/oculum/home_art/theme_mezzo_demone_massiccio_v1.png',
     'mezzo_demone_cosciente' =>
       'assets/oculum/home_art/theme_mezzo_demone_cosciente_v1.png',
     'nuvola_in_bottiglia' =>

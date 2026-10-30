@@ -117,7 +117,8 @@ extension _OculumWeakPoints on _OculumHomePageState {
       return false;
     }
     // Knowing a purchased page does not open the Guardian's intact chest.
-    return !oculumLunarGuardianCoreMonsterIds.contains(id) ||
+    return !(oculumLunarGuardianCoreMonsterIds.contains(id) ||
+            const {'costrutto_minore', 'nuvola_in_bottiglia'}.contains(id)) ||
         precisionPartsForToken(token).any((part) => part['weak'] == true);
   }
 
@@ -141,40 +142,49 @@ extension _OculumWeakPoints on _OculumHomePageState {
   }
 
   List<Map<String, dynamic>>
-  get currentPrecisionBodyParts => oculumLunarGuardianCorePrecisionParts(
-    oculumPrecisionBodyParts(
-          monster: monsterBookEntryById(faunaCurrentMonsterId),
-          solarFaceUncovered: solarFaceUncovered,
-          arts: arti,
-          description:
-              '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['razza'] ?? ''} ${backgroundController.text}',
-        )
-        .followedBy(
-          isConstructCharacter
-              ? [
-                  {
-                    'id': 'core',
-                    'label': 'Nucleo del Costrutto',
-                    'penalty': 0,
-                    'weak': true,
-                  },
-                ].where(
-                  (p) => !oculumPrecisionBodyParts(
-                    monster: monsterBookEntryById(faunaCurrentMonsterId),
-                    arts: arti,
-                  ).any((part) => part['id'] == 'core'),
-                )
-              : <Map<String, dynamic>>[],
-        )
-        .where(
-          (part) =>
-              !isLunarOrderCreature ||
-              !oculumLunarCrystalIds.contains(part['id']) ||
-              intactLunarCrystalIds.contains(part['id']),
-        )
-        .toList(),
-    monsterId: faunaCurrentMonsterId,
-    coreExposed: lunarGuardianCoreExposed,
+  get currentPrecisionBodyParts => oculumArmadilloPrecisionParts(
+    oculumReferenceCreaturePrecisionParts(
+      oculumLunarGuardianCorePrecisionParts(
+        oculumPrecisionBodyParts(
+              monster: monsterBookEntryById(faunaCurrentMonsterId),
+              solarFaceUncovered: solarFaceUncovered,
+              arts: arti,
+              description:
+                  '${schedePersonaggio.isEmpty ? '' : schedePersonaggio[schedaCorrente]['razza'] ?? ''} ${backgroundController.text}',
+            )
+            .followedBy(
+              isConstructCharacter
+                  ? [
+                      {
+                        'id': 'core',
+                        'label': 'Nucleo del Costrutto',
+                        'penalty': 0,
+                        'weak': true,
+                      },
+                    ].where(
+                      (p) => !oculumPrecisionBodyParts(
+                        monster: monsterBookEntryById(faunaCurrentMonsterId),
+                        arts: arti,
+                      ).any((part) => part['id'] == 'core'),
+                    )
+                  : <Map<String, dynamic>>[],
+            )
+            .where(
+              (part) =>
+                  !isLunarOrderCreature ||
+                  !oculumLunarCrystalIds.contains(part['id']) ||
+                  intactLunarCrystalIds.contains(part['id']),
+            )
+            .toList(),
+        monsterId: faunaCurrentMonsterId,
+        coreExposed: lunarGuardianCoreExposed,
+      ),
+      monsterId: faunaCurrentMonsterId,
+      minorConstructCoreExposed: minorConstructCoreExposed,
+      bottledCloudPhase: bottledCloudPhaseNumber,
+      explicitMasterAnatomy: currentHasExplicitMasterAnatomy,
+    ),
+    closed: armadilloClosed,
   );
   List<Map<String, dynamic>> get publicPrecisionBodyParts => [
     for (final p in currentPrecisionBodyParts)
@@ -212,13 +222,51 @@ extension _OculumWeakPoints on _OculumHomePageState {
           : index == schedaCorrente
           ? lunarGuardianCoreExposed
           : savedCore is Map && savedCore['coreExposed'] == true;
-      return oculumLunarGuardianCorePrecisionParts(
-        oculumPrecisionBodyParts(
-          monster: monster,
-          solarFaceUncovered: uncovered,
+      final minorExposed = index == schedaCorrente
+          ? minorConstructCoreExposed
+          : public is Map && public['minorConstructCoreExposed'] is bool
+          ? public['minorConstructCoreExposed'] == true
+          : runtime is Map && oculumMinorConstructBoxBroken(runtime);
+      final cloudState = runtime is Map ? runtime['bottledCloud'] : null;
+      final cloudPhase = index == schedaCorrente
+          ? bottledCloudPhaseNumber
+          : public is Map && public['bottledCloudPhase'] is num
+          ? readIntValue(public['bottledCloudPhase'], fallback: 1)
+          : cloudState is Map && cloudState['fight'] == bottledCloudFightKey
+          ? readIntValue(cloudState['phase'], fallback: 1)
+          : 1;
+      final custom = monster.encounterRules['precisionBodyParts'];
+      final publicArmadillo = public is Map ? public['armadillo'] : null;
+      final savedArmadillo = runtime is Map ? runtime['armadillo'] : null;
+      final targetArmadilloClosed = index == schedaCorrente
+          ? armadilloClosed
+          : oculumArmadilloSpeciesIds.contains(monster.id) &&
+                oculumArmadilloStateIsClosed(
+                  publicArmadillo is Map
+                      ? publicArmadillo
+                      : savedArmadillo is Map
+                      ? savedArmadillo
+                      : const {},
+                  fightKey:
+                      '$onlineCombatEncounterId:${token['fightInstanceId'] ?? ''}',
+                  currentHp: readIntValue(token['currentHp'], fallback: 1),
+                );
+      return oculumArmadilloPrecisionParts(
+        oculumReferenceCreaturePrecisionParts(
+          oculumLunarGuardianCorePrecisionParts(
+            oculumPrecisionBodyParts(
+              monster: monster,
+              solarFaceUncovered: uncovered,
+            ),
+            monsterId: monster.id,
+            coreExposed: exposed,
+          ),
+          monsterId: monster.id,
+          minorConstructCoreExposed: minorExposed,
+          bottledCloudPhase: cloudPhase,
+          explicitMasterAnatomy: custom is List && custom.isNotEmpty,
         ),
-        monsterId: monster.id,
-        coreExposed: exposed,
+        closed: targetArmadilloClosed,
       );
     }
     final raw = index >= 0

@@ -796,6 +796,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
+    if (!armadilloCanUseAbility(effects)) return false;
     final sandTailMode = effects.any((e) => e.target == 'sand_tail_attack')
         ? 'attack'
         : effects.any((e) => e.target == 'sand_tail_parry')
@@ -834,6 +835,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     if (senkaEffects == null) return false;
     effects = senkaEffects;
     effects = prepareLunarGuardianEffects(effects);
+    effects = prepareBottledCloudEffects(effects);
     if (effects.any((e) => e.target == 'explosive_cards_damage')) {
       final selected = await prepareExplosiveCards(effects);
       if (selected == null) return false;
@@ -1322,6 +1324,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     // Validate the complete payment before consuming a turn resource. A
     // composite primary cost and an additional cost may name the same stat.
     if (!canPayArtSkillPayments(selectedPayments)) return false;
+    if (!armadilloCanUseAbility(effects)) return false;
     if (sandTailMode != null && !canPrepareSandTail(sandTailMode)) return false;
     final robotTechnique = effects
         .where((e) => e.type == 'meccanio')
@@ -1350,6 +1353,8 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 'lusier_regal_strike',
                 'lusier_open_ray',
                 'lusier_thin_ray',
+                'bottled_cloud_stop',
+                'bottled_cloud_open',
                 'senka_thousand_cuts',
                 'senka_moon_cuts',
                 'senka_shadow_step',
@@ -1415,7 +1420,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 : ownTurn
                 ? 'azione'
                 : 'reazione'),
-        preferFreeReaction: !effects.any((e) => e.target == 'rabbit_hat'),
+        preferFreeReaction: !effects.any(
+          (e) => e.target == 'rabbit_hat' || e.target.startsWith('armadillo_'),
+        ),
       )) {
         return false;
       }

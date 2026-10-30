@@ -306,6 +306,7 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
         .firstOrNull;
     final stamp =
         '$onlineCombatEncounterId:$selectedMasterInitiativeGroupId:${readIntValue(group?['completedFightCount'])}:$masterInitiativeRound';
+    bottledCloudPersonalTurn(token, stamp);
     var wave = false;
     faunaForOwnedSheet(tag, () {
       if (planarState['referenceTurnStamp'] == stamp) return;

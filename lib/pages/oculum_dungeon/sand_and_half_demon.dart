@@ -98,6 +98,36 @@ final _sandAndHalfDemonEntries = <MonsterBookEntry>[
     classificationTags: ['Mezzo demone', 'Cosciente'],
   ),
   _authoredPlanar(
+    'mezzo_demone_massiccio',
+    'Mezzo Demone Massiccio',
+    ['mezzano', 'demoniaco'],
+    'taglio',
+    'Variante cosciente tozza e massiccia, con pelle grigia spessa e due corna '
+        'laterali ricurve. Il volto superiore, con due occhi vigili, rimane '
+        'distinto dalla grande bocca orizzontale dentata fra il collo e il '
+        'torace. Ha due braccia possenti con mani artigliate, due gambe corte '
+        'e robuste e panni consumati stretti alla vita. È più resistente '
+        'della variante atletica, ma meno dotato nelle altre tre statistiche. '
+        'Può mostrarsi aggressivo e conserva coscienza e capacità di scegliere.',
+    'La bocca dello stomaco: la zona epigastrica al centro dell’addome superiore, sotto lo sterno.',
+    [6, 3, 2, 1],
+    2,
+    false,
+    false,
+    ['half_demon_rake', 'half_demon_guard'],
+    {
+      'authoredCanonical': true,
+      'conscious': true,
+      'dispositions': ['ostile', 'neutrale'],
+      'canonicalVariantOf': 'mezzo_demone_cosciente',
+    },
+    const {},
+  ).copyWith(
+    dropIds: ['artiglio_mezzo_demone'],
+    dropChances: {'artiglio_mezzo_demone': 50},
+    classificationTags: ['Mezzo demone', 'Cosciente', 'Massiccio'],
+  ),
+  _authoredPlanar(
     'shadow_devil',
     'Shadow Devil',
     ['shadow_hell'],

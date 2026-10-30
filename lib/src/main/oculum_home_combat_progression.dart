@@ -2951,6 +2951,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void restoreMasterInitiativeTurnResources(Map<String, dynamic> token) {
+    refreshBottledCloudTokenFight(token);
     restoreMasterInitiativeFastReactionsForToken(token);
     restoreMasterInitiativeTokenReactions(token);
     if (readIntValue(token['actionTurnRound'], fallback: -1) !=
@@ -2975,6 +2976,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token[field] = readIntValue(token[field]) + 1;
       }
       token['actionTurnRound'] = masterInitiativeRound;
+      oculumConsumeBottledCloudPendingActions(token);
       cycleTurnReactions(token);
       if (token['senkaClone'] == true) {
         token['senkaCloneFirstTurn'] = false;
@@ -5925,6 +5927,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     var dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
+    if (!referenceAnatomicalTargetAvailable(hitBodyPart)) {
+      aggiungiLog(
+        '[ANATOMIA] Parte non colpibile: il nucleo è protetto oppure la bottiglia non è più presente.',
+      );
+      return;
+    }
     if (sandLavaPacketAlreadyResolved(damagePacketId)) return;
     if (isConstructCharacter &&
         (hitBodyPart != null || attackKind.isNotEmpty)) {
@@ -6869,6 +6877,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           banditSourceId: nonLethalBanditSourceId,
         );
       }
+      recordStructuralHpDamage(damagePacketId, hpPrima, hp);
       if (lunarGuardianCoreDestroyed && hpPrima > 0) {
         recordFaunaFallenTurn();
       } else if (hp <= 0 && hpPrima > 0 && !nonLethal) {

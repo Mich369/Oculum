@@ -56,8 +56,12 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
               !skill.evo1.toLowerCase().contains('passiva automatica'),
         )
         .toList();
-    final sourceAppearance = monster.descIt.split(RegExp(r'(?<=[.!?])\s+')).first;
-    final sourceMaterials = monster.dropIds.map(oculumMonsterDropName).join(', ');
+    final sourceAppearance = monster.descIt
+        .split(RegExp(r'(?<=[.!?])\s+'))
+        .first;
+    final sourceMaterials = monster.dropIds
+        .map(oculumMonsterDropName)
+        .join(', ');
     if (skills.isEmpty) continue;
     final itemLevel = max(0, level ?? readIntValue(monster.stats['level']));
     final itemGrade = (grade ?? readIntValue(monster.stats['grade']))
@@ -689,23 +693,30 @@ List<InventoryItem> oculumGenerateMonsterLoot({
         },
       ),
     for (var i = 0; i < dropNames.length; i++)
-      InventoryItem(
-        nome: dropNames[i],
-        peso: oculumMonsterCyclePhase(monster).isNotEmpty ? .15 : 0,
-        quantita: 1,
-        gradoOggetto: safeGrade,
-        gradoRichiesto: safeGrade,
-        note: material
-            ? 'Materiale — Mammuth livello $safeLevel, grado $safeGrade. Arma: +$safeLevel Danni; armatura: +$safeGrade Difesa. La combinazione porta l’equipaggiamento almeno al grado del materiale, anche dal fabbro. Non puoi combinarlo da solo se il tuo grado è inferiore.'
-            : 'Drop ottenuto all’uccisione di ${monster.nameIt}, livello $safeLevel, grado $safeGrade.',
-        monsterLoot: {
-          ...metadata,
-          'id': '$killId:material:$i',
-          'material': true,
-          'weaponBonus': safeLevel,
-          'armorBonus': safeGrade,
-        },
-      ),
+      oculumArmadilloMaterialDrop(
+            dropNames[i],
+            level: safeLevel,
+            grade: safeGrade,
+            receiptId: '$killId:material:$i',
+            metadata: metadata,
+          ) ??
+          InventoryItem(
+            nome: dropNames[i],
+            peso: oculumMonsterCyclePhase(monster).isNotEmpty ? .15 : 0,
+            quantita: 1,
+            gradoOggetto: safeGrade,
+            gradoRichiesto: safeGrade,
+            note: material
+                ? 'Materiale — Mammuth livello $safeLevel, grado $safeGrade. Arma: +$safeLevel Danni; armatura: +$safeGrade Difesa. La combinazione porta l’equipaggiamento almeno al grado del materiale, anche dal fabbro. Non puoi combinarlo da solo se il tuo grado è inferiore.'
+                : 'Drop ottenuto all’uccisione di ${monster.nameIt}, livello $safeLevel, grado $safeGrade.',
+            monsterLoot: {
+              ...metadata,
+              'id': '$killId:material:$i',
+              'material': true,
+              'weaponBonus': safeLevel,
+              'armorBonus': safeGrade,
+            },
+          ),
   ];
   if ((monster.id == 'slime_blu' ||
           monster.id == 'slime_blu_helmeted' ||

@@ -5,6 +5,25 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Nuvola, scatole e armadilli — 30 ottobre',
+    titleEn: 'Cloud, boxes and armadillos — October 30',
+    contentIt: r'''
+Nuvola in bottiglia: un colpo letale la uccide prima che possa cambiare fase. Sopravvivendo, al 15% della Vita recupera il 75% della massima entro il massimo; rompere prima la bottiglia con un critico mirato che danneggia la Vita avvia invece la fase con recupero aggiuntivo del 40%. Difesa, Scudi e Scudi critici conservano la loro protezione. La bottiglia non rimane un bersaglio dopo il cambio di fase.
+La scarica Open aggiunge i normali Danni attuali e 2d50+25 Fulmine, su massimo12 bersagli. L'aumento del15% per persona parte dal secondo bersaglio: uno0%, due15%, tre30%. Una Reazione veloce aggiuntiva per turno personale con il Buff. Fulmine ferma Azione è sempre utilizzabile: un quarto dei Danni attuali e20% di fermare un'Azione, oppure metà e60% con il potenziamento della propria Open. Se non c'è un'Azione in corso, consuma la prossima disponibile; non sottrae Reazioni o Reazioni veloci. Costi, probabilità, bersagli e recuperi restano modificabili.
+Costrutto Minore: il nucleo è dentro la scatola e non è mirabile finché la scatola non viene rotta. Colpi mirati alla scatola danneggiano corpo e integrità dopo Difesa e Scudi. Vita scatola iniziale delegata:35% della massima, minimo3, modificabile nell'editor parti; un critico non la apre automaticamente. Le anatomie e gli override espliciti del Master sono conservati.
+Pinepine ha la pigna integra e una squama naturalmente più tenera, non una ferita preesistente. Fragilità al Fuoco ed esplosione rimangono.
+Mezzo Demone Massiccio: variante distinta e cosciente, più resistente e meno dotata nelle altre statistiche; base iniziale modificabile6RES/3VOL/2MAT/1OCU a livello2, stesso totale base del Mezzo Demone atletico3/4/3/2.
+Armadilli: specie base e varianti Sabbia, Cristallo e Legno. Appallottolamento usa un'Azione oppure una Reazione e concede +6/+9/+16CM nelle formeI/II/III finché chiusi. Possono rotolare e speronare; non attaccare con gli artigli esposti finché chiusi. Il bilanciamento iniziale e i materiali restano modificabili, senza inventare immunità o eccezioni degli altri mostri.
+''',
+    contentEn: r'''
+Bottled Cloud: a lethal hit kills it before phase change. A surviving cloud reaching15% HP gains75% maximum HP, capped; an earlier aimed critical that damages body HP breaks its bottle and starts phase two with40% additional recovery instead. Defense and all Shields retain their rules. The bottle is no longer targetable after phase change.
+Its Open adds current Damage and2d50+25 Lightning against up to12 targets; +15% per target starts with the second. Its Buff adds a Fast Reaction each personal turn. The always-available stop skill deals25% current Damage with20% Action interruption, empowered to50% and60% respectively. If no Action is pending, consume the next available Action, preserving Reactions and Fast Reactions. Costs, chances, targets and cooldowns are editable.
+Minor Construct core is untargetable until its box is broken. Aimed box hits damage both body and box after Defense and Shields; delegated editable initial box HP is35% maximum body HP, minimum3. Critical hits do not automatically open it. Explicit Master anatomy remains authoritative.
+Pinepine has an intact cone with a naturally softer scale, preserving Fire vulnerability and explosion. The stocky conscious Half Demon is a separate variant, with editable base6/3/2/1 at level2, preserving the athletic variant3/4/3/2.
+Armadillos have base, Sand, Crystal and Wood variants. Rolling up uses one Action or Reaction and grants6/9/16CM for formsI/II/III while closed. They can roll and ram, but not use exposed claws while closed. Delegated balance and materials remain editable without borrowing unrelated immunities.
+''',
+  ),
+  ManualSection(
     titleIt: 'Sonno, bisogni e giorni automatici — 29 ottobre',
     titleEn: 'Sleep, needs and automatic days — October 29',
     contentIt: r'''

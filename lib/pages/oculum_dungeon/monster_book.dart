@@ -23,6 +23,7 @@ part 'planar_monsters.dart';
 part 'canonical_monster_variants.dart';
 part 'masked_monsters.dart';
 part 'ordinary_creatures.dart';
+part 'armadillo_creatures.dart';
 part 'bramble.dart';
 part 'storm_and_bandits.dart';
 part 'rebirth_rage_evergreen.dart';
@@ -954,9 +955,9 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Pinepine',
     nameEn: 'Pinepine',
     descIt:
-        'Pigna umanoide alta circa due metri, con tratti morbidi e due occhi piccoli visibili. La corazza è la sua stessa pigna: squame legnose sovrapposte, ciuffi di aghi verdi davanti e anche dietro la testa e lungo la nuca. Buffo e curioso, tranquillo finché non provocato. Mostro intermedio, livello 0. Base: Resilienza 6, Volontà 3, Materia 10, Oculum 0, Scudo Critico 1 e Resistenza 50%. Punto debole: Ferite Aperte e Fuoco. Se viene colpito dal Fuoco, la pelle esplode: il Pinepine subisce i danni della propria esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Con critico sul drop ottieni 20 Scudo Pigna: dimezza i danni non di fuoco; contro fuoco o simili esplode, coinvolgendo anche chi lo indossa.',
+        'Pigna umanoide alta circa due metri, con tratti morbidi e due occhi piccoli visibili. La corazza è la sua stessa pigna: squame legnose sovrapposte, ciuffi di aghi verdi davanti e anche dietro la testa e lungo la nuca. Buffo e curioso, tranquillo finché non provocato. Mostro intermedio, livello 0. Base: Resilienza 6, Volontà 3, Materia 10, Oculum 0, Scudo Critico 1 e Resistenza 50%. Punto debole anatomico: una squama naturalmente più tenera nella pigna integra. Fragilità elementale: Fuoco. Se viene colpito dal Fuoco, la pelle esplode: il Pinepine subisce i danni della propria esplosione, pari alla sua Vita rimanente + Danni, insieme a tutte le creature entro 2 metri, alleati inclusi. Con critico sul drop ottieni 20 Scudo Pigna: dimezza i danni non di fuoco; contro fuoco o simili esplode, coinvolgendo anche chi lo indossa.',
     descEn:
-        'Intermediate creature with 50% resistance, weak to open wounds and fire. Fire detonates its cone skin, dealing its remaining Life + Damage to Pinepine itself and every creature within 2 metres, including allies.',
+        'Two-metre pine-cone humanoid with an intact natural shell, a softer scale as its anatomical weak point, 50% resistance and vulnerability to fire. Fire detonates its cone skin, dealing its remaining Life + Damage to Pinepine itself and every creature within 2 metres, including allies.',
     elementId: 'natura',
     spriteAssetPath: '',
     isMiniBoss: true,
@@ -971,6 +972,10 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'materia': 10,
       'oculum': 0,
     },
+    weakPointIt:
+        'Una squama naturalmente più tenera fra le protezioni della pigna integra.',
+    weakPointEn:
+        'A naturally softer scale among the plates of its intact pine-cone shell.',
     skillIds: ['pinepine_cone_skin'],
     dropIds: ['scudo_pigna'],
   ),
@@ -2189,9 +2194,9 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Forest Demon',
     nameEn: 'Forest Demon',
     descIt:
-        'Rettile Gigante, livello 10/30, Grado I/II/V. Carica Devastante usa gli Oculum immessi, diventa impossibile da bloccare senza almeno il doppio del suo livello e al grado alto raddoppia i danni. Scatto Arretrante protegge e raddoppia la Carica successiva; Scatto Immateriale concede +3/+10/+15 Materia. Ultimate Carica Finale: aura rossa, Oculum ×3 o ×4 contro una parete. Con 20 Forest Demon Weapon: tiro DT 18+. Titoli: Dirty Forest Demon Killer e Heavy Horn. Drop adulto: carne, scarti e Ossa Dure.',
+        'Rettile quadrupede massiccio lungo circa10metri, con squame olivastre e brune, quattro zampe robuste, coda spessa, due occhi e due corna laterali più un corno frontale da rinoceronte. Livello 10/30, Grado I/II/V. Carica Devastante usa gli Oculum immessi, diventa impossibile da bloccare senza almeno il doppio del suo livello e al grado alto raddoppia i danni. Scatto Arretrante protegge e raddoppia la Carica successiva; Scatto Immateriale concede +3/+10/+15 Materia. Ultimate Carica Finale: aura rossa, Oculum ×3 o ×4 contro una parete. Con 20 Forest Demon Weapon: tiro DT 18+. Titoli: Dirty Forest Demon Killer e Heavy Horn. Drop adulto: carne, scarti e Ossa Dure.',
     descEn:
-        'Giant forest reptile. Devastating Charge, Backward Dash and Immaterial Dash make it a mobile bruiser.',
+        'Massive ten-metre quadruped forest reptile with olive-brown scales, four legs, one thick tail, two eyes, two side horns and one rhinoceros-like front horn. Devastating Charge, Backward Dash and Immaterial Dash make it a mobile bruiser.',
     elementId: 'natura',
     spriteAssetPath:
         'assets/oculum_dungeon/generated_sprites/enemies/forest_demon.png',
@@ -5123,7 +5128,7 @@ String monsterBookSkillText(String rawId) {
     case 'archangel_order':
       return 'ordine dell arcangelo — I/un alleato si muove o si difende; II/due alleati; III/una reazione nemica viene negata.';
     case 'pinepine_cone_skin':
-      return 'Pelle di Pigna — I/dimezzi i danni non di Fuoco. Se il Fuoco ti colpisce, la pelle esplode e danneggia anche te: infligge Vita rimanente + Danni, anche a tutte le creature entro 2 metri; II/proteggi un alleato vicino, ma il Fuoco fa esplodere la pelle e infligge la tua Vita rimanente + Danni a entrambi e alle altre creature entro 2 metri; III/quando Fuoco o simili ti colpiscono, esplodi entro 2 metri e subisci anche tu i danni dell’esplosione, pari alla tua Vita rimanente + Danni, insieme agli alleati e ai nemici vicini. Debole a Ferite Aperte e Fuoco.';
+      return 'Pelle di Pigna — I/dimezzi i danni non di Fuoco. Se il Fuoco ti colpisce, la pelle esplode e danneggia anche te: infligge Vita rimanente + Danni, anche a tutte le creature entro 2 metri; II/proteggi un alleato vicino, ma il Fuoco fa esplodere la pelle e infligge la tua Vita rimanente + Danni a entrambi e alle altre creature entro 2 metri; III/quando Fuoco o simili ti colpiscono, esplodi entro 2 metri e subisci anche tu i danni dell’esplosione, pari alla tua Vita rimanente + Danni, insieme agli alleati e ai nemici vicini. Punto debole nella squama tenera della pigna integra; fragile al Fuoco.';
     case 'lesser_frost_demon_cold_blood':
       return 'sangue freddo — I/chi ti ferisce in mischia riceve Congelamento; II/Ricordo Vitale prepara la cura; III/la reazione fredda colpisce anche chi insiste a restare vicino.';
     case 'intermediate_frost_demon_ray':
@@ -5492,6 +5497,7 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
               ..._octoberCreatureEntries,
               ..._celestialReferenceEntries,
               ..._microRealmCreatureEntries,
+              ..._armadilloCreatureEntries,
               ..._solarGuardAndGrofixEntries,
               ..._lunarGuardEntries,
               ..._spineHedgehogEntries,
@@ -5748,6 +5754,7 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _octoberCreatureEntries;
   yield* _celestialReferenceEntries;
   yield* _microRealmCreatureEntries;
+  yield* _armadilloCreatureEntries;
   yield* _solarGuardAndGrofixEntries;
   yield* _lunarGuardEntries;
   yield* _spineHedgehogEntries;

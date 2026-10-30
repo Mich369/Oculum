@@ -9,8 +9,18 @@ const oculumLunarCrystalIds = <String>[
   'lunar_crystal_rear',
 ];
 
-int oculumCloudOpenDamage(int rolledBase, int targets) =>
-    (max(0, rolledBase) * (100 + 15 * targets.clamp(1, 12)) ~/ 100).toInt();
+int oculumCloudOpenDamage(
+  int rolledBase,
+  int targets, {
+  int percentPerExtraTarget = 15,
+  int maximumTargets = 12,
+}) =>
+    (max(0, rolledBase) *
+            (100 +
+                max(0, percentPerExtraTarget) *
+                    max(0, targets.clamp(1, max(1, maximumTargets)) - 1)) ~/
+            100)
+        .toInt();
 
 extension _OculumCelestialRuntime on _OculumHomePageState {
   bool get isLunarOrderCreature =>

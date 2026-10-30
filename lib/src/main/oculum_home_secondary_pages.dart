@@ -9236,6 +9236,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'guardian_golden_mace',
                 'sand_tail_attack',
                 'sand_tail_parry',
+                'armadillo_roll_up',
+                'armadillo_uncurl',
+                'armadillo_closed_required',
                 'feralis_fury',
                 'monk_ki',
                 'monk_seal',
@@ -10374,6 +10377,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
     if (artIndex < 0 || artIndex >= arti.length) return;
     final targetArt = arti[artIndex];
+    if (oculumBottledCloudArt(targetArt)) {
+      await useBottledCloudOpen(targetArt, artIndex);
+      return;
+    }
     if (oculumGuardianGoldArt(targetArt)) {
       await useGuardianGoldOpen(targetArt, artIndex);
       return;
