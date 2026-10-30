@@ -1,0 +1,256 @@
+{
+  "date": "2026-10-30",
+  "species": "armadillo_corazzato",
+  "name": "Armadillo Corazzato",
+  "tool": "built-in image_gen",
+  "status": "DESKTOP_A_USER_APPROVED",
+  "canon": "Base70cm,4zampe corte artigliate,2occhi scuri,muso affusolato,1coda rastremata,placche cornee brune,ventrecrema; noarmi/abiti",
+  "sources": [
+    "AGENTS.md",
+    "docs/OCULUM_LORE_VISIVA.md",
+    "docs/DICITURE_UTENTE_2026-10-27.md",
+    "design/OCULUM-VISUAL-BIBLE.md",
+    "lib/pages/oculum_dungeon/armadillo_creatures.dart",
+    "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png"
+  ],
+  "proposals": [
+    {
+      "letter": "A",
+      "title": "Rotondo fra le radici",
+      "design": "Design A: a surprisingly round, broad-backed animal, low small pointed face and stubby paws, huge rounded chestnut-walnut horny scales overlapping asymmetrically like natural armor shingles. Cream underside clearly visible near the chin and between its front legs. It is sniffing a thin exposed root with one front paw gently raised; all four paws identifiable. Tail bends naturally toward the viewer. Not fluffy, no mammalian fur mane.",
+      "scene": "A verdant ancient woodland floor with gnarled mossy roots, little unfurling fern shoots and soft lichen. Ground-level three-quarter side view, animal on the RIGHT, turned gently toward the left. Layered dark green woodland depth across the quiet middle, diffuse cool forest light, earthy walnut and sage-green palette.",
+      "id": "armadillo_corazzato_A_v2",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_A_v2.png",
+      "reference": "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+      "prompt": "Use case: precise-object-edit. Asset type: original Oculum monster-theme landscape. Recompose image1 while preserving EXACTLY the same charming round Armadillo Corazzato animal design: chestnut/walnut overlapping natural horn plates, cream soft belly, tapered pointed muzzle, two dark eyes, FOUR short clawed paws and ONE tapered tail, no new anatomy or equipment. Image2is ONLY matte Rame fatato soft painting technique, no fairies or amber shore copied. The animal from image1 is too large for the UI: make its ENTIRE silhouette including snout/paws/tail fit strictly inside x=68%to94%of canvas, y=48%to91%. This means the creature is only26%of the total canvas width. Keep it complete and cleanly readable, not clipped, at least5%from borders. The middle vertical band35%to65%must contain only quiet low-contrast green atmospheric forest depth, NOpart of the animal or bold foreground branches. Keep the mossy forest/root setting and curious root-sniffing pose, original handmade matte anime-fantasy brushwork, restrained earthpigments. Full-bleed WIDE16:10background, not sprite/collage. No text/logo/UI, no Sun/Moon or other creatures, no new powers. Do not change the design; ONLY reduce animal scale/reposition and reconstruct woodland where it stood.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_A_v1.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png"
+      ],
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-b2faa99d-ab67-45f2-95c2-d7f9e4e9c666.png",
+      "user_approved": true,
+      "visually_inspected": true,
+      "proof_scope": "Local visual inspection; not real UI or package verification",
+      "width": 1586,
+      "height": 992,
+      "png_mode": "RGB",
+      "format": "PNG",
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "sha256": "385136a342d5d30e957aa5be32955354a86bc610c5659f970034f8cc0244ee78",
+      "generated_original_sha256": "385136a342d5d30e957aa5be32955354a86bc610c5659f970034f8cc0244ee78",
+      "original_copy_exact": true,
+      "approval_quote": "A — Tondo, placche noce",
+      "approval_scope": "DESKTOP_ONLY"
+    },
+    {
+      "letter": "B",
+      "title": "Lungo presso il ruscello",
+      "design": "Design B: distinctly long and very low to the ground, slender pointed muzzle and long tapered tail, narrower shoulders than hips; a sequence of many narrow transverse flexible brown tobacco/caramel horny bands across its armor, with small darker overlapping plates along the flanks. Short claws broad enough to grip wet soil. Dynamic cautious trot, all FOURpaws in a clear gait, not rolling into a ball, not a crocodile.",
+      "scene": "A green willow-lined shallow stream with smooth wet pebbles, bright leaf-green reeds and small overhanging ferns, no flower fairies. Animal on the LEFT along the bank, facing right, seen in side three-quarter profile. Muted teal-green water gently crosses the lower scene while the middle band remains softly reflected and clear. Cooler diffuse morning-like ambient light without showing any celestial object; tobacco and caramel browns contrast with willow green.",
+      "id": "armadillo_corazzato_B_v2",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_B_v2.png",
+      "reference": "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+      "prompt": "Use case: precise-object-edit. Edit image1's layout only, preserving EXACTLY the same long low Armadillo Corazzato with brown flexible horny transverse bands, soft cream belly, long pointed snout, two dark eyes, FOUR short clawed paws in a cautious trot and ONE tapered tail. Its tail in image1 is clipped at the left canvas edge: reconstruct the complete tapered tail tip and reposition/scale the ENTIRE animal so its leftmost tail pixel is at least8%of canvas width from left edge; the entire head-to-tail silhouette must fit within x=8%to33%, y=54%to87%. The animal should be SMALL in a broad willow-stream landscape, not a closeup. Do not shorten or remove its tail and do not remove legs. Keep all image1's lovely cool willow-green stream environment and original matte handmade anime-fantasy Rame fatato technique; image2is technique ONLY, no shore/orange sunset/faeries. The middle vertical35–65%band must be quiet low-contrast open distant green woodland and water with no animal crossing it. Full-bleed WIDE16:10 background, no labels/text/UI/logo, no other creatures, no Sun/Moon in sky, no new anatomy or powers.",
+      "references": [
+        "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_B_v1.png",
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png"
+      ],
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-2b9726ac-951a-4dcd-8d11-00c08bce4353.png",
+      "user_approved": false,
+      "visually_inspected": true,
+      "proof_scope": "Local visual inspection; not real UI or package verification",
+      "width": 1585,
+      "height": 992,
+      "png_mode": "RGB",
+      "format": "PNG",
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "sha256": "db67de908025db77588010e4385676708bd7939a6626db4d7ecfa993c005b82a",
+      "generated_original_sha256": "db67de908025db77588010e4385676708bd7939a6626db4d7ecfa993c005b82a",
+      "original_copy_exact": true
+    },
+    {
+      "letter": "C",
+      "title": "Dorso alto nella felceta",
+      "design": "Design C: tall domed but angular carapace, short stocky legs and an unusually delicate long pointed face peeking beneath its broad brow; broad angular walnut-grey and umber horny plates with beveled organic ridges and flexible seams. Stout short tapering tail, TWOdark eyes and round restrained ears. Prudently lowers the snout and braces its four claws at a fern clearing edge, partly drawing shoulders inward but NOT fully curled, every paw remains visible. Not a hedgehog: no spines.",
+      "scene": "A cool emerald fern grove with upright moss-coated stones, soft fallen leaves and dense green foliage, seen slightly from above. Animal on the RIGHT, body diagonally oriented toward the lower left. Make the surrounding leaves larger than the70cm animal to establish small scale. Dusky blue-green forest depth across the quiet middle; grey-brown/umber armor and warm cream underside.",
+      "id": "armadillo_corazzato_C",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_C_v1.png",
+      "reference": "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+      "prompt": "Use case: stylized-concept. Asset type: WIDE DESKTOP original monster-theme background for an Oculum RPG character sheet, approximately 16:10. Make ONE full-bleed painterly scene, not a sprite sheet or a labelled character card. Species: the BASE Armadillo Corazzato, a living armored quadrupedal animal about70cm long, ONE tapered flexible tail, exactly FOUR short clawed paws, TWO small dark eyes, a tapered pointed snout and a soft CREAM belly. The dorsal armor is overlapping BROWN HORN/KERATIN plates, naturally integrated into its living hide; NO metal, wooden bark, sand coating or crystals. No weapons, clothes, belts, jewelry, horns, wings, human hands or exposed core. Curious and shy; defensive alertness rather than evil aggression. It can curl inward, so the plates and all short limbs must be mechanically plausible, not a turtle shell welded onto a mammal. Preserve a single creature, with its entire head, paws and tail visible inside a5%safe margin. Composition: place the animal at one lateral side below mid-height, with enough size to read all anatomy. Keep the middle vertical band from35%to65%of canvas width quiet, low-contrast and free of creature/strong foliage for real game controls; deep atmospheric environmental shapes can be there, never blank bars. No text, lettering, logos, UI, labels, watermarks or painted picture frames. Use the attached reference ONLY for the MATTE RAME FATATO painting technique: handmade soft gouache/oil brushwork, original thoughtful anime-fantasy shape design, restrained material highlights, soft irregular edges and visible pigment. Do NOT copy its amber shore, boulder, dusk orange sky or fairy subjects. No glossy3D,photorealistic skin,pixelart,overprocessed/generic AI fantasy,neon glow. Do not invent powers or drops. Forest/Mezzano green environment, no Moon or Sun visible in the sky.\nDistinct original direction: Design C: tall domed but angular carapace, short stocky legs and an unusually delicate long pointed face peeking beneath its broad brow; broad angular walnut-grey and umber horny plates with beveled organic ridges and flexible seams. Stout short tapering tail, TWOdark eyes and round restrained ears. Prudently lowers the snout and braces its four claws at a fern clearing edge, partly drawing shoulders inward but NOT fully curled, every paw remains visible. Not a hedgehog: no spines.\nScene and composition: A cool emerald fern grove with upright moss-coated stones, soft fallen leaves and dense green foliage, seen slightly from above. Animal on the RIGHT, body diagonally oriented toward the lower left. Make the surrounding leaves larger than the70cm animal to establish small scale. Dusky blue-green forest depth across the quiet middle; grey-brown/umber armor and warm cream underside.\nThis is proposal Cof FIVE separate design proposals of the SAME base species, not a new environmental variant or evolution. Preserve the brown horn plates and cream belly while making this silhouette, pose and environment distinctly its own.\nSTRICT UI LAYOUT: the ENTIRE creature including its snout, FOUR paws and tail must fit inside the RIGHT lateral rectangle x=68%to94%, y=48%to91%. Its whole silhouette is only about26%of the total canvas width, drawn cleanly enough to read. Absolutely NO creature pixels in the middle35%to65%horizontal band. Do NOT enlarge it to fill half of the landscape. Keep this middle band to quiet low-contrast distant green atmosphere. Landscape wide16:10.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-9d45be94-1e45-4819-8435-6014ce76e48e.png",
+      "user_approved": false,
+      "visually_inspected": true,
+      "proof_scope": "Local visual inspection; not real UI or package verification",
+      "width": 1586,
+      "height": 992,
+      "png_mode": "RGB",
+      "format": "PNG",
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "sha256": "b196477726858b4436dd965f7d2dc6516ccc883da66149c036779a9e5ea3fdcb",
+      "generated_original_sha256": "b196477726858b4436dd965f7d2dc6516ccc883da66149c036779a9e5ea3fdcb",
+      "original_copy_exact": true
+    },
+    {
+      "letter": "D",
+      "title": "Mogano sotto le grandi foglie",
+      "design": "Design D: compact broad body with comparatively small neck and long fine triangular snout, large smooth semicircular overlapping horny plates in very dark mahogany with muted reddish brown edge variations, pale cream throat and belly. Short sturdy paws with elegant little claws, ONE tail curving in a shallow S to the rear side. Three-quarter FRONT view but keep BOTHdark eyes and all FOURpaws identifiable. Quietly alert, head tilted with curiosity, no grin or cartoon teeth.",
+      "scene": "A lush broadleaf woodland hollow with giant soft round green leaves overhead, velvet moss and scattered seed husks; animal on the LEFT on a shallow earthen ledge, turned three-quarter toward the viewer/right. Soft filtered green light, deep nearly black-green background and chestnut/mahogany subject, not a sunny orange shore. Centre35–65%is softly misted emerald woodland with uncluttered subtle contours.",
+      "id": "armadillo_corazzato_D",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_D_v1.png",
+      "reference": "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+      "prompt": "CRUCIAL COMPOSITION FIRST: a DISTANT ENVIRONMENT WIDE SHOT with one SMALL animal, its whole head-to-tail silhouette ONLY ONE FIFTH of the total canvas width, positioned entirely in the far outer quarter of the landscape. The environment dominates. Do not draw a close-up, do not let its tail touch any canvas edge. Leave the entire broad middle of the landscape empty of creatures, quiet and atmospheric. Use case: stylized-concept. Asset type: WIDE DESKTOP original monster-theme background for an Oculum RPG character sheet, approximately 16:10. Make ONE full-bleed painterly scene, not a sprite sheet or a labelled character card. Species: the BASE Armadillo Corazzato, a living armored quadrupedal animal about70cm long, ONE tapered flexible tail, exactly FOUR short clawed paws, TWO small dark eyes, a tapered pointed snout and a soft CREAM belly. The dorsal armor is overlapping BROWN HORN/KERATIN plates, naturally integrated into its living hide; NO metal, wooden bark, sand coating or crystals. No weapons, clothes, belts, jewelry, horns, wings, human hands or exposed core. Curious and shy; defensive alertness rather than evil aggression. It can curl inward, so the plates and all short limbs must be mechanically plausible, not a turtle shell welded onto a mammal. Preserve a single creature, with its entire head, paws and tail visible inside a5%safe margin. Composition: place the animal at one lateral side below mid-height, with enough size to read all anatomy. Keep the middle vertical band from35%to65%of canvas width quiet, low-contrast and free of creature/strong foliage for real game controls; deep atmospheric environmental shapes can be there, never blank bars. No text, lettering, logos, UI, labels, watermarks or painted picture frames. Use the attached reference ONLY for the MATTE RAME FATATO painting technique: handmade soft gouache/oil brushwork, original thoughtful anime-fantasy shape design, restrained material highlights, soft irregular edges and visible pigment. Do NOT copy its amber shore, boulder, dusk orange sky or fairy subjects. No glossy3D,photorealistic skin,pixelart,overprocessed/generic AI fantasy,neon glow. Do not invent powers or drops. Forest/Mezzano green environment, no Moon or Sun visible in the sky.\nDistinct original direction: Design D: compact broad body with comparatively small neck and long fine triangular snout, large smooth semicircular overlapping horny plates in very dark mahogany with muted reddish brown edge variations, pale cream throat and belly. Short sturdy paws with elegant little claws, ONE tail curving in a shallow S to the rear side. Three-quarter FRONT view but keep BOTHdark eyes and all FOURpaws identifiable. Quietly alert, head tilted with curiosity, no grin or cartoon teeth.\nScene and composition: A lush broadleaf woodland hollow with giant soft round green leaves overhead, velvet moss and scattered seed husks; animal on the LEFT on a shallow earthen ledge, turned three-quarter toward the viewer/right. Soft filtered green light, deep nearly black-green background and chestnut/mahogany subject, not a sunny orange shore. Centre35–65%is softly misted emerald woodland with uncluttered subtle contours.\nThis is proposal Dof FIVE separate design proposals of the SAME base species, not a new environmental variant or evolution. Preserve the brown horn plates and cream belly while making this silhouette, pose and environment distinctly its own.\nSTRICT UI LAYOUT: the ENTIRE creature including its snout, FOUR paws and tail must fit inside the LEFT lateral rectangle x=6%to32%, y=48%to91%. Its whole silhouette is only about26%of the total canvas width, drawn cleanly enough to read. Absolutely NO creature pixels in the middle35%to65%horizontal band. Do NOT enlarge it to fill half of the landscape. Keep this middle band to quiet low-contrast distant green atmosphere. Landscape wide16:10.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-4803072d-66d8-4b6f-81ab-991d0b73cff6.png",
+      "user_approved": false,
+      "visually_inspected": true,
+      "proof_scope": "Local visual inspection; not real UI or package verification",
+      "width": 1586,
+      "height": 992,
+      "png_mode": "RGB",
+      "format": "PNG",
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "sha256": "741989b92ca9ead89a8c5b81c8e8dc58836b883cb3d081221b1f776695922ffe",
+      "generated_original_sha256": "741989b92ca9ead89a8c5b81c8e8dc58836b883cb3d081221b1f776695922ffe",
+      "original_copy_exact": true
+    },
+    {
+      "letter": "E",
+      "title": "Bruno oliva sul tronco",
+      "design": "Design E: athletic robust oblong body and a gently flattened wedge-shaped head, long tapered muzzle and low compact ears, FOUR short powerful clawed limbs, ONElong tapering tail. Distinctive interlocked long lozenge-shaped horn plates, dull olive-brown with deep earthy dark-brown seams and little cream patches at the underside, no actual wooden bark. Climbing a very LOW fallen mossy trunk: forepaws on top, hindpaws on ground, allfourclearly separate. Body tilted diagonally up, tail counterbalancing intact.",
+      "scene": "A humid green woodland with a fallen soft decaying log, delicate ferns and low moss-covered rocks. Animal on the RIGHT oriented diagonally upward to the left; view low from just beyond the log. Quiet olive-green hazy forest central space, gentle cool reflected light and muted earth pigments. Creature70cm relative to leaves and the low log, no architectural throne or other animals.",
+      "id": "armadillo_corazzato_E",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_E_v1.png",
+      "reference": "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+      "prompt": "CRUCIAL COMPOSITION FIRST: a DISTANT ENVIRONMENT WIDE SHOT with one SMALL animal, its whole head-to-tail silhouette ONLY ONE FIFTH of the total canvas width, positioned entirely in the far outer quarter of the landscape. The environment dominates. Do not draw a close-up, do not let its tail touch any canvas edge. Leave the entire broad middle of the landscape empty of creatures, quiet and atmospheric. Use case: stylized-concept. Asset type: WIDE DESKTOP original monster-theme background for an Oculum RPG character sheet, approximately 16:10. Make ONE full-bleed painterly scene, not a sprite sheet or a labelled character card. Species: the BASE Armadillo Corazzato, a living armored quadrupedal animal about70cm long, ONE tapered flexible tail, exactly FOUR short clawed paws, TWO small dark eyes, a tapered pointed snout and a soft CREAM belly. The dorsal armor is overlapping BROWN HORN/KERATIN plates, naturally integrated into its living hide; NO metal, wooden bark, sand coating or crystals. No weapons, clothes, belts, jewelry, horns, wings, human hands or exposed core. Curious and shy; defensive alertness rather than evil aggression. It can curl inward, so the plates and all short limbs must be mechanically plausible, not a turtle shell welded onto a mammal. Preserve a single creature, with its entire head, paws and tail visible inside a5%safe margin. Composition: place the animal at one lateral side below mid-height, with enough size to read all anatomy. Keep the middle vertical band from35%to65%of canvas width quiet, low-contrast and free of creature/strong foliage for real game controls; deep atmospheric environmental shapes can be there, never blank bars. No text, lettering, logos, UI, labels, watermarks or painted picture frames. Use the attached reference ONLY for the MATTE RAME FATATO painting technique: handmade soft gouache/oil brushwork, original thoughtful anime-fantasy shape design, restrained material highlights, soft irregular edges and visible pigment. Do NOT copy its amber shore, boulder, dusk orange sky or fairy subjects. No glossy3D,photorealistic skin,pixelart,overprocessed/generic AI fantasy,neon glow. Do not invent powers or drops. Forest/Mezzano green environment, no Moon or Sun visible in the sky.\nDistinct original direction: Design E: athletic robust oblong body and a gently flattened wedge-shaped head, long tapered muzzle and low compact ears, FOUR short powerful clawed limbs, ONElong tapering tail. Distinctive interlocked long lozenge-shaped horn plates, dull olive-brown with deep earthy dark-brown seams and little cream patches at the underside, no actual wooden bark. Climbing a very LOW fallen mossy trunk: forepaws on top, hindpaws on ground, allfourclearly separate. Body tilted diagonally up, tail counterbalancing intact.\nScene and composition: A humid green woodland with a fallen soft decaying log, delicate ferns and low moss-covered rocks. Animal on the RIGHT oriented diagonally upward to the left; view low from just beyond the log. Quiet olive-green hazy forest central space, gentle cool reflected light and muted earth pigments. Creature70cm relative to leaves and the low log, no architectural throne or other animals.\nThis is proposal Eof FIVE separate design proposals of the SAME base species, not a new environmental variant or evolution. Preserve the brown horn plates and cream belly while making this silhouette, pose and environment distinctly its own.\nSTRICT UI LAYOUT: the ENTIRE creature including its snout, FOUR paws and tail must fit inside the RIGHT lateral rectangle x=68%to94%, y=48%to91%. Its whole silhouette is only about26%of the total canvas width, drawn cleanly enough to read. Absolutely NO creature pixels in the middle35%to65%horizontal band. Do NOT enlarge it to fill half of the landscape. Keep this middle band to quiet low-contrast distant green atmosphere. Landscape wide16:10.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-fa196008-ee36-4e2c-869e-449a9c72be7a.png",
+      "user_approved": false,
+      "visually_inspected": true,
+      "proof_scope": "Local visual inspection; not real UI or package verification",
+      "width": 1586,
+      "height": 992,
+      "png_mode": "RGB",
+      "format": "PNG",
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "sha256": "2ced3cc6b8c3e28f2ea09d7c4393acb2154c73a8ffe6b0be2b555c3d7be13dd4",
+      "generated_original_sha256": "2ced3cc6b8c3e28f2ea09d7c4393acb2154c73a8ffe6b0be2b555c3d7be13dd4",
+      "original_copy_exact": true
+    }
+  ],
+  "history": [
+    {
+      "id": "armadillo_corazzato_A",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-7869c855-d05f-428f-8d78-af68f6d892c0.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_A_v1.png",
+      "user_approved": false,
+      "status": "SUPERSEDED_COMPOSITION_RETAINED",
+      "width": 1586,
+      "height": 992,
+      "png_mode": "RGB",
+      "format": "PNG",
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "sha256": "7d936df65ae6e4170da1c0f8c8d289213849a253e764c1277c21ac2b4582ac1e",
+      "generated_original_sha256": "7d936df65ae6e4170da1c0f8c8d289213849a253e764c1277c21ac2b4582ac1e",
+      "original_copy_exact": true
+    },
+    {
+      "id": "armadillo_corazzato_B",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-aff4c86f-2d7a-4844-ae4e-acec28e8eadd.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_B_v1.png",
+      "user_approved": false,
+      "status": "SUPERSEDED_COMPOSITION_RETAINED",
+      "width": 1586,
+      "height": 992,
+      "png_mode": "RGB",
+      "format": "PNG",
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "sha256": "ab6c6a3cad72f4e5add0e3988a080a20e090de6148f77202efe4447e620cc963",
+      "generated_original_sha256": "ab6c6a3cad72f4e5add0e3988a080a20e090de6148f77202efe4447e620cc963",
+      "original_copy_exact": true
+    }
+  ],
+  "all_generation_receipts": [
+    {
+      "id": "armadillo_corazzato_A",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-7869c855-d05f-428f-8d78-af68f6d892c0.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_A_v1.png",
+      "user_approved": false
+    },
+    {
+      "id": "armadillo_corazzato_B",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-aff4c86f-2d7a-4844-ae4e-acec28e8eadd.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_B_v1.png",
+      "user_approved": false
+    },
+    {
+      "id": "armadillo_corazzato_C",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-9d45be94-1e45-4819-8435-6014ce76e48e.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_C_v1.png",
+      "user_approved": false
+    },
+    {
+      "id": "armadillo_corazzato_D",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-4803072d-66d8-4b6f-81ab-991d0b73cff6.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_D_v1.png",
+      "user_approved": false,
+      "prompt": "CRUCIAL COMPOSITION FIRST: a DISTANT ENVIRONMENT WIDE SHOT with one SMALL animal, its whole head-to-tail silhouette ONLY ONE FIFTH of the total canvas width, positioned entirely in the far outer quarter of the landscape. The environment dominates. Do not draw a close-up, do not let its tail touch any canvas edge. Leave the entire broad middle of the landscape empty of creatures, quiet and atmospheric. Use case: stylized-concept. Asset type: WIDE DESKTOP original monster-theme background for an Oculum RPG character sheet, approximately 16:10. Make ONE full-bleed painterly scene, not a sprite sheet or a labelled character card. Species: the BASE Armadillo Corazzato, a living armored quadrupedal animal about70cm long, ONE tapered flexible tail, exactly FOUR short clawed paws, TWO small dark eyes, a tapered pointed snout and a soft CREAM belly. The dorsal armor is overlapping BROWN HORN/KERATIN plates, naturally integrated into its living hide; NO metal, wooden bark, sand coating or crystals. No weapons, clothes, belts, jewelry, horns, wings, human hands or exposed core. Curious and shy; defensive alertness rather than evil aggression. It can curl inward, so the plates and all short limbs must be mechanically plausible, not a turtle shell welded onto a mammal. Preserve a single creature, with its entire head, paws and tail visible inside a5%safe margin. Composition: place the animal at one lateral side below mid-height, with enough size to read all anatomy. Keep the middle vertical band from35%to65%of canvas width quiet, low-contrast and free of creature/strong foliage for real game controls; deep atmospheric environmental shapes can be there, never blank bars. No text, lettering, logos, UI, labels, watermarks or painted picture frames. Use the attached reference ONLY for the MATTE RAME FATATO painting technique: handmade soft gouache/oil brushwork, original thoughtful anime-fantasy shape design, restrained material highlights, soft irregular edges and visible pigment. Do NOT copy its amber shore, boulder, dusk orange sky or fairy subjects. No glossy3D,photorealistic skin,pixelart,overprocessed/generic AI fantasy,neon glow. Do not invent powers or drops. Forest/Mezzano green environment, no Moon or Sun visible in the sky.\nDistinct original direction: Design D: compact broad body with comparatively small neck and long fine triangular snout, large smooth semicircular overlapping horny plates in very dark mahogany with muted reddish brown edge variations, pale cream throat and belly. Short sturdy paws with elegant little claws, ONE tail curving in a shallow S to the rear side. Three-quarter FRONT view but keep BOTHdark eyes and all FOURpaws identifiable. Quietly alert, head tilted with curiosity, no grin or cartoon teeth.\nScene and composition: A lush broadleaf woodland hollow with giant soft round green leaves overhead, velvet moss and scattered seed husks; animal on the LEFT on a shallow earthen ledge, turned three-quarter toward the viewer/right. Soft filtered green light, deep nearly black-green background and chestnut/mahogany subject, not a sunny orange shore. Centre35–65%is softly misted emerald woodland with uncluttered subtle contours.\nThis is proposal Dof FIVE separate design proposals of the SAME base species, not a new environmental variant or evolution. Preserve the brown horn plates and cream belly while making this silhouette, pose and environment distinctly its own.\nSTRICT UI LAYOUT: the ENTIRE creature including its snout, FOUR paws and tail must fit inside the LEFT lateral rectangle x=6%to32%, y=48%to91%. Its whole silhouette is only about26%of the total canvas width, drawn cleanly enough to read. Absolutely NO creature pixels in the middle35%to65%horizontal band. Do NOT enlarge it to fill half of the landscape. Keep this middle band to quiet low-contrast distant green atmosphere. Landscape wide16:10."
+    },
+    {
+      "id": "armadillo_corazzato_E",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-fa196008-ee36-4e2c-869e-449a9c72be7a.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_E_v1.png",
+      "user_approved": false,
+      "prompt": "CRUCIAL COMPOSITION FIRST: a DISTANT ENVIRONMENT WIDE SHOT with one SMALL animal, its whole head-to-tail silhouette ONLY ONE FIFTH of the total canvas width, positioned entirely in the far outer quarter of the landscape. The environment dominates. Do not draw a close-up, do not let its tail touch any canvas edge. Leave the entire broad middle of the landscape empty of creatures, quiet and atmospheric. Use case: stylized-concept. Asset type: WIDE DESKTOP original monster-theme background for an Oculum RPG character sheet, approximately 16:10. Make ONE full-bleed painterly scene, not a sprite sheet or a labelled character card. Species: the BASE Armadillo Corazzato, a living armored quadrupedal animal about70cm long, ONE tapered flexible tail, exactly FOUR short clawed paws, TWO small dark eyes, a tapered pointed snout and a soft CREAM belly. The dorsal armor is overlapping BROWN HORN/KERATIN plates, naturally integrated into its living hide; NO metal, wooden bark, sand coating or crystals. No weapons, clothes, belts, jewelry, horns, wings, human hands or exposed core. Curious and shy; defensive alertness rather than evil aggression. It can curl inward, so the plates and all short limbs must be mechanically plausible, not a turtle shell welded onto a mammal. Preserve a single creature, with its entire head, paws and tail visible inside a5%safe margin. Composition: place the animal at one lateral side below mid-height, with enough size to read all anatomy. Keep the middle vertical band from35%to65%of canvas width quiet, low-contrast and free of creature/strong foliage for real game controls; deep atmospheric environmental shapes can be there, never blank bars. No text, lettering, logos, UI, labels, watermarks or painted picture frames. Use the attached reference ONLY for the MATTE RAME FATATO painting technique: handmade soft gouache/oil brushwork, original thoughtful anime-fantasy shape design, restrained material highlights, soft irregular edges and visible pigment. Do NOT copy its amber shore, boulder, dusk orange sky or fairy subjects. No glossy3D,photorealistic skin,pixelart,overprocessed/generic AI fantasy,neon glow. Do not invent powers or drops. Forest/Mezzano green environment, no Moon or Sun visible in the sky.\nDistinct original direction: Design E: athletic robust oblong body and a gently flattened wedge-shaped head, long tapered muzzle and low compact ears, FOUR short powerful clawed limbs, ONElong tapering tail. Distinctive interlocked long lozenge-shaped horn plates, dull olive-brown with deep earthy dark-brown seams and little cream patches at the underside, no actual wooden bark. Climbing a very LOW fallen mossy trunk: forepaws on top, hindpaws on ground, allfourclearly separate. Body tilted diagonally up, tail counterbalancing intact.\nScene and composition: A humid green woodland with a fallen soft decaying log, delicate ferns and low moss-covered rocks. Animal on the RIGHT oriented diagonally upward to the left; view low from just beyond the log. Quiet olive-green hazy forest central space, gentle cool reflected light and muted earth pigments. Creature70cm relative to leaves and the low log, no architectural throne or other animals.\nThis is proposal Eof FIVE separate design proposals of the SAME base species, not a new environmental variant or evolution. Preserve the brown horn plates and cream belly while making this silhouette, pose and environment distinctly its own.\nSTRICT UI LAYOUT: the ENTIRE creature including its snout, FOUR paws and tail must fit inside the RIGHT lateral rectangle x=68%to94%, y=48%to91%. Its whole silhouette is only about26%of the total canvas width, drawn cleanly enough to read. Absolutely NO creature pixels in the middle35%to65%horizontal band. Do NOT enlarge it to fill half of the landscape. Keep this middle band to quiet low-contrast distant green atmosphere. Landscape wide16:10."
+    },
+    {
+      "id": "armadillo_corazzato_A_v2",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-b2faa99d-ab67-45f2-95c2-d7f9e4e9c666.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_A_v2.png",
+      "user_approved": false,
+      "prompt": "Use case: precise-object-edit. Asset type: original Oculum monster-theme landscape. Recompose image1 while preserving EXACTLY the same charming round Armadillo Corazzato animal design: chestnut/walnut overlapping natural horn plates, cream soft belly, tapered pointed muzzle, two dark eyes, FOUR short clawed paws and ONE tapered tail, no new anatomy or equipment. Image2is ONLY matte Rame fatato soft painting technique, no fairies or amber shore copied. The animal from image1 is too large for the UI: make its ENTIRE silhouette including snout/paws/tail fit strictly inside x=68%to94%of canvas, y=48%to91%. This means the creature is only26%of the total canvas width. Keep it complete and cleanly readable, not clipped, at least5%from borders. The middle vertical band35%to65%must contain only quiet low-contrast green atmospheric forest depth, NOpart of the animal or bold foreground branches. Keep the mossy forest/root setting and curious root-sniffing pose, original handmade matte anime-fantasy brushwork, restrained earthpigments. Full-bleed WIDE16:10background, not sprite/collage. No text/logo/UI, no Sun/Moon or other creatures, no new powers. Do not change the design; ONLY reduce animal scale/reposition and reconstruct woodland where it stood."
+    },
+    {
+      "id": "armadillo_corazzato_B_v2",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18d2f-e97c-7572-aed0-90fa5e556424\\exec-2b9726ac-951a-4dcd-8d11-00c08bce4353.png",
+      "output_path": "C:/Oculum App/oculum/output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_B_v2.png",
+      "user_approved": false,
+      "prompt": "Use case: precise-object-edit. Edit image1's layout only, preserving EXACTLY the same long low Armadillo Corazzato with brown flexible horny transverse bands, soft cream belly, long pointed snout, two dark eyes, FOUR short clawed paws in a cautious trot and ONE tapered tail. Its tail in image1 is clipped at the left canvas edge: reconstruct the complete tapered tail tip and reposition/scale the ENTIRE animal so its leftmost tail pixel is at least8%of canvas width from left edge; the entire head-to-tail silhouette must fit within x=8%to33%, y=54%to87%. The animal should be SMALL in a broad willow-stream landscape, not a closeup. Do not shorten or remove its tail and do not remove legs. Keep all image1's lovely cool willow-green stream environment and original matte handmade anime-fantasy Rame fatato technique; image2is technique ONLY, no shore/orange sunset/faeries. The middle vertical35–65%band must be quiet low-contrast open distant green woodland and water with no animal crossing it. Full-bleed WIDE16:10 background, no labels/text/UI/logo, no other creatures, no Sun/Moon in sky, no new anatomy or powers."
+    }
+  ],
+  "technical_checks": {
+    "selected_count": 5,
+    "preserved_earlier_versions": 2,
+    "all_pngs_verified": true,
+    "all_original_copies_exact": true,
+    "no_raster_postprocessing": true,
+    "no_sdk_executed": true,
+    "no_user_approvals_inferred": true,
+    "real_ui_tested": false
+  },
+  "composition_notes": {
+    "A": "V2 riduce il soggetto e libera il centro rispetto alla V1 conservata.",
+    "B": "V2 ricostruisce tutta la coda e la mantiene distante dal margine sinistro, rispetto alla V1 superata.",
+    "C": "Coda intera ma vicina al bordo destro: eventuale ulteriore impaginazione dopo la scelta.",
+    "D": "Coda intera ma vicina al bordo sinistro: eventuale ulteriore impaginazione dopo la scelta.",
+    "E": "Posa sul tronco e centro ampio; ispezione visiva locale, non prova dei widget."
+  }
+}

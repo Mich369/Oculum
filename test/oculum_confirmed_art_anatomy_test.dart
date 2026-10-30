@@ -48,6 +48,61 @@ void main() {
     },
   );
 
+  test('an Azione in corso is not an orso with four legs', () {
+    final cloud = monsterBookEntryById('nuvola_in_bottiglia')!.copyWith(
+      id: 'regression_cloud_in_progress',
+      nameIt: 'Nube di prova',
+      nameEn: 'Test cloud',
+      descIt:
+          'Una nube compatta con un occhio e due mani vaporose. '
+          'Interrompe una Azione in corso.',
+      encounterRules: const {},
+    );
+    final actual = oculumMonsterPrecisionAnatomy(cloud);
+    expect(
+      actual.where((part) => part['group'] == 'legs'),
+      isEmpty,
+      reason: 'The word corso describes an action, not a bear anatomy.',
+    );
+  });
+
+  test('a real catalogued orso retains its four quadruped legs', () {
+    final bear = monsterBookEntryById('ciclo_orso_aculei')!;
+    expect(oculumMonsterPhysicalDescription(bear), contains('un orso'));
+    expect(
+      oculumMonsterPrecisionAnatomy(
+        bear,
+      ).where((part) => part['group'] == 'legs'),
+      hasLength(4),
+    );
+  });
+
+  test('saved Master legs override a cloud without natural legs', () {
+    final cloud = monsterBookEntryById('nuvola_in_bottiglia')!.copyWith(
+      encounterRules: {
+        'precisionBodyParts': [
+          {
+            'id': 'custom_support',
+            'label': 'Appoggio personale',
+            'group': 'legs',
+            'weak': false,
+            'editorNote': 'keep',
+          },
+        ],
+      },
+    );
+    final actual = oculumMonsterPrecisionAnatomy(cloud);
+    expect(actual, hasLength(1));
+    expect(actual.single['id'], 'custom_support');
+    expect(actual.single['group'], 'legs');
+    expect(actual.single['editorNote'], 'keep');
+    actual.single['label'] = 'Changed copy';
+    expect(
+      (cloud.encounterRules['precisionBodyParts'] as List).single['label'],
+      'Appoggio personale',
+    );
+  });
+
   for (final name in ['lusier_iii', 'erik_i']) {
     testWidgets(
       '$name keeps exposed eyes instead of inheriting the generic solar helmet',

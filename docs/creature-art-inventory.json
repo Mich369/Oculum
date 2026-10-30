@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "exportedAtUtc": "2026-10-30T15:47:55.992283Z",
-  "baseCommit": "b721422c0546ba3be5e014ddb82cdf1a300cb2ae",
+  "exportedAtUtc": "2026-10-30T18:06:03.703234Z",
+  "baseCommit": "fa14d0c2abb1d9ea579ede4cbb81cffc1612a386",
   "scope": "working tree catalog; includes uncommitted source definitions; not publication proof",
   "entriesIncludingVariants": 1205,
   "entriesWithoutGeneratedVariantSuffix": 734,
   "generatedVariants": 471,
-  "dedicatedThemeAssetsPresentAndMapped": 47,
-  "missingDedicatedThemeAssets": 1158,
-  "dedicatedRelicsMapped": 27,
+  "dedicatedThemeAssetsPresentAndMapped": 51,
+  "missingDedicatedThemeAssets": 1154,
+  "dedicatedRelicsMapped": 28,
   "proceduralRelicsAreNotFinal": true,
-  "catalogueSha256": "6311915f86d8af1369f52910f0ae2a5558cdfa7d323841bab4036d84f04d1927",
-  "themeMappingSha256": "d1eaf095374503e678ad7eb825d874dd3f063803f6b5595d748c72ae1a47ef61",
+  "catalogueSha256": "81e29f40f825b5d498a772095013a92be15e57d2e151b263ce028d579d0b5c5d",
+  "themeMappingSha256": "4de57ed7230e265d3a8e41014a5a37d4711d7f2f9d2a1874f8492cf89fd2fd1c",
   "catalogueSourceHashes": {
     "lib/pages/oculum_dungeon/armadillo_creatures.dart": "301e031c7e27aa8503b1f9c7602adcf1c3f12677bd1493397bbff829cf64cd8f",
     "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart": "03f43ce67155bbbb6fdf44eb6aba57fcc359951e7b2cd86f22574dc70b5109e6",
@@ -34,13 +34,13 @@
     "lib/pages/oculum_dungeon/lunar_guards.dart": "551c367426af8469fa6347fe4c2e0fc120ade3b6be5159863c80cc80727d2f4f",
     "lib/pages/oculum_dungeon/masked_monsters.dart": "f7c2a41507b32b7914b6ff7145233a8bf2c6e7f7ec66d25020da6fecb23f6c69",
     "lib/pages/oculum_dungeon/micro_realm_creatures.dart": "3a3d5266862b1180bd5af7fa4951c76e2b5b22453767e1f63026b4ad9c5b6f62",
-    "lib/pages/oculum_dungeon/monster_anatomy.dart": "a83e7caccb83aa11e26d740371c97ea561a0a17fb836e0102f06d93b140047f0",
-    "lib/pages/oculum_dungeon/monster_book.dart": "17a6c36e1afe3e5c23c19ba5d10728281a2c56462878e448614cd39d08249119",
+    "lib/pages/oculum_dungeon/monster_anatomy.dart": "02ad1ef3e0e1bae4b3cccabfe08e7fec2062c28ecc08bb4c1f354cec164c108d",
+    "lib/pages/oculum_dungeon/monster_book.dart": "8291f7d6061cb8ed188711e1beffc3814f414a115164ed493b5fa8bc3674d10a",
     "lib/pages/oculum_dungeon/monster_progression_pool.dart": "b19b524ad22550de4254996766fc6df2447ca424f01b6975239d418e8de6ac68",
     "lib/pages/oculum_dungeon/monster_registry.dart": "1c3a7570937bd0bc139cf4b825eea9285475ba0eb3f81091cd15345e92aff000",
     "lib/pages/oculum_dungeon/necromancer_monsters.dart": "3ae529f557fb6ecbba7e6d9d158824c16723c21752f3ab600236a4724befb0cf",
     "lib/pages/oculum_dungeon/non_return_undead.dart": "a771a2b74874f00502e4a6fe9f2f5b4a85d6a8dd3bff810175b0b401d49c4a95",
-    "lib/pages/oculum_dungeon/october_creatures.dart": "27e108348cfcca720955700dac2363fac4935942f372ce5d9b823397b5424a97",
+    "lib/pages/oculum_dungeon/october_creatures.dart": "551a7ddce6b7ea84535f5177b8f271460c835dd4aaec7c0d2b83672a6688e3bb",
     "lib/pages/oculum_dungeon/oculum_battle.dart": "8beb2aed0533ad7ba81653549f38230aa2db3c519f4d883136f1d2b70ad59c26",
     "lib/pages/oculum_dungeon/oculum_dungeon_models.dart": "8f5abae6e98b925c595b0dbbb10b8cd98929fcd5cca5f54212b5d2c72c007b3b",
     "lib/pages/oculum_dungeon/oculum_dungeon_realtime_coop.dart": "16bf987515ff75c053c00cba33ddb88854c12a85360726b585b31426c1259daf",
@@ -62,12 +62,12 @@
     "lib/pages/oculum_dungeon/weak_horror_monsters.dart": "709795387b576760747fcb766bfd28c39989c5740531df291dfe83db2ed4697f",
     "lib/pages/oculum_dungeon/withered_construct_white_larva.dart": "92ebd772cc3b47c053eeb051e1cd8e61d2606edcb1b12e0ad74fc51b0cc5846d"
   },
-  "dedicatedMobileThemeAssetsPresentAndMapped": 26,
-  "missingDedicatedMobileThemeAssets": 1179,
-  "dedicatedRelicAssetsPresentAndMapped": 27,
-  "missingDedicatedRelicAssets": 1178,
-  "completeDedicatedArtworkSetsMapped": 25,
-  "entriesMissingAtLeastOneDedicatedArtwork": 1180,
+  "dedicatedMobileThemeAssetsPresentAndMapped": 27,
+  "missingDedicatedMobileThemeAssets": 1178,
+  "dedicatedRelicAssetsPresentAndMapped": 28,
+  "missingDedicatedRelicAssets": 1177,
+  "completeDedicatedArtworkSetsMapped": 26,
+  "entriesMissingAtLeastOneDedicatedArtwork": 1179,
   "runtimeUiVerifiedByThisAudit": false,
   "entries": [
     {
@@ -576,49 +576,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "in piena luce non può usare il Velo del Vespro",
@@ -658,12 +615,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -712,49 +664,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "in piena luce non può usare il Velo del Vespro",
@@ -795,12 +704,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -841,21 +745,23 @@
       "classification": [],
       "isBoss": false,
       "isMiniBoss": true,
-      "physicalDescription": "una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
+      "physicalDescription": "cavaliere altissimo e sottile con due braccia e due gambe, racchiuso in una corazza di metallo annerito. una campana conica di bronzo incrinato sostituisce la testa: dentro non esistono volto o occhi, soltanto cenere che respira. le mani sono vuote. sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
       "anatomy": [
         {
           "id": "body",
           "label": "Corpo",
           "group": "body",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "metal"
         },
         {
           "id": "head",
-          "label": "Testa",
+          "label": "Campana-testa",
           "group": "head",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "metal"
         },
         {
           "id": "arms_1",
@@ -864,7 +770,8 @@
           "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "arms_2",
@@ -873,7 +780,8 @@
           "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "legs_1",
@@ -882,7 +790,8 @@
           "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "legs_2",
@@ -891,18 +800,19 @@
           "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         }
       ],
       "weakPoint": "chi si muove senza toccare il suolo elude il suo ascolto",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. Sorveglia porte murate e riconosce i passi dal tremore della pietra.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Cavaliere altissimo e sottile con due braccia e due gambe, racchiuso in una corazza di metallo annerito. Una campana conica di bronzo incrinato sostituisce la testa: dentro non esistono volto o occhi, soltanto cenere che respira. Le mani sono vuote. Sorveglia porte murate e riconosce i passi dal tremore della pietra.",
       "drops": [
         "bronzo_senza_voce",
         "cenere_del_guardiano"
       ],
       "inventoryItems": [],
       "encounterRules": {
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. Sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Cavaliere altissimo e sottile con due braccia e due gambe, racchiuso in una corazza di metallo annerito. Una campana conica di bronzo incrinato sostituisce la testa: dentro non esistono volto o occhi, soltanto cenere che respira. Le mani sono vuote. Sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
         "additionalProgressionSkills": [
           "growth__custode_campana_cieca__0",
           "growth__custode_campana_cieca__1",
@@ -921,9 +831,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:612",
       "isGeneratedVariant": false,
       "baseId": "custode_campana_cieca",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_custode_campana_cieca_v1.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -932,7 +842,7 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
+        "Campana-testa",
         "Braccio destro",
         "Braccio sinistro",
         "Gamba destra",
@@ -940,9 +850,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_custode_campana_cieca_v1.png",
+          "exists": true,
+          "sha256": "7270290b16b981c0f512998ec6ef6ae73a6a79a48da1dc15f3bb8ab2dd12feda",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -962,7 +872,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -977,7 +886,7 @@
       "classification": [],
       "isBoss": false,
       "isMiniBoss": true,
-      "physicalDescription": "variante veterana (dal livello 0): alterna le sue tecniche senza ripetere la stessa apertura. una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
+      "physicalDescription": "variante veterana (dal livello 0): alterna le sue tecniche senza ripetere la stessa apertura. cavaliere altissimo e sottile con due braccia e due gambe, racchiuso in una corazza di metallo annerito. una campana conica di bronzo incrinato sostituisce la testa: dentro non esistono volto o occhi, soltanto cenere che respira. le mani sono vuote. sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
       "anatomy": [
         {
           "id": "body",
@@ -992,6 +901,24 @@
           "group": "head",
           "weak": false,
           "penalty": 0
+        },
+        {
+          "id": "eyes_1",
+          "label": "Occhio destro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "eyes_2",
+          "label": "Occhio sinistro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
         },
         {
           "id": "arms_1",
@@ -1031,7 +958,7 @@
         }
       ],
       "weakPoint": "chi si muove senza toccare il suolo elude il suo ascolto",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante veterana (dal livello 0): alterna le sue tecniche senza ripetere la stessa apertura. Una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. Sorveglia porte murate e riconosce i passi dal tremore della pietra.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante veterana (dal livello 0): alterna le sue tecniche senza ripetere la stessa apertura. Cavaliere altissimo e sottile con due braccia e due gambe, racchiuso in una corazza di metallo annerito. Una campana conica di bronzo incrinato sostituisce la testa: dentro non esistono volto o occhi, soltanto cenere che respira. Le mani sono vuote. Sorveglia porte murate e riconosce i passi dal tremore della pietra.",
       "drops": [
         "bronzo_senza_voce",
         "cenere_del_guardiano",
@@ -1039,7 +966,7 @@
       ],
       "inventoryItems": [],
       "encounterRules": {
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante veterana (dal livello 0): alterna le sue tecniche senza ripetere la stessa apertura. Una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. Sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante veterana (dal livello 0): alterna le sue tecniche senza ripetere la stessa apertura. Cavaliere altissimo e sottile con due braccia e due gambe, racchiuso in una corazza di metallo annerito. Una campana conica di bronzo incrinato sostituisce la testa: dentro non esistono volto o occhi, soltanto cenere che respira. Le mani sono vuote. Sorveglia porte murate e riconosce i passi dal tremore della pietra. ",
         "additionalProgressionSkills": [
           "growth__custode_campana_cieca_variante_veterana__0",
           "growth__custode_campana_cieca_variante_veterana__1",
@@ -1070,6 +997,8 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
+        "Occhio destro",
+        "Occhio sinistro",
         "Braccio destro",
         "Braccio sinistro",
         "Gamba destra",
@@ -1559,7 +1488,7 @@
       "classification": [],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
+      "physicalDescription": "mammuth putrido compatto e gobbuto, dal pelo scuro logoro e pelle consumata, con quattro zampe massicce, due occhi, due grandi orecchie, una proboscide, due zanne e una coda. fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
       "anatomy": [
         {
           "id": "body",
@@ -1574,6 +1503,24 @@
           "group": "head",
           "weak": false,
           "penalty": 0
+        },
+        {
+          "id": "eyes_1",
+          "label": "Occhio destro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "eyes_2",
+          "label": "Occhio sinistro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
         },
         {
           "id": "legs_1",
@@ -1612,6 +1559,59 @@
           "sideIndex": 2
         },
         {
+          "id": "tail",
+          "label": "Coda",
+          "group": "tail",
+          "weak": false,
+          "penalty": 0
+        },
+        {
+          "id": "ears_1",
+          "label": "Orecchio destro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "ears_2",
+          "label": "Orecchio sinistro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "tusks_1",
+          "label": "Zanna destro",
+          "group": "tusks",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1,
+          "material": "bone"
+        },
+        {
+          "id": "tusks_2",
+          "label": "Zanna sinistro",
+          "group": "tusks",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1,
+          "material": "bone"
+        },
+        {
+          "id": "trunk",
+          "label": "Proboscide",
+          "group": "trunk",
+          "weak": false,
+          "penalty": 0,
+          "material": "flesh"
+        },
+        {
           "id": "joint",
           "label": "Giuntura",
           "group": "joint",
@@ -1620,13 +1620,13 @@
         }
       ],
       "weakPoint": "La giuntura interna della zampa anteriore, scoperta durante l’affondo.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Mammuth putrido compatto e gobbuto, dal pelo scuro logoro e pelle consumata, con quattro zampe massicce, due occhi, due grandi orecchie, una proboscide, due zanne e una coda. Fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede.",
       "drops": [
         "ossa_mammuth_putrido"
       ],
       "inventoryItems": [],
       "encounterRules": {
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Mammuth putrido compatto e gobbuto, dal pelo scuro logoro e pelle consumata, con quattro zampe massicce, due occhi, due grandi orecchie, una proboscide, due zanne e una coda. Fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
         "additionalProgressionSkills": [
           "growth__mammuth_in_decomposizione__0",
           "growth__mammuth_in_decomposizione__1",
@@ -1645,9 +1645,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:689",
       "isGeneratedVariant": false,
       "baseId": "mammuth_in_decomposizione",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_mammuth_decomposizione_v1.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -1657,17 +1657,25 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
+        "Occhio destro",
+        "Occhio sinistro",
         "Zampa destra anteriore",
         "Zampa sinistra anteriore",
         "Zampa destra posteriore",
         "Zampa sinistra posteriore",
+        "Coda",
+        "Orecchio destro",
+        "Orecchio sinistro",
+        "Zanna destro",
+        "Zanna sinistro",
+        "Proboscide",
         "Giuntura"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_mammuth_decomposizione_v1.png",
+          "exists": true,
+          "sha256": "e6d5fd359b6196d7d688b141f4cf90cdd54c1fc5a54560206ebd854903392bdf",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -1687,7 +1695,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -1702,7 +1709,7 @@
       "classification": [],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "variante rituale (dal livello 0): prepara il terreno con oculum prima di colpire. un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
+      "physicalDescription": "variante rituale (dal livello 0): prepara il terreno con oculum prima di colpire. mammuth putrido compatto e gobbuto, dal pelo scuro logoro e pelle consumata, con quattro zampe massicce, due occhi, due grandi orecchie, una proboscide, due zanne e una coda. fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
       "anatomy": [
         {
           "id": "body",
@@ -1717,6 +1724,24 @@
           "group": "head",
           "weak": false,
           "penalty": 0
+        },
+        {
+          "id": "eyes_1",
+          "label": "Occhio destro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "eyes_2",
+          "label": "Occhio sinistro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
         },
         {
           "id": "legs_1",
@@ -1755,6 +1780,13 @@
           "sideIndex": 2
         },
         {
+          "id": "tail",
+          "label": "Coda",
+          "group": "tail",
+          "weak": false,
+          "penalty": 0
+        },
+        {
           "id": "joint",
           "label": "Giuntura",
           "group": "joint",
@@ -1763,14 +1795,14 @@
         }
       ],
       "weakPoint": "La giuntura interna della zampa anteriore, scoperta durante l’affondo.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante rituale (dal livello 0): prepara il terreno con Oculum prima di colpire. Un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante rituale (dal livello 0): prepara il terreno con Oculum prima di colpire. Mammuth putrido compatto e gobbuto, dal pelo scuro logoro e pelle consumata, con quattro zampe massicce, due occhi, due grandi orecchie, una proboscide, due zanne e una coda. Fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede.",
       "drops": [
         "ossa_mammuth_putrido",
         "frammento_variante_rituale"
       ],
       "inventoryItems": [],
       "encounterRules": {
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante rituale (dal livello 0): prepara il terreno con Oculum prima di colpire. Un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante rituale (dal livello 0): prepara il terreno con Oculum prima di colpire. Mammuth putrido compatto e gobbuto, dal pelo scuro logoro e pelle consumata, con quattro zampe massicce, due occhi, due grandi orecchie, una proboscide, due zanne e una coda. Fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. ",
         "additionalProgressionSkills": [
           "growth__mammuth_in_decomposizione_variante_rituale__0",
           "growth__mammuth_in_decomposizione_variante_rituale__1",
@@ -1801,10 +1833,13 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
+        "Occhio destro",
+        "Occhio sinistro",
         "Zampa destra anteriore",
         "Zampa sinistra anteriore",
         "Zampa destra posteriore",
         "Zampa sinistra posteriore",
+        "Coda",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -7778,49 +7813,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "joint",
           "label": "Giuntura",
           "group": "joint",
@@ -7865,11 +7857,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -7921,49 +7908,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "joint",
           "label": "Giuntura",
           "group": "joint",
@@ -8009,11 +7953,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -12677,7 +12616,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
@@ -12686,30 +12625,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -12759,10 +12680,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -12840,7 +12759,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
@@ -12849,30 +12768,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -12923,10 +12824,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -15899,13 +15798,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -15922,42 +15814,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -16005,13 +15861,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -16063,13 +15914,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -16086,42 +15930,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -16170,13 +15978,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -34762,7 +34565,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "sciamano sottile avvolto in un mantello di foglie verdi, con arti scuri e una maschera chiara sorridente, ornata da piccoli cerchi rossi. infligge vita afona e maledizioni che riducono temporaneamente le statistiche. le sue maledizioni durano fino al riposo lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche. ",
+      "physicalDescription": "sciamano sottile con due braccia e due gambe di legno scuro, accovacciato sul bordo di uno stagno nella penombra blu petrolio. il mantello è di felci verdi appuntite, con un ampio colletto ripiegato all’indietro; la maschera chiara a rombo sorride ed è ornata da piccoli cerchi rossi. le due aperture scure della maschera non sono occhi biologici esposti. non porta armi. infligge vita afona e maledizioni che riducono temporaneamente le statistiche. le sue maledizioni durano fino al riposo lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche. ",
       "anatomy": [
         {
           "id": "body",
@@ -34772,15 +34575,72 @@
           "penalty": 0
         },
         {
+          "id": "head",
+          "label": "Testa",
+          "group": "head",
+          "weak": false,
+          "penalty": 0
+        },
+        {
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_1",
+          "label": "Gamba destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Gamba sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
           "id": "mask",
           "label": "Maschera",
           "group": "mask",
           "weak": true,
           "penalty": 0
+        },
+        {
+          "id": "rim",
+          "label": "Bordo",
+          "group": "rim",
+          "weak": false,
+          "penalty": 0
+        },
+        {
+          "id": "fold",
+          "label": "Piega del corpo",
+          "group": "fold",
+          "weak": false,
+          "penalty": 0
         }
       ],
       "weakPoint": "La maschera e i suoi ornamenti rossi.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Sciamano sottile avvolto in un mantello di foglie verdi, con arti scuri e una maschera chiara sorridente, ornata da piccoli cerchi rossi. Infligge Vita Afona e maledizioni che riducono temporaneamente le statistiche. Le sue maledizioni durano fino al Riposo Lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Sciamano sottile con due braccia e due gambe di legno scuro, accovacciato sul bordo di uno stagno nella penombra blu petrolio. Il mantello è di felci verdi appuntite, con un ampio colletto ripiegato all’indietro; la maschera chiara a rombo sorride ed è ornata da piccoli cerchi rossi. Le due aperture scure della maschera non sono occhi biologici esposti. Non porta armi. Infligge Vita Afona e maledizioni che riducono temporaneamente le statistiche. Le sue maledizioni durano fino al Riposo Lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche.",
       "drops": [
         "foglia_maschera_sciamano"
       ],
@@ -34791,7 +34651,7 @@
           "long_rest",
           "source_killed"
         ],
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Sciamano sottile avvolto in un mantello di foglie verdi, con arti scuri e una maschera chiara sorridente, ornata da piccoli cerchi rossi. Infligge Vita Afona e maledizioni che riducono temporaneamente le statistiche. Le sue maledizioni durano fino al Riposo Lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Sciamano sottile con due braccia e due gambe di legno scuro, accovacciato sul bordo di uno stagno nella penombra blu petrolio. Il mantello è di felci verdi appuntite, con un ampio colletto ripiegato all’indietro; la maschera chiara a rombo sorride ed è ornata da piccoli cerchi rossi. Le due aperture scure della maschera non sono occhi biologici esposti. Non porta armi. Infligge Vita Afona e maledizioni che riducono temporaneamente le statistiche. Le sue maledizioni durano fino al Riposo Lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche. ",
         "additionalProgressionSkills": [
           "growth__sciamano_malizioso__0",
           "growth__sciamano_malizioso__1",
@@ -34810,48 +34670,54 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": false,
       "baseId": "sciamano_malizioso",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "themeAsset": "assets/oculum/home_art/theme_sciamano_malizioso_v1.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_sciamano_malizioso_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_sciamano_malizioso_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_sciamano_malizioso_v1.png",
+        "assets/oculum/home_art/theme_sciamano_malizioso_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Maschera"
+        "Testa",
+        "Braccio destro",
+        "Braccio sinistro",
+        "Gamba destra",
+        "Gamba sinistra",
+        "Maschera",
+        "Bordo",
+        "Piega del corpo"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_sciamano_malizioso_v1.png",
+          "exists": true,
+          "sha256": "8ba1201f26977407a4c2e8f4c55e2a5d590dfb6bce0cbd090f88a253e5c72449",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_sciamano_malizioso_mobile_v1.png",
+          "exists": true,
+          "sha256": "e6168ced4221380d9bc48adb5fb145392420d1482dda2dd21a943dbd8c67e660",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_sciamano_malizioso_v1.png",
+          "exists": true,
+          "sha256": "30b10be2af6d6fb8a9aa5f0c3e7c7b5082f78db69396b86324101556a09b36f6",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -34992,54 +34858,11 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes",
           "label": "Occhio",
           "group": "eyes",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "hands_1",
@@ -35138,12 +34961,7 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Mano vaporosa destra",
         "Mano vaporosa sinistra",
         "Ricevitore di fulmini destro",
@@ -36003,49 +35821,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "Le giunture fra roccia e cristalli.",
@@ -36085,12 +35860,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -36235,49 +36005,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "La gola luminosa quando apre le fauci.",
@@ -36317,12 +36044,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -36691,7 +36413,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -36700,30 +36422,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "Il tendine scoperto alla radice della falce.",
@@ -36767,10 +36471,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore"
+        "Gamba destra",
+        "Gamba sinistra"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -37270,42 +36972,6 @@
           "sideIndex": 1
         },
         {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "torso",
           "label": "Torace",
           "group": "torso",
@@ -37354,10 +37020,6 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Torace"
       ],
       "artworkEvidence": {
@@ -37773,13 +37435,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -37796,42 +37451,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "Il grande occhio centrale.",
@@ -37872,13 +37491,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
-        "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Occhio sinistro"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -38281,49 +37895,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "joint",
           "label": "Giuntura",
           "group": "joint",
@@ -38369,11 +37940,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -38434,42 +38000,6 @@
           "group": "head",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -38539,10 +38069,6 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Ventre"
@@ -38869,9 +38395,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/armadillo_creatures.dart:14",
       "isGeneratedVariant": false,
       "baseId": "armadillo_corazzato",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_armadillo_corazzato_v1.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -38892,9 +38418,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_armadillo_corazzato_v1.png",
+          "exists": true,
+          "sha256": "385136a342d5d30e957aa5be32955354a86bc610c5659f970034f8cc0244ee78",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -38914,7 +38440,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -48810,49 +48335,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "gills",
           "label": "Branchie",
           "group": "gills",
@@ -48905,11 +48387,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Branchie"
       ],
       "artworkEvidence": {
@@ -48965,49 +48442,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "gills",
           "label": "Branchie",
           "group": "gills",
@@ -49061,11 +48495,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Branchie"
       ],
       "artworkEvidence": {
@@ -49462,13 +48891,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -49485,42 +48907,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "belly",
@@ -49585,13 +48971,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ventre",
         "Piega del corpo"
       ],
@@ -49650,13 +49031,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -49673,42 +49047,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "belly",
@@ -49774,13 +49112,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ventre",
         "Piega del corpo"
       ],
@@ -51477,7 +50810,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -51486,30 +50819,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "torso",
@@ -51563,10 +50878,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Torace"
       ],
       "artworkEvidence": {
@@ -51649,7 +50962,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -51658,30 +50971,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "torso",
@@ -51736,10 +51031,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Torace"
       ],
       "artworkEvidence": {
@@ -53739,7 +53032,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -53748,30 +53041,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "mask",
@@ -53828,10 +53103,8 @@
         "Occhio sinistro",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Maschera"
       ],
       "artworkEvidence": {
@@ -54394,7 +53667,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
@@ -54403,30 +53676,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -54479,10 +53734,8 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -54883,13 +54136,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -54906,42 +54152,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -55014,13 +54224,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra"
       ],
@@ -55103,7 +54308,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -55112,30 +54317,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "mask",
@@ -55189,10 +54376,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Maschera"
       ],
       "artworkEvidence": {
@@ -55496,7 +54681,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -55505,30 +54690,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "Tutte e quattro le braccia: i colpi mirati critici possono spezzarle.",
@@ -55582,10 +54749,8 @@
         "Braccio sinistro superiore",
         "Braccio destro inferiore",
         "Braccio sinistro inferiore",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore"
+        "Gamba destra",
+        "Gamba sinistra"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -56375,49 +55540,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "mask",
           "label": "Maschera",
           "group": "mask",
@@ -56466,11 +55588,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Maschera"
       ],
       "artworkEvidence": {
@@ -57186,7 +56303,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -57195,30 +56312,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -57293,10 +56392,8 @@
         "Occhio sinistro",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Coda",
         "Piega del corpo"
       ],
@@ -58327,7 +57424,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -58336,30 +57433,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -58450,10 +57529,8 @@
         "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Ala destra superiore",
         "Ala sinistra superiore",
         "Ala destra inferiore",
@@ -59240,15 +58317,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -59257,30 +58327,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -59332,11 +58384,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -59782,60 +58831,6 @@
           "penalty": 0
         },
         {
-          "id": "arms_1",
-          "label": "Braccio destro",
-          "group": "arms",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "arms_2",
-          "label": "Braccio sinistro",
-          "group": "arms",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Gamba destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "wings_1",
           "label": "Ala destra",
           "group": "wings",
@@ -59910,12 +58905,6 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
-        "Braccio destro",
-        "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Coda",
@@ -93804,15 +92793,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -93821,30 +92803,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -93895,11 +92859,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -93955,15 +92916,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -93972,30 +92926,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -94047,11 +92983,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -94107,13 +93040,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -94130,42 +93056,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -94241,13 +93131,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Giuntura",
@@ -94306,13 +93191,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -94329,42 +93207,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -94441,13 +93283,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Giuntura",
@@ -94532,7 +93369,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -94541,30 +93378,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "sensor",
@@ -94618,10 +93437,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Nodo sensoriale"
       ],
       "artworkEvidence": {
@@ -94703,7 +93520,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -94712,30 +93529,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "sensor",
@@ -94790,10 +93589,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Nodo sensoriale"
       ],
       "artworkEvidence": {
@@ -95926,15 +94723,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -95943,30 +94733,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -96017,11 +94789,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -96077,15 +94846,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -96094,30 +94856,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -96169,11 +94913,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -96229,13 +94970,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -96252,42 +94986,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -96363,13 +95061,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Giuntura",
@@ -96428,13 +95121,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -96451,42 +95137,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -96563,13 +95213,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Giuntura",
@@ -96654,7 +95299,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -96663,30 +95308,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "sensor",
@@ -96740,10 +95367,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Nodo sensoriale"
       ],
       "artworkEvidence": {
@@ -96825,7 +95450,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -96834,30 +95459,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "sensor",
@@ -96912,10 +95519,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Nodo sensoriale"
       ],
       "artworkEvidence": {
@@ -96969,49 +95574,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -97091,11 +95653,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra superiore",
         "Ala sinistra superiore",
         "Ala destra inferiore",
@@ -97152,49 +95709,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -97275,11 +95789,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra superiore",
         "Ala sinistra superiore",
         "Ala destra inferiore",
@@ -97336,49 +95845,6 @@
           "group": "body",
           "weak": true,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "La fessura priva di placche sul fianco sinistro.",
@@ -97421,12 +95887,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -97479,49 +95940,6 @@
           "group": "body",
           "weak": true,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "La fessura priva di placche sul fianco sinistro.",
@@ -97565,12 +95983,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -97625,49 +96038,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "core",
           "label": "Nucleo",
           "group": "core",
@@ -97716,11 +96086,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Nucleo"
       ],
       "artworkEvidence": {
@@ -97776,49 +96141,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "core",
           "label": "Nucleo",
           "group": "core",
@@ -97868,11 +96190,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Nucleo"
       ],
       "artworkEvidence": {
@@ -97928,15 +96245,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -97945,30 +96255,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -98019,11 +96311,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -98079,15 +96368,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -98096,30 +96378,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -98171,11 +96435,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -98231,13 +96492,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -98254,42 +96508,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -98365,13 +96583,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Giuntura",
@@ -98430,13 +96643,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "eyes_1",
           "label": "Occhio destro",
           "group": "eyes",
@@ -98453,42 +96659,6 @@
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -98565,13 +96735,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
         "Occhio destro",
         "Occhio sinistro",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Giuntura",
@@ -99053,49 +97218,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "wings_1",
           "label": "Ala destra superiore",
           "group": "wings",
@@ -99173,11 +97295,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra superiore",
         "Ala sinistra superiore",
         "Ala destra inferiore",
@@ -99234,49 +97351,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -99357,11 +97431,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Ala destra superiore",
         "Ala sinistra superiore",
         "Ala destra inferiore",
@@ -99418,49 +97487,6 @@
           "group": "body",
           "weak": true,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "La fessura priva di placche sul fianco sinistro.",
@@ -99503,12 +97529,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -99561,49 +97582,6 @@
           "group": "body",
           "weak": true,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "La fessura priva di placche sul fianco sinistro.",
@@ -99647,12 +97625,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -99707,49 +97680,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "core",
           "label": "Nucleo",
           "group": "core",
@@ -99798,11 +97728,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Nucleo"
       ],
       "artworkEvidence": {
@@ -99858,49 +97783,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "core",
           "label": "Nucleo",
           "group": "core",
@@ -99950,11 +97832,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Nucleo"
       ],
       "artworkEvidence": {
@@ -100010,15 +97887,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -100027,30 +97897,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -100101,11 +97953,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -100161,15 +98010,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": true,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -100178,30 +98020,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "tail",
@@ -100253,11 +98077,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda"
       ],
       "artworkEvidence": {
@@ -137673,15 +135494,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -137690,30 +135504,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -137769,11 +135565,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -138545,49 +136338,6 @@
           "group": "body",
           "weak": true,
           "penalty": 0
-        },
-        {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "La pelle chiara sotto il grugno, non coperta dalle zolle.",
@@ -138634,12 +136384,7 @@
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
-        "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Corpo"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -139175,7 +136920,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -139184,30 +136929,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         }
       ],
       "weakPoint": "La parte sottile del collo sotto le piume del mento.",
@@ -139257,10 +136984,8 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore"
+        "Zampa destra",
+        "Zampa sinistra"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -144069,49 +141794,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "joint",
           "label": "Giuntura",
           "group": "joint",
@@ -144156,11 +141838,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -144215,49 +141892,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "joint",
           "label": "Giuntura",
           "group": "joint",
@@ -144303,11 +141937,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -145525,15 +143154,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
@@ -145542,30 +143164,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -145620,11 +143224,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Giuntura",
         "Piega del corpo"
       ],
@@ -145677,15 +143278,8 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
           "id": "legs_1",
-          "label": "Zampa destra anteriore",
+          "label": "Zampa destra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
@@ -145694,30 +143288,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
+          "label": "Zampa sinistra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -145773,11 +143349,8 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
+        "Zampa destra",
+        "Zampa sinistra",
         "Giuntura",
         "Piega del corpo"
       ],
@@ -158463,49 +156036,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "gills",
           "label": "Branchie",
           "group": "gills",
@@ -158550,11 +156080,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Branchie"
       ],
       "artworkEvidence": {
@@ -158606,49 +156131,6 @@
           "penalty": 0
         },
         {
-          "id": "head",
-          "label": "Testa",
-          "group": "head",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "legs_1",
-          "label": "Zampa destra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra anteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Zampa destra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Zampa sinistra posteriore",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
-        },
-        {
           "id": "gills",
           "label": "Branchie",
           "group": "gills",
@@ -158694,11 +156176,6 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
-        "Zampa destra anteriore",
-        "Zampa sinistra anteriore",
-        "Zampa destra posteriore",
-        "Zampa sinistra posteriore",
         "Branchie"
       ],
       "artworkEvidence": {
@@ -161263,7 +158740,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
@@ -161272,30 +158749,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -161439,10 +158898,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Giuntura"
       ],
       "artworkEvidence": {
@@ -161520,7 +158977,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
@@ -161529,30 +158986,12 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": true,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
-        },
-        {
-          "id": "legs_3",
-          "label": "Gamba destra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 2
-        },
-        {
-          "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
-          "group": "legs",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 2
         },
         {
           "id": "joint",
@@ -161697,10 +159136,8 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore",
+        "Gamba destra",
+        "Gamba sinistra",
         "Giuntura"
       ],
       "artworkEvidence": {

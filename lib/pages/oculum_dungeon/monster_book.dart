@@ -613,7 +613,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Custode della Campana Cieca',
     nameEn: 'Keeper of the Blind Bell',
     descIt:
-        'Una campana incrinata sostituisce la testa di questo cavaliere; dentro non esiste un volto, soltanto cenere che respira. Sorveglia porte murate e riconosce i passi dal tremore della pietra. Ruolo in scena: Mini Boss guardiano che presidia un passaggio e alterna rintocchi e corazza. Punto debole: chi si muove senza toccare il suolo elude il suo ascolto. Base di livello 0: RES 12, VOL 10, MAT 8, OCU 14.',
+        'Cavaliere altissimo e sottile con due braccia e due gambe, racchiuso in una corazza di metallo annerito. Una campana conica di bronzo incrinato sostituisce la testa: dentro non esistono volto o occhi, soltanto cenere che respira. Le mani sono vuote. Sorveglia porte murate e riconosce i passi dal tremore della pietra. Ruolo in scena: Mini Boss guardiano che presidia un passaggio e alterna rintocchi e corazza. Punto debole: chi si muove senza toccare il suolo elude il suo ascolto. Base di livello 0: RES 12, VOL 10, MAT 8, OCU 14.',
     descEn:
         'A cracked bell replaces the head of an ash-filled knight. A guardian mini-boss that hears footsteps through stone; creatures off the ground evade that sense.',
     elementId: 'sonoro',
@@ -690,7 +690,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Mammuth in decomposizione',
     nameEn: 'Decaying Mammoth',
     descIt:
-        'Un mammuth putrido che fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. Ruolo in scena: controlla la fuga con le ossa, recupera Vita dal terreno e carica il bersaglio. Drop all’uccisione: Ossa di mammuth putrido, materiale dello stesso grado del mammuth.',
+        'Mammuth putrido compatto e gobbuto, dal pelo scuro logoro e pelle consumata, con quattro zampe massicce, due occhi, due grandi orecchie, una proboscide, due zanne e una coda. Fa emergere ossa dal terreno, decompone il suolo per curarsi e travolge le prede. Ruolo in scena: controlla la fuga con le ossa, recupera Vita dal terreno e carica il bersaglio. Drop all’uccisione: Ossa di mammuth putrido, materiale dello stesso grado del mammuth.',
     descEn:
         'A rotting mammoth that raises pursuing bones, feeds on decaying ground and charges its prey. Drops Putrid Mammoth Bones on death, matching its Grade.',
     elementId: 'necrotico',

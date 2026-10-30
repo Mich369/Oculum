@@ -2,13 +2,15 @@
 
 ## Patch del 30 ottobre — Nuvola, corazze e nuove varianti
 
+- Nuovi temi scelti: Sciamano Malizioso con felci e maschera a rombo, Custode altissimo con campana conica, Mammuth compatto e Armadillo tondo. Sciamano dispone anche di telefono/reliquia approvati. Descrizioni e bersagli seguono i disegni, senza attribuire nuovi poteri; la campana non nasconde un volto e le zanne/proboscide del Mammuth sono distinte. Corretto il riconoscimento anatomico che confondeva«corso» con«orso» e«progress» con«ogre».
+
 - Nuvola in bottiglia cambia fase solo se sopravvive. Il critico mirato rompe la bottiglia soltanto danneggiando la Vita; recuperi40/75% e bersaglio bottiglia rimosso nella seconda fase. La scarica Open cresce dal secondo bersaglio; Fulmine ferma Azione interrompe l'Azione in corso o consuma la prossima, preservando Reazioni e Reazioni veloci. Le nuove Art usano effetti e valori modificabili; le personalizzazioni salvate restano conservate.
 - Costrutto Minore: prima si rompe la scatola, poi si può mirare il nucleo. I colpi alla scatola danneggiano corpo e integrità; Ultime forze non cancella più il danno strutturale appena ricevuto. Pacchetti vecchi non possono colpire un nucleo ancora nascosto.
 - Quattro Armadilli — base, Sabbia, Cristallo e Legno — con appallottolamento tramite Azione o Reazione: +6/+9/+16CM nelle tre forme, rotolamento e speronamento consentiti. Regole, costi, anatomia, materiali e drop rimangono modificabili; gli attacchi già preparati non possono mirare parti ormai coperte.
 - Mezzo Demone Massiccio come variante distinta: più Resilienza, meno Volontà/Materia/Oculum, a parità di totale base; non sostituisce la versione atletica. Pinepine mantiene la pigna integra con una squama più tenera, senza ferita preesistente.
 - Nuovi pack approvati desktop/telefono/reliquia di Massiccio, Mastino della Cripta, Forest Demon e Forest Demon Blu. Anatomie allineate: comune quadrupede con corno frontale e due laterali; Blu quadrupede con due corna rosa. Gli altri sette pack approvati restano separati dalla futura integrazione delle specie. Corretto Pinepine: due braccia, due gambe e squama tenera mirabile, senza ferita iniziale; la fragilità elementale non lo rende incorporeo.
 
-Verifiche locali:113test mirati e analisi senza problemi sulla revisione finale; prima tranche con34nuovi test,141regressioni e32controlli di catalogo/personalizzazioni passati. Conteggi in parte ripetuti, non sommabili. CI, pacchetti e pubblicazione sono controlli distinti, documentati nella consegna quando completati.
+Verifiche locali sulla revisione:185test e analisi senza problemi; le precedenti113prove e gli altri conteggi sono in parte ripetuti, non sommabili. LaCIprecedente con tre fallimenti non è stata distribuita: nuovaCI, pacchetti e pubblicazione sono controlli distinti, documentati nella consegna quando completati.
 
 ## Patch successiva del 29 ottobre — sonno, bisogni e creature di sabbia
 

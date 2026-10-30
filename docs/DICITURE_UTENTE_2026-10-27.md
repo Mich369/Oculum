@@ -2,6 +2,11 @@
 
 ## Ultime diciture del30ottobre — prevalenza sui precedenti lotti
 
+- Custode della Campana Cieca: **«B — Altissimo e campana conica»**; Mammuth in decomposizione: **«A — Compatto e gobbuto»**; Armadillo Corazzato: **«A — Tondo, placche noce»**, con riferimento allaA2 mostrata nella galleria. Approvazioni desktop, derivati da produrre/valutare separatamente.
+
+- Sciamano Malizioso: **«B — Petrolio, felci e maschera a rombo»**, selezione esplicita del desktop fra le cinque nuove immagini. Telefono/reliquia separati, nessuna conferma automatica della variante Minore.
+- Successiva conferma dei due derivati dello SciamanoB: **«Sì, entrambi canonici»**. TelefonoV1 e reliquiaV2, con alpha e margini corretti; V1reliquia non selezionata.
+
 - «intanto continua anche con gli altri temi»; «questa volta5diverse possibilità della stessa art e diversificali molto anche nei colori e facendo cose simili a quelle mostrate per non avere problemi». Adattamento: cinque alternative originali della stessa specie, con differenze sostanziali di sagoma/posa/palette/ambiente e dettagli canonici conservati. Non cinque specie o cinque evoluzioni.
 - Alla domanda esplicita sui22adattamenti telefono/reliquia degli11desktop scelti: **«Approvo tutti e22»**. Sono approvati gli esatti file selezionati in `output/artwork/derivati_canonici_2026-10-30_lotto2/manifest_derivati.json`; le sei precedenti revisioni dei margini restano storico, non file selezionati.
 

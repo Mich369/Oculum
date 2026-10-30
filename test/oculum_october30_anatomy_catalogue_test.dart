@@ -2,6 +2,41 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
+  test('new approved themes keep anatomy and materials of each species', () {
+    final keeper = oculumMonsterPrecisionAnatomy(
+      monsterBookEntryById('custode_campana_cieca')!,
+    );
+    expect(keeper.where((p) => p['group'] == 'eyes'), isEmpty);
+    expect(keeper.where((p) => p['group'] == 'arms'), hasLength(2));
+    expect(keeper.where((p) => p['group'] == 'legs'), hasLength(2));
+    expect(
+      keeper.singleWhere((p) => p['group'] == 'head')['material'],
+      'metal',
+    );
+    final shaman = oculumMonsterPrecisionAnatomy(
+      monsterBookEntryById('sciamano_malizioso')!,
+    );
+    expect(shaman.where((p) => p['group'] == 'arms'), hasLength(2));
+    expect(shaman.where((p) => p['group'] == 'legs'), hasLength(2));
+    expect(shaman.where((p) => p['group'] == 'eyes'), isEmpty);
+    expect(shaman.singleWhere((p) => p['id'] == 'mask')['weak'], isTrue);
+    final mammoth = oculumMonsterPrecisionAnatomy(
+      monsterBookEntryById('mammuth_in_decomposizione')!,
+    );
+    expect(mammoth.where((p) => p['group'] == 'legs'), hasLength(4));
+    expect(mammoth.where((p) => p['group'] == 'arms'), isEmpty);
+    for (final group in ['eyes', 'ears', 'tusks']) {
+      expect(mammoth.where((p) => p['group'] == group), hasLength(2));
+    }
+    expect(mammoth.where((p) => p['group'] == 'trunk'), hasLength(1));
+    expect(mammoth.where((p) => p['group'] == 'tail'), hasLength(1));
+    expect(
+      mammoth
+          .where((p) => p['group'] == 'tusks')
+          .every((p) => p['material'] == 'bone'),
+      isTrue,
+    );
+  });
   test(
     'approved Forest Demon anatomy is reptilian with four legs and three horns',
     () {

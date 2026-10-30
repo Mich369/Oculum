@@ -136,7 +136,7 @@ final _octoberCreatureEntries = <MonsterBookEntry>[
       'mentale',
       minor
           ? 'Versione depotenziata dello Sciamano Malizioso: corpo ligneo, grande testa di legno sorridente, mantello di foglie e piccole estremità scure. Ha statistiche più basse e maledizioni meno intense. Vita Afona e riduzioni statistiche terminano al Riposo Breve, al Riposo Lungo oppure all’uccisione dello sciamano sorgente.'
-          : 'Sciamano sottile avvolto in un mantello di foglie verdi, con arti scuri e una maschera chiara sorridente, ornata da piccoli cerchi rossi. Infligge Vita Afona e maledizioni che riducono temporaneamente le statistiche. Le sue maledizioni durano fino al Riposo Lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche.',
+          : 'Sciamano sottile con due braccia e due gambe di legno scuro, accovacciato sul bordo di uno stagno nella penombra blu petrolio. Il mantello è di felci verdi appuntite, con un ampio colletto ripiegato all’indietro; la maschera chiara a rombo sorride ed è ornata da piccoli cerchi rossi. Le due aperture scure della maschera non sono occhi biologici esposti. Non porta armi. Infligge Vita Afona e maledizioni che riducono temporaneamente le statistiche. Le sue maledizioni durano fino al Riposo Lungo della vittima oppure all’uccisione dello sciamano che le ha inflitte; non cancellano altri effetti né modificano permanentemente le statistiche.',
       'La maschera e i suoi ornamenti rossi.',
       minor ? [1, 2, 1, 1] : [2, 4, 2, 3],
       minor ? 0 : 2,

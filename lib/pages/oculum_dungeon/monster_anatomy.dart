@@ -178,6 +178,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             'bipede umanoide, due braccia, due gambe, testa, due occhi, due orecchie e coda',
           'sharp' => 'quattro zampe, due occhi',
           'mosca_campana' => 'sei zampe, quattro ali, due occhi',
+          'custode_campana_cieca' =>
+            'umanoide, due braccia, due gambe, testa a campana, senza occhi',
+          'sciamano_malizioso' =>
+            'umanoide ligneo, due braccia, due gambe, testa mascherata, senza occhi biologici',
+          'mammuth_in_decomposizione' =>
+            'quadrupede, quattro zampe, due occhi, due orecchie, una proboscide, due zanne e coda',
           'shadow_devil' => 'due corna, senza occhi',
           'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' =>
             'umanoide, due braccia, due gambe, due corna e due occhi',
@@ -202,12 +208,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       !spherical &&
       !incorporeal &&
       has(
-        r'umano|goblin|coboldo|gnoll|orco|ogre|troll|gigante|bandit|scostum|monaco|cavalier|mago|demone|diavolo|vampiro|scheletro|teschio|cultista|pellegrino|angelo|adoratore|feralis|manichino|pupazzo',
+        r'umano|goblin|coboldo|gnoll|\borco\b|\bogre\b|troll|gigante|bandit|scostum|monaco|cavalier|mago|demone|diavolo|vampiro|scheletro|teschio|cultista|pellegrino|angelo|adoratore|feralis|manichino|pupazzo',
       );
   final quadruped =
       !spherical &&
       has(
-        r'quadrupede|mammuth|lupo|warg|cane|orso|cinghiale|iena|felino|leone|rinoceronte|grifone|drago|basilisco',
+        r'\b(?:quadrupede|mammuth|lupo|warg|cane|orso|cinghiale|iena|felino|leone|rinoceronte|grifone|drago|basilisco)\b',
       );
   final parts = <Map<String, dynamic>>[];
   const numbers = {
@@ -236,6 +242,9 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             'topino_avventuroso' => {'arms': 2, 'legs': 2, 'eyes': 2},
             'sharp' => {'legs': 4, 'eyes': 2},
             'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
+            'custode_campana_cieca' ||
+            'sciamano_malizioso' => {'arms': 2, 'legs': 2},
+            'mammuth_in_decomposizione' => {'legs': 4, 'eyes': 2},
             'shadow_devil' => {'horns': 2},
             'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' => {
               'arms': 2,
@@ -420,6 +429,21 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   }
   if (entry.id == 'funghetto_cappuccio_rosso') {
     add('cap', 'Cappello fungino', 'cap', false);
+  }
+  if (entry.id == 'mammuth_in_decomposizione') {
+    group('ears', 'Orecchio', 'Orecchie', 2, r'orecchio|orecchie');
+    group('tusks', 'Zanna', 'Zanne', 2, r'zanna|zanne');
+    for (final part in parts.where((p) => p['group'] == 'tusks')) {
+      part['material'] = 'bone';
+    }
+    add('trunk', 'Proboscide', 'trunk', weak.contains('proboscide'));
+    parts.last['material'] = 'flesh';
+  }
+  if (entry.id == 'custode_campana_cieca') {
+    for (final part in parts) {
+      part['material'] = 'metal';
+      if (part['group'] == 'head') part['label'] = 'Campana-testa';
+    }
   }
   if (entry.id == 'il_doppione') {
     add('crest', 'Corona di lembi', 'crest', true);

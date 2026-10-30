@@ -72,6 +72,42 @@ void main() {
             true,
             reason: monster.id,
           );
+        } else if (monster.id == 'nuvola_in_bottiglia') {
+          // The authored cloud Open grants a fast reaction, not the generic
+          // monster damage buff. Its own Open alone empowers the Stop skill.
+          expect(oculumBottledCloudArt(restored), isTrue);
+          final open = restored.openDescriptionEffects.singleWhere(
+            (effect) => effect.target == 'bottled_cloud_open',
+          );
+          expect(open.diceExpression, '2d50');
+          expect(open.valueExpression, 'danni+25');
+          expect(open.maximumTargets, 12);
+          expect(open.resource, '15');
+          final buff = restored.openBuffEffects.singleWhere(
+            (effect) => effect.target == 'bottled_cloud_fast_reaction',
+          );
+          expect(buff.valueExpression, '1');
+          expect(buff.mode, 'finche_attivo');
+          expect(
+            restored.openBuffEffects.any(
+              (effect) => effect.target == 'monster_open_power',
+            ),
+            isFalse,
+          );
+          final stop = restored.openSkillEffects.singleWhere(
+            (effect) => effect.target == 'bottled_cloud_stop',
+          );
+          expect(stop.valueExpression, '25');
+          expect(stop.resource, '20');
+          expect(
+            oculumBottledCloudEffectData(stop.narrativeText),
+            containsPair('empoweredChancePercent', 60),
+          );
+          expect(
+            oculumBottledCloudEffectData(stop.narrativeText),
+            containsPair('empoweredDamagePercent', 50),
+          );
+          expect(restored.openSkillCooldown?.amount, 3);
         } else {
           expect(
             restored.openBuffEffects.any(

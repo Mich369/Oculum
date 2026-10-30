@@ -2,6 +2,13 @@
 
 ## Ultimo aggiornamento operativo del30ottobre
 
+- **QA30-CI:** run41085067973 di fa14d0c2 fallito:1883passati/3falliti/6saltati, pacchetti non distribuiti. Causa reale: regex leggeva«orso» in«corso»; nuova regressione identifica anche«ogre» in«progress». Testbottiglia isolato dalle parate/schivate casuali; asserzioneOpen aggiornata al BuffautorialeNuvola, senza buffDanni inventato. Riprove locali e nuovaCI richieste prima dei pacchetti; vecchia distribuzione conservata.
+- **ART36:** desktop CustodeB/MammuthA/ArmadilloA2 approvati; SciamanoB anche telefonoV1/reliquiaV2. Sei copie runtime SHAidentiche, descrizioni e parti coerenti: campana metallica senza occhi, arti lignei e maschera, orecchie/zanne/proboscide del Mammuth. Nuovi sei derivati dei tre desktop in produzione. Revisione in verifica, nessuna riga100%.
+
+**QA30-CI/ART36, prova locale successiva:**185test passati e analisi senza problemi. Inclusi i tre fallimentiCI, gli overrideMaster e gli ulteriori temi. Nessuna distribuzione della buildfallita; nuovaCI/pacchetti/downloadpubblici da completare. Nessuna chiusura100% implicita.
+
+- **ART35:** Sciamano Malizioso nuovo desktopB esplicitamente scelto: felci/petrolio/maschera a rombo. Prompt, originale eSHA conservati; produrre telefono/reliquia e sottoporli separatamente, poi allineare descrizione/anatomia e verificare renderer. Non ancora nel commit compilato fa14d0c2, nessuna chiusura100%.
+
 - **ART33:** richiesta attuale: cinque proposte A–E per nuovo mostro, molto diverse anche nei colori, rispettando canone/anatomia. Lotti precedenti e approvazioni conservati. Armadillo base e ulteriori due specie in produzione; nessuna scelta inventata.
 - **ART34:** tutti22derivati del lotto2 approvati esplicitamente con «Approvo tutti e22». Otto file collegati per Massiccio, Mastino e due Forest Demon; altri14conservati per sette specie ancora senza voce runtime. PNG/SHA/alpha verificati; nuova verifica renderer/CI/pacchetti in corso, nessuna chiusura100%.
 - **AN30b, correzione successiva:** la parola «elementale» nella fragilità di Pinepine lo classificava incorporeo e nascondeva gli arti; aggiunti fatti canonici2braccia/2gambe e parte mirabile `soft_scale` in legno, senza ferita preesistente. Personalizzazioni Master precedenti ancora prioritarie. Regressione aggiunta, esecuzione e distribuzione successive distinte.

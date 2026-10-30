@@ -1,0 +1,361 @@
+{
+  "date": "2026-10-30",
+  "mode": "built-in image_gen only",
+  "status": "DESKTOP_SELECTIONS_USER_APPROVED",
+  "requested_species": 2,
+  "requested_designs_per_species": 5,
+  "generated_pngs": 10,
+  "policy": "No approved art replaced; no anatomy/weakpoint/runtime changed. A-E are five design choices, not five new monsters.",
+  "sources": [
+    "lib/pages/oculum_dungeon/monster_book.dart:612",
+    "lib/pages/oculum_dungeon/monster_book.dart:689",
+    "docs/creature-art-inventory.json"
+  ],
+  "validation": "Decoded PNG and source SHA equality only; visual inspection separate; no SDK or real UI check.",
+  "proposals": [
+    {
+      "species": "custode_campana_cieca",
+      "name": "Custode della Campana Cieca",
+      "variant": "A",
+      "title": "Basso e possente",
+      "canon": "The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.",
+      "direction": "A distinctly SHORT BROAD knight, barrel chest and stout angular legs, a very WIDE squat cracked bronze bell head with a thick flared lip, overlapping rounded shoulder plates. Heavy long forearms, both empty hands planted on a low masonry sill as he leans forward listening. Bronze warm ochre with dark brown iron joints, sparse muted olive patina. LOWER RIGHT beside a bricked doorway in an ancient LOW vaulted stone gatehouse, grey-green moss and quiet grey-green corridor centre. Do not use a tall cone bell or thin legs.",
+      "id": "custode_campana_cieca_A",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/custode_campana_cieca_proposta_A_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.\nTHIS DISTINCT DESIGN A: A distinctly SHORT BROAD knight, barrel chest and stout angular legs, a very WIDE squat cracked bronze bell head with a thick flared lip, overlapping rounded shoulder plates. Heavy long forearms, both empty hands planted on a low masonry sill as he leans forward listening. Bronze warm ochre with dark brown iron joints, sparse muted olive patina. LOWER RIGHT beside a bricked doorway in an ancient LOW vaulted stone gatehouse, grey-green moss and quiet grey-green corridor centre. Do not use a tall cone bell or thin legs.",
+      "summary_it": "Basso e possente, con campana larga e bronzo caldo. Si piega sul passaggio murato di una vecchia sala a volta.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-36471f47-f51c-46f5-b87a-b7d350082a0c.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "2bf2832c5a7e247af16d374000c9a108704e9dc04f109f3938f80d0cc5f93ae2",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2405065,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    },
+    {
+      "species": "custode_campana_cieca",
+      "name": "Custode della Campana Cieca",
+      "variant": "B",
+      "title": "Altissimo e sottile",
+      "canon": "The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.",
+      "direction": "A markedly TALL NARROW knight, very long thin limbs, angular hanging shoulder plates and one elongated CONICAL bell head with narrow mouth and a single vertical crack. Two empty skeletal gauntlets hang near knees; slight backward-leaning posture with one foot forward, eerie attentive stillness. Blue-black iron armor, cold soot-brown bronze bell with dusty grey ash, no glowing face. LOWER LEFT before a high bricked stairwell arch in a roofed abandoned gothic crypt; slate-blue and violet shadow palette, a distant small cold lamp. Keep tall subject scaled down so top ofbell below midheight.",
+      "id": "custode_campana_cieca_B",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/custode_campana_cieca_proposta_B_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.\nTHIS DISTINCT DESIGN B: A markedly TALL NARROW knight, very long thin limbs, angular hanging shoulder plates and one elongated CONICAL bell head with narrow mouth and a single vertical crack. Two empty skeletal gauntlets hang near knees; slight backward-leaning posture with one foot forward, eerie attentive stillness. Blue-black iron armor, cold soot-brown bronze bell with dusty grey ash, no glowing face. LOWER LEFT before a high bricked stairwell arch in a roofed abandoned gothic crypt; slate-blue and violet shadow palette, a distant small cold lamp. Keep tall subject scaled down so top ofbell below midheight.",
+      "summary_it": "Molto alto e sottile, con campana conica e ferro annerito. Attende in una cripta dalle ombre blu-viola.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-3d4dd0b0-1d7f-4a1c-b1c7-88f9fe04fcaa.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "7270290b16b981c0f512998ec6ef6ae73a6a79a48da1dc15f3bb8ab2dd12feda",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2376659,
+        "original_copy_identical": true
+      },
+      "user_approved": true,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL",
+      "approval_quote": "B — Altissimo e campana conica",
+      "approval_scope": "DESKTOP_ONLY"
+    },
+    {
+      "species": "custode_campana_cieca",
+      "name": "Custode della Campana Cieca",
+      "variant": "C",
+      "title": "Curvo e obliquo",
+      "canon": "The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.",
+      "direction": "A crooked medium-height knight with long ARCHED BACK, narrow waist, one shoulder much higher; crooked knee joints, one empty hand touching the stone floor, other empty palm touching the sealed doorway. Broad OVAL bell head hangs tilted to one side, narrow diagonal crack, only grey ash in its open underside. Green VERDIGRIS bronze plates with orange-rust seams, muted stone-grey limbs. LOWER RIGHT in a damp enclosed underground aqueduct side-room, bricked floodgate and shallow dark puddles; muted teal/green setting with rusty details. No added tentacles or chains-as-limbs.",
+      "id": "custode_campana_cieca_C",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/custode_campana_cieca_proposta_C_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.\nTHIS DISTINCT DESIGN C: A crooked medium-height knight with long ARCHED BACK, narrow waist, one shoulder much higher; crooked knee joints, one empty hand touching the stone floor, other empty palm touching the sealed doorway. Broad OVAL bell head hangs tilted to one side, narrow diagonal crack, only grey ash in its open underside. Green VERDIGRIS bronze plates with orange-rust seams, muted stone-grey limbs. LOWER RIGHT in a damp enclosed underground aqueduct side-room, bricked floodgate and shallow dark puddles; muted teal/green setting with rusty details. No added tentacles or chains-as-limbs.",
+      "summary_it": "Corpo curvo, campana obliqua e bronzo con patina verde. Una mano tocca la pietra, una il muro, in un acquedotto umido.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-b888f077-bcf9-43b5-a1cc-e18ae279a0f9.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "8f11f25b11f9a83619cdc5d178908ee05cdadf4e7daff2980a1c9a7c0c5b0745",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2495416,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    },
+    {
+      "species": "custode_campana_cieca",
+      "name": "Custode della Campana Cieca",
+      "variant": "D",
+      "title": "Raccolto e corazzato",
+      "canon": "The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.",
+      "direction": "A compact HUNCHED knight with broad trapezoid torso, thick plated thighs, small two bent arms held crossed over chest, and a LOW FLATTENED mushroom-like bell head with broad lip and shallow dome, still unmistakably a hollow cracked bronze bell not a helmet. Huge broken shoulder silhouette, feet apart in sentry pose. Blackened bronze, plum-brown iron plates and pale grey ash; no gold or solar marks. LOWER LEFT guarding a sealed squat burial passage in a roofed rock-cut chamber, dry dusty purple-brown floor and low warm clay lantern at far edge. Distinctly flatter and more geometric than A.",
+      "id": "custode_campana_cieca_D",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/custode_campana_cieca_proposta_D_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.\nTHIS DISTINCT DESIGN D: A compact HUNCHED knight with broad trapezoid torso, thick plated thighs, small two bent arms held crossed over chest, and a LOW FLATTENED mushroom-like bell head with broad lip and shallow dome, still unmistakably a hollow cracked bronze bell not a helmet. Huge broken shoulder silhouette, feet apart in sentry pose. Blackened bronze, plum-brown iron plates and pale grey ash; no gold or solar marks. LOWER LEFT guarding a sealed squat burial passage in a roofed rock-cut chamber, dry dusty purple-brown floor and low warm clay lantern at far edge. Distinctly flatter and more geometric than A.",
+      "summary_it": "Corpo raccolto e geometrico, campana piatta e corazza scura. Braccia incrociate davanti a un passaggio funerario.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-d1a6ee0d-5678-4dcc-b83a-e29dd2647301.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "4ce4bfb7e5dc828bfa9a6b64cb491bf1e5a26f981bbfe65138d72ca152c1396c",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2241473,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    },
+    {
+      "species": "custode_campana_cieca",
+      "name": "Custode della Campana Cieca",
+      "variant": "E",
+      "title": "Sottile e cerimoniale",
+      "canon": "The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.",
+      "direction": "A slim UPRIGHT knight with long narrow torso and elegantly layered narrow metal plates, elongated swept-back shoulder pieces, long split plate faulds revealing two articulated legs. Head is a long slender bell with scalloped bronze lip and a small uneven side crack, no spire/crown/face. Two empty hands held open at waistheight like listening to vibrations, head slightly turned sideways. Deep reddish copper-BRONZE surfaces, dark grey iron edges and ash; muted cream-limestone stone surroundings. LOWER RIGHT inside an enclosed salt-stained monastery ruin, semicircular BRICKED door, dry pale dust and soft cool grey centre. No religious/sun/moon symbols or extra cloth figures.",
+      "id": "custode_campana_cieca_E",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/custode_campana_cieca_proposta_E_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: The Keeper of the Blind Bell / Custode della Campana Cieca: a knight with exactly TWO arms and TWO legs, enclosed worn metal torso/limb armor. A CRACKED BRONZE BELL replaces the entire head, open underneath, hollow with only softly breathing grey ASH inside; absolutely NO face, eyes, mouth, skull, human head or clock inside. No eyes painted on the bell. The creature listens through stone and guards a BRICKED-UP DOOR; show weight set directly on the floor. No weapon is specified: depict empty hands, no sword, mace, shield or new apparatus. The bell substrate remains bronze, with varied realistic patina and worn surfaces, the armor can be iron/bronze. Cracks remain narrow metal fissures, not an open exposed core.\nTHIS DISTINCT DESIGN E: A slim UPRIGHT knight with long narrow torso and elegantly layered narrow metal plates, elongated swept-back shoulder pieces, long split plate faulds revealing two articulated legs. Head is a long slender bell with scalloped bronze lip and a small uneven side crack, no spire/crown/face. Two empty hands held open at waistheight like listening to vibrations, head slightly turned sideways. Deep reddish copper-BRONZE surfaces, dark grey iron edges and ash; muted cream-limestone stone surroundings. LOWER RIGHT inside an enclosed salt-stained monastery ruin, semicircular BRICKED door, dry pale dust and soft cool grey centre. No religious/sun/moon symbols or extra cloth figures.",
+      "summary_it": "Sottile e cerimoniale, con campana allungata e bronzo ramato. Mani aperte, pietra chiara e una porta sigillata.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-80f4b0fe-7c8a-43cd-80d0-05127c239c7e.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "024ce00af0af047bf4865049aa80178703b4f41be542a980291fe486d1fb6e0f",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2651847,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    },
+    {
+      "species": "mammuth_in_decomposizione",
+      "name": "Mammuth in decomposizione",
+      "variant": "A",
+      "title": "Compatto e gobbuto",
+      "canon": "Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.",
+      "direction": "A squat powerful short-bodied mammoth with an immense rounded shoulder HUMP, short thick legs and a low blunt head, small ragged ears. TWO medium tusks curve inward then upward, trunk curled under chin without hidingits single tip. Patchy olive-grey decayed hide under short dark umber fur clumps; pale dry ribs subtly visible on one flank. LowerRIGHT in a roofed ROOT-TANGLED forest sinkhole, huge enclosing roots and damp ochre soil, moss green palette. No sky and no cyan/purple magic. Keep all fourfeet distinguishable.",
+      "id": "mammuth_in_decomposizione_A",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/mammuth_in_decomposizione_proposta_A_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.\nTHIS DISTINCT DESIGN A: A squat powerful short-bodied mammoth with an immense rounded shoulder HUMP, short thick legs and a low blunt head, small ragged ears. TWO medium tusks curve inward then upward, trunk curled under chin without hidingits single tip. Patchy olive-grey decayed hide under short dark umber fur clumps; pale dry ribs subtly visible on one flank. LowerRIGHT in a roofed ROOT-TANGLED forest sinkhole, huge enclosing roots and damp ochre soil, moss green palette. No sky and no cyan/purple magic. Keep all fourfeet distinguishable.",
+      "summary_it": "Compatto e gobbuto, pelo scuro e pelle grigio-oliva. Una voragine coperta di radici ne incornicia il corpo.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-2127e3c3-d6b8-41f2-b165-a82803abdac5.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "e6d5fd359b6196d7d688b141f4cf90cdd54c1fc5a54560206ebd854903392bdf",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2322690,
+        "original_copy_identical": true
+      },
+      "user_approved": true,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL",
+      "approval_quote": "A — Compatto e gobbuto",
+      "approval_scope": "DESKTOP_ONLY"
+    },
+    {
+      "species": "mammuth_in_decomposizione",
+      "name": "Mammuth in decomposizione",
+      "variant": "B",
+      "title": "Alto e consunto",
+      "canon": "Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.",
+      "direction": "A tall gaunt elongated mammoth, four long narrow pillar legs, sharply high shoulder ridge, sunken flanks, long hanging trunk reaching toward soil, TWO long ivory tusks sweep almost horizontally outward then upward. Sparse pale tawny fur over ashen grey skin, dry ivory bone glimpsed through old fur gaps, no fresh open gore. In sideways three-quarter stepping posture, lowerLEFT inside a gigantic enclosed STONE OSSUARY with collapsed large arches and dusty blue-black shadow; cold slate-blue palette with pale bone. Show colossal scale via masonry while complete animal stays compact.",
+      "id": "mammuth_in_decomposizione_B",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/mammuth_in_decomposizione_proposta_B_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.\nTHIS DISTINCT DESIGN B: A tall gaunt elongated mammoth, four long narrow pillar legs, sharply high shoulder ridge, sunken flanks, long hanging trunk reaching toward soil, TWO long ivory tusks sweep almost horizontally outward then upward. Sparse pale tawny fur over ashen grey skin, dry ivory bone glimpsed through old fur gaps, no fresh open gore. In sideways three-quarter stepping posture, lowerLEFT inside a gigantic enclosed STONE OSSUARY with collapsed large arches and dusty blue-black shadow; cold slate-blue palette with pale bone. Show colossal scale via masonry while complete animal stays compact.",
+      "summary_it": "Alto, consunto e dalle zampe lunghe. Zanne distese, pelo pallido e un enorme ossario dalle volte fredde.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-76edea99-070b-4d55-8b30-03cfd0c6ed70.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "7bec906225f2202ca43c1d9e197d3140360be0957a54e76fabe4438fb7811b5a",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2498936,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    },
+    {
+      "species": "mammuth_in_decomposizione",
+      "name": "Mammuth in decomposizione",
+      "variant": "C",
+      "title": "Largo e tozzo",
+      "canon": "Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.",
+      "direction": "A very WIDE pear-shaped mammoth with a huge sagging belly, broad short legs, comparatively small domed head and thick cheeks. TWO short robust ivory tusks curl outward in a wide U, trunk raised onlyslightly forward, never a horn. Almost frontal threequarter cautious stance, feet planted wide. Dark aubergine-brown decomposed hide with long ragged charcoal fur and dusty pink-grey scars, no purple glow. LowerRIGHT at a gloomy flooded BURIAL MARSH under thick canopy of dead trees, dark burgundy-brown reeds, smoky mauve lowcontrast centre and grey stillwater. Entire tail visible at one side; no additional limbs.",
+      "id": "mammuth_in_decomposizione_C",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/mammuth_in_decomposizione_proposta_C_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.\nTHIS DISTINCT DESIGN C: A very WIDE pear-shaped mammoth with a huge sagging belly, broad short legs, comparatively small domed head and thick cheeks. TWO short robust ivory tusks curl outward in a wide U, trunk raised onlyslightly forward, never a horn. Almost frontal threequarter cautious stance, feet planted wide. Dark aubergine-brown decomposed hide with long ragged charcoal fur and dusty pink-grey scars, no purple glow. LowerRIGHT at a gloomy flooded BURIAL MARSH under thick canopy of dead trees, dark burgundy-brown reeds, smoky mauve lowcontrast centre and grey stillwater. Entire tail visible at one side; no additional limbs.",
+      "summary_it": "Largo e tozzo, con pelo scuro tendente al malva. Fronte quasi rivolta verso chi guarda, tra i giunchi di una palude funeraria.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-a66bd0e4-e7fd-4c7a-b9d9-f0969286d15d.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "32470a22ef2fde3050fe2a769984da435adfdc60f90045f287025a11bd5f8d17",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2461447,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    },
+    {
+      "species": "mammuth_in_decomposizione",
+      "name": "Mammuth in decomposizione",
+      "variant": "D",
+      "title": "Lungo e rasoterra",
+      "canon": "Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.",
+      "direction": "A distinctly LONG LOW mammoth with sloping narrow back, forward-thrust long head and deeply bent front legs as it sniffs decomposing soil. TWO slender tusks curl down then out at tips; ONE long trunk follows the ground before curving up at its tip. Blue-charcoal skin with thin old white fur patches and dull bone colouredtusks. LowerLEFT in a bleak tundra BURIAL VALLEY between high snow-crusted rockwalls, blue-grey cold soil and dead grass; frame sky out entirely, no moon/sun/stars. Old animal bones only at far loweredge; no icy magic or new powers.",
+      "id": "mammuth_in_decomposizione_D",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/mammuth_in_decomposizione_proposta_D_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.\nTHIS DISTINCT DESIGN D: A distinctly LONG LOW mammoth with sloping narrow back, forward-thrust long head and deeply bent front legs as it sniffs decomposing soil. TWO slender tusks curl down then out at tips; ONE long trunk follows the ground before curving up at its tip. Blue-charcoal skin with thin old white fur patches and dull bone colouredtusks. LowerLEFT in a bleak tundra BURIAL VALLEY between high snow-crusted rockwalls, blue-grey cold soil and dead grass; frame sky out entirely, no moon/sun/stars. Old animal bones only at far loweredge; no icy magic or new powers.",
+      "summary_it": "Lungo e basso, con la proboscide vicino al terreno. Pelle fredda e poco pelo in una valle rocciosa innevata.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-fb58b663-7cca-4ec6-a604-e0f37b169a19.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "0236a956ba8071a11f8273b848075e70b9548195dc88195cfc41cfe399c29c77",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2650925,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    },
+    {
+      "species": "mammuth_in_decomposizione",
+      "name": "Mammuth in decomposizione",
+      "variant": "E",
+      "title": "Dorso a cupola",
+      "canon": "Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.",
+      "direction": "A huge dome-backed almost round mammoth with a compact high forehead, four stout tapering legs, broad small ears and dense jagged patchwork fur along back, lower flanks nearly hairless. TWO massive tusks curl very HIGH and backward around head sides in open arcs, SINGLE trunk turned sideways away from tusks, small tail. Upright in a turning defensive pose rather than charging, lowerRIGHT. Ochre-rust and dark sepia matted fur, warm grey desiccated skin, subtle dusty lichen but no livingflowers. Enclosed enormous rock CAVERN filled with fossil roots, dry orange-brown earth and coldgrey distantwall, no celestial objects.",
+      "id": "mammuth_in_decomposizione_E",
+      "references": [
+        "C:/Oculum App/oculum/assets/oculum/home_art/amber_shore.png",
+        "C:/Users/michy/.codex/skills/artifact-template-oculum-theme-art-pack/assets/reference.png"
+      ],
+      "transparent_background": false,
+      "output_path": "C:/Oculum App/oculum/output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/mammuth_in_decomposizione_proposta_E_v1.png",
+      "prompt": "Use case: stylized-concept. Asset: ONE original Oculum desktop CHARACTER-SHEET BACKGROUND, horizontal 16:10, 1586x992. Original matte anime dark-fantasy painting, Rame fatato technique: tactile soft gouache/oil brushwork, designed strong shapes and restrained irregular material textures, limited gentle local lighting, no plastic 3D, no photograph, no polished cinematic concept-art cliché. Image1 is ONLY the painting technique, do NOT copy its amber coast, insects/fairies, scene or palette. Image2 is ONLY quiet readable hierarchy, NEVER copy its text, eye, ornaments, UI or frame. Make a NEW creature design, not a clone of a previous reference. Place the whole complete creature compact on a lower SIDE, all appendages within8%canvas safety margins; maximum42%image height, not filling the picture. The middle55%-65%and upper centre remain QUIET and lowcontrast for actual app controls: broad dark atmospheric tonal shapes, not an empty solid panel. No painted letters, digits, logos, watermark, UI, frames or labels. No sun, moon, stars or celestial symbols. Closed/underground scenes must have solid overhead ceiling, no sky or cloud. No extra creatures or victims. Do not add new powers, visible glowing cores, targets, wounds-as-weakpoints, loot or invented equipment. Five A-E are alternative DESIGN proposals of the SAME species, not five new species or gameplay evolutions. DIFFERENT silhouette, proportions, posture, material shape language, palette and setting for this option, while retaining all fixed anatomy. Single complete painting, no grid or collage.\nFIXED CANON AND ANATOMY: Decaying Mammoth / Mammuth in decomposizione: a putrid MAMMOTH, natural elephant-like mammoth anatomy with exactly FOUR heavy legs, ONE flexible TRUNK, TWO curved IVORY TUSKS, TWO small rounded ears, ONE short tail and one head. Large high shoulders/back, coarse irregular remaining fur, weathered decomposed skin and some dry ivory animal bone visible through missing fur, no graphic fresh blood and no human body parts. Its body is still coherent and load-bearing, not a pile of unrelated bones; legs have real joints/feet, tusks grow naturally from the head. It decomposes soil and raises bones from the ground, but do not draw spell effects or many floating bones: subtle old animal bones protruding from soil at the edge only. No horns, wings, armor, saddle, rider or visible magic core.\nTHIS DISTINCT DESIGN E: A huge dome-backed almost round mammoth with a compact high forehead, four stout tapering legs, broad small ears and dense jagged patchwork fur along back, lower flanks nearly hairless. TWO massive tusks curl very HIGH and backward around head sides in open arcs, SINGLE trunk turned sideways away from tusks, small tail. Upright in a turning defensive pose rather than charging, lowerRIGHT. Ochre-rust and dark sepia matted fur, warm grey desiccated skin, subtle dusty lichen but no livingflowers. Enclosed enormous rock CAVERN filled with fossil roots, dry orange-brown earth and coldgrey distantwall, no celestial objects.",
+      "summary_it": "Dorso a cupola, pelo ruggine e grandi zanne ricurve verso l’alto. Si volta in una grotta di radici fossili.",
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a18b7f-f444-7822-864d-90c568052b8c\\exec-9876d832-c1de-4830-9d35-ad03f89ee4d4.png",
+      "metadata": {
+        "width": 1586,
+        "height": 992,
+        "mode": "RGB",
+        "format": "PNG",
+        "sha256": "b7a17577eca080de2bcea81bb78162982be60de10378f332cbff19a4c2724258",
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bytes": 2573169,
+        "original_copy_identical": true
+      },
+      "user_approved": false,
+      "runtime_integrated": false,
+      "source_approval": "NONE: NEW DESIGN PROPOSAL"
+    }
+  ]
+}

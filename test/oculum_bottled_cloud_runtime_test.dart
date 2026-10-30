@@ -410,6 +410,13 @@ void main() {
       final (state, probe, _) = await _mount(tester);
       state.scudoSalvataggioAttivo = false;
       state.modificatoreDannoSelezionato = 'Normale';
+      // This scenario needs an HP hit, not a randomly successful automatic
+      // Oculum parry or Fortune dodge. Their behavior is tested separately.
+      state.currentOculumController.text = '0';
+      for (final stat in state.hiddenEyeStats) {
+        if (stat.id == 'fortuna') stat.unlocked = false;
+      }
+      probe.invalidateDerivedCaches();
       // Exercise a real surviving HP hit, independently of derived Defense.
       final maximum = probe.maximumHp();
       state.currentHpController.text = '$maximum';

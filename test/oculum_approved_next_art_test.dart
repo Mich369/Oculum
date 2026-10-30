@@ -24,8 +24,16 @@ const _complete = [
   'weak_horror_mastino',
   'forest_demon',
   'ciclo_forest_demon_blu',
+  'sciamano_malizioso',
 ];
-const _desktopOnly = ['sharp', 'topino_avventuroso', 'mosca_campana'];
+const _desktopOnly = [
+  'sharp',
+  'topino_avventuroso',
+  'mosca_campana',
+  'custode_campana_cieca',
+  'mammuth_in_decomposizione',
+  'armadillo_corazzato',
+];
 
 void main() {
   for (final id in [..._complete, ..._desktopOnly]) {

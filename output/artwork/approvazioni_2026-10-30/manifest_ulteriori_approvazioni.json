@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-30",
+  "scope": "Four newly approved desktops and two approved Sciamano derivatives. Other derivatives pending. Runtime/widget/CI checks separate.",
+  "files": [
+    {
+      "id": "custode_campana_cieca",
+      "kind": "desktop",
+      "variant": "B",
+      "source_path": "output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/custode_campana_cieca_proposta_B_v1.png",
+      "runtime_asset": "assets/oculum/home_art/theme_custode_campana_cieca_v1.png",
+      "sha256": "7270290b16b981c0f512998ec6ef6ae73a6a79a48da1dc15f3bb8ab2dd12feda",
+      "approval_quote": "B — Altissimo e campana conica",
+      "user_approved": true,
+      "runtime_integrated": true,
+      "widget_verified": true,
+      "verification": "Local185-test regression group passed, themes320/834/1440; CI, packages and real devices separate."
+    },
+    {
+      "id": "mammuth_in_decomposizione",
+      "kind": "desktop",
+      "variant": "A",
+      "source_path": "output/artwork/proposte_cinque_2026-10-30/lotto_campana_mammuth/mammuth_in_decomposizione_proposta_A_v1.png",
+      "runtime_asset": "assets/oculum/home_art/theme_mammuth_decomposizione_v1.png",
+      "sha256": "e6d5fd359b6196d7d688b141f4cf90cdd54c1fc5a54560206ebd854903392bdf",
+      "approval_quote": "A — Compatto e gobbuto",
+      "user_approved": true,
+      "runtime_integrated": true,
+      "widget_verified": true,
+      "verification": "Local185-test regression group passed, themes320/834/1440; CI, packages and real devices separate."
+    },
+    {
+      "id": "armadillo_corazzato",
+      "kind": "desktop",
+      "variant": "A",
+      "source_path": "output/artwork/ridisegni_2026-10-30/armadilli_base/armadillo_corazzato_desktop_proposta_A_v2.png",
+      "runtime_asset": "assets/oculum/home_art/theme_armadillo_corazzato_v1.png",
+      "sha256": "385136a342d5d30e957aa5be32955354a86bc610c5659f970034f8cc0244ee78",
+      "approval_quote": "A — Tondo, placche noce",
+      "user_approved": true,
+      "runtime_integrated": true,
+      "widget_verified": true,
+      "verification": "Local185-test regression group passed, themes320/834/1440; CI, packages and real devices separate."
+    },
+    {
+      "id": "sciamano_malizioso",
+      "kind": "desktop",
+      "variant": "B",
+      "source_path": "output/artwork/proposte_cinque_2026-10-30/sciamano_malizioso/sciamano_malizioso_B_v1.png",
+      "runtime_asset": "assets/oculum/home_art/theme_sciamano_malizioso_v1.png",
+      "sha256": "8ba1201f26977407a4c2e8f4c55e2a5d590dfb6bce0cbd090f88a253e5c72449",
+      "approval_quote": "B — Petrolio, felci e maschera a rombo",
+      "user_approved": true,
+      "runtime_integrated": true,
+      "widget_verified": true,
+      "verification": "Local185-test regression group passed, themes320/834/1440; CI, packages and real devices separate."
+    },
+    {
+      "id": "sciamano_malizioso",
+      "kind": "phone",
+      "variant": null,
+      "source_path": "output/artwork/proposte_cinque_2026-10-30/sciamano_malizioso/sciamano_malizioso_telefono_v1.png",
+      "runtime_asset": "assets/oculum/home_art/theme_sciamano_malizioso_mobile_v1.png",
+      "sha256": "e6168ced4221380d9bc48adb5fb145392420d1482dda2dd21a943dbd8c67e660",
+      "approval_quote": "Sì, entrambi canonici",
+      "user_approved": true,
+      "runtime_integrated": true,
+      "widget_verified": true,
+      "verification": "Local185-test regression group passed, themes320/834/1440; CI, packages and real devices separate."
+    },
+    {
+      "id": "sciamano_malizioso",
+      "kind": "relic",
+      "variant": null,
+      "source_path": "output/artwork/proposte_cinque_2026-10-30/sciamano_malizioso/sciamano_malizioso_reliquia_v2.png",
+      "runtime_asset": "assets/oculum/home_art/relic_sciamano_malizioso_v1.png",
+      "sha256": "30b10be2af6d6fb8a9aa5f0c3e7c7b5082f78db69396b86324101556a09b36f6",
+      "approval_quote": "Sì, entrambi canonici",
+      "user_approved": true,
+      "runtime_integrated": true,
+      "widget_verified": true,
+      "verification": "Local185-test regression group passed, themes320/834/1440; CI, packages and real devices separate."
+    }
+  ]
+}

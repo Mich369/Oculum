@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-30",
+  "status": "USER_APPROVED_2026_10_30",
+  "source_desktop": "sciamano_malizioso_B_v1.png",
+  "source_desktop_approved": true,
+  "files": [
+    {
+      "species": "sciamano_malizioso",
+      "kind": "phone",
+      "selected": true,
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-98ae4138-c86b-43b1-907d-79053967d548.png",
+      "output_path": "output/artwork/proposte_cinque_2026-10-30/sciamano_malizioso/sciamano_malizioso_telefono_v1.png",
+      "prompt": "Identity-preserving portrait recomposition for an OCULUM PHONE character-sheet background. Reference image is the approved Sciamano Malizioso B design; retain exactly its narrow ivory DIAMOND mask, black eye openings, small round red insets, smiling mouth, dark slender wooden limbs, two arms/two legs and dark GREEN FERN cloak with swept pointed collar. Keep the original crouch by the edge of the still petrol-blue woodland pool, long lower hand touching water, other hand beside mask; carefully retain coherent two arms/two legs. Make a new PORTRAIT2:3 composition, not crop: entire shaman and collar within lower40% at lowerLEFT, full cloak/feet/hands within7%safe margin, scale down to keep everything in frame. Upper60% is soft low-contrast dark PETROL BLUE woodland haze, widely spaced tree trunks and fern silhouettes, broad quiet space for actual application controls. A little amber fungus glow only at the bottomLEFT; no new monsters/fairies, no staff/weapons. Opaque full scene, no bars/blank frame. Style same matte handmade Rame fatato soft oil/gouache fantasy/anime brushwork as approved image, no photorealism, no glossy CGI, no extra decorative noise. Preserve existing creature colors and materials. No Sun, Moon, stars, text, letters, logos, UI, border, watermark. The attached image is design/identity and local environment reference only; DO NOT invent new anatomy, wounds, visible cores, powers or loot.",
+      "user_approved": true,
+      "runtime_integrated": false,
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGB",
+      "sha256": "e6168ced4221380d9bc48adb5fb145392420d1482dda2dd21a943dbd8c67e660",
+      "copy_identical": true,
+      "approval_quote": "Sì, entrambi canonici"
+    },
+    {
+      "species": "sciamano_malizioso",
+      "kind": "relic",
+      "selected": false,
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-6211d04d-0c55-4879-a175-965655b1d683.png",
+      "output_path": "output/artwork/proposte_cinque_2026-10-30/sciamano_malizioso/sciamano_malizioso_reliquia_v1.png",
+      "prompt": "Create a SINGLE decorative RELIC for the Oculum Sciamano Malizioso B theme, on a GENUINELY TRANSPARENT background. Use attached approved creature as exact design reference ONLY. Depict its small elongated ivory DIAMOND-shaped smiling wooden MASK, two black almond-like empty eye openings, tiny ROUND RED insets arranged like those on reference, a dark green FERN spray sweeping upward behind it and one short twisted dark-brown wood support. Mask dominant, fern secondary. It is a decorative still-life emblem, not a new item/drop or a character portrait. Keep the white mask shape, red circle placement and pointed fern leaf silhouette recognizable; asymmetrical layered natural materials, no new skull, eyes, horns, flowers, weapons, moon/sun or magical core. Oculum Rame fatato matte hand-painted gouache/oil anime-fantasy material work, soft irregular brush edges, natural understated shadows contained inside the object; no polished3D/no glossy render/no vector glyph. Portrait or square canvas1024, object fitted compactly INSIDE the CENTRAL70% with at least15% COMPLETELY TRANSPARENT padding on ALL4sides including fern tips. Absolutely no opaque scene, no vignette, no backdrop, no black or white rectangle, no checkerboard painted in, no cast shadow outside the object. Transparent PNG with alpha. No lettering, logo, frame, watermark or UI. Full mask and all fern tips completely visible, no cropping.",
+      "user_approved": false,
+      "runtime_integrated": false,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "solid_bbox": [
+        210,
+        29,
+        1034,
+        1226
+      ],
+      "minimum_margin": 0.022328548644338118,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "a27c98fb7790ba9c6e0e6c42c87633c4ecd1f7338ca644a444b5c9165411d2ea",
+      "copy_identical": true
+    },
+    {
+      "species": "sciamano_malizioso",
+      "kind": "relic",
+      "selected": true,
+      "generated_original": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-0658ea66-a248-4afe-8b1d-b3ccd4340016.png",
+      "output_path": "output/artwork/proposte_cinque_2026-10-30/sciamano_malizioso/sciamano_malizioso_reliquia_v2.png",
+      "prompt": "Precise edit of this decorative relic. Keep the exact same ivory diamond smiling mask with five red circular insets, green fern branches, dark twisted wooden stem, matte painted Rame fatato materials and TRUE transparent background. ONLY fix the scale and safe margin: show the ENTIRE existing relic MUCH SMALLER and centered on a SQUARE canvas. All opaque pixels, including top leaf tip and bottom twig, must fit in the CENTRAL55% of width and CENTRAL55% of height. This means at least22% COMPLETELY EMPTY TRANSPARENT padding above, below, left and right. Do not extend fern or add anything into the padding. Preserve the original complete silhouette, no crop, no redesign, no new scene, no shadows outside it, no black/white background, no checkerboard, no border, no text. The output is a transparent PNG with a noticeably small floating object and very wide empty alpha margins, NOT a close-up. Do not fill the canvas.",
+      "user_approved": true,
+      "runtime_integrated": false,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "solid_bbox": [
+        375,
+        291,
+        856,
+        972
+      ],
+      "minimum_margin": 0.22488038277511962,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "30b10be2af6d6fb8a9aa5f0c3e7c7b5082f78db69396b86324101556a09b36f6",
+      "copy_identical": true,
+      "approval_quote": "Sì, entrambi canonici"
+    }
+  ],
+  "approval_quote": "Sì, entrambi canonici"
+}

@@ -159,6 +159,8 @@ class OculumMonsterTheme {
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
   String? get relicIllustration => switch (monster.id) {
+    'sciamano_malizioso' =>
+      'assets/oculum/home_art/relic_sciamano_malizioso_v1.png',
     'mezzo_demone_massiccio' =>
       'assets/oculum/home_art/relic_mezzo_demone_massiccio_v1.png',
     'weak_horror_mastino' =>
@@ -205,6 +207,14 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'sciamano_malizioso' =>
+      'assets/oculum/home_art/theme_sciamano_malizioso_v1.png',
+    'custode_campana_cieca' =>
+      'assets/oculum/home_art/theme_custode_campana_cieca_v1.png',
+    'mammuth_in_decomposizione' =>
+      'assets/oculum/home_art/theme_mammuth_decomposizione_v1.png',
+    'armadillo_corazzato' =>
+      'assets/oculum/home_art/theme_armadillo_corazzato_v1.png',
     'weak_horror_mastino' =>
       'assets/oculum/home_art/theme_mastino_cripta_v1.png',
     'forest_demon' => 'assets/oculum/home_art/theme_forest_demon_v1.png',
@@ -282,6 +292,8 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustrationMobile => switch (monster.id) {
+    'sciamano_malizioso' =>
+      'assets/oculum/home_art/theme_sciamano_malizioso_mobile_v1.png',
     'mezzo_demone_massiccio' =>
       'assets/oculum/home_art/theme_mezzo_demone_massiccio_mobile_v1.png',
     'weak_horror_mastino' =>
