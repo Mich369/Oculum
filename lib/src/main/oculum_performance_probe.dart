@@ -91,6 +91,24 @@ class OculumPerformanceProbe {
   void controlOblivion(int total) => _state.applyOblivionMemoryControl(total);
   void oblivionTurn(Map<String, dynamic> token, int percentile) =>
       _state.resolveOblivionMemoryTurn(token, percentile: percentile);
+  void forgetFlame(Map<String, dynamic> request, {int? percentile}) =>
+      _state.resolveOblivionForgetFlame(request, percentile: percentile);
+  bool consumeForget(String resource) => _state.consumeOblivionForget(resource);
+  int? readDamageHealingInput(String text) {
+    _state.dannoSubitoController.text = text;
+    return _state.leggiValoreDannoCura();
+  }
+
+  Future<void> applyDamageInput(String text) {
+    _state.dannoSubitoController.text = text;
+    return _state.applicaDannoSubito();
+  }
+
+  void applyHealInput(String text) {
+    _state.dannoSubitoController.text = text;
+    _state.curaHp();
+  }
+
   void damageSaltalungoTail(Map<String, dynamic> request, int hpLost) =>
       _state.resolveSaltalungoTail(request, hpLost);
   Future<void> chargeRabbitHat() => _state.useRabbitHat(charge: true);

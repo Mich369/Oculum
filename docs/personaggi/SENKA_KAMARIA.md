@@ -1,5 +1,9 @@
 # Senka Kamaria — L’Ombra Mascherata
 
+## Aggiornamento del31ottobre — scheda esportabile
+
+Su richiesta: **100EXP** nel campo della scheda e **un Vitalium Ridefinito** consumabile nell’inventario. Coltellino equipaggiato aggiornato a **+3Danni Taglienti**, ultima correzione che prevale sulla proposta intermedia+2. Maschera ancora non equipaggiata: bonus numericiDanni6/Difesa3 nei campi dell’oggetto, statistiche nel campoBuff; rimosse dalle note le ripetizioni eseguibili `@Danni+6 @Difesa+3`. Le note e il racconto restano leggibili, senza diventare una formula troppo lunga. Nessun salvataggio locale del giocatore riscritto: esportazione ufficiale in `output/characters/senka_kamaria/`, da importare o usare come riferimento. I100EXP sono già inclusi, non riassegnarli due volte. Importazione, effetti di combattimento, rete reale e distribuzione rimangono verifiche distinte.
+
 ## Aggiornamento del29ottobre — misure e ciclo Open attuali
 
 Questa nota prevale sulle misure e sulle durate Open delle verifiche del28ottobre, conservate sotto come storico. Regole: [Vita e bonus PT](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#vita-per-livello-bonus-pt-e-visibilità--ultima-conferma), [ciclo Open](../CONFERME_2026-10-29_PREMI_GUARDIANI.md#nuova-regola-generale-open).

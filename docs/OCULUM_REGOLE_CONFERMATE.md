@@ -1,5 +1,15 @@
 # Oculum — registro delle regole confermate
 
+## Conferme del 31 ottobre — Oblivion Shield e percentuali Vita
+
+- **Lupo Infernale del Ghiaccio:** correzione esplicita «deve essere glaciale è delle zone ghiacciate dell'inferno», estesa dall'utente anche alle capacità: **morso e carica glaciali, resistenza al Ghiaccio**. Sostituisce il precedente morso rovente/carica di cenere e le affinità termiche precedenti; nessun soffio nuovo. Identificativi legacy di mostro, tecniche e materiale conservati, nomi e nuove definizioni coerenti col gelo; nessuna riscrittura delle personalizzazioni salvate. Numeri e limiti degli attacchi restano invariati; il Morso usa Rallentamento al posto di Bruciatura nelle forme superiori.
+
+- **Oblivion Shield** è il nuovo nome del Famelico dell’Oblio; ID `famelico_oblio` conservato, schede personalizzate non riscritte. Canonico l’allegato `codex-clipboard-57dd3489-2545-4a05-ab4c-02c4c364ae7a.png`, distinto dalla precedente proposta B1.
+- Nuova Skill **Fiammata del non ricordo**: un critico che danneggia la Vita fa perdere la prima Azione, Reazione o Reazione Veloce che il bersaglio tenta successivamente, con **«cosa stavo facendo?» nel log**. Probabilità di non subire l’effetto: **Memoria%**, più **Fortuna% per chi è del Fato**. Rimangono gli Scudi critici. Il contrasto è il controattacco contro la Fiammata stessa: se vince evita colpo ed effetto. Non confondere la Skill con il Morso a stadi già esistente.
+- Bilanciamento delegato iniziale e modificabile della Fiammata: +4/8/12 Danni Oblio ai Danni attuali, costo 2/3/4 Oculum, CD 3 turni personali. Sono valori scelti nell’implementazione, non nuove cifre dettate dall’utente.
+- **Danno/Cura**: `25%` usa la Vita reale attuale al clic; **`25%Tot` usa la Vita massima**. Esclusi gli HP temporanei dalla base. Danno attraversa le normali Difesa, resistenze e Scudi, salvo Oltre Difesa e/o Oltre Scudi; Cura segue la guarigione esistente. Conservare numeri, formule, arrotondamento e pacchetti automatici: il campo manuale non sostituisce gli importi automatici.
+- Richiesto miglioramento dei parser comuni a Skill, Titoli, Open e Skill Open e dei pannelli Attacco/Difesa/Utility. Effetti condizionati non diventano bonus incondizionati. Effetti strutturati personalizzati già salvati prevalgono sul riconoscimento del testo. Nuove verifiche locali in lavorazione; nessuna nuova CI, pacchetto o prova online attestata da questa nota.
+
 ## Conferme del 30 ottobre — Nuvola e anatomie
 
 Le seguenti risposte chiudono NU01–NU04 e AN01; la loro implementazione e verifica sono una lavorazione successiva alla build bb403888.

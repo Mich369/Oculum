@@ -1,6 +1,29 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+## Diciture del 31 ottobre — immagini e nuove meccaniche
+
+- Mostro Solare: **«B — Busto largo e guardia bassa»**, approvazione della proposta B.
+
+- Lupo Infernale del Ghiaccio: **«deve essere glaciale è delle zone ghiacciate dell'inferno»**; alla domanda sul vecchio morso rovente/carica di cenere/resistenza al Fuoco risponde **«Sì: morso e carica glaciali, resistenza al Ghiaccio»**. Le nuove proposte vanno mostrate prima della scelta.
+
+- Laer: **«A — Guardia verticale»**, selezione esplicita della base canonica, senza approvare le altre quattro alternative.
+
+- Feralis: **«D—Proteso nel balzo»**, approvazione desktop separata dai nuovi derivati.
+
+- Nuove scelte: **«A—Argento»** per la Bestia lupina, **«C—Custode della vena»** per Armadillo di Cristallo, **«A—Tondo di castagno»** per Legno, **«C—Gobbuto, ombre malva»** per Sabbia.
+- Senka: screenshot delle note della maschera con errore **«Formula troppo lunga»**, richiesta **«correggi ciò»**; poi **«dagli un vitalium ridefinito e100exp»**, interpretato dal contesto come nuova esportazione di Senka. Coltellino: ultima cifra esplicita **«fai+3danni taglienti»**, prevale sulla proposta intermedia+2. **«controlla anche le skill e art se funzionano»**: verificare uso reale e non solo importazione.
+
+- Famelico: «fammi vedere varie versioni grafiche»; poi **«Oblivion Shield»**, allegato57dd3489 e **«Nuovo nome del mostro; questa immagine è canonica»**. Il nome cambia, l’ID legacy resta compatibile.
+- Saltalungo: «è lato1.50 e si», interpretato dal contesto come altezza1,50m e due braccia/due gambe. Prima B, poi **«c come base proprio così com'è ma aggiungi anche quello appeso così com'è»**; composizioneBCv2 mostrata e risposta **«Sì, canonica»**.
+- Bestia: **«Cammina su due gambe visibili»**, poi **«più lupo con il pelo e le corna su due zampe»**, allegatoe0667c94 con **«qualcosa di più simile a questo»**. Prime proposte superate, nuova direzione da mostrare.
+- Presentazione: «mandami le versioni tutte quelle che hai fatto che devo ancora accettare»; dopo errore della galleria **«mandamele e voto mostro per mostro»**, **«tutti i telefono e reliquie le accetto»**. Ricevuta dei16derivati già mostrati conservata separatamente.
+- Skill: **«Fiammata del non ricordo: una volta colpito con un critico salterai una reazione o azione con la scritta "cosa stavo facendo?" nel log»**; resistenza **«probabilità pari ad memoria% di non subire effetti»**, **«+fortuna se sei del fato»**. Prima risorsa tentata, anche Reazione Veloce; richiede Danni alla Vita. **«se contrasto vince non fa perdere nulla»**, chiarito come contrasto contro la Fiammata stessa.
+- Parser/editor: **«migliora skill, skill titolo, skill open, open in parser ed effetti e riconoscimento automatico delle scritte migliora anche le impostazione di attacco, difesa ed utility»**. Nessuna autorizzazione a sostituire gli effetti personalizzati salvati.
+- Vita: **«25%»** per percentuale della Vita attuale, Cura uguale; **«ma devono comunque poter rimanere automatiche»**. Difesa e Scudi prima, **«a meno che non è oltre difesa e/o oltre scudi»**. Correzione: **«se scrivi25%Tot saranno totali e non attuali»**.
+
 ## Ultime diciture del30ottobre — prevalenza sui precedenti lotti
+
+- «continua mentre dormo creando più mostri possibili seguendo le indicazioni che poi io dovrò accettare quando mi sveglio». Autorizza a proseguire con proposte e domande accumulate; non è un'approvazione automatica dei disegni né di cambiamenti alle statistiche dedotti dall'art.
 
 - Custode della Campana Cieca: **«B — Altissimo e campana conica»**; Mammuth in decomposizione: **«A — Compatto e gobbuto»**; Armadillo Corazzato: **«A — Tondo, placche noce»**, con riferimento allaA2 mostrata nella galleria. Approvazioni desktop, derivati da produrre/valutare separatamente.
 

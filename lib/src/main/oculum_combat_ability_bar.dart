@@ -113,7 +113,8 @@ String _combatEffectPreview(
     'scudo_oculum' => 'Scudo Oculum',
     'hp_temporanei' => 'HP temporanei',
     'difesa' => 'Difesa',
-    'modifica_statistica' || 'modifica_sottotratto' => 'Bonus ${effect.target}',
+    'modifica_statistica' || 'modifica_sottotratto' =>
+      '${effect.mode == 'diminuzione' ? 'Malus' : 'Bonus'} ${effect.target}',
     'stato' => 'Condizione ${effect.appliedState}',
     'elemental_resistance' => 'Resistenza ${effect.elementType}',
     'evocazione' || 'costrutto' => 'Evocazione',
@@ -127,7 +128,9 @@ String _combatEffectPreview(
       valueDice.expression.trim(),
     if (extraDice.expression.trim().isNotEmpty) effect.diceExpression,
   ].where((value) => value.trim().isNotEmpty).join(' + ');
-  return '$label: $amount${diceNote.isEmpty ? '' : ' · dadi $diceNote'}$durationText$targetCount';
+  final conditions =
+      '${effect.criticalOnly ? ' · su critico' : ''}${effect.requiresHpDamage ? ' · con Danni alla Vita' : ''}';
+  return '$label: $amount${diceNote.isEmpty ? '' : ' · dadi $diceNote'}$durationText$targetCount$conditions';
 }
 
 Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
@@ -153,6 +156,7 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
           'sand_tail_attack',
           'bottled_cloud_stop',
           'bottled_cloud_open',
+          'oblivion_forget_next',
         }.contains(e.target),
   )) {
     return {OculumCombatAbilityRole.attack};
@@ -177,7 +181,10 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
       score = 1;
     }
     OculumCombatAbilityRole? role;
-    if (const {'danno', 'danno_percentuale'}.contains(effect.type) ||
+    if ((effect.criticalOnly || effect.requiresHpDamage) &&
+            const {'nemico', 'bersaglio'}.contains(effect.recipient) ||
+        effect.target == 'oblivion_forget_next' ||
+        const {'danno', 'danno_percentuale'}.contains(effect.type) ||
         const {'vc', 'attacco', 'danni'}.contains(target)) {
       role = OculumCombatAbilityRole.attack;
     } else if (const {
@@ -275,6 +282,7 @@ OculumCombatAbilityRole oculumCombatAbilityRole(
           'sand_tail_attack',
           'bottled_cloud_stop',
           'bottled_cloud_open',
+          'oblivion_forget_next',
         }.contains(e.target),
   )) {
     return OculumCombatAbilityRole.attack;

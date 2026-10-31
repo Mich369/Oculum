@@ -5531,8 +5531,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (raw.isEmpty) return null;
 
     try {
-      final value = oculumEvaluateFormula(raw, formulaValueContext());
-      return oculumRoundFormulaResult(value);
+      // Resolve against current real HP at the click, before Defense/Shields.
+      // Explicit damage packets keep their automatic amount and bypass flags.
+      return oculumEvaluateDamageHealingInput(
+        raw,
+        formulaValueContext(),
+        currentHp: hpCorrenti(),
+        maximumHp: maxHp(),
+      );
     } catch (error) {
       setState(() {
         risultato = t(

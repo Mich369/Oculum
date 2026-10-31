@@ -1,5 +1,16 @@
 # Registro cumulativo per i giocatori
 
+## Patch del 31 ottobre — parser, Senka e Oblivion Shield
+
+- Danno/Cura: `25%` usa la Vita attuale, `25%Tot` la massima. Restano Difesa, resistenze, Scudi, Oltre Difesa/Oltre Scudi e gli importi automatici delle Skill.
+- Costi leggibili con minimo/massimo; effetti secondari su critico e Danni alla Vita modificabili negli editor comuni di Skill, Art, Titoli e Open. Corrette anteprime Bonus/Malus e collocazione degli effetti offensivi. Le note descrittive non allungano più le formule oltre il punto di frase, senza nascondere errori matematici o perdere decimali.
+- Oblivion Shield è il nuovo nome del Famelico, con ID compatibile. Fiammata del non ricordo: critico che danneggia la Vita, resistenza Memoria(+Fortuna per il Fato), perdita della prima A/R/RV tentata e log «cosa stavo facendo?». Restano Scudi critici e contrasto vincente; l'effetto viene preparato prima del colpo e non si duplica con la consegna dei messaggi.
+- Nuovo codice Senka:100EXP già presenti, un Vitalium Ridefinito, coltellino+3Tagliente equipaggiato e maschera non equipaggiata. Bonus nei campi corretti, senza doppioni nelle note; salvataggi e personalizzazioni conservati.
+- Anatomie approvate allineate: niente arti o code duplicati nella Bestia delle Nuvole, Saltalungo, Oblivion e Forest Demon. Gli override del Master conservano la precedenza.
+- Lupo Infernale del Ghiaccio ora glaciale delle zone ghiacciate dell'Inferno: morso/carica Ghiaccio, resistenza Ghiaccio e materiale coerente. Identificativi precedenti, valori e limiti restano compatibili. I nuovi artwork ancora da scegliere non sono dichiarati integrati dalla sola generazione.
+
+Costi, effetti, forme, durata, bersagli, tipi di danno, equipaggiamento, anatomie e temi restano modificabili. [Verifiche e limiti della patch](PATCH_2026-10-31_PARSER_OBLIVION.md).
+
 ## Patch del 30 ottobre — Nuvola, corazze e nuove varianti
 
 - Nuovi temi scelti: Sciamano Malizioso con felci e maschera a rombo, Custode altissimo con campana conica, Mammuth compatto e Armadillo tondo. Sciamano dispone anche di telefono/reliquia approvati. Descrizioni e bersagli seguono i disegni, senza attribuire nuovi poteri; la campana non nasconde un volto e le zanne/proboscide del Mammuth sono distinte. Corretto il riconoscimento anatomico che confondeva«corso» con«orso» e«progress» con«ogre».

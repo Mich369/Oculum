@@ -524,6 +524,7 @@ class OculumStructuredEffect {
     this.killSource = false,
     this.allOpponents = false,
     this.criticalOnly = false,
+    this.requiresHpDamage = false,
   }) : id = id?.trim().isNotEmpty == true
            ? id!.trim()
            : 'effect_${DateTime.now().microsecondsSinceEpoch}';
@@ -533,6 +534,7 @@ class OculumStructuredEffect {
   bool killSource;
   bool allOpponents;
   bool criticalOnly;
+  bool requiresHpDamage;
   String type;
   int sourceScrollGrade;
   int chargeOculumPerTurn;
@@ -615,6 +617,7 @@ class OculumStructuredEffect {
     'bypassShields': bypassShields,
     'bypassResistance': bypassResistance,
     if (criticalOnly) 'criticalOnly': true,
+    if (requiresHpDamage) 'requiresHpDamage': true,
     'shieldDamageBonusPercent': shieldDamageBonusPercent,
     'damagePerTarget': damagePerTarget,
     'killSource': killSource,
@@ -685,6 +688,7 @@ class OculumStructuredEffect {
       killSource: readBoolValue(json['killSource']),
       allOpponents: readBoolValue(json['allOpponents']),
       criticalOnly: readBoolValue(json['criticalOnly']),
+      requiresHpDamage: readBoolValue(json['requiresHpDamage']),
     );
   }
 }
@@ -1167,6 +1171,7 @@ String oculumStructuredEffectDescription(
       : ' ${effect.elementType.trim()}';
   final bypassText = <String>[
     if (effect.criticalOnly) 'solo su critico',
+    if (effect.requiresHpDamage) 'solo con Danni alla Vita',
     if (effect.bypassDefense) 'oltre Difesa',
     if (effect.bypassShields) 'oltre Scudi',
     if (effect.bypassResistance) 'ignora le resistenze solo per questo danno',

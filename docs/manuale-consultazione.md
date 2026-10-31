@@ -2,6 +2,17 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Lupo Infernale del Ghiaccio — correzione del 31 ottobre
+
+Il Lupo Infernale del Ghiaccio vive nelle zone ghiacciate dell'Inferno. Il precedente morso rovente e la carica di cenere sono sostituiti da Morso glaciale infernale e Carica della brina infernale, entrambi di Ghiaccio. Resiste al Ghiaccio; le vecchie affinità al calore sono superate. Restano quattro zampe, due orecchie, due occhi e una coda, nessun soffio aggiuntivo. Valori e limiti delle tecniche invariati e modificabili; le forme superiori del Morso applicano Rallentamento al posto di Bruciatura. La scheggia del drop prende il nome di Scheggia di gelo infernale. Gli identificativi interni sono conservati per compatibilità; le schede personalizzate salvate non vengono riscritte.
+
+## Oblivion Shield e percentuali Vita — 31 ottobre
+
+Oblivion Shield è il nuovo nome del Famelico dell’Oblio; conserva l’ID originale per compatibilità, senza riscrivere nomi o capacità personalizzate delle schede salvate. È un quadrupede nero-violaceo massiccio con quattro arti artigliati, due lunghe corna, lingua rossa e coda ad anello, secondo l’allegato canonico.
+Fiammata del non ricordo: Danni attuali +4/8/12 Oblio, costo2/3/4Oculum, CD3turni personali, valori iniziali modificabili. Un critico che danneggia la Vita dopo Difesa e Scudi fa perdere la prima Azione, Reazione o Reazione Veloce successiva tentata; nel log compare «cosa stavo facendo?». Memoria% di resistere, più Fortuna% se del Fato, entro0–100%. Gli Scudi critici proteggono; un contrasto vincente contro la Fiammata evita colpo ed effetto. La Skill resta distinta dal Morso del ricordo vuoto a stadi.
+Danno/Cura: puoi scrivere un numero, una formula oppure25% della Vita attuale;25%Tot usa la Vita massima, senza contare gli HP temporanei. Difesa, resistenze e Scudi continuano a funzionare; le opzioni Oltre Difesa e Oltre Scudi restano indipendenti. Cura usa la guarigione normale. Importi automatici e opzioni delle Skill non vengono sostituiti dal campo manuale.
+Parser comune: costi come «Materia da1a10» o «Costo: da1a10Materia» restano minimi/massimi modificabili. Gli effetti secondari al nemico possono richiedere un critico e Danni alla Vita; testo non riconosciuto resta da verificare, senza diventare un bonus gratuito. Effetti strutturati salvati e personalizzazioni rimangono prioritari.
+
 ## Nuvola, scatole e armadilli — 30 ottobre
 
 Nuvola in bottiglia: un colpo letale la uccide prima che possa cambiare fase. Sopravvivendo, al 15% della Vita recupera il 75% della massima entro il massimo; rompere prima la bottiglia con un critico mirato che danneggia la Vita avvia invece la fase con recupero aggiuntivo del 40%. Difesa, Scudi e Scudi critici conservano la loro protezione. La bottiglia non rimane un bersaglio dopo il cambio di fase.

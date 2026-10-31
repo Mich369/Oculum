@@ -503,6 +503,16 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     }
     programmaSalvataggio();
     notifyActiveSheetSummaryChanged();
+    if (consumeOblivionForget(
+      actualResource,
+      freeReaction: freeReaction != null,
+    )) {
+      // The turn resource was consumed, but the attempted ability must not
+      // roll, pay its stat/item cost or start its cooldown. Publish the lost
+      // activity even though there will be no attack packet to carry it.
+      await flushPendingCombatTurnResources();
+      return false;
+    }
     return true;
   }
 

@@ -1693,11 +1693,14 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     var resource = oculumNormalizeEffectResource(
       seed.resource.isEmpty ? 'vita' : seed.resource,
     );
-    var recipient = seed.recipient;
+    // Legacy enemy effects and newly parsed effects use the same target
+    // option; feeding 'nemico' to a dropdown without it used to assert.
+    var recipient = seed.recipient == 'nemico' ? 'bersaglio' : seed.recipient;
     var durationUnit = seed.durationUnit;
     var diceDestination = seed.diceDestination;
     var enabled = seed.enabled;
     var criticalOnly = seed.criticalOnly;
+    var requiresHpDamage = seed.requiresHpDamage;
     var stackable = seed.stackable;
     var includeLevel = seed.includeLevel;
     var includeGrade = seed.includeGrade;
@@ -1833,6 +1836,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         killSource: killSource,
         allOpponents: allOpponents,
         criticalOnly: criticalOnly,
+        requiresHpDamage: requiresHpDamage,
       );
     }
 
@@ -2005,6 +2009,31 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             ),
                             onChanged: (value) =>
                                 setDialogState(() => criticalOnly = value),
+                          ),
+                        if (!const {
+                          'danno',
+                          'danno_percentuale',
+                        }.contains(type))
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            value: requiresHpDamage,
+                            title: Text(
+                              t(
+                                'Richiede Danni alla Vita',
+                                'Requires HP damage',
+                              ),
+                            ),
+                            subtitle: Text(
+                              t(
+                                'Si applica dopo il colpo, soltanto se supera Difesa e Scudi e toglie Vita.',
+                                'Applies after a hit only when it passes Defense and Shields and removes HP.',
+                              ),
+                            ),
+                            onChanged: (value) => setDialogState(() {
+                              requiresHpDamage = value;
+                              if (value) recipient = 'bersaglio';
+                            }),
                           ),
                         SwitchListTile.adaptive(
                           contentPadding: EdgeInsets.zero,

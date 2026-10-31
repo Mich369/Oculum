@@ -281,6 +281,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     Map<String, num> spentResources = const <String, num>{},
     bool applyFusionBonus = true,
     Map<String, dynamic>? rewardRequest,
+    int resolvedHpDamage = 0,
   }) {
     if (applyFusionBonus) effects = dustFusionArtEffects(effects);
     final messages = <String>[];
@@ -314,6 +315,14 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     int? slimeBounces;
 
     for (final effect in effects.where((item) => item.enabled)) {
+      // A hostile secondary effect is prepared before the hit exists. Preserve
+      // its gate in pending_target; the receiving hit resolves it only after HP
+      // damage. Checking HP here before queueing silently dropped the effect.
+      if (effect.requiresHpDamage &&
+          effect.recipient == 'se_stesso' &&
+          resolvedHpDamage <= 0) {
+        continue;
+      }
       try {
         final rewardHpBefore = rewardRequest == null ? 0 : hpCorrenti();
         final rewardHpMaximum = rewardRequest == null ? 0 : maxHp();

@@ -65,6 +65,35 @@ String _summary(Map<String, int> totals) {
 }
 
 void main() {
+  test('mixed prose ends at a sentence without swallowing mask commands', () {
+    final text =
+        'SOLO CON MASCHERA ATTIVA: @Danni+6 @Difesa+3. La riserva di Vita aggiunta dai +6 RES e i +5 Oculum spendibili si RICARICANO a ogni nuova attivazione.';
+    final commands = oculumParseFormulaCommands(text, _vars);
+    expect(commands, hasLength(2));
+    expect(commands.every((c) => c.valid), isTrue);
+    expect(commands.map((c) => c.value), [6, 3]);
+    expect(
+      oculumParseFormulaCommands(
+        '@Danni+3.5 Fuoco. Narrazione lunga.',
+        _vars,
+      ).single.value,
+      4,
+    );
+    expect(
+      oculumParseFormulaCommands(
+        '@Difesa+(3*). Narrazione.',
+        _vars,
+      ).single.valid,
+      isFalse,
+    );
+    expect(
+      oculumParseFormulaCommands(
+        '@Mat+unknown_var. Narrazione.',
+        _vars,
+      ).single.valid,
+      isFalse,
+    );
+  });
   test('formula aritmetica semplice funziona per danno e cura', () {
     final value = oculumEvaluateFormula('10+100-20', _vars);
     expect(oculumRoundFormulaResult(value), 90);

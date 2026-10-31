@@ -1,5 +1,23 @@
 # Oculum — canone visivo confermato
 
+## Conferme del 31 ottobre — Oblivion Shield, Saltalungo e Bestia
+
+**Mostro Solare:** scelto **B — Busto largo e guardia bassa**, file `output/artwork/proposte_cinque_2026-10-30/mostro_solare/mostro_solare_proposta_B_v1.png`. Selezione del desktop; conserva le altre quattro proposte come storico e non dedurre statistiche dalla postura.
+
+**Lupo Infernale del Ghiaccio:** le cinque proposte con brace sono respinte: deve essere **glaciale, delle zone ghiacciate dell'Inferno**. Nuovo lotto con neve, brina e ghiaccio, quattro zampe, due orecchie, due occhi e una coda; niente brace o crepe incandescenti. Aspetto ancora da scegliere fra cinque nuove proposte, non dedurre una conferma da questa direzione. L'utente ha confermato separatamente anche morso/carica glaciali e resistenza al Ghiaccio.
+
+**Laer:** scelto **A — Guardia verticale**, file `output/artwork/proposte_cinque_2026-10-30/laer/laer_A_v2.png`. Questa è la base canonica; le altre quattro restano alternative storiche. La selezione non modifica da sola statistiche, equipaggiamento o poteri.
+
+**Scelte successive:** Bestia delle Nuvole **A—Argento** del nuovo lotto lupino approvata: `bestia_nuvole_lupina/bestia_nuvole_lupina_A_v2.png`, non la vecchia A ossea. Armadillo di Cristallo **C—Custode della vena**; Armadillo di Legno **A—Tondo di castagno**; Armadillo della Sabbia **C—Gobbuto, ombre malva**. Ricevute esatte conservate nei manifest del31ottobre. I rispettivi derivati nuovi restano separati dall’approvazione dei16precedenti.
+
+**Feralis:** scelto **D—Proteso nel balzo**, file `output/artwork/proposte_cinque_2026-10-30/feralis/feralis_D_v2.png`. Non approvare le altre quattro pose per estensione, né cambiare statistiche o resistenze dalla sola posa.
+
+- **Oblivion Shield:** nuovo nome confermato del mostro con ID legacy `famelico_oblio`. L’allegato approvato mostra un quadrupede nero-violaceo massiccio, quattro arti artigliati con anteriori robusti, due lunghe corna, occhi violacei, lingua rossa e coda ad anello. File esatto `output/artwork/proposte_cinque_2026-10-30/famelico_oblio/famelico_oblio_B_v2_canonico.png`, copia byte-identica all’allegato. B1 ha un corpo diverso: resta storico, non è la conferma.
+- **Saltalungo Maculato:** alto circa1,50m, due braccia e due gambe come primate saltatore. Dopo la prima scelta B l’utente richiede C come scena base e B appeso aggiunto: **composizione B+C v2 approvata canonica**, `output/artwork/proposte_cinque_2026-10-30/saltalungo_composizione_BC/saltalungo_composizione_BC_v2.png`. Due esemplari distinti, ciascuno con la propria coda a foglia; nessuna nuova capacità dedotta dalla presenza di due esemplari.
+- **Bestia delle Nuvole:** cammina su due gambe visibili. Le prime cinque nuove proposte sono superate dal feedback «più lupo con il pelo e le corna su due zampe» e dal riferimento `codex-clipboard-e0667c94-fbd1-4ca3-b70c-8ed8fe07b150.png`: muso lupino, corpo possente e peloso, grande criniera bianca nebulosa, corna e stracci scuri. La successiva **A — Argento** del lotto lupino è approvata, come specificato sopra. Resta distinta dalla Nuvola in bottiglia.
+- **«tutti i telefono e reliquie le accetto»** approva i16file telefono/reliquia già presenti nella raccolta mostrata: Custode, Mammuth, Armadillo, Sharp, Topino, Mosca, Errato e Veterano. Ricevuta esatta con SHA in `output/artwork/approvazioni_2026-10-31/manifest_approvazioni_derivati.json`. I nuovi derivati non ancora mostrati rimangono distinti. Nessuna integrazione runtime o distribuzione certificata dalla sola approvazione visiva.
+- La galleria HTML non si è caricata nell’app dell’utente: presentare le immagini direttamente nella chat, **un mostro per volta**, con lettere e domande di scelta. Non richiedere nuovamente le approvazioni già esplicite.
+
 ## Ultima conferma — cinque alternative e22derivati
 
 **Ulteriori desktop scelti:** Custode della Campana CiecaB, altissimo con campana conica, cenere interna e nessun volto/occhio; MammuthA, compatto e gobbuto, quattro zampe, due zanne, proboscide, due orecchie e coda; Armadillo CorazzatoA, tondo con placche noce, riferimento esattoA2 con margini corretti. Approvati soltanto questi desktop: i sei nuovi derivati vanno mostrati separatamente. Copie e SHA in `output/artwork/approvazioni_2026-10-30/manifest_ulteriori_approvazioni.json`. Il piccolo Armadillo non è un nuovo golem, non porta armi; varianti ambientali non approvate per estensione.

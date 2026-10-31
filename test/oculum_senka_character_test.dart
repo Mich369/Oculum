@@ -21,6 +21,19 @@ void main() {
       expect(sheet['livello'], '1');
       expect(sheet['grado'], '0');
       expect(sheet['razza'], 'Mhunan');
+      expect(sheet['exp'], '100');
+      final knife = (sheet['inventario'] as List).singleWhere(
+        (item) => item['nome'] == 'Coltello di Senka',
+      );
+      expect(knife['bonusDanno'], 3);
+      expect(knife['elementoDanno'], 'Tagliente');
+      expect(knife['equipaggiata'], true);
+      expect(
+        (sheet['inventario'] as List)
+            .where((item) => item['nome'] == 'Vitalium Ridefinito')
+            .single['quantita'],
+        1,
+      );
       for (final key in [
         'id',
         'sheetTag',
@@ -43,6 +56,7 @@ void main() {
           .firstWhere((t) => t.craftData['senkaMask'] == true);
       expect(mask.buff, '@res+6; @vol+5; @mat+10; @ocu+5');
       expect(mask.equipaggiata, isFalse);
+      expect(mask.note, isNot(contains('@Danni+6 @Difesa+3')));
       expect(mask.note, contains('VELO'));
       expect(mask.note, contains('ceil(3 × tiro / 4)'));
       expect(mask.note, contains('RICARICANO'));

@@ -2,6 +2,12 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+int oculumOblivionForgetResistance({
+  required int memoria,
+  required int fortuna,
+  required bool fate,
+}) => (memoria + (fate ? fortuna : 0)).clamp(0, 100);
+
 const _planarSelfRules = <String, String>{
   'rock_cloud_punch': 'golem_best_element',
   'cycle_lunar_bite': 'cycle_lunar_bite',
@@ -34,6 +40,19 @@ List<List<OculumStructuredEffect>>? oculumPlanarSkillEffects(
   String id,
   List<List<OculumStructuredEffect>>? base,
 ) {
+  if (id == 'oblivion_forget_flame' && base != null) {
+    return base
+        .map(
+          (form) => form.map((effect) {
+            if (effect.target == 'oblivion_forget_next') {
+              effect.criticalOnly = true;
+              effect.requiresHpDamage = true;
+            }
+            return effect;
+          }).toList(),
+        )
+        .toList();
+  }
   if (id == 'bottled_cloud_stop') {
     return List.generate(
       3,
@@ -174,6 +193,57 @@ String oculumRabbitHatElement(
 }
 
 extension _OculumPlanarRuntime on _OculumHomePageState {
+  void resolveOblivionForgetFlame(
+    Map<String, dynamic> request, {
+    int? percentile,
+    int losses = 1,
+  }) {
+    if (losses <= 0) return;
+    final key =
+        'oblivion-flame:$permissionScope:$onlineCombatEncounterId:${request['id']}';
+    if (!faunaReceipt(key)) return;
+    int subtrait(String id) {
+      final stat = hiddenEyeStats.where((s) => s.id == id).firstOrNull;
+      return stat == null ? 0 : hiddenEyeTotal(stat);
+    }
+
+    final chance = oculumOblivionForgetResistance(
+      memoria: subtrait('memoria'),
+      fortuna: subtrait('fortuna'),
+      fate: !identityIsChaos,
+    );
+    final roll = (percentile ?? Random.secure().nextInt(100)).clamp(0, 99);
+    if (roll < chance) {
+      aggiungiLog('[OBLIO] Fiammata del non ricordo: resistita ($chance%).');
+      return;
+    }
+    planarState['oblivionForgetPending'] =
+        readIntValue(planarState['oblivionForgetPending']) + losses;
+    aggiungiLog(
+      '[OBLIO] Fiammata del non ricordo: la prossima Azione/Reazione/Reazione Veloce tentata andrà persa (resistenza $chance%).',
+    );
+    programmaSalvataggio();
+  }
+
+  bool consumeOblivionForget(String resource, {bool freeReaction = false}) {
+    if (!freeReaction &&
+        !const {
+          'azione',
+          'azione_anticipata',
+          'reazione',
+          'reazione_veloce',
+        }.contains(resource)) {
+      return false;
+    }
+    final pending = readIntValue(planarState['oblivionForgetPending']);
+    if (pending <= 0) return false;
+    planarState['oblivionForgetPending'] = pending - 1;
+    aggiungiLog(
+      '[OBLIO] cosa stavo facendo? Risorsa consumata; nessun tiro o costo della Skill applicato.',
+    );
+    return true;
+  }
+
   Map<String, dynamic> get planarState {
     if (schedePersonaggio.isEmpty ||
         schedaCorrente < 0 ||
@@ -956,6 +1026,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
       'chargeSteps',
       'attackRollBonus',
       'defenseRollPenalty',
+      'oblivionForgetPending',
     ]) {
       planarState.remove(key);
     }
@@ -1522,7 +1593,7 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
       'lupo_delle_nevi' => ('zanna_brinata', 'Zanna brinata'),
       'lupo_infernale_del_ghiaccio' => (
         'scheggia_brace_lupo',
-        'Scheggia di brace lupina',
+        'Scheggia di gelo infernale',
       ),
       'lupo_ombra_oblio' => ('filo_ululante_oblio', 'Filo ululante d’Oblio'),
       'lupo_runico_postea' => ('dente_circuito_lupo', 'Dente a circuito'),

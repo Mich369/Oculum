@@ -104,7 +104,7 @@ void main() {
       'famelico_oblio',
     ]) {
       final monster = defaultMonsterBookEntries.singleWhere((m) => m.id == id);
-      expect(monster.skillIds.length, 14);
+      expect(monster.skillIds.length, id == 'famelico_oblio' ? 15 : 14);
       expect(monster.dropIds, isNotEmpty);
       // The two authored techniques belong to the Art; natural skills now
       // include a separate progression pool and need not spend the same pool.

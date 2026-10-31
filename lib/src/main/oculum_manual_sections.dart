@@ -5,6 +5,30 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Lupo Infernale del Ghiaccio — correzione del 31 ottobre',
+    titleEn: 'Infernal Ice Wolf — October 31 correction',
+    contentIt: r'''
+Il Lupo Infernale del Ghiaccio vive nelle zone ghiacciate dell'Inferno. Il precedente morso rovente e la carica di cenere sono sostituiti da Morso glaciale infernale e Carica della brina infernale, entrambi di Ghiaccio. Resiste al Ghiaccio; le vecchie affinità al calore sono superate. Restano quattro zampe, due orecchie, due occhi e una coda, nessun soffio aggiuntivo. Valori e limiti delle tecniche invariati e modificabili; le forme superiori del Morso applicano Rallentamento al posto di Bruciatura. La scheggia del drop prende il nome di Scheggia di gelo infernale. Gli identificativi interni sono conservati per compatibilità; le schede personalizzate salvate non vengono riscritte.
+''',
+    contentEn: r'''
+The Infernal Ice Wolf lives in the frozen Infernal regions. Its old ember bite and ash charge become Ice attacks: Infernal Glacial Bite and Infernal Frost Charge. It resists Ice; its old heat affinities are superseded. It retains four legs, two ears, two eyes and one tail, with no new breath attack. Attack values and limits remain editable and unchanged; higher Bite forms slow instead of burning. Its shard is named Infernal Frost Shard. Legacy identifiers and customized saved sheets are preserved.
+''',
+  ),
+  ManualSection(
+    titleIt: 'Oblivion Shield e percentuali Vita — 31 ottobre',
+    titleEn: 'Oblivion Shield and HP percentages — October 31',
+    contentIt: r'''
+Oblivion Shield è il nuovo nome del Famelico dell’Oblio; conserva l’ID originale per compatibilità, senza riscrivere nomi o capacità personalizzate delle schede salvate. È un quadrupede nero-violaceo massiccio con quattro arti artigliati, due lunghe corna, lingua rossa e coda ad anello, secondo l’allegato canonico.
+Fiammata del non ricordo: Danni attuali +4/8/12 Oblio, costo2/3/4Oculum, CD3turni personali, valori iniziali modificabili. Un critico che danneggia la Vita dopo Difesa e Scudi fa perdere la prima Azione, Reazione o Reazione Veloce successiva tentata; nel log compare «cosa stavo facendo?». Memoria% di resistere, più Fortuna% se del Fato, entro0–100%. Gli Scudi critici proteggono; un contrasto vincente contro la Fiammata evita colpo ed effetto. La Skill resta distinta dal Morso del ricordo vuoto a stadi.
+Danno/Cura: puoi scrivere un numero, una formula oppure25% della Vita attuale;25%Tot usa la Vita massima, senza contare gli HP temporanei. Difesa, resistenze e Scudi continuano a funzionare; le opzioni Oltre Difesa e Oltre Scudi restano indipendenti. Cura usa la guarigione normale. Importi automatici e opzioni delle Skill non vengono sostituiti dal campo manuale.
+Parser comune: costi come «Materia da1a10» o «Costo: da1a10Materia» restano minimi/massimi modificabili. Gli effetti secondari al nemico possono richiedere un critico e Danni alla Vita; testo non riconosciuto resta da verificare, senza diventare un bonus gratuito. Effetti strutturati salvati e personalizzazioni rimangono prioritari.
+''',
+    contentEn: r'''
+Oblivion Shield keeps its legacy ID and preserves customized saved sheets. Forgetting Flame adds4/8/12Oblivion Damage, costs2/3/4Oculum and has a3personal-turn cooldown, all editable. A critical hit that removes real HP can deny the next attempted Action, Reaction or Fast Reaction. Resistance is Memory%, plus Luck% for Fate characters, capped at100%. Critical Shields and a winning counterattack against the Flame prevent its effect.
+Damage/Healing accepts numbers, formulas,25%of current HP or25%Tot of maximum HP. Temporary HP is excluded from the base; Defense, Shields and independent bypass options still apply. Explicit automatic packets keep their own amounts. Saved structured effects take priority over text recognition.
+''',
+  ),
+  ManualSection(
     titleIt: 'Nuvola, scatole e armadilli — 30 ottobre',
     titleEn: 'Cloud, boxes and armadillos — October 30',
     contentIt: r'''

@@ -5837,6 +5837,25 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           if (!planarIsCriticalEffectAllowed(request, effect)) {
             continue;
           }
+          if (effect.requiresHpDamage && readIntValue(receipt['hpLost']) <= 0) {
+            continue;
+          }
+          if (effect.target == 'oblivion_forget_next') {
+            if (readIntValue(receipt['hpLost']) > 0) {
+              resolveOblivionForgetFlame(
+                request,
+                losses: max(
+                  0,
+                  oculumEvaluateStructuredEffectValue(
+                    effect,
+                    variables: formulaValueContext(),
+                    subtraits: hiddenEyeStats,
+                  ),
+                ),
+              );
+            }
+            continue;
+          }
           if (effect.type == 'stato' &&
               effect.appliedState == 'corruzione' &&
               effect.resource.startsWith('corruption_mastery:')) {
@@ -5898,6 +5917,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             source: '${request['sourceName']} · attacco $id',
             applyFusionBonus: false,
             rewardRequest: request,
+            resolvedHpDamage: readIntValue(receipt['hpLost']),
           );
           if (effect.id.startsWith('senka_grapple_') &&
               activeConditions.any((c) => c.conditionType == 'immobilizzato')) {

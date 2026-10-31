@@ -1065,10 +1065,10 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
     nameIt: 'Lupo Infernale del Ghiaccio',
     nameEn: 'Infernal Ice Wolf',
     descIt:
-        'Variante del Lupo delle Nevi mutata dal calore demoniaco. Il sottopelo ghiacciato è attraversato da crepe di brace e le impronte fumano sul terreno. Ha abbandonato il soffio gelido: si avvicina con un morso rovente e usa le ceneri del Regno demoniaco per una carica breve, senza colpire più bersagli né ignorare la Difesa.',
+        'Variante del Lupo delle Nevi delle zone ghiacciate dell’Inferno. È un lupo quadrupede dal sottopelo fitto e gelato: la brina irrigidisce le punte del mantello e le impronte incidono la neve dura. Assale con un morso glaciale e una breve carica sul terreno ghiacciato, senza colpire più bersagli né ignorare la Difesa. Non ha crepe di brace o poteri di Fuoco.',
     descEn:
-        'Infernal mutation of the Snow Wolf: an ember bite and a short ash charge replace its frost breath.',
-    elementId: 'demoniaco',
+        'A quadruped wolf of the frozen Infernal regions, with dense frost-covered fur, a glacial bite and a short ice charge. It has no ember cracks or Fire powers.',
+    elementId: 'ghiaccio',
     spriteAssetPath: '',
     isMiniBoss: false,
     isBoss: false,
@@ -1081,7 +1081,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'oculum': 2,
     },
     weakPointIt:
-        'Le crepe chiare sotto il collo, esposte quando prepara la carica.',
+        'La piega meno protetta sotto il collo, esposta quando prepara la carica.',
     skillIds: ['infernal_wolf_ember_bite', 'infernal_wolf_ash_charge'],
     dropIds: ['zanna_ghiacciata', 'scheggia_brace_lupo'],
     dropChances: {'zanna_ghiacciata': 25, 'scheggia_brace_lupo': 45},
@@ -1090,7 +1090,7 @@ const List<MonsterBookEntry> _craftedMonsterBookEntries = [
       'canonicalVariantOf': 'lupo_delle_nevi',
       'dispositions': ['ostile'],
     },
-    damageResistancePresets: {'fuoco': 'resistenza', 'acqua': 'debolezza'},
+    damageResistancePresets: {'ghiaccio': 'resistenza'},
   ),
   MonsterBookEntry(
     id: 'demonietto_bruciante',

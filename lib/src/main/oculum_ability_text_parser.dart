@@ -40,6 +40,31 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
 ({int minimum, int maximum, String resource})? oculumParseAbilityCost(
   String raw,
 ) {
+  // Authored ranges in cost fields: "Materia da 1 a 10" and
+  // "Costo: da 1 a 10 Materia" share the same editable structured cost.
+  final proseRange = RegExp(
+    '^\\s*(?:(?:costo|spendi|consumi|costa)\\s*:?\\s*)?(?:($_oculumAbilityResourcePattern)\\s*)?(?:da|tra|fra)\\s*(\\d+)\\s*(?:a|e)\\s*(\\d+)\\s*($_oculumAbilityResourcePattern)?\\s*\\.?\\s*\$',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (proseRange != null &&
+      (proseRange.group(1) != null || proseRange.group(4) != null)) {
+    if (proseRange.group(1) != null &&
+        proseRange.group(4) != null &&
+        oculumNormalizeArtSkillCostResource(proseRange.group(1)) !=
+            oculumNormalizeArtSkillCostResource(proseRange.group(4))) {
+      return null;
+    }
+    final minimum = int.parse(proseRange.group(2)!);
+    final maximum = int.parse(proseRange.group(3)!);
+    if (maximum < minimum) return null;
+    return (
+      minimum: minimum,
+      maximum: maximum,
+      resource: oculumNormalizeArtSkillCostResource(
+        proseRange.group(1) ?? proseRange.group(4),
+      ),
+    );
+  }
   // A dedicated cost field can contain only its resource: the editor's
   // separate Minimum/Maximum controls then supply the quantity.
   final resourceOnly = RegExp(
@@ -267,6 +292,68 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
   clauses.add(raw.substring(start));
   for (final clause
       in clauses.map((c) => c.trim()).where((c) => c.isNotEmpty)) {
+    if (raw.toLowerCase().contains('fiammata del non ricordo') &&
+        RegExp(r'\bcritico\b', caseSensitive: false).hasMatch(clause) &&
+        RegExp(
+          r'\b(?:prima|prossima)\s+Azione\b.*\bReazione\b',
+          caseSensitive: false,
+        ).hasMatch(clause)) {
+      effects.add(
+        OculumStructuredEffect(
+          id: 'parsed_${sourceKey}_forget',
+          type: 'planar',
+          target: 'oblivion_forget_next',
+          valueExpression: '1',
+          recipient: 'nemico',
+          criticalOnly: true,
+          requiresHpDamage: true,
+          narrativeText: clause,
+        ),
+      );
+      continue;
+    }
+    final criticalPrefix = RegExp(
+      r'^(?:con|su|al)\s+(?:un\s+)?critico(?:\s+positivo)?(?:\s+che\s+danneggia\s+la\s+Vita)?\s*[:,]?\s*',
+      caseSensitive: false,
+    ).firstMatch(clause);
+    if (criticalPrefix != null) {
+      final conditional = oculumParseAbilityMechanics(
+        clause.substring(criticalPrefix.end),
+        subtraits: subtraits,
+        investedOculum: investedOculum,
+      );
+      // Only defender-side secondary effects are applied after a hit. Never
+      // turn conditional damage or a self buff into an unconditional bonus.
+      if (conditional.effects.isNotEmpty &&
+          conditional.effects.every(
+            (e) =>
+                const {'nemico', 'bersaglio'}.contains(e.recipient) &&
+                const {
+                  'stato',
+                  'modifica_statistica',
+                  'modifica_sottotratto',
+                  'rimuovi_reazioni',
+                  'rimuovi_reazioni_rapide',
+                }.contains(e.type),
+          )) {
+        for (final effect in conditional.effects) {
+          effect.criticalOnly = true;
+          effect.requiresHpDamage = criticalPrefix[0]!.toLowerCase().contains(
+            'vita',
+          );
+          effect.narrativeText = clause;
+          if (!seen.add(oculumStructuredEffectSemanticKey(effect))) continue;
+          effect.id = 'parsed_${sourceKey}_${effects.length}';
+          effects.add(effect);
+        }
+        if (conditional.unrecognizedText.isNotEmpty) {
+          leftovers.add(conditional.unrecognizedText);
+        }
+      } else {
+        leftovers.add(clause);
+      }
+      continue;
+    }
     if (RegExp(
       r'\bse\s+(?!stess[oa]\b)|\b(?:quando|qualora)\b|\b(?:con|al)\s+(?:un\s+)?critico\b|\bnon\s+(?:ottieni|guadagni|ricevi|infliggi|curi|aumenta|aggiungi)\b|\bsubisc\w*\s+[^;]*danni\s+ogni\b|\bScudo\s+Oculum\b',
       caseSensitive: false,
@@ -643,6 +730,24 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
   }
 
   for (final match in RegExp(
+    '(perde|perdi|sottrai|rimuovi|guadagna|guadagni|riceve|ricevi|ottiene|ottieni)\\s+($expression)\\s+($targetPattern)\\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    if (claimed(match)) continue;
+    statBonus(
+      match,
+      match[3]!,
+      match[2]!,
+      const {
+        'perde',
+        'perdi',
+        'sottrai',
+        'rimuovi',
+      }.contains(match[1]!.toLowerCase()),
+    );
+  }
+
+  for (final match in RegExp(
     r'(?:Danni|Danno)\s*([+-])\s*(\d+)\s*%',
     caseSensitive: false,
   ).allMatches(text)) {
@@ -773,6 +878,20 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
           : 'scudo',
       match.group(2)!,
       recipient: recipientNear(match),
+      at: match,
+    );
+    claims.add((match.start, match.end));
+  }
+  for (final match in RegExp(
+    r'\b(?:recuperi|recupera|curi|cura|rigeneri|rigenera|guarisci)\s+(?:il\s+)?(\d+(?:[.,]\d+)?)\s*%\s*(?:della\s+)?(?:Vita\s+attuale|HP\s+attuali)\b',
+    caseSensitive: false,
+  ).allMatches(text)) {
+    add(
+      'cura',
+      'hp_current*${match[1]!.replaceAll(',', '.')}/100',
+      resource: 'vita',
+      recipient: recipientNear(match),
+      mode: 'immediato',
       at: match,
     );
     claims.add((match.start, match.end));

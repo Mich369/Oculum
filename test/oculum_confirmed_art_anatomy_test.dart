@@ -11,6 +11,29 @@ void main() {
       parts(id).where((p) => p['group'] == group).length;
 
   test(
+    'approved bipeds and quadrupeds do not gain duplicate limbs from prose',
+    () {
+      for (final id in ['saltalungo_maculato', 'cloud_beast']) {
+        expect(count(id, 'arms'), 2, reason: id);
+        expect(count(id, 'legs'), 2, reason: id);
+        expect(count(id, 'ears'), 2, reason: id);
+        expect(count(id, 'tail'), 1, reason: id);
+      }
+      for (final id in [
+        'famelico_oblio',
+        'forest_demon',
+        'ciclo_forest_demon_blu',
+        'mostro_sabbia',
+      ]) {
+        expect(count(id, 'arms'), 0, reason: id);
+        expect(count(id, 'legs'), 4, reason: id);
+      }
+      expect(count('cloud_beast', 'horns'), 2);
+      expect(count('famelico_oblio', 'horns'), 2);
+    },
+  );
+
+  test(
     'five newly approved designs keep their actual body counts and original weak-point rules',
     () {
       expect(count('mezzo_demone_cosciente', 'arms'), 2);

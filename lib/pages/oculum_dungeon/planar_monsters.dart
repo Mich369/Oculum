@@ -868,7 +868,7 @@ final _shieldCloudMonsterEntries = <MonsterBookEntry>[
     'Bestia delle Nuvole',
     ['isole', 'nuvole_rocciose'],
     'nuvola',
-    'Bestia alta e incurvata, con muso ossuto, orecchie appuntite e due corna color rame. Una criniera di nuvole pallide trabocca sulle spalle; avambracci lunghi e artigli sottili sostengono il busto. Stracci scuri pendono dai fianchi e una grande coda di vapore raccoglie elettricità. Mini Boss: 1 Scudo critico e 1 Schivata Oculum.',
+    'Lupo antropomorfo possente dal pelo argenteo, con muso lupino chiaro, orecchie appuntite e due corna color rame. Cammina su due gambe visibili e possiede due lunghe braccia artigliate, senza arti aggiuntivi. Una grande criniera bianca di pelo e nuvole pallide trabocca sulle spalle; stracci scuri pendono dai fianchi e un’unica grande coda di vapore raccoglie elettricità. Mini Boss: 1 Scudo critico e 1 Schivata Oculum.',
     'Il petto ossuto sotto la criniera, esposto quando raccoglie aria tra le mani.',
     [8, 7, 7, 5],
     5,

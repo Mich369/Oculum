@@ -108,37 +108,61 @@ def png_evidence(path):
 
 def manifest_creatures(batch):
     """Normalise nested entries or flat files/proposals, retaining their IDs."""
-    groups = {}
+    collections = []
     for collection in ('entries', 'files', 'proposals'):
         rows = batch.get(collection, [])
         if isinstance(rows, dict):
             rows = [dict(value, variant=letter) for letter, value in rows.items()
                     if isinstance(value, dict)]
-        for row in rows if isinstance(rows, list) else []:
+        collections.append(rows if isinstance(rows, list) else [])
+    flat_rows = [row for rows in collections for row in rows
+                 if isinstance(row, dict) and row.get('proposals') is None]
+    top_id = batch.get('creature_id') or batch.get('monster_id')
+    top_species = batch.get('species')
+    # Some single-species files put the creature ID/display name at the top,
+    # while each flat row's name describes that particular A-E design.
+    # Do not apply the top-level identity to a genuinely mixed-species batch.
+    explicit_ids = {row.get('creature_id') or row.get('monster_id') or row.get('artwork_key')
+                    for row in flat_rows}
+    species_values = {row.get('species') for row in flat_rows}
+    single_id = (top_id if top_id and explicit_ids <= {None, top_id} and
+                 species_values <= {None, top_id, top_species} else None)
+    groups = {}
+    for rows in collections:
+        for row in rows:
             if not isinstance(row, dict):
                 continue
             nested = row.get('proposals')
             if nested is not None:
-                key = row.get('id') or row.get('artwork_key') or row.get('species')
+                key = (row.get('id') or row.get('artwork_key') or row.get('creature_id') or
+                       row.get('monster_id') or row.get('species'))
+                name = row.get('name') or batch.get('name') or key
                 proposals = nested
                 if isinstance(proposals, dict):
                     proposals = [dict(value, variant=letter) for letter, value in proposals.items()
                                  if isinstance(value, dict)]
             else:
-                key = (row.get('species') or row.get('creature_id') or row.get('monster_id') or
-                       row.get('artwork_key') or batch.get('species') or row.get('id'))
+                key = (row.get('creature_id') or row.get('monster_id') or row.get('artwork_key') or
+                       single_id or row.get('species') or batch.get('species') or row.get('id'))
+                name = ((top_species if top_species != single_id else None) or batch.get('name') or
+                        row.get('name') or key) if single_id and key == single_id else (
+                            row.get('name') or batch.get('name') or key)
                 proposals = [row]
             if not key:
                 continue
             group = groups.setdefault(key, {**row, 'id': key,
-                                            'name': row.get('name') or batch.get('name') or key,
+                                            'name': name,
                                             'proposals': []})
             for proposal in proposals if isinstance(proposals, list) else []:
                 if not isinstance(proposal, dict):
                     continue
                 variant = str(proposal.get('variant') or proposal.get('letter') or '').upper()
                 if variant in VARIANTS:
-                    group['proposals'].append({**proposal, 'variant': variant})
+                    normalised = {**proposal, 'variant': variant}
+                    if (nested is None and single_id and key == single_id and
+                            not normalised.get('title') and proposal.get('name') != name):
+                        normalised['title'] = proposal.get('name')
+                    group['proposals'].append(normalised)
     for group in groups.values():
         # Multiple collection aliases must not count the same output twice.
         unique = {}
@@ -170,6 +194,56 @@ def exact_approved_proposal(choice, path):
                 evidence.get('sha256') == choice['sha256'])
 
 
+def write_questions_index():
+    """Link source questions without rewriting them or implying approval."""
+    target = FIVE_OUT / 'DOMANDE_AL_RISVEGLIO.md'
+    sources = sorted(path for path in FIVE_OUT.rglob('DOMANDE*.md')
+                     if path.parent != FIVE_OUT)
+    lines = [
+        '# Domande artwork al risveglio', '',
+        'Indice dei documenti di domande dei nuovi lotti. Le domande rimangono '
+        'nei rispettivi file originali: nessuna risposta o approvazione è dedotta '
+        'dalla presenza in questo elenco.', '',
+        '[Galleria unica delle cinque proposte](GALLERIA.html)', '',
+    ]
+    for path in sources:
+        relative = path.relative_to(FIVE_OUT).as_posix()
+        label = path.parent.relative_to(FIVE_OUT).as_posix().replace('_', ' ')
+        lines.append(f'- [{label} — {path.name}]({relative})')
+    lines.extend(['', f'Documenti collegati: {len(sources)}. '
+                  'Ogni rigenerazione aggiunge automaticamente i nuovi file '
+                  'DOMANDE delle sottocartelle, senza modificarne il contenuto.', ''])
+    target.write_text('\n'.join(lines), encoding='utf-8')
+    return target
+
+
+def derivatives_explicitly_approved(manifest, expected_species_count=1):
+    """Check selected derivative receipts; historical rejected files do not count."""
+    if not manifest.is_file():
+        return False
+    payload = json.loads(manifest.read_text(encoding='utf-8-sig'))
+    selected = [item for item in payload.get('files', [])
+                if item.get('selected', True)]
+    by_species = defaultdict(list)
+    for item in selected:
+        by_species[item.get('species') or item.get('creature_id')].append(item)
+    if len(by_species) != expected_species_count or any(
+            species is None or len(items) != 2 or
+            {item.get('kind') for item in items} != {'phone', 'relic'}
+            for species, items in by_species.items()):
+        return False
+    for item in selected:
+        if item.get('user_approved') is not True:
+            return False
+        evidence = png_evidence(artwork_path(item.get('output_path'), manifest))
+        if not evidence.get('pngVerified'):
+            return False
+        expected = item.get('sha256') or (item.get('metadata') or {}).get('sha256')
+        if expected and evidence.get('sha256') != expected:
+            return False
+    return True
+
+
 def write_five_gallery(batches, canonical):
     """Unified review page; missing proposals stay visible as pending slots."""
     FIVE_OUT.mkdir(parents=True, exist_ok=True)
@@ -194,7 +268,19 @@ def write_five_gallery(batches, canonical):
     shaman_derivatives = FIVE_OUT / 'sciamano_malizioso/GALLERIA_DERIVATI.html'
     if shaman_derivatives.is_file():
         href = html.escape(Path(os.path.relpath(shaman_derivatives, FIVE_OUT)).as_posix(), quote=True)
-        links.append(f'<a href="{href}">Sciamano B — telefono e reliquia da valutare separatamente</a>')
+        approved = derivatives_explicitly_approved(shaman_derivatives.parent / 'manifest_derivati.json')
+        state = 'approvati separatamente' if approved else 'da valutare separatamente'
+        links.append(f'<a href="{href}">Sciamano B — telefono e reliquia {state}</a>')
+    trio_derivatives = FIVE_OUT / 'derivati_custode_mammuth_armadillo/GALLERIA_DERIVATI.html'
+    if trio_derivatives.is_file():
+        href = html.escape(Path(os.path.relpath(trio_derivatives, FIVE_OUT)).as_posix(), quote=True)
+        approved = derivatives_explicitly_approved(
+            trio_derivatives.parent / 'manifest_derivati.json', expected_species_count=3)
+        state = 'approvati separatamente' if approved else 'ancora da valutare'
+        links.append(f'<a href="{href}">Custode, Mammuth e Armadillo — sei derivati {state}</a>')
+    questions = write_questions_index()
+    href = html.escape(questions.name, quote=True)
+    links.append(f'<a href="{href}">Domande accumulate al risveglio</a>')
     for manifest, batch in batches:
         if manifest not in five_manifests():
             continue
@@ -221,7 +307,11 @@ def write_five_gallery(batches, canonical):
                     href = html.escape(Path(os.path.relpath(path, FIVE_OUT)).as_posix(), quote=True)
                     label = html.escape(str(proposal.get('title') or proposal.get('design_direction') or letter))
                     state = 'CANONICO — scelta esplicita' if approved else 'Da scegliere'
-                    cards.append(f'<figure><a href="{href}" target="_blank"><img loading="lazy" src="{href}" alt="{html.escape(creature["name"])} {letter}"></a><figcaption><strong>{letter} — {label}</strong><br>{state}</figcaption></figure>')
+                    warnings = proposal.get('qa_warnings') or []
+                    warnings = [warnings] if isinstance(warnings, str) else warnings
+                    warning_note = ('<p>Da verificare: ' + '; '.join(
+                        html.escape(str(item)) for item in warnings) + '</p>') if warnings else ''
+                    cards.append(f'<figure><a href="{href}" target="_blank"><img loading="lazy" src="{href}" alt="{html.escape(creature["name"])} {letter}"></a><figcaption><strong>{letter} — {label}</strong><br>{state}{warning_note}</figcaption></figure>')
                 else:
                     detail = 'File da verificare' if evidence.get('exists') else 'Ancora da produrre'
                     cards.append(f'<figure class="pending"><strong>{letter}</strong><p>{detail}</p></figure>')
@@ -301,6 +391,8 @@ def main():
                                   if re.fullmatch(r'manifest_lotto_\d+\.json', path.name))
     for manifest in historical_manifests + five_manifests():
         batch = json.loads(manifest.read_text(encoding='utf-8-sig'))
+        if batch.get('status') == 'SUPERSEDED_DESIGN':
+            continue
         batch = {**batch, 'entries': manifest_creatures(batch)}
         batches.append((manifest, batch))
         for creature in batch.get('entries', []):
@@ -329,7 +421,7 @@ def main():
         # Existing mapped artwork is preserved; mapping alone is not approval.
         review_required = not has_desktop
         rows.append({
-            'id': entry['id'], 'name': entry['name'],
+            'id': entry['id'], 'name': choice.get('name', entry['name']) if choice else entry['name'],
             'sourceInventory': 'docs/creature-art-inventory.json',
             'sourceInventoryIndex': index,
             'sourceLocation': entry.get('sourceLocation'),

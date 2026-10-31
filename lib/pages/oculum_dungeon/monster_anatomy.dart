@@ -191,6 +191,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             'rettile quadrupede, quattro zampe, due occhi, tre corna e coda',
           'ciclo_forest_demon_blu' =>
             'rettile quadrupede, quattro zampe, due occhi, due corna e coda, senza ali',
+          'famelico_oblio' =>
+            'quadrupede, quattro zampe, due occhi, due corna, una coda',
+          'saltalungo_maculato' =>
+            'bipede, due braccia, due gambe, due occhi, due orecchie, una coda',
+          'cloud_beast' =>
+            'bipede lupino, due braccia, due gambe, due occhi, due orecchie, due corna, una coda',
           _ => '',
         };
   final physical =
@@ -204,9 +210,16 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   final incorporeal =
       !pinepine &&
       has(r'incorporeo|incorporea|senza corpo|elementale|spettro|fantasma');
+  final approvedQuadruped = const {
+    'mostro_sabbia',
+    'forest_demon',
+    'ciclo_forest_demon_blu',
+    'famelico_oblio',
+  }.contains(entry.id);
   final humanoid =
       !spherical &&
       !incorporeal &&
+      !approvedQuadruped &&
       has(
         r'umano|goblin|coboldo|gnoll|\borco\b|\bogre\b|troll|gigante|bandit|scostum|monaco|cavalier|mago|demone|diavolo|vampiro|scheletro|teschio|cultista|pellegrino|angelo|adoratore|feralis|manichino|pupazzo',
       );
@@ -255,6 +268,20 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             'nuvola_in_bottiglia' => {'eyes': 1},
             'forest_demon' => {'legs': 4, 'eyes': 2, 'horns': 3},
             'ciclo_forest_demon_blu' => {'legs': 4, 'eyes': 2, 'horns': 2},
+            'famelico_oblio' => {'legs': 4, 'eyes': 2, 'horns': 2, 'tail': 1},
+            'saltalungo_maculato' => {
+              'arms': 2,
+              'legs': 2,
+              'eyes': 2,
+              'tail': 1,
+            },
+            'cloud_beast' => {
+              'arms': 2,
+              'legs': 2,
+              'eyes': 2,
+              'horns': 2,
+              'tail': 1,
+            },
             _ => <String, int>{},
           };
     final group = switch (noun) {
@@ -263,6 +290,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       'occhi|occhio|lenti' => 'eyes',
       'ali' => 'wings',
       'corna|corno' => 'horns',
+      'code|coda' => 'tail',
       _ => noun,
     };
     if (canonicalCounts.containsKey(group)) return canonicalCounts[group]!;
@@ -370,7 +398,9 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       r'occhi|occhio|lente|pupilla',
     );
   }
-  if (!spherical && (humanoid || has(r'\bbraccia\b|\bbraccio\b'))) {
+  if (!spherical &&
+      !approvedQuadruped &&
+      (humanoid || has(r'\bbraccia\b|\bbraccio\b'))) {
     group(
       'arms',
       'Braccio',
@@ -424,7 +454,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   if (confirmedPhysical.contains('corna')) {
     group('horns', 'Corno', 'Corna', count('corna|corno', 2), r'corna|corno');
   }
-  if (entry.id == 'topino_avventuroso' || entry.id == 'ogle') {
+  if (const {
+    'topino_avventuroso',
+    'ogle',
+    'saltalungo_maculato',
+    'cloud_beast',
+  }.contains(entry.id)) {
     group('ears', 'Orecchio', 'Orecchie', 2, r'orecchio|orecchie');
   }
   if (entry.id == 'funghetto_cappuccio_rosso') {

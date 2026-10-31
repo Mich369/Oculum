@@ -2618,6 +2618,31 @@ double? oculumStandalonePercentage(String raw) {
   return value / 100;
 }
 
+/// Bare percentages use current real HP; %Tot uses maximum HP. Never temp HP.
+/// Keep the formula parser's rounding and safety bounds for both input modes.
+int oculumEvaluateDamageHealingInput(
+  String raw,
+  Map<String, num> vars, {
+  required int currentHp,
+  int? maximumHp,
+}) {
+  final total = RegExp(
+    r'^(\d+(?:[,.]\d+)?\s*%)\s*Tot$',
+    caseSensitive: false,
+  ).firstMatch(raw.trim());
+  final percentage = oculumStandalonePercentage(total?[1] ?? raw);
+  final base = total == null
+      ? currentHp
+      : maximumHp ?? readIntValue(vars['hp_max'] ?? vars['hp']);
+  final value = percentage == null
+      ? oculumEvaluateFormula(raw, vars)
+      : max(0, base).toDouble() * percentage;
+  if (!value.isFinite || value.abs() > 999999) {
+    throw const FormatException('Risultato troppo grande.');
+  }
+  return oculumRoundFormulaResult(value);
+}
+
 double oculumEvaluateCommandFormula(
   String raw, {
   required String targetKey,
@@ -2744,6 +2769,16 @@ List<OculumFormulaCommand> oculumParseFormulaCommands(
     var key = oculumFormulaVariableKey(rawKeyText, vars);
     var sign = (match.group(2) ?? match.group(5)) == '-' ? -1 : 1;
     var expression = (match.group(3) ?? match.group(6) ?? '').trim();
+    // A sentence after a command is narrative, not part of its formula.
+    // Preserve decimal dots (3.5), event triggers and genuine invalid math.
+    for (var i = 0; i < expression.length; i++) {
+      if (expression[i] != '.') continue;
+      if (i + 1 == expression.length ||
+          RegExp(r'\s').hasMatch(expression[i + 1])) {
+        expression = expression.substring(0, i).trimRight();
+        break;
+      }
+    }
     var element = '';
     var triggerRaw = '';
 

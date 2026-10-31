@@ -7212,8 +7212,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     return dropdownSection(
       title: t('Danno / Cura', 'Damage / Healing'),
       subtitle: t(
-        'Inserisci un numero, scegli il modificatore, poi applica. Il danno totale usa il colore dell’elemento dominante.',
-        'Enter a number, choose the modifier, then apply. Total damage uses the dominant element color.',
+        'Inserisci un numero, una formula o una percentuale della Vita attuale, poi scegli Danno o Cura. Difesa, Scudi e opzioni Oltre restano applicabili.',
+        'Enter a number, a formula or a percentage of current HP, then choose Damage or Heal. Defense, Shields and bypass options still apply.',
       ),
       icon: Icons.healing,
       borderColor: tertiaryColor,
@@ -7231,8 +7231,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               controller: dannoSubitoController,
               focusNode: dannoCuraFocusNode,
               helper: t(
-                'Numero o formula: 10+100-20. Il pulsante decide danno o cura.',
-                'Number or formula: 10+100-20. The button decides damage or healing.',
+                'Esempi: 30, 10+100-20, 25% (Vita attuale), 25%Tot (Vita massima). Il pulsante decide Danno o Cura.',
+                'Examples: 30, 10+100-20, 25% (current HP), 25%Tot (maximum HP). The button chooses Damage or Heal.',
               ),
             ),
           ),
