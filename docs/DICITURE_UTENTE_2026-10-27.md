@@ -1,5 +1,25 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+Specchio Mangiavoce, Teschio Mostruoso e Torretta Oculum: seconda risposta **«Sì, tutti e sei canonici»**, riferita ai telefoni v2 e alle reliquie Specchio v2/Teschio v3/Torretta v2 mostrati. Conferma distinta dai sei derivati precedenti; file/versioni/SHA nel manifest centrale e nel pacchetto del lotto. Non estendere ad altre revisioni o immagini future.
+
+Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo: **«Sì, tutti e sei canonici»** alla domanda riferita esattamente a telefono v1 e reliquia v2 di ciascuno, dopo la correzione dei margini. File/SHA e ricevuta separata nel manifest dei derivati; nessuna estensione agli altri sei in produzione.
+
+Cavaliere Morto, punto debole: **«Sfera nascosta alla base della vita»**, risposta alla contraddizione con il campo generico che citava giunture/ossa. Conferma di regola distinta dall'approvazione dell'illustrazione E2; niente nuova posizione nel petto o giunture deboli dedotte.
+
+Scheletro Bombarolo: **«C — Curvo, ocra vecchia»**, selezione del desktop C1 mostrato il31ottobre2026, SHA `d8b26df180390059688eef4ef765d7353a8ce021fc6aedaae84e4175f265397b`. Originali conservati, nessuna approvazione delle altre alternative o dei derivati successivi implicita.
+
+Cavaliere Morto: **«E — Spalle a scaglie, verde rame»**, scelta esplicita del desktop E2 mostrato il31ottobre2026. SHA `3b667a2cee77c439407fa9ab864b87e960a131da147309b9e2155f5288cc1c7e`. Nessuna approvazione delle altre alternative o integrazione runtime implicita.
+
+Adoratore della Bestia, scelta successiva: allegata la proposta viola con umano accovacciato, **«il mostro più simile a quello bianco di volto»**. Mostrata la revisione C3 che conserva indaco/malva e riprende il volto feroce del riferimento avorio; conferma **«si»**. Canonico soltanto `adoratore_bestia_C_stand_v3.png`, SHA `8803bcb4753324744526dd4d56b8ed07d3df4ccd2d4392c4231f2bc58f1d3b6a`; le altre quattro palette restano alternative.
+
+Adoratore della Bestia, revisione del 31 ottobre: **«devono avere la bestia come stand»**, poi **«falle di colori diversi»**. Alla proposta di una Bestia umanoide, grande e massiccia: **«1 dietro l'adoratore»**; resa **«Presenza semitrasparente ma ben riconoscibile»**. Sostituisce il precedente accenno solo nell'ombra propria. Cinque palette da valutare; nessuna scelta canonica dei nuovi file, potere o nuovo partecipante al fight dedotto dall'illustrazione. Il dubbio sul sigillo fronte/maschera resta distinto.
+
+Torretta Oculum: **«C — Obliqua, scisto prugna»**, desktop C1 confermato il 31 ottobre 2026.
+
+Teschio Mostruoso: **«D — Passo dei quattro artigli»**, desktop D1 confermato il 31 ottobre 2026.
+
+Specchio Mangiavoce: **«D — Curvo, legno cenere»**, desktop D2 confermato il31ottobre2026. Riga QA31-R: **«Sì, consegna approvata»**, riferito soltanto alla consegna5808e966 e alle verifiche descritte, senza chiudere artwork o regole aperte.
+
 Mostro Solare: **«Due occhi laterali, uno per lato»**. Sciamano Malizioso Minore: **«La testa lignea stessa»** come punto debole. Navigatore d’Aria: il vortice **«Sostituisce gambe e piedi»**; **«Braccia e torace materiali, basso corpo d’aria»**. Conferme anatomiche esplicite, senza nuove immunità.
 
 ## Diciture del 31 ottobre — immagini e nuove meccaniche

@@ -1,5 +1,9 @@
 # Oculum — registro delle regole confermate
 
+## Cavaliere Morto — chiarimento del 31 ottobre
+
+Alla differenza tra descrizione dell'armatura vuota e campo generico sulle giunture/ossa, l'utente conferma **«Sfera nascosta alla base della vita»** come punto debole. Non sostituirla con ossa o giunture delle braccia. Il desktop E2 conserva la sfera nascosta, senza apertura nel petto o nucleo sempre visibile. ART43: descrizione italiana/inglese, parte colpibile e manuale sorgente allineati localmente; regressioni incluse nei 195 test mirati passati. Restano prioritarie le personalizzazioni salvate. Questa implementazione non modifica retroattivamente la build5808e966; CI e nuova distribuzione sono verifiche separate.
+
 **Anatomie — conferme esplicite 31 ottobre:** Mostro Solare due occhi laterali, uno per lato. Punto debole dello Sciamano Malizioso Minore: testa lignea, non maschera. Navigatore d’Aria: busto e braccia materiali, vortice al posto di gambe/piedi; ciò non aggiunge immunità. Le anatomie personalizzate del Master restano prioritarie.
 
 ## Conferme del 31 ottobre — Oblivion Shield e percentuali Vita

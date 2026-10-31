@@ -1,5 +1,41 @@
 # Oculum — canone visivo confermato
 
+**ART43 — integrazione locale del lotto di sei creature:** i 18 PNG esatti approvati sotto sono ora collegati a desktop, telefono e reliquia; nessun ritocco ai pixel o nuovi poteri. Le composizioni si mostrano intere sui telefoni alti. Verificati SHA, alpha, layout e clic nei 195 test mirati; CI e distribuzione restano prove separate. La sfera del Cavaliere è la parte debole alla base della vita e rimane nascosta nell’illustrazione. Le note cronologiche sotto conservano lo stato al momento della scelta.
+
+## Adattamenti del lotto corrente — conferma del 31 ottobre
+
+**Seconda conferma esplicita:** approvati anche i sei file mostrati di Specchio Mangiavoce (telefono v2/reliquia v2), Teschio Mostruoso (telefono v2/reliquia v3) e Torretta Oculum (telefono v2/reliquia v2), con **«Sì, tutti e sei canonici»**. Teschio v3 corregge il margine della cresta e degli artigli; le revisioni precedenti sono conservate. Il lotto ha quindi6desktop+6telefoni+6reliquie tutti approvati, con ricevute esatte e copie SHA. Raccolta in `output/artwork/derivati_scelte_2026-10-31/manifest_pacchetti_approvati.json`. Integrazione e prove UI restano successive.
+
+Prima conferma: approvati con **«Sì, tutti e sei canonici»** i tre sfondi telefono **v1** e le tre reliquie **v2** di Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo, sotto `output/artwork/derivati_scelte_2026-10-31/`. Le v2 delle reliquie sostituiscono le v1 con poco margine, conservate come storico; PNG con alpha reale e margine minimo osservato superiore al13%. Ricevuta per i sei file esatti, prompt e SHA nel manifest centrale dei derivati; copie byte-identiche. La seconda conferma sopra è separata, non un'approvazione per estensione.
+
+## Scheletro Bombarolo — scelta del 31 ottobre
+
+Canonico **C — Curvo, ocra vecchia**, versione1, file `output/artwork/proposte_cinque_2026-10-31/scheletro_bombarolo/scheletro_bombarolo_C_v1.png`. Scheletro ricurvo con cranio/mandibola, due braccia e due gambe, ossa ocra e brandelli alla vita; frammenti delle proprie ossa, senza esplosivi moderni o nuovo nucleo Oculum. Copia e SHA nel manifest centrale; alternative conservate. Integrazione, anatomia dettagliata e nuovi derivati sono passi separati.
+
+## Cavaliere Morto — scelta del 31 ottobre
+
+**Chiarimento successivo:** punto debole confermato come **sfera nascosta alla base della vita**, non giunture o ossa delle braccia. La sfera resta nascosta nel tema; allineamento dei dati e delle parti colpibili è lavoro successivo, distinto dall'artwork.
+
+Canonico **E — Spalle a scaglie, verde rame**, versione2, file `output/artwork/proposte_cinque_2026-10-31/cavaliere_morto/cavaliere_morto_E_v2.png`. Armatura vuota con elmo chiuso, due braccia e due gambe, spalle a scaglie, spada e scudo fisici; sfera Oculum nascosta alla base della vita. Nessun corpo umano, scheletro o nucleo scoperto aggiunto. Il verde rame è una patina visiva, non una nuova proprietà del materiale. Copia e SHA nel manifest centrale; alternative conservate. Integrazione, anatomia dettagliata e derivati sono passi successivi.
+
+## Adoratore della Bestia — nuova direzione del 31 ottobre
+
+**Scelta canonica successiva:** C3 indaco/malva, umano accovacciato e Bestia semitrasparente dietro; il volto della Bestia riprende la proposta avorio, con muso più largo e ghigno feroce. Conferma esplicita **«si»** dopo aver visto la revisione. File `output/artwork/proposte_cinque_2026-10-31/adoratore_bestia/stand_colori/adoratore_bestia_C_stand_v3.png`; copia e SHA nel manifest delle approvazioni. Le altre palette sono conservate; non sono approvate per estensione. Integrazione, derivati e anatomia colpibile restano successivi; nessun nuovo partecipante o effetto in combattimento viene dedotto dallo stand.
+
+La Bestia deve comparire **come stand umanoide, grande e massiccia dietro l'Adoratore, semitrasparente ma riconoscibile**. Correzione esplicita dell'utente al precedente vincolo della sola sagoma nell'ombra propria. Richieste cinque alternative con colori molto diversi: palette e anatomia fine della Bestia restano proposte da votare, non nuove specie o regole. L'Adoratore conserva corpo umano, due mezze maschere d'argilla, corde e corteccia; la localizzazione del sigillo colpibile rimane domanda separata. Nuovi file e prompt in `output/artwork/proposte_cinque_2026-10-31/adoratore_bestia/stand_colori/`, senza sostituire gli originali né modificare la build5808e966.
+
+## Torretta Oculum — scelta del 31 ottobre
+
+Canonica **C — Obliqua, scisto prugna**, file `output/artwork/proposte_cinque_2026-10-31/torretta_oculum/torretta_oculum_C_v1.png`. Due placche di pietra scura, scheggia basale e nucleo Oculum viola; nessun occhio o bocca. Copia e SHA registrati; altre quattro alternative conservate. La selezione non aggiunge capacità, drop o resistenze. Integrazione e derivati successivi, distinti dalla build5808e966.
+
+## Teschio Mostruoso — scelta del 31 ottobre
+
+Canonico **D — Passo dei quattro artigli**, file `output/artwork/proposte_cinque_2026-10-31/teschio_mostruoso/teschio_mostruoso_D_v1.png`. Cresta alta, mascella aperta, quattro braccia con artigli ossei e due gambe lunghe. Questa scelta risolve il confronto visivo con i capi bassi delle altre proposte. Conservati originali e SHA; nessuna nuova Art, Oculum, arma o proprietà di combattimento dedotta. Integrazione, anatomia dettagliata e derivati sono successivi; non incluso retroattivamente nella build5808e966.
+
+## Specchio Mangiavoce — scelta del 31 ottobre
+
+Canonico **D — Curvo, legno cenere**, file `output/artwork/proposte_cinque_2026-10-31/specchio_mangiavoce/specchio_mangiavoce_D_v2.png`. Specchio asimmetrico con cornice lignea consumata e fascette di rame, appoggiato alla parete sotterranea; superficie specchiante, senza volto o arti aggiunti. Copia e SHA registrati nel manifest delle approvazioni. La scelta non aggiunge poteri, drop o fragilità; integrazione, anatomia dettagliata e derivati sono passi successivi. Non incluso nella build5808e966 già consegnata.
+
 **Anatomie confermate 31 ottobre:** Mostro Solare B con due occhi laterali, uno per lato; Sciamano Malizioso Minore A con testa lignea come punto debole, senza maschera; Navigatore d’Aria E con braccia e torace materiali e vortice al posto di gambe/piedi. Nessuna nuova immunità dedotta dal materiale del disegno.
 
 ## Conferme del 31 ottobre — Oblivion Shield, Saltalungo e Bestia

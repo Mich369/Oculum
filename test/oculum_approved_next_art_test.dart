@@ -10,6 +10,12 @@ import 'package:oculum/widgets/oculum_narrative_background.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
 
 const _complete = [
+  'specchio_mangiavoce',
+  'teschio_mostruoso',
+  'torretta_oculum',
+  'adoratore_bestia',
+  'cavaliere_morto',
+  'scheletro_bombarolo',
   'funghetto_cappuccio_rosso',
   'costrutto_minore',
   'shadow_devil',
@@ -91,6 +97,9 @@ void main() {
             ),
           );
           final image = tester.widget<Image>(find.byType(Image).first);
+          if (theme.preserveIllustrationFraming) {
+            expect(image.fit, BoxFit.contain);
+          }
           final provider = image.image is ResizeImage
               ? (image.image as ResizeImage).imageProvider
               : image.image;

@@ -44,7 +44,9 @@ class OculumNarrativeBackground extends StatelessWidget {
                   key: ValueKey(
                     'narrative-background-${monster?.id ?? pack.id}',
                   ),
-                  fit: pack.preserveStoryFraming
+                  fit:
+                      (monster?.preserveIllustrationFraming == true ||
+                          pack.preserveStoryFraming)
                       ? BoxFit.contain
                       : BoxFit.cover,
                   alignment: monster?.illustration != null

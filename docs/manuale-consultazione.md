@@ -2,6 +2,11 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Cavaliere Morto e sei temi canonici — 31 ottobre
+
+Il punto debole del Cavaliere Morto è la sfera di Oculum nascosta alla base della vita, non le giunture o le ossa delle braccia. La sua armatura è vuota: elmo, due braccia e due gambe sono di metallo; non si aggiungono occhi o ossa della Summon eventuale al suo corpo. La sfera è una parte distinta nella precisione. Restano le condizioni già descritte per danneggiarlo, senza inventare una nuova soglia per esporla. Le anatomie e i punti deboli personalizzati salvati dal Master mantengono la precedenza.
+Specchio Mangiavoce, Teschio Mostruoso, Torretta Oculum, Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo hanno ciascuno lo sfondo desktop, il telefono e la reliquia decorativa approvati. Il Teschio ha quattro braccia artigliate e due gambe; la Torretta ha un nucleo, senza occhi; lo Specchio non ha arti o volto. Dietro l’Adoratore si manifesta la Bestia come stand semitrasparente: non diventa per questo un partecipante aggiuntivo. Le illustrazioni non aggiungono poteri, resistenze o drop. Le composizioni sono mostrate intere anche sugli schermi stretti; tema e reliquia restano selezionabili.
+
 ## Manichini e anatomie confermate — 31 ottobre
 
 Il Manichino della Spada ha lama nel braccio sinistro e occhio viola; il Manichino di Baghest è una variante distinta con lama destra, occhio rosso e cappotto blu ardesia. Quest’ultimo nasce già succube di Corruzione Rossa dopo tre Notti.

@@ -8,10 +8,12 @@ final _necromancerMonsterEntries = [
     id: 'cavaliere_morto',
     nameIt: 'Cavaliere Morto',
     nameEn: 'Dead Knight',
+    weakPointIt: 'La sfera di Oculum nascosta alla base della vita.',
+    weakPointEn: 'The Oculum sphere hidden at the base of the waist.',
     descIt:
         'Armatura vuota animata attorno a una sfera di Oculum nascosta alla base della vita. Finché non ne scopri il punto debole, il corpo ignora i colpi: può subire danno solo dopo la scoperta della sfera oppure con un tiro naturale superiore a 17 e un totale che supera la sua CM. Porta spada e scudo. Spadata aggiunge 5 + Livello Danni per quella sola azione; la difesa cresce fino a uno Scudo Oculum. Raramente (impostazione iniziale 5%) possiede anche “Un vecchio amore”: una donna scheletrica dai capelli di colore casuale, armatura di pelle e arco che si erge dal terreno. È una Summon al livello del Cavaliere e può valere il doppio dell’EXP di una Summon ordinaria.',
     descEn:
-        'An empty suit of armor animated around an Oculum sphere hidden at the base of its life. Until the weak point is discovered it ignores hits: it can take damage only after the sphere is exposed, or from a natural roll above 17 whose total exceeds its CM. It carries sword and shield. Sword Strike adds 5 + Level damage for that action; its defense grows into an Oculum Shield. Rarely (initial setting 5%) it also has “An Old Love”: a skeletal woman with randomly colored hair, leather armor and a bow who rises from the ground. She is a Summon at the Knight’s level and can grant twice the EXP of an ordinary Summon.',
+        'An empty suit of armor animated around an Oculum sphere hidden at the base of its waist. Until the weak point is discovered it ignores hits: it can take damage only after the sphere is exposed, or from a natural roll above 17 whose total exceeds its CM. It carries sword and shield. Sword Strike adds 5 + Level damage for that action; its defense grows into an Oculum Shield. Rarely (initial setting 5%) it also has “An Old Love”: a skeletal woman with randomly colored hair, leather armor and a bow who rises from the ground. She is a Summon at the Knight’s level and can grant twice the EXP of an ordinary Summon.',
     elementId: 'ombra',
     spriteAssetPath: '',
     isMiniBoss: false,

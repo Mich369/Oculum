@@ -1,6 +1,14 @@
 # Registro cumulativo per i giocatori
 
-Verifica locale della revisione31ottobre:1959test passati,6saltati e nessun fallimento; analisi senza problemi. Aggiornati i controlli dei derivati approvati e della nuova variante del catalogo; isolata la casualità nella prova della parata di coda, senza modificare la relativa regola. CI e distribuzione vengono verificate separatamente. [Evidenze](PATCH_2026-10-31_PARSER_OBLIVION.md).
+## Sei nuovi temi completi e Cavaliere Morto — 31 ottobre
+
+- Integrati gli ulteriori18PNG approvati: sfondo desktop, composizione telefono e reliquia di Specchio Mangiavoce, Teschio Mostruoso, Torretta Oculum, Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo. I file conservano esattamente i pixel e i colori confermati; le alternative restano separate. Le nuove composizioni si vedono intere anche sui telefoni stretti, senza ritagliare il soggetto laterale.
+- Il punto debole del Cavaliere Morto è la sfera di Oculum nascosta alla base della vita, con parte distinta in Precisione. L’armatura è vuota: niente ossa o occhi provenienti dalla descrizione della sua eventuale Summon. Conservati i punti deboli e le anatomie personalizzati dal Master.
+- Descrizioni coerenti con gli artwork: la Bestia compare dietro l’Adoratore come stand semitrasparente; il Teschio ha cresta alta, quattro braccia artigliate e due gambe. Nessuna illustrazione aggiunge poteri, immunità o drop. Nel Monster Book la pagina acquistata mantiene lo sfondo senza imporre un ritratto.
+
+Verifiche locali mirate:195test passati, compresi SHA dei18file, trasparenza delle reliquie, layout e clic a320/834/1440px, parti anatomiche e round-trip delle personalizzazioni. La suite completa, la CI, i pacchetti e la pubblicazione hanno verifiche separate. Temi, reliquie, colori, punti deboli e parti anatomiche restano modificabili. [Evidenze e limiti](PATCH_2026-10-31_SEI_TEMI.md).
+
+Verifica locale della precedente revisione5808e966:1959test passati,6saltati e nessun fallimento; analisi senza problemi. Aggiornati i controlli dei derivati approvati e della nuova variante del catalogo; isolata la casualità nella prova della parata di coda, senza modificare la relativa regola. CI e distribuzione vengono verificate separatamente. [Evidenze](PATCH_2026-10-31_PARSER_OBLIVION.md).
 
 ## Revisione del 31 ottobre — temi approvati, anatomie e Manichino di Baghest
 

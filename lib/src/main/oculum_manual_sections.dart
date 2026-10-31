@@ -5,6 +5,18 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Cavaliere Morto e sei temi canonici — 31 ottobre',
+    titleEn: 'Dead Knight and six canonical themes — October 31',
+    contentIt: r'''
+Il punto debole del Cavaliere Morto è la sfera di Oculum nascosta alla base della vita, non le giunture o le ossa delle braccia. La sua armatura è vuota: elmo, due braccia e due gambe sono di metallo; non si aggiungono occhi o ossa della Summon eventuale al suo corpo. La sfera è una parte distinta nella precisione. Restano le condizioni già descritte per danneggiarlo, senza inventare una nuova soglia per esporla. Le anatomie e i punti deboli personalizzati salvati dal Master mantengono la precedenza.
+Specchio Mangiavoce, Teschio Mostruoso, Torretta Oculum, Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo hanno ciascuno lo sfondo desktop, il telefono e la reliquia decorativa approvati. Il Teschio ha quattro braccia artigliate e due gambe; la Torretta ha un nucleo, senza occhi; lo Specchio non ha arti o volto. Dietro l’Adoratore si manifesta la Bestia come stand semitrasparente: non diventa per questo un partecipante aggiuntivo. Le illustrazioni non aggiungono poteri, resistenze o drop. Le composizioni sono mostrate intere anche sugli schermi stretti; tema e reliquia restano selezionabili.
+''',
+    contentEn: r'''
+The Dead Knight weak point is the Oculum sphere hidden at the base of its waist, not arm joints or bones. Its empty armour has a helmet, two arms and two legs; an optional summoned woman adds no eyes, bones or limbs to it. Precision lists the sphere separately. Existing damage conditions remain unchanged; no new exposure threshold is invented. Saved Master anatomy and weak-point overrides retain priority.
+Voice-Eating Mirror, Monstrous Skull, Oculum Turret, Beast Worshipper, Dead Knight and Bomber Skeleton each have approved desktop, phone and decorative relic art. The Skull has four clawed arms and two legs. The Turret has a core and no eyes; the Mirror has no face or limbs. The translucent Beast stand behind its Worshipper is no additional combat participant. Art adds no powers, resistances or drops. Preserve whole compositions on narrow screens and keep themes/relics selectable.
+''',
+  ),
+  ManualSection(
     titleIt: 'Manichini e anatomie confermate — 31 ottobre',
     titleEn: 'Puppets and confirmed anatomy — October 31',
     contentIt: r'''

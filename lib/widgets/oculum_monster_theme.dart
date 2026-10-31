@@ -158,7 +158,29 @@ class OculumMonsterTheme {
   int get seed => oculumMonsterArtSeed(monster.id);
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
+  // These approved compositions include a full lateral subject. Contain the
+  // whole painting on tall phones instead of cropping away that subject.
+  bool get preserveIllustrationFraming => const {
+    'specchio_mangiavoce',
+    'teschio_mostruoso',
+    'torretta_oculum',
+    'adoratore_bestia',
+    'cavaliere_morto',
+    'scheletro_bombarolo',
+  }.contains(monster.id);
   String? get relicIllustration => switch (monster.id) {
+    'specchio_mangiavoce' =>
+      'assets/oculum/home_art/relic_specchio_mangiavoce_canon_20261031.png',
+    'teschio_mostruoso' =>
+      'assets/oculum/home_art/relic_teschio_mostruoso_canon_20261031.png',
+    'torretta_oculum' =>
+      'assets/oculum/home_art/relic_torretta_oculum_canon_20261031.png',
+    'adoratore_bestia' =>
+      'assets/oculum/home_art/relic_adoratore_bestia_canon_20261031.png',
+    'cavaliere_morto' =>
+      'assets/oculum/home_art/relic_cavaliere_morto_canon_20261031.png',
+    'scheletro_bombarolo' =>
+      'assets/oculum/home_art/relic_scheletro_bombarolo_canon_20261031.png',
     'armadillo_corazzato' =>
       'assets/oculum/home_art/relic_armadillo_corazzato_v1.png',
     'custode_campana_cieca' =>
@@ -221,6 +243,18 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'specchio_mangiavoce' =>
+      'assets/oculum/home_art/theme_specchio_mangiavoce_canon_20261031.png',
+    'teschio_mostruoso' =>
+      'assets/oculum/home_art/theme_teschio_mostruoso_canon_20261031.png',
+    'torretta_oculum' =>
+      'assets/oculum/home_art/theme_torretta_oculum_canon_20261031.png',
+    'adoratore_bestia' =>
+      'assets/oculum/home_art/theme_adoratore_bestia_canon_20261031.png',
+    'cavaliere_morto' =>
+      'assets/oculum/home_art/theme_cavaliere_morto_canon_20261031.png',
+    'scheletro_bombarolo' =>
+      'assets/oculum/home_art/theme_scheletro_bombarolo_canon_20261031.png',
     'famelico_oblio' =>
       'assets/oculum/home_art/theme_famelico_oblio_canon_20261031.png',
     'saltalungo_maculato' =>
@@ -340,6 +374,18 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustrationMobile => switch (monster.id) {
+    'specchio_mangiavoce' =>
+      'assets/oculum/home_art/theme_specchio_mangiavoce_mobile_canon_20261031.png',
+    'teschio_mostruoso' =>
+      'assets/oculum/home_art/theme_teschio_mostruoso_mobile_canon_20261031.png',
+    'torretta_oculum' =>
+      'assets/oculum/home_art/theme_torretta_oculum_mobile_canon_20261031.png',
+    'adoratore_bestia' =>
+      'assets/oculum/home_art/theme_adoratore_bestia_mobile_canon_20261031.png',
+    'cavaliere_morto' =>
+      'assets/oculum/home_art/theme_cavaliere_morto_mobile_canon_20261031.png',
+    'scheletro_bombarolo' =>
+      'assets/oculum/home_art/theme_scheletro_bombarolo_mobile_canon_20261031.png',
     'armadillo_corazzato' =>
       'assets/oculum/home_art/theme_armadillo_corazzato_mobile_v1.png',
     'custode_campana_cieca' =>

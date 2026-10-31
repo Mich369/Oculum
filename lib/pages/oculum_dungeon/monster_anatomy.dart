@@ -36,6 +36,12 @@ String oculumLogicalMonsterWeakPoint(
           .toLowerCase();
   String pair(String it, String en) => english ? en : it;
   bool has(String pattern) => RegExp(pattern).hasMatch(text);
+  if (entry.id.split('_variante_').first == 'cavaliere_morto') {
+    return pair(
+      'La sfera di Oculum nascosta alla base della vita.',
+      'The Oculum sphere hidden at the base of the waist.',
+    );
+  }
   if (entry.id == 'pinepine' || entry.id.startsWith('pinepine_variante_')) {
     return pair(
       'Una squama naturalmente più tenera fra le protezioni della pigna integra.',
@@ -212,8 +218,10 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             'quadrupede, quattro zampe, testa, due occhi, due orecchie, una coda',
           _ => '',
         };
-  final physical =
-      '${oculumMonsterPhysicalDescription(entry)} $confirmedPhysical';
+  final physical = entry.id.split('_variante_').first == 'cavaliere_morto'
+      // The optional summoned woman is not a body part of the empty armour.
+      ? 'armatura vuota umanoide, due braccia, due gambe, elmo chiuso senza occhi, sfera di Oculum nascosta alla base della vita'
+      : '${oculumMonsterPhysicalDescription(entry)} $confirmedPhysical';
   final identity = '${entry.id} ${entry.nameIt} $physical'.toLowerCase();
   final weak = entry.weakPointDescriptionIt.toLowerCase();
   bool has(String pattern) => RegExp(pattern).hasMatch(identity);
@@ -572,6 +580,15 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   for (final d in details) {
     if (RegExp(d.$3).hasMatch('$physical $weak')) {
       add(d.$1, d.$2, d.$1, RegExp(d.$3).hasMatch(weak));
+    }
+  }
+  if (entry.id.split('_variante_').first == 'cavaliere_morto') {
+    final sphereWeak = RegExp(r'sfera|sphere').hasMatch(weak);
+    add('core', 'Sfera di Oculum alla base della vita', 'core', sphereWeak);
+    for (final part in parts) {
+      if (sphereWeak) part['weak'] = part['id'] == 'core';
+      if (part['group'] == 'head') part['label'] = 'Elmo dell’armatura';
+      part['material'] = part['id'] == 'core' ? 'oculum' : 'metal';
     }
   }
   if (pinepine) {
