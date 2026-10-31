@@ -25,14 +25,18 @@ const _complete = [
   'forest_demon',
   'ciclo_forest_demon_blu',
   'sciamano_malizioso',
-];
-const _desktopOnly = [
   'sharp',
   'topino_avventuroso',
   'mosca_campana',
   'custode_campana_cieca',
   'mammuth_in_decomposizione',
   'armadillo_corazzato',
+];
+const _desktopOnly = [
+  'manichino_spada',
+  'manichino_baghest',
+  'mostro_solare',
+  'lupo_infernale_del_ghiaccio',
 ];
 
 void main() {

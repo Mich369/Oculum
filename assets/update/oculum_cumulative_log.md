@@ -1,5 +1,7 @@
 # Registro cumulativo per i giocatori
 
+Verifica locale della revisione31ottobre:1959test passati,6saltati e nessun fallimento; analisi senza problemi. Aggiornati i controlli dei derivati approvati e della nuova variante del catalogo; isolata la casualità nella prova della parata di coda, senza modificare la relativa regola. CI e distribuzione vengono verificate separatamente. [Evidenze](PATCH_2026-10-31_PARSER_OBLIVION.md).
+
 ## Revisione del 31 ottobre — temi approvati, anatomie e Manichino di Baghest
 
 - Collegati19sfondi desktop canonici scelti in chat, comprese le due varianti del Manichino, il Lupo glaciale e i tre Armadilli ambientali. Collegati anche i16adattamenti telefono/reliquia già approvati per otto mostri. Copie identiche ai PNG confermati, con ricevute SHA; le proposte e i nuovi derivati ancora da valutare restano separati.

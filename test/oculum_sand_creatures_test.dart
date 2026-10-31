@@ -355,13 +355,28 @@ void main() {
   );
 
   testWidgets(
-    'no-roll tail parry takes 65% after Defense before shields, even if passive resistance beats attack',
+    'no-roll tail parry takes 65% after Defense before shields without unrelated random mitigation',
     (tester) async {
       final (state, p) = await _mount(tester, species: 'mostro_sabbia');
+      // The independently rolled Luck/Resistance reduction can remove more
+      // damage before shields. Cancel only those derived passives for this
+      // exact layer-order assertion; their production behavior is unchanged.
+      for (final id in ['fortuna', 'resistenza']) {
+        final dynamic stat = (state.hiddenEyeStats as List).singleWhere(
+          (dynamic entry) => entry.id == id,
+        );
+        stat.valore = (stat.valore as int) - p.subtraitValue(id);
+        stat.unlocked = true;
+      }
+      p.invalidateDerivedCaches();
+      expect(p.subtraitValue('fortuna'), 0);
+      expect(p.subtraitValue('resistenza'), 0);
       state.scudoController.text = '200';
       final beforeHp = p.currentHp();
       final defense = p.defenseTotal();
-      final request = _incoming(p, 'tail-packet');
+      // A penalized attack below the passive reference must still land:
+      // the no-roll tail parry mitigates damage rather than avoiding the hit.
+      final request = _incoming(p, 'tail-packet', attack: -1);
       state.onlineCombatRequests[request['id']] = request;
       final turn = state.playerReportedTurn;
       final token = state.masterInitiativeTokens.first as Map;
@@ -374,6 +389,7 @@ void main() {
       expect(request['status'], 'resolved');
       expect(request['defenseChoice'], 'coda_sabbia');
       expect(request['defenseNatural'], 0);
+      expect(request['defense'], greaterThan(request['attack'] as int));
       expect(request['freeReaction'], false);
       final expected = oculumSandTailReceivedDamage(
         (100 - defense).clamp(1, 100).toInt(),
@@ -599,6 +615,7 @@ void main() {
       expect(request['status'], 'resolved');
       expect(request['doubleCritical'], true);
       expect(request['defenseNatural'], 0);
+      expect(request['defense'], p.subtraitValue('resistenza'));
       expect(p.currentHp(), 0);
       expect((request['damageReceipt'] as Map)['hpLost'], beforeHp);
       expect(

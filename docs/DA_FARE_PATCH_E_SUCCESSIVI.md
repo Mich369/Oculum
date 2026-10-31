@@ -1,5 +1,7 @@
 # Oculum — attività, conferme e consegne
 
+- **QA31-CI, riparazione verificata localmente:** run41196964717 fermata a1917passati/20falliti/6saltati, nessuna pubblicazione della distribuzione coordinata. Aggiornate le aspettative dei sei derivati approvati e del catalogo381; isolata la riduzione casuale della fixture coda senza cambiare le regole.150riprove mirate, suite completa1959passati/6saltati/0falliti, cinque ripetizioni del caso coda e analisi pulita136,6s. NuovaCI e consegna ancora da verificare; nessuna riga100%.
+
 - **BUG48:** Torretta descritta senza occhi ma parser aggiungeva due parti colpibili: errore riprodotto e corretto,38test anatomie/purificazione passati. Copertura artwork verificata in sola lettura:70desktop,35telefoni,36reliquie,34set completi;36nuovi derivati da approvare. Sono presenti78ID con proposte da votare, anche redesign di mostri già illustrati: non è il numero dei mostri senza tema. Nessuna chiusura100%.
 
 ## Revisione locale corrente — 31 ottobre

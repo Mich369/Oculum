@@ -1,5 +1,13 @@
 # Patch del 31 ottobre — parser, Senka e Oblivion Shield
 
+## Riparazione dei controlli CI e nuova verifica completa
+
+La run41196964717 del commit3a76ceeb si è fermata con1917test passati,20falliti e6saltati. Le build native della distribuzione coordinata sono state saltate e quella run non è stata pubblicata. Diciotto controlli conservavano l'aspettativa di derivati assenti per sei creature già approvate: ora verificano davvero telefono, reliquia, alpha, margini e clic; quattro desktop con derivati ancora da votare mantengono il controllo di esclusione. Il catalogo passa correttamente da380a381 con la nuova variante Baghest, senza indebolire i controlli su duplicati e tecniche.
+
+L'ultimo fallimento dipendeva dalla riduzione casuale indipendente di Fortuna/Resistenza nella fixture della parata. Isolati quei passivi soltanto nel test: nessuna modifica alla regola produttiva del65%. Confermato separatamente il riferimento Resistenza per il doppio critico. Il caso della parata con tiro d'attacco inferiore al riferimento è passato in cinque ripetizioni indipendenti.
+
+**Verifica locale:**150riprove mirate passate, poi suite completa **1959passati/6saltati/0falliti** in26min41s; analisi finale senza problemi in136,6s. Log `build/patch_31_ci_repairs_targeted.log`, `build/patch_31_ci_repairs_full.log`, `build/tail_parry_deterministic_1.log`–`5.log` e `build/patch_31_ci_repairs_analyze.log`. I gruppi si sovrappongono: non sommare i conteggi. NuovaCI, pacchetti, pubblicazione e prove online restano passi successivi; nessuna chiusura100% dalla sola suite.
+
 ## Revisione successiva a3fe20e43 — verifiche distinte
 
 - Ultimo controllo: riprodotto e corretto il parser anatomico che ignorava «Non ha occhi» nella Torretta Oculum. Conservati i due occhi laterali del Mostro Solare e gli override del Master; nessun occhio aggiunto alle nuove proposte della Torretta.

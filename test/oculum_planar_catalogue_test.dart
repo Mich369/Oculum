@@ -10,14 +10,15 @@ void main() {
     expect(skill.maximums, [2, 2, 2]);
     expect(skill.cooldowns, [3, 3, 3]);
   });
-  test('380 authored entries, no duplicate ids or normalized names', () {
-    expect(oculumPlanarMonsterEntries.length, 380);
+  test('381 authored entries, including Baghest, without duplicates', () {
+    expect(oculumPlanarMonsterEntries.length, 381);
     final ids = oculumPlanarMonsterEntries.map((e) => e.id).toSet();
-    expect(ids.length, 380);
+    expect(ids.length, 381);
+    expect(ids, contains('manichino_baghest'));
     final names = oculumPlanarMonsterEntries
         .map((e) => e.nameIt.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''))
         .toSet();
-    expect(names.length, 380);
+    expect(names.length, 381);
     for (final e in oculumPlanarMonsterEntries) {
       expect(
         defaultMonsterBookEntries.where((m) => m.id == e.id).length,
