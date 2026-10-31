@@ -15,6 +15,24 @@ bool oculumFateCoreReflects(MonsterBookEntry? entry, String part) =>
     (entry.id == 'fate_golem' || entry.id.startsWith('fate_golem_variante_')) &&
     part == 'fairy_core';
 
+/// A hidden internal weak point is not revealed by opening the target picker.
+/// Keep the full anatomy available to discovery and hit resolution, and never
+/// reinterpret an explicit saved Master anatomy as a catalogue default.
+List<Map<String, dynamic>> oculumMonsterPrecisionChoices(
+  Iterable<Map<String, dynamic>> parts, {
+  required MonsterBookEntry? monster,
+  required bool weakPointDiscovered,
+}) {
+  final choices = parts.map((p) => Map<String, dynamic>.from(p)).toList();
+  final custom = monster?.encounterRules['precisionBodyParts'];
+  if (monster?.id.split('_variante_').first == 'cavaliere_morto' &&
+      !weakPointDiscovered &&
+      !(custom is List && custom.isNotEmpty)) {
+    choices.removeWhere((p) => p['id'] == 'core' || p['group'] == 'core');
+  }
+  return choices;
+}
+
 /// An elemental vulnerability is not automatically a body location to aim at.
 /// Explicit Master rules can still define a different, saved custom anatomy.
 bool oculumMonsterHasAnatomicalWeakPoint(MonsterBookEntry? entry) {

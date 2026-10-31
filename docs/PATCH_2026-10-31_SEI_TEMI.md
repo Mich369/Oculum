@@ -12,7 +12,7 @@ Allineate le descrizioni dello stand dell’Adoratore e della cresta del Teschio
 
 ## Verifiche
 
--195test locali mirati passati: caricamento degli asset, confronto SHA delle18copie, trasparenza e margini delle reliquie, scelta telefono/desktop, layout e clic a320/834/1440px, anatomie, fratture, personalizzazioni JSON. Log locale: `build/six-packs-focused-tests.log`.
+-197test locali mirati passati: caricamento degli asset, confronto SHA delle18copie, trasparenza e margini delle reliquie, scelta telefono/desktop, layout e clic a320/834/1440px, anatomie, fratture, personalizzazioni JSON. Log locale: `build/six-packs-focused-final.log`.
 -Analisi e suite completa, CI GitHub, pacchetti installati, download pubblici e sessioni online reali sono evidenze distinte. Questa nota non certifica da sola tali passaggi né una prova completa su tre dispositivi fisici.
 
 ## Personalizzazioni preservate
@@ -22,3 +22,5 @@ Selezione del tema e della reliquia, colori, punti deboli, parti anatomiche e lo
 ## Riga da approvare a consegna verificata
 
 ART43 — Integrare i sei set canonici desktop/telefono/reliquia, correggere la sfera del Cavaliere Morto e preservare personalizzazioni e leggibilità. Implementazione locale verificata; la chiusura al100% richiede la conferma dell’utente dopo il riepilogo dei risultati effettivi della consegna.
+
+La selezione di Precisione non mostra la sfera del Cavaliere prima della scoperta effettiva del punto debole. La scoperta la rende selezionabile; le anatomie esplicite del Master restano prioritarie. Test widget prima/dopo e prova di non-mutazione inclusi nei 197 test mirati finali. La prima suite completa e le prime run dc4a6ad5 sono state interrotte intenzionalmente per includere questa correzione; non sono presentate come verifiche complete.

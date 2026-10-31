@@ -2,11 +2,67 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:pointycastle/digests/sha256.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/widgets/oculum_monster_theme.dart';
+import 'package:oculum/main.dart';
+import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  testWidgets('Precision hides the Knight sphere until actual discovery', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(1440, 900),
+    );
+    final probe = OculumPerformanceProbe(state);
+    final token = <String, dynamic>{
+      'id': 'hidden_knight',
+      'monsterBookId': 'cavaliere_morto',
+      'name': 'Cavaliere',
+    };
+    final first = probe.selectPrecisionPart(token);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Sfera di Oculum'), findsNothing);
+    expect(find.text('Sfera di Oculum alla base della vita'), findsNothing);
+    await tester.tap(find.text('Corpo'));
+    await tester.pumpAndSettle();
+    expect((await first)?['id'], 'body');
+    probe.rememberMonsterDiscovery('cavaliere_morto', weakPoint: true);
+    final second = probe.selectPrecisionPart(token);
+    await tester.pumpAndSettle();
+    expect(find.text('Sfera di Oculum alla base della vita'), findsOneWidget);
+    await tester.tap(find.text('Sfera di Oculum alla base della vita'));
+    await tester.pumpAndSettle();
+    expect((await second)?['id'], 'core');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  test('discovery filtering preserves input and explicit Master anatomy', () {
+    final knight = monsterBookEntryById('cavaliere_morto')!;
+    final original = oculumMonsterPrecisionAnatomy(knight);
+    final hidden = oculumMonsterPrecisionChoices(
+      original,
+      monster: knight,
+      weakPointDiscovered: false,
+    );
+    expect(hidden.any((p) => p['id'] == 'core'), isFalse);
+    expect(original.any((p) => p['id'] == 'core'), isTrue);
+    final custom = knight.copyWith(
+      encounterRules: {'precisionBodyParts': original},
+    );
+    expect(
+      oculumMonsterPrecisionChoices(
+        original,
+        monster: custom,
+        weakPointDiscovered: false,
+      ),
+      original,
+    );
+  });
   final receipt =
       jsonDecode(
             File(
@@ -102,7 +158,10 @@ void main() {
     );
     final restored = MonsterBookEntry.fromJson(custom.toJson());
     expect(restored.weakPointDescriptionIt, 'Il gomito destro.');
-    expect(oculumMonsterPrecisionAnatomy(restored).single['id'], 'custom_elbow');
+    expect(
+      oculumMonsterPrecisionAnatomy(restored).single['id'],
+      'custom_elbow',
+    );
     expect(oculumMonsterPrecisionAnatomy(restored).single['hp'], 17);
     final customText = knight.copyWith(weakPointIt: 'Il gomito destro.');
     expect(

@@ -285,8 +285,12 @@ extension _OculumWeakPoints on _OculumHomePageState {
     if (weakOnly && !combatTokenHasAccessibleAnatomicalWeakPoint(token)) {
       return null;
     }
-    final parts = precisionPartsForToken(token);
     final known = combatTokenWeakPointKnown(token);
+    final parts = oculumMonsterPrecisionChoices(
+      precisionPartsForToken(token),
+      monster: monsterBookEntryById(monsterBookIdForCombatToken(token)),
+      weakPointDiscovered: known,
+    );
     final knownIds =
         (discoveredCombatTarget(onlineCombatTokenTag(token))?['knownBodyParts']
                     as List? ??

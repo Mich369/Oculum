@@ -1,6 +1,6 @@
 # Oculum — canone visivo confermato
 
-**ART43 — integrazione locale del lotto di sei creature:** i 18 PNG esatti approvati sotto sono ora collegati a desktop, telefono e reliquia; nessun ritocco ai pixel o nuovi poteri. Le composizioni si mostrano intere sui telefoni alti. Verificati SHA, alpha, layout e clic nei 195 test mirati; CI e distribuzione restano prove separate. La sfera del Cavaliere è la parte debole alla base della vita e rimane nascosta nell’illustrazione. Le note cronologiche sotto conservano lo stato al momento della scelta.
+**ART43 — integrazione locale del lotto di sei creature:** i 18 PNG esatti approvati sotto sono ora collegati a desktop, telefono e reliquia; nessun ritocco ai pixel o nuovi poteri. Le composizioni si mostrano intere sui telefoni alti. Verificati SHA, alpha, layout e clic nei 197 test mirati; CI e distribuzione restano prove separate. La sfera del Cavaliere è la parte debole alla base della vita e rimane nascosta nell’illustrazione. Le note cronologiche sotto conservano lo stato al momento della scelta.
 
 ## Adattamenti del lotto corrente — conferma del 31 ottobre
 
