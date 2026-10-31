@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-31",
+  "approval": "tutti i telefono e reliquie le accetto",
+  "approval_scope": "exact sixteen files in the shown collection; no future images inferred approved",
+  "files": [
+    {
+      "species": "armadillo_corazzato",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_armadillo_corazzato_v1.png",
+      "sha256": "b6921d5c28aee3e6adc514c6358894924ccd9e2c71865dcbbeef996383a94d51"
+    },
+    {
+      "species": "armadillo_corazzato",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_armadillo_corazzato_mobile_v1.png",
+      "sha256": "72bb5bbdde64973952f9c0e0b432ec45ec9e28e075ff9358670c874f22121cc6"
+    },
+    {
+      "species": "custode_campana_cieca",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_custode_campana_cieca_v1.png",
+      "sha256": "eab018035e85f2c3c6ce8cfabfa20ff920516823fce3e393a70935e45108295f"
+    },
+    {
+      "species": "custode_campana_cieca",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_custode_campana_cieca_mobile_v1.png",
+      "sha256": "446aaf8ca8d6549a671c16001b166e9bf667c674d5f228a671c823879c07014a"
+    },
+    {
+      "species": "mammuth_in_decomposizione",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_mammuth_decomposizione_v1.png",
+      "sha256": "3260da9e2683e332d07d5b9c4da1bf47555f0f2155004be978f16ef45e337d96"
+    },
+    {
+      "species": "mammuth_in_decomposizione",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_mammuth_decomposizione_mobile_v1.png",
+      "sha256": "5ba61484baad4162cee77b8a9c54783b783050785bb50afe3c9598a71e1e6e6f"
+    },
+    {
+      "species": "mosca_campana",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_mosca_campana_mobile_v1.png",
+      "sha256": "4f6a6a5f57bf0cf4b56cfb6fa374cb0800ed4d4eef79341f1480701e124d0006"
+    },
+    {
+      "species": "mosca_campana",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_mosca_campana_v1.png",
+      "sha256": "3913c8a3d65f727729b9f7378dd07a60a19a724455f58cbcce086f628288e708"
+    },
+    {
+      "species": "scostubandito_errato",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_scostubandito_errato_v1.png",
+      "sha256": "e814b97f9eef38d01ececb04f6808e3434aebabc2e384442904e2d42a82b3ead"
+    },
+    {
+      "species": "scostubandito_errato",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_scostubandito_errato_mobile_v1.png",
+      "sha256": "5efbfda261dd9d1b98d174c743083aa634963079944c7dd7e1d9bedff7bd2af5"
+    },
+    {
+      "species": "scostubandito_veterano_errato",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_scostubandito_veterano_errato_v1.png",
+      "sha256": "670116cf2b26ac10aa0d7737bf013742710bb07eb970913a286facb28eb6328d"
+    },
+    {
+      "species": "scostubandito_veterano_errato",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_scostubandito_veterano_errato_mobile_v1.png",
+      "sha256": "db371e26bcd851396a724d01602ebb40cfc2844402e90ca30a82baf126af0308"
+    },
+    {
+      "species": "sharp",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_sharp_v1.png",
+      "sha256": "fcfbc2afda62ac5a3e3dbf541328843b029e126e3c7dd457868e108c880bbec9"
+    },
+    {
+      "species": "sharp",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_sharp_mobile_v1.png",
+      "sha256": "562c8d475db94db45356d600b8185c31a21352a2a3f22fc154d3a6070d19debb"
+    },
+    {
+      "species": "topino_avventuroso",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_topino_avventuroso_v1.png",
+      "sha256": "6a09788f1298abb1b2e892de79345ea83de7cabc03567e463eb7e2273eb5e0f3"
+    },
+    {
+      "species": "topino_avventuroso",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_topino_avventuroso_mobile_v1.png",
+      "sha256": "dfe650156113bac3d834e1aee1d556d9afad1a70bebb40a869a959c2e0709f04"
+    }
+  ]
+}

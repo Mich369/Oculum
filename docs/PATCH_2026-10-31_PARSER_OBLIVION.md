@@ -1,5 +1,16 @@
 # Patch del 31 ottobre — parser, Senka e Oblivion Shield
 
+## Revisione successiva a3fe20e43 — verifiche distinte
+
+- Nuova correzione destinatari ad area: `nemico` e `bersaglio` mantengono la preparazione sul bersaglio, senza diventare bonus personali dopo l’editor.
+-19desktop approvati e16derivati approvati copiati senza cambiare i pixel; mapping e SHA in `design/approved-monster-desktops-2026-10-31.json` e `design/approved-monster-derivatives-2026-10-31.json`. Rendering e clic su320/834/1440px nei test mirati. I nuovi derivati di oggi restano da approvare.
+- Due Manichini separati, Corruzione Rossa iniziale3Notti per Baghest e purificazione dal menu Master. Un’Azione, pietra solo al successo, confronto confermato; nessuna morte/ricompensa da uccisione. La pietra è nel catalogo assegnabile dal Master, non è una dose alchemica. La regola generale delle dosi resta invariata finché l’utente chiarisce l’eventuale altra via.
+- Corretto il salvataggio dell’ultima condizione: viene serializzata esplicitamente la lista vuota, evitando che la fusione col precedente JSON ripristini il malus rimosso. La prova comprende salvataggio e riapertura. Individuato e corretto nei test anche il consumo di un riferimento inventario precedente al cambio di scheda: l’ultima pietra ora viene consumata sull’istanza effettiva.
+- **135test mirati locali passati**, log `build/patch_31_followup_verified.log`: parser, runtime, menu Master, anatomie, temi, condizioni, salvataggi, patch online e guardiano salvataggi updater. Altri30test successivi passati su temi, hash, purificazione, log offline e inventario con catalogo differito;12prove Python dei download passate. Questi gruppi si sovrappongono, non sommare i conteggi. Analisi finale senza problemi (136,1s), log build/patch_31_followup_analyze_final.log. La CI della nuova revisione segue separatamente; non sommare i gruppi sovrapposti.
+
+**CI del solo precedente3fe20e43:** run41187167236 riuscita su tutti i job,1920test passati/6saltati, analisi senza problemi e4prove autenticate passate; questi numeri non certificano già le nuove modifiche successive. Nessuna nuova sessione su tre dispositivi fisici attestata.
+
+
 ## Modifiche
 
 - Danno/Cura accetta `25%` della Vita attuale e `25%Tot` della massima, senza usare gli HP temporanei come base. Restano Difesa, resistenze, Scudi e le due opzioni indipendenti Oltre Difesa/Oltre Scudi. I pacchetti automatici conservano gli importi propri.
@@ -14,6 +25,8 @@
 Editor e JSON conservano costi/minimi/massimi, statistiche, tipi di danno, bersagli, critico richiesto, Danni Vita richiesti, durata, recupero, forme, effetti, equipaggiamento, anatomie e temi. Gli effetti non riconosciuti automaticamente restano visibili da controllare: non diventano bonus gratuiti.
 
 ## Evidenze locali
+
+**Ripetizione finale al commit3fe20e43:**1920test passati,6saltati, nessun fallimento,30min23s, con concorrenza2. Sorgenti congelati durante la suite; log `build/patch_31_full_final.log`. Analisi finale locale senza problemi in240,9s, log `build/patch_31_analyze_verified.log`. Sono prove locali: nessuna distribuzione pubblica o sessione multi-dispositivo dedotta da questo risultato.
 
 La prima suite completa ha terminato con1916test passati,6saltati e1fallito: la fixture delle percentuali lasciava riattivare la Resistenza passiva casuale. Isolata la fixture senza cambiare la regola;85riprove passate. Successivamente40prove su Lupo/anatomie/catalogo e41su attivazione reale/parser/Senka passate; i gruppi si sovrappongono e non si sommano. Una prova nuova ha individuato il filtro Vita prematuro sull'effetto ostile: corretta la preparazione prima del colpo.
 

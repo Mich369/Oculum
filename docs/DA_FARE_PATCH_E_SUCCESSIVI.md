@@ -1,6 +1,20 @@
 # Oculum — attività, conferme e consegne
 
+## Revisione locale corrente — 31 ottobre
+
+- **ART41:**19desktop canonici e16derivati già approvati collegati, SHA e mapping verificati. Nuovi derivati prodotti ma non ancora approvati restano separati; nessuna chiusura100% del catalogo.
+- **P45:** catalogo delle due varianti, inizializzazione della Corruzione Rossa a3Notti e procedura della pietra implementati. Purificazione dal menu del partecipante, riservata al Master online; Azione reale, pareggi difensivi, pietra solo al successo, stato dissolto senza uccisione. Pietra assegnabile dal catalogo Master.135prove mirate passate includendo parser/salvataggi/temi; nuovaCI e pacchetti ancora successivi. Domanda aperta: mantenere anche le tre dosi e farlo dissolvere oppure eccezione solo pietra? Non modificata la cura generale in attesa della risposta. Non chiusa100%.
+- **BUG46:** effetto ad area dopo l’editor poteva diventare personale; correzione verificata con entrambi gli identificativi legacy/editor.
+- **BUG47:** ultima condizione rimossa poteva riapparire alla riapertura per campo omesso; serializzazione esplicita e test di riapertura passati.
+- **ART42:** Mostro Solare due occhi laterali; Sciamano Minore testa lignea; Navigatore busto/braccia materiali e basso corpo d’aria. Conferme registrate e anatomie verificate senza nuove immunità. Teschio Mostruoso cinque proposte mostrate in chat, scelta ancora aperta.
+- **CI3fe20e43:** run41187167236 riuscita,1920test/6saltati,4prove autenticate; distribuzione locale precedente conservata in attesa dei pacchetti della revisione finale. QuestaCI non certifica i nuovi file dopo3fe20e43.
+
+
 ## Lavorazione del 31 ottobre — revisioni e parser
+
+- **P45 — Manichino di Baghest:** entrambe le varianti artistiche confermate, normale sinistraA2 e Baghest destraE3; CorruzioneRossa già3Notti. Purificazione:1Azione+pietra posseduta, Riflessi propri+Memoria base mostro controRiflessimostro; consuma pietra solo al successo, caduta/ritorno al terreno, risoluzione pacifica senza uccisione. Nuova implementazione da completare e verificare offline/online/idempotenza; non inclusa automaticamente in3fe20e43 né chiusa100%.
+
+- **QA31, ripetizione finale:** commit3fe20e43,1920test passati/6saltati/0falliti in30min23s; log locale `build/patch_31_full_final.log`. Analisi locale finale senza problemi in240,9s. Verifiche Python:12download e20updater/installazione/firma passate. CI41187167236 ancora in corso; pacchetti3fe20e43 non ancora installati. Nessuna riga al100% dalla sola suite.
 
 - **QA31 — Revisione successiva:** suite completa iniziale1916passati/6saltati/1fallito; il fallimento numerico dipendeva dalla Resistenza passiva casuale della fixture, isolata senza alterare la regola. Riprove85passate e analisi pulita; successivo gruppo glaciale40passato. Individuato anche un difetto reale del nuovo filtro Vita: l'effetto secondario ostile veniva scartato prima di essere preparato; corretta la coda, aggiunta prova di attivazione reale. Nuova verifica in corso; non sommare i gruppi sovrapposti e non attribuire queste prove alla CI o a pacchetti ancora vecchi.
 - **P44 — Lupo Infernale del Ghiaccio:** confermata correzione generale all'identità glaciale delle zone ghiacciate dell'Inferno, comprese capacità e resistenza. Morso/carica Ghiaccio, forme superiori Rallentamento, numeri e ID legacy conservati; drop rinominato senza perdere le associazioni. Vecchio lotto caldo superato, cinque proposte glaciali in produzione e da scegliere. Nessuna riga al100%.

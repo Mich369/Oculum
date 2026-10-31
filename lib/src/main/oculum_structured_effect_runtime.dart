@@ -441,7 +441,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             !effect.bypassShields &&
             !effect.bypassResistance &&
             effect.shieldDamageBonusPercent == 0 &&
-            !(isAreaDamage && effect.recipient == 'nemico');
+            !(isAreaDamage &&
+                const {'nemico', 'bersaglio'}.contains(effect.recipient));
         // Existing saved Arts, scrolls and relics already carry this authored
         // effect ID. Keep their customized damage/cost while enabling its bite rule.
         if (effect.type == 'danno' &&

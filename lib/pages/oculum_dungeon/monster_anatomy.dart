@@ -166,6 +166,8 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   final confirmedPhysical = pinepine
       ? 'umanoide, due braccia, due gambe, testa e due occhi'
       : switch (entry.id) {
+          'manichino_spada' || 'manichino_baghest' =>
+            'umanoide, due braccia, due gambe e un occhio nella guardia della lama',
           'mostro_sabbia' =>
             'quadrupede, quattro zampe, due corna, testa e coda',
           'gigante_sabbia' =>
@@ -197,6 +199,17 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             'bipede, due braccia, due gambe, due occhi, due orecchie, una coda',
           'cloud_beast' =>
             'bipede lupino, due braccia, due gambe, due occhi, due orecchie, due corna, una coda',
+          'laer' => 'umanoide, testa, due braccia, due gambe',
+          'mostro_solare' =>
+            'umanoide, testa, due braccia, due gambe, due occhi, un corno',
+          'sciamano_malizioso_minore' =>
+            'umanoide ligneo, testa, due braccia, due gambe, senza occhi biologici',
+          'strana_presenza' =>
+            'presenza umanoide, due braccia, due gambe, senza testa, senza occhi',
+          'air_navigator' =>
+            'testa, becco, due braccia, senza ali, senza gambe, senza zampe, vortice inferiore',
+          'lupo_infernale_del_ghiaccio' =>
+            'quadrupede, quattro zampe, testa, due occhi, due orecchie, una coda',
           _ => '',
         };
   final physical =
@@ -248,6 +261,8 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     final canonicalCounts = pinepine
         ? {'arms': 2, 'legs': 2, 'eyes': 2}
         : switch (entry.id) {
+            'manichino_spada' ||
+            'manichino_baghest' => {'arms': 2, 'legs': 2, 'eyes': 1},
             'mostro_sabbia' => {'legs': 4, 'eyes': 2, 'horns': 2},
             'gigante_sabbia' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
             'costrutto_minore' ||
@@ -282,6 +297,11 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
               'horns': 2,
               'tail': 1,
             },
+            'laer' || 'sciamano_malizioso_minore' => {'arms': 2, 'legs': 2},
+            'mostro_solare' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 1},
+            'strana_presenza' => {'arms': 2, 'legs': 2},
+            'air_navigator' => {'arms': 2},
+            'lupo_infernale_del_ghiaccio' => {'legs': 4, 'eyes': 2, 'tail': 1},
             _ => <String, int>{},
           };
     final group = switch (noun) {
@@ -451,7 +471,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   if (!spherical && has(r'\bcoda\b|\bcode\b')) {
     group('tail', 'Coda', 'Code', count('code|coda', 1), r'coda|code');
   }
-  if (confirmedPhysical.contains('corna')) {
+  if (RegExp(r'\bcorna\b|\bcorno\b').hasMatch(confirmedPhysical)) {
     group('horns', 'Corno', 'Corna', count('corna|corno', 2), r'corna|corno');
   }
   if (const {
@@ -459,6 +479,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     'ogle',
     'saltalungo_maculato',
     'cloud_beast',
+    'lupo_infernale_del_ghiaccio',
   }.contains(entry.id)) {
     group('ears', 'Orecchio', 'Orecchie', 2, r'orecchio|orecchie');
   }
@@ -483,6 +504,35 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   if (entry.id == 'il_doppione') {
     add('crest', 'Corona di lembi', 'crest', true);
     parts.firstWhere((p) => p['id'] == 'body')['weak'] = false;
+  }
+  if (entry.id == 'laer') {
+    add('joint', 'Giunture dell’armatura', 'joint', true);
+    for (final part in parts) {
+      part['material'] = const {'mask', 'joint'}.contains(part['group'])
+          ? 'metal'
+          : 'flesh';
+    }
+  }
+  if (entry.id == 'sciamano_malizioso_minore') {
+    parts.removeWhere((part) => part['group'] == 'mask');
+    for (final part in parts) {
+      part['material'] = 'wood';
+      part['weak'] = part['group'] == 'head';
+    }
+  }
+  if (entry.id == 'strana_presenza') {
+    add('suspended_point', 'Punto sospeso nella corona', 'sensor', true);
+    for (final part in parts) {
+      part['material'] = 'spectral';
+      part['weak'] = part['id'] == 'suspended_point';
+    }
+  }
+  if (entry.id == 'air_navigator') {
+    for (final part in parts) {
+      part['material'] = 'flesh';
+    }
+    add('lower_vortex', 'Vortice inferiore', 'vortex', false);
+    parts.last['material'] = 'spectral';
   }
   if (entry.id.startsWith('aberrazione_metallica_')) {
     for (final part in parts.where((p) => p['group'] == 'head')) {

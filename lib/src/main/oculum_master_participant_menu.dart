@@ -146,6 +146,13 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
             ),
           ),
     const PopupMenuDivider(),
+    if ((!onlineMasterApprovalRequired || realtimeIsMasterRole) &&
+        encounterId == selectedMasterInitiativeGroupId &&
+        canPurifyBaghestToken(token))
+      const PopupMenuItem(
+        value: 'baghestPurify',
+        child: Text('Purifica · Pietra anti-corruzione'),
+      ),
     PopupMenuItem(
       value: 'role',
       child: Text(t('Sposta in Role', 'Move to Role')),
@@ -228,6 +235,10 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
   ) async {
     final token = resolveMasterParticipantAnchor(anchor);
     if (token == null) return;
+    if (command == 'baghestPurify') {
+      await showBaghestPurification(publicInitiativeSourceTag(token));
+      return;
+    }
     if (command.startsWith('escapeReply:')) {
       final decoded = jsonDecode(command.substring('escapeReply:'.length));
       if (decoded is! List || decoded.length != 2) return;

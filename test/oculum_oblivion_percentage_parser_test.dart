@@ -56,30 +56,58 @@ Future<(dynamic, OculumPerformanceProbe)> cleanFight(
 }
 
 void main() {
-  test('Infernal Ice Wolf is glacial while legacy technique IDs stay usable', () {
-    final wolf = monsterBookEntryById('lupo_infernale_del_ghiaccio')!;
-    expect(wolf.elementId, 'ghiaccio');
-    expect(wolf.damageResistancePresets, {'ghiaccio': 'resistenza'});
-    expect(wolf.skillIds.take(2), [
-      'infernal_wolf_ember_bite',
-      'infernal_wolf_ash_charge',
-    ]);
-    final bite = monsterBookConcreteTechnique(wolf.skillIds.first)!;
-    final charge = monsterBookConcreteTechnique(wolf.skillIds[1])!;
-    expect(bite.element, 'ghiaccio');
-    expect(charge.element, 'ghiaccio');
-    expect(bite.name, 'Morso glaciale infernale');
-    expect(charge.name, 'Carica della brina infernale');
-    expect(bite.forms.first.any((e) => e.type == 'stato'), false);
-    for (final form in bite.forms.skip(1)) {
-      expect(form.singleWhere((e) => e.type == 'stato').target, 'rallentato');
-      expect(form.any((e) => e.target == 'bruciatura'), false);
-    }
-    expect(bite.forms.map((f) => f.first.formula), ['9', '15', '22']);
-    expect(charge.forms.map((f) => f.first.formula), ['8', '14', '20']);
-    expect(bite.minimums, [1, 2, 3]);
-    expect(bite.cooldowns, [2, 2, 3]);
-  });
+  testWidgets(
+    'legacy and editor hostile recipients preserve area target preparation',
+    (tester) async {
+      final (s, p) = await cleanFight(tester);
+      for (final recipient in ['nemico', 'bersaglio']) {
+        s.activeStructuredEffects.clear();
+        p.applyEffects([
+          OculumStructuredEffect(
+            type: 'danno',
+            mode: 'prossima_azione',
+            valueExpression: '12',
+            maximumTargets: 2,
+            recipient: recipient,
+          ),
+        ]);
+        final pending = (s.activeStructuredEffects as List)
+            .whereType<Map>()
+            .where((effect) => effect['type'] == 'pending_target')
+            .toList();
+        expect(pending, hasLength(1), reason: recipient);
+        expect((pending.single['effect'] as Map)['maximumTargets'], 2);
+      }
+      await closeFixture(tester, p);
+    },
+  );
+  test(
+    'Infernal Ice Wolf is glacial while legacy technique IDs stay usable',
+    () {
+      final wolf = monsterBookEntryById('lupo_infernale_del_ghiaccio')!;
+      expect(wolf.elementId, 'ghiaccio');
+      expect(wolf.damageResistancePresets, {'ghiaccio': 'resistenza'});
+      expect(wolf.skillIds.take(2), [
+        'infernal_wolf_ember_bite',
+        'infernal_wolf_ash_charge',
+      ]);
+      final bite = monsterBookConcreteTechnique(wolf.skillIds.first)!;
+      final charge = monsterBookConcreteTechnique(wolf.skillIds[1])!;
+      expect(bite.element, 'ghiaccio');
+      expect(charge.element, 'ghiaccio');
+      expect(bite.name, 'Morso glaciale infernale');
+      expect(charge.name, 'Carica della brina infernale');
+      expect(bite.forms.first.any((e) => e.type == 'stato'), false);
+      for (final form in bite.forms.skip(1)) {
+        expect(form.singleWhere((e) => e.type == 'stato').target, 'rallentato');
+        expect(form.any((e) => e.target == 'bruciatura'), false);
+      }
+      expect(bite.forms.map((f) => f.first.formula), ['9', '15', '22']);
+      expect(charge.forms.map((f) => f.first.formula), ['8', '14', '20']);
+      expect(bite.minimums, [1, 2, 3]);
+      expect(bite.cooldowns, [2, 2, 3]);
+    },
+  );
   test('percent HP input uses current real HP and existing formula safety', () {
     for (final current in [0, 1, 100, 175, 500]) {
       expect(
@@ -313,28 +341,32 @@ void main() {
     await closeFixture(tester, p);
   });
 
-  testWidgets('activating the Flame queues its gated secondary for the real hit', (
-    tester,
-  ) async {
-    final (s, p) = await cleanFight(tester);
-    final art = oculumMonsterBookArt(monsterBookEntryById('famelico_oblio')!);
-    final flame = art.skills.singleWhere(
-      (skill) => skill.nome == 'Fiammata del non ricordo',
-    );
-    p.applyEffects(flame.effettiPerLivello.first);
-    final pending = (s.activeStructuredEffects as List).whereType<Map>().singleWhere(
-      (entry) => entry['type'] == 'pending_target' &&
-          (entry['effect'] as Map?)?['target'] == 'oblivion_forget_next',
-    );
-    final effect = OculumStructuredEffect.fromJson(
-      Map<String, dynamic>.from(pending['effect'] as Map),
-    );
-    expect(effect.criticalOnly, true);
-    expect(effect.requiresHpDamage, true);
-    expect(p.planarStateSnapshot()['oblivionForgetPending'], isNull);
-    expect(p.conditions, isEmpty);
-    await closeFixture(tester, p);
-  });
+  testWidgets(
+    'activating the Flame queues its gated secondary for the real hit',
+    (tester) async {
+      final (s, p) = await cleanFight(tester);
+      final art = oculumMonsterBookArt(monsterBookEntryById('famelico_oblio')!);
+      final flame = art.skills.singleWhere(
+        (skill) => skill.nome == 'Fiammata del non ricordo',
+      );
+      p.applyEffects(flame.effettiPerLivello.first);
+      final pending = (s.activeStructuredEffects as List)
+          .whereType<Map>()
+          .singleWhere(
+            (entry) =>
+                entry['type'] == 'pending_target' &&
+                (entry['effect'] as Map?)?['target'] == 'oblivion_forget_next',
+          );
+      final effect = OculumStructuredEffect.fromJson(
+        Map<String, dynamic>.from(pending['effect'] as Map),
+      );
+      expect(effect.criticalOnly, true);
+      expect(effect.requiresHpDamage, true);
+      expect(p.planarStateSnapshot()['oblivionForgetPending'], isNull);
+      expect(p.conditions, isEmpty);
+      await closeFixture(tester, p);
+    },
+  );
 
   testWidgets(
     'real Flame packets require critical HP damage and respect a winning defense',

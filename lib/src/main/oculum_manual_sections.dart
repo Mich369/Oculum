@@ -5,6 +5,20 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Manichini e anatomie confermate — 31 ottobre',
+    titleEn: 'Puppets and confirmed anatomy — October 31',
+    contentIt: r'''
+Il Manichino della Spada ha lama nel braccio sinistro e occhio viola; il Manichino di Baghest è una variante distinta con lama destra, occhio rosso e cappotto blu ardesia. Quest’ultimo nasce già succube di Corruzione Rossa dopo tre Notti.
+Purificazione specifica: un’Azione e una Pietra anti-corruzione posseduta; 1d20 + Riflessi propri + Memoria base del Manichino contro 1d20 + Riflessi del Manichino. La pietra si consuma soltanto al successo, mai come dose alchemica. Il Master esegue il confronto dal menu del partecipante scegliendo chi usa la pietra; online la risoluzione è riservata al Master della campagna. Fallimento spende l’Azione e conserva la pietra. Successo: il Manichino cade e ritorna gradualmente al terreno; viene rimosso dai partecipanti attivi come sconfitta pacifica, senza morte né premi da uccisione. Dati e risultato sono conservati nella scheda e nel log; nessun azzeramento della Vita per simulare un’uccisione.
+Mostro Solare: due occhi laterali, uno per lato. Sciamano Malizioso Minore: testa lignea come punto debole, senza maschera. Navigatore d’Aria: busto e braccia materiali; vortice al posto di gambe e piedi. I materiali anatomici non aggiungono immunità e le parti personalizzate del Master restano prioritarie.
+''',
+    contentEn: r'''
+The Sword Puppet has a left-arm blade and purple eye. The separate Baghest Puppet has a right-arm blade, red eye, slate-blue coat and three elapsed Nights of Red Corruption.
+Specific purification uses one Action and an Anti-corruption Stone. Oppose 1d20 + purifier Reflexes + puppet base Memory against 1d20 + puppet Reflexes. Consume the stone only on success; failure spends only the Action. The campaign Master resolves the attempt from the participant menu. Success dissolves the puppet into the terrain as a peaceful defeat, without death or kill rewards. Preserve sheets, logs and custom definitions.
+Solar Monster has two lateral eyes. Lesser Malicious Shaman has a wooden-head weak point, no mask. Air Navigator has material arms/torso and a lower vortex replacing legs/feet; no new immunity is inferred.
+''',
+  ),
+  ManualSection(
     titleIt: 'Lupo Infernale del Ghiaccio — correzione del 31 ottobre',
     titleEn: 'Infernal Ice Wolf — October 31 correction',
     contentIt: r'''

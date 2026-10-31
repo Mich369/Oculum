@@ -1343,10 +1343,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'oculumAddormentatoRiposiBrevi': oculumAddormentatoRiposiBrevi,
       'oculumAddormentatoRiposiLunghi': oculumAddormentatoRiposiLunghi,
       'consumoElevato': consumoElevato,
-      if (activeConditions.isNotEmpty)
-        'conditions': activeConditions
-            .map((condition) => condition.toJson())
-            .toList(growable: false),
+      // Explicitly save the last condition's removal. Omitting this field
+      // would merge the previous non-empty list back into the saved sheet.
+      'conditions': activeConditions
+          .map((condition) => condition.toJson())
+          .toList(growable: false),
       if (conditionImmunities.isNotEmpty)
         'conditionImmunities': conditionImmunities.toList(growable: false),
       if (conditionDefinitionOverrides.isNotEmpty)
@@ -8924,6 +8925,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
       if (matchedMonster?.id == 'teschio_monaco') {
         schivateOculumBonus = max(0, 2 - schivataOculumBase());
+      }
+      if (matchedMonster?.id == 'manichino_baghest') {
+        initializeBaghestPuppet();
       }
       salvaSchedaCorrenteInMemoria();
       if (isMeccanioBookId(

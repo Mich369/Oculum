@@ -151,6 +151,7 @@ part 'src/main/oculum_crafting_expansion.dart';
 part 'src/main/oculum_skill_target_automation.dart';
 part 'src/main/oculum_online_attacks.dart';
 part 'src/main/oculum_corruption_runtime.dart';
+part 'src/main/oculum_baghest_puppet.dart';
 part 'src/main/oculum_combat_scout.dart';
 part 'src/main/oculum_master_roll_requests.dart';
 part 'src/main/oculum_encounter_rewards.dart';

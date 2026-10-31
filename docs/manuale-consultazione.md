@@ -2,6 +2,12 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Manichini e anatomie confermate — 31 ottobre
+
+Il Manichino della Spada ha lama nel braccio sinistro e occhio viola; il Manichino di Baghest è una variante distinta con lama destra, occhio rosso e cappotto blu ardesia. Quest’ultimo nasce già succube di Corruzione Rossa dopo tre Notti.
+Purificazione specifica: un’Azione e una Pietra anti-corruzione posseduta; 1d20 + Riflessi propri + Memoria base del Manichino contro 1d20 + Riflessi del Manichino. La pietra si consuma soltanto al successo, mai come dose alchemica. Il Master esegue il confronto dal menu del partecipante scegliendo chi usa la pietra; online la risoluzione è riservata al Master della campagna. Fallimento spende l’Azione e conserva la pietra. Successo: il Manichino cade e ritorna gradualmente al terreno; viene rimosso dai partecipanti attivi come sconfitta pacifica, senza morte né premi da uccisione. Dati e risultato sono conservati nella scheda e nel log; nessun azzeramento della Vita per simulare un’uccisione.
+Mostro Solare: due occhi laterali, uno per lato. Sciamano Malizioso Minore: testa lignea come punto debole, senza maschera. Navigatore d’Aria: busto e braccia materiali; vortice al posto di gambe e piedi. I materiali anatomici non aggiungono immunità e le parti personalizzate del Master restano prioritarie.
+
 ## Lupo Infernale del Ghiaccio — correzione del 31 ottobre
 
 Il Lupo Infernale del Ghiaccio vive nelle zone ghiacciate dell'Inferno. Il precedente morso rovente e la carica di cenere sono sostituiti da Morso glaciale infernale e Carica della brina infernale, entrambi di Ghiaccio. Resiste al Ghiaccio; le vecchie affinità al calore sono superate. Restano quattro zampe, due orecchie, due occhi e una coda, nessun soffio aggiuntivo. Valori e limiti delle tecniche invariati e modificabili; le forme superiori del Morso applicano Rallentamento al posto di Bruciatura. La scheggia del drop prende il nome di Scheggia di gelo infernale. Gli identificativi interni sono conservati per compatibilità; le schede personalizzate salvate non vengono riscritte.

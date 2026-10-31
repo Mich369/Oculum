@@ -1,6 +1,23 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+Mostro Solare: **«Due occhi laterali, uno per lato»**. Sciamano Malizioso Minore: **«La testa lignea stessa»** come punto debole. Navigatore d’Aria: il vortice **«Sostituisce gambe e piedi»**; **«Braccia e torace materiali, basso corpo d’aria»**. Conferme anatomiche esplicite, senza nuove immunità.
+
 ## Diciture del 31 ottobre — immagini e nuove meccaniche
+
+- Manichini: **«Sinistra/viola — A: cappotto stretto / Destra/rosso — E: spalle chiuse, blu ardesia / due varianti una controllata da baghest (quella rossa)»**, poi **«chiamalo Manichino di Baghest»**. Controllo **«Tramite Corruzione Rossa»**, **«Già succube: tre Notti trascorse»**.
+- Purificazione Manichino di Baghest: **«se lo purifichi devi prima superare un tiro di riflessi + memoria base mostro contro tiro riflessi mostro e devi avere una pietra anti corruzione, una volta non corrotto cade a terra e diventa pian piano parte del terreno»**. Confermato aggiungere la Memoria base del Manichino al tiro di chi purifica; pietra consumata soltanto al successo, un'Azione, sconfitta pacifica senza uccisione.
+
+- Teirak: **«B — Barile d’ossa nell’ossario»**. Teschio Monaco: **«C — Palmo basso nella cripta»**. Teschio Quattro Lame: **«D — Diagonale sulla scala»**.
+
+- Strana Presenza: **«E — Passo obliquo»**, scelta del desktop E1.
+
+- Sciamano Malizioso Minore: **«A — Guscio di noce»**, distinta dalla selezione dello Sciamano maggiore.
+
+- Ogor: **«C — Spalle ad arco»**, scelta della proposta C1.
+
+- Navigatore d'Aria: **«E — Volto corvino e nebbia petrolio»**. Alla domanda sulla lama/occhio del Manichino della Spada risponde **«fammi5artworkciascuno»**: cinque sinistra/viola e cinque destra/rosso, da valutare prima di fissare il canone.
+
+- Nuovo lotto Lupo glaciale: **«C — Antracite, accovacciato»**, selezione canonica della C2, successiva alla correzione generale del mostro.
 
 - Mostro Solare: **«B — Busto largo e guardia bassa»**, approvazione della proposta B.
 

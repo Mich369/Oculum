@@ -94,6 +94,14 @@ class OculumPerformanceProbe {
   void forgetFlame(Map<String, dynamic> request, {int? percentile}) =>
       _state.resolveOblivionForgetFlame(request, percentile: percentile);
   bool consumeForget(String resource) => _state.consumeOblivionForget(resource);
+  void initializeBaghest() => _state.initializeBaghestPuppet();
+  Future<bool> purifyBaghest(String actor, String target, int a, int d) =>
+      _state.purifyBaghestPuppet(
+        actor,
+        target,
+        actorNatural: a,
+        targetNatural: d,
+      );
   int? readDamageHealingInput(String text) {
     _state.dannoSubitoController.text = text;
     return _state.leggiValoreDannoCura();

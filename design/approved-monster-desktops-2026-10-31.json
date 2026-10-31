@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-31",
+  "status": "EXACT_APPROVED_COPIES_SOURCE_ONLY",
+  "files": [
+    {
+      "id": "famelico_oblio",
+      "asset": "assets/oculum/home_art/theme_famelico_oblio_canon_20261031.png",
+      "sha256": "49422beecea960edb91f670b4067b973d1e73d001e6a23db7594f8ff8138f6ef",
+      "source": "output/artwork/proposte_cinque_2026-10-30/famelico_oblio/famelico_oblio_B_v2_canonico.png",
+      "approval": "Nuovo nome del mostro; questa immagine è canonica"
+    },
+    {
+      "id": "saltalungo_maculato",
+      "asset": "assets/oculum/home_art/theme_saltalungo_maculato_canon_20261031.png",
+      "sha256": "7b2915d2bf3f409e16524a8c84db25120974051384ce616d3ffdbc2d13cc6594",
+      "source": "output/artwork/proposte_cinque_2026-10-30/saltalungo_composizione_BC/saltalungo_composizione_BC_v2.png",
+      "approval": "Sì, canonica"
+    },
+    {
+      "id": "cloud_beast",
+      "asset": "assets/oculum/home_art/theme_cloud_beast_canon_20261031.png",
+      "sha256": "b8841d06a73caf9e1bd1cc07b17ede4e28e7b2c5bbbe1f0720117f8d8c5e34f3",
+      "source": "output/artwork/proposte_cinque_2026-10-30/bestia_nuvole_lupina/bestia_nuvole_lupina_A_v2.png",
+      "approval": "A — Argento"
+    },
+    {
+      "id": "armadillo_cristallo",
+      "asset": "assets/oculum/home_art/theme_armadillo_cristallo_canon_20261031.png",
+      "sha256": "76f8a1fcbbdf8b7925cf1e3c3a5e8158f2c4d615844f4b7167063b738573fda9",
+      "source": "output/artwork/proposte_cinque_2026-10-30/armadillo_cristallo/armadillo_cristallo_C_v2.png",
+      "approval": "C — Custode della vena"
+    },
+    {
+      "id": "armadillo_legno",
+      "asset": "assets/oculum/home_art/theme_armadillo_legno_canon_20261031.png",
+      "sha256": "ea37e149d32b8bc5835d15eb044939c5b4d3787df46b5d59feeee10eab31b3c7",
+      "source": "output/artwork/proposte_cinque_2026-10-30/armadillo_legno/armadillo_legno_proposta_A_v1.png",
+      "approval": "A — Tondo di castagno"
+    },
+    {
+      "id": "armadillo_sabbia",
+      "asset": "assets/oculum/home_art/theme_armadillo_sabbia_canon_20261031.png",
+      "sha256": "4e265da449ba96c3544f45f7ab3be0714298645be5981276215d2aa5fde58385",
+      "source": "output/artwork/proposte_cinque_2026-10-30/armadillo_sabbia/armadillo_sabbia_C_v1.png",
+      "approval": "C — Gobbuto, ombre malva"
+    },
+    {
+      "id": "feralis",
+      "asset": "assets/oculum/home_art/theme_feralis_canon_20261031.png",
+      "sha256": "69598475c576a7243b2c42d03acaad0fc2e7f10deb03f307431957ce72e997da",
+      "source": "output/artwork/proposte_cinque_2026-10-30/feralis/feralis_D_v2.png",
+      "approval": "D — Proteso nel balzo"
+    },
+    {
+      "id": "laer",
+      "asset": "assets/oculum/home_art/theme_laer_canon_20261031.png",
+      "sha256": "d35b9f9867efa8804fa39c44fb53a56a23a54e2f461227e6e844cdb96b2223a6",
+      "source": "output/artwork/proposte_cinque_2026-10-30/laer/laer_A_v2.png",
+      "approval": "A — Guardia verticale"
+    },
+    {
+      "id": "mostro_solare",
+      "asset": "assets/oculum/home_art/theme_mostro_solare_canon_20261031.png",
+      "sha256": "b4c65fdcfdff174d94bb471d9631ff70ea06a4ccdee49de965afbf8072ec251a",
+      "source": "output/artwork/proposte_cinque_2026-10-30/mostro_solare/mostro_solare_proposta_B_v1.png",
+      "approval": "B — Busto largo e guardia bassa"
+    },
+    {
+      "id": "air_navigator",
+      "asset": "assets/oculum/home_art/theme_air_navigator_canon_20261031.png",
+      "sha256": "e8efb8c1395d6b212999f0db85e40654350d76b8bbcba052fc70bfc820050078",
+      "source": "output/artwork/proposte_cinque_2026-10-30/navigatore_aria/navigatore_aria_E_v1.png",
+      "approval": "E — Volto corvino e nebbia petrolio"
+    },
+    {
+      "id": "ogor",
+      "asset": "assets/oculum/home_art/theme_ogor_canon_20261031.png",
+      "sha256": "c929fbd9221bd13cf556c1ddf10a9651251ba4f49d669630f54f68cc80185207",
+      "source": "output/artwork/proposte_cinque_2026-10-30/ogor/ogor_C_v1.png",
+      "approval": "C — Spalle ad arco"
+    },
+    {
+      "id": "sciamano_malizioso_minore",
+      "asset": "assets/oculum/home_art/theme_sciamano_malizioso_minore_canon_20261031.png",
+      "sha256": "f8965e82034c1d187d8059d9e0ce61976e16b87fddc17e6d97fdc01b6ea2fbc9",
+      "source": "output/artwork/proposte_cinque_2026-10-30/sciamano_minore/sciamano_malizioso_minore_A_v1.png",
+      "approval": "A — Guscio di noce"
+    },
+    {
+      "id": "strana_presenza",
+      "asset": "assets/oculum/home_art/theme_strana_presenza_canon_20261031.png",
+      "sha256": "360c640294b2d299da7df63a979d7635ca6e09fcb90315780af1ef1236cf6fbc",
+      "source": "output/artwork/proposte_cinque_2026-10-30/strana_presenza/strana_presenza_E_v1.png",
+      "approval": "E — Passo obliquo"
+    },
+    {
+      "id": "teirak",
+      "asset": "assets/oculum/home_art/theme_teirak_canon_20261031.png",
+      "sha256": "2055a2fea6749f15c3c6fb4cb3487418785fbb58ef31c3fba7eb19b71fda2db6",
+      "source": "output/artwork/proposte_cinque_2026-10-30/teirak/teirak_proposta_B_v1.png",
+      "approval": "B — Barile d’ossa nell’ossario"
+    },
+    {
+      "id": "teschio_monaco",
+      "asset": "assets/oculum/home_art/theme_teschio_monaco_canon_20261031.png",
+      "sha256": "26f7b10b9a00bf2cd447ba12b4128465942812f3df310c13782d07a4a5157394",
+      "source": "output/artwork/proposte_cinque_2026-10-30/teschio_monaco/teschio_monaco_proposta_C_v2.png",
+      "approval": "C — Palmo basso nella cripta"
+    },
+    {
+      "id": "teschio_quattro_lame",
+      "asset": "assets/oculum/home_art/theme_teschio_quattro_lame_canon_20261031.png",
+      "sha256": "d0958c9dbefcff74315fe377b0a6ea48ba5fc9fc70b50f9f833f4453416fe9f6",
+      "source": "output/artwork/proposte_cinque_2026-10-30/teschio_quattro_lame/teschio_quattro_lame_D_v1.png",
+      "approval": "D — Diagonale sulla scala"
+    },
+    {
+      "id": "lupo_infernale_del_ghiaccio",
+      "asset": "assets/oculum/home_art/theme_lupo_infernale_del_ghiaccio_canon_20261031.png",
+      "sha256": "7cda68c7d4f04e5cf18e42c9b0b305bcadecbfc92f6e4b4e24f830474cf5d069",
+      "source": "output/artwork/proposte_cinque_2026-10-31/lupo_infernale_ghiaccio_glaciale/lupo_infernale_ghiaccio_glaciale_C_v2.png",
+      "approval": "C — Antracite, accovacciato"
+    },
+    {
+      "id": "manichino_spada",
+      "asset": "assets/oculum/home_art/theme_manichino_spada_canon_20261031.png",
+      "sha256": "f3f1bcd719669c227bea2684eddcd916a59c8fabafbb811a4efb423ab9847be6",
+      "source": "output/artwork/proposte_cinque_2026-10-31/manichino_spada_sinistra_viola/manichino_spada_sinistra_viola_A_v2.png",
+      "approval": "Sinistra/viola — A: cappotto stretto"
+    },
+    {
+      "id": "manichino_baghest",
+      "asset": "assets/oculum/home_art/theme_manichino_baghest_canon_20261031.png",
+      "sha256": "b9df11fc4235069675571e8677ef5f9b054e2972f8150945cf49e61c2341e886",
+      "source": "C:\\Oculum App\\oculum\\output\\artwork\\proposte_cinque_2026-10-31\\manichino_spada_destra_rosso\\manichino_destra_rosso_E_v3.png",
+      "approval": "Destra/rosso — E: spalle chiuse, blu ardesia; due varianti una controllata da Baghest"
+    }
+  ]
+}

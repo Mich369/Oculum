@@ -1,6 +1,10 @@
 # Oculum — registro delle regole confermate
 
+**Anatomie — conferme esplicite 31 ottobre:** Mostro Solare due occhi laterali, uno per lato. Punto debole dello Sciamano Malizioso Minore: testa lignea, non maschera. Navigatore d’Aria: busto e braccia materiali, vortice al posto di gambe/piedi; ciò non aggiunge immunità. Le anatomie personalizzate del Master restano prioritarie.
+
 ## Conferme del 31 ottobre — Oblivion Shield e percentuali Vita
+
+- **Manichino di Baghest:** variante distinta del Manichino della Spada, base artistica destra/rossoE3, controllata da Baghest tramite **Corruzione Rossa, già tre Notti trascorse e completamente succube**. Il normale resta sinistra/violaA2. Requisiti di purificazione specifici: possedere una **Pietra anti-corruzione**, spendere **un'Azione**, vincere **1d20 + Riflessi del purificatore + Memoria base del mostro** contro **1d20 + Riflessi del mostro**. La pietra si consuma **solo al successo**. Purificato cade a terra e diventa gradualmente parte del terreno: **sconfitta pacifica, senza uccisione né relativi premi**. Non estendere questa procedura a tutti i corrotti né trasformare la pietra nelle dosi cumulative alchemiche. Catalogo, condizione iniziale e automatismo sono nuova lavorazione, non attestati dalla precedenteCI3fe20e43.
 
 - **Lupo Infernale del Ghiaccio:** correzione esplicita «deve essere glaciale è delle zone ghiacciate dell'inferno», estesa dall'utente anche alle capacità: **morso e carica glaciali, resistenza al Ghiaccio**. Sostituisce il precedente morso rovente/carica di cenere e le affinità termiche precedenti; nessun soffio nuovo. Identificativi legacy di mostro, tecniche e materiale conservati, nomi e nuove definizioni coerenti col gelo; nessuna riscrittura delle personalizzazioni salvate. Numeri e limiti degli attacchi restano invariati; il Morso usa Rallentamento al posto di Bruciatura nelle forme superiori.
 

@@ -1,5 +1,15 @@
 # Registro cumulativo per i giocatori
 
+## Revisione del 31 ottobre — temi approvati, anatomie e Manichino di Baghest
+
+- Collegati19sfondi desktop canonici scelti in chat, comprese le due varianti del Manichino, il Lupo glaciale e i tre Armadilli ambientali. Collegati anche i16adattamenti telefono/reliquia già approvati per otto mostri. Copie identiche ai PNG confermati, con ricevute SHA; le proposte e i nuovi derivati ancora da valutare restano separati.
+- Mostro Solare con due occhi laterali; Sciamano Minore con testa lignea come punto debole; Navigatore d’Aria con busto/braccia materiali e vortice al posto delle gambe. Corrette anche le parti coerenti con Laer, Strana Presenza e Lupo glaciale, senza introdurre immunità. Le parti personalizzate dal Master conservano la precedenza.
+- Manichino di Baghest distinto dal Manichino della Spada: lama destra/occhio rosso, Corruzione Rossa già a tre Notti. Dal menu del partecipante il Master sceglie chi purifica:1Azione, pietra posseduta, Riflessi propri+Memoria base del Manichino contro i suoi Riflessi. Pietra consumata soltanto al successo; sconfitta pacifica senza morte o relativi premi. La pietra è assegnabile dal catalogo del Master, distinta dalle dosi alchemiche.
+- Corretto un effetto ad area che poteva perdere il bersaglio dopo l’editor; corretto il salvataggio dell’ultima condizione rimossa, che poteva ricomparire alla riapertura. Provati consumo dell’ultima pietra, pareggio, Azione assente, permessi del giocatore e tentativi ripetuti.
+
+La cura generale tramite dosi alchemiche non cambia in questa revisione; l’eventuale dissoluzione del Manichino anche attraverso quella strada è una domanda separata ancora aperta. Costi e poteri delle Skill, anatomie, oggetti, statistiche e temi personalizzati restano conservati. [Evidenze della revisione](PATCH_2026-10-31_PARSER_OBLIVION.md).
+
+
 ## Patch del 31 ottobre — parser, Senka e Oblivion Shield
 
 - Danno/Cura: `25%` usa la Vita attuale, `25%Tot` la massima. Restano Difesa, resistenze, Scudi, Oltre Difesa/Oltre Scudi e gli importi automatici delle Skill.

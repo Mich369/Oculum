@@ -11,6 +11,52 @@ void main() {
       parts(id).where((p) => p['group'] == group).length;
 
   test(
+    'new confirmed anatomy follows actual limbs and material boundaries',
+    () {
+      expect(count('laer', 'head'), 1);
+      expect(count('laer', 'arms'), 2);
+      expect(count('laer', 'legs'), 2);
+      expect(
+        parts('laer').singleWhere((p) => p['id'] == 'joint')['weak'],
+        true,
+      );
+      expect(count('mostro_solare', 'eyes'), 2);
+      expect(count('mostro_solare', 'horns'), 1);
+      final minor = parts('sciamano_malizioso_minore');
+      expect(count('sciamano_malizioso_minore', 'arms'), 2);
+      expect(count('sciamano_malizioso_minore', 'legs'), 2);
+      expect(minor.where((p) => p['group'] == 'mask'), isEmpty);
+      expect(minor.every((p) => p['material'] == 'wood'), true);
+      expect(minor.where((p) => p['weak'] == true).single['group'], 'head');
+      expect(count('air_navigator', 'arms'), 2);
+      expect(count('air_navigator', 'head'), 1);
+      expect(count('air_navigator', 'wings'), 0);
+      expect(count('air_navigator', 'legs'), 0);
+      final navigator = parts('air_navigator');
+      expect(
+        navigator.singleWhere((p) => p['group'] == 'body')['material'],
+        'flesh',
+      );
+      expect(
+        navigator.singleWhere((p) => p['id'] == 'lower_vortex')['material'],
+        'spectral',
+      );
+      expect(count('strana_presenza', 'arms'), 2);
+      expect(count('strana_presenza', 'legs'), 2);
+      expect(count('strana_presenza', 'head'), 0);
+      expect(count('strana_presenza', 'eyes'), 0);
+      expect(
+        parts('strana_presenza').where((p) => p['weak'] == true).single['id'],
+        'suspended_point',
+      );
+      expect(count('lupo_infernale_del_ghiaccio', 'legs'), 4);
+      expect(count('lupo_infernale_del_ghiaccio', 'eyes'), 2);
+      expect(count('lupo_infernale_del_ghiaccio', 'ears'), 2);
+      expect(count('lupo_infernale_del_ghiaccio', 'tail'), 1);
+    },
+  );
+
+  test(
     'approved bipeds and quadrupeds do not gain duplicate limbs from prose',
     () {
       for (final id in ['saltalungo_maculato', 'cloud_beast']) {

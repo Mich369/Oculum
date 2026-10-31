@@ -37,7 +37,7 @@ final _celestialReferenceBaseEntries = <MonsterBookEntry>[
     'Mostro solare',
     ['sacro', 'mezzano'],
     'solare',
-    'Predatore solare dal corpo dorato coperto da motivi scuri, testa lunga tenuta bassa e un corno scuro molto affilato. Le braccia sono lunghe e terminano in grandi artigli metallici; le zampe snelle hanno dita unghiate. Avanza aggressivamente con affondi del corno, tagli delle braccia e marchi Solari; quando deve resistere incrocia gli arti davanti al torace. Corno, artigli e lamine dorate forniscono materiali, scroll ed equipaggiamenti coerenti con queste tecniche.',
+    'Predatore solare dal corpo dorato coperto da motivi scuri, testa lunga tenuta bassa, due occhi laterali, uno per lato, e un corno scuro molto affilato. Le due braccia sono lunghe e terminano in grandi artigli metallici; le due zampe snelle hanno dita unghiate. Avanza aggressivamente con affondi del corno, tagli delle braccia e marchi Solari; quando deve resistere incrocia gli arti davanti al torace. Corno, artigli e lamine dorate forniscono materiali, scroll ed equipaggiamenti coerenti con queste tecniche.',
     'La giuntura sotto il collo quando abbassa il corno per caricare.',
     [3, 4, 2, 2],
     2,

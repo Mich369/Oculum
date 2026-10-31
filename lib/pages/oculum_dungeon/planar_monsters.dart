@@ -847,7 +847,7 @@ final _shieldCloudMonsterEntries = <MonsterBookEntry>[
     'Navigatore dell’Aria',
     ['isole', 'nuvole_rocciose'],
     'vento',
-    'Creatura sottile dalla testa d’uccello e dal lungo mantello di piume color paglia. Le braccia nere finiscono in tre artigli ricurvi; la parte inferiore si disperde in un vortice scuro. Non ha zampe visibili. Si inclina controvento e protegge le correnti che attraversa.',
+    'Creatura sottile dalla testa d’uccello e dal lungo mantello di piume scure nella nebbia color petrolio. Ha una testa e due braccia nere materiali, ciascuna terminante in tre artigli ricurvi; anche il torace è materiale. Il vortice d’aria inferiore sostituisce gambe e piedi: non nasconde zampe attaccabili. Non ha ali. Si inclina controvento e protegge le correnti che attraversa.',
     'Il nodo scuro tra torace e vortice, visibile quando si ferma a fluttuare.',
     [4, 4, 6, 3],
     3,

@@ -1,18 +1,32 @@
 part of 'monster_book.dart';
 
+final _swordPuppetEntry = _canonicalCreature(
+  'manichino_spada',
+  'Manichino della Spada',
+  '',
+  ['morti', 'mezzano'],
+  'taglio',
+  [5, 5, 7, 6],
+  4,
+  _originalFaunaDescriptions['manichino_spada']!,
+  'L’occhio nella guardia della spada che controlla il cadavere.',
+  ['sword_puppet_slash', 'sword_puppet_guard', 'sword_puppet_full'],
+  'guardia_occhio_manichino',
+);
 final _laerTurretEntries = <MonsterBookEntry>[
-  _canonicalCreature(
-    'manichino_spada',
-    'Manichino della Spada',
-    '',
-    ['morti', 'mezzano'],
-    'taglio',
-    [5, 5, 7, 6],
-    4,
-    'Una spada senziente usa un cadavere come manichino, rendendolo più resistente e agile. Il corpo alto è avvolto da una corazza d’osso chiaro, con spalle appuntite, costole scolpite e un elmo liscio che cela il volto dietro un sorriso dentato. Fra le placche si vedono tendini scuri e carne avvizzita. Dal gomito destro sporge un grande occhio rosso incastonato nella guardia di una lama ossea; l’altro braccio termina in dita lunghe e affilate. Una veste nera lacera nasconde le gambe. È la spada a guidare ogni movimento del corpo morto. La sua Art da battaglia comprende Tagli rapidi, Difesa aumentata e Spada al 100%.',
-    'L’occhio nella guardia della spada che controlla il cadavere.',
-    ['sword_puppet_slash', 'sword_puppet_guard', 'sword_puppet_full'],
-    'guardia_occhio_manichino',
+  _swordPuppetEntry,
+  _swordPuppetEntry.copyWith(
+    id: 'manichino_baghest',
+    nameIt: 'Manichino di Baghest',
+    descIt:
+        'Un cadavere mosso da una lama senziente, coperto da un cappotto blu ardesia con spalle chiuse. Una maschera lignea senza bocca nasconde il volto. Due gambe e due braccia: la lama è nel braccio destro e un solo occhio rosso è incastonato nella sua guardia; il sinistro termina in una mano. È già succube di Baghest tramite Corruzione Rossa dopo tre Notti. Conserva Tagli rapidi, Difesa aumentata e Spada al 100%. Purificato con una Pietra anti-corruzione cade a terra e diventa lentamente parte del terreno, senza contare come uccisione.',
+    encounterRules: {
+      ..._swordPuppetEntry.encounterRules,
+      'canonicalVariantOf': 'manichino_spada',
+      'initialCorruptionKind': 'rossa',
+      'initialCorruptionNights': 3,
+      'purificationKind': 'baghest_stone',
+    },
   ),
   _canonicalCreature(
     'laer',

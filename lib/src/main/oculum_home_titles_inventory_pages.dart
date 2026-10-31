@@ -5552,6 +5552,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
     }
 
+    add(oculumAntiCorruptionStone());
     for (final echo in oculumMonsterEchoScrolls) {
       for (var grade = 0; grade <= 12; grade++) {
         add(oculumMonsterEchoScrollItem(echo.id, grade));

@@ -1,6 +1,24 @@
 # Oculum — canone visivo confermato
 
+**Anatomie confermate 31 ottobre:** Mostro Solare B con due occhi laterali, uno per lato; Sciamano Malizioso Minore A con testa lignea come punto debole, senza maschera; Navigatore d’Aria E con braccia e torace materiali e vortice al posto di gambe/piedi. Nessuna nuova immunità dedotta dal materiale del disegno.
+
 ## Conferme del 31 ottobre — Oblivion Shield, Saltalungo e Bestia
+
+**Manichini, selezione definitiva:** l'utente sceglie **entrambe come varianti distinte**: sinistra/viola **A2 — Cappotto stretto** (`manichino_spada_sinistra_viola/manichino_spada_sinistra_viola_A_v2.png`) conserva Manichino della Spada; destra/rosso **E3 — Spalle chiuse, blu ardesia** (`manichino_spada_destra_rosso/manichino_destra_rosso_E_v3.png`) si chiama **Manichino di Baghest**. File sotto `output/artwork/proposte_cinque_2026-10-31/`. La variante rossa è controllata da Baghest tramite Corruzione Rossa, già completamente succube dopo tre Notti. Le regole specifiche della purificazione sono nel registro confermato; il disegno non aggiunge altri poteri.
+
+**Ulteriori scelte:** Teirak **B — Barile d'ossa nell'ossario**, `teirak/teirak_proposta_B_v1.png`; Teschio Monaco **C — Palmo basso nella cripta**, `teschio_monaco/teschio_monaco_proposta_C_v2.png`; Teschio Quattro Lame **D — Diagonale sulla scala**, `teschio_quattro_lame/teschio_quattro_lame_D_v1.png`. Tutti sotto `output/artwork/proposte_cinque_2026-10-30/`; copie e SHA esatti nel manifest delle approvazioni. Gli altri desktop non sono approvati per estensione.
+
+**Strana Presenza:** scelto **E — Passo obliquo**, file `output/artwork/proposte_cinque_2026-10-30/strana_presenza/strana_presenza_E_v1.png`, come base canonica. Le altre quattro restano alternative non approvate.
+
+**Sciamano Malizioso Minore:** scelto **A — Guscio di noce**, file `output/artwork/proposte_cinque_2026-10-30/sciamano_minore/sciamano_malizioso_minore_A_v1.png`. Resta distinto dallo Sciamano Malizioso B già approvato.
+
+**Ogor:** scelto **C — Spalle ad arco**, file `output/artwork/proposte_cinque_2026-10-30/ogor/ogor_C_v1.png`. Riferimento canonico della sagoma, senza nuove proprietà di combattimento dedotte dall'immagine.
+
+**Navigatore d'Aria:** scelto **E — Volto corvino e nebbia petrolio**, file `output/artwork/proposte_cinque_2026-10-30/navigatore_aria/navigatore_aria_E_v1.png`. Nuovi derivati da produrre dalla E, non dalle quattro alternative.
+
+**Manichino della Spada:** rimane da risolvere il contrasto fra lama sinistra/occhio viola e lama destra/occhio rosso. Alla domanda l'utente chiede **«fammi5artworkciascuno»**: produrre dieci alternative, cinque per ciascuna direzione, e far scegliere il riferimento. Non creare due specie o abilità canoniche dalla sola richiesta di confronto.
+
+**Lupo glaciale scelto:** **C — Antracite, accovacciato**, file `output/artwork/proposte_cinque_2026-10-31/lupo_infernale_ghiaccio_glaciale/lupo_infernale_ghiaccio_glaciale_C_v2.png`. Questa è la base canonica del nuovo lotto freddo; le altre quattro e il lotto con brace non sono approvati. Telefono/reliquia derivati da questa C sono una lavorazione successiva.
 
 **Mostro Solare:** scelto **B — Busto largo e guardia bassa**, file `output/artwork/proposte_cinque_2026-10-30/mostro_solare/mostro_solare_proposta_B_v1.png`. Selezione del desktop; conserva le altre quattro proposte come storico e non dedurre statistiche dalla postura.
 

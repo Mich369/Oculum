@@ -100,7 +100,7 @@ List<OculumCreatureColor> oculumMonsterColors(MonsterBookEntry monster) {
     'luce' => ('Champagne', const Color(0xffddd1a0)),
     'angelico' => ('Avorio dorato', const Color(0xffd8d7b1)),
     'acqua' => ('Azzurro profondo', const Color(0xff79b7d3)),
-    'gelo' => ('Cristallo di brina', const Color(0xffacd8e5)),
+    'gelo' || 'ghiaccio' => ('Cristallo di brina', const Color(0xffacd8e5)),
     'fulmine' => ('Ambra elettrica', const Color(0xffddc46e)),
     'energia' => ('Ciano', const Color(0xff87d2de)),
     'buio' => ('Viola notte', const Color(0xffaa9ac9)),
@@ -159,6 +159,20 @@ class OculumMonsterTheme {
   Color get accent => color.color;
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
   String? get relicIllustration => switch (monster.id) {
+    'armadillo_corazzato' =>
+      'assets/oculum/home_art/relic_armadillo_corazzato_v1.png',
+    'custode_campana_cieca' =>
+      'assets/oculum/home_art/relic_custode_campana_cieca_v1.png',
+    'mammuth_in_decomposizione' =>
+      'assets/oculum/home_art/relic_mammuth_decomposizione_v1.png',
+    'mosca_campana' => 'assets/oculum/home_art/relic_mosca_campana_v1.png',
+    'scostubandito_errato' =>
+      'assets/oculum/home_art/relic_scostubandito_errato_v1.png',
+    'scostubandito_veterano_errato' =>
+      'assets/oculum/home_art/relic_scostubandito_veterano_errato_v1.png',
+    'sharp' => 'assets/oculum/home_art/relic_sharp_v1.png',
+    'topino_avventuroso' =>
+      'assets/oculum/home_art/relic_topino_avventuroso_v1.png',
     'sciamano_malizioso' =>
       'assets/oculum/home_art/relic_sciamano_malizioso_v1.png',
     'mezzo_demone_massiccio' =>
@@ -207,6 +221,40 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'famelico_oblio' =>
+      'assets/oculum/home_art/theme_famelico_oblio_canon_20261031.png',
+    'saltalungo_maculato' =>
+      'assets/oculum/home_art/theme_saltalungo_maculato_canon_20261031.png',
+    'cloud_beast' =>
+      'assets/oculum/home_art/theme_cloud_beast_canon_20261031.png',
+    'armadillo_cristallo' =>
+      'assets/oculum/home_art/theme_armadillo_cristallo_canon_20261031.png',
+    'armadillo_legno' =>
+      'assets/oculum/home_art/theme_armadillo_legno_canon_20261031.png',
+    'armadillo_sabbia' =>
+      'assets/oculum/home_art/theme_armadillo_sabbia_canon_20261031.png',
+    'feralis' => 'assets/oculum/home_art/theme_feralis_canon_20261031.png',
+    'laer' => 'assets/oculum/home_art/theme_laer_canon_20261031.png',
+    'mostro_solare' =>
+      'assets/oculum/home_art/theme_mostro_solare_canon_20261031.png',
+    'air_navigator' =>
+      'assets/oculum/home_art/theme_air_navigator_canon_20261031.png',
+    'ogor' => 'assets/oculum/home_art/theme_ogor_canon_20261031.png',
+    'sciamano_malizioso_minore' =>
+      'assets/oculum/home_art/theme_sciamano_malizioso_minore_canon_20261031.png',
+    'strana_presenza' =>
+      'assets/oculum/home_art/theme_strana_presenza_canon_20261031.png',
+    'teirak' => 'assets/oculum/home_art/theme_teirak_canon_20261031.png',
+    'teschio_monaco' =>
+      'assets/oculum/home_art/theme_teschio_monaco_canon_20261031.png',
+    'teschio_quattro_lame' =>
+      'assets/oculum/home_art/theme_teschio_quattro_lame_canon_20261031.png',
+    'lupo_infernale_del_ghiaccio' =>
+      'assets/oculum/home_art/theme_lupo_infernale_del_ghiaccio_canon_20261031.png',
+    'manichino_spada' =>
+      'assets/oculum/home_art/theme_manichino_spada_canon_20261031.png',
+    'manichino_baghest' =>
+      'assets/oculum/home_art/theme_manichino_baghest_canon_20261031.png',
     'sciamano_malizioso' =>
       'assets/oculum/home_art/theme_sciamano_malizioso_v1.png',
     'custode_campana_cieca' =>
@@ -292,6 +340,21 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustrationMobile => switch (monster.id) {
+    'armadillo_corazzato' =>
+      'assets/oculum/home_art/theme_armadillo_corazzato_mobile_v1.png',
+    'custode_campana_cieca' =>
+      'assets/oculum/home_art/theme_custode_campana_cieca_mobile_v1.png',
+    'mammuth_in_decomposizione' =>
+      'assets/oculum/home_art/theme_mammuth_decomposizione_mobile_v1.png',
+    'mosca_campana' =>
+      'assets/oculum/home_art/theme_mosca_campana_mobile_v1.png',
+    'scostubandito_errato' =>
+      'assets/oculum/home_art/theme_scostubandito_errato_mobile_v1.png',
+    'scostubandito_veterano_errato' =>
+      'assets/oculum/home_art/theme_scostubandito_veterano_errato_mobile_v1.png',
+    'sharp' => 'assets/oculum/home_art/theme_sharp_mobile_v1.png',
+    'topino_avventuroso' =>
+      'assets/oculum/home_art/theme_topino_avventuroso_mobile_v1.png',
     'sciamano_malizioso' =>
       'assets/oculum/home_art/theme_sciamano_malizioso_mobile_v1.png',
     'mezzo_demone_massiccio' =>
