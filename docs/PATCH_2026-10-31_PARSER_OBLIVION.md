@@ -2,6 +2,8 @@
 
 ## Revisione successiva a3fe20e43 — verifiche distinte
 
+- Ultimo controllo: riprodotto e corretto il parser anatomico che ignorava «Non ha occhi» nella Torretta Oculum. Conservati i due occhi laterali del Mostro Solare e gli override del Master; nessun occhio aggiunto alle nuove proposte della Torretta.
+
 - Nuova correzione destinatari ad area: `nemico` e `bersaglio` mantengono la preparazione sul bersaglio, senza diventare bonus personali dopo l’editor.
 -19desktop approvati e16derivati approvati copiati senza cambiare i pixel; mapping e SHA in `design/approved-monster-desktops-2026-10-31.json` e `design/approved-monster-derivatives-2026-10-31.json`. Rendering e clic su320/834/1440px nei test mirati. I nuovi derivati di oggi restano da approvare.
 - Due Manichini separati, Corruzione Rossa iniziale3Notti per Baghest e purificazione dal menu Master. Un’Azione, pietra solo al successo, confronto confermato; nessuna morte/ricompensa da uccisione. La pietra è nel catalogo assegnabile dal Master, non è una dose alchemica. La regola generale delle dosi resta invariata finché l’utente chiarisce l’eventuale altra via.

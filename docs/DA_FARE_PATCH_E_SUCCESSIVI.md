@@ -1,5 +1,7 @@
 # Oculum — attività, conferme e consegne
 
+- **BUG48:** Torretta descritta senza occhi ma parser aggiungeva due parti colpibili: errore riprodotto e corretto,38test anatomie/purificazione passati. Copertura artwork verificata in sola lettura:70desktop,35telefoni,36reliquie,34set completi;36nuovi derivati da approvare. Sono presenti78ID con proposte da votare, anche redesign di mostri già illustrati: non è il numero dei mostri senza tema. Nessuna chiusura100%.
+
 ## Revisione locale corrente — 31 ottobre
 
 - **ART41:**19desktop canonici e16derivati già approvati collegati, SHA e mapping verificati. Nuovi derivati prodotti ma non ancora approvati restano separati; nessuna chiusura100% del catalogo.

@@ -11,6 +11,44 @@ void main() {
       parts(id).where((p) => p['group'] == group).length;
 
   test(
+    'explicitly eyeless physical descriptions never create targetable eyes',
+    () {
+      final turret = monsterBookEntryById('torretta_oculum')!;
+      for (final phrase in [
+        'Non ha occhi o bocca.',
+        'Non possiede occhi.',
+        'Priva di occhi.',
+        'Senza occhi.',
+      ]) {
+        final entry = turret.copyWith(
+          id: 'qa_eyeless_turret',
+          descIt: 'Pietra sospesa con nucleo esposto. $phrase',
+        );
+        expect(
+          oculumMonsterPrecisionAnatomy(
+            entry,
+          ).where((p) => p['group'] == 'eyes'),
+          isEmpty,
+          reason: phrase,
+        );
+      }
+      expect(count('torretta_oculum', 'eyes'), 0);
+      expect(count('mostro_solare', 'eyes'), 2);
+      final custom = turret.copyWith(
+        encounterRules: {
+          'precisionBodyParts': [
+            {'id': 'custom_sensor', 'group': 'eyes', 'weak': true},
+          ],
+        },
+      );
+      expect(
+        oculumMonsterPrecisionAnatomy(custom).single['id'],
+        'custom_sensor',
+      );
+    },
+  );
+
+  test(
     'new confirmed anatomy follows actual limbs and material boundaries',
     () {
       expect(count('laer', 'head'), 1);

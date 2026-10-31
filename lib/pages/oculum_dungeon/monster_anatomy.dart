@@ -403,7 +403,9 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       r'testa|cranio|gola|mascella|collo',
     );
   }
-  if (!has(r'senza occhi|nessun occhio') &&
+  if (!has(
+        r'\b(?:senza occhi|nessun occhio|non (?:ha|hanno|possiede|possiedono|presenta|presentano) (?:gli |alcun[io]? )?occhi(?:o)?|priv[oaie] di occhi)\b',
+      ) &&
       has(r'occhi|occhio|lenti|pupilla')) {
     group(
       'eyes',
