@@ -5482,7 +5482,13 @@ List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
     ),
 ];
 
-final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
+// Keep retired definitions for existing sheets, without offering them in the
+// manual, new encounters, theme queues or the default Monster Book catalogue.
+bool oculumIsRetiredMonsterId(String id) =>
+    id.trim().split('_variante_').first == 'cuore_filo';
+
+final List<MonsterBookEntry>
+_builtinMonsterBookEntriesIncludingLegacy = List.unmodifiable(
   _withoutDefaultMonsterImages(
     _withMonsterSkillNarration(
       _withMonsterProgressionPools(
@@ -5533,6 +5539,17 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
         ),
       ),
     ),
+  ),
+);
+
+final Map<String, MonsterBookEntry> _retiredBuiltinMonsterEntries = {
+  for (final entry in _builtinMonsterBookEntriesIncludingLegacy)
+    if (oculumIsRetiredMonsterId(entry.id)) entry.id: entry,
+};
+
+final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
+  _builtinMonsterBookEntriesIncludingLegacy.where(
+    (entry) => !oculumIsRetiredMonsterId(entry.id),
   ),
 );
 
@@ -5695,6 +5712,7 @@ MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
 List<MonsterBookEntry> _activeMonsterBookEntries = defaultMonsterBookEntries;
 Map<String, MonsterBookEntry> _monsterBookEntriesById =
     <String, MonsterBookEntry>{
+      ..._retiredBuiltinMonsterEntries,
       for (final entry in defaultMonsterBookEntries) entry.id: entry,
     };
 
@@ -5726,12 +5744,18 @@ void configureMonsterBookEntries({
   }
   for (final entry in overrides.values) {
     if (hidden.contains(entry.id) || used.contains(entry.id)) continue;
+    if (oculumIsRetiredMonsterId(entry.id)) continue;
     merged.add(entry);
     used.add(entry.id);
   }
 
   _activeMonsterBookEntries = List<MonsterBookEntry>.unmodifiable(merged);
   _monsterBookEntriesById = <String, MonsterBookEntry>{
+    for (final entry in _retiredBuiltinMonsterEntries.values)
+      if (!hidden.contains(entry.id)) entry.id: overrides[entry.id] ?? entry,
+    for (final entry in overrides.values)
+      if (oculumIsRetiredMonsterId(entry.id) && !hidden.contains(entry.id))
+        entry.id: entry,
     for (final entry in _activeMonsterBookEntries) entry.id: entry,
   };
 }
@@ -5739,6 +5763,7 @@ void configureMonsterBookEntries({
 void resetMonsterBookEntries() {
   _activeMonsterBookEntries = defaultMonsterBookEntries;
   _monsterBookEntriesById = <String, MonsterBookEntry>{
+    ..._retiredBuiltinMonsterEntries,
     for (final entry in defaultMonsterBookEntries) entry.id: entry,
   };
 }

@@ -1,5 +1,9 @@
 # Oculum — registro delle regole confermate
 
+## Ritiro di Cuore Filo — 31 ottobre
+
+L’utente corregge «non voglio questo mostro nella campagna» in «cioè nel manuale». Cuore Filo e le sue varianti sono ritirati dal catalogo/manuale attivo e dai nuovi incontri. Non cancellare schede o personalizzazioni esistenti: gli ID legacy restano risolvibili per compatibilità, senza rimettere le voci nelle nuove liste. Nessun disegno del lotto è approvato. Il ritiro avviene dopo la costruzione delle varianti, preservando gli ID e gli stili delle altre specie.
+
 ## Cavaliere Morto — chiarimento del 31 ottobre
 
 Alla differenza tra descrizione dell'armatura vuota e campo generico sulle giunture/ossa, l'utente conferma **«Sfera nascosta alla base della vita»** come punto debole. Non sostituirla con ossa o giunture delle braccia. Il desktop E2 conserva la sfera nascosta, senza apertura nel petto o nucleo sempre visibile. ART43: descrizione italiana/inglese, parte colpibile e manuale sorgente allineati localmente; regressioni incluse nei 197 test mirati passati. Restano prioritarie le personalizzazioni salvate. Questa implementazione non modifica retroattivamente la build5808e966; CI e nuova distribuzione sono verifiche separate.

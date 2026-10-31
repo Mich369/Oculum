@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
-  "exportedAtUtc": "2026-10-30T18:06:03.703234Z",
-  "baseCommit": "fa14d0c2abb1d9ea579ede4cbb81cffc1612a386",
+  "exportedAtUtc": "2026-10-31T18:34:28.387527Z",
+  "baseCommit": "8f1212627b6c593c3d6246b6583617f2b86e581e",
   "scope": "working tree catalog; includes uncommitted source definitions; not publication proof",
-  "entriesIncludingVariants": 1205,
+  "entriesIncludingVariants": 1204,
   "entriesWithoutGeneratedVariantSuffix": 734,
-  "generatedVariants": 471,
-  "dedicatedThemeAssetsPresentAndMapped": 51,
-  "missingDedicatedThemeAssets": 1154,
-  "dedicatedRelicsMapped": 28,
+  "generatedVariants": 470,
+  "dedicatedThemeAssetsPresentAndMapped": 76,
+  "missingDedicatedThemeAssets": 1128,
+  "dedicatedRelicsMapped": 42,
   "proceduralRelicsAreNotFinal": true,
-  "catalogueSha256": "81e29f40f825b5d498a772095013a92be15e57d2e151b263ce028d579d0b5c5d",
-  "themeMappingSha256": "4de57ed7230e265d3a8e41014a5a37d4711d7f2f9d2a1874f8492cf89fd2fd1c",
+  "catalogueSha256": "28e69ea5213364e758a27933319b55cb5a94f897cae9f2eb2b410a7d7f5200bf",
+  "themeMappingSha256": "0bd078f98513fbc58eb1b96eb46cc92098f20a282a63a194cd7e2fa330f63788",
   "catalogueSourceHashes": {
     "lib/pages/oculum_dungeon/armadillo_creatures.dart": "301e031c7e27aa8503b1f9c7602adcf1c3f12677bd1493397bbff829cf64cd8f",
     "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart": "03f43ce67155bbbb6fdf44eb6aba57fcc359951e7b2cd86f22574dc70b5109e6",
     "lib/pages/oculum_dungeon/bramble.dart": "9373da5cfcdafc2b3120400dde60a0287c36984139d96b1547d4248c0cda0912",
-    "lib/pages/oculum_dungeon/canonical_monster_variants.dart": "983acfdf072f2783da2d5dc059ca1a0716081729fb69503b90bf84a9897e716e",
-    "lib/pages/oculum_dungeon/celestial_reference_creatures.dart": "f0aecaacf5f0e4caad06a1535bae3d39fc8618994a26f18d2715e1084259b86e",
+    "lib/pages/oculum_dungeon/canonical_monster_variants.dart": "845e7f471f801f3d446ac98606ab91fcc8d832220f1f83aef29829358271d532",
+    "lib/pages/oculum_dungeon/celestial_reference_creatures.dart": "0b656e5400568520c926a5e1c1db5dc57537ae58d7ff219097458e9e6a0fbb2b",
     "lib/pages/oculum_dungeon/concrete_monster_techniques.dart": "d8fa137eb94906e03084f58415207b852a864859c345219832bdb65c5610e51d",
     "lib/pages/oculum_dungeon/cycle_monsters.dart": "413a351c1daef35c9ee81fb657492b1dbf2bc1c4c5ecd398006010363bf61a66",
     "lib/pages/oculum_dungeon/cycle_suggested_monsters.dart": "1c7675d0ddcc017fb3e055823ea2b2abe79467371b475fd40c913be1710da625",
@@ -28,19 +28,19 @@
     "lib/pages/oculum_dungeon/fauna_variants.dart": "f96ae285ce659094d0dbff3057f1bc11a3aca94a93997bf24eb8dd5cd51eb548",
     "lib/pages/oculum_dungeon/gold_marble_aberrations.dart": "1a9a75f0ccb582749227efe5201d4996e2a5379fd45ccf62987248c44113a40d",
     "lib/pages/oculum_dungeon/illness_metal_time_creatures.dart": "84cb1423e3d645c967d2e4d3e7a66ddafc886636a53d3cd87940a41ab71e7404",
-    "lib/pages/oculum_dungeon/laer_turret.dart": "0987b1370a0206f7177dd0a6f16850679197e4846ce4932688ad91f05db8c954",
+    "lib/pages/oculum_dungeon/laer_turret.dart": "3a63f68752406e1bc2ad8a869e791f181b70d52c3ed6b62f69a6309462d841c5",
     "lib/pages/oculum_dungeon/lavastrello.dart": "426ae039ac3edef7e1af4425fd5a2e7df46fec8972b825fcca632a76f86b9d80",
     "lib/pages/oculum_dungeon/lava_monsters.dart": "6969c45c17e494948545a4e821fa031cdcf2572a855ce0c5d72b040910ff6ba6",
     "lib/pages/oculum_dungeon/lunar_guards.dart": "551c367426af8469fa6347fe4c2e0fc120ade3b6be5159863c80cc80727d2f4f",
     "lib/pages/oculum_dungeon/masked_monsters.dart": "f7c2a41507b32b7914b6ff7145233a8bf2c6e7f7ec66d25020da6fecb23f6c69",
     "lib/pages/oculum_dungeon/micro_realm_creatures.dart": "3a3d5266862b1180bd5af7fa4951c76e2b5b22453767e1f63026b4ad9c5b6f62",
-    "lib/pages/oculum_dungeon/monster_anatomy.dart": "02ad1ef3e0e1bae4b3cccabfe08e7fec2062c28ecc08bb4c1f354cec164c108d",
-    "lib/pages/oculum_dungeon/monster_book.dart": "8291f7d6061cb8ed188711e1beffc3814f414a115164ed493b5fa8bc3674d10a",
+    "lib/pages/oculum_dungeon/monster_anatomy.dart": "4de44ab076ec8f71e0e374bd4709af3e737b61904369e4951baaaf79b93a4bbb",
+    "lib/pages/oculum_dungeon/monster_book.dart": "2c0f68600acb705f5d1a8cf600fba5bb6f4d61d2191953af29fac68871826642",
     "lib/pages/oculum_dungeon/monster_progression_pool.dart": "b19b524ad22550de4254996766fc6df2447ca424f01b6975239d418e8de6ac68",
     "lib/pages/oculum_dungeon/monster_registry.dart": "1c3a7570937bd0bc139cf4b825eea9285475ba0eb3f81091cd15345e92aff000",
-    "lib/pages/oculum_dungeon/necromancer_monsters.dart": "3ae529f557fb6ecbba7e6d9d158824c16723c21752f3ab600236a4724befb0cf",
+    "lib/pages/oculum_dungeon/necromancer_monsters.dart": "f7db8c420a40896f928f8103e015be28022e8e68e8884a166550bda1532164a2",
     "lib/pages/oculum_dungeon/non_return_undead.dart": "a771a2b74874f00502e4a6fe9f2f5b4a85d6a8dd3bff810175b0b401d49c4a95",
-    "lib/pages/oculum_dungeon/october_creatures.dart": "551a7ddce6b7ea84535f5177b8f271460c835dd4aaec7c0d2b83672a6688e3bb",
+    "lib/pages/oculum_dungeon/october_creatures.dart": "5ab7d1a58f271c781aee7f96fbdb8d8adab19bc8f97e47d2ef0e4c27ecfc3d1c",
     "lib/pages/oculum_dungeon/oculum_battle.dart": "8beb2aed0533ad7ba81653549f38230aa2db3c519f4d883136f1d2b70ad59c26",
     "lib/pages/oculum_dungeon/oculum_dungeon_models.dart": "8f5abae6e98b925c595b0dbbb10b8cd98929fcd5cca5f54212b5d2c72c007b3b",
     "lib/pages/oculum_dungeon/oculum_dungeon_realtime_coop.dart": "16bf987515ff75c053c00cba33ddb88854c12a85360726b585b31426c1259daf",
@@ -48,9 +48,9 @@
     "lib/pages/oculum_dungeon/oculum_dungeon_sprite_painter.dart": "f8521033cb551047a6588ac641d93e3b002a33a93683d52e1c8fb3a04cfa36da",
     "lib/pages/oculum_dungeon/oculum_dungeon_text_rpg.dart": "3d8b0a1cb2de29cf93f8e180d5ec3379ec6c7de6fbf8413440a7d1d6fda92a35",
     "lib/pages/oculum_dungeon/ordinary_creatures.dart": "bd14670f7c0d25a67dc2c7d1cc84f97f65a6d994c3c3a460d636870069c79f1f",
-    "lib/pages/oculum_dungeon/original_fauna_descriptions.dart": "bce633b0a616810e6dc1bb293e758e10824d0e819e9d20c0b43fba0916389062",
+    "lib/pages/oculum_dungeon/original_fauna_descriptions.dart": "7279362f1a3e518a416f1a5c5b869f88578ce2d9b0c0133ce343abc12a252731",
     "lib/pages/oculum_dungeon/pack_leader_monsters.dart": "c2c604db755b3c08ce91465527dd7b2e156c277cee9131c1f4705304fceb224a",
-    "lib/pages/oculum_dungeon/planar_monsters.dart": "647bc3297a49ffc49044749d66bb1fdcfb90b45b95d9271aa7ba98d61be4d5da",
+    "lib/pages/oculum_dungeon/planar_monsters.dart": "6cd0805b0ddad52c098f393d38d465ee76be122445094e756d430d59c5e3ec85",
     "lib/pages/oculum_dungeon/rebirth_rage_evergreen.dart": "f439df25ed7eb13cd496d861c7293136b722de0f89bd6d1a39f393e5fef08ff1",
     "lib/pages/oculum_dungeon/runic_acid_monsters.dart": "e55060f88723535bbb970907ac495ba06ed9760816db35f823a399b2fc5e32f9",
     "lib/pages/oculum_dungeon/run_evolution.dart": "10ba5c6c3c4ce2763fed7246edd28b7c518a369e4e7c74daa9d0209b1825d028",
@@ -62,12 +62,12 @@
     "lib/pages/oculum_dungeon/weak_horror_monsters.dart": "709795387b576760747fcb766bfd28c39989c5740531df291dfe83db2ed4697f",
     "lib/pages/oculum_dungeon/withered_construct_white_larva.dart": "92ebd772cc3b47c053eeb051e1cd8e61d2606edcb1b12e0ad74fc51b0cc5846d"
   },
-  "dedicatedMobileThemeAssetsPresentAndMapped": 27,
-  "missingDedicatedMobileThemeAssets": 1178,
-  "dedicatedRelicAssetsPresentAndMapped": 28,
-  "missingDedicatedRelicAssets": 1177,
-  "completeDedicatedArtworkSetsMapped": 26,
-  "entriesMissingAtLeastOneDedicatedArtwork": 1179,
+  "dedicatedMobileThemeAssetsPresentAndMapped": 41,
+  "missingDedicatedMobileThemeAssets": 1163,
+  "dedicatedRelicAssetsPresentAndMapped": 42,
+  "missingDedicatedRelicAssets": 1162,
+  "completeDedicatedArtworkSetsMapped": 40,
+  "entriesMissingAtLeastOneDedicatedArtwork": 1164,
   "runtimeUiVerifiedByThisAudit": false,
   "entries": [
     {
@@ -834,11 +834,14 @@
       "themeAsset": "assets/oculum/home_art/theme_custode_campana_cieca_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_custode_campana_cieca_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_custode_campana_cieca_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_custode_campana_cieca_v1.png",
+        "assets/oculum/home_art/theme_custode_campana_cieca_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -857,25 +860,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_custode_campana_cieca_mobile_v1.png",
+          "exists": true,
+          "sha256": "446aaf8ca8d6549a671c16001b166e9bf667c674d5f228a671c823879c07014a",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_custode_campana_cieca_v1.png",
+          "exists": true,
+          "sha256": "eab018035e85f2c3c6ce8cfabfa20ff920516823fce3e393a70935e45108295f",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -1648,10 +1648,10 @@
       "themeAsset": "assets/oculum/home_art/theme_mammuth_decomposizione_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_mammuth_decomposizione_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_mammuth_decomposizione_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
@@ -1680,25 +1680,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_mammuth_decomposizione_mobile_v1.png",
+          "exists": true,
+          "sha256": "5ba61484baad4162cee77b8a9c54783b783050785bb50afe3c9598a71e1e6e6f",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_mammuth_decomposizione_v1.png",
+          "exists": true,
+          "sha256": "3260da9e2683e332d07d5b9c4da1bf47555f0f2155004be978f16ef45e337d96",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -2803,14 +2800,17 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:797",
       "isGeneratedVariant": false,
       "baseId": "scheletro_bombarolo",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "themeAsset": "assets/oculum/home_art/theme_scheletro_bombarolo_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_scheletro_bombarolo_mobile_canon_20261031.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_scheletro_bombarolo_canon_20261031.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_scheletro_bombarolo_canon_20261031.png",
+        "assets/oculum/home_art/theme_scheletro_bombarolo_mobile_canon_20261031.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -2823,33 +2823,29 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_scheletro_bombarolo_canon_20261031.png",
+          "exists": true,
+          "sha256": "d8b26df180390059688eef4ef765d7353a8ce021fc6aedaae84e4175f265397b",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_scheletro_bombarolo_mobile_canon_20261031.png",
+          "exists": true,
+          "sha256": "e7477aba156b19b812e59cadabca6339f714d627905193415ec7e9350c8a1876",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_scheletro_bombarolo_canon_20261031.png",
+          "exists": true,
+          "sha256": "e9146d8c875c02bd2b625bb7cc67112b82e8fb8f3a27a99feb9b18be4be15a56",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -5582,17 +5578,17 @@
       "planes": [
         "demoniaco"
       ],
-      "element": "demoniaco",
+      "element": "ghiaccio",
       "classification": [],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "variante del lupo delle nevi mutata dal calore demoniaco. il sottopelo ghiacciato è attraversato da crepe di brace e le impronte fumano sul terreno. ha abbandonato il soffio gelido: si avvicina con un morso rovente e usa le ceneri del regno demoniaco per una carica breve, senza colpire più bersagli né ignorare la difesa. ",
+      "physicalDescription": "variante del lupo delle nevi delle zone ghiacciate dell’inferno. è un lupo quadrupede dal sottopelo fitto e gelato: la brina irrigidisce le punte del mantello e le impronte incidono la neve dura. assale con un morso glaciale e una breve carica sul terreno ghiacciato, senza colpire più bersagli né ignorare la difesa. non ha crepe di brace o poteri di fuoco. ",
       "anatomy": [
         {
           "id": "body",
           "label": "Corpo",
           "group": "body",
-          "weak": false,
+          "weak": true,
           "penalty": 0
         },
         {
@@ -5603,18 +5599,18 @@
           "penalty": 0
         },
         {
-          "id": "arms_1",
-          "label": "Braccio destro",
-          "group": "arms",
+          "id": "eyes_1",
+          "label": "Occhio destro",
+          "group": "eyes",
           "weak": false,
           "penalty": 0,
           "side": "right",
           "sideIndex": 1
         },
         {
-          "id": "arms_2",
-          "label": "Braccio sinistro",
-          "group": "arms",
+          "id": "eyes_2",
+          "label": "Occhio sinistro",
+          "group": "eyes",
           "weak": false,
           "penalty": 0,
           "side": "left",
@@ -5622,7 +5618,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Gamba destra anteriore",
+          "label": "Zampa destra anteriore",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -5631,7 +5627,7 @@
         },
         {
           "id": "legs_2",
-          "label": "Gamba sinistra anteriore",
+          "label": "Zampa sinistra anteriore",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -5640,7 +5636,7 @@
         },
         {
           "id": "legs_3",
-          "label": "Gamba destra posteriore",
+          "label": "Zampa destra posteriore",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -5649,16 +5645,48 @@
         },
         {
           "id": "legs_4",
-          "label": "Gamba sinistra posteriore",
+          "label": "Zampa sinistra posteriore",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 2
+        },
+        {
+          "id": "tail",
+          "label": "Coda",
+          "group": "tail",
+          "weak": false,
+          "penalty": 0
+        },
+        {
+          "id": "ears_1",
+          "label": "Orecchio destro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "ears_2",
+          "label": "Orecchio sinistro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "fold",
+          "label": "Piega del corpo",
+          "group": "fold",
+          "weak": true,
+          "penalty": 0
         }
       ],
-      "weakPoint": "Le crepe chiare sotto il collo, esposte quando prepara la carica.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante del Lupo delle Nevi mutata dal calore demoniaco. Il sottopelo ghiacciato è attraversato da crepe di brace e le impronte fumano sul terreno. Ha abbandonato il soffio gelido: si avvicina con un morso rovente e usa le ceneri del Regno demoniaco per una carica breve, senza colpire più bersagli né ignorare la Difesa.",
+      "weakPoint": "La piega meno protetta sotto il collo, esposta quando prepara la carica.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante del Lupo delle Nevi delle zone ghiacciate dell’Inferno. È un lupo quadrupede dal sottopelo fitto e gelato: la brina irrigidisce le punte del mantello e le impronte incidono la neve dura. Assale con un morso glaciale e una breve carica sul terreno ghiacciato, senza colpire più bersagli né ignorare la Difesa. Non ha crepe di brace o poteri di Fuoco.",
       "drops": [
         "zanna_ghiacciata",
         "scheggia_brace_lupo"
@@ -5670,7 +5698,7 @@
         "dispositions": [
           "ostile"
         ],
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante del Lupo delle Nevi mutata dal calore demoniaco. Il sottopelo ghiacciato è attraversato da crepe di brace e le impronte fumano sul terreno. Ha abbandonato il soffio gelido: si avvicina con un morso rovente e usa le ceneri del Regno demoniaco per una carica breve, senza colpire più bersagli né ignorare la Difesa. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante del Lupo delle Nevi delle zone ghiacciate dell’Inferno. È un lupo quadrupede dal sottopelo fitto e gelato: la brina irrigidisce le punte del mantello e le impronte incidono la neve dura. Assale con un morso glaciale e una breve carica sul terreno ghiacciato, senza colpire più bersagli né ignorare la Difesa. Non ha crepe di brace o poteri di Fuoco. ",
         "additionalProgressionSkills": [
           "growth__lupo_infernale_del_ghiaccio__0",
           "growth__lupo_infernale_del_ghiaccio__1",
@@ -5689,9 +5717,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:1063",
       "isGeneratedVariant": false,
       "baseId": "lupo_infernale_del_ghiaccio",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_lupo_infernale_del_ghiaccio_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -5701,18 +5729,22 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
-        "Braccio destro",
-        "Braccio sinistro",
-        "Gamba destra anteriore",
-        "Gamba sinistra anteriore",
-        "Gamba destra posteriore",
-        "Gamba sinistra posteriore"
+        "Occhio destro",
+        "Occhio sinistro",
+        "Zampa destra anteriore",
+        "Zampa sinistra anteriore",
+        "Zampa destra posteriore",
+        "Zampa sinistra posteriore",
+        "Coda",
+        "Orecchio destro",
+        "Orecchio sinistro",
+        "Piega del corpo"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_lupo_infernale_del_ghiaccio_canon_20261031.png",
+          "exists": true,
+          "sha256": "7cda68c7d4f04e5cf18e42c9b0b305bcadecbfc92f6e4b4e24f830474cf5d069",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -5732,7 +5764,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -25042,213 +25073,6 @@
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
-      "id": "cuore_filo",
-      "name": "Cuore Filo",
-      "planes": [],
-      "element": "sangue",
-      "classification": [],
-      "isBoss": false,
-      "isMiniBoss": true,
-      "physicalDescription": "cuore appeso a fili. taglia reazioni, protegge un alleato e si spezza in due fasi. ",
-      "anatomy": [
-        {
-          "id": "body",
-          "label": "Corpo",
-          "group": "body",
-          "weak": true,
-          "penalty": 0
-        },
-        {
-          "id": "heart",
-          "label": "Cuore",
-          "group": "heart",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "fold",
-          "label": "Piega del corpo",
-          "group": "fold",
-          "weak": true,
-          "penalty": 0
-        }
-      ],
-      "weakPoint": "La piega meno protetta del corpo, esposta quando cambia direzione per attaccare.",
-      "naturalAttitude": "Taglia reazioni, protegge un alleato e si spezza in due fasi.",
-      "drops": [
-        "thread_heart_core"
-      ],
-      "inventoryItems": [],
-      "encounterRules": {
-        "naturalAttitude": "Taglia reazioni, protegge un alleato e si spezza in due fasi.",
-        "additionalProgressionSkills": [
-          "growth__cuore_filo__0",
-          "growth__cuore_filo__1",
-          "growth__cuore_filo__2",
-          "growth__cuore_filo__3",
-          "growth__cuore_filo__4",
-          "growth__cuore_filo__5",
-          "growth__cuore_filo__6",
-          "growth__cuore_filo__7",
-          "growth__cuore_filo__8",
-          "growth__cuore_filo__9",
-          "growth__cuore_filo__10",
-          "growth__cuore_filo__11"
-        ]
-      },
-      "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:2689",
-      "isGeneratedVariant": false,
-      "baseId": "cuore_filo",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
-      "anatomyLabels": [
-        "Corpo",
-        "Cuore",
-        "Piega del corpo"
-      ],
-      "artworkEvidence": {
-        "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
-          "uiVerifiedByThisAudit": false
-        },
-        "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
-          "uiVerifiedByThisAudit": false
-        },
-        "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
-          "uiVerifiedByThisAudit": false
-        }
-      },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
-    },
-    {
-      "id": "cuore_filo_variante_veterana",
-      "name": "Cuore Filo Veterana",
-      "planes": [],
-      "element": "sangue",
-      "classification": [],
-      "isBoss": false,
-      "isMiniBoss": true,
-      "physicalDescription": "variante veterana (dal livello 0): alterna le sue tecniche senza ripetere la stessa apertura. cuore appeso a fili. taglia reazioni, protegge un alleato e si spezza in due fasi. ",
-      "anatomy": [
-        {
-          "id": "body",
-          "label": "Corpo",
-          "group": "body",
-          "weak": true,
-          "penalty": 0
-        },
-        {
-          "id": "heart",
-          "label": "Cuore",
-          "group": "heart",
-          "weak": false,
-          "penalty": 0
-        },
-        {
-          "id": "fold",
-          "label": "Piega del corpo",
-          "group": "fold",
-          "weak": true,
-          "penalty": 0
-        }
-      ],
-      "weakPoint": "La piega meno protetta del corpo, esposta quando cambia direzione per attaccare.",
-      "naturalAttitude": "Taglia reazioni, protegge un alleato e si spezza in due fasi.",
-      "drops": [
-        "thread_heart_core",
-        "frammento_variante_veterana"
-      ],
-      "inventoryItems": [],
-      "encounterRules": {
-        "naturalAttitude": "Taglia reazioni, protegge un alleato e si spezza in due fasi.",
-        "additionalProgressionSkills": [
-          "growth__cuore_filo_variante_veterana__0",
-          "growth__cuore_filo_variante_veterana__1",
-          "growth__cuore_filo_variante_veterana__2",
-          "growth__cuore_filo_variante_veterana__3",
-          "growth__cuore_filo_variante_veterana__4",
-          "growth__cuore_filo_variante_veterana__5",
-          "growth__cuore_filo_variante_veterana__6",
-          "growth__cuore_filo_variante_veterana__7",
-          "growth__cuore_filo_variante_veterana__8",
-          "growth__cuore_filo_variante_veterana__9",
-          "growth__cuore_filo_variante_veterana__10",
-          "growth__cuore_filo_variante_veterana__11"
-        ]
-      },
-      "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:2689",
-      "isGeneratedVariant": true,
-      "baseId": "cuore_filo",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
-      "anatomyLabels": [
-        "Corpo",
-        "Cuore",
-        "Piega del corpo"
-      ],
-      "artworkEvidence": {
-        "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
-          "uiVerifiedByThisAudit": false
-        },
-        "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
-          "uiVerifiedByThisAudit": false
-        },
-        "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
-          "uiVerifiedByThisAudit": false
-        }
-      },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
-    },
-    {
       "id": "lanterniere_osso",
       "name": "Lanterniere d Osso",
       "planes": [],
@@ -25490,14 +25314,17 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:2725",
       "isGeneratedVariant": false,
       "baseId": "specchio_mangiavoce",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "themeAsset": "assets/oculum/home_art/theme_specchio_mangiavoce_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_specchio_mangiavoce_mobile_canon_20261031.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_specchio_mangiavoce_canon_20261031.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_specchio_mangiavoce_canon_20261031.png",
+        "assets/oculum/home_art/theme_specchio_mangiavoce_mobile_canon_20261031.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -25505,33 +25332,29 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_specchio_mangiavoce_canon_20261031.png",
+          "exists": true,
+          "sha256": "1cbf78cace3048e1641af4111483353317af75a85e8a6cdc9546cc67a6996308",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_specchio_mangiavoce_mobile_canon_20261031.png",
+          "exists": true,
+          "sha256": "83ee186aeb733089e08da0eb4331c77b0a7959f10027275aa26dbc770348b909",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_specchio_mangiavoce_canon_20261031.png",
+          "exists": true,
+          "sha256": "453c5f66783b522030c2c6a247c16816480650f19d83880ae4fbdab07f43653e",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -33856,11 +33679,14 @@
       "themeAsset": "assets/oculum/home_art/creature_scostubandito_errato_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_scostubandito_errato_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_scostubandito_errato_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_scostubandito_errato_v1.png",
+        "assets/oculum/home_art/theme_scostubandito_errato_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -33879,25 +33705,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_scostubandito_errato_mobile_v1.png",
+          "exists": true,
+          "sha256": "5efbfda261dd9d1b98d174c743083aa634963079944c7dd7e1d9bedff7bd2af5",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_scostubandito_errato_v1.png",
+          "exists": true,
+          "sha256": "e814b97f9eef38d01ececb04f6808e3434aebabc2e384442904e2d42a82b3ead",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -34029,11 +33852,14 @@
       "themeAsset": "assets/oculum/home_art/creature_scostubandito_veterano_errato_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_scostubandito_veterano_errato_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_scostubandito_veterano_errato_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_scostubandito_veterano_errato_v1.png",
+        "assets/oculum/home_art/theme_scostubandito_veterano_errato_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -34054,25 +33880,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_scostubandito_veterano_errato_mobile_v1.png",
+          "exists": true,
+          "sha256": "db371e26bcd851396a724d01602ebb40cfc2844402e90ca30a82baf126af0308",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_scostubandito_veterano_errato_v1.png",
+          "exists": true,
+          "sha256": "670116cf2b26ac10aa0d7737bf013742710bb07eb970913a286facb28eb6328d",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -34455,7 +34278,8 @@
           "label": "Corpo",
           "group": "body",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "spectral"
         },
         {
           "id": "arms_1",
@@ -34464,7 +34288,8 @@
           "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "spectral"
         },
         {
           "id": "arms_2",
@@ -34473,7 +34298,36 @@
           "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "spectral"
+        },
+        {
+          "id": "legs_1",
+          "label": "Gamba destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1,
+          "material": "spectral"
+        },
+        {
+          "id": "legs_2",
+          "label": "Gamba sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1,
+          "material": "spectral"
+        },
+        {
+          "id": "suspended_point",
+          "label": "Punto sospeso nella corona",
+          "group": "sensor",
+          "weak": true,
+          "penalty": 0,
+          "material": "spectral"
         }
       ],
       "weakPoint": "Il piccolo punto sospeso nella corona.",
@@ -34507,9 +34361,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/october_creatures.dart:107",
       "isGeneratedVariant": false,
       "baseId": "strana_presenza",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_strana_presenza_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -34519,13 +34373,16 @@
       "anatomyLabels": [
         "Corpo",
         "Braccio destro",
-        "Braccio sinistro"
+        "Braccio sinistro",
+        "Gamba destra",
+        "Gamba sinistra",
+        "Punto sospeso nella corona"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_strana_presenza_canon_20261031.png",
+          "exists": true,
+          "sha256": "360c640294b2d299da7df63a979d7635ca6e09fcb90315780af1ef1236cf6fbc",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -34545,7 +34402,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -34679,6 +34535,7 @@
       "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [
         "assets/oculum/home_art/relic_sciamano_malizioso_v1.png",
+        "assets/oculum/home_art/theme_sciamano_malizioso_minore_canon_20261031.png",
         "assets/oculum/home_art/theme_sciamano_malizioso_mobile_v1.png"
       ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
@@ -34740,24 +34597,59 @@
           "label": "Corpo",
           "group": "body",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "wood"
         },
         {
           "id": "head",
           "label": "Testa",
           "group": "head",
-          "weak": false,
-          "penalty": 0
+          "weak": true,
+          "penalty": 0,
+          "material": "wood"
         },
         {
-          "id": "mask",
-          "label": "Maschera",
-          "group": "mask",
-          "weak": true,
-          "penalty": 0
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1,
+          "material": "wood"
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1,
+          "material": "wood"
+        },
+        {
+          "id": "legs_1",
+          "label": "Gamba destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1,
+          "material": "wood"
+        },
+        {
+          "id": "legs_2",
+          "label": "Gamba sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1,
+          "material": "wood"
         }
       ],
-      "weakPoint": "La maschera e i suoi ornamenti rossi.",
+      "weakPoint": "La testa lignea stessa.",
       "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Versione depotenziata dello Sciamano Malizioso: corpo ligneo, grande testa di legno sorridente, mantello di foglie e piccole estremità scure. Ha statistiche più basse e maledizioni meno intense. Vita Afona e riduzioni statistiche terminano al Riposo Breve, al Riposo Lungo oppure all’uccisione dello sciamano sorgente.",
       "drops": [
         "foglia_maschera_sciamano"
@@ -34789,9 +34681,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": false,
       "baseId": "sciamano_malizioso_minore",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_sciamano_malizioso_minore_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -34801,13 +34693,16 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
-        "Maschera"
+        "Braccio destro",
+        "Braccio sinistro",
+        "Gamba destra",
+        "Gamba sinistra"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_sciamano_malizioso_minore_canon_20261031.png",
+          "exists": true,
+          "sha256": "f8965e82034c1d187d8059d9e0ce61976e16b87fddc17e6d97fdc01b6ea2fbc9",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -34827,7 +34722,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -35009,7 +34903,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "predatore solare dal corpo dorato coperto da motivi scuri, testa lunga tenuta bassa e un corno scuro molto affilato. le braccia sono lunghe e terminano in grandi artigli metallici; le zampe snelle hanno dita unghiate. avanza aggressivamente con affondi del corno, tagli delle braccia e marchi solari; quando deve resistere incrocia gli arti davanti al torace. corno, artigli e lamine dorate forniscono materiali, scroll ed equipaggiamenti coerenti con queste tecniche. ",
+      "physicalDescription": "predatore solare dal corpo dorato coperto da motivi scuri, testa lunga tenuta bassa, due occhi laterali, uno per lato, e un corno scuro molto affilato. le due braccia sono lunghe e terminano in grandi artigli metallici; le due zampe snelle hanno dita unghiate. avanza aggressivamente con affondi del corno, tagli delle braccia e marchi solari; quando deve resistere incrocia gli arti davanti al torace. corno, artigli e lamine dorate forniscono materiali, scroll ed equipaggiamenti coerenti con queste tecniche. ",
       "anatomy": [
         {
           "id": "body",
@@ -35024,6 +34918,24 @@
           "group": "head",
           "weak": true,
           "penalty": 0
+        },
+        {
+          "id": "eyes_1",
+          "label": "Occhio destro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "eyes_2",
+          "label": "Occhio sinistro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
         },
         {
           "id": "arms_1",
@@ -35045,7 +34957,7 @@
         },
         {
           "id": "legs_1",
-          "label": "Zampa destra",
+          "label": "Gamba destra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
@@ -35054,12 +34966,19 @@
         },
         {
           "id": "legs_2",
-          "label": "Zampa sinistra",
+          "label": "Gamba sinistra",
           "group": "legs",
           "weak": false,
           "penalty": 0,
           "side": "left",
           "sideIndex": 1
+        },
+        {
+          "id": "horns",
+          "label": "Corno",
+          "group": "horns",
+          "weak": true,
+          "penalty": 0
         },
         {
           "id": "torso",
@@ -35108,9 +35027,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/celestial_reference_creatures.dart:35",
       "isGeneratedVariant": false,
       "baseId": "mostro_solare",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_mostro_solare_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -35120,18 +35039,21 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
+        "Occhio destro",
+        "Occhio sinistro",
         "Braccio destro",
         "Braccio sinistro",
-        "Zampa destra",
-        "Zampa sinistra",
+        "Gamba destra",
+        "Gamba sinistra",
+        "Corno",
         "Torace",
         "Giuntura"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_mostro_solare_canon_20261031.png",
+          "exists": true,
+          "sha256": "b4c65fdcfdff174d94bb471d9631ff70ea06a4ccdee49de965afbf8072ec251a",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -35151,7 +35073,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -38398,11 +38319,14 @@
       "themeAsset": "assets/oculum/home_art/theme_armadillo_corazzato_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_armadillo_corazzato_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_armadillo_corazzato_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_armadillo_corazzato_v1.png",
+        "assets/oculum/home_art/theme_armadillo_corazzato_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Carapace a placche",
@@ -38425,25 +38349,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_armadillo_corazzato_mobile_v1.png",
+          "exists": true,
+          "sha256": "72bb5bbdde64973952f9c0e0b432ec45ec9e28e075ff9358670c874f22121cc6",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_armadillo_corazzato_v1.png",
+          "exists": true,
+          "sha256": "b6921d5c28aee3e6adc514c6358894924ccd9e2c71865dcbbeef996383a94d51",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -38737,9 +38658,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/armadillo_creatures.dart:30",
       "isGeneratedVariant": false,
       "baseId": "armadillo_sabbia",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_armadillo_sabbia_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -38760,9 +38681,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_armadillo_sabbia_canon_20261031.png",
+          "exists": true,
+          "sha256": "4e265da449ba96c3544f45f7ab3be0714298645be5981276215d2aa5fde58385",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -38782,7 +38703,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -39080,9 +39000,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/armadillo_creatures.dart:46",
       "isGeneratedVariant": false,
       "baseId": "armadillo_cristallo",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_armadillo_cristallo_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -39103,9 +39023,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_armadillo_cristallo_canon_20261031.png",
+          "exists": true,
+          "sha256": "76f8a1fcbbdf8b7925cf1e3c3a5e8158f2c4d615844f4b7167063b738573fda9",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -39125,7 +39045,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -39424,9 +39343,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/armadillo_creatures.dart:62",
       "isGeneratedVariant": false,
       "baseId": "armadillo_legno",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_armadillo_legno_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -39447,9 +39366,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_armadillo_legno_canon_20261031.png",
+          "exists": true,
+          "sha256": "ea37e149d32b8bc5835d15eb044939c5b4d3787df46b5d59feeee10eab31b3c7",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -39469,7 +39388,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -44913,32 +44831,36 @@
           "label": "Corpo",
           "group": "body",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "metal"
         },
         {
           "id": "head",
-          "label": "Testa",
+          "label": "Elmo dell’armatura",
           "group": "head",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "metal"
         },
         {
           "id": "arms_1",
           "label": "Braccio destro",
           "group": "arms",
-          "weak": true,
+          "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "arms_2",
           "label": "Braccio sinistro",
           "group": "arms",
-          "weak": true,
+          "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "legs_1",
@@ -44947,7 +44869,8 @@
           "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "legs_2",
@@ -44956,17 +44879,19 @@
           "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
-          "id": "torso",
-          "label": "Torace",
-          "group": "torso",
+          "id": "core",
+          "label": "Sfera di Oculum alla base della vita",
+          "group": "core",
           "weak": true,
-          "penalty": 0
+          "penalty": 0,
+          "material": "oculum"
         }
       ],
-      "weakPoint": "Le giunture che collegano le braccia al torace, meno solide delle ossa lunghe.",
+      "weakPoint": "La sfera di Oculum nascosta alla base della vita.",
       "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Armatura vuota animata attorno a una sfera di Oculum nascosta alla base della vita. Finché non ne scopri il punto debole, il corpo ignora i colpi: può subire danno solo dopo la scoperta della sfera oppure con un tiro naturale superiore a 17 e un totale che supera la sua CM. Porta spada e scudo. Spadata aggiunge 5 + Livello Danni per quella sola azione; la difesa cresce fino a uno Scudo Oculum. Raramente (impostazione iniziale 5%) possiede anche “Un vecchio amore”: una donna scheletrica dai capelli di colore casuale, armatura di pelle e arco che si erge dal terreno. È una Summon al livello del Cavaliere e può valere il doppio dell’EXP di una Summon ordinaria.",
       "drops": [
         "metallo_runico",
@@ -44993,53 +44918,52 @@
       "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:8",
       "isGeneratedVariant": false,
       "baseId": "cavaliere_morto",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "themeAsset": "assets/oculum/home_art/theme_cavaliere_morto_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_cavaliere_morto_mobile_canon_20261031.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_cavaliere_morto_canon_20261031.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_cavaliere_morto_canon_20261031.png",
+        "assets/oculum/home_art/theme_cavaliere_morto_mobile_canon_20261031.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
+        "Elmo dell’armatura",
         "Braccio destro",
         "Braccio sinistro",
         "Gamba destra",
         "Gamba sinistra",
-        "Torace"
+        "Sfera di Oculum alla base della vita"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_cavaliere_morto_canon_20261031.png",
+          "exists": true,
+          "sha256": "3b667a2cee77c439407fa9ab864b87e960a131da147309b9e2155f5288cc1c7e",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_cavaliere_morto_mobile_canon_20261031.png",
+          "exists": true,
+          "sha256": "deb064b1979c3ed01a9e7fee9369fee223b5917aa61b99de94a0c6cf381f6683",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_cavaliere_morto_canon_20261031.png",
+          "exists": true,
+          "sha256": "fe900d0e9d207d187db1495f1ebecf51dc945b3f19a7697f5422232cce4022f5",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -45057,32 +44981,36 @@
           "label": "Corpo",
           "group": "body",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "metal"
         },
         {
           "id": "head",
-          "label": "Testa",
+          "label": "Elmo dell’armatura",
           "group": "head",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "metal"
         },
         {
           "id": "arms_1",
           "label": "Braccio destro",
           "group": "arms",
-          "weak": true,
+          "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "arms_2",
           "label": "Braccio sinistro",
           "group": "arms",
-          "weak": true,
+          "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "legs_1",
@@ -45091,7 +45019,8 @@
           "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
           "id": "legs_2",
@@ -45100,17 +45029,19 @@
           "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "metal"
         },
         {
-          "id": "torso",
-          "label": "Torace",
-          "group": "torso",
+          "id": "core",
+          "label": "Sfera di Oculum alla base della vita",
+          "group": "core",
           "weak": true,
-          "penalty": 0
+          "penalty": 0,
+          "material": "oculum"
         }
       ],
-      "weakPoint": "Le giunture che collegano le braccia al torace, meno solide delle ossa lunghe.",
+      "weakPoint": "La sfera di Oculum nascosta alla base della vita.",
       "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Variante errante (dal livello 0): si muove tra le linee e punisce chi resta isolato. Armatura vuota animata attorno a una sfera di Oculum nascosta alla base della vita. Finché non ne scopri il punto debole, il corpo ignora i colpi: può subire danno solo dopo la scoperta della sfera oppure con un tiro naturale superiore a 17 e un totale che supera la sua CM. Porta spada e scudo. Spadata aggiunge 5 + Livello Danni per quella sola azione; la difesa cresce fino a uno Scudo Oculum. Raramente (impostazione iniziale 5%) possiede anche “Un vecchio amore”: una donna scheletrica dai capelli di colore casuale, armatura di pelle e arco che si erge dal terreno. È una Summon al livello del Cavaliere e può valere il doppio dell’EXP di una Summon ordinaria.",
       "drops": [
         "metallo_runico",
@@ -45149,12 +45080,12 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Testa",
+        "Elmo dell’armatura",
         "Braccio destro",
         "Braccio sinistro",
         "Gamba destra",
         "Gamba sinistra",
-        "Torace"
+        "Sfera di Oculum alla base della vita"
       ],
       "artworkEvidence": {
         "desktop": {
@@ -45236,7 +45167,7 @@
           "growth__necromante_cenere__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:36",
+      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:38",
       "isGeneratedVariant": false,
       "baseId": "necromante_cenere",
       "themeAsset": null,
@@ -45333,7 +45264,7 @@
           "growth__necromante_cenere_variante_corazzata__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:36",
+      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:38",
       "isGeneratedVariant": true,
       "baseId": "necromante_cenere",
       "themeAsset": null,
@@ -45429,7 +45360,7 @@
           "growth__necromante_ossidiana__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:64",
+      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:66",
       "isGeneratedVariant": false,
       "baseId": "necromante_ossidiana",
       "themeAsset": null,
@@ -45526,7 +45457,7 @@
           "growth__necromante_ossidiana_variante_rituale__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:64",
+      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:66",
       "isGeneratedVariant": true,
       "baseId": "necromante_ossidiana",
       "themeAsset": null,
@@ -45622,7 +45553,7 @@
           "growth__necromante_fame__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:92",
+      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:94",
       "isGeneratedVariant": false,
       "baseId": "necromante_fame",
       "themeAsset": null,
@@ -45719,7 +45650,7 @@
           "growth__necromante_fame_variante_errante__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:92",
+      "sourceLocation": "lib/pages/oculum_dungeon/necromancer_monsters.dart:94",
       "isGeneratedVariant": true,
       "baseId": "necromante_fame",
       "themeAsset": null,
@@ -49588,21 +49519,23 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "creatura sottile dalla testa d’uccello e dal lungo mantello di piume color paglia. le braccia nere finiscono in tre artigli ricurvi; la parte inferiore si disperde in un vortice scuro. non ha zampe visibili. si inclina controvento e protegge le correnti che attraversa. ",
+      "physicalDescription": "creatura sottile dalla testa d’uccello e dal lungo mantello di piume scure nella nebbia color petrolio. ha una testa e due braccia nere materiali, ciascuna terminante in tre artigli ricurvi; anche il torace è materiale. il vortice d’aria inferiore sostituisce gambe e piedi: non nasconde zampe attaccabili. non ha ali. si inclina controvento e protegge le correnti che attraversa. ",
       "anatomy": [
         {
           "id": "body",
           "label": "Corpo",
           "group": "body",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "flesh"
         },
         {
           "id": "head",
           "label": "Testa",
           "group": "head",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "flesh"
         },
         {
           "id": "arms_1",
@@ -49611,7 +49544,8 @@
           "weak": false,
           "penalty": 0,
           "side": "right",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "flesh"
         },
         {
           "id": "arms_2",
@@ -49620,43 +49554,16 @@
           "weak": false,
           "penalty": 0,
           "side": "left",
-          "sideIndex": 1
+          "sideIndex": 1,
+          "material": "flesh"
         },
         {
-          "id": "legs_1",
-          "label": "Zampa destra",
-          "group": "legs",
+          "id": "lower_vortex",
+          "label": "Vortice inferiore",
+          "group": "vortex",
           "weak": false,
           "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "legs_2",
-          "label": "Zampa sinistra",
-          "group": "legs",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
-          "id": "wings_1",
-          "label": "Ala destra",
-          "group": "wings",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "wings_2",
-          "label": "Ala sinistra",
-          "group": "wings",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
+          "material": "spectral"
         },
         {
           "id": "torso",
@@ -49667,7 +49574,7 @@
         }
       ],
       "weakPoint": "Il nodo scuro tra torace e vortice, visibile quando si ferma a fluttuare.",
-      "naturalAttitude": "Si inclina controvento e protegge le correnti che attraversa.",
+      "naturalAttitude": "Il vortice d’aria inferiore sostituisce gambe e piedi: non nasconde zampe attaccabili. Si inclina controvento e protegge le correnti che attraversa.",
       "drops": [
         "frammento_air_navigator"
       ],
@@ -49681,7 +49588,7 @@
           "condition": "base_attack",
           "skillId": "air_navigator_claws"
         },
-        "naturalAttitude": "Si inclina controvento e protegge le correnti che attraversa.",
+        "naturalAttitude": "Il vortice d’aria inferiore sostituisce gambe e piedi: non nasconde zampe attaccabili. Si inclina controvento e protegge le correnti che attraversa.",
         "additionalProgressionSkills": [
           "growth__air_navigator__0",
           "growth__air_navigator__1",
@@ -49700,9 +49607,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/planar_monsters.dart:845",
       "isGeneratedVariant": false,
       "baseId": "air_navigator",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_air_navigator_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -49714,17 +49621,14 @@
         "Testa",
         "Braccio destro",
         "Braccio sinistro",
-        "Zampa destra",
-        "Zampa sinistra",
-        "Ala destra",
-        "Ala sinistra",
+        "Vortice inferiore",
         "Torace"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_air_navigator_canon_20261031.png",
+          "exists": true,
+          "sha256": "e8efb8c1395d6b212999f0db85e40654350d76b8bbcba052fc70bfc820050078",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -49744,7 +49648,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -49764,7 +49667,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "variante rituale (dal livello 3): prepara il terreno con oculum prima di colpire. creatura sottile dalla testa d’uccello e dal lungo mantello di piume color paglia. le braccia nere finiscono in tre artigli ricurvi; la parte inferiore si disperde in un vortice scuro. non ha zampe visibili. si inclina controvento e protegge le correnti che attraversa. ",
+      "physicalDescription": "variante rituale (dal livello 3): prepara il terreno con oculum prima di colpire. creatura sottile dalla testa d’uccello e dal lungo mantello di piume scure nella nebbia color petrolio. ha una testa e due braccia nere materiali, ciascuna terminante in tre artigli ricurvi; anche il torace è materiale. il vortice d’aria inferiore sostituisce gambe e piedi: non nasconde zampe attaccabili. non ha ali. si inclina controvento e protegge le correnti che attraversa. ",
       "anatomy": [
         {
           "id": "body",
@@ -49817,24 +49720,6 @@
           "sideIndex": 1
         },
         {
-          "id": "wings_1",
-          "label": "Ala destra",
-          "group": "wings",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "wings_2",
-          "label": "Ala sinistra",
-          "group": "wings",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
-        },
-        {
           "id": "torso",
           "label": "Torace",
           "group": "torso",
@@ -49843,7 +49728,7 @@
         }
       ],
       "weakPoint": "Il nodo scuro tra torace e vortice, visibile quando si ferma a fluttuare.",
-      "naturalAttitude": "Si inclina controvento e protegge le correnti che attraversa.",
+      "naturalAttitude": "Il vortice d’aria inferiore sostituisce gambe e piedi: non nasconde zampe attaccabili. Si inclina controvento e protegge le correnti che attraversa.",
       "drops": [
         "frammento_air_navigator",
         "frammento_variante_rituale"
@@ -49858,7 +49743,7 @@
           "condition": "base_attack",
           "skillId": "air_navigator_claws"
         },
-        "naturalAttitude": "Si inclina controvento e protegge le correnti che attraversa.",
+        "naturalAttitude": "Il vortice d’aria inferiore sostituisce gambe e piedi: non nasconde zampe attaccabili. Si inclina controvento e protegge le correnti che attraversa.",
         "additionalProgressionSkills": [
           "growth__air_navigator_variante_rituale__0",
           "growth__air_navigator_variante_rituale__1",
@@ -49893,8 +49778,6 @@
         "Braccio sinistro",
         "Zampa destra",
         "Zampa sinistra",
-        "Ala destra",
-        "Ala sinistra",
         "Torace"
       ],
       "artworkEvidence": {
@@ -49941,7 +49824,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": true,
-      "physicalDescription": "bestia alta e incurvata, con muso ossuto, orecchie appuntite e due corna color rame. una criniera di nuvole pallide trabocca sulle spalle; avambracci lunghi e artigli sottili sostengono il busto. stracci scuri pendono dai fianchi e una grande coda di vapore raccoglie elettricità. mini boss: 1 scudo critico e 1 schivata oculum. ",
+      "physicalDescription": "lupo antropomorfo possente dal pelo argenteo, con muso lupino chiaro, orecchie appuntite e due corna color rame. cammina su due gambe visibili e possiede due lunghe braccia artigliate, senza arti aggiuntivi. una grande criniera bianca di pelo e nuvole pallide trabocca sulle spalle; stracci scuri pendono dai fianchi e un’unica grande coda di vapore raccoglie elettricità. mini boss: 1 scudo critico e 1 schivata oculum. ",
       "anatomy": [
         {
           "id": "body",
@@ -49958,11 +49841,101 @@
           "penalty": 0
         },
         {
+          "id": "eyes_1",
+          "label": "Occhio destro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "eyes_2",
+          "label": "Occhio sinistro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": true,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": true,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_1",
+          "label": "Zampa destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Zampa sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
           "id": "tail",
           "label": "Coda",
           "group": "tail",
           "weak": false,
           "penalty": 0
+        },
+        {
+          "id": "horns_1",
+          "label": "Corno destro",
+          "group": "horns",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "horns_2",
+          "label": "Corno sinistro",
+          "group": "horns",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "ears_1",
+          "label": "Orecchio destro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "ears_2",
+          "label": "Orecchio sinistro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
         },
         {
           "id": "torso",
@@ -49973,7 +49946,7 @@
         }
       ],
       "weakPoint": "Il petto ossuto sotto la criniera, esposto quando raccoglie aria tra le mani.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Bestia alta e incurvata, con muso ossuto, orecchie appuntite e due corna color rame. Una criniera di nuvole pallide trabocca sulle spalle; avambracci lunghi e artigli sottili sostengono il busto. Stracci scuri pendono dai fianchi e una grande coda di vapore raccoglie elettricità. Mini Boss: 1 Scudo critico e 1 Schivata Oculum.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Lupo antropomorfo possente dal pelo argenteo, con muso lupino chiaro, orecchie appuntite e due corna color rame. Cammina su due gambe visibili e possiede due lunghe braccia artigliate, senza arti aggiuntivi. Una grande criniera bianca di pelo e nuvole pallide trabocca sulle spalle; stracci scuri pendono dai fianchi e un’unica grande coda di vapore raccoglie elettricità. Mini Boss: 1 Scudo critico e 1 Schivata Oculum.",
       "drops": [
         "frammento_cloud_beast"
       ],
@@ -49989,7 +49962,7 @@
           "condition": "ability",
           "skillId": "cloud_beast_lightning"
         },
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Bestia alta e incurvata, con muso ossuto, orecchie appuntite e due corna color rame. Una criniera di nuvole pallide trabocca sulle spalle; avambracci lunghi e artigli sottili sostengono il busto. Stracci scuri pendono dai fianchi e una grande coda di vapore raccoglie elettricità. Mini Boss: 1 Scudo critico e 1 Schivata Oculum. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Lupo antropomorfo possente dal pelo argenteo, con muso lupino chiaro, orecchie appuntite e due corna color rame. Cammina su due gambe visibili e possiede due lunghe braccia artigliate, senza arti aggiuntivi. Una grande criniera bianca di pelo e nuvole pallide trabocca sulle spalle; stracci scuri pendono dai fianchi e un’unica grande coda di vapore raccoglie elettricità. Mini Boss: 1 Scudo critico e 1 Schivata Oculum. ",
         "additionalProgressionSkills": [
           "growth__cloud_beast__0",
           "growth__cloud_beast__1",
@@ -50008,9 +49981,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/planar_monsters.dart:866",
       "isGeneratedVariant": false,
       "baseId": "cloud_beast",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_cloud_beast_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -50020,14 +49993,24 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
+        "Occhio destro",
+        "Occhio sinistro",
+        "Braccio destro",
+        "Braccio sinistro",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda",
+        "Corno destro",
+        "Corno sinistro",
+        "Orecchio destro",
+        "Orecchio sinistro",
         "Torace"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_cloud_beast_canon_20261031.png",
+          "exists": true,
+          "sha256": "b8841d06a73caf9e1bd1cc07b17ede4e28e7b2c5bbbe1f0720117f8d8c5e34f3",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -50047,7 +50030,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -50067,7 +50049,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": true,
-      "physicalDescription": "variante corazzata (dal livello 5): protegge un passaggio e forza il gruppo a consumare difesa. bestia alta e incurvata, con muso ossuto, orecchie appuntite e due corna color rame. una criniera di nuvole pallide trabocca sulle spalle; avambracci lunghi e artigli sottili sostengono il busto. stracci scuri pendono dai fianchi e una grande coda di vapore raccoglie elettricità. mini boss: 1 scudo critico e 1 schivata oculum. ",
+      "physicalDescription": "variante corazzata (dal livello 5): protegge un passaggio e forza il gruppo a consumare difesa. lupo antropomorfo possente dal pelo argenteo, con muso lupino chiaro, orecchie appuntite e due corna color rame. cammina su due gambe visibili e possiede due lunghe braccia artigliate, senza arti aggiuntivi. una grande criniera bianca di pelo e nuvole pallide trabocca sulle spalle; stracci scuri pendono dai fianchi e un’unica grande coda di vapore raccoglie elettricità. mini boss: 1 scudo critico e 1 schivata oculum. ",
       "anatomy": [
         {
           "id": "body",
@@ -50082,6 +50064,42 @@
           "group": "head",
           "weak": false,
           "penalty": 0
+        },
+        {
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": true,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": true,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_1",
+          "label": "Zampa destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Zampa sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
         },
         {
           "id": "tail",
@@ -50147,6 +50165,10 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
+        "Braccio destro",
+        "Braccio sinistro",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda",
         "Torace"
       ],
@@ -54272,7 +54294,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "un umano soggiogato dalla bestia, un eiva potentissimo. due mezze maschere di argilla verde coprono zigomi e bocca, lasciando scoperta la fronte segnata dal sigillo del padrone. il torso è avvolto da corde di canapa e piastre di corteccia; un grembiule color ruggine e fasce grigie proteggono le gambe. una mano porta anelli d’osso, l’altra resta nuda per toccare il terreno prima di combattere. nell’ombra del corpo affiora una sagoma bestiale incompleta, espressione del controllo e non una creatura separata. protegge la bestia e uccide per suo conto. ",
+      "physicalDescription": "un umano soggiogato dalla bestia, un eiva potentissimo. due mezze maschere di argilla verde coprono zigomi e bocca, lasciando scoperta la fronte segnata dal sigillo del padrone. il torso è avvolto da corde di canapa e piastre di corteccia; un grembiule color malva e fasce grigie proteggono le gambe. una mano porta anelli d’osso, l’altra resta nuda per toccare il terreno prima di combattere. alle sue spalle si manifesta la bestia come uno stand grande, semitrasparente ma ben riconoscibile, color indaco e malva, dal volto largo e ferino. è la manifestazione del controllo, non una creatura separata. protegge la bestia e uccide per suo conto. ",
       "anatomy": [
         {
           "id": "body",
@@ -54362,14 +54384,17 @@
       "sourceLocation": "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart:4",
       "isGeneratedVariant": false,
       "baseId": "adoratore_bestia",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "themeAsset": "assets/oculum/home_art/theme_adoratore_bestia_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_adoratore_bestia_mobile_canon_20261031.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_adoratore_bestia_canon_20261031.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_adoratore_bestia_canon_20261031.png",
+        "assets/oculum/home_art/theme_adoratore_bestia_mobile_canon_20261031.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -54382,33 +54407,29 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_adoratore_bestia_canon_20261031.png",
+          "exists": true,
+          "sha256": "8803bcb4753324744526dd4d56b8ed07d3df4ccd2d4392c4231f2bc58f1d3b6a",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_adoratore_bestia_mobile_canon_20261031.png",
+          "exists": true,
+          "sha256": "77ed608edece3d505aee255ecd423e3958aad65a4326ca2d9874b9fdfaeb9774",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_adoratore_bestia_canon_20261031.png",
+          "exists": true,
+          "sha256": "9d9edbacfbaf4dac1e85a443c831e3b74f98df041c7490541eea7bfa9214cf82",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -54545,9 +54566,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart:17",
       "isGeneratedVariant": false,
       "baseId": "teschio_monaco",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_teschio_monaco_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -54567,9 +54588,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_teschio_monaco_canon_20261031.png",
+          "exists": true,
+          "sha256": "26f7b10b9a00bf2cd447ba12b4128465942812f3df310c13782d07a4a5157394",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -54589,7 +54610,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -54731,9 +54751,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart:52",
       "isGeneratedVariant": false,
       "baseId": "teschio_quattro_lame",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_teschio_quattro_lame_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -54754,9 +54774,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_teschio_quattro_lame_canon_20261031.png",
+          "exists": true,
+          "sha256": "d0958c9dbefcff74315fe377b0a6ea48ba5fc9fc70b50f9f833f4453416fe9f6",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -54776,7 +54796,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -54796,7 +54815,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "uno scheletro a quattro braccia con il cranio basso e largo, due escrescenze laterali simili a palchi incompleti e una mascella separata da legacci di cuoio. il torace si chiude in una gabbia ossea quasi circolare; il bacino stretto sostiene gambe molto lunghe e piedi a tre dita. gli artigli delle mani sono ricavati da falangi saldate, non da lame impugnate. piccole pietre scure tintinnano tra le costole quando corre. non possiede oculum né art oculum: combatte usando il corpo e abilità con costi di materia o recupero a cooldown. ",
+      "physicalDescription": "uno scheletro a quattro braccia con una cresta cranica alta e squadrata e una grande mascella aperta. il torace si chiude in una gabbia ossea quasi circolare; il bacino stretto sostiene due gambe lunghe e piedi artigliati. gli artigli delle quattro mani sono ricavati da falangi saldate, non da lame impugnate. piccole pietre scure tintinnano tra le costole quando corre. non possiede oculum né art oculum: combatte usando il corpo e abilità con costi di materia o recupero a cooldown. ",
       "anatomy": [
         {
           "id": "body",
@@ -54875,7 +54894,7 @@
         }
       ],
       "weakPoint": "Le giunture delle quattro braccia.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Uno scheletro a quattro braccia con il cranio basso e largo, due escrescenze laterali simili a palchi incompleti e una mascella separata da legacci di cuoio. Il torace si chiude in una gabbia ossea quasi circolare; il bacino stretto sostiene gambe molto lunghe e piedi a tre dita. Gli artigli delle mani sono ricavati da falangi saldate, non da lame impugnate. Piccole pietre scure tintinnano tra le costole quando corre. Non possiede Oculum né Art Oculum: combatte usando il corpo e abilità con costi di Materia o recupero a cooldown.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Uno scheletro a quattro braccia con una cresta cranica alta e squadrata e una grande mascella aperta. Il torace si chiude in una gabbia ossea quasi circolare; il bacino stretto sostiene due gambe lunghe e piedi artigliati. Gli artigli delle quattro mani sono ricavati da falangi saldate, non da lame impugnate. Piccole pietre scure tintinnano tra le costole quando corre. Non possiede Oculum né Art Oculum: combatte usando il corpo e abilità con costi di Materia o recupero a cooldown.",
       "drops": [
         "falange_mostruosa"
       ],
@@ -54885,7 +54904,7 @@
         "dispositions": [
           "ostile"
         ],
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Uno scheletro a quattro braccia con il cranio basso e largo, due escrescenze laterali simili a palchi incompleti e una mascella separata da legacci di cuoio. Il torace si chiude in una gabbia ossea quasi circolare; il bacino stretto sostiene gambe molto lunghe e piedi a tre dita. Gli artigli delle mani sono ricavati da falangi saldate, non da lame impugnate. Piccole pietre scure tintinnano tra le costole quando corre. Non possiede Oculum né Art Oculum: combatte usando il corpo e abilità con costi di Materia o recupero a cooldown. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Uno scheletro a quattro braccia con una cresta cranica alta e squadrata e una grande mascella aperta. Il torace si chiude in una gabbia ossea quasi circolare; il bacino stretto sostiene due gambe lunghe e piedi artigliati. Gli artigli delle quattro mani sono ricavati da falangi saldate, non da lame impugnate. Piccole pietre scure tintinnano tra le costole quando corre. Non possiede Oculum né Art Oculum: combatte usando il corpo e abilità con costi di Materia o recupero a cooldown. ",
         "additionalProgressionSkills": [
           "growth__teschio_mostruoso__0",
           "growth__teschio_mostruoso__1",
@@ -54904,14 +54923,17 @@
       "sourceLocation": "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart:77",
       "isGeneratedVariant": false,
       "baseId": "teschio_mostruoso",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "themeAsset": "assets/oculum/home_art/theme_teschio_mostruoso_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_teschio_mostruoso_mobile_canon_20261031.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_teschio_mostruoso_canon_20261031.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_teschio_mostruoso_canon_20261031.png",
+        "assets/oculum/home_art/theme_teschio_mostruoso_mobile_canon_20261031.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -54926,33 +54948,29 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_teschio_mostruoso_canon_20261031.png",
+          "exists": true,
+          "sha256": "4889e17735422101691c6ac28ad30257acd010c34729604d251497beb0d9faa9",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_teschio_mostruoso_mobile_canon_20261031.png",
+          "exists": true,
+          "sha256": "8c71b9c9fd55864302d4aaf8977b93b945e15b00747c91b15d9096d2059563cd",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_teschio_mostruoso_canon_20261031.png",
+          "exists": true,
+          "sha256": "b5bdba51c34b740205f53f9934531bcdc41b1e7d62bef7df88131856c67b17a4",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -55068,9 +55086,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart:90",
       "isGeneratedVariant": false,
       "baseId": "ogor",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_ogor_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -55089,9 +55107,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_ogor_canon_20261031.png",
+          "exists": true,
+          "sha256": "c929fbd9221bd13cf556c1ddf10a9651251ba4f49d669630f54f68cc80185207",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -55111,7 +55129,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -55281,9 +55298,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart:110",
       "isGeneratedVariant": false,
       "baseId": "teirak",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_teirak_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -55308,9 +55325,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_teirak_canon_20261031.png",
+          "exists": true,
+          "sha256": "2055a2fea6749f15c3c6fb4cb3487418785fbb58ef31c3fba7eb19b71fda2db6",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -55330,7 +55347,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -55367,22 +55383,11 @@
           "penalty": 0
         },
         {
-          "id": "eyes_1",
-          "label": "Occhio destro",
+          "id": "eyes",
+          "label": "Occhio",
           "group": "eyes",
           "weak": true,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "eyes_2",
-          "label": "Occhio sinistro",
-          "group": "eyes",
-          "weak": true,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
+          "penalty": 0
         },
         {
           "id": "arms_1",
@@ -55462,12 +55467,12 @@
           "growth__manichino_spada__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:4",
+      "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:3",
       "isGeneratedVariant": false,
       "baseId": "manichino_spada",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_manichino_spada_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -55477,8 +55482,7 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
-        "Occhio destro",
-        "Occhio sinistro",
+        "Occhio",
         "Braccio destro",
         "Braccio sinistro",
         "Gamba destra",
@@ -55488,9 +55492,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_manichino_spada_canon_20261031.png",
+          "exists": true,
+          "sha256": "f3f1bcd719669c227bea2684eddcd916a59c8fabafbb811a4efb423ab9847be6",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -55510,7 +55514,169 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
+        "phone",
+        "relic"
+      ],
+      "completeDedicatedArtworkSetMapped": false,
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+    },
+    {
+      "id": "manichino_baghest",
+      "name": "Manichino di Baghest",
+      "planes": [
+        "morti",
+        "mezzano"
+      ],
+      "element": "taglio",
+      "classification": [
+        "Creatura planare"
+      ],
+      "isBoss": false,
+      "isMiniBoss": false,
+      "physicalDescription": "un cadavere mosso da una lama senziente, coperto da un cappotto blu ardesia con spalle chiuse. una maschera lignea senza bocca nasconde il volto. due gambe e due braccia: la lama è nel braccio destro e un solo occhio rosso è incastonato nella sua guardia; il sinistro termina in una mano. è già succube di baghest tramite corruzione rossa dopo tre notti. conserva tagli rapidi, difesa aumentata e spada al 100%. purificato con una pietra anti-corruzione cade a terra e diventa lentamente parte del terreno, senza contare come uccisione. ",
+      "anatomy": [
+        {
+          "id": "body",
+          "label": "Corpo",
+          "group": "body",
+          "weak": false,
+          "penalty": 0
+        },
+        {
+          "id": "head",
+          "label": "Testa",
+          "group": "head",
+          "weak": false,
+          "penalty": 0
+        },
+        {
+          "id": "eyes",
+          "label": "Occhio",
+          "group": "eyes",
+          "weak": true,
+          "penalty": 0
+        },
+        {
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_1",
+          "label": "Gamba destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Gamba sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "mask",
+          "label": "Maschera",
+          "group": "mask",
+          "weak": false,
+          "penalty": 0
+        }
+      ],
+      "weakPoint": "L’occhio nella guardia della spada che controlla il cadavere.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Un cadavere mosso da una lama senziente, coperto da un cappotto blu ardesia con spalle chiuse. Una maschera lignea senza bocca nasconde il volto. Due gambe e due braccia: la lama è nel braccio destro e un solo occhio rosso è incastonato nella sua guardia; il sinistro termina in una mano. È già succube di Baghest tramite Corruzione Rossa dopo tre Notti. Conserva Tagli rapidi, Difesa aumentata e Spada al 100%. Purificato con una Pietra anti-corruzione cade a terra e diventa lentamente parte del terreno, senza contare come uccisione.",
+      "drops": [
+        "guardia_occhio_manichino"
+      ],
+      "inventoryItems": [],
+      "encounterRules": {
+        "authoredCanonical": true,
+        "dispositions": [
+          "ostile"
+        ],
+        "canonicalVariantOf": "manichino_spada",
+        "initialCorruptionKind": "rossa",
+        "initialCorruptionNights": 3,
+        "purificationKind": "baghest_stone",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Un cadavere mosso da una lama senziente, coperto da un cappotto blu ardesia con spalle chiuse. Una maschera lignea senza bocca nasconde il volto. Due gambe e due braccia: la lama è nel braccio destro e un solo occhio rosso è incastonato nella sua guardia; il sinistro termina in una mano. È già succube di Baghest tramite Corruzione Rossa dopo tre Notti. Conserva Tagli rapidi, Difesa aumentata e Spada al 100%. Purificato con una Pietra anti-corruzione cade a terra e diventa lentamente parte del terreno, senza contare come uccisione. ",
+        "additionalProgressionSkills": [
+          "growth__manichino_baghest__0",
+          "growth__manichino_baghest__1",
+          "growth__manichino_baghest__2",
+          "growth__manichino_baghest__3",
+          "growth__manichino_baghest__4",
+          "growth__manichino_baghest__5",
+          "growth__manichino_baghest__6",
+          "growth__manichino_baghest__7",
+          "growth__manichino_baghest__8",
+          "growth__manichino_baghest__9",
+          "growth__manichino_baghest__10",
+          "growth__manichino_baghest__11"
+        ]
+      },
+      "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:19",
+      "isGeneratedVariant": false,
+      "baseId": "manichino_baghest",
+      "themeAsset": "assets/oculum/home_art/theme_manichino_baghest_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": null,
+      "mobileThemeAssetExists": false,
+      "relicAsset": null,
+      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
+      "unlinkedArtworkCandidates": [],
+      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "anatomyLabels": [
+        "Corpo",
+        "Testa",
+        "Occhio",
+        "Braccio destro",
+        "Braccio sinistro",
+        "Gamba destra",
+        "Gamba sinistra",
+        "Maschera"
+      ],
+      "artworkEvidence": {
+        "desktop": {
+          "path": "assets/oculum/home_art/theme_manichino_baghest_canon_20261031.png",
+          "exists": true,
+          "sha256": "b9df11fc4235069675571e8677ef5f9b054e2972f8150945cf49e61c2341e886",
+          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "uiVerifiedByThisAudit": false
+        },
+        "phone": {
+          "path": null,
+          "exists": false,
+          "sha256": null,
+          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "uiVerifiedByThisAudit": false
+        },
+        "relic": {
+          "path": null,
+          "exists": false,
+          "sha256": null,
+          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "uiVerifiedByThisAudit": false
+        }
+      },
+      "missingDedicatedArtwork": [
         "phone",
         "relic"
       ],
@@ -55537,7 +55703,64 @@
           "label": "Corpo",
           "group": "body",
           "weak": false,
-          "penalty": 0
+          "penalty": 0,
+          "material": "flesh"
+        },
+        {
+          "id": "head",
+          "label": "Testa",
+          "group": "head",
+          "weak": false,
+          "penalty": 0,
+          "material": "flesh"
+        },
+        {
+          "id": "arms_1",
+          "label": "Braccio destro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1,
+          "material": "flesh"
+        },
+        {
+          "id": "arms_2",
+          "label": "Braccio sinistro",
+          "group": "arms",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1,
+          "material": "flesh"
+        },
+        {
+          "id": "legs_1",
+          "label": "Gamba destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1,
+          "material": "flesh"
+        },
+        {
+          "id": "legs_2",
+          "label": "Gamba sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1,
+          "material": "flesh"
+        },
+        {
+          "id": "joint",
+          "label": "Giunture dell’armatura",
+          "group": "joint",
+          "weak": true,
+          "penalty": 0,
+          "material": "metal"
         },
         {
           "id": "mask",
@@ -55574,12 +55797,12 @@
           "growth__laer__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:17",
+      "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:31",
       "isGeneratedVariant": false,
       "baseId": "laer",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_laer_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -55588,13 +55811,19 @@
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
+        "Testa",
+        "Braccio destro",
+        "Braccio sinistro",
+        "Gamba destra",
+        "Gamba sinistra",
+        "Giunture dell’armatura",
         "Maschera"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_laer_canon_20261031.png",
+          "exists": true,
+          "sha256": "d35b9f9867efa8804fa39c44fb53a56a23a54e2f461227e6e844cdb96b2223a6",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -55614,7 +55843,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -55643,24 +55871,6 @@
           "group": "body",
           "weak": false,
           "penalty": 0
-        },
-        {
-          "id": "eyes_1",
-          "label": "Occhio destro",
-          "group": "eyes",
-          "weak": false,
-          "penalty": 0,
-          "side": "right",
-          "sideIndex": 1
-        },
-        {
-          "id": "eyes_2",
-          "label": "Occhio sinistro",
-          "group": "eyes",
-          "weak": false,
-          "penalty": 0,
-          "side": "left",
-          "sideIndex": 1
         },
         {
           "id": "core",
@@ -55697,53 +55907,50 @@
           "growth__torretta_oculum__11"
         ]
       },
-      "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:30",
+      "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:44",
       "isGeneratedVariant": false,
       "baseId": "torretta_oculum",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "themeAsset": "assets/oculum/home_art/theme_torretta_oculum_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
+      "mobileThemeAsset": "assets/oculum/home_art/theme_torretta_oculum_mobile_canon_20261031.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_torretta_oculum_canon_20261031.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_torretta_oculum_canon_20261031.png",
+        "assets/oculum/home_art/theme_torretta_oculum_mobile_canon_20261031.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
-        "Occhio destro",
-        "Occhio sinistro",
         "Nucleo"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_torretta_oculum_canon_20261031.png",
+          "exists": true,
+          "sha256": "09b43205f213c45934cb5a062c18d74028eff269137788741054a0a84e69b45a",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_torretta_oculum_mobile_canon_20261031.png",
+          "exists": true,
+          "sha256": "18e4654ac07ee62a2a84d95cd7d68c0183b21d1419c3a77bb548c42e8f214bd0",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_torretta_oculum_canon_20261031.png",
+          "exists": true,
+          "sha256": "fca2d7de6bd8c23bdcf08443cb4f6461f8fc67c2b529af61f05de64732ea65f7",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "desktop",
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -56568,9 +56775,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/rebirth_rage_evergreen.dart:31",
       "isGeneratedVariant": false,
       "baseId": "feralis",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_feralis_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -56591,9 +56798,9 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_feralis_canon_20261031.png",
+          "exists": true,
+          "sha256": "69598475c576a7243b2c42d03acaad0fc2e7f10deb03f307431957ce72e997da",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -56613,7 +56820,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -58653,7 +58859,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "creatura snella dalla testa turchese, grandi orecchie nere e occhi gialli; macchie nere punteggiano la pelle verde acqua, il petto è arancio e le dita lunghe terminano in unghie ricurve. le braccia quasi toccano terra e si allungano come tendini elastici per afferrare rami e colpire a distanza. compie salti enormi e bilancia ogni atterraggio con una coda sottile dalla punta gialla a foglia. la coda integra gli concede riflessi +6. ",
+      "physicalDescription": "primate saltatore alto circa 1,50 metri, con due braccia e due gambe. testa turchese, grandi orecchie nere e occhi gialli; macchie nere punteggiano la pelle verde acqua, il petto è arancio e le dita lunghe terminano in unghie ricurve. le braccia quasi toccano terra e si allungano come tendini elastici per afferrare rami e colpire a distanza. compie salti enormi e bilancia ogni atterraggio con una coda sottile dalla punta gialla a foglia. la coda integra gli concede riflessi +6. ",
       "anatomy": [
         {
           "id": "body",
@@ -58706,11 +58912,47 @@
           "sideIndex": 1
         },
         {
+          "id": "legs_1",
+          "label": "Zampa destra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Zampa sinistra",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
           "id": "tail",
           "label": "Coda",
           "group": "tail",
           "weak": true,
           "penalty": 0
+        },
+        {
+          "id": "ears_1",
+          "label": "Orecchio destro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "ears_2",
+          "label": "Orecchio sinistro",
+          "group": "ears",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
         },
         {
           "id": "torso",
@@ -58721,7 +58963,7 @@
         }
       ],
       "weakPoint": "Coda: un critico mirato che danneggia la Vita la distrugge per lo scontro, rimuove Riflessi +6 e impone Iniziativa −3.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Creatura snella dalla testa turchese, grandi orecchie nere e occhi gialli; macchie nere punteggiano la pelle verde acqua, il petto è arancio e le dita lunghe terminano in unghie ricurve. Le braccia quasi toccano terra e si allungano come tendini elastici per afferrare rami e colpire a distanza. Compie salti enormi e bilancia ogni atterraggio con una coda sottile dalla punta gialla a foglia. La coda integra gli concede Riflessi +6.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Primate saltatore alto circa 1,50 metri, con due braccia e due gambe. Testa turchese, grandi orecchie nere e occhi gialli; macchie nere punteggiano la pelle verde acqua, il petto è arancio e le dita lunghe terminano in unghie ricurve. Le braccia quasi toccano terra e si allungano come tendini elastici per afferrare rami e colpire a distanza. Compie salti enormi e bilancia ogni atterraggio con una coda sottile dalla punta gialla a foglia. La coda integra gli concede Riflessi +6.",
       "drops": [
         "tendine_elastico_maculato"
       ],
@@ -58732,7 +58974,7 @@
           "pacifico",
           "neutrale"
         ],
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Creatura snella dalla testa turchese, grandi orecchie nere e occhi gialli; macchie nere punteggiano la pelle verde acqua, il petto è arancio e le dita lunghe terminano in unghie ricurve. Le braccia quasi toccano terra e si allungano come tendini elastici per afferrare rami e colpire a distanza. Compie salti enormi e bilancia ogni atterraggio con una coda sottile dalla punta gialla a foglia. La coda integra gli concede Riflessi +6. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Primate saltatore alto circa 1,50 metri, con due braccia e due gambe. Testa turchese, grandi orecchie nere e occhi gialli; macchie nere punteggiano la pelle verde acqua, il petto è arancio e le dita lunghe terminano in unghie ricurve. Le braccia quasi toccano terra e si allungano come tendini elastici per afferrare rami e colpire a distanza. Compie salti enormi e bilancia ogni atterraggio con una coda sottile dalla punta gialla a foglia. La coda integra gli concede Riflessi +6. ",
         "additionalProgressionSkills": [
           "growth__saltalungo_maculato__0",
           "growth__saltalungo_maculato__1",
@@ -58751,9 +58993,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/canonical_monster_variants.dart:156",
       "isGeneratedVariant": false,
       "baseId": "saltalungo_maculato",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_saltalungo_maculato_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -58767,14 +59009,18 @@
         "Occhio sinistro",
         "Braccio destro",
         "Braccio sinistro",
+        "Zampa destra",
+        "Zampa sinistra",
         "Coda",
+        "Orecchio destro",
+        "Orecchio sinistro",
         "Torace"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_saltalungo_maculato_canon_20261031.png",
+          "exists": true,
+          "sha256": "7b2915d2bf3f409e16524a8c84db25120974051384ce616d3ffdbc2d13cc6594",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -58794,7 +59040,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -58803,7 +59048,7 @@
     },
     {
       "id": "famelico_oblio",
-      "name": "Famelico dell’Oblio",
+      "name": "Oblivion Shield",
       "planes": [
         "oblio",
         "shadow_hell"
@@ -58814,7 +59059,7 @@
       ],
       "isBoss": false,
       "isMiniBoss": false,
-      "physicalDescription": "predatore nero e violaceo dalle membra bestiali, corna sottili e dita uncinate. fenditure iridescenti attraversano muso e torso come ricordi spezzati; dalla bocca scende una lingua rossa lunghissima. una coda nera termina in un uncino ad anello. assale con scatti fulminei e morsi che intaccano la memoria. chi viene ucciso da lui è dimenticato dal party: la scheda e i progressi restano conservati. ",
+      "physicalDescription": "predatore quadrupede nero e violaceo, massiccio e raccolto, con quattro arti artigliati: quelli anteriori sono particolarmente robusti. ha due lunghe corna, occhi violacei e una lingua rossa lunghissima. fenditure iridescenti attraversano muso e torso come ricordi spezzati; una coda nera termina in un uncino ad anello. assale con scatti fulminei e morsi che intaccano la memoria. chi viene ucciso da lui è dimenticato dal party: la scheda e i progressi restano conservati. il vecchio nome famelico dell’oblio conserva lo stesso identificativo interno. ",
       "anatomy": [
         {
           "id": "body",
@@ -58829,6 +59074,60 @@
           "group": "head",
           "weak": false,
           "penalty": 0
+        },
+        {
+          "id": "eyes_1",
+          "label": "Occhio destro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "eyes_2",
+          "label": "Occhio sinistro",
+          "group": "eyes",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_1",
+          "label": "Zampa destra anteriore",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Zampa sinistra anteriore",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_3",
+          "label": "Zampa destra posteriore",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 2
+        },
+        {
+          "id": "legs_4",
+          "label": "Zampa sinistra posteriore",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 2
         },
         {
           "id": "wings_1",
@@ -58856,6 +59155,24 @@
           "penalty": 0
         },
         {
+          "id": "horns_1",
+          "label": "Corno destro",
+          "group": "horns",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "horns_2",
+          "label": "Corno sinistro",
+          "group": "horns",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
           "id": "fold",
           "label": "Piega del corpo",
           "group": "fold",
@@ -58864,7 +59181,7 @@
         }
       ],
       "weakPoint": "La piega iridescente sotto la mandibola mentre spalanca il morso.",
-      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Predatore nero e violaceo dalle membra bestiali, corna sottili e dita uncinate. Fenditure iridescenti attraversano muso e torso come ricordi spezzati; dalla bocca scende una lingua rossa lunghissima. Una coda nera termina in un uncino ad anello. Assale con scatti fulminei e morsi che intaccano la memoria. Chi viene ucciso da lui è dimenticato dal party: la scheda e i progressi restano conservati.",
+      "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Predatore quadrupede nero e violaceo, massiccio e raccolto, con quattro arti artigliati: quelli anteriori sono particolarmente robusti. Ha due lunghe corna, occhi violacei e una lingua rossa lunghissima. Fenditure iridescenti attraversano muso e torso come ricordi spezzati; una coda nera termina in un uncino ad anello. Assale con scatti fulminei e morsi che intaccano la memoria. Chi viene ucciso da lui è dimenticato dal party: la scheda e i progressi restano conservati. Il vecchio nome Famelico dell’Oblio conserva lo stesso identificativo interno.",
       "drops": [
         "zanna_ricordo_vuoto"
       ],
@@ -58874,7 +59191,7 @@
         "dispositions": [
           "ostile"
         ],
-        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Predatore nero e violaceo dalle membra bestiali, corna sottili e dita uncinate. Fenditure iridescenti attraversano muso e torso come ricordi spezzati; dalla bocca scende una lingua rossa lunghissima. Una coda nera termina in un uncino ad anello. Assale con scatti fulminei e morsi che intaccano la memoria. Chi viene ucciso da lui è dimenticato dal party: la scheda e i progressi restano conservati. ",
+        "naturalAttitude": "Le sue reazioni dipendono dall’ambiente, dalle minacce e dai legami che ha sviluppato. Predatore quadrupede nero e violaceo, massiccio e raccolto, con quattro arti artigliati: quelli anteriori sono particolarmente robusti. Ha due lunghe corna, occhi violacei e una lingua rossa lunghissima. Fenditure iridescenti attraversano muso e torso come ricordi spezzati; una coda nera termina in un uncino ad anello. Assale con scatti fulminei e morsi che intaccano la memoria. Chi viene ucciso da lui è dimenticato dal party: la scheda e i progressi restano conservati. Il vecchio nome Famelico dell’Oblio conserva lo stesso identificativo interno. ",
         "additionalProgressionSkills": [
           "growth__famelico_oblio__0",
           "growth__famelico_oblio__1",
@@ -58893,9 +59210,9 @@
       "sourceLocation": "lib/pages/oculum_dungeon/canonical_monster_variants.dart:170",
       "isGeneratedVariant": false,
       "baseId": "famelico_oblio",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art/theme_famelico_oblio_canon_20261031.png",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato collegato, presente",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
@@ -58905,16 +59222,24 @@
       "anatomyLabels": [
         "Corpo",
         "Testa",
+        "Occhio destro",
+        "Occhio sinistro",
+        "Zampa destra anteriore",
+        "Zampa sinistra anteriore",
+        "Zampa destra posteriore",
+        "Zampa sinistra posteriore",
         "Ala destra",
         "Ala sinistra",
         "Coda",
+        "Corno destro",
+        "Corno sinistro",
         "Piega del corpo"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_famelico_oblio_canon_20261031.png",
+          "exists": true,
+          "sha256": "49422beecea960edb91f670b4067b973d1e73d001e6a23db7594f8ff8138f6ef",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
@@ -58934,7 +59259,6 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
@@ -152044,11 +152368,14 @@
       "themeAsset": "assets/oculum/home_art/theme_sharp_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_sharp_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_sharp_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_sharp_v1.png",
+        "assets/oculum/home_art/theme_sharp_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -152070,25 +152397,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_sharp_mobile_v1.png",
+          "exists": true,
+          "sha256": "562c8d475db94db45356d600b8185c31a21352a2a3f22fc154d3a6070d19debb",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_sharp_v1.png",
+          "exists": true,
+          "sha256": "fcfbc2afda62ac5a3e3dbf541328843b029e126e3c7dd457868e108c880bbec9",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -153046,11 +153370,14 @@
       "themeAsset": "assets/oculum/home_art/theme_topino_avventuroso_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_topino_avventuroso_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_topino_avventuroso_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_topino_avventuroso_v1.png",
+        "assets/oculum/home_art/theme_topino_avventuroso_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -153075,25 +153402,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_topino_avventuroso_mobile_v1.png",
+          "exists": true,
+          "sha256": "dfe650156113bac3d834e1aee1d556d9afad1a70bebb40a869a959c2e0709f04",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_topino_avventuroso_v1.png",
+          "exists": true,
+          "sha256": "6a09788f1298abb1b2e892de79345ea83de7cabc03567e463eb7e2273eb5e0f3",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {
@@ -153439,11 +153763,14 @@
       "themeAsset": "assets/oculum/home_art/theme_mosca_campana_v1.png",
       "themeAssetExists": true,
       "themeStatus": "asset dedicato collegato, presente",
-      "mobileThemeAsset": null,
-      "mobileThemeAssetExists": false,
-      "relicAsset": null,
-      "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
-      "unlinkedArtworkCandidates": [],
+      "mobileThemeAsset": "assets/oculum/home_art/theme_mosca_campana_mobile_v1.png",
+      "mobileThemeAssetExists": true,
+      "relicAsset": "assets/oculum/home_art/relic_mosca_campana_v1.png",
+      "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
+      "unlinkedArtworkCandidates": [
+        "assets/oculum/home_art/relic_mosca_campana_v1.png",
+        "assets/oculum/home_art/theme_mosca_campana_mobile_v1.png"
+      ],
       "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
       "anatomyLabels": [
         "Corpo",
@@ -153469,25 +153796,22 @@
           "uiVerifiedByThisAudit": false
         },
         "phone": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/theme_mosca_campana_mobile_v1.png",
+          "exists": true,
+          "sha256": "4f6a6a5f57bf0cf4b56cfb6fa374cb0800ed4d4eef79341f1480701e124d0006",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         },
         "relic": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
+          "path": "assets/oculum/home_art/relic_mosca_campana_v1.png",
+          "exists": true,
+          "sha256": "3913c8a3d65f727729b9f7378dd07a60a19a724455f58cbcce086f628288e708",
           "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
           "uiVerifiedByThisAudit": false
         }
       },
-      "missingDedicatedArtwork": [
-        "phone",
-        "relic"
-      ],
-      "completeDedicatedArtworkSetMapped": false,
+      "missingDedicatedArtwork": [],
+      "completeDedicatedArtworkSetMapped": true,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
     },
     {

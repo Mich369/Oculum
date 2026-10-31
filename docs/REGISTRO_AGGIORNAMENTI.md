@@ -2,6 +2,7 @@
 
 ## Sei nuovi temi completi e Cavaliere Morto — 31 ottobre
 
+- Ritirati dal manuale/catalogo attivo Cuore Filo e la sua variante Veterana, come richiesto. Non vengono più proposti per nuovi incontri o artwork; le vecchie schede e le personalizzazioni conservano compatibilità. Le altre specie mantengono i propri ID e stili di variante.
 - Integrati gli ulteriori18PNG approvati: sfondo desktop, composizione telefono e reliquia di Specchio Mangiavoce, Teschio Mostruoso, Torretta Oculum, Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo. I file conservano esattamente i pixel e i colori confermati; le alternative restano separate. Le nuove composizioni si vedono intere anche sui telefoni stretti, senza ritagliare il soggetto laterale.
 - Il punto debole del Cavaliere Morto è la sfera di Oculum nascosta alla base della vita, con parte distinta in Precisione. L’armatura è vuota: niente ossa o occhi provenienti dalla descrizione della sua eventuale Summon. Conservati i punti deboli e le anatomie personalizzati dal Master.
 - Descrizioni coerenti con gli artwork: la Bestia compare dietro l’Adoratore come stand semitrasparente; il Teschio ha cresta alta, quattro braccia artigliate e due gambe. Nessuna illustrazione aggiunge poteri, immunità o drop. Nel Monster Book la pagina acquistata mantiene lo sfondo senza imporre un ritratto.

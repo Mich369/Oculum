@@ -1,5 +1,7 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+Cuore Filo, 31 ottobre: **«non voglio questo mostro nella campagna»**, corretto subito in **«cioè nel manuale»**. Rifiuto della creatura, non selezione tra le immagini A–E. Escludere base e varianti dal manuale/catalogo attivo e dalla coda artwork; conservare eventuali schede salvate e relativi ID. Le domande artistiche di questo lotto sono superate.
+
 Specchio Mangiavoce, Teschio Mostruoso e Torretta Oculum: seconda risposta **«Sì, tutti e sei canonici»**, riferita ai telefoni v2 e alle reliquie Specchio v2/Teschio v3/Torretta v2 mostrati. Conferma distinta dai sei derivati precedenti; file/versioni/SHA nel manifest centrale e nel pacchetto del lotto. Non estendere ad altre revisioni o immagini future.
 
 Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo: **«Sì, tutti e sei canonici»** alla domanda riferita esattamente a telefono v1 e reliquia v2 di ciascuno, dopo la correzione dei margini. File/SHA e ricevuta separata nel manifest dei derivati; nessuna estensione agli altri sei in produzione.
