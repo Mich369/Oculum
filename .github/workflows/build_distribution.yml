@@ -503,14 +503,23 @@ jobs:
       - name: Package Android App Bundle
         run: cp build/app/outputs/bundle/release/app-release.aab build/distribution/Oculum-Android-release.aab
 
-      - name: Upload Android artifact
+      # Keep the updater's existing APK artifact name. APK and AAB together
+      # exceed the 2 GiB per-asset GitHub Release limit as artwork grows.
+      - name: Upload Android APK artifact
         uses: actions/upload-artifact@v6
         with:
           name: Oculum-Android
           path: |
             build/distribution/Oculum-Android-release.apk
-            build/distribution/Oculum-Android-release.aab
             build/android-update-compatibility.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Android App Bundle artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-Android-AAB
+          path: build/distribution/Oculum-Android-release.aab
           if-no-files-found: error
           retention-days: 30
 

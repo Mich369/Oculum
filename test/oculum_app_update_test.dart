@@ -27,6 +27,47 @@ void main() {
         })} -->',
   });
   test(
+    'Android updater keeps APK identity when the AAB download comes first',
+    () async {
+      final payload = jsonDecode(release()) as Map<String, dynamic>;
+      final catalog =
+          jsonDecode(
+                (payload['body'] as String)
+                    .split('<!-- OCULUM_DOWNLOADS:')
+                    .last
+                    .split(' -->')
+                    .first,
+              )
+              as Map;
+      final group = catalog['1'] as Map;
+      (group['artifacts'] as List).insert(0, {
+        'name': 'Oculum-Android-AAB',
+        'bytes': 999,
+        'sha256': 'sha256:${'d' * 64}',
+        'url':
+            'https://github.com/Mich369/Oculum/releases/download/oculum-build-123/Oculum-Android-AAB.zip',
+      });
+      payload['body'] = '<!-- OCULUM_DOWNLOADS:${jsonEncode(catalog)} -->';
+      final client = MockClient(
+        (request) async => http.Response(
+          request.url.path.contains('/compare/')
+              ? jsonEncode({'status': 'ahead'})
+              : jsonEncode(payload),
+          200,
+        ),
+      );
+      addTearDown(client.close);
+      final update = await oculumCheckAppUpdate(
+        client,
+        'Oculum-Android',
+        currentCommit: old,
+      );
+      expect(update!.url, endsWith('/Oculum-Android.zip'));
+      expect(update.bytes, 100);
+      expect(update.commit, newer);
+    },
+  );
+  test(
     'only a verified descendant is offered, and Test retains its edition',
     () async {
       final client = MockClient(

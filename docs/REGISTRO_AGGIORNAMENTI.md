@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Download Android separati — 2 novembre
+
+- APK e App Bundle Android hanno ora archivi pubblici separati: la loro dimensione combinata aveva superato il limite di2GiB di GitHub e fermato la pubblicazione. Il nome APK rimane compatibile con gli aggiornamenti delle versioni precedenti; il menu Web offre anche l’AAB come download aggiuntivo.
+- Artwork e contenuto dei pacchetti restano integri. Windows normale/Test, runtime, firma stabile Android, salvataggi e personalizzazioni conservati. [Causa e verifica](BUG51_ANDROID_APK_AAB_SEPARATI_2026-11-02.md).
+
 ## Ventitré temi e nucleo del Golem — 1 novembre
 
 -69immagini canoniche esatte: desktop, telefono e reliquia di23creature. Il Robot Artigliato a Molla è molto più grande, RockShield è un gigante umanoide bipede e il Golem di nuvole rocciose è più imponente, come nelle revisioni approvate. Le composizioni rimangono intere sui telefoni; niente nuovi poteri o drop dalle reliquie.

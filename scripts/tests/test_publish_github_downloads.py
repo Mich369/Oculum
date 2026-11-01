@@ -12,6 +12,26 @@ spec.loader.exec_module(publisher)
 
 
 class DownloadPublicationTests(unittest.TestCase):
+    def test_android_apk_and_aab_are_separate_reviewed_release_assets(self):
+        # This real growth boundary broke publication when the two packages
+        # were combined. Keep APK identity stable for older app updaters.
+        apk = dict(name="Oculum-Android", id=1, expired=False, size_in_bytes=1_140_000_000)
+        aab = dict(name="Oculum-Android-AAB", id=2, expired=False, size_in_bytes=1_020_000_000)
+        with self.assertRaisesRegex(ValueError, "size limit"):
+            publisher.asset_name({**apk, "size_in_bytes": apk["size_in_bytes"] + aab["size_in_bytes"]})
+        self.assertEqual(publisher.asset_name(apk), "Oculum-Android.zip")
+        self.assertEqual(publisher.asset_name(aab), "Oculum-Android-AAB.zip")
+        required = [dict(name=name, id=index+10, expired=False, size_in_bytes=4)
+                    for index,name in enumerate(publisher.PUBLIC_ARTIFACTS) if name != "Oculum-Android"]
+        selected = publisher.select_release_archives([aab, *required, apk])
+        self.assertIn(aab, selected)
+        self.assertEqual(len(publisher.select_public_artifacts(selected)), 5)
+        workflow = (Path(__file__).parents[2] / ".github/workflows/build_distribution.yml").read_text(encoding="utf-8")
+        apk_upload = workflow.split("name: Upload Android APK artifact",1)[1].split("name: Upload Android App Bundle artifact",1)[0]
+        self.assertIn("name: Oculum-Android\n", apk_upload)
+        self.assertIn("Oculum-Android-release.apk", apk_upload)
+        self.assertNotIn("Oculum-Android-release.aab", apk_upload)
+
     def test_update_log_uses_the_exact_built_commit(self):
         content = base64.b64encode("# Log\n\n- Bug fix\n- Nuovi mostri\n".encode()).decode()
         with patch.object(publisher, "api", return_value={"content": content}) as fetch:

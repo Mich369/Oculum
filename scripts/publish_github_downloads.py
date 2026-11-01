@@ -25,6 +25,7 @@ PUBLIC_ARTIFACTS = (
     "Oculum-Linux", "Oculum-Android",
 )
 EXTRA_ARCHIVES = (
+    "Oculum-Android-AAB",
     "Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture",
     "Oculum-Windows-Folders", "Oculum-Windows-Folder", "Oculum-Test-Windows-Folder",
     "Oculum-Verifica-Mostri",

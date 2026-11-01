@@ -16,6 +16,8 @@ In questo caso scarica il pacchetto Windows completo ed estrailo **in una nuova 
 
 ## Android
 
+Per installare o aggiornare scegli **Oculum-Android**, che contiene l’APK e il rapporto di compatibilità della firma. **Oculum-Android-AAB** offre separatamente l’App Bundle destinato alla distribuzione tramite store. La separazione mantiene ciascun download entro il limite GitHub e conserva il nome APK riconosciuto dalle versioni precedenti.
+
 Apri l’APK verificato e conferma l’aggiornamento nel programma di installazione Android. L’aggiornamento diretto richiede lo stesso identificativo applicazione, lo stesso certificato di firma e un codice versione ammesso dal dispositivo. I nuovi APK usano la firma stabile del progetto.
 
 Un vecchio APK firmato con una chiave diversa non può essere sostituito mantenendo i dati tramite il normale aggiornamento Android. **Non disinstallarlo prima di aver esportato e controllato il backup delle schede e delle immagini.** Un’eventuale reinstallazione richiede poi il ripristino del backup e potrebbe richiedere nuovamente l’accesso online. Il progetto non può recuperare una vecchia chiave privata mancante.

@@ -12,6 +12,7 @@ const _requiredArtifactNames = <String>[
 ];
 
 const _extraArtifactNames = <String>[
+  'Oculum-Android-AAB',
   'Oculum-Web',
   'Oculum-iOS-unsigned',
   'Oculum-UI-Catture',

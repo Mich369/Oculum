@@ -1,5 +1,11 @@
 # Oculum — attività, conferme e consegne
 
+## Correzione pubblicazione — 2 novembre
+
+**BUG51 — «Rendere pubblici tutti i pacchetti riusciti, anche dopo la crescita degli artwork, preservando l’aggiornamento dalle versioni precedenti».** Il run41355899555 passa2.236test/6saltati,4prove autenticate e9job, ma il publisher rifiuta l’archivio Android combinato oltre2GiB. APK mantiene il nome storico `Oculum-Android`, AAB passa a `Oculum-Android-AAB` separato e visibile fra i download Web; firma e immagini conservate.13test Python e11Flutter su menu/scelta APK passati; analisi mirata pulita23,2s. Nuova CI/pacchetti/pubblicazione ancora da completare; riga non chiusa al100%. [Dettagli](BUG51_ANDROID_APK_AAB_SEPARATI_2026-11-02.md).
+
+Ulteriori48proposte per8creature sono pronte nella galleria locale, sei alternative ciascuna. Restano da votare e fuori dai temi compilati. Domande su Nuvì, Patalpa, Mimic, Slime Roccioso, Cervo Candela e dettaglio del punto debole di RockShield raccolte separatamente.
+
 ## Patch successiva locale — 23 temi e Golem, verifiche del 1 novembre
 
 | Riga | Richiesta e adattamento | Stato ed evidenze |
