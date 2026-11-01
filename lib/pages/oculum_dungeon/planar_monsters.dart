@@ -821,7 +821,7 @@ final _shieldCloudMonsterEntries = <MonsterBookEntry>[
     'RockShield',
     ['sotterraneo', 'sotterraneo_maggiore', 'nuvole_rocciose'],
     'roccia',
-    'Un quadrupede tozzo con quattro braccia corte, lunghe unghie nere e dorso piramidale di scaglie chiare. La testa scompare sotto una cresta appuntita; ferite scure interrompono le scaglie sui fianchi. Mini Boss difensivo: 3 Scudi critici e 1 Schivata Oculum. La corazza rende preziosi gli attacchi contundenti non magici.',
+    'Un gigante umanoide bipede, con due braccia robuste e due gambe portanti. Lunghe unghie nere terminano mani e piedi; scaglie chiare sovrapposte formano una massa piramidale, con ombre malva fra le piastre. La testa rimane schermata sotto una cresta appuntita. Torreggia sulle piccole strutture della grotta. Mini Boss difensivo: 3 Scudi critici e 1 Schivata Oculum. La corazza rende preziosi gli attacchi contundenti non magici.',
     'Le ferite aperte e la pelle sotto la pancia, tra le zampe.',
     [10, 6, 8, 4],
     5,

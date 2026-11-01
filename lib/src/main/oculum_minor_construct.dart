@@ -8,6 +8,7 @@ List<Map<String, dynamic>> oculumReferenceCreaturePrecisionParts(
   Iterable<Map> original, {
   required String monsterId,
   bool minorConstructCoreExposed = false,
+  bool runicGolemCoreExposed = false,
   int bottledCloudPhase = 1,
   bool explicitMasterAnatomy = false,
 }) {
@@ -16,19 +17,21 @@ List<Map<String, dynamic>> oculumReferenceCreaturePrecisionParts(
   if (monsterId == 'nuvola_in_bottiglia' && bottledCloudPhase >= 2) {
     parts.removeWhere((p) => p['id'] == 'bottle' || p['group'] == 'bottle');
   }
-  if (monsterId != 'costrutto_minore') return parts;
+  final runic = oculumHasRunicGolemPlateCore(monsterId);
+  if (monsterId != 'costrutto_minore' && !runic) return parts;
+  final coverId = runic ? 'chest_plates' : 'box';
   parts.removeWhere((p) => p['id'] == 'core' || p['group'] == 'core');
-  if (!parts.any((p) => p['id'] == 'box')) {
+  if (!parts.any((p) => p['id'] == coverId)) {
     parts.add({
-      'id': 'box',
-      'label': 'Scatola corazzata',
-      'group': 'box',
+      'id': coverId,
+      'label': runic ? 'Piastre frontali del petto' : 'Scatola corazzata',
+      'group': coverId,
       'material': 'metal',
       'penalty': 0,
       'weak': false,
     });
   }
-  if (minorConstructCoreExposed) {
+  if (runic ? runicGolemCoreExposed : minorConstructCoreExposed) {
     parts.add({
       'id': 'core',
       'label': 'Nucleo interno esposto',
@@ -42,6 +45,19 @@ List<Map<String, dynamic>> oculumReferenceCreaturePrecisionParts(
   return parts;
 }
 
+bool oculumHasRunicGolemPlateCore(String monsterId) =>
+    monsterId.split('_variante_').first == 'golem_runico';
+
+bool oculumRunicGolemPlatesBroken(Map runtime) {
+  final override = (runtime['runicGolemPlateRules'] as Map?)?['coreExposed'];
+  if (override is bool) return override;
+  final plates =
+      ((runtime['anatomicalParts'] as Map?)?['parts'] as Map?)?['chest_plates'];
+  if (plates is! Map) return false;
+  final maximum = readIntValue(plates['maximumHp']);
+  return maximum > 0 && readIntValue(plates['damageTaken']) >= maximum;
+}
+
 bool oculumMinorConstructBoxBroken(Map runtime) {
   final override = (runtime['minorConstructBoxRules'] as Map?)?['coreExposed'];
   if (override is bool) return override;
@@ -52,6 +68,12 @@ bool oculumMinorConstructBoxBroken(Map runtime) {
 }
 
 extension _OculumMinorConstruct on _OculumHomePageState {
+  bool get isRunicGolemCoreCreature =>
+      oculumHasRunicGolemPlateCore(faunaCurrentMonsterId);
+
+  bool get runicGolemCoreExposed =>
+      isRunicGolemCoreCreature && oculumRunicGolemPlatesBroken(planarState);
+
   bool get minorConstructCoreExposed =>
       faunaCurrentMonsterId == 'costrutto_minore' &&
       oculumMinorConstructBoxBroken(planarState);
@@ -67,6 +89,7 @@ extension _OculumMinorConstruct on _OculumHomePageState {
     if (part == null || part.isEmpty) return true;
     final guarded =
         faunaCurrentMonsterId == 'costrutto_minore' && part == 'core' ||
+        isRunicGolemCoreCreature && part == 'core' ||
         faunaCurrentMonsterId == 'nuvola_in_bottiglia' && part == 'bottle' ||
         isArmadilloCreature && armadilloClosed;
     if (!guarded) return true;
@@ -75,9 +98,10 @@ extension _OculumMinorConstruct on _OculumHomePageState {
 
   void publishReferenceCreatureAnatomyState() {
     if (!const {
-      'costrutto_minore',
-      'nuvola_in_bottiglia',
-    }.contains(faunaCurrentMonsterId)) {
+          'costrutto_minore',
+          'nuvola_in_bottiglia',
+        }.contains(faunaCurrentMonsterId) &&
+        !isRunicGolemCoreCreature) {
       return;
     }
     for (final token in _writableOnlineCombatTokens().where(
@@ -87,6 +111,8 @@ extension _OculumMinorConstruct on _OculumHomePageState {
         ...Map<String, dynamic>.from(token['faunaPublic'] as Map? ?? const {}),
         if (faunaCurrentMonsterId == 'costrutto_minore')
           'minorConstructCoreExposed': minorConstructCoreExposed,
+        if (isRunicGolemCoreCreature)
+          'runicGolemCoreExposed': runicGolemCoreExposed,
         if (faunaCurrentMonsterId == 'nuvola_in_bottiglia')
           'bottledCloudPhase': bottledCloudPhaseNumber,
       };

@@ -1,6 +1,55 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
 
+## Tre revisioni approvate — 1 novembre
+
+Dopo aver visto insieme le tre nuove immagini, l’utente risponde **«approvati»**, poi «procedi» e «ora vado a dormire». Sono canonici Robot Artigliato a Molla F grande (scelta F4), RockShield C2 gigante umanoide con due braccia e due gambe e Golem di nuvole rocciose E3 più imponente. La scala è resa rispetto all’ambiente: nessuna misura in metri o moltiplicazione delle statistiche dedotta. Originali, revisioni e copie esatte conservati; ricevuta `CONFERME_TRE_REVISIONI_ART_2026-11-01.json`. Questa conferma risolve le tre richieste di revisione del lotto19; telefono/reliquia coerenti restano accettati secondo l’istruzione già registrata. Integrazione, anatomie, test e distribuzione sono passi separati.
+
+
+## Diciannove scelte e quattro derivati — 1 novembre
+
+Risposte esplicite registrate in `CONFERME_ARTWORK_LOTTO_19_2026-11-01.json`:16desktop esatti canonici e3basi scelte con modifiche richieste; queste ultime non approvano il file invariato. Approvati anche Goblin telefono v1/reliquia v2 e Diavolo telefono v4/reliquia v2 con «Sì, entrambi canonici». «tutto accettato telefono e reliquie» accetta gli adattamenti coerenti delle scelte; i file ancora da produrre saranno identificati e verificati separatamente. Originali e SHA conservati; nessuna nuova integrazione, pubblicazione o chiusura100% implicita.
+
+| Creatura | Base | Esito / modifica richiesta |
+|---|---|---|
+| Cavaliere del Non Ritorno | A2 | Desktop canonico, copia esatta |
+| DeadlySins | B3 | Desktop canonico, copia esatta |
+| Pupazzo Vivente Artigliato | B3 | Desktop canonico, copia esatta |
+| Robot Artigliato a Molla | F3 | più grosso del doppio |
+| Thunder Bot | E2 | Desktop canonico, copia esatta |
+| Observer's Tear | D1 | Desktop canonico, copia esatta |
+| ObserSunshine | C2 | Desktop canonico, copia esatta |
+| Scostubandito Empatico | C3 | Desktop canonico, copia esatta |
+| GranScostumato Empatico | E2 | Desktop canonico, copia esatta |
+| Rascalume | A2 | Desktop canonico, copia esatta |
+| Mìrula | D2 | Desktop canonico, copia esatta |
+| RockShield | C1 | su due zampe molto più grosso e umanoide |
+| Riccio dei Sentieri Quieti | F1 | Desktop canonico, copia esatta |
+| Colosso di Prismarite | D3 | Desktop canonico, copia esatta |
+| Costrutto Prismatico | F1 | Desktop canonico, copia esatta |
+| Brumìlio | F2 | Desktop canonico, copia esatta |
+| Vèndulo | E2 | Desktop canonico, copia esatta |
+| Golem di nuvole rocciose | E2 | più grosso |
+| Orso dagli Aculei Ghiacciati | D1 | Desktop canonico, copia esatta |
+
+
+**Zombie dello Sbocco Acido — scelta canonica del 1 novembre:** «D — Sbilenco, ardesia e ruggine», revisione 1, `output/artwork/sei_varianti_notte_2026-10-31/lotto_cavalieri/zombie_acido/zombie_acido_D_v1.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/zombie_acido_desktop_canonico.png`; SHA256 `15a687b2b1c1d1cac8f0b778e030db282f7d4fef0c2f77bb4f7fb5c9126ab05e`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
+## Scelta Goblin e modifica Diavolo — 1 novembre
+
+Goblin Kamikaze: allegato seguito da **«questa»**, riferito alla A2 oliva tonda/accovacciata. Pixel identici all’originale, nonostante PNG ricodificato; audit `build/goblin-user-attachment-pixels.json`, copia utente e canonico conservati. SHA del file originale A2: `415677ddd7a1790a7e0cf7f4bb23df80959c40349b1de5511022415b01e8fda5`. Approvazione desktop, nessun derivato o potere inferito.
+
+Diavolo Obliterato D1: **«questo ma sulla mano più a destra un sfera nera priva di luce»**. Dopo il primo edit: **«non mi convince»**, quindi non approvato. Seconda revisione, con la sfera sostenuta dalle dita, approvata esplicitamente con **«Sì, questa è canonica»**. SHA256 `2488d4f1bda392a20659a082708ba6b6f2a68d62e7fa38160869aea5d5ef6953`; fonte e file canonico nel manifest centrale. Telefono/reliquia restano separati. Non confondere la scelta della base con l’approvazione dell’immagine modificata.
+
+## Chiusure e scelta Golem — conferme del 1 novembre
+
+Risposte esplicite alle quattro righe complete con adattamento e prove: **«Sì, ART45 conclusa»**, **«Sì, ART46 conclusa»**, **«Sì, BUG49 conclusa»**, **«Sì, QA45 consegna conclusa»**. Approvazione al 100% delle sole righe consegnate con il commit f86951cb; non estesa all’intero catalogo, ad altre immagini o a prove fisiche non eseguite. Ricevuta esatta in `CONFERME_CHIUSURA_f86951cb.json` e rapporto `CONSEGNA_VERIFICATA_f86951cb.md`.
+
+Golem Runico: **«E — Torace a botte»**, revisione E2, SHA256 `8bcb10f2e42d06080cbe3745bfcb7e1910be19e1591e0e2383b92974b877f93a`. Copia canonica in `output/artwork/approvazioni_2026-11-01/golem_runico_desktop_canonico.png`. Conferma del desktop mostrato, successiva al congelamento della build f86951cb; derivati e integrazione non sono approvati implicitamente. Il riferimento e il catalogo hanno cupola cieca, torace chiuso, piastre rosso cupo e solchi rame: nessun mantello da inventare.
+
+Conferme successive esplicite del Golem: **«Sì, entrambi canonici»** per telefono v2/reliquia v2, SHA rispettivamente `9989f86ff9c6dc257f273824b68827d9172fedfa3c0caf03a2b58ac6ec1d9833` e `7ca35d807aab5e487c844034187900317022c1ace9e3c3459f2aaa09ad67b951`; **«Prima rompere le piastre; bilancia tu»** per l’accesso al nucleo, con integrità separata e valori modificabili. Ricevuta in `CONFERME_GOLEM_RUNICO_2026-11-01.json`; nessuna integrazione o chiusura100% implicita. **«manda qui»** per il Diavolo e **«fa vedere»** per il Goblin richiedono immagini visibili nella chat, non selezionano una lettera.
+
+
 **FireShield — scelta canonica del 1 novembre:** «Sì, C è canonica», revisione 2, `output/artwork/sei_varianti_2026-11-01/lotto_fire_shield_bipede/fire_shield_bipede_C_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/fire_shield_desktop_canonico.png`; SHA256 `0632f9bfa546c3cda18d7a938cf2711558ddcb43d0e0c58e3651ce138d2aa190`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
 
 ## Meccanio e FireShield — 1 novembre

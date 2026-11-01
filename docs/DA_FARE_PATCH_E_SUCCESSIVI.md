@@ -1,6 +1,50 @@
 # Oculum — attività, conferme e consegne
 
-## Lavorazione del 1 novembre — Meccanio e FireShield
+## Patch successiva locale — 23 temi e Golem, verifiche del 1 novembre
+
+| Riga | Richiesta e adattamento | Stato ed evidenze |
+|---|---|---|
+| ART47 | Golem Runico E2, telefono v2 e reliquia v2 approvati; nucleo non mirabile prima di rompere le piastre, con integrità modificabile. | Collegati3PNG. Bilanciamento delegato35% Vita massima/minimo3;14test piastre/scatole passati. Pacchetti e CI successivi separati;100% da approvare. |
+| ART48 | Goblin Kamikaze A2, telefono v1 e reliquia v2 esplicitamente approvati; nessun nuovo potere dai disegni. | Tre file esatti collegati e inclusi nel gruppo211test passato.100% da approvare. |
+| ART49 | Integrare i19set votati e i quattro precedenti:23specie/69PNG; Robot più del doppio, RockShield bipede umanoide molto più grande e Golem di nuvole più grande, revisioni approvate. | File/SHA/alpha/margini verificati;211test grafici/anatomici passati, immagini contenute sui telefoni, Book senza ritratto. Sorgenti locali; CI/distribuzione separate.100% da approvare. |
+| ART50 | Preparare sei alternative per ogni mostro ancora da scegliere, senza attribuire canonicità automatica. |36proposte per sei specie, galleria unica e SHA verificati. Da votare al ritorno; Nuvì attende due/quattro zampe. |
+
+[Dettagli e limiti delle prove](PATCH_2026-11-01_23_TEMI_GOLEM.md). Le precedenti note sottostanti mantengono la cronologia; gli stati locali qui sopra le aggiornano senza riscrivere la consegna f86951cb già approvata.
+
+
+## Tre revisioni approvate — 1 novembre
+
+Dopo aver visto insieme le tre nuove immagini, l’utente risponde **«approvati»**, poi «procedi» e «ora vado a dormire». Sono canonici Robot Artigliato a Molla F grande (scelta F4), RockShield C2 gigante umanoide con due braccia e due gambe e Golem di nuvole rocciose E3 più imponente. La scala è resa rispetto all’ambiente: nessuna misura in metri o moltiplicazione delle statistiche dedotta. Originali, revisioni e copie esatte conservati; ricevuta `CONFERME_TRE_REVISIONI_ART_2026-11-01.json`. Questa conferma risolve le tre richieste di revisione del lotto19; telefono/reliquia coerenti restano accettati secondo l’istruzione già registrata. Integrazione, anatomie, test e distribuzione sono passi separati.
+
+
+## Nuovo lotto approvato — 19 scelte del 1 novembre
+
+- Ricevuta `CONFERME_ARTWORK_LOTTO_19_2026-11-01.json`:16desktop esatti approvati e copiati senza ritocchi; quattro derivati Goblin/Diavolo approvati separatamente. SHA dei19input e delle20copie canoniche verificati.
+- Revisioni richieste: Robot Artigliato a Molla F oltre il doppio della scala; RockShield C molto più grande, umanoide su due gambe; Golem di nuvole rocciose E più grande. Non trattare i tre file precedenti come approvati senza modifiche.
+- Telefono/reliquia accettati per gli adattamenti coerenti delle scelte; generazione, controllo anatomico, integrazione e renderer restano lavori distinti. Nessuna chiusura100% o consegna nuova implicita.
+
+## Chiusure approvate — 1 novembre, consegna f86951cb
+
+Conferme esplicite dell’utente ricevute dopo la consegna verificata. Queste note aggiornano il registro di lavoro; non cambiano il commit compilato, i pacchetti o il log cumulativo già distribuiti. [Righe complete, adattamenti e prove](CONSEGNA_VERIFICATA_f86951cb.md).
+
+| Riga | Chiusura approvata e prove |
+|---|---|
+| **ART45 — 100%** | «Sì, ART45 conclusa». Tre temi Meccanio F2/A2/C2 e sei derivati canonici: nove PNG identici, personalizzazioni conservate. Passati 87 test del gruppo misto e 15 prove sfondi/pagine (gruppi sovrapposti); 54 copie dei nove file verificate nei pacchetti. Pubblicati e installati. |
+| **ART46 — 100%** | «Sì, ART46 conclusa». FireShield C2 di circa 5 metri, due braccia e due zampe, telefono e reliquia con soltanto la testa. Passati 20 test finali pacchetti/anatomia e 5 prove FireShield (gruppi sovrapposti); 18 copie dei tre PNG verificate. Valori/poteri e altre specie conservati; pubblicato e installato. |
+| **BUG49 — 100%** | «Sì, BUG49 conclusa». Corretti ali spurie, occhio/lente singolare, radici dell’ambiente e classificazione Robot degli Empatici organici. Conservati veri organi vegetali e anatomie personalizzate. Passati 62 test mirati e CI completa; correzioni pubblicate e installate. |
+| **QA45 — 100% della consegna** | «Sì, QA45 consegna conclusa». Commit f86951cb: CI 2.040 test passati/6 saltati e 4 prove online autenticate separate; 16.554 file senza differenze, APK100267 firmato, 180 confronti artwork, 6 log coerenti e 11 download anonimi. EXE completo, Windows/Test separati, ZIP/APK e backup conservati. Nessuna nuova prova su tre dispositivi fisici implicita. |
+
+Golem Runico **E2 — Torace a botte**: scelta desktop canonica successiva al congelamento, registrata separatamente e non inclusa nella build f86951cb. Telefono, reliquia e integrazione restano un nuovo lavoro; nessuna chiusura dell’intero catalogo o di altre righe implicita. Originale e ricevuta in `output/artwork/approvazioni_2026-11-01/`.
+
+- **ART47 — tre immagini Golem canoniche, implementazione successiva:** desktop E2, telefono v2 e reliquia v2 approvati esplicitamente; l’ultima risposta è «Sì, entrambi canonici». Copie canoniche esatte e ricevute in `output/artwork/approvazioni_2026-11-01/` e `output/artwork/derivati_scelte_2026-11-01/golem_runico/`. PNG/CRC/zlib/SHA controllati, margine visibile della reliquia25,04%. L’utente risolve la domanda anatomica con «Prima rompere le piastre; bilancia tu»: nucleo non mirabile prima della distruzione delle piastre, con integrità separata e parametri modificabili. Vincolo confermato da implementare e testare insieme; nessun collegamento runtime o test UI/Flutter ancora dichiarato. Nessuna chiusura100% o nuova distribuzione implicita.
+- **ART48 — Goblin Kamikaze A2 desktop canonico:** scelta «questa» con allegato della versione oliva tonda, verificato identico nei pixel alla A2 originale; copie e SHA nel manifest centrale. Conservate tutte le12immagini e le altre alternative A–F. Solo Esplosione suicida del catalogo, cariche/micce medievali fantasy, nessuna arma o capacità nuova. Telefono v1 e reliquia v2 pronti da mostrare: PNG, copie/SHA e alpha reale verificati nel manifest locale; margine visibile della reliquia20,41%. Non ancora approvati o collegati al runtime; nessuna nuova distribuzione implicita.
+- **Diavolo Obliterato, revisione della base D1:** richiesta sfera nera priva di luce sulla mano più a destra. Primo edit rifiutato («non mi convince»); seconda revisione con dita attorno al bordo inferiore approvata con «Sì, questa è canonica». Desktop canonico esatto copiato e registrato; telefono/reliquia in produzione separata, nessun collegamento runtime ancora dichiarato. Originali, prompt e ricevute in `output/artwork/revisioni_2026-11-01/diavolo_obliterato_sfera/`; nessun edit rifiutato o non ancora confermato diventa canonico.
+- **Zombie dello Sbocco Acido D1 — desktop canonico:** scelta esplicita «D — Sbilenco, ardesia e ruggine»; copia canonica byte-identica con SHA25615a687b2b1c1d1cac8f0b778e030db282f7d4fef0c2f77bb4f7fb5c9126ab05e e ricevuta nel manifest centrale. Telefono/reliquia in produzione separata, originali conservati; nessuna nuova integrazione o chiusura100%. Nei due lotti restano19specie con114proposte A–F da votare: tutti i114file esistono e coincidono con gli SHA degli indici. Questo conteggio riguarda solo i due lotti preparati.
+- **BUG50 — confini delle parole nei punti deboli, corretto solo localmente:** «arto» dentro «partono» e «mano» dentro «umano/manopola» rendevano deboli le braccia; «ala» dentro «palato» creava ali spurie o rendeva deboli ali reali. Tre regressioni fallite prima della modifica, poi13test anatomici pertinenti passati con riconoscimento per parole intere; analisi dei due file pulita26,2s. Conservate parole anatomiche vere, forme alare/alari e personalizzazioni. La build f86951cb già approvata non contiene questa nuova correzione; CI, pacchetti e pubblicazione successivi ancora da eseguire. [Causa, perimetro e prove](BUG50_CONFINI_ANATOMIA_2026-11-01.md). Nessuna chiusura100% implicita.
+
+## Storico della lavorazione del 1 novembre — Meccanio e FireShield
+
+I punti seguenti conservano le verifiche parziali precedenti; per ART45, ART46, BUG49 e QA45 prevalgono le chiusure esplicite sopra.
 
 - **QA45 — riprova dopo CI9e4d4123:** run41282486243 concluso2039passati/1fallito/6saltati, pacchetti non prodotti e nessuna pubblicazione. Isolate Resistenza/Fortuna/Riflessi casuali nella sola fixture del contrattacco; attesi originali20/10 e risorse di turno invariati. Passati10test locali contrattacco/turni/Resistenza dopo l’inizializzazione esplicita. Nuova CI completa e distribuzione successive, nessuna chiusura100%.
 

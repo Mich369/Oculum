@@ -1,5 +1,11 @@
 # Oculum — registro delle regole confermate
 
+## Golem Runico — piastre e nucleo, conferma del 1 novembre
+
+Risposta esplicita: **«Prima rompere le piastre; bilancia tu»**. Il nucleo dietro il petto non è mirabile finché le piastre frontali non vengono distrutte. Devono avere integrità separata, con valori iniziali delegati al bilanciamento e conservabili/modificabili nell’editor e nel JSON. Non estendere automaticamente la regola ad altri mostri o alle anatomie personali del Master. È una nuova regola confermata, implementata e verificata localmente nella patch successiva; non presente nella build f86951cb. Valori iniziali delegati:35% della Vita massima per difetto, minimo3; un critico non apre automaticamente le piastre. Contano i Danni effettivi alla Vita e il corpo non viene danneggiato due volte. Passati14test locali del gruppo piastre/scatole: bersaglio locale e remoto, conoscenza del Book, danni assorbiti, rottura, riparazione, JSON, ricevute duplicate e isolamento fra turnistiche. CI, pacchetti e pubblicazione restano verifiche separate.
+
+Con **«Sì, entrambi canonici»** l’utente approva anche Golem telefono v2 e reliquia v2: copie originali, SHA e ricevuta esatta in `CONFERME_GOLEM_RUNICO_2026-11-01.json` e nei manifest artwork. La conferma visiva non certifica il comportamento in combattimento. «manda qui» e «fa vedere» avevano richiesto di mostrare nuovamente Diavolo e Goblin; successivamente Goblin A2 è approvato con «questa». Per il Diavolo è scelta la base D1 con sfera da aggiungere: il primo edit è rifiutato e il secondo è successivamente approvato con «Sì, questa è canonica». Nessun nuovo effetto di gioco dedotto dai disegni.
+
 ## FireShield e riconoscimento anatomico — 1 novembre
 
 **Conferma esplicita:** FireShield è alto circa 5 metri, bipede con due braccia grandi e artigliate e due zampe. Sostituisce la vecchia descrizione a sei arti; non estendere la correzione alle altre specie. Conservati statistiche, resistenze, tecniche e personalizzazioni del Master. Le nuove immagini sono ancora da scegliere.

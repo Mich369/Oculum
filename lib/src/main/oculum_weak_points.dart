@@ -181,6 +181,7 @@ extension _OculumWeakPoints on _OculumHomePageState {
       ),
       monsterId: faunaCurrentMonsterId,
       minorConstructCoreExposed: minorConstructCoreExposed,
+      runicGolemCoreExposed: runicGolemCoreExposed,
       bottledCloudPhase: bottledCloudPhaseNumber,
       explicitMasterAnatomy: currentHasExplicitMasterAnatomy,
     ),
@@ -227,6 +228,11 @@ extension _OculumWeakPoints on _OculumHomePageState {
           : public is Map && public['minorConstructCoreExposed'] is bool
           ? public['minorConstructCoreExposed'] == true
           : runtime is Map && oculumMinorConstructBoxBroken(runtime);
+      final runicExposed = index == schedaCorrente
+          ? runicGolemCoreExposed
+          : public is Map && public['runicGolemCoreExposed'] is bool
+          ? public['runicGolemCoreExposed'] == true
+          : runtime is Map && oculumRunicGolemPlatesBroken(runtime);
       final cloudState = runtime is Map ? runtime['bottledCloud'] : null;
       final cloudPhase = index == schedaCorrente
           ? bottledCloudPhaseNumber
@@ -263,6 +269,7 @@ extension _OculumWeakPoints on _OculumHomePageState {
           ),
           monsterId: monster.id,
           minorConstructCoreExposed: minorExposed,
+          runicGolemCoreExposed: runicExposed,
           bottledCloudPhase: cloudPhase,
           explicitMasterAnatomy: custom is List && custom.isNotEmpty,
         ),

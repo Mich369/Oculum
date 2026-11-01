@@ -161,6 +161,29 @@ class OculumMonsterTheme {
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
   bool get preserveIllustrationFraming => const {
+    'cavaliere_non_ritorno',
+    'deadly_sins',
+    'pupazzo_artigliato',
+    'pupazzo_robotico_postea',
+    'thunder_bot',
+    'observers_tear',
+    'obser_sunshine',
+    'scostubanditi_empatico',
+    'granscostumato_empatico',
+    'rascalume',
+    'mirula',
+    'rock_shield',
+    'ciclo_riccio_pacifico',
+    'colosso_prismarite',
+    'costrutto_prismatico',
+    'brumilio',
+    'vendulo',
+    'rock_cloud_golem',
+    'ciclo_orso_aculei',
+    'golem_runico',
+    'goblin_kamikaze',
+    'obliterated_devil',
+    'zombie_acido',
     'fire_shield',
     'meccanio',
     'meccanio_ammaccato',
@@ -173,6 +196,48 @@ class OculumMonsterTheme {
     'scheletro_bombarolo',
   }.contains(monster.id);
   String? get relicIllustration => switch (monster.id) {
+    'cavaliere_non_ritorno' =>
+      'assets/oculum/home_art/relic_cavaliere_non_ritorno_canon_20261101.png',
+    'deadly_sins' =>
+      'assets/oculum/home_art/relic_deadly_sins_canon_20261101.png',
+    'pupazzo_artigliato' =>
+      'assets/oculum/home_art/relic_pupazzo_artigliato_canon_20261101.png',
+    'pupazzo_robotico_postea' =>
+      'assets/oculum/home_art/relic_pupazzo_robotico_postea_canon_20261101.png',
+    'thunder_bot' =>
+      'assets/oculum/home_art/relic_thunder_bot_canon_20261101.png',
+    'observers_tear' =>
+      'assets/oculum/home_art/relic_observers_tear_canon_20261101.png',
+    'obser_sunshine' =>
+      'assets/oculum/home_art/relic_obser_sunshine_canon_20261101.png',
+    'scostubanditi_empatico' =>
+      'assets/oculum/home_art/relic_scostubanditi_empatico_canon_20261101.png',
+    'granscostumato_empatico' =>
+      'assets/oculum/home_art/relic_granscostumato_empatico_canon_20261101.png',
+    'rascalume' => 'assets/oculum/home_art/relic_rascalume_canon_20261101.png',
+    'mirula' => 'assets/oculum/home_art/relic_mirula_canon_20261101.png',
+    'rock_shield' =>
+      'assets/oculum/home_art/relic_rock_shield_canon_20261101.png',
+    'ciclo_riccio_pacifico' =>
+      'assets/oculum/home_art/relic_ciclo_riccio_pacifico_canon_20261101.png',
+    'colosso_prismarite' =>
+      'assets/oculum/home_art/relic_colosso_prismarite_canon_20261101.png',
+    'costrutto_prismatico' =>
+      'assets/oculum/home_art/relic_costrutto_prismatico_canon_20261101.png',
+    'brumilio' => 'assets/oculum/home_art/relic_brumilio_canon_20261101.png',
+    'vendulo' => 'assets/oculum/home_art/relic_vendulo_canon_20261101.png',
+    'rock_cloud_golem' =>
+      'assets/oculum/home_art/relic_rock_cloud_golem_canon_20261101.png',
+    'ciclo_orso_aculei' =>
+      'assets/oculum/home_art/relic_ciclo_orso_aculei_canon_20261101.png',
+    'golem_runico' =>
+      'assets/oculum/home_art/relic_golem_runico_canon_20261101.png',
+    'goblin_kamikaze' =>
+      'assets/oculum/home_art/relic_goblin_kamikaze_canon_20261101.png',
+    'obliterated_devil' =>
+      'assets/oculum/home_art/relic_obliterated_devil_canon_20261101.png',
+    'zombie_acido' =>
+      'assets/oculum/home_art/relic_zombie_acido_canon_20261101.png',
     'fire_shield' =>
       'assets/oculum/home_art/relic_fire_shield_canon_20261101.png',
     'meccanio' => 'assets/oculum/home_art/relic_meccanio_canon_20261101.png',
@@ -254,6 +319,48 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'cavaliere_non_ritorno' =>
+      'assets/oculum/home_art/theme_cavaliere_non_ritorno_canon_20261101.png',
+    'deadly_sins' =>
+      'assets/oculum/home_art/theme_deadly_sins_canon_20261101.png',
+    'pupazzo_artigliato' =>
+      'assets/oculum/home_art/theme_pupazzo_artigliato_canon_20261101.png',
+    'pupazzo_robotico_postea' =>
+      'assets/oculum/home_art/theme_pupazzo_robotico_postea_canon_20261101.png',
+    'thunder_bot' =>
+      'assets/oculum/home_art/theme_thunder_bot_canon_20261101.png',
+    'observers_tear' =>
+      'assets/oculum/home_art/theme_observers_tear_canon_20261101.png',
+    'obser_sunshine' =>
+      'assets/oculum/home_art/theme_obser_sunshine_canon_20261101.png',
+    'scostubanditi_empatico' =>
+      'assets/oculum/home_art/theme_scostubanditi_empatico_canon_20261101.png',
+    'granscostumato_empatico' =>
+      'assets/oculum/home_art/theme_granscostumato_empatico_canon_20261101.png',
+    'rascalume' => 'assets/oculum/home_art/theme_rascalume_canon_20261101.png',
+    'mirula' => 'assets/oculum/home_art/theme_mirula_canon_20261101.png',
+    'rock_shield' =>
+      'assets/oculum/home_art/theme_rock_shield_canon_20261101.png',
+    'ciclo_riccio_pacifico' =>
+      'assets/oculum/home_art/theme_ciclo_riccio_pacifico_canon_20261101.png',
+    'colosso_prismarite' =>
+      'assets/oculum/home_art/theme_colosso_prismarite_canon_20261101.png',
+    'costrutto_prismatico' =>
+      'assets/oculum/home_art/theme_costrutto_prismatico_canon_20261101.png',
+    'brumilio' => 'assets/oculum/home_art/theme_brumilio_canon_20261101.png',
+    'vendulo' => 'assets/oculum/home_art/theme_vendulo_canon_20261101.png',
+    'rock_cloud_golem' =>
+      'assets/oculum/home_art/theme_rock_cloud_golem_canon_20261101.png',
+    'ciclo_orso_aculei' =>
+      'assets/oculum/home_art/theme_ciclo_orso_aculei_canon_20261101.png',
+    'golem_runico' =>
+      'assets/oculum/home_art/theme_golem_runico_canon_20261101.png',
+    'goblin_kamikaze' =>
+      'assets/oculum/home_art/theme_goblin_kamikaze_canon_20261101.png',
+    'obliterated_devil' =>
+      'assets/oculum/home_art/theme_obliterated_devil_canon_20261101.png',
+    'zombie_acido' =>
+      'assets/oculum/home_art/theme_zombie_acido_canon_20261101.png',
     'fire_shield' =>
       'assets/oculum/home_art/theme_fire_shield_canon_20261101.png',
     'meccanio' => 'assets/oculum/home_art/theme_meccanio_canon_20261101.png',
@@ -392,6 +499,51 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustrationMobile => switch (monster.id) {
+    'cavaliere_non_ritorno' =>
+      'assets/oculum/home_art/theme_cavaliere_non_ritorno_mobile_canon_20261101.png',
+    'deadly_sins' =>
+      'assets/oculum/home_art/theme_deadly_sins_mobile_canon_20261101.png',
+    'pupazzo_artigliato' =>
+      'assets/oculum/home_art/theme_pupazzo_artigliato_mobile_canon_20261101.png',
+    'pupazzo_robotico_postea' =>
+      'assets/oculum/home_art/theme_pupazzo_robotico_postea_mobile_canon_20261101.png',
+    'thunder_bot' =>
+      'assets/oculum/home_art/theme_thunder_bot_mobile_canon_20261101.png',
+    'observers_tear' =>
+      'assets/oculum/home_art/theme_observers_tear_mobile_canon_20261101.png',
+    'obser_sunshine' =>
+      'assets/oculum/home_art/theme_obser_sunshine_mobile_canon_20261101.png',
+    'scostubanditi_empatico' =>
+      'assets/oculum/home_art/theme_scostubanditi_empatico_mobile_canon_20261101.png',
+    'granscostumato_empatico' =>
+      'assets/oculum/home_art/theme_granscostumato_empatico_mobile_canon_20261101.png',
+    'rascalume' =>
+      'assets/oculum/home_art/theme_rascalume_mobile_canon_20261101.png',
+    'mirula' => 'assets/oculum/home_art/theme_mirula_mobile_canon_20261101.png',
+    'rock_shield' =>
+      'assets/oculum/home_art/theme_rock_shield_mobile_canon_20261101.png',
+    'ciclo_riccio_pacifico' =>
+      'assets/oculum/home_art/theme_ciclo_riccio_pacifico_mobile_canon_20261101.png',
+    'colosso_prismarite' =>
+      'assets/oculum/home_art/theme_colosso_prismarite_mobile_canon_20261101.png',
+    'costrutto_prismatico' =>
+      'assets/oculum/home_art/theme_costrutto_prismatico_mobile_canon_20261101.png',
+    'brumilio' =>
+      'assets/oculum/home_art/theme_brumilio_mobile_canon_20261101.png',
+    'vendulo' =>
+      'assets/oculum/home_art/theme_vendulo_mobile_canon_20261101.png',
+    'rock_cloud_golem' =>
+      'assets/oculum/home_art/theme_rock_cloud_golem_mobile_canon_20261101.png',
+    'ciclo_orso_aculei' =>
+      'assets/oculum/home_art/theme_ciclo_orso_aculei_mobile_canon_20261101.png',
+    'golem_runico' =>
+      'assets/oculum/home_art/theme_golem_runico_mobile_canon_20261101.png',
+    'goblin_kamikaze' =>
+      'assets/oculum/home_art/theme_goblin_kamikaze_mobile_canon_20261101.png',
+    'obliterated_devil' =>
+      'assets/oculum/home_art/theme_obliterated_devil_mobile_canon_20261101.png',
+    'zombie_acido' =>
+      'assets/oculum/home_art/theme_zombie_acido_mobile_canon_20261101.png',
     'fire_shield' =>
       'assets/oculum/home_art/theme_fire_shield_mobile_canon_20261101.png',
     'meccanio' =>

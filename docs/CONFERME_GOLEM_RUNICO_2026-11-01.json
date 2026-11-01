@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-01",
+  "species": "golem_runico",
+  "userAnswers": {
+    "plateGate": "Prima rompere le piastre; bilancia tu",
+    "derivatives": "Sì, entrambi canonici"
+  },
+  "questionItems": [
+    "[\"request_user_input_async\",\"call_e2b2942481044901a74d7668bf9d3b08\",0]",
+    "[\"request_user_input_async\",\"call_43b11a2b1081478e846fe9cb90533691\",0]"
+  ],
+  "rule": "Il nucleo non è mirabile finché le piastre frontali del petto non sono distrutte. Integrità separata con bilanciamento delegato e modificabile.",
+  "implementationStatus": "confirmed_rule_not_yet_implemented",
+  "artworkRuntimeIntegrated": false,
+  "doesNotApproveDiavoloOrGoblin": true,
+  "existingDeliveredCommit": "f86951cb9f6e30914e2404f02b0ad226286eab87"
+}

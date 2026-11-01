@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-01",
+  "compiledCommit": "f86951cb9f6e30914e2404f02b0ad226286eab87",
+  "ciRunId": 41286042480,
+  "scope": "Explicit acceptance of the four delivered rows; no additional artwork or physical-device proof inferred",
+  "approvals": [
+    {"row": "ART45", "completionPercent": 100, "userAnswer": "Sì, ART45 conclusa", "questionItemId": "[\"request_user_input_async\",\"call_b40f5bf9478846a082ecddd2dc080b8d\",0]"},
+    {"row": "ART46", "completionPercent": 100, "userAnswer": "Sì, ART46 conclusa", "questionItemId": "[\"request_user_input_async\",\"call_b40f5bf9478846a082ecddd2dc080b8d\",1]"},
+    {"row": "BUG49", "completionPercent": 100, "userAnswer": "Sì, BUG49 conclusa", "questionItemId": "[\"request_user_input_async\",\"call_b40f5bf9478846a082ecddd2dc080b8d\",2]"},
+    {"row": "QA45", "completionPercent": 100, "userAnswer": "Sì, QA45 consegna conclusa", "questionItemId": "[\"request_user_input_async\",\"call_b40f5bf9478846a082ecddd2dc080b8d\",3]"}
+  ],
+  "evidence": {
+    "report": "docs/CONSEGNA_VERIFICATA_f86951cb.md",
+    "ciPassed": 2040,
+    "ciSkipped": 6,
+    "authenticatedOnlineTestsPassedSeparately": 4,
+    "installedFileCount": 16554,
+    "installedMismatches": 0,
+    "artworkComparisons": 180,
+    "cumulativeLogComparisons": 6,
+    "anonymousDownloads": 11,
+    "androidVersionCode": 100267,
+    "newThreePhysicalDeviceProof": false
+  },
+  "changesAppRuntime": false,
+  "changesPreviouslyCompiledLog": false,
+  "otherRowsRemainSeparate": true
+}

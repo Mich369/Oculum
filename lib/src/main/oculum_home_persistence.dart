@@ -1438,6 +1438,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           'bottledCloudPhase': bottledCloudPhaseNumber,
         if (faunaCurrentMonsterId == 'costrutto_minore')
           'minorConstructCoreExposed': minorConstructCoreExposed,
+        if (isRunicGolemCoreCreature)
+          'runicGolemCoreExposed': runicGolemCoreExposed,
       },
       'precisionBodyParts': publicPrecisionBodyParts,
       'homeArtworkFollowsTheme': homeArtworkFollowsTheme,

@@ -186,12 +186,18 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   final pinepine =
       entry.id == 'pinepine' || entry.id.startsWith('pinepine_variante_');
   final fireShield = entry.id.split('_variante_').first == 'fire_shield';
+  final rockShield = entry.id.split('_variante_').first == 'rock_shield';
+  final runicGolem = entry.id.split('_variante_').first == 'golem_runico';
   // Confirmed artwork supplies missing physical facts, never new powers or
   // weak points. An explicit saved anatomy above remains authoritative.
   final confirmedPhysical = pinepine
       ? 'umanoide, due braccia, due gambe, testa e due occhi'
       : fireShield
       ? 'bipede, testa, due braccia, due zampe, due occhi e due corna'
+      : rockShield
+      ? 'gigante umanoide bipede, testa, due braccia e due gambe'
+      : runicGolem
+      ? 'costrutto umanoide, due braccia, due gambe, testa a calotta senza occhi'
       : switch (entry.id) {
           'manichino_spada' || 'manichino_baghest' =>
             'umanoide, due braccia, due gambe e un occhio nella guardia della lama',
@@ -292,6 +298,10 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
         ? {'arms': 2, 'legs': 2, 'eyes': 2}
         : fireShield
         ? {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2}
+        : rockShield
+        ? {'arms': 2, 'legs': 2}
+        : runicGolem
+        ? {'arms': 2, 'legs': 2, 'eyes': 0}
         : switch (entry.id) {
             'manichino_spada' ||
             'manichino_baghest' => {'arms': 2, 'legs': 2, 'eyes': 1},
@@ -460,7 +470,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       'Braccio',
       'Braccia',
       count('braccia|braccio', 2),
-      r'braccia|braccio|gomito|polso|mani|mano|arto',
+      r'\b(?:braccia|braccio|gomito|polso|mani|mano|arto)\b',
     );
   }
   if (!spherical &&
@@ -493,13 +503,13 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       (has(
             r'\b(?:ali|alato|alata)\b|arpia|uccello|rapace|angelo|grifone|drago|fata|falena|vespa',
           ) ||
-          weak.contains('ala'))) {
+          RegExp(r'\b(?:ala|ali|alare|alari)\b').hasMatch(weak))) {
     group(
       'wings',
       'Ala',
       'Ali',
       count('ali', entry.id.startsWith('nuvi') ? 4 : 2),
-      r'ala|ali|piume',
+      r'\b(?:ala|ali|alare|alari|piume)\b',
     );
   }
   if (!spherical && has(r'\bcoda\b|\bcode\b')) {

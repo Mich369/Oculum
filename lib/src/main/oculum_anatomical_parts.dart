@@ -90,8 +90,12 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
     required bool critical,
   }) async {
     final monster = monsterBookEntryById(faunaCurrentMonsterId);
-    if (monster?.id == 'costrutto_minore' &&
-        const {'box', 'core'}.contains(request['targetBodyPart']) &&
+    final protectedCoverHit =
+        monster?.id == 'costrutto_minore' &&
+            const {'box', 'core'}.contains(request['targetBodyPart']) ||
+        isRunicGolemCoreCreature &&
+            const {'chest_plates', 'core'}.contains(request['targetBodyPart']);
+    if (protectedCoverHit &&
         (request['targetTag'] != sheetTagAt(schedaCorrente) ||
             !controlsOnlineCombatSheet(sheetTagAt(schedaCorrente)) ||
             request['scope'] != permissionScope ||
@@ -139,7 +143,8 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
     if (result.duplicate) return;
     planarState['anatomicalParts'] = result.state;
     if (!result.applied) return;
-    if (faunaCurrentMonsterId == 'costrutto_minore' && point['id'] == 'box') {
+    if (faunaCurrentMonsterId == 'costrutto_minore' && point['id'] == 'box' ||
+        isRunicGolemCoreCreature && point['id'] == 'chest_plates') {
       publishReferenceCreatureAnatomyState();
     }
     // Preserve the confirmed critical shortcut AND add zero-integrity damage.

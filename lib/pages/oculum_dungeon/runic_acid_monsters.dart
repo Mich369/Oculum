@@ -47,13 +47,13 @@ final _runicAcidMonsterEntries = <MonsterBookEntry>[
     nameIt: 'Golem Runico',
     nameEn: 'Runic Golem',
     descIt:
-        'Un costrutto massiccio di piastre rosso cupo, giunti di pietra nera e catene spezzate. Solchi geometrici color rame attraversano petto e braccia; la testa è una calotta senza volto sopra una fessura buia. Le rune reagiscono ai colpi. RES 10, VOL 3, MAT 6, OCU 0. Tre passive gratuite crescono ai livelli 0/3/6: riflette il 10/15/20% dei danni dichiarati se supera il tiro difensivo; quando un suo colpo toglie Vita effettiva applica -2/-3/-4 Difesa per 1 turno, non cumulabile dalla stessa fonte; CM +3/+4/+5. Oculum Art: Open attiva Portali del nucleo, livello 6, nessun costo Oculum, CD 6 turni. Una sola attivazione per fight: un raggio per bersaglio scelto, danno pari alla Vita attuale del Golem, senza sommare il danno base; sul semicolpito metà danno. I raggi emergono da portali sul campo. Nessuna immagine allegata.',
+        'Un costrutto massiccio di piastre rosso cupo, giunti di pietra nera e catene spezzate. Solchi geometrici color rame attraversano petto e braccia; la testa è una calotta senza volto sopra una fessura buia. Le rune reagiscono ai colpi. RES 10, VOL 3, MAT 6, OCU 0. Tre passive gratuite crescono ai livelli 0/3/6: riflette il 10/15/20% dei danni dichiarati se supera il tiro difensivo; quando un suo colpo toglie Vita effettiva applica -2/-3/-4 Difesa per 1 turno, non cumulabile dalla stessa fonte; CM +3/+4/+5. Oculum Art: Open attiva Portali del nucleo, livello 6, nessun costo Oculum, CD 6 turni. Una sola attivazione per fight: un raggio per bersaglio scelto, danno pari alla Vita attuale del Golem, senza sommare il danno base; sul semicolpito metà danno. I raggi emergono da portali sul campo. Il nucleo si può mirare soltanto dopo aver rotto le piastre frontali, con integrità separata modificabile. Tema canonico con torace a botte e calotta senza occhi.',
     descEn:
         'A massive construct of dark red plates, black stone joints and broken chains. Copper geometric grooves cross its chest and limbs beneath a faceless dome. Free passives evolve at levels 0/3/6: reflect 10/15/20 percent of declared damage after a successful defense; inflicting actual HP loss applies -2/-3/-4 Defense for one turn; CM +3/+4/+5. Active Open: one current-HP beam per selected target, half on a partial hit, no ordinary base damage added, six-turn cooldown and once per fight.',
     weakPointIt:
-        'Il nucleo runico dietro le incisioni convergenti al centro del petto, protetto dalle piastre frontali.',
+        'Il nucleo runico dietro le incisioni convergenti al centro del petto, mirabile soltanto dopo aver rotto le piastre frontali.',
     weakPointEn:
-        'The runic core behind the grooves converging at the center of its chest, shielded by the front plates.',
+        'The runic core behind the grooves converging at the center of its chest, targetable only after breaking the front plates.',
     elementId: 'pietra',
     spriteAssetPath: '',
     isMiniBoss: false,
@@ -70,6 +70,21 @@ final _runicAcidMonsterEntries = <MonsterBookEntry>[
     skillIds: const ['runic_reflection', 'runic_wound', 'runic_guard'],
     dropIds: const ['metallo_runico'],
     dropChances: const {'metallo_runico': 25},
+    encounterRules: const {
+      'coreRequiresBrokenPlates': true,
+      'anatomicalPartRules': {
+        'chest_plates': {
+          'maximumHpFraction': .35,
+          'minimumHp': 3,
+          'criticalCanInjure': false,
+          'material': 'metal',
+          'rollPenalty': 0,
+          'injuryLabel': 'Piastre rotte, nucleo esposto',
+          'revealsPartIds': ['core'],
+          'recovery': 'appropriate_treatment',
+        },
+      },
+    },
   ),
   MonsterBookEntry(
     id: 'sputatore_corrosivo',

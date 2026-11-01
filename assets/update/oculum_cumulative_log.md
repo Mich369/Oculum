@@ -1,5 +1,14 @@
 # Registro cumulativo per i giocatori
 
+## Ventitré temi e nucleo del Golem — 1 novembre
+
+-69immagini canoniche esatte: desktop, telefono e reliquia di23creature. Il Robot Artigliato a Molla è molto più grande, RockShield è un gigante umanoide bipede e il Golem di nuvole rocciose è più imponente, come nelle revisioni approvate. Le composizioni rimangono intere sui telefoni; niente nuovi poteri o drop dalle reliquie.
+- Golem Runico: per mirare al nucleo bisogna prima distruggere le piastre frontali. Integrità separata iniziale35% Vita massima, minimo3, modificabile. Danni dopo le protezioni, corpo danneggiato una sola volta, bersagli aggiornati e ricevute duplicate respinte. Comprare la pagina non espone il nucleo.
+- Corretto il riconoscimento anatomico: «partono», «umano» e «manopola» non rendono deboli le braccia; «palato» non crea ali. RockShield ha due braccia/due gambe; Golem Runico due braccia/due gambe e nessun occhio.
+- Salvataggi, immagini personali, anatomie personalizzate, costi ed effetti modificabili conservati. Le ulteriori36proposte per sei creature restano fuori dai temi dell’app finché non vengono votate.
+
+Passati211test locali grafici/anatomici e118test finali su anatomie, parser/costi, Open, fuga e premi (comprendono i14su piastre/scatole).32test Python passati e analisi statica pulita. CI, prove online autenticate, pacchetti e pubblicazione si verificano separatamente. [Dettagli](PATCH_2026-11-01_23_TEMI_GOLEM.md).
+
 ## Meccanio e parti anatomiche — 1 novembre
 
 - Tre temi completi approvati: Meccanio Carbone e rame, Malconcio Latta rientrata e Primitivo Nodulo antico. Nove PNG esatti per desktop, telefono e reliquia; composizioni intere sugli schermi stretti, senza ritoccare i colori confermati o i colori personali salvati. Le reliquie sono decorative, senza nuovi poteri o drop.
