@@ -719,7 +719,12 @@ MonsterBookEntry _canonicalCreature(
       spriteAssetPath: id == 'observers_tear' ? 'assets/oculum/obser.png' : '',
       dropIds: [material],
       dropChances: {material: 50},
-      classificationTags: planes.contains('postea')
+      // These two authored bandits are organic. Their empathic variants
+      // inherit this body classification; their weapons and home plane do
+      // not turn them into constructs. Saved custom entries are untouched.
+      classificationTags: const {'scostubanditi', 'granscostumato'}.contains(id)
+          ? ['Umanoide']
+          : planes.contains('postea')
           ? ['Costrutto', 'Robot']
           : ['Creatura planare'],
     );

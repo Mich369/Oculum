@@ -185,10 +185,13 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   }
   final pinepine =
       entry.id == 'pinepine' || entry.id.startsWith('pinepine_variante_');
+  final fireShield = entry.id.split('_variante_').first == 'fire_shield';
   // Confirmed artwork supplies missing physical facts, never new powers or
   // weak points. An explicit saved anatomy above remains authoritative.
   final confirmedPhysical = pinepine
       ? 'umanoide, due braccia, due gambe, testa e due occhi'
+      : fireShield
+      ? 'bipede, testa, due braccia, due zampe, due occhi e due corna'
       : switch (entry.id) {
           'manichino_spada' || 'manichino_baghest' =>
             'umanoide, due braccia, due gambe e un occhio nella guardia della lama',
@@ -269,6 +272,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       );
   final parts = <Map<String, dynamic>>[];
   const numbers = {
+    'un': 1,
     'uno': 1,
     'una': 1,
     'due': 2,
@@ -286,6 +290,8 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     // a number and the approved-art facts repeat it.
     final canonicalCounts = pinepine
         ? {'arms': 2, 'legs': 2, 'eyes': 2}
+        : fireShield
+        ? {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2}
         : switch (entry.id) {
             'manichino_spada' ||
             'manichino_baghest' => {'arms': 2, 'legs': 2, 'eyes': 1},
@@ -333,7 +339,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     final group = switch (noun) {
       'braccia|braccio' => 'arms',
       'gambe|zampe' => 'legs',
-      'occhi|occhio|lenti' => 'eyes',
+      'occhi|occhio|lenti|lente' => 'eyes',
       'ali' => 'wings',
       'corna|corno' => 'horns',
       'code|coda' => 'tail',
@@ -341,7 +347,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     };
     if (canonicalCounts.containsKey(group)) return canonicalCounts[group]!;
     final pattern = RegExp(
-      '(\\d+|${numbers.keys.join('|')})\\s+(?:(coppie|paia)\\s+di\\s+)?(?:piccol[ei]\\s+|grand[ei]\\s+|lunghe\\s+|corte\\s+|principali\\s+|posteriori\\s+|anteriori\\s+)?(?:$noun)\\b',
+      '\\b(\\d+|${numbers.keys.join('|')})\\s+(?:(coppie|coppia|paia|paio)\\s+di\\s+)?(?:piccol[ei]\\s+|grand[ei]\\s+|lunghe\\s+|corte\\s+|principali\\s+|posteriori\\s+|anteriori\\s+)?(?:$noun)\\b',
     );
     final matches = pattern.allMatches(physical).toList();
     if (matches.isEmpty) return fallback;
@@ -432,13 +438,13 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   if (!has(
         r'\b(?:senza occhi|nessun occhio|non (?:ha|hanno|possiede|possiedono|presenta|presentano) (?:gli |alcun[io]? )?occhi(?:o)?|priv[oaie] di occhi)\b',
       ) &&
-      has(r'occhi|occhio|lenti|pupilla')) {
+      has(r'occhi|occhio|lenti|lente|pupilla')) {
     group(
       'eyes',
-      has(r'lenti') ? 'Lente' : 'Occhio',
+      has(r'lenti|lente') ? 'Lente' : 'Occhio',
       'Occhi',
       count(
-        'occhi|occhio|lenti',
+        'occhi|occhio|lenti|lente',
         has(r'occhio inciso|occhio centrale|singolo occhio|una sola lente')
             ? 1
             : 2,
@@ -485,7 +491,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   if (!spherical &&
       !has(r'senza ali|non ha ali|non hanno ali|nessuna ala|priv[oa] di ali') &&
       (has(
-            r'\bali\b|alato|alata|arpia|uccello|rapace|angelo|grifone|drago|fata|falena|vespa',
+            r'\b(?:ali|alato|alata)\b|arpia|uccello|rapace|angelo|grifone|drago|fata|falena|vespa',
           ) ||
           weak.contains('ala'))) {
     group(
@@ -596,6 +602,16 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     ('fold', 'Piega del corpo', r'piega'),
   ];
   for (final d in details) {
+    // Living among roots does not give an animal roots of its own. Keep
+    // bodily roots and authored root weak points, and preserve saved anatomy
+    // through the explicit override at the beginning of this function.
+    if (d.$1 == 'root' &&
+        !RegExp(d.$3).hasMatch(weak) &&
+        !RegExp(
+          r'\b(?:corpo|pianta|tronco|arti|gambe|braccia|piedi|zampe|muschio)\b[^.!?;]*\bradici\b',
+        ).hasMatch(physical)) {
+      continue;
+    }
     if (RegExp(d.$3).hasMatch('$physical $weak')) {
       add(d.$1, d.$2, d.$1, RegExp(d.$3).hasMatch(weak));
     }

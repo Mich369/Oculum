@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-01",
+  "provider": "builtin image_gen.imagegen",
+  "files": [
+    {
+      "species": "fire_shield",
+      "kind": "desktop",
+      "asset": "assets/oculum/home_art/theme_fire_shield_canon_20261101.png",
+      "sha256": "0632f9bfa546c3cda18d7a938cf2711558ddcb43d0e0c58e3651ce138d2aa190",
+      "bytes": 2391512,
+      "source": "output/artwork/approvazioni_2026-11-01/fire_shield_desktop_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "Sì, C è canonica",
+      "decorative_only": true
+    },
+    {
+      "species": "fire_shield",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_fire_shield_mobile_canon_20261101.png",
+      "sha256": "922738b87d10e459a84b0512c6ff0ef994f24f2a55c2d33277ab17876d1e9096",
+      "bytes": 2440256,
+      "source": "output/artwork/approvazioni_2026-11-01/fire_shield_phone_canonico.png",
+      "revision": 1,
+      "user_approved": true,
+      "approval_quote": "Sì, entrambi canonici",
+      "decorative_only": true
+    },
+    {
+      "species": "fire_shield",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_fire_shield_canon_20261101.png",
+      "sha256": "55b8a70284583dfd8cd4506bbbd914185fd36ccd243fb76608f0996d21e122dd",
+      "bytes": 418837,
+      "source": "output/artwork/approvazioni_2026-11-01/fire_shield_relic_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "Sì, entrambi canonici",
+      "decorative_only": true
+    }
+  ],
+  "scope": "FireShield C2 desktop, phone v1, head-only relic v2.",
+  "relicAlphaNote": "Visible subject margin at least16.9%; alpha1 residuals retained unchanged. Raw13%margin not claimed."
+}

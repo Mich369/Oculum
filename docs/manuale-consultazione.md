@@ -2,6 +2,12 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Meccanio, FireShield e parti reali — 1 novembre
+
+I tre Meccanio hanno temi completi approvati: Meccanio Carbone e rame, Malconcio Latta rientrata e Primitivo Nodulo antico, ciascuno con desktop, telefono e reliquia decorativa. Le immagini non cambiano i colori salvati del singolo compagno e non aggiungono Skill o drop. Tutti restano su una sola ruota con due braccia a pinza, senza ali. La parola «scanalata» descrive la ruota e non significa «alata».
+Le monete Observer’s Tear e Obser Sunshine hanno un solo occhio; l'articolo «un» e la lente singolare non devono produrne due. Le radici citate nell'habitat di Rascalume e Mìrula non sono nuovi organi colpibili. Le vere radici corporee e le anatomie personalizzate del Master restano valide. Scostubanditi e Granscostumato, incluse le varianti Empatiche, sono organici: abitare a Postea non li rende Robot o Costrutti.
+FireShield è un rettile corazzato bipede alto circa cinque metri: due braccia grandi e artigliate, due zampe robuste, due occhi e due corna. Questa conferma sostituisce la precedente sagoma a sei arti; non cambia BlackDragonShield o le altre specie. Restano le placche nere vulcaniche, il ventre grigio e le fenditure rosse. Statistiche, resistenze e tecniche non cambiano. Desktop C approvato, con guardia alta e fronte angolare; la reliquia deve raffigurare soltanto la testa. Le anatomie e i valori personalizzati salvati conservano la precedenza.
+
 ## Cavaliere Morto e sei temi canonici — 31 ottobre
 
 Il punto debole del Cavaliere Morto è la sfera di Oculum nascosta alla base della vita, non le giunture o le ossa delle braccia. La sua armatura è vuota: elmo, due braccia e due gambe sono di metallo; non si aggiungono occhi o ossa della Summon eventuale al suo corpo. La sfera è una parte distinta nella precisione. Restano le condizioni già descritte per danneggiarlo, senza inventare una nuova soglia per esporla. Le anatomie e i punti deboli personalizzati salvati dal Master mantengono la precedenza.

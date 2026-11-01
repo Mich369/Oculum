@@ -1,5 +1,14 @@
 # Registro cumulativo per i giocatori
 
+## Meccanio e parti anatomiche — 1 novembre
+
+- Tre temi completi approvati: Meccanio Carbone e rame, Malconcio Latta rientrata e Primitivo Nodulo antico. Nove PNG esatti per desktop, telefono e reliquia; composizioni intere sugli schermi stretti, senza ritoccare i colori confermati o i colori personali salvati. Le reliquie sono decorative, senza nuovi poteri o drop.
+- Corrette parti anatomiche inesistenti: «scanalata» non genera ali; «un occhio» e «una lente» valgono uno. Rascalume e Mìrula non acquisiscono radici perché sono citate nel loro ambiente. Le radici delle vere creature vegetali restano colpibili.
+- Scostubanditi e Granscostumato, incluse le varianti Empatiche, restano organici invece di essere classificati Robot perché abitano Postea. Gli altri robot del luogo non cambiano.
+- FireShield è un bipede alto circa5metri, con due braccia artigliate e due zampe. Collegati il desktop C2, il telefono e la reliquia approvati separatamente; quest’ultima mostra soltanto la testa con le due corna. Il lotto include quindi12PNG esatti per quattro temi completi. Restano i suoi poteri e valori; le vecchie proposte a sei arti sono conservate ma superate.
+
+Le anatomie e i valori personalizzati salvati dal Master conservano la precedenza. Statistiche, Skill/Art/Open, costi, forme, bersagli, durata, recuperi, elementi, parti colpibili, temi e colori restano modificabili. Test locali, CI, installazione e download pubblici hanno verifiche separate. [Evidenze e limiti](PATCH_2026-11-01_MECCANIO_ANATOMIE.md).
+
 ## Sei nuovi temi completi e Cavaliere Morto — 31 ottobre
 
 - Ritirati dal manuale/catalogo attivo Cuore Filo e la sua variante Veterana, come richiesto. Non vengono più proposti per nuovi incontri o artwork; le vecchie schede e le personalizzazioni conservano compatibilità. Le altre specie mantengono i propri ID e stili di variante.

@@ -161,6 +161,10 @@ class OculumMonsterTheme {
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
   bool get preserveIllustrationFraming => const {
+    'fire_shield',
+    'meccanio',
+    'meccanio_ammaccato',
+    'meccanio_primordiale',
     'specchio_mangiavoce',
     'teschio_mostruoso',
     'torretta_oculum',
@@ -169,6 +173,13 @@ class OculumMonsterTheme {
     'scheletro_bombarolo',
   }.contains(monster.id);
   String? get relicIllustration => switch (monster.id) {
+    'fire_shield' =>
+      'assets/oculum/home_art/relic_fire_shield_canon_20261101.png',
+    'meccanio' => 'assets/oculum/home_art/relic_meccanio_canon_20261101.png',
+    'meccanio_ammaccato' =>
+      'assets/oculum/home_art/relic_meccanio_ammaccato_canon_20261101.png',
+    'meccanio_primordiale' =>
+      'assets/oculum/home_art/relic_meccanio_primordiale_canon_20261101.png',
     'specchio_mangiavoce' =>
       'assets/oculum/home_art/relic_specchio_mangiavoce_canon_20261031.png',
     'teschio_mostruoso' =>
@@ -243,6 +254,13 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    'fire_shield' =>
+      'assets/oculum/home_art/theme_fire_shield_canon_20261101.png',
+    'meccanio' => 'assets/oculum/home_art/theme_meccanio_canon_20261101.png',
+    'meccanio_ammaccato' =>
+      'assets/oculum/home_art/theme_meccanio_ammaccato_canon_20261101.png',
+    'meccanio_primordiale' =>
+      'assets/oculum/home_art/theme_meccanio_primordiale_canon_20261101.png',
     'specchio_mangiavoce' =>
       'assets/oculum/home_art/theme_specchio_mangiavoce_canon_20261031.png',
     'teschio_mostruoso' =>
@@ -374,6 +392,14 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustrationMobile => switch (monster.id) {
+    'fire_shield' =>
+      'assets/oculum/home_art/theme_fire_shield_mobile_canon_20261101.png',
+    'meccanio' =>
+      'assets/oculum/home_art/theme_meccanio_mobile_canon_20261101.png',
+    'meccanio_ammaccato' =>
+      'assets/oculum/home_art/theme_meccanio_ammaccato_mobile_canon_20261101.png',
+    'meccanio_primordiale' =>
+      'assets/oculum/home_art/theme_meccanio_primordiale_mobile_canon_20261101.png',
     'specchio_mangiavoce' =>
       'assets/oculum/home_art/theme_specchio_mangiavoce_mobile_canon_20261031.png',
     'teschio_mostruoso' =>
@@ -489,6 +515,10 @@ class OculumMonsterTheme {
   }
 
   String get motif => switch (monster.id) {
+    'fire_shield' => 'Testa del bastione · corna e placche vulcaniche',
+    'meccanio' => 'Compagno su ruota · carbone e rame',
+    'meccanio_ammaccato' => 'Latta rientrata · lente incrinata e scintille',
+    'meccanio_primordiale' => 'Nodulo antico · pietra e rune del Fulmine',
     'mezzo_demone_cosciente' =>
       'Fauci del risveglio · corna a lama e pelle oliva',
     'nuvola_in_bottiglia' =>

@@ -1,5 +1,23 @@
 # Oculum — canone visivo confermato
 
+
+**FireShield — scelta canonica del 1 novembre:** «Sì, C è canonica», revisione 2, `output/artwork/sei_varianti_2026-11-01/lotto_fire_shield_bipede/fire_shield_bipede_C_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/fire_shield_desktop_canonico.png`; SHA256 `0632f9bfa546c3cda18d7a938cf2711558ddcb43d0e0c58e3651ce138d2aa190`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
+## Meccanio e FireShield — 1 novembre
+
+Approvati separatamente i sei derivati mostrati con «Sì, tutti e sei canonici»: Meccanio telefono v2/reliquia v2, Malconcio telefono v2/reliquia v2 e Primitivo telefono v2/reliquia v3. Insieme ai tre desktop F2/A2/C2 già approvati formano nove PNG esatti, copiati senza ritocchi. Ricevuta permanente: `design/approved-meccanio-packs-2026-11-01.json`; originali e revisioni conservati. I tre temi sono collegati localmente, con composizione intera sui telefoni e reliquie decorative senza nuovi poteri o drop. Colori salvati del singolo Meccanio conservati; CI, pacchetti e pubblicazione non sono dimostrati dalla sola copia.
+
+FireShield: l’utente corregge la precedente sagoma a sei arti in «a due zampe e grosso», poi conferma «Due braccia e due zampe» e «Circa 5 metri». È un rettile bipede massiccio con due grandi braccia artigliate e due zampe, due corna e due occhi; placche vulcaniche nere, ventre grigio, fenditure rosse. Le vecchie sei proposte sono superate e conservate come storico, non approvate. Le nuove alternative A–F richiedono una scelta. La correzione riguarda FireShield, non BlackDragonShield o altre specie; nessun cambiamento di statistiche, resistenze o Skill.
+
+
+**Meccanio Primitivo — scelta canonica del 1 novembre:** «C — Nodulo antico», revisione 2, `output/artwork/sei_varianti_notte_2026-10-31/lotto_meccanio/meccanio_primordiale/meccanio_primordiale_C_legacy_margini_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/meccanio_primordiale_desktop_canonico.png`; SHA256 `305d0cb359e9527cbe89f076be8fd329523f99b2d27b95372fa3af8ca194c21c`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
+
+**Meccanio Malconcio — scelta canonica del 1 novembre:** «A — Latta rientrata», revisione 2, `output/artwork/sei_varianti_notte_2026-10-31/lotto_meccanio/meccanio_ammaccato/meccanio_ammaccato_A_legacy_margini_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/meccanio_ammaccato_desktop_canonico.png`; SHA256 `4fe371fc1f09fc35f93354e534f98a1a914f4b45a9ebca5f8d20c3e03fd1a544`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
+
+**Meccanio — scelta canonica del 1 novembre:** «F — Carbone e rame», revisione 2, `output/artwork/sei_varianti_notte_2026-10-31/lotto_meccanio/meccanio/meccanio_F_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/meccanio_desktop_canonico.png`; SHA256 `535857025bd7466a9047bd101ba597948595dc002b9a929881134bba9bb3d503`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
 **Cuore Filo rifiutato dall’utente — 31 ottobre:** le cinque proposte non sono canoniche e non vanno integrate. L’utente esclude la creatura dal manuale, non soltanto dall’illustrazione. Originali/prompt conservati come storico del lotto scartato; nessun telefono o reliquia da produrre per questa voce.
 
 **ART43 — integrazione locale del lotto di sei creature:** i 18 PNG esatti approvati sotto sono ora collegati a desktop, telefono e reliquia; nessun ritocco ai pixel o nuovi poteri. Le composizioni si mostrano intere sui telefoni alti. Verificati SHA, alpha, layout e clic nei 197 test mirati; CI e distribuzione restano prove separate. La sfera del Cavaliere è la parte debole alla base della vita e rimane nascosta nell’illustrazione. Le note cronologiche sotto conservano lo stato al momento della scelta.
@@ -214,3 +232,9 @@ L’utente approva lo sfondo completo Grofix e la composizione separata per tele
 ### Guardiano Solare — aggiornamento dopo la sessione
 
 L’utente approva la direzione del nuovo sfondo del Guardiano e precisa «attenzione filo arco»: colosso massiccio d’oro con elmo chiuso a occhio solare, arco e due frecce, centro libero. Rifiutate le pose v2/v3 per la corda incoerente. **V4 approvata esplicitamente**: arco a riposo con una sola corda dritta collegata alle due estremità; le due frecce sono nell’altra mano, separate dall’arco. La versione telefono riprende questa struttura. Reliquia visiva dedicata con gli stessi materiali. Il nuovo tema non cambia statistiche, equipaggiamenti o drop; Mazza d’oro è una Skill richiesta separatamente. Prompt, fonti e stato dei controlli nel manifest `ART_GUARDIANO_SOLARE_2026-10-28.json`.
+
+
+**FireShield — derivati approvati il1novembre:** «Sì, entrambi canonici»: telefono v1 e reliquia sola testa v2, insieme al desktop C2 già scelto. Tre file copiati identici e collegati localmente, ricevuta design/approved-fire-shield-pack-2026-11-01.json. La reliquia conserva i pixel originali: margine visibile16,9%, non margine grezzo13%; residui alpha1 diagnosticati. CI/pacchetti distinti e nessuna chiusura100%.
+
+
+**Pacchetti1novembre verificati localmente:** 12PNG approvati e collegati per Meccanio, Malconcio, Primitivo e FireShield. Il gruppo finale ha superato20test asset/anatomia e5prove FireShield, oltre ai15test Meccanio già passati; analisi finale pulita222,5s. CI, pacchetti e download pubblici restano verifiche distinte. Nessuna chiusura100%.

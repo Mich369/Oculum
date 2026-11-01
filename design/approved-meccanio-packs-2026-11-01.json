@@ -1,0 +1,115 @@
+{
+  "date": "2026-11-01",
+  "provider": "builtin image_gen.imagegen",
+  "scope": "Three approved Meccanio packs; cosmetic only.",
+  "files": [
+    {
+      "species": "meccanio",
+      "kind": "desktop",
+      "asset": "assets/oculum/home_art/theme_meccanio_canon_20261101.png",
+      "sha256": "535857025bd7466a9047bd101ba597948595dc002b9a929881134bba9bb3d503",
+      "bytes": 2189295,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_desktop_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "F — Carbone e rame",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_meccanio_mobile_canon_20261101.png",
+      "sha256": "920dee44d8a686702e80f13f162ce6c8ff4778964e3a606eee244acadff79b63",
+      "bytes": 2181049,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_phone_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "Sì, tutti e sei canonici",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_meccanio_canon_20261101.png",
+      "sha256": "fa5af32b19f488559412caa90f1b8fb9a6a360d7a107a8e840d73bbb93848e46",
+      "bytes": 622592,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_relic_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "Sì, tutti e sei canonici",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio_ammaccato",
+      "kind": "desktop",
+      "asset": "assets/oculum/home_art/theme_meccanio_ammaccato_canon_20261101.png",
+      "sha256": "4fe371fc1f09fc35f93354e534f98a1a914f4b45a9ebca5f8d20c3e03fd1a544",
+      "bytes": 2049086,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_ammaccato_desktop_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "A — Latta rientrata",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio_ammaccato",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_meccanio_ammaccato_mobile_canon_20261101.png",
+      "sha256": "96b98dccb2476c5a4c1d5badf1211502c3e8bb2e4586eeb1abf732fbdf95d4e9",
+      "bytes": 2005247,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_ammaccato_phone_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "Sì, tutti e sei canonici",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio_ammaccato",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_meccanio_ammaccato_canon_20261101.png",
+      "sha256": "49b516346494547d43326e9c7d4c2f58375ab2ee2d9e2aae2f283f2eb1b82063",
+      "bytes": 573770,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_ammaccato_relic_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "Sì, tutti e sei canonici",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio_primordiale",
+      "kind": "desktop",
+      "asset": "assets/oculum/home_art/theme_meccanio_primordiale_canon_20261101.png",
+      "sha256": "305d0cb359e9527cbe89f076be8fd329523f99b2d27b95372fa3af8ca194c21c",
+      "bytes": 2021802,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_primordiale_desktop_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "C — Nodulo antico",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio_primordiale",
+      "kind": "phone",
+      "asset": "assets/oculum/home_art/theme_meccanio_primordiale_mobile_canon_20261101.png",
+      "sha256": "be8d40d916d7fcf6156963c32f6962bfb22cb474bfe0bcf40d52b98bce8b2c22",
+      "bytes": 1961359,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_primordiale_phone_canonico.png",
+      "revision": 2,
+      "user_approved": true,
+      "approval_quote": "Sì, tutti e sei canonici",
+      "decorative_only": true
+    },
+    {
+      "species": "meccanio_primordiale",
+      "kind": "relic",
+      "asset": "assets/oculum/home_art/relic_meccanio_primordiale_canon_20261101.png",
+      "sha256": "efc9dacd5dd4b5f1c689116e3ab055d2a6411ecd12769c1f1a236a4a92078e8b",
+      "bytes": 336436,
+      "source": "output/artwork/approvazioni_2026-11-01/meccanio_primordiale_relic_canonico.png",
+      "revision": 3,
+      "user_approved": true,
+      "approval_quote": "Sì, tutti e sei canonici",
+      "decorative_only": true
+    }
+  ]
+}

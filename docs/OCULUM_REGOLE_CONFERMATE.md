@@ -1,5 +1,11 @@
 # Oculum — registro delle regole confermate
 
+## FireShield e riconoscimento anatomico — 1 novembre
+
+**Conferma esplicita:** FireShield è alto circa 5 metri, bipede con due braccia grandi e artigliate e due zampe. Sostituisce la vecchia descrizione a sei arti; non estendere la correzione alle altre specie. Conservati statistiche, resistenze, tecniche e personalizzazioni del Master. Le nuove immagini sono ancora da scegliere.
+
+**Correzioni tecniche, non nuove regole:** «scanalata» non crea ali; «un occhio» e «una lente» contano uno; le radici dell’ambiente non sono parti corporee di Rascalume/Mìrula. Scostubanditi/Granscostumato ed Empatici organici non diventano Costrutti/Robot soltanto perché abitano Postea. Restano le vere radici delle piante, gli altri robot di Postea e le anatomie salvate. Riprodotti quattro difetti, corretti e verificati; 62 test mirati passati dopo la correzione di FireShield. Non è una nuova prova CI, distribuzione o interfaccia online reale.
+
 ## Ritiro di Cuore Filo — 31 ottobre
 
 L’utente corregge «non voglio questo mostro nella campagna» in «cioè nel manuale». Cuore Filo e le sue varianti sono ritirati dal catalogo/manuale attivo e dai nuovi incontri. Non cancellare schede o personalizzazioni esistenti: gli ID legacy restano risolvibili per compatibilità, senza rimettere le voci nelle nuove liste. Nessun disegno del lotto è approvato. Il ritiro avviene dopo la costruzione delle varianti, preservando gli ID e gli stili delle altre specie.

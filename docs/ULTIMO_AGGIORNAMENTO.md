@@ -1,4 +1,14 @@
-# Ultimo aggiornamento — 31 ottobre 2026
+# Ultimo aggiornamento — 1 novembre 2026
+
+- Tre nuovi temi completi dei Meccanio: Carbone e rame, Malconcio Latta rientrata e Primitivo Nodulo antico. Nove PNG approvati per desktop, telefono e reliquia, con composizione intera sui telefoni.
+- Corrette ali inesistenti da «scanalata», occhi singoli delle monete, radici ambientali scambiate per organi e classificazione Robot degli Empatici organici.
+- FireShield bipede5m con due braccia e due zampe: desktop C2, telefono e reliquia con sola testa canonici e collegati. In totale12PNG approvati per quattro temi completi; poteri e valori conservati.
+
+Verifiche locali:62test anatomici,87del gruppo misto e20finali sui quattro pacchetti passati; prove sfondi/pagine:15Meccanio e5FireShield. Gruppi sovrapposti, da non sommare.32testPython dell’aggiornamento passati; analisi finale senza problemi. CI, pacchetti e download pubblici sono verifiche separate. [Evidenze](PATCH_2026-11-01_MECCANIO_ANATOMIE.md) · [Registro cumulativo](REGISTRO_AGGIORNAMENTI.md).
+
+Modificabili: statistiche, sottotratti, Skill/Art/Open, costi e limiti, effetti, bersagli, durate e recuperi, elementi, oggetti, anatomie/Vita delle parti, temi, colori e trasparenze. Personalizzazioni salvate conservate.
+
+## Aggiornamento precedente — 31 ottobre
 
 - Cuore Filo e la Veterana ritirati dal manuale e dalle nuove liste; vecchie schede e personalizzazioni conservate.
 - Altri 18 artwork canonici collegati: desktop, telefono e reliquia per Specchio Mangiavoce, Teschio Mostruoso, Torretta Oculum, Adoratore della Bestia, Cavaliere Morto e Scheletro Bombarolo.

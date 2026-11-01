@@ -1,5 +1,23 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+
+**FireShield — scelta canonica del 1 novembre:** «Sì, C è canonica», revisione 2, `output/artwork/sei_varianti_2026-11-01/lotto_fire_shield_bipede/fire_shield_bipede_C_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/fire_shield_desktop_canonico.png`; SHA256 `0632f9bfa546c3cda18d7a938cf2711558ddcb43d0e0c58e3651ce138d2aa190`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
+## Meccanio e FireShield — 1 novembre
+
+Approvati separatamente i sei derivati mostrati con «Sì, tutti e sei canonici»: Meccanio telefono v2/reliquia v2, Malconcio telefono v2/reliquia v2 e Primitivo telefono v2/reliquia v3. Insieme ai tre desktop F2/A2/C2 già approvati formano nove PNG esatti, copiati senza ritocchi. Ricevuta permanente: `design/approved-meccanio-packs-2026-11-01.json`; originali e revisioni conservati. I tre temi sono collegati localmente, con composizione intera sui telefoni e reliquie decorative senza nuovi poteri o drop. Colori salvati del singolo Meccanio conservati; CI, pacchetti e pubblicazione non sono dimostrati dalla sola copia.
+
+FireShield: l’utente corregge la precedente sagoma a sei arti in «a due zampe e grosso», poi conferma «Due braccia e due zampe» e «Circa 5 metri». È un rettile bipede massiccio con due grandi braccia artigliate e due zampe, due corna e due occhi; placche vulcaniche nere, ventre grigio, fenditure rosse. Le vecchie sei proposte sono superate e conservate come storico, non approvate. Le nuove alternative A–F richiedono una scelta. La correzione riguarda FireShield, non BlackDragonShield o altre specie; nessun cambiamento di statistiche, resistenze o Skill.
+
+
+**Meccanio Primitivo — scelta canonica del 1 novembre:** «C — Nodulo antico», revisione 2, `output/artwork/sei_varianti_notte_2026-10-31/lotto_meccanio/meccanio_primordiale/meccanio_primordiale_C_legacy_margini_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/meccanio_primordiale_desktop_canonico.png`; SHA256 `305d0cb359e9527cbe89f076be8fd329523f99b2d27b95372fa3af8ca194c21c`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
+
+**Meccanio Malconcio — scelta canonica del 1 novembre:** «A — Latta rientrata», revisione 2, `output/artwork/sei_varianti_notte_2026-10-31/lotto_meccanio/meccanio_ammaccato/meccanio_ammaccato_A_legacy_margini_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/meccanio_ammaccato_desktop_canonico.png`; SHA256 `4fe371fc1f09fc35f93354e534f98a1a914f4b45a9ebca5f8d20c3e03fd1a544`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
+
+**Meccanio — scelta canonica del 1 novembre:** «F — Carbone e rame», revisione 2, `output/artwork/sei_varianti_notte_2026-10-31/lotto_meccanio/meccanio/meccanio_F_v2.png`. Copia canonica byte-identica: `output/artwork/approvazioni_2026-11-01/meccanio_desktop_canonico.png`; SHA256 `535857025bd7466a9047bd101ba597948595dc002b9a929881134bba9bb3d503`. Approvazione del solo desktop mostrato; originali e altre alternative conservati. Telefono/reliquia e integrazione hanno verifiche separate; nessun nuovo potere o drop dedotto.
+
 Cuore Filo, 31 ottobre: **«non voglio questo mostro nella campagna»**, corretto subito in **«cioè nel manuale»**. Rifiuto della creatura, non selezione tra le immagini A–E. Escludere base e varianti dal manuale/catalogo attivo e dalla coda artwork; conservare eventuali schede salvate e relativi ID. Le domande artistiche di questo lotto sono superate.
 
 Specchio Mangiavoce, Teschio Mostruoso e Torretta Oculum: seconda risposta **«Sì, tutti e sei canonici»**, riferita ai telefoni v2 e alle reliquie Specchio v2/Teschio v3/Torretta v2 mostrati. Conferma distinta dai sei derivati precedenti; file/versioni/SHA nel manifest centrale e nel pacchetto del lotto. Non estendere ad altre revisioni o immagini future.
@@ -627,3 +645,9 @@ Alla domanda se conservare la frattura da critico mirato valido oppure attendere
 > Critico oppure parte a 0
 
 Le eccezioni già definite (cristalli, nuclei, maschere e corazze speciali) restano prioritarie. Danno dopo le normali protezioni, anatomia/materiali coerenti; recuperi e soglie non ancora implementati integralmente per tutte le specie.
+
+
+**FireShield — derivati approvati il1novembre:** «Sì, entrambi canonici»: telefono v1 e reliquia sola testa v2, insieme al desktop C2 già scelto. Tre file copiati identici e collegati localmente, ricevuta design/approved-fire-shield-pack-2026-11-01.json. La reliquia conserva i pixel originali: margine visibile16,9%, non margine grezzo13%; residui alpha1 diagnosticati. CI/pacchetti distinti e nessuna chiusura100%.
+
+
+**Pacchetti1novembre verificati localmente:** 12PNG approvati e collegati per Meccanio, Malconcio, Primitivo e FireShield. Il gruppo finale ha superato20test asset/anatomia e5prove FireShield, oltre ai15test Meccanio già passati; analisi finale pulita222,5s. CI, pacchetti e download pubblici restano verifiche distinte. Nessuna chiusura100%.

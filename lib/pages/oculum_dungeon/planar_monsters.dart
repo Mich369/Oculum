@@ -795,7 +795,7 @@ final _shieldCloudMonsterEntries = <MonsterBookEntry>[
     'FireShield',
     ['demoniaco', 'diabolico', 'vero_inferno'],
     'fuoco',
-    'Un enorme rettile nero a sei arti, ventre grigio ripiegato e dorso formato da placche vulcaniche. Fenditure rosse attraversano corna, spalle e artigli; gli occhi ardono come feritoie. Tiene il ventre vicino al terreno e si solleva soltanto per il raggio. Boss di assedio: 2 Scudi critici. Resiste a Fuoco, Lava e fisico. Acqua spegne la resistenza fisica per il successivo attacco ricevuto, anche se schivato.',
+    'Un enorme rettile nero bipede alto circa cinque metri, con due braccia grandi e artigliate e due zampe robuste. Il ventre grigio ripiegato e il dorso di placche vulcaniche rendono la sagoma molto massiccia. Fenditure rosse attraversano le due corna, le spalle e gli artigli; i due occhi della testa ardono come feritoie. Si erge sulle zampe e apre le placche del collo per il raggio. Boss di assedio: 2 Scudi critici. Resiste a Fuoco, Lava e fisico. Acqua spegne la resistenza fisica per il successivo attacco ricevuto, anche se schivato.',
     'La pelle grigia sotto la pancia, priva delle placche vulcaniche.',
     [12, 8, 10, 6],
     8,

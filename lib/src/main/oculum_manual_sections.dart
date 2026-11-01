@@ -5,6 +5,20 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Meccanio, FireShield e parti reali — 1 novembre',
+    titleEn: 'Meccanio, FireShield and physical parts — November 1',
+    contentIt: r'''
+I tre Meccanio hanno temi completi approvati: Meccanio Carbone e rame, Malconcio Latta rientrata e Primitivo Nodulo antico, ciascuno con desktop, telefono e reliquia decorativa. Le immagini non cambiano i colori salvati del singolo compagno e non aggiungono Skill o drop. Tutti restano su una sola ruota con due braccia a pinza, senza ali. La parola «scanalata» descrive la ruota e non significa «alata».
+Le monete Observer’s Tear e Obser Sunshine hanno un solo occhio; l'articolo «un» e la lente singolare non devono produrne due. Le radici citate nell'habitat di Rascalume e Mìrula non sono nuovi organi colpibili. Le vere radici corporee e le anatomie personalizzate del Master restano valide. Scostubanditi e Granscostumato, incluse le varianti Empatiche, sono organici: abitare a Postea non li rende Robot o Costrutti.
+FireShield è un rettile corazzato bipede alto circa cinque metri: due braccia grandi e artigliate, due zampe robuste, due occhi e due corna. Questa conferma sostituisce la precedente sagoma a sei arti; non cambia BlackDragonShield o le altre specie. Restano le placche nere vulcaniche, il ventre grigio e le fenditure rosse. Statistiche, resistenze e tecniche non cambiano. Desktop C approvato, con guardia alta e fronte angolare; la reliquia deve raffigurare soltanto la testa. Le anatomie e i valori personalizzati salvati conservano la precedenza.
+''',
+    contentEn: r'''
+Three approved Meccanio packs include desktop, phone and decorative relic art: Charcoal and Copper, Dented Tin and Ancient Nodule. Saved companion colours remain unchanged. Each has one wheel and two pincer arms, with no wings; the Italian word for a grooved wheel does not mean winged.
+Observer’s Tear and Obser Sunshine each have one eye. Habitat roots do not create targetable organs on Rascalume or Mirula. Actual plant roots and saved Master anatomy remain authoritative. Scostubanditi and Granscostumato, including Empathic variants, are organic; living in Postea does not make them robots or constructs.
+FireShield is a five-metre armoured biped with two large clawed arms, two sturdy legs, two eyes and two horns. This supersedes its old six-limbed silhouette without changing BlackDragonShield or other species. Black volcanic plates, grey belly and red fissures remain. Statistics, resistances and techniques are unchanged. Desktop C is approved, with a high guard and angular forehead; its relic must depict only its head. Preserve saved custom anatomy and values.
+''',
+  ),
+  ManualSection(
     titleIt: 'Cavaliere Morto e sei temi canonici — 31 ottobre',
     titleEn: 'Dead Knight and six canonical themes — October 31',
     contentIt: r'''

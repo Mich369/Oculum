@@ -10,6 +10,10 @@ import 'package:oculum/widgets/oculum_narrative_background.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
 
 const _complete = [
+  'fire_shield',
+  'meccanio',
+  'meccanio_ammaccato',
+  'meccanio_primordiale',
   'specchio_mangiavoce',
   'teschio_mostruoso',
   'torretta_oculum',
