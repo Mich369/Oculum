@@ -15,6 +15,34 @@ void main() {
       state.datiCaricati = false;
       state.resilienzaController.text = '100';
       state.currentResilienzaController.text = '100';
+      // This case verifies counterattack percentages and turn resources, not
+      // independent random damage mitigation. RES100 derives Resistance50;
+      // without this offset the passive can reduce the expected10HP to1.
+      // Snapshotting below carries these same values into the attacker sheet.
+      for (final id in ['resistenza', 'fortuna', 'riflessi']) {
+        if (!(state.hiddenEyeStats as List).any(
+          (dynamic stat) => stat.id == id,
+        )) {
+          state.hiddenEyeStats.add(
+            HiddenEyeStat(
+              id: id,
+              nome: id,
+              descrizione: 'Fixture senza mitigazione casuale indipendente',
+              unlocked: true,
+            ),
+          );
+        }
+      }
+      for (final dynamic stat in state.hiddenEyeStats) {
+        if (const {'resistenza', 'fortuna', 'riflessi'}.contains(stat.id)) {
+          stat.valore = stat.id == 'resistenza' ? -50 : -100;
+          stat.unlocked = true;
+        }
+      }
+      probe.invalidateDerivedCaches();
+      expect(probe.subtraitValue('resistenza'), 0);
+      expect(probe.subtraitValue('fortuna'), lessThanOrEqualTo(0));
+      expect(probe.subtraitValue('riflessi'), lessThanOrEqualTo(0));
       state.modalitaMaster = true;
       state.isMasterHost = true;
       if (state.schedePersonaggio.isEmpty) {

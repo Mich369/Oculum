@@ -18,6 +18,10 @@ Successiva conferma esplicita: «Sì, entrambi canonici» per FireShield telefon
 - Dopo l’aggiunta di FireShield:20test finali su12PNG e anatomie passati,5prove dedicate a sfondo/pagina/reliquia FireShield passate; analisi finale senza problemi in222,5secondi. Le prove dei tre Meccanio sono15, già riportate sopra. Un filtro con barra verticale non è stato accettato dal launcherWindows: rilanciata FireShield con filtro testuale semplice. Nessuna modifica alle regole per aggirare un test.
 - Analisi, suite CI, prove online autenticate, installazione e download pubblici richiedono evidenze separate; nessuna prova su tre dispositivi fisici implicita.
 
+## Riprova CI — contrattacco
+
+Il primo run41282486243 del commit9e4d4123 ha superato2039test, con1fallimento e6saltati; nessun pacchetto di quella build è stato pubblicato. Il caso esatto del contrattacco attendeva10Danni ma poteva subirne1: la fixture conRES100 lasciava attiva la Resistenza passiva derivata50. Isolate soltanto le passività casuali indipendenti nella fixture, inizializzando esplicitamente i tre sottotratti e conservando gli attesi originali20/10. Nessuna modifica al motore, alle probabilità o alle regole reali. I10test locali di contrattacco/turni/Resistenza sono passati nella riprova. La nuova CI completa e i pacchetti restano da verificare.
+
 ## Personalizzazioni conservate
 
 Restano modificabili nomi e descrizioni, statistiche/sottotratti, Skill/Art/Open, costi/minimi/massimi, risorse, forme, effetti, elementi, bersagli, durata, cooldown, inventario, resistenze, anatomie/parti e loro Vita, temi, reliquie, colori e trasparenze negli editor esistenti e nel JSON. Le nuove definizioni non riscrivono le schede salvate.

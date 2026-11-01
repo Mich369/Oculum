@@ -3,6 +3,7 @@
 - Tre nuovi temi completi dei Meccanio: Carbone e rame, Malconcio Latta rientrata e Primitivo Nodulo antico. Nove PNG approvati per desktop, telefono e reliquia, con composizione intera sui telefoni.
 - Corrette ali inesistenti da «scanalata», occhi singoli delle monete, radici ambientali scambiate per organi e classificazione Robot degli Empatici organici.
 - FireShield bipede5m con due braccia e due zampe: desktop C2, telefono e reliquia con sola testa canonici e collegati. In totale12PNG approvati per quattro temi completi; poteri e valori conservati.
+- Stabilizzata una prova del contrattacco isolando la Resistenza passiva casuale della fixture; regole e Danni reali invariati.
 
 Verifiche locali:62test anatomici,87del gruppo misto e20finali sui quattro pacchetti passati; prove sfondi/pagine:15Meccanio e5FireShield. Gruppi sovrapposti, da non sommare.32testPython dell’aggiornamento passati; analisi finale senza problemi. CI, pacchetti e download pubblici sono verifiche separate. [Evidenze](PATCH_2026-11-01_MECCANIO_ANATOMIE.md) · [Registro cumulativo](REGISTRO_AGGIORNAMENTI.md).
 
