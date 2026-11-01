@@ -1,12 +1,18 @@
 # Manuale Oculum — riferimento integrale
 
+Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
+
+## Parti colpibili e punti deboli precisi — 2 novembre
+
+Le anatomie predefinite seguono i disegni canonici: DeadlySins ha due braccia, due gambe e due corna metalliche, senza occhi esposti dall’elmo; Rascalume e Mìrula quattro zampe, due occhi e una coda; Brumìlio due ali e due zampe; Vèndulo quattro zampe e due occhi. Il Colosso di Prismarite ha due braccia sulle nocche e due gambe, di pietra. Il Diavolo Obliterato ha due corna, due occhi normali e il terzo occhio sulla fronte.
+I punti deboli già descritti restano parti precise: catena di DeadlySins, vibrisse del Rascalume, pelle sotto le placche del muso di Vèndulo, petto di Brumìlio e terzo occhio del Diavolo. Le molle del Pupazzo Artigliato sono distinte dalle gambe. Il nucleo del Golem non rende debole tutto il torace; prima di rompere le piastre resta nascosto. Non vengono aggiunte immunità, nuove fragilità o statistiche dai disegni.
+Il riconoscimento delle parti usa parole intere: aspetto non significa petto, piegate non significa pieghe, mantenne non significa antenne, bisacca non significa sacca. Le parti, i materiali, la Vita delle parti e i punti deboli personalizzati dal Master mantengono la precedenza e restano salvati nel JSON.
+
 ## Piastre del Golem e 23 temi canonici — 1 novembre
 
 Golem Runico: il nucleo resta nascosto e non mirabile finché non si rompono le piastre frontali. Valori iniziali scelti sulla delega: integrità delle piastre pari al 35% della Vita massima, arrotondata per difetto con minimo3. Il colpo mirato danneggia anche il corpo una sola volta; sulle piastre conta soltanto la perdita di Vita effettiva dopo le protezioni. Un critico non le apre automaticamente. La conoscenza o l’acquisto della pagina non espone il nucleo. Riparazione, integrità, materiale e regole salvate restano modificabili; anatomie personali del Master conservate. Ricevute duplicate, bersagli estranei e turnistiche diverse non danneggiano le piastre.
 RockShield: il disegno canonico sostituisce la vecchia anatomia con un gigante umanoide bipede, due braccia e due gambe. Il Golem Runico ha due braccia, due gambe e calotta senza occhi. Robot Artigliato a Molla e Golem di nuvole rocciose sono raffigurati più grandi: non si deducono nuove statistiche o metri non confermati.
-Ventitré nuovi set completi approvati comprendono69immagini esatte per desktop, telefono e reliquia decorativa. Le composizioni restano intere sugli schermi stretti e non aggiungono poteri o drop. Nessun ritratto forzato nel Monster Book. Le36ulteriori proposte di sei creature restano da votare e non entrano nei temi dell’app.
-
-Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
+Ventitré nuovi set completi approvati comprendono69immagini esatte per desktop, telefono e reliquia decorativa. Le composizioni restano intere sugli schermi stretti e non aggiungono poteri o drop. Nessun ritratto forzato nel Monster Book. Le48ulteriori proposte di otto creature restano da votare e non entrano nei temi dell’app.
 
 ## Meccanio, FireShield e parti reali — 1 novembre
 

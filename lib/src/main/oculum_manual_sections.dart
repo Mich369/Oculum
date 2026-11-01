@@ -5,17 +5,31 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Parti colpibili e punti deboli precisi — 2 novembre',
+    titleEn: 'Physical targets and specific weak points — November 2',
+    contentIt: r'''
+Le anatomie predefinite seguono i disegni canonici: DeadlySins ha due braccia, due gambe e due corna metalliche, senza occhi esposti dall’elmo; Rascalume e Mìrula quattro zampe, due occhi e una coda; Brumìlio due ali e due zampe; Vèndulo quattro zampe e due occhi. Il Colosso di Prismarite ha due braccia sulle nocche e due gambe, di pietra. Il Diavolo Obliterato ha due corna, due occhi normali e il terzo occhio sulla fronte.
+I punti deboli già descritti restano parti precise: catena di DeadlySins, vibrisse del Rascalume, pelle sotto le placche del muso di Vèndulo, petto di Brumìlio e terzo occhio del Diavolo. Le molle del Pupazzo Artigliato sono distinte dalle gambe. Il nucleo del Golem non rende debole tutto il torace; prima di rompere le piastre resta nascosto. Non vengono aggiunte immunità, nuove fragilità o statistiche dai disegni.
+Il riconoscimento delle parti usa parole intere: aspetto non significa petto, piegate non significa pieghe, mantenne non significa antenne, bisacca non significa sacca. Le parti, i materiali, la Vita delle parti e i punti deboli personalizzati dal Master mantengono la precedenza e restano salvati nel JSON.
+''',
+    contentEn: r'''
+Default anatomy follows the canonical artwork: DeadlySins has two arms, two legs and two metal horns, with no exposed eyes through its helmet; Rascalume and Mirula have four legs, two eyes and one tail; Brumilio has two wings and two feet; Vendulo has four legs and two eyes. The Prismarite Colossus has two knuckle arms and two hind legs made of stone. The Obliterated Devil has two horns, two normal eyes and a third forehead eye.
+Existing weak points remain specific targets: DeadlySins' chain, Rascalume's whiskers, the skin beneath Vendulo's facial plates, Brumilio's chest and the Devil's third eye. The Clawed Puppet's springs are separate from its legs. The Golem core does not make its entire chest weak and remains hidden until its plates break. Artwork adds no new statistics, immunities or vulnerabilities.
+Anatomical keywords match whole words rather than incidental substrings. Saved custom Master anatomy, materials, part HP and weak points retain precedence and remain editable in sheet JSON.
+''',
+  ),
+  ManualSection(
     titleIt: 'Piastre del Golem e 23 temi canonici — 1 novembre',
     titleEn: 'Golem plates and 23 canonical themes — November 1',
     contentIt: r'''
 Golem Runico: il nucleo resta nascosto e non mirabile finché non si rompono le piastre frontali. Valori iniziali scelti sulla delega: integrità delle piastre pari al 35% della Vita massima, arrotondata per difetto con minimo3. Il colpo mirato danneggia anche il corpo una sola volta; sulle piastre conta soltanto la perdita di Vita effettiva dopo le protezioni. Un critico non le apre automaticamente. La conoscenza o l’acquisto della pagina non espone il nucleo. Riparazione, integrità, materiale e regole salvate restano modificabili; anatomie personali del Master conservate. Ricevute duplicate, bersagli estranei e turnistiche diverse non danneggiano le piastre.
 RockShield: il disegno canonico sostituisce la vecchia anatomia con un gigante umanoide bipede, due braccia e due gambe. Il Golem Runico ha due braccia, due gambe e calotta senza occhi. Robot Artigliato a Molla e Golem di nuvole rocciose sono raffigurati più grandi: non si deducono nuove statistiche o metri non confermati.
-Ventitré nuovi set completi approvati comprendono69immagini esatte per desktop, telefono e reliquia decorativa. Le composizioni restano intere sugli schermi stretti e non aggiungono poteri o drop. Nessun ritratto forzato nel Monster Book. Le36ulteriori proposte di sei creature restano da votare e non entrano nei temi dell’app.
+Ventitré nuovi set completi approvati comprendono69immagini esatte per desktop, telefono e reliquia decorativa. Le composizioni restano intere sugli schermi stretti e non aggiungono poteri o drop. Nessun ritratto forzato nel Monster Book. Le48ulteriori proposte di otto creature restano da votare e non entrano nei temi dell’app.
 ''',
     contentEn: r'''
 The Runic Golem core is hidden and cannot be targeted until its front plates break. Delegated initial balance: plate integrity equals 35 percent of maximum HP, rounded down with a minimum of three. A targeted hit also damages the body exactly once; plates only count actual HP loss after protections. Critical hits do not automatically open them. Knowing or purchasing the Book page does not expose the core. Saved integrity, material, repair rules and custom Master anatomy remain editable. Duplicate receipts and hits for another target or encounter cannot damage the plates.
 RockShield is now a giant humanoid biped with two arms and two legs, superseding its old anatomy. The Runic Golem has two arms, two legs and an eyeless dome. The Spring Claw Robot and Rock Cloud Golem look larger without inventing new statistics or exact sizes.
-Twenty-three approved sets include 69 exact desktop, phone and decorative relic images. Whole compositions remain visible on narrow screens, without adding powers, loot or forced Monster Book portraits. Thirty-six further proposals for six creatures await user selection and are not app themes.
+Twenty-three approved sets include 69 exact desktop, phone and decorative relic images. Whole compositions remain visible on narrow screens, without adding powers, loot or forced Monster Book portraits. Forty-eight further proposals for eight creatures await user selection and are not app themes.
 ''',
   ),
   ManualSection(

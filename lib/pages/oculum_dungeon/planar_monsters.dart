@@ -969,7 +969,7 @@ final _shieldCloudMonsterEntries = <MonsterBookEntry>[
     'Diavolo Obliterato',
     ['shadow_hell', 'oblio'],
     'oblio',
-    'Diavolo aggressivo dalla pelle grigio cenere, corna piegate e occhi completamente neri, senza riflessi. Un terzo occhio si apre nel palmo o sulla fronte; allontanando la mano da esso forma una sfera nera che sembra sottrarre luce alla scena. Se fugge, il ricordo della sua identità si perde; il Titolo Malanno Annichilimento applica @res-30% per tre Riposi Lunghi. La fuga nasconde soltanto l’identità nel Book, senza cancellare progressi o premi.',
+    'Diavolo aggressivo dalla pelle grigio cenere, due corna piegate e due occhi completamente neri, senza riflessi. Il terzo occhio è sulla fronte, come nel disegno canonico; dalla mano aperta forma una sfera nera che sembra sottrarre luce alla scena. Se fugge, il ricordo della sua identità si perde; il Titolo Malanno Annichilimento applica @res-30% per tre Riposi Lunghi. La fuga nasconde soltanto l’identità nel Book, senza cancellare progressi o premi.',
     'Il margine chiaro attorno al terzo occhio, visibile durante la preparazione della sfera.',
     [10, 9, 8, 8],
     40,

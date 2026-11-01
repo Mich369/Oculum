@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Bersagli anatomici più precisi — 2 novembre
+
+- Completate le parti di sette famiglie e delle loro varianti secondo i disegni canonici. Catena, vibrisse, molle, pelle del muso e terzo occhio hanno bersagli distinti; il petto di Brumìlio non rende deboli le ali.
+- Il torace del Golem Runico non aggira la protezione delle piastre. I nuclei restano punti specifici; le parole «aspetto», «mantenne», «rancuore», «bisacca», «ancore» e «piegate» non generano organi inesistenti.
+- Nessuna nuova statistica o capacità dalle immagini; anatomie e punti deboli personalizzati mantengono la precedenza. Passati41test locali mirati, analisi pulita; CI e pacchetti verificati separatamente. [Dettagli](BUG52_ANATOMIE_E_PUNTI_DEBOLI_2026-11-02.md).
+
 ## Download Android separati — 2 novembre
 
 - APK e App Bundle Android hanno ora archivi pubblici separati: la loro dimensione combinata aveva superato il limite di2GiB di GitHub e fermato la pubblicazione. Il nome APK rimane compatibile con gli aggiornamenti delle versioni precedenti; il menu Web offre anche l’AAB come download aggiuntivo.
@@ -10,7 +16,7 @@
 -69immagini canoniche esatte: desktop, telefono e reliquia di23creature. Il Robot Artigliato a Molla è molto più grande, RockShield è un gigante umanoide bipede e il Golem di nuvole rocciose è più imponente, come nelle revisioni approvate. Le composizioni rimangono intere sui telefoni; niente nuovi poteri o drop dalle reliquie.
 - Golem Runico: per mirare al nucleo bisogna prima distruggere le piastre frontali. Integrità separata iniziale35% Vita massima, minimo3, modificabile. Danni dopo le protezioni, corpo danneggiato una sola volta, bersagli aggiornati e ricevute duplicate respinte. Comprare la pagina non espone il nucleo.
 - Corretto il riconoscimento anatomico: «partono», «umano» e «manopola» non rendono deboli le braccia; «palato» non crea ali. RockShield ha due braccia/due gambe; Golem Runico due braccia/due gambe e nessun occhio.
-- Salvataggi, immagini personali, anatomie personalizzate, costi ed effetti modificabili conservati. Le ulteriori36proposte per sei creature restano fuori dai temi dell’app finché non vengono votate.
+- Salvataggi, immagini personali, anatomie personalizzate, costi ed effetti modificabili conservati. Le ulteriori48proposte per otto creature restano fuori dai temi dell’app finché non vengono votate.
 
 Passati211test locali grafici/anatomici e118test finali su anatomie, parser/costi, Open, fuga e premi (comprendono i14su piastre/scatole).32test Python passati e analisi statica pulita. CI, prove online autenticate, pacchetti e pubblicazione si verificano separatamente. [Dettagli](PATCH_2026-11-01_23_TEMI_GOLEM.md).
 

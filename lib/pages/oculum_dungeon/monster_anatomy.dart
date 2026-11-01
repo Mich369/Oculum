@@ -188,63 +188,91 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   final fireShield = entry.id.split('_variante_').first == 'fire_shield';
   final rockShield = entry.id.split('_variante_').first == 'rock_shield';
   final runicGolem = entry.id.split('_variante_').first == 'golem_runico';
+  final canonicalBase = entry.id.split('_variante_').first;
+  final reviewedPhysical = const {
+    'deadly_sins':
+        'umanoide, testa con elmo chiuso senza occhi visibili, torace, due braccia, due gambe e due corna di ferro',
+    'rascalume':
+        'roditore quadrupede, testa, torace, quattro zampe, due occhi, due orecchie, una coda e vibrisse',
+    'mirula':
+        'salamandra quadrupede, testa, torace, quattro zampe, due occhi, una coda e branchie esterne',
+    'colosso_prismarite':
+        'colosso umanoide di pietra, testa senza occhi, torace, due braccia sulle nocche e due gambe',
+    'brumilio':
+        'uccello, testa, becco, torace, due occhi, due ali, due zampe e una coda',
+    'vendulo': 'quadrupede, testa, torace, quattro zampe e due occhi',
+    'obliterated_devil':
+        'umanoide, testa, torace, due braccia, due gambe, due occhi neri e due corna',
+  }[canonicalBase];
+  final reviewedCounts = const <String, Map<String, int>>{
+    'deadly_sins': {'arms': 2, 'legs': 2, 'eyes': 0, 'horns': 2},
+    'rascalume': {'legs': 4, 'eyes': 2, 'tail': 1},
+    'mirula': {'legs': 4, 'eyes': 2, 'tail': 1},
+    'colosso_prismarite': {'arms': 2, 'legs': 2, 'eyes': 0},
+    'brumilio': {'legs': 2, 'wings': 2, 'eyes': 2, 'tail': 1},
+    'vendulo': {'legs': 4, 'eyes': 2},
+    // The third, weak eye is a separately labelled forehead target below.
+    'obliterated_devil': {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
+  }[canonicalBase];
   // Confirmed artwork supplies missing physical facts, never new powers or
   // weak points. An explicit saved anatomy above remains authoritative.
-  final confirmedPhysical = pinepine
-      ? 'umanoide, due braccia, due gambe, testa e due occhi'
-      : fireShield
-      ? 'bipede, testa, due braccia, due zampe, due occhi e due corna'
-      : rockShield
-      ? 'gigante umanoide bipede, testa, due braccia e due gambe'
-      : runicGolem
-      ? 'costrutto umanoide, due braccia, due gambe, testa a calotta senza occhi'
-      : switch (entry.id) {
-          'manichino_spada' || 'manichino_baghest' =>
-            'umanoide, due braccia, due gambe e un occhio nella guardia della lama',
-          'mostro_sabbia' =>
-            'quadrupede, quattro zampe, due corna, testa e coda',
-          'gigante_sabbia' =>
-            'umanoide, due braccia, due gambe, due corna e coda',
-          'costrutto_minore' =>
-            'umanoide meccanico, due braccia, due gambe, due occhi',
-          'funghetto_cappuccio_rosso' =>
-            'umanoide fungino, due braccia, due gambe, testa, due occhi',
-          'topino_avventuroso' =>
-            'bipede umanoide, due braccia, due gambe, testa, due occhi, due orecchie e coda',
-          'sharp' => 'quattro zampe, due occhi',
-          'mosca_campana' => 'sei zampe, quattro ali, due occhi',
-          'custode_campana_cieca' =>
-            'umanoide, due braccia, due gambe, testa a campana, senza occhi',
-          'sciamano_malizioso' =>
-            'umanoide ligneo, due braccia, due gambe, testa mascherata, senza occhi biologici',
-          'mammuth_in_decomposizione' =>
-            'quadrupede, quattro zampe, due occhi, due orecchie, una proboscide, due zanne e coda',
-          'shadow_devil' => 'due corna, senza occhi',
-          'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' =>
-            'umanoide, due braccia, due gambe, due corna e due occhi',
-          'forest_demon' =>
-            'rettile quadrupede, quattro zampe, due occhi, tre corna e coda',
-          'ciclo_forest_demon_blu' =>
-            'rettile quadrupede, quattro zampe, due occhi, due corna e coda, senza ali',
-          'famelico_oblio' =>
-            'quadrupede, quattro zampe, due occhi, due corna, una coda',
-          'saltalungo_maculato' =>
-            'bipede, due braccia, due gambe, due occhi, due orecchie, una coda',
-          'cloud_beast' =>
-            'bipede lupino, due braccia, due gambe, due occhi, due orecchie, due corna, una coda',
-          'laer' => 'umanoide, testa, due braccia, due gambe',
-          'mostro_solare' =>
-            'umanoide, testa, due braccia, due gambe, due occhi, un corno',
-          'sciamano_malizioso_minore' =>
-            'umanoide ligneo, testa, due braccia, due gambe, senza occhi biologici',
-          'strana_presenza' =>
-            'presenza umanoide, due braccia, due gambe, senza testa, senza occhi',
-          'air_navigator' =>
-            'testa, becco, due braccia, senza ali, senza gambe, senza zampe, vortice inferiore',
-          'lupo_infernale_del_ghiaccio' =>
-            'quadrupede, quattro zampe, testa, due occhi, due orecchie, una coda',
-          _ => '',
-        };
+  final confirmedPhysical =
+      reviewedPhysical ??
+      (pinepine
+          ? 'umanoide, due braccia, due gambe, testa e due occhi'
+          : fireShield
+          ? 'bipede, testa, due braccia, due zampe, due occhi e due corna'
+          : rockShield
+          ? 'gigante umanoide bipede, testa, due braccia e due gambe'
+          : runicGolem
+          ? 'costrutto umanoide, due braccia, due gambe, testa a calotta senza occhi'
+          : switch (entry.id) {
+              'manichino_spada' || 'manichino_baghest' =>
+                'umanoide, due braccia, due gambe e un occhio nella guardia della lama',
+              'mostro_sabbia' =>
+                'quadrupede, quattro zampe, due corna, testa e coda',
+              'gigante_sabbia' =>
+                'umanoide, due braccia, due gambe, due corna e coda',
+              'costrutto_minore' =>
+                'umanoide meccanico, due braccia, due gambe, due occhi',
+              'funghetto_cappuccio_rosso' =>
+                'umanoide fungino, due braccia, due gambe, testa, due occhi',
+              'topino_avventuroso' =>
+                'bipede umanoide, due braccia, due gambe, testa, due occhi, due orecchie e coda',
+              'sharp' => 'quattro zampe, due occhi',
+              'mosca_campana' => 'sei zampe, quattro ali, due occhi',
+              'custode_campana_cieca' =>
+                'umanoide, due braccia, due gambe, testa a campana, senza occhi',
+              'sciamano_malizioso' =>
+                'umanoide ligneo, due braccia, due gambe, testa mascherata, senza occhi biologici',
+              'mammuth_in_decomposizione' =>
+                'quadrupede, quattro zampe, due occhi, due orecchie, una proboscide, due zanne e coda',
+              'shadow_devil' => 'due corna, senza occhi',
+              'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' =>
+                'umanoide, due braccia, due gambe, due corna e due occhi',
+              'forest_demon' =>
+                'rettile quadrupede, quattro zampe, due occhi, tre corna e coda',
+              'ciclo_forest_demon_blu' =>
+                'rettile quadrupede, quattro zampe, due occhi, due corna e coda, senza ali',
+              'famelico_oblio' =>
+                'quadrupede, quattro zampe, due occhi, due corna, una coda',
+              'saltalungo_maculato' =>
+                'bipede, due braccia, due gambe, due occhi, due orecchie, una coda',
+              'cloud_beast' =>
+                'bipede lupino, due braccia, due gambe, due occhi, due orecchie, due corna, una coda',
+              'laer' => 'umanoide, testa, due braccia, due gambe',
+              'mostro_solare' =>
+                'umanoide, testa, due braccia, due gambe, due occhi, un corno',
+              'sciamano_malizioso_minore' =>
+                'umanoide ligneo, testa, due braccia, due gambe, senza occhi biologici',
+              'strana_presenza' =>
+                'presenza umanoide, due braccia, due gambe, senza testa, senza occhi',
+              'air_navigator' =>
+                'testa, becco, due braccia, senza ali, senza gambe, senza zampe, vortice inferiore',
+              'lupo_infernale_del_ghiaccio' =>
+                'quadrupede, quattro zampe, testa, due occhi, due orecchie, una coda',
+              _ => '',
+            });
   final physical = entry.id.split('_variante_').first == 'cavaliere_morto'
       // The optional summoned woman is not a body part of the empty armour.
       ? 'armatura vuota umanoide, due braccia, due gambe, elmo chiuso senza occhi, sfera di Oculum nascosta alla base della vita'
@@ -294,58 +322,79 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   int count(String noun, int fallback) {
     // Do not count the same limbs twice when the description already contains
     // a number and the approved-art facts repeat it.
-    final canonicalCounts = pinepine
-        ? {'arms': 2, 'legs': 2, 'eyes': 2}
-        : fireShield
-        ? {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2}
-        : rockShield
-        ? {'arms': 2, 'legs': 2}
-        : runicGolem
-        ? {'arms': 2, 'legs': 2, 'eyes': 0}
-        : switch (entry.id) {
-            'manichino_spada' ||
-            'manichino_baghest' => {'arms': 2, 'legs': 2, 'eyes': 1},
-            'mostro_sabbia' => {'legs': 4, 'eyes': 2, 'horns': 2},
-            'gigante_sabbia' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2},
-            'costrutto_minore' ||
-            'funghetto_cappuccio_rosso' ||
-            'topino_avventuroso' => {'arms': 2, 'legs': 2, 'eyes': 2},
-            'sharp' => {'legs': 4, 'eyes': 2},
-            'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
-            'custode_campana_cieca' ||
-            'sciamano_malizioso' => {'arms': 2, 'legs': 2},
-            'mammuth_in_decomposizione' => {'legs': 4, 'eyes': 2},
-            'shadow_devil' => {'horns': 2},
-            'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' => {
-              'arms': 2,
-              'legs': 2,
-              'eyes': 2,
-              'horns': 2,
-            },
-            'nuvola_in_bottiglia' => {'eyes': 1},
-            'forest_demon' => {'legs': 4, 'eyes': 2, 'horns': 3},
-            'ciclo_forest_demon_blu' => {'legs': 4, 'eyes': 2, 'horns': 2},
-            'famelico_oblio' => {'legs': 4, 'eyes': 2, 'horns': 2, 'tail': 1},
-            'saltalungo_maculato' => {
-              'arms': 2,
-              'legs': 2,
-              'eyes': 2,
-              'tail': 1,
-            },
-            'cloud_beast' => {
-              'arms': 2,
-              'legs': 2,
-              'eyes': 2,
-              'horns': 2,
-              'tail': 1,
-            },
-            'laer' || 'sciamano_malizioso_minore' => {'arms': 2, 'legs': 2},
-            'mostro_solare' => {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 1},
-            'strana_presenza' => {'arms': 2, 'legs': 2},
-            'air_navigator' => {'arms': 2},
-            'lupo_infernale_del_ghiaccio' => {'legs': 4, 'eyes': 2, 'tail': 1},
-            _ => <String, int>{},
-          };
+    final canonicalCounts =
+        reviewedCounts ??
+        (pinepine
+            ? {'arms': 2, 'legs': 2, 'eyes': 2}
+            : fireShield
+            ? {'arms': 2, 'legs': 2, 'eyes': 2, 'horns': 2}
+            : rockShield
+            ? {'arms': 2, 'legs': 2}
+            : runicGolem
+            ? {'arms': 2, 'legs': 2, 'eyes': 0}
+            : switch (entry.id) {
+                'manichino_spada' ||
+                'manichino_baghest' => {'arms': 2, 'legs': 2, 'eyes': 1},
+                'mostro_sabbia' => {'legs': 4, 'eyes': 2, 'horns': 2},
+                'gigante_sabbia' => {
+                  'arms': 2,
+                  'legs': 2,
+                  'eyes': 2,
+                  'horns': 2,
+                },
+                'costrutto_minore' ||
+                'funghetto_cappuccio_rosso' ||
+                'topino_avventuroso' => {'arms': 2, 'legs': 2, 'eyes': 2},
+                'sharp' => {'legs': 4, 'eyes': 2},
+                'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
+                'custode_campana_cieca' ||
+                'sciamano_malizioso' => {'arms': 2, 'legs': 2},
+                'mammuth_in_decomposizione' => {'legs': 4, 'eyes': 2},
+                'shadow_devil' => {'horns': 2},
+                'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' => {
+                  'arms': 2,
+                  'legs': 2,
+                  'eyes': 2,
+                  'horns': 2,
+                },
+                'nuvola_in_bottiglia' => {'eyes': 1},
+                'forest_demon' => {'legs': 4, 'eyes': 2, 'horns': 3},
+                'ciclo_forest_demon_blu' => {'legs': 4, 'eyes': 2, 'horns': 2},
+                'famelico_oblio' => {
+                  'legs': 4,
+                  'eyes': 2,
+                  'horns': 2,
+                  'tail': 1,
+                },
+                'saltalungo_maculato' => {
+                  'arms': 2,
+                  'legs': 2,
+                  'eyes': 2,
+                  'tail': 1,
+                },
+                'cloud_beast' => {
+                  'arms': 2,
+                  'legs': 2,
+                  'eyes': 2,
+                  'horns': 2,
+                  'tail': 1,
+                },
+                'laer' || 'sciamano_malizioso_minore' => {'arms': 2, 'legs': 2},
+                'mostro_solare' => {
+                  'arms': 2,
+                  'legs': 2,
+                  'eyes': 2,
+                  'horns': 1,
+                },
+                'strana_presenza' => {'arms': 2, 'legs': 2},
+                'air_navigator' => {'arms': 2},
+                'lupo_infernale_del_ghiaccio' => {
+                  'legs': 4,
+                  'eyes': 2,
+                  'tail': 1,
+                },
+                _ => <String, int>{},
+              });
     final group = switch (noun) {
       'braccia|braccio' => 'arms',
       'gambe|zampe' => 'legs',
@@ -519,12 +568,13 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     group('horns', 'Corno', 'Corna', count('corna|corno', 2), r'corna|corno');
   }
   if (const {
-    'topino_avventuroso',
-    'ogle',
-    'saltalungo_maculato',
-    'cloud_beast',
-    'lupo_infernale_del_ghiaccio',
-  }.contains(entry.id)) {
+        'topino_avventuroso',
+        'ogle',
+        'saltalungo_maculato',
+        'cloud_beast',
+        'lupo_infernale_del_ghiaccio',
+      }.contains(entry.id) ||
+      canonicalBase == 'rascalume') {
     group('ears', 'Orecchio', 'Orecchie', 2, r'orecchio|orecchie');
   }
   if (entry.id == 'funghetto_cappuccio_rosso') {
@@ -604,26 +654,108 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     ('gills', 'Branchie', r'branchie'),
     ('root', 'Nodo delle radici', r'radici|nodo tenero|fibre portanti'),
     ('runes', 'Rune esposte', r'rune esposte|nodo runico'),
-    ('joint', 'Giuntura', r'giuntura|cerniera|giunto equatoriale'),
+    ('joint', 'Giuntura', r'giuntur[ae]|cernier[ae]|giunto equatoriale'),
     ('wound', 'Ferita aperta', r'ferite aperte|ferita aperta'),
     ('sensor', 'Nodo sensoriale', r'nodo sensoriale'),
     ('sac', 'Sacca', r'sacca'),
     ('rim', 'Bordo', r'bordo|crepa'),
-    ('fold', 'Piega del corpo', r'piega'),
+    ('fold', 'Piega del corpo', r'piega|pieghe'),
+    ('whiskers', 'Vibrisse', r'baffi|vibrisse'),
   ];
   for (final d in details) {
+    final detail = RegExp('\\b(?:${d.$3})\\b');
     // Living among roots does not give an animal roots of its own. Keep
     // bodily roots and authored root weak points, and preserve saved anatomy
     // through the explicit override at the beginning of this function.
     if (d.$1 == 'root' &&
-        !RegExp(d.$3).hasMatch(weak) &&
+        !detail.hasMatch(weak) &&
         !RegExp(
           r'\b(?:corpo|pianta|tronco|arti|gambe|braccia|piedi|zampe|muschio)\b[^.!?;]*\bradici\b',
         ).hasMatch(physical)) {
       continue;
     }
-    if (RegExp(d.$3).hasMatch('$physical $weak')) {
-      add(d.$1, d.$2, d.$1, RegExp(d.$3).hasMatch(weak));
+    if (detail.hasMatch('$physical $weak')) {
+      add(d.$1, d.$2, d.$1, detail.hasMatch(weak));
+    }
+  }
+  if (canonicalBase == 'deadly_sins') {
+    if (weak ==
+        'la catena che collega il polso alla lama quando cambia forma.') {
+      for (final part in parts) {
+        part['weak'] = false;
+      }
+    }
+    add(
+      'weapon_chain',
+      'Catena fra polso e lama',
+      'chain',
+      RegExp(r'\bcatena\b').hasMatch(weak),
+    );
+    parts.last['material'] = 'metal';
+  }
+  if (canonicalBase == 'colosso_prismarite') {
+    for (final part in parts) {
+      part['material'] = 'stone';
+    }
+  }
+  if (canonicalBase == 'vendulo' &&
+      weak == 'la pelle tenera sotto le due placche del muso.') {
+    for (final part in parts) {
+      part['weak'] = false;
+    }
+    add('facial_skin', 'Pelle sotto le placche del muso', 'skin', true);
+    parts.last['material'] = 'flesh';
+  }
+  if (canonicalBase == 'obliterated_devil') {
+    final thirdWeak = RegExp(r'\bterzo occhio\b').hasMatch(weak);
+    if (weak ==
+        'il margine chiaro attorno al terzo occhio, visibile durante la preparazione della sfera.') {
+      for (final part in parts) {
+        part['weak'] = false;
+      }
+    }
+    add('third_eye', 'Terzo occhio sulla fronte', 'eyes', thirdWeak);
+    parts.last['material'] = 'flesh';
+  }
+  const exactCoreWeakPoints = {
+    'costrutto_prismatico': 'il nucleo prismatico nel torace.',
+    'rock_cloud_golem':
+        'il nucleo incassato al centro del petto, dietro la fascia di vapore.',
+    'golem_runico':
+        'il nucleo runico dietro le incisioni convergenti al centro del petto, mirabile soltanto dopo aver rotto le piastre frontali.',
+  };
+  if (weak == exactCoreWeakPoints[canonicalBase]) {
+    for (final part in parts) {
+      part['weak'] = part['id'] == 'core';
+    }
+  }
+  if (canonicalBase == 'brumilio' &&
+      weak == 'il petto, esposto fra due battiti d’ala.') {
+    for (final part in parts) {
+      part['weak'] = part['id'] == 'torso';
+    }
+  }
+  if (canonicalBase == 'rock_shield' &&
+      weak == 'le ferite aperte e la pelle sotto la pancia, tra le zampe.') {
+    for (final part in parts) {
+      part['weak'] = const {'belly', 'wound'}.contains(part['id']);
+    }
+  }
+  if (canonicalBase == 'pupazzo_artigliato' &&
+      weak ==
+          'le molle sono visibili tra i segmenti delle gambe mentre le comprime.') {
+    for (final part in parts) {
+      part['weak'] = false;
+    }
+    add('leg_springs', 'Molle fra i segmenti delle gambe', 'joint', true);
+    parts.last['material'] = 'metal';
+  }
+  if (canonicalBase == 'goblin_kamikaze' &&
+      weak ==
+          'l’innesco centrale sul ventre, da cui partono le micce verso le cariche laterali.') {
+    final trigger = parts.where((p) => p['id'] == 'belly').firstOrNull;
+    if (trigger != null) {
+      trigger['label'] = 'Innesco centrale sul ventre';
     }
   }
   if (entry.id.split('_variante_').first == 'cavaliere_morto') {

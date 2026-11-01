@@ -54,6 +54,24 @@ Map<String, dynamic> hit(OculumPerformanceProbe p, String id) => {
 };
 
 void main() {
+  test('a hidden runic core never makes the entire chest a weak point', () {
+    final full = oculumMonsterPrecisionAnatomy(
+      monsterBookEntryById('golem_runico')!,
+    );
+    final closed = oculumReferenceCreaturePrecisionParts(
+      full,
+      monsterId: 'golem_runico',
+    );
+    expect(closed.where((p) => p['weak'] == true), isEmpty);
+    final exposed = oculumReferenceCreaturePrecisionParts(
+      full,
+      monsterId: 'golem_runico',
+      runicGolemCoreExposed: true,
+    );
+    expect(exposed.where((p) => p['weak'] == true).map((p) => p['id']), [
+      'core',
+    ]);
+  });
   test('runic plates hide the core and preserve explicit Master anatomy', () {
     final original = <Map<String, dynamic>>[
       {'id': 'body', 'group': 'body', 'weak': false},

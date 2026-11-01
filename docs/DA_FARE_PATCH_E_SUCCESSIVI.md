@@ -1,5 +1,11 @@
 # Oculum — attività, conferme e consegne
 
+## Revisione anatomica finale — 2 novembre
+
+**BUG52 — «Rivedere anatomia e punti colpibili dai disegni confermati, cercando anche bug meno probabili».** Adattamento: completate sette famiglie e varianti, punti deboli limitati alle parti già descritte; torace del Golem ordinario finché il nucleo non è esposto, terzo occhio del Diavolo distinto. Parole come aspetto, mantenne, rancuore, bisacca, ancore e piegate non inventano organi; giunture reali ancora riconosciute. Anatomie esplicite e punti deboli personali conservati. **41 test mirati passati**, inclusi 13 nuovi casi; analisi mirata pulita50,4s. CI/pacchetti successivi separati. [Adattamento e prove](BUG52_ANATOMIE_E_PUNTI_DEBOLI_2026-11-02.md). Riga non chiusa al 100%.
+
+La CI41361403155 è stata annullata intenzionalmente prima delle build per includere questa correzione: non è una CI conclusa né un fallimento funzionale. Il precedente run41355899555 conserva le sue prove; la pubblicazione non riuscita è descritta in BUG51.
+
 ## Correzione pubblicazione — 2 novembre
 
 **BUG51 — «Rendere pubblici tutti i pacchetti riusciti, anche dopo la crescita degli artwork, preservando l’aggiornamento dalle versioni precedenti».** Il run41355899555 passa2.236test/6saltati,4prove autenticate e9job, ma il publisher rifiuta l’archivio Android combinato oltre2GiB. APK mantiene il nome storico `Oculum-Android`, AAB passa a `Oculum-Android-AAB` separato e visibile fra i download Web; firma e immagini conservate.13test Python e11Flutter su menu/scelta APK passati; analisi mirata pulita23,2s. Nuova CI/pacchetti/pubblicazione ancora da completare; riga non chiusa al100%. [Dettagli](BUG51_ANDROID_APK_AAB_SEPARATI_2026-11-02.md).
@@ -13,7 +19,7 @@ Ulteriori48proposte per8creature sono pronte nella galleria locale, sei alternat
 | ART47 | Golem Runico E2, telefono v2 e reliquia v2 approvati; nucleo non mirabile prima di rompere le piastre, con integrità modificabile. | Collegati3PNG. Bilanciamento delegato35% Vita massima/minimo3;14test piastre/scatole passati. Pacchetti e CI successivi separati;100% da approvare. |
 | ART48 | Goblin Kamikaze A2, telefono v1 e reliquia v2 esplicitamente approvati; nessun nuovo potere dai disegni. | Tre file esatti collegati e inclusi nel gruppo211test passato.100% da approvare. |
 | ART49 | Integrare i19set votati e i quattro precedenti:23specie/69PNG; Robot più del doppio, RockShield bipede umanoide molto più grande e Golem di nuvole più grande, revisioni approvate. | File/SHA/alpha/margini verificati;211test grafici/anatomici passati, immagini contenute sui telefoni, Book senza ritratto. Sorgenti locali; CI/distribuzione separate.100% da approvare. |
-| ART50 | Preparare sei alternative per ogni mostro ancora da scegliere, senza attribuire canonicità automatica. |36proposte per sei specie, galleria unica e SHA verificati. Da votare al ritorno; Nuvì attende due/quattro zampe. |
+| ART50 | Preparare sei alternative per ogni mostro ancora da scegliere, senza attribuire canonicità automatica. |48proposte per otto specie, galleria unica e SHA verificati. Da votare al ritorno; sei domande anatomiche raccolte separatamente. |
 
 [Dettagli e limiti delle prove](PATCH_2026-11-01_23_TEMI_GOLEM.md). Le precedenti note sottostanti mantengono la cronologia; gli stati locali qui sopra le aggiornano senza riscrivere la consegna f86951cb già approvata.
 
