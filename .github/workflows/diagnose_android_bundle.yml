@@ -33,7 +33,7 @@ jobs:
           umask 077
           printf '%s' "$OCULUM_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/oculum-release.keystore"
           echo "OCULUM_ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/oculum-release.keystore" >> "$GITHUB_ENV"
-      - name: Reproduce the original APK then bundle sequence
+      - name: Build the original APK
         env:
           OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
@@ -46,7 +46,18 @@ jobs:
             --dart-define=OculumSourceCommit=bc4811b71b9b15ac9a74b507ac03d934a1b53b9d \
             "--dart-define=OculumSupabaseUrl=$OCULUM_SUPABASE_URL" \
             "--dart-define=OculumSupabasePublishableKey=$OCULUM_SUPABASE_PUBLISHABLE_KEY"
+      - name: Reproduce the intermediate APK verification and copy
+        run: |
+          set -euo pipefail
           python3 scripts/verify_android_signing.py --apk build/app/outputs/flutter-apk/app-release.apk --min-version-code 100270
+          mkdir -p build/distribution/android
+          cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
+      - name: Build bundle with the original step boundary and full failure trace
+        env:
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
           df -h .
           free -m
           set +e
