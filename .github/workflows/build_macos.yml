@@ -24,7 +24,9 @@ jobs:
   build-macos:
     name: Verifica e crea Oculum macOS
     runs-on: macos-latest
-    timeout-minutes: 45
+    # The full image-heavy suite plus native packaging exceeds 45 minutes.
+    # Preserve all tests and leave enough time for the actual macOS bundle.
+    timeout-minutes: 90
 
     steps:
       - name: Checkout del commit richiesto
@@ -64,7 +66,7 @@ jobs:
       # integration suite once. Avoid a second live probe while that suite is
       # exercising the same project in parallel.
       - name: Test Flutter
-        run: flutter test
+        run: flutter test --no-pub --concurrency=2
 
       - name: Build macOS release
         shell: bash

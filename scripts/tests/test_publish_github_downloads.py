@@ -12,6 +12,23 @@ spec.loader.exec_module(publisher)
 
 
 class DownloadPublicationTests(unittest.TestCase):
+    def test_android_builds_finish_before_packaging_and_keep_signature_checks(self):
+        workflow = (Path(__file__).parents[2] / ".github/workflows/build_distribution.yml").read_text(encoding="utf-8")
+        apk = workflow.index("flutter build apk --release")
+        bundle = workflow.index("flutter build appbundle --release")
+        verify_bundle = workflow.index("jarsigner -verify build/app/outputs/bundle/release/app-release.aab")
+        package = workflow.index("name: Package Android release")
+        upload = workflow.index("name: Upload Android APK artifact")
+        self.assertLess(apk, bundle)
+        self.assertLess(bundle, verify_bundle)
+        self.assertLess(verify_bundle, package)
+        self.assertLess(package, upload)
+        self.assertNotIn("cp build/app/outputs/flutter-apk", workflow[apk:verify_bundle])
+        self.assertIn("scripts/verify_android_signing.py", workflow[package:upload])
+        self.assertIn('--min-version-code "$OCULUM_ANDROID_BUILD_NUMBER"', workflow[package:upload])
+        # A diagnostic Gradle retry must never turn the original failure green.
+        self.assertIn('exit "$bundle_status"', workflow[bundle:verify_bundle])
+
     def test_android_apk_and_aab_are_separate_reviewed_release_assets(self):
         # This real growth boundary broke publication when the two packages
         # were combined. Keep APK identity stable for older app updaters.

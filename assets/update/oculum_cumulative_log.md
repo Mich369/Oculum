@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Consegna Android e verifiche macOS — 2 novembre
+
+- Generazione APK e AAB nello stesso ambiente, copie dopo entrambe le build e verifiche obbligatorie prima degli upload; firma Android stabile e compatibilità dei nomi conservate. Gli errori di firma restano bloccanti e ora producono una traccia più completa.
+- Più margine al workflow macOS separato, mantenendo tutti i test. Nessun cambiamento a regole, statistiche o immagini confermate per queste correzioni della consegna.
+- 108 nuove proposte per 18 creature aspettano il voto e non vengono installate automaticamente. [Diagnosi e limiti delle prove](BUG53_PIPELINE_ANDROID_MACOS_2026-11-02.md).
+
 ## Bersagli anatomici più precisi — 2 novembre
 
 - Completate le parti di sette famiglie e delle loro varianti secondo i disegni canonici. Catena, vibrisse, molle, pelle del muso e terzo occhio hanno bersagli distinti; il petto di Brumìlio non rende deboli le ali.

@@ -2,7 +2,7 @@
 
 ## Parti colpibili dei set approvati — 2 novembre
 
-La revisione delle 23 immagini non aggiunge poteri: completa gli arti e separa i bersagli già descritti nel catalogo. Il Diavolo Obliterato ha il terzo occhio sulla fronte e due corna, oltre ai due occhi normali; l’elmo di DeadlySins non espone occhi. Brumìlio ha due ali e due zampe; Rascalume e Mìrula quattro zampe; Vèndulo quattro zampe; il Colosso di Prismarite due braccia sulle nocche e due gambe di pietra. Le 48 proposte successive per otto creature restano da votare, separate dal canone e dai 69 PNG collegati. Nessuna misura o statistica dedotta dalla scala nell’illustrazione.
+La revisione delle 23 immagini non aggiunge poteri: completa gli arti e separa i bersagli già descritti nel catalogo. Il Diavolo Obliterato ha il terzo occhio sulla fronte e due corna, oltre ai due occhi normali; l’elmo di DeadlySins non espone occhi. Brumìlio ha due ali e due zampe; Rascalume e Mìrula quattro zampe; Vèndulo quattro zampe; il Colosso di Prismarite due braccia sulle nocche e due gambe di pietra. Le 108 proposte successive per diciotto creature restano da votare, separate dal canone e dai 69 PNG collegati. Nessuna misura o statistica dedotta dalla scala nell’illustrazione.
 
 
 ## Tre revisioni approvate — 1 novembre

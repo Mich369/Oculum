@@ -468,17 +468,46 @@ jobs:
           echo "OCULUM_ANDROID_KEYSTORE_PATH=$OCULUM_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
           echo "OCULUM_ANDROID_BUILD_NUMBER=$((100000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
 
-      - name: Build Android release APK
+      - name: Configure bounded Android build resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          OCULUM_GRADLE_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
+          mkdir -p "$OCULUM_GRADLE_HOME"
+          printf '\norg.gradle.jvmargs=-Xmx6G -XX:MaxMetaspaceSize=1G -XX:ReservedCodeCacheSize=256m -XX:+HeapDumpOnOutOfMemoryError\norg.gradle.workers.max=2\n' >> "$OCULUM_GRADLE_HOME/gradle.properties"
+          df -h .
+          free -m
+
+      # Keep one signing environment for both formats. Copy the large output
+      # archives only after both builds have finished, as in the isolated check.
+      - name: Build Android APK and App Bundle
         shell: bash
         env:
           OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
+          set -euo pipefail
           flutter build apk --release \
             "--build-number=${OCULUM_ANDROID_BUILD_NUMBER}" \
             "--dart-define=OculumSourceCommit=${{ github.sha }}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+
+          set +e
+          flutter build appbundle --release \
+            "--build-number=${OCULUM_ANDROID_BUILD_NUMBER}" \
+            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
+            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
+            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
+          bundle_status=$?
+          set -e
+          if [ "$bundle_status" -ne 0 ]; then
+            df -h .
+            free -m
+            (cd android && ./gradlew :app:signReleaseBundle --stacktrace --console=plain) || true
+            exit "$bundle_status"
+          fi
+          jarsigner -verify build/app/outputs/bundle/release/app-release.aab
 
       - name: Package Android release
         run: |
@@ -488,17 +517,6 @@ jobs:
             --report build/android-update-compatibility.json
           mkdir -p build/distribution/android
           cp build/app/outputs/flutter-apk/app-release.apk build/distribution/Oculum-Android-release.apk
-
-      - name: Build Android App Bundle
-        env:
-          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
-          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
-        run: |
-          flutter build appbundle --release \
-            "--build-number=${OCULUM_ANDROID_BUILD_NUMBER}" \
-            "--dart-define=OculumSourceCommit=${{ github.sha }}" \
-            "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
-            "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
 
       - name: Package Android App Bundle
         run: cp build/app/outputs/bundle/release/app-release.aab build/distribution/Oculum-Android-release.aab
