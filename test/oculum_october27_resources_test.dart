@@ -11,6 +11,73 @@ Future<void> closeFixture(WidgetTester tester, OculumPerformanceProbe p) async {
 }
 
 void main() {
+  testWidgets(
+    'new sheets start with 3 Magical Luck and saved balances remain exact',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      expect(state.fortuna, 3);
+      final saved = p.snapshot();
+      for (final balance in [0, 1, 9]) {
+        p.load({...saved, 'fortuna': balance});
+        expect(p.snapshot()['fortuna'], balance);
+      }
+      p.load({...saved}..remove('fortuna'));
+      expect(p.snapshot()['fortuna'], 0);
+      await closeFixture(tester, p);
+    },
+  );
+
+  testWidgets('Magical Luck adjusts a shown roll once and preserves the die', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    final saved = p.snapshot();
+    p.load({...saved, 'fortuna': 3, 'proponiFortunaDopoTiro': true});
+
+    final roll = p.rollSpecial('Iniziativa', 20);
+    await tester.pumpAndSettle();
+    final preview = find.textContaining(RegExp(r'Dado \d+ · Totale -?\d+'));
+    expect(preview, findsOneWidget);
+    final shown = (tester.widget<Text>(preview).data!);
+    final match = RegExp(r'Dado (\d+) · Totale (-?\d+)').firstMatch(shown)!;
+    final natural = int.parse(match[1]!);
+    final total = int.parse(match[2]!);
+    expect(state.fortuna, 3);
+
+    for (var index = 0; index < 2; index++) {
+      await tester.tap(find.byTooltip('Aumenta spesa'));
+      await tester.pump();
+    }
+    await tester.tap(find.text('Spendi 2'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await roll;
+    expect(state.fortuna, 1);
+    expect(state.dadoMostrato, contains('Fortuna +2 → ${total + 2}'));
+    expect(state.tiroCriticoUno, natural == 1);
+    expect(state.tiroCriticoVenti, natural == 20);
+    expect(
+      (state.logEventi as List).where(
+        (event) => '$event'.contains('[FORTUNA MAGICA] Iniziativa'),
+      ),
+      hasLength(1),
+    );
+
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pump();
+    final unmodified = p.rollSpecial('Iniziativa', 20);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(find.text('Continua senza spendere'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await unmodified;
+    expect(p.snapshot()['fortuna'], 1);
+    expect(p.snapshot()['proponiFortunaDopoTiro'], true);
+    expect(state.dadoMostrato, isNot(contains('Fortuna +')));
+    await closeFixture(tester, p);
+  });
+
   for (final cost in [2, 6]) {
     testWidgets('Resilience $cost preserves current HP until the new maximum', (
       tester,

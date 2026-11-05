@@ -4511,10 +4511,17 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'Uomo in Posizione Fetale': 'psyche',
       'Uomo Decapitato': 'blood',
     };
+    const bodyCatalogueIds = {'Ragno degli Obser Falsi': 'ragno_obser_falsi'};
 
     final list = <_EnemyTemplate>[];
     for (final element in _elements.where((e) => e.id != 'neutral')) {
       for (int i = 0; i < bodiesIt.length; i++) {
+        // Keep the original indexes: removing a body must not change the
+        // generated stat modifiers of every body following it.
+        final catalogueId = bodyCatalogueIds[bodiesIt[i]];
+        if (catalogueId != null && oculumIsRetiredMonsterId(catalogueId)) {
+          continue;
+        }
         final fixedElement = fixedBodyElements[bodiesIt[i]];
         if (fixedElement != null && element.id != fixedElement) continue;
         list.add(

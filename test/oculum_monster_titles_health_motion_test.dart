@@ -6,15 +6,20 @@ import 'package:oculum/widgets/oculum_resource_bar_fx.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
 
 void main() {
-  test('only explicit minor creatures may spawn without techniques', () {
+  test('only authored no-Art exceptions may spawn without techniques', () {
     for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
       final count =
           oculumMonsterBookSkills(monster).length +
           (oculumMonsterBookImportArt(monster)?.skills.length ?? 0);
       if (count == 0) {
         expect(
-          monster.formTags,
-          contains('Creatura Minore'),
+          monster.formTags.contains('Creatura Minore') ||
+              const {
+                'demonietto_bruciante',
+                'demonietto_del_gelo',
+                'coboldo_di_brina',
+              }.contains(monster.id.split('_variante_').first),
+          isTrue,
           reason: monster.id,
         );
         expect(monster.skillIds, isEmpty, reason: monster.id);

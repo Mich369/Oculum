@@ -77,7 +77,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
     notifyDiceOverlayChanged();
   }
 
-  void tiraDadoCustom(int facce) {
+  Future<void> tiraDadoCustom(int facce) async {
     final quantita = min(
       1000,
       max(1, int.tryParse(diceAmountController.text) ?? 1),
@@ -118,7 +118,21 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       }
     }
 
-    final finale = totale + modificatore;
+    final formulaDadi = tiriConCritico.length == 1
+        ? tiriConCritico.first
+        : tiriConCritico.length <= 40
+        ? tiriConCritico.join(' + ')
+        : totale.toString();
+    final baseTotal = totale + modificatore;
+    final magicalLuck = canOfferMagicalLuckOnRoll(schedaCorrente)
+        ? await offerMagicalLuckOnRoll(
+            label: '${quantita}d$facce',
+            natural: '${totale - modificatoreCritico}',
+            total: baseTotal,
+          )
+        : 0;
+    if (magicalLuck == null) return;
+    final finale = baseTotal + magicalLuck;
     final testoMod = modificatore == 0
         ? ''
         : ' ${modificatore > 0 ? '+' : ''}$modificatore';
@@ -137,11 +151,11 @@ extension _OculumHomeDicePage on _OculumHomePageState {
     final testoCritico = modificatoreCritico == 0
         ? ''
         : ' ${signedRollPart(modificatoreCritico)} ${t('critico', 'critical')}';
-    final formulaDadi = tiriConCritico.length == 1
-        ? tiriConCritico.first
-        : tiriConCritico.length <= 40
-        ? tiriConCritico.join(' + ')
-        : totale.toString();
+    final formula = magicalLuckRollFormula(
+      '$formulaDadi$testoMod = $baseTotal',
+      magicalLuck,
+      finale,
+    );
     final zeroOutcome = oculumRollZeroOutcomeText(
       total: finale,
       difficulty: difficulty,
@@ -153,7 +167,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       tiroCriticoUno = criticoUno;
       tiroCriticoVenti = criticoMax;
       risultato =
-          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formulaDadi$testoMod = $finale$testoCritico$testoGlobale$testoAiuto$testoBonusReazioni$testoDt$zeroOutcome';
+          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formula$testoCritico$testoGlobale$testoAiuto$testoBonusReazioni$testoDt$zeroOutcome';
       aggiungiLog(
         oculumResolvedRollLog(label: '${quantita}d$facce', total: finale),
       );
@@ -170,7 +184,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
     sendRealtimeDiceRoll(
       label: '${quantita}d$facce',
       roll: totale,
-      bonus: modificatore,
+      bonus: modificatore + magicalLuck,
       total: finale,
     );
   }
@@ -449,6 +463,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
             ),
             const SizedBox(height: 8),
             rollDifficultyField(compact: true),
+            magicalLuckRollToggle(dense: true),
             const SizedBox(height: 12),
             diceGrid(),
           ],

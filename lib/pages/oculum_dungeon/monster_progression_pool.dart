@@ -46,6 +46,17 @@ List<MonsterBookEntry> _withMonsterProgressionPools(
   Iterable<MonsterBookEntry> entries,
 ) => [for (final entry in entries) _withMonsterProgressionPool(entry)];
 
+bool oculumMonsterHasFixedProgressionSkills(MonsterBookEntry entry) =>
+    const {
+      'nuvi',
+      'thunder_bot',
+      'collezionista_di_elementi',
+      'demonietto_bruciante',
+      'demonietto_del_gelo',
+      'coboldo_di_brina',
+    }.contains(entry.id.split('_variante_').first) ||
+    (entry.formTags.contains('Creatura Minore') && entry.skillIds.isEmpty);
+
 MonsterBookEntry _withMonsterProgressionPool(MonsterBookEntry entry) {
   final ids = List.generate(
     12,
@@ -53,6 +64,10 @@ MonsterBookEntry _withMonsterProgressionPool(MonsterBookEntry entry) {
   );
   for (final id in ids) {
     _progressionOwners[id] = entry;
+  }
+  // Keep legacy IDs resolvable, but do not add moves to a single-skill species.
+  if (oculumMonsterHasFixedProgressionSkills(entry)) {
+    return entry;
   }
   return entry.copyWith(
     skillIds: [
@@ -70,6 +85,85 @@ MonsterBookEntry _withMonsterProgressionPool(MonsterBookEntry entry) {
 MonsterBookEntry oculumRegisterProgressionPool(MonsterBookEntry entry) =>
     _withMonsterProgressionPool(entry);
 
+typedef _MonsterProgressionMotion = ({
+  String attack,
+  String guard,
+  String motion,
+  String strikeText,
+  String guardText,
+  String motionText,
+});
+
+final _progressionMotions = Expando<_MonsterProgressionMotion>();
+
+/// Uses body parts from the catalogue anatomy. Unknown bodies use timing and
+/// positioning without assuming equipment or additional organs.
+_MonsterProgressionMotion _monsterProgressionMotion(MonsterBookEntry owner) {
+  final groups = oculumMonsterPrecisionAnatomy(
+    owner,
+  ).map((part) => part['group']).toSet();
+  final physical = oculumMonsterPhysicalDescription(owner);
+  if (groups.contains('wings')) {
+    return (
+      attack: 'Sferzata alare',
+      guard: 'Profilo alare',
+      motion: 'Virata corta',
+      strikeText: 'Ruota e porta l’ala sulla traiettoria del colpo.',
+      guardText: 'Riduce il profilo tenendo le ali vicine al corpo.',
+      motionText: 'Cambia direzione con un battito breve.',
+    );
+  }
+  if (groups.contains('arms')) {
+    return (
+      attack: 'Colpo di braccio',
+      guard: 'Guardia raccolta',
+      motion: 'Rotazione di guardia',
+      strikeText: 'Muove un braccio lungo una traiettoria corta.',
+      guardText: 'Porta le braccia davanti alle zone più esposte.',
+      motionText: 'Ruota il corpo mantenendo la guardia.',
+    );
+  }
+  if (groups.contains('tail')) {
+    return (
+      attack: 'Colpo di coda',
+      guard: 'Fianco protetto',
+      motion: 'Scarto di coda',
+      strikeText: 'Porta la coda sulla traiettoria del colpo.',
+      guardText: 'Riduce il profilo e protegge il fianco esposto.',
+      motionText: 'Usa la coda per bilanciare uno scarto.',
+    );
+  }
+  if (groups.contains('legs')) {
+    return (
+      attack: 'Impeto in appoggio',
+      guard: 'Posizione salda',
+      motion: 'Passo obliquo',
+      strikeText:
+          'Sfrutta l’appoggio a terra per dare slancio al prossimo colpo.',
+      guardText: 'Abbassa il baricentro e mantiene gli appoggi.',
+      motionText: 'Cambia appoggio per spostarsi in diagonale.',
+    );
+  }
+  if (RegExp(r'\b(?:serpente|serpentiforme)\b').hasMatch(physical)) {
+    return (
+      attack: 'Slancio della spira',
+      guard: 'Spira serrata',
+      motion: 'Scivolata sinuosa',
+      strikeText: 'Distende una spira per dare slancio al prossimo attacco.',
+      guardText: 'Raccoglie le spire e riduce la superficie esposta.',
+      motionText: 'Scivola fuori dalla traiettoria con un movimento sinuoso.',
+    );
+  }
+  return (
+    attack: 'Attacco in tempo',
+    guard: 'Difesa compatta',
+    motion: 'Cambio di posizione',
+    strikeText: 'Concentra la propria forza nel momento del prossimo attacco.',
+    guardText: 'Riduce il profilo esposto e mantiene la propria difesa.',
+    motionText: 'Si sposta appena fuori dalla traiettoria più esposta.',
+  );
+}
+
 /// Twelve extra, species-owned techniques. Existing authored moves are retained.
 /// Anatomy supplies the movement language; element and payment follow the owner.
 MonsterConcreteTechnique? _monsterProgressionTechnique(String id) {
@@ -77,7 +171,9 @@ MonsterConcreteTechnique? _monsterProgressionTechnique(String id) {
   if (owner == null) return null;
   final slot = int.tryParse(id.split('__').last);
   if (slot == null || slot < 0 || slot >= 12) return null;
-  final anatomy = _monsterAnatomy(owner);
+  final anatomy = _progressionMotions[owner] ??= _monsterProgressionMotion(
+    owner,
+  );
   final resource = (owner.stats['oculum'] ?? 0) > 0
       ? 'oculum'
       : (owner.stats['materia'] ?? 0) > 0
@@ -86,32 +182,32 @@ MonsterConcreteTechnique? _monsterProgressionTechnique(String id) {
       ? 'volonta'
       : 'resilienza';
   final labels = [
-    '${anatomy.$1} concentrato',
-    '${anatomy.$1} di pressione',
-    '${anatomy.$1} conclusivo',
-    '${anatomy.$2} saldo',
-    '${anatomy.$2} mobile',
-    '${anatomy.$2} rinforzato',
-    '${anatomy.$6} controllato',
+    '${anatomy.attack} · precisione',
+    '${anatomy.attack} · pressione',
+    '${anatomy.attack} · impeto',
+    '${anatomy.guard} · tenuta',
+    '${anatomy.guard} · riposizionamento',
+    '${anatomy.guard} · rinforzo',
+    '${anatomy.motion} · controllo',
     'Ricognizione di ${owner.nameIt}',
     'Presenza di ${owner.nameIt}',
-    'Open · ${anatomy.$1}',
-    'Open · ${anatomy.$2}',
-    'Open · ${anatomy.$6}',
+    'Open · ${anatomy.attack}',
+    'Open · ${anatomy.guard}',
+    'Open · ${anatomy.motion}',
   ];
   final actions = [
-    '${anatomy.$3} Concentra l’impatto in un unico attacco.',
-    '${anatomy.$3} Mantiene pressione con una traiettoria corta.',
-    '${anatomy.$3} Impegna più energia in un colpo risolutivo.',
-    '${anatomy.$10} Rafforza la protezione contro il prossimo confronto.',
-    '${anatomy.$9} Sposta il corpo senza abbandonare la guardia.',
-    '${anatomy.$10} Accumula una riserva protettiva.',
-    '${anatomy.$9} Mantiene un movimento controllato.',
+    '${anatomy.strikeText} Concentra l’impatto in un unico attacco.',
+    '${anatomy.strikeText} Mantiene pressione con una traiettoria corta.',
+    '${anatomy.strikeText} Impegna più energia in un colpo risolutivo.',
+    '${anatomy.guardText} Rafforza la protezione contro il prossimo confronto.',
+    '${anatomy.motionText} Mantiene la guardia durante lo spostamento.',
+    '${anatomy.guardText} Accumula una riserva protettiva.',
+    '${anatomy.motionText} Mantiene un movimento controllato.',
     'Studia il territorio con i sensi della propria specie.',
-    '${anatomy.$11} Coordina il proprio ritmo e la propria presenza.',
-    '${anatomy.$3} Richiede un’Open attiva.',
-    '${anatomy.$10} Richiede un’Open attiva.',
-    '${anatomy.$9} Richiede un’Open attiva.',
+    'Coordina il proprio ritmo e la propria presenza.',
+    '${anatomy.strikeText} Richiede un’Open attiva.',
+    '${anatomy.guardText} Richiede un’Open attiva.',
+    '${anatomy.motionText} Richiede un’Open attiva.',
   ];
   final kind = switch (slot) {
     0 || 1 || 2 || 9 => 'colpo',

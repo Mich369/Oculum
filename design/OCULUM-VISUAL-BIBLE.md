@@ -18,6 +18,8 @@ Simboli incisi piccoli, bordi sottili e rune incompiute. Nessuna icona ornamenta
 
 ## Creature Language
 
+Precisazione esplicita del 2 novembre: Oculum resta un **dark fantasy**, nonostante le stranezze. Per le prossime proposte, soprattutto i mostri ostili devono risultare più mostruosi e minacciosi. Nuovo riferimento allegato: tratto anime scuro, ombre profonde, profili espressivi, colori controllati e pittura opaca. Rame fatato resta la base materica, senza obbligo di dolcezza o toni pastello. Il riferimento non impone il soggetto umano raffigurato e non annulla le immagini canoniche già approvate. [Richieste e applicazione](../docs/DIREZIONE_DARK_FANTASY_2026-11-02.md).
+
 Conferma del 28 ottobre 2026: ogni mostro e variante ha un tema e una reliquia visiva specifici, in stile Rame fatato. Materiali, anatomia, colori ed ambiente devono renderli riconoscibili, evitando il riuso di un generico segnaposto come lavoro definitivo. La reliquia visiva è decorativa e non attribuisce da sola nuovi drop. Mostri e reliquie rispettano i margini e gli spazi dei controlli; nel Monster Book niente ritratto imposto.
 Le illustrazioni originali dei temi possono emergere nei margini e negli spazi scenografici. Nessuna creatura invade i valori o si sovrappone alle etichette. Classic Oculum mantiene il sigillo inciso senza reintrodurre l'occhio nel reliquiario.
 

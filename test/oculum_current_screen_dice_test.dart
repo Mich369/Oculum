@@ -50,6 +50,10 @@ void main() {
       state.updateOculumHomeUi(() {
         state.tutorialCompletato = true;
         state.datiCaricati = true;
+        if ((state.schedePersonaggio as List).isEmpty) {
+          state.schedePersonaggio.add(OculumPerformanceProbe(state).snapshot());
+          state.schedaCorrente = 0;
+        }
         state.paginaCorrente = 8;
         state.diceAmountController.text = '2';
         state.diceModifierController.text = '3';
@@ -65,8 +69,35 @@ void main() {
       final panel = find.byKey(const ValueKey('current_screen_dice_panel'));
       expect(panel, findsOneWidget);
       expect(state.paginaCorrente, 8);
+      final toggle = find.descendant(
+        of: panel,
+        matching: find.widgetWithText(
+          SwitchListTile,
+          'Proponi Fortuna dopo il tiro',
+        ),
+      );
       final die = find.descendant(of: panel, matching: find.text('d4'));
       final list = find.descendant(of: panel, matching: find.byType(ListView));
+      for (var i = 0; i < 10 && toggle.hitTestable().evaluate().isEmpty; i++) {
+        await tester.drag(list, const Offset(0, -150));
+        await tester.pump(const Duration(milliseconds: 150));
+      }
+      expect(toggle.hitTestable(), findsOneWidget);
+      expect(tester.widget<SwitchListTile>(toggle).onChanged, isNotNull);
+      final switchControl = find.descendant(
+        of: toggle,
+        matching: find.byType(Switch),
+      );
+      await tester.tap(switchControl);
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+      expect(
+        OculumPerformanceProbe(state).snapshot()['proponiFortunaDopoTiro'],
+        true,
+      );
+      await tester.tap(switchControl);
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
       for (var i = 0; i < 10 && die.hitTestable().evaluate().isEmpty; i++) {
         await tester.drag(list, const Offset(0, -200));
         await tester.pump(const Duration(milliseconds: 150));

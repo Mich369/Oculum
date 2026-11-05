@@ -3328,6 +3328,52 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '${chosenBodyParts[tag]?['id']}',
       ),
     );
+    bool targetsAvailableForFortune() {
+      final active = onlineAttackTokens().map(onlineCombatTokenTag).toSet();
+      if (freeReactionId != null && freeReaction != null) {
+        final reactionTarget = '${freeReaction['sourceTag'] ?? ''}';
+        final currentTokens = onlineCombatTokens();
+        final actorActive = currentTokens.any(
+          (token) =>
+              combatTokenMatchesSheet(token, sourceTag) &&
+              !const {'dead', 'fled', 'expired'}.contains(token['status']),
+        );
+        final mentalCounter =
+            freeReaction['status'] == 'counter_available' &&
+            freeReaction['kind'] == 'corruption_command' &&
+            freeReaction['masterAuthorized'] == true &&
+            freeReaction['controlSuccess'] == false &&
+            freeReaction['corruptionMentalCounter'] == true;
+        // This action already claimed the free reaction before showing the
+        // roll. Preserve only that same live authorization, not a replacement
+        // request or a reaction subsequently claimed by another action.
+        if (!identical(onlineCombatRequests[freeReactionId], freeReaction) ||
+            freeReaction['scope'] != permissionScope ||
+            freeReaction['encounterId'] != encounter ||
+            freeReaction['targetTag'] != sourceTag ||
+            (freeReaction['status'] != 'resolved' && !mentalCounter) ||
+            freeReaction['freeReaction'] != true ||
+            freeReaction['reactionUsed'] != true ||
+            freeReaction['counterAttackId'] != id ||
+            controlledPlan.targetIds.length != 1 ||
+            controlledPlan.targetId != reactionTarget ||
+            !controlsOnlineCombatSheet(sourceTag) ||
+            !actorActive ||
+            outsideFight ||
+            totalPowerExhausted) {
+          return false;
+        }
+        // As in the planner, the authenticated source can precede its token.
+        // A known token that has become ineligible must not be reintroduced.
+        if (!currentTokens.any(
+          (token) => onlineCombatTokenTag(token) == reactionTarget,
+        )) {
+          active.add(reactionTarget);
+        }
+      }
+      return controlledPlan.targetIds.every(active.contains);
+    }
+
     if (allFateCores) {
       resolved(0, 0);
       finishArtWeakPointAction();
@@ -3344,6 +3390,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         actionLabel: label,
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
         onResolved: resolved,
+        canCommitFortuneRoll: targetsAvailableForFortune,
       );
     } else {
       final stat = hiddenEyeStats
@@ -3364,6 +3411,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         appliesAttackDamageBonus: true,
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
         onResolved: resolved,
+        canCommitFortuneRoll: targetsAvailableForFortune,
       );
       if (!mounted || currentSheetScrollId() != origin) return;
       clearMeccanioAttack();
@@ -4593,12 +4641,23 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         programmaSalvataggio();
       }
 
+      bool stillPending() =>
+          request['status'] == 'pending' &&
+          request['targetTag'] == tag &&
+          request['scope'] == permissionScope &&
+          request['encounterId'] == onlineCombatEncounterId &&
+          identical(onlineCombatRequests[id], request) &&
+          controlsOnlineCombatSheet(tag) &&
+          pawnPendingDamage.isEmpty &&
+          !outsideFight;
+
       if (choice == 'volonta') {
         await tiraValoreSpeciale(
           'Volontà',
           volontaTotale(),
           actionLabel: 'Difesa mentale contro ${request['sourceName']}',
           onResolved: resolved,
+          canCommitFortuneRoll: stillPending,
         );
       } else if (choice == 'cm') {
         await tiraValoreSpeciale(
@@ -4607,6 +4666,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           applyGlobalRollModifier: false,
           actionLabel: 'Difesa contro ${request['sourceName']}',
           onResolved: resolved,
+          canCommitFortuneRoll: stillPending,
         );
       } else {
         final stat = hiddenEyeStats
@@ -4617,6 +4677,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           stat,
           actionLabel: 'Difesa contro ${request['sourceName']}',
           onResolved: resolved,
+          canCommitFortuneRoll: stillPending,
         );
       }
       if (!mounted || defense == null || sheetTagAt(schedaCorrente) != tag) {

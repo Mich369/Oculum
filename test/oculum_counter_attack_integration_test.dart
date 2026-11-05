@@ -19,6 +19,7 @@ void main() {
       // independent random damage mitigation. RES100 derives Resistance50;
       // without this offset the passive can reduce the expected10HP to1.
       // Snapshotting below carries these same values into the attacker sheet.
+      state.fortuna = 0;
       for (final id in ['resistenza', 'fortuna', 'riflessi']) {
         if (!(state.hiddenEyeStats as List).any(
           (dynamic stat) => stat.id == id,

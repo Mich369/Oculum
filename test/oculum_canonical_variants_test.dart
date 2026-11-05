@@ -205,31 +205,28 @@ void main() {
       );
     },
   );
-  test(
-    'Thunder Bot retains its free suicide skill beside the twelve new techniques',
-    () {
-      final bot = monsterById('thunder_bot')!;
-      expect(bot.stats['oculum'], 0);
-      expect(bot.skillIds.first, 'thunder_bot_explosion');
-      expect(bot.skillIds, hasLength(13));
-      expect(oculumMonsterBookImportArt(bot), isNull);
-      final skills = oculumMonsterBookSkills(bot);
-      expect(skills, hasLength(13));
-      for (final form in skills.first.forme) {
-        expect(form.costoStrutturato!.resource, 'nessuna');
-        final effect = form.effettiStrutturati.single;
-        expect(effect.killSource, isTrue);
-        expect(effect.allOpponents, isTrue);
-        expect(effect.damagePerTarget, isTrue);
-        expect(effect.valueExpression, contains('hp_current'));
-        expect(effect.elementType, 'fulmine');
-        expect(effect.maximumTargets, greaterThanOrEqualTo(100));
-      }
-      expect(oculumThunderBotExplosionDamage(12, 7), 19);
-      expect(oculumThunderBotExplosionDamage(1, 7), 8);
-      expect(oculumThunderBotExplosionDamage(-3, 7), 7);
-    },
-  );
+  test('Thunder Bot retains only its authored free suicide skill', () {
+    final bot = monsterById('thunder_bot')!;
+    expect(bot.stats['oculum'], 0);
+    expect(bot.skillIds.first, 'thunder_bot_explosion');
+    expect(bot.skillIds, ['thunder_bot_explosion']);
+    expect(oculumMonsterBookImportArt(bot), isNull);
+    final skills = oculumMonsterBookSkills(bot);
+    expect(skills, hasLength(1));
+    for (final form in skills.first.forme) {
+      expect(form.costoStrutturato!.resource, 'nessuna');
+      final effect = form.effettiStrutturati.single;
+      expect(effect.killSource, isTrue);
+      expect(effect.allOpponents, isTrue);
+      expect(effect.damagePerTarget, isTrue);
+      expect(effect.valueExpression, contains('hp_current'));
+      expect(effect.elementType, 'fulmine');
+      expect(effect.maximumTargets, greaterThanOrEqualTo(100));
+    }
+    expect(oculumThunderBotExplosionDamage(12, 7), 19);
+    expect(oculumThunderBotExplosionDamage(1, 7), 8);
+    expect(oculumThunderBotExplosionDamage(-3, 7), 7);
+  });
   test(
     'wolf variants form one unlockable species family with distinct drops',
     () {

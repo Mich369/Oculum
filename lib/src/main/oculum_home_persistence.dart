@@ -1065,6 +1065,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     String tipo = 'Personaggio',
     int livello = 0,
     int grado = 0,
+    int fortunaIniziale = _OculumHomePageState.initialMagicalLuck,
   }) {
     return {
       'nome': nome,
@@ -1222,7 +1223,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'reputationsManuallyCleared': false,
       'logEventi': [],
       'campaignDifficulty': 'normale',
-      'fortuna': 0,
+      'fortuna': fortunaIniziale,
       'scannerRiposiLunghi': 0,
       'fateTokens': 0,
       'userGuiScale': 1.0,
@@ -1615,6 +1616,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'reputationsManuallyCleared': reputationsManuallyCleared,
       'logEventi': List<String>.from(logEventi),
       'fortuna': fortuna,
+      'proponiFortunaDopoTiro': proponiFortunaDopoTiro,
       'scannerRiposiLunghi': scannerRiposiLunghi,
       'fateTokens': fateTokens,
       'userGuiScale': userGuiScale,
@@ -2546,6 +2548,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       campaignDifficulty = 'normale';
     }
     fortuna = readIntValue(json['fortuna']);
+    proponiFortunaDopoTiro = readBoolValue(json['proponiFortunaDopoTiro']);
     scannerRiposiLunghi = readIntValue(json['scannerRiposiLunghi']).clamp(0, 3);
     fateTokens = readIntValue(json['fateTokens']);
     userGuiScale = readDoubleValue(
@@ -5097,7 +5100,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Map<String, dynamic> schedaJsonAt(int index) {
     if (index < 0 || index >= schedePersonaggio.length) {
-      return statoVuotoPersonaggio();
+      return statoVuotoPersonaggio(fortunaIniziale: 0);
     }
 
     if (index == schedaCorrente) {
@@ -8512,10 +8515,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
           ].where((value) => value.trim().isNotEmpty).join(' ');
         }
 
+        final loadout = matchedMonster == null
+            ? null
+            : oculumMonsterBookLoadout(
+                matchedMonster,
+                random: Random(),
+                level: livello,
+              );
         final generatedArt = matchedMonster != null
-            ? (monsterBookUsableSkillIds(matchedMonster).isEmpty
-                  ? null
-                  : oculumMonsterBookImportArt(matchedMonster))
+            ? loadout?.art
             : humanoidChoice != null && artMode != 'none'
             ? oculumBalancedHumanoidArt(
                 mode: artMode,
@@ -8540,15 +8548,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           );
           skills
             ..clear()
-            ..addAll(oculumMonsterBookSkills(matchedMonster))
-            ..addAll(
-              oculumEnemyAbilityVariants(
-                matchedMonster,
-                seed: monsterSpriteStableSeed(
-                  '$nome:${DateTime.now().microsecondsSinceEpoch}',
-                ),
-              ),
-            );
+            ..addAll(loadout!.skills);
           arti.clear();
           if (matchedMonster.id == 'cavaliere_morto' &&
               oculumDeadKnightGetsOldLove()) {

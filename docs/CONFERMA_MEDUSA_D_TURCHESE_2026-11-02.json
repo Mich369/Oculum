@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-02",
+  "species": "medusa_vetro",
+  "letter": "D",
+  "version": 2,
+  "title": "Campana panciuta, turchese scuro",
+  "initialUserQuote": "D — Campana panciuta, turchese scuro",
+  "confirmationUserQuote": "yes",
+  "approved": true,
+  "runtimeIntegrated": false,
+  "compiled": false,
+  "provider": "builtin image_gen.imagegen",
+  "nativePath": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-ebb3317f-8c0e-48fb-8f03-6a0f74fa2541.png",
+  "file": "output/artwork/proposte_sei_notte_2026-11-01/medusa_vetro/medusa_vetro_D_v2.png",
+  "sha256": "cf145028fdf427e09224c255b9c01214d3ac68693eb9ba1cf7d106a983f69fb6",
+  "nativeShaIdentical": true,
+  "promptFile": "output/artwork/revisioni_scelte_2026-11-02/medusa_vetro_D_turchese/medusa_vetro_D_turchese_v2.prompt.txt",
+  "sourceShape": "medusa_vetro_D_v1.png",
+  "sourcePalette": "medusa_vetro_F_v1.png",
+  "audit": {
+    "width": 1585,
+    "height": 992,
+    "pngCrcZlibFiltersValid": true
+  },
+  "visualInspected": true,
+  "visualNotes": "Rounded D bell, transparent glass, silver ring and tentacles preserved; deep turquoise palette applied; quiet center/right area.",
+  "noGameplayEffectsInferred": true,
+  "completionAt100PercentInferred": false
+}

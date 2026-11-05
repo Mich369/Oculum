@@ -130,6 +130,9 @@ void main() {
       {'sessionId': 'enemy-session', 'activeSheetTag': enemy, 'role': 'player'},
     ];
     state.campaignDifficulty = 'normale';
+    // Initial magical Luck is now 3. Disable its independent random dodge in
+    // this fixture, which checks exact shield layers and one-time revival.
+    state.fortuna = 0;
     state.titoli.clear();
     state.trattiRazziali.clear();
     state.skills.clear();
@@ -349,12 +352,31 @@ void main() {
     state.statoForzaTiriRimanenti = 0;
     state.statoForzaPronto = false;
     state.currentOculumController.text = '0';
+    // Keep level 5 for the phase's +10 damage, but cancel its two derived Luck
+    // points through fixture Karma. The reserve alone does not remove them;
+    // Luck ignores the manually invested subtrait value.
+    final karmaBeforePhase = state.karmaController.text as String;
+    state.karmaController.text = '-2';
+    probe.invalidateDerivedCaches();
+    expect(probe.subtraitValue('fortuna'), 0);
     await tester.runAsync(
       () =>
           probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
     );
-    expect(int.parse(state.currentHpController.text), (maximum * .75).ceil());
+    expect(
+      int.parse(state.currentHpController.text),
+      (maximum * .75).ceil(),
+      reason:
+          'phase max before=$maximum now=${probe.maximumHp()} '
+          'RES=${state.resilienzaController.text} '
+          'level=${state.livelloController.text} tag=${probe.currentTag()} '
+          'source=${state.schedePersonaggio[0]['monsterBookSourceId']} '
+          'phase=${state.schedePersonaggio[0]['aberrationPhase']} '
+          'triggered=${state.schedePersonaggio[0]['aberrationFinalPhaseTriggered']}\n'
+          '${(state.logEventi as List).take(20).join('\n')}',
+    );
     expect(state.schedePersonaggio[0]['aberrationPhase'], 3);
+    expect(state.schedePersonaggio[0]['aberrationFinalPhaseTriggered'], isTrue);
     expect(
       (state.activeStructuredEffects as List)
           .where((e) => e['effectId'] == 'aberration_final_phase')
@@ -367,10 +389,15 @@ void main() {
       () =>
           probe.damageResolved(10000, bypassDefense: true, bypassShields: true),
     );
-    expect(state.currentHpController.text, '0');
+    expect(
+      state.currentHpController.text,
+      '0',
+      reason: (state.logEventi as List).take(12).join('\n'),
+    );
     state.schedePersonaggio[0].remove('monsterBookSourceId');
     state.activeStructuredEffects.clear();
     state.livelloController.text = '0';
+    state.karmaController.text = karmaBeforePhase;
     state.currentHpController.text = '$fixtureMaximumHp';
     final last = state.onlineCombatRequests.values.last as Map<String, dynamic>;
     last['status'] = 'pending';

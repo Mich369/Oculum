@@ -10,15 +10,15 @@ void main() {
     expect(skill.maximums, [2, 2, 2]);
     expect(skill.cooldowns, [3, 3, 3]);
   });
-  test('381 authored entries, including Baghest, without duplicates', () {
-    expect(oculumPlanarMonsterEntries.length, 381);
+  test('387 authored entries, including Baghest, without duplicates', () {
+    expect(oculumPlanarMonsterEntries.length, 387);
     final ids = oculumPlanarMonsterEntries.map((e) => e.id).toSet();
-    expect(ids.length, 381);
+    expect(ids.length, 387);
     expect(ids, contains('manichino_baghest'));
     final names = oculumPlanarMonsterEntries
         .map((e) => e.nameIt.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''))
         .toSet();
-    expect(names.length, 381);
+    expect(names.length, 387);
     for (final e in oculumPlanarMonsterEntries) {
       expect(
         defaultMonsterBookEntries.where((m) => m.id == e.id).length,
@@ -30,6 +30,70 @@ void main() {
       for (final id in e.skillIds) {
         expect(oculumPlanarTechnique(id), isNotNull, reason: id);
       }
+    }
+  });
+  test('six Ice creatures keep distinct skills and aimable anatomy', () {
+    const weakParts = {
+      'costrutto_dei_tre_crani': 'neck',
+      'scheletro_delle_lame_di_brina': 'ribs',
+      'cacciatore_della_cresta_glaciale': 'throat',
+      'arciere_del_gelo_cavo': 'drawing_wrist',
+      'gigante_della_clava_polarnotte': 'forward_knee',
+      'ice_shield': 'shield_elbow',
+    };
+    final skillIds = <String>{};
+    for (final MapEntry(key: id, value: weakPart) in weakParts.entries) {
+      final monster = monsterById(id)!;
+      expect(monster.elementId, 'ghiaccio', reason: id);
+      expect(monster.planeIds, ['ghiaccio'], reason: id);
+      expect(monster.spriteAssetPath, isEmpty, reason: id);
+      final anatomy = oculumMonsterPrecisionAnatomy(monster);
+      expect(anatomy.where((part) => part['group'] == 'arms'), hasLength(2));
+      expect(anatomy.where((part) => part['group'] == 'legs'), hasLength(2));
+      expect(
+        anatomy.where((part) => part['weak'] == true).single['id'],
+        weakPart,
+      );
+      expect(monster.skillIds.take(2).toSet(), hasLength(2));
+      for (final skillId in monster.skillIds.take(2)) {
+        expect(skillIds.add(skillId), isTrue, reason: skillId);
+        final skill = monsterBookConcreteTechnique(skillId)!;
+        expect(skill.forms, hasLength(3));
+        expect(skill.minimums, [1, 2, 3]);
+        expect(skill.costResource, 'volonta');
+      }
+    }
+    final shield = monsterBookConcreteTechnique('ice_shield_plates')!;
+    expect(monsterById('ice_shield')!.nameIt, 'Ice Shield');
+    expect(shield.forms.map((form) => form.single.type), everyElement('scudo'));
+  });
+  test('Idrax and its glacial variant have the same limbless anatomy', () {
+    final base = monsterById('idrax')!;
+    final glacial = monsterById('idrax_glaciale')!;
+    expect(glacial.encounterRules['canonicalVariantOf'], base.id);
+    expect(glacial.elementId, 'ghiaccio');
+    expect(glacial.planeIds, ['ghiaccio']);
+    expect(glacial.stats, base.stats);
+    expect(glacial.skillIds.take(3), base.skillIds.take(3));
+    expect(glacial.dropIds, base.dropIds);
+    for (final monster in [
+      base,
+      glacial,
+      monsterById('idrax_variante_errante')!,
+    ]) {
+      final anatomy = oculumMonsterPrecisionAnatomy(monster);
+      expect(anatomy.map((part) => part['id']), [
+        'body',
+        'head',
+        'eyes_1',
+        'eyes_2',
+        'throat',
+        'tail',
+      ]);
+      expect(
+        anatomy.where((part) => part['weak'] == true).single['id'],
+        'throat',
+      );
     }
   });
   test('Piranha Mortale and Angelic Ray have distinct editable techniques', () {

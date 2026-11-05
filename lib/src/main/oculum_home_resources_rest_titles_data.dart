@@ -328,6 +328,183 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  bool canSpendMagicalLuckAt(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return false;
+    final sheet = schedePersonaggio[index];
+    return !readBoolValue(sheet['realtimeSharedSheet']) &&
+        !readBoolValue(sheet['realtimeReadOnlyByMaster']) &&
+        !readBoolValue(sheet['realtimeRestrictedByMaster']);
+  }
+
+  Widget magicalLuckRollToggle({bool dense = false}) => StatefulBuilder(
+    builder: (context, refresh) => SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: dense,
+      value: proponiFortunaDopoTiro,
+      onChanged: canSpendMagicalLuckAt(schedaCorrente)
+          ? (enabled) {
+              setState(() => proponiFortunaDopoTiro = enabled);
+              refresh(() {});
+              programmaSalvataggio();
+            }
+          : null,
+      title: Text(
+        t('Proponi Fortuna dopo il tiro', 'Offer Luck after rolling'),
+      ),
+      subtitle: dense
+          ? null
+          : Text(
+              t(
+                'Dopo aver visto il dado, ogni punto speso dà +1 al totale prima di confermarlo.',
+                'After seeing the die, spend one point per +1 to the total before confirming.',
+              ),
+            ),
+    ),
+  );
+
+  bool canOfferMagicalLuckOnRoll(int index, {int reserved = 0}) {
+    if (!mounted ||
+        magicalLuckRollDialogOpen ||
+        !canSpendMagicalLuckAt(index)) {
+      return false;
+    }
+    final current = index == schedaCorrente;
+    final sheet = schedePersonaggio[index];
+    return (current
+            ? proponiFortunaDopoTiro
+            : readBoolValue(sheet['proponiFortunaDopoTiro'])) &&
+        (current ? fortuna : readIntValue(sheet['fortuna'])) > reserved;
+  }
+
+  Future<int?> offerMagicalLuckOnRoll({
+    required String label,
+    required String natural,
+    required int total,
+    int? sheetIndex,
+    int reserved = 0,
+    bool Function()? canCommit,
+  }) async {
+    final index = sheetIndex ?? schedaCorrente;
+    if (!canOfferMagicalLuckOnRoll(index, reserved: reserved)) return 0;
+    final isCurrent = index == schedaCorrente;
+    final origin = currentSheetScrollId();
+    final tag = sheetTagAt(index);
+    final scope = permissionScope;
+    final encounter = onlineCombatEncounterId;
+    final available =
+        (isCurrent
+            ? fortuna
+            : readIntValue(schedePersonaggio[index]['fortuna'])) -
+        reserved;
+    var amount = 0;
+    int? chosen;
+    magicalLuckRollDialogOpen = true;
+    try {
+      chosen = await showDialog<int>(
+        context: context,
+        builder: (dialog) => StatefulBuilder(
+          builder: (context, update) => AlertDialog(
+            title: Text(t('Fortuna magica · $label', 'Magical Luck · $label')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t(
+                    'Dado $natural · Totale $total',
+                    'Die $natural · Total $total',
+                  ),
+                ),
+                Text(
+                  t(
+                    'Disponibile $available · Totale finale ${total + amount}',
+                    'Available $available · Final total ${total + amount}',
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: t('Riduci spesa', 'Spend less'),
+                      onPressed: amount > 0
+                          ? () => update(() => amount--)
+                          : null,
+                      icon: const Icon(Icons.remove),
+                    ),
+                    Text('+$amount'),
+                    IconButton(
+                      tooltip: t('Aumenta spesa', 'Spend more'),
+                      onPressed: amount < available
+                          ? () => update(() => amount++)
+                          : null,
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog, 0),
+                child: Text(
+                  t('Continua senza spendere', 'Continue without spending'),
+                ),
+              ),
+              FilledButton(
+                onPressed: amount > 0
+                    ? () => Navigator.pop(dialog, amount)
+                    : null,
+                child: Text(t('Spendi $amount', 'Spend $amount')),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      magicalLuckRollDialogOpen = false;
+    }
+    if (!mounted ||
+        currentSheetScrollId() != origin ||
+        permissionScope != scope ||
+        onlineCombatEncounterId != encounter ||
+        !canSpendMagicalLuckAt(index) ||
+        sheetTagAt(index) != tag ||
+        canCommit?.call() == false) {
+      return null;
+    }
+    final spent = chosen ?? 0;
+    if (spent <= 0) return 0;
+    final remaining = isCurrent
+        ? fortuna
+        : readIntValue(schedePersonaggio[index]['fortuna']);
+    if (spent > remaining - reserved) return 0;
+    setState(() {
+      if (isCurrent) {
+        fortuna -= spent;
+        invalidateHiddenEyeDerivedCaches();
+      } else {
+        schedePersonaggio[index]['fortuna'] = remaining - spent;
+      }
+      combatLogFor(
+        tag,
+        t(
+          '[FORTUNA MAGICA] $label: +$spent al tiro, ${remaining - spent} rimanenti.',
+          '[MAGICAL LUCK] $label: +$spent to the roll, ${remaining - spent} left.',
+        ),
+      );
+    });
+    programmaSalvataggio();
+    return spent;
+  }
+
+  String magicalLuckRollFormula(String formula, int spent, int total) =>
+      spent == 0
+      ? formula
+      : t(
+          '$formula · Fortuna +$spent → $total',
+          '$formula · Luck +$spent → $total',
+        );
+
   void modificaFortuna(int delta) {
     setState(() {
       fortuna = max(0, fortuna + delta);

@@ -131,7 +131,7 @@ int oculumBlackMarketFallenEyePrice({
 }
 
 bool oculumBlackMarketMonsterBookPageEligible(MonsterBookEntry entry) {
-  if (entry.isNpc) return false;
+  if (entry.isNpc || oculumIsRetiredMonsterId(entry.id)) return false;
   final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn}'.toLowerCase();
   return entry.formTags.any(
         (tag) => oculumNormalizeText(tag) == 'aberrazione',

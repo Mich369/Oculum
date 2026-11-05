@@ -157,7 +157,9 @@ extension _OculumWorldTravel on _OculumHomePageState {
   bool worldTravelMemberChaos(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return false;
     final sheet = schedePersonaggio[index];
-    final monster = monsterById('${sheet['monsterBookSourceId'] ?? ''}');
+    final monster = oculumSavedMonsterBookEntryById(
+      '${sheet['monsterBookSourceId'] ?? ''}',
+    );
     final values = [
       sheet['razza'],
       sheet['elemento'],
@@ -535,6 +537,11 @@ extension _OculumWorldTravel on _OculumHomePageState {
       final stats = Map<String, dynamic>.from(raw['stats'] as Map);
       final level = readIntValue(raw['level']),
           grade = readIntValue(raw['grade']);
+      final loadout = oculumMonsterBookLoadout(
+        monster,
+        random: Random(),
+        level: level,
+      );
       final tag = generaTagUnicoScheda(
         schedePersonaggio.length,
         schedePersonaggio
@@ -567,12 +574,8 @@ extension _OculumWorldTravel on _OculumHomePageState {
             'puntoDebole': monster.weakPointIt,
             'currentHp':
                 '${readIntValue(stats['resilienza']) * oculumHpMultiplierForGrade(grade, level: level)}',
-            'skills': oculumMonsterBookSkills(
-              monster,
-            ).map((skill) => skill.toJson()).toList(),
-            'arti': <Map<String, dynamic>>[],
-            if (oculumMonsterBookImportArt(monster) case final art?)
-              'arti': [art.toJson()],
+            'skills': loadout.skills.map((skill) => skill.toJson()).toList(),
+            'arti': [if (loadout.art case final art?) art.toJson()],
             for (final key in const [
               'resilienza',
               'volonta',

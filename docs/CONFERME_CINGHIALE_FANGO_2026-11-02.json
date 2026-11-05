@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-02",
+  "recordedUtc": "2026-11-02T08:28:52.544272+00:00",
+  "species": "ciclo_cinghiale_fango",
+  "userQuotes": {
+    "body": "lo voglio un cinghiale realmente fatto di fango",
+    "oldWeakPointRejected": "Voglio un punto debole diverso",
+    "newWeakPoint": "Un nucleo nascosto da esporre",
+    "exposure": "Con un grave colpo mirato al ventre",
+    "coreDamageAndDeath": "Sì, usa questa proporzione e morte del mostro"
+  },
+  "rule": {
+    "entireBodyMaterial": "fango",
+    "weakPoint": "hiddenCore",
+    "exposure": "grave colpo mirato al ventre",
+    "coreHpFractionOfCurrentBodyHpAtExposure": [
+      1,
+      3
+    ],
+    "proportionalDamageToBody": true,
+    "destroyingCoreKillsCreature": true,
+    "separateChestArmorRequired": false,
+    "exactGraveHitThreshold": "to balance in implementation; editable",
+    "runtimeImplemented": false
+  },
+  "bodyChangeDoesNotAutomaticallyGrantImmunitiesOrNewSkills": true,
+  "imageSelection": {
+    "letter": "B",
+    "version": 3,
+    "sourceAttachment": "C:\\Users\\michy\\AppData\\Local\\Temp\\codex-clipboard-2096dc10-60c2-4077-98cc-6d8207eeab9f.png",
+    "file": "output/artwork/proposte_sei_notte_2026-11-01/ciclo_cinghiale_fango/ciclo_cinghiale_fango_B_v3.png",
+    "attachmentSha256": "9f520106cec333d42b7e3f54c2de489262aad94e9fb56d9444bf4404457909e0",
+    "attachmentCopiedByteForByte": true,
+    "correspondingNativeProposal": "B v2",
+    "nativeAndAttachmentEncodingDiffer": true
+  },
+  "newBuildOrOnlineProofClaimed": false,
+  "completionAt100PercentInferred": false
+}

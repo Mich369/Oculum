@@ -1067,6 +1067,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       tipo: tipo.isEmpty ? 'Personaggio' : tipo,
       livello: readIntValue(safeRaw['livello']),
       grado: readIntValue(safeRaw['grado']),
+      fortunaIniziale: 0,
     );
 
     base.addAll(safeRaw);
@@ -2690,9 +2691,19 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             selectedMonster,
           ).where((title) => knownTitleKeys.add(title.chiaveSistema)),
         );
-        final importedArt = oculumMonsterBookImportArt(selectedMonster);
-        final monsterArt = importedArt == null
+        final loadout = wizard
             ? null
+            : oculumMonsterBookLoadout(
+                selectedMonster,
+                random: Random(),
+                level: livello,
+              );
+        final importedArt = wizard
+            ? oculumMonsterBookImportArt(selectedMonster)
+            : loadout?.art;
+        final monsterArt = importedArt == null ||
+                oculumMonsterHasFixedProgressionSkills(selectedMonster)
+            ? importedArt
             : oculumCompleteMonsterOpen(
                 importedArt,
                 name: selectedMonster.nameIt,
@@ -2707,7 +2718,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                   ).where((s) => s.passiva),
                   ...selectedPool.where((s) => !s.passiva),
                 ]
-              : oculumMonsterBookSkills(selectedMonster),
+              : loadout!.skills,
         );
         if (wizard && monsterArt != null) {
           monsterArt.skills = monsterArt.skills
@@ -2715,16 +2726,6 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 (s) => s.tipoPerLivello(1).toLowerCase().contains('passiv'),
               )
               .toList();
-        }
-        if (!wizard) {
-          skills.addAll(
-            oculumEnemyAbilityVariants(
-              selectedMonster,
-              seed: monsterSpriteStableSeed(
-                '${selectedMonster.id}:${DateTime.now().microsecondsSinceEpoch}',
-              ),
-            ),
-          );
         }
         // Il Book usa la Prima Art già presente nella scheda: non aggiunge una
         // quarta sezione. Una Prima Art personalizzata resta intatta e la

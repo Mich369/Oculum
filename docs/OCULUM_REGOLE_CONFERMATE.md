@@ -1,5 +1,29 @@
 # Oculum — registro delle regole confermate
 
+## Ritiro dell'Errante con l'Ombrello — 5 novembre
+
+Alla scelta artistica A/B, l'utente risponde **«Ritiralo dal manuale»**. Ritirare `errante_con_ombrello` e la variante Veterana dal catalogo attivo, dai nuovi incontri, dalle nuove pagine del Mercato Nero e dalla coda di voto. Le definizioni e le schede già salvate restano leggibili, con statistiche e capacità; conservare gli originali artistici nello storico senza approvazione. Non estendere il ritiro ad altri Erranti senza una richiesta esplicita.
+
+## Ritiro dell'Errante con la Sedia — 5 novembre
+
+Dopo aver visto le alternative A/B, l'utente risponde **«cancella dal manuale»**. Ritirare la specie e la sua variante dal catalogo attivo, dai nuovi incontri e dalla coda artistica; conservarne definizioni legacy, statistiche/Skill personalizzate e schede già salvate. I disegni restano nello storico, non approvati. Anche il Mercato Nero non propone nuove pagine del mostro ritirato. Implementazione locale per la prossima patch; la distribuzione installata non viene dichiarata già aggiornata.
+
+## Fortuna iniziale e pool dei mostri — 5 novembre
+
+Confermate «+3 iniziali nella Fortuna magica esistente» e «+1 per punto anche dopo aver visto il tiro». Le nuove schede partono con tre punti nella riserva già esistente. La spesa aggiunge al totale un punto per ogni punto speso. Nei tiri interattivi supportati, l'opzione «Proponi Fortuna dopo il tiro» mostra il naturale e il totale prima della conferma. Si può confermare senza spendere. I saldi salvati conservano il proprio valore. La scelta della finestra si salva per scheda.
+
+Ogni mostro ordinario privo di un pool adeguato riceve almeno nove Skill e due Open coerenti con specie, elemento e anatomia. Le nuove schede ordinarie ottengono tre Skill distinte e una Open per sorteggio. Il sorteggio privilegia le tecniche utilizzabili al livello della scheda. Se il pool include una tecnica a più bersagli utilizzabile, entra fra le tre. Le eccezioni esplicite e i set autoriali fissi mantengono le proprie regole. Il dossier mostra le Open disponibili, mentre la scheda salva quella ottenuta.
+
+Sette aggiunte al catalogo del Ghiaccio: Costrutto dei Tre Crani, Scheletro delle Lame di Brina, Cacciatore della Cresta Glaciale, Arciere del Gelo Cavo, Gigante della Clava Polarnotte, Ice Shield e Idrax Glaciale. Ice Shield usa Scudo normale. Idrax base, Errante e Glaciale sono serpentoni senza arti, con corpo, testa, occhi, gola e coda come bersagli. Glaciale riprende il profilo di Idrax con affinità Ghiaccio.
+
+## Ritiro del Ragno degli Obser Falsi — 2 novembre
+
+Richiesta esplicita: «eliminalo dal manuale». Specie e varianti ritirate dal catalogo attivo e dai nuovi incontri; vecchie schede, Skill e personalizzazioni restano risolvibili. Sei test locali sul ritiro passati; nuova distribuzione separata. [Adattamento e direzione visiva](DIREZIONE_DARK_FANTASY_2026-11-02.md).
+
+## Cinghiale interamente di fango e nucleo — conferme del 2 novembre
+
+Corpo interamente di fango, al posto del precedente pelo incrostato. Scelta grafica: B, immagine allegata copiata esattamente. Nuovo punto debole: nucleo nascosto, esposto da un grave colpo mirato al ventre; Vita del nucleo un terzo della Vita attuale all'esposizione, Danni proporzionali e morte del Cinghiale quando il nucleo è distrutto. Non richiede di rompere una corazza del torace. Soglie precise da bilanciare e lasciare modificabili, senza nuovi poteri o immunità dedotti. [Conferme, adattamento e stato](CINGHIALE_FANGO_CORPO_E_NUCLEO_2026-11-02.md). Implementazione e distribuzione nella prossima patch: la build 2765a5df non viene modificata da questi documenti. Nessuna chiusura al 100% implicita.
+
 ## Anatomie dai disegni canonici — allineamento del 2 novembre
 
 Applicazione della richiesta già confermata di rivedere le parti colpibili: completate sette famiglie e varianti (DeadlySins, Rascalume, Mìrula, Colosso di Prismarite, Brumìlio, Vèndulo, Diavolo Obliterato). I punti deboli già descritti restano specifici: catena, vibrisse, pelle sotto le placche, petto, nuclei, terzo occhio e molle; non si estendono all’intero arto o torace. Il nucleo del Golem resta nascosto prima delle piastre rotte, senza rendere debole tutto il petto. Il Diavolo ha due occhi normali e terzo occhio sulla fronte, come nell’immagine scelta. Nessuna nuova capacità, fragilità o statistica dedotta. Parole intere per riconoscere organi; anatomie esplicite e punti deboli personalizzati conservati. Sono correzioni dell’implementazione, non nuove cifre dettate dall’utente. [Prove e limiti](BUG52_ANATOMIE_E_PUNTI_DEBOLI_2026-11-02.md).

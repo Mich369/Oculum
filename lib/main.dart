@@ -1967,7 +1967,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   String colorDecorationPresetId = 'none';
   String colorGuiPresetId = 'classic_reliquary';
   String campaignDifficulty = 'normale';
-  int fortuna = 0;
+  static const initialMagicalLuck = 3;
+  int fortuna = initialMagicalLuck;
+  bool proponiFortunaDopoTiro = false;
+  bool magicalLuckRollDialogOpen = false;
   int scannerRiposiLunghi = 0;
   int fateTokens = 0;
   int diarioRewardClaimedCount = 0;

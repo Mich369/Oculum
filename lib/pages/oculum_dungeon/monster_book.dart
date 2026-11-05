@@ -21,6 +21,7 @@ part 'concrete_monster_techniques.dart';
 part 'monster_progression_pool.dart';
 part 'planar_monsters.dart';
 part 'canonical_monster_variants.dart';
+part 'ice_creatures.dart';
 part 'masked_monsters.dart';
 part 'ordinary_creatures.dart';
 part 'armadillo_creatures.dart';
@@ -3719,17 +3720,22 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Idrax',
     nameEn: 'Idrax',
     descIt:
-        'Serpente gigante livello 0. Quando subisce troppo danno può fare Muta: rigenera la parte eccedente ma perde 3 cm per un turno. Non cerca uno scontro frontale, alterna pelle, fuga e ritorno. Stat base: Resilienza 3, Volontà 5, Materia 5. Drop: 1d4 kg Pelle di serpente, Carne di Idrax 250 g (putrefazione 3 sessioni).',
-    descEn: 'Giant shedding serpent.',
+        'Serpente gigante senza arti, dalla testa larga a scaglie color oliva maculato e dalle zanne ricurve. Livello 0. Quando subisce troppo danno può fare Muta: rigenera la parte eccedente ma perde 3 cm per un turno. Non cerca uno scontro frontale, alterna pelle, fuga e ritorno. Stat base: Resilienza 3, Volontà 5, Materia 5. Drop: 1d4 kg Pelle di serpente, Carne di Idrax 250 g (putrefazione 3 sessioni).',
+    descEn:
+        'Broad-headed, olive-mottled giant shedding serpent with curved fangs.',
     elementId: 'natura',
     spriteAssetPath: '',
     isMiniBoss: false,
     isBoss: false,
     isNullFateless: false,
-    stats: {'hp': 70, 'atk': 16, 'def': 9, 'spd': 17},
-    skillIds: ['idrax_molt', 'serpent_coil', 'burrow_escape'],
-    dropIds: ['pelle_serpente', 'carne_idrax'],
+    stats: _idraxStats,
+    skillIds: _idraxSkillIds,
+    dropIds: _idraxDropIds,
+    weakPointIt:
+        'Le scaglie più sottili sotto la gola, esposte quando solleva il capo.',
+    encounterRules: {'precisionBodyParts': _idraxPrecisionBodyParts},
   ),
+  _glacialIdrax,
   MonsterBookEntry(
     id: 'notthing',
     nameIt: 'Notthing',
@@ -5484,8 +5490,12 @@ List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
 
 // Keep retired definitions for existing sheets, without offering them in the
 // manual, new encounters, theme queues or the default Monster Book catalogue.
-bool oculumIsRetiredMonsterId(String id) =>
-    id.trim().split('_variante_').first == 'cuore_filo';
+bool oculumIsRetiredMonsterId(String id) => const {
+  'cuore_filo',
+  'ragno_obser_falsi',
+  'errante_con_la_sedia',
+  'errante_con_ombrello',
+}.contains(id.trim().split('_variante_').first);
 
 final List<MonsterBookEntry>
 _builtinMonsterBookEntriesIncludingLegacy = List.unmodifiable(
@@ -5720,6 +5730,11 @@ List<MonsterBookEntry> get monsterBookEntries => _activeMonsterBookEntries;
 
 MonsterBookEntry? monsterBookEntryById(String id) =>
     _monsterBookEntriesById[id.trim()];
+
+/// Resolve an existing sheet or Eye without making its source available for
+/// new encounters. Keep the historical generated-variant fallback as well.
+MonsterBookEntry? oculumSavedMonsterBookEntryById(String id) =>
+    monsterBookEntryById(id) ?? _generatedVariantForHiddenBase(id.trim());
 
 void configureMonsterBookEntries({
   Iterable<MonsterBookEntry> customEntries = const <MonsterBookEntry>[],
@@ -5979,7 +5994,7 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
 /// statistiche, drop o identità; le Creature Minori restano senza Art.
 List<String> monsterBookUsableSkillIds(MonsterBookEntry monster) {
   if (monster.skillIds.isNotEmpty) return monster.skillIds;
-  if (monster.formTags.contains('Creatura Minore')) return const [];
+  if (oculumMonsterHasFixedProgressionSkills(monster)) return const [];
   return _skillIdsForGeneratedMonster(monster.id, monster.elementId);
 }
 

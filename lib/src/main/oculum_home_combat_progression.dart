@@ -1633,12 +1633,22 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                   ? -12
                   : 0),
         );
-    final totale = rollTotalWithCritical(dado, 20, [bonus]);
-    final testoDado = rollFormulaWithCritical(
+    final baseTotal = rollTotalWithCritical(dado, 20, [bonus]);
+    final formula = rollFormulaWithCritical(
       roll: dado,
       faces: 20,
       bonuses: [bonus],
     );
+    final magicalLuck = canOfferMagicalLuckOnRoll(schedaCorrente)
+        ? await offerMagicalLuckOnRoll(
+            label: nome,
+            natural: '$dado',
+            total: baseTotal,
+          )
+        : 0;
+    if (magicalLuck == null) return;
+    final totale = baseTotal + magicalLuck;
+    final testoDado = magicalLuckRollFormula(formula, magicalLuck, totale);
     slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
     final expGuadagnata = oculumRollExperienceGain(
       naturalRoll: dado,
@@ -1689,7 +1699,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       label: nome,
       roll: dado,
       bonus:
-          bonus + criticalDieModifier(dado, 20) + modificatoreDifficoltaTiro(),
+          bonus +
+          magicalLuck +
+          criticalDieModifier(dado, 20) +
+          modificatoreDifficoltaTiro(),
       total: totale,
     );
     onResolved?.call(dado, totale);
@@ -1704,6 +1717,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     String? actionLabel,
     void Function(int damageBonus)? onOculumDamageBonus,
     void Function(int naturalRoll, int total)? onResolved,
+    bool Function()? canCommitFortuneRoll,
   }) async {
     oculumProfileMark('roll_special');
     if (!resourceAlreadySpent &&
@@ -1747,7 +1761,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final woundPercent = initiativeRoll
         ? oculumWoundedInitiativePercent(hp: hpCorrenti(), maxHp: maxHp())
         : 100;
-    final totale = initiativeRoll
+    final baseTotal = initiativeRoll
         ? oculumWoundedInitiative(rawTotal, hp: hpCorrenti(), maxHp: maxHp())
         : rawTotal;
     final rawFormula = rollFormulaWithCritical(
@@ -1755,9 +1769,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       faces: faces,
       bonuses: [bonusTotale],
     );
-    final testoDado = woundPercent == 100
+    final formula = woundPercent == 100
         ? rawFormula
-        : '$rawFormula ×$woundPercent% = $totale';
+        : '$rawFormula ×$woundPercent% = $baseTotal';
+    final magicalLuck = canOfferMagicalLuckOnRoll(schedaCorrente)
+        ? await offerMagicalLuckOnRoll(
+            label: actionLabel ?? nome,
+            natural: '$dado',
+            total: baseTotal,
+            canCommit: canCommitFortuneRoll,
+          )
+        : 0;
+    if (magicalLuck == null) return;
+    final totale = baseTotal + magicalLuck;
+    final testoDado = magicalLuckRollFormula(formula, magicalLuck, totale);
     var gerinResonanceText = '';
     if ((nome.trim().toLowerCase() == 'danno' ||
             nome.trim().toLowerCase() == 'damage' ||
@@ -1867,6 +1892,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       roll: dado,
       bonus:
           bonusTotale +
+          magicalLuck +
           criticalDieModifier(dado, faces) +
           modificatoreDifficoltaTiro(),
       total: totale,
@@ -1886,6 +1912,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool appliesAttackDamageBonus = false,
     void Function(int damageBonus)? onOculumDamageBonus,
     void Function(int naturalRoll, int total)? onResolved,
+    bool Function()? canCommitFortuneRoll,
   }) async {
     oculumProfileMark('roll_subtrait');
     if (oculumScoutReadingStatIds.contains(stat.id) &&
@@ -1948,6 +1975,30 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         (stat.id == 'drop'
             ? oculumDropDifficultyBonus(normalizedCampaignDifficulty())
             : 0);
+    final label = actionLabel == null
+        ? '${stat.nome} (${hiddenEyeGroupLabel(hiddenEyeStatGroup(stat.id))})'
+        : '$actionLabel · ${stat.nome}';
+    final usaFortuna = stat.id == 'fortuna';
+    final reservedLuck = usaFortuna ? 1 : 0;
+    final baseTotal = rollTotalWithCritical(dado, faces, [bonus]);
+    final baseFormula = rollFormulaWithCritical(
+      roll: dado,
+      faces: faces,
+      bonuses: [bonus],
+    );
+    final magicalLuck =
+        canOfferMagicalLuckOnRoll(schedaCorrente, reserved: reservedLuck)
+        ? await offerMagicalLuckOnRoll(
+            label: label,
+            natural: '$dado',
+            total: baseTotal,
+            reserved: reservedLuck,
+            canCommit: canCommitFortuneRoll,
+          )
+        : 0;
+    if (!mounted || magicalLuck == null) return;
+    final totale = baseTotal + magicalLuck;
+    final testoDado = magicalLuckRollFormula(baseFormula, magicalLuck, totale);
     if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
       final usageSheet = schedePersonaggio[schedaCorrente];
       final usageRaw = usageSheet['subtraitRollUseCounts'];
@@ -1957,7 +2008,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       usage[stat.id] = max(0, readIntValue(usage[stat.id])) + 1;
       usageSheet['subtraitRollUseCounts'] = usage;
     }
-    final totale = rollTotalWithCritical(dado, faces, [bonus]);
     final utilityCombat =
         actionLabel?.toLowerCase().contains('utility') ?? false;
     if (utilityCombat &&
@@ -1986,15 +2036,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     onOculumDamageBonus?.call(oculumSpend.damageBonus);
     if (dado == faces) recoverPlanePressureCritical();
     onResolved?.call(dado, totale);
-    final testoDado = rollFormulaWithCritical(
-      roll: dado,
-      faces: faces,
-      bonuses: [bonus],
-    );
-    final label = actionLabel == null
-        ? '${stat.nome} (${hiddenEyeGroupLabel(hiddenEyeStatGroup(stat.id))})'
-        : '$actionLabel · ${stat.nome}';
-    final usaFortuna = stat.id == 'fortuna';
     final karmaNonConsumabile = stat.id == 'nodo';
     final consumptionGroup = stat.id == 'investigazione'
         ? oculumInvestigationEffectiveStat(
@@ -2221,6 +2262,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         roll: dado,
         bonus:
             bonus +
+            magicalLuck +
             criticalDieModifier(dado, faces) +
             modificatoreDifficoltaTiro(),
         total: totale,
@@ -4756,17 +4798,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       schedePersonaggio[index]['combatHelpPending'],
     ).clamp(-1000000, 1000000);
     final bonus = baseBonus + aid + directedHelp;
-    if (directedHelp != 0) {
-      aggiungiLog(
-        '[AIUTO CONSUMATO] ${nomeSchedaPersonaggio(index)} ${directedHelp >= 0 ? '+' : ''}$directedHelp nel tiro.',
-      );
-    }
-    schedePersonaggio[index]['combatHelpPending'] = 0;
-    schedePersonaggio[index]['companionAidPending'] = 0;
     final level = sheetCriticalLevelAt(index);
     final grade = max(0, sheetIntValueAt(index, 'grado'));
     final difficulty = sheetDifficoltaTiroAt(index);
-    final totale = rollTotalWithCritical(
+    final baseTotal = rollTotalWithCritical(
       dado,
       20,
       [bonus],
@@ -4774,7 +4809,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       grade: grade,
       difficulty: difficulty,
     );
-    final testoDado = rollFormulaWithCritical(
+    final formula = rollFormulaWithCritical(
       roll: dado,
       faces: 20,
       bonuses: [bonus],
@@ -4784,6 +4819,24 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     final label = sheetRollLabel(key);
     final nome = nomeSchedaPersonaggio(index);
+    final magicalLuck = canOfferMagicalLuckOnRoll(index)
+        ? await offerMagicalLuckOnRoll(
+            label: '$nome · $label',
+            natural: '$dado',
+            total: baseTotal,
+            sheetIndex: index,
+          )
+        : 0;
+    if (magicalLuck == null) return;
+    final totale = baseTotal + magicalLuck;
+    final testoDado = magicalLuckRollFormula(formula, magicalLuck, totale);
+    if (directedHelp != 0) {
+      aggiungiLog(
+        '[AIUTO CONSUMATO] $nome ${directedHelp >= 0 ? '+' : ''}$directedHelp nel tiro.',
+      );
+    }
+    schedePersonaggio[index]['combatHelpPending'] = 0;
+    schedePersonaggio[index]['companionAidPending'] = 0;
     final tipo = tipoSchedaPersonaggio(index).toLowerCase();
     final eliteProgress = oculumEliteMonsterRollProgress(
       boss: tipo.contains('boss') && !tipo.contains('mini'),
@@ -4824,7 +4877,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         updateMasterInitiativeToken(
           index: index,
           roll: dado,
-          base: bonus,
+          base: bonus + magicalLuck,
           total: totale,
         );
       }
@@ -4849,6 +4902,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       roll: dado,
       bonus:
           bonus +
+          magicalLuck +
           criticalDieModifier(dado, 20, level: level, grade: grade) +
           modificatoreDifficoltaTiro(difficulty: difficulty),
       total: totale,

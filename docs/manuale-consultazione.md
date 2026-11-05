@@ -2,6 +2,20 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Fortuna e generazione dei mostri — 5 novembre
+
+Le nuove schede iniziano con 3 punti di Fortuna magica. In Risorse o Dadi rapidi, «Proponi Fortuna dopo il tiro» abilita un'anteprima per scheda. Nei tiri interattivi supportati, ogni punto scelto aggiunge +1 al totale prima della conferma. Il valore naturale del dado rimane quello tirato. L'anteprima permette di proseguire senza spendere. I tiri automatici e gli esiti già confermati seguono il proprio flusso. I saldi delle schede salvate mantengono il loro valore.
+Il pool ordinario di ciascun mostro contiene almeno 9 Skill e 2 Open coerenti con specie, elemento e anatomia. La nuova scheda ordinaria riceve 3 Skill distinte e 1 Open. Se c'è una Skill a più bersagli utilizzabile, una delle 3 viene sorteggiata da quel gruppo. Le eccezioni esplicite, le schede salvate e i kit autoriali conservano le rispettive scelte. Il dossier mostra il pool. L'editor della scheda permette di cambiare Skill, Open, costi, requisiti, durata, bersagli, recuperi, effetti ed elemento.
+Le creature ritirate dal catalogo non vengono proposte nei nuovi incontri né nelle nuove pagine del Mercato Nero. Le definizioni legacy e le personalizzazioni restano disponibili per leggere le schede esistenti.
+
+## Terre di ghiaccio — 5 novembre
+
+Terre di ghiaccio: Costrutto dei Tre Crani, Scheletro delle Lame di Brina, Cacciatore della Cresta Glaciale, Arciere del Gelo Cavo, Gigante della Clava Polarnotte, Ice Shield e Idrax Glaciale. Il primo gruppo comprende tecniche tematiche di Ghiaccio basate sulle regole esistenti. Ice Shield ha due braccia, due gambe e un avambraccio-paratia che usa Scudo normale. Gli Idrax sono serpentoni senza arti. Idrax Glaciale conserva il profilo di Idrax con affinità Ghiaccio. Le alternative artistiche restano da scegliere e non aggiungono statistiche o poteri.
+
+## Cinghiale interamente di fango e nucleo — conferme del 2 novembre
+
+Corpo interamente di fango, al posto del precedente pelo incrostato. Il punto debole è un nucleo nascosto, esposto da un grave colpo mirato al ventre. La Vita del nucleo è un terzo della Vita attuale del Cinghiale all'esposizione. I Danni al nucleo si trasferiscono proporzionalmente al corpo e la sua distruzione uccide il mostro. Non occorre rompere una corazza del torace. Le soglie precise sono da bilanciare e lasciare modificabili, senza attribuire nuovi poteri o immunità. Regola confermata; i relativi automatismi sono ancora in preparazione nella patch locale.
+
 ## Parti colpibili e punti deboli precisi — 2 novembre
 
 Le anatomie predefinite seguono i disegni canonici: DeadlySins ha due braccia, due gambe e due corna metalliche, senza occhi esposti dall’elmo; Rascalume e Mìrula quattro zampe, due occhi e una coda; Brumìlio due ali e due zampe; Vèndulo quattro zampe e due occhi. Il Colosso di Prismarite ha due braccia sulle nocche e due gambe, di pietra. Il Diavolo Obliterato ha due corna, due occhi normali e il terzo occhio sulla fronte.

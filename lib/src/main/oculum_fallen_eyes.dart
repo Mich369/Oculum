@@ -787,6 +787,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       tipo: 'Mostro',
       livello: level,
       grado: grade,
+      fortunaIniziale: 0,
     );
     for (final key in const <String>[
       'currentHp',
@@ -2816,7 +2817,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     }
 
     loadDraft(draft);
-    MonsterBookEntry? selectedMonster = monsterById(
+    MonsterBookEntry? selectedMonster = oculumSavedMonsterBookEntryById(
       '${draft['monsterBookSourceId'] ?? editingEye?['sourceMonsterId'] ?? ''}',
     );
     Map<String, int> creationBaseStats() {

@@ -5,6 +5,40 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Fortuna e generazione dei mostri — 5 novembre',
+    titleEn: 'Fortune and monster generation — November 5',
+    contentIt: r'''
+Le nuove schede iniziano con 3 punti di Fortuna magica. In Risorse o Dadi rapidi, «Proponi Fortuna dopo il tiro» abilita un'anteprima per scheda. Nei tiri interattivi supportati, ogni punto scelto aggiunge +1 al totale prima della conferma. Il valore naturale del dado rimane quello tirato. L'anteprima permette di proseguire senza spendere. I tiri automatici e gli esiti già confermati seguono il proprio flusso. I saldi delle schede salvate mantengono il loro valore.
+Il pool ordinario di ciascun mostro contiene almeno 9 Skill e 2 Open coerenti con specie, elemento e anatomia. La nuova scheda ordinaria riceve 3 Skill distinte e 1 Open. Se c'è una Skill a più bersagli utilizzabile, una delle 3 viene sorteggiata da quel gruppo. Le eccezioni esplicite, le schede salvate e i kit autoriali conservano le rispettive scelte. Il dossier mostra il pool. L'editor della scheda permette di cambiare Skill, Open, costi, requisiti, durata, bersagli, recuperi, effetti ed elemento.
+Le creature ritirate dal catalogo non vengono proposte nei nuovi incontri né nelle nuove pagine del Mercato Nero. Le definizioni legacy e le personalizzazioni restano disponibili per leggere le schede esistenti.
+''',
+    contentEn: r'''
+New sheets begin with 3 points of magical Fortune. In Resources or Quick Dice, the per-sheet option "Offer Fortune after the roll" enables a preview. For supported interactive rolls, each point spent adds +1 to the total before confirmation. The natural die result remains unchanged. You may continue without spending. Automatic rolls and confirmed outcomes retain their own flow. Saved sheet balances keep their existing value.
+Each ordinary monster pool contains at least 9 Skills and 2 Opens coherent with its species, element and anatomy. A new ordinary sheet receives 3 distinct Skills and 1 Open. If an eligible multi-target Skill exists, one of the 3 is drawn from that group. Explicit exceptions, saved sheets and authored fixed kits retain their choices. The dossier shows the pool. The sheet editor allows changes to Skills, Opens, costs, requirements, duration, targets, recovery, effects and element.
+Retired creatures are excluded from new encounters and new Black Market pages. Their legacy definitions and customizations remain available to read existing sheets.
+''',
+  ),
+  ManualSection(
+    titleIt: 'Terre di ghiaccio — 5 novembre',
+    titleEn: 'Ice lands — November 5',
+    contentIt: r'''
+Terre di ghiaccio: Costrutto dei Tre Crani, Scheletro delle Lame di Brina, Cacciatore della Cresta Glaciale, Arciere del Gelo Cavo, Gigante della Clava Polarnotte, Ice Shield e Idrax Glaciale. Il primo gruppo comprende tecniche tematiche di Ghiaccio basate sulle regole esistenti. Ice Shield ha due braccia, due gambe e un avambraccio-paratia che usa Scudo normale. Gli Idrax sono serpentoni senza arti. Idrax Glaciale conserva il profilo di Idrax con affinità Ghiaccio. Le alternative artistiche restano da scegliere e non aggiungono statistiche o poteri.
+''',
+    contentEn: r'''
+Ice lands: Three-Skull Construct, Rime-Blade Skeleton, Glacial Crest Hunter, Hollow-Frost Archer, Polar-Night Club Giant, Ice Shield and Glacial Idrax. The first group has thematic Ice techniques based on existing rules. Ice Shield has two arms, two legs and a bulkhead forearm using normal Shield. Idrax creatures are giant limbless serpents. Glacial Idrax keeps the Idrax profile with an Ice affinity. Artwork alternatives remain to be selected and add no statistics or powers.
+''',
+  ),
+  ManualSection(
+    titleIt: 'Cinghiale interamente di fango e nucleo — conferme del 2 novembre',
+    titleEn: 'Mud Boar body and core — November 2 confirmations',
+    contentIt: r'''
+Corpo interamente di fango, al posto del precedente pelo incrostato. Il punto debole è un nucleo nascosto, esposto da un grave colpo mirato al ventre. La Vita del nucleo è un terzo della Vita attuale del Cinghiale all'esposizione. I Danni al nucleo si trasferiscono proporzionalmente al corpo e la sua distruzione uccide il mostro. Non occorre rompere una corazza del torace. Le soglie precise sono da bilanciare e lasciare modificabili, senza attribuire nuovi poteri o immunità. Regola confermata; i relativi automatismi sono ancora in preparazione nella patch locale.
+''',
+    contentEn: r'''
+The body is made entirely of mud, replacing the previous mud-covered fur. Its weak point is a hidden core exposed by a severe aimed hit to the belly. Core Life is one third of the Boar's current Life when exposed. Core damage transfers proportionally to the body, and destroying the core kills the creature. Breaking chest armour is not required. Exact thresholds remain to be balanced and editable without adding powers or immunities. This rule is confirmed; its automation is still being prepared in the local patch.
+''',
+  ),
+  ManualSection(
     titleIt: 'Parti colpibili e punti deboli precisi — 2 novembre',
     titleEn: 'Physical targets and specific weak points — November 2',
     contentIt: r'''

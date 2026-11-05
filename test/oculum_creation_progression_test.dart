@@ -6,15 +6,44 @@ import 'oculum_october27_resources_test.dart' show closeFixture;
 
 void main() {
   test(
-    'all catalogue variants retain authored techniques and gain twelve executable choices',
+    'ordinary catalogue variants gain twelve choices and explicit fixed kits stay intact',
     () {
       final rows = <Map<String, dynamic>>[];
+      // These authored exceptions predate the ordinary pool rule. Check them
+      // explicitly rather than giving a no-Art creature twelve new abilities.
+      const fixedKits = {
+        'nuvi',
+        'thunder_bot',
+        'collezionista_di_elementi',
+        'demonietto_bruciante',
+        'demonietto_del_gelo',
+        'coboldo_di_brina',
+        'koboldo_delle_braci',
+        'fuoco_fatuo_affamato',
+        'strige_del_fienile',
+        'larva_del_grimorio',
+      };
       for (final monster in defaultMonsterBookEntries) {
         final ids = monster.skillIds
             .where((id) => id.startsWith(oculumMonsterProgressionPrefix))
             .toList();
-        expect(ids.length, 12, reason: monster.id);
-        expect(ids.toSet().length, 12);
+        final fixed =
+            fixedKits.contains(monster.id.split('_variante_').first) ||
+            (monster.formTags.contains('Creatura Minore') &&
+                monster.skillIds.isEmpty);
+        expect(ids.length, fixed ? 0 : 12, reason: monster.id);
+        expect(ids.toSet().length, ids.length, reason: monster.id);
+        if (fixed) {
+          // A historical saved technique still resolves without being added
+          // to a newly generated fixed kit.
+          expect(
+            monsterBookConcreteTechnique(
+              '$oculumMonsterProgressionPrefix${monster.id}__0',
+            ),
+            isNotNull,
+            reason: monster.id,
+          );
+        }
         expect(oculumMonsterNaturalAttitude(monster).trim(), isNotEmpty);
         for (final id in ids) {
           final technique = monsterBookConcreteTechnique(id)!;

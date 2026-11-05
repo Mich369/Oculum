@@ -3,7 +3,7 @@ import 'skills.dart';
 import 'drops.dart';
 
 Map<String, Map<String, String>> getSkillsForMonster(String monsterId) {
-  final m = monsterById(monsterId);
+  final m = oculumSavedMonsterBookEntryById(monsterId);
   if (m == null) return {};
   final Map<String, Map<String, String>> out = {};
   for (final sid in m.skillIds) {
@@ -15,7 +15,7 @@ Map<String, Map<String, String>> getSkillsForMonster(String monsterId) {
 }
 
 Map<String, Map<String, Object>> getDropsForMonster(String monsterId) {
-  final m = monsterById(monsterId);
+  final m = oculumSavedMonsterBookEntryById(monsterId);
   if (m == null) return {};
   final Map<String, Map<String, Object>> out = {};
   for (final did in m.dropIds) {
@@ -27,7 +27,7 @@ Map<String, Map<String, Object>> getDropsForMonster(String monsterId) {
 }
 
 Map<String, int> getStatsForMonster(String monsterId) {
-  final m = monsterById(monsterId);
+  final m = oculumSavedMonsterBookEntryById(monsterId);
   if (m == null) return {};
   return m.stats;
 }

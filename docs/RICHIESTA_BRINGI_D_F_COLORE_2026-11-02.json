@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-02",
+  "recordedUtc": "2026-11-02T04:25:02.455909+00:00",
+  "species": "bringi",
+  "provider": "builtin image_gen.imagegen",
+  "request": "Due varianti: D azzurro elettrico e F rosa pastello. F sostituisce la precedente scelta C.",
+  "userQuotes": [
+    "D — Bruno scuro, vigile sul ramo **C — Guance larghe fra i semi falli entrambi uno azzurro elettrico uno rosa pastello**",
+    "anzi questo al posto di uno dei due del colore che vuoi F — Musino tondo, muschio azzurro"
+  ],
+  "colorAssignmentDelegatedToAssistant": true,
+  "replacedBase": "C",
+  "replacementBase": "F",
+  "status": "COMBINED_V3_CANONICAL_INTEGRATION_SEPARATE",
+  "approved": true,
+  "runtimeIntegrated": false,
+  "newGameplayEffectsInferred": false,
+  "sourceImagesPreserved": true,
+  "files": [
+    {
+      "letter": "D",
+      "title": "Azzurro elettrico, vigile sul ramo",
+      "path": "bringi_D_azzurro_elettrico_v2.png",
+      "kind": "desktop",
+      "version": 2,
+      "approved": false,
+      "runtimeIntegrated": false,
+      "nativePath": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-3c91780e-edfb-41cc-94f0-ffd6d18cbb13.png",
+      "nativeShaIdentical": true,
+      "sourceImage": "output/artwork/proposte_sei_notte_2026-11-01/bringi/bringi_D_v1.png",
+      "sourceSha256": "5d00d2fbd9cd81c24c5562a7b7ed00f30e4bb1c188fe15886544ccf27bc36319",
+      "promptFile": "bringi_D_color_v2.prompt.txt",
+      "audit": {
+        "width": 1586,
+        "height": 992,
+        "colorType": 2,
+        "bytes": 2714238,
+        "crcZlibFiltersValid": true,
+        "sha256": "6fefadac90c0be7f2c10484cd881899322b1dc2aa87e425c99799d02a20fd628"
+      },
+      "visualInspected": true,
+      "visualNotes": "Requested coat color, original pose, two eyes/ears, full cheeks, four paws and one curved fluffy tail preserved. Blue moss retained for F; calm sheet center and natural forest intact."
+    },
+    {
+      "letter": "F",
+      "title": "Rosa pastello, musino tondo e muschio azzurro",
+      "path": "bringi_F_rosa_pastello_v2.png",
+      "kind": "desktop",
+      "version": 2,
+      "approved": false,
+      "runtimeIntegrated": false,
+      "nativePath": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-dbf47fdf-4867-46db-bcef-4c5539d5c0ea.png",
+      "nativeShaIdentical": true,
+      "sourceImage": "output/artwork/proposte_sei_notte_2026-11-01/bringi/bringi_F_v1.png",
+      "sourceSha256": "9b020cbbc6c4d760c64fd37cf3755fa731ad69fbfbc6800128882a2b7d12492d",
+      "promptFile": "bringi_F_color_v2.prompt.txt",
+      "audit": {
+        "width": 1586,
+        "height": 992,
+        "colorType": 2,
+        "bytes": 2582996,
+        "crcZlibFiltersValid": true,
+        "sha256": "0baa38b411e65fb530d4a8971cb0dd7bed37af219413551e28d8b259e91fd141"
+      },
+      "visualInspected": true,
+      "visualNotes": "Requested coat color, original pose, two eyes/ears, full cheeks, four paws and one curved fluffy tail preserved. Blue moss retained for F; calm sheet center and natural forest intact."
+    }
+  ],
+  "styleReference": "assets/oculum/home_art/amber_shore.png",
+  "styleReferenceRole": "Rame fatato technique only, not a scene to copy",
+  "individualEditsRetainedAsHistory": true,
+  "latestProposal": {
+    "date": "2026-11-02",
+    "recordedUtc": "2026-11-02T04:30:17.438645+00:00",
+    "species": "bringi",
+    "kind": "desktop",
+    "version": 3,
+    "title": "Bringi D e F insieme — azzurro chiaro e rosa pastello",
+    "userQuote": "rendilo più chiaro devi metterli nella stessa immagine",
+    "supersedesSeparateImagePresentation": true,
+    "provider": "builtin image_gen.imagegen",
+    "nativePath": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-9d70e3a3-86ca-47ab-8759-e4c468eb827e.png",
+    "file": "output/artwork/revisioni_scelte_2026-11-02/bringi_colorati/bringi_DF_insieme_azzurro_chiaro_v3.png",
+    "sha256": "157f341dfbe300c10f90265752032ed5e1dbca10c406a3199d59d257f794da6d",
+    "nativeShaIdentical": true,
+    "promptFile": "bringi_DF_insieme_azzurro_chiaro_v3.prompt.txt",
+    "inputImages": [
+      "bringi_D_azzurro_elettrico_v2.png",
+      "bringi_F_rosa_pastello_v2.png"
+    ],
+    "styleReference": "assets/oculum/home_art/amber_shore.png",
+    "approved": true,
+    "runtimeIntegrated": false,
+    "noGameplayEffectsInferred": true,
+    "audit": {
+      "width": 1586,
+      "height": 992,
+      "mode": "RGB",
+      "bytes": 2867279,
+      "pngIntegrityVerified": true,
+      "fullZlibDecodePassed": true,
+      "scanlineFiltersValid": true
+    },
+    "visualInspected": true,
+    "visualNotes": "One coherent scene containing both Bringi; D coat and tail visibly lighter azure, F pastel pink and rounded muzzle, blue moss retained, two separate bodies/tails, complete silhouettes and quiet right-hand sheet area.",
+    "canonicalCopy": "output/artwork/approvazioni_2026-11-02/bringi_desktop_canonico.png",
+    "confirmation": {
+      "userQuote": "Sì, canonico così",
+      "questionItemId": "[\"request_user_input_async\",\"call_7dc94e3e781740f9a746303d4e3d61e5\",0]",
+      "receipt": "docs/CONFERME_ARTWORK_2026-11-02.json"
+    }
+  },
+  "approvalScope": "latestCombinedProposalOnly"
+}

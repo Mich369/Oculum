@@ -13,6 +13,7 @@ final _canonicalPlanarVariants = <MonsterBookEntry>[
   ..._stormAndBanditEntries,
   ..._rebirthRageEvergreenEntries,
   ..._nonReturnUndeadEntries,
+  ..._iceCreatureEntries,
   _canonicalCreature(
     'nuvi',
     'Nuvì',
@@ -748,6 +749,7 @@ final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
   ..._stormAndBanditTechniques,
   ..._rebirthRageEvergreenTechniques,
   ..._nonReturnUndeadTechniques,
+  ..._iceCreatureTechniques,
   'nuvi_flight': _planarMove(
     'Volo naturale',
     'Passiva: vola sempre e riceve +3 Difesa e +3 Movimento. Nessun costo, nessun attacco.',

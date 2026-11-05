@@ -1,5 +1,20 @@
 # Registro cumulativo per i giocatori
 
+## Aggiornamento — 5 novembre
+
+- Ritirati l'Errante con la Sedia e l'Errante con l'Ombrello, con le rispettive varianti, dal catalogo e dai nuovi incontri. Le schede salvate conservano statistiche e capacità; il Mercato Nero non propone nuove pagine delle specie ritirate.
+- Le nuove schede iniziano con 3 punti di Fortuna magica. Nei tiri interattivi supportati, l'opzione «Proponi Fortuna dopo il tiro» permette di scegliere quanti punti spendere dopo l'anteprima. Ogni punto aggiunge +1 al totale e il naturale resta quello tirato.
+- La conferma Fortuna conserva il bersaglio autenticato di un controattacco gratuito anche se il suo token è in ritardo; richieste difensive scadute o sostituite durante il dialogo non consumano punti.
+- I mostri ordinari ricevono tre Skill e una Open da un pool di almeno nove Skill e due Open coerenti con specie, elemento e anatomia. I set fissi e le eccezioni già definite conservano le proprie regole. Il dossier mostra le Open disponibili.
+- Aggiunti sette mostri del Ghiaccio, compresi Ice Shield e Idrax Glaciale. Sistemati i bersagli degli Idrax secondo la loro anatomia di serpenti.
+- Collegati 12 desktop approvati. Le alternative più maestose o compatte sono raccolte in una galleria da votare separatamente.
+
+## Ritiro e direzione dark fantasy — richieste del 2 novembre
+
+- Ritirato il Ragno degli Obser Falsi e le sue varianti dal manuale/catalogo attivo e dai nuovi incontri. Le vecchie schede e le personalizzazioni restano leggibili.
+- Nuova direzione delle proposte: anime dark fantasy, mostri ostili più minacciosi, ombre profonde e pennellata opaca. Il desktop D della Tempesta Sorridente è stato scelto come canonico. Integrazione prevista in una patch successiva.
+- Passati 45 test locali pertinenti: 6 sul ritiro, 34 su catalogo/personalizzazioni/temi, 4 sul log e 1 sul Dungeon. Corretto anche il generatore indipendente dei corpi elementali, senza spostare gli indici degli altri mostri. Queste prove precedevano la consegna successiva e non costituivano da sole una verifica CI o della distribuzione.
+
 ## Consegna Android e verifiche macOS — 2 novembre
 
 - Generazione APK e AAB nello stesso ambiente, copie dopo entrambe le build e verifiche obbligatorie prima degli upload; firma Android stabile e compatibilità dei nomi conservate. Gli errori di firma restano bloccanti e ora producono una traccia più completa.

@@ -2197,6 +2197,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
             label: Text(t('Usa Fortuna magica', 'Use Magical Luck')),
           ),
+          magicalLuckRollToggle(),
         ],
       ),
     );

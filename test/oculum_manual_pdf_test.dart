@@ -21,6 +21,10 @@ void main() {
       expect(text, isNot(contains('Ã')));
       expect(text, isNot(contains('�')));
       expect(text, isNot(contains('â€')));
+      expect(text, isNot(contains('Errante con la Sedia')));
+      expect(text, isNot(contains('Chair Wanderer')));
+      expect(text, isNot(contains('Errante con Ombrello')));
+      expect(text, isNot(contains('Umbrella Wanderer')));
     }
 
     final bytes = await oculumBuildManualPdf(english: false);

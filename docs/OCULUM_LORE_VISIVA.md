@@ -1,5 +1,33 @@
 # Oculum — canone visivo confermato
 
+## Anatomie anomale — conferma del 5 novembre
+
+Alla domanda sulle famiglie con anatomie insolite, l'utente sceglie **«Conserva le anatomie anomale del catalogo»**. Nei prossimi artwork non normalizzare Aironi/Corvi/Rospi/Meduse sulla base dell'animale reale suggerito dal nome: conservare le parti e le descrizioni del catalogo, anche zampe anteriori e code ad anelli, quattro ali o zampe delle meduse dove esplicitamente presenti. Le nuove alternative A maestosa/B compatta restano proposte da scegliere; questa risposta non approva automaticamente i disegni né aggiunge nuove statistiche o poteri.
+
+## Dark fantasy per le prossime proposte — 2 novembre
+
+Richieste esplicite: «mostri soprattutto se ostili più mostruosi», «è comunque un dark fantasy nonostante le stranezze» e nuovo riferimento anime scuro allegato. Ombre profonde, silhouette espressive e minacciose, pennellata opaca, palette controllata. Rame fatato non obbliga a toni dolci; anatomie e immagini già canoniche restano valide. Il Ragno degli Obser Falsi è ritirato dal manuale e dalla coda artistica, con originali e schede legacy conservati. [Adattamento e limiti](DIREZIONE_DARK_FANTASY_2026-11-02.md).
+
+## Medusa di Vetro D turchese — canonica, 2 novembre
+
+Richiesta: campana panciuta D con turchese scuro; conferma esplicita della revisione mostrata: **yes**. Canonico il file D v2, copia nativa ImageGen byte-identica. Vetro trasparente, anello e anatomia conservati; nessun nuovo potere dedotto. [Ricevuta, prompt e SHA](CONFERMA_MEDUSA_D_TURCHESE_2026-11-02.json). PNG verificato per CRC, zlib e filtri; integrazione e pacchetti separati, senza chiusura al 100%.
+
+## Cinghiale interamente di fango e nucleo — conferme del 2 novembre
+
+Corpo interamente di fango, al posto del precedente pelo incrostato. Scelta grafica: B, immagine allegata copiata esattamente. Nuovo punto debole: nucleo nascosto, esposto da un grave colpo mirato al ventre; Vita del nucleo un terzo della Vita attuale all'esposizione, Danni proporzionali e morte del Cinghiale quando il nucleo è distrutto. Non richiede di rompere una corazza del torace. Soglie precise da bilanciare e lasciare modificabili, senza nuovi poteri o immunità dedotti. [Conferme, adattamento e stato](CINGHIALE_FANGO_CORPO_E_NUCLEO_2026-11-02.md). Implementazione e distribuzione nella prossima patch: la build 2765a5df non viene modificata da questi documenti. Nessuna chiusura al 100% implicita.
+
+## Bringi — due varianti cromatiche, richiesta del 2 novembre
+
+La correzione più recente sostituisce C con F. Ultima richiesta: «rendilo più chiaro devi metterli nella stessa immagine». Proposta corrente v3: entrambi nella stessa scena, D azzurro più chiaro e F rosa pastello, musino tondo e muschio azzurro. Copia nativa/SHA/PNG verificati; composizione unica v3 confermata con «Sì, canonico così». Canonica soltanto la composizione con entrambi; integrazione separata. Originali e due immagini separate conservati, nessun nuovo potere dedotto. [Richiesta, adattamento e prove](BRINGI_VARIANTI_COLORE_2026-11-02.md). Non modifica la consegna 2765a5df né chiude righe al 100%.
+
+## Nuove scelte desktop — 2 novembre
+
+Le risposte esplicite sono registrate con file e SHA in [SCELTE_ARTWORK_2026-11-02.md](SCELTE_ARTWORK_2026-11-02.md) e [CONFERME_ARTWORK_2026-11-02.json](CONFERME_ARTWORK_2026-11-02.json). La selezione rende canonico soltanto il desktop indicato. Originali e alternative conservati; integrazione, anatomie, derivati e consegna hanno verifiche separate. Nessuna chiusura al 100% o nuovo effetto di gioco dedotto.
+
+## Reliquie e telefono — riconferma esplicita del 2 novembre
+
+L'utente conferma **«accetto tutte le reliquie e versioni telefono»** per i derivati preparati. Riconfermati i 54 file esatti dei 27 set correnti; conferme precedenti conservate. Le scelte degli sfondi desktop restano separate: le 108 alternative più recenti non sono approvate da questa risposta. Non promuovere revisioni scartate o dichiarare già realizzate immagini future. Reliquie decorative, senza nuovi poteri o drop; nessuna chiusura implicita al 100% del lavoro tecnico. [Ricevuta e SHA](CONFERMA_RELIQUIE_TELEFONO_2026-11-02.json).
+
 ## Parti colpibili dei set approvati — 2 novembre
 
 La revisione delle 23 immagini non aggiunge poteri: completa gli arti e separa i bersagli già descritti nel catalogo. Il Diavolo Obliterato ha il terzo occhio sulla fronte e due corna, oltre ai due occhi normali; l’elmo di DeadlySins non espone occhi. Brumìlio ha due ali e due zampe; Rascalume e Mìrula quattro zampe; Vèndulo quattro zampe; il Colosso di Prismarite due braccia sulle nocche e due gambe di pietra. Le 108 proposte successive per diciotto creature restano da votare, separate dal canone e dai 69 PNG collegati. Nessuna misura o statistica dedotta dalla scala nell’illustrazione.

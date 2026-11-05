@@ -148,6 +148,21 @@ OculumCreatureColor oculumRollMonsterColor(
   return colors.last;
 }
 
+const _november5ApprovedDesktopIds = {
+  'minotauro_base',
+  'minotauro_base_variante_errante',
+  'mimic_base',
+  'mimic_base_variante_corazzata',
+  'troll_base_variante_veterana',
+  'costrutto_dei_tre_crani',
+  'scheletro_delle_lame_di_brina',
+  'cacciatore_della_cresta_glaciale',
+  'arciere_del_gelo_cavo',
+  'gigante_della_clava_polarnotte',
+  'ice_shield',
+  'idrax',
+};
+
 @immutable
 class OculumMonsterTheme {
   const OculumMonsterTheme(this.monster, this.color);
@@ -161,6 +176,7 @@ class OculumMonsterTheme {
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
   bool get preserveIllustrationFraming => const {
+    ..._november5ApprovedDesktopIds,
     'cavaliere_non_ritorno',
     'deadly_sins',
     'pupazzo_artigliato',
@@ -319,6 +335,8 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    final id when _november5ApprovedDesktopIds.contains(id) =>
+      'assets/oculum/home_art/theme_${id}_canon_20261105.png',
     'cavaliere_non_ritorno' =>
       'assets/oculum/home_art/theme_cavaliere_non_ritorno_canon_20261101.png',
     'deadly_sins' =>

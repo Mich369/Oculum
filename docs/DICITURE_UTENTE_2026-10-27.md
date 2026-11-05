@@ -1,5 +1,36 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+## 5 novembre — originali su G e anatomie insolite
+
+Alla scelta dell'Errante con l'Ombrello: **«Ritiralo dal manuale»**. Ritiro anche della variante Veterana, conservando le schede storiche; gli altri Erranti non sono ritirati per deduzione.
+
+Alla scelta fra le due alternative dell'Errante con la Sedia, l'utente risponde **«cancella dal manuale»**. È un ritiro della specie e della variante, non un'approvazione delle immagini né una richiesta di cancellare schede personali.
+
+Conferma «sì» a creare `G:\Oculum-Artwork` per i nuovi originali ImageGen, lasciando galleria e anteprime nel progetto. Alla domanda sulle anatomie contraddittorie delle famiglie Aironi/Corvi/Rospi/Meduse: **«Conserva le anatomie anomale del catalogo»**. Il trasferimento integrale di `C:\Oculum App` è poi rimandato per spazio insufficiente su G: **«Solo pulizia sicura per ora, trasferimento integrale dopo»** e **«dopo riprendi coi mostri nel percorso che avevi detto»**. Il progetto resta su C, i nuovi originali su G.
+
+## Nuove diciture del 2 novembre — dark fantasy e Ragno
+
+«Ragno degli Obser Falsi: eliminalo dal manuale»; «procedi col creare immagini ma mostri soprattutto se ostili più mostruosi»; «è comunque un dark fantasy nonostante le stranezze»; «qualcosa di più simile a questo come stile», con allegato `codex-clipboard-191653d3-c889-41c0-989d-c6e42fd34217.png`. [Applicazione distinta da nuove regole di combattimento](DIREZIONE_DARK_FANTASY_2026-11-02.md).
+
+## Medusa di Vetro D turchese — canonica, 2 novembre
+
+Richiesta: campana panciuta D con turchese scuro; conferma esplicita della revisione mostrata: **yes**. Canonico il file D v2, copia nativa ImageGen byte-identica. Vetro trasparente, anello e anatomia conservati; nessun nuovo potere dedotto. [Ricevuta, prompt e SHA](CONFERMA_MEDUSA_D_TURCHESE_2026-11-02.json). PNG verificato per CRC, zlib e filtri; integrazione e pacchetti separati, senza chiusura al 100%.
+
+## Cinghiale interamente di fango e nucleo — conferme del 2 novembre
+
+Corpo interamente di fango, al posto del precedente pelo incrostato. Scelta grafica: B, immagine allegata copiata esattamente. Nuovo punto debole: nucleo nascosto, esposto da un grave colpo mirato al ventre; Vita del nucleo un terzo della Vita attuale all'esposizione, Danni proporzionali e morte del Cinghiale quando il nucleo è distrutto. Non richiede di rompere una corazza del torace. Soglie precise da bilanciare e lasciare modificabili, senza nuovi poteri o immunità dedotti. [Conferme, adattamento e stato](CINGHIALE_FANGO_CORPO_E_NUCLEO_2026-11-02.md). Implementazione e distribuzione nella prossima patch: la build 2765a5df non viene modificata da questi documenti. Nessuna chiusura al 100% implicita.
+
+## Bringi — due varianti cromatiche, richiesta del 2 novembre
+
+La correzione più recente sostituisce C con F. Ultima richiesta: «rendilo più chiaro devi metterli nella stessa immagine». Proposta corrente v3: entrambi nella stessa scena, D azzurro più chiaro e F rosa pastello, musino tondo e muschio azzurro. Copia nativa/SHA/PNG verificati; composizione unica v3 confermata con «Sì, canonico così». Canonica soltanto la composizione con entrambi; integrazione separata. Originali e due immagini separate conservati, nessun nuovo potere dedotto. [Richiesta, adattamento e prove](BRINGI_VARIANTI_COLORE_2026-11-02.md). Non modifica la consegna 2765a5df né chiude righe al 100%.
+
+## Nuove scelte desktop — 2 novembre
+
+Le risposte esplicite sono registrate con file e SHA in [SCELTE_ARTWORK_2026-11-02.md](SCELTE_ARTWORK_2026-11-02.md) e [CONFERME_ARTWORK_2026-11-02.json](CONFERME_ARTWORK_2026-11-02.json). La selezione rende canonico soltanto il desktop indicato. Originali e alternative conservati; integrazione, anatomie, derivati e consegna hanno verifiche separate. Nessuna chiusura al 100% o nuovo effetto di gioco dedotto.
+
+## 2 novembre — approvazione globale dei derivati preparati
+
+Dicitura originale: **«accetto tutte le reliquie e versioni telefono»**. Approvazione visiva registrata, con riconferma dei 54 file correnti (27 telefoni e 27 reliquie) e mantenimento delle conferme precedenti. Nessun voto desktop dedotto: 108 proposte per 18 creature restano da scegliere. Non è un'attestazione di generazione di file futuri, nuovi automatismi o chiusura al 100% delle righe della patch. [Ricevuta esatta](CONFERMA_RELIQUIE_TELEFONO_2026-11-02.json).
 
 ## Tre revisioni approvate — 1 novembre
 

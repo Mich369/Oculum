@@ -135,7 +135,25 @@ void main() {
     'black market page selection offers up to three distinct nearby wanderers or aberrations',
     () {
       final candidates = [
-        monsterById('errante_con_la_sedia')!,
+        const MonsterBookEntry(
+          id: 'test_market_wanderer',
+          nameIt: 'Errante di prova',
+          nameEn: 'Test Wanderer',
+          descIt: 'Candidato sintetico del mercato.',
+          descEn: 'Synthetic market candidate.',
+          elementId: 'fisico',
+          spriteAssetPath: '',
+          isMiniBoss: false,
+          isBoss: false,
+          isNullFateless: false,
+          stats: {
+            'level': 5,
+            'resilienza': 8,
+            'volonta': 7,
+            'materia': 6,
+            'oculum': 5,
+          },
+        ),
         monsterById('errante_bocca_cucita')!,
         monsterById('errante_specchio')!,
         monsterById('goblin_killer')!,
@@ -174,13 +192,31 @@ void main() {
           },
           alreadyKnownWeakPoints: const {
             'errante_specchio',
-            'errante_con_la_sedia',
+            'test_market_wanderer',
           },
         ).map((entry) => entry.id),
         isNot(contains('errante_specchio')),
       );
     },
   );
+
+  test('retired legacy entries cannot become new black market pages', () {
+    final legacy = monsterBookEntryById('errante_con_la_sedia')!;
+    expect(oculumBlackMarketMonsterBookPageEligible(legacy), isFalse);
+    expect(
+      oculumRankBlackMarketMonsterBookPages(
+        entries: [legacy, monsterById('errante_specchio')!],
+        playerLevel: 8,
+        playerStats: const {
+          'resilienza': 7,
+          'volonta': 8,
+          'materia': 10,
+          'oculum': 8,
+        },
+      ).map((entry) => entry.id),
+      isNot(contains(legacy.id)),
+    );
+  });
 
   test('default monsters are visual descriptions without imposed images', () {
     for (final entry in defaultMonsterBookEntries) {
@@ -202,11 +238,23 @@ void main() {
       expect(entry.formTags, contains('Creatura Minore'), reason: id);
       expect(entry.stats['level'], 0, reason: id);
       expect(entry.stats['resilienza'], 1, reason: id);
-      // The authored kit remains empty; the new player-choice pool adds twelve
-      // techniques without raising the creature's level-zero stats.
-      expect(entry.skillIds.where((s) => !s.startsWith(oculumMonsterProgressionPrefix)), isEmpty, reason: id);
-      expect(monsterBookUsableSkillIds(entry), hasLength(12), reason: id);
-      expect(oculumMonsterBookArt(entry).skills, hasLength(12), reason: id);
+      // Authored no-Art creatures are exceptions to the ordinary random pool.
+      expect(
+        entry.skillIds.where(
+          (s) => !s.startsWith(oculumMonsterProgressionPrefix),
+        ),
+        isEmpty,
+        reason: id,
+      );
+      expect(monsterBookUsableSkillIds(entry), isEmpty, reason: id);
+      expect(oculumMonsterBookArt(entry).skills, isEmpty, reason: id);
+      // Already saved growth techniques still resolve without assigning them
+      // to newly generated no-Art creatures.
+      expect(
+        monsterBookSkillForms('$oculumMonsterProgressionPrefix${id}__0'),
+        isNotEmpty,
+        reason: id,
+      );
       expect(entry.imageBase64, isEmpty, reason: id);
       // Oculum derives HP from Resilienza x 10, so these start at 10 HP.
       expect((entry.stats['resilienza'] as int) * 10, lessThan(16), reason: id);
@@ -441,7 +489,13 @@ void main() {
       expect(entry.stats['hp'], inInclusiveRange(5, 10), reason: id);
       expect(entry.stats['atk'], inInclusiveRange(4, 6), reason: id);
       expect(entry.stats['def'], inInclusiveRange(3, 4), reason: id);
-      expect(monsterBookUsableSkillIds(entry).where((s) => !s.startsWith(oculumMonsterProgressionPrefix)), hasLength(3), reason: id);
+      expect(
+        monsterBookUsableSkillIds(
+          entry,
+        ).where((s) => !s.startsWith(oculumMonsterProgressionPrefix)),
+        hasLength(3),
+        reason: id,
+      );
       expect(monsterBookUsableSkillIds(entry), hasLength(15), reason: id);
       expect(oculumMonsterBookArt(entry).skills, hasLength(15), reason: id);
     }
@@ -451,8 +505,14 @@ void main() {
     'Book keeps minor creatures without Art and legacy techniques usable',
     () {
       for (final entry in defaultMonsterBookEntries) {
-        if (entry.formTags.contains('Creatura Minore') &&
-            entry.skillIds.isEmpty) {
+        final explicitlyWithoutSkills = const {
+          'demonietto_bruciante',
+          'demonietto_del_gelo',
+          'coboldo_di_brina',
+        }.contains(entry.id.split('_variante_').first);
+        if (explicitlyWithoutSkills ||
+            (entry.formTags.contains('Creatura Minore') &&
+                entry.skillIds.isEmpty)) {
           expect(monsterBookUsableSkillIds(entry), isEmpty, reason: entry.id);
           expect(oculumMonsterBookArt(entry).skills, isEmpty, reason: entry.id);
         } else {

@@ -13,6 +13,9 @@ Future<(dynamic, OculumPerformanceProbe)> _mount(
   String species = 'gigante_sabbia',
 }) async {
   final (state, p) = await fixtures.mountFight(tester);
+  // Sand mechanics use deterministic layer assertions. Magical Luck's new
+  // initial balance and its random dodge are exercised in the Luck tests.
+  state.fortuna = 0;
   state.schedePersonaggio[state.schedaCorrente]['monsterBookSourceId'] =
       species;
   // Isolate sand survival from the independent random awakening at half HP.

@@ -161,21 +161,27 @@ extension _OculumMonsterDossier on _OculumHomePageState {
         monsterReadingHeading('Abilità', Icons.auto_awesome_outlined),
         for (final indexed in art.skills.indexed)
           monsterReadingSkill(monster, indexed.$2, indexed.$1),
-        if (art.openName.trim().isNotEmpty) ...[
-          monsterReadingHeading('Open · ${art.openName}', Icons.flare_outlined),
-          if (art.openDescription.trim().isNotEmpty)
-            SelectableText(oculumMonsterReadableProse(art.openDescription)),
+        for (final open in oculumMonsterBookOpenPool(
+          monster,
+          primary: art,
+        )) ...[
+          monsterReadingHeading(
+            'Open · ${open.openName}',
+            Icons.flare_outlined,
+          ),
+          if (open.openDescription.trim().isNotEmpty)
+            SelectableText(oculumMonsterReadableProse(open.openDescription)),
           monsterReadingOpenPart(
             'Buff Open',
-            art.openBuff,
-            art.openBuffEffects,
-            art.openBuffCooldown,
+            open.openBuff,
+            open.openBuffEffects,
+            open.openBuffCooldown,
           ),
           monsterReadingOpenPart(
             'Skill Open',
-            art.openSkill,
-            art.openSkillEffects,
-            art.openSkillCooldown,
+            open.openSkill,
+            open.openSkillEffects,
+            open.openSkillCooldown,
           ),
         ],
         monsterReadingHeading('Drop e ricompense', Icons.inventory_2_outlined),

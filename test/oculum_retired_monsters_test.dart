@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_registry.dart';
+import 'package:oculum/main.dart' show oculumCelestialAllegiance;
 
 void main() {
   test(
@@ -15,6 +17,120 @@ void main() {
     },
   );
   tearDown(resetMonsterBookEntries);
+
+  test(
+    'retired saved sources retain registry stats and celestial identity',
+    () {
+      final personal = monsterBookEntryById('errante_con_la_sedia')!.copyWith(
+        stats: {'level': 9, 'resilienza': 41},
+        skillIds: ['saved_chair_skill'],
+        encounterRules: {'celestialIdentity': 'lunare'},
+      );
+      configureMonsterBookEntries(customEntries: [personal]);
+      expect(monsterById(personal.id), isNull);
+      expect(oculumSavedMonsterBookEntryById(personal.id)!.skillIds, [
+        'saved_chair_skill',
+      ]);
+      expect(getStatsForMonster(personal.id), personal.stats);
+      expect(
+        oculumCelestialAllegiance({'monsterBookSourceId': personal.id}),
+        'lunare',
+      );
+      expect(
+        monsterBookEntries.any((entry) => entry.id == personal.id),
+        isFalse,
+      );
+      configureMonsterBookEntries(removedIds: [personal.id]);
+      expect(oculumSavedMonsterBookEntryById(personal.id), isNull);
+    },
+  );
+
+  test(
+    'Chair Wanderer retires without shifting other variants or losing saved kits',
+    () {
+      const id = 'errante_con_la_sedia';
+      for (final retiredId in [id, '${id}_variante_corazzata']) {
+        expect(oculumIsRetiredMonsterId(retiredId), isTrue);
+        expect(
+          defaultMonsterBookEntries.any((e) => e.id == retiredId),
+          isFalse,
+        );
+        final saved = monsterBookEntryById(retiredId)!;
+        final restored = MonsterBookEntry.fromJson(saved.toJson());
+        expect(restored.stats, saved.stats);
+        expect(restored.skillIds, saved.skillIds);
+      }
+      final personal = monsterBookEntryById(id)!.copyWith(
+        id: '${id}_variante_personale',
+        stats: {'level': 9, 'resilienza': 41},
+        skillIds: ['saved_chair_skill'],
+      );
+      configureMonsterBookEntries(customEntries: [personal]);
+      expect(monsterBookEntryById(personal.id)!.stats['resilienza'], 41);
+      expect(monsterBookEntryById(personal.id)!.skillIds, [
+        'saved_chair_skill',
+      ]);
+      expect(monsterBookEntries.any((e) => e.id.startsWith(id)), isFalse);
+      expect(monsterBookEntries.any((e) => e.id == 'fire_shield'), isTrue);
+      expect(
+        monsterBookEntries.any(
+          (e) => e.id == 'specchio_mangiavoce_variante_veterana',
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test('Umbrella Wanderer and its Veteran remain saved-only sources', () {
+    for (final id in [
+      'errante_con_ombrello',
+      'errante_con_ombrello_variante_veterana',
+    ]) {
+      expect(oculumIsRetiredMonsterId(id), isTrue);
+      expect(monsterById(id), isNull);
+      final source = oculumSavedMonsterBookEntryById(id)!;
+      final restored = MonsterBookEntry.fromJson(source.toJson());
+      expect(restored.stats, source.stats);
+      expect(restored.skillIds, source.skillIds);
+      expect(monsterBookEntries.any((entry) => entry.id == id), isFalse);
+    }
+  });
+
+  test(
+    'False Obser Spider is retired while saved sheets remain resolvable',
+    () {
+      const id = 'ragno_obser_falsi';
+      expect(oculumIsRetiredMonsterId(id), isTrue);
+      expect(oculumIsRetiredMonsterId(' ${id}_variante_personale '), isTrue);
+      expect(oculumIsRetiredMonsterId('${id}_personale'), isFalse);
+      expect(
+        defaultMonsterBookEntries.any((e) => e.id.startsWith(id)),
+        isFalse,
+      );
+      expect(monsterBookEntries.any((e) => e.id.startsWith(id)), isFalse);
+
+      final legacy = monsterBookEntryById(id)!;
+      final restored = MonsterBookEntry.fromJson(legacy.toJson());
+      expect(restored.skillIds, legacy.skillIds);
+      expect(restored.stats, legacy.stats);
+
+      final custom = legacy.copyWith(
+        id: '${id}_variante_personale',
+        stats: {'level': 9, 'resilienza': 41},
+        skillIds: ['saved_spider_skill'],
+      );
+      configureMonsterBookEntries(customEntries: [custom]);
+      expect(monsterBookEntryById(custom.id)!.stats['resilienza'], 41);
+      expect(monsterBookEntryById(custom.id)!.skillIds, ['saved_spider_skill']);
+      expect(monsterBookEntries.any((e) => e.id.startsWith(id)), isFalse);
+
+      configureMonsterBookEntries(removedIds: [id]);
+      expect(monsterBookEntryById(id), isNull);
+      resetMonsterBookEntries();
+      expect(monsterBookEntryById(id), isNotNull);
+      expect(monsterBookEntries.any((e) => e.id.startsWith(id)), isFalse);
+    },
+  );
 
   test(
     'rejected Thread Heart and its variants leave the active manual catalogue',

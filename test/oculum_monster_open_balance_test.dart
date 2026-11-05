@@ -10,6 +10,29 @@ void main() {
         (m) => !m.isNpc && !m.id.startsWith('pawn_guardiano'),
       )) {
         final art = oculumMonsterBookArt(monster);
+        final baseId = monster.id.split('_variante_').first;
+        if (baseId == 'collezionista_di_elementi') {
+          expect(art.openName, isEmpty, reason: monster.id);
+          expect(art.skills, hasLength(1), reason: monster.id);
+          continue;
+        }
+        if (const {
+          'demonietto_bruciante',
+          'demonietto_del_gelo',
+          'coboldo_di_brina',
+          'koboldo_delle_braci',
+          'fuoco_fatuo_affamato',
+          'strige_del_fienile',
+          'larva_del_grimorio',
+        }.contains(baseId)) {
+          expect(art.openName, isEmpty, reason: monster.id);
+          expect(
+            oculumMonsterBookImportArt(monster),
+            isNull,
+            reason: monster.id,
+          );
+          continue;
+        }
         if (monster.id == 'nuvi' ||
             monster.id == 'thunder_bot' ||
             monster.id.contains('meccanio') ||
