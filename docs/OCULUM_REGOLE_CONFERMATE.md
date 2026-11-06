@@ -1,5 +1,15 @@
 # Oculum — registro delle regole confermate
 
+## Assassino NPC nemico, Armaiolo e ritiri mirati — 6 novembre
+
+Richiesta: **«Duellante Senza Palpebre a e chiamalo "assassino" affidandogli il ruolo npc quando lo generi»**; precisazione successiva esplicita: **«ovviamente npc nemico»**. La base diventa **Assassino**, vero NPC nemico nelle nuove schede, con ID legacy `duellante_senza_palpebre`. Conserva statistiche, profilo di crescita, capacità, costi, recuperi e inventario precedenti; non viene resa alleata dal solo flag NPC e non riceve una nuova moralità. Le categorie e le personalizzazioni già salvate non sono migrate o sovrascritte.
+
+**«Duellante Senza Palpebre Errante elimina»** ritira esattamente `duellante_senza_palpebre_variante_errante`: non ritira la base né altre varianti personali. **«Sagrestano Cavo elimina»** ritira `weak_horror_sagrestano` e la sua famiglia di varianti secondo la politica esistente. Esclusione da catalogo/manuale attivo, nuovi incontri e nuove pagine del Mercato Nero; definizioni, lookup legacy, Skill e salvataggi personalizzati conservati.
+
+**«Armaiolo della Fila Lunga c rinominato Armaiolo della spada e scudo»** aggiorna il nome del catalogo e delle varianti ereditate. La voce base e la Rituale restano distinte, con scelte artistiche separate; nessun cambio di statistiche o equipaggiamento dedotto dal nome. Nomi e valori personali salvati restano prioritari. Implementazione locale e verifiche della nuova consegna sono passi separati dalle scelte artistiche.
+
+**«Scarabeo del Sigillo Ardente a molto più grosso»**, precisato in **«Circa 2 metri»**, fissa la sua dimensione fisica descrittiva a circa 2 metri. Non specifica un asse di misura e non assegna bonus automatici a statistiche, Danni, Difesa, Scudi, capacità o drop.
+
 ## Gigante Massiccio e quattro ritiri — 6 novembre
 
 Richiesta esplicita: **«fai il secondo gigante come variante segnato come più grosso»**, seguita da **«Bilancia tu statistiche più robuste»**. Il Gigante Comune mantiene la scelta artistica B; il secondo disegno, C, appartiene al nuovo **Gigante Massiccio**, ID `gigante_comune_variante_massiccia`. È una variante distinta, con statistiche più robuste bilanciate nell’implementazione e modificabili: non sostituisce il Comune né aggiorna le schede personali già salvate. Conserva anatomia, punto debole e regole degli attacchi della famiglia; l’arte non attribuisce resistenze o poteri aggiuntivi.

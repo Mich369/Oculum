@@ -124,6 +124,20 @@ class MonsterBookEntry {
     return 'Mostro';
   }
 
+  String get generationSide {
+    final saved = '${encounterRules['generationSide'] ?? ''}'
+        .trim()
+        .toLowerCase();
+    if (const {'enemy', 'ally', 'neutral'}.contains(saved)) return saved;
+    return isNpc ? 'ally' : 'enemy';
+  }
+
+  // Changing an entity's role or display name need not rebalance its build.
+  String get creationStatType =>
+      '${encounterRules['creationStatType'] ?? presetType}';
+  String get creationProfileName =>
+      '${encounterRules['creationProfileName'] ?? '$nameIt $nameEn'}';
+
   MonsterBookEntry copyWith({
     String? id,
     List<String>? planeIds,
@@ -3761,8 +3775,9 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Ciclope del Fato',
     nameEn: 'Fate Cyclops',
     descIt:
-        'Umanoide neutrale, Senza Grado/IV/IX. Attacco di Fortuna può dare +200/+300/+600% danni ma lo sbilancia se il dado non raggiunge la soglia. Difesa del Fato e Raggio Oculare lo rendono un duellante che punisce Oculum. Non è ostile senza motivo.',
-    descEn: 'Neutral fate cyclops.',
+        'Umanoide neutrale, Senza Grado/IV/IX. Ha un solo occhio con iride violetta e pupilla verticale, due orecchie appuntite, due braccia robuste e due gambe corte. La testa tondeggiante si raccorda al torso panciuto; una breve cresta di spine ossee scure corre sulla sommità del capo, senza capelli. Attacco di Fortuna può dare +200/+300/+600% danni ma lo sbilancia se il dado non raggiunge la soglia. Difesa del Fato e Raggio Oculare lo rendono un duellante che punisce Oculum. Non è ostile senza motivo.',
+    descEn:
+        'Neutral fate cyclops with one violet iris and vertical pupil, two pointed ears, two robust arms and two short legs. Its rounded head joins a large-bellied torso, with a short dark bony spine crest rather than hair. Not hostile without reason.',
     elementId: 'oculum',
     spriteAssetPath: '',
     isMiniBoss: false,
@@ -4517,8 +4532,14 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
   ),
   MonsterBookEntry(
     id: 'duellante_senza_palpebre',
-    nameIt: 'Duellante Senza Palpebre',
-    nameEn: 'Eyelidless Duelist',
+    nameIt: 'Assassino',
+    nameEn: 'Assassin',
+    encounterRules: {
+      'generationSide': 'enemy',
+      'creationStatType': 'Mostro Mini Boss',
+      'creationProfileName': 'Duellante Senza Palpebre Eyelidless Duelist',
+      'loadoutPolicy': 'sample_three',
+    },
     descIt:
         'Umanoide intermedio, livello 24. Non batte mai gli occhi e tiene due lame corte troppo lucide. Ruolo: sceglie un bersaglio isolato, lo legge e lo costringe a consumare reazioni. Inventario: coppia di lame lucide (+34 danni), giubba di cuoio nero (+7 Difesa).',
     descEn: 'Intermediate eyelidless humanoid duelist.',
@@ -4526,6 +4547,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     spriteAssetPath: '',
     isMiniBoss: true,
     isBoss: false,
+    isNpc: true,
     isNullFateless: false,
     stats: {
       'level': 24,
@@ -4544,7 +4566,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
         'nome': 'Coppia di lame lucide',
         'peso': 1.7,
         'quantita': 1,
-        'note': 'Armi del Duellante Senza Palpebre.',
+        'note': 'Armi dell’Assassino.',
         'arma': true,
         'equipaggiata': true,
         'bonusDanno': 34,
@@ -4554,7 +4576,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
         'nome': 'Giubba di cuoio nero',
         'peso': 2.3,
         'quantita': 1,
-        'note': 'Armatura del duellante.',
+        'note': 'Armatura dell’Assassino.',
         'protegge': true,
         'equipaggiata': true,
         'bonusDifesa': 7,
@@ -4665,8 +4687,8 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
   ),
   MonsterBookEntry(
     id: 'armaiolo_della_fila_lunga',
-    nameIt: 'Armaiolo della Fila Lunga',
-    nameEn: 'Long Rank Armorer',
+    nameIt: 'Armaiolo della spada e scudo',
+    nameEn: 'Sword and Shield Armorer',
     descIt:
         'Boss umanoide della stessa stirpe dei raccoglitori e delle guardie, livello 82. La sua pelle sembra una sala d armi: ganci, foderi e piastre si aprono lungo braccia e schiena. Comanda la Fila Lunga scegliendo stile a ogni turno: picca e lancia per tenere distanza, spada e scudo per il duello, alabarda per il controllo, balestra per punire da lontano, enormi guanti d arme per spezzare Difesa e Scudi. Inventario completo: ogni arma è reale e trasferibile quando lo crei come scheda.',
     descEn:
@@ -5490,16 +5512,19 @@ List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
 
 // Keep retired definitions for existing sheets, without offering them in the
 // manual, new encounters, theme queues or the default Monster Book catalogue.
-bool oculumIsRetiredMonsterId(String id) => const {
-  'cuore_filo',
-  'ragno_obser_falsi',
-  'ciclo_ragno_fili_giurati',
-  'ciclo_rondine_respiro_lieve',
-  'ciclo_viandante_ricordi_spenti',
-  'ciclo_lepre_fiato_vetro',
-  'errante_con_la_sedia',
-  'errante_con_ombrello',
-}.contains(id.trim().split('_variante_').first);
+bool oculumIsRetiredMonsterId(String id) =>
+    id.trim() == 'duellante_senza_palpebre_variante_errante' ||
+    const {
+      'cuore_filo',
+      'ragno_obser_falsi',
+      'ciclo_ragno_fili_giurati',
+      'ciclo_rondine_respiro_lieve',
+      'ciclo_viandante_ricordi_spenti',
+      'ciclo_lepre_fiato_vetro',
+      'errante_con_la_sedia',
+      'errante_con_ombrello',
+      'weak_horror_sagrestano',
+    }.contains(id.trim().split('_variante_').first);
 
 final List<MonsterBookEntry>
 _builtinMonsterBookEntriesIncludingLegacy = List.unmodifiable(
@@ -5654,6 +5679,7 @@ List<MonsterBookEntry> _withMonsterVariants(
 }
 
 MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
+  if (_explicitlyRemovedMonsterBookIds.contains(id.trim())) return null;
   final marker = id.indexOf('_variante_');
   if (marker <= 0) return null;
   final baseId = id.substring(0, marker);
@@ -5670,13 +5696,9 @@ MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
       !baseId.startsWith('pack_leader_')) {
     return null;
   }
-  MonsterBookEntry? base;
-  for (final entry in defaultMonsterBookEntries) {
-    if (entry.id == baseId) {
-      base = entry;
-      break;
-    }
-  }
+  // Saved-only families still need their historical generated variants, while
+  // explicit removals and saved custom definitions retain lookup precedence.
+  final base = monsterBookEntryById(baseId);
   if (base == null) return null;
   const roles = <String, String>{
     'errante': 'si muove tra le linee e punisce chi resta isolato',
@@ -5724,6 +5746,7 @@ MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
 }
 
 List<MonsterBookEntry> _activeMonsterBookEntries = defaultMonsterBookEntries;
+Set<String> _explicitlyRemovedMonsterBookIds = const {};
 Map<String, MonsterBookEntry> _monsterBookEntriesById =
     <String, MonsterBookEntry>{
       ..._retiredBuiltinMonsterEntries,
@@ -5748,6 +5771,7 @@ void configureMonsterBookEntries({
       .map((id) => id.trim())
       .where((id) => id.isNotEmpty)
       .toSet();
+  _explicitlyRemovedMonsterBookIds = Set<String>.unmodifiable(hidden);
   final overrides = <String, MonsterBookEntry>{
     for (final entry in customEntries)
       if (entry.id.trim().isNotEmpty) entry.id.trim(): entry,
@@ -5780,6 +5804,7 @@ void configureMonsterBookEntries({
 }
 
 void resetMonsterBookEntries() {
+  _explicitlyRemovedMonsterBookIds = const {};
   _activeMonsterBookEntries = defaultMonsterBookEntries;
   _monsterBookEntriesById = <String, MonsterBookEntry>{
     ..._retiredBuiltinMonsterEntries,
@@ -6127,6 +6152,7 @@ List<String> _dropIdsForGeneratedMonster(String id, String element) {
 }
 
 MonsterBookEntry? monsterById(String id) {
+  if (oculumIsRetiredMonsterId(id)) return null;
   try {
     return monsterBookEntries.firstWhere((e) => e.id == id);
   } catch (_) {

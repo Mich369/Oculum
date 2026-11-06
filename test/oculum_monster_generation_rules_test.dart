@@ -135,7 +135,7 @@ void main() {
             expect(
               stats.values.fold<int>(0, (a, b) => a + b),
               base.values.fold<int>(0, (a, b) => a + b) +
-                  oculumGeneratedMonsterBudget(monster.presetType, level),
+                  oculumGeneratedMonsterBudget(monster.creationStatType, level),
             );
           }
         }

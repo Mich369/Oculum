@@ -476,7 +476,8 @@ final _builtinMonsterLoadoutEntries = defaultMonsterBookEntries.toSet();
 bool _hasFixedMonsterLoadout(MonsterBookEntry monster) {
   final id = monster.id.split('_variante_').first;
   return !_builtinMonsterLoadoutEntries.contains(monster) ||
-      monster.isNpc ||
+      (monster.isNpc &&
+          monster.encounterRules['loadoutPolicy'] != 'sample_three') ||
       oculumMonsterHasFixedProgressionSkills(monster) ||
       id.startsWith('pawn_guardiano') ||
       id.startsWith('uomo_maschera') ||
@@ -2347,12 +2348,27 @@ Map<String, int> oculumMonsterCreationStats(
     'materia': max(0, base['materia'] ?? max(1, (base['def'] ?? 1) ~/ 3)),
     'oculum': max(0, base['oculum'] ?? 0),
   };
+  var creationRole =
+      '${monster.creationProfileName} ${monster.creationStatType} ${monster.elementId} ${monster.descIt} ${monster.descEn} ${monster.formTags.join(' ')} ${monster.skillIds.join(' ')}';
+  if (monster.encounterRules.containsKey('creationProfileName')) {
+    final displayNames =
+        {
+            monster.nameIt,
+            monster.nameEn,
+          }.where((name) => name.trim().isNotEmpty).toList()
+          ..sort((a, b) => b.length.compareTo(a.length));
+    for (final name in displayNames) {
+      creationRole = creationRole.replaceAll(
+        RegExp(RegExp.escape(name), caseSensitive: false),
+        monster.creationProfileName,
+      );
+    }
+  }
   final growth = oculumDistributeMonsterStats(
-    oculumGeneratedMonsterBudget(monster.presetType, level),
+    oculumGeneratedMonsterBudget(monster.creationStatType, level),
     hasSkills: monsterBookUsableSkillIds(monster).isNotEmpty,
     hasOculumArt: oculumMonsterHasOculumArt(monster),
-    role:
-        '${monster.nameIt} ${monster.nameEn} ${monster.presetType} ${monster.elementId} ${monster.descIt} ${monster.descEn} ${monster.formTags.join(' ')} ${monster.skillIds.join(' ')}',
+    role: creationRole,
     buildStats: startingStats,
   );
   return {

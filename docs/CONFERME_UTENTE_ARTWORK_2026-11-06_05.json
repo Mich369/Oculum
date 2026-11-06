@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "source": "Scelta esplicita tramite allegato dell’utente dopo che sono state mostrate le alternative A/B/C del Gigante Scheletro nella chat del 6 novembre 2026.",
+  "recordedAtUtc": "2026-11-06T14:36:50.692402+00:00",
+  "artisticVotes": [
+    {
+      "id": "gigante_scheletro",
+      "name": "Gigante Scheletro",
+      "letter": "A",
+      "responseType": "image_attachment",
+      "userTextAnswer": null,
+      "status": "canonical_user_vote_exact_desktop",
+      "file": "output/artwork/alternative_mostri_2026-11-05/gigante_scheletro_desktop_v1.jpg",
+      "sha256": "d861635f579c94fcf31c164ce0d3aed84154c310c8a26abaaa99a342265c6193",
+      "sourceFile": "G:\\Oculum-Artwork\\originali_2026-11-05\\gigante_scheletro_desktop_v1_b1200bf82277bf92.png",
+      "nativeSha256": "b1200bf82277bf9209799033041475fb148422c52bdd672b6985bd60d95d8e18",
+      "version": 1,
+      "userEvidence": {
+        "kind": "explicit_user_attachment_visual_selection",
+        "responseType": "image_attachment",
+        "attachment": "C:\\Users\\michy\\AppData\\Local\\Temp\\codex-clipboard-b4f87961-160d-4868-82af-714ea9d4724b.png",
+        "attachmentSha256": "a64d88e983bd3063c411cd5f3749fbc5423c7bbd25801e2620f150b4aedd10d9",
+        "shownAlternative": "A",
+        "matchingMethod": "Direct visual comparison of the attachment and gallery A at original resolution.",
+        "visualSelection": "Stesso scheletro colossale in avanzata sul lato sinistro, mano e piede in primo piano, filamenti viola, gabbia toracica aperta e medesimo passaggio ad archi.",
+        "fileByteIdentityClaimed": false,
+        "decodedPixelComparisonPerformed": false,
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_05.json"
+      },
+      "integrationStatus": "pending_next_revision",
+      "newAlternativesIntegrated": false
+    }
+  ],
+  "artisticVoteLedger": "docs/SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json",
+  "choicesBefore": 55,
+  "choicesAfter": 56,
+  "ledgerBeforeBackup": "build/SCELTE_ALTERNATIVE_MOSTRI_before_56th_vote_20261106_05.json",
+  "ledgerBeforeSha256": "aaa6d4c36cf80baf4422d414ba9153d413b0624edf7ddccc549b8ab7af4312de",
+  "previousVoteReceiptPreserved": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_04.json",
+  "preservation": "Tutti i 55 voti e revisioni precedenti restano identici nei contenuti; aggiunta soltanto la scelta A del Gigante Scheletro. La ricevuta04 del Cultista resta immutata.",
+  "sourceAlternativeReceipt": {
+    "file": "output/artwork/alternative_mostri_2026-11-05/gigante_scheletro_desktop_v1.json",
+    "sha256": "44afe2e645d58dac478d6f0536bf92303514ada6bb12cc18267a1644a09d152f"
+  },
+  "fileIdentityLimits": "Allegato, JPEG galleria e PNG nativo hanno SHA file distinti. La selezione A è chiara dal confronto visivo; nessuna byteidentità o identità dei pixel dichiarata.",
+  "lastObservedGallerySnapshotBeforeCultistAndGiantVotes": {
+    "audit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+    "auditSha256": "ff9efb7753d70d8f2d780278f7e501519d6c210faaf16fd9c61b56e4e9c45c40",
+    "auditPassed": true,
+    "readyCreatures": 31,
+    "imageComparisons": 93,
+    "progress": "build/THIRD_C_PROGRESS_20261106.json",
+    "progressSha256": "9717893d4bcae9c89dea0b2f6b761ae8fc5d0ff403896cc180480fda1ea31e2e",
+    "pendingWithoutCanonicalChoice": 1018,
+    "observedBeforeRecordingThisVote": true,
+    "browserRenderingVerified": false
+  },
+  "afterNewVotesArithmeticNotYetRefreshed": {
+    "status": "expected_pending_gallery_refresh_and_verification",
+    "newlyChosenIdsSinceSnapshot": [
+      "cultist_of_purple_eyes",
+      "gigante_scheletro"
+    ],
+    "readyCreaturesExpected": 29,
+    "imageComparisonsExpected": 87,
+    "pendingWithoutCanonicalChoiceExpected": 1016,
+    "refreshedCountsClaimed": false
+  },
+  "compiledDistributionUnchanged": {
+    "commit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+    "coordinatedBuild": 273,
+    "packagesOrRuntimeModifiedByThisRecord": false,
+    "deliveryApprovalStillPending": true,
+    "rowMarked100Percent": false
+  },
+  "notClaimed": [
+    "Nessuna nuova regola, bonus o capacità aggiunta dall’immagine",
+    "Nessuna integrazione nell’app o nuovo pacchetto",
+    "Nessun refresh della galleria o ripetizione dei 21 test",
+    "Nessuna modifica dello storico o chiusura della consegna 273 al 100%"
+  ]
+}

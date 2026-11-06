@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-06T17:08:43.680171+00:00",
+  "question": "Approvi le cinque revisioni appena mostrate?",
+  "answers": [
+    "modifica colori e leggermente anatomia del ciclope del fato",
+    "il resto va bene"
+  ],
+  "interpretation": "Four shown revisions explicitly approved; Cyclops v2 not approved and new edit requested.",
+  "approved": [
+    {
+      "id": "ciclo_scarabeo_sigillo_ardente",
+      "artwork": {
+        "file": "output/artwork/revisioni_voti_2026-11-06/scarabeo_sigillo_ardente_A_2m_v2.png",
+        "source": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\scarabeo_sigillo_ardente_A_2m_v2.png",
+        "sha256": "cc9334abff2c984e430f01cd067835086827ec03b79999757a7215bd024f2e52",
+        "nativeSha256": "cc9334abff2c984e430f01cd067835086827ec03b79999757a7215bd024f2e52",
+        "provenanceFile": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\scarabeo_sigillo_ardente_A_2m_v2.provenance.json",
+        "provenanceSha256": "0b1492badb4a1c0949263b7f198eae8a313681d2e4a24f6c2f8c64a4d3899627"
+      }
+    },
+    {
+      "id": "demone_glaciale_intermedio",
+      "artwork": {
+        "file": "output/artwork/revisioni_voti_2026-11-06/demone_glaciale_intermedio_A_massiccio_v2.png",
+        "source": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\demone_glaciale_intermedio_A_massiccio_v2.png",
+        "sha256": "0d1e94794dc7b246a6e2b3e9239f41d745c7e4e998990b967be0439a2a17a2ca",
+        "nativeSha256": "0d1e94794dc7b246a6e2b3e9239f41d745c7e4e998990b967be0439a2a17a2ca",
+        "provenanceFile": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\demone_glaciale_intermedio_A_massiccio_v2.provenance.json",
+        "provenanceSha256": "61e2c69e91972054493759866e8fd50ba5d5dc7675505cd7f8926acc6ba5e899"
+      }
+    },
+    {
+      "id": "demone_intermedio",
+      "artwork": {
+        "file": "output/artwork/revisioni_voti_2026-11-06/demone_intermedio_A_massiccio_v2.png",
+        "source": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\demone_intermedio_A_massiccio_v2.png",
+        "sha256": "b59e01b357c352d8d3d1ed3c2115b7b96094bae40a8cc49cf82cc56e3ea9b604",
+        "nativeSha256": "b59e01b357c352d8d3d1ed3c2115b7b96094bae40a8cc49cf82cc56e3ea9b604",
+        "provenanceFile": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\demone_intermedio_A_massiccio_v2.provenance.json",
+        "provenanceSha256": "bd50d9b37182139b78948a417de3952b60e876aad5312c90ef22fd21293f3868"
+      }
+    },
+    {
+      "id": "weak_horror_lacrimante",
+      "artwork": {
+        "file": "output/artwork/revisioni_voti_2026-11-06/lacrimante_B_braccia_locomotorie_v1.png",
+        "source": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\lacrimante_B_braccia_locomotorie_v1.png",
+        "sha256": "21cadc6eb160dc025d7d6b6744e9f9ecbd52fdb5bd386fb84c15c6510dcabb65",
+        "nativeSha256": "21cadc6eb160dc025d7d6b6744e9f9ecbd52fdb5bd386fb84c15c6510dcabb65",
+        "provenanceFile": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\lacrimante_B_braccia_locomotorie_v1.provenance.json",
+        "provenanceSha256": "c2e58a0feb653e51a2f092da4280a969bfa7bbaa010ca3052e8e132edd5ae4bd"
+      }
+    }
+  ],
+  "cyclops": {
+    "id": "ciclope_del_fato",
+    "v2Approved": false,
+    "request": "modifica colori e leggermente anatomia del ciclope del fato"
+  }
+}

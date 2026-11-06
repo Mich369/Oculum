@@ -437,7 +437,7 @@ void main() {
     expect(ids.toSet(), hasLength(ids.length));
   });
 
-  test('every base monster has a stable combat variant', () {
+  test('every base monster keeps an active or retired historical variant', () {
     final bases = defaultMonsterBookEntries
         .where((entry) => !entry.id.contains('_variante_'))
         .toList(growable: false);
@@ -447,14 +447,22 @@ void main() {
         // mechanics; adding a generic fourth form would duplicate them.
         continue;
       }
-      expect(
-        monsterById('${base.id}_variante_errante') ??
-            monsterById('${base.id}_variante_corazzata') ??
-            monsterById('${base.id}_variante_rituale') ??
-            monsterById('${base.id}_variante_veterana'),
-        isNotNull,
-        reason: base.id,
-      );
+      final variantIds = [
+        '${base.id}_variante_errante',
+        '${base.id}_variante_corazzata',
+        '${base.id}_variante_rituale',
+        '${base.id}_variante_veterana',
+      ];
+      if (variantIds.any((id) => monsterById(id) != null)) continue;
+
+      final retiredVariantIds = variantIds
+          .where(oculumIsRetiredMonsterId)
+          .toList(growable: false);
+      expect(retiredVariantIds, isNotEmpty, reason: base.id);
+      for (final id in retiredVariantIds) {
+        expect(monsterById(id), isNull, reason: id);
+        expect(oculumSavedMonsterBookEntryById(id)?.id, id, reason: id);
+      }
     }
   });
 

@@ -239,7 +239,7 @@ const _cycleSpecies = <String, List<_CycleSpecies>>{
       'ciclo_scarabeo_sigillo_ardente',
       'Scarabeo del Sigillo Ardente',
       'solare',
-      'Uno scarabeo nero lucido reca sulle elitre un sigillo a occhio d’oro arancio, con pupilla scura e raggi incisi. Le zampe anteriori terminano in piccoli uncini roventi. Nei sei giorni di The Sun lascia i sotterranei e pattuglia pietre esposte, incidendo segni solari. È aggressivo e protegge il sigillo chiudendo le elitre.',
+      'Uno scarabeo grande circa 2 metri, nero lucido, reca sulle elitre un sigillo a occhio d’oro arancio, con pupilla scura e raggi incisi. Le zampe anteriori terminano in piccoli uncini roventi. Nei sei giorni di The Sun lascia i sotterranei e pattuglia pietre esposte, incidendo segni solari. È aggressivo e protegge il sigillo chiudendo le elitre.',
       'La sutura nera fra le due elitre incise.',
       'elitra_del_sigillo_ardente',
       (

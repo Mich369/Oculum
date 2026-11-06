@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "source": "Scelta esplicita tramite allegato dell’utente dopo la presentazione A/B/C del Cultista degli Occhi Viola nella chat del 6 novembre 2026.",
+  "recordedAtUtc": "2026-11-06T14:35:07.726075+00:00",
+  "artisticVotes": [
+    {
+      "id": "cultist_of_purple_eyes",
+      "name": "Cultista degli Occhi Viola",
+      "letter": "A",
+      "title": "Mano protesa, toni blu",
+      "responseType": "image_attachment",
+      "userTextAnswer": null,
+      "status": "canonical_user_vote_exact_desktop",
+      "file": "output/artwork/alternative_mostri_2026-11-05/cultist_of_purple_eyes_desktop_v1.jpg",
+      "sha256": "3c31fac47799fd24228dfb60d673f83e7f0af4250a39d7e38c06343ca605f1b6",
+      "sourceFile": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-992ebc10-6e78-4e5a-a8f5-d1bc35c687d6.png",
+      "nativeSha256": "8e06ab84d05587d4a989b2296c3ba62edbac27649cb881893611fa6651c73a41",
+      "version": 1,
+      "userEvidence": {
+        "kind": "explicit_user_attachment_visual_selection",
+        "responseType": "image_attachment",
+        "attachment": "C:\\Users\\michy\\AppData\\Local\\Temp\\codex-clipboard-d6d2cb65-6f73-4e4f-bb96-59d72a990e92.png",
+        "attachmentSha256": "23277b414fa0027797dcc0318231567211458ad7bc99e8bc758d05cb1bd6abd1",
+        "shownAlternativeTitle": "A — Mano protesa, toni blu",
+        "matchingMethod": "Direct visual comparison of the displayed attachment and gallery A at original resolution.",
+        "visualSelection": "Stessa figura incappucciata in toni blu, mano protesa verso il lettore, piedi sulla rovina e medesima scena ad archi; selezione A chiara.",
+        "fileByteIdentityClaimed": false,
+        "decodedPixelComparisonPerformed": false,
+        "decodedPixelComparisonNote": "Pillow non disponibile nel Python locale; nessuna dipendenza installata e nessuna equivalenza pixel dichiarata.",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_04.json"
+      },
+      "integrationStatus": "pending_next_revision",
+      "newAlternativesIntegrated": false
+    }
+  ],
+  "artisticVoteLedger": "docs/SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json",
+  "choicesBefore": 54,
+  "choicesAfter": 55,
+  "ledgerBeforeBackup": "build/SCELTE_ALTERNATIVE_MOSTRI_before_55th_vote_20261106_04.json",
+  "ledgerBeforeSha256": "8444d48d4ccc5569615435fd78107a6e2304256be7315933f3b34155353155b9",
+  "preservation": "Tutti i 54 voti e revisioni precedenti restano identici nei contenuti; aggiunta soltanto la scelta A del Cultista. Alternative, baseline e ricevute storiche conservati.",
+  "fileIdentityLimits": "JPEG galleria, PNG nativo e PNG allegato hanno tre SHA file distinti. Questa ricevuta identifica la scelta visivamente e conserva i tre hash separati; non certifica byteidentità o identità dei pixel.",
+  "sourceAlternativeReceipt": {
+    "file": "output/artwork/alternative_mostri_2026-11-05/cultist_of_purple_eyes_desktop_v1.json",
+    "sha256": "0ff48b2505b51a0d8434585ea20ad11aabd1bd81f9b16711976425bf64c08933"
+  },
+  "gallerySnapshotBeforeVote": {
+    "audit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+    "auditSha256": "ff9efb7753d70d8f2d780278f7e501519d6c210faaf16fd9c61b56e4e9c45c40",
+    "auditPassed": true,
+    "readyCreatures": 31,
+    "imageComparisons": 93,
+    "progress": "build/THIRD_C_PROGRESS_20261106.json",
+    "progressSha256": "9717893d4bcae9c89dea0b2f6b761ae8fc5d0ff403896cc180480fda1ea31e2e",
+    "pendingWithoutCanonicalChoice": 1018,
+    "observedBeforeRecordingThisVote": true,
+    "browserRenderingVerified": false
+  },
+  "afterVoteArithmeticNotYetRefreshed": {
+    "status": "expected_pending_gallery_refresh_and_verification",
+    "readyCreaturesExpected": 30,
+    "imageComparisonsExpected": 90,
+    "pendingWithoutCanonicalChoiceExpected": 1017,
+    "refreshedCountsClaimed": false
+  },
+  "galleryBuilderRegressionEvidence": {
+    "file": "build/ARTWORK_CHOICE_BANNER_REGRESSIONS_20261106.json",
+    "sha256": "48471372224b0e220d50bece2c9abf4c84fc3ff6d35de2add8eb7c8d2a6df325",
+    "testsPassed": 21,
+    "newRegressionCases": 10,
+    "rerunByThisRecord": false,
+    "fixScope": "Helper galleria locale: frozenBuild assente gestito senza falsa integrazione pendente; revisioni A approvate e precedenza approvedRevision del Guardiano con cartella ammessa e SHA verificati.",
+    "priorRefreshReportedExitCode": 0
+  },
+  "compiledDistributionUnchanged": {
+    "commit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+    "coordinatedBuild": 273,
+    "packagesOrRuntimeModifiedByThisRecord": false,
+    "deliveryApprovalStillPending": true,
+    "rowMarked100Percent": false
+  },
+  "notClaimed": [
+    "Nessun bonus o nuova regola di combattimento",
+    "Nessuna integrazione nell’app o nuovo pacchetto",
+    "Nessuna nuova esecuzione dei 21 test già passati",
+    "Nessun refresh della galleria eseguito da questa registrazione",
+    "Nessuna chiusura della consegna 273 o dell’intero catalogo al 100%"
+  ]
+}

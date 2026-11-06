@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "source": "Risposte esplicite dell’utente nella chat del 6 novembre 2026, successive alla consegna compilata 5f89ea2b",
+  "recordedAtUtc": "2026-11-06T14:08:04.149821+00:00",
+  "compiledDistributionUnchanged": {
+    "commit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+    "coordinatedBuild": 273,
+    "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+    "packagesOrRuntimeModifiedByThisRecord": false,
+    "deliveryApprovalStillPending": true,
+    "rowMarked100Percent": false
+  },
+  "artworkClarifications": [
+    {
+      "id": "ciclo_guardiano_dodici_rintocchi",
+      "name": "Guardiano dei Dodici Rintocchi",
+      "userAnswer": "Mantieni dodici; correggi il disegno A",
+      "existingChoiceLetter": "A",
+      "bellCount": 12,
+      "interpretation": "Conservare il conteggio di dodici del catalogo e correggere il disegno A già scelto; il voto precedente e il suo originale restano conservati.",
+      "artworkEditStatus": "pending_separate_revision_and_review",
+      "newEditApproved": false,
+      "newEditIntegrated": false,
+      "existingCompiledUnusedAssetPreserved": true,
+      "existingCompiledUnusedAssetNativeSha256": "ed5545b262118185425a4e851cbdb0b1bb339d5456c0bb16b4c2b685a0bd559d",
+      "gameplayRuleChanged": false
+    }
+  ],
+  "artisticVotes": [
+    {
+      "id": "bambola_vapium_variante_veterana",
+      "name": "Bambola di Vapium Veterana",
+      "letter": "C",
+      "version": 1,
+      "userAnswer": "C — Passo quieto, pittura opaca",
+      "status": "canonical_user_vote_exact_desktop",
+      "file": "output/artwork/terze_C_2026-11-06/C_bambola_vapium_veterana_v1.png",
+      "sourceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_bambola_vapium_veterana_v1.png",
+      "sha256": "0471c09fc561a4f05a3f1b43168a3fe3f2e5e8c4b30668785d303e2fe9d1ba50",
+      "provenanceFile": "output/artwork/terze_C_2026-11-06/C_bambola_vapium_veterana_v1.provenance.json",
+      "provenanceSha256": "c56b6a9fb508e552f337e99a55a633a53993c77864966c8b54ef9555d646f746",
+      "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+      "galleryAuditSha256": "b5379d51e3e36705dcd46638abec487d53eea02db12b4850205ff6633cb5c191",
+      "selectionScope": "Solo il desktop C v1 della variante Veterana; nessun cambiamento del voto B della Bambola base o approvazione automatica di derivati.",
+      "integrationStatus": "pending_next_revision",
+      "newAlternativesIntegrated": false
+    }
+  ],
+  "artworkEditRequests": [
+    {
+      "id": "bandito_base_variante_veterana",
+      "name": "Bandito Veterano",
+      "previousUserRequest": "fammi vedere tutte le alternative",
+      "previousRequestIsArtisticVote": false,
+      "userAnswer": "bandito veterano con armatura leggera",
+      "attachmentFileName": "codex-clipboard-902f8867-2272-4735-bc38-46e3ac510c70.png",
+      "referencedAlternative": "A",
+      "decision": "edit_request_on_attached_base_not_canonical_vote",
+      "editTarget": "Armatura leggera sul Bandito Veterano del disegno A allegato.",
+      "status": "pending_separate_edit_and_user_review",
+      "canonicalApprovalInferred": false,
+      "integrationInferred": false,
+      "inventedArmorDefenseOrBonusNumbers": false
+    }
+  ],
+  "artisticVoteLedger": "docs/SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json",
+  "ledgerBeforeBackup": "build/SCELTE_ALTERNATIVE_MOSTRI_before_53rd_vote_20261106_02.json",
+  "ledgerBeforeSha256": "a22d88059e287794bbddb1fc766c3a2c8de3a626b5d02ff0c45758908bd8ea61",
+  "choicesBefore": 52,
+  "choicesAfter": 53,
+  "preservation": "I 52 voti precedenti mantengono tutti i campi e contenuti originali. Al Guardiano si aggiunge soltanto una precisazione successiva alla consegna; mapping e ricevute della build 5f89ea2b restano storici invariati.",
+  "notClaimed": [
+    "Nessuna nuova build o sostituzione dei pacchetti distribuiti",
+    "Nessuna nuova prova runtime, online, CI o dispositivo fisico",
+    "Nessuna nuova statistica, resistenza, costo o bonus di armatura",
+    "Nessuna chiusura al 100% o approvazione dei nuovi edit"
+  ]
+}

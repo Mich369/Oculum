@@ -1,0 +1,2841 @@
+{
+  "schemaVersion": 1,
+  "source": "Lotto esplicito dell’utente dopo la galleria47;43lettere,2ritiri e1richiesta di redesign. Le3A con modifiche sono basi scelte e non output invariati approvati per runtime.",
+  "recordedAtUtc": "2026-11-06T16:26:49.194835+00:00",
+  "authoritativeBatchSource": {
+    "file": "build/USER_SELECTION_BATCH_20261106_SECOND.json",
+    "sha256": "1610aab2e70557c9732fc239e57d90b9a7e861252f25b622cc29b6d71294489b",
+    "bytes": 5240
+  },
+  "originalInstructions": [
+    {
+      "id": "ciclo_la_follia",
+      "letter": "A",
+      "quote": "La Follia a"
+    },
+    {
+      "id": "ciclo_larva_nome_vuoto",
+      "letter": "B",
+      "quote": "Larva del Nome Vuoto b"
+    },
+    {
+      "id": "ciclo_rospo_gronde_marce",
+      "letter": "C",
+      "quote": "Rospo delle Gronde Marce c"
+    },
+    {
+      "id": "ciclo_volpe_lanterne_spente",
+      "letter": "A",
+      "quote": "Volpe delle Lanterne Spente a"
+    },
+    {
+      "id": "weak_horror_affamato",
+      "letter": "C",
+      "quote": "Affamato delle Fosse c"
+    },
+    {
+      "id": "armaiolo_della_fila_lunga_variante_rituale",
+      "letter": "A",
+      "quote": "Armaiolo della Fila Lunga Rituale a"
+    },
+    {
+      "id": "habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante",
+      "letter": "A",
+      "quote": "Bandito della maschera di corteccia Errante a"
+    },
+    {
+      "id": "inspired_basilisco_delle_rovine_variante_corazzata",
+      "letter": "A",
+      "quote": "Basilisco delle Rovine Corazzata a"
+    },
+    {
+      "id": "cloud_beast_variante_corazzata",
+      "letter": "A",
+      "quote": "Bestia delle Nuvole Corazzata a"
+    },
+    {
+      "id": "baby_rock_rhino_variante_veterana",
+      "letter": "C",
+      "quote": "Baby Rock Rhino Veterana c"
+    },
+    {
+      "id": "duellante_senza_palpebre_variante_errante",
+      "action": "retire",
+      "quote": "Duellante Senza Palpebre Errante elimina"
+    },
+    {
+      "id": "ciclo_scarabeo_sigillo_ardente",
+      "letter": "A",
+      "edit": "much_larger_2_metres",
+      "quote": "Scarabeo del Sigillo Ardente a molto più grosso",
+      "clarification": "Circa 2 metri",
+      "gameplayBonusInferred": false
+    },
+    {
+      "id": "angelo_protettore_variante_corazzata",
+      "letter": "A",
+      "quote": "Angelo Protettore Corazzata A — proposta conservata"
+    },
+    {
+      "id": "basilisco_base_variante_veterana",
+      "letter": "A",
+      "quote": "Basilisco Veterana a"
+    },
+    {
+      "id": "ciclo_scorpione_cisterne_secche",
+      "letter": "A",
+      "quote": "Scorpione delle Cisterne Secche a"
+    },
+    {
+      "id": "ciclo_gufo_stelle_alleate",
+      "letter": "C",
+      "quote": "Gufo delle Stelle Alleate c"
+    },
+    {
+      "id": "ciclo_cervo_radure_miti",
+      "letter": "B",
+      "quote": "Cervo delle Radure Miti b"
+    },
+    {
+      "id": "ciclo_lupo_lunare",
+      "letter": "A",
+      "quote": "Lupo Lunare a"
+    },
+    {
+      "id": "lupo_runico_postea",
+      "letter": "A",
+      "quote": "Lupo Runico di Postea a"
+    },
+    {
+      "id": "habitat_nuvole_rocciose_cinghiale_delle_creste_volanti",
+      "letter": "A",
+      "quote": "Cinghiale delle creste volanti a"
+    },
+    {
+      "id": "gatto_ciotola",
+      "letter": "B",
+      "quote": "Gatto Ciotola B — proposta conservata"
+    },
+    {
+      "id": "guardia_del_pozzo",
+      "letter": "A",
+      "quote": "Guardia del Pozzo a"
+    },
+    {
+      "id": "habitat_postea_archivista_della_citt_errante",
+      "letter": "A",
+      "quote": "Archivista della città errante a"
+    },
+    {
+      "id": "habitat_foresta_elementale_antico_dei_venti_elementi",
+      "letter": "B",
+      "quote": "Antico dei venti elementi B"
+    },
+    {
+      "id": "weak_horror_lacrimante",
+      "letter": "B",
+      "quote": "Lacrimante b"
+    },
+    {
+      "id": "demone_glaciale_minore",
+      "letter": "A",
+      "quote": "Demone Glaciale Minore a"
+    },
+    {
+      "id": "demone_glaciale_intermedio",
+      "letter": "A",
+      "edit": "more_massive",
+      "quote": "Demone Glaciale Intermedio a più massiccio",
+      "gameplayBonusInferred": false
+    },
+    {
+      "id": "demone_glaciale_maggiore",
+      "letter": "A",
+      "quote": "Demone Glaciale Maggiore a"
+    },
+    {
+      "id": "demone_minore",
+      "letter": "A",
+      "quote": "Demone Minore a"
+    },
+    {
+      "id": "demone_intermedio",
+      "letter": "A",
+      "edit": "more_massive",
+      "quote": "Demone Intermedio a più massiccio",
+      "gameplayBonusInferred": false
+    },
+    {
+      "id": "demone_maggiore",
+      "letter": "A",
+      "quote": "Demone Maggiore a"
+    },
+    {
+      "id": "kobold_base",
+      "letter": "A",
+      "quote": "Coboldo a"
+    },
+    {
+      "id": "coboldo_di_brina",
+      "letter": "B",
+      "quote": "Coboldo di Brina b"
+    },
+    {
+      "id": "coboldo_minatore",
+      "letter": "A",
+      "quote": "Coboldo Minatore a"
+    },
+    {
+      "id": "coboldo_runico_postea",
+      "letter": "C",
+      "quote": "Coboldo Runico di Postea c"
+    },
+    {
+      "id": "duellante_senza_palpebre",
+      "letter": "A",
+      "rename": "Assassino",
+      "generatedEntityRole": "npc",
+      "quote": "Duellante Senza Palpebre a e chiamalo \"assassino\" affidandogli il ruolo npc quando lo generi"
+    },
+    {
+      "id": "gnoll_diabolico",
+      "letter": "B",
+      "quote": "Gnoll Diabolico b"
+    },
+    {
+      "id": "baby_forest_demon",
+      "letter": "A",
+      "quote": "baby Forest Demon a"
+    },
+    {
+      "id": "inspired_basilisco_delle_rovine",
+      "letter": "A",
+      "quote": "Basilisco delle Rovine a"
+    },
+    {
+      "id": "ciclope_del_fato",
+      "action": "redesign_reference",
+      "quote": "Ciclope del Fato simile a prima immagine",
+      "referenceAttachment": "C:/Users/michy/AppData/Local/Temp/codex-clipboard-e1d2be90-7782-4fdf-9a12-95a261e759cb.png",
+      "exactExistingArtworkVoteInferred": false
+    },
+    {
+      "id": "armaiolo_della_fila_lunga",
+      "letter": "C",
+      "rename": "Armaiolo della spada e scudo",
+      "quote": "Armaiolo della Fila Lunga c rinominato Armaiolo della spada e scudo"
+    },
+    {
+      "id": "cane_di_cenere",
+      "letter": "A",
+      "quote": "Cane di Cenere a"
+    },
+    {
+      "id": "capitano_della_ruggine_variante_errante",
+      "letter": "A",
+      "quote": "Capitano della Ruggine Errante a"
+    },
+    {
+      "id": "ciclo_gigante_goblin",
+      "letter": "A",
+      "quote": "Gigante Goblin a"
+    },
+    {
+      "id": "ciclo_lepre_guscio_quieto",
+      "letter": "B",
+      "quote": "Lepre del Guscio Quieto b"
+    },
+    {
+      "id": "weak_horror_sagrestano",
+      "action": "retire",
+      "quote": "Sagrestano Cavo elimina"
+    }
+  ],
+  "artisticVotes": [
+    {
+      "id": "ciclo_la_follia",
+      "originalName": "La Follia",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "La Follia a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_la_follia_desktop_v1.jpg",
+        "sha256": "49d6d24b0f1c9f2631815a5b6e98f4b9c1bb968b271af2e51a4d7d2b600ff829",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-86a979c4-574e-4828-9558-62ff06a8d0e7.png",
+        "nativeSha256": "b979c90f31a020dbebeee53364cc5810b2bb0cd48d6742fda7f607ff51c75bea",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_la_follia_desktop_v1.json",
+        "provenanceSha256": "b90992888636f0a6536caa1620349f811746cad6a528202b9377fbf8120508af",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/ciclo_la_follia_desktop_v1.png",
+        "sha256": "8d43f1c34ed16d06f1122a6915abe10654bd04eeeb3da0db32fcd8b1e97dc3e5"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_la_follia_desktop_v1.jpg",
+          "sha256": "49d6d24b0f1c9f2631815a5b6e98f4b9c1bb968b271af2e51a4d7d2b600ff829",
+          "bytes": 295343
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-86a979c4-574e-4828-9558-62ff06a8d0e7.png",
+          "sha256": "b979c90f31a020dbebeee53364cc5810b2bb0cd48d6742fda7f607ff51c75bea",
+          "bytes": 1996056,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_la_follia_desktop_v1.json",
+          "sha256": "b90992888636f0a6536caa1620349f811746cad6a528202b9377fbf8120508af",
+          "bytes": 1581
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_larva_nome_vuoto",
+      "originalName": "Larva del Nome Vuoto",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Larva del Nome Vuoto b",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_larva_nome_vuoto_desktop_v2.jpg",
+        "sha256": "766b13e5f0df6ae6cec3783baa6e13dd0fed5a574fac25df99c15cfe337a019c",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-b25b8767-b8b2-4e25-be57-9d7c72d6a5bd.png",
+        "nativeSha256": "a7ef1d5864d3dd993e7bc8774965ea546263b4fbc1cf78c15019824ae8235f17",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_larva_nome_vuoto_desktop_v2.json",
+        "provenanceSha256": "251a8e2d65c42ff553f82048c718e0ef0627e51a81734f106ba646447bb25706",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_10/ciclo_larva_nome_vuoto_desktop_proposta_A.png",
+        "sha256": "cefc93043c23d067c796918e2d9d829a2f3e6e0da2610dd651fc6fc70902d8b9"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_larva_nome_vuoto_desktop_v2.jpg",
+          "sha256": "766b13e5f0df6ae6cec3783baa6e13dd0fed5a574fac25df99c15cfe337a019c",
+          "bytes": 228234
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-b25b8767-b8b2-4e25-be57-9d7c72d6a5bd.png",
+          "sha256": "a7ef1d5864d3dd993e7bc8774965ea546263b4fbc1cf78c15019824ae8235f17",
+          "bytes": 1821392,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_larva_nome_vuoto_desktop_v2.json",
+          "sha256": "251a8e2d65c42ff553f82048c718e0ef0627e51a81734f106ba646447bb25706",
+          "bytes": 1624
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_rospo_gronde_marce",
+      "originalName": "Rospo delle Gronde Marce",
+      "requestedName": null,
+      "letter": "C",
+      "userQuote": "Rospo delle Gronde Marce c",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_rospo_gronde_marce_v2.png",
+        "sha256": "145e1daaabb5c1f52695bf90c92a457f429ad9bbbfc76ac80a4b80e164157d8b",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_rospo_gronde_marce_v2.png",
+        "nativeSha256": "145e1daaabb5c1f52695bf90c92a457f429ad9bbbfc76ac80a4b80e164157d8b",
+        "version": 2,
+        "sourceKind": "native_imagegen_output_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_rospo_gronde_marce_v2.provenance.json",
+        "provenanceSha256": "8ede83b5284b825961830753c40b57a783cad68433ceea353c3db2e83334eeb5",
+        "rawProvenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_rospo_gronde_marce_v2.provenance.json",
+        "rawProvenanceSha256": "8ede83b5284b825961830753c40b57a783cad68433ceea353c3db2e83334eeb5",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_08/ciclo_rospo_gronde_marce_desktop_proposta_A.png",
+        "sha256": "18e157aefe07a1211211bfb71a6aa17f3c6fe25517d1048ae7f594d72d93053d"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/terze_C_2026-11-06/C_rospo_gronde_marce_v2.png",
+          "sha256": "145e1daaabb5c1f52695bf90c92a457f429ad9bbbfc76ac80a4b80e164157d8b",
+          "bytes": 2009108
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_rospo_gronde_marce_v2.png",
+          "sha256": "145e1daaabb5c1f52695bf90c92a457f429ad9bbbfc76ac80a4b80e164157d8b",
+          "bytes": 2009108,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/terze_C_2026-11-06/C_rospo_gronde_marce_v2.provenance.json",
+          "sha256": "8ede83b5284b825961830753c40b57a783cad68433ceea353c3db2e83334eeb5",
+          "bytes": 6683
+        },
+        "rawProvenance": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_rospo_gronde_marce_v2.provenance.json",
+          "sha256": "8ede83b5284b825961830753c40b57a783cad68433ceea353c3db2e83334eeb5",
+          "bytes": 6683
+        },
+        "previewCopyByteIdenticalToNative": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_volpe_lanterne_spente",
+      "originalName": "Volpe delle Lanterne Spente",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Volpe delle Lanterne Spente a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_volpe_lanterne_spente_desktop_v1.jpg",
+        "sha256": "ca96f71d859be46651901a7654df5addb976e59e4fbeea2789fcd582784b54c2",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-d3f33497-a283-4bc3-98f1-cea327a5d65c.png",
+        "nativeSha256": "69ef45658c256df702981ac9f204cb664243d20ff2562a947e02dcc4fa2e9bae",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_volpe_lanterne_spente_desktop_v1.json",
+        "provenanceSha256": "124caa6ad5e858284820bd90e8a16dde244cfa43c6e2faa943b7504440e0f71d",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_10/ciclo_volpe_lanterne_spente_desktop_proposta_A.png",
+        "sha256": "84213092e7aabbb6db1b929a9f4019b07d5af1cefcd2b7cf93838f5b9c047195"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_volpe_lanterne_spente_desktop_v1.jpg",
+          "sha256": "ca96f71d859be46651901a7654df5addb976e59e4fbeea2789fcd582784b54c2",
+          "bytes": 359021
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-d3f33497-a283-4bc3-98f1-cea327a5d65c.png",
+          "sha256": "69ef45658c256df702981ac9f204cb664243d20ff2562a947e02dcc4fa2e9bae",
+          "bytes": 2249157,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_volpe_lanterne_spente_desktop_v1.json",
+          "sha256": "124caa6ad5e858284820bd90e8a16dde244cfa43c6e2faa943b7504440e0f71d",
+          "bytes": 1628
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "weak_horror_affamato",
+      "originalName": "Affamato delle Fosse",
+      "requestedName": null,
+      "letter": "C",
+      "userQuote": "Affamato delle Fosse c",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_affamato_fosse_v3.png",
+        "sha256": "b8ccc98576658a64738cea1009a62cf80160993ef7d953a629913e141d3c2a75",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_affamato_fosse_v3.png",
+        "nativeSha256": "b8ccc98576658a64738cea1009a62cf80160993ef7d953a629913e141d3c2a75",
+        "version": 3,
+        "sourceKind": "native_imagegen_output_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_affamato_fosse_v3.provenance.json",
+        "provenanceSha256": "b593e897c5fb8ca077077cb470e863345eb006243b11125717bc529fbd4a6ebd",
+        "rawProvenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_affamato_fosse_v3.provenance.json",
+        "rawProvenanceSha256": "b593e897c5fb8ca077077cb470e863345eb006243b11125717bc529fbd4a6ebd",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/weak_horror_affamato_desktop_v1.png",
+        "sha256": "2fb264fdca634a4e4b9fd85e47176059956763b089a6bb2c83cb4e22bd5db1e5"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/terze_C_2026-11-06/C_affamato_fosse_v3.png",
+          "sha256": "b8ccc98576658a64738cea1009a62cf80160993ef7d953a629913e141d3c2a75",
+          "bytes": 1830122
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_affamato_fosse_v3.png",
+          "sha256": "b8ccc98576658a64738cea1009a62cf80160993ef7d953a629913e141d3c2a75",
+          "bytes": 1830122,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/terze_C_2026-11-06/C_affamato_fosse_v3.provenance.json",
+          "sha256": "b593e897c5fb8ca077077cb470e863345eb006243b11125717bc529fbd4a6ebd",
+          "bytes": 7799
+        },
+        "rawProvenance": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_affamato_fosse_v3.provenance.json",
+          "sha256": "b593e897c5fb8ca077077cb470e863345eb006243b11125717bc529fbd4a6ebd",
+          "bytes": 7799
+        },
+        "previewCopyByteIdenticalToNative": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "armaiolo_della_fila_lunga_variante_rituale",
+      "originalName": "Armaiolo della Fila Lunga Rituale",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Armaiolo della Fila Lunga Rituale a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/armaiolo_della_fila_lunga_variante_rituale_desktop_v1.jpg",
+        "sha256": "be47e1b46935abd4ffdad759bf0e298da609cb9fa0b1469da17e33e9ae910386",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-09a38518-362b-45ed-84e8-6eb104582e33.png",
+        "nativeSha256": "5ed560a2b5a72738028f08d2a772b75e27829c780c675b0d701b9f62682deb9b",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/armaiolo_della_fila_lunga_variante_rituale_desktop_v1.json",
+        "provenanceSha256": "09bbb1167c75365231fc706cbe5b0ca76435031c5e957e7219bfe3fbba3f9c56",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/armaiolo_della_fila_lunga_variante_rituale_desktop_v1.png",
+        "sha256": "914acbfa9fdebd2496759d7427b7ae6a9c61a9cf54d0937414605b137a892bbd"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/armaiolo_della_fila_lunga_variante_rituale_desktop_v1.jpg",
+          "sha256": "be47e1b46935abd4ffdad759bf0e298da609cb9fa0b1469da17e33e9ae910386",
+          "bytes": 320566
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-09a38518-362b-45ed-84e8-6eb104582e33.png",
+          "sha256": "5ed560a2b5a72738028f08d2a772b75e27829c780c675b0d701b9f62682deb9b",
+          "bytes": 2101637,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/armaiolo_della_fila_lunga_variante_rituale_desktop_v1.json",
+          "sha256": "09bbb1167c75365231fc706cbe5b0ca76435031c5e957e7219bfe3fbba3f9c56",
+          "bytes": 2067
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante",
+      "originalName": "Bandito della maschera di corteccia Errante",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Bandito della maschera di corteccia Errante a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_desktop_v1.jpg",
+        "sha256": "e47bf98d2d9052aa352c15b589b0c03ad1ad8e4bdb21b130716c01b9a589c62b",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_desktop_v1_6e885f2766b1be47.png",
+        "nativeSha256": "6e885f2766b1be47378447637b6bd0db63699006a14a93937491383a735fb8aa",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_desktop_v1.json",
+        "provenanceSha256": "b644e837a8aea746a9b978d27b4866df6d041a36da06846f1ab0889da4a2141c",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_desktop_v1.png",
+        "sha256": "1e05bc608d135585327e45dd7f69a8490bd226c927e58f69c694671adecb481b"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_desktop_v1.jpg",
+          "sha256": "e47bf98d2d9052aa352c15b589b0c03ad1ad8e4bdb21b130716c01b9a589c62b",
+          "bytes": 332210
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_desktop_v1_6e885f2766b1be47.png",
+          "sha256": "6e885f2766b1be47378447637b6bd0db63699006a14a93937491383a735fb8aa",
+          "bytes": 2142129,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_desktop_v1.json",
+          "sha256": "b644e837a8aea746a9b978d27b4866df6d041a36da06846f1ab0889da4a2141c",
+          "bytes": 4097
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "inspired_basilisco_delle_rovine_variante_corazzata",
+      "originalName": "Basilisco delle Rovine Corazzata",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Basilisco delle Rovine Corazzata a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_variante_corazzata_desktop_v1.jpg",
+        "sha256": "879673c294d96b5b8c5fb6f711fe18374d6a131a26c88e557787dd1286c6409f",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\inspired_basilisco_delle_rovine_variante_corazzata_desktop_v1_953bf63f34b23e7a.png",
+        "nativeSha256": "953bf63f34b23e7ab701b286cb472cb2cf07484631e734d43e1f641652a4ae01",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "805c58ba81c8ee4767ae0cd65046fe94b2ba18dc72d999398c4ca767310ef430",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/inspired_basilisco_delle_rovine_variante_corazzata_desktop_v1.png",
+        "sha256": "81307a60880d9929129b519ea68a601a71e594c67ddd4ec77411a356f55acd35"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_variante_corazzata_desktop_v1.jpg",
+          "sha256": "879673c294d96b5b8c5fb6f711fe18374d6a131a26c88e557787dd1286c6409f",
+          "bytes": 295553
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\originali_2026-11-05\\inspired_basilisco_delle_rovine_variante_corazzata_desktop_v1_953bf63f34b23e7a.png",
+          "sha256": "953bf63f34b23e7ab701b286cb472cb2cf07484631e734d43e1f641652a4ae01",
+          "bytes": 2074259,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_variante_corazzata_desktop_v1.json",
+          "sha256": "805c58ba81c8ee4767ae0cd65046fe94b2ba18dc72d999398c4ca767310ef430",
+          "bytes": 3279
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "cloud_beast_variante_corazzata",
+      "originalName": "Bestia delle Nuvole Corazzata",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Bestia delle Nuvole Corazzata a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/cloud_beast_variante_corazzata_desktop_v1.jpg",
+        "sha256": "1ecb10366a74c769df9308e8e6cbc39b1a09d4f452a31db8dc93fec81cf62db9",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-754ee292-460d-494c-8cdf-345ecc899751.png",
+        "nativeSha256": "f675ab4099e0427cff0176255565714d27203cf99ec2ef8f80bd0a8cb3e8f3bc",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/cloud_beast_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "fe420eab59fe6ecf038fd36f85eff83c2f2390bb74d9bd09821e9fd9e66c5fb6",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/cloud_beast_variante_corazzata_desktop_v1.png",
+        "sha256": "120a328d943bec6657c3b656880e634c708125449e45200646a7774b46cb0c50"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/cloud_beast_variante_corazzata_desktop_v1.jpg",
+          "sha256": "1ecb10366a74c769df9308e8e6cbc39b1a09d4f452a31db8dc93fec81cf62db9",
+          "bytes": 316279
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-754ee292-460d-494c-8cdf-345ecc899751.png",
+          "sha256": "f675ab4099e0427cff0176255565714d27203cf99ec2ef8f80bd0a8cb3e8f3bc",
+          "bytes": 2174624,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/cloud_beast_variante_corazzata_desktop_v1.json",
+          "sha256": "fe420eab59fe6ecf038fd36f85eff83c2f2390bb74d9bd09821e9fd9e66c5fb6",
+          "bytes": 1621
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "baby_rock_rhino_variante_veterana",
+      "originalName": "Baby Rock Rhino Veterana",
+      "requestedName": null,
+      "letter": "C",
+      "userQuote": "Baby Rock Rhino Veterana c",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_baby_rock_rhino_veterana_v2.png",
+        "sha256": "6ca896f68eac52ce114892bafcdaf62d7a332aefff8d0f14d8f086eb49d118e6",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_veterana_v2.png",
+        "nativeSha256": "6ca896f68eac52ce114892bafcdaf62d7a332aefff8d0f14d8f086eb49d118e6",
+        "version": 2,
+        "sourceKind": "native_imagegen_output_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_baby_rock_rhino_veterana_v2.provenance.json",
+        "provenanceSha256": "7f6a1823e6a0237c8c9476409380345e0667c3621f33fd10c373109da832949e",
+        "rawProvenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_veterana_v2.provenance.json",
+        "rawProvenanceSha256": "7f6a1823e6a0237c8c9476409380345e0667c3621f33fd10c373109da832949e",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/baby_rock_rhino_variante_veterana_desktop_v1.png",
+        "sha256": "59fd44374a45a99a303a197c666660aaee3788f117377c936f28375059ca6297"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/terze_C_2026-11-06/C_baby_rock_rhino_veterana_v2.png",
+          "sha256": "6ca896f68eac52ce114892bafcdaf62d7a332aefff8d0f14d8f086eb49d118e6",
+          "bytes": 1799418
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_veterana_v2.png",
+          "sha256": "6ca896f68eac52ce114892bafcdaf62d7a332aefff8d0f14d8f086eb49d118e6",
+          "bytes": 1799418,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/terze_C_2026-11-06/C_baby_rock_rhino_veterana_v2.provenance.json",
+          "sha256": "7f6a1823e6a0237c8c9476409380345e0667c3621f33fd10c373109da832949e",
+          "bytes": 6863
+        },
+        "rawProvenance": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_veterana_v2.provenance.json",
+          "sha256": "7f6a1823e6a0237c8c9476409380345e0667c3621f33fd10c373109da832949e",
+          "bytes": 6863
+        },
+        "previewCopyByteIdenticalToNative": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_scarabeo_sigillo_ardente",
+      "originalName": "Scarabeo del Sigillo Ardente",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Scarabeo del Sigillo Ardente a molto più grosso",
+      "status": "user_selected_base_revision_requested",
+      "baseRevisionRequested": true,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_scarabeo_sigillo_ardente_desktop_v1.jpg",
+        "sha256": "d6029e78d9b961717ddb3fa3b1ffd01538819c3374e41750699b2e53c3271b26",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-ebf3cb3c-c2e8-40b3-9ad8-504e98a5d4f6.png",
+        "nativeSha256": "2d33df1a4967ccbfe79efc897627fd6e0f5f1c9268c15ebbfa7056dc972a137b",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_scarabeo_sigillo_ardente_desktop_v1.json",
+        "provenanceSha256": "29a1c17fbe9099582bb7875f558e4003e6934d55575e8ee35417b3374be2ed3a",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/ciclo_scarabeo_sigillo_ardente_desktop_v2.png",
+        "sha256": "821429658cb4ab54df472085be4180303f7c79c52187c21a0b65669ed3b9ea9c"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_scarabeo_sigillo_ardente_desktop_v1.jpg",
+          "sha256": "d6029e78d9b961717ddb3fa3b1ffd01538819c3374e41750699b2e53c3271b26",
+          "bytes": 273222
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-ebf3cb3c-c2e8-40b3-9ad8-504e98a5d4f6.png",
+          "sha256": "2d33df1a4967ccbfe79efc897627fd6e0f5f1c9268c15ebbfa7056dc972a137b",
+          "bytes": 1934879,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_scarabeo_sigillo_ardente_desktop_v1.json",
+          "sha256": "29a1c17fbe9099582bb7875f558e4003e6934d55575e8ee35417b3374be2ed3a",
+          "bytes": 1600
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "held_for_requested_artwork_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta della sola base A con revisione esplicitamente richiesta: non integrare l’originale invariato; il nuovo output deve essere mostrato e approvato separatamente."
+      }
+    },
+    {
+      "id": "angelo_protettore_variante_corazzata",
+      "originalName": "Angelo Protettore Corazzata",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Angelo Protettore Corazzata A — proposta conservata",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/angelo_protettore_variante_corazzata_desktop_v1.jpg",
+        "sha256": "7b67ba035995d5b7355b71fd2251973480b23763823ed4fd6a483643133ec51b",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b802f941-0d75-44b0-99ad-de6007b7b6ed.png",
+        "nativeSha256": "984cefa6242233fb67689d3fd6ae3490536952a6b19b2ad21ff7540eec5fdace",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/angelo_protettore_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "796cd3a1b6b9629d8c00f82949890c02cb847bf229177e6b853f4e762ffa7385",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/angelo_protettore_variante_corazzata_desktop_v1.png",
+        "sha256": "4fe2f7dd8f67616eb4120589b79235e3ef114c01d29ed89e28a42c1eba8d5cb9"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/angelo_protettore_variante_corazzata_desktop_v1.jpg",
+          "sha256": "7b67ba035995d5b7355b71fd2251973480b23763823ed4fd6a483643133ec51b",
+          "bytes": 304314
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b802f941-0d75-44b0-99ad-de6007b7b6ed.png",
+          "sha256": "984cefa6242233fb67689d3fd6ae3490536952a6b19b2ad21ff7540eec5fdace",
+          "bytes": 2092332,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/angelo_protettore_variante_corazzata_desktop_v1.json",
+          "sha256": "796cd3a1b6b9629d8c00f82949890c02cb847bf229177e6b853f4e762ffa7385",
+          "bytes": 1484
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "basilisco_base_variante_veterana",
+      "originalName": "Basilisco Veterana",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Basilisco Veterana a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/basilisco_base_variante_veterana_desktop_v1.jpg",
+        "sha256": "a0913605bca18c8ac10e105cfad96c9dcb54f0b50dacecfe4e74dfee27ce84d0",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-193779f3-4ffb-40e4-b2ca-e10adf11d13d.png",
+        "nativeSha256": "f42d9f32d9c471ebd82929e12309d8e8690afda873f338499eea248d9075ca17",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/basilisco_base_variante_veterana_desktop_v1.json",
+        "provenanceSha256": "78c9aa55541a78ee0e9b219787624a60482dab5836d0cdc0cff1220c0a4640fc",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/basilisco_base_variante_veterana_desktop_v1.png",
+        "sha256": "153a30fecd6337666912d8f007ee13dee954fb403d18659f4147c57319ab4787"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/basilisco_base_variante_veterana_desktop_v1.jpg",
+          "sha256": "a0913605bca18c8ac10e105cfad96c9dcb54f0b50dacecfe4e74dfee27ce84d0",
+          "bytes": 364048
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-193779f3-4ffb-40e4-b2ca-e10adf11d13d.png",
+          "sha256": "f42d9f32d9c471ebd82929e12309d8e8690afda873f338499eea248d9075ca17",
+          "bytes": 2375265,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/basilisco_base_variante_veterana_desktop_v1.json",
+          "sha256": "78c9aa55541a78ee0e9b219787624a60482dab5836d0cdc0cff1220c0a4640fc",
+          "bytes": 1757
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_scorpione_cisterne_secche",
+      "originalName": "Scorpione delle Cisterne Secche",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Scorpione delle Cisterne Secche a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_scorpione_cisterne_secche_desktop_v1.jpg",
+        "sha256": "e03e181d436e30d245f3895521f6393af8df400699621dd6de005495492e87b2",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-4dbce281-51e5-4bbb-9621-992010e02557.png",
+        "nativeSha256": "10b3eaae89d55c0130ccbb1d929eac36d8776e6b4544223be2f904c94bcec36a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_scorpione_cisterne_secche_desktop_v1.json",
+        "provenanceSha256": "b36286d8e76107c8160e77c8cecb0df345f0c8df78fb7d1c67eff192be3d876b",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_08/ciclo_scorpione_cisterne_secche_desktop_proposta_A.png",
+        "sha256": "b46a095ca06072155779c093a9da62f029a857820d02fd9c0f28cc205bcadfb5"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_scorpione_cisterne_secche_desktop_v1.jpg",
+          "sha256": "e03e181d436e30d245f3895521f6393af8df400699621dd6de005495492e87b2",
+          "bytes": 371428
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-4dbce281-51e5-4bbb-9621-992010e02557.png",
+          "sha256": "10b3eaae89d55c0130ccbb1d929eac36d8776e6b4544223be2f904c94bcec36a",
+          "bytes": 2215563,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_scorpione_cisterne_secche_desktop_v1.json",
+          "sha256": "b36286d8e76107c8160e77c8cecb0df345f0c8df78fb7d1c67eff192be3d876b",
+          "bytes": 1643
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_gufo_stelle_alleate",
+      "originalName": "Gufo delle Stelle Alleate",
+      "requestedName": null,
+      "letter": "C",
+      "userQuote": "Gufo delle Stelle Alleate c",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_gufo_stelle_alleate_v2.png",
+        "sha256": "281e760d7152664e05a301fb003802975991bc3741dd90bbc2a39ba0260d0d08",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_gufo_stelle_alleate_v2.png",
+        "nativeSha256": "281e760d7152664e05a301fb003802975991bc3741dd90bbc2a39ba0260d0d08",
+        "version": 2,
+        "sourceKind": "native_imagegen_output_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_gufo_stelle_alleate_v2.provenance.json",
+        "provenanceSha256": "61145200e5283a811c4253a781b9110daf39e6cdc86ff01c67cab15cb2db3002",
+        "rawProvenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_gufo_stelle_alleate_v2.provenance.json",
+        "rawProvenanceSha256": "61145200e5283a811c4253a781b9110daf39e6cdc86ff01c67cab15cb2db3002",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/ciclo_gufo_stelle_alleate_desktop_v1.png",
+        "sha256": "753c8d6858200691da3ff13160503c08f7ad6a52000868e57cbb4a65fe80b9e8"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/terze_C_2026-11-06/C_gufo_stelle_alleate_v2.png",
+          "sha256": "281e760d7152664e05a301fb003802975991bc3741dd90bbc2a39ba0260d0d08",
+          "bytes": 2082388
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_gufo_stelle_alleate_v2.png",
+          "sha256": "281e760d7152664e05a301fb003802975991bc3741dd90bbc2a39ba0260d0d08",
+          "bytes": 2082388,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/terze_C_2026-11-06/C_gufo_stelle_alleate_v2.provenance.json",
+          "sha256": "61145200e5283a811c4253a781b9110daf39e6cdc86ff01c67cab15cb2db3002",
+          "bytes": 6473
+        },
+        "rawProvenance": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_gufo_stelle_alleate_v2.provenance.json",
+          "sha256": "61145200e5283a811c4253a781b9110daf39e6cdc86ff01c67cab15cb2db3002",
+          "bytes": 6473
+        },
+        "previewCopyByteIdenticalToNative": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_cervo_radure_miti",
+      "originalName": "Cervo delle Radure Miti",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Cervo delle Radure Miti b",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_cervo_radure_miti_desktop_v2.jpg",
+        "sha256": "7fa99d8bed3d0822c49ed8cecca6c2e8255bdb8a994f34d6e80f136bae533039",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-063bea3f-1e2c-494e-b3e7-ac6beac1a613.png",
+        "nativeSha256": "3a2177f86c72b84aa1800dfb8387f2ceec826c21e7031096e249e517066039b3",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_cervo_radure_miti_desktop_v2.json",
+        "provenanceSha256": "b2d7e3663cea83a4541036e77c01c9771c140f3ba999db94ee4a955d5579bdfb",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_08/ciclo_cervo_radure_miti_desktop_proposta_A.png",
+        "sha256": "44571c90bd96764e24dfa7831e6de0efd25b50e1dd8c20e3cb2ff58c237a6f2a"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_cervo_radure_miti_desktop_v2.jpg",
+          "sha256": "7fa99d8bed3d0822c49ed8cecca6c2e8255bdb8a994f34d6e80f136bae533039",
+          "bytes": 293207
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-063bea3f-1e2c-494e-b3e7-ac6beac1a613.png",
+          "sha256": "3a2177f86c72b84aa1800dfb8387f2ceec826c21e7031096e249e517066039b3",
+          "bytes": 2007596,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_cervo_radure_miti_desktop_v2.json",
+          "sha256": "b2d7e3663cea83a4541036e77c01c9771c140f3ba999db94ee4a955d5579bdfb",
+          "bytes": 1617
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_lupo_lunare",
+      "originalName": "Lupo Lunare",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Lupo Lunare a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_lupo_lunare_desktop_v1.jpg",
+        "sha256": "31dd24d3f71d7db3a172fdfa846c3b6ee16cac19b39429e8bbdf8eac91ab55de",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-d42c423e-428f-4792-bf8f-0cc66b86aed0.png",
+        "nativeSha256": "5ca4c80b98e159f30b9116a8e93fd98ac03d708565430d249c826dcecf9d3a19",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_lupo_lunare_desktop_v1.json",
+        "provenanceSha256": "31dc4ba825f0ed3448a01889fd7ac6fb34badff13a60dc823c67e55bf3504276",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_07/ciclo_lupo_lunare_desktop_proposta_A.png",
+        "sha256": "4830b1a33568e3a223e84e62fbb9163e7a545128f1cf3124266bac48608abab9"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_lupo_lunare_desktop_v1.jpg",
+          "sha256": "31dd24d3f71d7db3a172fdfa846c3b6ee16cac19b39429e8bbdf8eac91ab55de",
+          "bytes": 337886
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-d42c423e-428f-4792-bf8f-0cc66b86aed0.png",
+          "sha256": "5ca4c80b98e159f30b9116a8e93fd98ac03d708565430d249c826dcecf9d3a19",
+          "bytes": 2241489,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_lupo_lunare_desktop_v1.json",
+          "sha256": "31dc4ba825f0ed3448a01889fd7ac6fb34badff13a60dc823c67e55bf3504276",
+          "bytes": 1565
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "lupo_runico_postea",
+      "originalName": "Lupo Runico di Postea",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Lupo Runico di Postea a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/lupo_runico_postea_desktop_v1.jpg",
+        "sha256": "75d2a6903e43e2879e2bed47d7d3401488c83789246d7318fdc59261d96f54fe",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-9ffedfe6-56f2-4bae-8eee-1d2d4f401be1.png",
+        "nativeSha256": "428821ad786bef28109d808ce40e428bc6129dfb64e4e150a9d6ecddb1a1c6b9",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/lupo_runico_postea_desktop_v1.json",
+        "provenanceSha256": "c88df3293ed47392d5db773be712846e1ede2b35a1b9884094ac8e4ee8b229b6",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_11/lupo_runico_postea_desktop_proposta_A.png",
+        "sha256": "aeda45c7100c7da1f5e85590858834c7b5fbd590c0267fe8a68af490ad110185"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/lupo_runico_postea_desktop_v1.jpg",
+          "sha256": "75d2a6903e43e2879e2bed47d7d3401488c83789246d7318fdc59261d96f54fe",
+          "bytes": 342567
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-9ffedfe6-56f2-4bae-8eee-1d2d4f401be1.png",
+          "sha256": "428821ad786bef28109d808ce40e428bc6129dfb64e4e150a9d6ecddb1a1c6b9",
+          "bytes": 2161203,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/lupo_runico_postea_desktop_v1.json",
+          "sha256": "c88df3293ed47392d5db773be712846e1ede2b35a1b9884094ac8e4ee8b229b6",
+          "bytes": 1799
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "habitat_nuvole_rocciose_cinghiale_delle_creste_volanti",
+      "originalName": "Cinghiale delle creste volanti",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Cinghiale delle creste volanti a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_desktop_v1.jpg",
+        "sha256": "0938d66f6eff1995828a9ac3fe643f6b177bcad1f0ad24f0b807c226cef0816e",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-657b976b-ceab-4638-8a2d-2aa652104d96.png",
+        "nativeSha256": "a4116d496f91140c5026018f062a7c903f692ca1b62932214ada343817b60225",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_desktop_v1.json",
+        "provenanceSha256": "e28f52b2739e01ca90f55123bb29935134167053646740399c0dfc2d670f9996",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_desktop_v1.png",
+        "sha256": "38cfcd1474b0bcb95e063d1ade363058a8b256f0790bbd9751ea5308228a13dd"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_desktop_v1.jpg",
+          "sha256": "0938d66f6eff1995828a9ac3fe643f6b177bcad1f0ad24f0b807c226cef0816e",
+          "bytes": 316120
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-657b976b-ceab-4638-8a2d-2aa652104d96.png",
+          "sha256": "a4116d496f91140c5026018f062a7c903f692ca1b62932214ada343817b60225",
+          "bytes": 2115747,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_desktop_v1.json",
+          "sha256": "e28f52b2739e01ca90f55123bb29935134167053646740399c0dfc2d670f9996",
+          "bytes": 2811
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "gatto_ciotola",
+      "originalName": "Gatto Ciotola",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Gatto Ciotola B — proposta conservata",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/gatto_ciotola_desktop_v2.jpg",
+        "sha256": "3c6221c3e694b165ada1ebefca7198224228d701d41f87dbc4962139da1e8063",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\gatto_ciotola_desktop_v2_2e164a1d144f0b76.png",
+        "nativeSha256": "2e164a1d144f0b76bd9310595228dcd6de63619a1d6f5fd2ba77c80db7da2a3e",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/gatto_ciotola_desktop_v2.json",
+        "provenanceSha256": "3ae2ed88b9212aac8f38e755f61e131c00e235b66d50fea8aad9b7f6f1e37976",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/gatto_ciotola_desktop_v1.png",
+        "sha256": "ab604cf7f8cccdc51271ac796847c95737ca6b8c31af9ecc28641530d5737988"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/gatto_ciotola_desktop_v2.jpg",
+          "sha256": "3c6221c3e694b165ada1ebefca7198224228d701d41f87dbc4962139da1e8063",
+          "bytes": 271474
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\originali_2026-11-05\\gatto_ciotola_desktop_v2_2e164a1d144f0b76.png",
+          "sha256": "2e164a1d144f0b76bd9310595228dcd6de63619a1d6f5fd2ba77c80db7da2a3e",
+          "bytes": 1992019,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/gatto_ciotola_desktop_v2.json",
+          "sha256": "3ae2ed88b9212aac8f38e755f61e131c00e235b66d50fea8aad9b7f6f1e37976",
+          "bytes": 3013
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "guardia_del_pozzo",
+      "originalName": "Guardia del Pozzo",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Guardia del Pozzo a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/guardia_del_pozzo_desktop_v1.jpg",
+        "sha256": "fe66a4785e9d414cc70e100ae65f81948ecd2ab47984385af85f46eedcda0282",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b46d39be-840c-459d-abe5-da8990991e3d.png",
+        "nativeSha256": "1cfd0268f29a4cc5993f35a56f4b46962b483e162feb8539b8c7ba6d1bba053d",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/guardia_del_pozzo_desktop_v1.json",
+        "provenanceSha256": "06928daffa817404976c0d6ac2e50a4f38c741b96bd88dc52889f98e82d85edc",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/guardia_del_pozzo_desktop_v1.png",
+        "sha256": "53b18907c5fdabab7101ddecbabfaaa6ed7eeb74ac7c0f332c0f7ee5452dcf77"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/guardia_del_pozzo_desktop_v1.jpg",
+          "sha256": "fe66a4785e9d414cc70e100ae65f81948ecd2ab47984385af85f46eedcda0282",
+          "bytes": 329606
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b46d39be-840c-459d-abe5-da8990991e3d.png",
+          "sha256": "1cfd0268f29a4cc5993f35a56f4b46962b483e162feb8539b8c7ba6d1bba053d",
+          "bytes": 2176504,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/guardia_del_pozzo_desktop_v1.json",
+          "sha256": "06928daffa817404976c0d6ac2e50a4f38c741b96bd88dc52889f98e82d85edc",
+          "bytes": 2247
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "habitat_postea_archivista_della_citt_errante",
+      "originalName": "Archivista della città errante",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Archivista della città errante a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_archivista_della_citt_errante_desktop_v1.jpg",
+        "sha256": "6a25b581f7922e809c4e144e1ecab04e52db0c9f856e62a23bbc5a2ffbbd85ff",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_postea_archivista_della_citt_errante_desktop_v1_033dcd5e1fd3ab8f.png",
+        "nativeSha256": "033dcd5e1fd3ab8fa218f01302f9dfb0160d2d47db78722d32c68a52ca691344",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_archivista_della_citt_errante_desktop_v1.json",
+        "provenanceSha256": "a2ca2a42137552d84f1f160fbd91b4aacae7df801eb95d7a8a2ed7450bbca971",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/habitat_postea_archivista_della_citt_errante_desktop_v1.png",
+        "sha256": "817959da4ab06161306461ba52ce935c6ea4738d5312688897f83d87bea62a31"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_archivista_della_citt_errante_desktop_v1.jpg",
+          "sha256": "6a25b581f7922e809c4e144e1ecab04e52db0c9f856e62a23bbc5a2ffbbd85ff",
+          "bytes": 271554
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_postea_archivista_della_citt_errante_desktop_v1_033dcd5e1fd3ab8f.png",
+          "sha256": "033dcd5e1fd3ab8fa218f01302f9dfb0160d2d47db78722d32c68a52ca691344",
+          "bytes": 1997777,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_archivista_della_citt_errante_desktop_v1.json",
+          "sha256": "a2ca2a42137552d84f1f160fbd91b4aacae7df801eb95d7a8a2ed7450bbca971",
+          "bytes": 3328
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "habitat_foresta_elementale_antico_dei_venti_elementi",
+      "originalName": "Antico dei venti elementi",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Antico dei venti elementi B",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_antico_dei_venti_elementi_desktop_v2.jpg",
+        "sha256": "0747e6ea830937b2294f7d71da6671bd5d7921dd42ac5920c74606e21e7a642b",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_foresta_elementale_antico_dei_venti_elementi_desktop_v2_450a29ea42053b6f.png",
+        "nativeSha256": "450a29ea42053b6ff619e56c380b3f0fe176e59726e685535d87a5886e6cd938",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_antico_dei_venti_elementi_desktop_v2.json",
+        "provenanceSha256": "ed21554a44d77a6fa06b82a9bcda9da999ef4d04df5ee0a10d4b03435009a779",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/habitat_foresta_elementale_antico_dei_venti_elementi_desktop_v1.png",
+        "sha256": "fe4f1e46f472074f83968b2ab36b9c0189cf302552218f4dc96ecf245bb9b26e"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_antico_dei_venti_elementi_desktop_v2.jpg",
+          "sha256": "0747e6ea830937b2294f7d71da6671bd5d7921dd42ac5920c74606e21e7a642b",
+          "bytes": 330049
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_foresta_elementale_antico_dei_venti_elementi_desktop_v2_450a29ea42053b6f.png",
+          "sha256": "450a29ea42053b6ff619e56c380b3f0fe176e59726e685535d87a5886e6cd938",
+          "bytes": 2080175,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_antico_dei_venti_elementi_desktop_v2.json",
+          "sha256": "ed21554a44d77a6fa06b82a9bcda9da999ef4d04df5ee0a10d4b03435009a779",
+          "bytes": 3828
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "weak_horror_lacrimante",
+      "originalName": "Lacrimante",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Lacrimante b",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/weak_horror_lacrimante_desktop_v2.jpg",
+        "sha256": "991afbb2dda297ecd8d84540f25d6ad5b457e580d9227b0cce52209c3d2ce02e",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a969-6b0a-77c2-971f-0f4e4f2d57f9\\exec-5d25e82d-be21-4ee8-8f59-0a80b4b16bb3.png",
+        "nativeSha256": "cd6cf7b46a36d94df888e86e224ac8a54e7385f185fb25df8ff213679dc52d78",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/weak_horror_lacrimante_desktop_v2.json",
+        "provenanceSha256": "e66fd2e4c10cec8689b34b18f14e8f8cdb19abf2043c53ec8643261e541a55cf",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/weak_horror_lacrimante_desktop_v1.png",
+        "sha256": "ce108b0ca4046a28f60fd0f61575aea922e0f49b026c9d3970694f478a635f03"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/weak_horror_lacrimante_desktop_v2.jpg",
+          "sha256": "991afbb2dda297ecd8d84540f25d6ad5b457e580d9227b0cce52209c3d2ce02e",
+          "bytes": 243378
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a969-6b0a-77c2-971f-0f4e4f2d57f9\\exec-5d25e82d-be21-4ee8-8f59-0a80b4b16bb3.png",
+          "sha256": "cd6cf7b46a36d94df888e86e224ac8a54e7385f185fb25df8ff213679dc52d78",
+          "bytes": 1901297,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/weak_horror_lacrimante_desktop_v2.json",
+          "sha256": "e66fd2e4c10cec8689b34b18f14e8f8cdb19abf2043c53ec8643261e541a55cf",
+          "bytes": 2262
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "demone_glaciale_minore",
+      "originalName": "Demone Glaciale Minore",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Demone Glaciale Minore a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_minore_desktop_v1.jpg",
+        "sha256": "f3c500a786b4926d0363abb9c957aba3b37073dfe74993214bd8d7a8144cf1c3",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-64f0e17f-b3e3-457a-bfd5-6ad88ba2c9f0.png",
+        "nativeSha256": "28f7b1e7f03d181cf1a1a236e1132bf0ada19acfd2232ce3df0e046e001b35fc",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_minore_desktop_v1.json",
+        "provenanceSha256": "a2004f7d3c1fa294c436c0fac3ec661c33071394e453e27b73f30aa13f29d123",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/demone_glaciale_minore_desktop_v1.png",
+        "sha256": "cfee9e41103d29149b784b415d956e21311f78051b9766f4ad27672de357762a"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_minore_desktop_v1.jpg",
+          "sha256": "f3c500a786b4926d0363abb9c957aba3b37073dfe74993214bd8d7a8144cf1c3",
+          "bytes": 288917
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-64f0e17f-b3e3-457a-bfd5-6ad88ba2c9f0.png",
+          "sha256": "28f7b1e7f03d181cf1a1a236e1132bf0ada19acfd2232ce3df0e046e001b35fc",
+          "bytes": 2067997,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_minore_desktop_v1.json",
+          "sha256": "a2004f7d3c1fa294c436c0fac3ec661c33071394e453e27b73f30aa13f29d123",
+          "bytes": 2293
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "demone_glaciale_intermedio",
+      "originalName": "Demone Glaciale Intermedio",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Demone Glaciale Intermedio a più massiccio",
+      "status": "user_selected_base_revision_requested",
+      "baseRevisionRequested": true,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_intermedio_desktop_v1.jpg",
+        "sha256": "4e0f4e9a566728da36734edcfcbb377df01434034cd54d8fc729552d0961fd92",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b33d87cb-10b9-4a6d-a579-61799c41405b.png",
+        "nativeSha256": "c939d5b54d14e35647f2b377bd181a6597f8dd3ea512ddbcd45ae034fd2f4e27",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_intermedio_desktop_v1.json",
+        "provenanceSha256": "1241f285d4c07c80bbf34b75f00507d8f08ae71e4237de079ccdba6e54971468",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/demone_glaciale_intermedio_desktop_v1.png",
+        "sha256": "168dfc396b4722eebf387f3cb059fa6b643ef24511bd0a1adbef2162278de9f3"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_intermedio_desktop_v1.jpg",
+          "sha256": "4e0f4e9a566728da36734edcfcbb377df01434034cd54d8fc729552d0961fd92",
+          "bytes": 280080
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b33d87cb-10b9-4a6d-a579-61799c41405b.png",
+          "sha256": "c939d5b54d14e35647f2b377bd181a6597f8dd3ea512ddbcd45ae034fd2f4e27",
+          "bytes": 2049990,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_intermedio_desktop_v1.json",
+          "sha256": "1241f285d4c07c80bbf34b75f00507d8f08ae71e4237de079ccdba6e54971468",
+          "bytes": 2240
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "held_for_requested_artwork_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta della sola base A con revisione esplicitamente richiesta: non integrare l’originale invariato; il nuovo output deve essere mostrato e approvato separatamente."
+      }
+    },
+    {
+      "id": "demone_glaciale_maggiore",
+      "originalName": "Demone Glaciale Maggiore",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Demone Glaciale Maggiore a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_maggiore_desktop_v1.jpg",
+        "sha256": "6426dc688c930dfb8f35c296c789c2682b84019f87f762492a00449623c37900",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-7cfa0dc6-39cb-45e3-8ae8-d984ece13f00.png",
+        "nativeSha256": "83ae4c3de274d6fe400d19247bec1160e127aa41b4f75d786a588f3edb8cc076",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_maggiore_desktop_v1.json",
+        "provenanceSha256": "d5b0934d33dab9a5d95bafdad8554ceab2a1b52f3bd26830f7a072b2ca4f7e9b",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/demone_glaciale_maggiore_desktop_v1.png",
+        "sha256": "7304cfb34d39a932d638a12917c9141743750dd08ccc5056834c927aaf20fe0f"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_maggiore_desktop_v1.jpg",
+          "sha256": "6426dc688c930dfb8f35c296c789c2682b84019f87f762492a00449623c37900",
+          "bytes": 309150
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-7cfa0dc6-39cb-45e3-8ae8-d984ece13f00.png",
+          "sha256": "83ae4c3de274d6fe400d19247bec1160e127aa41b4f75d786a588f3edb8cc076",
+          "bytes": 2091991,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_maggiore_desktop_v1.json",
+          "sha256": "d5b0934d33dab9a5d95bafdad8554ceab2a1b52f3bd26830f7a072b2ca4f7e9b",
+          "bytes": 2408
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "demone_minore",
+      "originalName": "Demone Minore",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Demone Minore a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_minore_desktop_v1.jpg",
+        "sha256": "a52f483334056ce8c0423bb2b96c374541e9105271c84f7c4da0da5d5df130f3",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-a7fc6293-419f-4ec8-b00d-bf955e50d046.png",
+        "nativeSha256": "615550f92ea16cad74ad3ee946695105c099d4483f58296378682a0bf3e96dc9",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_minore_desktop_v1.json",
+        "provenanceSha256": "d01fa08a4dc6c0debd84647741f8587c9ff10445af8e4f6e55670692bc2d47e3",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/demone_minore_desktop_v1.png",
+        "sha256": "bdb3238468e096b0728675b0dfbf3835b71151d155f5c93df83b23e66e9a04ae"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_minore_desktop_v1.jpg",
+          "sha256": "a52f483334056ce8c0423bb2b96c374541e9105271c84f7c4da0da5d5df130f3",
+          "bytes": 290640
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-a7fc6293-419f-4ec8-b00d-bf955e50d046.png",
+          "sha256": "615550f92ea16cad74ad3ee946695105c099d4483f58296378682a0bf3e96dc9",
+          "bytes": 2093501,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_minore_desktop_v1.json",
+          "sha256": "d01fa08a4dc6c0debd84647741f8587c9ff10445af8e4f6e55670692bc2d47e3",
+          "bytes": 2383
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "demone_intermedio",
+      "originalName": "Demone Intermedio",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Demone Intermedio a più massiccio",
+      "status": "user_selected_base_revision_requested",
+      "baseRevisionRequested": true,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_intermedio_desktop_v1.jpg",
+        "sha256": "5adfe6d88ffd68ae5e690eabd8c3056a628da74e1eef0bbd703b7dee380189a0",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-7fde1173-2b44-43cd-af44-7f2e7b9efcac.png",
+        "nativeSha256": "821fc13e856de398bd63332d95dd3997d29223af6c1eb439fc1c4a2a78eff1ad",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_intermedio_desktop_v1.json",
+        "provenanceSha256": "106b86d977b89d142621480911f9b3b93d5dd715ff20e521f7461487ca405512",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/demone_intermedio_desktop_v1.png",
+        "sha256": "1908f8c35f68aa1b37fb2fc0828ac61611e4a3f26ebd2a1149320fd722e55712"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_intermedio_desktop_v1.jpg",
+          "sha256": "5adfe6d88ffd68ae5e690eabd8c3056a628da74e1eef0bbd703b7dee380189a0",
+          "bytes": 243021
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-7fde1173-2b44-43cd-af44-7f2e7b9efcac.png",
+          "sha256": "821fc13e856de398bd63332d95dd3997d29223af6c1eb439fc1c4a2a78eff1ad",
+          "bytes": 1843268,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_intermedio_desktop_v1.json",
+          "sha256": "106b86d977b89d142621480911f9b3b93d5dd715ff20e521f7461487ca405512",
+          "bytes": 2266
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "held_for_requested_artwork_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta della sola base A con revisione esplicitamente richiesta: non integrare l’originale invariato; il nuovo output deve essere mostrato e approvato separatamente."
+      }
+    },
+    {
+      "id": "demone_maggiore",
+      "originalName": "Demone Maggiore",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Demone Maggiore a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_maggiore_desktop_v1.jpg",
+        "sha256": "4cfddfe0dd214bd19ed37f8c4250332e418e14f5a324e67ab7e30901d3a4cd8f",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-6629b6ec-de43-40bb-ab1e-080de893431f.png",
+        "nativeSha256": "5f696bfed75015012bcb53e04cadc421ef4c236f4e3b9a2b914b002a1ade8c13",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_maggiore_desktop_v1.json",
+        "provenanceSha256": "e11cc9eed417088560841468fd88e1c5abce2783d86799f8e0ddad09a5bfe2bf",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/demone_maggiore_desktop_v1.png",
+        "sha256": "5c37ced6d6f6d1dfc40ed625d765abd1b178e4f7bf00e7983807bc059d2fc9c7"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_maggiore_desktop_v1.jpg",
+          "sha256": "4cfddfe0dd214bd19ed37f8c4250332e418e14f5a324e67ab7e30901d3a4cd8f",
+          "bytes": 242074
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-6629b6ec-de43-40bb-ab1e-080de893431f.png",
+          "sha256": "5f696bfed75015012bcb53e04cadc421ef4c236f4e3b9a2b914b002a1ade8c13",
+          "bytes": 1932528,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/demone_maggiore_desktop_v1.json",
+          "sha256": "e11cc9eed417088560841468fd88e1c5abce2783d86799f8e0ddad09a5bfe2bf",
+          "bytes": 2574
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "kobold_base",
+      "originalName": "Coboldo",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Coboldo a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/kobold_base_desktop_v1.jpg",
+        "sha256": "f7cbd75cf493e5a78762a124b1cfab845f97c25457062c266d89dd9ab37a8899",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-7013e1b5-ebd0-4351-bca9-32c7246d92a5.png",
+        "nativeSha256": "ce5486ffda003f46649b06fb4def89cceff64ad0ae6a379a5a1bbbacdbc68793",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/kobold_base_desktop_v1.json",
+        "provenanceSha256": "31e86916c4cb21687fd505df2cd671af371e289b1b11406464ca6f421cf92da8",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/kobold_base_desktop_v1.png",
+        "sha256": "fdc7025b5720b0a28898e9cc62928571858cdae82178c7c5a9616ae741e6e9ef"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/kobold_base_desktop_v1.jpg",
+          "sha256": "f7cbd75cf493e5a78762a124b1cfab845f97c25457062c266d89dd9ab37a8899",
+          "bytes": 324099
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-7013e1b5-ebd0-4351-bca9-32c7246d92a5.png",
+          "sha256": "ce5486ffda003f46649b06fb4def89cceff64ad0ae6a379a5a1bbbacdbc68793",
+          "bytes": 2084243,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/kobold_base_desktop_v1.json",
+          "sha256": "31e86916c4cb21687fd505df2cd671af371e289b1b11406464ca6f421cf92da8",
+          "bytes": 1664
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "coboldo_di_brina",
+      "originalName": "Coboldo di Brina",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Coboldo di Brina b",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/coboldo_di_brina_desktop_v2.jpg",
+        "sha256": "ef3ed729422707f94bbb3947ce35acd6e85ef1ecee3ff67152227549cc59d6db",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-bb006a2e-97b4-4115-a4a6-24f49253b073.png",
+        "nativeSha256": "8963b33acdeec1c31af3cc921e470523675e4e1b9147e511ea5b76c1524f5939",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/coboldo_di_brina_desktop_v2.json",
+        "provenanceSha256": "4dc78a268e02b5ae9cc398838e2add72d263b02e8045f156b857b55179f3d141",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/coboldo_di_brina_desktop_v1.png",
+        "sha256": "f1022508c4961e895672bf251926b53a8b4626903f7d966d57a101eebe1d4f52"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/coboldo_di_brina_desktop_v2.jpg",
+          "sha256": "ef3ed729422707f94bbb3947ce35acd6e85ef1ecee3ff67152227549cc59d6db",
+          "bytes": 242906
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-bb006a2e-97b4-4115-a4a6-24f49253b073.png",
+          "sha256": "8963b33acdeec1c31af3cc921e470523675e4e1b9147e511ea5b76c1524f5939",
+          "bytes": 1974276,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/coboldo_di_brina_desktop_v2.json",
+          "sha256": "4dc78a268e02b5ae9cc398838e2add72d263b02e8045f156b857b55179f3d141",
+          "bytes": 1557
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "coboldo_minatore",
+      "originalName": "Coboldo Minatore",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Coboldo Minatore a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/coboldo_minatore_desktop_v1.jpg",
+        "sha256": "40dc145005335149a6513659b94f65da7cedda4638cc04e5dc36310cb0a8fd1e",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-97e66784-88ab-4d43-9be1-f86fb588b8ce.png",
+        "nativeSha256": "a48e52976dc28942adc9c5015c46ad424f1401280ab1d9898909930463627c9e",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/coboldo_minatore_desktop_v1.json",
+        "provenanceSha256": "160cd41cffb574eed71b2ecb46a8a7b4d589a7dfd9676cabd70e0be41de8c7c8",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/coboldo_minatore_desktop_v1.png",
+        "sha256": "214b2f0c96c2d430bde924381346cac289c4dafd3fcc1c2ee9de5a856a105bb9"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/coboldo_minatore_desktop_v1.jpg",
+          "sha256": "40dc145005335149a6513659b94f65da7cedda4638cc04e5dc36310cb0a8fd1e",
+          "bytes": 281349
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-97e66784-88ab-4d43-9be1-f86fb588b8ce.png",
+          "sha256": "a48e52976dc28942adc9c5015c46ad424f1401280ab1d9898909930463627c9e",
+          "bytes": 1980318,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/coboldo_minatore_desktop_v1.json",
+          "sha256": "160cd41cffb574eed71b2ecb46a8a7b4d589a7dfd9676cabd70e0be41de8c7c8",
+          "bytes": 1554
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "coboldo_runico_postea",
+      "originalName": "Coboldo Runico di Postea",
+      "requestedName": null,
+      "letter": "C",
+      "userQuote": "Coboldo Runico di Postea c",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_coboldo_runico_postea_v1.png",
+        "sha256": "b093ab40d685ac9e3910faa23289d6fff9338404bc893e005adbf6b11cbddea7",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_coboldo_runico_postea_v1.png",
+        "nativeSha256": "b093ab40d685ac9e3910faa23289d6fff9338404bc893e005adbf6b11cbddea7",
+        "version": 1,
+        "sourceKind": "native_imagegen_output_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_coboldo_runico_postea_v1.provenance.json",
+        "provenanceSha256": "b82a5606e83d389598785e518ef8dfe09a0af267de72270df779231140d8f51b",
+        "rawProvenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_coboldo_runico_postea_v1.provenance.json",
+        "rawProvenanceSha256": "b82a5606e83d389598785e518ef8dfe09a0af267de72270df779231140d8f51b",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_12/coboldo_runico_postea_desktop_proposta_A.png",
+        "sha256": "93e3f20969f30c5a3b673c75995beb1e11dd5392c470a509a57d515e44cf011c"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/terze_C_2026-11-06/C_coboldo_runico_postea_v1.png",
+          "sha256": "b093ab40d685ac9e3910faa23289d6fff9338404bc893e005adbf6b11cbddea7",
+          "bytes": 2142255
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_coboldo_runico_postea_v1.png",
+          "sha256": "b093ab40d685ac9e3910faa23289d6fff9338404bc893e005adbf6b11cbddea7",
+          "bytes": 2142255,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/terze_C_2026-11-06/C_coboldo_runico_postea_v1.provenance.json",
+          "sha256": "b82a5606e83d389598785e518ef8dfe09a0af267de72270df779231140d8f51b",
+          "bytes": 6974
+        },
+        "rawProvenance": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_coboldo_runico_postea_v1.provenance.json",
+          "sha256": "b82a5606e83d389598785e518ef8dfe09a0af267de72270df779231140d8f51b",
+          "bytes": 6974
+        },
+        "previewCopyByteIdenticalToNative": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "duellante_senza_palpebre",
+      "originalName": "Duellante Senza Palpebre",
+      "requestedName": "Assassino",
+      "letter": "A",
+      "userQuote": "Duellante Senza Palpebre a e chiamalo \"assassino\" affidandogli il ruolo npc quando lo generi",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/duellante_senza_palpebre_desktop_v1.jpg",
+        "sha256": "220780774ed05f56077bd128156160fa7029b39a6fb722af951a89dc56d744d5",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-82197be4-1423-4c49-acf9-c83d0025fbf4.png",
+        "nativeSha256": "e4184f71f5fad4bca03a4c26a75103258d6212e4c7cb3ca104cba60a6a351065",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/duellante_senza_palpebre_desktop_v1.json",
+        "provenanceSha256": "265f904efcd4c4146edefc5a9ab266d70309aaed4d2a33e739b8c19a7304db63",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/duellante_senza_palpebre_desktop_v1.png",
+        "sha256": "d6314b969c0746af22f0ab628409a3ef6692e8455366a5207420c99c974e2e92"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/duellante_senza_palpebre_desktop_v1.jpg",
+          "sha256": "220780774ed05f56077bd128156160fa7029b39a6fb722af951a89dc56d744d5",
+          "bytes": 213235
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-82197be4-1423-4c49-acf9-c83d0025fbf4.png",
+          "sha256": "e4184f71f5fad4bca03a4c26a75103258d6212e4c7cb3ca104cba60a6a351065",
+          "bytes": 1826641,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/duellante_senza_palpebre_desktop_v1.json",
+          "sha256": "265f904efcd4c4146edefc5a9ab266d70309aaed4d2a33e739b8c19a7304db63",
+          "bytes": 2499
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "gnoll_diabolico",
+      "originalName": "Gnoll Diabolico",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Gnoll Diabolico b",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/gnoll_diabolico_desktop_v2.jpg",
+        "sha256": "3466e7efb4e36231765fdc6efebabb45238add63c37fad14be5776ac0f934bc0",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\gnoll_diabolico_desktop_v2_3ec988f89e053eb9.png",
+        "nativeSha256": "3ec988f89e053eb9936ee44dafea7b9626d1bff79e951a705c1d8530a77dfd1a",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/gnoll_diabolico_desktop_v2.json",
+        "provenanceSha256": "4d0ed82490514dd5d9f1ffcb419651fac6b0808314821768d270763ada7bafd3",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_11/gnoll_diabolico_desktop_proposta_A.png",
+        "sha256": "be7167b27f7e230195276d02ed36050193d8cbf8fd0d0d93b841c57b6cc3ae06"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/gnoll_diabolico_desktop_v2.jpg",
+          "sha256": "3466e7efb4e36231765fdc6efebabb45238add63c37fad14be5776ac0f934bc0",
+          "bytes": 254246
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\originali_2026-11-05\\gnoll_diabolico_desktop_v2_3ec988f89e053eb9.png",
+          "sha256": "3ec988f89e053eb9936ee44dafea7b9626d1bff79e951a705c1d8530a77dfd1a",
+          "bytes": 1932904,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/gnoll_diabolico_desktop_v2.json",
+          "sha256": "4d0ed82490514dd5d9f1ffcb419651fac6b0808314821768d270763ada7bafd3",
+          "bytes": 3384
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "baby_forest_demon",
+      "originalName": "Baby Forest Demon",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "baby Forest Demon a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/baby_forest_demon_desktop_v1.jpg",
+        "sha256": "41d38cba659aeeb26faed0f4a9df400a142053fbfc9fc04f9ac067d7f430fcb4",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-2e2dfa2d-2f9f-4b86-9955-dd4b83ce04c8.png",
+        "nativeSha256": "711cac991e7e4474ddda847958b368457ed2913e68334289201cbbd3b4cd2f26",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/baby_forest_demon_desktop_v1.json",
+        "provenanceSha256": "55db6eb12d77b91e5978ce109f2f011dd6e502aa099c907ab9cc5cf252fbf692",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/baby_forest_demon_desktop_v1.png",
+        "sha256": "bebf272f8faae129e25daab3603867dde7086fbb2a1f8f21c15fa9e0e83d0567"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/baby_forest_demon_desktop_v1.jpg",
+          "sha256": "41d38cba659aeeb26faed0f4a9df400a142053fbfc9fc04f9ac067d7f430fcb4",
+          "bytes": 366357
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-2e2dfa2d-2f9f-4b86-9955-dd4b83ce04c8.png",
+          "sha256": "711cac991e7e4474ddda847958b368457ed2913e68334289201cbbd3b4cd2f26",
+          "bytes": 2238393,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/baby_forest_demon_desktop_v1.json",
+          "sha256": "55db6eb12d77b91e5978ce109f2f011dd6e502aa099c907ab9cc5cf252fbf692",
+          "bytes": 1539
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "inspired_basilisco_delle_rovine",
+      "originalName": "Basilisco delle Rovine",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Basilisco delle Rovine a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_desktop_v1.jpg",
+        "sha256": "cadca982aed85fc888bd33e5d6ffe33fd1a17d2cb155f0ed905fd45409314f81",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\inspired_basilisco_delle_rovine_desktop_v1_95141c46992aac86.png",
+        "nativeSha256": "95141c46992aac86049a7934aeee1f88c9920afc152c3ccd1c6bba33d6dcb80d",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_desktop_v1.json",
+        "provenanceSha256": "bc17329ac80cad49eba45377226fca9ac7bc31f560f116922a838003df635c0f",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/inspired_basilisco_delle_rovine_desktop_v1.png",
+        "sha256": "aed5625e3548c0b20bb9bbf3d1848bf34067793e76f393f4e39492b532b50cdc"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_desktop_v1.jpg",
+          "sha256": "cadca982aed85fc888bd33e5d6ffe33fd1a17d2cb155f0ed905fd45409314f81",
+          "bytes": 270415
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\originali_2026-11-05\\inspired_basilisco_delle_rovine_desktop_v1_95141c46992aac86.png",
+          "sha256": "95141c46992aac86049a7934aeee1f88c9920afc152c3ccd1c6bba33d6dcb80d",
+          "bytes": 1979387,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/inspired_basilisco_delle_rovine_desktop_v1.json",
+          "sha256": "bc17329ac80cad49eba45377226fca9ac7bc31f560f116922a838003df635c0f",
+          "bytes": 3327
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "armaiolo_della_fila_lunga",
+      "originalName": "Armaiolo della Fila Lunga",
+      "requestedName": "Armaiolo della spada e scudo",
+      "letter": "C",
+      "userQuote": "Armaiolo della Fila Lunga c rinominato Armaiolo della spada e scudo",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_armaiolo_della_fila_lunga_v1.png",
+        "sha256": "c8bfd0a045042481cd6b95ae74f41b3f6b481f2cc8c81d20092a81e8a843e5a3",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_armaiolo_della_fila_lunga_v1.png",
+        "nativeSha256": "c8bfd0a045042481cd6b95ae74f41b3f6b481f2cc8c81d20092a81e8a843e5a3",
+        "version": 1,
+        "sourceKind": "native_imagegen_output_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_armaiolo_della_fila_lunga_v1.provenance.json",
+        "provenanceSha256": "759a6deebc53530225933c85852f2122a02032bca7287472f43911d8fe80fdd1",
+        "rawProvenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_armaiolo_della_fila_lunga_v1.provenance.json",
+        "rawProvenanceSha256": "759a6deebc53530225933c85852f2122a02032bca7287472f43911d8fe80fdd1",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/armaiolo_della_fila_lunga_desktop_v1.png",
+        "sha256": "74bb023319b492a6995515a9d07c6f7d604245c6ca7fcb1850f66b72bc277dec"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/terze_C_2026-11-06/C_armaiolo_della_fila_lunga_v1.png",
+          "sha256": "c8bfd0a045042481cd6b95ae74f41b3f6b481f2cc8c81d20092a81e8a843e5a3",
+          "bytes": 1981648
+        },
+        "native": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_armaiolo_della_fila_lunga_v1.png",
+          "sha256": "c8bfd0a045042481cd6b95ae74f41b3f6b481f2cc8c81d20092a81e8a843e5a3",
+          "bytes": 1981648,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/terze_C_2026-11-06/C_armaiolo_della_fila_lunga_v1.provenance.json",
+          "sha256": "759a6deebc53530225933c85852f2122a02032bca7287472f43911d8fe80fdd1",
+          "bytes": 7306
+        },
+        "rawProvenance": {
+          "file": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_armaiolo_della_fila_lunga_v1.provenance.json",
+          "sha256": "759a6deebc53530225933c85852f2122a02032bca7287472f43911d8fe80fdd1",
+          "bytes": 7306
+        },
+        "previewCopyByteIdenticalToNative": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "cane_di_cenere",
+      "originalName": "Cane di Cenere",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Cane di Cenere a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/cane_di_cenere_desktop_v1.jpg",
+        "sha256": "5ad28ab8f85ac3f7c9a9c957f4c5bc42b6bbd0d0cf1dc287155d99f5ff32129f",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-520e7efb-06a3-42c9-a8fd-dd9a25d80d75.png",
+        "nativeSha256": "b7bf457e029006342d9efacf02482728a00ad3f4253a68349afe98ad6ff1d62f",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/cane_di_cenere_desktop_v1.json",
+        "provenanceSha256": "51390d3e2ee30e10670af6de34aad7e630145bf5c729dda8833d8828732dc57c",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/cane_di_cenere_desktop_v1.png",
+        "sha256": "19e205b217dec77fefb943610a61be6784163fca8e996b1d1df819712f26a189"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/cane_di_cenere_desktop_v1.jpg",
+          "sha256": "5ad28ab8f85ac3f7c9a9c957f4c5bc42b6bbd0d0cf1dc287155d99f5ff32129f",
+          "bytes": 250757
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-520e7efb-06a3-42c9-a8fd-dd9a25d80d75.png",
+          "sha256": "b7bf457e029006342d9efacf02482728a00ad3f4253a68349afe98ad6ff1d62f",
+          "bytes": 1910670,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/cane_di_cenere_desktop_v1.json",
+          "sha256": "51390d3e2ee30e10670af6de34aad7e630145bf5c729dda8833d8828732dc57c",
+          "bytes": 1457
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "capitano_della_ruggine_variante_errante",
+      "originalName": "Capitano della Ruggine Errante",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Capitano della Ruggine Errante a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/capitano_della_ruggine_variante_errante_desktop_v1.jpg",
+        "sha256": "4af8c5f99fb633bced32a0ced1881eab13fb50b8c2cc182be67c180f1a3418af",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-5a1d1af2-7048-4da4-ae2b-921bd965b620.png",
+        "nativeSha256": "47137f8948ca3628af5a7868c65d3c7d35dc565d21b6bf9776454ce8ec5cc8f9",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/capitano_della_ruggine_variante_errante_desktop_v1.json",
+        "provenanceSha256": "a8e52cc210492c9f51918a60883d618fa542e72ff694b652320d41ac9bd5517e",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/capitano_della_ruggine_variante_errante_desktop_v1.png",
+        "sha256": "34730bc70db30e39dba3fdb2c19ef40af01986c89f858d9bd72c71c7512f12d5"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/capitano_della_ruggine_variante_errante_desktop_v1.jpg",
+          "sha256": "4af8c5f99fb633bced32a0ced1881eab13fb50b8c2cc182be67c180f1a3418af",
+          "bytes": 345293
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-5a1d1af2-7048-4da4-ae2b-921bd965b620.png",
+          "sha256": "47137f8948ca3628af5a7868c65d3c7d35dc565d21b6bf9776454ce8ec5cc8f9",
+          "bytes": 2160141,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/capitano_della_ruggine_variante_errante_desktop_v1.json",
+          "sha256": "a8e52cc210492c9f51918a60883d618fa542e72ff694b652320d41ac9bd5517e",
+          "bytes": 1667
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_gigante_goblin",
+      "originalName": "Gigante Goblin",
+      "requestedName": null,
+      "letter": "A",
+      "userQuote": "Gigante Goblin a",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_gigante_goblin_desktop_v1.jpg",
+        "sha256": "53e89e985f6fe5d0818af6d8775ae7736fa1972bf31d8d8e7695bac23272abfa",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-cba82f22-a48a-40e3-8444-ef6cf85149bc.png",
+        "nativeSha256": "d3172eb3d630788625981b944791bcf03aca9b194c2ee9c0c44e58c0aec89bb1",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_gigante_goblin_desktop_v1.json",
+        "provenanceSha256": "67fac918df49d3c6a4e2a7413a8e316f3f49fc33b92c5925eabfeaaaefe197c4",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/proposte_prossima_patch_2026-10-29/lotto_09/ciclo_gigante_goblin_desktop_proposta_A.png",
+        "sha256": "a8037a214655c1e72a672466efaa6866a424f24faecda1322466165b29052e24"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_gigante_goblin_desktop_v1.jpg",
+          "sha256": "53e89e985f6fe5d0818af6d8775ae7736fa1972bf31d8d8e7695bac23272abfa",
+          "bytes": 259198
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-cba82f22-a48a-40e3-8444-ef6cf85149bc.png",
+          "sha256": "d3172eb3d630788625981b944791bcf03aca9b194c2ee9c0c44e58c0aec89bb1",
+          "bytes": 1921544,
+          "width": 1585,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_gigante_goblin_desktop_v1.json",
+          "sha256": "67fac918df49d3c6a4e2a7413a8e316f3f49fc33b92c5925eabfeaaaefe197c4",
+          "bytes": 1595
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    },
+    {
+      "id": "ciclo_lepre_guscio_quieto",
+      "originalName": "Lepre del Guscio Quieto",
+      "requestedName": null,
+      "letter": "B",
+      "userQuote": "Lepre del Guscio Quieto b",
+      "status": "canonical_user_vote",
+      "baseRevisionRequested": false,
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_lepre_guscio_quieto_desktop_v2.jpg",
+        "sha256": "ade6da27d4763fde28af01aec3f5f032011793b43f1ef6c435980c2a294586ff",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-5b37debb-1d6c-44e7-af44-7482ca25cf59.png",
+        "nativeSha256": "7637aab60a0490c8a3b51bb7ba595d6e6740f061d9e39fad0da502ec9ce172da",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_lepre_guscio_quieto_desktop_v2.json",
+        "provenanceSha256": "c167235168ff083d275a12c648bc28a3637d3d349d23ccd01c3a0530b973d263",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/ciclo_lepre_guscio_quieto_desktop_v1.png",
+        "sha256": "43f5187bff68af126a3a3fa2c8766495894732a54df8fe72fa3a240f25945767"
+      },
+      "assetVerification": {
+        "preview": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_lepre_guscio_quieto_desktop_v2.jpg",
+          "sha256": "ade6da27d4763fde28af01aec3f5f032011793b43f1ef6c435980c2a294586ff",
+          "bytes": 272258
+        },
+        "native": {
+          "file": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-5b37debb-1d6c-44e7-af44-7482ca25cf59.png",
+          "sha256": "7637aab60a0490c8a3b51bb7ba595d6e6740f061d9e39fad0da502ec9ce172da",
+          "bytes": 1919898,
+          "width": 1586,
+          "height": 992,
+          "pngCrcVerified": true,
+          "zlibVerified": true,
+          "rowFilterBytesVerified": true
+        },
+        "provenance": {
+          "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_lepre_guscio_quieto_desktop_v2.json",
+          "sha256": "c167235168ff083d275a12c648bc28a3637d3d349d23ccd01c3a0530b973d263",
+          "bytes": 1595
+        },
+        "nativeAndPreviewAreDifferentFormats": true
+      },
+      "integration": {
+        "status": "pending_next_revision",
+        "frozenBuild": "5f89ea2b",
+        "compiledCommitUnchanged": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "newAlternativesIntegrated": false,
+        "note": "Scelta artistica esatta registrata; integrazione, composizione sui controlli e nuovi pacchetti sono verifiche separate dalla build273 già consegnata."
+      }
+    }
+  ],
+  "artworkRevisionRequests": [
+    {
+      "id": "ciclo_scarabeo_sigillo_ardente",
+      "originalName": "Scarabeo del Sigillo Ardente",
+      "status": "pending_generation_and_user_review",
+      "requestKind": "much_larger_2_metres",
+      "baseAlternative": "A",
+      "userQuote": "Scarabeo del Sigillo Ardente a molto più grosso",
+      "requiresApprovedRevisionBeforeIntegration": true,
+      "unchangedBaseIsApprovedForRuntime": false,
+      "newGeneratedOutputApproved": false,
+      "newOutputIntegrated": false,
+      "gameplayBonusInferred": false,
+      "userClarification": "Circa 2 metri",
+      "requestedVisualSizeApproxMeters": 2,
+      "sizeAxisNotInferred": true,
+      "baseArtwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ciclo_scarabeo_sigillo_ardente_desktop_v1.jpg",
+        "sha256": "d6029e78d9b961717ddb3fa3b1ffd01538819c3374e41750699b2e53c3271b26",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-ebf3cb3c-c2e8-40b3-9ad8-504e98a5d4f6.png",
+        "nativeSha256": "2d33df1a4967ccbfe79efc897627fd6e0f5f1c9268c15ebbfa7056dc972a137b",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ciclo_scarabeo_sigillo_ardente_desktop_v1.json",
+        "provenanceSha256": "29a1c17fbe9099582bb7875f558e4003e6934d55575e8ee35417b3374be2ed3a",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      }
+    },
+    {
+      "id": "demone_glaciale_intermedio",
+      "originalName": "Demone Glaciale Intermedio",
+      "status": "pending_generation_and_user_review",
+      "requestKind": "more_massive",
+      "baseAlternative": "A",
+      "userQuote": "Demone Glaciale Intermedio a più massiccio",
+      "requiresApprovedRevisionBeforeIntegration": true,
+      "unchangedBaseIsApprovedForRuntime": false,
+      "newGeneratedOutputApproved": false,
+      "newOutputIntegrated": false,
+      "gameplayBonusInferred": false,
+      "baseArtwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_intermedio_desktop_v1.jpg",
+        "sha256": "4e0f4e9a566728da36734edcfcbb377df01434034cd54d8fc729552d0961fd92",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b33d87cb-10b9-4a6d-a579-61799c41405b.png",
+        "nativeSha256": "c939d5b54d14e35647f2b377bd181a6597f8dd3ea512ddbcd45ae034fd2f4e27",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_glaciale_intermedio_desktop_v1.json",
+        "provenanceSha256": "1241f285d4c07c80bbf34b75f00507d8f08ae71e4237de079ccdba6e54971468",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      }
+    },
+    {
+      "id": "demone_intermedio",
+      "originalName": "Demone Intermedio",
+      "status": "pending_generation_and_user_review",
+      "requestKind": "more_massive",
+      "baseAlternative": "A",
+      "userQuote": "Demone Intermedio a più massiccio",
+      "requiresApprovedRevisionBeforeIntegration": true,
+      "unchangedBaseIsApprovedForRuntime": false,
+      "newGeneratedOutputApproved": false,
+      "newOutputIntegrated": false,
+      "gameplayBonusInferred": false,
+      "baseArtwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/demone_intermedio_desktop_v1.jpg",
+        "sha256": "5adfe6d88ffd68ae5e690eabd8c3056a628da74e1eef0bbd703b7dee380189a0",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-7fde1173-2b44-43cd-af44-7f2e7b9efcac.png",
+        "nativeSha256": "821fc13e856de398bd63332d95dd3997d29223af6c1eb439fc1c4a2a78eff1ad",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/demone_intermedio_desktop_v1.json",
+        "provenanceSha256": "106b86d977b89d142621480911f9b3b93d5dd715ff20e521f7461487ca405512",
+        "galleryAudit": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+        "galleryAuditSha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76"
+      }
+    }
+  ],
+  "redesignRequests": [
+    {
+      "id": "ciclope_del_fato",
+      "originalName": "Ciclope del Fato",
+      "userQuote": "Ciclope del Fato simile a prima immagine",
+      "action": "redesign_reference",
+      "savedSheetsCustomArtAndOriginalReceiptsPreserved": true,
+      "implementationHandledSeparately": true,
+      "status": "redesign_requested_pending_generation_and_user_review",
+      "referenceAttachment": {
+        "file": "C:\\Users\\michy\\AppData\\Local\\Temp\\codex-clipboard-e1d2be90-7782-4fdf-9a12-95a261e759cb.png",
+        "sha256": "b9198251491b4c35cc269677e1d15800ba7eaa31439c5081b8166b021ac84333",
+        "bytes": 362545
+      },
+      "exactExistingArtworkVoteInferred": false,
+      "newCanonicalArtworkInferred": false,
+      "newGeneratedArtworkApproved": false,
+      "attachmentRole": "Identity/style reference for a new design; not an exact vote for existing A."
+    }
+  ],
+  "retirements": [
+    {
+      "id": "duellante_senza_palpebre_variante_errante",
+      "originalName": "Duellante Senza Palpebre Errante",
+      "userQuote": "Duellante Senza Palpebre Errante elimina",
+      "action": "retire",
+      "savedSheetsCustomArtAndOriginalReceiptsPreserved": true,
+      "implementationHandledSeparately": true,
+      "status": "explicit_user_retirement_request",
+      "artworkVoteInferred": false,
+      "legacyIdPreserved": true
+    },
+    {
+      "id": "weak_horror_sagrestano",
+      "originalName": "Sagrestano Cavo",
+      "userQuote": "Sagrestano Cavo elimina",
+      "action": "retire",
+      "savedSheetsCustomArtAndOriginalReceiptsPreserved": true,
+      "implementationHandledSeparately": true,
+      "status": "explicit_user_retirement_request",
+      "artworkVoteInferred": false,
+      "legacyIdPreserved": true
+    }
+  ],
+  "renameRequests": [
+    {
+      "id": "duellante_senza_palpebre",
+      "originalName": "Duellante Senza Palpebre",
+      "requestedName": "Assassino",
+      "legacyIdPreserved": true,
+      "userQuote": "Duellante Senza Palpebre a e chiamalo \"assassino\" affidandogli il ruolo npc quando lo generi",
+      "requestedGeneratedEntityRole": "npc"
+    },
+    {
+      "id": "armaiolo_della_fila_lunga",
+      "originalName": "Armaiolo della Fila Lunga",
+      "requestedName": "Armaiolo della spada e scudo",
+      "legacyIdPreserved": true,
+      "userQuote": "Armaiolo della Fila Lunga c rinominato Armaiolo della spada e scudo"
+    }
+  ],
+  "instructionCount": 46,
+  "letterChoiceCount": 43,
+  "letterCounts": {
+    "A": 29,
+    "B": 8,
+    "C": 6
+  },
+  "exactDesktopChoices": 40,
+  "selectedBasesWithRevisionRequired": 3,
+  "choicesBefore": 56,
+  "choicesAfter": 99,
+  "artisticVoteLedger": "docs/SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json",
+  "ledgerBeforeBackup": "build/SCELTE_ALTERNATIVE_MOSTRI_before_99_votes_20261106_06.json",
+  "ledgerBeforeSha256": "a10e140b34eae3079881dd2623765d266212debd7cfacd5e34a23b8296afba2d",
+  "gallerySnapshot": {
+    "file": "build/THIRD_C_GALLERY_AUDIT_20261106.json",
+    "sha256": "f13ac838800e88fc343d3a660e078308f69dcecd504c35e78f9413b23f62de76",
+    "bytes": 76280,
+    "eligibleCreatureCount": 47,
+    "imageComparisons": 141,
+    "actualCurrentCRevisionsResolved": true
+  },
+  "unmentionedPendingId": "habitat_mezzano_bandito_della_maschera_di_corteccia",
+  "preservation": "Tutti i56record precedenti sono identici integralmente nei contenuti. Le provenienze originali e tutte le alternative restano immutate. Nomi originali conservati; requestedName e ruoli richiesti sono separati dai legacyID.",
+  "compiledDistributionUnchanged": {
+    "commit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+    "coordinatedBuild": 273,
+    "newRuntimeOrPackageProofInferred": false,
+    "rowMarked100Percent": false
+  },
+  "notClaimed": [
+    "Nessuna approvazione del redesign Ciclope o dei nuovi4output richiesti.",
+    "Nessun voto per il Bandito Corteccia base non nominato.",
+    "Nessuna integrazione dell’A invariata delle3basi con edit richiesto.",
+    "Nessuna modifica di source/runtime/asset/manuale/regole/TODO/Git/gallerie/pending/progress da questa registrazione.",
+    "Nessuna cancellazione di salvataggi, immagini personalizzate o originali e nessun bonus gameplay dedotto dalla scala."
+  ]
+}

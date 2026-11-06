@@ -5537,7 +5537,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Grado $selectedGrade · +${oculumMonsterStatPointsPerGrade(entry.presetType)} punti per Grado',
+                        'Grado $selectedGrade · +${oculumMonsterStatPointsPerGrade(entry.creationStatType)} punti per Grado',
                       ),
                       const SizedBox(height: 8),
                       smallInfoText(
@@ -5632,8 +5632,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           await creaSchedaRapidaMaster(
                             forcedType: entry.presetType,
                             fallbackName: entry.nameIt,
-                            sideOverride: entry.isNpc ? 'ally' : 'enemy',
-                            forceEnemyProfile: !entry.isNpc,
+                            sideOverride: entry.generationSide,
+                            forceEnemyProfile: entry.generationSide == 'enemy',
                             livelloForzato: selectedLevel,
                             statsMostroForzate: {
                               for (final key in controllers.keys)

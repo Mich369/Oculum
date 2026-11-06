@@ -5,6 +5,22 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Assassino NPC nemico, ritiri e Scarabeo — 6 novembre',
+    titleEn: 'Enemy NPC Assassin, retirements and Beetle — November 6',
+    contentIt: r'''
+Il Duellante Senza Palpebre comune si chiama Assassino. Alla generazione è un vero NPC nemico: la precisazione dell’utente è «ovviamente npc nemico». Conserva l’ID storico, il livello, le statistiche e il profilo di crescita precedenti, le capacità del catalogo con costi e recuperi, le due lame e la giubba. Il nome e il ruolo non attribuiscono nuove capacità o una nuova moralità.
+È ritirato soltanto il Duellante Senza Palpebre Errante, non la base Assassino. Il Sagrestano Cavo e tutte le sue varianti sono ritirati dal catalogo e dai nuovi incontri o acquisti di pagine. Gli ID legacy, le schede esistenti, le immagini e le personalizzazioni del Master restano leggibili.
+L’Armaiolo della Fila Lunga si chiama Armaiolo della spada e scudo. La variante Rituale eredita il nome ma resta una voce distinta dalla base, con la propria scelta artistica. Le rinominazioni non riscrivono i nomi personali, le categorie o i valori già salvati. Gli editor e il JSON conservano capacità, costi, durata, bersagli ed effetti modificabili.
+Lo Scarabeo del Sigillo Ardente è grande circa 2 metri, secondo la precisazione esplicita dell’utente. La dimensione descrittiva non assegna bonus automatici a statistiche, Danni, Difesa, Scudi, capacità o drop.
+''',
+    contentEn: r'''
+The base Eyelidless Duelist is now named Assassin. Generation creates a real enemy NPC, following the user's explicit clarification "ovviamente npc nemico". It retains its historical ID, level, stats and previous growth profile, catalogue abilities with their costs and cooldowns, paired blades and leather coat. The name and role grant no new abilities or moral alignment.
+Only the Eyelidless Duelist Wanderer is retired; the base Assassin remains available. The Hollow Sacristan and all its variants are excluded from the active catalogue, new encounters and new Book-page purchases. Legacy IDs, existing sheets, images and Master customizations remain readable.
+The Long Rank Armorer is renamed Sword and Shield Armorer. Its Ritual variant inherits the name while remaining distinct from the base, with its own artwork selection. Renaming does not rewrite saved personal names, categories or values. Existing editors and sheet JSON retain editable abilities, costs, duration, targets and effects.
+The Burning Seal Beetle is approximately 2 metres in size, as explicitly clarified by the user. This descriptive size grants no automatic bonuses to stats, damage, defence, shields, abilities or loot.
+''',
+  ),
+  ManualSection(
     titleIt: 'Fortuna e generazione dei mostri — 5 novembre',
     titleEn: 'Fortune and monster generation — November 5',
     contentIt: r'''
@@ -29,7 +45,8 @@ Ice lands: Three-Skull Construct, Rime-Blade Skeleton, Glacial Crest Hunter, Hol
 ''',
   ),
   ManualSection(
-    titleIt: 'Cinghiale interamente di fango e nucleo — conferme del 2 novembre',
+    titleIt:
+        'Cinghiale interamente di fango e nucleo — conferme del 2 novembre',
     titleEn: 'Mud Boar body and core — November 2 confirmations',
     contentIt: r'''
 Corpo interamente di fango, al posto del precedente pelo incrostato. Il punto debole è un nucleo nascosto, esposto da un grave colpo mirato al ventre. La Vita del nucleo è un terzo della Vita attuale del Cinghiale all'esposizione. I Danni al nucleo si trasferiscono proporzionalmente al corpo e la sua distruzione uccide il mostro. Non occorre rompere una corazza del torace. Le soglie precise sono da bilanciare e lasciare modificabili, senza attribuire nuovi poteri o immunità. Regola confermata; i relativi automatismi sono ancora in preparazione nella patch locale.

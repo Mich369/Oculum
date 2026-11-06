@@ -614,6 +614,25 @@ class OculumPerformanceProbe {
   );
   Future<void> spawnBookCreature(String id) =>
       _state.showMonsterBookQuickSpawnDialog(monsterById(id)!);
+  bool isEnemySheetAt(int index) => _state.isEnemySheetAt(index);
+  String sheetSideAt(int index) => _state.sheetSideAt(index);
+  List<int> partyStatsCountIndexes() => _state.partyStatsCountIndexes();
+  Future<void> generateBookCreatureFromSource(
+    MonsterBookEntry source, {
+    String? forcedType,
+    int level = 0,
+    Map<String, int>? stats,
+    String sideOverride = '',
+    Random? loadoutRandom,
+  }) => _state.creaSchedaRapidaMaster(
+    forcedType: forcedType,
+    fallbackName: source.nameIt,
+    livelloForzato: level,
+    statsMostroForzate: stats,
+    monsterLoadoutRandom: loadoutRandom,
+    sideOverride: sideOverride,
+    monsterBookSource: source,
+  );
   List<OculumPawnGuardian> get pawns => List.unmodifiable(_state.pawnGuardians);
   int interceptPawnDamage(String tag, int amount) =>
       _state.redirectPawnHpDamage(tag, amount);

@@ -168,7 +168,12 @@ void main() {
     for (final id in _nativeDesktopShaById.keys) {
       final theme = _themeFor(id);
       if (id == _pendingBellCountId) {
-        expect(theme.illustration, isNull);
+        expect(
+          theme.illustration,
+          'assets/oculum/home_art/theme_${id}_canon_20261106_votes2.png',
+          reason:
+              'The subsequently approved twelve-bell revision replaces the held ten-bell draft.',
+        );
       } else {
         linked++;
         expect(theme.illustration, _assetFor(id));

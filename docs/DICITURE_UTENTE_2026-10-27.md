@@ -1,5 +1,11 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+## 6 novembre — Assassino, Scarabeo e Ciclope
+
+**«Duellante Senza Palpebre a e chiamalo \"assassino\" affidandogli il ruolo npc quando lo generi»**, precisato **«ovviamente npc nemico»**: rinomina e ruolo nemico espliciti, senza sostituire il suo kit con quello generico degli NPC alleati. **«Armaiolo della Fila Lunga c rinominato Armaiolo della spada e scudo»**: nome della base distinto dalla variante Rituale. Ritiro del solo Duellante Errante e del Sagrestano Cavo, secondo l’elenco esatto della [ricevuta del lotto](CONFERME_UTENTE_ARTWORK_2026-11-06_06.json).
+
+Scarabeo del Sigillo Ardente: **«Circa 2 metri»**. Dopo i cinque edit mostrati: **«modifica colori e leggermente anatomia del ciclope del fato»**, poi **«il resto va bene»** approva gli altri quattro. Sul Ciclope successivo: **«cambia colore occhio in violetto»**, **«e mettigli una cresta»**, **«non di capelli di spine tipo»**. La v4 mostrata riceve **«Sì, canonico»**. [Quattro revisioni](CONFERME_UTENTE_ARTWORK_2026-11-06_07.json) · [Ciclope definitivo](CONFERME_UTENTE_ARTWORK_2026-11-06_08.json). Nessuna capacità numerica dedotta da queste sole correzioni artistiche.
+
 ## 6 novembre — allegati, ritiri e secondo Gigante
 
 **«Ragno dei Fili Giurati cancella»** e **«Rondine del Respiro Lieve, Viandante dei Ricordi Spenti,Lepre del Fiato di Vetro cancella»**: ritirare le quattro specie dal manuale e dalle nuove selezioni, conservando le schede esistenti e gli originali artistici.

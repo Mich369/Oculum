@@ -2,6 +2,13 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Assassino NPC nemico, ritiri e Scarabeo — 6 novembre
+
+Il Duellante Senza Palpebre comune si chiama Assassino. Alla generazione è un vero NPC nemico: la precisazione dell’utente è «ovviamente npc nemico». Conserva l’ID storico, il livello, le statistiche e il profilo di crescita precedenti, le capacità del catalogo con costi e recuperi, le due lame e la giubba. Il nome e il ruolo non attribuiscono nuove capacità o una nuova moralità.
+È ritirato soltanto il Duellante Senza Palpebre Errante, non la base Assassino. Il Sagrestano Cavo e tutte le sue varianti sono ritirati dal catalogo e dai nuovi incontri o acquisti di pagine. Gli ID legacy, le schede esistenti, le immagini e le personalizzazioni del Master restano leggibili.
+L’Armaiolo della Fila Lunga si chiama Armaiolo della spada e scudo. La variante Rituale eredita il nome ma resta una voce distinta dalla base, con la propria scelta artistica. Le rinominazioni non riscrivono i nomi personali, le categorie o i valori già salvati. Gli editor e il JSON conservano capacità, costi, durata, bersagli ed effetti modificabili.
+Lo Scarabeo del Sigillo Ardente è grande circa 2 metri, secondo la precisazione esplicita dell’utente. La dimensione descrittiva non assegna bonus automatici a statistiche, Danni, Difesa, Scudi, capacità o drop.
+
 ## Fortuna e generazione dei mostri — 5 novembre
 
 Le nuove schede iniziano con 3 punti di Fortuna magica. In Risorse o Dadi rapidi, «Proponi Fortuna dopo il tiro» abilita un'anteprima per scheda. Nei tiri interattivi supportati, ogni punto scelto aggiunge +1 al totale prima della conferma. Il valore naturale del dado rimane quello tirato. L'anteprima permette di proseguire senza spendere. I tiri automatici e gli esiti già confermati seguono il proprio flusso. I saldi delle schede salvate mantengono il loro valore.

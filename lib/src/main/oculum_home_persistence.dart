@@ -6648,9 +6648,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
         label: systemMonsterPresetLabel(monster.nameIt),
         name: monster.nameIt,
         type: monster.presetType,
-        side: monster.isNpc ? 'ally' : 'enemy',
+        side: monster.generationSide,
         artMode: systemMonsterPresetArtMode(monster),
-        enemy: !monster.isNpc,
+        enemy: monster.generationSide == 'enemy',
         description: systemMonsterGeneratorDescription(monster),
       ),
   ];
@@ -6664,7 +6664,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
   List<MonsterBookEntry> systemMonsterPresetForms(String id) {
     final baseId = systemMonsterPresetBaseId(id.trim());
     final base = monsterBookEntryById(baseId);
-    if (base == null) return const <MonsterBookEntry>[];
+    if (base == null || oculumIsRetiredMonsterId(base.id)) {
+      return const <MonsterBookEntry>[];
+    }
     return <MonsterBookEntry>[
       base,
       ...monsterBookEntries.where(
@@ -6677,6 +6679,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     String baseId, {
     String requestedVariantId = '',
   }) {
+    if (oculumIsRetiredMonsterId(baseId)) return baseId;
     final forms = systemMonsterPresetForms(baseId);
     if (forms.isEmpty) return baseId;
     if (requestedVariantId.isNotEmpty &&
@@ -7534,11 +7537,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     int? livelloForzato,
     int? gradoForzato,
     Map<String, int>? statsMostroForzate,
+    Random? monsterLoadoutRandom,
     String monsterVariant = 'base',
     MonsterBookEntry? monsterBookSource,
   }) async {
     ensureQuickNpcSkills();
-    final selectedType = forcedType ?? quickSheetType;
     final pawnCreatureOwner = pawnSenderTag;
     final createWithOculusRules = oculusModActive;
     final baseName = quickSheetNameController.text.trim().isEmpty
@@ -7549,7 +7552,21 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final description = cleanUiText(
       quickSheetDescriptionController.text,
     ).trim();
-    final enemyProfile = forceEnemyProfile || isEnemyTypeName(selectedType);
+    final humanoidSource =
+        monsterBookSource ??
+        monsterBookEntryForGeneratedEntity(description, baseName);
+    final selectedType = humanoidSource?.isNpc == true
+        ? 'NPC'
+        : (forcedType ?? quickSheetType);
+    final statGenerationType =
+        '${humanoidSource?.encounterRules['creationStatType'] ?? selectedType}';
+    final generationSide = sideOverride.trim().isNotEmpty
+        ? sideOverride
+        : (humanoidSource?.generationSide ?? '');
+    final enemyProfile =
+        forceEnemyProfile ||
+        isEnemyTypeName(selectedType) ||
+        generationSide.trim().toLowerCase() == 'enemy';
     final count = readIntValue(
       quickSheetCountController.text,
       fallback: 1,
@@ -7567,19 +7584,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
       return;
     }
     final createdNames = <String>[];
-    final humanoidSource =
-        monsterBookSource ??
-        monsterBookEntryForGeneratedEntity(description, baseName);
     OculumHumanoidChoice? humanoidChoice;
     if (!createWithOculusRules &&
+        humanoidSource?.isNpc != true &&
         oculumIsHumanoid(selectedType, description, humanoidSource)) {
       final previewLevel =
           livelloForzato ?? max(0, leggiNumero(quickSheetLevelController));
       final previewGrade =
           gradoForzato ?? max(0, leggiNumero(quickSheetGradeController));
       final previewStats = balancedQuickSheetStats(
-        selectedType,
-        forceEnemyProfile: forceEnemyProfile,
+        statGenerationType,
+        forceEnemyProfile: enemyProfile,
         level: previewLevel,
         grade: previewGrade,
         description: '$description $baseName',
@@ -7597,8 +7612,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
         initialArtMode: generatedArtModeForDescription(description),
         budgetAtLevel: (level) {
           final stats = balancedQuickSheetStats(
-            selectedType,
-            forceEnemyProfile: forceEnemyProfile,
+            statGenerationType,
+            forceEnemyProfile: enemyProfile,
             level: level,
             grade: previewGrade,
             description: '$description $baseName',
@@ -7681,14 +7696,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
                   'oculum': matchedMonster?.stats['oculum'] ?? 1,
                 }
               : balancedQuickSheetStats(
-                  selectedType,
-                  forceEnemyProfile: forceEnemyProfile,
+                  statGenerationType,
+                  forceEnemyProfile: enemyProfile,
                   level: livello,
                   grade: grado,
                   description: '$description $nome',
                 ));
       final monsterPointBudget = quickMonsterStatBudget(
-        selectedType,
+        statGenerationType,
         livello,
         grado,
       );
@@ -7752,7 +7767,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         _ => '',
       };
       final elements = <String>{
-        if (selectedType.toLowerCase() == 'npc' && monsterBookSource == null)
+        if (selectedType.toLowerCase() == 'npc' && matchedMonster == null)
           quickNpcSkillElement
         else if (quickSheetElementController.text.trim().isNotEmpty)
           quickSheetElementController.text.trim()
@@ -7817,7 +7832,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
             scudoOculumMaxController.text = '0';
             scudoOculumController.text = '0';
           }
-        } else if (selectedType.toLowerCase().contains('mostro')) {
+        } else if (statGenerationType.toLowerCase().contains('mostro')) {
           // Crescita intrinseca: danno, difesa e punti extra sono separati
           // dalle Art e dai Titoli, perciò non alterano le loro formule.
           attaccoRapidoController.text =
@@ -7839,7 +7854,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           }
         }
         quickSheetType = selectedType;
-        final normalizedSide = sideOverride.trim().toLowerCase();
+        final normalizedSide = generationSide.trim().toLowerCase();
         if (normalizedSide == 'enemy' ||
             normalizedSide == 'ally' ||
             normalizedSide == 'neutral') {
@@ -8519,7 +8534,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
             ? null
             : oculumMonsterBookLoadout(
                 matchedMonster,
-                random: Random(),
+                random: monsterLoadoutRandom ?? Random(),
                 level: livello,
               );
         final generatedArt = matchedMonster != null
@@ -8602,15 +8617,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
               skills.isNotEmpty ||
               (matchedMonster?.skillIds.isNotEmpty ?? false) ||
               arti.any(oculumArtHasUsableSkills);
-          final hasArt = arti.any(
-            (art) =>
-                const [
-                  'oculum',
-                  'oculum art',
-                  'art mostro',
-                ].contains(art.tipo.toLowerCase()) &&
-                oculumArtHasUsableSkills(art),
-          );
+          final hasArt =
+              matchedMonster != null &&
+                  matchedMonster.encounterRules['loadoutPolicy'] ==
+                      'sample_three'
+              ? oculumMonsterHasOculumArt(matchedMonster)
+              : arti.any(
+                  (art) =>
+                      const [
+                        'oculum',
+                        'oculum art',
+                        'art mostro',
+                      ].contains(art.tipo.toLowerCase()) &&
+                      oculumArtHasUsableSkills(art),
+                );
           final allocatedBase =
               statsMostroForzate ??
               (matchedMonster != null
@@ -8893,9 +8913,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
             ? 'npc'
             : 'player';
         oculusModData['monsterRank'] =
-            selectedType.toLowerCase().contains('mini')
+            statGenerationType.toLowerCase().contains('mini')
             ? 'miniBoss'
-            : selectedType.toLowerCase().contains('boss')
+            : statGenerationType.toLowerCase().contains('boss')
             ? 'boss'
             : 'normal';
         if (createWithOculusRules) {

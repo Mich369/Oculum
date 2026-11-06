@@ -1,5 +1,11 @@
 # Oculum — canone visivo confermato
 
+## Secondo lotto, revisioni e Ciclope violetto — 6 novembre
+
+Il registro contiene ora **100 scelte**. Canonici i cinque edit mostrati: Scarabeo del Sigillo Ardente fisicamente di circa due metri, i due Demoni Intermedi più massicci, Lacrimante B con due braccia collegate che appoggiano le mani per spostarsi, Ciclope del Fato v4. Quest’ultimo ha pelle grigio-verde, drappo bordò, un solo occhio violetto con pupilla verticale e una corta cresta di spine ossee, senza capelli; mantiene due orecchie, due braccia, due gambe corte, pancia e mazza. Le versioni precedenti rimangono conservate. [Quattro edit approvati](CONFERME_UTENTE_ARTWORK_2026-11-06_07.json) · [Ciclope v4 approvato](CONFERME_UTENTE_ARTWORK_2026-11-06_08.json).
+
+Il Guardiano dei Dodici Rintocchi usa la revisione A v3 con dodici campanelle, sei sopra e sei sotto, approvata separatamente. Il precedente chiarimento dieci/dodici è risolto; l’originale con dieci resta storico. Le altre scelte del lotto hanno i file esatti nella [ricevuta dei voti](CONFERME_UTENTE_ARTWORK_2026-11-06_06.json). Non riproporre canoni già scelti e non applicare il voto di una variante alla sua base. Duellante Errante e famiglia Sagrestano sono ritirati dalle nuove proposte, senza cancellare originali o schede. Anatomie e colori non aggiungono da soli statistiche, fragilità, immunità o poteri.
+
 ## Lotto di allegati e Gigante distinto — 6 novembre
 
 Registrate **36 scelte desktop distinte** tramite confronto esatto dei pixel dei 39 allegati con le proposte A/B/C; due allegati del Custode dei Nastri ripetono la stessa immagine. Il disegno C del Gigante è scelto separatamente per il **Gigante Massiccio**, più grosso; il Comune resta B. I quindici voti precedenti sono conservati senza modifiche: il registro contiene ora 52 scelte, compresa la nuova variante. [Ricevuta e file esatti](CONFERME_LOTTO_ALLEGATI_2026-11-06.json).

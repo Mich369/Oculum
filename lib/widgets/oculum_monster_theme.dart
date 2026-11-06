@@ -202,6 +202,107 @@ const _november6ApprovedDesktopIds = {
   'black_dragon_shield',
 };
 
+const _november6SecondApprovedDesktopAssets = <String, String>{
+  'angelo_protettore_variante_corazzata':
+      'assets/oculum/home_art/theme_angelo_protettore_variante_corazzata_canon_20261106_votes2.png',
+  'armaiolo_della_fila_lunga':
+      'assets/oculum/home_art/theme_armaiolo_della_fila_lunga_canon_20261106_votes2.png',
+  'armaiolo_della_fila_lunga_variante_rituale':
+      'assets/oculum/home_art/theme_armaiolo_della_fila_lunga_variante_rituale_canon_20261106_votes2.png',
+  'baby_forest_demon':
+      'assets/oculum/home_art/theme_baby_forest_demon_canon_20261106_votes2.png',
+  'baby_rock_rhino_variante_veterana':
+      'assets/oculum/home_art/theme_baby_rock_rhino_variante_veterana_canon_20261106_votes2.png',
+  'bambola_vapium_variante_veterana':
+      'assets/oculum/home_art/theme_bambola_vapium_variante_veterana_canon_20261106_votes2.png',
+  'bandito_base_variante_veterana':
+      'assets/oculum/home_art/theme_bandito_base_variante_veterana_canon_20261106_votes2.png',
+  'basilisco_base_variante_veterana':
+      'assets/oculum/home_art/theme_basilisco_base_variante_veterana_canon_20261106_votes2.png',
+  'cane_di_cenere':
+      'assets/oculum/home_art/theme_cane_di_cenere_canon_20261106_votes2.png',
+  'capitano_della_ruggine_variante_errante':
+      'assets/oculum/home_art/theme_capitano_della_ruggine_variante_errante_canon_20261106_votes2.png',
+  'ciclo_cervo_radure_miti':
+      'assets/oculum/home_art/theme_ciclo_cervo_radure_miti_canon_20261106_votes2.png',
+  'ciclo_gigante_goblin':
+      'assets/oculum/home_art/theme_ciclo_gigante_goblin_canon_20261106_votes2.png',
+  'ciclo_guardiano_dodici_rintocchi':
+      'assets/oculum/home_art/theme_ciclo_guardiano_dodici_rintocchi_canon_20261106_votes2.png',
+  'ciclo_gufo_stelle_alleate':
+      'assets/oculum/home_art/theme_ciclo_gufo_stelle_alleate_canon_20261106_votes2.png',
+  'ciclo_la_follia':
+      'assets/oculum/home_art/theme_ciclo_la_follia_canon_20261106_votes2.png',
+  'ciclo_larva_nome_vuoto':
+      'assets/oculum/home_art/theme_ciclo_larva_nome_vuoto_canon_20261106_votes2.png',
+  'ciclo_lepre_guscio_quieto':
+      'assets/oculum/home_art/theme_ciclo_lepre_guscio_quieto_canon_20261106_votes2.png',
+  'ciclo_lupo_lunare':
+      'assets/oculum/home_art/theme_ciclo_lupo_lunare_canon_20261106_votes2.png',
+  'ciclo_rospo_gronde_marce':
+      'assets/oculum/home_art/theme_ciclo_rospo_gronde_marce_canon_20261106_votes2.png',
+  'ciclo_scarabeo_sigillo_ardente':
+      'assets/oculum/home_art/theme_ciclo_scarabeo_sigillo_ardente_canon_20261106_votes2.png',
+  'ciclo_scorpione_cisterne_secche':
+      'assets/oculum/home_art/theme_ciclo_scorpione_cisterne_secche_canon_20261106_votes2.png',
+  'ciclo_volpe_lanterne_spente':
+      'assets/oculum/home_art/theme_ciclo_volpe_lanterne_spente_canon_20261106_votes2.png',
+  'ciclope_del_fato':
+      'assets/oculum/home_art/theme_ciclope_del_fato_canon_20261106_votes2.png',
+  'cloud_beast_variante_corazzata':
+      'assets/oculum/home_art/theme_cloud_beast_variante_corazzata_canon_20261106_votes2.png',
+  'coboldo_di_brina':
+      'assets/oculum/home_art/theme_coboldo_di_brina_canon_20261106_votes2.png',
+  'coboldo_minatore':
+      'assets/oculum/home_art/theme_coboldo_minatore_canon_20261106_votes2.png',
+  'coboldo_runico_postea':
+      'assets/oculum/home_art/theme_coboldo_runico_postea_canon_20261106_votes2.png',
+  'cultist_of_purple_eyes':
+      'assets/oculum/home_art/theme_cultist_of_purple_eyes_canon_20261106_votes2.png',
+  'demone_glaciale_intermedio':
+      'assets/oculum/home_art/theme_demone_glaciale_intermedio_canon_20261106_votes2.png',
+  'demone_glaciale_maggiore':
+      'assets/oculum/home_art/theme_demone_glaciale_maggiore_canon_20261106_votes2.png',
+  'demone_glaciale_minore':
+      'assets/oculum/home_art/theme_demone_glaciale_minore_canon_20261106_votes2.png',
+  'demone_intermedio':
+      'assets/oculum/home_art/theme_demone_intermedio_canon_20261106_votes2.png',
+  'demone_maggiore':
+      'assets/oculum/home_art/theme_demone_maggiore_canon_20261106_votes2.png',
+  'demone_minore':
+      'assets/oculum/home_art/theme_demone_minore_canon_20261106_votes2.png',
+  'duellante_senza_palpebre':
+      'assets/oculum/home_art/theme_duellante_senza_palpebre_canon_20261106_votes2.png',
+  'gatto_ciotola':
+      'assets/oculum/home_art/theme_gatto_ciotola_canon_20261106_votes2.png',
+  'gigante_scheletro':
+      'assets/oculum/home_art/theme_gigante_scheletro_canon_20261106_votes2.png',
+  'gnoll_diabolico':
+      'assets/oculum/home_art/theme_gnoll_diabolico_canon_20261106_votes2.png',
+  'guardia_del_pozzo':
+      'assets/oculum/home_art/theme_guardia_del_pozzo_canon_20261106_votes2.png',
+  'habitat_foresta_elementale_antico_dei_venti_elementi':
+      'assets/oculum/home_art/theme_habitat_foresta_elementale_antico_dei_venti_elementi_canon_20261106_votes2.png',
+  'habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante':
+      'assets/oculum/home_art/theme_habitat_mezzano_bandito_della_maschera_di_corteccia_variante_errante_canon_20261106_votes2.png',
+  'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti':
+      'assets/oculum/home_art/theme_habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_canon_20261106_votes2.png',
+  'habitat_postea_archivista_della_citt_errante':
+      'assets/oculum/home_art/theme_habitat_postea_archivista_della_citt_errante_canon_20261106_votes2.png',
+  'inspired_basilisco_delle_rovine':
+      'assets/oculum/home_art/theme_inspired_basilisco_delle_rovine_canon_20261106_votes2.png',
+  'inspired_basilisco_delle_rovine_variante_corazzata':
+      'assets/oculum/home_art/theme_inspired_basilisco_delle_rovine_variante_corazzata_canon_20261106_votes2.png',
+  'kobold_base':
+      'assets/oculum/home_art/theme_kobold_base_canon_20261106_votes2.png',
+  'lupo_runico_postea':
+      'assets/oculum/home_art/theme_lupo_runico_postea_canon_20261106_votes2.png',
+  'weak_horror_affamato':
+      'assets/oculum/home_art/theme_weak_horror_affamato_canon_20261106_votes2.png',
+  'weak_horror_lacrimante':
+      'assets/oculum/home_art/theme_weak_horror_lacrimante_canon_20261106_votes2.png',
+};
+
 @immutable
 class OculumMonsterTheme {
   const OculumMonsterTheme(this.monster, this.color);
@@ -214,43 +315,45 @@ class OculumMonsterTheme {
   Color get surface => Color.lerp(const Color(0xff0d1013), accent, .055)!;
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
-  bool get preserveIllustrationFraming => const {
-    ..._november6ApprovedDesktopIds,
-    ..._november5ApprovedDesktopIds,
-    'cavaliere_non_ritorno',
-    'deadly_sins',
-    'pupazzo_artigliato',
-    'pupazzo_robotico_postea',
-    'thunder_bot',
-    'observers_tear',
-    'obser_sunshine',
-    'scostubanditi_empatico',
-    'granscostumato_empatico',
-    'rascalume',
-    'mirula',
-    'rock_shield',
-    'ciclo_riccio_pacifico',
-    'colosso_prismarite',
-    'costrutto_prismatico',
-    'brumilio',
-    'vendulo',
-    'rock_cloud_golem',
-    'ciclo_orso_aculei',
-    'golem_runico',
-    'goblin_kamikaze',
-    'obliterated_devil',
-    'zombie_acido',
-    'fire_shield',
-    'meccanio',
-    'meccanio_ammaccato',
-    'meccanio_primordiale',
-    'specchio_mangiavoce',
-    'teschio_mostruoso',
-    'torretta_oculum',
-    'adoratore_bestia',
-    'cavaliere_morto',
-    'scheletro_bombarolo',
-  }.contains(monster.id);
+  bool get preserveIllustrationFraming =>
+      _november6SecondApprovedDesktopAssets.containsKey(monster.id) ||
+      const {
+        ..._november6ApprovedDesktopIds,
+        ..._november5ApprovedDesktopIds,
+        'cavaliere_non_ritorno',
+        'deadly_sins',
+        'pupazzo_artigliato',
+        'pupazzo_robotico_postea',
+        'thunder_bot',
+        'observers_tear',
+        'obser_sunshine',
+        'scostubanditi_empatico',
+        'granscostumato_empatico',
+        'rascalume',
+        'mirula',
+        'rock_shield',
+        'ciclo_riccio_pacifico',
+        'colosso_prismarite',
+        'costrutto_prismatico',
+        'brumilio',
+        'vendulo',
+        'rock_cloud_golem',
+        'ciclo_orso_aculei',
+        'golem_runico',
+        'goblin_kamikaze',
+        'obliterated_devil',
+        'zombie_acido',
+        'fire_shield',
+        'meccanio',
+        'meccanio_ammaccato',
+        'meccanio_primordiale',
+        'specchio_mangiavoce',
+        'teschio_mostruoso',
+        'torretta_oculum',
+        'adoratore_bestia',
+        'cavaliere_morto',
+        'scheletro_bombarolo',
+      }.contains(monster.id);
   String? get relicIllustration => switch (monster.id) {
     'cavaliere_non_ritorno' =>
       'assets/oculum/home_art/relic_cavaliere_non_ritorno_canon_20261101.png',
@@ -375,6 +478,8 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    final id when _november6SecondApprovedDesktopAssets.containsKey(id) =>
+      _november6SecondApprovedDesktopAssets[id],
     final id when _november6ApprovedDesktopIds.contains(id) =>
       'assets/oculum/home_art/theme_${id}_canon_20261106.png',
     final id when _november5ApprovedDesktopIds.contains(id) =>

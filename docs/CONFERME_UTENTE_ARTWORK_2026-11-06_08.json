@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-06T17:51:24.041729+00:00",
+  "id": "ciclope_del_fato",
+  "question": "Approvi come canonico il Ciclope del Fato appena mostrato, con occhio violetto e cresta di spine?",
+  "answer": "Sì, canonico",
+  "artwork": {
+    "file": "output/artwork/revisioni_voti_2026-11-06/ciclope_del_fato_riferimento_panciuto_v4.png",
+    "source": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\ciclope_del_fato_riferimento_panciuto_v4.png",
+    "sha256": "8c2da1fdadb33ddc8551404ee2490251ecf35678b87b10419b206426e0ecf722",
+    "nativeSha256": "8c2da1fdadb33ddc8551404ee2490251ecf35678b87b10419b206426e0ecf722",
+    "sourceKind": "native_imagegen_edit_verified",
+    "provenanceFile": "G:\\Oculum-Artwork\\revisioni_voti_2026-11-06\\ciclope_del_fato_riferimento_panciuto_v4.provenance.json",
+    "provenanceSha256": "5a0e5f53dee8d88963586ffbff13b0cc177a013f28c9f6c8cfcb98c5ab73c557",
+    "version": 4
+  },
+  "requests": [
+    "modifica colori e leggermente anatomia del ciclope del fato",
+    "cambia colore occhio in violetto",
+    "e mettigli una cresta",
+    "non di capelli di spine tipo"
+  ],
+  "scope": "Exact v4 artwork approval; no vote for former A/B/C inferred and no new gameplay powers."
+}

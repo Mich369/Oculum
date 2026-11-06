@@ -1400,6 +1400,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   bool isEnemySheetAt(int index) {
+    if (index >= 0 && index < schedePersonaggio.length) {
+      final side = '${schedePersonaggio[index]['masterSideOverride'] ?? ''}'
+          .trim()
+          .toLowerCase();
+      if (side == 'enemy' || side == 'ally' || side == 'neutral') {
+        return side == 'enemy';
+      }
+    }
     final tipo = tipoSchedaPersonaggio(index).trim().toLowerCase();
     return tipo.contains('mostro') ||
         tipo.contains('boss') ||
