@@ -1,5 +1,15 @@
 # Registro cumulativo per i giocatori
 
+## Aggiornamento — 6 novembre
+
+- Nuovo Gigante Massiccio distinto dal Comune, con statistiche più robuste e disegno C scelto; il Comune conserva B. Valori, livello, tecniche e parti colpibili restano modificabili. Corretta l’applicazione del bonus +15 +5×livello per ciascun bersaglio degli attacchi della famiglia, dopo la divisione del danno base.
+- Collegati 36 sfondi desktop canonici ai PNG originali, conservando le immagini e le preferenze personali. Sugli schermi stretti il desktop rimane intero tramite il fallback esistente. Il voto del Guardiano dei Dodici Rintocchi è conservato, ma il nuovo sfondo resta sospeso per chiarire il numero delle campane. Non sono nuovi derivati telefono o reliquie.
+- Ritirati Ragno dei Fili Giurati, Rondine del Respiro Lieve, Viandante dei Ricordi Spenti e Lepre del Fiato di Vetro dal manuale/catalogo attivo, dai nuovi incontri e dalle nuove pagine in vendita. Schede salvate, sorgenti degli Occhi e personalizzazioni restano leggibili.
+- Le decorazioni personalizzate vengono montate una sola volta: la loro opacità non si somma più a un duplicato. Il refresh delle gallerie applica anche i ritiri successivi senza cancellare gli originali.
+- L’esportazione del manuale conserva tutti gli 82 capitoli anche quando il formatter manda un titolo su più righe. Registrate 52 scelte artistiche; le proposte non scelte rimangono nello storico.
+
+Verifiche locali: 99 test Flutter passati, comprese prove a 320/834/1440 px, attacchi del Gigante e conservazione dei custom; analisi completa senza problemi e ricontrollo finale del manuale riuscito. Passati 19 test Python per gallerie/percorsi e due per l’esportazione reale del manuale. CI, pacchetti, pubblicazione e installazione hanno riscontri separati. [Dettagli, bilanciamento e valori modificabili](PATCH_2026-11-06_LOTTO_GIGANTE_RITIRI.md).
+
 ## Aggiornamento — 5 novembre
 
 - Ritirati l'Errante con la Sedia e l'Errante con l'Ombrello, con le rispettive varianti, dal catalogo e dai nuovi incontri. Le schede salvate conservano statistiche e capacità; il Mercato Nero non propone nuove pagine delle specie ritirate.

@@ -1799,7 +1799,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final cycleStomp = max(0, readIntValue(planarState['cycleLunarStomp']));
     final cycleBite = planarState['cycleLunarBite'] == true;
     final cycleThrow = planarState['cycleSkeletonThrow'] == true;
-    if (faunaCurrentMonsterId == 'gigante_comune') {
+    if (oculumIsCommonGiantFamily(faunaCurrentMonsterId)) {
       maximumTargets = max(maximumTargets, 3);
     }
     if (cycleThrow) {
@@ -2573,10 +2573,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           )
         : 0;
     var attackOculumDamageBonus = 0;
+    final giantDamageBonus = oculumIsCommonGiantFamily(sourceMonsterId)
+        ? 15 + 5 * leggiNumero(livelloController)
+        : 0;
     final flatDamageBonus =
-        (sourceMonsterId == 'gigante_comune'
-            ? 15 + 5 * leggiNumero(livelloController)
-            : 0) +
+        giantDamageBonus +
         bonusDannoPiatto() +
         manifestationDamageBonus +
         directDamage.fold<int>(
@@ -2588,8 +2589,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       (sum, e) => sum + max(0, readIntValue(e['valueExpression'])),
     );
     final baseDamage = oculumAttackDamageWithAbilityBonus(
+      // The species bonus is not included in dannoTotale(), unlike the other
+      // flat modifiers. Include it before the shared area splitter removes it.
       preparedDamage:
-          preparedDamage + max(0, shadowDamageForAction - maskedShadowDamage),
+          preparedDamage +
+          giantDamageBonus +
+          max(0, shadowDamageForAction - maskedShadowDamage),
       fixedBonuses: flatDamageBonus,
       abilityDamageBonus: abilityDamageBonus,
     );

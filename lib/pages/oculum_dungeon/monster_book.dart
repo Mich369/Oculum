@@ -5493,6 +5493,10 @@ List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
 bool oculumIsRetiredMonsterId(String id) => const {
   'cuore_filo',
   'ragno_obser_falsi',
+  'ciclo_ragno_fili_giurati',
+  'ciclo_rondine_respiro_lieve',
+  'ciclo_viandante_ricordi_spenti',
+  'ciclo_lepre_fiato_vetro',
   'errante_con_la_sedia',
   'errante_con_ombrello',
 }.contains(id.trim().split('_variante_').first);

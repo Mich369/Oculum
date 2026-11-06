@@ -1,5 +1,17 @@
 # Oculum — diciture originali e precisazioni dell'utente
 
+## 6 novembre — allegati, ritiri e secondo Gigante
+
+**«Ragno dei Fili Giurati cancella»** e **«Rondine del Respiro Lieve, Viandante dei Ricordi Spenti,Lepre del Fiato di Vetro cancella»**: ritirare le quattro specie dal manuale e dalle nuove selezioni, conservando le schede esistenti e gli originali artistici.
+
+**«fai il secondo gigante come variante segnato come più grosso»**, poi **«Bilancia tu statistiche più robuste»**: il primo Gigante scelto resta Comune B; il secondo è la variante distinta Massiccia, disegno C, con bilanciamento delegato e modificabile. Gli altri allegati sono confrontati con i pixel delle proposte, senza far ripetere i voti. [39 allegati, 36 scelte distinte, due ripetizioni e variante](CONFERME_LOTTO_ALLEGATI_2026-11-06.json). Nessuna chiusura automatica di una consegna o nuova capacità dedotta dai disegni.
+
+## 6 novembre — quattro voti, anatomie e chiusure
+
+Risposte: **«Sì, consegna 641 approvata»**, **«Sì, STORAGE06 conclusa»**. Chiuse al 100% le due sole righe già verificate. Voti desktop: **«A — In piedi, ali spiegate»** per Angelo Protettore; **«C — Spira sospesa, pittura più asciutta»** per Anguilla del trasformatore; **«B — Inginocchiata presso il drappo»** per Bambola di Vapium; **«C — Passo nel sottobosco»** per Cerbiatto dei Voti Lunari. «6+++» era un messaggio involontario.
+
+Anatomie: Archivista **«Sei zampe, senza ali»**; Antico **«Sei arti uncinati»**, mantenendo le due ali della domanda; Lacrimante **«Due braccia per spostarsi»**; Scorpione **«Otto zampe»**, oltre a chele e coda. La prima risposta «si» sullo Scorpione non era stata trasformata in un conteggio. [Ricevuta strutturata](CONFERME_UTENTE_2026-11-06.json). Queste conferme non dichiarano già integrate le nuove illustrazioni o verificate le nuove parti del motore.
+
 ## 5 novembre — originali su G e anatomie insolite
 
 Alla scelta dell'Errante con l'Ombrello: **«Ritiralo dal manuale»**. Ritiro anche della variante Veterana, conservando le schede storiche; gli altri Erranti non sono ritirati per deduzione.
@@ -731,3 +743,8 @@ Le eccezioni già definite (cristalli, nuclei, maschere e corazze speciali) rest
 
 
 **Pacchetti1novembre verificati localmente:** 12PNG approvati e collegati per Meccanio, Malconcio, Primitivo e FireShield. Il gruppo finale ha superato20test asset/anatomia e5prove FireShield, oltre ai15test Meccanio già passati; analisi finale pulita222,5s. CI, pacchetti e download pubblici restano verifiche distinte. Nessuna chiusura100%.
+# 6 novembre — uso di G e terze proposte pittoriche
+
+- **«stai riempiendo il disco c incorpora nel progetto il disco g»**: integrazione selettiva dei carichi di artwork e archivi su G, mantenendo i percorsi C tramite junction e verificando le copie prima di liberare le sole copie C. Progetto sorgente, salvataggi e distribuzione attiva conservati. [Percorsi, prove e limiti](ARCHIVIAZIONE_DISCO_G.md).
+- **«dopo continua con la terza variaente pittorica per ogni mostro in questa il mostro lo fai leggermente diverso anche in stile pittoricico a tua scelta»**, precisato subito con **«per tutte le scelte già fatte no»**: proposta C soltanto per creature ancora senza scelta; piccoli redesign e variazione pittorica coerenti con anatomia, elemento e Rame fatato dark fantasy. Nessuna sostituzione dei canoni, nuovo potere o approvazione implicita. Prompt e immagini sono conservati su G; le bozze vengono mostrate per il voto.
+- Alce A corretto e Ammasso di Carne ed Ossa A corretto: **«Sì, canonica così»** per le rispettive revisioni con margini corretti. Angelo Fustigatore: **«A — Frusta e ali spiegate»**. I file esatti e gli SHA sono nel registro delle scelte; integrazione e distribuzione delle nuove immagini restano separate.

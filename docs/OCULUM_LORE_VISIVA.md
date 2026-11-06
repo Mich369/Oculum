@@ -1,5 +1,17 @@
 # Oculum — canone visivo confermato
 
+## Lotto di allegati e Gigante distinto — 6 novembre
+
+Registrate **36 scelte desktop distinte** tramite confronto esatto dei pixel dei 39 allegati con le proposte A/B/C; due allegati del Custode dei Nastri ripetono la stessa immagine. Il disegno C del Gigante è scelto separatamente per il **Gigante Massiccio**, più grosso; il Comune resta B. I quindici voti precedenti sono conservati senza modifiche: il registro contiene ora 52 scelte, compresa la nuova variante. [Ricevuta e file esatti](CONFERME_LOTTO_ALLEGATI_2026-11-06.json).
+
+Ragno dei Fili Giurati, Rondine del Respiro Lieve, Viandante dei Ricordi Spenti e Lepre del Fiato di Vetro sono ritirati dalla nuova produzione, senza cancellare originali o schede salvate. Non riproporre le creature scelte. Il Guardiano dei Dodici Rintocchi A mostra dieci campanelle: scelta conservata, domanda sul conteggio ancora aperta, senza trasformarla in una modifica del catalogo. Margini, composizione sui controlli, anatomie ambigue e integrazione richiedono le proprie verifiche; nessuna nuova approvazione di derivati viene dedotta dagli allegati desktop.
+
+## Scelte e anatomie del 6 novembre
+
+Canonici i desktop **Angelo Protettore A**, **Anguilla del trasformatore C v2**, **Bambola di Vapium B** e **Cerbiatto dei Voti Lunari C v1**, secondo le risposte esplicite. File e SHA nel [registro dei voti](SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json); A/B, revisioni e provenienze originarie conservate. Le nuove C escludono questi ID; le varianti hanno scelte separate. Integrazione nei temi dell’app e nuove build restano da preparare.
+
+Precisati **Archivista: sei zampe e nessuna ala; Antico: sei arti uncinati e due ali; Lacrimante: due braccia locomotorie collegate alle mani; Scorpione delle Cisterne Secche: otto zampe oltre a due chele e coda**. Le prossime proposte seguono questi conteggi; i disegni precedenti restano nello storico. [Risposte, ambito e chiusure approvate](CONFERME_UTENTE_2026-11-06.json).
+
 ## Anatomie anomale — conferma del 5 novembre
 
 Alla domanda sulle famiglie con anatomie insolite, l'utente sceglie **«Conserva le anatomie anomale del catalogo»**. Nei prossimi artwork non normalizzare Aironi/Corvi/Rospi/Meduse sulla base dell'animale reale suggerito dal nome: conservare le parti e le descrizioni del catalogo, anche zampe anteriori e code ad anelli, quattro ali o zampe delle meduse dove esplicitamente presenti. Le nuove alternative A maestosa/B compatta restano proposte da scegliere; questa risposta non approva automaticamente i disegni né aggiunge nuove statistiche o poteri.
@@ -317,3 +329,6 @@ L’utente approva la direzione del nuovo sfondo del Guardiano e precisa «atten
 
 
 **Pacchetti1novembre verificati localmente:** 12PNG approvati e collegati per Meccanio, Malconcio, Primitivo e FireShield. Il gruppo finale ha superato20test asset/anatomia e5prove FireShield, oltre ai15test Meccanio già passati; analisi finale pulita222,5s. CI, pacchetti e download pubblici restano verifiche distinte. Nessuna chiusura100%.
+# 6 novembre — terza proposta pittorica soltanto per le scelte ancora aperte
+
+L'utente richiede una proposta C con piccole variazioni del design e una diversa resa pittorica, a discrezione artistica, poi precisa **«per tutte le scelte già fatte no»**. La nuova C riguarda soltanto creature senza una scelta precedente: escludere i desktop canonici, le scelte già registrate e gli artwork esistenti prudentemente conservati. A/B e tutte le conferme restano intatti; nessuna nuova domanda per sostituire un canone già scelto. Anatomia, elemento, materiale e descrizione specifica della creatura rimangono vincoli; il disegno non assegna statistiche, poteri o punti deboli nuovi. La resa può accentuare guazzo/tempera opaca, contorni anime a inchiostro secco e pennellate visibili restando nel dark fantasy Rame fatato. Originali e revisioni vengono conservati su G con prompt, SHA e note QA; una C non diventa canonica senza il voto dell'utente. I tentativi con appendici in eccesso o margini insufficienti restano bozze e vengono corretti prima della proposta finale.

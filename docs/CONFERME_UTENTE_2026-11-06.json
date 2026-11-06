@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": "Risposte esplicite dell’utente nella chat del 6 novembre 2026",
+  "closures": [
+    {"row": "Consegna 641ec7ed", "userAnswer": "Sì, consegna 641 approvata", "status": "completed_100_percent_user_approved", "evidence": "docs/CONSEGNA_VERIFICATA_641ec7ed.md", "scope": "La sola consegna verificata: CI, pacchetti, download pubblici e installazione. Nuove immagini e anatomie successive restano separate."},
+    {"row": "STORAGE06", "userAnswer": "Sì, STORAGE06 conclusa", "status": "completed_100_percent_user_approved", "evidence": "docs/ARCHIVIAZIONE_DISCO_G.md", "scope": "Tre cartelle pesanti su G, junction C, verifiche SHA/ADS e quattro helper. Sorgenti, salvataggi e distribuzione attiva restano su C."}
+  ],
+  "artisticVotes": [
+    {"id": "angelo_protettore", "letter": "A", "userAnswer": "A — In piedi, ali spiegate"},
+    {"id": "habitat_postea_anguilla_del_trasformatore", "letter": "C", "version": 2, "userAnswer": "C — Spira sospesa, pittura più asciutta"},
+    {"id": "bambola_vapium", "letter": "B", "userAnswer": "B — Inginocchiata presso il drappo"},
+    {"id": "ciclo_cerbiatto_voti_lunari", "letter": "C", "version": 1, "userAnswer": "C — Passo nel sottobosco"}
+  ],
+  "artisticVoteLedger": "docs/SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json",
+  "artisticVoteAudit": "build/AUDIT_QUATTRO_VOTI_C_20261106.json",
+  "artisticScope": "Scelta del desktop indicato. Le varianti mantengono il proprio voto separato; integrazione nell’app, anatomie del motore e pacchetti successivi sono in preparazione.",
+  "anatomyConfirmations": [
+    {"id": "habitat_postea_archivista_della_citt_errante", "userAnswer": "Sei zampe, senza ali", "walkingLegs": 6, "wings": 0},
+    {"id": "habitat_foresta_elementale_antico_dei_venti_elementi", "userAnswer": "Sei arti uncinati", "hookedLimbs": 6, "wings": 2, "wingEvidence": "Le due ali del catalogo erano esplicitamente mantenute nella domanda."},
+    {"id": "weak_horror_lacrimante", "userAnswer": "Due braccia per spostarsi", "locomotorArms": 2, "floatingHands": false},
+    {"id": "ciclo_scorpione_cisterne_secche", "userAnswer": "Otto zampe", "walkingLegs": 8, "clawsSeparateFromWalkingLegs": 2, "tails": 1}
+  ],
+  "anatomyImplementation": "Conferme registrate e usate nei prossimi disegni. Catalogo, parti colpibili e manuale interno da riallineare nella prossima patch con prove pertinenti; nessun nuovo automatismo già verificato dichiarato.",
+  "ambiguousMessages": [
+    {"text": "6+++", "userClarification": "Era un messaggio involontario", "treatedAsArtisticVote": false},
+    {"context": "Prima domanda sul numero di zampe dello Scorpione", "answer": "si", "resolution": "La successiva risposta esplicita Otto zampe fissa il numero."}
+  ]
+}

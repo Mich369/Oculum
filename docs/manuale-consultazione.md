@@ -189,7 +189,7 @@ Modifiche successive alla build `b917217d98d16861a5bbaf1706d78825d883c970`, run 
 
 ## Creature e tecniche
 
-Alle 24 specie delle dodici fasi, con 48 tecniche, si aggiungono 11 creature del ciclo e due Giganti, con 29 tecniche: 37 specie e 77 tecniche dopo la build di riferimento. Restano forme I/II/III, costi, requisiti, cooldown, anatomia, punti deboli, materiali, scroll e Open. Fase, luogo e ricerca sono combinabili. Le soglie personalizzate delle scroll restano rispettate; naturale 18/19 assegna una tecnica e 20 entrambe per le specie con due tecniche, senza duplicati. L'Ultimo Ciclo conserva le due specie precedenti.
+Le creature delle dodici fasi del ciclo comprendono anche undici aggiunte, i Giganti Comune e Scheletro e la variante Massiccia del Comune. Restano forme I/II/III, costi, requisiti, cooldown, anatomia, punti deboli, materiali, scroll e Open. Fase, luogo e ricerca sono combinabili. Le soglie personalizzate delle scroll restano rispettate; naturale 18/19 assegna una tecnica e 20 entrambe per le specie con due tecniche, senza duplicati. L'Ultimo Ciclo conserva le due specie precedenti.
 
 - Riccio dei Sentieri Quieti: pacifico, tre tecniche di utilità/protezione. Cinghiale del Fango: Fango, Terra e Roccia in questo ordine. Uomo Cactus: escrescenze carnose spinose che conservano liquidi, perdita del senno e caccia ai corpi per reidratarsi.
 - La Follia: +1 Follia sul critico riuscito; una Reazione veloce extra al proprio turno se è vivo un alleato dell'Illness. Gigante Goblin: −5 ai tiri d'attacco; una Reazione normale al primo turno personale degli altri Goblin, una volta per scontro.
@@ -198,7 +198,7 @@ Alle 24 specie delle dodici fasi, con 48 tecniche, si aggiungono 11 creature del
 - Lupo Lunare: Pedata Manifestazione del Potere contro Resistenza, −6 a tutti i tiri per un turno a chi perde, CD iniziale 4. Morso Lunare/Ombra secondo la maggiore efficacia sul bersaglio, casuale a parità.
 - Marmocchi del Fato: durante The Fate, ai membri Fato +1 alle quattro statistiche nel 75% dei casi, +2 nel 25%. Tre donatori distinti al massimo, nessun dono ripetuto dallo stesso: totale +3…+6. Uscire dalla fase azzera doni e conteggio; compreso Oculum.
 - Melma di The Null: oblio narrativo dell'identità, schede e progressi conservati. Orso dagli Aculei Ghiacciati: 1d8+2 colpi; ogni precedente colpo riuscito sul medesimo bersaglio dà +5% Danni, su un altro +10%. Critico: Gelo un turno, stadio crescente con applicazioni ripetute.
-- Gigante comune: fino a tre bersagli; danno base ripartito, poi +15 +5×livello a ciascuno. Gigante Scheletro: Vita Afona per 1d3 turni con naturale 19–20 riuscito. Telecinesi: metri = attacco−difesa−2 su naturale 1–17, attacco−difesa su 18–20. Ripresa gratuita: superare l'attacco su 1–17, DT 13+metri su 18, DT 16+metri su 19. Su 20 si spende Azione/Reazione e serve almeno il doppio dell'attacco, senza successo automatico del naturale 20. Ripresa riuscita: solo Danno base. Altrimenti +2 Danni per metro, bonus Schianto dal 19, normali effetti critici al 20.
+- Gigante comune: fino a tre bersagli; danno base ripartito, poi +15 +5×livello a ciascuno. Gigante Massiccio: variante distinta più grande e robusta, alta 10–14 metri, livello consigliato 6. Basi di catalogo: RES 18, VOL 10, MAT 10, OCU 5; alla creazione della scheda si aggiunge la crescita ordinaria. Condivide il massimo di tre bersagli e la formula Danni del Comune. Statistiche, abilità, requisiti, costi e parametri restano modificabili negli editor e nel JSON. Gigante Scheletro: Vita Afona per 1d3 turni con naturale 19–20 riuscito. Telecinesi: metri = attacco−difesa−2 su naturale 1–17, attacco−difesa su 18–20. Ripresa gratuita: superare l'attacco su 1–17, DT 13+metri su 18, DT 16+metri su 19. Su 20 si spende Azione/Reazione e serve almeno il doppio dell'attacco, senza successo automatico del naturale 20. Ripresa riuscita: solo Danno base. Altrimenti +2 Danni per metro, bonus Schianto dal 19, normali effetti critici al 20.
 
 ## Fuga, rientro e Role
 
@@ -260,18 +260,18 @@ I rilevatori funzionano anche sugli altri personaggi. Gli alchimisti vendono amu
 
 ## Creature delle dodici fasi del ciclo
 
-Il Monster Book include due specie per ciascuna delle dodici fasi del ciclo: 24 creature, 48 tecniche con forme I/II/III, materiali e Open propri. Nel selettore puoi combinare fase, luogo e nome; il dossier mostra l’affinità della creatura. Il Master può usarla anche fuori dalla fase: l’affinità non cambia le regole del calendario.
+Il Monster Book include creature legate alle dodici fasi del ciclo, con tecniche in forme I/II/III, materiali e Open propri. Nel selettore puoi combinare fase, luogo e nome; il dossier mostra l’affinità della creatura. Il Master può usarla anche fuori dalla fase: l’affinità non cambia le regole del calendario.
 Safe Monster: Lepre del Guscio Quieto e Cervo delle Radure Miti, pacifici con ripari e cure.
 Illness: Falena del Delirio e Scrutatore delle Febbri, pulviscolo e impulsi psichici.
-Little Breath: Rondine del Respiro Lieve e Custode dei Nastri Sospesi, cure, mobilità e protezioni.
+Little Breath: Custode dei Nastri Sospesi, cure, mobilità e protezioni.
 Piogge Fertilizzanti: Porcello del Fango Grasso e Rospo delle Gronde Marce, fango e secrezioni.
 The Sun: Scarabeo del Sigillo Ardente e Araldo delle Sei Albe, ostili e legati al Sole.
 Mezzo Ciclo: Airone del Guado Quieto e Tartaruga della Pioggia Chiara, abitanti delle acque tornate miti.
 The Moon: Cerbiatto dei Voti Lunari e Gufo delle Stelle Alleate, reliquie della Luna scomparsa e protezione degli ospiti.
-The Fate: Ragno dei Fili Giurati e Cavaliere del Filo d’Oro, nodi magici e guardie guidate dai fili.
+The Fate: Cavaliere del Filo d’Oro, guardia guidata dai fili.
 Caldo Infernale: Scorpione delle Cisterne Secche e Mantide della Vampa, predatori di luoghi aridi.
-The Null: Larva del Nome Vuoto e Viandante dei Ricordi Spenti, Vuoto e Oblio.
-Ghiaccio Imponente: Lepre del Fiato di Vetro e Golem della Brina Profonda, schegge e ripari di ghiaccio.
+The Null: Larva del Nome Vuoto, Vuoto e Oblio.
+Ghiaccio Imponente: Golem della Brina Profonda, schegge e ripari di ghiaccio.
 Ultimo Ciclo: Volpe delle Lanterne Spente e Guardiano dei Dodici Rintocchi, raccolta delle lanterne e protezione dei cortei.
 Valori iniziali modificabili: tecniche 1/2/3 Oculum, requisiti al livello base della creatura e poi +3/+6, recupero 2/2/3 turni personali oppure 3/3/4 per le cure. Drop naturale 18/19: una delle due scroll; naturale 20: entrambe, con normale apprendimento. La soglia delle scroll è modificabile nei dati della creatura; i materiali mantengono la propria probabilità e le normali regole Drop. Buff e Skill Open sono separati; il Buff aumenta realmente la Skill. Statistiche, nomi, descrizioni, anatomia, resistenze, materiali, costi, livelli, durata e cooldown restano negli editor e nel JSON. Le voci personalizzate già salvate non vengono riscritte.
 

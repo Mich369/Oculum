@@ -163,6 +163,45 @@ const _november5ApprovedDesktopIds = {
   'idrax',
 };
 
+const _november6ApprovedDesktopIds = {
+  'basilisco_base',
+  'capitano_della_ruggine',
+  'coniglio_plasma',
+  'araldo_bozzoli',
+  'base_ghiaccio_02',
+  'lumaca_assassina',
+  'base_postea_07',
+  'habitat_morti_becchino_dalle_mani_lunghe',
+  'bandito_base',
+  'base_nuvole_07',
+  'arpia_base',
+  'habitat_vero_inferno_araldo_della_cenere_eterna',
+  'weak_horror_ciste',
+  'ciclo_custode_nastri_sospesi',
+  'habitat_affogato_anguilla_delle_campane_sommerse',
+  'ciclo_cavaliere_filo_oro',
+  'quadribrachio_ambra',
+  'topo_con_mani',
+  'marshmallow',
+  'serafino_angelico',
+  'habitat_ghiaccio_falena_della_neve_nera',
+  'gigante_comune',
+  'gigante_comune_variante_massiccia',
+  'inspired_pipistrello_cavernicolo',
+  'snorlo',
+  'weak_horror_portalanterna',
+  'weak_horror_cucitore',
+  'ciclo_melma_null',
+  'serafino_solare',
+  'ciclo_golem_brina_profonda',
+  'ciclo_araldo_sei_albe',
+  'ciclo_porcello_fango_grasso',
+  'ciclo_solare_siccita',
+  'araldo_raggio_angelico',
+  'angelo_palpebra_sporca',
+  'black_dragon_shield',
+};
+
 @immutable
 class OculumMonsterTheme {
   const OculumMonsterTheme(this.monster, this.color);
@@ -176,6 +215,7 @@ class OculumMonsterTheme {
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
   bool get preserveIllustrationFraming => const {
+    ..._november6ApprovedDesktopIds,
     ..._november5ApprovedDesktopIds,
     'cavaliere_non_ritorno',
     'deadly_sins',
@@ -335,6 +375,8 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    final id when _november6ApprovedDesktopIds.contains(id) =>
+      'assets/oculum/home_art/theme_${id}_canon_20261106.png',
     final id when _november5ApprovedDesktopIds.contains(id) =>
       'assets/oculum/home_art/theme_${id}_canon_20261105.png',
     'cavaliere_non_ritorno' =>

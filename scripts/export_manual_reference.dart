@@ -5,7 +5,7 @@ void main() {
     'lib/src/main/oculum_manual_sections.dart',
   ).readAsStringSync();
   final sections = RegExp(
-    "titleIt: '((?:\\\\.|[^'])*)',[\\s\\S]*?contentIt: r?'''([\\s\\S]*?)'''",
+    "titleIt:\\s*'((?:\\\\.|[^'])*)',[\\s\\S]*?contentIt: r?'''([\\s\\S]*?)'''",
     multiLine: true,
   ).allMatches(source).toList();
   final expected = RegExp(r'\bManualSection\(').allMatches(source).length;

@@ -133,7 +133,6 @@ class OculumThemeScope extends StatelessWidget {
                         ),
                       ),
                       const Positioned.fill(child: OculumCustomArtworkLayer()),
-                      const Positioned.fill(child: OculumCustomArtworkLayer()),
                       Positioned.fill(
                         child: OculumCombatReactionHost(
                           state: combat,

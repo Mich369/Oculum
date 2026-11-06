@@ -1,5 +1,22 @@
 # Oculum — registro delle regole confermate
 
+## Gigante Massiccio e quattro ritiri — 6 novembre
+
+Richiesta esplicita: **«fai il secondo gigante come variante segnato come più grosso»**, seguita da **«Bilancia tu statistiche più robuste»**. Il Gigante Comune mantiene la scelta artistica B; il secondo disegno, C, appartiene al nuovo **Gigante Massiccio**, ID `gigante_comune_variante_massiccia`. È una variante distinta, con statistiche più robuste bilanciate nell’implementazione e modificabili: non sostituisce il Comune né aggiorna le schede personali già salvate. Conserva anatomia, punto debole e regole degli attacchi della famiglia; l’arte non attribuisce resistenze o poteri aggiuntivi.
+
+Ritirare **Ragno dei Fili Giurati**, **Rondine del Respiro Lieve**, **Viandante dei Ricordi Spenti** e **Lepre del Fiato di Vetro** dal manuale/catalogo attivo, dai nuovi incontri, dalle nuove pagine in vendita e dalla coda artistica. Le definizioni legacy e le schede già salvate restano leggibili; originali, Skill e personalizzazioni conservati. Il ritiro comprende eventuali varianti dei quattro ID, senza estenderlo ad altre specie.
+
+[Ricevuta dei 39 allegati, 36 scelte distinte e variante del Gigante](CONFERME_LOTTO_ALLEGATI_2026-11-06.json). Implementazione locale e nuova consegna hanno verifiche separate. Le sole scelte artistiche non chiudono righe al 100%.
+
+## Anatomie precisate — conferme del 6 novembre
+
+- **Archivista della città errante:** sei zampe uncinate, senza ali; piastre e scudo frontale conservati.
+- **Antico dei venti elementi:** sei arti uncinati sotto il carapace e le due ali già descritte nel catalogo.
+- **Lacrimante:** le due mani sono collegate a due braccia usate per spostarsi.
+- **Scorpione delle Cisterne Secche:** otto zampe per camminare, oltre alle due chele e alla coda. La risposta successiva «Otto zampe» risolve il precedente «si» privo di numero.
+
+Conferme autoriali registrate per disegni e prossimo riallineamento di catalogo, parti colpibili e manuale interno. Gli automatismi del motore e la nuova distribuzione richiedono le rispettive prove; il solo disegno non le certifica. [Risposte esatte e ambito](CONFERME_UTENTE_2026-11-06.json).
+
 ## Ritiro dell'Errante con l'Ombrello — 5 novembre
 
 Alla scelta artistica A/B, l'utente risponde **«Ritiralo dal manuale»**. Ritirare `errante_con_ombrello` e la variante Veterana dal catalogo attivo, dai nuovi incontri, dalle nuove pagine del Mercato Nero e dalla coda di voto. Le definizioni e le schede già salvate restano leggibili, con statistiche e capacità; conservare gli originali artistici nello storico senza approvazione. Non estendere il ritiro ad altri Erranti senza una richiesta esplicita.

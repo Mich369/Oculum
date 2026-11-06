@@ -353,7 +353,47 @@ final _suggestedCycleEntries = <MonsterBookEntry>[
 final _suggestedGiantEntries = <MonsterBookEntry>[
   for (final s in _suggestedCycleSpecs.where((s) => s.phase.isEmpty))
     _suggestedCycleEntry(s),
+  _massiveCommonGiantEntry(),
 ];
+
+const oculumMassiveGiantMonsterId = 'gigante_comune_variante_massiccia';
+
+/// Authored Common Giant variants retain their species' sweeping attacks.
+bool oculumIsCommonGiantFamily(String monsterId) =>
+    monsterId.trim().split('_variante_').first == 'gigante_comune';
+
+MonsterBookEntry _massiveCommonGiantEntry() {
+  final base = _suggestedCycleEntry(
+    _suggestedCycleSpecs.firstWhere((s) => s.id == 'gigante_comune'),
+  );
+  return base.copyWith(
+    id: oculumMassiveGiantMonsterId,
+    nameIt: 'Gigante Massiccio',
+    nameEn: 'Massive Giant',
+    descIt:
+        'Variante più grande e robusta del Gigante Comune, alta fra dieci e quattordici metri. Ha due braccia, due gambe, dorso largo, pelle grigio terra e mani callose; indossa pelli intrecciate e impugna una sola trave di legno come mazza. Difende il proprio passaggio con una guardia salda e colpi pesanti. I suoi attacchi normali possono colpire fino a tre persone: il Danno viene suddiviso e ogni bersaglio riceve poi +15 +5 per livello del Gigante, prima delle proprie protezioni.',
+    descEn:
+        'A larger, sturdier Common Giant variant, ten to fourteen metres tall, with two arms, two legs, earth-grey skin and woven hides. It wields one rough wooden beam and holds its ground with a firm guard. Its normal attacks can hit up to three people: split the base damage, then add 15 + 5 per Giant level to each target before their protections.',
+    // Catalogue bases only: normal level/Grade growth is still added when a
+    // new sheet is created. The existing editors and JSON retain every value.
+    stats: {
+      ...base.stats,
+      'level': 6,
+      'resilienza': 18,
+      'volonta': 10,
+      'materia': 10,
+      'oculum': 5,
+    },
+    encounterRules: {
+      ...base.encounterRules,
+      'canonicalVariantOf': 'gigante_comune',
+      'precisionBodyParts': [
+        for (final part in base.encounterRules['precisionBodyParts'] as List)
+          Map<String, dynamic>.from(part as Map),
+      ],
+    },
+  );
+}
 
 MonsterConcreteTechnique _suggestedCycleMove(
   String id,

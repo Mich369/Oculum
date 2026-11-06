@@ -18,6 +18,8 @@ Simboli incisi piccoli, bordi sottili e rune incompiute. Nessuna icona ornamenta
 
 ## Creature Language
 
+Precisazione del 6 novembre: la terza alternativa C, con piccoli redesign e variazione pittorica (guazzo/tempera opaca, contorni anime secchi, pennellate più visibili), vale soltanto per creature ancora senza scelta. I canoni e i voti precedenti escludono nuove proposte per quella creatura; A/B restano conservate. Nessuna modifica dell'anatomia, dell'elemento o dei poteri per ottenere la variazione. Ogni nuova C va controllata per numero degli arti e margini e rimane una proposta finché l'utente la sceglie. Archivio e revisioni su G, con collegamenti compatibili dai percorsi del progetto su C.
+
 Precisazione esplicita del 2 novembre: Oculum resta un **dark fantasy**, nonostante le stranezze. Per le prossime proposte, soprattutto i mostri ostili devono risultare più mostruosi e minacciosi. Nuovo riferimento allegato: tratto anime scuro, ombre profonde, profili espressivi, colori controllati e pittura opaca. Rame fatato resta la base materica, senza obbligo di dolcezza o toni pastello. Il riferimento non impone il soggetto umano raffigurato e non annulla le immagini canoniche già approvate. [Richieste e applicazione](../docs/DIREZIONE_DARK_FANTASY_2026-11-02.md).
 
 Conferma del 28 ottobre 2026: ogni mostro e variante ha un tema e una reliquia visiva specifici, in stile Rame fatato. Materiali, anatomia, colori ed ambiente devono renderli riconoscibili, evitando il riuso di un generico segnaposto come lavoro definitivo. La reliquia visiva è decorativa e non attribuisce da sola nuovi drop. Mostri e reliquie rispettano i margini e gli spazi dei controlli; nel Monster Book niente ritratto imposto.

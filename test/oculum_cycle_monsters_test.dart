@@ -77,45 +77,51 @@ void main() {
       }
     },
   );
-  test('all phases retain base species and eleven suggested additions', () {
-    expect(oculumCycleMonsterPhaseNames.length, 12);
-    expect(oculumCycleMonsterEntries.length, 35);
-    final skills = <String>{};
-    final materials = <String>{};
-    for (final phase in oculumCycleMonsterPhaseNames.keys) {
-      expect(
-        oculumCycleMonsterEntries.where(
-          (m) => oculumMonsterCyclePhase(m) == phase,
-        ),
-        hasLength(phase == 'ultimo_ciclo' ? 2 : 3),
-        reason: phase,
-      );
-    }
-    for (final monster in oculumCycleMonsterEntries) {
-      expect(
-        defaultMonsterBookEntries.where((m) => m.id == monster.id),
-        hasLength(1),
-      );
-      expect(
-        defaultMonsterBookEntries.where((m) => m.nameIt == monster.nameIt),
-        hasLength(1),
-      );
-      expect(monster.weakPointDescriptionIt, isNotEmpty);
-      expect(monster.planeIds, isNotEmpty);
-      expect(monster.spriteAssetPath, isEmpty);
-      expect(monster.dropIds, hasLength(1));
-      materials.addAll(monster.dropIds);
-      skills.addAll(monster.skillIds);
-      final restored = MonsterBookEntry.fromJson(monster.toJson());
-      expect(
-        oculumMonsterCyclePhase(restored),
-        oculumMonsterCyclePhase(monster),
-      );
-      expect(restored.dropIds, monster.dropIds);
-    }
-    expect(materials, hasLength(35));
-    expect(skills, hasLength(73));
-  });
+  test(
+    'cycle sources retain legacy species without restoring retired encounters',
+    () {
+      expect(oculumCycleMonsterPhaseNames.length, 12);
+      expect(oculumCycleMonsterEntries.length, 35);
+      final skills = <String>{};
+      final materials = <String>{};
+      for (final phase in oculumCycleMonsterPhaseNames.keys) {
+        expect(
+          oculumCycleMonsterEntries.where(
+            (m) => oculumMonsterCyclePhase(m) == phase,
+          ),
+          hasLength(phase == 'ultimo_ciclo' ? 2 : 3),
+          reason: phase,
+        );
+      }
+      for (final monster in oculumCycleMonsterEntries) {
+        final activeMatches = oculumIsRetiredMonsterId(monster.id) ? 0 : 1;
+        expect(
+          defaultMonsterBookEntries.where((m) => m.id == monster.id),
+          hasLength(activeMatches),
+          reason: monster.id,
+        );
+        expect(
+          defaultMonsterBookEntries.where((m) => m.nameIt == monster.nameIt),
+          hasLength(activeMatches),
+        );
+        expect(oculumSavedMonsterBookEntryById(monster.id), isNotNull);
+        expect(monster.weakPointDescriptionIt, isNotEmpty);
+        expect(monster.planeIds, isNotEmpty);
+        expect(monster.spriteAssetPath, isEmpty);
+        expect(monster.dropIds, hasLength(1));
+        materials.addAll(monster.dropIds);
+        skills.addAll(monster.skillIds);
+        final restored = MonsterBookEntry.fromJson(monster.toJson());
+        expect(
+          oculumMonsterCyclePhase(restored),
+          oculumMonsterCyclePhase(monster),
+        );
+        expect(restored.dropIds, monster.dropIds);
+      }
+      expect(materials, hasLength(35));
+      expect(skills, hasLength(73));
+    },
+  );
 
   test(
     'imported skill forms retain executable effects, costs and level gates',
@@ -231,7 +237,11 @@ void main() {
       await tester.tap(find.text('The Moon').last);
       await tester.pumpAndSettle();
       expect(find.text('Cerbiatto dei Voti Lunari'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('Gufo delle Stelle Alleate'), 80, scrollable: find.byType(Scrollable).last);
+      await tester.scrollUntilVisible(
+        find.text('Gufo delle Stelle Alleate'),
+        80,
+        scrollable: find.byType(Scrollable).last,
+      );
       expect(find.text('Gufo delle Stelle Alleate'), findsOneWidget);
       expect(find.text('Falena del Delirio'), findsNothing);
       await tester.tap(find.text('Annulla'));

@@ -6,6 +6,41 @@ import 'package:oculum/main.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test(
+    'massive giant manual distinguishes catalogue bases and creation growth',
+    () {
+      final text = activeManualSections
+          .map((section) => section.contentIt)
+          .join('\n');
+      expect(text, contains('Gigante Massiccio: variante distinta'));
+      expect(text, contains('10–14 metri, livello consigliato 6'));
+      expect(text, contains('Basi di catalogo: RES 18, VOL 10, MAT 10, OCU 5'));
+      expect(
+        text,
+        contains(
+          'alla creazione della scheda si aggiunge la crescita ordinaria',
+        ),
+      );
+      expect(
+        text,
+        contains(
+          'Condivide il massimo di tre bersagli e la formula Danni del Comune',
+        ),
+      );
+      final english = activeManualSections
+          .map((section) => section.contentEn)
+          .join('\n');
+      expect(
+        english,
+        contains('catalogue bases RES 18, VOL 10, MAT 10, OCU 5'),
+      );
+      expect(
+        english,
+        contains('ordinary creation growth is added to these bases'),
+      );
+    },
+  );
+
   test('manuale attivo e PDF restano completi e senza testo corrotto', () async {
     expect(activeManualSections.length, oculumManualSections.length + 1);
     expect(
@@ -25,6 +60,11 @@ void main() {
       expect(text, isNot(contains('Chair Wanderer')));
       expect(text, isNot(contains('Errante con Ombrello')));
       expect(text, isNot(contains('Umbrella Wanderer')));
+      expect(text, isNot(contains('Ragno dei Fili Giurati')));
+      expect(text, isNot(contains('ciclo_ragno_fili_giurati')));
+      expect(text, isNot(contains('Rondine del Respiro Lieve')));
+      expect(text, isNot(contains('Viandante dei Ricordi Spenti')));
+      expect(text, isNot(contains('Lepre del Fiato di Vetro')));
     }
 
     final bytes = await oculumBuildManualPdf(english: false);

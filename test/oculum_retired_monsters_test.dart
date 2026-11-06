@@ -1,7 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_registry.dart';
-import 'package:oculum/main.dart' show oculumCelestialAllegiance;
+import 'package:oculum/main.dart'
+    show
+        oculumBlackMarketMonsterBookPageEligible,
+        oculumCelestialAllegiance,
+        oculumRankBlackMarketMonsterBookPages;
+
+const retiredCycleIds = [
+  'ciclo_ragno_fili_giurati',
+  'ciclo_rondine_respiro_lieve',
+  'ciclo_viandante_ricordi_spenti',
+  'ciclo_lepre_fiato_vetro',
+];
 
 void main() {
   test(
@@ -17,6 +28,97 @@ void main() {
     },
   );
   tearDown(resetMonsterBookEntries);
+
+  test('retired cycle sources cannot restore active encounters', () {
+    configureMonsterBookEntries(customEntries: oculumCycleMonsterEntries);
+    for (final id in retiredCycleIds) {
+      final source = oculumCycleMonsterEntries.singleWhere((m) => m.id == id);
+      final legacy = oculumSavedMonsterBookEntryById(id)!;
+      expect(legacy.stats, source.stats);
+      expect(legacy.skillIds, containsAll(source.skillIds));
+      for (final retiredId in [
+        id,
+        '${id}_variante_errante',
+        '${id}_variante_corazzata',
+        '${id}_variante_rituale',
+        '${id}_variante_veterana',
+        '${id}_variante_personale',
+      ]) {
+        expect(oculumIsRetiredMonsterId(' $retiredId '), isTrue);
+        expect(monsterById(retiredId), isNull);
+      }
+      expect(oculumIsRetiredMonsterId('${id}_personale'), isFalse);
+      expect(
+        defaultMonsterBookEntries.any((m) => m.id.startsWith(id)),
+        isFalse,
+      );
+      expect(monsterBookEntries.any((m) => m.id.startsWith(id)), isFalse);
+    }
+    expect(monsterById('ciclo_cavaliere_filo_oro'), isNotNull);
+    expect(monsterById('ciclo_custode_nastri_sospesi'), isNotNull);
+    expect(monsterById('ciclo_larva_nome_vuoto'), isNotNull);
+    expect(monsterById('ciclo_golem_brina_profonda'), isNotNull);
+  });
+
+  test('retired cycle species keep saved custom and Eye sources', () {
+    for (final id in retiredCycleIds) {
+      final custom = oculumSavedMonsterBookEntryById(id)!.copyWith(
+        nameIt: 'Creatura personale salvata',
+        stats: {'level': 9, 'resilienza': 41},
+        skillIds: ['saved_cycle_skill'],
+        imageBase64: 'c2F2ZWQtaW1hZ2U=',
+        encounterRules: {'celestialIdentity': 'lunare', 'savedSetting': 7},
+      );
+      final variant = custom.copyWith(id: '${id}_variante_personale');
+      configureMonsterBookEntries(customEntries: [custom, variant]);
+      for (final entry in [custom, variant]) {
+        final saved = oculumSavedMonsterBookEntryById(entry.id)!;
+        final restored = MonsterBookEntry.fromJson(saved.toJson());
+        expect(restored.nameIt, entry.nameIt);
+        expect(restored.stats, entry.stats);
+        expect(restored.skillIds, entry.skillIds);
+        expect(restored.imageBase64, entry.imageBase64);
+        expect(restored.encounterRules, entry.encounterRules);
+        expect(getStatsForMonster(entry.id), entry.stats);
+        expect(
+          oculumCelestialAllegiance({'monsterBookSourceId': entry.id}),
+          'lunare',
+        );
+        expect(monsterById(entry.id), isNull);
+      }
+      expect(monsterBookEntries.any((m) => m.id.startsWith(id)), isFalse);
+      configureMonsterBookEntries(removedIds: [id, variant.id]);
+      expect(oculumSavedMonsterBookEntryById(id), isNull);
+      expect(oculumSavedMonsterBookEntryById(variant.id), isNull);
+      resetMonsterBookEntries();
+      expect(oculumSavedMonsterBookEntryById(id), isNotNull);
+      expect(monsterById(id), isNull);
+    }
+  });
+
+  test('retired cycle species cannot become new Black Market pages', () {
+    for (final id in retiredCycleIds) {
+      final retired = oculumSavedMonsterBookEntryById(
+        id,
+      )!.copyWith(nameIt: 'Creatura Errante personale');
+      final control = retired.copyWith(id: 'test_cycle_market_control');
+      expect(oculumBlackMarketMonsterBookPageEligible(control), isTrue);
+      expect(oculumBlackMarketMonsterBookPageEligible(retired), isFalse);
+      expect(
+        oculumRankBlackMarketMonsterBookPages(
+          entries: [retired, control],
+          playerLevel: 9,
+          playerStats: const {
+            'resilienza': 7,
+            'volonta': 8,
+            'materia': 10,
+            'oculum': 8,
+          },
+        ).map((entry) => entry.id),
+        [control.id],
+      );
+    }
+  });
 
   test(
     'retired saved sources retain registry stats and celestial identity',
