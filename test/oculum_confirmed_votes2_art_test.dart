@@ -24,10 +24,10 @@ void main() {
   final files = (receipt['files'] as List).cast<Map<String, dynamic>>();
 
   test(
-    '49 approved originals are bundled byte-identically and reachable',
+    '55 approved originals are bundled byte-identically and reachable',
     () async {
-      expect(files, hasLength(49));
-      expect(files.map((x) => x['id']).toSet(), hasLength(49));
+      expect(files, hasLength(55));
+      expect(files.map((x) => x['id']).toSet(), hasLength(55));
       for (final row in files) {
         final id = row['id'] as String;
         final entry = monsterBookEntryById(id);

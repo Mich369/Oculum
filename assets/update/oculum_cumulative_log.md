@@ -2,12 +2,14 @@
 
 ## Nuovo lotto canonico e Assassino — 6 novembre
 
+Il lotto comprende anche Cane dei Ghiacci A, Cervo dal Fiato Bianco C, Cervo di Linfa Verde C, Cinghiale Muschioso C, Cervo di Brumalba C e Baby Rock Rhino ridotto dal disegno della Veterana. Statistiche delle due versioni del Rhino distinte.
+
 - L’Assassino viene generato come NPC nemico, mantenendo le capacità e la crescita precedente. Il vecchio identificativo resta compatibile con schede e personalizzazioni.
 - Armaiolo della Fila Lunga diventa Armaiolo della spada e scudo; la variante Rituale rimane distinta. Duellante Senza Palpebre Errante e Sagrestano Cavo con le sue varianti escono dalle nuove selezioni, conservando le vecchie schede e le sorgenti degli Occhi.
-- Collegati 49 sfondi desktop nativi approvati, incluse le cinque revisioni di Scarabeo, Demoni Intermedi, Lacrimante e Ciclope e il Guardiano con dodici campanelle. Immagini personali e alternative conservate; desktop intero sui telefoni tramite il fallback esistente.
+- Collegati 55 sfondi desktop nativi approvati, incluse le cinque revisioni di Scarabeo, Demoni Intermedi, Lacrimante e Ciclope e il Guardiano con dodici campanelle. Immagini personali e alternative conservate; desktop intero sui telefoni tramite il fallback esistente.
 - Nomi, ruolo/lato, statistiche, capacità, costi, durate, recuperi, bersagli, anatomie, punti deboli, temi e immagini restano personalizzabili. Nessun bonus numerico viene dedotto dalle sole dimensioni dei disegni.
 
-Verifiche locali: 75 test Flutter passati, analisi senza problemi e 38 regressioni Python delle gallerie passate; manuale esportato in 83 sezioni. CI, pacchetti, pubblicazione e installazione restano riscontri separati. [Dettagli e parametri modificabili](PATCH_2026-11-06_ASSASSINO_VOTI_ARTWORK.md).
+Verifiche locali: 80 casi Flutter distinti coperti, con 23 prove mirate ripetute dopo il nuovo lotto e il test del ritiro aggiornato, analisi senza problemi e 44 regressioni Python delle gallerie passate; manuale esportato in 83 sezioni. CI, pacchetti, pubblicazione e installazione restano riscontri separati. [Dettagli e parametri modificabili](PATCH_2026-11-06_ASSASSINO_VOTI_ARTWORK.md).
 
 ## Aggiornamento — 6 novembre
 

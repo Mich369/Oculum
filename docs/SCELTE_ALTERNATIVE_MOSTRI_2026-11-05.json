@@ -5157,6 +5157,254 @@
         "published": false,
         "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_08.json"
       }
+    },
+    "base_ghiaccio_10": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "name": "Cane dei Ghiacci",
+      "userChoice": "A",
+      "recordedAtUtc": "2026-11-06T19:12:31.494070+00:00",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/base_ghiaccio_10_desktop_v1.jpg",
+        "sha256": "4466840441f89dc71bf240b3ba7d156e6f085affe36e4feff585834d14b249a1",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-0746c54f-69ab-4377-9b79-ed7a7a9c29d8.png",
+        "nativeSha256": "8950f70a9e467d128b3ec3ffcf8fc246ff09a994158557d4415cb603523cbc9c",
+        "version": 1
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/base_ghiaccio_10_desktop_v1.png",
+        "sha256": "04b5567cecb5738a145cbd33a43337e5ff9658e069025797af961b3f3269b58a"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "A"
+      },
+      "selectionScope": "Exact selected art; base and Veteran statistics remain distinct.",
+      "integration": {
+        "status": "pending_retry_build_after_failed_ci274",
+        "newAlternativesIntegrated": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_base_ghiaccio_10_canon_20261106_votes2.png",
+        "nativeSha256": "8950f70a9e467d128b3ec3ffcf8fc246ff09a994158557d4415cb603523cbc9c",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json"
+      },
+      "letter": "A"
+    },
+    "base_ghiaccio_04": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "name": "Cervo dal Fiato Bianco",
+      "userChoice": "C",
+      "recordedAtUtc": "2026-11-06T19:12:31.494070+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_cervo_fiato_bianco_v2.png",
+        "sha256": "cddb6401ec1b931a63c77248ff413db34a60b35108dbc8a0ef5b32574f2f4d6b",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_fiato_bianco_v2.png",
+        "nativeSha256": "cddb6401ec1b931a63c77248ff413db34a60b35108dbc8a0ef5b32574f2f4d6b",
+        "version": 2,
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_fiato_bianco_v2.provenance.json",
+        "provenanceSha256": "78733bc2ad198185e76bbb894f4c7c4f3033d8509dd4a37f1563770f3d12020c"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/base_ghiaccio_04_desktop_v1.png",
+        "sha256": "c8ba8fbbb6bac8bdc6c90faeb5d01cb1e94865a88842fd10c419bf4c2927fe6e"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
+      },
+      "selectionScope": "Exact selected art; base and Veteran statistics remain distinct.",
+      "integration": {
+        "status": "pending_retry_build_after_failed_ci274",
+        "newAlternativesIntegrated": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_base_ghiaccio_04_canon_20261106_votes2.png",
+        "nativeSha256": "cddb6401ec1b931a63c77248ff413db34a60b35108dbc8a0ef5b32574f2f4d6b",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json"
+      },
+      "letter": "C"
+    },
+    "base_foresta_01": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "name": "Cervo di Linfa Verde",
+      "userChoice": "C",
+      "recordedAtUtc": "2026-11-06T19:12:31.494070+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_cervo_linfa_verde_v2.png",
+        "sha256": "08a36b4bea1b746f13f7896019731dc84af6457d25b64600f55cf0e4efd406d6",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_linfa_verde_v2.png",
+        "nativeSha256": "08a36b4bea1b746f13f7896019731dc84af6457d25b64600f55cf0e4efd406d6",
+        "version": 2,
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_linfa_verde_v2.provenance.json",
+        "provenanceSha256": "87f2a1ff3c07cf0eaf5231d4c3f2d49d07da7c56a7d383267a671fae95291f2c"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/base_foresta_01_desktop_v1.png",
+        "sha256": "d39a3c8b3d67dd2b33cf6449629eb0e168bf03986ab731f61fa82aa9f564eb09"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
+      },
+      "selectionScope": "Exact selected art; base and Veteran statistics remain distinct.",
+      "integration": {
+        "status": "pending_retry_build_after_failed_ci274",
+        "newAlternativesIntegrated": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_base_foresta_01_canon_20261106_votes2.png",
+        "nativeSha256": "08a36b4bea1b746f13f7896019731dc84af6457d25b64600f55cf0e4efd406d6",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json"
+      },
+      "letter": "C"
+    },
+    "base_mezzano_08": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "name": "Cinghiale Muschioso",
+      "userChoice": "C",
+      "recordedAtUtc": "2026-11-06T19:12:31.494070+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_cinghiale_muschioso_v2.png",
+        "sha256": "41d7d10e95f75b2d0ab2054eec7522b7c57d079dcebc2a5cbcac69343ddf4874",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cinghiale_muschioso_v2.png",
+        "nativeSha256": "41d7d10e95f75b2d0ab2054eec7522b7c57d079dcebc2a5cbcac69343ddf4874",
+        "version": 2,
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cinghiale_muschioso_v2.provenance.json",
+        "provenanceSha256": "2735be97b3dc6060169edae499935abcf1f437199ba0695c790a0f344f60d6af"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/base_mezzano_08_desktop_v1.png",
+        "sha256": "ffd2a3c21d14bbfc3edcc005184585a3077f768ec2d314911c4841c30fd03295"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
+      },
+      "selectionScope": "Exact selected art; base and Veteran statistics remain distinct.",
+      "integration": {
+        "status": "pending_retry_build_after_failed_ci274",
+        "newAlternativesIntegrated": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_base_mezzano_08_canon_20261106_votes2.png",
+        "nativeSha256": "41d7d10e95f75b2d0ab2054eec7522b7c57d079dcebc2a5cbcac69343ddf4874",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json"
+      },
+      "letter": "C"
+    },
+    "base_mezzano_01": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "name": "Cervo di Brumalba",
+      "userChoice": "C",
+      "recordedAtUtc": "2026-11-06T19:12:31.494070+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_cervo_brumalba_v1.png",
+        "sha256": "0a6d9e78ff90e7ca170927b6ce63696d9731d72bba33f812e519e97510b78df0",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_brumalba_v1.png",
+        "nativeSha256": "0a6d9e78ff90e7ca170927b6ce63696d9731d72bba33f812e519e97510b78df0",
+        "version": 1,
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_brumalba_v1.provenance.json",
+        "provenanceSha256": "b78022eb6f7808d176d78c90b064e2693b5b37039a29c3e71a8e9662a9596bf4"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/base_mezzano_01_desktop_v1.png",
+        "sha256": "33580f1638be83f9a80a16eb4c966d3196a62180edfd4a936cb2a97bf5e0bad1"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
+      },
+      "selectionScope": "Exact selected art; base and Veteran statistics remain distinct.",
+      "integration": {
+        "status": "pending_retry_build_after_failed_ci274",
+        "newAlternativesIntegrated": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_base_mezzano_01_canon_20261106_votes2.png",
+        "nativeSha256": "0a6d9e78ff90e7ca170927b6ce63696d9731d72bba33f812e519e97510b78df0",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json"
+      },
+      "letter": "C"
+    },
+    "baby_rock_rhino": {
+      "decision": "approve_revised_reference",
+      "artisticStatus": "canonical_user_vote",
+      "name": "Baby Rock Rhino",
+      "userChoice": "Sì, canonico",
+      "recordedAtUtc": "2026-11-06T19:12:31.494070+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_baby_rock_rhino_da_veterana_ridotto_v1.png",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_da_veterana_ridotto_v1.png",
+        "sha256": "7a35e6143bf89d9020f33a2697befd1f89a23d8f01d650648179132b9bd6c397",
+        "nativeSha256": "7a35e6143bf89d9020f33a2697befd1f89a23d8f01d650648179132b9bd6c397",
+        "version": 1,
+        "sourceKind": "native_imagegen_edit_verified",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_da_veterana_ridotto_v1.provenance.json",
+        "provenanceSha256": "c323db2b4209f9675b4239dc8c71d48632dd065cd2f16dcb22dccb44e073f686"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/baby_rock_rhino_desktop_v1.png",
+        "sha256": "0733220741e2d02a7f164cefe06d8a30a027671054cf4546be32ae54f6e781f0"
+      },
+      "userEvidence": {
+        "kind": "explicit_acceptance_of_shown_revision",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "Sì, canonico"
+      },
+      "selectionScope": "Exact selected art; base and Veteran statistics remain distinct.",
+      "integration": {
+        "status": "pending_retry_build_after_failed_ci274",
+        "newAlternativesIntegrated": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_baby_rock_rhino_canon_20261106_votes2.png",
+        "nativeSha256": "7a35e6143bf89d9020f33a2697befd1f89a23d8f01d650648179132b9bd6c397",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json"
+      },
+      "approvedRevision": {
+        "approvalStatus": "canonical_user_approved_revision",
+        "artwork": {
+          "file": "output/artwork/terze_C_2026-11-06/C_baby_rock_rhino_da_veterana_ridotto_v1.png",
+          "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_da_veterana_ridotto_v1.png",
+          "sha256": "7a35e6143bf89d9020f33a2697befd1f89a23d8f01d650648179132b9bd6c397",
+          "nativeSha256": "7a35e6143bf89d9020f33a2697befd1f89a23d8f01d650648179132b9bd6c397",
+          "version": 1,
+          "sourceKind": "native_imagegen_edit_verified",
+          "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_da_veterana_ridotto_v1.provenance.json",
+          "provenanceSha256": "c323db2b4209f9675b4239dc8c71d48632dd065cd2f16dcb22dccb44e073f686"
+        },
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "referenceId": "baby_rock_rhino_variante_veterana",
+        "statsRemainDistinct": true
+      }
     }
   }
 }

@@ -1,8 +1,10 @@
 # Oculum — attività, conferme e consegne
 
-## CAT07 / ART07 — Assassino NPC nemico e 49 desktop, in verifica locale
+## CAT07 / ART07 — Assassino NPC nemico e 55 desktop, in verifica locale
 
-**Riga:** «Applicare i voti A/B/C del nuovo lotto, le revisioni approvate, i ritiri richiesti e i nomi/ruoli aggiornati, preservando le schede e preparando la prossima consegna». **Adattamento:** Assassino NPC nemico con kit e crescita precedenti; Armaiolo della spada e scudo e Rituale; ritiro esatto del Duellante Errante e della famiglia Sagrestano Cavo. Collegati 49 desktop nativi scelti, inclusi quattro edit approvati e il Guardiano con dodici campanelle. Ciclope con occhio violetto e cresta di spine approvato; base del Bandito Corteccia non scelta per inferenza dalla variante. 100 record di voto conservati; 79 test Flutter passati, 38 regressioni Python delle gallerie e 14 del publisher passate; analisi senza problemi e quattro test del log passati. Consegna successiva separata. [Modifiche, ricevute e parametri modificabili](PATCH_2026-11-06_ASSASSINO_VOTI_ARTWORK.md). Nessuna chiusura al 100% senza la conferma richiesta.
+**Riga:** «Applicare i voti A/B/C del nuovo lotto, le revisioni approvate, i ritiri richiesti e i nomi/ruoli aggiornati, preservando le schede e preparando la prossima consegna». **Adattamento:** Assassino NPC nemico con kit e crescita precedenti; Armaiolo della spada e scudo e Rituale; ritiro esatto del Duellante Errante e della famiglia Sagrestano Cavo. Collegati 55 desktop nativi scelti, inclusi quattro edit approvati e il Guardiano con dodici campanelle. Ciclope con occhio violetto e cresta di spine approvato; base del Bandito Corteccia non scelta per inferenza dalla variante. 106 record di voto conservati; 80 casi Flutter locali distinti coperti (23 ripetuti sul nuovo lotto), 44 regressioni Python delle gallerie e 14 del publisher passate; analisi senza problemi e quattro test del log passati. Consegna successiva separata. [Modifiche, ricevute e parametri modificabili](PATCH_2026-11-06_ASSASSINO_VOTI_ARTWORK.md). Nessuna chiusura al 100% senza la conferma richiesta.
+
+CI274: 2.303 passati, un vecchio conteggio attivi fallito e sei saltati; packaging non eseguito, distribuzione precedente intatta. Invariante corretto a otto attivi con Sagrestano legacy verificato; nuovo tentativo comprende le sei ulteriori approvazioni.
 
 ## ARTC06 — 47 confronti A/B/C pronti, cinque correzioni finali verificate
 

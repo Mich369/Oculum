@@ -211,12 +211,24 @@ const _november6SecondApprovedDesktopAssets = <String, String>{
       'assets/oculum/home_art/theme_armaiolo_della_fila_lunga_variante_rituale_canon_20261106_votes2.png',
   'baby_forest_demon':
       'assets/oculum/home_art/theme_baby_forest_demon_canon_20261106_votes2.png',
+  'baby_rock_rhino':
+      'assets/oculum/home_art/theme_baby_rock_rhino_canon_20261106_votes2.png',
   'baby_rock_rhino_variante_veterana':
       'assets/oculum/home_art/theme_baby_rock_rhino_variante_veterana_canon_20261106_votes2.png',
   'bambola_vapium_variante_veterana':
       'assets/oculum/home_art/theme_bambola_vapium_variante_veterana_canon_20261106_votes2.png',
   'bandito_base_variante_veterana':
       'assets/oculum/home_art/theme_bandito_base_variante_veterana_canon_20261106_votes2.png',
+  'base_foresta_01':
+      'assets/oculum/home_art/theme_base_foresta_01_canon_20261106_votes2.png',
+  'base_ghiaccio_04':
+      'assets/oculum/home_art/theme_base_ghiaccio_04_canon_20261106_votes2.png',
+  'base_ghiaccio_10':
+      'assets/oculum/home_art/theme_base_ghiaccio_10_canon_20261106_votes2.png',
+  'base_mezzano_01':
+      'assets/oculum/home_art/theme_base_mezzano_01_canon_20261106_votes2.png',
+  'base_mezzano_08':
+      'assets/oculum/home_art/theme_base_mezzano_08_canon_20261106_votes2.png',
   'basilisco_base_variante_veterana':
       'assets/oculum/home_art/theme_basilisco_base_variante_veterana_canon_20261106_votes2.png',
   'cane_di_cenere':

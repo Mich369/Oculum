@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "recordedAtUtc": "2026-11-06T16:58:33.988630+00:00",
   "status": "SOURCE_ONLY_NOT_COMPILED_OR_PUBLISHED",
-  "count": 49,
-  "newVotes": 39,
+  "count": 55,
+  "newVotes": 44,
   "previousApprovals": 5,
   "files": [
     {
@@ -107,6 +107,27 @@
       "relicDerivativeCount": 0
     },
     {
+      "id": "baby_rock_rhino",
+      "asset": "assets/oculum/home_art/theme_baby_rock_rhino_canon_20261106_votes2.png",
+      "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_da_veterana_ridotto_v1.png",
+      "nativeSha256": "7a35e6143bf89d9020f33a2697befd1f89a23d8f01d650648179132b9bd6c397",
+      "bytes": 1739021,
+      "width": 1585,
+      "height": 992,
+      "selectedPreview": "output/artwork/terze_C_2026-11-06/C_baby_rock_rhino_da_veterana_ridotto_v1.png",
+      "selectedPreviewSha256": "7a35e6143bf89d9020f33a2697befd1f89a23d8f01d650648179132b9bd6c397",
+      "selection": "approve_revised_reference",
+      "approvalEvidence": {
+        "kind": "explicit_acceptance_of_shown_revision",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "Sì, canonico"
+      },
+      "approvedRevision": true,
+      "kind": "desktop",
+      "phoneDerivativeCount": 0,
+      "relicDerivativeCount": 0
+    },
+    {
       "id": "baby_rock_rhino_variante_veterana",
       "asset": "assets/oculum/home_art/theme_baby_rock_rhino_variante_veterana_canon_20261106_votes2.png",
       "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_rock_rhino_veterana_v2.png",
@@ -171,6 +192,111 @@
         "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_03.json",
         "previousEditRequestReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_02.json",
         "previousEditTargetAttachment": "codex-clipboard-902f8867-2272-4735-bc38-46e3ac510c70.png"
+      },
+      "approvedRevision": false,
+      "kind": "desktop",
+      "phoneDerivativeCount": 0,
+      "relicDerivativeCount": 0
+    },
+    {
+      "id": "base_foresta_01",
+      "asset": "assets/oculum/home_art/theme_base_foresta_01_canon_20261106_votes2.png",
+      "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_linfa_verde_v2.png",
+      "nativeSha256": "08a36b4bea1b746f13f7896019731dc84af6457d25b64600f55cf0e4efd406d6",
+      "bytes": 2105101,
+      "width": 1585,
+      "height": 992,
+      "selectedPreview": "output/artwork/terze_C_2026-11-06/C_cervo_linfa_verde_v2.png",
+      "selectedPreviewSha256": "08a36b4bea1b746f13f7896019731dc84af6457d25b64600f55cf0e4efd406d6",
+      "selection": "C",
+      "approvalEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
+      },
+      "approvedRevision": false,
+      "kind": "desktop",
+      "phoneDerivativeCount": 0,
+      "relicDerivativeCount": 0
+    },
+    {
+      "id": "base_ghiaccio_04",
+      "asset": "assets/oculum/home_art/theme_base_ghiaccio_04_canon_20261106_votes2.png",
+      "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_fiato_bianco_v2.png",
+      "nativeSha256": "cddb6401ec1b931a63c77248ff413db34a60b35108dbc8a0ef5b32574f2f4d6b",
+      "bytes": 2264983,
+      "width": 1585,
+      "height": 992,
+      "selectedPreview": "output/artwork/terze_C_2026-11-06/C_cervo_fiato_bianco_v2.png",
+      "selectedPreviewSha256": "cddb6401ec1b931a63c77248ff413db34a60b35108dbc8a0ef5b32574f2f4d6b",
+      "selection": "C",
+      "approvalEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
+      },
+      "approvedRevision": false,
+      "kind": "desktop",
+      "phoneDerivativeCount": 0,
+      "relicDerivativeCount": 0
+    },
+    {
+      "id": "base_ghiaccio_10",
+      "asset": "assets/oculum/home_art/theme_base_ghiaccio_10_canon_20261106_votes2.png",
+      "nativeSource": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-0746c54f-69ab-4377-9b79-ed7a7a9c29d8.png",
+      "nativeSha256": "8950f70a9e467d128b3ec3ffcf8fc246ff09a994158557d4415cb603523cbc9c",
+      "bytes": 1844458,
+      "width": 1586,
+      "height": 992,
+      "selectedPreview": "output/artwork/alternative_mostri_2026-11-05/base_ghiaccio_10_desktop_v1.jpg",
+      "selectedPreviewSha256": "4466840441f89dc71bf240b3ba7d156e6f085affe36e4feff585834d14b249a1",
+      "selection": "A",
+      "approvalEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "A"
+      },
+      "approvedRevision": false,
+      "kind": "desktop",
+      "phoneDerivativeCount": 0,
+      "relicDerivativeCount": 0
+    },
+    {
+      "id": "base_mezzano_01",
+      "asset": "assets/oculum/home_art/theme_base_mezzano_01_canon_20261106_votes2.png",
+      "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cervo_brumalba_v1.png",
+      "nativeSha256": "0a6d9e78ff90e7ca170927b6ce63696d9731d72bba33f812e519e97510b78df0",
+      "bytes": 2279829,
+      "width": 1585,
+      "height": 992,
+      "selectedPreview": "output/artwork/terze_C_2026-11-06/C_cervo_brumalba_v1.png",
+      "selectedPreviewSha256": "0a6d9e78ff90e7ca170927b6ce63696d9731d72bba33f812e519e97510b78df0",
+      "selection": "C",
+      "approvalEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
+      },
+      "approvedRevision": false,
+      "kind": "desktop",
+      "phoneDerivativeCount": 0,
+      "relicDerivativeCount": 0
+    },
+    {
+      "id": "base_mezzano_08",
+      "asset": "assets/oculum/home_art/theme_base_mezzano_08_canon_20261106_votes2.png",
+      "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_cinghiale_muschioso_v2.png",
+      "nativeSha256": "41d7d10e95f75b2d0ab2054eec7522b7c57d079dcebc2a5cbcac69343ddf4874",
+      "bytes": 2093224,
+      "width": 1585,
+      "height": 992,
+      "selectedPreview": "output/artwork/terze_C_2026-11-06/C_cinghiale_muschioso_v2.png",
+      "selectedPreviewSha256": "41d7d10e95f75b2d0ab2054eec7522b7c57d079dcebc2a5cbcac69343ddf4874",
+      "selection": "C",
+      "approvalEvidence": {
+        "kind": "explicit_user_choice",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+        "userAnswer": "C"
       },
       "approvedRevision": false,
       "kind": "desktop",
@@ -1223,7 +1349,11 @@
   "originalsUnchanged": true,
   "phoneDerivativeCount": 0,
   "relicDerivativeCount": 0,
-  "approvedRevisions": 5,
+  "approvedRevisions": 6,
   "revisionApprovalsReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_07.json",
-  "cyclopsApprovalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_08.json"
+  "cyclopsApprovalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_08.json",
+  "additionalApprovalsReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-06_09.json",
+  "previousFailedSourceCommit": "5aa6bbeca6400e0f803d4507439e9d4d6ecfd706",
+  "approvedRevisionsScope": "Six newly approved edits in this batch; the earlier twelve-bell Guardian correction is among the five previous approvals.",
+  "approvedRevisionFileCountIncludingEarlierGuardian": 7
 }

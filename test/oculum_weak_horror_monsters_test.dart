@@ -4,13 +4,24 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
   test(
-    'Nine weak horror monsters retain six to ten core points and usable skills',
+    'Eight active weak horrors and the saved Sacristan retain their core kits',
     () {
       final monsters = defaultMonsterBookEntries
           .where((entry) => entry.id.startsWith('weak_horror_'))
           .toList();
-      expect(monsters, hasLength(9));
-      for (final monster in monsters) {
+      expect(monsters, hasLength(8));
+      const retiredId = 'weak_horror_sagrestano';
+      expect(oculumIsRetiredMonsterId(retiredId), isTrue);
+      expect(monsters.map((monster) => monster.id), isNot(contains(retiredId)));
+      expect(monsterById(retiredId), isNull);
+      final savedSacristan = oculumSavedMonsterBookEntryById(retiredId);
+      expect(savedSacristan, isNotNull);
+      expect(savedSacristan!.id, retiredId);
+      expect(
+        savedSacristan.skillIds,
+        containsAll(['${retiredId}_attack', '${retiredId}_guard']),
+      );
+      for (final monster in [...monsters, savedSacristan]) {
         final total = [
           'resilienza',
           'volonta',
