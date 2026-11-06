@@ -1,5 +1,11 @@
 # Oculum — attività, conferme e consegne
 
+## CAT06 / ART06 — consegna 5f89ea2b verificata, attende conferma
+
+**Riga:** «Consegnare il lotto scelto, i quattro ritiri e il Gigante Massiccio bilanciato, con sorgenti, CI, download pubblici, EXE completo, ZIP e APK, preservando versione precedente e salvataggi». Fonte compilata **5f89ea2b**, run **42206168903**, build 273. Verificati **2.294 test CI passati e 6 saltati**, quattro prove online autenticate automatizzate, 9/9 job riusciti, dodici artifact e dodici download anonimi, tre risorse Pages allineate. Installati **16.913 file senza differenze**; **407/407 confronti dei 37 PNG**, 36 mapping nella fonte e un Guardiano sospeso; Windows normale/Test separati, APK 100273 con firma precedente, due EXE vivi dopo otto secondi. Backup 641 verificato e 62 file del profilo invariati. Nessuna nuova prova completa dell’interfaccia o su tre dispositivi fisici. [Rapporto completo e limiti](CONSEGNA_VERIFICATA_5f89ea2b.md). **Non al 100%: attende l’approvazione dell’utente per questa consegna concreta.**
+
+**ARTC06, snapshot successivo:** originali su G, **89 ID / 110 PNG C** comprese revisioni; **33 mostri da scegliere / 99 confronti A/B/C** nella galleria. Dodici raw restano da esaminare; 975 voci senza una C. Nessuna delle nuove proposte viene considerata approvata o inclusa nella build 5f89ea2b. Archivista sei uncini senza ali, Antico sei arti e due ali e Lacrimante due braccia locomotorie controllati; le correzioni di inquadratura hanno revisioni separate. [Conteggi locali](../build/THIRD_C_PROGRESS_20261106.json). I paragrafi sottostanti conservano gli snapshot precedenti e non sostituiscono questi esiti successivi.
+
 ## CAT06 / ART06 — lotto scelto, quattro ritiri e Gigante Massiccio, in lavorazione
 
 Registrati **39 allegati** con corrispondenza univoca dei pixel alle proposte: **36 scelte distinte**, due ripetizioni del Custode dei Nastri e **un secondo Gigante per la variante più grossa**. Quindici voti precedenti intatti; **52 scelte nel registro**. Comune B e Massiccio C restano distinti, con bilanciamento più robusto delegato dall’utente. Ritirati Ragno dei Fili Giurati, Rondine del Respiro Lieve, Viandante dei Ricordi Spenti e Lepre del Fiato di Vetro, conservando lookup legacy, schede, Occhi e originali. [Ricevuta esatta](CONFERME_LOTTO_ALLEGATI_2026-11-06.json).

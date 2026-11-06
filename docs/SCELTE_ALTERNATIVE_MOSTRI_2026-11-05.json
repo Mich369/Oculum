@@ -529,10 +529,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_basilisco_base_canon_20261106.png",
+        "nativeSha256": "c357f45c38a5d4dcec0116aecf48982d1a81ed8a19784788e45e70061e51b812",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "capitano_della_ruggine": {
@@ -567,10 +578,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_capitano_della_ruggine_canon_20261106.png",
+        "nativeSha256": "d2d6c7b59a4b45f6bcf0aeca18a39d52fba33e01c89bfadff30d09fb4496b890",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "coniglio_plasma": {
@@ -605,10 +627,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_coniglio_plasma_canon_20261106.png",
+        "nativeSha256": "b05df84f8b88c6743f13a8928b24875f4fec8eb9ffebab833bc0e9a576a2b7b1",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "araldo_bozzoli": {
@@ -643,10 +676,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_araldo_bozzoli_canon_20261106.png",
+        "nativeSha256": "6b17a130332fce847350f3ceef7275a3c9d9e1b409e95260761f3b18a4ccff04",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "base_ghiaccio_02": {
@@ -681,10 +725,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_base_ghiaccio_02_canon_20261106.png",
+        "nativeSha256": "5ba6eeed17e9e1f403067ab15cbbd2c445c759744cf7dfa47577ce408a783abf",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "lumaca_assassina": {
@@ -719,10 +774,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_lumaca_assassina_canon_20261106.png",
+        "nativeSha256": "4b3884151f3d11c64d219257299c0d6c4004353f4acc2e1c0a1c69209801af53",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "base_postea_07": {
@@ -760,10 +826,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_base_postea_07_canon_20261106.png",
+        "nativeSha256": "d9f9031c80507eb85ab188bb535d492407fe5d293d9defe9001fdc5b9c96981f",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "habitat_morti_becchino_dalle_mani_lunghe": {
@@ -798,10 +875,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_habitat_morti_becchino_dalle_mani_lunghe_canon_20261106.png",
+        "nativeSha256": "f1ff5c662cc33828b115a8d430c4bd1543fac79792fbcff2ada344afe3e489c5",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "bandito_base": {
@@ -836,10 +924,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_bandito_base_canon_20261106.png",
+        "nativeSha256": "f89baa4d8daf9e0a3a94ca4b880ea58cf9f4c7150eea6e82b63376552aa21785",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "base_nuvole_07": {
@@ -874,10 +973,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_base_nuvole_07_canon_20261106.png",
+        "nativeSha256": "d9770dfcfd25319bd30b23ac8abb138d9ef15c905615b03c317cf73412369149",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "arpia_base": {
@@ -912,10 +1022,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_arpia_base_canon_20261106.png",
+        "nativeSha256": "4543bc4b88204174a313c156663bc68bd1dd5e7611fcba3be0a26499f67867e0",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "habitat_vero_inferno_araldo_della_cenere_eterna": {
@@ -953,10 +1074,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_habitat_vero_inferno_araldo_della_cenere_eterna_canon_20261106.png",
+        "nativeSha256": "54ca480fb5c1a4c89de4e8fe9cdf5c2849880de22c6e82ad3020a096c8069567",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "weak_horror_ciste": {
@@ -991,10 +1123,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_weak_horror_ciste_canon_20261106.png",
+        "nativeSha256": "13f88116ba026fd75486bdd6dc10483484dda6c4b98c0bb1e6c39380417f73e7",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_custode_nastri_sospesi": {
@@ -1029,10 +1172,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclo_custode_nastri_sospesi_canon_20261106.png",
+        "nativeSha256": "56285c6d1acf7a94470423851d79ab6804c8ae3bcd173a9a146262619d5b1914",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "habitat_affogato_anguilla_delle_campane_sommerse": {
@@ -1067,10 +1221,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_habitat_affogato_anguilla_delle_campane_sommerse_canon_20261106.png",
+        "nativeSha256": "4a9a361802669bbe743f4a7116414a7d834ad75e2b4b3513b317d65e9617747b",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_cavaliere_filo_oro": {
@@ -1108,10 +1273,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclo_cavaliere_filo_oro_canon_20261106.png",
+        "nativeSha256": "8b5b86f3786853f718bc2afe7bb5ed2ebb6b870eabbaf9f40bad4fad6d6cde69",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "quadribrachio_ambra": {
@@ -1146,10 +1322,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_quadribrachio_ambra_canon_20261106.png",
+        "nativeSha256": "f746ad5858e334c7939bbc08fbb31c4c3374d72ee73d5d3752355514ae1a791b",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "topo_con_mani": {
@@ -1187,10 +1374,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_topo_con_mani_canon_20261106.png",
+        "nativeSha256": "062100de991437799745446456ba798bc935c4c330bae1ce6e17709b72f5abfa",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "marshmallow": {
@@ -1225,10 +1423,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_marshmallow_canon_20261106.png",
+        "nativeSha256": "684172f8783a3697f8752ac1c65090e90efca453a3f6889061f0e2e479f4c3f0",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "serafino_angelico": {
@@ -1263,10 +1472,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_serafino_angelico_canon_20261106.png",
+        "nativeSha256": "8f9575f4b3aae431f5b9b11d72d2312587a3efc30b2f4d3597e3b0a464e13eb9",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "habitat_ghiaccio_falena_della_neve_nera": {
@@ -1304,10 +1524,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_habitat_ghiaccio_falena_della_neve_nera_canon_20261106.png",
+        "nativeSha256": "43180af2c735e877b1aaedfb3253f83f3ff8fb13c4c62a38a87ab533da0ab73a",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "gigante_comune": {
@@ -1342,10 +1573,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_gigante_comune_canon_20261106.png",
+        "nativeSha256": "e832ec9d90c6a7cbdb4d0e3ac45759b1664e0d51274bc6ef189addc0e9a30002",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "gigante_comune_variante_massiccia": {
@@ -1383,10 +1625,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_gigante_comune_variante_massiccia_canon_20261106.png",
+        "nativeSha256": "0cdd9bb660d12baca73819a14adb3c150c6e68109d7b125931a6cba116b60286",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       },
       "sourceCreatureId": "gigante_comune",
       "variantOf": "gigante_comune",
@@ -1428,10 +1681,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_inspired_pipistrello_cavernicolo_canon_20261106.png",
+        "nativeSha256": "a58f92b3476b68c7d3ceebd914d5df981509a78f3567bc711b8685eb11c79690",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_guardiano_dodici_rintocchi": {
@@ -1466,10 +1730,17 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
+        "status": "held_for_user_rule_clarification",
         "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "compiledCommitContainingUnusedAsset": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "nativeSha256": "ed5545b262118185425a4e851cbdb0b1bb339d5456c0bb16b4c2b685a0bd559d",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Originale scelto e PNG conservati; mapping sospeso per dieci campane visibili contro dodici del catalogo. Nessuna scelta sostitutiva o regola dedotta."
       }
     },
     "snorlo": {
@@ -1504,10 +1775,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_snorlo_canon_20261106.png",
+        "nativeSha256": "1a7014ee03d76017658c5194561c552c9ff4a590e500e9f3a292958dab014799",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "weak_horror_portalanterna": {
@@ -1542,10 +1824,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_weak_horror_portalanterna_canon_20261106.png",
+        "nativeSha256": "503c9585133feeac5b348b3ebd3636dea9b2eeebf99bf5c6aa20260aee491ae3",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "weak_horror_cucitore": {
@@ -1580,10 +1873,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_weak_horror_cucitore_canon_20261106.png",
+        "nativeSha256": "9f5eb969750d98a60ae6dc6fe1443b1f6ac6681c01aee218527c855077d6592f",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_melma_null": {
@@ -1618,10 +1922,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclo_melma_null_canon_20261106.png",
+        "nativeSha256": "11ec572a8420d9c4d0a887845bbcd50bc2038888bc4f28e9c5e2fdd770bec351",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "serafino_solare": {
@@ -1656,10 +1971,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_serafino_solare_canon_20261106.png",
+        "nativeSha256": "43eb14cb21ac32b0aee71973e2f5d9a36e8131b98d4720e59c932dd5aecd3f85",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_golem_brina_profonda": {
@@ -1694,10 +2020,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclo_golem_brina_profonda_canon_20261106.png",
+        "nativeSha256": "8de7b54aa46a5a0b43167a414f534acceb987ceb8b2f17fa84e0cc9df9554cce",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_araldo_sei_albe": {
@@ -1732,10 +2069,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclo_araldo_sei_albe_canon_20261106.png",
+        "nativeSha256": "e85696949afdc2a6c32a5b439b72f3e00f079736a75ad099a0b0544d5c15e3e9",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_porcello_fango_grasso": {
@@ -1770,10 +2118,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclo_porcello_fango_grasso_canon_20261106.png",
+        "nativeSha256": "6fedec0bd5111833f3b1e9ae908a7b0985da3e01cd4920eb5072f96f87e7291c",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "ciclo_solare_siccita": {
@@ -1808,10 +2167,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclo_solare_siccita_canon_20261106.png",
+        "nativeSha256": "760f64b0e0318a39abfe8f1c2cd08bd4ed1dbb8bc4149c01259edadb039ff260",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "araldo_raggio_angelico": {
@@ -1846,10 +2216,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_araldo_raggio_angelico_canon_20261106.png",
+        "nativeSha256": "641c88556b87270d23e7e09de2f8a5b03e046566fc90ef0742a4d1b21f76fb43",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "angelo_palpebra_sporca": {
@@ -1884,10 +2265,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_angelo_palpebra_sporca_canon_20261106.png",
+        "nativeSha256": "2eb6f9aabee9b4a2a994793c546fbbab38697ac64663f2094168ad818fc836b5",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     },
     "black_dragon_shield": {
@@ -1922,10 +2314,21 @@
       },
       "selectionScope": "exact_desktop_only_no_automatic_variant_approval",
       "integration": {
-        "status": "pending_next_revision",
-        "frozenBuild": "641ec7ed",
-        "newAlternativesIntegrated": false,
-        "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        "status": "distributed_verified_5f89ea2b",
+        "compiledCommit": "5f89ea2b6f48cd4d17eb5da3d87fc62db87747d0",
+        "githubRun": "https://github.com/Mich369/Oculum/actions/runs/42206168903",
+        "newAlternativesIntegrated": true,
+        "runtimeAsset": "assets/oculum/home_art/theme_black_dragon_shield_canon_20261106.png",
+        "nativeSha256": "4ac2d40cabf8c231a6cff8e85e139657edf81d6149cded1862145d791fd8e44c",
+        "verifiedAtUtc": "2026-11-06T13:06:08.861891+00:00",
+        "verificationReport": "docs/CONSEGNA_VERIFICATA_5f89ea2b.md",
+        "previousIntegrationRecord": {
+          "status": "pending_next_revision",
+          "frozenBuild": "641ec7ed",
+          "newAlternativesIntegrated": false,
+          "note": "Voto esplicito; integrazione, composizione sui controlli e pacchetti verificati separatamente."
+        },
+        "note": "Desktop nativo nella fonte compilata e nei pacchetti verificati; mapping e custom hanno prove locali distinte. Nessuna nuova prova completa dei controlli grafici o approvazione di derivati dedotta."
       }
     }
   }
