@@ -530,9 +530,9 @@ void main() {
           );
           expect(
             (state.logEventi as List).join('\n'),
-            contains('Critico nemico'),
+            contains('[DANNO RISOLTO]'),
             reason:
-                'The critical damage bonus must be logged on the target sheet.',
+                'The target sheet logs the resolved impact without the calculation.',
           );
           if (readIntValue(damageReceipt['shieldLost']) > 0) {
             expect(readIntValue(damageReceipt['oculumShieldLost']), 10);

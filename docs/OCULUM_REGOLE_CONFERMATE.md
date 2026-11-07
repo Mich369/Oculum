@@ -1,5 +1,19 @@
 # Oculum — registro delle regole confermate
 
+## Potenza attuale sulle schede del Master — 7 novembre
+
+Il Master vede la Potenza attuale e quella totale nella forma `Potenza 56/70`. La Potenza attuale parte dal totale e perde 1 per ogni blocco completo di Vita pari al moltiplicatore Vita della scheda e 1 per ogni punto di Resilienza, Volontà, Materia o Oculum mancante dalla riserva. Si ferma a zero. Il rapporto è visibile con i permessi Master già applicati alle schede.
+
+## Vita al Grado 0 — 7 novembre 2026
+
+La Vita massima al Grado 0 moltiplica la Resilienza per 6 al livello 0, 7 al livello 1, 8 al livello 2, 9 al livello 3 e 10 dal livello 4. Dal Grado I si applica la progressione confermata in precedenza. Al Grado I, per i livelli 10, 11, 12 e da 13 in poi, i moltiplicatori sono 11, 14, 14 e 15. Il bonus di Potenza Totale usa il moltiplicatore Vita aggiornato, diviso per 10 al Grado 0 e per 5 dal Grado I, arrotondato per difetto. Le riserve esplicite di cloni e nuclei seguono le proprie formule. Le schede salvate conservano la Vita corrente entro il nuovo massimale, con le consuete eccezioni per i sovramassimali.
+
+## Meditazione fuori fight — 7 novembre
+
+Meditazione si usa da Supporto e utilità fuori da un fight attivo. Tira 1d20 naturale e recupera in Vita e Oculum due terzi del risultato, arrotondati per difetto, secondo le regole di recupero. Ogni scheda ha un uso fino al prossimo Riposo Lungo, anche con recupero pari a zero. Il Riposo Breve lascia l’uso consumato. Con la turnistica di roleplay attiva si applicano le normali regole di Azione e Reazione. Il registro mostra il tiro e gli importi effettivamente recuperati.
+
+Le tre suite locali dei pannelli di combattimento, del sonno e dei livelli di danno hanno superato 46 test. La regressione di Meditazione verifica il pannello, i recuperi, il salvataggio per scheda e la ricarica al Riposo Lungo.
+
 ## Evocazioni nella cartella dell’evocatore — 7 novembre
 
 L’utente ha specificato **«quando una entità evoca un mostro o un occhio dei caduti anche se player staranno nella stessa cartella»** e **«es patalpa evoca patalpa il secondo sarà nella cartella sotto il primo»**. La nuova scheda di un evocato si colloca immediatamente sotto la scheda di chi lo ha evocato, nella stessa cartella esistente o a livello principale. Vale per mostri, Occhi dei Caduti e creature già evocate che evocano a loro volta. Il legame usa il tag della scheda, indipendentemente dal nome.
@@ -1109,3 +1123,13 @@ Il resto del background proposto è approvato dall’utente e resta personalizza
 Nuova Skill confermata dopo la sessione. Evoca una mazza dorata e aumenta temporaneamente i Danni: Forma I **×1,2 per1d3 turni personali** (senza+1, ultima correzione esplicita); Forma II **×1,3 per1d3+2**; Forma III **×1,5 per1d3+3**. Le forme I/III e il bilanciamento di costi/cooldown sono stati delegati e approvati, con correzione finale della Forma I.
 
 Bilanciamento iniziale modificabile: costo2/4/6Oculum, cooldown4/6/8turni personali, forme ai livelli0/3/6 secondo il catalogo. Si applica il bonus percentuale temporaneo ai Danni, senza sommare il moltiplicatore completo come bonus. Esempio100Danni diventano120/130/150. Durata estratta all’attivazione e conservata, senza ritirarla al caricamento. L’illustrazione dell’arco e la nuova Skill restano elementi distinti.
+## Rottura degli Scudi e usura dell’equipaggiamento — 7 novembre 2026
+
+- **Scudo normale.** Quando un colpo azzera lo Scudo normale, Volontà e Materia effettive ricevono −2. Il malus cala di 1 al turno personale e una nuova rottura lo riporta a −2. Ricevere un altro Scudo normale rimuove il malus. La riserva spendibile resta distinta dai valori effettivi.
+- **Scudo Oculum.** La rottura dà −3 al prossimo tiro difensivo con un dado. Chi risolve l’impatto sceglie i non alleati vicini nell’incontro. Ogni bersaglio scelto riceve 10 + 5 × livello del portatore in Danni Oculum, soggetti alle protezioni. La vicinanza si decide al tavolo.
+- **Capacità.** Armi, armature e scudi hanno 250, 500, 750 o 1.000 usi ai livelli oggetto 0, 1, 2 o 3+. Vale anche per l’equipaggiamento di mostri e NPC. I Titoli Item sono esenti.
+- **Consumo armi.** Pari livello tra arma e portatore: 1 uso per attacco, oppure 3 con un buff a Volontà o Attacco. Con arma di livello inferiore si aggiunge la differenza di livello al costo normale, oppure 1,5 volte la differenza al costo con buff. Con arma di livello superiore il consumo è zero finché il portatore la raggiunge. Un attacco applica il costo una sola volta per arma contribuente.
+- **Consumo protezioni.** L’armatura conta i colpi che arrivano alla Vita o agli HP temporanei dopo le protezioni. Lo scudo conta i colpi che blocca per intero con una quota attribuibile all’oggetto. Il consumo base è 1 uso.
+- **Avversario più forte.** Nello scontro con un mostro o NPC ostile, il consumo si moltiplica per 1,25 con avversario da 1 a 3 livelli sopra il portatore e per 1,90 da 4 livelli sopra. Si aggiunge un fattore del 50% per ogni Grado di vantaggio dell’avversario. Il costo per colpo si arrotonda per eccesso.
+- **Efficienza.** Danni, Difesa o capacità Scudo dell’oggetto calano in proporzione agli usi, arrotondando per difetto. A zero usi resta una percentuale casuale intera dal 20% al 30%, tirata una volta e salvata. L’implementazione limita il calo prima della rottura al 30% per evitare un aumento di efficacia al passaggio a zero.
+- **Riaffila e fabbro.** Riaffila recupera il 15% della capacità dell’arma in combattimento spendendo un’Azione, oppure il 30% fuori combattimento. Gli usi recuperati si arrotondano per difetto e rispettano la capacità. Serve un’arma con almeno un uso. Il fabbro ripara anche l’equipaggiamento rotto per 60 Obser × Grado dell’oggetto, minimo 30 Obser.

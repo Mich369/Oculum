@@ -198,10 +198,7 @@ void main() {
       resistanceBypassDamage: 15,
     );
     expect(int.parse(state.currentHpController.text), fixtureMaximumHp - 15);
-    expect(
-      state.logEventi.any((dynamic e) => '$e'.contains('[MITRA RUNICO] +15')),
-      isTrue,
-    );
+    expect(state.risultato, '[DANNO SUBITO] · Vita −15');
     state.incomingDamagePresets.clear();
     state.activeConditions.clear();
     for (final result in [
@@ -240,6 +237,7 @@ void main() {
         'level': 0,
         'difficulty': 'normale',
         'element': 'fisico',
+        'damageDisplayImpact': {'hpLost': 999, 'shieldBroken': true},
       };
       if (result.$3 == 5) {
         final readySnapshot = state.realtimeVisibleInitiativeSnapshot;
@@ -295,7 +293,37 @@ void main() {
         'hpLost': remaining,
         'pawnPending': false,
       });
-      expect((state.logEventi as List).join('\n'), contains('[DANNO RISOLTO]'));
+      final summary = [
+        if (spentOculumShield == 10)
+          'Scudo Oculum rotto'
+        else if (spentOculumShield > 0)
+          'Scudo Oculum −$spentOculumShield',
+        if (spentShield == 20)
+          'Scudo rotto'
+        else if (spentShield > 0)
+          'Scudo −$spentShield',
+        if (remaining > 0) 'Vita −$remaining',
+        if (avoided) 'Colpo evitato',
+      ].join(' · ');
+      final log = (state.logEventi as List).cast<String>().firstWhere(
+        (entry) => entry.contains('[DANNO RISOLTO]'),
+      );
+      expect(log.split(' · ').skip(1).join(' · '), summary);
+      final response = transport.sent
+          .lastWhere(
+            (entry) => entry.$1 == 'combat_defense' && entry.$2['id'] == id,
+          )
+          .$2;
+      expect(response['damageReceipt'], request['damageReceipt']);
+      if (!avoided) {
+        final display = response['damageDisplayImpact'] as Map;
+        expect(display['oculumShieldBroken'], spentOculumShield == 10);
+        expect(display['shieldBroken'], spentShield == 20);
+        expect(display['hpLost'], remaining);
+      }
+      final logCount = (state.logEventi as List)
+          .where((entry) => '$entry'.contains('[DANNO RISOLTO]'))
+          .length;
       expect(state.schedePersonaggio[1]['currentHp'], 999);
       await tester.runAsync(
         () => probe.resolveCombatDefense(request, 'cm', 10),
@@ -305,7 +333,85 @@ void main() {
         '$expectedHp',
         reason: 'Duplicate defense must not apply damage twice',
       );
+      expect(
+        (state.logEventi as List).where(
+          (entry) => '$entry'.contains('[DANNO RISOLTO]'),
+        ),
+        hasLength(logCount),
+      );
     }
+    const replyId = 'concise-remote-defender-reply';
+    state.onlineCombatRequests[replyId] = <String, dynamic>{
+      'id': replyId,
+      'scope': probe.permissionScope,
+      'encounterId': 'fight',
+      'sourceTag': owner,
+      'targetTag': enemy,
+      'sourceName': 'Rose',
+      'targetName': 'Avversario',
+      'status': 'pending',
+      'choice': 'vc',
+      'attack': 18,
+      'damage': 50,
+    };
+    final remoteReply = <String, dynamic>{
+      'id': replyId,
+      'scope': probe.permissionScope,
+      'campaignId': state.activeCampaignId,
+      'encounterId': 'fight',
+      'sessionId': 'enemy-session',
+      'senderTag': enemy,
+      'senderRole': 'player',
+      'sourceTag': owner,
+      'targetTag': enemy,
+      'defense': 10,
+      'defenseChoice': 'cm',
+      'damageReceipt': {
+        'oculumShieldLost': 10,
+        'shieldLost': 4,
+        'temporaryHpLost': 0,
+        'hpLost': 0,
+        'pawnPending': false,
+      },
+      'damageDisplayImpact': {
+        'oculumShieldLost': 10,
+        'oculumShieldBroken': true,
+        'shieldLost': 4,
+      },
+    };
+    probe.receiveCombat('combat_defense', remoteReply);
+    probe.receiveCombat('combat_defense', remoteReply);
+    expect(
+      (state.logEventi as List).cast<String>().where(
+        (entry) => entry.endsWith(
+          '[DANNO RISOLTO] Rose → Avversario · Scudo Oculum rotto · Scudo −4',
+        ),
+      ),
+      hasLength(1),
+    );
+    state.onlineCombatRequests.remove(replyId);
+    state.currentHpController.text = '${fixtureMaximumHp - 2}';
+    probe.applyHealing(100);
+    expect(state.currentHpController.text, '$fixtureMaximumHp');
+    expect((state.logEventi as List).first, endsWith('[CURA] · Vita +2'));
+    final line =
+        probe.combatLogLine(
+              '[DANNO RISOLTO] · Scudo Oculum rotto · Scudo −4 · Vita −3 · Vita +2',
+            )
+            as Text;
+    final colors = <String, Color?>{};
+    line.textSpan!.visitChildren((span) {
+      if (span is TextSpan && span.text != null && span.style?.color != null) {
+        colors[span.text!] = span.style!.color;
+      }
+      return true;
+    });
+    expect(colors, {
+      'Scudo Oculum rotto': state.oculumStatFormulaColor,
+      'Scudo −4': const Color(0xFF61C5FF),
+      'Vita −3': const Color(0xFFD7344C),
+      'Vita +2': const Color(0xFF58DFA5),
+    });
     // One-shot penetration must leave no armed defensive toggle behind.
     state.scudoOculumController.text = '10';
     state.scudoController.text = '20';

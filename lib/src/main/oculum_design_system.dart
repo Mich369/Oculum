@@ -336,6 +336,90 @@ class OculumPanelEngraving extends CustomPainter {
       oldDelegate.accent != accent;
 }
 
+/// Shared frame for sections outside the character sheet.
+class OculumSectionFrame extends StatelessWidget {
+  const OculumSectionFrame({
+    super.key,
+    required this.accent,
+    required this.surface,
+    required this.ornaments,
+    this.fullBleed = false,
+    required this.child,
+  });
+
+  final Color accent;
+  final Color surface;
+  final bool ornaments;
+  final bool fullBleed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 600;
+        final gutter = fullBleed || compact
+            ? 0.0
+            : constraints.maxWidth < 1000
+            ? OculumDesignTokens.space4
+            : OculumDesignTokens.space8;
+        final radius = BorderRadius.circular(
+          compact ? 0 : OculumDesignTokens.radiusMedium,
+        );
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            ValueListenableBuilder<OculumThemePresentation>(
+              valueListenable: oculumThemePresentation,
+              child: Padding(padding: EdgeInsets.all(gutter), child: child),
+              builder: (context, presentation, content) {
+                final strength = 1 - presentation.surfaceTransparency;
+                return DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: radius,
+                    gradient: fullBleed
+                        ? null
+                        : LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: const [0, .30, 1],
+                            colors: [
+                              Color.lerp(
+                                surface,
+                                accent,
+                                .10,
+                              )!.withValues(alpha: .42 * strength),
+                              surface.withValues(alpha: .16 * strength),
+                              surface.withValues(alpha: .32 * strength),
+                            ],
+                          ),
+                  ),
+                  child: content,
+                );
+              },
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: radius,
+                    border: Border.all(color: accent.withValues(alpha: .28)),
+                  ),
+                  child: ornaments && !compact
+                      ? CustomPaint(
+                          painter: OculumPanelEngraving(accent: accent),
+                        )
+                      : null,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class OculumGothicDivider extends StatelessWidget {
   const OculumGothicDivider({super.key, required this.color});
 

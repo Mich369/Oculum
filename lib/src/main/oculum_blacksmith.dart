@@ -1,5 +1,13 @@
 part of '../../main.dart';
 
+int oculumBlacksmithRepairCost(InventoryItem item) =>
+    max(30, 60 * item.gradoOggetto);
+
+bool _oculumBlacksmithCanRepair(InventoryItem item) =>
+    item.quantita > 0 &&
+    oculumEquipmentCanWear(item) &&
+    oculumEquipmentUses(item) < oculumEquipmentCapacity(item);
+
 // Definitions and material powers are carried by the item, not regenerated on load.
 int oculumBlacksmithDustCost(InventoryItem item) => min(
   12,
@@ -370,6 +378,63 @@ InventoryItem? oculumCombineEquipment(
 }
 
 extension _OculumBlacksmith on _OculumHomePageState {
+  Future<void> showBlacksmithRepair() async {
+    if (!merchantIsOpen || merchantShopType != 'fabbro') return;
+    final origin = currentSheetScrollId();
+    final candidates = inventario.where(_oculumBlacksmithCanRepair).toList();
+    final available = leggiNumero(obserController);
+    final item = await showDialog<InventoryItem>(
+      context: context,
+      builder: (dialog) => SimpleDialog(
+        title: const Text('Fabbro · Ripara'),
+        children: [
+          if (candidates.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Text('Nessun equipaggiamento da riparare.'),
+            ),
+          for (final item in candidates)
+            SimpleDialogOption(
+              onPressed: available >= oculumBlacksmithRepairCost(item)
+                  ? () => Navigator.pop(dialog, item)
+                  : null,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                enabled: available >= oculumBlacksmithRepairCost(item),
+                title: Text(item.nome),
+                subtitle: Text(
+                  '${oculumEquipmentUses(item)} / ${oculumEquipmentCapacity(item)} usi',
+                ),
+                trailing: Text('${oculumBlacksmithRepairCost(item)} Obser'),
+              ),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        item == null ||
+        !merchantIsOpen ||
+        merchantShopType != 'fabbro' ||
+        origin != currentSheetScrollId() ||
+        !inventario.contains(item) ||
+        !_oculumBlacksmithCanRepair(item)) {
+      return;
+    }
+    final cost = oculumBlacksmithRepairCost(item);
+    final balance = leggiNumero(obserController);
+    if (balance < cost || !oculumRepairEquipmentWear(item)) return;
+    updateOculumHomeUi(() {
+      obserController.text = '${balance - cost}';
+      invalidateDerivedDataCaches();
+    });
+    aggiungiLog('[FABBRO] ${item.nome} riparato · −$cost Obser');
+    programmaSalvataggio();
+  }
+
   Future<void> showBlacksmithCombine() async {
     if (!merchantIsOpen || merchantShopType != 'fabbro') return;
     InventoryItem? target;

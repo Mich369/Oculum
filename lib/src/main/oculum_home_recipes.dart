@@ -1050,6 +1050,10 @@ extension _OculumHomeRecipes on _OculumHomePageState {
                     gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
                     gradoRichiesto: oculumCraftedEquipmentBonuses(recipe).grade,
                     monsterLoot: oculumCraftedEquipmentSkillData(recipe),
+                    craftData: {
+                      if (recipe.forgeTarget == 'armor')
+                        'wearProtectionKind': 'armor',
+                    },
                     arma:
                         recipe.forgeTarget == 'weapon' ||
                         recipe.forgeTarget == 'arma',

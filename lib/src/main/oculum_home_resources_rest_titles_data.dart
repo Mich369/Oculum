@@ -2585,6 +2585,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     recordAggiustaNucleoProgress(immediate: true);
     processConditionTick(OculumConditionTickTrigger.longRest);
     tickOpenLifecycleRest(longRest: true);
+    planarState.remove(_meditationUseKey);
     if (advanceWorldClock && worldClockProgress.calendarOriginDay > 0) {
       notifyWorldRestState(longRest: true);
     }

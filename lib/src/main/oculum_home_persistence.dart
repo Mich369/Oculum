@@ -997,6 +997,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       // notifier mirati dedicati.
       invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
     }
+    if (!loadingThresholdSheet) clearNormalShieldBreakPenaltyIfProtected();
     autosaveTimer?.cancel();
 
     autosaveTimer = Timer(delay, () {
@@ -2819,6 +2820,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     // sincronizzazione un cambio scheda poteva riutilizzare formule, riepiloghi
     // e valori derivati calcolati per la scheda precedente.
     invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    clearNormalShieldBreakPenaltyIfProtected();
     notifyExperienceChanged();
     notifyOculumResourceChanged();
     recipesRevision.value++;
@@ -4570,11 +4572,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (!oculumUsesIsolatedSaveProfile &&
         authState.canSyncToCloud &&
         authState.userId != null) {
+      final cloudPayload = oculumSessionMaterialCloudSaveForMaster(
+        savePayload,
+        authState.userId!,
+      );
       unawaited(
         OculumCloudSaveService.instance.queueLocalSaveForSync(
           authState.userId!,
-          payload: savePayload,
-          encodedPayload: saveResult.encoded,
+          payload: cloudPayload,
+          encodedPayload: identical(cloudPayload, savePayload)
+              ? saveResult.encoded
+              : null,
         ),
       );
     }
@@ -4676,6 +4684,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         caricaStatoDaJson(schedePersonaggio.first);
         assicuraTagSchede();
         activeCampaignId = generateCampaignId();
+        sessionMaterialsByMaster.clear();
         campaignNameController.text = 'Campagna principale';
         campagneOculum
           ..clear()
@@ -4928,6 +4937,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         caricaStatoDaJson(schedePersonaggio.first);
         assicuraTagSchede();
         activeCampaignId = generateCampaignId();
+        sessionMaterialsByMaster.clear();
         campaignNameController.text = 'Campagna principale';
         campagneOculum
           ..clear()
@@ -4970,6 +4980,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
       schedaCorrente = 0;
       activeCampaignId = generateCampaignId();
+      sessionMaterialsByMaster.clear();
       campaignNameController.text = 'Campagna principale';
       caricaStatoDaJson(schedePersonaggio.first);
       saveActiveCampaignInMemory();
@@ -9011,11 +9022,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
   // =====================================================
 
   Future<void> scegliImmagine() async {
+    final origin = currentSheetScrollId();
+    final campaign = activeCampaignId;
     final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
 
     if (file == null) return;
 
     final bytes = await file.readAsBytes();
+    if (!_portraitEditIsCurrent(origin, campaign)) return;
     await importaImmaginePersonaggioDaBytes(
       bytes,
       sourceName: file.name.trim().isEmpty ? 'gallery' : file.name.trim(),
@@ -9023,8 +9037,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   Future<void> incollaImmaginePersonaggioDaClipboard() async {
+    final origin = currentSheetScrollId();
+    final campaign = activeCampaignId;
     try {
       final clipboardImage = await Pasteboard.image;
+      if (!_portraitEditIsCurrent(origin, campaign)) return;
       if (clipboardImage != null && clipboardImage.isNotEmpty) {
         await importaImmaginePersonaggioDaBytes(
           clipboardImage,
@@ -9043,7 +9060,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
           if (!await file.exists()) continue;
 
           final bytes = await file.readAsBytes();
-          if (img.decodeImage(bytes) == null) continue;
+          if (!_portraitEditIsCurrent(origin, campaign)) return;
+          if (!oculumIsPortraitGif(bytes) && img.decodeImage(bytes) == null) {
+            continue;
+          }
 
           await importaImmaginePersonaggioDaBytes(
             bytes,
@@ -9055,7 +9075,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         }
       }
 
-      if (!mounted) return;
+      if (!_portraitEditIsCurrent(origin, campaign)) return;
       setState(() {
         risultato = t(
           'Nessuna immagine trovata negli appunti.',
@@ -9064,7 +9084,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         aggiungiLog(risultato);
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!_portraitEditIsCurrent(origin, campaign)) return;
       setState(() {
         risultato = t(
           'Impossibile leggere l\'immagine dagli appunti.',
@@ -9104,7 +9124,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<void> scaricaImmaginePersonaggio() async {
     final bytes = immaginePersonaggio;
     if (bytes == null || bytes.isEmpty) return;
+    await _scaricaImmaginePersonaggioBytes(bytes);
+  }
 
+  Future<void> _scaricaImmaginePersonaggioBytes(Uint8List bytes) async {
     try {
       final now = DateTime.now();
       final stamp =
@@ -9116,14 +9139,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
           .replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_')
           .replaceAll(RegExp(r'_+'), '_')
           .replaceAll(RegExp(r'^_|_$'), '');
+      final type = oculumPortraitFileType(bytes);
       final fileName =
-          'oculum_${safeName.isEmpty ? 'personaggio' : safeName}_$stamp.png';
+          'oculum_${safeName.isEmpty ? 'personaggio' : safeName}_$stamp.${type.extension}';
 
       if (kIsWeb) {
         await oculumDownloadBytes(
           bytes: bytes,
           fileName: fileName,
-          mimeType: 'image/png',
+          mimeType: type.mimeType,
         );
         if (!mounted) return;
         setState(() {
@@ -9184,6 +9208,17 @@ extension _OculumHomePersistence on _OculumHomePageState {
         child: Wrap(
           children: [
             ListTile(
+              leading: const Icon(Icons.animation, color: Colors.white),
+              title: Text(
+                t('Crea GIF ritratto', 'Create portrait GIF'),
+                style: const TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                unawaited(_creaGifRitratto());
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.copy, color: Colors.white),
               title: Text(
                 t('Copia negli appunti', 'Copy to clipboard'),
@@ -9211,39 +9246,137 @@ extension _OculumHomePersistence on _OculumHomePageState {
     );
   }
 
+  bool _portraitEditIsCurrent(String origin, String campaign) =>
+      mounted &&
+      currentSheetScrollId() == origin &&
+      activeCampaignId == campaign;
+
+  void _portraitImportMessage(String message) {
+    if (!mounted) return;
+    setState(() {
+      risultato = message;
+      aggiungiLog(message);
+    });
+  }
+
+  Future<void> _creaGifRitratto() async {
+    final origin = currentSheetScrollId();
+    final campaign = activeCampaignId;
+    final current = immaginePersonaggio;
+    final pickFile = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(t('Immagine di partenza', 'Source image')),
+        children: [
+          if (current != null)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(t('Ritratto attuale', 'Current portrait')),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(t('Scegli un’immagine', 'Choose an image')),
+          ),
+        ],
+      ),
+    );
+    if (pickFile == null || !_portraitEditIsCurrent(origin, campaign)) return;
+
+    Uint8List? source = current;
+    ({Uint8List bytes, int width, int height})? preview;
+    try {
+      if (pickFile) {
+        final file = await _picker.pickImage(source: ImageSource.gallery);
+        if (file == null) return;
+        source = await file.readAsBytes();
+      }
+      if (source == null || !_portraitEditIsCurrent(origin, campaign)) return;
+      preview = kIsWeb
+          ? oculumPortraitGifPreview(source)
+          : await compute(oculumPortraitGifPreview, source);
+    } catch (_) {
+      preview = null;
+    }
+    if (!mounted || !_portraitEditIsCurrent(origin, campaign)) return;
+    if (source == null || preview == null) {
+      _portraitImportMessage(
+        t('Immagine di partenza non valida.', 'Invalid source image.'),
+      );
+      return;
+    }
+    final sourceBytes = source;
+    final previewData = preview;
+    final result = await showDialog<OculumPortraitGifResult>(
+      context: context,
+      builder: (_) => OculumPortraitGifEditor(
+        source: sourceBytes,
+        preview: previewData,
+        english: linguaInglese,
+      ),
+    );
+    if (result == null || !_portraitEditIsCurrent(origin, campaign)) return;
+    if (result.apply) {
+      await _salvaImmaginePersonaggio(result.bytes);
+    } else {
+      await _scaricaImmaginePersonaggioBytes(result.bytes);
+    }
+  }
+
   Future<void> importaImmaginePersonaggioDaBytes(
     Uint8List bytes, {
     String sourceName = '',
   }) async {
+    final origin = currentSheetScrollId();
+    final campaign = activeCampaignId;
     if (bytes.isEmpty) {
-      if (!mounted) return;
-      setState(() {
-        risultato = t('Immagine vuota ignorata.', 'Empty image ignored.');
-        aggiungiLog(risultato);
-      });
+      _portraitImportMessage(
+        t('Immagine vuota ignorata.', 'Empty image ignored.'),
+      );
+      return;
+    }
+
+    if (oculumIsPortraitGif(bytes)) {
+      final valid = kIsWeb
+          ? oculumCanImportPortraitGif(bytes)
+          : await compute(oculumCanImportPortraitGif, bytes);
+      if (!_portraitEditIsCurrent(origin, campaign)) return;
+      if (!valid) {
+        _portraitImportMessage(
+          t(
+            'GIF non valida o troppo grande. Massimo 384 KiB, 1024 px per lato e 120 fotogrammi entro il limite di decodifica.',
+            'Invalid or oversized GIF. Up to 384 KiB, 1024 px per side and 120 frames within the decoding budget.',
+          ),
+        );
+        return;
+      }
+      await _salvaImmaginePersonaggio(bytes, sourceName: sourceName);
       return;
     }
 
     final cropped = await mostraEditorCropEsagono(bytes);
+    if (!_portraitEditIsCurrent(origin, campaign)) return;
     if (cropped == null || cropped.isEmpty) {
-      if (!mounted) return;
-      setState(() {
-        risultato = t(
+      _portraitImportMessage(
+        t(
           'Ritaglio annullato: immagine precedente mantenuta.',
           'Crop cancelled: previous image kept.',
-        );
-        aggiungiLog(risultato);
-      });
+        ),
+      );
       return;
     }
 
-    if (!mounted) return;
+    await _salvaImmaginePersonaggio(cropped, sourceName: sourceName);
+  }
 
+  Future<void> _salvaImmaginePersonaggio(
+    Uint8List bytes, {
+    String sourceName = '',
+  }) async {
     setState(() {
-      immaginePersonaggio = cropped;
+      immaginePersonaggio = bytes;
       if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
         schedePersonaggio[schedaCorrente]['immaginePersonaggioBase64'] =
-            base64Encode(cropped);
+            base64Encode(bytes);
       }
       final suffix = sourceName.trim().isEmpty ? '' : ' ($sourceName)';
       risultato = t(

@@ -61,8 +61,9 @@ void main() {
     () {
       expect(
         oculumScoutPower(3, [5, 2, 1, 0]),
-        12,
-      ); // Grade 0, HP multiplier 10 adds 1.
+        11,
+      ); // Grade 0, HP multiplier 9 adds 0.
+      expect(oculumScoutPower(4, [5, 2, 1, 0]), 13);
       expect(oculumScoutPowerBand(0, 0), 'equal');
       expect(oculumScoutPowerBand(0, 1), 'impossible');
       for (final (target, expected) in [

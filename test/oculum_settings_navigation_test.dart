@@ -68,6 +68,9 @@ void main() {
       captureKey: capture,
     );
     final probe = OculumPerformanceProbe(state);
+    await tester.pumpAndSettle();
+    expect(find.byType(OculumSectionFrame), findsNothing);
+
     state.updateOculumHomeUi(() {
       state.paginaCorrente = 11;
       state.settingsCategory = 'general';
@@ -93,7 +96,12 @@ void main() {
         });
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: '$category at $width');
-        expect(find.byKey(const ValueKey('settings-search')), findsOneWidget);
+        final search = find.byKey(const ValueKey('settings-search'));
+        expect(search, findsOneWidget);
+        expect(
+          find.ancestor(of: search, matching: find.byType(OculumSectionFrame)),
+          findsOneWidget,
+        );
         if (['general', 'appearance', 'data'].contains(category)) {
           await tester.runAsync(() async {
             final boundary =

@@ -1005,7 +1005,10 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             fontSize: 12,
                           ),
                         ),
-                        knownPowerBadge(sheetTagAt(schedaCorrente)),
+                        knownPowerBadge(
+                          sheetTagAt(schedaCorrente),
+                          showMasterReserve: true,
+                        ),
                       ],
                     ),
                     racialCapabilitiesPanel(),

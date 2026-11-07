@@ -11,6 +11,7 @@ import 'services/oculum_update_runtime.dart';
 import 'services/oculum_update_log.dart';
 import 'widgets/oculum_update_log_dialog.dart';
 import 'game/meccanio_rules.dart';
+import 'game/oculum_portrait_gif.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -59,8 +60,10 @@ import 'widgets/oculum_encounter_stage.dart';
 import 'widgets/oculum_room_activity_surface.dart';
 import 'widgets/oculum_reference_art.dart';
 import 'widgets/oculum_reference_frame.dart';
+import 'widgets/oculum_portrait_gif_editor.dart';
 import 'widgets/oculum_goth_ornaments.dart';
 import 'widgets/oculum_resource_bar_fx.dart';
+import 'widgets/oculum_sheet_feedback.dart';
 import 'widgets/oculum_theme_presentation.dart';
 import 'widgets/oculum_custom_theme.dart';
 import 'widgets/oculum_watching_eyes.dart';
@@ -145,6 +148,7 @@ part 'src/main/oculum_diary_knowledge_integration.dart';
 part 'src/main/oculum_monster_loot.dart';
 part 'src/main/oculum_monster_dossier.dart';
 part 'src/main/oculum_equipment_abilities.dart';
+part 'src/main/oculum_equipment_wear.dart';
 part 'src/main/oculum_enemy_ability_variants.dart';
 part 'src/main/oculum_authored_materials.dart';
 part 'src/main/oculum_crafting_expansion.dart';
@@ -220,6 +224,8 @@ part 'src/main/oculum_humanoid_roles.dart';
 part 'src/main/oculum_global_search.dart';
 part 'src/main/oculum_friends.dart';
 part 'src/main/oculum_campaigns.dart';
+part 'src/main/oculum_combat_log.dart';
+part 'src/main/oculum_session_material.dart';
 part 'src/main/oculum_sheet_folders.dart';
 part 'src/main/oculum_withered_larva.dart';
 part 'src/main/oculum_story_session_notes.dart';
@@ -1190,6 +1196,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   void beginOculumFocusTransition() {
     appOculumFocusTransition = true;
+    sheetFeedback.value = null;
     lifecycleFocusSettleTimer?.cancel();
     if (autosaveTimer?.isActive ?? false) {
       autosavePendingAfterFocusTransition = true;
@@ -1592,6 +1599,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final dannoSubitoController = TextEditingController();
   final dannoSubitoPercentController = TextEditingController();
   String incomingDamageElement = '';
+  Future<void> _oculumShieldBreakImpactQueue = Future.value();
   final Map<String, String> incomingDamagePresets = {};
   int assignableSubtraitPoints = 0;
   final Map<String, String> dannoSubitoPercentPerTipo = <String, String>{};
@@ -1707,6 +1715,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   String monsterBookTierFilter = 'Tutti';
   String monsterBookHabitatFilter = '';
   String monsterBookKnowledgeFilter = 'all';
+  bool monsterBookFinishedOnly = false;
   String partyBookHabitatFilter = '';
   final recipeSearchController = TextEditingController();
 
@@ -1870,6 +1879,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   List<MonsterBookEntry> monsterBookFilterCache = const <MonsterBookEntry>[];
   final List<Map<String, dynamic>> amiciOculum = [];
   final List<Map<String, dynamic>> campagneOculum = [];
+  final Map<String, _SessionMaterialPlan> sessionMaterialsByMaster = {};
 
   // =====================================================
   // STATO UI / SISTEMA
@@ -1994,6 +2004,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool ultimoDannoNucleoEvitato = false;
   final ValueNotifier<int> diceResultRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> diceOverlayRevision = ValueNotifier<int>(0);
+  final ValueNotifier<OculumSheetFeedback?> sheetFeedback =
+      ValueNotifier<OculumSheetFeedback?>(null);
   final ValueNotifier<int> inputUiRevision = ValueNotifier<int>(0);
   final ValueNotifier<int> referenceDetailRevision = ValueNotifier<int>(0);
 
@@ -2082,6 +2094,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   String ultimoEventoRiposo = 'Nessun evento di riposo registrato.';
   int artIntegrityRestIndex = 0;
   bool longRestInProgress = false;
+  bool _meditationInProgress = false;
+  bool _weaponSharpeningInProgress = false;
   bool aggiustaNucleoUsato = false;
   bool aggiustaNucleoInCorso = false;
   String statoForzaAttivo = '';
@@ -3910,6 +3924,16 @@ class _OculumHomePageState extends State<OculumHomePage>
       return pageLoadingPlaceholder(page);
     }
 
+    final content = buildCurrentPage(page);
+    final section = page == 0 || (oculusModActive && page != settingsPageIndex)
+        ? content
+        : OculumSectionFrame(
+            accent: tertiaryColor,
+            surface: backgroundMidColor,
+            ornaments: oculumGraphicsEnabled.value,
+            fullBleed: page == mapPageIndex,
+            child: content,
+          );
     return KeyedSubtree(
       key: ValueKey<String>('page_ready_${currentSheetScrollId()}_$page'),
       child: Column(
@@ -3925,10 +3949,10 @@ class _OculumHomePageState extends State<OculumHomePage>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       referenceSheetSideMenu(page),
-                      Expanded(child: buildCurrentPage(page)),
+                      Expanded(child: section),
                     ],
                   )
-                : buildCurrentPage(page),
+                : section,
           ),
         ],
       ),
@@ -4091,6 +4115,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   @override
   void dispose() {
     oculumSheetRelicSelections.removeListener(onSheetRelicChanged);
+    sheetFeedback.dispose();
     oculumUpdateTimer?.cancel();
     for (final timer in pawnDamageRetryTimers.values) {
       timer.cancel();
@@ -4804,10 +4829,11 @@ class _OculumHomePageState extends State<OculumHomePage>
       });
     }
 
-    return OculumRoomActivitySurface(
+    final sheetTheme = currentMonsterTheme(_cachedAppTypographyTheme!);
+    final home = OculumRoomActivitySurface(
       onActivity: () => realtimeService?.recordUserActivity(),
       child: Theme(
-        data: currentMonsterTheme(_cachedAppTypographyTheme!),
+        data: sheetTheme,
         child: CallbackShortcuts(
           bindings: <ShortcutActivator, VoidCallback>{
             const SingleActivator(LogicalKeyboardKey.keyF, control: true):
@@ -5499,6 +5525,16 @@ class _OculumHomePageState extends State<OculumHomePage>
           ),
         ),
       ),
+    );
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        home,
+        if (safePage == 0 && !oculusModActive)
+          Positioned.fill(
+            child: Theme(data: sheetTheme, child: sheetFeedbackLayer()),
+          ),
+      ],
     );
   }
 }

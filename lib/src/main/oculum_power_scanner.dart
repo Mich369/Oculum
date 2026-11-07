@@ -41,6 +41,30 @@ int? oculumTokenDisplayTotalPower(Map token) {
 }
 
 extension _OculumPowerScanner on _OculumHomePageState {
+  ({int current, int total}) scoutPowerReserveForActiveSheet() {
+    final reserves = [
+      (current: resilienzaTotale(), maximum: resilienzaMassimo()),
+      (current: volontaTotale(), maximum: volontaMassimo()),
+      (current: materiaTotale(), maximum: materiaMassimo()),
+      (current: oculumTotale(), maximum: oculumDisplayMassimo()),
+    ];
+    final total = oculumScoutPower(
+      sheetCriticalLevelAt(schedaCorrente),
+      reserves.map((reserve) => reserve.maximum),
+      grade: sheetIntValueAt(schedaCorrente, 'grado'),
+    );
+    return (
+      current: oculumCurrentPower(
+        totalPower: total,
+        currentHp: hpCorrenti(),
+        maximumHp: maxHp(),
+        hpMultiplier: moltiplicatoreHp(),
+        reserves: reserves,
+      ),
+      total: total,
+    );
+  }
+
   int scoutTotalPowerAt(int index) => oculumScoutPower(
     sheetCriticalLevelAt(index),
     index == schedaCorrente

@@ -33,6 +33,27 @@ void _player(dynamic state) {
 }
 
 void main() {
+  testWidgets('sheet shows current and total Power only with Master access', (
+    tester,
+  ) async {
+    final (state, probe) = await fixtures.mountFight(tester);
+    state.modalitaMaster = true;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: probe.sheetPowerBadge(probe.ownerTag())),
+      ),
+    );
+    expect(find.textContaining(RegExp(r'^Potenza \d+/\d+$')), findsOneWidget);
+    state.realtimeService = _PlayerTransport();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: probe.sheetPowerBadge(probe.ownerTag())),
+      ),
+    );
+    expect(find.textContaining(RegExp(r'^Potenza \d+/\d+$')), findsNothing);
+    await closeFixture(tester, probe);
+  });
+
   testWidgets(
     'own PT preference stays independent through real sheet switches and exported JSON reload',
     (tester) async {

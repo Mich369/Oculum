@@ -291,7 +291,7 @@ extension _OculumMeccanio on _OculumHomePageState {
         current;
   }
 
-  void regenerateMeccanio(int amount, {int form = 1}) {
+  void regenerateMeccanio(int amount, {int form = 1, bool logRepair = true}) {
     if (!isMeccanio || amount <= 0) return;
     final maximum = maxHp();
     final repaired = meccanioRepair(
@@ -331,9 +331,11 @@ extension _OculumMeccanio on _OculumHomePageState {
         );
       }
     }
-    aggiungiLog(
-      '[MECCANIO] Riparazione: +${repaired.healed} Vita, +${repaired.shieldAdded} Scudo.',
-    );
+    if (logRepair) {
+      aggiungiLog(
+        '[MECCANIO] Riparazione: +${repaired.healed} Vita, +${repaired.shieldAdded} Scudo.',
+      );
+    }
     invalidateDerivedDataCaches();
     programmaSalvataggio();
   }

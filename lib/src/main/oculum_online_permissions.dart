@@ -5,6 +5,10 @@ part of '../../main.dart';
 bool oculumActionNeedsApproval({required bool online, required bool staff}) =>
     online && !staff;
 
+const _turnSpendRetryScopeField = '_turnSpendRetryScope';
+const _turnSpendRetryTurnField = 'retryTurnKey';
+typedef _TurnSpendRetryScope = ({String context, String turnKey});
+
 extension _OculumOnlinePermissions on _OculumHomePageState {
   bool get onlineMasterApprovalRequired =>
       realtimeService?.isConnected == true ||
@@ -439,6 +443,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   Future<bool> requestUtilitySpend(
     String resource, {
     bool preferFreeReaction = true,
+    bool grantFastRollBonus = true,
   }) async {
     if (hasCondition('paralisi_fato')) {
       aggiungiLog('Paralisi dal Fato: Azioni e Reazioni bloccate.');
@@ -452,6 +457,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     }
     if (!currentTurnTrackerIsActive()) return true;
     final tag = sheetTagAt(schedaCorrente);
+    final encounterId = onlineCombatEncounterId;
+    final retryScope = realtimeService?.isConnected == true
+        ? _turnSpendRetryScope(encounterId)
+        : null;
     final freeReaction =
         !totalPowerExhausted &&
             preferFreeReaction &&
@@ -466,7 +475,13 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
               .firstOrNull
         : null;
     final selectedResource = freeReaction?.key ?? resource;
-    if (!_consumeLocalCombatTurnResource(tag, selectedResource)) return false;
+    if (!_consumeLocalCombatTurnResource(
+      tag,
+      selectedResource,
+      grantFastRollBonus: grantFastRollBonus,
+    )) {
+      return false;
+    }
     final spentToken = _writableOnlineCombatTokens()
         .where((token) => combatTokenMatchesSheet(token, tag))
         .firstOrNull;
@@ -495,7 +510,9 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         'sheetTag': tag,
         'resource': selectedResource,
         'activityResource': actualResource,
-        'encounterId': onlineCombatEncounterId,
+        'encounterId': encounterId,
+        _turnSpendRetryScopeField: retryScope,
+        if (!grantFastRollBonus) 'grantFastRollBonus': false,
       });
       if (pendingOnlineCombatTurnResourceSpends.length > 16) {
         pendingOnlineCombatTurnResourceSpends.removeAt(0);
@@ -555,6 +572,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     bool advanceMasterTurn = true,
     String? requestId,
     int amount = 0,
+    bool grantFastRollBonus = true,
   }) {
     if (totalPowerExhaustedForTag(tag) &&
         (const {
@@ -729,7 +747,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     } else {
       return false;
     }
-    if (usedFastReaction) {
+    if (usedFastReaction && grantFastRollBonus) {
       final fastBonus = oculumFastReactionRollBonus(
         initiativeIndex: index,
         round: round,
@@ -829,6 +847,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     } else if (realtimeService?.isConnected == true) {
       final spendId =
           '$tag:reaction-roll-bonus:${DateTime.now().microsecondsSinceEpoch}';
+      final retryScope = _turnSpendRetryScope(onlineCombatEncounterId);
       appliedOnlineCombatTurnResourceSpendIds.add(spendId);
       if (unusedBonus > 0) {
         pendingOnlineCombatTurnResourceSpends.add({
@@ -836,6 +855,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
           'sheetTag': tag,
           'resource': 'reaction_roll_bonus',
           'amount': unusedBonus,
+          _turnSpendRetryScopeField: retryScope,
         });
       }
       if (fastBonus > 0) {
@@ -844,6 +864,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
           'sheetTag': tag,
           'resource': 'fast_reaction_roll_bonus',
           'amount': fastBonus,
+          _turnSpendRetryScopeField: retryScope,
         });
         appliedOnlineCombatTurnResourceSpendIds.add('$spendId:fast');
       }
@@ -884,6 +905,9 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         'sheetTag': tag,
         'resource': 'fast_reaction_consequence_bonus',
         'amount': bonus,
+        _turnSpendRetryScopeField: _turnSpendRetryScope(
+          onlineCombatEncounterId,
+        ),
       });
     }
     aggiungiLog(
@@ -893,43 +917,159 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     return bonus;
   }
 
-  void attachPendingCombatTurnResources(Map<String, dynamic> payload) {
-    if (payload['turnResourceSpends'] is List) return;
+  List<Map<String, dynamic>> attachPendingCombatTurnResources(
+    Map<String, dynamic> payload, {
+    _TurnSpendRetryScope? standaloneRetryScope,
+  }) {
+    if (payload['turnResourceSpends'] is List ||
+        pendingOnlineCombatTurnResourceSpends.isEmpty) {
+      return const [];
+    }
     final senderTag = sheetTagAt(schedaCorrente);
     final matched = pendingOnlineCombatTurnResourceSpends
-        .where((spend) => spend['sheetTag'] == senderTag)
+        .where(
+          (spend) =>
+              spend['sheetTag'] == senderTag &&
+              (!spend.containsKey(_turnSpendRetryTurnField) ||
+                  spend[_turnSpendRetryScopeField] == standaloneRetryScope),
+        )
         .toList();
-    if (matched.isEmpty) return;
-    payload['turnResourceSpends'] = matched
-        .map((spend) => Map<String, dynamic>.from(spend))
-        .toList();
-    pendingOnlineCombatTurnResourceSpends.removeWhere(matched.contains);
+    final byId = <String, Map<String, dynamic>>{};
+    for (final spend in matched) {
+      final id = '${spend['id'] ?? ''}';
+      if (id.isEmpty) continue;
+      byId.putIfAbsent(id, () => spend);
+    }
+    final sendingIds = byId.keys.take(16).toSet();
+    if (sendingIds.isEmpty) return const [];
+    final spends = [for (final id in sendingIds) byId[id]!];
+    payload['turnResourceSpends'] = [
+      for (final spend in spends) {...spend}..remove(_turnSpendRetryScopeField),
+    ];
+    pendingOnlineCombatTurnResourceSpends.removeWhere(
+      (spend) =>
+          matched.contains(spend) && sendingIds.contains('${spend['id']}'),
+    );
+    return spends;
+  }
+
+  ({String encounterId, String key})? _turnSpendRetryTurn() {
+    final tokens = _writableOnlineCombatTokens();
+    final tracker = _usesLocalMasterInitiative
+        ? masterInitiativeGroups
+              .where((group) => group['id'] == selectedMasterInitiativeGroupId)
+              .firstOrNull
+        : realtimeVisibleInitiativeSnapshot;
+    final activeIndex = _usesLocalMasterInitiative
+        ? masterInitiativeActiveIndex
+        : readIntValue(tracker?['activeIndex']);
+    if (activeIndex < 0 || activeIndex >= tokens.length) return null;
+    final encounterId = _usesLocalMasterInitiative
+        ? selectedMasterInitiativeGroupId
+        : '${tracker?['encounterId'] ?? ''}';
+    final activeTag = normalizeOculumFriendTag(
+      publicInitiativeSourceTag(tokens[activeIndex]),
+    );
+    if (encounterId.isEmpty || activeTag.isEmpty) return null;
+    // Use the same fight instance fallback as the public initiative snapshot.
+    final instanceId =
+        tracker?['fightInstanceId'] ??
+        tokens
+            .map((token) => token['fightInstanceId'])
+            .firstWhere(
+              (value) => value != null && '$value'.isNotEmpty,
+              orElse: () => null,
+            );
+    return (
+      encounterId: encounterId,
+      key: jsonEncode([
+        encounterId,
+        _onlineCombatRound(),
+        activeTag,
+        '${instanceId ?? ''}',
+        tracker?['fightStarted'] == true,
+      ]),
+    );
+  }
+
+  _TurnSpendRetryScope? _turnSpendRetryScope(String encounterId) {
+    final turn = _turnSpendRetryTurn();
+    if (turn == null || turn.encounterId != encounterId) return null;
+    return (
+      context: jsonEncode([
+        sheetTagAt(schedaCorrente),
+        activeCampaignId,
+        permissionScope,
+        encounterId,
+      ]),
+      turnKey: turn.key,
+    );
   }
 
   Future<void> flushPendingCombatTurnResources() async {
-    if (realtimeService?.isConnected != true ||
+    final service = realtimeService;
+    if (service == null ||
+        !service.isConnected ||
         pendingOnlineCombatTurnResourceSpends.isEmpty) {
       return;
     }
     final tag = sheetTagAt(schedaCorrente);
+    final encounterId = onlineCombatEncounterId;
+    final retryScope = _turnSpendRetryScope(encounterId);
+    if (retryScope != null) {
+      pendingOnlineCombatTurnResourceSpends.removeWhere((spend) {
+        final origin = spend[_turnSpendRetryScopeField];
+        return spend.containsKey(_turnSpendRetryTurnField) &&
+            origin is _TurnSpendRetryScope &&
+            origin.context == retryScope.context &&
+            origin.turnKey != retryScope.turnKey;
+      });
+    }
     final request = <String, dynamic>{
       'id': 'turn-resource:$tag:${DateTime.now().microsecondsSinceEpoch}',
       'kind': 'help',
       'helpMode': 'turn_resource',
       'scope': permissionScope,
-      'encounterId': onlineCombatEncounterId,
+      'encounterId': encounterId,
       'sourceTag': tag,
       'targetTag': tag,
       'sourceName': realtimeDisplayName(),
       'helpBonus': 0,
     };
-    attachPendingCombatTurnResources(request);
-    if (request['turnResourceSpends'] is List) {
-      await realtimeService!.sendCombatEvent(
+    // Keep recovered spends out of senders that cannot requeue on failure.
+    final spends = attachPendingCombatTurnResources(
+      request,
+      standaloneRetryScope: retryScope,
+    );
+    if (spends.isEmpty) return;
+    try {
+      if (await service.sendCombatEvent(
         'combat_help',
         permissionEnvelope(request),
-      );
+      )) {
+        return;
+      }
+    } catch (_) {
+      // A disconnected transport can throw instead of returning false.
     }
+    if (!mounted ||
+        retryScope == null ||
+        _turnSpendRetryScope(encounterId) != retryScope) {
+      return;
+    }
+    final queuedIds = pendingOnlineCombatTurnResourceSpends
+        .map((spend) => spend['id'])
+        .toSet();
+    pendingOnlineCombatTurnResourceSpends.insertAll(0, [
+      for (final spend in spends)
+        if (spend[_turnSpendRetryScopeField] == retryScope &&
+            queuedIds.add(spend['id']))
+          {
+            ...spend,
+            'activityComplete': true,
+            _turnSpendRetryTurnField: retryScope.turnKey,
+          },
+    ]);
   }
 
   bool _applyIncomingCombatTurnResources(
@@ -965,6 +1105,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       if (spendId.isEmpty || spendTag != senderTag || resource.isEmpty) {
         continue;
       }
+      final retryTurn = spend[_turnSpendRetryTurnField];
+      if (retryTurn != null && retryTurn != _turnSpendRetryTurn()?.key) {
+        continue;
+      }
       if (seen.contains(spendId) ||
           appliedOnlineCombatTurnResourceSpendIds.contains(spendId)) {
         seen.add(spendId);
@@ -977,12 +1121,18 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
           advanceMasterTurn: false,
           requestId: requestId,
           amount: amount,
+          grantFastRollBonus: spend['grantFastRollBonus'] != false,
         );
         if (applied) request['masterTurnResourcesApplied'] = true;
       } else {
         // Other profiles mirror the already-authorized combat event into
         // their local initiative view without another backend write.
-        _consumeLocalCombatTurnResource(spendTag, resource, amount: amount);
+        _consumeLocalCombatTurnResource(
+          spendTag,
+          resource,
+          amount: amount,
+          grantFastRollBonus: spend['grantFastRollBonus'] != false,
+        );
       }
       appliedOnlineCombatTurnResourceSpendIds.add(spendId);
       seen.add(spendId);
@@ -992,7 +1142,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     return true;
   }
 
-  Future<bool> spendCombatRollResource({bool forceReaction = false}) async {
+  Future<bool> spendCombatRollResource({
+    bool forceReaction = false,
+    bool grantFastRollBonus = true,
+  }) async {
     if (!currentTurnTrackerIsActive()) return true;
     if (realtimeService?.isConnected != true && !_usesLocalMasterInitiative) {
       return true;
@@ -1025,7 +1178,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         : useAction
         ? 'azione'
         : 'reazione';
-    final allowed = await requestUtilitySpend(resource);
+    final allowed = await requestUtilitySpend(
+      resource,
+      grantFastRollBonus: grantFastRollBonus,
+    );
     if (!allowed) {
       const message =
           'Tiro non eseguito: controlla la partecipazione alla turnistica e le Azioni/Reazioni disponibili.';

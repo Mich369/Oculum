@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+  "source": "Scelte esplicite trasmesse dal coordinatore sulla vista dei nove confronti del Lotto 2 r08.",
+  "scope": "Nove scelte desktop esatte. Il voto precedente del Bunnys base è separato.",
+  "instructionCount": 9,
+  "letterChoiceCount": 9,
+  "letterCounts": {
+    "A": 4,
+    "C": 5
+  },
+  "exactDesktopChoices": 9,
+  "choicesBefore": 124,
+  "choicesAfter": 133,
+  "artisticVoteLedger": "docs/SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json",
+  "batchSource": {
+    "file": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+    "sha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06"
+  },
+  "ledgerBeforeSha256": "32254d4d0fd8d9974a874d581003c0acc9653b4d3b23aa4bbd879420bfdb2a11",
+  "gallerySnapshot": {
+    "file": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+    "sha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+    "eligibleCreatures": 9
+  },
+  "focalReviewPage": {
+    "path": "output\\artwork\\lotti_revisione_50_2026-11-07_r08\\LOTTO_02_NUOVE_C.html",
+    "sha256": "db0b7f71fbfac0ba2d0baf66090cfefe0c49958f393367dfca356dfc2ec5267e"
+  },
+  "artisticVotes": [
+    {
+      "position": 51,
+      "id": "bestia_invisibile_del_vantaggio_variante_errante",
+      "originalName": "Bestia Invisibile del Vantaggio Errante",
+      "letter": "A",
+      "userAnswer": "Bestia Errante A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/bestia_invisibile_del_vantaggio_variante_errante_desktop_v1.jpg",
+        "sha256": "0a6ce1e93f45157e12b4a4a8bc3469c38997792b3acf91994ab0e95f423ad45a",
+        "source": "archivio-locale",
+        "nativeSha256": "2fdb8e25139b30acbb2299f2528d6ef36e86e6e139e5ab222bdf845130580fdc",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/bestia_invisibile_del_vantaggio_variante_errante_desktop_v1.json",
+        "provenanceSha256": "524ab89071e8a025529b6f31a0600e5054c921180a62b63ed1271bad9a024005"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Sagoma nebbiosa, quattro appoggi leggibili e bardatura bronzea.",
+        "framingNote": "filamento posteriore vicino al margine destro"
+      }
+    },
+    {
+      "position": 52,
+      "id": "bringi_variante_veterana",
+      "originalName": "Bringi Veterana",
+      "letter": "A",
+      "userAnswer": "Bringi Veterana A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/bringi_variante_veterana_desktop_v1.jpg",
+        "sha256": "66820198756379f142093620be4e45d4eebea54ee76d6bdb26551a80de571183",
+        "source": "archivio-locale",
+        "nativeSha256": "d59c65f18fb3bbcdc2c5ae72c3ca9213f8f828a27cda3c8b93497c06bb82d9d3",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/bringi_variante_veterana_desktop_v1.json",
+        "provenanceSha256": "bcf48fb69c7f2b46100430866958e1a61e0e5ca1acffc934957419d01b0e547d"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Due scoiattoli nella stessa scena, azzurro e rosa pastello, con guance, orecchie e code folte. La posa è pacifica e coerente con la conferma cromatica.",
+        "framingNote": "coda rosa vicina al margine destro"
+      }
+    },
+    {
+      "position": 53,
+      "id": "inspired_bruto_sorriso_cavo_variante_corazzata",
+      "originalName": "Bruto Sorridente Corazzata",
+      "letter": "A",
+      "userAnswer": "Bruto Corazzata A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_bruto_sorriso_cavo_variante_corazzata_desktop_v1.jpg",
+        "sha256": "306dfd2650a4246c40385416993e994b6d932273b4096bca011bd6d49e822322",
+        "source": "archivio-locale",
+        "nativeSha256": "7ecbc1ea55e700166faf35b39a09c501bce76688be91e3c8244e92e7dce5ac6c",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_bruto_sorriso_cavo_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "6df591e2c511090e3bec03fa96b09b50989d1fc7ab02f90288f04c0f5d6e97ef"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Bestia bassa con pelliccia scura, bocca smisurata, spirale alla tempia e piastre dorsali. Due anteriori e almeno un appoggio posteriore distinguibili.",
+        "framingNote": "parte posteriore poco leggibile verso il margine sinistro"
+      }
+    },
+    {
+      "position": 55,
+      "id": "bunnys_variante_veterana",
+      "originalName": "Bunnys Veterana",
+      "letter": "C",
+      "userAnswer": "Bunnys Veterana C",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_bunnys_variante_veterana_v1.png",
+        "sha256": "010be79bd9b01ed5c550a9fdc39d047fe316b51950e965b318a7efe8fbf25ff0",
+        "source": "archivio-locale",
+        "nativeSha256": "010be79bd9b01ed5c550a9fdc39d047fe316b51950e965b318a7efe8fbf25ff0",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "5eb4c39f12d7f8fb2774cf289abd522daa0a00f03c06321d93acc40e5a0615d0"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Due orecchie ampie collegate alla testa e quattro zampe leggibili in volo. Mantello e borsello distinguono la Veterana.",
+        "framingNote": null
+      }
+    },
+    {
+      "position": 56,
+      "id": "habitat_morti_campanaro_delle_anime_ferme",
+      "originalName": "Campanaro delle anime ferme",
+      "letter": "C",
+      "userAnswer": "Campanaro base C",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_habitat_morti_campanaro_delle_anime_ferme_v1.png",
+        "sha256": "f6b8dbc41619fdb53aef7555128f73788ac2f0965a6e2d03ab4564369066d0f8",
+        "source": "archivio-locale",
+        "nativeSha256": "f6b8dbc41619fdb53aef7555128f73788ac2f0965a6e2d03ab4564369066d0f8",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "1146f8646f57926baaa6512c57efe6bdeac72e1af222066e9880d34036ead83c"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Collo arcuato, due braccia, due gambe, dita lunghe, sudario e lume funebre. Il sudario copre il nucleo della gola.",
+        "framingNote": null
+      }
+    },
+    {
+      "position": 57,
+      "id": "habitat_morti_campanaro_delle_anime_ferme_variante_errante",
+      "originalName": "Campanaro delle anime ferme Errante",
+      "letter": "A",
+      "userAnswer": "Campanaro Errante A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_campanaro_delle_anime_ferme_variante_errante_desktop_v1.jpg",
+        "sha256": "1164d05eadaf1c88e3d3c6db38898531944ac650f186c933a8e3d0421e6696d5",
+        "source": "archivio-locale",
+        "nativeSha256": "622895cee19b0c10f88b9abf7fdc27d8a1bf0039e61cd26f606352957ac82d01",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_campanaro_delle_anime_ferme_variante_errante_desktop_v1.json",
+        "provenanceSha256": "509f29fd15f55a21d288d930e89b83b541152590807181516d7c9ac321ebf157"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Lume, cranio e collo arcuato, due braccia, dita lunghe e sudario. La gamba lontana resta coperta o fuori inquadratura.",
+        "framingNote": "mantello al bordo sinistro e piede posteriore vicino al bordo"
+      }
+    },
+    {
+      "position": 58,
+      "id": "cane_di_cenere_variante_errante",
+      "originalName": "Cane di Cenere Errante",
+      "letter": "C",
+      "userAnswer": "Cane di Cenere Errante C",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_cane_di_cenere_variante_errante_v1.png",
+        "sha256": "be200f5ecce3d313485456bf1b32d1d4b8676699f9b181789371136b3d17e9f1",
+        "source": "archivio-locale",
+        "nativeSha256": "be200f5ecce3d313485456bf1b32d1d4b8676699f9b181789371136b3d17e9f1",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "ebaab7a0bb476a03c7496758a935c1cab58f98b6379aa64b584a7ab4cfb06b94"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Quattro zampe in corsa, una coda, orecchie canine e imbrago. L’appoggio posteriore lontano emerge dalla cenere.",
+        "framingNote": null
+      }
+    },
+    {
+      "position": 59,
+      "id": "hero_path_capo_cervelli",
+      "originalName": "Capo dei Cervelli",
+      "letter": "C",
+      "userAnswer": "Capo dei Cervelli C",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_hero_path_capo_cervelli_v2.png",
+        "sha256": "d59ffbaa95ff9597bd54980195701cfff34f6b1bbbb5bf5d7ddd2c1dc081de22",
+        "source": "archivio-locale",
+        "nativeSha256": "d59ffbaa95ff9597bd54980195701cfff34f6b1bbbb5bf5d7ddd2c1dc081de22",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "41ad8924abdbd18640222d983fd7baadc9bfd1489cacb5118ff941b9cff4a36f"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Corpo cerebriforme senza volto con quattro appoggi carnosi in cisterna.",
+        "framingNote": null
+      }
+    },
+    {
+      "position": 60,
+      "id": "hero_path_capo_cervelli_variante_corazzata",
+      "originalName": "Capo dei Cervelli Corazzata",
+      "letter": "C",
+      "userAnswer": "Capo dei Cervelli Corazzata C",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_hero_path_capo_cervelli_variante_corazzata_v3.png",
+        "sha256": "643ddeb67fcf93bcde130d1bbeca2ae934fa786fdc82ddd62f14166708c49ebb",
+        "source": "archivio-locale",
+        "nativeSha256": "643ddeb67fcf93bcde130d1bbeca2ae934fa786fdc82ddd62f14166708c49ebb",
+        "version": 3,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "dc895e22abbb658a8d23d072420d2dc0887db2d0b80ac57cc0282722b592d531"
+      },
+      "visualQa": {
+        "status": "no_confirmed_anatomy_mismatch",
+        "observation": "Corpo cerebriforme, quattro appoggi e piastre organiche dorsali.",
+        "framingNote": null
+      }
+    }
+  ],
+  "retirements": [],
+  "renames": [],
+  "position54Preserved": {
+    "id": "bunnys",
+    "position": 54,
+    "letter": "C",
+    "title": "Prugna e miele",
+    "sha256": "52a1ae4854abbf885602bc3a9118a80e5cf55532290e20eb808225df09438c37",
+    "decisionFile": "docs/DA_FARE_PATCH_E_SUCCESSIVI.md",
+    "decisionSha256": "6a1b6952f35942549bf53c15c54f59cf141d7e269e67ed39ea6135e5535f7509",
+    "nativeReceipt": "archivio-locale",
+    "nativeReceiptSha256": "b31b4d91f65aa0a9ce2c56c6a6cf85242259ab6b56737425918845f176ac84d7",
+    "archive": "archivio-locale",
+    "existingReceipt": {
+      "path": "build\\BUNNYS_ABC_NATIVE_20261107.json",
+      "sha256": "b31b4d91f65aa0a9ce2c56c6a6cf85242259ab6b56737425918845f176ac84d7"
+    },
+    "alreadyChosenOutsideThisBatch": true,
+    "registeredInBaselineLedger": false
+  }
+}

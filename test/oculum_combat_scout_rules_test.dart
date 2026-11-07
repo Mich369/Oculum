@@ -2,6 +2,33 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/game/oculum_combat_scout_rules.dart';
 
 void main() {
+  test('current Power loses one per full Life block and spent core point', () {
+    expect(
+      oculumCurrentPower(
+        totalPower: 70,
+        currentHp: 63,
+        maximumHp: 80,
+        hpMultiplier: 8,
+        reserves: const [
+          (current: 7, maximum: 7),
+          (current: 9, maximum: 9),
+          (current: 6, maximum: 6),
+          (current: 4, maximum: 6),
+        ],
+      ),
+      66,
+    );
+    expect(
+      oculumCurrentPower(
+        totalPower: 1,
+        currentHp: 0,
+        maximumHp: 80,
+        hpMultiplier: 8,
+        reserves: const [(current: 0, maximum: 7)],
+      ),
+      0,
+    );
+  });
   test(
     'low-power tiers progressively ease exact power and weak-point discovery',
     () {

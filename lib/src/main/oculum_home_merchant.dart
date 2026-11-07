@@ -3140,12 +3140,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ),
           children: [
             merchantProfileControls(),
-            if (merchantShopType == 'fabbro')
+            if (merchantShopType == 'fabbro') ...[
               OutlinedButton.icon(
                 onPressed: showBlacksmithCombine,
                 icon: const Icon(Icons.handyman_outlined),
                 label: const Text('Combina · armi, armature e scudi'),
               ),
+              OutlinedButton.icon(
+                onPressed: showBlacksmithRepair,
+                icon: const Icon(Icons.build_outlined),
+                label: const Text('Ripara · armi, armature e scudi'),
+              ),
+            ],
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(

@@ -7,6 +7,20 @@ InventoryItem weapon({int quantity = 1}) => InventoryItem(nome: 'Spada', peso: 1
 InventoryItem quartz({String name = 'Quarzo risonante', double kg = .5}) => InventoryItem(nome: name, peso: kg, quantita: 1, note: '', livelloOggetto: 12, craftData: {'material':'quarzo_risonante','materialLevel':12});
 
 void main() {
+  test('repair price uses item Grade with a 30 Obser minimum', () {
+    final item = weapon();
+    for (final (grade, price) in [(0, 30), (1, 60), (2, 120), (4, 240)]) {
+      item.gradoOggetto = grade;
+      expect(oculumBlacksmithRepairCost(item), price);
+    }
+    item.craftData = {'personalizzato': 'da conservare'};
+    oculumSpendEquipmentWear(item, 250, rollBrokenPercent: () => 24);
+    expect(oculumEquipmentBrokenPercent(item), 24);
+    expect(oculumRepairEquipmentWear(item), isTrue);
+    expect(oculumEquipmentUses(item), 250);
+    expect(item.craftData, {'personalizzato': 'da conservare'});
+    expect(oculumRepairEquipmentWear(item), isFalse);
+  });
   test('material defaults put sixty percent at level zero through six and fewer in higher bands', () {
     final levels = oculumDefaultMaterialLevels();
     final bands = [for (final (a,b) in [(0,6),(7,12),(13,20),(21,30),(31,100)]) levels.values.where((v) => v >= a && v <= b).length];

@@ -1,10 +1,11 @@
 import 'dart:math';
 
-/// The first level of a Grade has a smaller HP reserve, then two intermediate
-/// levels precede its full multiplier. A missing level preserves legacy data.
+/// Grade 0 gains one multiplier point per level until level 4. Higher Grades
+/// retain their decade progression. A missing level preserves legacy data.
 int oculumHpMultiplierForGrade(int grade, {int? level}) {
   final normalizedGrade = grade.clamp(0, 12).toInt();
   if (level == null) return 10 + 5 * normalizedGrade;
+  if (normalizedGrade == 0) return min(10, 6 + max(0, level));
   final levelInGrade = max(0, level) % 10;
   final base = levelInGrade == 0
       ? 6

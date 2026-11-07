@@ -1,5 +1,9 @@
 # Senka Kamaria — L’Ombra Mascherata
 
+## Aggiornamento del 7 novembre — Vita
+
+La progressione del Grado 0 dà a Senka, al livello 1 e prima della Open, **63 Vita massima senza maschera e 105 con la maschera**. La Resilienza resta 9 senza maschera e 15 con la maschera. Il codice esportabile parte da 63 Vita con la maschera disattivata. [Regola Vita del Grado 0](../OCULUM_REGOLE_CONFERMATE.md#vita-al-grado-0--7-novembre-2026)
+
 ## Aggiornamento del31ottobre — scheda esportabile
 
 Su richiesta: **100EXP** nel campo della scheda e **un Vitalium Ridefinito** consumabile nell’inventario. Coltellino equipaggiato aggiornato a **+3Danni Taglienti**, ultima correzione che prevale sulla proposta intermedia+2. Maschera ancora non equipaggiata: bonus numericiDanni6/Difesa3 nei campi dell’oggetto, statistiche nel campoBuff; rimosse dalle note le ripetizioni eseguibili `@Danni+6 @Difesa+3`. Le note e il racconto restano leggibili, senza diventare una formula troppo lunga. Nessun salvataggio locale del giocatore riscritto: esportazione ufficiale in `output/characters/senka_kamaria/`, da importare o usare come riferimento. I100EXP sono già inclusi, non riassegnarli due volte. Importazione, effetti di combattimento, rete reale e distribuzione rimangono verifiche distinte.

@@ -57,6 +57,11 @@ extension _OculumCampaigns on _OculumHomePageState {
                 .toList(growable: false)
           : <Map<String, dynamic>>[],
       'masterSessionNotes': masterSessionController.text,
+      if (sessionMaterialsByMaster.isNotEmpty)
+        'sessionMaterialByMaster': {
+          for (final entry in sessionMaterialsByMaster.entries)
+            entry.key: entry.value.toJson(),
+        },
       'storySessionNotes': storySessionNotes
           .map((note) => note.toJson())
           .toList(growable: false),
@@ -217,6 +222,17 @@ extension _OculumCampaigns on _OculumHomePageState {
     }
     sheetSidebarRevision.value++;
     activeCampaignId = '${campaign['id'] ?? generateCampaignId()}';
+    sessionMaterialsByMaster.clear();
+    final sessionMaterials = campaign['sessionMaterialByMaster'];
+    if (sessionMaterials is Map) {
+      for (final entry in sessionMaterials.entries) {
+        final owner = entry.key;
+        final plan = entry.value;
+        if (owner is String && owner.isNotEmpty && plan is Map) {
+          sessionMaterialsByMaster[owner] = _SessionMaterialPlan.fromJson(plan);
+        }
+      }
+    }
     loadWorldClockCampaign(campaign);
     loadPawnCampaignState(campaign);
     campaignNameController.text =
@@ -406,6 +422,7 @@ extension _OculumCampaigns on _OculumHomePageState {
 
     setState(() {
       activeCampaignId = newId;
+      sessionMaterialsByMaster.clear();
       campaignNameController.text = name;
       newCampaignNameController.clear();
       schedePersonaggio
@@ -471,6 +488,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       );
       if (campagneOculum.isEmpty) {
         activeCampaignId = generateCampaignId();
+        sessionMaterialsByMaster.clear();
         campaignNameController.text = t('Campagna principale', 'Main campaign');
         schedePersonaggio
           ..clear()

@@ -35,27 +35,113 @@ class OculumAnimatedResourceFill extends StatelessWidget {
     required this.fraction,
     required this.child,
   });
+
   final double fraction;
   final Widget child;
+
   @override
-  Widget build(BuildContext context) {
-    final motion = oculumThemePresentation.value.motion;
-    final disabled =
-        MediaQuery.disableAnimationsOf(context) ||
-        motion == OculumThemeMotion.disabled;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(end: fraction.isFinite ? fraction.clamp(0.0, 1.0) : 0.0),
-      duration: disabled
-          ? Duration.zero
-          : Duration(
-              milliseconds: motion == OculumThemeMotion.reduced ? 140 : 380,
-            ),
-      curve: Curves.easeOutCubic,
-      child: child,
-      builder: (context, value, content) =>
-          FractionallySizedBox(widthFactor: value, child: content),
-    );
+  Widget build(BuildContext context) => OculumAnimatedResourceValue(
+    fraction: fraction,
+    animateDecrease: true,
+    child: child,
+    builder: (context, value, content) =>
+        FractionallySizedBox(widthFactor: value, child: content),
+  );
+}
+
+/// Animates the painted fill independently of the resource's current value.
+class OculumAnimatedResourceValue extends StatefulWidget {
+  const OculumAnimatedResourceValue({
+    super.key,
+    required this.fraction,
+    required this.builder,
+    this.animateDecrease = false,
+    this.child,
+  });
+
+  final double fraction;
+  final ValueWidgetBuilder<double> builder;
+  final bool animateDecrease;
+  final Widget? child;
+
+  double get _target => fraction.isFinite ? fraction.clamp(0.0, 1.0) : 0.0;
+
+  @override
+  State<OculumAnimatedResourceValue> createState() =>
+      _OculumAnimatedResourceValueState();
+}
+
+class _OculumAnimatedResourceValueState
+    extends State<OculumAnimatedResourceValue>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _fill = AnimationController(
+    vsync: this,
+    value: widget._target,
+    animationBehavior: AnimationBehavior.preserve,
+  );
+  bool _platformMotionDisabled = false;
+
+  bool get _motionDisabled =>
+      _platformMotionDisabled ||
+      oculumThemePresentation.value.motion == OculumThemeMotion.disabled;
+
+  @override
+  void initState() {
+    super.initState();
+    oculumThemePresentation.addListener(_settleIfMotionDisabled);
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _platformMotionDisabled = MediaQuery.disableAnimationsOf(context);
+    _settleIfMotionDisabled();
+  }
+
+  void _settleIfMotionDisabled() {
+    if (_motionDisabled &&
+        (_fill.isAnimating || _fill.value != widget._target)) {
+      _fill.value = widget._target;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant OculumAnimatedResourceValue oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previous = oldWidget._target;
+    final target = widget._target;
+    if (target == previous) return;
+
+    final rising = target > previous;
+    if (_motionDisabled || (!rising && !widget.animateDecrease)) {
+      _fill.value = target;
+      return;
+    }
+
+    // A heal can arrive while the bar is still painting the preceding damage.
+    if (rising && _fill.value > previous) _fill.value = previous;
+
+    final duration = switch (oculumThemePresentation.value.motion) {
+      OculumThemeMotion.reduced => const Duration(milliseconds: 140),
+      _ when rising => const Duration(seconds: 1),
+      _ => const Duration(milliseconds: 380),
+    };
+    _fill.animateTo(target, duration: duration, curve: Curves.easeOutCubic);
+  }
+
+  @override
+  void dispose() {
+    oculumThemePresentation.removeListener(_settleIfMotionDisabled);
+    _fill.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _fill,
+    child: widget.child,
+    builder: (context, child) => widget.builder(context, _fill.value, child),
+  );
 }
 
 /// Small clipped particles for resource gauges. Decorative only: the painter

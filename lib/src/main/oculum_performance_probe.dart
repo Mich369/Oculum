@@ -478,6 +478,8 @@ class OculumPerformanceProbe {
       _state.receiveMonsterBookPartyDiscoverySnapshot(payload);
   Future<bool> utilitySpend(String resource) =>
       _state.requestUtilitySpend(resource);
+  Future<void> flushTurnResourceSpends() =>
+      _state.flushPendingCombatTurnResources();
   Future<bool> spendCombatRoll() => _state.spendCombatRollResource();
   Future<void> showAssignSheets() => _state.showAssignSheetsDialog();
   Future<void> initialSheetLoad() => _state.initialSheetLoad;
@@ -605,8 +607,11 @@ class OculumPerformanceProbe {
   int damageTotal() => _state.dannoTotale();
   bool consumeNextAttackEffects() =>
       _state.consumeNextAttackStructuredEffects();
-  Future<void> rollSpecial(String name, int bonus) =>
-      _state.tiraValoreSpeciale(name, bonus);
+  Future<void> rollSpecial(
+    String name,
+    int bonus, {
+    void Function(int natural, int total)? onResolved,
+  }) => _state.tiraValoreSpeciale(name, bonus, onResolved: onResolved);
   List<OculumConditionInstance> get conditions =>
       List.unmodifiable(_state.activeConditions);
   int subtraitValue(String id) => _state.hiddenEyeTotal(
@@ -648,6 +653,8 @@ class OculumPerformanceProbe {
   Future<void> showCreateFallenEye({Map<String, dynamic>? editingEye}) =>
       _state._showCreateFallenEyeDialog(editingEye: editingEye);
   Widget skillsPage() => _state.skillsPage();
+  Widget statsOverview() => _state.statsOverviewPanel(dense: true);
+  Widget combatLogLine(String text) => _state.combatLogText(text);
   Widget contextActionAnchor({
     required Widget child,
     required VoidCallback activate,
@@ -793,6 +800,9 @@ class OculumPerformanceProbe {
   void tickEquipmentCooldowns() =>
       _state.tickStructuredAbilityCooldowns('turni', scheduleSave: false);
   int itemShield(InventoryItem item) => _state.itemShieldBonus(item);
+  int equipmentDefense(InventoryItem item) =>
+      _state.itemDefenseBonus(item) +
+      (_state.itemQuickBonuses(item)['difesa'] ?? 0);
   String get planeId => _state.selectedPlaneId;
   Future<void> useNecromancy(InventoryItem item) =>
       _state.useNecromancyEquipment(item);

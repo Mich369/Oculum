@@ -4,6 +4,63 @@
 
 Collocare le nuove evocazioni e gli Occhi dei Caduti sotto la scheda del loro evocatore, nella stessa cartella anche per PG e omonimi. Collegati i 18 desktop scelti, incluso King Slime A con lama nera e scettro. Verificata l’inquadratura del riquadro scheda e corretti i bersagli oculari di Ciclope Non Morto e Sentinella. Aggiornati Bruto Sorridente e Cuore di Magma con volo naturale e ritirati Custode con Mani Inverse e Rituale. Passati 69 test locali mirati e analisi statica pulita. Consegna in verifica. [Scelte del lotto](CONFERME_UTENTE_ARTWORK_2026-11-07_10.json)
 
+CI 276, run `42351486600`: 2.316 passati, 6 saltati e un caso del Mantello fallito per la schivata automatica di Fortuna. Il commit locale `6fb23b5e` stabilizza il test e ha superato 35 prove mirate. Il controllo automatico ha fermato il push in attesa dell’autorizzazione esplicita per GitHub `main`. EXE, ZIP e APK attivi sono della 275.
+
+## Scheda e animazioni del 7 novembre
+
+Nel worktree sono collegati gli effetti su Vita, Scudi, Oculum, Volontà, Materia, potenziamenti e status. I bordi sfumano in modo trasparente. I teschi rossi restano nel perimetro del graffio, soltanto dopo un danno che lascia la Vita sotto il 25%. La Vita e l’Oculum salgono in un secondo con movimento completo. Quando una cura segue subito un danno, la barra riparte al più dal valore effettivo prima della cura. Colore Oculum e preferenze di movimento restano configurabili.
+
+Il registro riporta Vita effettivamente persa o recuperata e perdite parziali di Scudo. La rottura compare senza la quantità assorbita. Il menu contestuale Resilienza mostra le riserve delle parti con un danno mirato ancora registrato, usando soltanto i dati anatomici già disponibili per quella scheda. La galleria dimostra gli effetti sulla schermata originale di Senka con valori di esempio. Il riquadro chiamata e le preferenze Microfono, Videocamera e Uscita audio sono prototipi. Il trasporto di chiamata e la selezione reale dei dispositivi restano da integrare.
+
+Analisi Flutter senza rilievi e 117 test locali passati nel gruppo mirato, inclusi teschi alla soglia esatta, inversione della barra quando una cura segue un colpo, log e ricevute simulate, Meditazione, ritratto GIF e Materiale sessione. Chrome ha verificato il prototipo, 12 GIF leggibili e la cura da 57/81 a 75/81 senza diminuzioni fra i fotogrammi. Verifiche locali e di trasporto simulato. Il worktree resta da pubblicare.
+
+La revisione estende gli effetti alla finestra. Materia mostra l’aura azzurra e due frecce lungo i bordi. Volontà positiva riprende il rosso precedente e quella negativa usa un borgogna più scuro. Il danno rimane rosso e adatta la luminosità al tema. Raster Flutter e prototipo Chrome verificati su tre formati. La galleria di Senka presenta 12 GIF, una modalità senza scheda e quattro segnali audio. L’utente ha approvato l’anteprima. Il prototipo permette di entrare con o senza webcam, riattivarla durante la chiamata e separare il pannello in una finestra ridimensionabile. La vista Master mostra Vita, Oculum e Potenza attuale/totale con valori di esempio. La chiamata reale, la qualità audio tra client e il permesso Master per i valori live richiedono integrazione.
+
+### Lotto 2 di artwork
+
+La galleria r08 contiene nove nuovi confronti A/B/C da votare. Bunnys base resta indicato come già scelto C, Prugna e miele. Originali ImageGen e copie verificati, 1.946 immagini e 4.064 collegamenti controllati nella galleria complessiva. Il Lotto 2 ha 9 terne complete su 49 da rivedere. Archiviati su G anche i 459 fotogrammi intermedi delle GIF di Senka dopo confronto SHA-256.
+
+Registrati i nove voti successivi e collegate le copie desktop corrispondenti. Tutti e nove i file coincidono con gli originali per SHA-256. La prova locale copre temi, ritaglio, preesistenza dei profili e appartenenza delle varianti. [Scelte confermate](CONFERME_UTENTE_ARTWORK_2026-11-07_11.json)
+
+### Vita, Potenza e pagine secondarie
+
+Al Grado 0 la Vita usa Resilienza ×6, ×7, ×8, ×9 e ×10 ai livelli 0, 1, 2, 3 e 4+. Dal Grado I continua la progressione precedente. L’importazione ricalcola il massimo mantenendo la Vita attuale entro il limite. Il codice di Senka è aggiornato. La scheda del Master mostra la Potenza attuale/totale con un punto sottratto per ogni blocco completo di Vita perso e per ogni punto speso di Resilienza, Volontà, Materia e Oculum. L’accesso segue i permessi Master della campagna.
+
+Le pagine secondarie usano una cornice adattiva legata al tema. La Mappa conserva la geometria a tutta larghezza. Passati 51 test locali di Vita e Senka e 60 nel controllo integrato, con navigazione desktop e telefono, risorse, permessi Master e nuovi sfondi. I gruppi includono regressioni in comune. Log locali `build/PATCH_VITA_GRADO_ZERO_20261107_FINALE.log` e `build/PATCH_EFFETTI_VITA_POTENZA_UI_20261107_FINALE.log`.
+
+Compilate in locale le edizioni Windows e Windows Test dal worktree. Le cartelle runtime e i rispettivi ZIP coincidono per tutti gli 11.350 file confrontati. I nove nuovi desktop e il log offline sono presenti in entrambe le edizioni. Il profilo Windows Test è isolato. Staging `C:\Oculum App\oculum\build\distribution-staging-locale-20261107-194302`, esito `STAGING-VERIFICATO.json`. Restano aperti la firma Android stabile, la CI coordinata, i download pubblici e le prove live. La distribuzione attiva è 275.
+
+Preflight di pubblicazione del 7 novembre. Corretti tre rilievi statici senza cambiare la logica. L’analisi Flutter è pulita. La prova di Materiale sessione attende ora la fine dello scorrimento e tocca il pulsante effettivamente visibile. Passati 7 test di navigazione e Materiale sessione e 34 test Python di pubblicazione, firma e installazione in una directory temporanea del progetto. Verificata la separazione dei file di consegna dalla documentazione locale OcuCraft. Le ricevute originali degli artwork sono conservate localmente e i nuovi record pubblici riportano asset e impronte.
+
+### Scudi infranti, usura e riparazione
+
+Rottura normale con −2 a Volontà e Materia, recupero di 1 per turno personale, rinnovo e annullamento con uno Scudo normale ricevuto. Rottura Oculum con −3 al prossimo tiro difensivo effettivo e impatto da 10 + 5 × livello del portatore sui non alleati vicini selezionati. Passati 13 test locali, comprese le difese e le ricevute online simulate. [Regole confermate](OCULUM_REGOLE_CONFERMATE.md)
+
+Armi, armature e scudi hanno da 250 a 1.000 usi per livello. Efficienza residua a zero dal 20% al 30%, estratta e salvata, Titoli Item esenti, consumo aggravato da livello e Grado nei combattimenti con mostri o NPC ostili. L’editor inventario permette di dichiarare il tipo di protezione. Gli Scudi senza quota attribuibile restano gestiti nel pool esistente. Passati 14 test locali sulle armi, le protezioni e gli scudi. Riaffila recupera il 15% con un’Azione in fight e il 30% fuori fight, a condizione che l’arma funzioni ancora. Passati 7 test del pannello. Il Fabbro ripara al costo di 60 Obser × Grado, minimo 30. La consegna resta separata.
+
+Batch finale con Fabbro incluso: 28 test locali passati in nove suite, con raster dei bordi, usura, prezzi, riparazione, turni, danno e trasporto simulato. Manuale esportato in 86 sezioni e log offline identico al registro cumulativo. Log locale `build/PATCH_EFFETTI_SCUDI_USURA_20261107.log`.
+
+### Controllo orario del 7 novembre, 10:55 UTC
+
+Corretta Meditazione nella turnistica roleplay online. Ora invia al Master la ricevuta dell’Azione, Reazione o Reazione Veloce appena utilizzata. Il d20 resta naturale e una Reazione Veloce spesa per Meditazione non lascia un bonus per il tiro successivo. Passati 11 test locali, con trasporto simulato per i tre tipi di spesa e regressioni di danno e Materiale sessione, e altri 3 test sui permessi e sulle soglie. Log locali `build/MEDITATION_TURN_SPEND_WORKTREE_20261107-r3.log` e `build/HOURLY_ONLINE_PERMISSIONS_20261107T105543Z-r2.log`.
+
+Il controllo ha inoltre rilevato che l'invio autonomo delle risorse di turno toglieva la ricevuta dalla coda prima della conferma. Correzione verificata nel controllo successivo.
+
+### Controllo orario del 7 novembre, 11:54 UTC
+
+Se l'invio autonomo delle ricevute A/R/RV fallisce, la coda in memoria conserva lo stesso ID per il successivo invio esplicito nel contesto d'origine. L'app verifica scheda, campagna, stanza, incontro e turno. Il ricevitore aggiornato deduplica le consegne ripetute e scarta i reinvii tardivi anche quando cambia l'attore nello stesso round. La verifica include l'Azione del Master che fa avanzare il turno prima dell'invio.
+
+Passati 13 test locali con trasporto simulato, incluse regressioni di turnistica, Meditazione e danno. Log `build/TURN_SPEND_RETRY_WORKTREE_20261107-r3.log`. La correzione riguarda l'invio autonomo e la coda in memoria. I reinvii oltre il turno e fra client di versioni diverse restano fuori dalla verifica. EXE, ZIP e APK attivi risultano ancora della 275.
+
+## Scelte alle soglie di 20 da integrare
+
+- **Volontà.** Schianto pesante moltiplica i danni per 1,5, applica una Frattura e ha recupero di tre turni. Pressione pesante può bloccare fino a dieci nemici al massimo di un Grado sopra. Il personaggio e gli alleati ottengono un critico dal 18 naturale e un bonus basato sulla differenza di Potenza, con minimo +9, anche se la Potenza del bersaglio è nascosta.
+- **Materia.** Azione rapida aggiunge una Reazione veloce come azione gratuita ogni quattro turni. L’alternativa è una schivata gratuita che si ricarica con un Riposo Lungo o due Riposi Brevi.
+- **Resilienza.** Opzione da 1d50 + 50 Vita temporanea al risveglio, una volta al giorno. In alternativa, Resistenza fisica sviluppa una resistenza fino ad Alta contro lo stesso elemento durante il fight. Si tira Resilienza contro il tiro d’attacco e si perde uno stadio ogni sei punti di scarto.
+- **Oculum.** Sfera di Oculum infligge 30 + Danni propri e raddoppia contro chi non possiede Oculum. Ricarica ripristina 1d25 Oculum dopo un intero turno fermo. Il colpo interrompe la ricarica se supera gli Scudi.
+
+Restano da definire la gestione della scelta sulle schede già a soglia, la persistenza della Vita temporanea fra risvegli, i passaggi della resistenza adattiva e costi e durata delle tecniche dove non precisati. Le scelte a 20 sono ancora separate dagli automatismi attivi.
+
 ## Richieste successive del 7 novembre
 
 - Bunnys di Grado 0, II e IV. Volano con le due orecchie. Alla morte curano ciascun alleato del 50% della sua Vita attuale. Cura ripristina il 25% della Vita attuale di un avversario scelto e costa Oculum pari al livello di chi riceve la cura. Scelta confermata **C, Prugna e miele**. Servono verifiche del bersaglio, della morte e della consegna online.
@@ -16,7 +73,7 @@ Collocare le nuove evocazioni e gli Occhi dei Caduti sotto la scheda del loro ev
 - Squadre di combattimento assegnate dal Master con colori distinti. Party blu, nemici rossi e ulteriori squadre, per esempio nemici gialli ostili ai rossi. Colori visibili anche nella selezione dei bersagli e filtro contro gli attacchi accidentali agli appartenenti alla propria squadra.
 - Gli oggetti runici di Postea vengono da un futuro errato in cui le rune sono avanzate senza la scoperta dei Cerchi Magici. L’Oculum è raro fra gli abitanti. Le rune si cancellano gradualmente se graffiate e i manufatti più pregiati, inclusi quelli Elité, le proteggono sotto le piastre.
 - Scudo delle guardie normali 50 + 5 × Grado. Scudo Elité 150 + 10 × Grado. Scudo delle Guardie Magiche di Postea 200 + 15 × Grado. Normali ed Elité colpiscono da vicino con il fucile e si allontanano. Le Magiche possono contrattaccare gratuitamente al primo colpo ricevuto nel turno. Cadenza di tre turni per gli Elité e per le guardie normali, con conteggio dalla partenza per queste ultime. Solo le normali hanno il 60% di probabilità di contrattaccare e l’80% di mantenere l’utilizzo.
-- Usura delle armi da 1.000 utilizzi. A parità di livello con chi impugna l’arma, un attacco normale spende 1 uso e un attacco con buff di Volontà o Attacco ne spende 3. Un’arma di livello superiore si conserva finché il personaggio raggiunge il suo livello. Per un’arma di livello inferiore, costo normale 1 + differenza di livello, con buff 3 + 1,5 × differenza, arrotondato per eccesso. I Danni dell’arma calano in proporzione agli usi rimasti, arrotondati per difetto. Riparazione dal fabbro per 50 Obser × Grado dell’arma, minimo 25.
+- Usura e fabbro seguono le conferme più recenti nella sezione Scudi infranti, usura e riparazione.
 
 ## CAT07 / ART07 — Assassino NPC nemico e 55 desktop, consegna chiusa al 100%
 

@@ -3731,7 +3731,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                   ),
                 ),
               if (dadoMostrato.isNotEmpty) const SizedBox(height: 18),
-              Text(
+              combatLogText(
                 cleanUiText(risultato),
                 textAlign: TextAlign.center,
                 style: const TextStyle(

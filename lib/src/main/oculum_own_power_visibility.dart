@@ -99,6 +99,8 @@ extension _OculumOwnPowerVisibility on _OculumHomePageState {
 }
 
 extension OculumOwnPowerVisibilityProbe on OculumPerformanceProbe {
+  Widget sheetPowerBadge(String tag) =>
+      _state.knownPowerBadge(tag, showMasterReserve: true);
   bool get ownPowerVisible => _state.showOwnTotalPower;
   void showOwnPower(bool value) => _state.setShowOwnTotalPower(value);
   Widget ownPowerSetting() => _state.ownPowerVisibilitySetting();

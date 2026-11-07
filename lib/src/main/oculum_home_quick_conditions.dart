@@ -1025,6 +1025,9 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
                     c.metadata['referenceCurseSource'] == isolatedSource,
               )
               .firstOrNull;
+    final before = existing == null
+        ? null
+        : (existing.stage, existing.stacks, existing.duration);
     final override = conditionOverrideFor(type);
     if (!canApplyControlCondition(
       definition,
@@ -1147,6 +1150,21 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     ultimoEventoRiposo = message;
     aggiungiLog(message);
     final appliedInstance = getCondition(type);
+    final applied = existing ?? appliedInstance;
+    if (applied != null &&
+        before != (applied.stage, applied.stacks, applied.duration)) {
+      showSheetFeedback(
+        definition.polarity == OculumConditionPolarity.positive
+            ? OculumFeedbackKind.buff
+            : OculumFeedbackKind.status,
+        tint: switch (type) {
+          'bruciatura' => const Color(0xFFFF945E),
+          'gelo' => const Color(0xFF9AE2FF),
+          'veleno' => const Color(0xFF82C473),
+          _ => null,
+        },
+      );
+    }
     if (type == 'aumento_difficolta' && appliedInstance != null) {
       grantDifficultyIncreaseFightRewards(appliedInstance);
     }
@@ -2059,6 +2077,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     int amount,
   ) async {
     if (amount <= 0) return;
+    final feedbackOrigin = sheetFeedbackTarget;
     final before = hpCorrenti();
     var remaining = amount;
     final tag = pawnSenderTag;
@@ -2072,6 +2091,11 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     if (!mounted) return;
     final after = max(0, before - remaining);
     currentHpController.text = after.toString();
+    showSheetFeedback(
+      OculumFeedbackKind.lifeDamage,
+      origin: feedbackOrigin,
+      amount: before - after,
+    );
     final message = t(
       '${conditionName(instance)} infligge $remaining danni diretti${remaining < amount ? ' (Pawn ne intercetta ${amount - remaining})' : ''} (ignora Scudo e Difesa).',
       '${conditionName(instance)} deals $remaining direct damage${remaining < amount ? ' (Pawn intercepts ${amount - remaining})' : ''} (ignores Shield and Defense).',
@@ -2104,9 +2128,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final temporary = healed.temporary - beforeTemporary;
     currentHpController.text = '${healed.current}';
     impostaHpTempTotali(healed.temporary);
-    final message = t(
-      'Rigenerazione: +$restored HP${temporary > 0 ? ', +$temporary HP temporanei' : ''} (${oculumRegenerationHealing(maxHp(), instance.stage)} richiesti).',
-      'Regeneration: +$restored HP${temporary > 0 ? ', +$temporary temporary HP' : ''} (${oculumRegenerationHealing(maxHp(), instance.stage)} requested).',
+    showSheetFeedback(OculumFeedbackKind.heal, amount: restored + temporary);
+    final message = combatImpactLog(
+      '[CURA]',
+      _CombatLogImpact(hpGained: restored),
     );
     risultato = message;
     aggiungiLog(message);
@@ -2489,6 +2514,9 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }
 
   void processConditionTick(OculumConditionTickTrigger trigger) {
+    if (trigger == OculumConditionTickTrigger.endTurn) {
+      advanceNormalShieldBreakPenalty();
+    }
     if (trigger == OculumConditionTickTrigger.action) {
       consumeMaskedShadowAction();
     }

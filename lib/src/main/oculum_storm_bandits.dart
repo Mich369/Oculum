@@ -382,6 +382,101 @@ extension _OculumStormBandits on _OculumHomePageState {
         );
   }
 
+  bool oculumShieldBreakCanTarget(
+    Map<String, dynamic> source,
+    Map<String, dynamic> target,
+  ) {
+    String side(Map<String, dynamic> token) {
+      final value = '${token['side'] ?? 'ally'}';
+      return value == 'party' ? 'ally' : value;
+    }
+
+    return onlineCombatTokenTag(target).isNotEmpty &&
+        !oculumSameSheetIdentity(
+          onlineCombatTokenTag(source),
+          onlineCombatTokenTag(target),
+        ) &&
+        side(source) != side(target) &&
+        !const {'dead', 'fled', 'expired'}.contains(target['status']) &&
+        target['outsideFight'] != true &&
+        target['mechaOccupied'] != true;
+  }
+
+  bool validOculumShieldBreakImpact(Map<String, dynamic> payload) {
+    final source = '${payload['sourceTag'] ?? ''}';
+    final target = '${payload['targetTag'] ?? ''}';
+    final level = readIntValue(payload['level'], fallback: -1);
+    if (source.isEmpty ||
+        payload['senderTag'] != source ||
+        payload['encounterId'] != onlineCombatEncounterId ||
+        payload['kind'] != 'fauna_burst' ||
+        payload['faunaBurst'] != true ||
+        payload['element'] != 'oculum' ||
+        payload['attack'] != 1 ||
+        payload['natural'] != 10 ||
+        payload['forcedCritical'] == true ||
+        payload['turnResourceSpends'] is List ||
+        payload['effects'] is! List ||
+        (payload['effects'] as List).isNotEmpty ||
+        level < 0 ||
+        payload['damage'] != 10 + 5 * level) {
+      return false;
+    }
+    final tokens = onlineCombatTokens();
+    final bearer = tokens
+        .where((t) => onlineCombatTokenTag(t) == source)
+        .firstOrNull;
+    final recipient = tokens
+        .where((t) => onlineCombatTokenTag(t) == target)
+        .firstOrNull;
+    return bearer != null &&
+        bearer['outsideFight'] != true &&
+        recipient != null &&
+        oculumShieldBreakCanTarget(bearer, recipient);
+  }
+
+  void queueOculumShieldBreakImpact({
+    required String source,
+    required String encounter,
+    required String scope,
+    required int level,
+  }) {
+    if (source.isEmpty || encounter.isEmpty) return;
+    final receipt = 'oculum-shield:${DateTime.now().microsecondsSinceEpoch}';
+    _oculumShieldBreakImpactQueue = _oculumShieldBreakImpactQueue
+        .then((_) async {
+          // The original damage request commits its own receipt before target
+          // selection can switch to another owned sheet.
+          await Future<void>.delayed(Duration.zero);
+          if (!mounted ||
+              permissionScope != scope ||
+              onlineCombatEncounterId != encounter ||
+              !controlsOnlineCombatSheet(source)) {
+            return;
+          }
+          await sendFaunaBurst(
+            sourceTag: source,
+            centerTag: source,
+            receipt: receipt,
+            name: t('Impatto dello Scudo Oculum', 'Oculum Shield impact'),
+            element: 'oculum',
+            damage: 10 + 5 * level,
+            shieldBreakLevel: level,
+          );
+        })
+        .catchError((Object _) {
+          if (mounted && permissionScope == scope) {
+            combatLogFor(
+              source,
+              t(
+                '[SCUDO OCULUM] Invio dell’impatto interrotto.',
+                '[OCULUM SHIELD] Impact delivery interrupted.',
+              ),
+            );
+          }
+        });
+  }
+
   Future<void> sendFaunaBurst({
     required String sourceTag,
     required String centerTag,
@@ -397,8 +492,17 @@ extension _OculumStormBandits on _OculumHomePageState {
     String skillId = '',
     int maximumTargets = 100,
     int damagePerAdditionalTargetPercent = 0,
+    int? shieldBreakLevel,
   }) async {
     final scope = permissionScope, encounter = onlineCombatEncounterId;
+    final shieldBreak = shieldBreakLevel != null;
+    final tokens = onlineCombatTokens();
+    final bearer = tokens
+        .where((token) => onlineCombatTokenTag(token) == sourceTag)
+        .firstOrNull;
+    if (shieldBreak && (bearer == null || bearer['outsideFight'] == true)) {
+      return;
+    }
     final sourceIndex = localSheetIndexForOculumTag(sourceTag);
     final sourceMonster = sourceIndex < 0
         ? null
@@ -406,7 +510,8 @@ extension _OculumStormBandits on _OculumHomePageState {
             '${schedePersonaggio[sourceIndex]['monsterBookSourceId'] ?? ''}',
           );
     final side = combatScoutSide(centerTag);
-    final candidates = onlineCombatTokens().where((t) {
+    final candidates = tokens.where((t) {
+      if (shieldBreak) return oculumShieldBreakCanTarget(bearer!, t);
       final tag = onlineCombatTokenTag(t);
       if (tag == centerTag ||
           tag == sourceTag ||
@@ -421,6 +526,10 @@ extension _OculumStormBandits on _OculumHomePageState {
     final selected = <String>{};
     final unknown = <Map<String, dynamic>>[];
     for (final token in candidates) {
+      if (shieldBreak) {
+        unknown.add(token);
+        continue;
+      }
       final tag = onlineCombatTokenTag(token),
           distance = faunaDistance(centerTag, tag);
       if (distance == null) {
@@ -443,7 +552,12 @@ extension _OculumStormBandits on _OculumHomePageState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Posizioni non indicate sulla mappa: seleziona chi è entro $radius metri. Nessuna Azione o Reazione aggiuntiva.',
+                      shieldBreak
+                          ? t(
+                              'Seleziona i non alleati vicini. Impatto: $damage Danni Oculum.',
+                              'Select nearby non-allies. Impact: $damage Oculum Damage.',
+                            )
+                          : 'Posizioni non indicate sulla mappa: seleziona chi è entro $radius metri. Nessuna Azione o Reazione aggiuntiva.',
                     ),
                     for (final token in unknown)
                       CheckboxListTile(
@@ -492,6 +606,27 @@ extension _OculumStormBandits on _OculumHomePageState {
                         100))
             .floor();
     for (final target in targets) {
+      if (!mounted ||
+          permissionScope != scope ||
+          onlineCombatEncounterId != encounter) {
+        return;
+      }
+      if (shieldBreak) {
+        final current = onlineCombatTokens();
+        final sourceNow = current
+            .where((t) => onlineCombatTokenTag(t) == sourceTag)
+            .firstOrNull;
+        final targetNow = current
+            .where((t) => onlineCombatTokenTag(t) == target)
+            .firstOrNull;
+        if (!controlsOnlineCombatSheet(sourceTag) ||
+            sourceNow == null ||
+            sourceNow['outsideFight'] == true ||
+            targetNow == null ||
+            !oculumShieldBreakCanTarget(sourceNow, targetNow)) {
+          continue;
+        }
+      }
       final request = <String, dynamic>{
         'id': '$receipt:$target',
         'scope': scope,
@@ -509,6 +644,7 @@ extension _OculumStormBandits on _OculumHomePageState {
         'abilityName': name,
         'choice': 'fauna_burst',
         'faunaBurst': true,
+        if (shieldBreak) 'oculumShieldBreakImpact': true,
         'faunaPush': push,
         'faunaNonLethal': nonLethal,
         'faunaRobberyPercent': readIntValue(
@@ -520,12 +656,23 @@ extension _OculumStormBandits on _OculumHomePageState {
         'damage': max(0, burstDamage),
         'element': element,
         'natural': 10,
-        'level': 0,
+        'level': shieldBreakLevel ?? 0,
         'grade': 0,
         'difficulty': 'normale',
         'effects': <Map<String, dynamic>>[],
         'status': 'pending',
       };
+      if (shieldBreak) {
+        onlineCombatRequests['${request['id']}'] = request;
+        if (realtimeService?.isConnected == true) {
+          await sendOnlineCombatRequest(request);
+        }
+        if (controlsOnlineCombatSheet(target) &&
+            request['status'] == 'pending') {
+          await resolveAutomaticFaunaDamage(request);
+        }
+        continue;
+      }
       if (controlsOnlineCombatSheet(target)) {
         await resolveAutomaticFaunaDamage(request);
       }

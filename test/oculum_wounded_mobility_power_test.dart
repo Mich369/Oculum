@@ -32,13 +32,14 @@ void main() {
     'HP multiplier contributes to display PT and exactly once inside turn averages',
     () {
       expect(oculumHpTotalPowerBonusForGrade(0, level: 2), 0);
-      expect(oculumHpTotalPowerBonusForGrade(0, level: 3), 1);
+      expect(oculumHpTotalPowerBonusForGrade(0, level: 3), 0);
+      expect(oculumHpTotalPowerBonusForGrade(0, level: 4), 1);
       expect(oculumHpTotalPowerBonusForGrade(1, level: 13), 3);
       expect(oculumHpTotalPowerBonusForGrade(2, level: 23), 4);
       final low = oculumScoutPower(2, [10, 10, 10, 10]);
-      final high = oculumScoutPower(3, [10, 10, 10, 10]);
+      final high = oculumScoutPower(4, [10, 10, 10, 10]);
       expect(low, 42);
-      expect(high, 44);
+      expect(high, 45);
       expect(
         oculumEncounterPermanentTotalPower({
           'resilienza': 10,

@@ -86,7 +86,7 @@ void main() {
       state.resilienzaController.text = '20';
       state.currentResilienzaController.text = '20';
       state.gradoController.text = '0';
-      state.livelloController.text = '3';
+      state.livelloController.text = '4';
       state.currentHpController.text = '150';
       expect(p.hpMultiplier(), 10);
       expect(p.availableArtResource('resilienza'), 15);

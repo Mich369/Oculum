@@ -2761,6 +2761,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     for (final key in changedKeys) {
       controllers[key]!.text = '${updated[key] ?? ''}';
     }
+    if (changedKeys.contains('scudo')) {
+      clearNormalShieldBreakPenaltyIfProtected();
+    }
     return true;
   }
 

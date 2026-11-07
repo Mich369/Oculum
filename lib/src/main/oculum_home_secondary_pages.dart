@@ -5717,11 +5717,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     // Il Book può contenere centinaia di mostri e varianti: la scansione è
     // riusata finché non cambiano query, filtro o la lista configurata.
     final filterCacheKey =
-        'power-asc|${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter|$monsterBookKnowledgeFilter|${combatKnowledgeRevision.value}';
+        'power-asc|${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter|$monsterBookKnowledgeFilter|$monsterBookFinishedOnly|${combatKnowledgeRevision.value}';
     final filtered = monsterBookFilterCacheKey == filterCacheKey
         ? monsterBookFilterCache
         : monsterBookEntries
               .where((entry) {
+                if (monsterBookFinishedOnly &&
+                    OculumMonsterTheme.desktopIllustrationForId(entry.id) ==
+                        null) {
+                  return false;
+                }
                 final known = monsterBookPartyKnowsAny(entry.id);
                 if (monsterBookKnowledgeFilter == 'known' && !known ||
                     monsterBookKnowledgeFilter == 'locked' && known) {
@@ -5816,6 +5821,18 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   onSelected: (_) =>
                       setState(() => monsterBookKnowledgeFilter = filter.key),
                 ),
+              FilterChip(
+                key: const ValueKey('monster-book-finished'),
+                avatar: const Icon(Icons.image_outlined, size: 18),
+                label: Text(t('Finiti', 'Finished')),
+                tooltip: t(
+                  'Mostri con uno sfondo desktop scelto',
+                  'Monsters with a selected desktop background',
+                ),
+                selected: monsterBookFinishedOnly,
+                onSelected: (value) =>
+                    setState(() => monsterBookFinishedOnly = value),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -7929,7 +7946,22 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               masterDashboardNotePanel,
             ],
           ),
+          if (sessionMaterialMasterKey != null)
+            (
+              id: 'session-material',
+              label: t('Materiale sessione', 'Session material'),
+              description: t(
+                'Materiali da trovare e battaglie preparate.',
+                'Discoverable materials and prepared battles.',
+              ),
+              icon: Icons.inventory_2_outlined,
+              keywords: 'materiale material minerali minerals cristalli crystals battaglia battle preparazione',
+              panels: [sessionMaterialPanel],
+            ),
         ];
+    final visibleCategory = sections.any((section) => section.id == masterCategory)
+        ? masterCategory
+        : 'overview';
     final terms = masterQuery
         .trim()
         .toLowerCase()
@@ -7939,7 +7971,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final matches = sections
         .where(
           (section) => terms.isEmpty
-              ? section.id == masterCategory
+              ? section.id == visibleCategory
               : terms.every(
                   ('${section.label} ${section.keywords}'.toLowerCase())
                       .contains,
@@ -7957,7 +7989,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             for (final s in sections)
               OculumSettingsCategory(s.id, s.label, s.icon),
           ],
-          selected: masterCategory,
+          selected: visibleCategory,
           query: masterQuery,
           english: linguaInglese,
           searchLabel: t('Cerca negli strumenti Master', 'Search Master tools'),

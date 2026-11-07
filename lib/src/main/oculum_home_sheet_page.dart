@@ -1104,8 +1104,16 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       required Color color,
       required IconData icon,
       OculumResourceFxKind? effect,
+      Key? animationKey,
     }) {
       final safeRatio = ratio.clamp(0.0, 1.0).toDouble();
+      Widget progress(double displayed) => LinearProgressIndicator(
+        value: displayed,
+        semanticsValue: '${(safeRatio * 100).round()}',
+        minHeight: dense ? 5 : 7,
+        color: color,
+        backgroundColor: Colors.black.withValues(alpha: 0.56),
+      );
       return Padding(
         padding: EdgeInsets.only(bottom: dense ? 7 : 9),
         child: Column(
@@ -1156,12 +1164,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    LinearProgressIndicator(
-                      value: safeRatio,
-                      minHeight: dense ? 5 : 7,
-                      color: color,
-                      backgroundColor: Colors.black.withValues(alpha: 0.56),
-                    ),
+                    if (animationKey == null)
+                      progress(safeRatio)
+                    else
+                      OculumAnimatedResourceValue(
+                        key: animationKey,
+                        fraction: safeRatio,
+                        builder: (context, displayed, child) =>
+                            progress(displayed),
+                      ),
                     if (effect != null && safeRatio > 0)
                       OculumResourceBarFx(kind: effect, color: color),
                   ],
@@ -1180,6 +1191,11 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ? '???/${max(1, maxHpVal)}'
             : '$currentHp/${max(1, maxHpVal)}',
         ratio: vitaAfona ? 0 : currentHp / max(1, maxHpVal),
+        animationKey: ValueKey((
+          currentSheetScrollId(),
+          'compact-hp',
+          vitaAfona,
+        )),
         color: vitaAfona
             ? Colors.black
             : themeFamily == OculumGothFamily.spirit
@@ -1891,11 +1907,17 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: ratio,
-                  minHeight: 12,
-                  color: meterColor,
-                  backgroundColor: Colors.black45,
+                child: OculumAnimatedResourceValue(
+                  key: ValueKey((currentSheetScrollId(), 'oculum', sleeping)),
+                  fraction: ratio,
+                  builder: (context, displayed, child) =>
+                      LinearProgressIndicator(
+                        value: displayed,
+                        semanticsValue: '${(ratio * 100).round()}',
+                        minHeight: 12,
+                        color: meterColor,
+                        backgroundColor: Colors.black45,
+                      ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -4024,6 +4046,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
   }) async {
     final cleanLabel = cleanUiText(label).trim();
     final origin = currentSheetScrollId();
+    final campaign = activeCampaignId;
     final choice = await showMenu<String>(
       context: context,
       color: Theme.of(context).colorScheme.surface,
@@ -4099,6 +4122,12 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             value: 'related_damage',
             child: Text(t('Danni subiti e cura', 'Damage taken and healing')),
           ),
+          if (conditionTarget == OculumConditionTarget.resilienza &&
+              resiliencePartHealth().isNotEmpty)
+            PopupMenuItem<String>(
+              value: 'part_health',
+              child: Text(t('Vita delle parti', 'Body part health')),
+            ),
         ],
         if (conditionTarget != null &&
             conditionsAffecting(conditionTarget).isNotEmpty)
@@ -4162,6 +4191,9 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       case 'related_damage':
         vaiAllaFunzione(page: 0, anchorId: 'sheet_damage_heal');
         break;
+      case 'part_health':
+        if (activeCampaignId == campaign) await showResiliencePartHealth();
+        break;
       case 'roll':
         onRoll?.call();
         break;
@@ -4183,6 +4215,64 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         onIncrease?.call();
         break;
     }
+  }
+
+  List<({String label, int remaining, int maximum})> resiliencePartHealth() {
+    if (!sheetIsOwnLocalSheetAt(schedaCorrente)) return const [];
+    final sheet = schedePersonaggio[schedaCorrente];
+    if (readBoolValue(sheet['realtimeRestrictedByMaster']) ||
+        readBoolValue(sheet['realtimeReadOnlyByMaster'])) {
+      return const [];
+    }
+    final state = anatomicalPartState;
+    final parts = state['parts'];
+    if (parts is! Map || parts.isEmpty) return const [];
+    final status = oculumPublicAnatomicalPartStatus(
+      state: state,
+      ownerOrMaster: true,
+    );
+    return [
+      for (final part in status)
+        if (parts[part['id']] case final Map stored)
+          if (readIntValue(stored['maximumHp']) > 0 &&
+              readIntValue(part['remainingHp']) <
+                  readIntValue(part['maximumHp']))
+            (
+              label: cleanUiText('${stored['label'] ?? part['id']}'),
+              remaining: readIntValue(part['remainingHp']),
+              maximum: readIntValue(part['maximumHp']),
+            ),
+    ];
+  }
+
+  Future<void> showResiliencePartHealth() async {
+    final parts = resiliencePartHealth();
+    if (parts.isEmpty) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('Vita delle parti', 'Body part health')),
+        scrollable: true,
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final part in parts)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  '${part.label} · ${part.remaining}/${part.maximum} HP',
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(t('Chiudi', 'Close')),
+          ),
+        ],
+      ),
+    );
   }
 
   void openManualForQuickTerm(String rawTerm) {
@@ -10476,7 +10566,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                           itemCount: min(24, logEventi.length),
                           itemBuilder: (context, index) => Padding(
                             padding: const EdgeInsets.fromLTRB(10, 3, 10, 3),
-                            child: Text(
+                            child: combatLogText(
                               logEventi[logEventi.length - 1 - index],
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,

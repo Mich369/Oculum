@@ -5,9 +5,9 @@ import 'oculum_october27_resources_test.dart' show closeFixture;
 
 void main() {
   test(
-    'HP multipliers follow the confirmed first three levels of every Grade',
+    'Grade 0 grows through level 4 while higher Grades retain their progression',
     () {
-      for (var grade = 0; grade <= 12; grade++) {
+      for (var grade = 1; grade <= 12; grade++) {
         for (var offset = 0; offset <= 9; offset++) {
           final expected =
               (offset == 0
@@ -24,9 +24,11 @@ void main() {
         }
       }
       expect(oculumHpMultiplierForGrade(0, level: 0), 6);
-      expect(oculumHpMultiplierForGrade(0, level: 1), 9);
-      expect(oculumHpMultiplierForGrade(0, level: 2), 9);
-      expect(oculumHpMultiplierForGrade(0, level: 3), 10);
+      expect(oculumHpMultiplierForGrade(0, level: 1), 7);
+      expect(oculumHpMultiplierForGrade(0, level: 2), 8);
+      expect(oculumHpMultiplierForGrade(0, level: 3), 9);
+      expect(oculumHpMultiplierForGrade(0, level: 4), 10);
+      expect(oculumHpMultiplierForGrade(0, level: 9), 10);
       expect(oculumHpMultiplierForGrade(1, level: 10), 11);
       expect(oculumHpMultiplierForGrade(1, level: 11), 14);
       expect(oculumHpMultiplierForGrade(1, level: 13), 15);
@@ -59,20 +61,23 @@ void main() {
         'manualHpMaximumAdjustment': 7,
         'currentHp': '40',
       };
-      expect(oculumSheetHpMaximum(old), 52);
+      expect(oculumSheetHpMaximum(old), 42);
       expect(
         old['currentHp'],
         '40',
         reason: 'Recalculation never heals a save',
       );
-      final migrated = {...old, 'derivedMaxHp': 52, 'hpGradeMultiplier': 9};
+      final previous = {...old, 'derivedMaxHp': 52, 'hpGradeMultiplier': 9};
+      expect(oculumSheetHpMaximum(previous), 42);
+      final migrated = {...old, 'derivedMaxHp': 42, 'hpGradeMultiplier': 7};
       expect(
         oculumSheetHpMaximum(migrated),
-        52,
+        42,
         reason: 'Repeated JSON round trips do not scale again',
       );
       expect(oculumSheetHpMaximum({...old, 'livello': '0'}), 37);
-      expect(oculumSheetHpMaximum({...old, 'livello': '3'}), 57);
+      expect(oculumSheetHpMaximum({...old, 'livello': '3'}), 52);
+      expect(oculumSheetHpMaximum({...old, 'livello': '4'}), 57);
       expect(
         oculumSheetHpMaximum({
           'livello': 10,
@@ -145,9 +150,10 @@ void main() {
       final base = p.snapshot();
       for (final entry in [
         (level: 0, grade: 0, multiplier: 6),
-        (level: 1, grade: 0, multiplier: 9),
-        (level: 2, grade: 0, multiplier: 9),
-        (level: 3, grade: 0, multiplier: 10),
+        (level: 1, grade: 0, multiplier: 7),
+        (level: 2, grade: 0, multiplier: 8),
+        (level: 3, grade: 0, multiplier: 9),
+        (level: 4, grade: 0, multiplier: 10),
         (level: 10, grade: 1, multiplier: 11),
         (level: 11, grade: 1, multiplier: 14),
         (level: 13, grade: 1, multiplier: 15),

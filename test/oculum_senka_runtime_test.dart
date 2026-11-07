@@ -362,6 +362,7 @@ void main() {
       final before = p.coreStats();
       expect(before['materia'], 8);
       expect(before['oculum'], 9);
+      expect(hp, 63);
       expect(p.currentHp(), p.maximumHp());
       File('build/oct27-senka-measured.json').writeAsStringSync(
         jsonEncode({
@@ -378,7 +379,7 @@ void main() {
       expect(p.manifestSenkaMask(item, true), true);
       expect(p.coreStats()['resilienza'], before['resilienza']! + 6);
       expect(p.coreStats()['materia'], before['materia']! + 10);
-      expect(p.currentHp(), hp + 54);
+      expect(p.currentHp(), hp + 42);
       expect(p.coreStats()['oculum'], oculum + 5);
       expect(p.combatTurnResources(), turn);
       final shield = state.scudoController.text;
@@ -388,7 +389,7 @@ void main() {
       expect(p.coreStats()['oculum'], oculum);
       expect(p.currentHp(), hp);
       p.manifestSenkaMask(item, true);
-      expect(p.currentHp(), hp + 54);
+      expect(p.currentHp(), hp + 42);
       expect(p.coreStats()['oculum'], oculum + 5);
       expect(state.scudoController.text, shield);
       item.scudoIntegritaOculumCorrente = 0;

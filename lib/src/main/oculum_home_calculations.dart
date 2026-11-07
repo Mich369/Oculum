@@ -361,15 +361,13 @@ int oculumWeaponLimit(int grade) => 3 + grade.clamp(0, 12) * 5;
 int oculumWeaponStackDamage(Iterable<InventoryItem> weapons) {
   final sorted = weapons.toList()
     ..sort(
-      (a, b) => (b.bonusDanno + b.gradoOggetto * 5).compareTo(
-        a.bonusDanno + a.gradoOggetto * 5,
-      ),
+      (a, b) => oculumWeaponWearDamage(b).compareTo(oculumWeaponWearDamage(a)),
     );
   if (sorted.isEmpty) return 0;
   final main = sorted.first;
-  var damage = main.bonusDanno + main.gradoOggetto * 5;
+  var damage = oculumWeaponWearDamage(main);
   for (final weapon in sorted.skip(1)) {
-    final extra = weapon.bonusDanno + weapon.gradoOggetto * 5;
+    final extra = oculumWeaponWearDamage(weapon);
     final improved =
         weapon.livelloOggetto >= main.livelloOggetto ||
         weapon.gradoOggetto >= main.gradoOggetto;
@@ -1069,7 +1067,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
               ? 0
               : conditionFlatModifier(conditionTarget)),
     );
-    return subtotal + senkaMoonStatBonus(key, subtotal);
+    return max(
+      0,
+      subtotal +
+          senkaMoonStatBonus(key, subtotal) -
+          normalShieldBreakPenaltyFor(key),
+    );
   }
 
   int resilienzaTotale() => max(
@@ -1325,7 +1328,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           conditionalBuffStatBonus(key) +
           temp +
           progressionSurge.statBonus +
-          activeStructuredEffectBonus(key),
+          activeStructuredEffectBonus(key) -
+          normalShieldBreakPenaltyFor(key),
     );
   }
 
@@ -2649,6 +2653,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       if (itemIntegrityShieldCurrent(item) == 0) {
         bonuses.updateAll((key, value) => value ~/ 2);
       }
+      applyProtectionQuickDefenseWear(item, bonuses);
       return bonuses;
     }
     if (item.equipaggiata &&
@@ -2673,7 +2678,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     for (final text in activeItemQuickTexts(item)) {
       addTitleQuickCommands(bonuses, text);
     }
+    applyProtectionQuickDefenseWear(item, bonuses);
     return bonuses;
+  }
+
+  void applyProtectionQuickDefenseWear(
+    InventoryItem item,
+    Map<String, int> bonuses,
+  ) {
+    final defense = bonuses['difesa'] ?? 0;
+    if (defense <= 0 || oculumWearProtectionKind(item) == null) return;
+    final direct = max(0, item.bonusDifesa + itemGrade(item) * 2);
+    bonuses['difesa'] =
+        oculumEquipmentWearValue(item, direct + defense) -
+        oculumEquipmentWearValue(item, direct);
   }
 
   int itemQuickBonus(String key) {
@@ -3012,6 +3030,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       deferDerivedCardNotifications: deferDerivedCardNotifications,
     );
     final applied = max(0, oculumTotale() - before);
+    showSheetStatGain('oculum', applied);
     if (scheduleSave && applied > 0) {
       recordCurrentOculumProgress();
       programmaSalvataggio(
@@ -3878,13 +3897,19 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       scheduleRealtimeOculumChanged();
       return;
     }
-    final runtimeBonus = runtimeCurrentStatBonus(key);
-    currentStatController(key).text = (visible - runtimeBonus).toString();
+    setRawCurrentFromVisibleStat(key, visible, before);
     syncVisibleCurrentStatEditor(key);
     notifyActiveSheetSummaryChanged();
     if (trackConsumption) {
       adjustRecordedStatSpentFromDelta(key, visible - before);
     }
+  }
+
+  void setRawCurrentFromVisibleStat(String key, int value, int before) {
+    final penalty = normalShieldBreakPenaltyFor(key);
+    if (penalty > 0 && value == before) return;
+    currentStatController(key).text =
+        (value - runtimeCurrentStatBonus(key) + penalty).toString();
   }
 
   int currentStatValue(String key) {
@@ -4251,13 +4276,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           trackConsumption: false,
         );
       } else {
-        final runtimeBonus = runtimeCurrentStatBonus(key);
-        currentStatController(key).text = (next - runtimeBonus).toString();
+        setRawCurrentFromVisibleStat(key, next, before);
       }
       adjustRecordedStatSpentFromDelta(key, appliedDelta);
       if (key == 'resilienza') {
         rimarginaHpDaAumentoResilienza(appliedDelta);
       }
+      showSheetStatGain(key, currentStatValue(key) - before);
       final massimo = statMassimo(key);
       final applyHalfResourceFatigue = oculumShouldApplyHalfResourceFatigue(
         before: before,
@@ -5179,6 +5204,45 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
+  int get normalShieldBreakPenalty {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return 0;
+    }
+    final runtime = schedePersonaggio[schedaCorrente]['planarRuntime'];
+    return runtime is Map
+        ? readIntValue(runtime['normalShieldBreakPenalty']).clamp(0, 2).toInt()
+        : 0;
+  }
+
+  int normalShieldBreakPenaltyFor(String key) =>
+      key == 'volonta' || key == 'materia' ? normalShieldBreakPenalty : 0;
+
+  void setNormalShieldBreakPenalty(int value) {
+    if (normalShieldBreakPenalty == value) return;
+    if (value == 0) {
+      planarState.remove('normalShieldBreakPenalty');
+    } else {
+      planarState['normalShieldBreakPenalty'] = value;
+    }
+    invalidateDerivedDataCaches();
+    syncVisibleCurrentStatEditor('volonta');
+    syncVisibleCurrentStatEditor('materia');
+    notifyActiveSheetSummaryChanged();
+  }
+
+  void clearNormalShieldBreakPenaltyIfProtected() {
+    if (normalShieldBreakPenalty > 0 && scudo() > 0) {
+      setNormalShieldBreakPenalty(0);
+    }
+  }
+
+  void advanceNormalShieldBreakPenalty() {
+    final penalty = normalShieldBreakPenalty;
+    if (penalty > 0) {
+      setNormalShieldBreakPenalty(scudo() > 0 ? 0 : penalty - 1);
+    }
+  }
+
   void impostaScudoTotale(int value) {
     final target = max(0, value);
     final manual = max(0, leggiNumero(scudoController));
@@ -5189,15 +5253,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     if (target >= manual) {
       scudoBonusConsumati = (manual + bonus - target).clamp(0, bonus).toInt();
-      return;
+    } else {
+      scudoController.text = target.toString();
+      progressionSurge.shield = max(
+        0,
+        progressionSurge.shield - (manual - target),
+      );
+      scudoBonusConsumati = bonus;
     }
-
-    scudoController.text = target.toString();
-    progressionSurge.shield = max(
-      0,
-      progressionSurge.shield - (manual - target),
-    );
-    scudoBonusConsumati = bonus;
+    clearNormalShieldBreakPenaltyIfProtected();
   }
 
   int scudoCritico() {
@@ -5472,9 +5536,24 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         item,
       );
     }
+    final typed = oculumWearProtectionKind(item) != null;
+    final attributed = protectionShieldContributionTracked(item);
     final shieldBonus = titleItem
         ? item.scudoIntegritaCorrente
+        : attributed
+        ? min(
+            itemIntegrityShieldCurrent(item),
+            segno > 0
+                ? max(0, itemShieldBonus(item))
+                : max(0, leggiNumero(scudoController)),
+          )
+        : typed && segno < 0
+        ? _itemBaseShieldBonus(item)
         : itemShieldBonus(item);
+    if (!titleItem && segno > 0 && (attributed || typed)) {
+      item.scudoIntegritaCorrente = max(0, shieldBonus);
+      item.craftData = {...item.craftData, 'wearNormalShieldTracked': true};
+    }
     if (shieldBonus != 0) {
       scudoController.text = max(
         0,
@@ -5497,22 +5576,61 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int requiredItemGrade(InventoryItem item) =>
       max(item.gradoOggetto, item.gradoRichiesto).clamp(0, 12).toInt();
 
-  int itemAttackBonus(InventoryItem item) =>
-      item.bonusDanno + itemGrade(item) * 5;
+  int itemAttackBonus(InventoryItem item) => oculumWeaponWearDamage(item);
 
-  int itemDefenseBonus(InventoryItem item) =>
-      item.bonusDifesa + itemGrade(item) * 2;
+  int itemDefenseBonus(InventoryItem item) {
+    final base = item.bonusDifesa + itemGrade(item) * 2;
+    return oculumWearProtectionKind(item) == null
+        ? base
+        : oculumEquipmentWearValue(item, base);
+  }
 
-  int itemShieldBonus(InventoryItem item) => item.craftData['cyberWorn'] == true
+  int _itemBaseShieldBonus(InventoryItem item) =>
+      item.craftData['cyberWorn'] == true
       ? 0
       : item.bonusScudo +
             (item.bonusScudoIncludeGrado ? 0 : itemGrade(item) * 5);
+
+  int itemShieldBonus(InventoryItem item) {
+    final base = _itemBaseShieldBonus(item);
+    return oculumWearProtectionKind(item) == null
+        ? base
+        : oculumEquipmentWearValue(item, base);
+  }
+
+  bool protectionShieldContributionTracked(InventoryItem item) =>
+      item.craftData['wearNormalShieldTracked'] == true ||
+      (oculumWearProtectionKind(item) != null &&
+          item.scudoIntegritaCorrente >= 0);
+
+  void changeInventoryItemShieldBonus(InventoryItem item, int bonus) {
+    final before = itemShieldBonus(item);
+    final attributed = protectionShieldContributionTracked(item);
+    final previousContribution = attributed
+        ? itemIntegrityShieldCurrent(item)
+        : 0;
+    item.bonusScudo = bonus;
+    if (!item.equipaggiata || !item.protegge) return;
+    final difference = itemShieldBonus(item) - before;
+    if (difference == 0) return;
+    if (attributed) {
+      item.scudoIntegritaCorrente = (previousContribution + difference)
+          .clamp(0, max(0, _itemBaseShieldBonus(item)))
+          .toInt();
+    }
+    final change = attributed
+        ? item.scudoIntegritaCorrente - previousContribution
+        : difference;
+    scudoController.text = '${max(0, leggiNumero(scudoController) + change)}';
+  }
 
   int itemOculumShieldBonus(InventoryItem item) =>
       max(0, item.bonusScudoOculum);
 
   int itemIntegrityShieldCurrent(InventoryItem item) {
-    final maximum = max(0, itemShieldBonus(item));
+    // Wear reduces future shield capacity. Existing granted points are
+    // consumed only by the normal shield resolution or explicit removal.
+    final maximum = max(0, _itemBaseShieldBonus(item));
     return oculumInventoryIntegrityCurrent(
       item.scudoIntegritaCorrente,
       maximum,

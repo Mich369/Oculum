@@ -25,6 +25,22 @@ int oculumScoutPower(int level, Iterable<int> statistics, {int grade = 0}) =>
     oculumHpTotalPowerBonusForGrade(grade, level: level) +
     statistics.fold(0, (sum, stat) => sum + max(0, stat));
 
+int oculumCurrentPower({
+  required int totalPower,
+  required int currentHp,
+  required int maximumHp,
+  required int hpMultiplier,
+  required Iterable<({int current, int maximum})> reserves,
+}) {
+  final lostLifePoints =
+      max(0, maximumHp - max(0, currentHp)) ~/ max(1, hpMultiplier);
+  final spentStats = reserves.fold(
+    0,
+    (sum, reserve) => sum + max(0, reserve.maximum - max(0, reserve.current)),
+  );
+  return max(0, totalPower - lostLifePoints - spentStats);
+}
+
 ({int divisor, int threshold, int chancePerPoint, int weakPointNatural})
 oculumScoutPowerTier(int? power) => switch (power) {
   final int p when p <= 10 => (

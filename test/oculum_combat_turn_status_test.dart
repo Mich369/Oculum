@@ -24,6 +24,29 @@ class _SharedFightTransport extends OculumRealtimeService {
   bool get isConnected => true;
 }
 
+class _RetryFightTransport extends _SharedFightTransport {
+  final sent = <Map<String, dynamic>>[];
+  final outcomes = <Object>[
+    false,
+    StateError('transport closed'),
+    true,
+    false,
+    false,
+  ];
+
+  @override
+  Future<bool> sendCombatEvent(
+    String event,
+    Map<String, dynamic> payload,
+  ) async {
+    if (event != 'combat_help') return true;
+    sent.add(Map.of(payload));
+    final outcome = outcomes.removeAt(0);
+    if (outcome is bool) return outcome;
+    throw outcome;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() async {
@@ -291,6 +314,151 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 4));
   });
+  testWidgets(
+    'standalone spends retry once per receipt and only in their original turn',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      final tag = p.ownerTag();
+      final transport = _RetryFightTransport();
+      state.modalitaMaster = false;
+      state.realtimeService = transport;
+      state.activeCampaignId = 'local-retry';
+      final actor = <String, dynamic>{
+        'id': tag,
+        'sheetTag': tag,
+        'status': 'ready',
+        'reactionMax': 2,
+        'reactionUsed': 0,
+        'reactionUsedRound': 2,
+        'reactionFastMax': 1,
+        'reactionPoolInitialized': true,
+        'reactionPoolRound': 2,
+      };
+      final snapshot = <String, dynamic>{
+        'campaignId': 'shared-retry',
+        'encounterId': 'fight-retry',
+        'round': 2,
+        'activeIndex': 1,
+        'fightStarted': false,
+        'tokens': [
+          actor,
+          <String, dynamic>{'id': 'OTHER', 'status': 'active'},
+        ],
+      };
+      state.realtimeVisibleInitiativeSnapshot = snapshot;
+      expect(await p.utilitySpend('reazione'), isTrue);
+      final pending = state.pendingOnlineCombatTurnResourceSpends as List;
+      final id = pending.single['id'];
+
+      await p.flushTurnResourceSpends();
+      expect(
+        pending.single['id'],
+        id,
+        reason: 'False result must retain spend',
+      );
+      expect(pending.single['activityComplete'], isTrue);
+      expect(
+        p.turnResourceTestPacket('unrelated')['turnResourceSpends'],
+        isNull,
+      );
+
+      state.activeCampaignId = 'unrelated';
+      await p.flushTurnResourceSpends();
+      expect(transport.sent, hasLength(1));
+      state.activeCampaignId = 'local-retry';
+
+      await p.flushTurnResourceSpends();
+      expect(pending.single['id'], id, reason: 'Exception must retain spend');
+      await p.flushTurnResourceSpends();
+      expect(pending, isEmpty);
+      await p.flushTurnResourceSpends();
+      expect(transport.sent, hasLength(3));
+      final sentSpends = transport.sent.map(
+        (packet) => (packet['turnResourceSpends'] as List).single as Map,
+      );
+      expect(sentSpends.map((spend) => spend['id']), everyElement(id));
+      expect(
+        sentSpends.skip(1).map((spend) => spend['retryTurnKey']),
+        everyElement(isA<String>()),
+      );
+      expect(
+        sentSpends.every((spend) => !spend.containsKey('_turnSpendRetryScope')),
+        isTrue,
+      );
+      expect(actor['reactionUsed'], 1);
+
+      expect(await p.utilitySpend('reazione'), isTrue);
+      await p.flushTurnResourceSpends();
+      expect(pending, hasLength(1));
+      snapshot['activeIndex'] = 0;
+      await p.flushTurnResourceSpends();
+      expect(
+        transport.sent,
+        hasLength(4),
+        reason: 'A different actor in the same round is a different turn',
+      );
+      expect(pending, isEmpty);
+      expect(actor['reactionUsed'], 2);
+
+      // Replay the transport packets on the Master side with its own tracker
+      // and receipt history. A false acknowledgement can follow delivery.
+      transport.authenticatedRole = 'master';
+      state.activeCampaignId = 'shared-retry';
+      state.selectedMasterInitiativeGroupId = 'fight-retry';
+      state.masterInitiativeRound = 2;
+      state.masterInitiativeActiveIndex = 0;
+      final masterActor = {...actor, 'reactionUsed': 0};
+      state.masterInitiativeTokens
+        ..clear()
+        ..addAll([
+          masterActor,
+          <String, dynamic>{'id': 'OTHER', 'status': 'active'},
+        ]);
+      state.masterInitiativeGroups
+        ..clear()
+        ..add(<String, dynamic>{'id': 'fight-retry', 'fightStarted': false});
+      state.appliedOnlineCombatTurnResourceSpendIds.clear();
+      state.realtimeUsers = <Map<String, dynamic>>[
+        {'sessionId': 'retry-player', 'role': 'player', 'activeSheetTag': tag},
+      ];
+      final firstDelivery = {
+        ...transport.sent.first,
+        'sessionId': 'retry-player',
+      };
+      final retryDelivery = {...transport.sent[2], 'sessionId': 'retry-player'};
+      p.receiveCombat('combat_help', retryDelivery);
+      expect(
+        masterActor['reactionUsed'],
+        0,
+        reason: 'A delayed retry cannot spend the next actor turn',
+      );
+      state.masterInitiativeActiveIndex = 1;
+      p.receiveCombat('combat_help', retryDelivery);
+      expect(masterActor['reactionUsed'], 1);
+      p.receiveCombat('combat_help', firstDelivery);
+      p.receiveCombat('combat_help', retryDelivery);
+      expect(
+        masterActor['reactionUsed'],
+        1,
+        reason: 'A stable spend ID must deduplicate separate sends',
+      );
+
+      state.masterInitiativeActiveIndex = 0;
+      expect(await p.utilitySpend('azione'), isTrue);
+      expect(state.masterInitiativeActiveIndex, 1);
+      await p.flushTurnResourceSpends();
+      expect(transport.sent, hasLength(5));
+      expect(
+        pending,
+        isEmpty,
+        reason: 'An action that advanced the tracker cannot retry in that turn',
+      );
+
+      state.realtimeService = null;
+      await transport.dispose();
+      await closeFixture(tester, p);
+    },
+  );
   testWidgets(
     'shared fights follow sheet membership and Master turn snapshots including merges',
     (tester) async {

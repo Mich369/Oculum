@@ -90,6 +90,92 @@ bool oculumReflexCriticalAwardsDodge({
     percentileRoll < 25;
 
 extension _OculumHomeCombatProgression on _OculumHomePageState {
+  int get oculumShieldBreakDefensePenalty =>
+      planarState['oculumShieldBreakDefensePending'] == true ? 3 : 0;
+
+  int takeOculumShieldBreakDefensePenalty() {
+    final penalty = oculumShieldBreakDefensePenalty;
+    if (penalty > 0) {
+      planarState.remove('oculumShieldBreakDefensePending');
+      programmaSalvataggio();
+    }
+    return penalty;
+  }
+
+  OculumFeedbackTarget get sheetFeedbackTarget =>
+      (scope: permissionScope, sheet: currentSheetScrollId());
+
+  bool get sheetFeedbackEnabled =>
+      oculumGraphicsEnabled.value &&
+      !modalitaLeggera &&
+      !modalitaVeloce &&
+      !oculusModActive &&
+      oculumThemePresentation.value.motion == OculumThemeMotion.complete &&
+      MediaQuery.maybeOf(context)?.disableAnimations != true;
+
+  Widget sheetFeedbackLayer() =>
+      ValueListenableBuilder<OculumThemePresentation>(
+        valueListenable: oculumThemePresentation,
+        builder: (_, _, _) => sheetFeedbackEnabled
+            ? OculumSheetFeedbackLayer(
+                events: sheetFeedback,
+                target: sheetFeedbackTarget,
+              )
+            : const SizedBox.shrink(),
+      );
+
+  void showSheetFeedback(
+    OculumFeedbackKind kind, {
+    int amount = 1,
+    OculumFeedbackTarget? origin,
+    Color? tint,
+  }) {
+    if (amount <= 0 ||
+        !mounted ||
+        !datiCaricati ||
+        appOculumInBackground ||
+        appOculumFocusTransition ||
+        paginaVisibileSicura(paginaCorrente) != 0 ||
+        !sheetFeedbackEnabled) {
+      return;
+    }
+    final target = sheetFeedbackTarget;
+    if (origin != null && origin != target) return;
+    sheetFeedback.value = OculumSheetFeedback(
+      kind,
+      target,
+      amount: amount,
+      tint: tint,
+      showSkulls:
+          kind == OculumFeedbackKind.lifeDamage && hpCorrenti() * 4 < maxHp(),
+    );
+  }
+
+  void showSheetStatGain(String stat, int amount) {
+    if (amount <= 0) return;
+    switch (stat) {
+      case 'oculum':
+        showSheetFeedback(
+          OculumFeedbackKind.oculum,
+          amount: amount,
+          tint: oculumStatFormulaColor,
+        );
+      case 'volonta':
+        final karma = karmaTotale();
+        showSheetFeedback(
+          OculumFeedbackKind.will,
+          amount: amount,
+          tint: switch (karma.sign) {
+            -1 => const Color(0xFF430E24),
+            1 => const Color(0xFF941836),
+            _ => const Color(0xFFD04751),
+          },
+        );
+      case 'materia':
+        showSheetFeedback(OculumFeedbackKind.matter, amount: amount);
+    }
+  }
+
   void ensureMasterInitiativeGroups() {
     if (masterInitiativeGroups.isEmpty) {
       masterInitiativeGroups.add(<String, dynamic>{
@@ -1713,12 +1799,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int rollFaces = 20,
     bool applyGlobalRollModifier = true,
     bool resourceAlreadySpent = false,
+    bool defenseRoll = false,
     String? actionLabel,
     void Function(int damageBonus)? onOculumDamageBonus,
     void Function(int naturalRoll, int total)? onResolved,
     bool Function()? canCommitFortuneRoll,
   }) async {
     oculumProfileMark('roll_special');
+    final rollName = nome.trim().toLowerCase();
+    defenseRoll =
+        defenseRoll || const {'cm', 'difesa', 'defense'}.contains(rollName);
+    final defenseOrigin = defenseRoll
+        ? (sheetFeedbackTarget, onlineCombatEncounterId)
+        : null;
     if (!resourceAlreadySpent &&
         actionLabel == null &&
         onResolved == null &&
@@ -1727,7 +1820,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         !await spendCombatRollResource()) {
       return;
     }
-    if (!mounted) return;
+    if (!mounted ||
+        defenseRoll &&
+            defenseOrigin != (sheetFeedbackTarget, onlineCombatEncounterId)) {
+      return;
+    }
     final attack = {
       'vc',
       'danno',
@@ -1763,24 +1860,34 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final baseTotal = initiativeRoll
         ? oculumWoundedInitiative(rawTotal, hp: hpCorrenti(), maxHp: maxHp())
         : rawTotal;
-    final rawFormula = rollFormulaWithCritical(
-      roll: dado,
-      faces: faces,
-      bonuses: [bonusTotale],
-    );
-    final formula = woundPercent == 100
-        ? rawFormula
-        : '$rawFormula ×$woundPercent% = $baseTotal';
     final magicalLuck = canOfferMagicalLuckOnRoll(schedaCorrente)
         ? await offerMagicalLuckOnRoll(
             label: actionLabel ?? nome,
             natural: '$dado',
-            total: baseTotal,
+            total:
+                baseTotal - (defenseRoll ? oculumShieldBreakDefensePenalty : 0),
             canCommit: canCommitFortuneRoll,
           )
         : 0;
-    if (magicalLuck == null) return;
-    final totale = baseTotal + magicalLuck;
+    if (!mounted ||
+        magicalLuck == null ||
+        defenseRoll &&
+            (defenseOrigin != (sheetFeedbackTarget, onlineCombatEncounterId) ||
+                canCommitFortuneRoll?.call() == false)) {
+      return;
+    }
+    final shieldPenalty = defenseRoll
+        ? takeOculumShieldBreakDefensePenalty()
+        : 0;
+    final rawFormula = rollFormulaWithCritical(
+      roll: dado,
+      faces: faces,
+      bonuses: [bonusTotale - shieldPenalty],
+    );
+    final formula = woundPercent == 100
+        ? rawFormula
+        : '$rawFormula ×$woundPercent% = $baseTotal';
+    final totale = baseTotal + magicalLuck - shieldPenalty;
     final testoDado = magicalLuckRollFormula(formula, magicalLuck, totale);
     var gerinResonanceText = '';
     if ((nome.trim().toLowerCase() == 'danno' ||
@@ -1890,7 +1997,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : '${actionLabel ?? nome} · Danno azione precedente $preparedDamage',
       roll: dado,
       bonus:
-          bonusTotale +
+          bonusTotale -
+          shieldPenalty +
           magicalLuck +
           criticalDieModifier(dado, faces) +
           modificatoreDifficoltaTiro(),
@@ -1906,6 +2014,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int rollFaces = 20,
     String? actionLabel,
     bool resourceAlreadySpent = false,
+    bool defenseRoll = false,
     int? opposingTotal,
     int logPenalty = 0,
     bool appliesAttackDamageBonus = false,
@@ -1914,6 +2023,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool Function()? canCommitFortuneRoll,
   }) async {
     oculumProfileMark('roll_subtrait');
+    final defenseOrigin = defenseRoll
+        ? (sheetFeedbackTarget, onlineCombatEncounterId)
+        : null;
     if (oculumScoutReadingStatIds.contains(stat.id) &&
         actionLabel == null &&
         onResolved == null) {
@@ -1927,7 +2039,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         !await spendCombatRollResource()) {
       return;
     }
-    if (!mounted) return;
+    if (!mounted ||
+        defenseRoll &&
+            defenseOrigin != (sheetFeedbackTarget, onlineCombatEncounterId)) {
+      return;
+    }
     if (stat.id == 'manifestazione_potere') {
       final consumptionRoll = Random.secure().nextInt(100);
       final consumed = oculumManifestationConsumesOculum(consumptionRoll)
@@ -1961,7 +2077,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
     final oculumSpend = consumaOculumTiro(forAttack: appliesAttackDamageBonus);
     final reactionRollBonus = consumePendingReactionRollBonus();
-    final bonus =
+    var bonus =
         hiddenEyeTotal(stat) -
         artWeakPointRollPenalty(actionLabel ?? '') -
         fractureRollPenalty(stat.id) +
@@ -1980,23 +2096,34 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final usaFortuna = stat.id == 'fortuna';
     final reservedLuck = usaFortuna ? 1 : 0;
     final baseTotal = rollTotalWithCritical(dado, faces, [bonus]);
-    final baseFormula = rollFormulaWithCritical(
-      roll: dado,
-      faces: faces,
-      bonuses: [bonus],
-    );
     final magicalLuck =
         canOfferMagicalLuckOnRoll(schedaCorrente, reserved: reservedLuck)
         ? await offerMagicalLuckOnRoll(
             label: label,
             natural: '$dado',
-            total: baseTotal,
+            total:
+                baseTotal - (defenseRoll ? oculumShieldBreakDefensePenalty : 0),
             reserved: reservedLuck,
             canCommit: canCommitFortuneRoll,
           )
         : 0;
-    if (!mounted || magicalLuck == null) return;
-    final totale = baseTotal + magicalLuck;
+    if (!mounted ||
+        magicalLuck == null ||
+        defenseRoll &&
+            (defenseOrigin != (sheetFeedbackTarget, onlineCombatEncounterId) ||
+                canCommitFortuneRoll?.call() == false)) {
+      return;
+    }
+    final shieldPenalty = defenseRoll
+        ? takeOculumShieldBreakDefensePenalty()
+        : 0;
+    bonus -= shieldPenalty;
+    final baseFormula = rollFormulaWithCritical(
+      roll: dado,
+      faces: faces,
+      bonuses: [bonus],
+    );
+    final totale = baseTotal + magicalLuck - shieldPenalty;
     final testoDado = magicalLuckRollFormula(baseFormula, magicalLuck, totale);
     if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
       final usageSheet = schedePersonaggio[schedaCorrente];
@@ -5604,12 +5731,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
   }
 
-  String dettaglioValoreDannoCura(int valore) {
-    final raw = dannoSubitoController.text.trim();
-    if (raw.isEmpty || raw == valore.toString()) return '$valore';
-    return '$raw = $valore';
-  }
-
   int applicaRiduzioneSchivataOculum(int danno) {
     final reduction = schivataOculumRiduzionePronta.clamp(0, 100).toInt();
     if (danno <= 0 || reduction <= 0) return danno;
@@ -5970,6 +6091,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int nonLethalRobberyPercent = 75,
     String nonLethalBanditSourceId = '',
     bool criticalShieldAlreadyBroken = false,
+    ValueChanged<_CombatLogImpact>? onImpact,
   }) async {
     if (parasiteHiddenInHost) {
       aggiungiLog(
@@ -5993,6 +6115,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       return;
     }
     if (sandLavaPacketAlreadyResolved(damagePacketId)) return;
+    final feedbackOrigin = sheetFeedbackTarget;
     if (isConstructCharacter &&
         (hitBodyPart != null || attackKind.isNotEmpty)) {
       constructCore['lastAttackCore'] = hitBodyPart == 'core';
@@ -6001,12 +6124,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final element = oculumNormalizeElementId(selectedIncomingDamageElement());
       final percent = meccanioElementPercent(activeCriticalLevel());
       if (element == 'fulmine') {
+        final hpBefore = hpCorrenti();
         regenerateMeccanio(
           (dannoInserito * percent / 100).ceil(),
           form: min(3, 1 + activeCriticalLevel() ~/ 3),
+          logRepair: false,
         );
-        aggiungiLog(
-          '[MECCANIO] Fulmine assorbito: rigenerazione $percent%, nessun danno.',
+        reportIncomingCombatImpact(
+          _CombatLogImpact(hpGained: max(0, hpCorrenti() - hpBefore)),
+          onImpact,
         );
         return;
       }
@@ -6018,7 +6144,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         }
       }
     }
-    final damageBeforeAdaptation = dannoInserito;
     ensureHiddenEyeDefaults();
     final sheet =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
@@ -6060,12 +6185,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final reduced = min(dannoInserito, adaptationReduction);
       dannoInserito -= reduced;
       sheet['combatAdaptationReductionPending'] = 0;
-      aggiungiLog(
-        '[ADATTAMENTO] -$reduced al prossimo danno ricevuto ($damageBeforeAdaptation → $dannoInserito).',
-      );
       programmaSalvataggio();
       if (dannoInserito <= 0) {
-        risultato = 'Adattamento ha assorbito tutto il danno.';
+        reportIncomingCombatImpact(
+          const _CombatLogImpact(),
+          onImpact,
+          empty: t('Colpo assorbito', 'Hit absorbed'),
+        );
         notifyDiceResultChanged();
         return;
       }
@@ -6097,12 +6223,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
       setState(() {
         fortuna += fortunaOttenuta;
-        risultato = t(
-          'Fortuna: danno schivato (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} su ${fortunaSchivataChance.toStringAsFixed(2)}%). Ottieni 1d3 Fortuna magica: $fortunaOttenuta (Risorse).',
-          'Luck: damage dodged (${(fortunaSchivataRoll / 100).toStringAsFixed(2)} against ${fortunaSchivataChance.toStringAsFixed(2)}%). Gain 1d3 Magical Luck: $fortunaOttenuta (Resources).',
-        );
         dannoSubitoController.clear();
-        aggiungiLog(risultato);
+        reportIncomingCombatImpact(
+          const _CombatLogImpact(),
+          onImpact,
+          empty: t('Colpo schivato', 'Hit dodged'),
+        );
       });
       programmaSalvataggio();
       oculumCombatTheme.react(
@@ -6116,12 +6242,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         schedaCorrente >= 0 &&
         schedaCorrente < schedePersonaggio.length &&
         schedePersonaggio[schedaCorrente]['skullFormOriginal'] is Map;
+    ({String source, String encounter, String scope, int level})? shieldImpact;
+    void commitOculumShieldBreak() {
+      planarState['oculumShieldBreakDefensePending'] = true;
+      shieldImpact = (
+        source: sheetTagAt(schedaCorrente),
+        encounter: onlineCombatEncounterId,
+        scope: permissionScope,
+        level: max(0, leggiNumero(livelloController)),
+      );
+    }
+
     try {
       final currentOculumForParry = max(0, currentOculum());
-      final parryChanceThreshold = oculumParryChanceThresholdPerThousand(
-        currentOculumForParry,
-        difficulty: normalizedCampaignDifficulty(),
-      );
       final currentOculumParryRoll = Random.secure().nextInt(1000);
       final parryChanceTriggered =
           !resolvedResistance &&
@@ -6147,7 +6280,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final parrySubtrait = useManifestation
           ? manifestationStat
           : bodyControlStat;
-      final parrySubtraitLabel = parrySubtrait.nome;
       final parrySubtraitBonus =
           hiddenEyeTotal(parrySubtrait) +
           hiddenEyeStatRollQuickBonus(parrySubtrait) +
@@ -6159,7 +6291,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final parryManifestationRoll = parryChanceTriggered ? tiraD20() : 0;
       final parryManifestationTotal = parryChanceTriggered
           ? rollTotalWithCritical(parryManifestationRoll, 20, [
-              parrySubtraitBonus,
+              parrySubtraitBonus - takeOculumShieldBreakDefensePenalty(),
             ])
           : 0;
       final parryCheckSucceeded =
@@ -6198,9 +6330,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (criticalTriggers) {
         final ashRoll = Random.secure().nextInt(100);
         final ashMessage = ashRoll < 30 ? modificaCenereControllata(1) : null;
-        aggiungiLog(
-          '[CRITICO RICEVUTO] Cenere: tiro ${ashRoll + 1}/100, 30% → ${ashRoll < 30 ? '+1 Cenere' : 'nessun aumento'}.${ashMessage == null ? '' : ' $ashMessage'}',
-        );
+        if (ashMessage != null) aggiungiLog(ashMessage);
       }
       final misfortuneShieldRoll = Random.secure().nextInt(10000);
       final misfortuneShieldTriggered = oculumPercentRollSucceeds(
@@ -6228,7 +6358,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
               ? prossimoStadioCriticoDanno(modificatorePrima)
               : modificatorePrima);
       final riduzioneSchivata = schivataOculumRiduzionePronta;
-      final schivataLabel = schivataOculumEtichettaPronta.trim();
       final criticalDifficulty =
           enemyDifficulty ?? normalizedCampaignDifficulty();
       final criticalEnemyLevel = max(0, enemyLevel ?? 1);
@@ -6259,7 +6388,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             incomingDamageMultiplier,
           ) +
           runicBeforeDefense;
-      final riduzioneElementale = dannoPrimaParataLordo - dannoPrimaParata;
       final riduzioneParataOculum = parryCheckSucceeded
           ? oculumParryDamageReduction(
               currentOculum: currentOculumForParry,
@@ -6275,21 +6403,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         dannoPrimaSchivata,
       );
       final dannoInArrivo = dannoDopoSchivata;
-      final dannoInseritoLog = dannoEsplicito == null
-          ? dettaglioValoreDannoCura(dannoInserito)
-          : '$dannoInserito';
-      final schivataLogIt = riduzioneSchivata > 0
-          ? ' Schivata Oculum${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, danno $dannoPrimaSchivata -> $dannoDopoSchivata.'
-          : '';
-      final schivataLogEn = riduzioneSchivata > 0
-          ? ' Oculum Dodge${schivataLabel.isEmpty ? "" : " $schivataLabel"}: -$riduzioneSchivata%, damage $dannoPrimaSchivata -> $dannoDopoSchivata.'
-          : '';
-      final parataOculumLogIt = parryChanceTriggered
-          ? ' il tuo oculum si è concentrato per indebolire il colpo (probabilità $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): prova $parrySubtraitLabel 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal contro DT $parryDifficulty; ${riduzioneElementale > 0 ? "difesa elementale: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "danno $dannoPrimaParata → $dannoDopoParataOculum (riduzione $riduzioneParataOculum, gratuita)." : "prova fallita, il colpo non viene indebolito."}${parryCriticalAwardsDodge ? " Critico: +1 Schivata Oculum." : ""}'
-          : '';
-      final parataOculumLogEn = parryChanceTriggered
-          ? ' Your Oculum concentrated to weaken the blow (chance $parryChanceThreshold/1000, ${campaignDifficultyLabel()}): $parrySubtraitLabel check 1d20 ($parryManifestationRoll) + $parrySubtraitBonus = $parryManifestationTotal against DT $parryDifficulty; ${riduzioneElementale > 0 ? "elemental defense: -$riduzioneElementale (×${incomingDamageMultiplier.toStringAsFixed(2)}). " : ""}${parryCheckSucceeded ? "damage $dannoPrimaParata → $dannoDopoParataOculum (reduction $riduzioneParataOculum, free)." : "check failed; the blow is not weakened."}${parryCriticalAwardsDodge ? " Critical: +1 Oculum Dodge." : ""}'
-          : '';
       final difficultyBypasses = rollDifficultyIncreaseDamageBypasses();
       final ignoraDifesa =
           bypassDefense || dannoOltreDifesa || difficultyBypasses.beyondDefense;
@@ -6309,12 +6422,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           bonusScudiManuale +
           bonusScudiCorrosione +
           (misfortuneShieldTriggered ? misfortune.oculumShieldBonus : 0);
-      final shieldDifficultyValue = switch (activeDifficulty) {
-        'facile' => '×1,5 ↓',
-        'difficile' => '×0,5 ↑',
-        'oculum' => '×0,2 ↓',
-        _ => '×1',
-      };
       var dannoDopoDifesa = dannoInArrivo <= 0
           ? 0
           : ignoraDifesa
@@ -6332,22 +6439,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : min(max(0, resistanceBypassDamage), dannoDopoDifesa);
       dannoDopoDifesa -= protectedRunicDamage;
       final adaptiveResistance = elementalAdaptation?.resistanceBeforeHit ?? 0;
-      final dannoPrimaAdattamento = dannoDopoDifesa;
       if (dannoDopoDifesa > 0 && adaptiveResistance > 0) {
         dannoDopoDifesa = oculumReduceIncomingDamage(
           dannoDopoDifesa,
           (100 - adaptiveResistance) / 100,
         );
       }
-      final elementalAdaptationLogIt = elementalAdaptation == null
-          ? ''
-          : elementalAdaptation.lockedElement.isNotEmpty &&
-                elementalAdaptation.element != elementalAdaptation.lockedElement
-          ? ' Adattamento del mini-boss bloccato su ${elementalAdaptation.lockedElement}; ${elementalAdaptation.element} non aumenta la resistenza.'
-          : ' Resistenza adattiva ${elementalAdaptation.element}: $adaptiveResistance% su questo colpo'
-                '${elementalAdaptation.changed ? ' → ${elementalAdaptation.resistanceAfterHit}% dal prossimo' : ''}; danno dopo Difesa $dannoPrimaAdattamento → $dannoDopoDifesa.';
-      var passiveReductionLogIt = '';
-      var passiveReductionLogEn = '';
       dannoDopoDifesa = referenceAbsorbDamage(
         dannoDopoDifesa,
         mantleProtectionPercent,
@@ -6369,10 +6466,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             damage: dannoDopoDifesa,
             reduction: reduction,
           );
-          passiveReductionLogIt +=
-              ' Fortuna: 1d$sides=$reduction, danno attenuato a $dannoDopoDifesa.';
-          passiveReductionLogEn +=
-              ' Luck: 1d$sides=$reduction, damage reduced to $dannoDopoDifesa.';
         }
       }
       if (dannoDopoDifesa > 0 && resistenzaTotale > 0) {
@@ -6386,40 +6479,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             damage: dannoDopoDifesa,
             reduction: resistenzaTotale,
           );
-          passiveReductionLogIt +=
-              ' Resistenza passiva: -$resistenzaTotale, minimo 1 → $dannoDopoDifesa.';
-          passiveReductionLogEn +=
-              ' Passive Resistance: -$resistenzaTotale, minimum 1 → $dannoDopoDifesa.';
         }
       }
-      final difesaLogIt = ignoraDifesa
-          ? ' oltre Difesa = $dannoDopoDifesa$elementalAdaptationLogIt$passiveReductionLogIt'
-          : ' - Difesa ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1,5 · attacco quasi riuscito)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogIt';
-      final difesaLogEn = ignoraDifesa
-          ? ' beyond Defense = $dannoDopoDifesa$passiveReductionLogEn'
-          : ' - Defense ${((difesa() + max(0, additionalDefense)) * defenseMultiplier.clamp(1, 1.5)).ceil()}${defenseMultiplier > 1 ? ' (×1.5 · partial attack)' : ''} = $dannoPrimaAdattamento$elementalAdaptationLogIt$passiveReductionLogEn';
-      final opzioniImpattoIt =
-          '${ignoraScudi ? " Oltre Scudi: il danno salta Scudo Oculum e Scudo." : ""}'
-          '${difficultyBypasses.beyondDefense ? " Aumento difficolta: attivato Oltre Difesa." : ""}'
-          '${difficultyBypasses.beyondShield ? " Aumento difficolta: attivato Oltre Scudo." : ""}'
-          '${!ignoraScudi ? " Valore Scudo $shieldDifficultyValue." : ""}'
-          '${bonusScudiManuale > 0 && !ignoraScudi ? " Danno agli scudi +$bonusScudiManuale%." : ""}'
-          '${misfortuneShieldTriggered && !ignoraScudi
-              ? activeDifficulty == "oculum"
-                    ? " Sfortuna: +100% danni a Scudo e Scudo Oculum."
-                    : " Sfortuna: +50% danni allo Scudo."
-              : ""}';
-      final opzioniImpattoEn =
-          '${ignoraScudi ? " Beyond Shields: damage skips Oculum Shield and Shield." : ""}'
-          '${difficultyBypasses.beyondDefense ? " Difficulty increase: Beyond Defense triggered." : ""}'
-          '${difficultyBypasses.beyondShield ? " Difficulty increase: Beyond Shield triggered." : ""}'
-          '${!ignoraScudi ? " Shield value $shieldDifficultyValue." : ""}'
-          '${bonusScudiManuale > 0 && !ignoraScudi ? " Shield damage +$bonusScudiManuale%." : ""}'
-          '${misfortuneShieldTriggered && !ignoraScudi
-              ? activeDifficulty == "oculum"
-                    ? " Misfortune: +100% damage to Shield and Oculum Shield."
-                    : " Misfortune: +50% damage to Shield."
-              : ""}';
       final modificatore = critico
           ? modificatoreDannoDaNome(modificatoreDopo)
           : resistancePresetOverride != null
@@ -6437,9 +6498,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         );
         dannoSubitoPercentPerTipo[activePercentDamageType] = percentText;
         dannoSubitoPercentController.text = percentText;
-        aggiungiLog(
-          '[DOPPIO CRITICO] +$extraFragilityPercent punti percentuali di Fragilità per $activePercentDamageType: $percentText.',
-        );
       }
       final baseDamageMultiplier =
           modificatorePercentualeLibero ?? modificatore.multiplier;
@@ -6450,20 +6508,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final usesAdjustedDamageMultiplier =
           modificatorePercentualeLibero != null ||
           incomingDamagePercentAdjustment != 0;
-      if (incomingDamagePercentAdjustment != 0) {
-        aggiungiLog(
-          '[MODIFICATORE IN INGRESSO] ${incomingDamagePercentAdjustment > 0 ? '+' : ''}$incomingDamagePercentAdjustment punti percentuali applicati alla percentuale già configurata (${((baseDamageMultiplier - 1) * 100).round()}% → ${((adjustedDamageMultiplier - 1) * 100).round()}%).',
-        );
-      }
       final dannoModificatoBase = !usesAdjustedDamageMultiplier
           ? applicaModificatoreDannoCon(dannoDopoDifesa, modificatore)
           : applicaModificatoreDannoPercentuale(
               dannoDopoDifesa,
               adjustedDamageMultiplier,
             );
-      final modificatoreNome = !usesAdjustedDamageMultiplier
-          ? modificatore.name
-          : '${((adjustedDamageMultiplier - 1) * 100).toStringAsFixed(0)}% danno ricevuto';
       final elementoAttivo = selectedIncomingDamageElement();
       final incomingElementRules = activeIncomingDamageRules(elementoAttivo);
       final dannoDopoRegoleElementali = dannoModificatoBase > 0
@@ -6475,40 +6525,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         modifiedDamage: dannoDopoRegoleElementali,
         bonusPercent: abilityResistance,
       );
-      if (abilityResistance > 0 &&
-          afterAbilityResistance != dannoDopoRegoleElementali) {
-        aggiungiLog(
-          '[AFFINITÀ] $abilityResistance punti percentuali di resistenza a ${elementDisplayName(elementoAttivo)}: $dannoDopoRegoleElementali → $afterAbilityResistance (limite 90%).',
-        );
-      }
       var dannoModificato = resolvedResistance
           ? 1
           : applyConditionIncomingDamage(afterAbilityResistance);
-      final parserRulesLog = incomingElementRules.isEmpty
-          ? ''
-          : ' Parser ${incomingDamageRulesSummary(elementoAttivo)}: $dannoModificatoBase -> $dannoModificato.';
-      final dannoLog = critico
-          ? '$dannoInseritoLog + $bonusCritico critico = $dannoPrimaParataLordo${riduzioneElementale > 0 ? " - $riduzioneElementale difesa elementale = $dannoPrimaParata" : ""}'
-          : dannoInseritoLog;
-      final stadioPrimaLog = percentualeLiberaPrima == null
-          ? modificatorePrima
-          : testoPercentualeDannoLibera(percentualeLiberaPrima);
-      final criticoLogIt = critico
-          ? (stadioPrimaLog == modificatoreDopo
-                ? ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio già a $modificatoreDopo.'
-                : ' Critico nemico ${campaignDifficultyLabel(criticalDifficulty)} livello $criticalEnemyLevel: +$bonusCritico danni, stadio $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
-          : '';
-      final sfortunaCriticoLogIt = misfortuneCriticalTriggered
-          ? ' Sfortuna: il danno è diventato critico (tiro ${(misfortuneCriticalRoll / 100).toStringAsFixed(2)}%).'
-          : '';
-      final sfortunaCriticoLogEn = misfortuneCriticalTriggered
-          ? ' Misfortune: damage became critical (roll ${(misfortuneCriticalRoll / 100).toStringAsFixed(2)}%).'
-          : '';
-      final criticoLogEn = critico
-          ? (stadioPrimaLog == modificatoreDopo
-                ? ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage already at $modificatoreDopo.'
-                : ' Enemy critical ${campaignDifficultyLabel(criticalDifficulty)} level $criticalEnemyLevel: +$bonusCritico damage, stage $stadioPrimaLog → $modificatoreDopo (${testoPercentualeDannoLibera(modificatore.multiplier)}).')
-          : '';
 
       if (dannoModificato < 0) {
         final curaDaRigenerazione = dannoModificato.abs();
@@ -6539,16 +6558,18 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           currentHpController.text = healed.current.toString();
           impostaHpTempTotali(healed.temporary);
 
-          risultato = t(
-            'Rigenerazione: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti HP temporanei" : ""}.$criticoLogIt$sfortunaCriticoLogIt$opzioniImpattoIt',
-            'Regeneration: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti temporary HP" : ""}.$criticoLogEn$sfortunaCriticoLogEn$opzioniImpattoEn',
-          );
-
           dannoSubitoController.clear();
-
-          aggiungiLog(risultato);
+          reportIncomingCombatImpact(
+            _CombatLogImpact(hpGained: hpRecuperati),
+            onImpact,
+          );
         });
 
+        showSheetFeedback(
+          OculumFeedbackKind.heal,
+          origin: feedbackOrigin,
+          amount: hpRecuperati + hpTempOttenuti,
+        );
         programmaSalvataggio();
         sendRealtimeHpChanged();
         oculumCombatTheme.react('heal');
@@ -6570,14 +6591,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           schivataOculumRiduzionePronta = 0;
           schivataOculumEtichettaPronta = '';
 
-          risultato = t(
-            'Danno annullato: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: nessun danno subito.$parserRulesLog$criticoLogIt$sfortunaCriticoLogIt$opzioniImpattoIt',
-            'Damage negated: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: no damage taken.$parserRulesLog$criticoLogEn$sfortunaCriticoLogEn$opzioniImpattoEn',
-          );
-
           dannoSubitoController.clear();
-
-          aggiungiLog(risultato);
+          reportIncomingCombatImpact(const _CombatLogImpact(), onImpact);
         });
 
         programmaSalvataggio();
@@ -6605,12 +6620,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (resistenzaStatoForzaAttiva) {
         dannoFinale = max(1, (dannoFinale * 0.75).ceil());
       }
-      final resistenzaStatoForzaLogIt = resistenzaStatoForzaAttiva
-          ? ' Azzeramento delle vulnerabilita: danno ridotto a $dannoFinale.'
-          : '';
-      final resistenzaStatoForzaLogEn = resistenzaStatoForzaAttiva
-          ? ' Vulnerability Reset: damage reduced to $dannoFinale.'
-          : '';
 
       final resistenzaAdattamentoAttiva =
           currentSheetHasAdaptationTemporaryResistance();
@@ -6620,12 +6629,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           (dannoFinale * damageRuleMultiplierForCommand('Resistenza')).ceil(),
         );
       }
-      final resistenzaAdattamentoLogIt = resistenzaAdattamentoAttiva
-          ? ' Adattamento: Resistenza Temporanea a tutti i danni, danno ridotto a $dannoFinale.'
-          : '';
-      final resistenzaAdattamentoLogEn = resistenzaAdattamentoAttiva
-          ? ' Adaptation: Temporary Resistance to all damage, damage reduced to $dannoFinale.'
-          : '';
 
       dannoFinale = planarModifyIncomingDamage(
         dannoFinale,
@@ -6635,11 +6638,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         bypassShields: ignoraScudi,
       );
       dannoFinale += protectedRunicDamage;
-      if (protectedRunicDamage > 0) {
-        aggiungiLog(
-          '[MITRA RUNICO] +$protectedRunicDamage danni oltre le resistenze; resto dell’attacco dopo le resistenze: ${dannoFinale - protectedRunicDamage}. Scudi applicati normalmente.',
-        );
-      }
       // A no-roll tail parry reduces the actual post-Defense packet once,
       // before any shield layer. It never changes the defensive die or A/R/RV.
       dannoFinale = applySandTailParry(dannoFinale, packetId: damagePacketId);
@@ -6657,14 +6655,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       var hpPrima = hp;
       final oculumShieldBeforeDamage = oculumShield;
       final shieldBeforeDamage = shield;
-      var pawnDamageLog = '';
       final safeHpPronto = hasSafeHpParserCommand();
       final saveShieldValue = saveShieldParserValue();
       final scudoSalvataggioPronto =
           !ignoraScudi && scudoSalvataggioAttivo && (oculumShield + shield) > 0;
       var scudoSalvataggioAttivato = false;
-      var safeHpAttivato = false;
-      var saveShieldAttivato = false;
       final integrityEffectShields = inventario
           .where(
             (item) =>
@@ -6672,6 +6667,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 item.equipaggiata &&
                 canEquipInventoryItem(item) &&
                 (item.craftData['clothing'] == true ||
+                    protectionShieldContributionTracked(item) ||
                     item.craftData['titleItem'] == true ||
                     item.craftData['senkaMask'] == true ||
                     item.effettoIntegritaScudo.trim().isNotEmpty ||
@@ -6706,6 +6702,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         _ => false,
       };
       final integrityBroken = <String>{};
+      InventoryItem? blockingEquipmentShield;
+      final attributableShield =
+          integrityShieldTotal <= max(0, leggiNumero(scudoController));
       var combatArmorBreakLog = '';
 
       void noteBrokenIntegrity(InventoryItem item) {
@@ -6736,8 +6735,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           final before = itemIntegrityShieldCurrent(item);
           final spent = min(before, remainingAmount);
           if (spent <= 0) continue;
+          final contributionKnown = protectionShieldContributionTracked(item);
           item.scudoIntegritaCorrente = before - spent;
           remainingAmount -= spent;
+          if (remainingAmount == 0 &&
+              attributableShield &&
+              contributionKnown &&
+              oculumWearProtectionKind(item) ==
+                  OculumWearProtectionKind.shield) {
+            blockingEquipmentShield = item;
+          }
           noteBrokenIntegrity(item);
         }
         return remainingAmount;
@@ -6781,11 +6788,50 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           consumeIntegrityShieldPoints(shieldPointsSpent);
         }
       }
+      final oculumShieldAfterAbsorption = oculumShield;
+      final oculumShieldBroken =
+          oculumShieldBeforeDamage > 0 && oculumShieldAfterAbsorption == 0;
+      final shieldAfterAbsorption = shield;
+      final normalShieldBroken =
+          shieldBeforeDamage > 0 && shieldAfterAbsorption == 0;
+      final normalShieldBlocked = rimanente == 0;
+
+      void showShieldImpacts() {
+        showSheetFeedback(
+          oculumShieldBroken
+              ? OculumFeedbackKind.oculumShieldBroken
+              : OculumFeedbackKind.oculumShield,
+          origin: feedbackOrigin,
+          amount: oculumShieldBeforeDamage - oculumShieldAfterAbsorption,
+          tint: oculumStatFormulaColor,
+        );
+        showSheetFeedback(
+          shieldAfterAbsorption == 0
+              ? OculumFeedbackKind.shieldBroken
+              : OculumFeedbackKind.shield,
+          origin: feedbackOrigin,
+          amount: shieldBeforeDamage - shieldAfterAbsorption,
+        );
+      }
 
       if (scudoSalvataggioPronto && oculumShield <= 0 && shield <= 0) {
         rimanente = 0;
         scudoSalvataggioAttivato = true;
       }
+
+      final closingShield = blockingEquipmentShield;
+      final protectionWorn = recordProtectionWear(
+        rimanente > 0
+            ? protezioniEquipaggiate().where(
+                (item) =>
+                    oculumWearProtectionKind(item) ==
+                    OculumWearProtectionKind.armor,
+              )
+            : normalShieldBlocked && closingShield != null
+            ? [closingShield]
+            : const [],
+        packetId: damagePacketId,
+      );
 
       if (temp > 0 && rimanente > 0) {
         final assorbito = min(temp, rimanente);
@@ -6801,16 +6847,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
 
       rimanente = absorbLarvalBroodDamage(rimanente);
+      var shieldImpactsShown = false;
       if (rimanente > 0 && pawnProtects(sheetTagAt(schedaCorrente))) {
-        final beforePawn = rimanente;
         if (pawnRemoteAuthority) {
           // Commit the target's own shields before requesting only the HP
           // overflow. Retries reuse one persisted ID at the Master.
           setState(() {
             scudoOculumController.text = '$oculumShield';
+            if (oculumShieldBroken) commitOculumShieldBreak();
             impostaScudoTotale(shield);
+            if (normalShieldBroken) setNormalShieldBreakPenalty(2);
             impostaHpTempTotali(temp);
           });
+          showShieldImpacts();
+          shieldImpactsShown = true;
+          if (shieldImpact != null || protectionWorn) programmaSalvataggio();
           try {
             rimanente = await requestPawnHpInterception(rimanente);
           } catch (error) {
@@ -6833,8 +6884,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             rimanente,
           );
         }
-        pawnDamageLog =
-            '\nPawn intercetta ${beforePawn - rimanente} danni destinati agli HP; $rimanente raggiungono la scheda.';
       }
       if (rimanente > 0 &&
           isLunarGuardianCoreCreature &&
@@ -6877,7 +6926,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final brokenCoreProfile = oculumBrokenCoreDamageProfile(activeDifficulty);
       int? brokenCoreRoll;
       var brokenCoreExtraDamage = 0;
-      var hpBeforeBrokenCore = hp;
       if (oculumBrokenCoreCanRoll(
         brokenCore: brokenCoreActive,
         hpBeforeDamage: hpPrima,
@@ -6888,7 +6936,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           chancePercent: brokenCoreProfile.chancePercent,
           rollBasisPoints: brokenCoreRoll,
         )) {
-          hpBeforeBrokenCore = hp;
           brokenCoreExtraDamage = oculumBrokenCoreCurrentHpDamage(
             currentHp: hp,
             difficulty: activeDifficulty,
@@ -6957,7 +7004,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           hp <= 0 &&
           hpPrima > 0) {
         hp = 1;
-        safeHpAttivato = true;
         consumeOneShotParserCommand('safehp');
       }
 
@@ -6965,7 +7011,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           hp > 0 &&
           hp <= max(1, (maxHp() * 0.25).ceil())) {
         shield += saveShieldValue;
-        saveShieldAttivato = true;
         consumeOneShotParserCommand('saveShield');
       }
 
@@ -6995,7 +7040,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         }
 
         scudoOculumController.text = oculumShield.toString();
+        if (oculumShieldBroken && !shieldImpactsShown) {
+          commitOculumShieldBreak();
+        }
         impostaScudoTotale(shield);
+        if (normalShieldBroken && !shieldImpactsShown) {
+          setNormalShieldBreakPenalty(2);
+        }
         impostaHpTempTotali(temp);
         currentHpController.text = hp.toString();
         if (attackKind.isNotEmpty || dannoEsplicito == null) {
@@ -7020,17 +7071,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           maximum: maxHp(),
           resourceName: t('HP', 'HP'),
         );
-        final brokenCoreLog = brokenCoreRoll == null
-            ? ''
-            : brokenCoreExtraDamage > 0
-            ? t(
-                '\nNucleo Rotto: tiro ${(brokenCoreRoll / 100).toStringAsFixed(2)}% su ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%. Vita attuale $hpBeforeBrokenCore, danno aggiuntivo $brokenCoreExtraDamage.',
-                '\nBroken Core: roll ${(brokenCoreRoll / 100).toStringAsFixed(2)}% against ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%. Current Life $hpBeforeBrokenCore, $brokenCoreExtraDamage additional damage.',
-              )
-            : t(
-                '\nNucleo Rotto: tiro ${(brokenCoreRoll / 100).toStringAsFixed(2)}% su ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, nessun danno aggiuntivo.',
-                '\nBroken Core: roll ${(brokenCoreRoll / 100).toStringAsFixed(2)}% against ${brokenCoreProfile.chancePercent.toStringAsFixed(0)}%, no additional damage.',
-              );
         if (scudoCriticoSpezzato && lunarLinkedCriticalShields == 0) {
           scudoCriticoController.text = max(
             0,
@@ -7140,28 +7180,36 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           }
         }
 
-        risultato = t(
-          'Danno subito: $dannoLog$parataOculumLogIt$schivataLogIt$difesaLogIt. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogIt$sfortunaCriticoLogIt ${scudoCriticoAttivo ? "Scudo Critico attivo: danno dimezzato a $dannoFinale. " : ""}$resistenzaStatoForzaLogIt$resistenzaAdattamentoLogIt$opzioniImpattoIt${scudoSalvataggioAttivato ? " Scudo di Salvataggio: l'overflow viene bloccato dopo l'ultimo scudo." : ""}${safeHpAttivato ? " @safehp: resti a 1 HP e il comando viene consumato." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Scudo, comando consumato." : ""} Applicato a ${ignoraScudi ? "HP Temp -> HP" : "Scudo Oculum -> Scudo -> HP Temp -> HP"}.',
-          'Damage taken: $dannoLog$parataOculumLogEn$schivataLogEn$difesaLogEn. $modificatoreNome: $dannoModificatoBase.$parserRulesLog$criticoLogEn$sfortunaCriticoLogEn ${scudoCriticoAttivo ? "Critical Shield active: damage halved to $dannoFinale. " : ""}$resistenzaStatoForzaLogEn$resistenzaAdattamentoLogEn$opzioniImpattoEn${scudoSalvataggioAttivato ? " Saving Shield: overflow is blocked after the last shield." : ""}${safeHpAttivato ? " @safehp: you stay at 1 HP and the command is consumed." : ""}${saveShieldAttivato ? " @saveShield: +$saveShieldValue Shield, command consumed." : ""} Applied to ${ignoraScudi ? "Temp HP -> HP" : "Oculum Shield -> Shield -> Temp HP -> HP"}.',
-        );
-        risultato += partialAwakeningLog;
-        risultato += lowHpLog;
-        risultato += brokenCoreLog;
-        risultato += combatArmorBreakLog;
-        risultato += pawnDamageLog;
-
-        if (scudoCriticoSpezzato) {
-          risultato += t(
-            '\nScudo Critico spezzato dal danno critico: -1.',
-            '\nCritical Shield broken by critical damage: -1.',
-          );
-        }
-
         dannoSubitoController.clear();
-
-        aggiungiLog(risultato);
+        final oculumLoss =
+            oculumShieldBeforeDamage - oculumShieldAfterAbsorption;
+        final shieldLoss = shieldBeforeDamage - shieldAfterAbsorption;
+        reportIncomingCombatImpact(
+          _CombatLogImpact(
+            oculumShieldLost: oculumLoss,
+            oculumShieldBroken: oculumShieldBroken,
+            shieldLost: shieldLoss,
+            shieldBroken: normalShieldBroken,
+            hpLost: max(0, hpPrima - hp),
+            hpGained: max(0, hp - hpPrima),
+          ),
+          onImpact,
+        );
+        for (final note in [
+          partialAwakeningLog,
+          lowHpLog,
+          combatArmorBreakLog,
+        ]) {
+          if (note.trim().isNotEmpty) aggiungiLog(note.trim());
+        }
       });
 
+      if (!shieldImpactsShown) showShieldImpacts();
+      showSheetFeedback(
+        OculumFeedbackKind.lifeDamage,
+        origin: feedbackOrigin,
+        amount: hpPrima - hp,
+      );
       consumeDifficultyIncreaseFortunaBonus(hpLost: hp < hpPrima);
       maskedAngelicHpHit(max(0, hpPrima - hp));
       final elementalAdjustment = incomingElementRules.isEmpty
@@ -7229,6 +7277,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       controllaStatoForzaDopoHp();
     } finally {
       if (skullFormHit) advanceSkullFormHit();
+      final impact = shieldImpact;
+      if (impact != null) {
+        queueOculumShieldBreakImpact(
+          source: impact.source,
+          encounter: impact.encounter,
+          scope: impact.scope,
+          level: impact.level,
+        );
+      }
     }
   }
 
@@ -7236,7 +7293,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final cura = leggiValoreDannoCura();
 
     if (cura == null || cura <= 0) return;
-    final curaLog = dettaglioValoreDannoCura(cura);
     final hpPrima = hpCorrenti();
     final hpTempPrima = hpTemp();
     final healed = healOculumHp(
@@ -7257,9 +7313,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       currentHpController.text = healed.current.toString();
       impostaHpTempTotali(healed.temporary);
 
-      risultato = t(
-        'Cura applicata ($curaLog): +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti HP temporanei" : ""}.',
-        'Healing applied ($curaLog): +$hpRecuperati HP${hpTempOttenuti > 0 ? ", +$hpTempOttenuti temporary HP" : ""}.',
+      risultato = combatImpactLog(
+        '[CURA]',
+        _CombatLogImpact(hpGained: hpRecuperati),
       );
 
       dannoSubitoController.clear();
@@ -7267,6 +7323,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    showSheetFeedback(
+      OculumFeedbackKind.heal,
+      amount: hpRecuperati + hpTempOttenuti,
+    );
     programmaSalvataggio();
     sendRealtimeHpChanged();
     controllaStatoForzaDopoHp();

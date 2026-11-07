@@ -185,9 +185,15 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     final effectiveAmount = amount > 0
         ? applyConditionHealingAmount(amount)
         : amount;
-    currentHpController.text = (hpCorrenti() + effectiveAmount)
-        .clamp(0, maxHp())
-        .toString();
+    final before = hpCorrenti();
+    final after = (before + effectiveAmount).clamp(0, maxHp()).toInt();
+    currentHpController.text = after.toString();
+    showSheetFeedback(OculumFeedbackKind.heal, amount: after - before);
+    if (after > before) {
+      aggiungiLog(
+        combatImpactLog('[CURA]', _CombatLogImpact(hpGained: after - before)),
+      );
+    }
   }
 
   bool tickActiveStructuredEffects(String unit) {
@@ -217,6 +223,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           case 'rimuovi_vita':
             final before = hpCorrenti();
             currentHpController.text = max(0, before - value.abs()).toString();
+            showSheetFeedback(
+              OculumFeedbackKind.lifeDamage,
+              amount: before - hpCorrenti(),
+            );
             checkAutomaticAshFromHpLoss(
               before,
               hpCorrenti(),
@@ -661,6 +671,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             if (isPeriodic) break;
             final hpBeforeRemoval = hpCorrenti();
             currentHpController.text = max(0, hpCorrenti() + value).toString();
+            showSheetFeedback(
+              OculumFeedbackKind.lifeDamage,
+              amount: hpBeforeRemoval - hpCorrenti(),
+            );
             checkAutomaticAshFromHpLoss(
               hpBeforeRemoval,
               hpCorrenti(),
@@ -848,6 +862,23 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               'periodicActive': false,
             },
           });
+          if (!isPeriodic && value > 0 && const {
+            'danno',
+            'danno_percentuale',
+            'difesa',
+            'difesa_percentuale',
+            'modifica_statistica',
+            'modifica_sottotratto',
+            'velocita',
+            'forza',
+          }.contains(effect.type)) {
+            if (effect.type == 'modifica_statistica' &&
+                const {'volonta', 'materia', 'oculum'}.contains(target)) {
+              showSheetStatGain(target, value);
+            } else {
+              showSheetFeedback(OculumFeedbackKind.buff, amount: value);
+            }
+          }
         }
 
         if (rewardRequest != null) {

@@ -6196,6 +6196,38 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  Widget inventoryProtectionWearKindEditor(InventoryItem item) {
+    final saved = item.craftData['wearProtectionKind'];
+    return DropdownButtonFormField<String>(
+      initialValue: const {'armor', 'shield'}.contains(saved) ? '$saved' : '',
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: t('Tipo di protezione per l’usura', 'Protection wear type'),
+        helperText: t(
+          'Per uno scudo già equipaggiato, il residuo legacy diventa attribuibile dal prossimo equipaggiamento.',
+          'For an already equipped shield, any legacy remainder can be tracked from the next equip.',
+        ),
+        helperMaxLines: 2,
+      ),
+      items: [
+        DropdownMenuItem(
+          value: '',
+          child: Text(t('Da catalogo', 'From catalogue')),
+        ),
+        DropdownMenuItem(value: 'armor', child: Text(t('Armatura', 'Armor'))),
+        DropdownMenuItem(value: 'shield', child: Text(t('Scudo', 'Shield'))),
+      ],
+      onChanged: (value) {
+        if (value == null) return;
+        setState(() {
+          item.craftData = {...item.craftData}..remove('wearProtectionKind');
+          if (value.isNotEmpty) item.craftData['wearProtectionKind'] = value;
+        });
+        programmaSalvataggio();
+      },
+    );
+  }
+
   Widget inventoryItemCardEfficient(int i) {
     if (i < 0 || i >= inventario.length) {
       return const SizedBox.shrink();
@@ -6938,6 +6970,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       },
                     ),
                   ]),
+                  if (item.protegge && oculumEquipmentCanWear(item))
+                    inventoryProtectionWearKindEditor(item),
                   const SizedBox(height: 6),
                   inventoryFieldGrid([
                     campoModello(
@@ -6960,16 +6994,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       label: t('Bonus Scudo', 'Shield Bonus'),
                       initialValue: item.bonusScudo.toString(),
                       onChanged: (value) {
-                        final nuovo = int.tryParse(value.trim()) ?? 0;
-                        if (item.equipaggiata && item.protegge) {
-                          scudoController.text = max(
-                            0,
-                            leggiNumero(scudoController) +
-                                (nuovo + itemGrade(item) * 5) -
-                                itemShieldBonus(item),
-                          ).toString();
-                        }
-                        item.bonusScudo = nuovo;
+                        changeInventoryItemShieldBonus(
+                          item,
+                          int.tryParse(value.trim()) ?? 0,
+                        );
                       },
                       liveRefresh: true,
                     ),
@@ -7682,17 +7710,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: t('Bonus Scudo', 'Shield Bonus'),
                     initialValue: inventario[i].bonusScudo.toString(),
                     onChanged: (value) {
-                      final nuovo = int.tryParse(value.trim()) ?? 0;
-                      if (inventario[i].equipaggiata &&
-                          inventario[i].protegge) {
-                        scudoController.text = max(
-                          0,
-                          leggiNumero(scudoController) +
-                              (nuovo + itemGrade(inventario[i]) * 5) -
-                              itemShieldBonus(inventario[i]),
-                        ).toString();
-                      }
-                      inventario[i].bonusScudo = nuovo;
+                      changeInventoryItemShieldBonus(
+                        inventario[i],
+                        int.tryParse(value.trim()) ?? 0,
+                      );
                     },
                   ),
                   campoModello(
@@ -7788,6 +7809,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   ),
                 ]),
 
+                if (inventario[i].protegge &&
+                    oculumEquipmentCanWear(inventario[i]))
+                  inventoryProtectionWearKindEditor(inventario[i]),
                 SwitchListTile(
                   value: inventario[i].equipaggiata,
                   activeThumbColor: tertiaryColor,

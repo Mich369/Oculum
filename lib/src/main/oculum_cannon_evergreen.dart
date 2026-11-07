@@ -114,9 +114,6 @@ extension _OculumCannonEvergreen on _OculumHomePageState {
       scudoOculumController.text = '${scudoOculum() - ocu}';
       final ordinary = min(remaining, max(0, scudo()));
       scudoController.text = '${scudo() - ordinary}';
-      aggiungiLog(
-        '[CANNONE] Spezzati $ocu Scudo Oculum e $ordinary Scudo normale; nessun danno alla Vita dalla rottura.',
-      );
     }
     return false;
   }

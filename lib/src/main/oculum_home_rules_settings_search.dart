@@ -6941,7 +6941,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                     itemCount: min(120, logEventi.length),
                     itemBuilder: (context, index) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
-                      child: Text(
+                      child: combatLogText(
                         logEventi[index],
                         style: TextStyle(
                           color: Colors.grey.shade200,

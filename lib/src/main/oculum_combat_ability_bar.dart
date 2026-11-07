@@ -4,6 +4,8 @@ part of '../../main.dart';
 
 enum OculumCombatAbilityRole { attack, defense, support }
 
+const _meditationUseKey = 'meditationUsedSinceLongRest';
+
 final _oculumAbilityPlacementPattern = RegExp(
   r'\[pannello:(attacco|difesa|supporto)\]\s*',
   caseSensitive: false,
@@ -476,6 +478,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       await tiraSottotrattoOcchio(
         stat,
         resourceAlreadySpent: true,
+        defenseRoll: role == OculumCombatAbilityRole.defense,
         appliesAttackDamageBonus: role == OculumCombatAbilityRole.attack,
       );
     } else {
@@ -1009,6 +1012,189 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     );
   }
 
+  bool get canShowMeditation {
+    if (parasiteOwnerLocked ||
+        currentCombatIsActive() ||
+        schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length) {
+      return false;
+    }
+    return controlsOnlineCombatSheet(sheetTagAt(schedaCorrente));
+  }
+
+  bool get meditationSpent => planarState[_meditationUseKey] == true;
+
+  Future<void> useMeditation() async {
+    alignCombatEncounterForRoll();
+    if (!canShowMeditation || meditationSpent || _meditationInProgress) return;
+
+    final origin = (
+      currentSheetScrollId(),
+      permissionScope,
+      permissionCampaignId,
+    );
+    _meditationInProgress = true;
+    try {
+      if (!await spendCombatRollResource(grantFastRollBonus: false) ||
+          !mounted ||
+          (currentSheetScrollId(), permissionScope, permissionCampaignId) !=
+              origin ||
+          !canShowMeditation ||
+          meditationSpent) {
+        return;
+      }
+
+      final natural = Random.secure().nextInt(20) + 1;
+      final amount = natural * 2 ~/ 3;
+      var lifeGained = 0;
+      setState(() {
+        planarState[_meditationUseKey] = true;
+        final lifeBefore = hpCorrenti();
+        if (amount > 0 && lifeBefore < maxHp()) {
+          applyStructuredHealing('vita', amount);
+          lifeGained = max(0, hpCorrenti() - lifeBefore);
+        }
+        final oculumGained = addOculum(amount, scheduleSave: false);
+        if (oculumGained > 0) recordCurrentOculumProgress();
+        risultato = t(
+          '[MEDITAZIONE] d20 $natural · recupero base $amount · Vita +$lifeGained · Oculum +$oculumGained.',
+          '[MEDITATION] d20 $natural · base recovery $amount · Life +$lifeGained · Oculum +$oculumGained.',
+        );
+        aggiungiLog(risultato);
+      });
+      if (lifeGained > 0) sendRealtimeHpChanged();
+      programmaSalvataggio();
+      await flushPendingCombatTurnResources();
+    } finally {
+      _meditationInProgress = false;
+    }
+  }
+
+  bool get canSharpenWeapons =>
+      !parasiteOwnerLocked &&
+      schedaCorrente >= 0 &&
+      schedaCorrente < schedePersonaggio.length &&
+      controlsOnlineCombatSheet(sheetTagAt(schedaCorrente));
+
+  bool _isSharpenableWeapon(InventoryItem item) {
+    final uses = oculumEquipmentUses(item);
+    return item.arma &&
+        item.quantita > 0 &&
+        uses > 0 &&
+        uses < oculumEquipmentCapacity(item);
+  }
+
+  Future<void> sharpenWeapon() async {
+    alignCombatEncounterForRoll();
+    if (!canSharpenWeapons || _weaponSharpeningInProgress) return;
+    final weapons = inventario.where(_isSharpenableWeapon).toList();
+    if (weapons.isEmpty) return;
+
+    final inFight = currentCombatIsActive();
+    final percent = inFight ? 15 : 30;
+    int restoreAmount(int capacity) => capacity * percent ~/ 100;
+    (String, String, String, String) scope() => (
+      currentSheetScrollId(),
+      permissionScope,
+      permissionCampaignId,
+      onlineCombatEncounterId,
+    );
+    final origin = scope();
+    bool stillEligible(InventoryItem item) =>
+        mounted &&
+        scope() == origin &&
+        canSharpenWeapons &&
+        currentCombatIsActive() == inFight &&
+        inventario.contains(item) &&
+        _isSharpenableWeapon(item);
+
+    _weaponSharpeningInProgress = true;
+    try {
+      final weapon = await showDialog<InventoryItem>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          scrollable: true,
+          title: Text(t('Riaffila un’arma', 'Sharpen a weapon')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                t(
+                  'Recupera il $percent% della capacità dell’arma, arrotondato per difetto.',
+                  'Restore $percent% of the weapon’s capacity, rounded down.',
+                ),
+              ),
+              if (inFight) Text(t('Costo: un’Azione.', 'Cost: one Action.')),
+              ...weapons.map((weapon) {
+                final before = oculumEquipmentUses(weapon);
+                final capacity = oculumEquipmentCapacity(weapon);
+                final after = min(capacity, before + restoreAmount(capacity));
+                return ListTile(
+                  title: Text(weapon.nome),
+                  subtitle: Text('$before → $after / $capacity'),
+                  onTap: () => Navigator.pop(dialog, weapon),
+                );
+              }),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+          ],
+        ),
+      );
+      if (weapon == null || !stillEligible(weapon)) return;
+      if (inFight) {
+        final spent = await requestUtilitySpend(
+          'azione',
+          preferFreeReaction: false,
+          grantFastRollBonus: false,
+        );
+        if (!spent) {
+          if (mounted) {
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+              SnackBar(
+                content: Text(
+                  t(
+                    'Riaffila non eseguita. Controlla il turno e le Azioni disponibili.',
+                    'Sharpen cancelled. Check the turn and available Actions.',
+                  ),
+                ),
+              ),
+            );
+          }
+          return;
+        }
+        if (!stillEligible(weapon)) {
+          await flushPendingCombatTurnResources();
+          return;
+        }
+      }
+
+      setState(() {
+        final capacity = oculumEquipmentCapacity(weapon);
+        final gained = oculumRestoreEquipmentWear(
+          weapon,
+          restoreAmount(capacity),
+        );
+        final remaining = oculumEquipmentUses(weapon);
+        invalidateDerivedDataCaches();
+        risultato = t(
+          '[RIAFFILA] ${weapon.nome} · +$gained usi · $remaining/$capacity.',
+          '[SHARPEN] ${weapon.nome} · +$gained uses · $remaining/$capacity.',
+        );
+        aggiungiLog(risultato);
+      });
+      programmaSalvataggio(invalidateCaches: false);
+      if (inFight) await flushPendingCombatTurnResources();
+    } finally {
+      _weaponSharpeningInProgress = false;
+    }
+  }
+
   Future<void> showCombatActionPanel(OculumCombatAbilityRole role) async {
     alignCombatEncounterForRoll();
     if (parasiteOwnerLocked) {
@@ -1053,6 +1239,47 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                   guardianGoldificationControls(),
                   escapeUtilityControls(),
                   escapeRequestsPanel(),
+                  if (canSharpenWeapons && inventario.any(_isSharpenableWeapon))
+                    ListTile(
+                      leading: const Icon(Icons.handyman_outlined),
+                      enabled: !_weaponSharpeningInProgress,
+                      title: Text(t('Riaffila', 'Sharpen')),
+                      subtitle: Text(
+                        t(
+                          'Recupera usi di un’arma non ancora rotta.',
+                          'Restore uses to a weapon that has not broken.',
+                        ),
+                      ),
+                      onTap: _weaponSharpeningInProgress
+                          ? null
+                          : () => Navigator.pop(
+                              dialog,
+                              () => unawaited(sharpenWeapon()),
+                            ),
+                    ),
+                  if (canShowMeditation)
+                    ListTile(
+                      leading: const Icon(Icons.self_improvement),
+                      enabled: !meditationSpent && !_meditationInProgress,
+                      title: Text(t('Meditazione', 'Meditation')),
+                      subtitle: Text(
+                        meditationSpent
+                            ? t(
+                                'Disponibile dopo il prossimo Riposo Lungo.',
+                                'Available after the next Long Rest.',
+                              )
+                            : t(
+                                'Tira 1d20 naturale. Recuperi due terzi del risultato, arrotondati per difetto, sia in Vita sia in Oculum. Un uso per Riposo Lungo.',
+                                'Roll a natural d20. Restore two thirds of the result, rounded down, to both Life and Oculum. Once per Long Rest.',
+                              ),
+                      ),
+                      onTap: meditationSpent || _meditationInProgress
+                          ? null
+                          : () => Navigator.pop(
+                              dialog,
+                              () => unawaited(useMeditation()),
+                            ),
+                    ),
                 ],
                 if (role == OculumCombatAbilityRole.defense)
                   for (final volley in maskedInterruptibleVolleys.toList())

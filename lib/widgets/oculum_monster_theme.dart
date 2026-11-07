@@ -202,6 +202,18 @@ const _november6ApprovedDesktopIds = {
   'black_dragon_shield',
 };
 
+const _lotTwoApprovedDesktopIds = {
+  'bestia_invisibile_del_vantaggio_variante_errante',
+  'bringi_variante_veterana',
+  'bunnys_variante_veterana',
+  'cane_di_cenere_variante_errante',
+  'habitat_morti_campanaro_delle_anime_ferme',
+  'habitat_morti_campanaro_delle_anime_ferme_variante_errante',
+  'hero_path_capo_cervelli',
+  'hero_path_capo_cervelli_variante_corazzata',
+  'inspired_bruto_sorriso_cavo_variante_corazzata',
+};
+
 const _november7ApprovedDesktopIds = {
   'ciclope_non_morto',
   'costrutto_rinsecchito',
@@ -349,6 +361,7 @@ class OculumMonsterTheme {
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
   bool get preserveIllustrationFraming =>
+      _lotTwoApprovedDesktopIds.contains(monster.id) ||
       _november7ApprovedDesktopIds.contains(monster.id) ||
       _november6SecondApprovedDesktopAssets.containsKey(monster.id) ||
       const {
@@ -511,7 +524,13 @@ class OculumMonsterTheme {
       'assets/oculum/home_art/relic_guardiano_solare_v2.png',
     _ => null,
   };
-  String? get illustration => switch (monster.id) {
+  String? get illustration => desktopIllustrationForId(monster.id);
+
+  static String? desktopIllustrationForId(
+    String monsterId,
+  ) => switch (monsterId) {
+    final id when _lotTwoApprovedDesktopIds.contains(id) =>
+      'assets/oculum/home_art/theme_${id}_canon_20261107_votes4.png',
     final id when _november7ApprovedDesktopIds.contains(id) =>
       'assets/oculum/home_art/theme_${id}_canon_20261107_votes3.png',
     final id when _november6SecondApprovedDesktopAssets.containsKey(id) =>

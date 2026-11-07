@@ -80,6 +80,7 @@ void main() {
       expect(oculumCharacterSkillFormCost(attack.forme.single)!.minimum, 1);
       expect(attack.costo, '1 Materia');
       expect(sheet['relicArtPackId'], 'senka_kamaria');
+      expect(sheet['currentHp'], '63');
       expect(sheet['background'], contains('piani più bassi di Lost Town'));
       final clone = abilities.firstWhere(
         (s) => s.nome == 'Clone d’ombra di Senka',

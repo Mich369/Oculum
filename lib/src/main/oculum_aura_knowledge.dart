@@ -310,7 +310,7 @@ extension _OculumAuraKnowledge on _OculumHomePageState {
     return spendCombatRollResource();
   }
 
-  Widget knownPowerBadge(String tag) {
+  Widget knownPowerBadge(String tag, {bool showMasterReserve = false}) {
     if (hideOwnPowerBadge(tag)) return const SizedBox.shrink();
     final override = powerBadgeOverride(tag);
     final record = override == null
@@ -321,12 +321,25 @@ extension _OculumAuraKnowledge on _OculumHomePageState {
     if (exact is! num && estimate is! num && band == null) {
       return const SizedBox.shrink();
     }
-    final label = exact is num
+    final reserve =
+        showMasterReserve &&
+            haPermessiMaster &&
+            oculumSameSheetIdentity(tag, sheetTagAt(schedaCorrente))
+        ? scoutPowerReserveForActiveSheet()
+        : null;
+    final label = reserve != null
+        ? t(
+            'Potenza ${reserve.current}/${reserve.total}',
+            'Power ${reserve.current}/${reserve.total}',
+          )
+        : exact is num
         ? 'Potenza ${exact.toInt()}'
         : estimate is num
         ? 'Potenza ≈ ${estimate.toInt()}'
         : band!;
-    final detail = override != null
+    final detail = reserve != null
+        ? t('Potenza attuale / Potenza totale', 'Current Power / Total Power')
+        : override != null
         ? haPermessiMaster
               ? 'Potenza totale visibile al Master'
               : 'La tua Potenza totale attuale'

@@ -6433,6 +6433,456 @@
         "published": false,
         "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
       }
+    },
+    "bestia_invisibile_del_vantaggio_variante_errante": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Bestia Invisibile del Vantaggio Errante",
+      "originalName": "Bestia Invisibile del Vantaggio Errante",
+      "userChoice": "Bestia Errante A",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/bestia_invisibile_del_vantaggio_variante_errante_desktop_v1.jpg",
+        "sha256": "0a6ce1e93f45157e12b4a4a8bc3469c38997792b3acf91994ab0e95f423ad45a",
+        "source": "archivio-locale",
+        "nativeSha256": "2fdb8e25139b30acbb2299f2528d6ef36e86e6e139e5ab222bdf845130580fdc",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/bestia_invisibile_del_vantaggio_variante_errante_desktop_v1.json",
+        "provenanceSha256": "524ab89071e8a025529b6f31a0600e5054c921180a62b63ed1271bad9a024005"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Bestia Errante A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_bestia_invisibile_del_vantaggio_variante_errante_canon_20261107_votes4.png",
+        "nativeSha256": "2fdb8e25139b30acbb2299f2528d6ef36e86e6e139e5ab222bdf845130580fdc",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "bringi_variante_veterana": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Bringi Veterana",
+      "originalName": "Bringi Veterana",
+      "userChoice": "Bringi Veterana A",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/bringi_variante_veterana_desktop_v1.jpg",
+        "sha256": "66820198756379f142093620be4e45d4eebea54ee76d6bdb26551a80de571183",
+        "source": "archivio-locale",
+        "nativeSha256": "d59c65f18fb3bbcdc2c5ae72c3ca9213f8f828a27cda3c8b93497c06bb82d9d3",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/bringi_variante_veterana_desktop_v1.json",
+        "provenanceSha256": "bcf48fb69c7f2b46100430866958e1a61e0e5ca1acffc934957419d01b0e547d"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Bringi Veterana A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_bringi_variante_veterana_canon_20261107_votes4.png",
+        "nativeSha256": "d59c65f18fb3bbcdc2c5ae72c3ca9213f8f828a27cda3c8b93497c06bb82d9d3",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "inspired_bruto_sorriso_cavo_variante_corazzata": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Bruto Sorridente Corazzata",
+      "originalName": "Bruto Sorridente Corazzata",
+      "userChoice": "Bruto Corazzata A",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_bruto_sorriso_cavo_variante_corazzata_desktop_v1.jpg",
+        "sha256": "306dfd2650a4246c40385416993e994b6d932273b4096bca011bd6d49e822322",
+        "source": "archivio-locale",
+        "nativeSha256": "7ecbc1ea55e700166faf35b39a09c501bce76688be91e3c8244e92e7dce5ac6c",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_bruto_sorriso_cavo_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "6df591e2c511090e3bec03fa96b09b50989d1fc7ab02f90288f04c0f5d6e97ef"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Bruto Corazzata A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_inspired_bruto_sorriso_cavo_variante_corazzata_canon_20261107_votes4.png",
+        "nativeSha256": "7ecbc1ea55e700166faf35b39a09c501bce76688be91e3c8244e92e7dce5ac6c",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "bunnys_variante_veterana": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "C",
+      "name": "Bunnys Veterana",
+      "originalName": "Bunnys Veterana",
+      "userChoice": "Bunnys Veterana C",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_bunnys_variante_veterana_v1.png",
+        "sha256": "010be79bd9b01ed5c550a9fdc39d047fe316b51950e965b318a7efe8fbf25ff0",
+        "source": "archivio-locale",
+        "nativeSha256": "010be79bd9b01ed5c550a9fdc39d047fe316b51950e965b318a7efe8fbf25ff0",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "5eb4c39f12d7f8fb2774cf289abd522daa0a00f03c06321d93acc40e5a0615d0"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "not_selected_preserved",
+        "C": "selected_canonical_artistic_vote_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Bunnys Veterana C",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_bunnys_variante_veterana_canon_20261107_votes4.png",
+        "nativeSha256": "010be79bd9b01ed5c550a9fdc39d047fe316b51950e965b318a7efe8fbf25ff0",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "habitat_morti_campanaro_delle_anime_ferme": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "C",
+      "name": "Campanaro delle anime ferme",
+      "originalName": "Campanaro delle anime ferme",
+      "userChoice": "Campanaro base C",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_habitat_morti_campanaro_delle_anime_ferme_v1.png",
+        "sha256": "f6b8dbc41619fdb53aef7555128f73788ac2f0965a6e2d03ab4564369066d0f8",
+        "source": "archivio-locale",
+        "nativeSha256": "f6b8dbc41619fdb53aef7555128f73788ac2f0965a6e2d03ab4564369066d0f8",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "1146f8646f57926baaa6512c57efe6bdeac72e1af222066e9880d34036ead83c"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "not_selected_preserved",
+        "C": "selected_canonical_artistic_vote_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Campanaro base C",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_habitat_morti_campanaro_delle_anime_ferme_canon_20261107_votes4.png",
+        "nativeSha256": "f6b8dbc41619fdb53aef7555128f73788ac2f0965a6e2d03ab4564369066d0f8",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "habitat_morti_campanaro_delle_anime_ferme_variante_errante": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Campanaro delle anime ferme Errante",
+      "originalName": "Campanaro delle anime ferme Errante",
+      "userChoice": "Campanaro Errante A",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_campanaro_delle_anime_ferme_variante_errante_desktop_v1.jpg",
+        "sha256": "1164d05eadaf1c88e3d3c6db38898531944ac650f186c933a8e3d0421e6696d5",
+        "source": "archivio-locale",
+        "nativeSha256": "622895cee19b0c10f88b9abf7fdc27d8a1bf0039e61cd26f606352957ac82d01",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_campanaro_delle_anime_ferme_variante_errante_desktop_v1.json",
+        "provenanceSha256": "509f29fd15f55a21d288d930e89b83b541152590807181516d7c9ac321ebf157"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Campanaro Errante A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_habitat_morti_campanaro_delle_anime_ferme_variante_errante_canon_20261107_votes4.png",
+        "nativeSha256": "622895cee19b0c10f88b9abf7fdc27d8a1bf0039e61cd26f606352957ac82d01",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "cane_di_cenere_variante_errante": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "C",
+      "name": "Cane di Cenere Errante",
+      "originalName": "Cane di Cenere Errante",
+      "userChoice": "Cane di Cenere Errante C",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_cane_di_cenere_variante_errante_v1.png",
+        "sha256": "be200f5ecce3d313485456bf1b32d1d4b8676699f9b181789371136b3d17e9f1",
+        "source": "archivio-locale",
+        "nativeSha256": "be200f5ecce3d313485456bf1b32d1d4b8676699f9b181789371136b3d17e9f1",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "ebaab7a0bb476a03c7496758a935c1cab58f98b6379aa64b584a7ab4cfb06b94"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "not_selected_preserved",
+        "C": "selected_canonical_artistic_vote_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Cane di Cenere Errante C",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_cane_di_cenere_variante_errante_canon_20261107_votes4.png",
+        "nativeSha256": "be200f5ecce3d313485456bf1b32d1d4b8676699f9b181789371136b3d17e9f1",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "hero_path_capo_cervelli": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "C",
+      "name": "Capo dei Cervelli",
+      "originalName": "Capo dei Cervelli",
+      "userChoice": "Capo dei Cervelli C",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_hero_path_capo_cervelli_v2.png",
+        "sha256": "d59ffbaa95ff9597bd54980195701cfff34f6b1bbbb5bf5d7ddd2c1dc081de22",
+        "source": "archivio-locale",
+        "nativeSha256": "d59ffbaa95ff9597bd54980195701cfff34f6b1bbbb5bf5d7ddd2c1dc081de22",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "41ad8924abdbd18640222d983fd7baadc9bfd1489cacb5118ff941b9cff4a36f"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "not_selected_preserved",
+        "C": "selected_canonical_artistic_vote_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Capo dei Cervelli C",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_hero_path_capo_cervelli_canon_20261107_votes4.png",
+        "nativeSha256": "d59ffbaa95ff9597bd54980195701cfff34f6b1bbbb5bf5d7ddd2c1dc081de22",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
+    },
+    "hero_path_capo_cervelli_variante_corazzata": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "C",
+      "name": "Capo dei Cervelli Corazzata",
+      "originalName": "Capo dei Cervelli Corazzata",
+      "userChoice": "Capo dei Cervelli Corazzata C",
+      "recordedAtUtc": "2026-11-07T15:39:31.259865+00:00",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_hero_path_capo_cervelli_variante_corazzata_v3.png",
+        "sha256": "643ddeb67fcf93bcde130d1bbeca2ae934fa786fdc82ddd62f14166708c49ebb",
+        "source": "archivio-locale",
+        "nativeSha256": "643ddeb67fcf93bcde130d1bbeca2ae934fa786fdc82ddd62f14166708c49ebb",
+        "version": 3,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "archivio-locale",
+        "provenanceSha256": "dc895e22abbb658a8d23d072420d2dc0887db2d0b80ac57cc0282722b592d531"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "not_selected_preserved",
+        "C": "selected_canonical_artistic_vote_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Capo dei Cervelli Corazzata C",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json",
+        "batchSource": "build/USER_SELECTION_LOTTO02_R08_20261107.json",
+        "batchSourceSha256": "7dc9553ef0b86f2bb8c5d4f22f00e4026189dc704e632d45635101c6a7cacc06",
+        "galleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json",
+        "galleryManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+        "originalGalleryManifest": "output/artwork/lotti_revisione_50_2026-11-07_r08/LOTTI.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_hero_path_capo_cervelli_variante_corazzata_canon_20261107_votes4.png",
+        "nativeSha256": "643ddeb67fcf93bcde130d1bbeca2ae934fa786fdc82ddd62f14166708c49ebb",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_11.json"
+      }
     }
   }
 }

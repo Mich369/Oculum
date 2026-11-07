@@ -262,8 +262,9 @@ void main() {
         final level = readIntValue(build['level']);
         final grade = readIntValue(build['grade']);
         final phase = level % 10;
-        final hpMultiplier =
-            (phase == 0
+        final hpMultiplier = grade == 0
+            ? (6 + level).clamp(6, 10).toInt()
+            : (phase == 0
                 ? 6
                 : phase <= 2
                 ? 9

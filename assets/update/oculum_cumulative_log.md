@@ -1,9 +1,22 @@
 # Registro cumulativo per i giocatori
 
+## Effetti di scheda, Scudi ed equipaggiamento — 7 novembre
+
+- Gli effetti seguono i quattro bordi della finestra su desktop, tablet e telefono. Materia ha un’aura azzurra, il danno adatta il rosso al tema e la Volontà con karma negativo ha un’aura più scura. Le preferenze di movimento e il colore dell’Oculum restano configurabili.
+- Scudo normale infranto con −2 temporaneo a Volontà e Materia. Scudo Oculum infranto con −3 al prossimo tiro difensivo e impatto sui non alleati vicini selezionati.
+- Armi, armature e scudi si usurano in combattimento, anche per i nemici. Titoli Item esenti. Puoi classificare il tipo di protezione nell’editor. Riaffila ripristina gli usi di un’arma che funziona ancora. Il fabbro ripara armi, armature e scudi per 60 Obser × Grado, minimo 30.
+- Al Grado 0 la Vita usa ×6, ×7, ×8, ×9 e ×10 ai livelli 0, 1, 2, 3 e 4+. Dal Grado I continua la progressione esistente. Il Master vede Potenza attuale/totale, che riflette Vita persa e riserve spese.
+- Le pagine secondarie usano una cornice adattiva che segue il tema e la trasparenza impostati. La Mappa mantiene la sua area a tutta larghezza.
+- Meditazione, fuori combattimento, recupera Vita e Oculum con lo stesso d20 naturale e torna disponibile al Riposo Lungo. Le ricevute A/R/RV possono essere reinviate con lo stesso ID nel contesto d’origine, con controllo dei duplicati e del turno.
+- Puoi importare una GIF come ritratto o crearla da un’immagine con anteprima, inquadratura, movimento e opzioni preimpostate.
+- Il Master può preparare cinque opzioni di Materiale sessione con prova, difficoltà e Grado di estrazione, oltre a salvare e avviare battaglie preparate. La preferenza per il Co-Master si salva. L’accesso alla pagina resta del Master in questa versione.
+
 ## Cartelle delle evocazioni e nuovi sfondi — 7 novembre
 
 - Un mostro evocato o un Occhio dei Caduti attivato compare sotto la scheda dell’evocatore nella stessa cartella, anche se l’evocatore è un PG. Due Patalpa con lo stesso nome restano schede distinte.
 - Collegati 18 sfondi desktop scelti. Il King Slime A ha una spada a lama nera e uno scettro con sfera viola conficcati nella gelatina. Le insegne sono parte dell’illustrazione. Il riquadro della scheda mantiene l’inquadratura intera sui temi protetti.
+- Collegati altri nove desktop del Lotto 2, fra cui Bunnys Veterana C, Capo dei Cervelli C e Campanaro delle anime ferme C. [Scelte confermate](CONFERME_UTENTE_ARTWORK_2026-11-07_11.json)
+- Il filtro Finiti mostra i mostri con un desktop canonico.
 - Il Ciclope Non Morto ha un solo occhio centrale e due braccia e due gambe. La Sentinella a Spirali ha una sola lente centrale. Le anatomie personalizzate mantengono la precedenza.
 - Bruto dal Sorriso Cavo diventa Bruto Sorridente. Cuore della Caldera diventa Cuore di Magma e può usare il volo naturale. Dalla mappa, chi gestisce il token può cambiare quota entro il Movimento residuo.
 - Custode con Mani Inverse e la variante Rituale escono dalle nuove selezioni. Le schede salvate e le personalizzazioni restano leggibili.
