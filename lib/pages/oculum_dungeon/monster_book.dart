@@ -46,6 +46,7 @@ class MonsterBookEntry {
   final String id;
   final List<String> planeIds;
   final Map<String, dynamic> encounterRules;
+  bool get hasNaturalFlight => encounterRules['naturalFlight'] == true;
   final String nameIt;
   final String nameEn;
   final String descIt;
@@ -2945,7 +2946,7 @@ final List<MonsterBookEntry> _inspiredMonsterBookEntries = [
   ),
   _inspiredMonster(
     id: 'bruto_sorriso_cavo',
-    name: 'Bruto dal Sorriso Cavo',
+    name: 'Bruto Sorridente',
     element: 'vuoto',
     resilience: 8,
     will: 2,
@@ -5524,6 +5525,7 @@ bool oculumIsRetiredMonsterId(String id) =>
       'errante_con_la_sedia',
       'errante_con_ombrello',
       'weak_horror_sagrestano',
+      'custode_mani_inverse',
     }.contains(id.trim().split('_variante_').first);
 
 final List<MonsterBookEntry>

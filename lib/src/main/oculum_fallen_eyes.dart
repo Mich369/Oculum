@@ -1725,11 +1725,14 @@ extension _OculumFallenEyes on _OculumHomePageState {
       if ('${sheet['nome'] ?? ''}'.trim().isEmpty) {
         sheet['nome'] = '${eye['name'] ?? 'Occhio dei Caduti'}';
       }
+      final summonedIndex = schedePersonaggio.length;
       schedePersonaggio.add(sheet);
       assicuraTagSchede();
-      eye['summonedSheetTag'] = '${sheet['sheetTag']}';
-      eye['sheetData'] = _cloneJsonMap(sheet);
+      registerSummonSheetPlacement(summonedIndex, owner);
+      eye['summonedSheetTag'] = sheetTagAt(summonedIndex);
+      eye['sheetData'] = _cloneJsonMap(schedePersonaggio[summonedIndex]);
       eye['usesBlankSummonSlot'] = true;
+      eye.putIfAbsent('summonSlotPlacementBefore', () => <String, dynamic>{});
       restored++;
     }
     return restored;
@@ -1830,6 +1833,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
         sheet['id'] = slotTag;
         sheet['sheetTag'] = slotTag;
       }
+      final previousPlacement = sheetSidebarPlacements[slotTag];
+      eye['summonSlotPlacementBefore'] = {
+        'tag': slotTag,
+        if (previousPlacement != null)
+          'placement': Map<String, dynamic>.from(previousPlacement),
+      };
       final summonedIndex = blankIndex >= 0
           ? blankIndex
           : schedePersonaggio.length;
@@ -1839,6 +1848,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
         schedePersonaggio.add(sheet);
       }
       assicuraTagSchede();
+      registerSummonSheetPlacement(summonedIndex, ownerId);
       eye['sheetData'] = _cloneJsonMap(schedePersonaggio[summonedIndex]);
       eye['summonedSheetTag'] =
           '${schedePersonaggio[summonedIndex]['sheetTag'] ?? ''}';
@@ -2147,6 +2157,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
         // Conserva ogni modifica fatta all'Occhio prima di liberare lo slot.
         final releasedSheet = _cloneJsonMap(schedePersonaggio[index]);
         eye['sheetData'] = releasedSheet;
+        final tag = sheetTagAt(index);
         if (readBoolValue(eye['usesBlankSummonSlot'])) {
           final previous = schedePersonaggio[index];
           final blank = statoVuotoPersonaggio();
@@ -2155,6 +2166,16 @@ extension _OculumFallenEyes on _OculumHomePageState {
           schedePersonaggio[index] = blank;
         } else {
           schedePersonaggio.removeAt(index);
+        }
+        final before = eye['summonSlotPlacementBefore'];
+        if (before is Map) {
+          final placement = before['placement'];
+          if (before['tag'] == tag && placement is Map) {
+            sheetSidebarPlacements[tag] = Map<String, dynamic>.from(placement);
+          } else {
+            sheetSidebarPlacements.remove(tag);
+          }
+          sheetSidebarRevision.value++;
         }
       });
     }
@@ -2174,6 +2195,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     setState(() {
       eye['active'] = false;
       eye.remove('summonStatBonuses');
+      eye.remove('summonSlotPlacementBefore');
       eye['summonedSheetTag'] = '';
       _touchFallenEyes();
     });

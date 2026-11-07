@@ -252,6 +252,7 @@ extension _OculumPawnCores on _OculumHomePageState {
         item.craftData['brokenCore'] == true) {
       return;
     }
+    final summonerTag = sheetTagAt(schedaCorrente);
     final source = item.craftData['coreSource'];
     if (source is Map && source['id'] != null) {
       final recovered = oculumPawnInventoryItem()
@@ -349,6 +350,7 @@ extension _OculumPawnCores on _OculumHomePageState {
       statsMostroForzate: oculumMonsterCreationStats(entry, level),
       monsterVariant: 'base',
       monsterBookSource: entry,
+      summonOwnerTag: summonerTag,
     );
   }
 }

@@ -275,6 +275,8 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
         }
         if (monster != null) {
           if (monster.illustration != null) {
+            final preserveFraming =
+                widget.fillArea && monster.preserveIllustrationFraming;
             return SizedBox(
               key: ValueKey('monster-scene-${monster.id}'),
               height: widget.fillArea ? double.infinity : 112,
@@ -282,8 +284,12 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
               child: IgnorePointer(
                 child: Image.asset(
                   monster.illustration!,
-                  fit: widget.fillArea ? BoxFit.cover : BoxFit.contain,
-                  alignment: Alignment.bottomRight,
+                  fit: widget.fillArea && !preserveFraming
+                      ? BoxFit.cover
+                      : BoxFit.contain,
+                  alignment: preserveFraming
+                      ? Alignment.centerRight
+                      : Alignment.bottomRight,
                   cacheWidth: 1440,
                 ),
               ),

@@ -1586,12 +1586,12 @@ const _bespokeMonsterMoves = <String, (String, String, String)>{
   ),
   'lava_heart_burst': (
     'Battito della caldera',
-    'Il Cuore della Caldera comprime le camere interne ed espelle un fiotto di lava',
+    'Il Cuore di Magma comprime le camere interne ed espelle un fiotto di lava',
     'colpo',
   ),
   'lava_heart_fissure': (
     'Crosta della caldera',
-    'Il Cuore della Caldera deposita scorie davanti al nucleo in una crosta con Vita propria',
+    'Il Cuore di Magma deposita scorie davanti al nucleo in una crosta con Vita propria',
     'costrutto',
   ),
   'necromancer_ash_bind': (

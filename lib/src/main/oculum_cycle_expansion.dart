@@ -77,7 +77,7 @@ extension _OculumCycleExpansion on _OculumHomePageState {
 
   int get cycleNaturalFlightBonus =>
       faunaCurrentMonsterId == 'ciclo_solare_siccita' &&
-          cycleRules['naturalFlight'] == true
+          monsterBookEntryById(faunaCurrentMonsterId)?.hasNaturalFlight == true
       ? wingAdjustedFlightBonus(3, 'Volo naturale')
       : 0;
 

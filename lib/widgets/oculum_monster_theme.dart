@@ -202,6 +202,27 @@ const _november6ApprovedDesktopIds = {
   'black_dragon_shield',
 };
 
+const _november7ApprovedDesktopIds = {
+  'ciclope_non_morto',
+  'costrutto_rinsecchito',
+  'cuore_lava',
+  'elementale_ombra_minore',
+  'elementale_sangue_minore',
+  'forest_rune_golem',
+  'golem_di_pietra_base',
+  'golem_lava',
+  'habitat_mezzano_bandito_della_maschera_di_corteccia',
+  'inspired_bruto_sorriso_cavo',
+  'inspired_rospaccio_rosso',
+  'inspired_sentinella_spirale',
+  'inspired_teschio_brina',
+  'inspired_troll_delle_caverne',
+  'king_slime',
+  'lich_minore_base',
+  'mother_slime',
+  'scheletro_base',
+};
+
 const _november6SecondApprovedDesktopAssets = <String, String>{
   'angelo_protettore_variante_corazzata':
       'assets/oculum/home_art/theme_angelo_protettore_variante_corazzata_canon_20261106_votes2.png',
@@ -328,6 +349,7 @@ class OculumMonsterTheme {
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
   bool get preserveIllustrationFraming =>
+      _november7ApprovedDesktopIds.contains(monster.id) ||
       _november6SecondApprovedDesktopAssets.containsKey(monster.id) ||
       const {
         ..._november6ApprovedDesktopIds,
@@ -490,6 +512,8 @@ class OculumMonsterTheme {
     _ => null,
   };
   String? get illustration => switch (monster.id) {
+    final id when _november7ApprovedDesktopIds.contains(id) =>
+      'assets/oculum/home_art/theme_${id}_canon_20261107_votes3.png',
     final id when _november6SecondApprovedDesktopAssets.containsKey(id) =>
       _november6SecondApprovedDesktopAssets[id],
     final id when _november6ApprovedDesktopIds.contains(id) =>

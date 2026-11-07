@@ -5405,6 +5405,1034 @@
         "referenceId": "baby_rock_rhino_variante_veterana",
         "statsRemainDistinct": true
       }
+    },
+    "golem_di_pietra_base": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Golem di Pietra",
+      "originalName": "Golem di Pietra",
+      "userChoice": "Golem di Pietra A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/golem_di_pietra_base_desktop_v1.jpg",
+        "sha256": "aee297eea2177064c709379cb1395692f9c7ed6da4d4bf244d8fdb541d9509a5",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\golem_di_pietra_base_desktop_v1_784b45272026e70f.png",
+        "nativeSha256": "784b45272026e70f98647eaf75552741d63feea603e9e854e2aca299247d417a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/golem_di_pietra_base_desktop_v1.json",
+        "provenanceSha256": "a53bb9779b263da345f442a527303793d914d0faf6f1da6ffc606a7be7c26747"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/golem_di_pietra_base_desktop_v1.png",
+        "sha256": "926720e76715631762495a5ef289105ed8db189d9407885e26cb7c95f5dd8135"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Golem di Pietra A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_golem_di_pietra_base_canon_20261107_votes3.png",
+        "nativeSha256": "784b45272026e70f98647eaf75552741d63feea603e9e854e2aca299247d417a",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "mother_slime": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Mother Slime",
+      "originalName": "Mother Slime",
+      "userChoice": "Mother Slime A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/mother_slime_desktop_v1.jpg",
+        "sha256": "c330bfe1c48cb7ce95f79e38a7220aad17732ff4ccb6367ea66590994471100a",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b2954d49-6d40-48fd-91b8-ec5bb2c8a2e7.png",
+        "nativeSha256": "3440502e66603a563a0e89db53f4f360c4814aea91ac9ee35c415502c3726792",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/mother_slime_desktop_v1.json",
+        "provenanceSha256": "5fd623699ca175db663ac86e00e722731ac1f799e62115d5264ea8642171e4b9"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/mother_slime_desktop_v1.png",
+        "sha256": "f0aea9c4f955ffb0fad601f768093f74e9b91336226cd5795af178d6261f3a76"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Mother Slime A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_mother_slime_canon_20261107_votes3.png",
+        "nativeSha256": "3440502e66603a563a0e89db53f4f360c4814aea91ac9ee35c415502c3726792",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "king_slime": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "King Slime",
+      "originalName": "King Slime",
+      "userChoice": "King Slime a con modifiche",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/king_slime_desktop_v1.jpg",
+        "sha256": "4cc3d0e9d239f557cb30aaec39f62adcc76ac0f973c6d26afe628486afc59c24",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-fc0cfe42-41b3-4b59-a1d3-f8770a4de8ab.png",
+        "nativeSha256": "43291f17c2eac1cb3afb063ca2a522defcad4c3904bb85caf5faa19e8165bc84",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/king_slime_desktop_v1.json",
+        "provenanceSha256": "b25a263fedd1d3e03c2286f8486a5ecc9eccbb80cf4e528443f52937aa2c4227"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/king_slime_desktop_v1.png",
+        "sha256": "5622fa7b1e967c057ca80b189828c911130051357ac02d0eb26059901ff7e76f"
+      },
+      "alternatives": {
+        "A": "selected_base_revision_requested_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_selected_base_with_revision_request",
+        "userAnswer": "King Slime a con modifiche",
+        "wording": "verbatim",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "held_for_requested_revision",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": false,
+        "compiled": false,
+        "published": false
+      },
+      "requiresApprovedRevisionBeforeIntegration": true,
+      "revisionRequest": {
+        "status": "fulfilled_with_native_edit_linked_in_source",
+        "userAnswer": "il king slime deve avere una spada ed uno scettro conficcati dentro di lui",
+        "referenceInstruction": "prendi spunto",
+        "unchangedBaseIsApprovedForRuntime": false,
+        "followUp": "fai la lama nera",
+        "intermediate": {
+          "file": "output/artwork/revisioni_voti_2026-11-06/king_slime_A_spada_scettro_20261107.png",
+          "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\king_slime_A_spada_scettro_20261107.png",
+          "sha256": "2f66434946a07ddd7a452517234148dfe05757ef487b86683bdf36c845498d49",
+          "bytes": 2194729,
+          "archive": "build/king_slime_A_spada_scettro_intermedia_20261107.png",
+          "status": "intermediate_preserved_blade_color_revision_requested"
+        }
+      },
+      "approvedRevision": {
+        "approvalStatus": "canonical_user_approved_revision",
+        "approvalBasis": "explicit_A_choice_and_user_requested_edits",
+        "userAnswer": "fai la lama nera",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "artwork": {
+          "file": "output/artwork/revisioni_voti_2026-11-06/king_slime_A_lama_nera_20261107.png",
+          "sha256": "3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494",
+          "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\king_slime_A_lama_nera_20261107.png",
+          "nativeSha256": "3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494",
+          "version": 2,
+          "sourceKind": "native_imagegen_edit_verified",
+          "provenanceFile": "build/KING_SLIME_A_LAMA_NERA_20261107.json",
+          "provenanceSha256": "cc836d4936a86635506e1f28cbe6a73dd6011f423ea164b04f5055fd5d3300ac"
+        },
+        "originalAlternative": "A",
+        "requestedEditApplied": true,
+        "intermediatePreserved": true,
+        "sourceIntegrationStatus": "source_linked_pending_build_verification"
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_king_slime_canon_20261107_votes3.png",
+        "nativeSha256": "3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "elementale_ombra_minore": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Elementale dell Ombra Minore",
+      "originalName": "Elementale dell Ombra Minore",
+      "userChoice": "Elementale dell Ombra Minore A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/elementale_ombra_minore_desktop_v1.jpg",
+        "sha256": "4a11b000a4fddb0e3d856efa41d6de7c8c9ab79c3790702e365cbb7903a4914f",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-279b1aef-382e-4294-ab03-009b46a9d5ef.png",
+        "nativeSha256": "791c27d24f751d86a44c1463db7149f35c929e39d4eb2d12357e7938805080be",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/elementale_ombra_minore_desktop_v1.json",
+        "provenanceSha256": "c5da9781e29b5c3c4a0aa3b0beef211f547defd82fbdba11fd79ec06c8d387b4"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/elementale_ombra_minore_desktop_v1.png",
+        "sha256": "73de409c03826440ce0e3c4e8a9bba32db9561c84ed0937ec9f824895dc04ac7"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Elementale dell Ombra Minore A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_elementale_ombra_minore_canon_20261107_votes3.png",
+        "nativeSha256": "791c27d24f751d86a44c1463db7149f35c929e39d4eb2d12357e7938805080be",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "forest_rune_golem": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Forest Rune Golem",
+      "originalName": "Forest Rune Golem",
+      "userChoice": "Forest Rune Golem A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/forest_rune_golem_desktop_v1.jpg",
+        "sha256": "bf689ec4cd1f9003537109291b20b3a729ebc58946796b2dbcf4d72cf9a4c314",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\forest_rune_golem_desktop_v1_83d1945866a19648.png",
+        "nativeSha256": "83d1945866a19648b987919db0cd0721758b7f41052ce227d1849fe6329468ad",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/forest_rune_golem_desktop_v1.json",
+        "provenanceSha256": "8dfd1bffaf0ba15ccbbd01c7ad6f21cfbebe25a19d1c54c394a61235a0592657"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/forest_rune_golem_desktop_v1.png",
+        "sha256": "59a0b564a9c6a873aa34763773c5b2392e399b3507df60385c9d0066601346c5"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Forest Rune Golem A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_forest_rune_golem_canon_20261107_votes3.png",
+        "nativeSha256": "83d1945866a19648b987919db0cd0721758b7f41052ce227d1849fe6329468ad",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "scheletro_base": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Scheletro",
+      "originalName": "Scheletro",
+      "userChoice": "Scheletro A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/scheletro_base_desktop_v1.jpg",
+        "sha256": "92cd1fa02c34e3bfefc81123727c3dfc755b83e09ad939d9a2ed21337da32b01",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\scheletro_base_desktop_v1_ea4adb7e4c671a7d.png",
+        "nativeSha256": "ea4adb7e4c671a7d2cbe472857c27921b1ea3aafb84d55c32da73460b1da6997",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/scheletro_base_desktop_v1.json",
+        "provenanceSha256": "e03a166f25857d21ec1f0b2713acda060d4b92a689612741d9d5e2a7fe4377b9"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/scheletro_base_desktop_v1.png",
+        "sha256": "1457e258f56a10c2e2f061025cd3e0a3c3ca05047172b1dfbffab99e1d19e4f2"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Scheletro A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_scheletro_base_canon_20261107_votes3.png",
+        "nativeSha256": "ea4adb7e4c671a7d2cbe472857c27921b1ea3aafb84d55c32da73460b1da6997",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "inspired_sentinella_spirale": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Sentinella a Spirali",
+      "originalName": "Sentinella a Spirali",
+      "userChoice": "Sentinella a Spirali A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_sentinella_spirale_desktop_v1.jpg",
+        "sha256": "538bf43894cddb4c436ec68dd4e16f8f054cb953e7fc25698da936f22e77ff9e",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-22fe5061-763d-4f75-ab60-fe5649a8c83b.png",
+        "nativeSha256": "6d56c40f0a075beeddb0ba1e386a7f492be344c358cd0d6b7225236d57acf0aa",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_sentinella_spirale_desktop_v1.json",
+        "provenanceSha256": "69d5c4fbc6249d71f6b59f5633aaa5a798bdb14009d7e4cdc55b9b88c581a1a1"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/inspired_sentinella_spirale_desktop_v1.png",
+        "sha256": "2b115fe22650991c806ca192acdb03812c658a6b5b05438e1ddefee59e5944a3"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Sentinella a Spirali A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_inspired_sentinella_spirale_canon_20261107_votes3.png",
+        "nativeSha256": "6d56c40f0a075beeddb0ba1e386a7f492be344c358cd0d6b7225236d57acf0aa",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "inspired_rospaccio_rosso": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "B",
+      "name": "Rospaccio Rosso",
+      "originalName": "Rospaccio Rosso",
+      "userChoice": "Rospaccio Rosso B",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_rospaccio_rosso_desktop_v2.jpg",
+        "sha256": "f4fdcf8c0e49e5e9de89b36b1745afc340fb5036895d2d2ccff26021098913e0",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-cba792b2-9281-4cdc-9746-b1b9a47632bf.png",
+        "nativeSha256": "929611c21dc805486bc28bff042ca93632b92df24f60b7692dc44835f25c0f57",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_rospaccio_rosso_desktop_v2.json",
+        "provenanceSha256": "d31d63d599d2c861ab733ad6a40a0ead566446197824b0360128ad80b768860b"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/inspired_rospaccio_rosso_desktop_v1.png",
+        "sha256": "8f7ac383ef36e920bc5cb485f363b8843dcaeed4996d5f1b2923eb716531adc5"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "selected_canonical_artistic_vote_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Rospaccio Rosso B",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_inspired_rospaccio_rosso_canon_20261107_votes3.png",
+        "nativeSha256": "929611c21dc805486bc28bff042ca93632b92df24f60b7692dc44835f25c0f57",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "lich_minore_base": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Lich Minore",
+      "originalName": "Lich Minore",
+      "userChoice": "Lich Minore A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/lich_minore_base_desktop_v1.jpg",
+        "sha256": "16d1c3627292467902c05c655053f6a7cd90d1e87e5a64fd487eb399d72a9d7d",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-57ad0c34-af55-4566-b829-4cef9b4b7ba7.png",
+        "nativeSha256": "43c86dc21ba0624da9b656f14b8a92d05ba090fabbff7cf324205dee6bdf827a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/lich_minore_base_desktop_v1.json",
+        "provenanceSha256": "ed22a83652c09cf090f1ae110bb1c637a7e1ef7980ad78d9fa71800812ac8a3d"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/lich_minore_base_desktop_v1.png",
+        "sha256": "aed34a3536976898c0b6164e76ba6dca1b5bd1fbeb0484dcb3fe9b40008438c1"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Lich Minore A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_lich_minore_base_canon_20261107_votes3.png",
+        "nativeSha256": "43c86dc21ba0624da9b656f14b8a92d05ba090fabbff7cf324205dee6bdf827a",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "inspired_teschio_brina": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Teschio della Brina Cieca",
+      "originalName": "Teschio della Brina Cieca",
+      "userChoice": "Teschio della Brina Cieca A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_teschio_brina_desktop_v1.jpg",
+        "sha256": "57a35416ae940373ce7e2fbcb60e3bdfe03bd2676792e1c9c49b2daf5191f5dd",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-ce2318fa-af1e-46a9-a506-dc08e6e06c8a.png",
+        "nativeSha256": "b3591d97de819f813cabc20a19ed20a73b13e6f85c30452577630bac4f61f815",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_teschio_brina_desktop_v1.json",
+        "provenanceSha256": "03cbe0ca49ace4a1f08365818b6931889f311442daeda7c995dc242122309500"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/inspired_teschio_brina_desktop_v1.png",
+        "sha256": "b82897631ff649d0836a0863cbd1889969531239870af0d2f37962f8bbc84abb"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Teschio della Brina Cieca A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_inspired_teschio_brina_canon_20261107_votes3.png",
+        "nativeSha256": "b3591d97de819f813cabc20a19ed20a73b13e6f85c30452577630bac4f61f815",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "inspired_troll_delle_caverne": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Troll delle Caverne",
+      "originalName": "Troll delle Caverne",
+      "userChoice": "Troll delle Caverne A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_troll_delle_caverne_desktop_v1.jpg",
+        "sha256": "fb24a133c283d7413fae37dcb199c07c2e5ce04f55bcf37da0f9c5616fc24b55",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-a5e30ac5-0f9c-48ca-9cd9-3dc60e32de12.png",
+        "nativeSha256": "5823e4fa5959659fa0a10998ff33629ad0a94e0cd47a20d873ae0eefadc0d59b",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_troll_delle_caverne_desktop_v1.json",
+        "provenanceSha256": "8a6147f14c89c2a4dbdc9741282261ba259d3044895016c7b90b691a4fac1b06"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/inspired_troll_delle_caverne_desktop_v1.png",
+        "sha256": "52469db1b8d7e01f964edb7cb1f7c5c865c415e6a46c92498b4690100fe9c6fd"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Troll delle Caverne A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_inspired_troll_delle_caverne_canon_20261107_votes3.png",
+        "nativeSha256": "5823e4fa5959659fa0a10998ff33629ad0a94e0cd47a20d873ae0eefadc0d59b",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "elementale_sangue_minore": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Elementale del Sangue Minore",
+      "originalName": "Elementale del Sangue Minore",
+      "userChoice": "Elementale del Sangue Minore A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/elementale_sangue_minore_desktop_v1.png",
+        "sha256": "6ec47248ff763451e9c26ed518041cce2962f84afb2658fe0bddffc26a9644d2",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-32638a9d-7563-452f-bb0b-7fa2559202f9.png",
+        "nativeSha256": "6ec47248ff763451e9c26ed518041cce2962f84afb2658fe0bddffc26a9644d2",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/elementale_sangue_minore_desktop_v1.json",
+        "provenanceSha256": "d9c0b2b0488250a3a938f30aecc83c82e2b80607a90e57488c05b7cd50f0746e"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/elementale_sangue_minore_desktop_v1.png",
+        "sha256": "48eeb3d03ad17836bd7999d48c54bc89627382e9edaccfdf201c74e31943a3ae"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Elementale del Sangue Minore A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_elementale_sangue_minore_canon_20261107_votes3.png",
+        "nativeSha256": "6ec47248ff763451e9c26ed518041cce2962f84afb2658fe0bddffc26a9644d2",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "inspired_bruto_sorriso_cavo": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "C",
+      "name": "Bruto Sorridente",
+      "originalName": "Bruto dal Sorriso Cavo",
+      "userChoice": "Bruto dal Sorriso Cavo c nome Bruto Sorridente",
+      "requestedName": "Bruto Sorridente",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_bruto_sorriso_cavo_v1.png",
+        "sha256": "74c55b36e6b9d1c9e5d1bcce35732c84fbde835273ddb02a71544c754a524b92",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_bruto_sorriso_cavo_v1.png",
+        "nativeSha256": "74c55b36e6b9d1c9e5d1bcce35732c84fbde835273ddb02a71544c754a524b92",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_bruto_sorriso_cavo_v1.provenance.json",
+        "provenanceSha256": "a773e268119ea48fdc3a61af3501037691b5d674972dcd9b0bb8658632e63799"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/inspired_bruto_sorriso_cavo_desktop_v1.png",
+        "sha256": "51188c35075fa7724f517decbb1c4fb945f17badac5685ade1647ac1c1beabff"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "not_selected_preserved",
+        "C": "selected_canonical_artistic_vote_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Bruto dal Sorriso Cavo c nome Bruto Sorridente",
+        "wording": "verbatim",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_inspired_bruto_sorriso_cavo_canon_20261107_votes3.png",
+        "nativeSha256": "74c55b36e6b9d1c9e5d1bcce35732c84fbde835273ddb02a71544c754a524b92",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "ciclope_non_morto": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "C",
+      "name": "Ciclope Non Morto",
+      "originalName": "Ciclope Non Morto",
+      "userChoice": "Ciclope Non Morto C",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_ciclope_non_morto_v2.png",
+        "sha256": "fa3bb22ac0c7e39c2fd8c9adb4166381ff731b69bd6e4e098b9b5df847c202f5",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_ciclope_non_morto_v2.png",
+        "nativeSha256": "fa3bb22ac0c7e39c2fd8c9adb4166381ff731b69bd6e4e098b9b5df847c202f5",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_ciclope_non_morto_v2.provenance.json",
+        "provenanceSha256": "f70e44f7dd38d6f8a76c4aa7ae371fb4de1305caa6e08bafa98705b8bfbe19bc"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/ciclope_non_morto_desktop_v1.png",
+        "sha256": "c0e3c216547302b7095403d0f4b917ea30332e552c0f83a97092a21ec2b4b363"
+      },
+      "alternatives": {
+        "A": "not_selected_preserved",
+        "B": "not_selected_preserved",
+        "C": "selected_canonical_artistic_vote_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Ciclope Non Morto C",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_ciclope_non_morto_canon_20261107_votes3.png",
+        "nativeSha256": "fa3bb22ac0c7e39c2fd8c9adb4166381ff731b69bd6e4e098b9b5df847c202f5",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "golem_lava": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Golem di Lava",
+      "originalName": "Golem di Lava",
+      "userChoice": "Golem di Lava A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/golem_lava_desktop_v1.jpg",
+        "sha256": "1a6e64ceaedb3e69ca4d8125518dca6780b634269bd9068f9d90061a69e3596c",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\golem_lava_desktop_v1_f394a5948634f94d.png",
+        "nativeSha256": "f394a5948634f94dcf204bc7cfde4140748173f277cfe1b8faf1fba276ed0bd2",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/golem_lava_desktop_v1.json",
+        "provenanceSha256": "7f0c9b7aadc430b908c2133932793fd01011201de08c3695edc2a4e77be69df4"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/golem_lava_desktop_v1.png",
+        "sha256": "5fcaaf37e44a1e03e123eab513ccc782dd7fc5d23fd95a5338f0858f8d156d62"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Golem di Lava A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_golem_lava_canon_20261107_votes3.png",
+        "nativeSha256": "f394a5948634f94dcf204bc7cfde4140748173f277cfe1b8faf1fba276ed0bd2",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "costrutto_rinsecchito": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Costrutto Rinsecchito",
+      "originalName": "Costrutto Rinsecchito",
+      "userChoice": "Costrutto Rinsecchito A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/costrutto_rinsecchito_desktop_v1.jpg",
+        "sha256": "78c3d8a6d64676e8f8c813151a20de4a1c5b80717a856c41831ba4a7ed5440cf",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-11c32895-56c1-4daa-9b8e-78aec54767a2.png",
+        "nativeSha256": "aa6f65bcc02088a2a634c2e32b24de3ec769fe465262a16db428afbec41c96ad",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/costrutto_rinsecchito_desktop_v1.json",
+        "provenanceSha256": "cdf91b6901da6a5a7a3d48d19b75aa653476170d73e944e2e8506c1aa6672008"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/costrutto_rinsecchito_desktop_v1.png",
+        "sha256": "2e69b42a13d34f8d8a2aed1af707853fa2b0b008ed9cf8642b477f874f06af76"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Costrutto Rinsecchito A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_costrutto_rinsecchito_canon_20261107_votes3.png",
+        "nativeSha256": "aa6f65bcc02088a2a634c2e32b24de3ec769fe465262a16db428afbec41c96ad",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "cuore_lava": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Cuore di Magma",
+      "originalName": "Cuore della Caldera",
+      "userChoice": "Cuore della Caldera si rinomina in cuore di magma e può volare proposta a",
+      "requestedName": "Cuore di Magma",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/cuore_lava_desktop_v1.jpg",
+        "sha256": "f77d0fcb8df0cc4af7306a3a6bd9cb26e87e1bc6863c76323726724e3a63e717",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-a0e2015a-1cf6-4ec3-bcd8-dc4296d268e3.png",
+        "nativeSha256": "6c938fbbca41d7ca17826f02dc81d629c96f2803c29f742943e9c376d735dda3",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/cuore_lava_desktop_v1.json",
+        "provenanceSha256": "f978ef27b8a5f692b1595f88aa2d70ca5da4f07679c45e1fac1460ea8c127492"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/cuore_lava_desktop_v1.png",
+        "sha256": "a17a24699448d733792380f34317c87f1e62a2824ce0ad69a417b4c850b46a55"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Cuore della Caldera si rinomina in cuore di magma e può volare proposta a",
+        "wording": "verbatim",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_cuore_lava_canon_20261107_votes3.png",
+        "nativeSha256": "6c938fbbca41d7ca17826f02dc81d629c96f2803c29f742943e9c376d735dda3",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
+    },
+    "habitat_mezzano_bandito_della_maschera_di_corteccia": {
+      "decision": "choose_alternative",
+      "artisticStatus": "canonical_user_vote",
+      "letter": "A",
+      "name": "Bandito della maschera di corteccia",
+      "originalName": "Bandito della maschera di corteccia",
+      "userChoice": "Bandito della maschera di corteccia A",
+      "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_desktop_v1.jpg",
+        "sha256": "b421fd6fca18cffcb95b16a6900823e791d0c403dde847fff8b10fcbc6033e6b",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_mezzano_bandito_della_maschera_di_corteccia_desktop_v1_63a00f6d885e53da.png",
+        "nativeSha256": "63a00f6d885e53daecc229f9173733c2b7fb5aabc9f801b1a0e4949f93c9049a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_desktop_v1.json",
+        "provenanceSha256": "2ac3785628a499da6050716903176c5b09c2a4925ec42d37f57a9b562ed04fdf"
+      },
+      "baseline": {
+        "file": "output/artwork/mostri_2026-11-04/habitat_mezzano_bandito_della_maschera_di_corteccia_desktop_v1.png",
+        "sha256": "03c6bc957a6a3f3c6eaa98eea2ffecf0ec6cc7339daff0921092dfb2b16cefd8"
+      },
+      "alternatives": {
+        "A": "selected_canonical_artistic_vote_preserved",
+        "B": "not_selected_preserved",
+        "C": "not_selected_preserved"
+      },
+      "userEvidence": {
+        "kind": "explicit_user_choice",
+        "userAnswer": "Bandito della maschera di corteccia A",
+        "wording": "selection_as_transmitted",
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+        "batchSource": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+        "batchSourceSha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815",
+        "galleryManifest": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+        "galleryManifestSha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+        "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json"
+      },
+      "selectionScope": "exact_desktop_only_no_automatic_base_variant_or_derivative_approval",
+      "integration": {
+        "status": "source_linked_pending_build_verification",
+        "compiledCommitUnchanged": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+        "newAlternativesIntegrated": true,
+        "compiled": false,
+        "published": false
+      },
+      "currentSourceIntegration": {
+        "status": "exact_approved_native_desktop_linked_in_source",
+        "runtimeAsset": "assets/oculum/home_art/theme_habitat_mezzano_bandito_della_maschera_di_corteccia_canon_20261107_votes3.png",
+        "nativeSha256": "63a00f6d885e53daecc229f9173733c2b7fb5aabc9f801b1a0e4949f93c9049a",
+        "compiled": false,
+        "published": false,
+        "approvalReceipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json"
+      }
     }
   }
 }

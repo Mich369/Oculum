@@ -4511,7 +4511,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       'Uomo in Posizione Fetale': 'psyche',
       'Uomo Decapitato': 'blood',
     };
-    const bodyCatalogueIds = {'Ragno degli Obser Falsi': 'ragno_obser_falsi'};
+    const bodyCatalogueIds = {
+      'Custode con Mani Inverse': 'custode_mani_inverse',
+      'Ragno degli Obser Falsi': 'ragno_obser_falsi',
+    };
 
     final list = <_EnemyTemplate>[];
     for (final element in _elements.where((e) => e.id != 'neutral')) {

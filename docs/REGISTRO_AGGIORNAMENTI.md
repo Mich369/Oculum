@@ -1,5 +1,14 @@
 # Registro cumulativo per i giocatori
 
+## Cartelle delle evocazioni e nuovi sfondi — 7 novembre
+
+- Un mostro evocato o un Occhio dei Caduti attivato compare sotto la scheda dell’evocatore nella stessa cartella, anche se l’evocatore è un PG. Due Patalpa con lo stesso nome restano schede distinte.
+- Collegati 18 sfondi desktop scelti. Il King Slime A ha una spada a lama nera e uno scettro con sfera viola conficcati nella gelatina. Le insegne sono parte dell’illustrazione. Il riquadro della scheda mantiene l’inquadratura intera sui temi protetti.
+- Il Ciclope Non Morto ha un solo occhio centrale e due braccia e due gambe. La Sentinella a Spirali ha una sola lente centrale. Le anatomie personalizzate mantengono la precedenza.
+- Bruto dal Sorriso Cavo diventa Bruto Sorridente. Cuore della Caldera diventa Cuore di Magma e può usare il volo naturale. Dalla mappa, chi gestisce il token può cambiare quota entro il Movimento residuo.
+- Custode con Mani Inverse e la variante Rituale escono dalle nuove selezioni. Le schede salvate e le personalizzazioni restano leggibili.
+- Cartelle e ordine delle schede, nomi, statistiche, capacità, costi, durate, bersagli, effetti, immagini e colori si possono ancora personalizzare.
+
 ## Nuovo lotto canonico e Assassino — 6 novembre
 
 Il lotto comprende anche Cane dei Ghiacci A, Cervo dal Fiato Bianco C, Cervo di Linfa Verde C, Cinghiale Muschioso C, Cervo di Brumalba C e Baby Rock Rhino ridotto dal disegno della Veterana. Statistiche delle due versioni del Rhino distinte.

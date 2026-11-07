@@ -2,6 +2,24 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Evocazioni nella cartella dell’evocatore — 7 novembre
+
+Quando una creatura evocata o un Occhio dei Caduti ottiene una scheda, la trovi subito sotto la scheda di chi l’ha evocata, nella stessa cartella esistente o a livello principale. Vale anche per le schede dei giocatori e per le evocazioni concatenate. Se un Patalpa evoca un secondo Patalpa, il secondo compare sotto il primo. La relazione segue il tag della scheda anche quando i nomi coincidono.
+
+Un Occhio ripristinato torna sotto la scheda del suo proprietario. Quando si libera uno slot vuoto riutilizzato, lo slot recupera la posizione precedente. Le schede si possono spostare manualmente e i normali aggiornamenti rispettano la posizione scelta.
+
+Per le copie online ricevute tramite le condivisioni esistenti, l’abbinamento segue il tag sorgente, la campagna e il mittente. Se la copia dell’evocatore arriva dopo, la scheda evocata attende nella posizione predefinita, nella cartella Online per Master e Co-Master, quindi compare sotto l’evocatore. Visibilità e turnistica seguono le regole della campagna.
+
+## Bruto Sorridente, Custode ritirato e Cuore di Magma — 7 novembre
+
+Il Bruto dal Sorriso Cavo si chiama Bruto Sorridente. Il Cuore della Caldera si chiama Cuore di Magma e può volare. Il volo naturale è un tratto di locomozione indicato nelle regole speciali del catalogo, senza bonus numerici, nuove tecniche o immunità. Le varianti ereditano i nomi e il Cuore conserva la rigenerazione di lava. Gli ID storici e i nomi personali salvati sono conservati.
+
+Sulla mappa locale o del Master, apri il menu del token collegato alla scheda con clic destro o pressione prolungata. Il gestore del token può scegliere Movimento in volo e inserire la quota desiderata in metri. Salita e discesa consumano la distanza percorsa dal Movimento residuo e rispettano i vincoli di turnistica già applicati al movimento orizzontale. La quota si salva nella scena e viene mostrata quando il Master condivide la mappa. L’editor del token permette ancora di impostare manualmente la quota.
+
+Il Custode con Mani Inverse e il suo Rituale sono ritirati dal catalogo attivo, dai nuovi incontri e dalla vendita di nuove pagine. Gli ID e le definizioni restano disponibili alle schede, alle pagine già ottenute e alle personalizzazioni salvate.
+
+I bersagli di Precisione delle voci base seguono le immagini scelte. Il Ciclope Non Morto C ha un occhio centrale, due braccia e due gambe. La Sentinella a Spirali A ha una lente centrale. Le anatomie personalizzate dal Master mantengono la precedenza.
+
 ## Assassino NPC nemico, ritiri e Scarabeo — 6 novembre
 
 Il Duellante Senza Palpebre comune si chiama Assassino. Alla generazione è un vero NPC nemico: la precisazione dell’utente è «ovviamente npc nemico». Conserva l’ID storico, il livello, le statistiche e il profilo di crescita precedenti, le capacità del catalogo con costi e recuperi, le due lame e la giubba. Il nome e il ruolo non attribuiscono nuove capacità o una nuova moralità.

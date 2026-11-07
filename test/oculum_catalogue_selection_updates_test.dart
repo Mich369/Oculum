@@ -193,6 +193,269 @@ void main() {
     expect(beetle.elementId, 'solare');
   });
 
+  test('Bruto Sorridente keeps its stable IDs and saved personal name', () {
+    const id = 'inspired_bruto_sorriso_cavo';
+    final base = monsterById(id)!;
+    final variant = monsterById('${id}_variante_corazzata')!;
+    expect(base.nameIt, 'Bruto Sorridente');
+    expect(variant.nameIt, 'Bruto Sorridente Corazzata');
+    expect(base.stats, {
+      'level': 0,
+      'resilienza': 8,
+      'volonta': 2,
+      'materia': 3,
+      'oculum': 1,
+    });
+    expect(base.skillIds, contains('inspired_bruto_sorriso_cavo_attack'));
+    final custom = MonsterBookEntry.fromJson(
+      base
+          .copyWith(
+            nameIt: 'Bruto personale',
+            stats: {'level': 3, 'resilienza': 23},
+            imageBase64: 'c2F2ZWQtYXJ0',
+          )
+          .toJson(),
+    );
+    configureMonsterBookEntries(customEntries: [custom]);
+    expect(monsterById(id)!.toJson(), custom.toJson());
+  });
+
+  test('Keeper and Ritual retire while preserving their saved definitions', () {
+    const id = 'custode_mani_inverse';
+    const ritualId = '${id}_variante_rituale';
+    final keeper = oculumSavedMonsterBookEntryById(id)!;
+    final ritual = oculumSavedMonsterBookEntryById(ritualId)!;
+    expect(keeper.stats, {'hp': 170, 'atk': 29, 'def': 26, 'spd': 10});
+    expect(keeper.skillIds, contains('inverse_parry'));
+    expect(ritual.skillIds, contains('inverse_parry_variante_rituale'));
+
+    final custom = MonsterBookEntry.fromJson(
+      ritual
+          .copyWith(
+            nameIt: 'Custode salvato dal Master',
+            stats: {'level': 8, 'resilienza': 31},
+            skillIds: ['saved_keeper_skill'],
+            imageBase64: 'c2F2ZWQtYXJ0',
+          )
+          .toJson(),
+    );
+    configureMonsterBookEntries(customEntries: [custom]);
+    for (final retiredId in [id, ritualId]) {
+      expect(oculumIsRetiredMonsterId(retiredId), isTrue);
+      expect(monsterById(retiredId), isNull);
+      expect(monsterBookEntries.any((entry) => entry.id == retiredId), isFalse);
+      expect(
+        oculumBlackMarketMonsterBookPageEligible(
+          oculumSavedMonsterBookEntryById(retiredId)!,
+        ),
+        isFalse,
+      );
+    }
+    expect(
+      oculumSavedMonsterBookEntryById(ritualId)!.toJson(),
+      custom.toJson(),
+    );
+  });
+
+  test(
+    'Magma Heart inherits natural flight without changing its combat pool',
+    () {
+      const id = 'cuore_lava';
+      final magma = monsterById(id)!;
+      final variant = monsterById('${id}_variante_corazzata')!;
+      expect(magma.nameIt, 'Cuore di Magma');
+      expect(magma.nameEn, 'Magma Heart');
+      expect(variant.nameIt, 'Cuore di Magma Corazzata');
+      expect(magma.hasNaturalFlight, isTrue);
+      expect(variant.hasNaturalFlight, isTrue);
+      expect(magma.descIt, contains('capace di volo naturale'));
+      expect(monsterById('golem_lava')!.hasNaturalFlight, isFalse);
+      expect(monsterById('ciclo_solare_siccita')!.hasNaturalFlight, isTrue);
+      expect(magma.stats, {
+        'level': 0,
+        'resilienza': 10,
+        'volonta': 6,
+        'materia': 8,
+        'oculum': 8,
+      });
+      expect(magma.skillIds.take(3), [
+        'lava_heart_burst',
+        'lava_regeneration_core',
+        'lava_heart_fissure',
+      ]);
+      expect(magma.dropChances, {
+        'lava_tear_core': 80,
+        'metallo_runico': 30,
+        'corno_forest_demon': 10,
+      });
+
+      final previous = magma.copyWith(
+        nameIt: 'Cuore della Caldera',
+        nameEn: 'Caldera Heart',
+        descIt: magma.descIt
+            .replaceAll(', capace di volo naturale', '')
+            .replaceAll('Cuore di Magma', 'Cuore della Caldera'),
+        descEn: magma.descEn
+            .replaceAll(' capable of natural flight', '')
+            .replaceAll(', capace di volo naturale', '')
+            .replaceAll('Cuore di Magma', 'Cuore della Caldera'),
+        encounterRules: const {},
+      );
+      for (final level in [0, 12, 50]) {
+        expect(
+          oculumMonsterCreationStats(magma, level),
+          oculumMonsterCreationStats(previous, level),
+        );
+      }
+      for (var seed = 0; seed < 8; seed++) {
+        expect(
+          oculumEnemyAbilityVariants(
+            magma,
+            seed: seed,
+          ).map((skill) => skill.nome),
+          oculumEnemyAbilityVariants(previous, seed: seed).map(
+            (skill) => skill.nome.replaceAll(
+              ' — Cuore della Caldera',
+              ' — Cuore di Magma',
+            ),
+          ),
+        );
+      }
+
+      final custom = MonsterBookEntry.fromJson(
+        magma
+            .copyWith(
+              nameIt: 'Cuore personale',
+              encounterRules: const {'naturalFlight': false},
+            )
+            .toJson(),
+      );
+      configureMonsterBookEntries(customEntries: [custom]);
+      final saved = oculumSavedMonsterBookEntryById(id)!;
+      expect(saved.nameIt, 'Cuore personale');
+      expect(saved.hasNaturalFlight, isFalse);
+      expect(saved.toJson(), custom.toJson());
+    },
+  );
+
+  testWidgets(
+    'the token flight command spends remaining Movement and saves elevation',
+    (tester) async {
+      final dynamic state = await fixtures.mountSheet(
+        tester,
+        const Size(1600, 1400),
+      );
+      final probe = OculumPerformanceProbe(state);
+      const tag = '123-TESTFLIGHT';
+      final sheet = {
+        ...probe.snapshot(),
+        'id': tag,
+        'sheetTag': tag,
+        'nome': 'Cuore di Magma',
+        'monsterBookSourceId': 'cuore_lava',
+        'planarRuntime': <String, dynamic>{},
+      };
+      state.schedePersonaggio
+        ..clear()
+        ..add(sheet);
+      state.schedaCorrente = 0;
+      probe.load(sheet);
+      expect(probe.cycleFlight(), 0);
+      sheet['monsterBookSourceId'] = 'ciclo_solare_siccita';
+      expect(probe.cycleFlight(), 3);
+      sheet['monsterBookSourceId'] = 'cuore_lava';
+      final budget = probe.movement().toDouble();
+      expect(budget, greaterThan(7));
+      final token = <String, dynamic>{
+        'id': 'flight-test',
+        'sheetTag': tag,
+        'ownerTag': tag,
+        'x': .5,
+        'y': .3,
+        'elevationMeters': 2.0,
+        'movementUsedMeters': budget - 5,
+        'visible': true,
+      };
+      state.updateOculumHomeUi(() {
+        state.modalitaMaster = true;
+        state.linguaInglese = false;
+        state.mapMode = 'local';
+        state.localMapTokens
+          ..clear()
+          ..add(token);
+      });
+      final mapReady = state.vaiAllaFunzione(page: 10) as Future<void>;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+      await mapReady;
+      final tokenView = find.byKey(
+        const ValueKey('vtt_local_token_flight-test'),
+      );
+      final mapScroll = find
+          .descendant(
+            of: find.byKey(state.sheetScrollKey('map') as Key),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.scrollUntilVisible(tokenView, 300, scrollable: mapScroll);
+      expect(
+        find.descendant(of: tokenView, matching: find.text('Cuore di Magma')),
+        findsOneWidget,
+      );
+
+      Future<void> openMenu() async {
+        await tester.ensureVisible(tokenView);
+        await tester.pump();
+        await tester.longPress(tokenView);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(find.text('Modifica token'), findsOneWidget);
+      }
+
+      Future<void> flyTo(String elevation) async {
+        await openMenu();
+        await tester.tap(find.text('Movimento in volo'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.enterText(
+          find.byKey(const ValueKey('vtt_natural_flight_elevation')),
+          elevation,
+        );
+        await tester.tap(find.text('Vola'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+      }
+
+      await flyTo('20,5');
+      expect(token['elevationMeters'], 7.0);
+      expect(token['movementUsedMeters'], budget);
+      final vtt = state.vttState as OculumVttState;
+      final restored = OculumVttState.fromJson(vtt.toJson());
+      expect(restored.activeScene.tokens.single['elevationMeters'], 7.0);
+      expect(restored.activeScene.tokens.single['movementUsedMeters'], budget);
+      final sharedScene = OculumVttScene.fromJson(
+        vtt.activeScene.toJson(includePrivate: false),
+      );
+      expect(sharedScene.tokens.single['elevationMeters'], 7.0);
+
+      await flyTo('0');
+      expect(token['elevationMeters'], 7.0);
+      await openMenu();
+      await tester.tap(find.text('Reset movimento'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await flyTo('0');
+      expect(token['elevationMeters'], 0.0);
+      expect(token['movementUsedMeters'], 7.0);
+
+      state.schedePersonaggio[0]['monsterBookSourceId'] = 'golem_lava';
+      await openMenu();
+      expect(find.text('Movimento in volo'), findsNothing);
+      expect(find.text('Modifica token'), findsOneWidget);
+      await closeFixture(tester, probe);
+    },
+  );
+
   test(
     'Assassin still draws three techniques while other NPC kits stay fixed',
     () {
@@ -253,6 +516,60 @@ void main() {
         expect(
           oculumMonsterBookOpenPool(fixed),
           hasLength(fixedArt == null ? 0 : 1),
+        );
+      }
+    },
+  );
+
+  test(
+    'Undead Cyclops and Spiral Sentinel have a single central Precision target',
+    () {
+      final cyclops = monsterById('ciclope_non_morto')!;
+      final sentinel = monsterById('inspired_sentinella_spirale')!;
+      final cyclopsParts = oculumMonsterPrecisionAnatomy(cyclops);
+      expect(
+        cyclopsParts.where((part) => part['group'] == 'arms'),
+        hasLength(2),
+      );
+      expect(
+        cyclopsParts.where((part) => part['group'] == 'legs'),
+        hasLength(2),
+      );
+      for (final (source, label) in [
+        (cyclops, 'Occhio centrale'),
+        (sentinel, 'Lente centrale'),
+      ]) {
+        final eyes = oculumMonsterPrecisionAnatomy(
+          source,
+        ).where((part) => part['group'] == 'eyes').toList();
+        expect(eyes, hasLength(1), reason: source.id);
+        expect(eyes.single['id'], 'eyes');
+        expect(eyes.single['label'], label);
+        expect(eyes.single.containsKey('side'), isFalse);
+
+        const personal = [
+          {
+            'id': 'personal_joint',
+            'label': 'Giuntura personale',
+            'group': 'joint',
+            'weak': true,
+            'penalty': 0,
+          },
+        ];
+        final custom = MonsterBookEntry.fromJson(
+          source
+              .copyWith(
+                encounterRules: {
+                  ...source.encounterRules,
+                  'precisionBodyParts': personal,
+                },
+              )
+              .toJson(),
+        );
+        configureMonsterBookEntries(customEntries: [custom]);
+        expect(
+          oculumMonsterPrecisionAnatomy(monsterById(source.id)!),
+          personal,
         );
       }
     },

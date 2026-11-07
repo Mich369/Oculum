@@ -59,12 +59,13 @@ final _lavaMonsterEntries = [
   ),
   MonsterBookEntry(
     id: 'cuore_lava',
-    nameIt: 'Cuore della Caldera',
-    nameEn: 'Caldera Heart',
+    nameIt: 'Cuore di Magma',
+    nameEn: 'Magma Heart',
     descIt:
-        'Nucleo maggiore di lava. Rigenera 15 HP a fine turno; Gelo o Acqua riducono la rigenerazione a 0 per un turno.',
+        'Nucleo maggiore di lava, capace di volo naturale. Rigenera 15 HP a fine turno; Gelo o Acqua riducono la rigenerazione a 0 per un turno.',
     descEn:
-        'Greater lava core. Regenerates 15 HP at end of turn; Frost or Water suppress it for one turn.',
+        'Greater lava core capable of natural flight. Regenerates 15 HP at end of turn; Frost or Water suppress it for one turn.',
+    encounterRules: const {'naturalFlight': true},
     elementId: 'lava',
     spriteAssetPath: '',
     isMiniBoss: false,

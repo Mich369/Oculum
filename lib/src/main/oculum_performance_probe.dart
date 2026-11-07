@@ -970,6 +970,10 @@ class OculumPerformanceProbe {
       _state.processConditionTick(trigger);
   void moveSheetFolderEntry(String tag, String parent, {int? beforeIndex}) =>
       _state.moveSidebarEntry(tag, parent, beforeIndex: beforeIndex);
+  List<String> sheetTagsInFolder(String folderId) => _state
+      .sheetSidebarOrderedIndexes(folderId)
+      .map(_state.sheetTagAt)
+      .toList();
   Future<void> showSheetFolders() => _state.showSheetFoldersDialog();
   Map<String, dynamic> campaignSnapshot() => _state.currentCampaignSnapshot();
   void loadCampaign(Map<String, dynamic> data) =>

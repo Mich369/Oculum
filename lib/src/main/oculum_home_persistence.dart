@@ -1462,6 +1462,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         'planePressureDoubleCriticalIds',
         'magicalLuckCriticalIds',
         'necromancyOwnerTurnExpires',
+        _summonPlacementOwnerField,
       ])
         if (schedaCorrente >= 0 &&
             schedaCorrente < schedePersonaggio.length &&
@@ -5623,6 +5624,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     int livello = 0,
     int grado = 0,
     bool aggiungiAlMasterParty = false,
+    String summonOwnerTag = '',
   }) async {
     salvaSchedaCorrenteInMemoria();
     final globali = catturaImpostazioniGlobali();
@@ -5641,6 +5643,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       assicuraTagSchede();
 
       schedaCorrente = schedePersonaggio.length - 1;
+      if (summonOwnerTag.isNotEmpty) {
+        registerSummonSheetPlacement(schedaCorrente, summonOwnerTag);
+      }
       caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
       ripristinaImpostazioniGlobali(globali);
 
@@ -7540,6 +7545,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     Random? monsterLoadoutRandom,
     String monsterVariant = 'base',
     MonsterBookEntry? monsterBookSource,
+    String summonOwnerTag = '',
   }) async {
     ensureQuickNpcSkills();
     final pawnCreatureOwner = pawnSenderTag;
@@ -7791,6 +7797,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         livello: livello,
         grado: grado,
         aggiungiAlMasterParty: true,
+        summonOwnerTag: summonOwnerTag,
       );
 
       setState(() {

@@ -1,10 +1,11 @@
-# Ultimo aggiornamento — 6 novembre 2026
+# Ultimo aggiornamento — 7 novembre 2026
 
-- Assassino generato come NPC nemico, con capacità e crescita precedenti conservate.
-- Armaiolo della spada e scudo e variante Rituale rinominati; Duellante Errante e famiglia Sagrestano Cavo ritirati dalle nuove selezioni. Schede e sorgenti degli Occhi compatibili.
-- 55 desktop nativi approvati collegati, compresi Scarabeo di circa 2 m, Demoni Intermedi massicci, Lacrimante con braccia collegate e Guardiano con dodici campanelle. Immagini personali e originali conservati.
-- Gallerie aggiornate a 106 voti, senza riproporre scelte concluse; Ciclope con occhio violetto e cresta di spine approvato.
+- Mostri evocati e Occhi dei Caduti nella cartella dell’evocatore, subito sotto la sua scheda. Vale anche per i PG e per le schede omonime.
+- 18 sfondi desktop, compreso King Slime A con lama nera e scettro conficcati nel corpo.
+- Inquadratura intera per gli sfondi protetti. Occhio centrale del Ciclope Non Morto e lente centrale della Sentinella aggiornati nella Precisione.
+- Bruto Sorridente e Cuore di Magma aggiornati. Il Cuore può muoversi in volo dalla mappa usando il Movimento residuo.
+- Custode con Mani Inverse e Rituale ritirati dalle nuove selezioni. Compatibilità delle schede salvate conservata.
 
-Verifiche locali: **80 casi Flutter locali distinti coperti** (23 mirati rieseguiti sul nuovo lotto), analisi senza problemi, **44 test Python passati**, manuale esportato in 83 sezioni. CI, online autenticato, nuovi pacchetti, installazione e download pubblici si verificano separatamente; la distribuzione attiva resta 5f89ea2b finché la nuova non supera i controlli.
+Verifiche locali del sorgente: 69 test mirati passati e analisi statica senza problemi.
 
-Modificabili: nomi, ruolo/lato, livello/Grado, statistiche, Skill/Art/Open, forme, requisiti, costi, bersagli, effetti, durate, recuperi, anatomie, punti deboli, oggetti, temi, colori, sfondi e preferenze personali. [Dettagli](PATCH_2026-11-06_ASSASSINO_VOTI_ARTWORK.md) · [Log cumulativo completo](REGISTRO_AGGIORNAMENTI.md).
+Si possono personalizzare cartelle, ordine, nomi, ruoli, statistiche, Skill/Art/Open, requisiti, costi, bersagli, effetti, durate, recuperi, anatomie, oggetti, temi, colori e sfondi. [Log cumulativo](REGISTRO_AGGIORNAMENTI.md) · [Consegna precedente 275](CONSEGNA_VERIFICATA_41abaed7.md)

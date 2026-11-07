@@ -40,4 +40,13 @@ void main() {
       expect(oculumSelectedSheetDeliveryIndexes(sheets, 0, eyes), [0, 2]);
     },
   );
+  test('a selected legacy summon still shares its owner', () {
+    final sheets = <Map<String, dynamic>>[
+      {'sheetTag': 'OWNER'},
+      {'sheetTag': 'PRIVATE'},
+      {'sheetTag': 'LEGACY', 'summonerTag': 'OWNER'},
+    ];
+    expect(oculumSelectedSheetDeliveryIndexes(sheets, 2, const []), [2, 0]);
+    expect(oculumSelectedSheetDeliveryIndexes(sheets, 0, const []), [0]);
+  });
 }

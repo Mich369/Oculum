@@ -116,6 +116,25 @@ void main() {
       });
       probe.saveSheet();
       final ownerTag = probe.ownerTag();
+      const blankTag = '001-EYE1';
+      state.schedePersonaggio.add(<String, dynamic>{
+        'id': blankTag,
+        'sheetTag': blankTag,
+        'nome': '???',
+        'tipoScheda': 'Personaggio',
+      });
+      state.sheetSidebarFolders.addAll([
+        {'id': 'owner-folder', 'name': 'Proprietario', 'parent': ''},
+        {'id': 'blank-folder', 'name': 'Schede libere', 'parent': ''},
+      ]);
+      state.sheetSidebarPlacements[ownerTag] = {
+        'folder': 'owner-folder',
+        'order': 2,
+      };
+      state.sheetSidebarPlacements[blankTag] = {
+        'folder': 'blank-folder',
+        'order': 4,
+      };
       final before = probe.snapshot();
       final eye = <String, dynamic>{
         'id': 'eye-persistence',
@@ -145,6 +164,8 @@ void main() {
       await runWithFrames(() => probe.activateFallenEye(eye));
       await tester.pump();
       expect(eye['active'], isTrue);
+      expect(eye['summonedSheetTag'], blankTag);
+      expect(probe.sheetTagsInFolder('owner-folder'), [ownerTag, blankTag]);
       final List sheets = state.schedePersonaggio;
       expect(
         sheets.where((s) => s['occhioCadutoId'] == eye['id']),
@@ -177,6 +198,7 @@ void main() {
         hasLength(1),
       );
       expect(eye['bond'], originalBond);
+      expect(probe.sheetTagsInFolder('owner-folder'), [ownerTag, blankTag]);
       expect(
         probe.snapshot()['volonta'],
         after['volonta'],
@@ -199,8 +221,11 @@ void main() {
         ),
         hasLength(1),
       );
+      expect(probe.sheetTagsInFolder('owner-folder'), [ownerTag, blankTag]);
       await runWithFrames(() => probe.deactivateFallenEye(restoredEye));
       await tester.pump();
+      expect(probe.sheetTagsInFolder('owner-folder'), [ownerTag]);
+      expect(probe.sheetTagsInFolder('blank-folder'), [blankTag]);
       final restoredOwner = probe.snapshot();
       for (final stat in ['resilienza', 'volonta', 'materia', 'oculum']) {
         expect(

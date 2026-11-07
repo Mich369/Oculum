@@ -1514,21 +1514,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     var localIndex = realtimeLocalSheetIndexForKey(key);
     if (localIndex < 0) {
-      final prepared = prepareRealtimeSheetForLocal(record);
-      prepared['inMasterParty'] = true;
-      schedePersonaggio.add(prepared);
-      localIndex = schedePersonaggio.length - 1;
+      localIndex = storeRealtimeSheetForLocal(record);
+      schedePersonaggio[localIndex]['inMasterParty'] = true;
     } else if (!readBoolValue(
       schedePersonaggio[localIndex]['realtimeDirtyLocal'],
     )) {
-      final prepared = prepareRealtimeSheetForLocal(
-        record,
-        existingIndex: localIndex,
-      );
-      prepared['inMasterParty'] = readBoolValue(
-        schedePersonaggio[localIndex]['inMasterParty'],
-      );
-      schedePersonaggio[localIndex] = prepared;
+      storeRealtimeSheetForLocal(record, existingIndex: localIndex);
     }
 
     return localIndex;

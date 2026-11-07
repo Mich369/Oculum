@@ -1,0 +1,462 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-07T05:12:49.391Z",
+  "source": "Scelte esplicite sulla galleria A/B/C da 19 creature e successiva specifica del King Slime, trasmesse dal coordinatore.",
+  "scope": "17 scelte esatte, 1 scelta A con le revisioni richieste, 1 ritiro di famiglia e 2 rinomine.",
+  "instructionCount": 19,
+  "letterChoiceCount": 18,
+  "letterCounts": {
+    "A": 15,
+    "B": 1,
+    "C": 2
+  },
+  "exactDesktopChoices": 17,
+  "choicesBefore": 106,
+  "choicesAfter": 124,
+  "artisticVoteLedger": "docs/SCELTE_ALTERNATIVE_MOSTRI_2026-11-05.json",
+  "batchSource": {
+    "file": "build/USER_SELECTION_BATCH_20261107_THIRD.json",
+    "sha256": "975901f17704457d051a53d091e2b0029557c903cd3efb04e00d73f060e48815"
+  },
+  "ledgerBeforeSha256": "5994461e84cca69f7ff3fc1304cb8410021360ee3705816c092570a15c3be03a",
+  "gallerySnapshot": {
+    "file": "build/THIRD_C_GALLERY_VOTI_20261107_SNAPSHOT.json",
+    "originalGalleryManifest": "output/artwork/terze_C_2026-11-06/proposte_C.json",
+    "sha256": "66c9c0e622698d07297a77aadcc8e92a6865ef64d1fe9ac9e1e957926e03afec",
+    "eligibleCreatures": 19
+  },
+  "historicalABManifest": {
+    "file": "output/artwork/alternative_mostri_2026-11-05/manifest.json",
+    "sha256": "c0385611f21b58983f91a727b4532a2fc1fa337d507287dea714a8f7c9e601fb"
+  },
+  "artisticVotes": [
+    {
+      "id": "golem_di_pietra_base",
+      "originalName": "Golem di Pietra",
+      "letter": "A",
+      "userAnswer": "Golem di Pietra A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/golem_di_pietra_base_desktop_v1.jpg",
+        "sha256": "aee297eea2177064c709379cb1395692f9c7ed6da4d4bf244d8fdb541d9509a5",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\golem_di_pietra_base_desktop_v1_784b45272026e70f.png",
+        "nativeSha256": "784b45272026e70f98647eaf75552741d63feea603e9e854e2aca299247d417a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/golem_di_pietra_base_desktop_v1.json",
+        "provenanceSha256": "a53bb9779b263da345f442a527303793d914d0faf6f1da6ffc606a7be7c26747"
+      }
+    },
+    {
+      "id": "mother_slime",
+      "originalName": "Mother Slime",
+      "letter": "A",
+      "userAnswer": "Mother Slime A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/mother_slime_desktop_v1.jpg",
+        "sha256": "c330bfe1c48cb7ce95f79e38a7220aad17732ff4ccb6367ea66590994471100a",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-b2954d49-6d40-48fd-91b8-ec5bb2c8a2e7.png",
+        "nativeSha256": "3440502e66603a563a0e89db53f4f360c4814aea91ac9ee35c415502c3726792",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/mother_slime_desktop_v1.json",
+        "provenanceSha256": "5fd623699ca175db663ac86e00e722731ac1f799e62115d5264ea8642171e4b9"
+      }
+    },
+    {
+      "id": "king_slime",
+      "originalName": "King Slime",
+      "letter": "A",
+      "userAnswer": "King Slime a con modifiche",
+      "wording": "verbatim",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/king_slime_desktop_v1.jpg",
+        "sha256": "4cc3d0e9d239f557cb30aaec39f62adcc76ac0f973c6d26afe628486afc59c24",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-fc0cfe42-41b3-4b59-a1d3-f8770a4de8ab.png",
+        "nativeSha256": "43291f17c2eac1cb3afb063ca2a522defcad4c3904bb85caf5faa19e8165bc84",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/king_slime_desktop_v1.json",
+        "provenanceSha256": "b25a263fedd1d3e03c2286f8486a5ecc9eccbb80cf4e528443f52937aa2c4227"
+      }
+    },
+    {
+      "id": "elementale_ombra_minore",
+      "originalName": "Elementale dell Ombra Minore",
+      "letter": "A",
+      "userAnswer": "Elementale dell Ombra Minore A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/elementale_ombra_minore_desktop_v1.jpg",
+        "sha256": "4a11b000a4fddb0e3d856efa41d6de7c8c9ab79c3790702e365cbb7903a4914f",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-279b1aef-382e-4294-ab03-009b46a9d5ef.png",
+        "nativeSha256": "791c27d24f751d86a44c1463db7149f35c929e39d4eb2d12357e7938805080be",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/elementale_ombra_minore_desktop_v1.json",
+        "provenanceSha256": "c5da9781e29b5c3c4a0aa3b0beef211f547defd82fbdba11fd79ec06c8d387b4"
+      }
+    },
+    {
+      "id": "forest_rune_golem",
+      "originalName": "Forest Rune Golem",
+      "letter": "A",
+      "userAnswer": "Forest Rune Golem A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/forest_rune_golem_desktop_v1.jpg",
+        "sha256": "bf689ec4cd1f9003537109291b20b3a729ebc58946796b2dbcf4d72cf9a4c314",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\forest_rune_golem_desktop_v1_83d1945866a19648.png",
+        "nativeSha256": "83d1945866a19648b987919db0cd0721758b7f41052ce227d1849fe6329468ad",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/forest_rune_golem_desktop_v1.json",
+        "provenanceSha256": "8dfd1bffaf0ba15ccbbd01c7ad6f21cfbebe25a19d1c54c394a61235a0592657"
+      }
+    },
+    {
+      "id": "scheletro_base",
+      "originalName": "Scheletro",
+      "letter": "A",
+      "userAnswer": "Scheletro A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/scheletro_base_desktop_v1.jpg",
+        "sha256": "92cd1fa02c34e3bfefc81123727c3dfc755b83e09ad939d9a2ed21337da32b01",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\scheletro_base_desktop_v1_ea4adb7e4c671a7d.png",
+        "nativeSha256": "ea4adb7e4c671a7d2cbe472857c27921b1ea3aafb84d55c32da73460b1da6997",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/scheletro_base_desktop_v1.json",
+        "provenanceSha256": "e03a166f25857d21ec1f0b2713acda060d4b92a689612741d9d5e2a7fe4377b9"
+      }
+    },
+    {
+      "id": "inspired_sentinella_spirale",
+      "originalName": "Sentinella a Spirali",
+      "letter": "A",
+      "userAnswer": "Sentinella a Spirali A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_sentinella_spirale_desktop_v1.jpg",
+        "sha256": "538bf43894cddb4c436ec68dd4e16f8f054cb953e7fc25698da936f22e77ff9e",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-22fe5061-763d-4f75-ab60-fe5649a8c83b.png",
+        "nativeSha256": "6d56c40f0a075beeddb0ba1e386a7f492be344c358cd0d6b7225236d57acf0aa",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_sentinella_spirale_desktop_v1.json",
+        "provenanceSha256": "69d5c4fbc6249d71f6b59f5633aaa5a798bdb14009d7e4cdc55b9b88c581a1a1"
+      }
+    },
+    {
+      "id": "inspired_rospaccio_rosso",
+      "originalName": "Rospaccio Rosso",
+      "letter": "B",
+      "userAnswer": "Rospaccio Rosso B",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_rospaccio_rosso_desktop_v2.jpg",
+        "sha256": "f4fdcf8c0e49e5e9de89b36b1745afc340fb5036895d2d2ccff26021098913e0",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-cba792b2-9281-4cdc-9746-b1b9a47632bf.png",
+        "nativeSha256": "929611c21dc805486bc28bff042ca93632b92df24f60b7692dc44835f25c0f57",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_rospaccio_rosso_desktop_v2.json",
+        "provenanceSha256": "d31d63d599d2c861ab733ad6a40a0ead566446197824b0360128ad80b768860b"
+      }
+    },
+    {
+      "id": "lich_minore_base",
+      "originalName": "Lich Minore",
+      "letter": "A",
+      "userAnswer": "Lich Minore A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/lich_minore_base_desktop_v1.jpg",
+        "sha256": "16d1c3627292467902c05c655053f6a7cd90d1e87e5a64fd487eb399d72a9d7d",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-57ad0c34-af55-4566-b829-4cef9b4b7ba7.png",
+        "nativeSha256": "43c86dc21ba0624da9b656f14b8a92d05ba090fabbff7cf324205dee6bdf827a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/lich_minore_base_desktop_v1.json",
+        "provenanceSha256": "ed22a83652c09cf090f1ae110bb1c637a7e1ef7980ad78d9fa71800812ac8a3d"
+      }
+    },
+    {
+      "id": "inspired_teschio_brina",
+      "originalName": "Teschio della Brina Cieca",
+      "letter": "A",
+      "userAnswer": "Teschio della Brina Cieca A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_teschio_brina_desktop_v1.jpg",
+        "sha256": "57a35416ae940373ce7e2fbcb60e3bdfe03bd2676792e1c9c49b2daf5191f5dd",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-ce2318fa-af1e-46a9-a506-dc08e6e06c8a.png",
+        "nativeSha256": "b3591d97de819f813cabc20a19ed20a73b13e6f85c30452577630bac4f61f815",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_teschio_brina_desktop_v1.json",
+        "provenanceSha256": "03cbe0ca49ace4a1f08365818b6931889f311442daeda7c995dc242122309500"
+      }
+    },
+    {
+      "id": "inspired_troll_delle_caverne",
+      "originalName": "Troll delle Caverne",
+      "letter": "A",
+      "userAnswer": "Troll delle Caverne A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/inspired_troll_delle_caverne_desktop_v1.jpg",
+        "sha256": "fb24a133c283d7413fae37dcb199c07c2e5ce04f55bcf37da0f9c5616fc24b55",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-a5e30ac5-0f9c-48ca-9cd9-3dc60e32de12.png",
+        "nativeSha256": "5823e4fa5959659fa0a10998ff33629ad0a94e0cd47a20d873ae0eefadc0d59b",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/inspired_troll_delle_caverne_desktop_v1.json",
+        "provenanceSha256": "8a6147f14c89c2a4dbdc9741282261ba259d3044895016c7b90b691a4fac1b06"
+      }
+    },
+    {
+      "id": "elementale_sangue_minore",
+      "originalName": "Elementale del Sangue Minore",
+      "letter": "A",
+      "userAnswer": "Elementale del Sangue Minore A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/elementale_sangue_minore_desktop_v1.png",
+        "sha256": "6ec47248ff763451e9c26ed518041cce2962f84afb2658fe0bddffc26a9644d2",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-32638a9d-7563-452f-bb0b-7fa2559202f9.png",
+        "nativeSha256": "6ec47248ff763451e9c26ed518041cce2962f84afb2658fe0bddffc26a9644d2",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/elementale_sangue_minore_desktop_v1.json",
+        "provenanceSha256": "d9c0b2b0488250a3a938f30aecc83c82e2b80607a90e57488c05b7cd50f0746e"
+      }
+    },
+    {
+      "id": "inspired_bruto_sorriso_cavo",
+      "originalName": "Bruto dal Sorriso Cavo",
+      "letter": "C",
+      "userAnswer": "Bruto dal Sorriso Cavo c nome Bruto Sorridente",
+      "wording": "verbatim",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_bruto_sorriso_cavo_v1.png",
+        "sha256": "74c55b36e6b9d1c9e5d1bcce35732c84fbde835273ddb02a71544c754a524b92",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_bruto_sorriso_cavo_v1.png",
+        "nativeSha256": "74c55b36e6b9d1c9e5d1bcce35732c84fbde835273ddb02a71544c754a524b92",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_bruto_sorriso_cavo_v1.provenance.json",
+        "provenanceSha256": "a773e268119ea48fdc3a61af3501037691b5d674972dcd9b0bb8658632e63799"
+      }
+    },
+    {
+      "id": "ciclope_non_morto",
+      "originalName": "Ciclope Non Morto",
+      "letter": "C",
+      "userAnswer": "Ciclope Non Morto C",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_2026-11-06/C_ciclope_non_morto_v2.png",
+        "sha256": "fa3bb22ac0c7e39c2fd8c9adb4166381ff731b69bd6e4e098b9b5df847c202f5",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_ciclope_non_morto_v2.png",
+        "nativeSha256": "fa3bb22ac0c7e39c2fd8c9adb4166381ff731b69bd6e4e098b9b5df847c202f5",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/terze_C_2026-11-06/C_ciclope_non_morto_v2.provenance.json",
+        "provenanceSha256": "f70e44f7dd38d6f8a76c4aa7ae371fb4de1305caa6e08bafa98705b8bfbe19bc"
+      }
+    },
+    {
+      "id": "golem_lava",
+      "originalName": "Golem di Lava",
+      "letter": "A",
+      "userAnswer": "Golem di Lava A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/golem_lava_desktop_v1.jpg",
+        "sha256": "1a6e64ceaedb3e69ca4d8125518dca6780b634269bd9068f9d90061a69e3596c",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\golem_lava_desktop_v1_f394a5948634f94d.png",
+        "nativeSha256": "f394a5948634f94dcf204bc7cfde4140748173f277cfe1b8faf1fba276ed0bd2",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/golem_lava_desktop_v1.json",
+        "provenanceSha256": "7f0c9b7aadc430b908c2133932793fd01011201de08c3695edc2a4e77be69df4"
+      }
+    },
+    {
+      "id": "costrutto_rinsecchito",
+      "originalName": "Costrutto Rinsecchito",
+      "letter": "A",
+      "userAnswer": "Costrutto Rinsecchito A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/costrutto_rinsecchito_desktop_v1.jpg",
+        "sha256": "78c3d8a6d64676e8f8c813151a20de4a1c5b80717a856c41831ba4a7ed5440cf",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-11c32895-56c1-4daa-9b8e-78aec54767a2.png",
+        "nativeSha256": "aa6f65bcc02088a2a634c2e32b24de3ec769fe465262a16db428afbec41c96ad",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/costrutto_rinsecchito_desktop_v1.json",
+        "provenanceSha256": "cdf91b6901da6a5a7a3d48d19b75aa653476170d73e944e2e8506c1aa6672008"
+      }
+    },
+    {
+      "id": "cuore_lava",
+      "originalName": "Cuore della Caldera",
+      "letter": "A",
+      "userAnswer": "Cuore della Caldera si rinomina in cuore di magma e può volare proposta a",
+      "wording": "verbatim",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/cuore_lava_desktop_v1.jpg",
+        "sha256": "f77d0fcb8df0cc4af7306a3a6bd9cb26e87e1bc6863c76323726724e3a63e717",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-a0e2015a-1cf6-4ec3-bcd8-dc4296d268e3.png",
+        "nativeSha256": "6c938fbbca41d7ca17826f02dc81d629c96f2803c29f742943e9c376d735dda3",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/cuore_lava_desktop_v1.json",
+        "provenanceSha256": "f978ef27b8a5f692b1595f88aa2d70ca5da4f07679c45e1fac1460ea8c127492"
+      }
+    },
+    {
+      "id": "habitat_mezzano_bandito_della_maschera_di_corteccia",
+      "originalName": "Bandito della maschera di corteccia",
+      "letter": "A",
+      "userAnswer": "Bandito della maschera di corteccia A",
+      "wording": "selection_as_transmitted",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_desktop_v1.jpg",
+        "sha256": "b421fd6fca18cffcb95b16a6900823e791d0c403dde847fff8b10fcbc6033e6b",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_mezzano_bandito_della_maschera_di_corteccia_desktop_v1_63a00f6d885e53da.png",
+        "nativeSha256": "63a00f6d885e53daecc229f9173733c2b7fb5aabc9f801b1a0e4949f93c9049a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_mezzano_bandito_della_maschera_di_corteccia_desktop_v1.json",
+        "provenanceSha256": "2ac3785628a499da6050716903176c5b09c2a4925ec42d37f57a9b562ed04fdf"
+      }
+    }
+  ],
+  "artworkRevisionRequests": [
+    {
+      "id": "king_slime",
+      "baseLetter": "A",
+      "status": "fulfilled_with_native_edit_linked_in_source",
+      "userInstructions": [
+        "King Slime a con modifiche",
+        "il king slime deve avere una spada ed uno scettro conficcati dentro di lui",
+        "prendi spunto",
+        "fai la lama nera"
+      ],
+      "unchangedBaseIsApprovedForRuntime": false,
+      "intermediate": {
+        "file": "output/artwork/revisioni_voti_2026-11-06/king_slime_A_spada_scettro_20261107.png",
+        "nativeSource": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\king_slime_A_spada_scettro_20261107.png",
+        "sha256": "2f66434946a07ddd7a452517234148dfe05757ef487b86683bdf36c845498d49",
+        "bytes": 2194729,
+        "archive": "build/king_slime_A_spada_scettro_intermedia_20261107.png",
+        "status": "intermediate_preserved_blade_color_revision_requested"
+      },
+      "approvedArtwork": {
+        "file": "output/artwork/revisioni_voti_2026-11-06/king_slime_A_lama_nera_20261107.png",
+        "sha256": "3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\king_slime_A_lama_nera_20261107.png",
+        "nativeSha256": "3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494",
+        "version": 2,
+        "sourceKind": "native_imagegen_edit_verified",
+        "provenanceFile": "build/KING_SLIME_A_LAMA_NERA_20261107.json",
+        "provenanceSha256": "cc836d4936a86635506e1f28cbe6a73dd6011f423ea164b04f5055fd5d3300ac"
+      }
+    }
+  ],
+  "retirements": [
+    {
+      "id": "custode_mani_inverse",
+      "originalName": "Custode con Mani Inverse",
+      "action": "retire_family",
+      "affectedRuntimeIds": [
+        "custode_mani_inverse",
+        "custode_mani_inverse_variante_rituale"
+      ],
+      "status": "explicit_user_retirement_request",
+      "legacyIdsPreserved": true,
+      "artworkVoteInferred": false,
+      "implementationHandledSeparately": true
+    }
+  ],
+  "renameRequests": [
+    {
+      "id": "inspired_bruto_sorriso_cavo",
+      "originalName": "Bruto dal Sorriso Cavo",
+      "requestedName": "Bruto Sorridente",
+      "legacyIdPreserved": true
+    },
+    {
+      "id": "cuore_lava",
+      "originalName": "Cuore della Caldera",
+      "requestedName": "Cuore di Magma",
+      "legacyIdPreserved": true
+    }
+  ],
+  "gameplayRequests": [
+    {
+      "id": "cuore_lava",
+      "capability": "volo",
+      "status": "user_confirmed_handled_separately",
+      "userAnswer": "Cuore della Caldera si rinomina in cuore di magma e può volare proposta a",
+      "selectedDesktopRetainedExactly": true
+    }
+  ],
+  "preservation": {
+    "previousChoiceRecords": 106,
+    "originalsAndPreviousVariantsPreserved": true,
+    "savedCustomizationPreserved": true
+  },
+  "compiledDistributionUnchanged": {
+    "commit": "41abaed7b53c07e06a3b088dc504e41e9af99035",
+    "runId": 42280975683,
+    "build": 275
+  },
+  "linkedDesktopCount": 18,
+  "approvedRevisions": [
+    {
+      "id": "king_slime",
+      "approvalStatus": "canonical_user_approved_revision",
+      "approvalBasis": "explicit_A_choice_and_user_requested_edits",
+      "userAnswer": "fai la lama nera",
+      "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-07_10.json",
+      "artwork": {
+        "file": "output/artwork/revisioni_voti_2026-11-06/king_slime_A_lama_nera_20261107.png",
+        "sha256": "3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494",
+        "source": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\king_slime_A_lama_nera_20261107.png",
+        "nativeSha256": "3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494",
+        "version": 2,
+        "sourceKind": "native_imagegen_edit_verified",
+        "provenanceFile": "build/KING_SLIME_A_LAMA_NERA_20261107.json",
+        "provenanceSha256": "cc836d4936a86635506e1f28cbe6a73dd6011f423ea164b04f5055fd5d3300ac"
+      },
+      "originalAlternative": "A",
+      "requestedEditApplied": true,
+      "intermediatePreserved": true,
+      "sourceIntegrationStatus": "source_linked_pending_build_verification"
+    }
+  ]
+}

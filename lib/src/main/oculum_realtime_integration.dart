@@ -146,9 +146,7 @@ List<int> oculumSelectedSheetDeliveryIndexes(
   String tag(Map sheet) =>
       '${sheet['sheetTag'] ?? sheet['id'] ?? ''}'.toUpperCase();
   final selectedSheet = sheets[selected];
-  final owner =
-      '${selectedSheet['summonerTag'] ?? selectedSheet['shadowCloneOwnerTag'] ?? ''}'
-          .toUpperCase();
+  final owner = _summonPlacementOwnerTag(selectedSheet).toUpperCase();
   final owners = {tag(selectedSheet), if (owner.isNotEmpty) owner};
   final activeEyes = eyes.where(
     (eye) => readBoolValue(eye['active']) && !oculumFallenEyeIsDead(eye),
@@ -165,6 +163,19 @@ List<int> oculumSelectedSheetDeliveryIndexes(
       )
       .map((eye) => '${eye['summonedSheetTag'] ?? ''}'.toUpperCase())
       .toSet();
+  bool activeSummonOfSelectedSheet(Map<String, dynamic> sheet) {
+    final summoner = _summonPlacementOwnerTag(sheet).toUpperCase();
+    final registered =
+        '${sheet[_summonPlacementOwnerField] ?? ''}'.trim().isNotEmpty ||
+        readBoolValue(sheet['isSummon']) ||
+        readBoolValue(sheet['oculumShadowClone']);
+    return registered &&
+        summoner.isNotEmpty &&
+        owners.contains(summoner) &&
+        !readBoolValue(sheet['summonExpired']) &&
+        !readBoolValue(sheet['shadowCloneExpired']);
+  }
+
   return [
     selected,
     for (var i = 0; i < sheets.length; i++)
@@ -172,14 +183,7 @@ List<int> oculumSelectedSheetDeliveryIndexes(
           !readBoolValue(sheets[i]['realtimeSharedSheet']) &&
           (owners.contains(tag(sheets[i])) ||
               eyeTags.contains(tag(sheets[i])) ||
-              ((readBoolValue(sheets[i]['isSummon']) ||
-                      readBoolValue(sheets[i]['oculumShadowClone'])) &&
-                  !readBoolValue(sheets[i]['summonExpired']) &&
-                  !readBoolValue(sheets[i]['shadowCloneExpired']) &&
-                  owners.contains(
-                    '${sheets[i]['summonerTag'] ?? sheets[i]['shadowCloneOwnerTag'] ?? ''}'
-                        .toUpperCase(),
-                  ))))
+              activeSummonOfSelectedSheet(sheets[i])))
         i,
   ];
 }
@@ -2308,11 +2312,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     );
 
     final title = titoloSempreVisibileSchedaAt(index);
+    final summonerTag = _summonPlacementOwnerTag(schedePersonaggio[index]);
     return <String, dynamic>{
       'nome': nomeSchedaPersonaggio(index),
       'tipoScheda': tipoSchedaPersonaggio(index),
       'id': tag,
       'sheetTag': tag,
+      if (summonerTag.isNotEmpty) _summonPlacementOwnerField: summonerTag,
       'immaginePersonaggioBase64': sheetImageBase64At(index),
       'inMasterParty': sheetInMasterPartyAt(index),
       'realtimeRestrictedByMaster': true,
@@ -2466,22 +2472,96 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         '${record['senderRole'] ?? ''}' == 'coMaster';
     sheet['realtimeDirtyLocal'] = false;
     sheet.remove('realtimeDirtyAt');
-    if (realtimeIsMasterRole || realtimeIsCoMasterRole) {
-      const folderId = 'oculum_received_online_sheets';
-      sheetSidebarFolders.removeWhere((folder) => folder['id'] == folderId);
-      sheetSidebarFolders.add({
-        'id': folderId,
-        'name': 'Online',
-        'parent': '',
-        'expanded': true,
-      });
+    return sheet;
+  }
+
+  int storeRealtimeSheetForLocal(
+    Map<String, dynamic> record, {
+    int? existingIndex,
+  }) {
+    final sheet = prepareRealtimeSheetForLocal(
+      record,
+      existingIndex: existingIndex,
+    );
+    final index = existingIndex ?? schedePersonaggio.length;
+    if (existingIndex == null) {
+      schedePersonaggio.add(sheet);
+    } else {
+      schedePersonaggio[index] = sheet;
+    }
+
+    final localTag = sheetTagAt(index);
+    final staff = realtimeIsMasterRole || realtimeIsCoMasterRole;
+    final summonerTag = normalizeOculumFriendTag(
+      _summonPlacementOwnerTag(sheet),
+    );
+    final senderUserId = '${record['senderUserId'] ?? ''}'.trim();
+    final newSummon =
+        existingIndex == null &&
+        senderUserId.isNotEmpty &&
+        summonerTag.isNotEmpty &&
+        !oculumSameSheetIdentity(summonerTag, record['sheetId']);
+    if ((staff || newSummon) &&
+        (existingIndex == null ||
+            !sheetSidebarPlacements.containsKey(localTag))) {
+      const onlineFolder = 'oculum_received_online_sheets';
+      if (staff && !sheetSidebarFolders.any((f) => f['id'] == onlineFolder)) {
+        sheetSidebarFolders.add({
+          'id': onlineFolder,
+          'name': 'Online',
+          'parent': '',
+          'expanded': true,
+        });
+      }
       sheetSidebarPlacements[localTag] = {
-        'folder': folderId,
+        'folder': staff ? onlineFolder : '',
         'order': DateTime.now().microsecondsSinceEpoch.toDouble(),
+        // The existing receipt key includes the authenticated account and
+        // campaign, so a tag collision in another player's copy cannot bind.
+        if (newSummon)
+          _pendingSummonFolderOwnerField: realtimeSharedSheetKey(
+            ownerTag: summonerTag,
+            campaignId: '${record['campaignId'] ?? ''}',
+            sheetId: summonerTag,
+            senderUserId: senderUserId,
+          ),
       };
       sheetSidebarRevision.value++;
     }
-    return sheet;
+    resolvePendingRealtimeSummonFolders();
+    return index;
+  }
+
+  void resolvePendingRealtimeSummonFolders() {
+    // A descendant can arrive before its summoner. Wait for that summoner's
+    // own placement too, so an entire chain can arrive in reverse order.
+    var placed = false;
+    do {
+      placed = false;
+      for (final entry in sheetSidebarPlacements.entries.toList()) {
+        final ownerKey = '${entry.value[_pendingSummonFolderOwnerField] ?? ''}';
+        if (ownerKey.isEmpty) continue;
+        final summonIndex = localSheetIndexForOculumTag(entry.key);
+        final ownerIndex = realtimeLocalSheetIndexForKey(ownerKey);
+        if (summonIndex < 0 || ownerIndex < 0 || summonIndex == ownerIndex) {
+          continue;
+        }
+        if (!readBoolValue(
+              schedePersonaggio[summonIndex]['realtimeSharedSheet'],
+            ) ||
+            !readBoolValue(
+              schedePersonaggio[ownerIndex]['realtimeSharedSheet'],
+            )) {
+          continue;
+        }
+        final ownerPlacement = sheetSidebarPlacements[sheetTagAt(ownerIndex)];
+        if (ownerPlacement?.containsKey(_pendingSummonFolderOwnerField) ==
+            true) {
+          continue;
+        }
+        if (placeSummonSheetBelow(summonIndex, ownerIndex)) placed = true;
+      }
+    } while (placed);
   }
 
   int localSheetIndexForOculumTag(String tag) {
@@ -3727,8 +3807,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         masterParty: readBoolValue(payload['masterParty']),
         restrictedByMaster: readBoolValue(sheet['realtimeRestrictedByMaster']),
       )) {
-        final prepared = prepareRealtimeSheetForLocal(record);
-        schedePersonaggio.add(prepared);
+        storeRealtimeSheetForLocal(record);
         saveActiveCampaignInMemory();
         replayPendingEncounterJoins(sheetId);
         aggiungiLog(
@@ -3770,13 +3849,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return false;
     }
 
-    final prepared = prepareRealtimeSheetForLocal(
-      record,
-      existingIndex: localIndex,
-    );
-    schedePersonaggio[localIndex] = prepared;
+    storeRealtimeSheetForLocal(record, existingIndex: localIndex);
     if (schedaCorrente == localIndex) {
-      caricaStatoDaJson(prepared);
+      caricaStatoDaJson(schedePersonaggio[localIndex]);
     }
     syncSharedSheetToMasterEncounters(localIndex);
     aggiungiLog(
@@ -4871,18 +4946,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     try {
       setState(() {
         if (localIndex < 0) {
-          final prepared = prepareRealtimeSheetForLocal(record);
-          schedePersonaggio.add(prepared);
-          localIndex = schedePersonaggio.length - 1;
+          localIndex = storeRealtimeSheetForLocal(record);
         } else {
           final dirty = readBoolValue(
             schedePersonaggio[localIndex]['realtimeDirtyLocal'],
           );
           if (!dirty || forceRemote) {
-            schedePersonaggio[localIndex] = prepareRealtimeSheetForLocal(
-              record,
-              existingIndex: localIndex,
-            );
+            storeRealtimeSheetForLocal(record, existingIndex: localIndex);
           } else {
             openedDirtyCopy = true;
           }

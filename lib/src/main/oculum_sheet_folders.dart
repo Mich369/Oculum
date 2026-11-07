@@ -2,6 +2,15 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+const _summonPlacementOwnerField = 'summonPlacementOwnerTag';
+const _pendingSummonFolderOwnerField = 'pendingSummonerSourceKey';
+
+String _summonPlacementOwnerTag(Map<String, dynamic> sheet) {
+  final explicitTag = '${sheet[_summonPlacementOwnerField] ?? ''}'.trim();
+  if (explicitTag.isNotEmpty) return explicitTag;
+  return '${sheet['summonerTag'] ?? sheet['shadowCloneOwnerTag'] ?? ''}'.trim();
+}
+
 bool oculumSheetFolderCanMove(
   List<Map<String, dynamic>> folders,
   String id,
@@ -19,7 +28,87 @@ bool oculumSheetFolderCanMove(
 }
 
 extension _OculumSheetFolders on _OculumHomePageState {
+  String sheetSidebarFolderAt(int index) {
+    final id = '${sheetSidebarPlacements[sheetTagAt(index)]?['folder'] ?? ''}';
+    return sheetSidebarFolders.any((folder) => folder['id'] == id) ? id : '';
+  }
+
+  double sheetSidebarOrderAt(int index) {
+    final order = readDoubleValue(
+      sheetSidebarPlacements[sheetTagAt(index)]?['order'],
+      fallback: index.toDouble(),
+    );
+    return order.isFinite ? order : index.toDouble();
+  }
+
+  List<int> sheetSidebarOrderedIndexes(String folderId) {
+    final indexes = [
+      for (var i = 0; i < schedePersonaggio.length; i++)
+        if (sheetSidebarFolderAt(i) == folderId) i,
+    ];
+    indexes.sort((a, b) {
+      final order = sheetSidebarOrderAt(a).compareTo(sheetSidebarOrderAt(b));
+      return order == 0 ? a.compareTo(b) : order;
+    });
+    return indexes;
+  }
+
+  void registerSummonSheetPlacement(int summonIndex, String ownerTag) {
+    final ownerIndex = localSheetIndexForOculumTag(ownerTag);
+    if (placeSummonSheetBelow(summonIndex, ownerIndex)) {
+      schedePersonaggio[summonIndex][_summonPlacementOwnerField] = sheetTagAt(
+        ownerIndex,
+      );
+    }
+  }
+
+  bool placeSummonSheetBelow(int summonIndex, int ownerIndex) {
+    if (summonIndex < 0 ||
+        summonIndex >= schedePersonaggio.length ||
+        ownerIndex < 0 ||
+        ownerIndex >= schedePersonaggio.length ||
+        summonIndex == ownerIndex) {
+      return false;
+    }
+    final folder = sheetSidebarFolderAt(ownerIndex);
+    final siblings = sheetSidebarOrderedIndexes(folder)..remove(summonIndex);
+    final position = siblings.indexOf(ownerIndex) + 1;
+    final ownerOrder = sheetSidebarOrderAt(ownerIndex);
+    final nextOrder = position < siblings.length
+        ? sheetSidebarOrderAt(siblings[position])
+        : null;
+    final order = nextOrder == null
+        ? ownerOrder + 1
+        : ownerOrder + (nextOrder - ownerOrder) / 2;
+    final summonTag = sheetTagAt(summonIndex);
+    if (order.isFinite &&
+        order > ownerOrder &&
+        (nextOrder == null || order < nextOrder)) {
+      sheetSidebarPlacements[summonTag] = {
+        ...?sheetSidebarPlacements[summonTag],
+        'folder': folder,
+        'order': order,
+      };
+    } else {
+      // Equal saved orders or exhausted fractional precision need a new
+      // sequence in this folder. Preserve the existing relative order.
+      siblings.insert(position, summonIndex);
+      for (var i = 0; i < siblings.length; i++) {
+        final tag = sheetTagAt(siblings[i]);
+        sheetSidebarPlacements[tag] = {
+          ...?sheetSidebarPlacements[tag],
+          'folder': folder,
+          'order': i.toDouble(),
+        };
+      }
+    }
+    sheetSidebarPlacements[summonTag]?.remove(_pendingSummonFolderOwnerField);
+    sheetSidebarRevision.value++;
+    return true;
+  }
+
   void saveSheetFolders() {
+    resolvePendingRealtimeSummonFolders();
     sheetSidebarRevision.value++;
     if (mounted) setState(() {});
     saveActiveCampaignInMemory();
@@ -192,35 +281,18 @@ extension _OculumSheetFolders on _OculumHomePageState {
       final index = localSheetIndexForOculumTag(data);
       if (index < 0) return;
       final tag = sheetTagAt(index);
-      final siblings =
-          List<int>.generate(schedePersonaggio.length, (i) => i)
-              .where(
-                (i) =>
-                    i != index &&
-                    '${sheetSidebarPlacements[sheetTagAt(i)]?['folder'] ?? ''}' ==
-                        folderId,
-              )
-              .toList()
-            ..sort(
-              (a, b) =>
-                  readDoubleValue(
-                    sheetSidebarPlacements[sheetTagAt(a)]?['order'],
-                    fallback: a.toDouble(),
-                  ).compareTo(
-                    readDoubleValue(
-                      sheetSidebarPlacements[sheetTagAt(b)]?['order'],
-                      fallback: b.toDouble(),
-                    ),
-                  ),
-            );
+      final siblings = sheetSidebarOrderedIndexes(folderId)..remove(index);
       final at = beforeIndex == null ? -1 : siblings.indexOf(beforeIndex);
       siblings.insert(at < 0 ? siblings.length : at, index);
       for (var i = 0; i < siblings.length; i++) {
-        sheetSidebarPlacements[sheetTagAt(siblings[i])] = {
+        final siblingTag = sheetTagAt(siblings[i]);
+        sheetSidebarPlacements[siblingTag] = {
+          ...?sheetSidebarPlacements[siblingTag],
           'folder': folderId,
           'order': i.toDouble(),
         };
       }
+      sheetSidebarPlacements[tag]?.remove(_pendingSummonFolderOwnerField);
       assert(sheetSidebarPlacements.containsKey(tag));
     }
     saveSheetFolders();
@@ -261,25 +333,7 @@ extension _OculumSheetFolders on _OculumHomePageState {
             collect('${folder['id']}', depth + 1);
           }
         }
-        final indexes =
-            List<int>.generate(schedePersonaggio.length, (i) => i).where((i) {
-              final id =
-                  '${sheetSidebarPlacements[sheetTagAt(i)]?['folder'] ?? ''}';
-              final valid = sheetSidebarFolders.any((f) => f['id'] == id);
-              return (valid ? id : '') == parent;
-            }).toList()..sort(
-              (a, b) =>
-                  readDoubleValue(
-                    sheetSidebarPlacements[sheetTagAt(a)]?['order'],
-                    fallback: a.toDouble(),
-                  ).compareTo(
-                    readDoubleValue(
-                      sheetSidebarPlacements[sheetTagAt(b)]?['order'],
-                      fallback: b.toDouble(),
-                    ),
-                  ),
-            );
-        for (final i in indexes) {
+        for (final i in sheetSidebarOrderedIndexes(parent)) {
           rows.add((folder: null, index: i, depth: depth));
         }
         if (parent.isEmpty) {

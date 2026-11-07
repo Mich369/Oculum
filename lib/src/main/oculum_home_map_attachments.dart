@@ -6953,6 +6953,104 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     }
   }
 
+  bool _canFlyLocalMapToken(Map<String, dynamic> token) {
+    if (!canManageLocalMapToken(token) || vttShowingRemoteScene) {
+      return false;
+    }
+    final index = indexForLocalMapToken(token);
+    if (index < 0) return false;
+    final sheet = schedePersonaggio[index];
+    final source = oculumSavedMonsterBookEntryById(
+      '${sheet['monsterBookSourceId'] ?? ''}',
+    );
+    final planar = sheet['planarRuntime'];
+    final damagedWings = planar is Map ? planar['damagedWings'] : null;
+    return source?.hasNaturalFlight == true &&
+        !(damagedWings is List && damagedWings.length >= 2);
+  }
+
+  Future<void> _showLocalMapTokenFlight(Map<String, dynamic> token) async {
+    if (!_canFlyLocalMapToken(token)) return;
+    final form = GlobalKey<FormState>();
+    double? parseElevation(String? text) =>
+        double.tryParse((text ?? '').trim().replaceAll(',', '.'));
+    double? requestedElevation;
+    final target = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('Movimento in volo', 'Flight movement')),
+        content: Form(
+          key: form,
+          child: TextFormField(
+            key: const ValueKey('vtt_natural_flight_elevation'),
+            initialValue: '${readDoubleValue(token['elevationMeters'])}',
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+              signed: true,
+            ),
+            decoration: InputDecoration(
+              labelText: t(
+                'Quota desiderata in metri',
+                'Target elevation in metres',
+              ),
+              helperText: t(
+                'Salita e discesa usano il Movimento residuo.',
+                'Ascent and descent use remaining Movement.',
+              ),
+              helperMaxLines: 2,
+            ),
+            validator: (text) => parseElevation(text)?.isFinite == true
+                ? null
+                : t('Inserisci una quota valida.', 'Enter a valid elevation.'),
+            onSaved: (text) => requestedElevation = parseElevation(text),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!form.currentState!.validate()) return;
+              form.currentState!.save();
+              Navigator.pop(dialogContext, requestedElevation);
+            },
+            child: Text(t('Vola', 'Fly')),
+          ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        target == null ||
+        !localMapTokens.contains(token) ||
+        !_canFlyLocalMapToken(token)) {
+      return;
+    }
+    final storedElevation = readDoubleValue(token['elevationMeters']);
+    final before = storedElevation.isFinite ? storedElevation : 0.0;
+    final requested = target - before;
+    if (requested == 0 || !prepareLocalMapTokenMovement(token)) return;
+    final remaining = localMapTokenMovementRemaining(token);
+    final delta = requested.clamp(-remaining, remaining).toDouble();
+    if (delta == 0) return;
+    final after = before + delta;
+    setState(() {
+      token['elevationMeters'] = after;
+      if (remaining.isFinite) {
+        token['movementUsedMeters'] =
+            localMapTokenMovementUsed(token) + delta.abs();
+      }
+      final name = localMapTokenDisplayName(token);
+      final metres = after.toStringAsFixed(1);
+      aggiungiLog(
+        t('$name vola a quota $metres m.', '$name flies to $metres m.'),
+      );
+    });
+    markVttLegacyMapChanged();
+    programmaSalvataggio();
+  }
+
   Future<void> showLocalMapTokenMenu(
     Map<String, dynamic> token,
     Offset globalPosition,
@@ -6994,6 +7092,19 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             ],
           ),
         ),
+        if (_canFlyLocalMapToken(token))
+          PopupMenuItem<String>(
+            value: 'fly',
+            child: Row(
+              children: [
+                Icon(Icons.flight, color: tertiaryColor, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(t('Movimento in volo', 'Flight movement')),
+                ),
+              ],
+            ),
+          ),
         PopupMenuItem<String>(
           value: 'refresh',
           enabled: canManage && hasLinkedSheet,
@@ -7111,6 +7222,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         break;
       case 'edit':
         await showFreeLocalMapTokenEditor(token);
+        break;
+      case 'fly':
+        await _showLocalMapTokenFlight(token);
         break;
       case 'refresh':
         updateLocalMapTokenFromSheet(token);
@@ -7911,7 +8025,13 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final canDrag =
         canManageLocalMapToken(token) &&
         (vttTool == OculumVttTool.select || vttTool == OculumVttTool.pan);
-    final infoHeight = hasMovementLabel ? 57.0 : 45.0;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final infoHeight = max(
+      hasMovementLabel ? 57.0 : 45.0,
+      31.0 +
+          textScaler.scale(11) +
+          (hasMovementLabel ? textScaler.scale(10) : 0),
+    );
     final boxHeight = size + infoHeight + 3 + (canDrag ? 24 : 0);
     final x = localMapTokenAxis(token, 'x');
     final y = localMapTokenAxis(token, 'y');
@@ -7930,6 +8050,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       width: boxWidth,
       height: boxHeight,
       child: GestureDetector(
+        key: ValueKey('vtt_local_token_${localMapTokenStableId(token)}'),
         behavior: HitTestBehavior.opaque,
         onPanUpdate: canDrag
             ? (details) => moveLocalMapTokenGroup(
@@ -7951,6 +8072,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         onLongPressStart: (details) =>
             showLocalMapTokenMenu(token, details.globalPosition),
         child: Tooltip(
+          triggerMode: TooltipTriggerMode.manual,
           message: t(
             '$name${hasMovementLabel ? '\nMovimento: $movementLabel' : ''}\nTasto destro: turnistica e opzioni.',
             '$name${hasMovementLabel ? '\nMovement: $movementLabel' : ''}\nRight-click: initiative and options.',
@@ -8012,6 +8134,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
+                        height: 1,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -8024,6 +8147,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                         style: TextStyle(
                           color: color,
                           fontSize: 10,
+                          height: 1,
                           fontWeight: FontWeight.w900,
                         ),
                       ),

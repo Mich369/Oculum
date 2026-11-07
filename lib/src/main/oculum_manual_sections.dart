@@ -5,6 +5,46 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Evocazioni nella cartella dell’evocatore — 7 novembre',
+    titleEn: 'Summons in their summoner’s folder — November 7',
+    contentIt: r'''
+Quando una creatura evocata o un Occhio dei Caduti ottiene una scheda, la trovi subito sotto la scheda di chi l’ha evocata, nella stessa cartella esistente o a livello principale. Vale anche per le schede dei giocatori e per le evocazioni concatenate. Se un Patalpa evoca un secondo Patalpa, il secondo compare sotto il primo. La relazione segue il tag della scheda anche quando i nomi coincidono.
+
+Un Occhio ripristinato torna sotto la scheda del suo proprietario. Quando si libera uno slot vuoto riutilizzato, lo slot recupera la posizione precedente. Le schede si possono spostare manualmente e i normali aggiornamenti rispettano la posizione scelta.
+
+Per le copie online ricevute tramite le condivisioni esistenti, l’abbinamento segue il tag sorgente, la campagna e il mittente. Se la copia dell’evocatore arriva dopo, la scheda evocata attende nella posizione predefinita, nella cartella Online per Master e Co-Master, quindi compare sotto l’evocatore. Visibilità e turnistica seguono le regole della campagna.
+''',
+    contentEn: r'''
+When a summoned creature or Fallen Eye gets a sheet, it appears directly below the summoner’s sheet in the same existing folder or at the root level. This also applies to player sheets and summons that summon another creature. If a Patalpa summons another Patalpa, the second appears below the first. The link follows the sheet tag even when names match.
+
+A restored Fallen Eye appears below its owner’s sheet. When a reused blank slot is freed, that slot returns to its previous position. You can move sheets manually, and ordinary updates respect your chosen position.
+
+Online copies received through the existing sharing flow match by source tag, campaign and sender. If the summoner’s copy arrives later, the summon waits at the default location, in the Online folder for Masters and Co-Masters, and then moves below its summoner. Campaign visibility and initiative rules apply.
+''',
+  ),
+  ManualSection(
+    titleIt: 'Bruto Sorridente, Custode ritirato e Cuore di Magma — 7 novembre',
+    titleEn: 'Bruto Sorridente, retired Keeper and Magma Heart — November 7',
+    contentIt: r'''
+Il Bruto dal Sorriso Cavo si chiama Bruto Sorridente. Il Cuore della Caldera si chiama Cuore di Magma e può volare. Il volo naturale è un tratto di locomozione indicato nelle regole speciali del catalogo, senza bonus numerici, nuove tecniche o immunità. Le varianti ereditano i nomi e il Cuore conserva la rigenerazione di lava. Gli ID storici e i nomi personali salvati sono conservati.
+
+Sulla mappa locale o del Master, apri il menu del token collegato alla scheda con clic destro o pressione prolungata. Il gestore del token può scegliere Movimento in volo e inserire la quota desiderata in metri. Salita e discesa consumano la distanza percorsa dal Movimento residuo e rispettano i vincoli di turnistica già applicati al movimento orizzontale. La quota si salva nella scena e viene mostrata quando il Master condivide la mappa. L’editor del token permette ancora di impostare manualmente la quota.
+
+Il Custode con Mani Inverse e il suo Rituale sono ritirati dal catalogo attivo, dai nuovi incontri e dalla vendita di nuove pagine. Gli ID e le definizioni restano disponibili alle schede, alle pagine già ottenute e alle personalizzazioni salvate.
+
+I bersagli di Precisione delle voci base seguono le immagini scelte. Il Ciclope Non Morto C ha un occhio centrale, due braccia e due gambe. La Sentinella a Spirali A ha una lente centrale. Le anatomie personalizzate dal Master mantengono la precedenza.
+''',
+    contentEn: r'''
+The Bruto dal Sorriso Cavo is now named Bruto Sorridente. The Caldera Heart is now named Magma Heart and can fly. Natural flight is a locomotion trait in the catalogue’s special rules and grants no numeric bonuses, new techniques or immunities. Variants inherit the new names and Magma Heart retains lava regeneration. Historical IDs and saved personal names are preserved.
+
+On the local or Master map, right-click or long-press a token linked to its sheet. Its manager can choose Flight movement and enter a target elevation in metres. Ascent and descent spend the distance travelled from remaining Movement and follow the existing turn restrictions for horizontal movement. The scene saves the elevation and shows it when the Master shares the map. The token editor still allows manual elevation changes.
+
+The Keeper with Inverted Hands and its Ritual variant are retired from the active catalogue, new encounters and new Book-page sales. Their IDs and definitions remain available to existing sheets, previously obtained pages and saved customizations.
+
+Precision targets for the base entries follow the chosen artwork. The Undead Cyclops C has one central eye, two arms and two legs. The Spiral Sentinel A has one central lens. The Master’s custom anatomy takes precedence.
+''',
+  ),
+  ManualSection(
     titleIt: 'Assassino NPC nemico, ritiri e Scarabeo — 6 novembre',
     titleEn: 'Enemy NPC Assassin, retirements and Beetle — November 6',
     contentIt: r'''

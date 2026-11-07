@@ -227,6 +227,10 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
           : runicGolem
           ? 'costrutto umanoide, due braccia, due gambe, testa a calotta senza occhi'
           : switch (entry.id) {
+              'ciclope_non_morto' =>
+                'umanoide, testa con un occhio centrale, torace, due braccia e due gambe',
+              'inspired_sentinella_spirale' =>
+                'costrutto con una lente centrale',
               'manichino_spada' || 'manichino_baghest' =>
                 'umanoide, due braccia, due gambe e un occhio nella guardia della lama',
               'mostro_sabbia' =>
@@ -333,6 +337,8 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             : runicGolem
             ? {'arms': 2, 'legs': 2, 'eyes': 0}
             : switch (entry.id) {
+                'ciclope_non_morto' => {'arms': 2, 'legs': 2, 'eyes': 1},
+                'inspired_sentinella_spirale' => {'eyes': 1},
                 'manichino_spada' ||
                 'manichino_baghest' => {'arms': 2, 'legs': 2, 'eyes': 1},
                 'mostro_sabbia' => {'legs': 4, 'eyes': 2, 'horns': 2},
@@ -500,7 +506,11 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       has(r'occhi|occhio|lenti|lente|pupilla')) {
     group(
       'eyes',
-      has(r'lenti|lente') ? 'Lente' : 'Occhio',
+      switch (entry.id) {
+        'ciclope_non_morto' => 'Occhio centrale',
+        'inspired_sentinella_spirale' => 'Lente centrale',
+        _ => has(r'lenti|lente') ? 'Lente' : 'Occhio',
+      },
       'Occhi',
       count(
         'occhi|occhio|lenti|lente',

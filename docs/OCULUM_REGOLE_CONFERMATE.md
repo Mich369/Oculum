@@ -1,5 +1,25 @@
 # Oculum — registro delle regole confermate
 
+## Evocazioni nella cartella dell’evocatore — 7 novembre
+
+L’utente ha specificato **«quando una entità evoca un mostro o un occhio dei caduti anche se player staranno nella stessa cartella»** e **«es patalpa evoca patalpa il secondo sarà nella cartella sotto il primo»**. La nuova scheda di un evocato si colloca immediatamente sotto la scheda di chi lo ha evocato, nella stessa cartella esistente o a livello principale. Vale per mostri, Occhi dei Caduti e creature già evocate che evocano a loro volta. Il legame usa il tag della scheda, indipendentemente dal nome.
+
+Un Occhio ripristinato si colloca sotto il suo proprietario. Quando si libera uno slot vuoto riutilizzato, lo slot recupera la posizione precedente. Si può spostare a mano una scheda già collocata e i normali aggiornamenti rispettano quello spostamento.
+
+Per le copie online già condivise con i permessi esistenti, l’abbinamento richiede tag sorgente, campagna e mittente. Se la copia dell’evocatore arriva dopo, l’evocato resta temporaneamente nella posizione predefinita, nella cartella Online per Master e Co-Master, poi si colloca sotto l’evocatore. Le regole di visibilità, condivisione e turnistica restano quelle della campagna.
+
+## Bruto Sorridente, Custode ritirato e Cuore di Magma — 7 novembre
+
+Il **Bruto dal Sorriso Cavo** si chiama **Bruto Sorridente** e il **Cuore della Caldera** si chiama **Cuore di Magma**. Le varianti ereditano i nomi del catalogo. Gli ID storici `inspired_bruto_sorriso_cavo` e `cuore_lava` e i nomi personali già salvati sono conservati.
+
+Il **Cuore di Magma** può volare. Il catalogo lo indica come tratto di volo naturale, modificabile nelle regole speciali della voce. La conferma riguarda la locomozione, senza assegnare bonus numerici, nuove tecniche o immunità.
+
+Sulla mappa locale o del Master, il gestore del token collegato alla scheda può aprire **Movimento in volo** con un clic destro o una pressione prolungata. Indica la quota desiderata in metri, anche decimali. La salita e la discesa consumano la distanza percorsa dal Movimento residuo, fino al limite disponibile e con gli stessi vincoli di turnistica del movimento orizzontale. La quota è salvata nella scena e viene mostrata ai partecipanti quando il Master condivide la mappa. L'editor del token consente ancora di impostare manualmente la quota.
+
+Il **Custode con Mani Inverse** e la sua variante Rituale sono ritirati dal catalogo attivo, dai nuovi incontri e dalla vendita di nuove pagine. L’ID `custode_mani_inverse`, l’ID della variante e le relative definizioni restano disponibili alle schede, alle pagine già ottenute e alle personalizzazioni salvate.
+
+Le scelte **Ciclope Non Morto C** e **Sentinella a Spirali A** sono rispecchiate nei bersagli di Precisione delle due voci base. Il Ciclope Non Morto ha un occhio centrale, due braccia e due gambe. La Sentinella ha una lente centrale. Le anatomie personalizzate dal Master nelle schede mantengono la precedenza.
+
 ## Assassino NPC nemico, Armaiolo e ritiri mirati — 6 novembre
 
 Richiesta: **«Duellante Senza Palpebre a e chiamalo "assassino" affidandogli il ruolo npc quando lo generi»**; precisazione successiva esplicita: **«ovviamente npc nemico»**. La base diventa **Assassino**, vero NPC nemico nelle nuove schede, con ID legacy `duellante_senza_palpebre`. Conserva statistiche, profilo di crescita, capacità, costi, recuperi e inventario precedenti; non viene resa alleata dal solo flag NPC e non riceve una nuova moralità. Le categorie e le personalizzazioni già salvate non sono migrate o sovrascritte.

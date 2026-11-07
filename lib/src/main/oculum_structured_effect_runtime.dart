@@ -1013,6 +1013,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     }
     schedePersonaggio.add(clone);
     assicuraTagSchede();
+    registerSummonSheetPlacement(index, ownerTag);
     final actualTag = sheetTagAt(index);
     final localOwnerInTurnOrder = masterInitiativeTokens.any(
       (token) =>
