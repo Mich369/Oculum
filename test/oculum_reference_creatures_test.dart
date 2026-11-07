@@ -233,6 +233,10 @@ void main() {
         state.activeStructuredEffects.clear();
         state.livelloController.text = '0';
         state.gradoController.text = '0';
+        // Default subtraits are unlocked during damage resolution. Clear
+        // derived Luck so its automatic dodge cannot mask the mantle hit.
+        state.fortuna = 0;
+        state.karmaController.text = '0';
         state.resilienzaController.text = '100';
         state.currentResilienzaController.text = '100';
         state.volontaController.text = '0';
@@ -251,7 +255,6 @@ void main() {
         state.modificatoreDannoSelezionato = 'Normale';
         for (final dynamic stat in state.hiddenEyeStats) {
           stat.valore = stat.id == 'resistenza' ? 100 : 0;
-          stat.unlocked = stat.id == 'resistenza';
         }
         state.masterInitiativeActiveIndex = resource == 'azione' ? 0 : 1;
         final token = state.masterInitiativeTokens.first as Map;
@@ -269,6 +272,7 @@ void main() {
         });
         p.recordCurrentEncounter();
         p.invalidateDerivedCaches();
+        expect(p.subtraitValue('fortuna'), 0);
         final request = <String, dynamic>{
           'id': 'mantle-below-resistance-$resource',
           'scope': p.permissionScope,
