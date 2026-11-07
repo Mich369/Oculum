@@ -32,6 +32,8 @@ Compilate in locale le edizioni Windows e Windows Test dal worktree. Le cartelle
 
 Preflight di pubblicazione del 7 novembre. Corretti tre rilievi statici senza cambiare la logica. L’analisi Flutter è pulita. La prova di Materiale sessione attende ora la fine dello scorrimento e tocca il pulsante effettivamente visibile. Passati 7 test di navigazione e Materiale sessione e 34 test Python di pubblicazione, firma e installazione in una directory temporanea del progetto. Verificata la separazione dei file di consegna dalla documentazione locale OcuCraft. Le ricevute originali degli artwork sono conservate localmente e i nuovi record pubblici riportano asset e impronte.
 
+CI del candidato `5d6b52dc`, run `42408580099`. Passati 2.336 test, 15 falliti e 6 saltati. Le build coordinate non sono partite. Corretto il rinvio dell’impatto di rottura dello Scudo Oculum per evitare un timer pendente alla chiusura della scheda. Aggiornati i test alle formule di Vita e Potenza e alla verifica del danno effettivo con log sintetico. L’ultimo gruppo ha 81 casi passati e un critico da stabilizzare, poi superato con una fixture senza difese passive e sopra la soglia del Risveglio. Analisi finale pulita. Nuova CI da verificare.
+
 ### Scudi infranti, usura e riparazione
 
 Rottura normale con −2 a Volontà e Materia, recupero di 1 per turno personale, rinnovo e annullamento con uno Scudo normale ricevuto. Rottura Oculum con −3 al prossimo tiro difensivo effettivo e impatto da 10 + 5 × livello del portatore sui non alleati vicini selezionati. Passati 13 test locali, comprese le difese e le ricevute online simulate. [Regole confermate](OCULUM_REGOLE_CONFERMATE.md)

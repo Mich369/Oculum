@@ -9,9 +9,9 @@ void main() {
   for (final phases in [
     [
       (level: 0, multiplier: 6),
-      (level: 1, multiplier: 9),
-      (level: 2, multiplier: 9),
-      (level: 3, multiplier: 10),
+      (level: 1, multiplier: 7),
+      (level: 2, multiplier: 8),
+      (level: 3, multiplier: 9),
     ],
     [
       (level: 10, multiplier: 11),

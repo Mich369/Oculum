@@ -143,7 +143,7 @@ void main() {
       expect(total(), 27 + 9);
       expect(stat('Oculum'), 0);
       final firstRes = stat('Resilienza');
-      expect(stat('Vita'), firstRes * 9);
+      expect(stat('Vita'), firstRes * 7);
       await tester.enterText(field('Livello'), '2');
       await tester.pump();
       expect(total(), 27 + 18);
@@ -188,11 +188,11 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       expect(total(), 36);
-      expect(stat('Vita'), firstRes * 9 - 7);
+      expect(stat('Vita'), firstRes * 7 - 7);
       await tester.enterText(field('Livello'), '2');
       await tester.pump();
       expect(total(), 45);
-      expect(stat('Vita'), stat('Resilienza') * 9 - 7);
+      expect(stat('Vita'), stat('Resilienza') * 8 - 7);
       await tester.enterText(field('Livello'), '0');
       await tester.pump();
       expect(total(), 27);

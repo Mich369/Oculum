@@ -7,6 +7,9 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'oculum_escape_provoker_test.dart' as fixtures;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 
+const _fixtureResilience = 20;
+const _fixtureMaxHp = _fixtureResilience * 9; // Grade 0, level 3.
+
 Future<(dynamic, OculumPerformanceProbe)> _mount(WidgetTester tester) async {
   final (state, p) = await fixtures.mountFight(tester);
   state.arti.clear();
@@ -25,16 +28,19 @@ Future<(dynamic, OculumPerformanceProbe)> _mount(WidgetTester tester) async {
           'box': <String, dynamic>{'maximumHp': 20},
         },
       };
-  state.resilienzaController.text = '20';
-  state.currentResilienzaController.text = '20';
+  state.resilienzaController.text = '$_fixtureResilience';
+  state.currentResilienzaController.text = '$_fixtureResilience';
   state.livelloController.text = '3';
   state.gradoController.text = '0';
-  state.currentHpController.text = '200';
+  state.currentHpController.text = '$_fixtureMaxHp';
   state.scudoController.text = '0';
   state.scudoOculumController.text = '0';
   state.scudoCriticoController.text = '0';
   state.hpTempController.text = '0';
   state.scudoSalvataggioAttivo = false;
+  state.fortuna = 0;
+  state.karmaController.text = '-1'; // Offsets the level 3 Luck bonus.
+  state.currentOculumController.text = '0';
   state.modificatoreDannoSelezionato = 'Normale';
   p.invalidateDerivedCaches();
   p.recordCurrentEncounter();
@@ -250,7 +256,7 @@ void main() {
       await p.resolveCombatDefense(packet, 'cm', 20, natural: 10);
       expect(packet['referenceAnatomicalTargetUnavailable'], isTrue);
       expect(readIntValue((packet['damageReceipt'] as Map)['hpLost']), 0);
-      expect(p.currentHp(), 200);
+      expect(p.currentHp(), _fixtureMaxHp);
       expect(p.shieldTotal(), 50);
       expect(p.constructCoreHp, beforeCore);
       await p.damageConstructCore(1000);
@@ -267,6 +273,7 @@ void main() {
     'real box hit damages body once and a different campaign cannot expose it',
     (tester) async {
       final (state, p) = await _mount(tester);
+      expect(p.subtraitValue('fortuna'), 0);
       final foreign = _hit(p, 'foreign', 'box')..['scope'] = 'other-room';
       await p.anatomicalTargetHit(foreign, hpLost: 100, critical: false);
       expect(p.anatomicalPartsSnapshot()['parts'], isNull);
@@ -287,7 +294,7 @@ void main() {
       await p.resolveCombatDefense(packet, 'cm', 20, natural: 10);
       final lost = readIntValue((packet['damageReceipt'] as Map)['hpLost']);
       expect(lost, greaterThanOrEqualTo(20));
-      expect(p.currentHp(), 200 - lost);
+      expect(p.currentHp(), _fixtureMaxHp - lost);
       expect(p.anatomicalTargetAvailable('core'), isTrue);
       expect(
         ((p.anatomicalPartsSnapshot()['parts'] as Map)['box']

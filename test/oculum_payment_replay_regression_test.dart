@@ -171,18 +171,18 @@ void main() {
       final (state, p) = await fixtures.mountFight(tester);
       _cleanCosts(state);
       p.normalizeInitiative();
-      expect(p.maximumHp(), 200);
+      expect(p.maximumHp(), 180);
       final before = p.coreStats();
       final xpBefore = _resourceXp(p);
       expect(p.payArtResources({'resilienza': 6, 'hp': 150}), false);
       expect(state.currentHpController.text, '150');
       expect(p.coreStats(), before);
-      expect(p.maximumHp(), 200);
+      expect(p.maximumHp(), 180);
       expect(_resourceXp(p), xpBefore);
       // The feasible payment is independent of the editor's insertion order.
       expect(p.payArtResources({'hp': 10, 'resilienza': 6}), true);
       expect(state.currentResilienzaController.text, '14');
-      expect(state.currentHpController.text, '130');
+      expect(state.currentHpController.text, '116');
       expect(_resourceXp(p)['statsSpent'], 6);
       expect(_resourceXp(p)['hpLost'], 0);
       await closeFixture(tester, p);

@@ -445,9 +445,10 @@ extension _OculumStormBandits on _OculumHomePageState {
     final receipt = 'oculum-shield:${DateTime.now().microsecondsSinceEpoch}';
     _oculumShieldBreakImpactQueue = _oculumShieldBreakImpactQueue
         .then((_) async {
+          if (!mounted) return;
           // The original damage request commits its own receipt before target
-          // selection can switch to another owned sheet.
-          await Future<void>.delayed(Duration.zero);
+          // selection can switch to another owned sheet in the next frame.
+          await WidgetsBinding.instance.endOfFrame;
           if (!mounted ||
               permissionScope != scope ||
               onlineCombatEncounterId != encounter ||

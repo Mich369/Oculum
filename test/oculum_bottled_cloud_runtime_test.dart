@@ -8,6 +8,9 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'oculum_escape_provoker_test.dart' as fixtures;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 
+const _fixtureResilience = 10;
+const _fixtureMaxHp = _fixtureResilience * 9; // Grade 0, level 3.
+
 class _FixedRoll implements Random {
   _FixedRoll(this.roll);
   final int roll;
@@ -35,15 +38,15 @@ Future<(dynamic, OculumPerformanceProbe, CharacterArt)> _mount(
   state.activeConditions.clear();
   state.livelloController.text = '3';
   state.gradoController.text = '0';
-  state.resilienzaController.text = '10';
-  state.currentResilienzaController.text = '10';
+  state.resilienzaController.text = '$_fixtureResilience';
+  state.currentResilienzaController.text = '$_fixtureResilience';
   state.volontaController.text = '10';
   state.currentVolontaController.text = '10';
   state.materiaController.text = '10';
   state.currentMateriaController.text = '10';
   state.oculumController.text = '50';
   state.currentOculumController.text = '50';
-  state.currentHpController.text = '100';
+  state.currentHpController.text = '$_fixtureMaxHp';
   state.schedePersonaggio[state.schedaCorrente]['monsterBookSourceId'] =
       'nuvola_in_bottiglia';
   state.scudoController.text = '0';
@@ -366,7 +369,7 @@ void main() {
       expect(probe.bottledCloudPhaseNumber(), 1);
       final critical = hit('break-bottle');
       probe.bottledCloudPhase(critical, critical: true);
-      expect(probe.currentHp(), 90);
+      expect(probe.currentHp(), 50 + _fixtureMaxHp * 40 ~/ 100);
       expect(probe.bottledCloudPhaseNumber(), 2);
       final saved = probe.snapshot();
       probe.load(saved);
@@ -392,14 +395,19 @@ void main() {
         critical: true,
       );
       expect(probe.currentHp(), 0);
-      state.currentHpController.text = '15';
+      const thresholdHp = _fixtureMaxHp * 15 ~/ 100;
+      state.currentHpController.text = '${thresholdHp + 1}';
+      probe.bottledCloudPhase(hit('above-threshold'), critical: false);
+      expect(probe.bottledCloudPhaseNumber(), 1);
+      state.currentHpController.text = '$thresholdHp';
       probe.bottledCloudPhase(
         hit('foreign')..['scope'] = 'foreign',
         critical: false,
       );
-      expect(probe.currentHp(), 15);
+      expect(probe.currentHp(), thresholdHp);
       probe.bottledCloudPhase(hit('threshold'), critical: false);
-      expect(probe.currentHp(), 90);
+      expect(probe.currentHp(), thresholdHp + _fixtureMaxHp * 75 ~/ 100);
+      expect(probe.bottledCloudPhaseNumber(), 2);
       await closeFixture(tester, probe);
     },
   );
@@ -413,10 +421,10 @@ void main() {
       // This scenario needs an HP hit, not a randomly successful automatic
       // Oculum parry or Fortune dodge. Their behavior is tested separately.
       state.currentOculumController.text = '0';
-      for (final stat in state.hiddenEyeStats) {
-        if (stat.id == 'fortuna') stat.unlocked = false;
-      }
+      state.fortuna = 0;
+      state.karmaController.text = '-1'; // Offsets the level 3 Luck bonus.
       probe.invalidateDerivedCaches();
+      expect(probe.subtraitValue('fortuna'), 0);
       // Exercise a real surviving HP hit, independently of derived Defense.
       final maximum = probe.maximumHp();
       state.currentHpController.text = '$maximum';

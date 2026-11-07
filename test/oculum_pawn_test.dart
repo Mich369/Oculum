@@ -4,7 +4,7 @@ import 'package:oculum/main.dart';
 void main() {
   for (final phase in [
     (level: 0, grade: 0, before: 18, after: 30, hpAfter: 23),
-    (level: 1, grade: 0, before: 27, after: 45, hpAfter: 38),
+    (level: 1, grade: 0, before: 21, after: 35, hpAfter: 28),
     (level: 10, grade: 1, before: 33, after: 55, hpAfter: 48),
     (level: 12, grade: 1, before: 42, after: 70, hpAfter: 63),
     (level: 13, grade: 1, before: 45, after: 75, hpAfter: 68),
@@ -63,8 +63,8 @@ void main() {
         unspentStatPoints: 2,
       );
       expect(pawn.allocateStatPoints({'resilienza': 2}), isTrue);
-      expect(pawn.maxHp, 89);
-      expect(pawn.hp, 82);
+      expect(pawn.maxHp, 85);
+      expect(pawn.hp, 78);
       expect(pawn.maxHp - pawn.hp, 7);
     },
   );
@@ -386,7 +386,7 @@ void main() {
     expect(grown.experience, 250);
     expect(grown.unspentStatPoints, 4);
     expect(grown.stats['materia'], 7);
-    expect(grown.maxHp, 36);
+    expect(grown.maxHp, 32);
     final legacy = OculumPawnGuardian.fromJson({'id': 'old', 'ownerTag': 'a'});
     expect(legacy.stats, {
       'resilienza': 3,

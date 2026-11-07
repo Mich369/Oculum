@@ -65,8 +65,8 @@ void main() {
           characterLevel: 5,
           characterGrade: 0,
         ),
-        // (100+10+6+3) × 1.2², rounded, plus (20+3+1), minus (40+5+1).
-        149,
+        // (100+10+6+3) × 1.2², rounded, plus (20+3+0), minus (40+5+1).
+        148,
       );
       expect(
         oculumEncounterDifferenceExperience(
