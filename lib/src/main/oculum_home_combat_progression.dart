@@ -2035,6 +2035,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int logPenalty = 0,
     bool appliesAttackDamageBonus = false,
     bool oculumPowered = false,
+    bool consumeRollStats = true,
     void Function(int damageBonus)? onOculumDamageBonus,
     void Function(int naturalRoll, int total)? onResolved,
     bool Function()? canCommitFortuneRoll,
@@ -2061,7 +2062,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             defenseOrigin != (sheetFeedbackTarget, onlineCombatEncounterId)) {
       return;
     }
-    if (stat.id == 'manifestazione_potere') {
+    if (consumeRollStats && stat.id == 'manifestazione_potere') {
       final consumptionRoll = Random.secure().nextInt(100);
       final consumed = oculumManifestationConsumesOculum(consumptionRoll)
           ? spendOculum(1, scheduleSave: false)
@@ -2092,7 +2093,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       setState(() => schivateOculumBonus++);
       programmaSalvataggio();
     }
-    final oculumSpend = consumaOculumTiro(forAttack: appliesAttackDamageBonus);
+    final oculumSpend = consumeRollStats
+        ? consumaOculumTiro(forAttack: appliesAttackDamageBonus)
+        : (spent: 0, bonus: 0, damageBonus: 0);
     final reactionRollBonus = consumePendingReactionRollBonus();
     var bonus =
         hiddenEyeTotal(stat) -
@@ -2192,7 +2195,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             volonta: volontaTotale(),
           )
         : hiddenEyeStatGroup(stat.id);
-    final statConsumata = usaFortuna || karmaNonConsumabile
+    final statConsumata = !consumeRollStats || usaFortuna || karmaNonConsumabile
         ? ''
         : consumoElevatoStatKey(stat.nome, subtraitGroup: consumptionGroup);
     final consumoFortuna = usaFortuna ? consumeFortunaForRoll() : 0;

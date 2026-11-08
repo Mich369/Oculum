@@ -1908,7 +1908,14 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
             builder: (context, setDialogState) {
               final modes = modesFor(type);
               if (!modes.contains(mode)) mode = modes.first;
-              final targetOptions = structuredEffectTargetOptions(type);
+              final targetOptions = [
+                ...structuredEffectTargetOptions(type),
+                if (type == 'planar' && seed.target == oculumOculumTheftKind)
+                  oculumOculumTheftKind,
+                if (type == 'modifica_statistica' &&
+                    seed.id.startsWith('oculum_theft_amplify_'))
+                  'tutte',
+              ];
               final needsTarget = targetOptions.isNotEmpty;
               final isHealing = type == 'cura';
               final isCost = type == 'consumo_risorsa';
@@ -2260,7 +2267,14 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                               for (final value in targetOptions)
                                 DropdownMenuItem<String>(
                                   value: value,
-                                  child: Text(value),
+                                  child: Text(switch (value) {
+                                    oculumOculumTheftKind => 'Sfera Predatrice',
+                                    'tutte' => t(
+                                      'Tutte le statistiche',
+                                      'All stats',
+                                    ),
+                                    _ => value,
+                                  }),
                                 ),
                             ],
                             onChanged: (value) => setDialogState(() {

@@ -2441,6 +2441,27 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
               readIntValue(raw['remaining']) == 0,
         );
         sheet['activeStructuredEffects'] = effects;
+        if (controlsOnlineCombatSheet(tag)) {
+          final savedSkills = sheet['skills'];
+          if (savedSkills is List) {
+            for (final skill in savedSkills.whereType<Map>()) {
+              final forms = skill['forme'];
+              if (skill['id'] != oculumOculumTheftKind || forms is! List) {
+                continue;
+              }
+              for (final form in forms.whereType<Map>()) {
+                final raw = form['cooldownStrutturato'];
+                if (raw is! Map) continue;
+                final cooldown = OculumAbilityCooldown.fromJson(
+                  Map<String, dynamic>.from(raw),
+                );
+                if (cooldown.tick('turni')) {
+                  raw['remaining'] = cooldown.remaining;
+                }
+              }
+            }
+          }
+        }
         advanceInactiveSheetStatOpens(tag, sheet);
       }
     }

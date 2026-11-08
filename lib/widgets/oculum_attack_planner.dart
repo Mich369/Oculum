@@ -77,6 +77,8 @@ class OculumAttackPlanner extends StatefulWidget {
     this.initialChoice = 'vc',
     this.minimumTargets = 1,
     this.maximumTargets = 1,
+    this.distinctTargets = false,
+    this.comparisonRule,
     this.elements = const [],
     this.initialElement = 'fisico',
     this.availableForTarget,
@@ -93,6 +95,8 @@ class OculumAttackPlanner extends StatefulWidget {
   final String? initialTarget;
   final String initialChoice;
   final int minimumTargets, maximumTargets;
+  final bool distinctTargets;
+  final String? comparisonRule;
   final List<OculumCombatElement> elements;
   final String initialElement;
   final bool Function(String target, OculumAttackChoice choice)?
@@ -189,6 +193,7 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
   }
 
   List<String> completedExtraTargets() {
+    if (widget.distinctTargets) return List.of(extraTargets);
     final result = [target, ...extraTargets];
     final selected = result.toSet().toList();
     final random = Random();
@@ -299,32 +304,35 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
               },
             ),
             if (widget.maximumTargets > 1) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Colpi sul bersaglio: ${1 + extraTargets.where((id) => id == target).length}',
+              if (!widget.distinctTargets)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Colpi sul bersaglio: ${1 + extraTargets.where((id) => id == target).length}',
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Ripeti sul bersaglio',
-                    onPressed: 1 + extraTargets.length < widget.maximumTargets
-                        ? () => setState(() => extraTargets.add(target))
-                        : null,
-                    icon: const Icon(Icons.add),
-                  ),
-                  IconButton(
-                    tooltip: 'Rimuovi colpo ripetuto',
-                    onPressed: extraTargets.contains(target)
-                        ? () => setState(() => extraTargets.remove(target))
-                        : null,
-                    icon: const Icon(Icons.remove),
-                  ),
-                ],
-              ),
+                    IconButton(
+                      tooltip: 'Ripeti sul bersaglio',
+                      onPressed: 1 + extraTargets.length < widget.maximumTargets
+                          ? () => setState(() => extraTargets.add(target))
+                          : null,
+                      icon: const Icon(Icons.add),
+                    ),
+                    IconButton(
+                      tooltip: 'Rimuovi colpo ripetuto',
+                      onPressed: extraTargets.contains(target)
+                          ? () => setState(() => extraTargets.remove(target))
+                          : null,
+                      icon: const Icon(Icons.remove),
+                    ),
+                  ],
+                ),
               if (1 + extraTargets.length < widget.minimumTargets)
-                const Text(
-                  'I colpi rimanenti saranno distribuiti casualmente fra i bersagli selezionati.',
+                Text(
+                  widget.distinctTargets
+                      ? 'Seleziona almeno ${widget.minimumTargets} bersagli distinti.'
+                      : 'I colpi rimanenti saranno distribuiti casualmente fra i bersagli selezionati.',
                 ),
               Text(
                 'Bersagli: ${1 + extraTargets.length} · minimo ${widget.minimumTargets}, massimo ${widget.maximumTargets}',
@@ -354,8 +362,9 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                 ),
             ],
             const SizedBox(height: 12),
-            const Text(
-              'VC è il tiro di attacco ordinario. Per un tiro alternativo descrivi l’attacco a voce al Master; non serve scriverlo.',
+            Text(
+              widget.comparisonRule ??
+                  'VC è il tiro di attacco ordinario. Per un tiro alternativo descrivi l’attacco a voce al Master; non serve scriverlo.',
             ),
             const SizedBox(height: 8),
             Align(
@@ -491,18 +500,19 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
                 onChanged: (_) => setState(() {}),
               ),
             const SizedBox(height: 8),
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: const Text('Regole del confronto'),
-              children: [
-                const Text(
-                  'Quasi riuscito se superi la difesa di 1–6 in Facile, 1–5 in Medio, 1–3 in Difficile. In Oculum: attacco pari alla difesa o inferiore di 1. In questi casi Difesa ×1,5 e durata degli effetti dimezzata, minimo 0. Attacco doppio: bonus critico ×2 e Fragilità. Difesa doppia: reazione critica gratuita.',
-                ),
-                const Text(
-                  'Le stime usano solo i modificatori noti: non includono reazioni, spese future, dadi speciali o decisioni del Master.',
-                ),
-              ],
-            ),
+            if (widget.comparisonRule == null)
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: const Text('Regole del confronto'),
+                children: [
+                  const Text(
+                    'Quasi riuscito se superi la difesa di 1–6 in Facile, 1–5 in Medio, 1–3 in Difficile. In Oculum: attacco pari alla difesa o inferiore di 1. In questi casi Difesa ×1,5 e durata degli effetti dimezzata, minimo 0. Attacco doppio: bonus critico ×2 e Fragilità. Difesa doppia: reazione critica gratuita.',
+                  ),
+                  const Text(
+                    'Le stime usano solo i modificatori noti: non includono reazioni, spese future, dadi speciali o decisioni del Master.',
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -513,7 +523,11 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
         child: const Text('Annulla'),
       ),
       FilledButton(
-        onPressed: target.isEmpty || !widget.choices.any((c) => c.id == choice)
+        onPressed:
+            target.isEmpty ||
+                !widget.choices.any((c) => c.id == choice) ||
+                (widget.distinctTargets &&
+                    1 + extraTargets.length < widget.minimumTargets)
             ? null
             : () => Navigator.pop(
                 context,

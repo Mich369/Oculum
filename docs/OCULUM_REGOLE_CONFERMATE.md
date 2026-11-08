@@ -1,5 +1,13 @@
 # Oculum — registro delle regole confermate
 
+## Pergamena Sfera Predatrice
+
+- Una pergamena di Skill Oculum è ottenibile dal mercante. La Skill sottrae Oculum ai nemici colpiti e lo raccoglie in una sfera. La quantità sottraibile e il numero massimo di nemici aumentano con la forma. La dichiarazione richiede almeno due bersagli. Si usa un tiro di Manifestazione del Potere e una difesa di Canalizzazione per ogni bersaglio.
+- Chi lancia sceglie se ricaricarsi con il solo Oculum effettivamente sottratto, fino al proprio massimo con un eccesso al più di 5, oppure ottenere +3 a Resilienza, Volontà, Materia e Oculum per ogni nemico colpito da cui ha sottratto Oculum. Il bonus dura 3 turni personali.
+- La Skill appresa richiede 1 Azione, costa zero Oculum e recupera in 3 turni personali. La pergamena usata direttamente impiega la sua forma più alta e costa zero Oculum.
+- La Forma I è disponibile quando apprendi la Skill. La Forma II si sblocca dopo 3 lanci validi, la III dopo 7, la IV dopo 12 e la V dopo 18. Il conteggio è cumulativo, per scheda, e comprende i lanci della Skill appresa.
+- Valori iniziali modificabili in preparazione. Offre la pergamena l’Alchimista fra le scorte casuali. Le forme I–V sottraggono fino a 3/5/7/9/11 Oculum per nemico e accettano fino a 2/3/4/5/6 bersagli. Il pareggio favorisce la difesa. L’eccesso della ricarica si esaurisce a fine Fight. La scelta si fa prima del tiro.
+
 ## Traguardi delle statistiche e Open
 
 - Le prime due statistiche base permanenti che arrivano a 20 danno ciascuna una scelta fra due capacità. Le prime tre che arrivano a 35 danno ciascuna una scelta fra tre capacità. A 35 si sceglie anche dal gruppo di 20 se quella statistica non ha ancora una scelta. Nei salvataggi senza storico il giocatore sceglie l’ordine fra le statistiche qualificate.

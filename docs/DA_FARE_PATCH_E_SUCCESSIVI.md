@@ -1,5 +1,15 @@
 # Oculum — attività, conferme e consegne
 
+## Sfera Predatrice — aggiornamento successivo alla 279
+
+Pergamena Oculum ottenibile fra le offerte casuali dell’Alchimista. La ricarica usa solo Oculum effettivamente sottratto, con eccesso massimo 5. L’amplificazione dà +3 a tutte le statistiche per nemico da cui è stato sottratto Oculum e dura tre turni personali. La Skill appresa usa una Azione, zero Oculum e tre turni di recupero. Le cinque forme e i limiti iniziali sono modificabili. La build 279 è stata congelata prima di questa richiesta.
+
+Verifica locale mirata del 8 novembre. Analisi Flutter senza problemi e 104 test passati. Coperti acquisto, JSON delle forme, lancio appreso a riserva zero, selezione di due bersagli distinti, cap con riserva temporaneamente soppressa, difesa senza doppio addebito, chiusura delle richieste per bersagli divenuti alleati, progressione, Open e log cumulativo. La difesa Sfera è stata provata localmente. La verifica in una partita online reale resta separata.
+
+## Pubblicazione 279 — 8 novembre 2026
+
+GitHub ha compilato il commit `4e817604`. La CI ha superato 2.426 test e ne ha saltati 6. Sono passate anche 4 prove online autenticate automatizzate e, in una stanza sintetica separata, la verifica del trasporto dell’etichetta Vita e dei ruoli nelle richieste Materia. Quest’ultima non comprende la sequenza completa di movimento su mappa fra due dispositivi. Verificati 12 archivi pubblici con richieste HTTP anonime e il commit servito da Pages. Il controllo in Chrome ha aperto il menu Scarica Oculum e verificato le voci delle piattaforme, comprese le due edizioni Windows distinte. L’installazione locale è ripartita da una copia parziale dell’archivio Linux. [Build GitHub](https://github.com/Mich369/Oculum/actions/runs/42489112871)
+
 ## Ferite, colori di squadra, Open e Golem di Carne — 8 novembre 2026
 
 Turnistica principale e compatta, viste del Master e selettore dei bersagli usano il verde predefinito degli alleati e i colori personalizzati delle squadre. La turnistica condivisa mostra Ferito a 75%, Gravemente ferito a 50% e Morente a 25% della Vita massima. Le soglie sono inclusive. A Vita zero viene mostrato lo stato effettivo. Il client aggiornato invia lo stato della ferita nella turnistica, nel log della stanza, nell’anteprima e nella mappa pubblica. Decodifica anche i precedenti pacchetti numerici in etichette per queste viste. Le schede autorizzate del Master conservano i valori esatti.

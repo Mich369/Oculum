@@ -169,6 +169,12 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
   Map<String, dynamic> data, {
   int? resolvedDamage,
 }) {
+  if (data['kind'] == oculumOculumTheftKind && data['authoredSkill'] is Map) {
+    final skill = CharacterSkill.fromJson(
+      Map<String, dynamic>.from(data['authoredSkill'] as Map),
+    );
+    return skill.forme.last.effettiStrutturati;
+  }
   final configured = oculumReadStructuredEffects(data['effects']);
   if (configured.isNotEmpty) {
     for (final effect in configured.where((e) => e.type == 'preparazione')) {
@@ -309,6 +315,7 @@ Set<OculumCombatAbilityRole> oculumScrollCombatRoles(
     case 'ward':
       return {OculumCombatAbilityRole.defense};
     case 'corruption':
+    case oculumOculumTheftKind:
       return {OculumCombatAbilityRole.attack};
     case 'attack':
     case 'imprison':
@@ -339,6 +346,95 @@ Set<OculumCombatAbilityRole> oculumScrollCombatRoles(
     default:
       return oculumCombatAbilityRoles(effects);
   }
+}
+
+const oculumOculumTheftScrollDescription =
+    'Sfera Predatrice. Scegli almeno due nemici. Con la pergamena usi '
+    'la forma più alta configurata, una volta, spendendo 1 Azione e nessuna '
+    'riserva. Recuperi soltanto l’Oculum sottratto, fino al massimale +5 '
+    'durante il Fight. Amplifica dà +3 alle quattro statistiche per ogni '
+    'nemico a cui sottrai Oculum, per 3 turni personali.';
+
+const oculumTheftUsesRequirement = 'oculumTheftUses';
+
+CharacterSkill oculumOculumTheftSkill() => CharacterSkill(
+  id: oculumOculumTheftKind,
+  nome: 'Sfera Predatrice',
+  tipo: 'Attacco',
+  costo: '1 Azione',
+  cooldown: '3 turni personali',
+  descrizione: '',
+  equipaggiata: true,
+  forme: [
+    for (final (index, (roman, uses)) in const [
+      ('I', 0),
+      ('II', 3),
+      ('III', 7),
+      ('IV', 12),
+      ('V', 18),
+    ].indexed)
+      CharacterSkillForm(
+        unlockRequirements: {oculumTheftUsesRequirement: uses},
+        nome: 'Forma $roman',
+        tipo: 'Attacco',
+        costo: '1 Azione',
+        cooldown: '3 turni personali',
+        descrizione:
+            'Assorbi fino a ${3 + 2 * index} Oculum per nemico. Seleziona '
+            'da 2 a ${index + 2} bersagli. Amplifica dà +3 alle quattro '
+            'statistiche per bersaglio a cui sottrai Oculum, per 3 turni personali.',
+        costoStrutturato: OculumSkillCost(resource: 'nessuna'),
+        cooldownStrutturato: OculumAbilityCooldown(amount: 3),
+        effettiStrutturati: [
+          OculumStructuredEffect(
+            id: 'oculum_theft_drain_${index + 1}',
+            type: 'planar',
+            target: oculumOculumTheftKind,
+            recipient: 'nemico',
+            resource: 'oculum',
+            valueExpression: '${3 + 2 * index}',
+            minimumTargets: 2,
+            maximumTargets: index + 2,
+            narrativeText: 'Assorbe l’Oculum effettivamente sottratto.',
+            elementType: 'oculum',
+          ),
+          OculumStructuredEffect(
+            id: 'oculum_theft_amplify_${index + 1}',
+            type: 'modifica_statistica',
+            target: 'tutte',
+            valueExpression: '3',
+            mode: 'temporaneo',
+            duration: '3',
+          ),
+        ],
+      ),
+  ],
+);
+
+InventoryItem oculumOculumTheftScrollItem(int grade) {
+  final g = grade.clamp(0, 12).toInt();
+  return InventoryItem(
+    nome: '[Sfera Predatrice] [Pergamena] [Grado $g]',
+    peso: .1,
+    quantita: 1,
+    gradoOggetto: g,
+    note:
+        '$oculumOculumTheftScrollDescription '
+        'Apprendibile con 20 naturale, DT ${oculumScrollLearningDifficulty(g)} '
+        'e prova di apprendimento. Valore ${oculumScrollValue(g)} Obser.',
+    craftData: {
+      'scroll': {
+        'id': oculumOculumTheftKind,
+        'name': 'Sfera Predatrice',
+        'element': 'oculum',
+        'grade': g,
+        'kind': oculumOculumTheftKind,
+        'description': oculumOculumTheftScrollDescription,
+        'willCost': 0,
+        'authoredSkill': oculumOculumTheftSkill().toJson(),
+      },
+    },
+  );
 }
 
 InventoryItem oculumGratitudineScrollItem(int grade) {
@@ -784,6 +880,56 @@ InventoryItem oculumScrollItem(
 }
 
 extension _OculumScrolls on _OculumHomePageState {
+  void maybeLearnOculumTheftFromScroll(
+    Map<String, dynamic> data, {
+    required int natural,
+    required int total,
+  }) {
+    if (natural != 20 || data['authoredSkill'] is! Map) return;
+    final grade = readIntValue(data['grade']);
+    final level = leggiNumero(livelloController);
+    final skillLevel = readIntValue(data['skillLevel']);
+    if (total <
+        oculumScrollLearningDifficulty(
+          grade,
+          skillLevel: skillLevel,
+          characterLevel: level,
+        )) {
+      return;
+    }
+    if (skills.any((skill) => skill.id == oculumOculumTheftKind)) {
+      aggiungiLog('Sfera Predatrice è già stata appresa.');
+      return;
+    }
+    final random = Random.secure();
+    final canLearn = oculumScrollCanLearn(
+      natural,
+      total,
+      grade,
+      random.nextInt(100),
+      difficulty: normalizedCampaignDifficulty(),
+      bonusPercent: currentCombatIsActive() ? random.nextInt(3) + 1 : 0,
+      luck: scrollLearningLuck,
+      characterGrade: activeCriticalGrade(),
+      skillLevel: skillLevel,
+      characterLevel: level,
+      matchingElement: scrollMatchesUsableElement(data),
+    );
+    if (!canLearn) {
+      aggiungiLog('Sfera Predatrice non appresa.');
+      return;
+    }
+    final skill = CharacterSkill.fromJson({
+      ...Map<String, dynamic>.from(data['authoredSkill'] as Map),
+      'id': oculumOculumTheftKind,
+      'scrollData': const <String, dynamic>{},
+      'equipaggiata': true,
+    });
+    setState(() => skills.add(skill));
+    aggiungiLog('Skill appresa: ${skill.nome}.');
+    programmaSalvataggio();
+  }
+
   int get scrollLearningLuck {
     final stat = hiddenEyeStats.where((s) => s.id == 'fortuna').firstOrNull;
     return oculumScrollLuck(
@@ -906,6 +1052,10 @@ extension _OculumScrolls on _OculumHomePageState {
     final origin = currentSheetScrollId();
     if (!mounted ||
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
+      return;
+    }
+    if (data['kind'] == oculumOculumTheftKind && item != null) {
+      await useOculumTheftScroll(data, item);
       return;
     }
     final g = readIntValue(data['grade']).clamp(0, 12);

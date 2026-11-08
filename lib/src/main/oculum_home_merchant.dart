@@ -1504,6 +1504,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   bool merchantOfferMatchesShop(Map<String, dynamic> offer) {
     if (!merchantOfferMatchesPlane(offer)) return false;
     final kind = '${offer['kind']}';
+    if (offer['scrollProfileId'] == oculumOculumTheftKind &&
+        merchantShopType != 'alchimista') {
+      return false;
+    }
     if (const {
       'fabbro_monster_weapon',
       'fabbro_special_weapon',
@@ -3093,6 +3097,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             .where(
               (offer) =>
                   offer['kind'] == 'technique_scroll' &&
+                  offer['scrollProfileId'] != oculumOculumTheftKind &&
                   readIntValue(offer['scrollGrade']) == grade,
             )
             .toList()
@@ -3251,6 +3256,22 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'scrollGrade': grade,
           'desc':
               'Monouso. Costo ${oculumScrollWillCost(grade)} Volontà, CD ${oculumScrollCooldown(grade)} turni, DT ${oculumScrollDifficulty(grade)}. Apprendimento raro secondo difficoltà.',
+        });
+      }
+    }
+    if (merchantShopType == 'alchimista') {
+      final scrollGrade = max(grade, selectedPlane.minimumGrade).clamp(0, 12);
+      final id = 'alchemist_scroll_${oculumOculumTheftKind}_$scrollGrade';
+      if (!merchantStock.any((offer) => offer['id'] == id)) {
+        merchantStock.add({
+          'id': id,
+          'kind': 'technique_scroll',
+          'name': 'Pergamena Sfera Predatrice · Grado $scrollGrade',
+          'cost': oculumScrollValue(scrollGrade),
+          'remaining': 1,
+          'scrollProfileId': oculumOculumTheftKind,
+          'scrollGrade': scrollGrade,
+          'desc': oculumOculumTheftScrollDescription,
         });
       }
     }
@@ -4236,7 +4257,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       }.contains(kind)) {
         offer['remaining'] = 0;
       }
-      if (kind == 'technique_scroll' && offer['blackMarketSelected'] == true) {
+      if (kind == 'technique_scroll' &&
+          (offer['blackMarketSelected'] == true ||
+              offer['scrollProfileId'] == oculumOculumTheftKind)) {
         offer['remaining'] = 0;
       }
       if (item.arma &&
@@ -4958,6 +4981,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return oculumCorruptionScrollItem(readIntValue(offer['scrollGrade']));
     }
     if (offer['kind'] == 'technique_scroll') {
+      if (offer['scrollProfileId'] == oculumOculumTheftKind) {
+        return oculumOculumTheftScrollItem(readIntValue(offer['scrollGrade']));
+      }
       if (offer['scrollProfileId'] == 'provi_gratitudine') {
         return oculumGratitudineScrollItem(readIntValue(offer['scrollGrade']));
       }

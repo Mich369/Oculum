@@ -14,9 +14,14 @@ bool oculumSkillRequirementsMet(
   Map<String, int> stats = const {},
   Map<String, int> speciesKills = const {},
   Map<String, int> namedNpcKills = const {},
+  int oculumTheftUses = 0,
 }) {
   if (level < readIntValue(requirements['level'])) return false;
   if (grade < readIntValue(requirements['grade'])) return false;
+  if (oculumTheftUses <
+      readIntValue(requirements[oculumTheftUsesRequirement])) {
+    return false;
+  }
   final stat = oculumStatKey('${requirements['stat'] ?? ''}');
   if (stat.isNotEmpty &&
       (stats[stat] ?? 0) < readIntValue(requirements['statValue'])) {
@@ -82,6 +87,8 @@ String oculumSkillRequirementDescription(Map r) => [
     ].join(r['killsEither'] == true ? ' oppure ' : ' e '),
   if (readIntValue(r['criticals']) > 0)
     '${r['criticals']} critici riusciti con ${r['criticalSkill']}',
+  if (readIntValue(r[oculumTheftUsesRequirement]) > 0)
+    '${r[oculumTheftUsesRequirement]} lanci validi di Sfera Predatrice',
   if (r['speciesKills'] is Map)
     for (final entry in (r['speciesKills'] as Map).entries)
       '${entry.value} ${entry.key} sconfitti validi per la tua Potenza',
@@ -561,6 +568,7 @@ extension _OculumCreationProgression on _OculumHomePageState {
       skillCriticals: {
         for (final e in progress.entries) '${e.key}': readIntValue(e.value),
       },
+      oculumTheftUses: oculumTheftUses,
       open:
           arti.any((a) => a.openAttiva) ||
           [...titoli, ...trattiRazziali].any((t) => t.openAttiva) ||
@@ -572,6 +580,12 @@ extension _OculumCreationProgression on _OculumHomePageState {
                 i.craftData['titleOpenUsedSinceLongRest'] == true,
           ),
     );
+  }
+
+  String oculumTheftMasteryProgress(Map requirements) {
+    final needed = readIntValue(requirements[oculumTheftUsesRequirement]);
+    if (needed <= 0) return '';
+    return '$oculumTheftUses/$needed lanci validi';
   }
 
   List<CharacterSkill> tutorialSkillPool() {
@@ -1217,11 +1231,29 @@ extension _OculumCreationProgression on _OculumHomePageState {
     key: ValueKey('requirements_$storageId'),
     title: const Text('Requisiti di sblocco'),
     subtitle: Text(
-      oculumSkillRequirementDescription(r).isEmpty
-          ? 'Nessun requisito aggiuntivo'
-          : oculumSkillRequirementDescription(r),
+      [
+        if (oculumSkillRequirementDescription(r).isEmpty)
+          'Nessun requisito aggiuntivo'
+        else
+          oculumSkillRequirementDescription(r),
+        if (oculumTheftMasteryProgress(r) case final progress
+            when progress.isNotEmpty)
+          progress,
+      ].join(' · '),
     ),
     children: [
+      if (r.containsKey(oculumTheftUsesRequirement))
+        campoModello(
+          label: 'Lanci validi di Sfera Predatrice richiesti',
+          initialValue: '${readIntValue(r[oculumTheftUsesRequirement])}',
+          keyboardType: TextInputType.number,
+          onChanged: (value) {
+            setState(() {
+              r[oculumTheftUsesRequirement] = max(0, readIntValue(value));
+            });
+            programmaSalvataggio();
+          },
+        ),
       for (final pair in const [
         ('level', 'Livello minimo'),
         ('grade', 'Grado minimo'),

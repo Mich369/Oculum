@@ -3,7 +3,124 @@ import 'package:flutter/material.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
+import 'oculum_october27_resources_test.dart' show closeFixture;
+import 'oculum_theme_effects_portrait_test.dart' show mountSheet;
+
 void main() {
+  test(
+    'Sfera Predatrice saves all forms and exposes the strongest as attack',
+    () {
+      final item = InventoryItem.fromJson(
+        oculumOculumTheftScrollItem(3).toJson(),
+      );
+      final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
+      final skill = CharacterSkill.fromJson(
+        Map<String, dynamic>.from(scroll['authoredSkill'] as Map),
+      );
+      expect(item.gradoOggetto, 3);
+      expect(scroll['willCost'], 0);
+      expect(skill.nonEvolvibile, isFalse);
+      expect(skill.forme, hasLength(5));
+      const thresholds = [0, 3, 7, 12, 18];
+      bool masteryMet(CharacterSkillForm form, int uses) =>
+          oculumSkillRequirementsMet(
+            form.unlockRequirements,
+            level: 0,
+            subtraits: {},
+            kills: 0,
+            elementalKills: {},
+            skillCriticals: {},
+            oculumTheftUses: uses,
+          );
+      for (final (index, form) in skill.forme.indexed) {
+        final needed = thresholds[index];
+        expect(form.unlockRequirements[oculumTheftUsesRequirement], needed);
+        expect(masteryMet(form, needed), isTrue);
+        if (needed > 0) expect(masteryMet(form, needed - 1), isFalse);
+      }
+      skill.forme[1].unlockRequirements[oculumTheftUsesRequirement] = 2;
+      final restored = CharacterSkill.fromJson(skill.toJson());
+      expect(masteryMet(restored.forme[1], 1), isFalse);
+      expect(masteryMet(restored.forme[1], 2), isTrue);
+      expect(
+        skill.forme.map(
+          (form) => form.effettiStrutturati.first.valueExpression,
+        ),
+        ['3', '5', '7', '9', '11'],
+      );
+      expect(
+        skill.forme.map((form) => form.effettiStrutturati.first.maximumTargets),
+        [2, 3, 4, 5, 6],
+      );
+      expect(
+        skill.forme.every((form) => form.cooldownStrutturato?.amount == 3),
+        isTrue,
+      );
+      final effects = oculumScrollCombatEffects(scroll);
+      expect(effects.first.minimumTargets, 2);
+      expect(effects.first.maximumTargets, 6);
+      expect(oculumScrollCombatRoles(scroll, effects), {
+        OculumCombatAbilityRole.attack,
+      });
+    },
+  );
+
+  testWidgets('the Alchemist can sell Sfera Predatrice as a random offer', (
+    tester,
+  ) async {
+    final dynamic state = await mountSheet(tester, const Size(1440, 900));
+    state.datiCaricati = false;
+    final probe = OculumPerformanceProbe(state);
+    probe.shopOffers();
+    probe.shopType('alchimista');
+    probe.shopOffers();
+    final offer = (state.merchantStock as List)
+        .cast<Map<String, dynamic>>()
+        .singleWhere(
+          (offer) => offer['scrollProfileId'] == oculumOculumTheftKind,
+        );
+    final profile = (state.merchantProfiles as List)
+        .whereType<Map>()
+        .singleWhere(
+          (profile) => profile['id'] == state.merchantActiveProfileId,
+        );
+    final selection = profile['offerSelections']['alchimista'] as Map;
+    final fixedIds = (selection['fixedIds'] as List).toSet();
+    expect(fixedIds, isNot(contains(offer['id'])));
+    final otherRandomIds = (selection['ids'] as List).where(
+      (id) => id != offer['id'] && !fixedIds.contains(id),
+    );
+    selection['ids'] = [
+      ...fixedIds,
+      offer['id'],
+      ...otherRandomIds.take(readIntValue(selection['count']) - 1),
+    ];
+    expect(
+      probe.shopOffers().map((offer) => offer['id']),
+      contains(offer['id']),
+    );
+
+    final cost = probe.shopCost(offer);
+    state.obserController.text = '${cost + 10}';
+    await probe.buyShopOffer(offer);
+    expect(state.obserController.text, '10');
+    expect(offer['remaining'], 0);
+    final purchased = (state.inventario as List)
+        .whereType<InventoryItem>()
+        .singleWhere(
+          (item) => item.craftData['scroll']?['kind'] == oculumOculumTheftKind,
+        );
+    expect(purchased.quantita, 1);
+    probe.shopType('fabbro');
+    expect(
+      probe.shopOffers().any(
+        (offer) => offer['scrollProfileId'] == oculumOculumTheftKind,
+      ),
+      isFalse,
+    );
+    await closeFixture(tester, probe);
+  });
+
   test(
     'Fortuna increases learning within the character Grade cap and higher skills raise the DC',
     () {

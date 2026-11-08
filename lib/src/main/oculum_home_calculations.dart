@@ -1092,6 +1092,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           (includeOpposingChaos ? opposingChaosModifier('resilienza') : 0),
     );
   }
+
   int volontaTotale({bool includeOpposingChaos = true}) => max(
     0,
     currentStatWithRuntimeBuffs('volonta', currentVolonta()) +
@@ -1113,17 +1114,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   // Oculum addormentato blocks the whole available pool, including temporary
   // and runtime bonuses. The raw controller value remains intact so waking
   // does not destroy recoveries or saved bonuses.
-  int oculumTotale() {
+  int oculumTotale({
+    int? storedCurrent,
+    bool ignoreTemporarySuppression = false,
+  }) {
     if (isMeccanio || isThunderBot) return 0;
     final subtotal = max(
       0,
       oculumVisibleTotal(
-            storedCurrent: currentOculum(),
+            storedCurrent: storedCurrent ?? currentOculum(),
             runtimeBonus:
                 runtimeCurrentStatBonus('oculum') + cycleFateGiftBonus,
-            sleeping: oculumAddormentato,
+            sleeping: !ignoreTemporarySuppression && oculumAddormentato,
           ) -
-          planePressurePenalty,
+          (ignoreTemporarySuppression ? 0 : planePressurePenalty),
     );
     return subtotal + senkaMoonStatBonus('oculum', subtotal);
   }
@@ -3043,10 +3047,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final normalMaximum = _currentOculumCapacity;
     final gemReserve = min(
       statGemOverflow['oculum'] ?? 0,
-      max(
-        0,
-        currentTemporaryOculumState().normalCurrent - normalMaximum,
-      ),
+      max(0, currentTemporaryOculumState().normalCurrent - normalMaximum),
     );
     final next = addOculumToTemporaryState(
       state: currentTemporaryOculumState(),
@@ -3100,7 +3101,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
     final overflow = stat35OculumOverflow;
     if (overflow > 0) {
-      setStat35OculumOverflow(max(0, overflow - (temporaryOculum - next.temporary)));
+      setStat35OculumOverflow(
+        max(0, overflow - (temporaryOculum - next.temporary)),
+      );
     }
     applyTemporaryOculumState(next);
     final spent = max(0, before - oculumTotale()).toInt();
@@ -3270,16 +3273,21 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     processConditionRoll();
     final before = currentTemporaryOculumState();
     final overflow = stat35OculumOverflow;
-    final ordinary = overflow == 0 ? before : TemporaryOculumState(
-      normalCurrent: before.normalCurrent,
-      temporary: before.temporary - overflow,
-      rollsRemaining: before.rollsRemaining,
-    );
+    final ordinary = overflow == 0
+        ? before
+        : TemporaryOculumState(
+            normalCurrent: before.normalCurrent,
+            temporary: before.temporary - overflow,
+            rollsRemaining: before.rollsRemaining,
+          );
     final next = registerValidTemporaryOculumRoll(ordinary);
     if (identical(next, ordinary)) return;
     applyTemporaryOculumState(
-      TemporaryOculumState(normalCurrent: next.normalCurrent,
-        temporary: next.temporary + overflow, rollsRemaining: next.rollsRemaining),
+      TemporaryOculumState(
+        normalCurrent: next.normalCurrent,
+        temporary: next.temporary + overflow,
+        rollsRemaining: next.rollsRemaining,
+      ),
       notifyVisibleChange: next.total + overflow != before.total,
     );
     recordCurrentOculumProgress();
@@ -4596,12 +4604,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return max(
       1,
       max(
-            1,
-            resilienzaTotale(
-              includeOpposingChaos: false,
-              rawCurrent: currentResilienza() - temporaryResilience,
-            ),
-          ) *
+                1,
+                resilienzaTotale(
+                  includeOpposingChaos: false,
+                  rawCurrent: currentResilienza() - temporaryResilience,
+                ),
+              ) *
               moltiplicatoreHp() +
           runtimeQuickBonus('hp') +
           manualHpMaximumAdjustment,

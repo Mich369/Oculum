@@ -1684,6 +1684,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   Future<void> counterOnlineAttack(Map<String, dynamic> request) async {
+    if (request['kind'] == oculumOculumTheftKind) return;
     final id = '${request['id']}';
     if (!onlineCombatResolving.add(id)) return;
     try {
@@ -4221,7 +4222,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         !controlsOnlineCombatSheet('${request['targetTag']}')) {
       return;
     }
-    applyTotalPowerExposure(request);
+    if (request['kind'] != oculumOculumTheftKind) {
+      applyTotalPowerExposure(request);
+    }
     request['received'] = true;
     if (oculumIsFreeProtectiveImpact(request)) return;
     if (request['kind'] == 'fate_core_reflection') {
@@ -4321,6 +4324,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     String event,
     Map<String, dynamic> payload,
   ) {
+    if (event == 'combat_attack' &&
+        payload['kind'] == oculumOculumTheftKind &&
+        !oculumTheftPacketFightMatches(payload)) {
+      return;
+    }
     // Reject malformed interception dice before acknowledging or mirroring any
     // claimed resource expenditure into the Master's authoritative tracker.
     if (event == 'combat_attack' && !oculumEscapeAttackDieIsValid(payload)) {
@@ -4556,6 +4564,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               !parasiteStaffPacket(payload, '${request['targetTag']}')) ||
           payload['sourceTag'] != request['sourceTag'] ||
           payload['targetTag'] != request['targetTag']) {
+        return;
+      }
+      if (request['kind'] == oculumOculumTheftKind) {
+        if (request['status'] == 'resolved' ||
+            (request['status'] == 'pending' &&
+                acceptOculumTheftDefense(request, payload))) {
+          unawaited(sendCombatAcknowledgement(request, 'defense'));
+        }
         return;
       }
       unawaited(sendCombatAcknowledgement(request, 'defense'));
@@ -4966,6 +4982,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     Map<String, dynamic> request,
     String choice,
   ) async {
+    if (request['kind'] == oculumOculumTheftKind) {
+      await defendOculumTheft(request, choice);
+      return;
+    }
     if (request['kind'] == 'corruption') {
       await defendCorruptionApplication(request, choice);
       return;
@@ -5315,6 +5335,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     if (outsideFight) {
       request['status'] = 'cancelled';
+      return;
+    }
+    if (request['kind'] == oculumOculumTheftKind) {
+      await resolveOculumTheftDefense(request, choice, defense);
       return;
     }
     if (bottledCloudAttackInterrupted(request)) return;
@@ -7031,6 +7055,27 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               )
             else if (request['kind'] == 'corruption')
               corruptionApplicationPanel(request)
+            else if (request['kind'] == oculumOculumTheftKind)
+              ListTile(
+                title: Text(
+                  '${request['abilityName']} · ${request['sourceName']}',
+                ),
+                subtitle: Text(
+                  request['status'] == 'pending'
+                      ? 'Manifestazione del Potere ${request['attack']} · pareggia o supera con Canalizzazione.'
+                      : '${request['theftStolen'] ?? 0} Oculum sottratto.',
+                ),
+                trailing: request['status'] == 'pending'
+                    ? OutlinedButton(
+                        onPressed:
+                            onlineCombatResolving.contains('${request['id']}')
+                            ? null
+                            : () =>
+                                  defendOnlineAttack(request, 'canalizzazione'),
+                        child: const Text('Canalizzazione'),
+                      )
+                    : null,
+              )
             else
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),

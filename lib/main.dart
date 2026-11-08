@@ -254,6 +254,7 @@ part 'src/main/oculum_home_merchant.dart';
 part 'src/main/oculum_smoking_herbs.dart';
 part 'src/main/oculum_fate_sign.dart';
 part 'src/main/oculum_scrolls.dart';
+part 'src/main/oculum_oculum_theft.dart';
 part 'src/main/oculum_pawn.dart';
 part 'src/main/oculum_pawn_cores.dart';
 part 'src/main/oculum_skill_effects_ui.dart';

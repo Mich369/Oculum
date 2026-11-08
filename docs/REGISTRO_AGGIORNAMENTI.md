@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Pergamena Sfera Predatrice — 8 novembre
+
+- L’Alchimista può offrire Sfera Predatrice fra le scorte casuali. Sottrae Oculum a due o più nemici con Manifestazione del Potere contro Canalizzazione. La ricarica usa solo l’Oculum sottratto e arriva fino al massimo più 5. L’amplificazione dà +3 a tutte le statistiche per nemico da cui hai sottratto Oculum, per tre turni personali.
+- La Skill appresa usa un’Azione e recupera in tre turni personali. Il lancio appreso e quello da pergamena costano zero Oculum. Le forme II–V si sbloccano dopo 3, 7, 12 e 18 lanci validi della Skill appresa. Bersagli, quantità e durata delle cinque forme restano modificabili.
+
 ## Traguardi, Open e pasti — 8 novembre
 
 - Otto abilità del traguardo a 20, con parametri modificabili. Le scelte dei traguardi restano sulla scheda.

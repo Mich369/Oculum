@@ -387,15 +387,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   }
 
   Future<bool> defendPendingCombat(String choice) async {
-    if (realtimeService?.isConnected != true && !localMeccanioCombat) {
-      return false;
-    }
+    final onlyLocalTheft =
+        realtimeService?.isConnected != true && !localMeccanioCombat;
     final tag = sheetTagAt(schedaCorrente);
     final pending = onlineCombatRequests.values
         .where(
           (request) =>
               request['targetTag'] == tag &&
               request['status'] == 'pending' &&
+              (!onlyLocalTheft || request['kind'] == oculumOculumTheftKind) &&
               request['kind'] != 'help' &&
               request['kind'] != 'scout' &&
               request['scope'] == permissionScope &&
@@ -420,7 +420,10 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       );
     }
     if (mounted && selected != null && sheetTagAt(schedaCorrente) == tag) {
-      await defendOnlineAttack(selected, choice);
+      await defendOnlineAttack(
+        selected,
+        selected['kind'] == oculumOculumTheftKind ? 'canalizzazione' : choice,
+      );
     }
     return true;
   }
@@ -638,15 +641,21 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           for (var form = 0; form < count; form++)
             Builder(
               builder: (_) {
-                final available = natural != null
-                    ? combatNaturalFormAvailable(natural.forme[form])
-                    : combatArtFormAvailable(art!, artSkill!, form + 1);
-                if (!available) return const SizedBox.shrink();
                 final effectForm = natural?.forme[form];
+                final available = natural != null
+                    ? combatNaturalFormAvailable(effectForm!)
+                    : combatArtFormAvailable(art!, artSkill!, form + 1);
+                final mastery = effectForm == null
+                    ? ''
+                    : oculumTheftMasteryProgress(effectForm.unlockRequirements);
+                if (!available && mastery.isEmpty) {
+                  return const SizedBox.shrink();
+                }
                 final description = effectForm == null
                     ? artSkill!.testoEvoluzione(form + 1)
                     : '${effectForm.descrizione}\n${effectForm.effetto}\n${effectForm.buff}\n${effectForm.danni}\n${effectForm.cura}\n${effectForm.difesa}';
                 final requirementLocked =
+                    !available ||
                     oculumCombatTextHasUnresolvedRequirement(description);
                 final structured =
                     effectForm?.effettiStrutturati ??
@@ -671,6 +680,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                             Text(
                               '${artLevelRoman(form + 1)} · $cost${timer?.ready == false ? ' · recupero ${timer!.remaining} ${timer.unit}' : ''}${requirementLocked ? ' · requisito non soddisfatto' : ''}',
                             ),
+                            if (mastery.isNotEmpty) Text(mastery),
                             Text(
                               description,
                               maxLines: 3,
@@ -2034,24 +2044,29 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     )) {
       final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
       final effects = oculumScrollCombatEffects(scroll);
+      final sfera = scroll['kind'] == oculumOculumTheftKind;
+      final willCost = sfera
+          ? 0
+          : oculumScrollWillCost(readIntValue(scroll['grade']));
+      final costText = sfera
+          ? '1 Azione · 0 Oculum/Volontà'
+          : '$willCost Volontà';
+      final color = statFormulaColor(sfera ? 'oculum' : 'volonta');
       entries.add((
         name:
             'Item · ${scroll['name'] ?? item.nome} · Pergamena ×${item.quantita}',
         roles: oculumScrollCombatRoles(scroll, effects),
-        color: statFormulaColor('volonta'),
+        color: color,
         enabled:
             canEquipInventoryItem(item) &&
-            artSkillCostResourceAvailable('volonta') >=
-                oculumScrollWillCost(readIntValue(scroll['grade'])),
-        hint:
-            '${scroll['description'] ?? item.note}\nMonouso · costo ${oculumScrollWillCost(readIntValue(scroll['grade']))} Volontà',
+            artSkillCostResourceAvailable('volonta') >= willCost,
+        hint: '${scroll['description'] ?? item.note}\nMonouso · $costText',
         details: () => showCombatAbilityDetails(
           name: '${scroll['name'] ?? item.nome}',
           description: '${scroll['description'] ?? item.note}',
-          color: statFormulaColor('volonta'),
+          color: color,
           effects: effects,
-          cost:
-              '${oculumScrollWillCost(readIntValue(scroll['grade']))} Volontà',
+          cost: costText,
         ),
         use: () => unawaited(useScrollAbility(scroll, item: item)),
       ));

@@ -965,6 +965,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
 
   void resetPlanarFight() {
     endStat35OculumOverflow();
+    clearOculumTheftFight();
     planarState.remove(_stat20OculumChargeKey);
     resetStat20PhysicalResistance();
     clearStatOpenFightEffects();
