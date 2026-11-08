@@ -35,7 +35,7 @@ void main() {
       prepareProtectionFixture(state, probe);
       state.resilienzaController.text = '20';
       probe.setResourceCurrent('resilienza', 20);
-      state.oculumCurrentDayController.text = '15';
+      probe.setWorldClock({'seconds': 0, 'calendarOriginDay': 15});
       final runtime =
           state.schedePersonaggio[state.schedaCorrente]['planarRuntime'] as Map;
       runtime['stat35'] = {
@@ -54,8 +54,12 @@ void main() {
       expect(probe.currentTemporaryHp(), wakingLife - 10);
 
       await tester.pump(const Duration(milliseconds: 451));
-      state.oculumCurrentDayController.text = '16';
+      probe.setWorldClock({
+        'seconds': oculumWorldDaySeconds,
+        'calendarOriginDay': 15,
+      });
       probe.longRest(advanceWorldClock: false);
+      expect(runtime['stat20WakingLife']['day'], 'clock:1');
       expect(probe.currentTemporaryHp(), inInclusiveRange(51, 100));
       await closeFixture(tester, probe);
     },
