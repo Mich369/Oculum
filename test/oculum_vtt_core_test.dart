@@ -6,6 +6,9 @@ import 'package:image/image.dart' as img;
 
 import 'package:oculum/main.dart';
 
+import 'oculum_escape_provoker_test.dart' show mountFight;
+import 'oculum_october27_resources_test.dart' show closeFixture;
+
 void main() {
   test(
     'token updates retain received map, changed maps and scenes clear it',
@@ -152,6 +155,12 @@ void main() {
             'ownerTag': 'OCU-PLAYER',
             'visible': true,
             'privateNotes': 'hidden',
+            'currentHp': 37,
+            'maxHp': 100,
+            'tempHp': 8,
+            'shield': 19,
+            'currentOculum': 6,
+            'totalPower': 70,
           })
           ..tokens.addAll(<Map<String, dynamic>>[
             <String, dynamic>{
@@ -171,6 +180,19 @@ void main() {
         expect(public['triggers'], isEmpty);
         expect(token['ownerTag'], 'OCU-PLAYER');
         expect(token.containsKey('privateNotes'), isFalse);
+        expect(token['healthLabel'], 'Gravemente ferito');
+        final private = (scene.toJson()['tokens'] as List).first as Map;
+        for (final key in [
+          'currentHp',
+          'maxHp',
+          'tempHp',
+          'shield',
+          'currentOculum',
+          'totalPower',
+        ]) {
+          expect(token.containsKey(key), isFalse);
+          expect(private[key], scene.tokens.first[key]);
+        }
       },
     );
 
@@ -187,6 +209,43 @@ void main() {
       expect(restored.fogLayers['party']?.single['id'], 'party-reveal');
       expect(restored.fogLayers['ocu-player']?.single['id'], 'player-reveal');
     });
+  });
+
+  testWidgets('receiving a legacy shared map keeps only coarse token health', (
+    tester,
+  ) async {
+    final (state, probe) = await mountFight(tester);
+    state.modalitaMaster = false;
+    final legacy = {
+      'id': 'old-map',
+      'tokens': [
+        {
+          'id': 'wounded',
+          'ownerTag': 'ALLY',
+          'currentHp': 25,
+          'maxHp': 100,
+          'tempHp': 11,
+          'shield': 12,
+        },
+        {'id': 'downed', 'currentHp': 0, 'maxHp': 100, 'defeated': true},
+      ],
+    };
+    probe.receiveRealtime('vtt_scene_shared', {
+      'senderRole': 'master',
+      'snapshot': {'scene': legacy},
+    });
+    final received = state.realtimeVisibleVttScene as OculumVttScene;
+    expect(received.tokens.map((token) => token['healthLabel']), [
+      'Morente',
+      'A terra',
+    ]);
+    expect(received.tokens.first['ownerTag'], 'ALLY');
+    expect(received.tokens.first.containsKey('currentHp'), isFalse);
+    final savedSnapshot = state.realtimeVisibleVttSnapshot as Map;
+    final savedToken = (savedSnapshot['scene']['tokens'] as List).first as Map;
+    expect(savedToken.containsKey('maxHp'), isFalse);
+    expect((legacy['tokens'] as List).first['currentHp'], 25);
+    await closeFixture(tester, probe);
   });
 
   group('Oculum VTT geometry', () {

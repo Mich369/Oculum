@@ -53,6 +53,7 @@ String oculumMonsterReadableProse(String raw) => raw
 String oculumMonsterOverview(
   MonsterBookEntry monster, {
   bool weakPointKnown = true,
+  Set<String>? knownDropIds,
 }) {
   var text = monster.descIt.split('\n\nSkill per il giocatore:').first.trim();
   if (!weakPointKnown) {
@@ -61,7 +62,195 @@ String oculumMonsterOverview(
       '',
     );
   }
+  if (knownDropIds != null) {
+    text = text.replaceAll(
+      RegExp(
+        r'\b(?:Drop|Bottino)[^\n.!?]{0,32}\s*:[^\n.!?]*(?:[.!?]|$)',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    for (final id in monster.dropIds) {
+      if (knownDropIds.contains(id)) continue;
+      final name = oculumMonsterDropName(id);
+      if (name.isNotEmpty) {
+        text = text.replaceAll(
+          RegExp('\\b${RegExp.escape(name)}\\b', caseSensitive: false),
+          '???',
+        );
+      }
+    }
+  }
   return text.trim();
+}
+
+String oculumMonsterBookDropLabel(
+  MonsterBookEntry monster,
+  String dropId, {
+  Set<String>? knownDropIds,
+  int? dropBonus,
+}) {
+  if (knownDropIds != null && !knownDropIds.contains(dropId)) return '???';
+  final odds = _monsterBookDropOdds(monster, dropId, dropBonus: dropBonus);
+  return '${oculumMonsterDropName(dropId)} · $odds';
+}
+
+/// Drop modifier read from the roller's saved sheet.
+int oculumEncounterDropBonus(Map sheet, {bool includeSavedDifficulty = true}) {
+  final stats = sheet['hiddenEyeStats'];
+  final drop = stats is List
+      ? stats.whereType<Map>().where((stat) => stat['id'] == 'drop').firstOrNull
+      : null;
+  return readIntValue(drop?['valore']) +
+      oculumHiddenEyeDerivedBonusFor(
+        id: 'drop',
+        level: readIntValue(sheet['livello']),
+        resilienza: readIntValue(sheet['resilienza']),
+        volonta: readIntValue(sheet['volonta']),
+        materia: readIntValue(sheet['materia']),
+        oculum: readIntValue(sheet['oculum']),
+        karma: readIntValue(sheet['karma']),
+      ) -
+      (includeSavedDifficulty ? readIntValue(sheet['difficoltaTiro']) : 0);
+}
+
+// The generic percentage is conditional on the Drop check. Authored reward
+// routes that return before that check must not inherit the catalogue default.
+String _monsterBookDropOdds(
+  MonsterBookEntry monster,
+  String dropId, {
+  int? dropBonus,
+}) {
+  const special = 'Regola Drop speciale';
+  const guaranteed = 'Garantito';
+  String afterDifficulty(int percent, {int minimumTotal = 0, String? rule}) {
+    final conditional = percent.clamp(0, 100).toInt();
+    final bonus = dropBonus;
+    if (bonus == null) return rule ?? '$conditional% a DT Drop raggiunta';
+    final level = monster.stats['level'] ?? 0;
+    final grade = monster.stats['grade'] ?? oculumGradeForLevel(level);
+    final threshold = max(
+      minimumTotal,
+      oculumMonsterDropDifficulty(level: level, grade: grade),
+    );
+    final eligible = (21 - max(1, threshold - bonus)).clamp(0, 20);
+    if (conditional == 0) return 'Impossibile (0%)';
+    if (eligible == 0) return 'Impossibile senza critico (0%)';
+    final chance = eligible * conditional / 20;
+    final formatted = chance
+        .toStringAsFixed(2)
+        .replaceFirst(RegExp(r'\.?0+$'), '')
+        .replaceAll('.', ',');
+    return '≈$formatted%';
+  }
+
+  String naturalAtLeast(int minimum) =>
+      minimum == 1 ? guaranteed : '${(21 - minimum) * 5}% ($minimum+ naturale)';
+
+  final id = monster.id;
+  final species = oculumPartyHuntSpeciesId(id);
+  if (id == 'funghetto_cappuccio_rosso') {
+    return dropId == id ? '95% (1–19 naturale)' : special;
+  }
+  if (id == 'pupazzo_robotico_postea') {
+    return dropId == 'scarti_robotici_pupazzo' ? guaranteed : special;
+  }
+  if (id == 'fata_cacciatrice') {
+    return dropId == 'mezza_ala_fata'
+        ? afterDifficulty(
+            100,
+            minimumTotal: 50,
+            rule: 'Garantito con totale Drop ≥50 e DT raggiunta',
+          )
+        : special;
+  }
+  if (id == 'costrutto_rinsecchito') {
+    return switch (dropId) {
+      'nucleo_rotto_debole' || 'rami_rinsecchiti' => afterDifficulty(
+        100,
+        rule: 'Garantito a DT Drop raggiunta',
+      ),
+      'cuore_rami_rinsecchiti' => afterDifficulty(
+        monster.dropChances[dropId] ?? 3,
+      ),
+      _ => special,
+    };
+  }
+  if (id == 'larva_bianca') return special;
+  if (id == 'slime_roccioso' || id.startsWith('slime_roccioso_variante_')) {
+    return dropId == 'roccia_slime' ? guaranteed : special;
+  }
+  if (id.startsWith('mammuth_in_decomposizione')) {
+    return dropId == 'ossa_mammuth_putrido' ? afterDifficulty(35) : special;
+  }
+
+  if (const {
+    'fuocherelli',
+    'feralis',
+    'granscostumato',
+    'sempre_verde',
+    'lavastrello',
+    'teschio_monaco',
+    'teschio_quattro_lame',
+    'ogor',
+    'teirak',
+    'teschio_mostruoso',
+    'adoratore_bestia',
+    'laer',
+    'torretta_oculum',
+    'manichino_spada',
+    'deadly_sins',
+    'zombie_acido',
+    'cavaliere_non_ritorno',
+  }.contains(id)) {
+    final material = monster.dropChances.keys.firstOrNull ?? 'frammento_$id';
+    return dropId == material ? naturalAtLeast(8) : special;
+  }
+  const planarMaterials = {
+    'bramble': 'fibra_rovo_bramble',
+    'thunderbird': 'piuma_conduttrice_thunderbird',
+    'scostubanditi': 'ottone_fucile_scostubanditi',
+    'observers_tear': 'scheggia_occhio_viola',
+    'obser_sunshine': 'frammento_occhio_solare',
+    'saltalungo_maculato': 'tendine_elastico_maculato',
+    'famelico_oblio': 'zanna_ricordo_vuoto',
+    'nuvi': 'piuma_nuvi',
+    'coniglio_prestigiatore': 'fodera_cappello_incantato',
+    'coniglio_plasma': 'bobina_plasma_coniglio',
+    'pupazzo_artigliato': 'molla_pupazzo',
+    'medusa_vetro': 'filamento_medusa_vetro',
+    'nocciolo_corazzato': 'guscio_nocciolo',
+  };
+  final planarMaterial = planarMaterials[id];
+  if (planarMaterial != null) {
+    return dropId == planarMaterial ? naturalAtLeast(8) : special;
+  }
+  if (species == 'sharp') {
+    return switch (dropId) {
+      'scarti_metallici' => naturalAtLeast(8),
+      'dente_sharp' => naturalAtLeast(12),
+      _ => special,
+    };
+  }
+  if (species == 'lupo_delle_nevi') {
+    final material = switch (id) {
+      'lupo_delle_nevi' => 'zanna_brinata',
+      'lupo_infernale_del_ghiaccio' => 'scheggia_brace_lupo',
+      'lupo_ombra_oblio' => 'filo_ululante_oblio',
+      'lupo_runico_postea' => 'dente_circuito_lupo',
+      _ => 'artigli_lupo',
+    };
+    return dropId == material ? naturalAtLeast(8) : special;
+  }
+  if (species == 'topino_avventuroso') {
+    return switch (dropId) {
+      'fiaccola' => guaranteed,
+      'scroll_coltello_avvelenato' => naturalAtLeast(20),
+      _ => special,
+    };
+  }
+  if (species == 'mosca_campana') return special;
+  return afterDifficulty(monster.dropChances[dropId] ?? 35);
 }
 
 String oculumMonsterReadingCost(ArtSkill skill, int form) {
@@ -99,8 +288,13 @@ extension _OculumMonsterDossier on _OculumHomePageState {
   Widget monsterReadingOverview(
     MonsterBookEntry monster, {
     bool weakPointKnown = true,
+    Set<String>? knownDropIds,
   }) {
-    final text = oculumMonsterOverview(monster, weakPointKnown: weakPointKnown);
+    final text = oculumMonsterOverview(
+      monster,
+      weakPointKnown: weakPointKnown,
+      knownDropIds: knownDropIds,
+    );
     final pieces = text.split(RegExp(r'(?<=[.!?])\s+(?=[A-ZÀ-Ü])'));
     final appearance = pieces.isEmpty ? text : pieces.first;
     final behaviour = pieces.skip(1).join(' ').trim();
@@ -149,8 +343,17 @@ extension _OculumMonsterDossier on _OculumHomePageState {
     );
   }
 
-  Widget monsterReadingAbilities(MonsterBookEntry monster) {
+  Widget monsterReadingAbilities(
+    MonsterBookEntry monster, {
+    Set<String>? knownDropIds,
+  }) {
     final art = oculumMonsterBookArt(monster);
+    final dropBonus =
+        monster.dropIds.any(
+          (id) => knownDropIds == null || knownDropIds.contains(id),
+        )
+        ? _monsterBookActiveDropBonus()
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -198,7 +401,12 @@ extension _OculumMonsterDossier on _OculumHomePageState {
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      '${oculumMonsterDropName(id)}${monster.dropChances.containsKey(id) ? ' · ${monster.dropChances[id]}%' : ''}',
+                      oculumMonsterBookDropLabel(
+                        monster,
+                        id,
+                        knownDropIds: knownDropIds,
+                        dropBonus: dropBonus,
+                      ),
                     ),
                   ),
                 ],
@@ -206,11 +414,27 @@ extension _OculumMonsterDossier on _OculumHomePageState {
             ),
           const SizedBox(height: 5),
           smallInfoText(
-            'La prova Drop, le scroll e i premi speciali seguono le condizioni della creatura. Questi materiali non sono assegnati automaticamente solo consultando la pagina.',
+            'La stima usa il dado naturale da 1 a 20, il tuo bonus Drop e il Livello e Grado della voce di catalogo. Un critico può raggiungere soglie più alte. I premi legati al naturale seguono la propria regola.',
           ),
         ],
       ],
     );
+  }
+
+  int _monsterBookActiveDropBonus() {
+    final drop = hiddenEyeStats.where((stat) => stat.id == 'drop').firstOrNull;
+    return oculumEncounterDropBonus({
+      'hiddenEyeStats': [
+        if (drop != null) {'id': 'drop', 'valore': drop.valore},
+      ],
+      'livello': livelloController.text,
+      'resilienza': resilienzaController.text,
+      'volonta': volontaController.text,
+      'materia': materiaController.text,
+      'oculum': oculumController.text,
+      'karma': karmaController.text,
+      'difficoltaTiro': difficoltaTiroController.text,
+    });
   }
 
   Widget monsterReadingOpenPart(

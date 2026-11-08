@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-08T04:53:18.175248+00:00",
+  "scope": "Sei voti A/B del lotto e due desktop dei Caproni scheletrici. Solo artwork desktop.",
+  "exactDesktopChoices": 8,
+  "choicesBefore": 133,
+  "choicesAfter": 141,
+  "ledgerBeforeSha256": "f1866b55df6869a0302f0f9b9edfb44e45bbc62cecf0395c49c6e7df5994c003",
+  "gallerySnapshot": {
+    "file": "output/artwork/lotto02_caproni_61_66_2026-11-08/MANIFEST.json",
+    "sha256": "c5773d515d181371032800393e4cd908185946f033c8902754c70ae62b5eff91"
+  },
+  "artisticVotes": [
+    {
+      "position": 61,
+      "id": "habitat_vero_inferno_caprone_dei_troni_bruciati",
+      "originalName": "Caprone dei troni bruciati",
+      "letter": "B",
+      "userAnswer": "Caprone dei troni bruciati B",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_vero_inferno_caprone_dei_troni_bruciati_desktop_v2.jpg",
+        "sha256": "603b2fb4610dbaa707c18e07b3e3caae43a15d579d7b5dd87b4305a2280e2633",
+        "source": "archivio-locale",
+        "nativeSha256": "71e6f53cc60911b47e865b562c966d13f64a130c7e5ca692a77387d4d6bf8158",
+        "version": 2,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_vero_inferno_caprone_dei_troni_bruciati_desktop_v2.json",
+        "provenanceSha256": "ab1f745a8181f9efc65215ed7a4582dbf9d0f46a8dd2e09b20a88010e83dd9d3"
+      }
+    },
+    {
+      "position": 62,
+      "id": "habitat_vero_inferno_caprone_dei_troni_bruciati_variante_corazzata",
+      "originalName": "Caprone dei troni bruciati Corazzata",
+      "letter": "A",
+      "userAnswer": "Caprone dei troni bruciati Corazzata A",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_vero_inferno_caprone_dei_troni_bruciati_variante_corazzata_desktop_v1.jpg",
+        "sha256": "906edd3db2d9b99a59c619e333b93f7771bfdd0b75a14840d2a385e1b83e54b1",
+        "source": "archivio-locale",
+        "nativeSha256": "25ca9e13ce15ab8824cf1f84c304157ec0f25d0199e0cf42205cc7686aaf42a5",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_vero_inferno_caprone_dei_troni_bruciati_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "5fc7672326ac5633a4300d0a57150a6066a90636736ad6925dfd6ab3bef7ab32"
+      }
+    },
+    {
+      "position": 63,
+      "id": "habitat_foresta_elementale_caprone_della_brace_empia",
+      "originalName": "Caprone della brace empia",
+      "letter": "A",
+      "userAnswer": "Caprone della brace empia A",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_caprone_della_brace_empia_desktop_v1.jpg",
+        "sha256": "160cce534af25a2f71d61248a836d7590038529d30637ce3156c5221f4e06ac0",
+        "source": "archivio-locale",
+        "nativeSha256": "4d6e8dd1fa6a89522ee3dda712e2d1043362f56e8e5d97603af64f32b8ee6022",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_caprone_della_brace_empia_desktop_v1.json",
+        "provenanceSha256": "7b1f9c58263688e507d3e2dbb1f6b33b67c1e640b7a517ecb49e7febf4205b9e"
+      }
+    },
+    {
+      "position": 64,
+      "id": "habitat_foresta_elementale_caprone_della_brace_empia_variante_rituale",
+      "originalName": "Caprone della brace empia Rituale",
+      "letter": "A",
+      "userAnswer": "Caprone della brace empia Rituale A",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_caprone_della_brace_empia_variante_rituale_desktop_v1.jpg",
+        "sha256": "843756d9e93202b8d47b035cebba173b11407aba9886279918f309934d0bc047",
+        "source": "archivio-locale",
+        "nativeSha256": "7047f4502731297bbade4c62cc143395e506b2c62eca5906bcbeb0288a754c1a",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_foresta_elementale_caprone_della_brace_empia_variante_rituale_desktop_v1.json",
+        "provenanceSha256": "2eda87b4984f815c2a0cc34f09dbe5fee94110028967a7ae5ca8e01816b8c8b0"
+      }
+    },
+    {
+      "position": 65,
+      "id": "habitat_diabolico_caprone_della_fossa_di_vetro",
+      "originalName": "Caprone della fossa di vetro",
+      "letter": "A",
+      "userAnswer": "Caprone della fossa di vetro A",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_diabolico_caprone_della_fossa_di_vetro_desktop_v1.jpg",
+        "sha256": "69c4238c23c616916d623382fc333dc3d95096a50196976c2e865aa85cd1307f",
+        "source": "archivio-locale",
+        "nativeSha256": "a37e5558ae3be9927c2a4ca121daef373e1064dbf616d47c24553b8755303fa5",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_diabolico_caprone_della_fossa_di_vetro_desktop_v1.json",
+        "provenanceSha256": "40edf7efc68a17af74f4dfd1b31ad393c5fa147cbbd8e970a7b5d10f0f69e74a"
+      }
+    },
+    {
+      "position": 66,
+      "id": "habitat_diabolico_caprone_della_fossa_di_vetro_variante_errante",
+      "originalName": "Caprone della fossa di vetro Errante",
+      "letter": "A",
+      "userAnswer": "Caprone della fossa di vetro Errante A",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_diabolico_caprone_della_fossa_di_vetro_variante_errante_desktop_v1.jpg",
+        "sha256": "3d1eaea9604fe470f7f77f896d3ba3143b0200a41dfa8c835714df403bdd550b",
+        "source": "archivio-locale",
+        "nativeSha256": "2b7ba54a0761f00576c6769dfae145415f53c78331247abcee8411eff4dbe50f",
+        "version": 1,
+        "sourceKind": "native_imagegen_original_verified",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_diabolico_caprone_della_fossa_di_vetro_variante_errante_desktop_v1.json",
+        "provenanceSha256": "c18cd27c3e5059b57d9ea5d17c3ff1490dba61e44b8e5f705920c87c4a6bd171"
+      }
+    },
+    {
+      "id": "caprone_d_ossa",
+      "originalName": "Caprone d’ossa",
+      "userAnswer": "anzi per il caprone normale uso proprio questo · scheletrico ovviamente",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/caprone_d_ossa_2026-11-08/caprone_d_ossa_841bb07f182c.png",
+        "sha256": "841bb07f182c3c33d1dec404f964d779a13d72aa13b676fa9c51ed46561c2ed0",
+        "nativeSha256": "841bb07f182c3c33d1dec404f964d779a13d72aa13b676fa9c51ed46561c2ed0",
+        "source": "archivio-locale",
+        "sourceKind": "exact_user_attachment"
+      }
+    },
+    {
+      "id": "caprone_scheletrico_nero",
+      "originalName": "Caprone scheletrico nero",
+      "userAnswer": "questi due con le sue corna · approvato",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/caprone_d_ossa_2026-11-08/caprone_scheletrico_nero_2279d2a90636.png",
+        "sha256": "2279d2a9063698391eab3613a956d3e0b4ab88f7f6c194865e20533f8a72113d",
+        "nativeSha256": "2279d2a9063698391eab3613a956d3e0b4ab88f7f6c194865e20533f8a72113d",
+        "source": "archivio-locale",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    }
+  ]
+}

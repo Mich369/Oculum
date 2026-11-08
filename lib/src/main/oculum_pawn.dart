@@ -7,6 +7,9 @@ const oculumPawnExperiencePerTurn = 25;
 const oculumPawnStatPointsPerLevel = 6;
 const oculumPawnV2Price = 300;
 const oculumPawnV2ExperiencePerTurn = 50;
+const oculumPosteaPawnPrice = 250;
+const oculumArmoredPawnHealing = 50;
+const oculumArmoredPawnTemporaryHp = 25;
 
 int oculumPawnExperienceForLevel(String difficulty) {
   final standard = difficulty.trim().toLowerCase() == 'oculum' ? 1369 : 1000;
@@ -84,12 +87,32 @@ Map<String, dynamic> oculumPawnV2MerchantOffer() => {
   'desc': oculumPawnV2Description,
 };
 
-InventoryItem oculumPawnInventoryItem() => InventoryItem(
-  nome: 'Pawn',
+String oculumArmoredPawnName(bool postea) =>
+    postea ? 'Pawn Postea Corazzato' : 'Pawn Corazzato';
+
+String _oculumArmoredPawnDescription(bool postea) =>
+    '${postea ? 150 : 100} Vita iniziale e protezioni rinforzate. '
+    'A fine turno recupera $oculumArmoredPawnHealing Vita oppure, se è già '
+    'al massimo, accumula $oculumArmoredPawnTemporaryHp Vita temporanea. '
+    'La Vita temporanea scade al Riposo Lungo o dopo due Riposi Brevi '
+    'del proprietario.';
+
+Map<String, dynamic> oculumArmoredPawnMerchantOffer({required bool postea}) => {
+  'id': postea ? 'postea_pawn_armored' : 'pawn_armored',
+  'name': oculumArmoredPawnName(postea),
+  'kind': postea ? 'postea_companion' : 'pawn',
+  if (postea) 'companion': 'pawn',
+  'pawnArmored': true,
+  'cost': (postea ? oculumPosteaPawnPrice : oculumPawnPrice) * 190 ~/ 100,
+  'desc': _oculumArmoredPawnDescription(postea),
+};
+
+InventoryItem oculumPawnInventoryItem({bool armored = false}) => InventoryItem(
+  nome: armored ? oculumArmoredPawnName(false) : 'Pawn',
   peso: 0,
   quantita: 1,
-  note: oculumPawnDescription,
-  craftData: {'pawn': true},
+  note: armored ? _oculumArmoredPawnDescription(false) : oculumPawnDescription,
+  craftData: {'pawn': true, if (armored) 'pawnArmored': true},
 );
 
 InventoryItem oculumPawnV2InventoryItem() => InventoryItem(
@@ -115,6 +138,10 @@ class OculumPawnGuardian {
     this.experience = 0,
     this.unspentStatPoints = 0,
     this.isV2 = false,
+    this.armored = false,
+    this.armoredHpBonus = 0,
+    this.armoredTemporaryHp = 0,
+    this.armoredOlderTemporaryHp = 0,
     this.posteaType = '',
     this.posteaMedicine = 0,
     this.posteaTemporaryResilience = 0,
@@ -139,6 +166,11 @@ class OculumPawnGuardian {
        },
        targets = List.of(targets ?? const []) {
     hp = hp.clamp(0, maxHp);
+    armoredTemporaryHp = armored && alive ? max(0, armoredTemporaryHp) : 0;
+    armoredOlderTemporaryHp = armoredOlderTemporaryHp.clamp(
+      0,
+      armoredTemporaryHp,
+    );
     shield = max(0, shield);
     turn = max(0, turn);
     level = max(0, level);
@@ -161,6 +193,10 @@ class OculumPawnGuardian {
   int experience;
   int unspentStatPoints;
   bool isV2;
+  final bool armored;
+  final int armoredHpBonus;
+  int armoredTemporaryHp;
+  int armoredOlderTemporaryHp;
   String posteaType;
   int posteaMedicine;
   int posteaTemporaryResilience;
@@ -190,12 +226,21 @@ class OculumPawnGuardian {
       ? max(1, readIntValue(summoningEmblem['hp'], fallback: 120))
       : creatureSheetTag.isNotEmpty && creatureMaxHp > 0
       ? creatureMaxHp
-      : max(1, stats['resilienza'] ?? 3) *
-            oculumHpMultiplierForGrade(grade, level: isV2 ? ownerLevel : level);
+      : max(
+          1,
+          max(1, stats['resilienza'] ?? 3) *
+                  oculumHpMultiplierForGrade(
+                    grade,
+                    level: isV2 ? ownerLevel : level,
+                  ) +
+              (armored ? armoredHpBonus : 0),
+        );
   int get experiencePerTurn =>
       isV2 ? oculumPawnV2ExperiencePerTurn : oculumPawnExperiencePerTurn;
   int get statPointsPerLevel => oculumPawnStatPointsPerLevel;
-  String get displayName => posteaType == 'pawn'
+  String get displayName => armored
+      ? oculumArmoredPawnName(posteaType == 'pawn')
+      : posteaType == 'pawn'
       ? 'Pawn Postea'
       : posteaType == 'healer'
       ? 'Curatore vivente'
@@ -290,10 +335,34 @@ class OculumPawnGuardian {
       savingShield = false;
       return 0;
     }
+    final absorbedTemporaryHp = min(armoredTemporaryHp, remaining);
+    armoredTemporaryHp -= absorbedTemporaryHp;
+    armoredOlderTemporaryHp = max(
+      0,
+      armoredOlderTemporaryHp - absorbedTemporaryHp,
+    );
+    remaining -= absorbedTemporaryHp;
     final absorbedHp = min(hp, remaining);
     hp -= absorbedHp;
     remaining -= absorbedHp;
     return posteaType == 'pawn' ? 0 : remaining;
+  }
+
+  void _recoverArmoredTurn() {
+    if (hp < maxHp) {
+      hp = min(maxHp, hp + oculumArmoredPawnHealing);
+    } else {
+      armoredTemporaryHp += oculumArmoredPawnTemporaryHp;
+    }
+  }
+
+  bool restArmoredTemporaryHp({required bool longRest}) {
+    if (!armored || armoredTemporaryHp == 0) return false;
+    armoredTemporaryHp = longRest
+        ? 0
+        : armoredTemporaryHp - armoredOlderTemporaryHp;
+    armoredOlderTemporaryHp = armoredTemporaryHp;
+    return true;
   }
 
   bool advanceTo(int nextTurn, {String difficulty = 'normale'}) {
@@ -301,8 +370,13 @@ class OculumPawnGuardian {
     if (posteaType.isNotEmpty) {
       while (turn < nextTurn) {
         if (posteaType == 'pawn') {
+          final wasFull = hp >= maxHp;
           stats['resilienza'] = stats['resilienza']! + 3;
           posteaTemporaryResilience += 3;
+          if (armored) {
+            if (wasFull) hp = maxHp;
+            _recoverArmoredTurn();
+          }
         }
         turn++;
       }
@@ -316,7 +390,9 @@ class OculumPawnGuardian {
     }
     while (turn < nextTurn) {
       gainTurnExperience(difficulty);
-      if (hp < maxHp) {
+      if (armored) {
+        _recoverArmoredTurn();
+      } else if (hp < maxHp) {
         hp = min(maxHp, hp + 10);
       } else {
         shield += 5;
@@ -366,6 +442,10 @@ class OculumPawnGuardian {
     'experience': experience,
     'unspentStatPoints': unspentStatPoints,
     'isV2': isV2,
+    if (armored) 'armored': true,
+    if (armored) 'armoredHpBonus': armoredHpBonus,
+    if (armored) 'armoredTemporaryHp': armoredTemporaryHp,
+    if (armored) 'armoredOlderTemporaryHp': armoredOlderTemporaryHp,
     'posteaType': posteaType,
     'posteaMedicine': posteaMedicine,
     'posteaTemporaryResilience': posteaTemporaryResilience,
@@ -398,6 +478,10 @@ class OculumPawnGuardian {
     experience: readIntValue(data['experience']),
     unspentStatPoints: readIntValue(data['unspentStatPoints']),
     isV2: readBoolValue(data['isV2']),
+    armored: readBoolValue(data['armored']),
+    armoredHpBonus: readIntValue(data['armoredHpBonus']),
+    armoredTemporaryHp: readIntValue(data['armoredTemporaryHp']),
+    armoredOlderTemporaryHp: readIntValue(data['armoredOlderTemporaryHp']),
     posteaType: '${data['posteaType'] ?? ''}',
     posteaCompletedFightIds: (data['posteaCompletedFightIds'] as List? ?? [])
         .map((v) => '$v')
@@ -738,6 +822,24 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     }
   }
 
+  void restArmoredPawns(Iterable<String> ownerTags, {required bool longRest}) {
+    final owners = ownerTags.map(normalizeOculumFriendTag).toSet();
+    var changed = false;
+    for (final pawn in pawnGuardians) {
+      if (pawn.pendingRegistration ||
+          !owners.contains(normalizeOculumFriendTag(pawn.ownerTag))) {
+        continue;
+      }
+      if (!pawn.restArmoredTemporaryHp(longRest: longRest)) continue;
+      changed = true;
+      updatePawnInitiativeToken(pawn);
+    }
+    if (!changed) return;
+    notifyActiveSheetSummaryChanged();
+    programmaSalvataggio();
+    sendPawnSnapshot();
+  }
+
   void syncPawnPresence() {
     if (realtimeIsMasterRole) {
       sendPawnSnapshot();
@@ -763,7 +865,14 @@ extension _OculumPawnRuntime on _OculumHomePageState {
   Future<void> activatePawnItem(InventoryItem item) async {
     if (!inventario.contains(item) || item.quantita <= 0) return;
     final posteaType = '${item.craftData['posteaCompanion'] ?? ''}';
-    final isV2 = item.craftData['pawnV2'] == true;
+    final armored =
+        item.craftData['pawnArmored'] == true &&
+        (posteaType.isEmpty || posteaType == 'pawn');
+    final armoredStartingHp = posteaType == 'pawn' ? 150 : 100;
+    final armoredStats = posteaType == 'pawn'
+        ? {'resilienza': 20, 'volonta': 20, 'materia': 32, 'oculum': 0}
+        : {'resilienza': 10, 'volonta': 7, 'materia': 13, 'oculum': 0};
+    final isV2 = !armored && item.craftData['pawnV2'] == true;
     final recoveryLevel = max(0, readIntValue(item.craftData['recoveryLevel']));
     final recoveryGrade = oculumGradeForLevel(recoveryLevel);
     final recoveryAllocation = oculumPawnProportionalStatAllocation(
@@ -790,10 +899,21 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     final pawn = OculumPawnGuardian(
       id: 'pawn_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1000000)}',
       ownerTag: pawnSenderTag,
+      armored: armored,
+      armoredHpBonus: armored
+          ? armoredStartingHp -
+                armoredStats['resilienza']! *
+                    oculumHpMultiplierForGrade(
+                      recoveryGrade,
+                      level: recoveryLevel,
+                    )
+          : 0,
       posteaType: posteaType,
       posteaMedicine: readIntValue(item.craftData['medicine']),
       targets: posteaType == 'pawn' ? [pawnSenderTag] : null,
-      hp: posteaType == 'pawn' || posteaType == 'healer'
+      hp: armored
+          ? armoredStartingHp
+          : posteaType == 'pawn' || posteaType == 'healer'
           ? 100
           : isV2
           ? max(1, inherited['resilienza'] ?? 0) *
@@ -808,7 +928,9 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       grade: isV2 ? ownerGrade : recoveryGrade,
       ownerLevel: isV2 ? ownerLevel : 0,
       ownerGrade: isV2 ? ownerGrade : 0,
-      stats: posteaType == 'pawn'
+      stats: armored
+          ? armoredStats
+          : posteaType == 'pawn'
           ? {'resilienza': 10, 'volonta': 15, 'materia': 25, 'oculum': 0}
           : isV2
           ? inherited
@@ -816,7 +938,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
           ? recoveryStats
           : null,
       baseStats: isV2 ? inherited : null,
-      allocatedStats: recoveryLevel > 0 ? recoveryAllocation : null,
+      allocatedStats: !armored && recoveryLevel > 0 ? recoveryAllocation : null,
       unspentStatPoints: isV2
           ? (ownerLevel + ownerGrade) * oculumPawnStatPointsPerLevel
           : 0,
@@ -1234,6 +1356,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       final before = remaining;
       final hpBefore = pawn.hp;
       final shieldBefore = pawn.shield;
+      final temporaryHpBefore = pawn.armoredTemporaryHp;
       final savingShieldBefore = pawn.savingShield;
       final absorbedDefense = min(before, pawn.defense);
       remaining = pawn.intercept(remaining);
@@ -1242,6 +1365,11 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       aggiungiLog(
         '${pawn.displayName} intercetta al posto di $tag ${before - remaining} danni destinati alla Vita: la sua Difesa assorbe $absorbedDefense danni; perde ${hpBefore - pawn.hp} HP ($hpBefore → ${pawn.hp}/${pawn.maxHp}) e ${shieldBefore - pawn.shield} Scudo ($shieldBefore → ${pawn.shield}).${savingShieldBefore && !pawn.savingShield ? " Scudo di Salvataggio consumato: la Vita è protetta dal colpo che esaurisce lo Scudo." : ""}',
       );
+      if (temporaryHpBefore > pawn.armoredTemporaryHp) {
+        aggiungiLog(
+          '${pawn.displayName}: −${temporaryHpBefore - pawn.armoredTemporaryHp} Vita temporanea.',
+        );
+      }
     }
     if (remaining != damage) {
       invalidateDerivedDataCaches();
@@ -1560,6 +1688,10 @@ extension _OculumPawnRuntime on _OculumHomePageState {
                         if (pawn.isV2)
                           Text(
                             'Pawn V2: statistiche base pari alla metà della scheda proprietaria; ogni livello proprio, livello del proprietario e grado assegna 6 punti. Profilo guida 3:3:5:0.',
+                          ),
+                        if (pawn.armored)
+                          Text(
+                            '${pawn.armoredTemporaryHp} Vita temporanea · ogni turno: +$oculumArmoredPawnHealing Vita o +$oculumArmoredPawnTemporaryHp Vita temporanea a Vita piena.',
                           ),
                         Text(
                           '${pawn.targets.length} schede protette${pawn.alive ? '' : ' · Inattivo a 0 HP'}',

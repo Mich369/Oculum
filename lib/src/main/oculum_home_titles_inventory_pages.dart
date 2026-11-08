@@ -3079,6 +3079,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         sectionTitle(t('Skill Scritte', 'Written Skills')),
+        stat35ChoicePanel(),
         creationSkillLearningPanel(),
         gothicPanel(
           borderColor: tertiaryColor,
@@ -6411,6 +6412,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                 title: Text(t('Usa', 'Use')),
               ),
             ),
+          if (oculumCanInfuseEquipment(item))
+            PopupMenuItem<String>(
+              value: 'dust_infusion',
+              child: ListTile(
+                leading: const Icon(Icons.diamond_outlined),
+                title: Text(t('Infondi Ascension Dust', 'Infuse Ascension Dust')),
+              ),
+            ),
           PopupMenuItem<String>(
             value: 'equip',
             child: ListTile(
@@ -6530,6 +6539,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           break;
         case 'use':
           await useMerchantConsumable(item);
+          break;
+        case 'dust_infusion':
+          await showInventoryDustInfusion(item);
           break;
         case 'read_recipe_book':
           await readRecipeBook(item);
@@ -6696,7 +6708,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     color: Colors.lightBlueAccent,
                     icon: Icons.shield,
                   ),
-                if (item.protegge && itemOculumShieldBonus(item) > 0)
+                if (itemOculumShieldBonus(item) > 0)
                   compactInventoryChip(
                     label: 'SO +${itemOculumShieldBonus(item)}',
                     color: oculumStatFormulaColor,
@@ -6789,6 +6801,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     ),
                     const SizedBox(height: 6),
                   ],
+                  if (oculumCanInfuseEquipment(item))
+                    inventoryDustInfusionButton(item),
                   if (item.arma || item.protegge) equipmentAbilityEditor(item),
                   campoModello(
                     label: t('Nome Oggetto', 'Item Name'),
@@ -6930,14 +6944,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       icon: Icons.gavel,
                       color: tertiaryColor,
                       onChanged: (value) {
-                        setState(() {
+                        setState(() => editInfusedInventoryRole(item, () {
                           item.arma = value;
                           if (!item.arma &&
                               !item.protegge &&
                               item.buff.trim().isEmpty) {
                             item.equipaggiata = false;
                           }
-                        });
+                        }));
                         programmaSalvataggio();
                       },
                     ),
@@ -6951,7 +6965,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       icon: Icons.shield,
                       color: primaryColor,
                       onChanged: (value) {
-                        setState(() {
+                        setState(() => editInfusedInventoryRole(item, () {
                           final wasProtecting = item.protegge;
                           if (item.equipaggiata && wasProtecting && !value) {
                             applicaScudoItemAttuale(item, -1);
@@ -6965,7 +6979,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                               item.buff.trim().isEmpty) {
                             item.equipaggiata = false;
                           }
-                        });
+                        }));
                         programmaSalvataggio();
                       },
                     ),
@@ -7006,15 +7020,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       initialValue: item.bonusScudoOculum.toString(),
                       onChanged: (value) {
                         final nuovo = max(0, int.tryParse(value.trim()) ?? 0);
-                        if (item.equipaggiata && item.protegge) {
-                          scudoOculumController.text = max(
-                            0,
-                            leggiNumero(scudoOculumController) +
-                                nuovo -
-                                itemOculumShieldBonus(item),
-                          ).toString();
-                        }
-                        item.bonusScudoOculum = nuovo;
+                        changeInventoryOculumShieldCapacity(
+                          item,
+                          () => item.bonusScudoOculum = nuovo,
+                        );
                       },
                       liveRefresh: true,
                     ),
@@ -7377,9 +7386,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       statChip('DIF', itemDefenseBonus(inventario[i])),
                     if (inventario[i].protegge)
                       statChip('SCU', itemShieldBonus(inventario[i])),
-                    if (inventario[i].protegge &&
-                        itemOculumShieldBonus(inventario[i]) > 0)
+                    if (itemOculumShieldBonus(inventario[i]) > 0)
                       statChip('SO', itemOculumShieldBonus(inventario[i])),
+                    if (oculumCanInfuseEquipment(inventario[i]))
+                      inventoryDustInfusionButton(inventario[i]),
                     if (inventario[i].arma || inventario[i].protegge)
                       Chip(
                         avatar: const Icon(Icons.lock_clock_outlined, size: 16),
@@ -7478,8 +7488,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     label: 'Livello oggetto',
                     initialValue: '${inventario[i].livelloOggetto}',
                     onChanged: (v) {
-                      inventario[i].livelloOggetto = (int.tryParse(v) ?? 0)
-                          .clamp(0, 10000);
+                      final item = inventario[i];
+                      changeInventoryOculumShieldCapacity(
+                        item,
+                        () => item.livelloOggetto =
+                            (int.tryParse(v) ?? 0).clamp(0, 10000),
+                        chargeNewCapacity: false,
+                      );
                       invalidateDerivedDataCaches();
                       programmaSalvataggio();
                     },
@@ -7722,15 +7737,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     onChanged: (value) {
                       final item = inventario[i];
                       final nuovo = max(0, int.tryParse(value.trim()) ?? 0);
-                      if (item.equipaggiata && item.protegge) {
-                        scudoOculumController.text = max(
-                          0,
-                          leggiNumero(scudoOculumController) +
-                              nuovo -
-                              itemOculumShieldBonus(item),
-                        ).toString();
-                      }
-                      item.bonusScudoOculum = nuovo;
+                      changeInventoryOculumShieldCapacity(
+                        item,
+                        () => item.bonusScudoOculum = nuovo,
+                      );
                     },
                   ),
                 ]),
@@ -7764,14 +7774,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     icon: Icons.gavel,
                     color: tertiaryColor,
                     onChanged: (value) {
-                      setState(() {
+                      setState(() => editInfusedInventoryRole(inventario[i], () {
                         inventario[i].arma = value;
                         if (!inventario[i].arma &&
                             !inventario[i].protegge &&
                             inventario[i].buff.trim().isEmpty) {
                           inventario[i].equipaggiata = false;
                         }
-                      });
+                      }));
                       programmaSalvataggio();
                     },
                   ),
@@ -7785,7 +7795,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     icon: Icons.shield,
                     color: primaryColor,
                     onChanged: (value) {
-                      setState(() {
+                      setState(() => editInfusedInventoryRole(inventario[i], () {
                         final wasProtecting = inventario[i].protegge;
                         if (inventario[i].equipaggiata &&
                             wasProtecting &&
@@ -7803,7 +7813,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                             inventario[i].buff.trim().isEmpty) {
                           inventario[i].equipaggiata = false;
                         }
-                      });
+                      }));
                       programmaSalvataggio();
                     },
                   ),

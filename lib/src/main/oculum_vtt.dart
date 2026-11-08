@@ -79,6 +79,73 @@ Map<String, dynamic> _oculumVttDeepMap(Map<dynamic, dynamic> source) {
   return Map<String, dynamic>.from(jsonDecode(jsonEncode(source)) as Map);
 }
 
+String oculumVttTokenHealthLabel(Map token) {
+  final status = '${token['status'] ?? ''}';
+  if (status == 'dead' || _oculumVttBool(token['dead'])) return 'Morto';
+  if (const {'fled', 'expired'}.contains(status)) return '';
+  if (status == 'downed' ||
+      _oculumVttBool(token['downed']) ||
+      _oculumVttBool(token['defeated'])) {
+    return 'A terra';
+  }
+  if (token.containsKey('currentHp') && token.containsKey('maxHp')) {
+    return oculumCombatTokenHealthLabel(token);
+  }
+  return oculumRealtimePublicHealthLabel(token['healthLabel']);
+}
+
+List<Map<String, dynamic>> _oculumVttPublicTokens(
+  Iterable<Map<String, dynamic>> tokens,
+) => [
+  for (final raw in tokens)
+    if (_oculumVttBool(raw['visible'], true) && !_oculumVttBool(raw['hidden']))
+      _oculumVttPublicToken(raw),
+];
+
+Map<String, dynamic> _oculumVttPublicToken(Map<String, dynamic> raw) {
+  const privateVitals = {
+    'hp',
+    'currenthp',
+    'maxhp',
+    'derivedmaxhp',
+    'temphp',
+    'temporaryhp',
+    'hptemp',
+    'hpratio',
+    'hppercent',
+    'healthratio',
+    'healthpercent',
+    'shield',
+    'shieldhp',
+    'scudo',
+    'oculumshield',
+    'shieldoculum',
+    'scudooculum',
+    'criticalshield',
+    'scudocritico',
+    'oculum',
+    'currentoculum',
+    'maxoculum',
+    'larvalbroodhp',
+    'larvalbroodmaxhp',
+    'currentpower',
+    'totalpower',
+    'derivedtotalpower',
+    'potenzaattuale',
+    'potenzatotale',
+  };
+  final label = oculumVttTokenHealthLabel(raw);
+  final token = _oculumVttDeepMap(raw)..remove('healthLabel');
+  token.removeWhere((key, _) {
+    final lower = key.toLowerCase().replaceAll('_', '');
+    return lower.contains('private') ||
+        lower == 'masternotes' ||
+        privateVitals.contains(lower);
+  });
+  if (label.isNotEmpty) token['healthLabel'] = label;
+  return token;
+}
+
 Map<String, List<Map<String, dynamic>>> _oculumVttFogLayers(dynamic raw) {
   if (raw is! Map) {
     return <String, List<Map<String, dynamic>>>{
@@ -455,7 +522,9 @@ class OculumVttScene {
       'sortOrder': sortOrder,
       'revision': revision,
       'updatedAt': updatedAt,
-      'tokens': tokens.map(_oculumVttDeepMap).toList(growable: false),
+      'tokens': includePrivate
+          ? tokens.map(_oculumVttDeepMap).toList(growable: false)
+          : _oculumVttPublicTokens(tokens),
       'drawings': drawings.map(_oculumVttDeepMap).toList(growable: false),
       'walls': walls.map(_oculumVttDeepMap).toList(growable: false),
       'lights': lights.map(_oculumVttDeepMap).toList(growable: false),
@@ -467,23 +536,6 @@ class OculumVttScene {
       'sharedData': _oculumVttDeepMap(sharedData),
     };
     if (!includePrivate) {
-      result['tokens'] = tokens
-          .where(
-            (token) =>
-                _oculumVttBool(token['visible'], true) &&
-                !_oculumVttBool(token['hidden']),
-          )
-          .map((raw) {
-            final token = _oculumVttDeepMap(raw);
-            for (final key in token.keys.toList()) {
-              final lower = key.toLowerCase();
-              if (lower.contains('private') || lower == 'masternotes') {
-                token.remove(key);
-              }
-            }
-            return token;
-          })
-          .toList(growable: false);
       result['triggers'] = const <Map<String, dynamic>>[];
       result['sharedData'] = <String, dynamic>{
         for (final entry in sharedData.entries)

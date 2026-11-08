@@ -1,5 +1,22 @@
 # Oculum — canone visivo confermato
 
+## Divoramitù e Distruttor Caramella
+
+- **Divoramitù**. Scelta A, allegato dell’utente copiato senza modifiche in `assets/oculum/home_art/theme_divoramitu_canon_20261108.png`. Savoiardi al caffè, mascarpone e cacao, serpente senza arti. SHA-256 `eb9da9d389f65ca91d260199a1be5821e31b779593b1b9cb480eb0cf9affcc54`.
+- **Divoramitù Elité**. Scelta C, allegato dell’utente copiato in `assets/oculum/home_art/theme_divoramitu_elite_canon_20261108.png`. Mandibola alta e savoiardi interi sul dorso. SHA-256 `c1b1f3f2d7ca8475756a728bd68894456b38f04460fb35f7e48daE6b5f19714f`.
+- **Distruttor Caramella**. Nome definitivo. Posa B, terza palette Uva e lampone, bianco sostituito da azzurrino su bordi, elmo, gambali ed elsa. Copia ImageGen in `assets/oculum/home_art/theme_distruttor_caramella_canon_20261108.png`. SHA-256 `bccfa1a643c5104600122690afc40e2545dfdf80b9366525b4c4eb30d85e3f3f`.
+
+I tre sfondi desktop sono collegati alle rispettive schede. Per schermi stretti si conserva la composizione intera. Restano da progettare le reliquie visive e le composizioni dedicate al telefono.
+
+## Regni e luoghi — conferme dell’8 novembre
+
+- **Regno di Carne Viva.** La cisti d’arrivo introduce a masse di carne unite nel vuoto assoluto. I tessuti pulsano di Oculum rosso. L’Errante è di casa in questo regno, dove sorgono città di carne e ossa con taverne. [Canone, creature e tre luoghi proposti](REGNO_DI_CARNE_VIVA.md).
+- **Mondo Dolce.** Cinque torri sotterranee, in difficoltà crescente. Il terzo piano di ciascuna torre ospita un frammento del Clown Caramella. I frammenti sono sei in tutto. Il sesto è nascosto.
+- **Inferi.** Le zone di ghiaccio infernale sono antiche quanto quelle di magma e soggette al Chaos.
+- **Oblio.** Gli aiuti esterni alla memoria restano affidabili.
+- **Postea.** Il mercato di Postea è aperto a qualunque acquirente. I fabbri di Postea vi esercitano il loro mestiere.
+- **Lost Town.** Le scale dei Solari sono trasparenti, invisibili a riposo, e diventano dorate sotto i piedi di chi le percorre. Anche i Lunari possono salirle. I gironi restano separati nella roccia, con queste scale come eccezione alla geometria storica descritta sotto.
+
 ## Secondo lotto, revisioni e Ciclope violetto — 6 novembre
 
 Il registro contiene ora **106 scelte**. Nel lotto successivo sono scelti Cane dei Ghiacci A, Cervo dal Fiato Bianco C, Cervo di Linfa Verde C, Cinghiale Muschioso C e Cervo di Brumalba C. Baby Rock Rhino base riprende la C della Veterana con massa e scala leggermente ridotte, secondo la revisione mostrata e approvata; statistiche distinte. [Sei conferme esatte](CONFERME_UTENTE_ARTWORK_2026-11-06_09.json). Canonici i cinque edit mostrati: Scarabeo del Sigillo Ardente fisicamente di circa due metri, i due Demoni Intermedi più massicci, Lacrimante B con due braccia collegate che appoggiano le mani per spostarsi, Ciclope del Fato v4. Quest’ultimo ha pelle grigio-verde, drappo bordò, un solo occhio violetto con pupilla verticale e una corta cresta di spine ossee, senza capelli; mantiene due orecchie, due braccia, due gambe corte, pancia e mazza. Le versioni precedenti rimangono conservate. [Quattro edit approvati](CONFERME_UTENTE_ARTWORK_2026-11-06_07.json) · [Ciclope v4 approvato](CONFERME_UTENTE_ARTWORK_2026-11-06_08.json).
@@ -253,7 +270,7 @@ Argento annerito, dettagli#6a4cb0 per i normali e#8f1b5b per gli infernali. Guar
 
 ## Conferme del 28 ottobre — temi, reliquie e personaggi
 
-- **Lost Town, geometria definitiva:** la città è scavata dentro una montagna in **gironi circolari separati**, riconoscibili come cavità ad anello a diverse altezze, intervallate da ampie fasce di roccia. I gironi **non sono collegati**: niente ponti fra anelli, scale verticali fra gironi, strade a spirale o rampe continue. Non trasformarla in una normale città medievale sovrapposta su terrazze comunicanti. I gironi più bassi sono molto poveri, con case rattoppate e fumi tossici violacei dell’Oculum esausto; salendo, pulizia e ricchezza aumentano fino alle case solari d’oro e marmo nell’aria limpida. L’Oculum esausto scende dai quartieri alti a quelli lunari, non per iniziativa dei Lunari.
+- **Lost Town, geometria definitiva:** la città è scavata dentro una montagna in **gironi circolari separati**, riconoscibili come cavità ad anello a diverse altezze, intervallate da ampie fasce di roccia. I gironi sono privi di collegamenti materiali ordinari, come ponti fra anelli, scale in pietra, strade a spirale e rampe continue. Fanno eccezione le scale trasparenti dei Solari, confermate il giorno 8 novembre. Non trasformarla in una normale città medievale sovrapposta su terrazze comunicanti. I gironi più bassi sono molto poveri, con case rattoppate e fumi tossici violacei dell’Oculum esausto; salendo, pulizia e ricchezza aumentano fino alle case solari d’oro e marmo nell’aria limpida. L’Oculum esausto scende dai quartieri alti a quelli lunari, non per iniziativa dei Lunari.
 - **Tema Senka approvato con i gironi:** `assets/oculum/home_art/theme_senka_kamaria_v3.png` è il riferimento desktop approvato. Sky è felice nella modesta stanza doppia della locanda, in basso a destra nel girone più povero; Haniel ordinario, senza ali, è quasi nascosto a sinistra fra alberi, ombra e fumi violacei, con il nuovo aspetto ufficiale v4 senza occhiali e capelli argentati sciolti wolf cut. Spicchio di Luna benevolo ammesso soltanto come eccezione personale già confermata. La ricomposizione telefono `theme_senka_kamaria_mobile_v2.png` conserva questa geografia e identità; verifica UI e pubblicazione restano distinte dalla conferma della composizione.
 
 - **Tema personale di Senka**: piccolo spicchio di Luna come **apparizione inspiegabile ed eccezione personale per questo tema**, confermata. La Luna resta segno buono e protettivo; non torna nel cielo di tutte le scene. Foresta notturna ai margini, Haniel nascosto molto nello scuro e quasi impercettibile; in basso a destra apertura sulla stanza con Sky felice. **Senka e Sky abitano nei piani più bassi di Lost Town**: la taverna è parte dei quartieri poveri inferiori, non una casa isolata estranea alla città. Centro leggibile, niente figure sopra i valori. Reliquia decorativa con maschera nera a due fori/due circoli e motivo lunare benevolo; nessun nuovo bonus implicito.

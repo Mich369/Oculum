@@ -388,6 +388,7 @@ extension _OculumOpenLifecycle on _OculumHomePageState {
   }
 
   void tickOpenLifecycleRest({required bool longRest}) {
+    restStatOpens(longRest: longRest);
     for (final art in arti) {
       final state = artOpenLifecycle(art);
       final hadBuff = art.openAttiva;
@@ -467,6 +468,7 @@ extension _OculumOpenLifecycle on _OculumHomePageState {
             .toSet();
     if (!seen.add(fightId)) return;
     planarState['openLifecycleCompletedFightIds'] = seen.toList();
+    completeStatOpenFight(fightId);
     for (final art in arti) {
       final state = artOpenLifecycle(art);
       state.completeFight(fightId);

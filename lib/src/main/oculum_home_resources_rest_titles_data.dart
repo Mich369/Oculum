@@ -1378,27 +1378,17 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
   }
 
   void mangiaEBevi() {
-    satisfyPersonalNeed('food');
-    satisfyPersonalNeed('water');
+    if (!recordCharacterMeal(manual: true, hydrate: true)) return;
     setState(() {
-      modificaBuffTemporaneo('resilienza', 2, salva: false);
-
       modificaCenereControllata(-1, controllaSvenimento: false);
-
-      if (!automaticWorldNeedsEnabled) {
-        sessioniSenzaBisogniController.text = '0';
-      }
-
       ultimoEventoRiposo = t(
-        'Hai mangiato e bevuto a sufficienza: +2 Resilienza temporanea per il giorno, -1 Cenere e fame/sete soddisfatte; il sonno resta indipendente.',
-        'You ate and drank enough: +2 temporary Resilience for the day, -1 Ash and reset days without needs.',
+        'Hai mangiato e bevuto: −1 Cenere.',
+        'You ate and drank: −1 Ash.',
       );
 
       risultato = ultimoEventoRiposo;
       aggiungiLog(risultato);
     });
-    processConditionTick(OculumConditionTickTrigger.specificEvent);
-
     programmaSalvataggio();
   }
 
@@ -2154,6 +2144,8 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       return;
     }
     resetOgorCoreRest();
+    resetStat35Rest(long: false);
+    recoverMateria20FreeDodge(longRest: false);
     final activeSheet =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
         ? schedePersonaggio[schedaCorrente]
@@ -2174,9 +2166,10 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       final tiroCuraHp = Random.secure().nextInt(100) + 1;
       progressionSurge.shortRest();
       meccanioOwnerRest(longRest: false);
-      consumedFoodBonuses.clear();
       for (final effect in merchantHerbalEffects) {
-        if (effect['type'] == 'smoking_herbs') continue;
+        if (effect['type'] == 'smoking_herbs' || effect['mealBuff'] == true) {
+          continue;
+        }
         effect['shortRestsRemaining'] = max(
           0,
           readIntValue(effect['shortRestsRemaining']) - 1,
@@ -2194,12 +2187,12 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         controllaSvenimento: false,
       );
 
-      // I modificatori temporanei terminano al riposo breve. La loro rimozione
-      // non deve essere trattata come danno e quindi non sottrae mai HP.
-      tempResilienza = 0;
-      tempVolonta = 0;
-      tempMateria = 0;
-      tempOculum = 0;
+      // I buff dei pasti durano fino al Riposo Lungo. Gli altri modificatori
+      // temporanei cessano senza applicare nuovi danni alla Vita.
+      tempResilienza = consumedFoodBonuses['resilienza'] ?? 0;
+      tempVolonta = consumedFoodBonuses['volonta'] ?? 0;
+      tempMateria = consumedFoodBonuses['materia'] ?? 0;
+      tempOculum = consumedFoodBonuses['oculum'] ?? 0;
 
       recuperaStatsAttualiConRiposoBreve();
       currentHpController.text = oculumShortRestHpAfter(
@@ -2264,6 +2257,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     });
 
     processConditionTick(OculumConditionTickTrigger.shortRest);
+    if (realtimeService?.isConnected != true) {
+      restArmoredPawns([pawnSenderTag], longRest: false);
+    }
     tickOpenLifecycleRest(longRest: false);
     if (advanceWorldClock && worldClockProgress.calendarOriginDay > 0) {
       notifyWorldRestState(longRest: false);
@@ -2275,6 +2271,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     bool advanceWorldClock = true,
     int sleepMinutes = 90,
     bool fulfillSleepNeed = true,
+    int? wakingWorldSeconds,
   }) {
     if (advanceWorldClock && realtimeService?.isConnected == true) {
       requestWorldPartyRest(longRest: true);
@@ -2291,6 +2288,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
     if (longRestInProgress) return;
     longRestInProgress = true;
+    resetStat35Rest(long: true);
+    endStat35OculumOverflow();
+    resetPosteaTransformArmorAtLongRest();
     referenceLongRest();
     senkaRest();
     planarState['ascensionDustFightWindowEarned'] = 0;
@@ -2316,6 +2316,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       restThresholdTemporaryHp();
       schedePersonaggio[schedaCorrente]['packLeaderPhaseTriggered'] = false;
       advanceSmokingHerbs('long_rest');
+      expireMealBuffsAtLongRest();
       merchantHerbalEffects.clear();
       for (final item in inventario) {
         if (item.craftData['gerinResonanceGrade'] == null ||
@@ -2394,6 +2395,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       ascensionDustTempVolonta = 0;
       ascensionDustTempMateria = 0;
       ascensionDustTempOculum = 0;
+      expireInventoryDustInfusions();
       ascensionDustCombat.longRest();
       ascensionDustDropSinceLongRest = 0;
       ascensionDustSottotrattiTemporanei.clear();
@@ -2410,6 +2412,9 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       restDustFusion();
       longRestPlanarEffects();
       restorePosteaCores();
+      if (realtimeService?.isConnected != true) {
+        restArmoredPawns([pawnSenderTag], longRest: true);
+      }
       resetMeccanioAtOwnerRest();
       meccanioOwnerRest(longRest: true);
       raccoltaResilienzaSpesa = 0;
@@ -2584,6 +2589,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
     }
     recordAggiustaNucleoProgress(immediate: true);
     processConditionTick(OculumConditionTickTrigger.longRest);
+    grantStat20WakingLife(worldSeconds: wakingWorldSeconds);
     tickOpenLifecycleRest(longRest: true);
     planarState.remove(_meditationUseKey);
     if (advanceWorldClock && worldClockProgress.calendarOriginDay > 0) {
@@ -2666,6 +2672,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
   void resetBuffDebuffTemporanei() {
     setState(() {
+      consumedFoodBonuses.clear();
       tempResilienza = 0;
       tempVolonta = 0;
       tempMateria = 0;

@@ -126,8 +126,13 @@ int oculumEquipmentWearValue(InventoryItem item, int baseValue) {
   if (uses == 0) {
     return baseValue * oculumEquipmentBrokenPercent(item) ~/ 100;
   }
-  // A broken roll can retain up to 30%; an intact item cannot be weaker.
   final capacity = oculumEquipmentCapacity(item);
+  if (oculumIsPosteaReactiveArmor(item)) {
+    return baseValue *
+        oculumPosteaArmorBonusPercent(uses: uses, capacity: capacity) ~/
+        100;
+  }
+  // A broken roll can retain up to 30%; an intact item cannot be weaker.
   return baseValue * max(uses, capacity * 30 ~/ 100) ~/ capacity;
 }
 
@@ -192,6 +197,7 @@ extension _OculumProtectionWearRuntime on _OculumHomePageState {
   bool recordProtectionWear(
     Iterable<InventoryItem> items, {
     required String? packetId,
+    VoidCallback? onArmorBroken,
   }) {
     if (items.isEmpty ||
         (realtimeService?.isConnected == true &&
@@ -201,9 +207,20 @@ extension _OculumProtectionWearRuntime on _OculumHomePageState {
     final cost = _protectionWearCost(packetId);
     final changes = <String>[];
     for (final item in items) {
+      final before = oculumEquipmentUses(item);
       final spent = oculumSpendEquipmentWear(item, cost);
       if (spent == 0) continue;
       final uses = oculumEquipmentUses(item);
+      recordPosteaArmorHalfIntegrity(
+        item,
+        before: before,
+        after: uses,
+        damagePacketId: packetId,
+      );
+      if (uses == 0 &&
+          oculumWearProtectionKind(item) == OculumWearProtectionKind.armor) {
+        onArmorBroken?.call();
+      }
       final broken = oculumEquipmentBrokenPercent(item);
       changes.add(
         broken > 0

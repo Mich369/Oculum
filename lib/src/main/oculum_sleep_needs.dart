@@ -283,10 +283,11 @@ extension _OculumSleepAndNeeds on _OculumHomePageState {
 
   void satisfyConsumedFoodNeeds(Map food) {
     final explicit = food['satisfiesNeeds'];
-    final needs = explicit is List ? explicit.map((v) => '$v') : <String>[];
-    for (final need in needs.where(oculumPersonalNeeds.contains)) {
-      // Consumables cannot silently count as sleep.
-      if (need != 'sleep') satisfyPersonalNeed(need);
+    if (explicit is! List) return;
+    if (explicit.contains('food')) {
+      recordCharacterMeal(hydrate: explicit.contains('water'));
+    } else if (explicit.contains('water')) {
+      satisfyPersonalNeed('water');
     }
   }
 
@@ -448,6 +449,7 @@ extension _OculumSleepAndNeeds on _OculumHomePageState {
                   advanceWorldClock: false,
                   sleepMinutes: minutes,
                   fulfillSleepNeed: false,
+                  wakingWorldSeconds: readIntValue(raw['endSeconds']),
                 );
               } else {
                 riposoBreve(advanceWorldClock: false);
@@ -579,11 +581,16 @@ extension _OculumSleepAndNeeds on _OculumHomePageState {
 
   Widget personalNeedsSummary() {
     final progress = personalNeedsProgress();
+    final now = worldClockSeconds;
+    final mealWindow = progress.isEarlyBreakfast(now)
+        ? t('Primo pasto di domani', 'Tomorrow’s first meal')
+        : mealWindowName(oculumMealWindowAt(now));
     return Text(
       automaticWorldNeedsEnabled
-          ? 'Fame ${progress.daysWithout('food', worldClockSeconds)} giorni · '
-                'Sete ${progress.daysWithout('water', worldClockSeconds)} · '
-                'Sonno ${progress.daysWithout('sleep', worldClockSeconds)} · '
+          ? '${progress.enabled('food') ? 'Pasti ${progress.mealsToday(now)}/2 · $mealWindow · ' : ''}'
+                'Fame ${progress.daysWithout('food', now)} giorni · '
+                'Sete ${progress.daysWithout('water', now)} · '
+                'Sonno ${progress.daysWithout('sleep', now)} · '
                 'Cenere totale ${worldNeedsEffectiveAsh()} '
                 '(+${progress.ash} dai bisogni)'
           : 'Bisogni automatici esenti per questa scheda; '

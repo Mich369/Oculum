@@ -38,6 +38,7 @@ part 'monster_anatomy.dart';
 part 'non_return_undead.dart';
 part 'cycle_monsters.dart';
 part 'cycle_suggested_monsters.dart';
+part 'november_8_monster_names.dart';
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
     knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
@@ -49,6 +50,9 @@ class MonsterBookEntry {
   bool get hasNaturalFlight => encounterRules['naturalFlight'] == true;
   final String nameIt;
   final String nameEn;
+  String get speciesNameIt => '${encounterRules['speciesNameIt'] ?? nameIt}';
+  String get speciesNameEn => '${encounterRules['speciesNameEn'] ?? nameEn}';
+  bool get visibleInMonsterBook => !_november8HiddenMonsterBookIds.contains(id);
   final String descIt;
   final String descEn;
   final String elementId;
@@ -87,7 +91,13 @@ class MonsterBookEntry {
   final List<String> classificationTags;
   List<String> get formTags => classificationTags.isNotEmpty
       ? classificationTags
-      : oculumCreatureFormTags(id, nameIt, nameEn, descIt, isNpc: isNpc);
+      : oculumCreatureFormTags(
+          id,
+          speciesNameIt,
+          speciesNameEn,
+          descIt,
+          isNpc: isNpc,
+        );
 
   const MonsterBookEntry({
     required this.id,
@@ -137,7 +147,7 @@ class MonsterBookEntry {
   String get creationStatType =>
       '${encounterRules['creationStatType'] ?? presetType}';
   String get creationProfileName =>
-      '${encounterRules['creationProfileName'] ?? '$nameIt $nameEn'}';
+      '${encounterRules['creationProfileName'] ?? '$speciesNameIt $speciesNameEn'}';
 
   MonsterBookEntry copyWith({
     String? id,
@@ -315,7 +325,7 @@ Map<String, String> oculumMonsterBookDamageResistancePresets(
   MonsterBookEntry entry,
 ) {
   final identity =
-      '${entry.id} ${entry.nameIt} ${entry.nameEn} ${oculumMonsterPhysicalDescription(entry)}'
+      '${entry.id} ${entry.speciesNameIt} ${entry.speciesNameEn} ${oculumMonsterPhysicalDescription(entry)}'
           .toLowerCase();
   final presets = <String, String>{};
   final shell = RegExp(
@@ -3752,6 +3762,114 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
   ),
   _glacialIdrax,
   MonsterBookEntry(
+    id: 'divoramitu',
+    nameIt: 'Divoramitù',
+    nameEn: 'Divoramitù',
+    descIt:
+        'Variante dell’Idrax del Mondo Dolce. È un lungo serpente senza arti, '
+        'con savoiardi al caffè alternati a strati di mascarpone e cacao '
+        'amaro sul dorso. Conserva Muta, spire e fuga dell’Idrax.',
+    descEn:
+        'A limbless Idrax from the Sweet World with coffee-soaked ladyfingers, '
+        'mascarpone layers and a cocoa-dusted back.',
+    elementId: 'natura',
+    planeIds: ['caramella'],
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: _idraxStats,
+    weakPointIt: 'Lo strato sottile sotto la gola, quando solleva il capo.',
+    skillIds: _idraxSkillIds,
+    dropIds: _idraxDropIds,
+    encounterRules: {
+      'authoredCanonical': true,
+      'canonicalVariantOf': 'idrax',
+      'precisionBodyParts': _idraxPrecisionBodyParts,
+    },
+    classificationTags: ['Bestia', 'Rettile', 'Serpente'],
+  ),
+  MonsterBookEntry(
+    id: 'divoramitu_elite',
+    nameIt: 'Divoramitù Elité',
+    nameEn: 'Elite Divoramitù',
+    descIt:
+        'Variante Elité del Divoramitù, con mascella più alta e savoiardi '
+        'interi lungo il dorso di cacao. Il corpo senza arti si avvolge in '
+        'spire di mascarpone e biscotto al caffè.',
+    descEn:
+        'An elite Divoramitù with a raised jaw and whole ladyfingers '
+        'along its cocoa-dusted back.',
+    elementId: 'natura',
+    planeIds: ['caramella'],
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      ..._idraxStats,
+      'resilienza': 5,
+      'volonta': 7,
+      'materia': 6,
+      'oculum': 0,
+      'level': 3,
+    },
+    weakPointIt: 'Lo strato sottile sotto la gola, quando solleva il capo.',
+    skillIds: _idraxSkillIds,
+    dropIds: _idraxDropIds,
+    encounterRules: {
+      'authoredCanonical': true,
+      'canonicalVariantOf': 'divoramitu',
+      'precisionBodyParts': _idraxPrecisionBodyParts,
+    },
+    classificationTags: ['Bestia', 'Rettile', 'Serpente'],
+  ),
+  MonsterBookEntry(
+    id: 'distruttor_caramella',
+    nameIt: 'Distruttor Caramella',
+    nameEn: 'Candy Destroyer',
+    descIt:
+        'Un cavaliere del Mondo Dolce rivestito di caramella d’uva viola '
+        'e azzurrina, con venature lampone e un grande spadone di zucchero cristallino.',
+    descEn:
+        'A knight of the Sweet World in grape-purple and pale-blue candy '
+        'armour, wielding a giant crystallized sugar sword.',
+    elementId: 'fisico',
+    planeIds: ['caramella'],
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: {
+      'resilienza': 8,
+      'volonta': 12,
+      'materia': 4,
+      'oculum': 0,
+      'level': 4,
+    },
+    weakPointIt: 'La giunzione sotto l’elsa, quando solleva lo spadone.',
+    skillIds: ['candy_will_slam'],
+    dropIds: [],
+    encounterRules: {
+      'authoredCanonical': true,
+      'precisionBodyParts': [
+        {'id': 'head', 'label': 'Elmo', 'group': 'head'},
+        {'id': 'body', 'label': 'Torace', 'group': 'body'},
+        {'id': 'arms_1', 'label': 'Braccio destro', 'group': 'arms'},
+        {'id': 'arms_2', 'label': 'Braccio sinistro', 'group': 'arms'},
+        {'id': 'legs_1', 'label': 'Gamba destra', 'group': 'legs'},
+        {'id': 'legs_2', 'label': 'Gamba sinistra', 'group': 'legs'},
+        {
+          'id': 'sword_joint',
+          'label': 'Giunzione sotto l’elsa',
+          'group': 'arms',
+          'weak': true,
+        },
+      ],
+    },
+    classificationTags: ['Umanoide', 'Corazzato'],
+  ),
+  MonsterBookEntry(
     id: 'notthing',
     nameIt: 'Notthing',
     nameEn: 'Notthing',
@@ -5485,6 +5603,9 @@ List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
           : monster.family == 'Veleno'
           ? 'poison'
           : 'shadow',
+      encounterRules: {
+        if (monster.family == 'Corruzione') 'corruptedCriticalDrop': true,
+      },
       spriteAssetPath: '',
       isMiniBoss: monster.mini,
       isBoss: monster.boss,
@@ -5511,10 +5632,50 @@ List<MonsterBookEntry> _heroPathMonsterBookEntries() => [
     ),
 ];
 
+// Individual catalogue choices are independent of their base and siblings.
+const _retiredExactMonsterIds = <String>{
+  'duellante_senza_palpebre_variante_errante',
+  'cavaliere_campana_ruggine',
+  'cavaliere_campana_ruggine_variante_errante',
+  'cervo_candela_variante_rituale',
+  'base_nuvole_10',
+  'habitat_isole_cervo_delle_corde_sospese',
+  'habitat_isole_cervo_delle_corde_sospese_variante_errante',
+  'habitat_mezzano_cervo_delle_lanterne_spente',
+  'habitat_mezzano_cervo_delle_lanterne_spente_variante_corazzata',
+  'habitat_angelico_cervo_dell_aureola_incrinata',
+  'habitat_angelico_cervo_dell_aureola_incrinata_variante_errante',
+  'habitat_angelico_cherubino_delle_lance_vuote',
+  'habitat_angelico_cherubino_delle_lance_vuote_variante_corazzata',
+  'ciclope_del_fato_variante_errante',
+  'base_mezzano_10',
+  'bone_crown_boss',
+  'bone_crown_boss_variante_rituale',
+  'habitat_postea_corvo_archivista',
+  'habitat_postea_corvo_archivista_variante_corazzata',
+  'base_mezzano_03',
+  'crosty_variante_errante',
+  'habitat_vero_inferno_custode_del_cancello_senza_ritorno',
+  'habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale',
+  'habitat_isole_custode_del_faro_volante',
+  'habitat_isole_custode_del_faro_volante_variante_corazzata',
+  'habitat_nuvole_rocciose_custode_del_monolite_sospeso',
+  'habitat_nuvole_rocciose_custode_del_monolite_sospeso_variante_rituale',
+  'habitat_shadow_hell_custode_del_pendaglio_infranto',
+  'habitat_shadow_hell_custode_del_pendaglio_infranto_variante_rituale',
+  'habitat_morti_custode_delle_nicchie',
+  'habitat_morti_custode_delle_nicchie_variante_errante',
+  'habitat_foresta_elementale_custode_delle_stagioni_spezzate',
+  'habitat_foresta_elementale_custode_delle_stagioni_spezzate_variante_errante',
+  'demone_intermedio_variante_veterana',
+  'demone_maggiore_variante_rituale',
+  'hero_path_diverso_tank',
+};
+
 // Keep retired definitions for existing sheets, without offering them in the
 // manual, new encounters, theme queues or the default Monster Book catalogue.
 bool oculumIsRetiredMonsterId(String id) =>
-    id.trim() == 'duellante_senza_palpebre_variante_errante' ||
+    _retiredExactMonsterIds.contains(id.trim()) ||
     const {
       'cuore_filo',
       'ragno_obser_falsi',
@@ -5600,7 +5761,10 @@ final List<MonsterBookEntry> defaultMonsterBookEntries = List.unmodifiable(
 List<MonsterBookEntry> _withoutDefaultMonsterImages(
   Iterable<MonsterBookEntry> entries,
 ) => List<MonsterBookEntry>.unmodifiable(
-  entries.map((entry) => entry.copyWith(spriteAssetPath: '', imageBase64: '')),
+  entries.map((entry) {
+    final renamed = _withNovember8MonsterName(entry);
+    return renamed.copyWith(spriteAssetPath: '', imageBase64: '');
+  }),
 );
 
 /// Ogni mostro possiede anche una variante stabile, non un doppione grafico.
@@ -5732,19 +5896,26 @@ MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
         _ => pair.value,
       },
   };
-  return base.copyWith(
+  final variant = base.copyWith(
     id: id,
-    nameIt: '${base.nameIt} ${labels[styleId]}',
-    nameEn: '${base.nameEn} ${labels[styleId]}',
+    encounterRules: {
+      for (final rule in base.encounterRules.entries)
+        if (rule.key != 'speciesNameIt' && rule.key != 'speciesNameEn')
+          rule.key: rule.value,
+    },
+    nameIt: '${base.speciesNameIt} ${labels[styleId]}',
+    nameEn: '${base.speciesNameEn} ${labels[styleId]}',
     descIt:
         'Variante ${styleId.toLowerCase()}: ${roles[styleId]}. ${base.descIt}',
-    descEn: '${labels[styleId]} variant of ${base.nameEn}. ${base.descEn}',
+    descEn:
+        '${labels[styleId]} variant of ${base.speciesNameEn}. ${base.descEn}',
     stats: stats,
     skillIds: base.skillIds
         .map((skill) => '${skill}_variante_$styleId')
         .toList(growable: false),
     dropIds: [...base.dropIds, 'frammento_variante_$styleId'],
   );
+  return _withNovember8MonsterName(variant);
 }
 
 List<MonsterBookEntry> _activeMonsterBookEntries = defaultMonsterBookEntries;

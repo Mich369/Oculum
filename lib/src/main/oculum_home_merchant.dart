@@ -131,8 +131,13 @@ int oculumBlackMarketFallenEyePrice({
 }
 
 bool oculumBlackMarketMonsterBookPageEligible(MonsterBookEntry entry) {
-  if (entry.isNpc || oculumIsRetiredMonsterId(entry.id)) return false;
-  final identity = '${entry.id} ${entry.nameIt} ${entry.nameEn}'.toLowerCase();
+  if (entry.isNpc ||
+      !entry.visibleInMonsterBook ||
+      oculumIsRetiredMonsterId(entry.id)) {
+    return false;
+  }
+  final identity = '${entry.id} ${entry.speciesNameIt} ${entry.speciesNameEn}'
+      .toLowerCase();
   return entry.formTags.any(
         (tag) => oculumNormalizeText(tag) == 'aberrazione',
       ) ||
@@ -188,7 +193,7 @@ List<MonsterBookEntry> oculumRankBlackMarketMonsterBookPages({
   final families = <String>{};
   for (final entry in candidates) {
     final family = oculumNormalizeText(
-      entry.nameIt.split(RegExp(r'[·|/]')).first.trim(),
+      entry.speciesNameIt.split(RegExp(r'[·|/]')).first.trim(),
     );
     if (!families.add(family)) continue;
     selected.add(entry);
@@ -245,8 +250,12 @@ String? oculumMerchantCanonicalOfferKey(Map<String, dynamic> offer) {
   }
 }
 
-int oculumMerchantOfferCount(Random random) =>
-    random.nextInt(100) < 16 ? 12 : 6 + random.nextInt(4);
+int oculumMerchantOfferCount(Random random) {
+  // Cumulative chances for counts 3 through 12, with a mean of 6.
+  const thresholds = [8, 18, 38, 65, 85, 93, 96, 98, 99, 100];
+  final roll = random.nextInt(100);
+  return 3 + thresholds.indexWhere((threshold) => roll < threshold);
+}
 
 String? oculumMerchantOfferFamilyKey(Map<String, dynamic> offer) {
   final canonical = oculumMerchantCanonicalOfferKey(offer);
@@ -408,6 +417,608 @@ List<Map<String, dynamic>> oculumSelectMerchantOffers(
     selected.add(remaining.removeAt(pickedIndex));
   }
   return selected;
+}
+
+({String? title, String appearance}) _authoredMonsterWeaponDisplay(
+  String name,
+) => switch (name) {
+  'Martello da banco' => (
+    title: 'Vigilnail',
+    appearance: 'Testa squadrata di ferro battuto, manico avvolto in cuoio.',
+  ),
+  'Lancia da pozzo' => (
+    title: 'Wellwraith',
+    appearance: 'Punta smussata, asta scura e collarino di rame ossidato.',
+  ),
+  'Sciabola arrugginita' => (
+    title: 'Rustsalt',
+    appearance: 'Filo curvo chiazzato di ruggine e guardia di ferro consumato.',
+  ),
+  'Martello Lungo' => (
+    title: 'Longmaul',
+    appearance: 'Manico telescopico e testa massiccia con spigoli battuti.',
+  ),
+  'Spada lunga della Fila' => (
+    title: 'Linekeeper',
+    appearance: 'Lama lunga a doppio filo, croce diritta e pomo di ferro.',
+  ),
+  'Lancia da fila' => (
+    title: 'Ranksunder',
+    appearance:
+        'Asta lunga rinforzata, punta sottile e nastri corti al collarino.',
+  ),
+  'Picca a ganci' => (
+    title: 'Bastionhook',
+    appearance:
+        'Punta diritta, due ganci laterali e fascia metallica sull’asta.',
+  ),
+  'Alabarda di ferro freddo' => (
+    title: 'Ferrum Vigil',
+    appearance: 'Mezzaluna di ferro freddo, becco posteriore e punta alta.',
+  ),
+  'Balestra di fonderia' => (
+    title: 'Foundry Vesper',
+    appearance: 'Fusto scuro, arco in metallo e una staffa di ferro brunito.',
+  ),
+  'Guanti d arme enormi' => (
+    title: 'Bastionfist',
+    appearance: 'Dita a placche sovrapposte e nocche larghe rinforzate.',
+  ),
+  'Falce pesante del Tempo' => (
+    title: 'Hourreaper',
+    appearance:
+        'Lama pesante e arcuata, su un’asta lunga da impugnare a due mani.',
+  ),
+  'Lancia della Guardia Lunare' => (
+    title: 'Lunaward',
+    appearance: 'Lancia d’argento annerito con sottili incisioni viola lunare.',
+  ),
+  'Lama di Guardia Lunare Elité' => (
+    title: 'Luna Praetor',
+    appearance: 'Lama d’argento annerito con intarsi viola lunare.',
+  ),
+  'Lama di Guardia Infernale Ik' => (
+    title: 'Infernavigil',
+    appearance: 'Lama d’argento annerito con sottili intarsi rosa infernale.',
+  ),
+  'Lama di Guardia Infernale Ik Elité' => (
+    title: 'Inferna Praetor',
+    appearance: 'Lama d’argento annerito con intarsi rosa infernale profondi.',
+  ),
+  _ => (title: null, appearance: ''),
+};
+
+List<Map<String, dynamic>> oculumBlacksmithMonsterWeaponOffers({
+  required Iterable<MonsterBookEntry> monsters,
+  required int characterLevel,
+  required int characterGrade,
+  required int minimumGrade,
+  required int characterTotalPower,
+  required int budget,
+  required Random random,
+  required Set<String> excludedIds,
+  required int count,
+}) {
+  final sources = [
+    for (final monster in monsters)
+      if (!monster.isNpc &&
+          monster.visibleInMonsterBook &&
+          !oculumIsRetiredMonsterId(monster.id) &&
+          !monster.id.startsWith('pawn_guardiano') &&
+          (monster.stats['grade'] ?? 0) >= minimumGrade &&
+          (monster.stats['grade'] ?? 0) <= characterGrade)
+        <String, dynamic>{
+          'id': monster.id,
+          'monster': monster,
+          'level': monster.stats['level'] ?? 0,
+          'cost': oculumMonsterRelicMarketPrice(
+            level: monster.stats['level'] ?? 0,
+            grade: monster.stats['grade'] ?? 0,
+          ),
+          'recommendedPower': oculumScoutPower(monster.stats['level'] ?? 0, [
+            for (final stat in ['resilienza', 'volonta', 'materia', 'oculum'])
+              monster.stats[stat] ?? 0,
+          ], grade: monster.stats['grade'] ?? 0),
+        },
+  ];
+  final offers = <Map<String, dynamic>>[];
+  final seen = {...excludedIds};
+  for (final source in oculumSelectMerchantOffers(
+    sources,
+    characterLevel: characterLevel,
+    characterTotalPower: characterTotalPower,
+    budget: budget,
+    count: count,
+    random: random,
+  )) {
+    final monster = source['monster'] as MonsterBookEntry;
+    final weapons = <(String, InventoryItem)>[
+      for (final item in oculumMonsterEquipmentCatalogue(source: monster))
+        if (item.arma) ('${item.monsterLoot['id']}', item),
+      for (final (index, raw) in monster.inventoryItems.indexed)
+        if (raw['arma'] == true)
+          (
+            '${monster.id}:inventory:$index',
+            InventoryItem.fromJson({
+              'livelloOggetto': monster.stats['level'] ?? 0,
+              'gradoOggetto': monster.stats['grade'] ?? 0,
+              ...raw,
+            }),
+          ),
+    ]..shuffle(random);
+    for (final (id, item) in weapons) {
+      final stockId = 'fabbro_monster_weapon_$id';
+      final grade = max(item.gradoRichiesto, item.gradoOggetto);
+      if (grade < minimumGrade ||
+          grade > characterGrade ||
+          !seen.add(stockId)) {
+        continue;
+      }
+      final level = max(0, item.livelloOggetto);
+      final authoredCost = readIntValue(item.craftData['manualPriceObser']);
+      final cost = authoredCost > 0
+          ? authoredCost
+          : oculumMonsterRelicMarketPrice(level: level, grade: grade);
+      item
+        ..equipaggiata = false
+        ..quantita = 1
+        ..craftData = {...item.craftData, 'fabbroMonsterWeaponId': stockId};
+      final authoredDisplay = _authoredMonsterWeaponDisplay(item.nome);
+      final generatedAppearance = item.craftData['weaponAppearance'];
+      final appearance = generatedAppearance is String
+          ? generatedAppearance
+          : authoredDisplay.appearance;
+      offers.add({
+        'id': stockId,
+        'kind': 'fabbro_monster_weapon',
+        'name': authoredDisplay.title ?? item.nome,
+        'desc': [
+          if (authoredDisplay.title != null) 'Arma originale: ${item.nome}.',
+          item.note,
+        ].join(' '),
+        'cost': cost,
+        'level': level,
+        'grade': grade,
+        'damage': item.bonusDanno,
+        'recommendedPower': source['recommendedPower'],
+        if (appearance.isNotEmpty)
+          'weaponAppearance': authoredDisplay.title != null
+              ? '${item.nome} · $appearance'
+              : appearance,
+        'remaining': 1,
+        'relicItem': item.toJson(),
+      });
+      break;
+    }
+  }
+  return offers;
+}
+
+int _posteaPlasmaWeaponDamage(Object? kind, int level) => switch (kind) {
+  'postea_homing_chakram' => 7 + 4 * max(0, level),
+  'postea_homing_boomerang' => 6 + 4 * max(0, level),
+  _ => 10 + 5 * max(0, level),
+};
+
+Map<String, dynamic> _blacksmithSpecialWeaponOffer({
+  required String id,
+  required String name,
+  required String appearance,
+  required String element,
+  required int level,
+  required int grade,
+  required int damage,
+  required int cost,
+  required double weight,
+  int defense = 0,
+  int shield = 0,
+  int followupDamage = 0,
+  int followupCooldown = 2,
+  String mechanic = '',
+  String description = '',
+}) => {
+  'id': 'fabbro_$id',
+  'kind': 'fabbro_special_weapon',
+  'name': name,
+  'weaponAppearance': appearance,
+  'element': element,
+  'level': level,
+  'grade': grade,
+  'damage': damage,
+  'cost': cost,
+  'weight': weight,
+  'defence': defense,
+  'shield': shield,
+  if (mechanic.isNotEmpty) 'weaponMechanic': mechanic,
+  if (followupDamage > 0) ...{
+    'gunFollowupDamage': followupDamage,
+    'gunFollowupCooldown': followupCooldown,
+  },
+  'desc':
+      'Livello $level · Grado $grade · +$damage Danni'
+      '${defense > 0 ? ' · +$defense Difesa' : ''}'
+      '${shield > 0 ? ' · Scudo $shield' : ''}'
+      '${description.isEmpty ? '.' : '. $description'}'
+      '${followupDamage > 0 ? ' Colpo da $followupDamage Danni, recupero $followupCooldown turni personali.' : ''}',
+};
+
+List<Map<String, dynamic>> oculumBlacksmithSpecialEquipmentOffers() => [
+  _blacksmithSpecialWeaponOffer(
+    id: 'macis_a_stella',
+    name: 'Vesperstar',
+    appearance:
+        'Macis a Stella · Testa di ferro a punte corte, con un anello di ottone alla base.',
+    element: 'contundente',
+    level: 3,
+    grade: 0,
+    damage: 8,
+    cost: 110,
+    weight: 1.8,
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'katar',
+    name: 'Dawnfang',
+    appearance:
+        'Katar · Lama triangolare e presa trasversale fra due sbarre d’acciaio.',
+    element: 'perforante',
+    level: 2,
+    grade: 0,
+    damage: 6,
+    cost: 95,
+    weight: .7,
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'frusta_di_spine',
+    name: 'Spinavine',
+    appearance:
+        'Frusta di Spine · Ramo flessibile e intrecciato, con spine nere lungo tutta la frusta.',
+    element: 'natura',
+    level: 5,
+    grade: 1,
+    damage: 9,
+    cost: 200,
+    weight: .8,
+    mechanic: 'natureThornWhip',
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'urumi',
+    name: 'Steelwyrm',
+    appearance:
+        'Urumi · Nastro d’acciaio a doppio filo che si avvolge attorno all’elsa.',
+    element: 'taglio',
+    level: 6,
+    grade: 1,
+    damage: 12,
+    cost: 235,
+    weight: 1.1,
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'chakram_di_brina_pura',
+    name: 'Frostglass',
+    appearance:
+        'Chakram di Brina Pura · Disco cavo di ghiaccio azzurro, con bordo affilato e presa satinata.',
+    element: 'gelo',
+    level: 7,
+    grade: 1,
+    damage: 14,
+    cost: 280,
+    weight: 1.1,
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'dread_bow',
+    name: 'Eclipse Dread-Bow',
+    appearance:
+        'Dread-Bow · Arco corto piegato in avanti, corde nere e una scia d’ombra al rilascio.',
+    element: 'oscuro',
+    level: 9,
+    grade: 1,
+    damage: 12,
+    cost: 340,
+    weight: 1,
+    mechanic: 'dreadBowIgnoresPhysicalArmor',
+    description:
+        'Scaglia ombra senza usare frecce fisiche. Il colpo attraversa le armature fisiche.',
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'sword_breaker',
+    name: 'Vicefang',
+    appearance:
+        'Sword Breaker · Pugnale da mano sinistra, con profondi denti a pettine sul dorso.',
+    element: 'perforante',
+    level: 4,
+    grade: 0,
+    damage: 5,
+    cost: 120,
+    weight: .8,
+    mechanic: 'swordBreaker',
+    description:
+        'Il pettine può catturare la lama avversaria in parata. La torsione serve a tentare il disarmo o la rottura.',
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'gun_shield',
+    name: 'Foundry Eye',
+    appearance:
+        'Gun Shield · Brocchiere rotondo, con pistola a miccia e feritoia sopra la canna.',
+    element: 'perforante',
+    level: 6,
+    grade: 1,
+    damage: 6,
+    cost: 240,
+    weight: 2.6,
+    defense: 2,
+    shield: 10,
+    mechanic: 'gunShield',
+    followupDamage: 15,
+    description:
+        'Scudo offensivo. Dopo una parata riuscita può sparare un colpo gratuito.',
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'gunblade',
+    name: 'Powderknell',
+    appearance:
+        'Gunblade · Lama larga sopra una canna corta, con castello integrato nella guardia.',
+    element: 'taglio',
+    level: 7,
+    grade: 1,
+    damage: 11,
+    cost: 320,
+    weight: 2.1,
+    mechanic: 'gunblade',
+    followupDamage: 20,
+    description:
+        'Dopo un colpo riuscito con la lama può sparare un colpo gratuito.',
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'ascia_bipenne',
+    name: 'Bipennis',
+    appearance:
+        'Ascia Bipenne · Due lame a mezzaluna su un’asta fasciata in cuoio.',
+    element: 'taglio',
+    level: 5,
+    grade: 1,
+    damage: 12,
+    cost: 190,
+    weight: 2.6,
+  ),
+  _blacksmithSpecialWeaponOffer(
+    id: 'fire_mace',
+    name: 'Malleus Ignis',
+    appearance:
+        'Fire Mace · Testa cava e spinata che contiene polvere e zolfo.',
+    element: 'fuoco',
+    level: 7,
+    grade: 1,
+    damage: 13,
+    cost: 270,
+    weight: 2.1,
+    mechanic: 'fireMace',
+  ),
+];
+
+InventoryItem oculumBlacksmithSpecialEquipmentFromOffer(
+  Map<String, dynamic> offer,
+) {
+  final mechanic = '${offer['weaponMechanic'] ?? ''}';
+  final isShield = mechanic == 'gunShield';
+  final grade = max(0, readIntValue(offer['grade']));
+  return InventoryItem(
+    nome: '${offer['name']}',
+    peso: max(0, readDoubleValue(offer['weight'], fallback: 1)),
+    quantita: 1,
+    note: '${offer['weaponAppearance']}\n${offer['desc']}',
+    arma: true,
+    protegge: isShield,
+    bonusDanno: max(0, readIntValue(offer['damage'])),
+    bonusDifesa: max(0, readIntValue(offer['defence'])),
+    bonusScudo: max(0, readIntValue(offer['shield'])),
+    bonusScudoIncludeGrado: true,
+    livelloOggetto: max(0, readIntValue(offer['level'])),
+    gradoOggetto: grade,
+    gradoRichiesto: grade,
+    elementoDanno: '${offer['element']}',
+    craftData: {
+      'manualPriceObser': max(0, readIntValue(offer['cost'])),
+      'weaponAppearance': '${offer['weaponAppearance']}',
+      if (const {
+        'natureThornWhip',
+        'dreadBowIgnoresPhysicalArmor',
+        'swordBreaker',
+        'gunShield',
+        'gunblade',
+        'fireMace',
+      }.contains(mechanic))
+        mechanic: true,
+      if (isShield) 'wearProtectionKind': 'shield',
+      if (isShield || mechanic == 'gunblade') ...{
+        'gunFollowupDamage': max(0, readIntValue(offer['gunFollowupDamage'])),
+        'gunFollowupCooldown': max(
+          0,
+          readIntValue(offer['gunFollowupCooldown']),
+        ),
+      },
+    },
+  );
+}
+
+bool _isPosteaPlasmaWeapon(Object? kind) => const {
+  'postea_reactive_sword',
+  'postea_homing_chakram',
+  'postea_homing_boomerang',
+}.contains(kind);
+
+const _posteaTransformArmorKind = 'postea_transform_armor';
+
+Map<String, dynamic> oculumPosteaTransformArmorOffer(Random random) => {
+  'id': _posteaTransformArmorKind,
+  'kind': _posteaTransformArmorKind,
+  'name': 'Ferrum Mutabile',
+  'cost': 8000 + random.nextInt(5001),
+  'level': 12,
+  'defence': 12,
+  'transformDurationTurns': 3,
+  'transformHpPercent': 150,
+  'transformStatsPercent': 130,
+  'transformShield': 400,
+  'desc':
+      'Corazza trasformabile di Postea. Piastre sovrapposte ruotano su guide con rune schermate. '
+      '+12 Difesa. Trasformazione gratuita, una volta per Riposo Lungo, per 3 turni personali: '
+      '×1,5 Vita attuale, ×1,3 alle quattro statistiche attuali e +400 Scudo normale.',
+};
+
+List<Map<String, dynamic>> oculumPosteaReactiveEquipmentOffers(int level) => [
+  {
+    'id': 'postea_reactive_armor',
+    'kind': 'postea_reactive_armor',
+    'name': 'Corazza di Rimbalzo di Postea',
+    'cost': 1200,
+    'level': 6,
+    'shield': 200,
+    'defence': 4,
+    'shockDamage': 50,
+    'recoveryPercent': 25,
+    'desc':
+        'Piastre di ceramica scura con rune sigillate sotto il metallo. '
+        'Scudo normale 200. Scarica reattiva da 50 Danni e recupero del 25% dello Scudo.',
+  },
+  {
+    'id': 'postea_reactive_sword',
+    'kind': 'postea_reactive_sword',
+    'name': 'Reductus',
+    'cost': 480,
+    'recommendedLevel': level,
+    'damage': _posteaPlasmaWeaponDamage('postea_reactive_sword', level),
+    'shieldCap': 100,
+    'weaponAppearance':
+        'Lama di Ritorno di Postea · Filo al Plasma e rune protette all’interno dell’elsa.',
+    'desc':
+        'Livello e Danni fissati all’acquisto. Limite dello Scudo reattivo 100.',
+  },
+  {
+    'id': 'postea_perfect_shield',
+    'kind': 'postea_perfect_shield',
+    'name': 'Scudo di Guardia Perfetta di Postea',
+    'cost': 390,
+    'level': 4,
+    'defence': 3,
+    'parryShieldGain': 25,
+    'parryShieldCap': 75,
+    'desc':
+        'Scudo a lastre sovrapposte con rune nascoste nel bordo. '
+        'Una parata perfetta accumula 25 Scudo, fino a 75.',
+  },
+  for (final (kind, name, price, description) in const [
+    (
+      'postea_homing_chakram',
+      'Cerberus Disc',
+      430,
+      'Chakram al Plasma Segugio · Anello con tre guide di ceramica e rune schermate nel mozzo.',
+    ),
+    (
+      'postea_homing_boomerang',
+      'Hellhound Arc',
+      410,
+      'Boomerang al Plasma Segugio · Due bracci in lega scura e rune sigillate nella giunzione.',
+    ),
+  ])
+    {
+      'id': kind,
+      'kind': kind,
+      'name': name,
+      'cost': price,
+      'recommendedLevel': level,
+      'damage': _posteaPlasmaWeaponDamage(kind, level),
+      'homingHitBonus': 6,
+      'weaponAppearance': description,
+      'desc': '+6 al tiro quando attacchi con questa arma.',
+    },
+];
+
+InventoryItem? oculumPosteaReactiveEquipment(
+  Map<String, dynamic> offer, {
+  required int acquisitionLevel,
+}) {
+  final kind = offer['kind'];
+  final armor = kind == 'postea_reactive_armor';
+  final transformingArmor = kind == _posteaTransformArmorKind;
+  final sword = kind == 'postea_reactive_sword';
+  final shield = kind == 'postea_perfect_shield';
+  final weapon = _isPosteaPlasmaWeapon(kind);
+  if (!armor && !transformingArmor && !weapon && !shield) return null;
+  final appearance = '${offer['weaponAppearance'] ?? ''}'.trim();
+  return InventoryItem(
+    nome: '${offer['name']}',
+    peso: transformingArmor
+        ? 3
+        : armor
+        ? 2.5
+        : sword
+        ? 1.3
+        : shield
+        ? 1.8
+        : .9,
+    quantita: 1,
+    note: [
+      if (appearance.isNotEmpty) appearance,
+      '${offer['desc']}',
+    ].join('\n'),
+    arma: weapon,
+    protegge: !weapon,
+    livelloOggetto: weapon
+        ? max(0, acquisitionLevel)
+        : max(0, readIntValue(offer['level'])),
+    bonusDanno: weapon ? _posteaPlasmaWeaponDamage(kind, acquisitionLevel) : 0,
+    bonusDifesa: max(0, readIntValue(offer['defence'])),
+    bonusScudo: max(0, readIntValue(offer['shield'])),
+    bonusScudoIncludeGrado: true,
+    elementoDanno: weapon ? 'plasma' : 'Fisico',
+    craftData: {
+      'postea': true,
+      'manualPriceObser': max(0, readIntValue(offer['cost'])),
+      if (appearance.isNotEmpty) 'weaponAppearance': appearance,
+      if (armor || transformingArmor) 'wearProtectionKind': 'armor',
+      if (transformingArmor) ...{
+        'posteaTransformArmor': true,
+        'posteaTransformDurationTurns': max(
+          1,
+          readIntValue(offer['transformDurationTurns'], fallback: 3),
+        ),
+        'posteaTransformHpPercent': max(
+          100,
+          readIntValue(offer['transformHpPercent'], fallback: 150),
+        ),
+        'posteaTransformStatsPercent': max(
+          100,
+          readIntValue(offer['transformStatsPercent'], fallback: 130),
+        ),
+        'posteaTransformShield': max(
+          0,
+          readIntValue(offer['transformShield'], fallback: 400),
+        ),
+      },
+      if (armor) ...{
+        'posteaReactiveArmor': true,
+        'posteaArmorShockDamage': max(0, readIntValue(offer['shockDamage'])),
+        'posteaArmorRecoveryPercent': readIntValue(
+          offer['recoveryPercent'],
+        ).clamp(0, 100),
+      },
+      if (sword) ...{
+        'posteaReactiveSword': true,
+        'posteaSwordShieldCap': max(0, readIntValue(offer['shieldCap'])),
+      },
+      if (weapon && !sword)
+        'posteaHomingPlasmaHitBonus': max(
+          0,
+          readIntValue(offer['homingHitBonus']),
+        ),
+      if (shield) ...{
+        'wearProtectionKind': 'shield',
+        'posteaPerfectShield': true,
+        'posteaParryShieldGain': max(0, readIntValue(offer['parryShieldGain'])),
+        'posteaParryShieldCap': max(0, readIntValue(offer['parryShieldCap'])),
+      },
+    },
+  );
 }
 
 List<Map<String, dynamic>> oculumMerchantTimedFoodEffects(
@@ -575,7 +1186,12 @@ bool oculumMerchantCanPurchaseOffer(
   Map<String, dynamic> offer, {
   required int characterGrade,
 }) {
-  if (!const {'gear', 'title_item'}.contains('${offer['kind'] ?? ''}')) {
+  if (!const {
+    'gear',
+    'title_item',
+    'fabbro_monster_weapon',
+    'fabbro_special_weapon',
+  }.contains('${offer['kind'] ?? ''}')) {
     return true;
   }
   return max(0, readIntValue(offer['grade'])) <= max(0, characterGrade);
@@ -756,6 +1372,15 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   int merchantOfferCost(Map<String, dynamic> offer) {
     final kind = '${offer['kind'] ?? ''}';
+    if (const {
+      'fabbro_monster_weapon',
+      'fabbro_special_weapon',
+    }.contains(kind)) {
+      return oculumMerchantApplyPricePercent(
+        readIntValue(offer['cost']),
+        merchantPricePercent,
+      );
+    }
     if (const {'power_scanner', 'postea_power_scanner'}.contains(kind)) {
       return max(0, readIntValue(offer['cost']));
     }
@@ -879,6 +1504,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   bool merchantOfferMatchesShop(Map<String, dynamic> offer) {
     if (!merchantOfferMatchesPlane(offer)) return false;
     final kind = '${offer['kind']}';
+    if (const {
+      'fabbro_monster_weapon',
+      'fabbro_special_weapon',
+    }.contains(kind)) {
+      return merchantShopType == 'fabbro';
+    }
     if (kind == 'technique_scroll' &&
         readIntValue(offer['scrollGrade']) !=
             max(
@@ -952,9 +1583,13 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final stock = ensureMerchantStock();
     final selections = _activeMerchantProfile()['offerSelections'];
     final selection = selections is Map ? selections[merchantShopType] : null;
-    final rawSelectedIds = selection is Map ? selection['ids'] : null;
+    if (selection is! Map) return const <Map<String, dynamic>>[];
+    final rawSelectedIds = selection['ids'];
     if (rawSelectedIds is! List) return const <Map<String, dynamic>>[];
     final selectedIds = rawSelectedIds.map((id) => '$id').toSet();
+    final fixedIds = (selection['fixedIds'] as List? ?? const [])
+        .map((id) => '$id')
+        .toSet();
     final selected = stock
         .where(
           (offer) =>
@@ -963,20 +1598,26 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               !merchantOfferUnavailable(offer),
         )
         .toList();
-    return oculumMerchantOrderedOffers(
-      oculumMerchantUniqueOffers(selected),
-      merchantNeedStats,
-    );
+    final unique = oculumMerchantUniqueOffers(selected);
+    return [
+      for (final id in fixedIds) ...unique.where((offer) => offer['id'] == id),
+      ...oculumMerchantOrderedOffers(
+        unique.where((offer) => !fixedIds.contains('${offer['id']}')).toList(),
+        merchantNeedStats,
+      ),
+    ];
   }
 
   List<Map<String, dynamic>> _merchantReservedOffers(
-    List<Map<String, dynamic>> candidates,
-  ) {
+    List<Map<String, dynamic>> candidates, {
+    Set<String> preferredIds = const {},
+  }) {
     Map<String, dynamic>? firstWhere(bool Function(Map<String, dynamic>) test) {
-      for (final offer in candidates) {
-        if (test(offer)) return offer;
-      }
-      return null;
+      final eligible = candidates.where(test);
+      return eligible
+              .where((offer) => preferredIds.contains('${offer['id']}'))
+              .firstOrNull ??
+          eligible.firstOrNull;
     }
 
     final reserved = <Map<String, dynamic>>[];
@@ -1013,7 +1654,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         break;
       case 'fabbro':
         final pawn = firstWhere(
-          (offer) => offer['kind'] == 'pawn' || offer['kind'] == 'pawn_v2',
+          (offer) =>
+              (offer['kind'] == 'pawn' || offer['kind'] == 'pawn_v2') &&
+              offer['pawnArmored'] != true,
         );
         if (pawn != null) reserved.add(pawn);
         break;
@@ -1056,16 +1699,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final savedIds = (saved['ids'] as List?)
         ?.map((id) => '$id')
         .toList(growable: true);
+    final previousFixedIds = (saved['fixedIds'] as List? ?? const [])
+        .map((id) => '$id')
+        .toSet();
     final random = Random.secure();
     final level = max(0, leggiNumero(livelloController));
-    final candidates = oculumMerchantUniqueOffers(
-      merchantStock
-          .where(merchantOfferMatchesShop)
-          .where((offer) => !merchantOfferUnavailable(offer)),
-      random: random,
-      preferredIds: savedIds?.toSet() ?? const <String>{},
+    final available = merchantStock
+        .where(merchantOfferMatchesShop)
+        .where((offer) => !merchantOfferUnavailable(offer))
+        .toList();
+    final reserved = oculumMerchantUniqueOffers(
+      _merchantReservedOffers(available, preferredIds: previousFixedIds),
     );
-    final reserved = _merchantReservedOffers(candidates);
     final reservedIds = reserved
         .map((offer) => '${offer['id'] ?? ''}')
         .where((id) => id.isNotEmpty)
@@ -1078,50 +1723,86 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final refreshSelection = levelChanged || powerChanged;
     final wasSaved = savedIds != null && savedValue is Map;
     final targetCount = wasSaved && !refreshSelection
-        ? readIntValue(saved['count'], fallback: 0).clamp(6, 12).toInt()
+        ? readIntValue(
+            saved['count'],
+            fallback: savedIds.length,
+          ).clamp(3, 12).toInt()
         : oculumMerchantOfferCount(random);
-    final candidateIds = candidates
+    final candidates = oculumMerchantUniqueOffers(
+      [...reserved, ...available],
+      random: random,
+      preferredIds: {...reservedIds, ...?savedIds},
+    );
+    final randomCandidates = candidates
+        .where((offer) => !reservedIds.contains('${offer['id'] ?? ''}'))
+        .toList();
+    final randomCandidateIds = randomCandidates
         .map((offer) => '${offer['id'] ?? ''}')
         .toSet();
-    final selectedIds = <String>[];
-    for (final id in reservedIds) {
-      if (candidateIds.contains(id)) selectedIds.add(id);
-    }
-    if (wasSaved && !refreshSelection) {
-      for (final id in savedIds) {
-        if (candidateIds.contains(id) && !selectedIds.contains(id)) {
-          selectedIds.add(id);
-        }
-      }
-    }
-    if (selectedIds.length > targetCount) {
-      selectedIds.removeRange(targetCount, selectedIds.length);
-    }
-    final missing = max(0, targetCount - selectedIds.length);
+    final randomIds = <String>{
+      if (wasSaved && !refreshSelection)
+        ...savedIds
+            .where(
+              (id) =>
+                  randomCandidateIds.contains(id) &&
+                  !previousFixedIds.contains(id),
+            )
+            .take(targetCount),
+    };
+    final missing = targetCount - randomIds.length;
     if (missing > 0) {
-      final selectedSet = selectedIds.toSet();
+      final budget = max(0, leggiNumero(obserController));
+      final weapons = merchantShopType == 'fabbro'
+          ? oculumBlacksmithMonsterWeaponOffers(
+              monsters: monsterBookEntries,
+              characterLevel: level,
+              characterGrade: max(0, leggiNumero(gradoController)),
+              minimumGrade: selectedPlane.minimumGrade,
+              characterTotalPower: totalPower,
+              budget: budget,
+              random: random,
+              excludedIds: {
+                for (final offer in merchantStock) '${offer['id']}',
+                for (final item in inventario)
+                  if (item.craftData['fabbroMonsterWeaponId'] != null)
+                    '${item.craftData['fabbroMonsterWeaponId']}',
+                for (final item in inventario)
+                  if (item.monsterLoot['id'] != null)
+                    'fabbro_monster_weapon_${item.monsterLoot['id']}',
+              },
+              count: min(3, missing),
+            )
+          : const <Map<String, dynamic>>[];
       final extras = oculumSelectMerchantOffers(
-        candidates
-            .where((offer) => !selectedSet.contains('${offer['id'] ?? ''}'))
-            .toList(),
+        [
+          ...randomCandidates.where(
+            (offer) => !randomIds.contains('${offer['id'] ?? ''}'),
+          ),
+          ...weapons,
+        ],
         characterLevel: level,
         characterTotalPower: totalPower,
-        budget: max(0, leggiNumero(obserController)),
+        budget: budget,
         count: missing,
         random: random,
         priceOf: merchantOfferCost,
       );
-      selectedIds.addAll(extras.map((offer) => '${offer['id'] ?? ''}'));
+      randomIds.addAll(extras.map((offer) => '${offer['id'] ?? ''}'));
+      merchantStock.addAll(extras.where(weapons.contains));
     }
+    final selectedIds = [...reservedIds, ...randomIds];
     final next = <String, dynamic>{
       'level': level,
       'totalPower': totalPower,
       'count': targetCount,
       'ids': selectedIds,
+      'fixedIds': reservedIds.toList(),
     };
     if (saved['level'] == next['level'] &&
         saved['totalPower'] == next['totalPower'] &&
         saved['count'] == next['count'] &&
+        (saved['fixedIds'] as List?)?.map((id) => '$id').join('|') ==
+            reservedIds.join('|') &&
         (saved['ids'] as List?)?.map((id) => '$id').join('|') ==
             selectedIds.join('|')) {
       return;
@@ -1713,6 +2394,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             'Scudo del fabbro: la skill difensiva richiede livello 6; il tratto offensivo si attiva solo se attacchi con Materia.',
       },
     ]);
+    for (final postea in [false, true]) {
+      if (oculumMerchantPawnV2Available(random)) {
+        merchantStock.add(oculumArmoredPawnMerchantOffer(postea: postea));
+      }
+    }
     merchantStockSessionId = merchantRuntimeSessionId;
     ensureMerchantFoodOffers();
     if (merchantShopType == 'alchimista' &&
@@ -1874,6 +2560,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       }
     }
 
+    final level = max(0, leggiNumero(livelloController));
+    addMany(oculumPosteaReactiveEquipmentOffers(level));
+    if (!ids.contains(_posteaTransformArmorKind)) {
+      add(oculumPosteaTransformArmorOffer(Random.secure()));
+    }
+    for (final offer in merchantStock) {
+      if (_isPosteaPlasmaWeapon(offer['kind'])) {
+        offer['recommendedLevel'] = level;
+        offer['damage'] = _posteaPlasmaWeaponDamage(offer['kind'], level);
+      }
+    }
+
     add(
       Map<String, dynamic>.from(_OculumCorruptionChronicle.antiCorruptionOffer),
     );
@@ -1919,6 +2617,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
 
     if (merchantShopType == 'fabbro') {
+      addMany(oculumBlacksmithSpecialEquipmentOffers());
       for (var collectorGrade = 0; collectorGrade <= 12; collectorGrade++) {
         add(<String, dynamic>{
           'id': 'raccoglitore_grado_$collectorGrade',
@@ -2278,6 +2977,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'cost': 2500 + ownerLevel * 250 + ownerGrade * 900,
         'remaining': 1,
         'name': 'Arma del Mostro · ${item.nome}',
+        if (item.craftData['weaponAppearance'] case final String appearance)
+          'weaponAppearance': appearance,
         'desc':
             'Reliquia d’arma di ${candidate.monster.nameIt}, livello $ownerLevel e Grado $ownerGrade. La Skill collegata richiede il livello indicato e resta modificabile nell’editor equipaggiamento.',
       });
@@ -2713,7 +3414,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'materia': 2,
           'oculum': 2,
           'desc':
-              'Bonus consumabile alle quattro statistiche fino al prossimo riposo.',
+              'Bonus consumabile alle quattro statistiche fino al Riposo Lungo.',
         },
         {
           'id': 'meal_sunroot',
@@ -2913,8 +3614,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     final effect = food['isMaterial'] == true
         ? 'Materiale da crafting utilizzabile dall’inventario: gli effetti durano fino al Riposo Lungo o dopo 2 Riposi Brevi.'
         : food['alcohol'] == true
-        ? 'Alcolico: ogni dose somma il malus di Volontà e i bonus fino al prossimo riposo.'
-        : 'Cibo consumabile: bonus fino al prossimo riposo.';
+        ? 'Alcolico: ogni dose somma il malus di Volontà e i bonus fino al Riposo Lungo.'
+        : 'Cibo consumabile: bonus fino al Riposo Lungo.';
     final bonuses = ['resilienza', 'volonta', 'materia', 'oculum']
         .where(food.containsKey)
         .map(
@@ -2982,6 +3683,19 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool merchantOfferUnavailable(Map<String, dynamic> offer) {
+    if (offer['kind'] == 'fabbro_monster_weapon') {
+      final item = offer['relicItem'];
+      if (item is! Map || item['arma'] != true) return true;
+      final loot = item['monsterLoot'];
+      final relicId = loot is Map ? loot['id'] : null;
+      if (inventario.any(
+        (owned) =>
+            owned.craftData['fabbroMonsterWeaponId'] == offer['id'] ||
+            (relicId != null && owned.monsterLoot['id'] == relicId),
+      )) {
+        return true;
+      }
+    }
     if (offer['kind'] == 'corruption_page' && ownsCorruptionPage) return true;
     if (offer['kind'] == 'black_market_ascension_dust') {
       return merchantDustPurchaseCount >=
@@ -2996,6 +3710,30 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     return offer.containsKey('remaining') &&
         readIntValue(offer['remaining'], fallback: 1) <= 0;
+  }
+
+  Widget merchantOfferSubtitle(
+    Map<String, dynamic> offer, {
+    bool compact = false,
+  }) {
+    final appearance = '${offer['weaponAppearance'] ?? ''}'.trim();
+    final description = Text(
+      '${merchantRecommendation(offer)}${merchantOfferDescription(offer)}',
+      style: TextStyle(color: Colors.white70, fontSize: compact ? 11 : null),
+    );
+    if (appearance.isEmpty) return description;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          appearance,
+          style: TextStyle(color: Colors.white60, fontSize: compact ? 10 : 11),
+        ),
+        const SizedBox(height: 3),
+        description,
+      ],
+    );
   }
 
   bool merchantServiceHasEffect(Map<String, dynamic> offer) {
@@ -3068,6 +3806,36 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
   }
 
+  Widget blacksmithEquipmentServiceButtons({BuildContext? merchantDialog}) =>
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () =>
+                  showBlacksmithRepair(merchantDialog: merchantDialog),
+              icon: const Icon(Icons.build_outlined),
+              label: Text(
+                t(
+                  'Ripara · armi, armature e scudi',
+                  'Repair · weapons, armor and shields',
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  showBlacksmithTitleConversion(merchantDialog: merchantDialog),
+              icon: const Icon(Icons.workspace_premium_outlined),
+              label: Text(
+                t('Trasforma in Titolo Item', 'Convert to Item Title'),
+              ),
+            ),
+          ],
+        ),
+      );
+
   Widget merchantQuickPanel() {
     final stock = recommendedMerchantStock();
     return gothicPanel(
@@ -3133,8 +3901,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           ),
           subtitle: Text(
             t(
-              'Offerte secondo la tua Potenza totale · 6–9 scelte adatte a te, 16% di probabilità di trovarne 12.',
-              'Offers suited to your total power · 6–9 choices, with a 16% chance of 12.',
+              'Offerte fisse, poi 3–12 offerte casuali adatte al tuo livello e alla tua Potenza totale. In media 6 offerte casuali.',
+              'Fixed offers, then 3–12 random offers suited to your level and total power. Average of 6 random offers.',
             ),
             style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),
@@ -3146,11 +3914,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                 icon: const Icon(Icons.handyman_outlined),
                 label: const Text('Combina · armi, armature e scudi'),
               ),
-              OutlinedButton.icon(
-                onPressed: showBlacksmithRepair,
-                icon: const Icon(Icons.build_outlined),
-                label: const Text('Ripara · armi, armature e scudi'),
-              ),
+              blacksmithEquipmentServiceButtons(),
             ],
             Align(
               alignment: Alignment.centerLeft,
@@ -3198,10 +3962,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
-                  subtitle: Text(
-                    '${merchantRecommendation(offer)}${merchantOfferDescription(offer)}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11),
-                  ),
+                  subtitle: merchantOfferSubtitle(offer, compact: true),
                   trailing: FilledButton(
                     onPressed:
                         merchantOfferUnavailable(offer) ||
@@ -3235,6 +3996,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   Future<void> showMerchantDialog() async {
     notifyWorldMerchantVisit();
     final stock = recommendedMerchantStock();
+    final showEquipmentServices = merchantShopType == 'fabbro';
     _rollNurseRefillBuffForShopOpen();
     await showDialog<void>(
       context: context,
@@ -3246,9 +4008,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             width: min(620, MediaQuery.sizeOf(context).width * .94),
             height: min(560, MediaQuery.sizeOf(context).height * .68),
             child: ListView.builder(
-              itemCount: stock.length,
+              itemCount: stock.length + (showEquipmentServices ? 1 : 0),
               itemBuilder: (context, index) {
-                final offer = stock[index];
+                if (showEquipmentServices && index == 0) {
+                  return blacksmithEquipmentServiceButtons(
+                    merchantDialog: dialogContext,
+                  );
+                }
+                final offer = stock[index - (showEquipmentServices ? 1 : 0)];
                 final cost = merchantOfferCost(offer);
                 return ListTile(
                   title: Tooltip(
@@ -3260,10 +4027,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
-                  subtitle: Text(
-                    '${merchantRecommendation(offer)}${merchantOfferDescription(offer)}',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
+                  subtitle: merchantOfferSubtitle(offer),
                   trailing: FilledButton(
                     onPressed:
                         merchantOfferUnavailable(offer) ||
@@ -3468,13 +4232,18 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'chaos_sign',
         'fallen_eye',
         'gathering_collector',
+        'fabbro_monster_weapon',
       }.contains(kind)) {
         offer['remaining'] = 0;
       }
       if (kind == 'technique_scroll' && offer['blackMarketSelected'] == true) {
         offer['remaining'] = 0;
       }
-      if (item.arma && item.ability == null) {
+      if (item.arma &&
+          item.ability == null &&
+          kind != 'fabbro_monster_weapon' &&
+          kind != 'fabbro_special_weapon' &&
+          !_isPosteaPlasmaWeapon(kind)) {
         final weaponSkill = merchantWeaponSkill(item);
         if (!skills.any((skill) => skill.nome == weaponSkill.nome)) {
           skills.add(weaponSkill);
@@ -3710,6 +4479,26 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           )) {
         return;
       }
+      final savedName = '${offer['canonicalItemName'] ?? ''}'.trim();
+      if (savedName.isNotEmpty && savedName != purchasedItem.nome) {
+        purchasedItem.nome = savedName;
+        final appearance = purchasedItem.craftData['weaponAppearance'];
+        final savedAppearance = '${offer['weaponAppearance'] ?? ''}'.trim();
+        final prefix = '$appearance\n';
+        if (appearance is String && purchasedItem.note.startsWith(prefix)) {
+          final note = purchasedItem.note.substring(prefix.length);
+          purchasedItem.note = savedAppearance.isEmpty
+              ? note
+              : '$savedAppearance\n$note';
+        }
+        final itemData = {...purchasedItem.craftData}
+          ..remove('weaponAppearance')
+          ..remove('weaponForm');
+        if (savedAppearance.isNotEmpty) {
+          itemData['weaponAppearance'] = savedAppearance;
+        }
+        purchasedItem.craftData = itemData;
+      }
     } else if ((kind == 'technique_scroll' &&
             offer['blackMarketSelected'] == true) ||
         kind == 'black_market_scroll') {
@@ -3943,6 +4732,19 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     Map<String, dynamic> offer, {
     String titleType = '',
   }) {
+    if (offer['kind'] == 'fabbro_special_weapon') {
+      return oculumBlacksmithSpecialEquipmentFromOffer(offer);
+    }
+    if (offer['kind'] == 'fabbro_monster_weapon') {
+      return InventoryItem.fromJson(
+        Map<String, dynamic>.from(offer['relicItem'] as Map),
+      );
+    }
+    final reactivePostea = oculumPosteaReactiveEquipment(
+      offer,
+      acquisitionLevel: leggiNumero(livelloController),
+    );
+    if (reactivePostea != null) return reactivePostea;
     if (offer['kind'] == 'explosive_cards') return oculumExplosiveCards();
     if (offer['kind'] == 'anti_corruption') {
       return InventoryItem(
@@ -4170,7 +4972,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (offer['kind'] == 'creature_core') {
       return oculumCreatureCore(readIntValue(offer['coreTier']));
     }
-    if (offer['kind'] == 'pawn') return oculumPawnInventoryItem();
+    if (offer['kind'] == 'pawn') {
+      return oculumPawnInventoryItem(armored: offer['pawnArmored'] == true);
+    }
     if (offer['kind'] == 'pawn_v2') return oculumPawnV2InventoryItem();
     final kind = '${offer['kind'] ?? ''}';
     if (kind == 'food') {
@@ -4566,6 +5370,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (item.monsterLoot['food'] is Map) {
       final food = item.monsterLoot['food'] as Map;
+      final needs = food['satisfiesNeeds'];
+      final mealBuff =
+          needs is List && (needs.contains('food') || needs.contains('water'));
       final hasTimedHerbalEffect =
           food['resistanceElement'] != null ||
           food['subtraitId'] != null ||
@@ -4610,6 +5417,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               ),
               'shortRestsRemaining': 2,
               'source': item.nome,
+              if (mealBuff) 'mealBuff': true,
             });
             effects.add(
               'resistenza a ${elementDisplayName('${food['resistanceElement']}')}',
@@ -4626,6 +5434,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'value': value,
               'shortRestsRemaining': 2,
               'source': item.nome,
+              if (mealBuff) 'mealBuff': true,
             });
             effects.add('$statId ${value >= 0 ? '+' : ''}$value');
           }
@@ -4638,6 +5447,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'value': subtraitBonus,
               'shortRestsRemaining': 2,
               'source': item.nome,
+              if (mealBuff) 'mealBuff': true,
             });
             effects.add('+$subtraitBonus $subtraitId');
             invalidateHiddenEyeDerivedCaches();
@@ -4657,6 +5467,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               'id':
                   'merchant_food_${timed['target']}_${DateTime.now().microsecondsSinceEpoch}',
               ...timed,
+              if (mealBuff) 'mealBuff': true,
             });
             final label = timed['type'] == 'danno_percentuale'
                 ? 'Danni'
@@ -4669,27 +5480,35 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             applyCondition(
               condition,
               stage: readIntValue(food['conditionStage'], fallback: 1),
-              duration: readIntValue(food['conditionTurns'], fallback: 2),
+              duration: readIntValue(
+                food['conditionTurns'],
+                fallback: mealBuff ? 1 : 2,
+              ),
               durationType: food['conditionTurns'] != null
                   ? OculumConditionDurationType.turns
+                  : mealBuff
+                  ? OculumConditionDurationType.longRest
                   : OculumConditionDurationType.rests,
               tickTrigger: OculumConditionTickTrigger.none,
               source: 'Erba ${item.nome}',
+              metadata: mealBuff ? {'mealBuff': true} : null,
             );
             effects.add(condition);
           }
           tryLearnMonsterFood(food);
-          satisfyConsumedFoodNeeds(food);
           item.quantita--;
           if (item.quantita <= 0) inventario.remove(item);
           invalidateDerivedDataCaches();
           final durationLabel = food['conditionTurns'] != null
               ? '${readIntValue(food['conditionTurns'])} turni'
+              : mealBuff
+              ? 'fino al Riposo Lungo'
               : 'fino al Riposo Lungo o dopo 2 Riposi Brevi';
           risultato =
               '${item.nome}: ${effects.join(', ')}. Durata: $durationLabel.';
           aggiungiLog(risultato);
         });
+        satisfyConsumedFoodNeeds(food);
         programmaSalvataggio();
         return;
       }
@@ -4708,14 +5527,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
               (key == 'oculum' ? oculumBonus : readIntValue(food[key]));
         }
         tryLearnMonsterFood(food);
-        satisfyConsumedFoodNeeds(food);
         item.quantita--;
         if (item.quantita <= 0) inventario.remove(item);
         invalidateDerivedDataCaches();
         risultato =
-            '${item.nome}: bonus consumabile applicato; dura fino al prossimo riposo.';
+            '${item.nome}: bonus consumabile applicato; dura fino al Riposo Lungo.';
         aggiungiLog(risultato);
       });
+      satisfyConsumedFoodNeeds(food);
       programmaSalvataggio();
       return;
     }

@@ -1788,7 +1788,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 runSpacing: 6,
                 children: [
                   TextButton.icon(
-                    onPressed: () => satisfyPersonalNeed('food'),
+                    onPressed: () => recordCharacterMeal(manual: true),
                     icon: const Icon(Icons.restaurant),
                     label: Text(t('Mangia', 'Eat')),
                   ),
@@ -1808,10 +1808,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               personalNeedsSummary(),
               smallInfoText(
                 t(
-                  'I bisogni avanzano con il tempo della campagna. Soddisfarne uno '
-                      'non cancella gli altri; il Riposo Breve non è un sonno o un pasto.',
-                  'Needs follow campaign time. Meeting one does not clear the others; '
-                      'a Short Rest is not sleep or a meal.',
+                  'Due pasti in fasce diverse della giornata. Un pasto può valere come Riposo Breve ogni 4 h 30 del tempo di campagna.',
+                  'Eat in both meal windows each day. A meal can count as a Short Rest every 4 h 30 of campaign time.',
                 ),
               ),
             ],
@@ -3214,11 +3212,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final hexToken = masterInitiativeTokenUsesHex(token);
 
     final side = '${token['side'] ?? 'ally'}';
-    final color = side == 'enemy'
-        ? Colors.redAccent
-        : side == 'neutral'
-        ? Colors.orangeAccent
-        : Colors.greenAccent;
+    final color = combatParticipantSideColor(token);
     final fallbackIcon = Icon(
       side == 'enemy'
           ? Icons.bolt
@@ -3688,11 +3682,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         border: Border.all(
           color: i == masterInitiativeActiveIndex
               ? tertiaryColor
-              : '${masterInitiativeTokens[i]['side'] ?? 'ally'}' == 'enemy'
-              ? Colors.redAccent.withValues(alpha: 0.6)
-              : '${masterInitiativeTokens[i]['side'] ?? 'ally'}' == 'neutral'
-              ? Colors.orangeAccent.withValues(alpha: 0.6)
-              : Colors.greenAccent.withValues(alpha: 0.6),
+              : combatParticipantSideColor(
+                  masterInitiativeTokens[i],
+                ).withValues(alpha: 0.6),
         ),
       ),
       child: Column(
@@ -3711,14 +3703,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ),
               ),
               Tooltip(
-                message: masterInitiativeSideEyeLabel(
-                  '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
-                ),
+                message:
+                    readIntValue(masterInitiativeTokens[i]['colorArgb']) == 0
+                    ? masterInitiativeSideEyeLabel(
+                        '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
+                      )
+                    : masterInitiativeSideLabel(
+                        '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
+                      ),
                 child: Icon(
                   Icons.remove_red_eye,
-                  color: masterInitiativeSideEyeColor(
-                    '${masterInitiativeTokens[i]['side'] ?? 'ally'}',
-                  ),
+                  color: combatParticipantSideColor(masterInitiativeTokens[i]),
                   size: 18,
                 ),
               ),
@@ -4238,6 +4233,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       : t('Inizia fight', 'Start fight'),
                 ),
               ),
+              if (swordBreakerLocalPickupAvailable)
+                OutlinedButton.icon(
+                  onPressed: showSwordBreakerPickup,
+                  icon: const Icon(Icons.back_hand_outlined),
+                  label: Text(t('Armi a terra', 'Dropped weapons')),
+                ),
               if (canManageAllThemes)
                 OutlinedButton.icon(
                   onPressed: () => masterDiscoverWeakPoint(),
@@ -5693,6 +5694,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   Widget masterDashboardMonsterBookPanel() {
     if (!haPermessiMaster) return const SizedBox.shrink();
     final query = oculumNormalizeText(monsterBookSearchController.text);
+    final manualEntries = monsterBookEntries.where(
+      (entry) => entry.visibleInMonsterBook,
+    );
     String categoryFor(MonsterBookEntry entry) {
       if (entry.isBoss) return 'Boss';
       if (entry.isMiniBoss) return 'Mini Boss';
@@ -5720,7 +5724,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         'power-asc|${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter|$monsterBookKnowledgeFilter|$monsterBookFinishedOnly|${combatKnowledgeRevision.value}';
     final filtered = monsterBookFilterCacheKey == filterCacheKey
         ? monsterBookFilterCache
-        : monsterBookEntries
+        : manualEntries
               .where((entry) {
                 if (monsterBookFinishedOnly &&
                     OculumMonsterTheme.desktopIllustrationForId(entry.id) ==
@@ -5744,7 +5748,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 }
                 if (query.isEmpty) return true;
                 return oculumNormalizeText(
-                  '${entry.nameIt} ${entry.nameEn} ${entry.formTags.join(' ')} ${entry.id} ${entry.elementId} ${entry.presetType} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
+                  '${entry.nameIt} ${entry.nameEn} ${entry.speciesNameIt} ${entry.speciesNameEn} ${entry.formTags.join(' ')} ${entry.id} ${entry.elementId} ${entry.presetType} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
                 ).contains(query);
               })
               .toList(growable: false);
@@ -5755,7 +5759,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     }
     final visible = filtered;
     final forms =
-        monsterBookEntries.expand((entry) => entry.formTags).toSet().toList()
+        manualEntries.expand((entry) => entry.formTags).toSet().toList()
           ..sort();
 
     return gothicPanel(
@@ -5779,7 +5783,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ),
               ),
               Text(
-                '${monsterBookEntries.length}',
+                '${manualEntries.length}',
                 style: TextStyle(
                   color: tertiaryColor,
                   fontWeight: FontWeight.w900,
@@ -6080,6 +6084,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         monsterBookEntries
             .where(
               (e) =>
+                  e.visibleInMonsterBook &&
                   (haPermessiMaster || monsterBookPartyKnowsAny(e.id)) &&
                   (partyBookHabitatFilter.isEmpty ||
                       e.planeIds.contains(partyBookHabitatFilter)),
@@ -6206,6 +6211,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           final knowledge = monsterBookPartyKnowledge(entry.id);
           final identified = monsterBookPartyKnowsName(entry.id);
           final weakPointKnown = knowledge?['weakPoint'] == true;
+          final knownDropIds = haPermessiMaster
+              ? null
+              : oculumPartyKnownMonsterDropIds(partyChest, entry.id);
           return AlertDialog(
             backgroundColor: const Color(0xFF11121A),
             title: Text(identified ? entry.nameIt : '???'),
@@ -6236,6 +6244,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         monsterReadingOverview(
                           entry,
                           weakPointKnown: weakPointKnown,
+                          knownDropIds: knownDropIds,
                         ),
                       Text(
                         monsterKillCountLabel(entry.id),
@@ -6279,7 +6288,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                                     .map((e) => resistanceLabel(e.key, e.value))
                                     .join(' · '),
                         ),
-                        monsterReadingAbilities(entry),
+                        monsterReadingAbilities(
+                          entry,
+                          knownDropIds: knownDropIds,
+                        ),
                       ],
                     ],
                   ),
@@ -7955,11 +7967,13 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 'Discoverable materials and prepared battles.',
               ),
               icon: Icons.inventory_2_outlined,
-              keywords: 'materiale material minerali minerals cristalli crystals battaglia battle preparazione',
+              keywords:
+                  'materiale material minerali minerals cristalli crystals battaglia battle preparazione',
               panels: [sessionMaterialPanel],
             ),
         ];
-    final visibleCategory = sections.any((section) => section.id == masterCategory)
+    final visibleCategory =
+        sections.any((section) => section.id == masterCategory)
         ? masterCategory
         : 'overview';
     final terms = masterQuery

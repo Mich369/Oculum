@@ -648,7 +648,7 @@ List<CharacterSkill> oculumEnemyAbilityVariants(
     return [];
   }
   final body = oculumNormalizeText(
-    '${monster.nameIt} ${monster.descIt} ${monster.formTags.join(" ")}',
+    '${monster.speciesNameIt} ${monster.descIt} ${monster.formTags.join(" ")}',
   );
   final element = oculumNormalizeElementId(monster.elementId);
   final pool =

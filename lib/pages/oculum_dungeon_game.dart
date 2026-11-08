@@ -4647,6 +4647,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       _EnemyTemplate(
         nameIt: 'Coro delle Facce Spezzate',
         nameEn: 'Choir of Broken Faces',
+        catalogueId: 'coro_facce_spezzate',
         descIt:
             'Mostro Follia fantasma. Coro di maschere incrinate: Urlo della Memoria, Eco Follia e Frantuma Volonta.',
         descEn:
@@ -4795,9 +4796,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         boss: true,
       ),
     ]);
-    final existingNames = list.map((enemy) => enemy.nameIt).toSet();
+    final existingNames = list.map((enemy) => enemy.speciesNameIt).toSet();
     for (final monster in monsterBookEntries) {
-      if (!existingNames.add(monster.nameIt)) continue;
+      if (!existingNames.add(monster.speciesNameIt)) continue;
       final hp = monster.stats['hp'] ?? 80;
       final atk = monster.stats['atk'] ?? 14;
       final def = monster.stats['def'] ?? 6;
@@ -4805,6 +4806,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         _EnemyTemplate(
           nameIt: monster.nameIt,
           nameEn: monster.nameEn,
+          catalogueId: monster.id,
           descIt: monster.descIt,
           descEn: monster.descEn,
           elementId: monster.elementId,
@@ -14820,8 +14822,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   bool isOculianEnemyTemplate(_EnemyTemplate template) {
-    final nIt = template.nameIt.toLowerCase();
-    final nEn = template.nameEn.toLowerCase();
+    final nIt = template.speciesNameIt.toLowerCase();
+    final nEn = template.speciesNameEn.toLowerCase();
     return template.elementId == 'oculum' ||
         nIt.contains('oculian') ||
         nIt.contains('oculiano') ||
@@ -15050,18 +15052,10 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
                 : 0),
       );
 
-      MonsterBookEntry? matchedMonster;
-      for (final m in monsterBookEntries) {
-        final mEn = m.nameEn.toLowerCase();
-        final mIt = m.nameIt.toLowerCase();
-        if (nameEn.toLowerCase().contains(mEn) ||
-            nameIt.toLowerCase().contains(mIt) ||
-            nameEn.toLowerCase().contains(m.id) ||
-            nameIt.toLowerCase().contains(m.id)) {
-          matchedMonster = m;
-          break;
-        }
-      }
+      final matchedMonster = (forceTrueEye || forceBaghest
+              ? null
+              : template.catalogueEntry) ??
+          _monsterBookEntryForEnemyNames(nameIt, nameEn);
 
       final enemy = _EnemyInstance(
         nameIt: nameIt,
@@ -15077,7 +15071,11 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
         defense: finalDefense,
         boss: localBoss,
         elite: localElite,
-        fetal: nameIt.contains('Fetale') || nameEn.contains('Fetal'),
+        fetal:
+            !forceTrueEye &&
+            !forceBaghest &&
+            (template.speciesNameIt.contains('Fetale') ||
+                template.speciesNameEn.contains('Fetal')),
         level: enemyLevel,
         grade: enemyGrade,
         originalPower: enemyPowerScoreFromStats(
@@ -20992,14 +20990,23 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     );
   }
 
-  MonsterBookEntry? monsterBookEntryForTemplate(_EnemyTemplate template) {
+  MonsterBookEntry? monsterBookEntryForTemplate(_EnemyTemplate template) =>
+      template.catalogueEntry ??
+      _monsterBookEntryForEnemyNames(template.nameIt, template.nameEn);
+
+  MonsterBookEntry? _monsterBookEntryForEnemyNames(
+    String nameIt,
+    String nameEn,
+  ) {
+    final lowerIt = nameIt.toLowerCase();
+    final lowerEn = nameEn.toLowerCase();
     for (final m in monsterBookEntries) {
-      final mEn = m.nameEn.toLowerCase();
-      final mIt = m.nameIt.toLowerCase();
-      if (template.nameEn.toLowerCase().contains(mEn) ||
-          template.nameIt.toLowerCase().contains(mIt) ||
-          template.nameEn.toLowerCase().contains(m.id) ||
-          template.nameIt.toLowerCase().contains(m.id)) {
+      if (lowerEn.contains(m.nameEn.toLowerCase()) ||
+          lowerIt.contains(m.nameIt.toLowerCase()) ||
+          lowerEn.contains(m.speciesNameEn.toLowerCase()) ||
+          lowerIt.contains(m.speciesNameIt.toLowerCase()) ||
+          lowerEn.contains(m.id) ||
+          lowerIt.contains(m.id)) {
         return m;
       }
     }
@@ -21050,8 +21057,8 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
       boss: false,
       elite: currentFloor >= 5 && chance(14),
       fetal:
-          template.nameIt.contains('Fetale') ||
-          template.nameEn.contains('Fetal'),
+          template.speciesNameIt.contains('Fetale') ||
+          template.speciesNameEn.contains('Fetal'),
       level: max(1, currentFloor + runGrade),
       grade: runGrade,
       originalPower: enemyPowerScoreFromStats(hp, attack, defense),

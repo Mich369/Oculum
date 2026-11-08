@@ -1494,6 +1494,8 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                 )
                 .clamp(0, max(0, shown.length - 1)),
             accent: tertiaryColor,
+            participantColor: combatParticipantSideColor,
+            healthLabel: oculumCombatTokenHealthLabel,
             events: events,
             onNextTurn: master
                 ? () => nextMasterInitiativeTurn()

@@ -134,6 +134,21 @@ class _CombatService extends OculumRealtimeService {
 }
 
 void main() {
+  test('the public sheet preview keeps only coarse health and safe fields', () {
+    expect(
+      oculumRealtimePublicSheetPreview({
+        'healthLabel': 'Ferito',
+        'hp': '75/100',
+        'oculum': '7/20',
+        'shield': 40,
+        'level': '2',
+        'grade': '1',
+      }),
+      {'healthLabel': 'Ferito', 'level': 2, 'grade': 1},
+    );
+    expect(oculumRealtimePublicHealthLabel('75/100'), isEmpty);
+  });
+
   testWidgets(
     'attack requests validate sender, log once, and cannot reopen resolved damage',
     (tester) async {
@@ -196,6 +211,27 @@ void main() {
         },
       ];
       final probe = OculumPerformanceProbe(state);
+      probe.receiveRealtime('hp_changed', {
+        'playerName': 'Compagno',
+        'currentHp': 47,
+        'maxHp': 100,
+        'tempHp': 18,
+        'shield': 19,
+        'larvalBroodHp': 13,
+        'larvalBroodMaxHp': 91,
+      });
+      expect(
+        (state.realtimeEvents as List).first,
+        'Compagno · Gravemente ferito',
+      );
+      probe.receiveRealtime('sheet_sync_preview', {
+        'playerName': 'Compagno',
+        'smallState': {'hp': '70/100', 'oculum': '13/91', 'level': '2'},
+      });
+      final legacyPreview = (state.realtimeEvents as List).first as String;
+      expect(legacyPreview, contains('Ferito'));
+      expect(legacyPreview, isNot(contains('70/100')));
+      expect(legacyPreview, isNot(contains('13/91')));
       final packet = <String, dynamic>{
         'id': 'attack-one',
         'scope': probe.permissionScope,
@@ -362,6 +398,8 @@ void main() {
           'id': 'first',
           'name': 'Primo',
           'status': 'active',
+          'side': 'ally',
+          'colorArgb': 0xFF426CB1,
           'currentHp': 30,
           'maxHp': 100,
           'imageBase64': 'x' * 1200000,
@@ -380,12 +418,20 @@ void main() {
       expect((automaticallyShared['tokens'] as List).length, 2);
       expect(
         (automaticallyShared['tokens'] as List).first['healthLabel'],
-        'Morente',
+        'Gravemente ferito',
+      );
+      expect(
+        (automaticallyShared['tokens'] as List).first['colorArgb'],
+        0xFF426CB1,
       );
       expect(
         (automaticallyShared['tokens'] as List).first.containsKey('currentHp'),
         isFalse,
         reason: 'The shared label must not disclose hidden numeric HP',
+      );
+      expect(
+        (automaticallyShared['tokens'] as List).first.containsKey('maxHp'),
+        isFalse,
       );
       expect(
         '$automaticallyShared'.length,

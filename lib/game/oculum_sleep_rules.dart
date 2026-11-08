@@ -1,7 +1,15 @@
 import 'dart:math';
 
 const int oculumSleepDaySeconds = 9 * 60 * 60;
+const int oculumMealRestIntervalSeconds = 4 * 3600 + 30 * 60;
+const int oculumSecondMealStartsAt = 5 * 3600 + 30 * 60;
 const List<String> oculumPersonalNeeds = ['food', 'water', 'sleep'];
+const List<String> oculumMealWindows = ['first', 'second'];
+
+String oculumMealWindowAt(int now) =>
+    max(0, now) % oculumSleepDaySeconds < oculumSecondMealStartsAt
+    ? 'first'
+    : 'second';
 
 int _sleepInt(Object? value, [int fallback = 0]) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? fallback;
@@ -158,6 +166,19 @@ class OculumPersonalNeedsProgress {
        processedThrough = _sleepInt(raw['processedThrough'], now),
        lastFoodWaterEvent = _sleepInt(raw['lastFoodWaterEvent'], -1),
        sleepEventCount = _sleepInt(raw['sleepEventCount']),
+       creditedMealDays = {
+         if (raw['creditedMealDays'] is Map)
+           for (final entry in (raw['creditedMealDays'] as Map).entries)
+             if (_sleepInt(entry.key, -1) >= 0 && entry.value is List)
+               _sleepInt(entry.key): {
+                 for (final window in entry.value as List)
+                   if (oculumMealWindows.contains(window)) '$window',
+               },
+       },
+       lastMealShortRest = _sleepInt(raw['lastMealShortRest'], -1),
+       lastManualMealAt = _sleepInt(raw['lastManualMealAt'], -1),
+       actualMealDay = _sleepInt(raw['actualMealDay'], -1),
+       actualMealCount = _sleepInt(raw['actualMealCount']).clamp(0, 3),
        episodes = [
          for (final entry in raw['episodes'] is List ? raw['episodes'] : [])
            if (entry is Map) Map<String, dynamic>.from(entry),
@@ -167,6 +188,9 @@ class OculumPersonalNeedsProgress {
        );
   final Map<String, int> last;
   int processedThrough, lastFoodWaterEvent, sleepEventCount;
+  int lastMealShortRest, lastManualMealAt;
+  int actualMealDay, actualMealCount;
+  final Map<int, Set<String>> creditedMealDays;
   final List<Map<String, dynamic>> episodes;
   final Map<String, dynamic> config;
   // Derived body/race defaults are effective rules, never user configuration.
@@ -184,8 +208,78 @@ class OculumPersonalNeedsProgress {
       _sleepInt(config['daySeconds'], oculumSleepDaySeconds).clamp(1, 86400);
   int daysWithout(String need, int now) =>
       enabled(need) ? max(0, now - last[need]!) ~/ daySeconds : 0;
+
+  int mealsToday(int now) =>
+      creditedMealDays[max(0, now) ~/ oculumSleepDaySeconds]?.length ?? 0;
+
+  bool isEarlyBreakfast(int now) =>
+      now >= 0 &&
+      now % oculumSleepDaySeconds >= oculumSleepDaySeconds - 30 * 60 &&
+      (creditedMealDays[now ~/ oculumSleepDaySeconds]?.contains('second') ??
+          false);
+
+  int get mealDeficitStatLoss =>
+      max(0, _sleepInt(config['mealDeficitStatLoss'], 1));
+
+  ({
+    String? window,
+    bool consumed,
+    bool early,
+    bool second,
+    bool third,
+    bool shortRest,
+  })
+  recordMeal(int now, {required bool manual, required bool canRest}) {
+    final day = now ~/ oculumSleepDaySeconds;
+    if (!enabled('food') ||
+        now < processedThrough ||
+        day < actualMealDay ||
+        (manual && lastManualMealAt >= now)) {
+      return (
+        window: null,
+        consumed: false,
+        early: false,
+        second: false,
+        third: false,
+        shortRest: false,
+      );
+    }
+    advanceTo(now);
+    if (day != actualMealDay) {
+      actualMealDay = day;
+      actualMealCount = 0;
+    }
+    final third = actualMealCount == 2;
+    if (actualMealCount < 3) actualMealCount++;
+    final early = isEarlyBreakfast(now);
+    final ordinal = early ? day + 1 : day;
+    if (manual) lastManualMealAt = now;
+    satisfy('food', now);
+    final window = early ? 'first' : oculumMealWindowAt(now);
+    final windows = creditedMealDays.putIfAbsent(ordinal, () => <String>{});
+    final credited = windows.add(window);
+    final shortRest =
+        canRest &&
+        (lastMealShortRest < 0 ||
+            now - lastMealShortRest >= oculumMealRestIntervalSeconds);
+    if (shortRest) lastMealShortRest = now;
+    return (
+      window: credited ? window : null,
+      consumed: true,
+      early: early,
+      second: credited && windows.length == 2,
+      third: third,
+      shortRest: shortRest,
+    );
+  }
+
+  bool _fullFoodDeprivation(Map episode) =>
+      '${episode['id']}'.startsWith('food-water:') &&
+      (episode['needs'] as List? ?? []).contains('food');
+
   bool _episodeApplies(Map episode) =>
-      (episode['needs'] as List? ?? []).any((need) => enabled('$need'));
+      (episode['needs'] as List? ?? []).any((need) => enabled('$need')) &&
+      !(episode['mealDeficit'] == true && episodes.any(_fullFoodDeprivation));
   int get ash => episodes.fold(
     0,
     (sum, episode) =>
@@ -235,6 +329,31 @@ class OculumPersonalNeedsProgress {
         lastFoodWaterEvent = at;
       }
     }
+    final calendarOrdinal = now ~/ oculumSleepDaySeconds;
+    final completedMealDays = creditedMealDays.keys
+        .where((day) => day < calendarOrdinal)
+        .toList(growable: false);
+    for (final day in completedMealDays) {
+      final windows = creditedMealDays.remove(day);
+      if (enabled('food') &&
+          windows?.length == 1 &&
+          mealDeficitStatLoss > 0 &&
+          !episodes.any((episode) => episode['mealDeficit'] == true)) {
+        final stat = const [
+          'resilienza',
+          'volonta',
+          'materia',
+          'oculum',
+        ][rng.nextInt(4)];
+        episodes.add({
+          'id': 'meal-deficit:$day',
+          'needs': ['food'],
+          'stats': {stat: -mealDeficitStatLoss},
+          'ash': 0,
+          'mealDeficit': true,
+        });
+      }
+    }
     final sleepEvery = _sleepInt(
       config['sleepPenaltyEveryDays'],
       3,
@@ -277,6 +396,14 @@ class OculumPersonalNeedsProgress {
     'processedThrough': processedThrough,
     'lastFoodWaterEvent': lastFoodWaterEvent,
     'sleepEventCount': sleepEventCount,
+    'creditedMealDays': {
+      for (final entry in creditedMealDays.entries)
+        '${entry.key}': entry.value.toList(),
+    },
+    if (lastMealShortRest >= 0) 'lastMealShortRest': lastMealShortRest,
+    if (lastManualMealAt >= 0) 'lastManualMealAt': lastManualMealAt,
+    if (actualMealDay >= 0) 'actualMealDay': actualMealDay,
+    if (actualMealDay >= 0) 'actualMealCount': actualMealCount,
     'episodes': episodes,
     'config': config,
   };

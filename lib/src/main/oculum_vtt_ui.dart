@@ -924,7 +924,12 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
                           shadows: <Shadow>[Shadow(blurRadius: 4)],
                         ),
                       ),
-                      localMapTokenVitals(token, boxWidth - 8, color),
+                      localMapTokenVitals(
+                        token,
+                        boxWidth - 8,
+                        color,
+                        publicToken: true,
+                      ),
                     ],
                   ),
                 ),

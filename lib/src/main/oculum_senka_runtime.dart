@@ -92,8 +92,9 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
   Future<List<String>?> selectSenkaMoonCuts(
     List<String> targets,
     Map<String, Map<String, dynamic>> byId,
-    int cuts,
-  ) async {
+    int cuts, {
+    String hitLabel = 'tagli lunari',
+  }) async {
     if (targets.isEmpty || targets.length > cuts) return null;
     if (targets.length == 1) return List.filled(cuts, targets.single);
     final amounts = [
@@ -104,13 +105,13 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
       context: context,
       builder: (dialog) => StatefulBuilder(
         builder: (context, update) => AlertDialog(
-          title: Text('Distribuisci $cuts tagli lunari'),
+          title: Text('Distribuisci $cuts $hitLabel'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Un unico tiro d’attacco. Ogni taglio conserva la difesa del bersaglio.',
+                  'Un unico tiro d’attacco. Ogni colpo ha la propria difesa.',
                 ),
                 for (var i = 0; i < targets.length; i++)
                   Row(

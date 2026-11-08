@@ -1,7 +1,91 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
+import 'oculum_theme_effects_portrait_test.dart' as fixtures;
+
 void main() {
+  test('armored Pawns heal and use their temporary Life after Shields', () {
+    final pawn = OculumPawnGuardian(
+      id: 'pawn_armored_test',
+      ownerTag: 'owner',
+      armored: true,
+      armoredHpBonus: 40,
+      hp: 20,
+      shield: 7,
+      stats: {'resilienza': 10, 'volonta': 7, 'materia': 13},
+    );
+    expect(pawn.maxHp, 100);
+    expect(pawn.defense, 10);
+    expect(pawn.advanceTo(1), isTrue);
+    expect(pawn.hp, 70);
+    expect(pawn.armoredTemporaryHp, 0);
+    expect(pawn.advanceTo(3), isTrue);
+    expect(pawn.hp, 100);
+    expect(pawn.armoredTemporaryHp, 25);
+    expect(pawn.advanceTo(3), isFalse);
+    expect(pawn.restArmoredTemporaryHp(longRest: false), isTrue);
+    expect(pawn.advanceTo(4), isTrue);
+    expect(pawn.armoredTemporaryHp, 50);
+
+    final restored = OculumPawnGuardian.fromJson(pawn.toJson());
+    expect(restored.intercept(37), 0);
+    expect(restored.shield, 0);
+    expect(restored.hp, 100);
+    expect(restored.armoredTemporaryHp, 30);
+    expect(restored.restArmoredTemporaryHp(longRest: false), isTrue);
+    expect(restored.armoredTemporaryHp, 25);
+    expect(restored.restArmoredTemporaryHp(longRest: true), isTrue);
+    expect(restored.armoredTemporaryHp, 0);
+  });
+
+  test('armored merchant offers retain the 190 percent base price', () {
+    final ordinary = oculumArmoredPawnMerchantOffer(postea: false);
+    final postea = oculumArmoredPawnMerchantOffer(postea: true);
+    expect(ordinary['id'], 'pawn_armored');
+    expect(ordinary['kind'], 'pawn');
+    expect(ordinary['cost'], 190);
+    expect(postea['id'], 'postea_pawn_armored');
+    expect(postea['kind'], 'postea_companion');
+    expect(postea['cost'], 475);
+    expect(
+      oculumPawnInventoryItem(armored: true).craftData['pawnArmored'],
+      isTrue,
+    );
+    expect(oculumPawnInventoryItem().craftData['pawnArmored'], isNull);
+  });
+
+  testWidgets('Postea armored merchant item activates at 150 Life', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(1440, 900),
+    );
+    final probe = OculumPerformanceProbe(state);
+    state.schedePersonaggio.add(probe.snapshot());
+    state.schedaCorrente = 0;
+    final owner = probe.currentTag();
+    final item = probe.merchantItem(
+      oculumArmoredPawnMerchantOffer(postea: true),
+    );
+    state.inventario.add(item);
+    await probe.useMerchantItem(item);
+    final pawn = probe.pawns.single;
+    expect(pawn.displayName, 'Pawn Postea Corazzato');
+    expect(pawn.ownerTag, owner);
+    expect(pawn.targets, [owner]);
+    expect(pawn.maxHp, 150);
+    expect(pawn.hp, 150);
+    expect(pawn.defense, 26);
+    expect(state.inventario.contains(item), isFalse);
+    expect(pawn.advanceTo(1), isTrue);
+    expect(pawn.stats['resilienza'], 23);
+    expect(pawn.armoredTemporaryHp, 25);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   for (final phase in [
     (level: 0, grade: 0, before: 18, after: 30, hpAfter: 23),
     (level: 1, grade: 0, before: 21, after: 35, hpAfter: 28),

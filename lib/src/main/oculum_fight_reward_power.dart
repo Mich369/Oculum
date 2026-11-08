@@ -171,6 +171,11 @@ extension _OculumFightRewardPower on _OculumHomePageState {
         group['combatEnded'] == true) {
       return;
     }
+    markOblivionFightExposure();
+    refreshOpposingChaosTurn(
+      token,
+      fightInstanceId: fightRewardInstanceId(group, token),
+    );
     final power = fightRewardPowerForToken(token);
     if (power == null) return;
     oculumBeginFightRewardPowerTurn(

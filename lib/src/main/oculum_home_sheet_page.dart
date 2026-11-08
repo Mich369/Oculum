@@ -9065,8 +9065,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ),
             statMiniTile(
               label: 'Oculum',
-              value: oculumTotale(),
-              valueBuilder: oculumTotale,
+              value: oculumCombatStatTotal(),
+              valueBuilder: oculumCombatStatTotal,
               criticalExperienceKey: 'oculum',
               baseValue: normalCurrentOculum(),
               conditionTarget: OculumConditionTarget.oculum,
@@ -9075,7 +9075,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               massimo: oculumDisplayMassimo(),
               bonusSkillForma: skillFormaBonus('oculum'),
               color: oculumStatFormulaColor,
-              onRoll: () => tiraStat('Oculum', oculumTotale()),
+              onRoll: () => tiraStat('Oculum', oculumCombatStatTotal()),
               onEdit: () => vaiAllaFunzione(
                 page: 0,
                 anchorId: 'sheet_editable_values_oculum',

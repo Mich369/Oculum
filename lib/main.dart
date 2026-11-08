@@ -212,6 +212,25 @@ part 'src/main/oculum_provoker_shield.dart';
 part 'src/main/oculum_total_power_burst.dart';
 part 'src/main/oculum_cloud_barrier.dart';
 part 'src/main/oculum_postea.dart';
+part 'src/main/oculum_postea_reactive_armor.dart';
+part 'src/main/oculum_postea_reactive_weapons.dart';
+part 'src/main/oculum_postea_transform_armor.dart';
+part 'src/main/oculum_gun_followup.dart';
+part 'src/main/oculum_sword_breaker.dart';
+part 'src/main/oculum_daily_meals.dart';
+part 'src/main/oculum_stat_20_materia.dart';
+part 'src/main/oculum_stat_20_oculum.dart';
+part 'src/main/oculum_stat_20_resilience.dart';
+part 'src/main/oculum_stat_20_will.dart';
+part 'src/main/oculum_stat_open.dart';
+part 'src/main/oculum_stat_open_new_tracks.dart';
+part 'src/main/oculum_stat_open_attack_planning.dart';
+part 'src/main/oculum_flesh_golem.dart';
+part 'src/main/oculum_stat_35.dart';
+part 'src/main/oculum_stat_35_materia.dart';
+part 'src/main/oculum_stat_35_oculum.dart';
+part 'src/main/oculum_stat_35_resilience.dart';
+part 'src/main/oculum_stat_35_will.dart';
 part 'src/main/oculum_power_scanner.dart';
 part 'src/main/oculum_aura_knowledge.dart';
 part 'src/main/oculum_meccanio.dart';
@@ -4027,6 +4046,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   @override
   void initState() {
     super.initState();
+    installPosteaTransformResourceTracking();
     oculumSheetRelicSelections.addListener(onSheetRelicChanged);
     WidgetsBinding.instance.addObserver(this);
     assicuraArtiBase();

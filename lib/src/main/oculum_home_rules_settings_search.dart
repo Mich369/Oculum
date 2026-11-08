@@ -2322,7 +2322,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     final buff = precisionBonus == 0
         ? baseBuff
         : '$baseBuff\n@Precisione${precisionBonus >= 0 ? '+' : ''}$precisionBonus';
-    final lower = monster.nameIt.toLowerCase();
+    final lower = monster.speciesNameIt.toLowerCase();
     final skill = lower.contains('lupo')
         ? 'Lupo Solitario\nI/Se combatti senza alleati, ottieni +1 a ogni statistica per ogni nemico presente.\nII/+1 aggiuntivo a VC e CM.\nIII/La prima reazione del turno non costa Reazioni.'
         : 'Istinto di ${monster.nameIt}\nI/Una volta per turno ottieni +1 VC oppure +1 CM in una scena coerente con il tuo corpo.\nII/Il bonus diventa +2.\nIII/Dopo averlo usato, una Reazione rapida può seguire l’azione.';

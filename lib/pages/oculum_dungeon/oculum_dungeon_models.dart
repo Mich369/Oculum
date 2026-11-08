@@ -241,8 +241,8 @@ class _EquipmentSetDef {
 
 class _EnemyTemplate {
   const _EnemyTemplate({
-    required this.nameIt,
-    required this.nameEn,
+    required String nameIt,
+    required String nameEn,
     required this.descIt,
     required this.descEn,
     required this.elementId,
@@ -250,10 +250,19 @@ class _EnemyTemplate {
     required this.atkMod,
     required this.defMod,
     this.boss = false,
-  });
+    this.catalogueId,
+  }) : _nameIt = nameIt,
+       _nameEn = nameEn;
 
-  final String nameIt;
-  final String nameEn;
+  final String? catalogueId;
+  final String _nameIt;
+  final String _nameEn;
+  MonsterBookEntry? get catalogueEntry =>
+      catalogueId == null ? null : monsterBookEntryById(catalogueId!);
+  String get nameIt => catalogueEntry?.nameIt ?? _nameIt;
+  String get nameEn => catalogueEntry?.nameEn ?? _nameEn;
+  String get speciesNameIt => catalogueEntry?.speciesNameIt ?? _nameIt;
+  String get speciesNameEn => catalogueEntry?.speciesNameEn ?? _nameEn;
   final String descIt;
   final String descEn;
   final String elementId;

@@ -10,22 +10,30 @@ void main() {
     expect(skill.maximums, [2, 2, 2]);
     expect(skill.cooldowns, [3, 3, 3]);
   });
-  test('387 authored entries, including Baghest, without duplicates', () {
-    expect(oculumPlanarMonsterEntries.length, 387);
+  test('389 authored entries, including Baghest and the two Caproni', () {
+    const goats = {'caprone_d_ossa', 'caprone_scheletrico_nero'};
+    expect(oculumPlanarMonsterEntries.length, 389);
     final ids = oculumPlanarMonsterEntries.map((e) => e.id).toSet();
-    expect(ids.length, 387);
-    expect(ids, contains('manichino_baghest'));
+    expect(ids.length, 389);
+    expect(ids, containsAll({'manichino_baghest', ...goats}));
     final names = oculumPlanarMonsterEntries
         .map((e) => e.nameIt.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''))
         .toSet();
-    expect(names.length, 387);
+    expect(names.length, 389);
     for (final e in oculumPlanarMonsterEntries) {
+      final retired = oculumIsRetiredMonsterId(e.id);
       expect(
         defaultMonsterBookEntries.where((m) => m.id == e.id).length,
-        1,
+        retired ? 0 : 1,
         reason: e.id,
       );
-      expect(e.weakPointIt, isNotEmpty);
+      if (retired) expect(oculumSavedMonsterBookEntryById(e.id)?.id, e.id);
+      if (goats.contains(e.id)) {
+        expect(e.weakPointIt, isEmpty, reason: e.id);
+        expect(e.skillIds, [oculumBoneGoatChargeId], reason: e.id);
+      } else {
+        expect(e.weakPointIt, isNotEmpty, reason: e.id);
+      }
       expect(e.planeIds, isNotEmpty);
       for (final id in e.skillIds) {
         expect(oculumPlanarTechnique(id), isNotNull, reason: id);

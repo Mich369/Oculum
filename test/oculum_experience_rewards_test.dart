@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
@@ -88,10 +89,12 @@ void main() {
   );
 
   test('health labels and actual death remain separate after a revival', () {
-    expect(oculumCombatHealthLabel(61, 100), '');
-    expect(oculumCombatHealthLabel(60, 100), 'Ferito');
-    expect(oculumCombatHealthLabel(31, 100), 'Ferito');
-    expect(oculumCombatHealthLabel(30, 100), 'Morente');
+    expect(oculumCombatHealthLabel(76, 100), '');
+    expect(oculumCombatHealthLabel(75, 100), 'Ferito');
+    expect(oculumCombatHealthLabel(51, 100), 'Ferito');
+    expect(oculumCombatHealthLabel(50, 100), 'Gravemente ferito');
+    expect(oculumCombatHealthLabel(26, 100), 'Gravemente ferito');
+    expect(oculumCombatHealthLabel(25, 100), 'Morente');
     expect(oculumCombatHealthLabel(0, 100), '');
     expect(oculumCombatConfirmedDeath(hp: 0, deathWounds: 0), isFalse);
     expect(oculumCombatConfirmedDeath(hp: 0, deathWounds: 3), isTrue);
@@ -99,9 +102,10 @@ void main() {
     expect(
       oculumCombatTokenHealthLabel({
         'status': 'ready',
-        'healthLabel': 'Ferito',
+        'side': 'ally',
+        'healthLabel': 'Gravemente ferito',
       }),
-      'Ferito',
+      'Gravemente ferito',
     );
     expect(
       oculumCombatTokenHealthLabel({
@@ -109,6 +113,16 @@ void main() {
         'healthLabel': 'Morente',
       }),
       '',
+    );
+  });
+
+  test('party color defaults green and honors a saved color on any side', () {
+    expect(combatParticipantSideColor({'side': 'ally'}), Colors.greenAccent);
+    expect(combatParticipantSideColor({'side': 'party'}), Colors.greenAccent);
+    expect(combatParticipantSideColor({'side': 'enemy'}), Colors.redAccent);
+    expect(
+      combatParticipantSideColor({'side': 'rivals', 'colorArgb': 0xFF426CB1}),
+      const Color(0xFF426CB1),
     );
   });
   test('Dust favors missing resources and never grants Oculum at zero', () {

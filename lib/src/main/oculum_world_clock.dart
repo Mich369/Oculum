@@ -690,6 +690,12 @@ extension _OculumWorldClock on _OculumHomePageState {
       'minutes': duration,
       'endSeconds': clock.seconds,
     });
+    if (realtimeService?.isConnected == true) {
+      restArmoredPawns(
+        (rest['requestedBy'] as List? ?? const []).whereType<String>(),
+        longRest: rest['longRest'] == true,
+      );
+    }
     storeWorldClock(clock);
     return true;
   }

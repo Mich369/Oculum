@@ -1301,8 +1301,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
     };
   }
 
-  Map<String, dynamic> statoCorrenteJson() {
+  Map<String, dynamic> statoCorrenteJson() =>
+      captureSheetWithoutOpposingChaos(_sheetSnapshotJson);
+
+  Map<String, dynamic> _sheetSnapshotJson() {
     assicuraTagSchede();
+    recordStatMilestoneOrder();
     final titoloPubblico = titoloSempreVisibile;
     final vitals = OculumPersistentVitalsSnapshot(
       normalCurrentOculum: normalCurrentOculum(),
@@ -6343,8 +6347,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       bool enemy,
     })
   >
-  folliaGeneratorPresets() => const [
-    (
+  folliaGeneratorPresets() => [
+    const (
       id: 'infant_worm_head',
       label: 'Testa errata',
       name: 'Testa di infante errata',
@@ -6355,7 +6359,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       description:
           'Mostro fantasma errato da Follia: testa di infante ripiena di vermi. Fluttua trasparente guardando il vuoto con occhi completamente bianco latte. I vermi la mangiano, ma la carne trasparente si rigenera sempre. Ha Pensiero pesante, Apertura Mentale e infezione entro 9 ore se la Open skill riesce.',
     ),
-    (
+    const (
       id: 'three_women',
       label: 'Le Tre Donne',
       name: 'Le Tre Donne',
@@ -6368,8 +6372,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ),
     (
       id: 'coro_facce_spezzate',
-      label: 'Coro Facce',
-      name: 'Coro delle Facce Spezzate',
+      label: systemMonsterPresetLabel(_brokenFacesDisplayName),
+      name: _brokenFacesDisplayName,
       type: 'Mostro',
       side: 'enemy',
       artMode: 'illness',
@@ -6377,7 +6381,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       description:
           'Mostro Follia fantasma: maschere incrinate fuse in un coro nero. Urlo della Memoria stunna, Eco Follia aumenta la follia presa, Frantuma Volonta crea Vero Svantaggio.',
     ),
-    (
+    const (
       id: 'utero_di_specchio',
       label: 'Utero Specchio',
       name: 'Utero di Specchio',
@@ -6388,7 +6392,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       description:
           'Mini Boss Follia: guscio riflettente con occhi interni. Copia paure, riflette skill con critico e chiude il bersaglio in immagini false.',
     ),
-    (
+    const (
       id: 'giullare_ossa_filo',
       label: 'Giullare Filo',
       name: 'Giullare Ossa-Filo',
@@ -6399,7 +6403,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       description:
           'Mostro Follia veloce: burattino d ossa appeso a fili neri. La risata stunna, i fili tagliano reazioni e lo scatto appeso da vantaggio.',
     ),
-    (
+    const (
       id: 'santo_vene_candela',
       label: 'Santo Candela',
       name: 'Santo delle Vene di Candela',
@@ -6412,6 +6416,16 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ),
   ];
 
+  String get _brokenFacesDisplayName =>
+      monsterBookEntryById('coro_facce_spezzate')?.nameIt ??
+      'Coro delle Facce Spezzate';
+
+  bool _isBrokenFacesText(String normalized) =>
+      normalized.contains('facce spezzate') ||
+      normalized.contains('broken faces') ||
+      (normalized.isNotEmpty &&
+          normalized == oculumNormalizeText(_brokenFacesDisplayName));
+
   bool isFolliaGhostText(String raw) {
     final text = oculumNormalizeText(raw);
     return text.contains('follia') ||
@@ -6422,7 +6436,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         text.contains('infante') ||
         text.contains('vermi') ||
         text.contains('tre donne') ||
-        text.contains('facce spezzate') ||
+        _isBrokenFacesText(text) ||
         text.contains('utero di specchio') ||
         text.contains('ossa-filo') ||
         text.contains('vene di candela');
@@ -6742,7 +6756,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   String systemMonsterPresetArtMode(MonsterBookEntry monster) {
     final element = oculumNormalizeElementId(monster.elementId);
     final text = oculumNormalizeText(
-      '${monster.nameIt} ${monster.nameEn} ${monster.descIt} ${monster.descEn} $element',
+      '${monster.speciesNameIt} ${monster.speciesNameEn} ${monster.descIt} ${monster.descEn} $element',
     );
     if (monster.isNullFateless ||
         element == 'vuoto' ||
@@ -6871,12 +6885,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     for (final monster in monsterBookEntries) {
-      final id = oculumNormalizeText(monster.id);
-      final nameIt = oculumNormalizeText(monster.nameIt);
-      final nameEn = oculumNormalizeText(monster.nameEn);
-      if ((id.isNotEmpty && text.contains(id)) ||
-          (nameIt.isNotEmpty && text.contains(nameIt)) ||
-          (nameEn.isNotEmpty && text.contains(nameEn))) {
+      if (_monsterIdentityMatches(monster, text)) {
         add(monster.elementId);
       }
     }
@@ -6975,7 +6984,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
   String generatedEntityKind(String description, String name, String tipo) {
     final text = oculumNormalizeText('$description $name');
     if (text.contains('tre donne')) return 'Errato - Le Tre Donne';
-    if (text.contains('facce spezzate')) return 'Coro delle Facce Spezzate';
+    if (_isBrokenFacesText(text) ||
+        _isBrokenFacesText(oculumNormalizeText(name))) {
+      return _brokenFacesDisplayName;
+    }
     if (text.contains('utero di specchio')) return 'Utero di Specchio';
     if (text.contains('ossa-filo') || text.contains('giullare')) {
       return 'Giullare Ossa-Filo';
@@ -6988,12 +7000,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
     if (isFolliaGhostText(text)) return 'Errato di Follia';
     for (final monster in monsterBookEntries) {
-      final id = oculumNormalizeText(monster.id);
-      final nameIt = oculumNormalizeText(monster.nameIt);
-      final nameEn = oculumNormalizeText(monster.nameEn);
-      if ((id.isNotEmpty && text.contains(id)) ||
-          (nameIt.isNotEmpty && text.contains(nameIt)) ||
-          (nameEn.isNotEmpty && text.contains(nameEn))) {
+      if (_monsterIdentityMatches(monster, text)) {
         return monster.nameIt;
       }
     }
@@ -7109,7 +7116,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final power = max(10, level + grade * 6);
     final quest = 'Quest skill: livello $level del mostro.';
     final normalizedKind = oculumNormalizeText(kind);
-    if (normalizedKind.contains('facce spezzate')) {
+    if (_isBrokenFacesText(normalizedKind)) {
       return [
         CharacterSkill(
           nome: 'Urlo della Memoria',
@@ -7489,16 +7496,25 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final text = oculumNormalizeText('$name $description');
     if (text.isEmpty) return null;
     for (final monster in monsterBookEntries) {
-      final id = oculumNormalizeText(monster.id);
-      final nameIt = oculumNormalizeText(monster.nameIt);
-      final nameEn = oculumNormalizeText(monster.nameEn);
-      if ((id.isNotEmpty && text.contains(id)) ||
-          (nameIt.isNotEmpty && text.contains(nameIt)) ||
-          (nameEn.isNotEmpty && text.contains(nameEn))) {
+      if (_monsterIdentityMatches(monster, text)) {
         return monster;
       }
     }
     return null;
+  }
+
+  bool _monsterIdentityMatches(MonsterBookEntry monster, String text) {
+    for (final label in [
+      monster.id,
+      monster.nameIt,
+      monster.nameEn,
+      monster.speciesNameIt,
+      monster.speciesNameEn,
+    ]) {
+      final normalized = oculumNormalizeText(label);
+      if (normalized.isNotEmpty && text.contains(normalized)) return true;
+    }
+    return false;
   }
 
   String generatedEntityNotes({

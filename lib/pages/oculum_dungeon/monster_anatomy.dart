@@ -50,7 +50,7 @@ String oculumLogicalMonsterWeakPoint(
   bool english = false,
 }) {
   final text =
-      '${entry.id} ${entry.nameIt} ${oculumMonsterPhysicalDescription(entry)}'
+      '${entry.id} ${entry.speciesNameIt} ${oculumMonsterPhysicalDescription(entry)}'
           .toLowerCase();
   String pair(String it, String en) => english ? en : it;
   bool has(String pattern) => RegExp(pattern).hasMatch(text);
@@ -281,7 +281,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       // The optional summoned woman is not a body part of the empty armour.
       ? 'armatura vuota umanoide, due braccia, due gambe, elmo chiuso senza occhi, sfera di Oculum nascosta alla base della vita'
       : '${oculumMonsterPhysicalDescription(entry)} $confirmedPhysical';
-  final identity = '${entry.id} ${entry.nameIt} $physical'.toLowerCase();
+  final identity = '${entry.id} ${entry.speciesNameIt} $physical'.toLowerCase();
   final weak = entry.weakPointDescriptionIt.toLowerCase();
   bool has(String pattern) => RegExp(pattern).hasMatch(identity);
   final spherical = has(

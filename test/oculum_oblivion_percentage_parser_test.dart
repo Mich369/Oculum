@@ -17,6 +17,9 @@ Future<(dynamic, OculumPerformanceProbe)> cleanFight(
   s.activeStructuredEffects.clear();
   s.activeConditions.clear();
   s.buffMalusRapidiController.clear();
+  s.campaignDifficulty = 'normale';
+  s.karmaController.text = '0';
+  s.fortuna = 0;
   s.resilienzaController.text = '100';
   s.currentResilienzaController.text = '100';
   s.volontaController.text = '0';
@@ -42,7 +45,7 @@ Future<(dynamic, OculumPerformanceProbe)> cleanFight(
   s.schedePersonaggio[s.schedaCorrente]['partialAwakeningHalfHpTriggered'] =
       true;
   for (final dynamic stat in s.hiddenEyeStats) {
-    if (const {'fortuna', 'riflessi', 'resistenza'}.contains(stat.id)) {
+    if (const {'riflessi', 'resistenza'}.contains(stat.id)) {
       // Defaults can unlock a required subtrait again during incoming damage.
       // Offset the derived RES/2 as well; otherwise this exact arithmetic test
       // randomly receives the unrelated 50-point passive resistance reduction.
@@ -267,6 +270,7 @@ void main() {
       s.scudoController.text = '10';
       s.scudoOculumController.text = '10';
       final defense = p.defense();
+      expect(p.subtraitValue('fortuna'), 0);
       expect(p.readDamageHealingInput('25%'), 125);
       await p.applyDamageInput('25%');
       expect(
@@ -280,7 +284,7 @@ void main() {
       s.scudoController.text = '10';
       s.scudoOculumController.text = '10';
       await p.applyDamageInput('25%');
-      expect(p.currentHp(), 300);
+      expect(p.currentHp(), 300, reason: '${s.risultato}');
       expect(p.shieldTotal(), 10);
       expect(s.scudoOculumController.text, '10');
       p.applyHealInput('25%');

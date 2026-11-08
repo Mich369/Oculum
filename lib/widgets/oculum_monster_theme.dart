@@ -202,6 +202,17 @@ const _november6ApprovedDesktopIds = {
   'black_dragon_shield',
 };
 
+const _caproneApprovedDesktopIds = {
+  'caprone_d_ossa',
+  'caprone_scheletrico_nero',
+  'habitat_diabolico_caprone_della_fossa_di_vetro',
+  'habitat_diabolico_caprone_della_fossa_di_vetro_variante_errante',
+  'habitat_foresta_elementale_caprone_della_brace_empia',
+  'habitat_foresta_elementale_caprone_della_brace_empia_variante_rituale',
+  'habitat_vero_inferno_caprone_dei_troni_bruciati',
+  'habitat_vero_inferno_caprone_dei_troni_bruciati_variante_corazzata',
+};
+
 const _lotTwoApprovedDesktopIds = {
   'bestia_invisibile_del_vantaggio_variante_errante',
   'bringi_variante_veterana',
@@ -361,6 +372,13 @@ class OculumMonsterTheme {
   // These approved compositions include a full lateral subject. Contain the
   // whole painting on tall phones instead of cropping away that subject.
   bool get preserveIllustrationFraming =>
+      const {
+        'divoramitu',
+        'divoramitu_elite',
+        'distruttor_caramella',
+      }.contains(monster.id) ||
+      oculumNovember8VotedMonsterIds.contains(monster.id) ||
+      _caproneApprovedDesktopIds.contains(monster.id) ||
       _lotTwoApprovedDesktopIds.contains(monster.id) ||
       _november7ApprovedDesktopIds.contains(monster.id) ||
       _november6SecondApprovedDesktopAssets.containsKey(monster.id) ||
@@ -529,6 +547,14 @@ class OculumMonsterTheme {
   static String? desktopIllustrationForId(
     String monsterId,
   ) => switch (monsterId) {
+    'divoramitu' || 'divoramitu_elite' || 'distruttor_caramella' =>
+      'assets/oculum/home_art/theme_${monsterId}_canon_20261108.png',
+    'hero_path_rosso' || 'hero_path_rosso_variante_veterana' =>
+      'assets/oculum/home_art/theme_${monsterId}_canon_20261108_votes6_red_eyes.png',
+    final id when oculumNovember8VotedMonsterIds.contains(id) =>
+      'assets/oculum/home_art/theme_${id}_canon_20261108_votes6.png',
+    final id when _caproneApprovedDesktopIds.contains(id) =>
+      'assets/oculum/home_art/theme_${id}_canon_20261108_votes5.png',
     final id when _lotTwoApprovedDesktopIds.contains(id) =>
       'assets/oculum/home_art/theme_${id}_canon_20261107_votes4.png',
     final id when _november7ApprovedDesktopIds.contains(id) =>

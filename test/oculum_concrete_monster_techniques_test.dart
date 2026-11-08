@@ -25,7 +25,7 @@ void main() {
           random: _AlwaysZeroRandom(),
           killId: 'patalpa-$level-$grade',
           naturalDropRoll: 20,
-          dropTotal: 25 + grade * 2,
+          dropTotal: 30 + grade * 10,
         ).firstWhere((item) => item.nome == 'Armatura del Patalpa');
 
     final base = patalpaArmor(0, 0);
@@ -45,6 +45,10 @@ void main() {
   });
 
   test('Drop DT scales by defeated level and grade', () {
+    expect(
+      List.generate(13, oculumMonsterRelicDropThreshold),
+      List.generate(13, (grade) => 30 + grade * 10),
+    );
     expect(oculumMonsterDropDifficulty(level: 0, grade: 0), 20);
     expect(oculumMonsterDropDifficulty(level: 5, grade: 0), 25);
     expect(oculumMonsterDropDifficulty(level: 5, grade: 2), 31);
@@ -127,18 +131,19 @@ void main() {
   test(
     'Blue Slime shield scales Oculum shield by level and uses Slime element',
     () {
-      final items = oculumGenerateMonsterLoot(
+      List<InventoryItem> lootAt(int total) => oculumGenerateMonsterLoot(
         monster: monsterById('slime_blu')!,
         level: 4,
         grade: 1,
         random: Random(10),
         killId: 'slime-blue-test',
         naturalDropRoll: 20,
-        dropTotal: 32,
+        dropTotal: total,
       );
-      final relic = items.singleWhere(
-        (item) => item.nome == 'Elmetto-scudo di melma blu',
-      );
+      bool isRelic(InventoryItem item) =>
+          item.nome == 'Elmetto-scudo di melma blu';
+      expect(lootAt(39).where(isRelic), isEmpty);
+      final relic = lootAt(40).singleWhere(isRelic);
       expect(relic.arma, isTrue);
       expect(relic.protegge, isTrue);
       expect(relic.livelloOggetto, 4);

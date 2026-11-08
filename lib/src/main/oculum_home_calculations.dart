@@ -949,10 +949,14 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int currentVolonta() => readIntValue(currentVolontaController.text);
   int currentMateria() => readIntValue(currentMateriaController.text);
 
-  int resilienzaMassimo() =>
-      max(resilienzaMassimoNaturale(), resilienzaTotale());
-  int volontaMassimo() => max(volontaMassimoNaturale(), volontaTotale());
-  int materiaMassimo() => max(materiaMassimoNaturale(), materiaTotale());
+  int resilienzaMassimo() => max(
+    resilienzaMassimoNaturale(),
+    resilienzaTotale(includeOpposingChaos: false),
+  );
+  int volontaMassimo() =>
+      max(volontaMassimoNaturale(), volontaTotale(includeOpposingChaos: false));
+  int materiaMassimo() =>
+      max(materiaMassimoNaturale(), materiaTotale(includeOpposingChaos: false));
 
   int conditionalBuffStatBonus(String key) {
     int total = 0;
@@ -1075,28 +1079,35 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
-  int resilienzaTotale() => max(
-    0,
-    currentStatWithRuntimeBuffs('resilienza', currentResilienza()) +
-        planarResilienceBonus(
-          currentStatWithRuntimeBuffs('resilienza', currentResilienza()),
-        ) -
-        planePressurePenalty,
-  );
-  int volontaTotale() => max(
+  int resilienzaTotale({bool includeOpposingChaos = true, int? rawCurrent}) {
+    final effective = currentStatWithRuntimeBuffs(
+      'resilienza',
+      rawCurrent ?? currentResilienza(),
+    );
+    return max(
+      0,
+      effective +
+          planarResilienceBonus(effective) -
+          planePressurePenalty +
+          (includeOpposingChaos ? opposingChaosModifier('resilienza') : 0),
+    );
+  }
+  int volontaTotale({bool includeOpposingChaos = true}) => max(
     0,
     currentStatWithRuntimeBuffs('volonta', currentVolonta()) +
         scostuVeteranWillBonus(
           currentStatWithRuntimeBuffs('volonta', currentVolonta()),
         ) -
-        planePressurePenalty,
+        planePressurePenalty +
+        (includeOpposingChaos ? opposingChaosModifier('volonta') : 0),
   );
-  int materiaTotale() => sandAdjustedMatter(
+  int materiaTotale({bool includeOpposingChaos = true}) => sandAdjustedMatter(
     max(
       0,
       currentStatWithRuntimeBuffs('materia', currentMateria()) -
           (planeColdUnprotected ? 1 : 0) -
-          planePressurePenalty,
+          planePressurePenalty +
+          (includeOpposingChaos ? opposingChaosModifier('materia') : 0),
     ),
   );
   // Oculum addormentato blocks the whole available pool, including temporary
@@ -1398,14 +1409,28 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (formulaParserCacheRevision == derivedDataRevision && cached != null) {
       return cached;
     }
-    final res = safeFormulaStatValue(
+    final baseRes = safeFormulaStatValue(
       'resilienza',
       currentResilienza(),
       tempResilienza,
     );
-    final vol = safeFormulaStatValue('volonta', currentVolonta(), tempVolonta);
-    final mat = safeFormulaStatValue('materia', currentMateria(), tempMateria);
-    final ocu = safeFormulaStatValue('oculum', currentOculum(), tempOculum);
+    final baseVol = safeFormulaStatValue(
+      'volonta',
+      currentVolonta(),
+      tempVolonta,
+    );
+    final baseMat = safeFormulaStatValue(
+      'materia',
+      currentMateria(),
+      tempMateria,
+    );
+    final baseOcu = safeFormulaStatValue('oculum', currentOculum(), tempOculum);
+    final res = max(0, baseRes + opposingChaosModifier('resilienza'));
+    final vol = max(0, baseVol + opposingChaosModifier('volonta'));
+    final mat = max(0, baseMat + opposingChaosModifier('materia'));
+    final ocu = oculumAddormentato || isMeccanio || isThunderBot
+        ? baseOcu
+        : max(0, baseOcu + opposingChaosModifier('oculum'));
     final livelloGrado = bonusLivelloGrado();
     final malusFatica = malusFaticaTiri();
     final vantaggio = vantaggioTiroBonus();
@@ -1415,6 +1440,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         bonusDifesaRapido() +
         bonusDifesaEquipaggiamento() +
         fallenEyeRareAttributeBonusFor('difesa') +
+        posteaParryBonus +
         directSkillNumericBonus('difesa');
     final baseDanni =
         vol +
@@ -1426,8 +1452,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         malusFatica +
         vantaggio +
         fallenEyeRareAttributeBonusFor('danno') +
+        posteaParryBonus +
         directSkillNumericBonus('danni');
-    final baseHp = max(1, res) * moltiplicatoreHp();
+    final baseHp = max(1, baseRes) * moltiplicatoreHp();
     final baseMovimento = 30 + (mat ~/ 6);
     final grado = max(0, leggiNumero(gradoController));
     final baseSchivataOculum = grado ~/ 3;
@@ -1437,10 +1464,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
     final context = Map<String, num>.unmodifiable(<String, num>{
       'potenza_totale':
-          res +
-          vol +
-          mat +
-          ocu +
+          baseRes +
+          baseVol +
+          baseMat +
+          baseOcu +
           max(0, leggiNumero(livelloController)) +
           grado * 3,
       'monster_open_bonus': activeStructuredEffectBonus('monster_open_power'),
@@ -1457,7 +1484,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       // Oculum percentages deliberately use the currently available pool,
       // rather than its internal normal component. The sleep state still
       // makes the resource unavailable to every formula.
-      'oculum_percentage_base': oculumAddormentato ? 0 : max(0, ocu),
+      'oculum_percentage_base': oculumAddormentato ? 0 : max(0, baseOcu),
       'livello': max(0, leggiNumero(livelloController)),
       'grado': grado,
       'livello_grado': livelloGrado,
@@ -2400,6 +2427,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     InventoryItem? exceptItem,
     CharacterSkill? exceptItemOpen,
   }) {
+    clearStatOpenBuffs();
     void scanTitles(List<OculumTitle> list) {
       for (final titolo in list) {
         final keepMain =
@@ -2650,15 +2678,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       for (final text in activeItemQuickTexts(item)) {
         addTitleQuickCommands(bonuses, text);
       }
-      if (itemIntegrityShieldCurrent(item) == 0) {
+      if (!oculumIsPosteaReactiveArmor(item) &&
+          itemIntegrityShieldCurrent(item) == 0) {
         bonuses.updateAll((key, value) => value ~/ 2);
       }
-      applyProtectionQuickDefenseWear(item, bonuses);
+      applyProtectionQuickWear(item, bonuses);
       return bonuses;
     }
     if (item.equipaggiata &&
         canEquipInventoryItem(item) &&
         item.craftData['senkaMask'] != true &&
+        item.craftData['posteaTransformArmor'] != true &&
         (item.arma || item.protegge)) {
       final stat =
           const {
@@ -2678,14 +2708,15 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     for (final text in activeItemQuickTexts(item)) {
       addTitleQuickCommands(bonuses, text);
     }
-    applyProtectionQuickDefenseWear(item, bonuses);
+    applyProtectionQuickWear(item, bonuses);
     return bonuses;
   }
 
-  void applyProtectionQuickDefenseWear(
-    InventoryItem item,
-    Map<String, int> bonuses,
-  ) {
+  void applyProtectionQuickWear(InventoryItem item, Map<String, int> bonuses) {
+    if (oculumIsPosteaReactiveArmor(item)) {
+      bonuses.updateAll((_, value) => oculumEquipmentWearValue(item, value));
+      return;
+    }
     final defense = bonuses['difesa'] ?? 0;
     if (defense <= 0 || oculumWearProtectionKind(item) == null) return;
     final direct = max(0, item.bonusDifesa + itemGrade(item) * 2);
@@ -2933,6 +2964,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   int currentOculum() => readIntValue(currentOculumController.text);
 
+  int get _currentOculumCapacity =>
+      currentStatNaturalControllerMax('oculum') +
+      posteaTransformBuffer('oculum');
+
   int currentOculumRuntimeFloor() => -runtimeCurrentStatBonus('oculum');
 
   int normalCurrentOculum() {
@@ -3005,17 +3040,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     ultimoGuadagnoOculumEffettivo = amount;
     if (amount <= 0) return 0;
     final before = oculumTotale();
+    final normalMaximum = _currentOculumCapacity;
     final gemReserve = min(
       statGemOverflow['oculum'] ?? 0,
       max(
         0,
-        currentTemporaryOculumState().normalCurrent -
-            currentStatNaturalControllerMax('oculum'),
+        currentTemporaryOculumState().normalCurrent - normalMaximum,
       ),
     );
     final next = addOculumToTemporaryState(
       state: currentTemporaryOculumState(),
-      normalMaximum: currentStatNaturalControllerMax('oculum'),
+      normalMaximum: normalMaximum,
       amount: amount,
       difficulty: normalizedCampaignDifficulty(),
       rollDie: (faces) => (random ?? Random()).nextInt(faces) + 1,
@@ -3063,6 +3098,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       amount: spendable,
       minimumNormalCurrent: currentOculumRuntimeFloor(),
     );
+    final overflow = stat35OculumOverflow;
+    if (overflow > 0) {
+      setStat35OculumOverflow(max(0, overflow - (temporaryOculum - next.temporary)));
+    }
     applyTemporaryOculumState(next);
     final spent = max(0, before - oculumTotale()).toInt();
     if (spent > 0) recordCombatOculumSpent(spent);
@@ -3230,11 +3269,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     applicaConsumoElevatoDopoTiro(consumoStatKey);
     processConditionRoll();
     final before = currentTemporaryOculumState();
-    final next = registerValidTemporaryOculumRoll(before);
-    if (identical(next, before)) return;
+    final overflow = stat35OculumOverflow;
+    final ordinary = overflow == 0 ? before : TemporaryOculumState(
+      normalCurrent: before.normalCurrent,
+      temporary: before.temporary - overflow,
+      rollsRemaining: before.rollsRemaining,
+    );
+    final next = registerValidTemporaryOculumRoll(ordinary);
+    if (identical(next, ordinary)) return;
     applyTemporaryOculumState(
-      next,
-      notifyVisibleChange: next.total != before.total,
+      TemporaryOculumState(normalCurrent: next.normalCurrent,
+        temporary: next.temporary + overflow, rollsRemaining: next.rollsRemaining),
+      notifyVisibleChange: next.total + overflow != before.total,
     );
     recordCurrentOculumProgress();
     programmaSalvataggio(
@@ -3268,8 +3314,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
 
   void restoreTemporaryOculumState(Map<String, dynamic> json) {
     final normalMaximum =
-        currentStatNaturalControllerMax('oculum') +
-        (statGemOverflow['oculum'] ?? 0);
+        _currentOculumCapacity + (statGemOverflow['oculum'] ?? 0);
     final restored = temporaryOculumStateFromJson(
       json: json,
       normalMaximum: normalMaximum,
@@ -3448,7 +3493,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   void syncCurrentOculumToMax({bool resetToMax = false}) {
-    final massimo = currentStatNaturalControllerMax('oculum');
+    final massimo = _currentOculumCapacity;
     if (resetToMax) {
       final current = currentOculum();
       if (current < massimo) {
@@ -3915,11 +3960,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int currentStatValue(String key) {
     switch (key) {
       case 'resilienza':
-        return resilienzaTotale();
+        return resilienzaTotale(includeOpposingChaos: false);
       case 'volonta':
-        return volontaTotale();
+        return volontaTotale(includeOpposingChaos: false);
       case 'materia':
-        return materiaTotale();
+        return materiaTotale(includeOpposingChaos: false);
       case 'oculum':
       default:
         return oculumTotale();
@@ -4041,15 +4086,21 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (resilienceCost > 0 && hpCost > 0) {
       final before = currentResilienzaController.value;
       final hpBefore = hpCorrenti();
-      try {
-        currentResilienzaController.text =
-            '${currentResilienza() - resilienceCost}';
-        invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
-        if (min(hpBefore, maxHp()) < hpCost) return false;
-      } finally {
-        currentResilienzaController.value = before;
-        invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
-      }
+      return withoutPosteaTransformResourceTracking(() {
+        try {
+          currentResilienzaController.text =
+              '${currentResilienza() - resilienceCost}';
+          invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+          return min(
+                hpBefore,
+                maxHp(posteaResilienceSpentForProjection: resilienceCost),
+              ) >=
+              hpCost;
+        } finally {
+          currentResilienzaController.value = before;
+          invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+        }
+      });
     }
     return true;
   }
@@ -4145,7 +4196,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (normalized == 'scudo_oculum') {
       final before = scudoOculum();
       if (before < amount) return 0;
-      scudoOculumController.text = (before - amount).toString();
+      modificaScudoOculum(-amount);
       return amount;
     }
     if (normalized == 'resilienza') {
@@ -4515,7 +4566,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
-  int maxHp() {
+  int maxHp({int posteaResilienceSpentForProjection = 0}) =>
+      _maxHpWithoutPosteaTransform(posteaResilienceSpentForProjection) +
+      posteaTransformBuffer('hp');
+
+  int _maxHpWithoutPosteaTransform(int posteaResilienceSpentForProjection) {
     if (planarState['doppioneCopy'] == true) return 1;
     if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
       final fixedCloneHp = oculumSheetFixedCloneHpMaximum(
@@ -4534,9 +4589,20 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (planarCloudForm) {
       return max(1, readIntValue(planarState['cloudLifeHp']));
     }
+    final temporaryResilience = max(
+      0,
+      posteaTransformBuffer('resilienza') - posteaResilienceSpentForProjection,
+    );
     return max(
       1,
-      max(1, resilienzaTotale()) * moltiplicatoreHp() +
+      max(
+            1,
+            resilienzaTotale(
+              includeOpposingChaos: false,
+              rawCurrent: currentResilienza() - temporaryResilience,
+            ),
+          ) *
+              moltiplicatoreHp() +
           runtimeQuickBonus('hp') +
           manualHpMaximumAdjustment,
     );
@@ -4974,7 +5040,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         );
         break;
       case 'manifestazione_potere':
-        group = materiaTotale() >= oculumTotale() ? 'materia' : 'oculum';
+        group = materiaTotale() >= oculumCombatStatTotal()
+            ? 'materia'
+            : 'oculum';
         break;
       default:
         group = 'materia';
@@ -5042,7 +5110,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       'resilienza': resilienzaTotale(),
       'volonta': volontaTotale(),
       'materia': materiaTotale(),
-      'oculum': oculumTotale(),
+      'oculum': oculumCombatStatTotal(),
       'karma': karmaTotale(),
     };
     hiddenEyeDerivedStatsCache = snapshot;
@@ -5192,7 +5260,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   int scudo() {
     final bonus = runtimeQuickBonus('scudo') + scudoAutomaticoTipoScheda();
     final spent = scudoBonusConsumati.clamp(0, max(0, bonus)).toInt();
-    return max(0, leggiNumero(scudoController) + bonus - spent);
+    return max(0, leggiNumero(scudoController) + bonus - spent) +
+        posteaTransformShieldRemaining;
   }
 
   int scudoRefullTarget() {
@@ -5244,7 +5313,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   void impostaScudoTotale(int value) {
-    final target = max(0, value);
+    final target = normalShieldTargetAfterPosteaTransform(max(0, value));
     final manual = max(0, leggiNumero(scudoController));
     final bonus = max(
       0,
@@ -5301,7 +5370,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final massimo = scudoOculumMax();
     if (massimo > 0) {
       scudoOculumController.text = massimo.toString();
-      for (final item in protezioniEquipaggiate()) {
+      for (final item in oculumShieldEquipment()) {
         if (itemOculumShieldBonus(item) > 0) {
           oculumRechargeInventoryOculumIntegrity(
             item,
@@ -5315,7 +5384,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   void ripristinaScudoIntegritaOculum(int amount) {
     var remaining = max(0, amount);
     if (remaining <= 0) return;
-    for (final item in protezioniEquipaggiate()) {
+    for (final item in oculumShieldEquipment()) {
       if (remaining <= 0) break;
       final maximum = itemOculumShieldBonus(item);
       if (maximum <= 0) continue;
@@ -5339,6 +5408,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     scudoOculumController.text = next.toString();
     if (next > current) {
       ripristinaScudoIntegritaOculum(next - current);
+    } else {
+      reconcileTrackedOculumShield();
     }
   }
 
@@ -5406,6 +5477,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         referenceHaloDefense +
+        posteaParryBonus +
         cycleNaturalFlightBonus +
         spineMaterialDefense +
         maskedShadowDefense +
@@ -5426,11 +5498,13 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       OculumConditionTarget.difesa,
       beforeConditions + feralisFuryDefense,
     );
-    return applyWillKingdomBonus(
-      oculumDamageWithPercentage(
-        conditioned,
-        activeStructuredEffectBonus('difesa_percentuale') +
-            (dustFusionTier * 5),
+    return applyFleshGolemLifeLossBonus(
+      applyWillKingdomBonus(
+        oculumDamageWithPercentage(
+          conditioned,
+          activeStructuredEffectBonus('difesa_percentuale') +
+              (dustFusionTier * 5),
+        ),
       ),
     );
   }
@@ -5519,26 +5593,67 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   int bonusScudoOculumEquipaggiamento() {
-    return protezioniEquipaggiate().fold(
+    return oculumShieldEquipment().fold(
       0,
       (somma, item) => somma + itemOculumShieldBonus(item),
     );
   }
 
+  Iterable<InventoryItem> oculumShieldEquipment() => inventario.where(
+    (item) =>
+        item.equipaggiata &&
+        (item.protegge || oculumDustInfusionBonuses(item).shield > 0) &&
+        canEquipInventoryItem(item),
+  );
+
+  bool inventoryOculumShieldTracked(InventoryItem item) =>
+      oculumDustInfusionBonuses(item).shield > 0 ||
+      item.craftData['clothing'] == true ||
+      item.craftData['titleItem'] == true ||
+      item.craftData['senkaMask'] == true ||
+      item.effettoIntegritaScudo.trim().isNotEmpty ||
+      item.effettoRotturaScudo.isNotEmpty;
+
+  void reconcileTrackedOculumShield() {
+    final items = oculumShieldEquipment()
+        .where(inventoryOculumShieldTracked)
+        .toList(growable: false);
+    var debt =
+        items.fold<int>(
+          0,
+          (sum, item) => sum + itemIntegrityOculumShieldCurrent(item),
+        ) -
+        max(0, leggiNumero(scudoOculumController));
+    for (final item in items) {
+      if (debt <= 0) break;
+      final current = itemIntegrityOculumShieldCurrent(item);
+      final spent = min(debt, current);
+      if (spent <= 0) continue;
+      item.scudoIntegritaOculumCorrente = (current - spent).toInt();
+      debt -= spent;
+    }
+  }
+
   void applicaScudoItemAttuale(InventoryItem item, int segno) {
-    if (!item.protegge || !canEquipInventoryItem(item)) return;
+    if (!canEquipInventoryItem(item)) return;
     final titleItem = item.craftData['titleItem'] == true;
-    if (titleItem) {
-      // Manifestation preserves the remaining shield, rather than minting the
-      // full shield each time the same title is summoned again.
+    final infusedShield = oculumDustInfusionBonuses(item).shield > 0;
+    if (!item.protegge && !infusedShield) return;
+    if (item.protegge && titleItem) {
       item.scudoIntegritaCorrente = itemIntegrityShieldCurrent(item);
+    }
+    if (titleItem || infusedShield) {
+      // Removing equipment preserves what was left of its tracked shield.
+      if (segno < 0) reconcileTrackedOculumShield();
       item.scudoIntegritaOculumCorrente = itemIntegrityOculumShieldCurrent(
         item,
       );
     }
     final typed = oculumWearProtectionKind(item) != null;
     final attributed = protectionShieldContributionTracked(item);
-    final shieldBonus = titleItem
+    final shieldBonus = !item.protegge
+        ? 0
+        : titleItem
         ? item.scudoIntegritaCorrente
         : attributed
         ? min(
@@ -5550,7 +5665,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         : typed && segno < 0
         ? _itemBaseShieldBonus(item)
         : itemShieldBonus(item);
-    if (!titleItem && segno > 0 && (attributed || typed)) {
+    if (item.protegge && !titleItem && segno > 0 && (attributed || typed)) {
       item.scudoIntegritaCorrente = max(0, shieldBonus);
       item.craftData = {...item.craftData, 'wearNormalShieldTracked': true};
     }
@@ -5560,7 +5675,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         leggiNumero(scudoController) + shieldBonus * segno,
       ).toString();
     }
-    final oculumShieldBonus = titleItem
+    final oculumShieldBonus = titleItem || infusedShield
         ? item.scudoIntegritaOculumCorrente
         : itemOculumShieldBonus(item);
     if (oculumShieldBonus != 0) {
@@ -5615,7 +5730,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     if (difference == 0) return;
     if (attributed) {
       item.scudoIntegritaCorrente = (previousContribution + difference)
-          .clamp(0, max(0, _itemBaseShieldBonus(item)))
+          .clamp(0, itemTrackedNormalShieldMaximum(item))
           .toInt();
     }
     final change = attributed
@@ -5624,13 +5739,23 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     scudoController.text = '${max(0, leggiNumero(scudoController) + change)}';
   }
 
-  int itemOculumShieldBonus(InventoryItem item) =>
-      max(0, item.bonusScudoOculum);
+  int itemOculumShieldBonus(InventoryItem item) {
+    final base = item.protegge ? max(0, item.bonusScudoOculum) : 0;
+    final itemBonus = oculumIsPosteaReactiveArmor(item)
+        ? oculumEquipmentWearValue(item, base)
+        : base;
+    return itemBonus + oculumDustInfusionBonuses(item).shield;
+  }
+
+  int itemTrackedNormalShieldMaximum(InventoryItem item) {
+    final base = max(0, _itemBaseShieldBonus(item));
+    return oculumIsPosteaReactiveArmor(item) ? base * 190 ~/ 100 : base;
+  }
 
   int itemIntegrityShieldCurrent(InventoryItem item) {
     // Wear reduces future shield capacity. Existing granted points are
     // consumed only by the normal shield resolution or explicit removal.
-    final maximum = max(0, _itemBaseShieldBonus(item));
+    final maximum = itemTrackedNormalShieldMaximum(item);
     return oculumInventoryIntegrityCurrent(
       item.scudoIntegritaCorrente,
       maximum,
@@ -5660,6 +5785,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool canEquipInventoryItem(InventoryItem item) {
+    if (oculumSwordBreakerDropped(item)) return false;
+    final bladeInstance = item.craftData[_swordBreakerInstanceKey];
+    if (bladeInstance != null &&
+        item.craftData['titleItem'] != true &&
+        activeConditions.any(
+          (condition) =>
+              condition.conditionType == 'disarmato' &&
+              condition.metadata[_swordBreakerInstanceKey] == bladeInstance,
+        )) {
+      return false;
+    }
     final requiredGrade = max(item.gradoOggetto, requiredItemGrade(item));
     if (max(0, leggiNumero(gradoController)) < requiredGrade) return false;
     if (item.arma && item.equipaggiata && inventario.contains(item)) {
@@ -5698,6 +5834,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
         dannoTotaleBaseSenzaComandi() +
+        posteaParryBonus +
+        natureThornWhipDamage +
         titleQuickBonus('danni') +
         artQuickBonus('danni') +
         itemQuickBonus('danni') +
@@ -5709,7 +5847,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       OculumConditionTarget.danno,
       beforeConditions,
     );
-    return oculumFeralisDamage(
+    final damage = oculumFeralisDamage(
       scostuWeaponDamage(
         applyWillKingdomBonus(
           oculumDamageWithPercentage(
@@ -5725,6 +5863,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       readIntValue(planarState['feralisFuryPaidTurns']),
       feralisFuryActive,
     );
+    return applyFleshGolemLifeLossBonus(damage);
   }
 
   /// Flat Danni modifiers are kept outside an area's shared base packet so
@@ -5847,7 +5986,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
               command.elementId.isEmpty
                   ? item.elementoDanno
                   : command.elementId,
-              value,
+              oculumIsPosteaReactiveArmor(item)
+                  ? oculumEquipmentWearValue(item, value)
+                  : value,
             );
           }
         }
@@ -5933,7 +6074,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     for (final item in protezioniEquipaggiate()) {
       add(
         item.elementoDanno.isEmpty ? 'Fisico' : item.elementoDanno,
-        item.bonusDifesa,
+        oculumIsPosteaReactiveArmor(item)
+            ? itemDefenseBonus(item)
+            : item.bonusDifesa,
       );
     }
 
@@ -5973,7 +6116,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
               command.elementId.isEmpty
                   ? item.elementoDanno
                   : command.elementId,
-              value,
+              oculumIsPosteaReactiveArmor(item)
+                  ? oculumEquipmentWearValue(item, value)
+                  : value,
             );
           }
         }

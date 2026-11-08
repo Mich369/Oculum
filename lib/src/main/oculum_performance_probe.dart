@@ -900,6 +900,18 @@ class OculumPerformanceProbe {
   Widget combatAbilityBar() => _state.combatAbilityQuickBar();
   Future<void> openCombatActionPanel(OculumCombatAbilityRole role) =>
       _state.showCombatActionPanel(role);
+  Future<void> useStatOpenResilience() => _state.activateStatOpenResilience();
+  void completeParticipantTurn(int index) =>
+      _state.advanceEncounterParticipantTurn(index);
+  Future<void> useStatOpenKnights(String target, {int level = 50}) =>
+      useStatOpenAttack('will_knights_$level', target);
+  Future<void> useStatOpenAttack(String id, String target) =>
+      _state.planOnlineAttack(
+        targetId: target,
+        statOpenId: id,
+        preparedAttackNatural: 12,
+        preparedAttackTotal: 100,
+      );
   Future<void> requestDefenseRetry(Map<String, dynamic> request) =>
       _state.requestDefenseRetry(request);
   Future<void> useCombatRoll(OculumCombatAbilityRole role) =>
@@ -925,6 +937,9 @@ class OculumPerformanceProbe {
     total,
     defenseNatural: natural,
   );
+  void confirmPosteaSwordHit(Map request) =>
+      _state.confirmPosteaSwordHit(request);
+  String get activeCombatEncounterId => _state.onlineCombatEncounterId;
   List<OculumStructuredEffect> prepareBottledCloud(
     List<OculumStructuredEffect> effects, {
     Random? random,

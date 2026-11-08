@@ -1,5 +1,25 @@
 # Registro cumulativo per i giocatori
 
+## Traguardi, Open e pasti — 8 novembre
+
+- Otto abilità del traguardo a 20, con parametri modificabili. Le scelte dei traguardi restano sulla scheda.
+- Open delle statistiche ai livelli 50, 100, 150 e 200. I Cavalieri Rossi assegnano 4, 8, 16 o 36 colpi in quattro gruppi con una difesa ciascuno. Memoria di Pietra restituisce la Vita persa dopo ogni colpo per tre turni anche agli alleati. Le Skill Open rispettano costi e recuperi anche a Open spenta.
+- Compagni, NPC e mostri in vita mostrano Ferito a Vita ≤75%, Gravemente ferito a ≤50% e Morente a ≤25% del massimo. A Vita zero vale lo stato effettivo. Le viste condivise della turnistica, della mappa e del log mostrano l’etichetta. Il verde è il colore predefinito degli alleati. La tinta in turnistica si accende dopo 1,3 secondi di puntatore. Il Master può personalizzare i colori delle squadre e consultare i valori esatti dalle schede autorizzate.
+- Nel Regno di Carne Viva, il Golem di Carne aumenta Danni e Difesa in proporzione alla Vita persa durante il Fight.
+- Nuove voci del Mondo Dolce con desktop scelti. Divoramitù e Divoramitù Elité sono varianti dell’Idrax. Distruttor Caramella usa Schianto di Volontà, con la Volontà intera aggiunta ai Danni di ogni bersaglio.
+- Due fasce di pasto, possibilità di anticipare la colazione negli ultimi 30 minuti di notte, bonus distinti per le due fasce e il terzo pasto effettivo, un recupero da Riposo Breve ogni 4 ore e 30.
+
+## Banchi dei mercanti e lotto dei soprannomi — 8 novembre
+
+- I banchi mostrano per primi gli oggetti sempre presenti. Le nuove scorte aggiungono da 3 a 12 offerte casuali, in media 6, adatte al Livello e alla Potenza totale. Ripara e Trasforma in Titolo Item restano sempre accessibili al Fabbro, fuori dalla lista delle offerte.
+- Il lotto collega 115 sfondi desktop con l’inquadratura preservata. Introduce 109 soprannomi e conferma i due Dalàtro. Quattro voci escono dalla consultazione del Monster Book e conservano le Skill. Baghest Slave e Baghest Slave Elité hanno gli occhi rossi.
+- Il 20 naturale sul Drop di un Corrotto ucciso dà da 1 a 5 cristalli di Ascension Dust, con taglie casuali e quantità influenzata dalla Potenza totale relativa, al posto dell’Occhio dei Caduti.
+- Le reliquie rare del catalogo richiedono 30 + 10 × Grado del mostro. Le infusioni dell’equipaggiamento si sommano. La Dust pura dura fino al Riposo Lungo e la terza dose della stessa modalità diventa una singola infusione permanente. I cristalli Piccolo, Medio e Grande conferiscono subito uno, due e tre bonus permanenti della modalità scelta.
+- Il Monster Book Party mostra `???` per i bottini ancora da scoprire. Per quelli scoperti, la stima usa il tuo bonus Drop, la soglia e la rarità. «Impossibile senza critico» indica che un tiro ordinario non basta. Il Fabbro può proporre armi di mostri e reliquie con nomi di derivazione inglese o latina e una descrizione breve. Fra le nuove armi ci sono Ossivigil, Spinavine, Eclipse Dread-Bow, Bipennis e Malleus Ignis.
+- Postea aggiunge una corazza reattiva, uno scudo da parata perfetta e tre armi al Plasma. Il Gun Shield e la Gunblade permettono di scegliere uno sparo gratuito contro il bersaglio originale con recupero di due turni personali.
+- Ferrum Mutabile, corazza trasformante di Postea, costa 8.000–13.000 Obser e dà +12 Difesa. La trasformazione gratuita dura tre turni personali, una volta per Riposo Lungo, e dà Vita attuale ×1,5, quattro statistiche attuali ×1,3 e 400 Scudo.
+- Offerte, prezzi, inventari e schede personalizzate mantengono i propri dati. Nomi, ruoli, statistiche, abilità, costi, bersagli, durate, effetti, immagini e colori restano personalizzabili negli editor esistenti.
+
 ## Effetti di scheda, Scudi ed equipaggiamento — 7 novembre
 
 - Gli effetti seguono i quattro bordi della finestra su desktop, tablet e telefono. Materia ha un’aura azzurra, il danno adatta il rosso al tema e la Volontà con karma negativo ha un’aura più scura. Le preferenze di movimento e il colore dell’Oculum restano configurabili.

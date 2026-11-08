@@ -247,6 +247,21 @@ const _microRealmCreatureSeeds = <Map<String, dynamic>>[
     'attack': 'Carica della bocca aperta',
   },
   {
+    'id': 'golem_carne',
+    'name': 'Golem di Carne',
+    'realm': 'carne_viva',
+    'element': 'contundente',
+    'stats': [12, 7, 8, 4],
+    'level': 8,
+    'look':
+        'Massa di fibre muscolari e costole saldate, sostenuta da arti larghi e percorsa da pulsazioni rosse. Fino a fine combattimento la percentuale cumulata di Vita effettivamente persa aumenta i suoi Danni e la sua Difesa.',
+    'weak': 'Le fibre esposte sotto le costole del torace.',
+    'attitude':
+        'Ostile ai viaggiatori e agli altri mostri del Regno di Carne Viva.',
+    'material': 'pelle_mostro',
+    'attack': 'Schianto delle nocche di carne',
+  },
+  {
     'id': 'orea_floscocorno',
     'name': 'Floscocorno di Zalira',
     'realm': 'orea_zalira',
@@ -326,6 +341,7 @@ final _microRealmCreatureEntries = <MonsterBookEntry>[
       {
         'authoredCanonical': true,
         'naturalAttitude': s['attitude'],
+        if (s['id'] == 'golem_carne') 'hostileToMonsters': true,
         if (s['id'] == 'black_dragon_shield') ...{
           'criticalShields': 4,
           'canHitIntangible': true,

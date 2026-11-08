@@ -378,8 +378,15 @@ InventoryItem? oculumCombineEquipment(
 }
 
 extension _OculumBlacksmith on _OculumHomePageState {
-  Future<void> showBlacksmithRepair() async {
-    if (!merchantIsOpen || merchantShopType != 'fabbro') return;
+  bool _blacksmithServiceAvailable(BuildContext? merchantDialog) =>
+      merchantShopType == 'fabbro' &&
+      (merchantIsOpen ||
+          merchantDialog != null &&
+              merchantDialog.mounted &&
+              ModalRoute.of(merchantDialog)?.isActive == true);
+
+  Future<void> showBlacksmithRepair({BuildContext? merchantDialog}) async {
+    if (!_blacksmithServiceAvailable(merchantDialog)) return;
     final origin = currentSheetScrollId();
     final candidates = inventario.where(_oculumBlacksmithCanRepair).toList();
     final available = leggiNumero(obserController);
@@ -417,22 +424,95 @@ extension _OculumBlacksmith on _OculumHomePageState {
     );
     if (!mounted ||
         item == null ||
-        !merchantIsOpen ||
         merchantShopType != 'fabbro' ||
         origin != currentSheetScrollId() ||
         !inventario.contains(item) ||
         !_oculumBlacksmithCanRepair(item)) {
       return;
     }
+    if (!merchantIsOpen &&
+        (merchantDialog == null ||
+            !merchantDialog.mounted ||
+            ModalRoute.of(merchantDialog)?.isActive != true)) {
+      return;
+    }
     final cost = oculumBlacksmithRepairCost(item);
     final balance = leggiNumero(obserController);
     if (balance < cost || !oculumRepairEquipmentWear(item)) return;
+    oculumRearmPosteaArmor(item);
     updateOculumHomeUi(() {
       obserController.text = '${balance - cost}';
       invalidateDerivedDataCaches();
     });
     aggiungiLog('[FABBRO] ${item.nome} riparato · −$cost Obser');
     programmaSalvataggio();
+  }
+
+  Future<void> showBlacksmithTitleConversion({
+    BuildContext? merchantDialog,
+  }) async {
+    if (!_blacksmithServiceAvailable(merchantDialog)) return;
+    final origin = currentSheetScrollId();
+    final candidates = inventario
+        .where(
+          (item) =>
+              item.quantita > 0 &&
+              item.craftData['titleItem'] != true &&
+              oculumEquipmentCanBecomeTitle(item),
+        )
+        .toList();
+    final available = leggiNumero(ascensionDustController);
+    final item = await showDialog<InventoryItem>(
+      context: context,
+      builder: (dialog) => SimpleDialog(
+        title: Text(t('Fabbro · Titoli Item', 'Blacksmith · Item Titles')),
+        children: [
+          if (candidates.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Text(
+                t(
+                  'Nessun equipaggiamento convertibile.',
+                  'No equipment can be converted.',
+                ),
+              ),
+            ),
+          for (final candidate in candidates)
+            SimpleDialogOption(
+              onPressed: available >=
+                      oculumItemTitleDustCost(candidate.livelloOggetto)
+                  ? () => Navigator.pop(dialog, candidate)
+                  : null,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                enabled: available >=
+                    oculumItemTitleDustCost(candidate.livelloOggetto),
+                title: Text(candidate.nome),
+                trailing: Text(
+                  '${oculumItemTitleDustCost(candidate.livelloOggetto)} Dust',
+                ),
+              ),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(dialog),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        item == null ||
+        origin != currentSheetScrollId() ||
+        merchantShopType != 'fabbro') {
+      return;
+    }
+    if (!merchantIsOpen &&
+        (merchantDialog == null ||
+            !merchantDialog.mounted ||
+            ModalRoute.of(merchantDialog)?.isActive != true)) {
+      return;
+    }
+    convertInventoryItemToTitle(item);
   }
 
   Future<void> showBlacksmithCombine() async {

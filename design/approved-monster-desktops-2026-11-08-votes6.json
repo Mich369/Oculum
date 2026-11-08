@@ -1,0 +1,1864 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-08T07:05:58.351105+00:00",
+  "count": 115,
+  "status": "SOURCE_ONLY_NOT_COMPILED_OR_PUBLISHED",
+  "files": [
+    {
+      "id": "habitat_shadow_hell_caprone_della_memoria_bruciata",
+      "position": 67,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_shadow_hell_caprone_della_memoria_bruciata_canon_20261108_votes6.png",
+      "nativeSha256": "f5a76994773c1da42ffcda14f6a545740203407d89a27e64d3166413937a5e40",
+      "bytes": 1824734,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Caprone della memoria bruciata A"
+      }
+    },
+    {
+      "id": "habitat_shadow_hell_caprone_della_memoria_bruciata_variante_corazzata",
+      "position": 68,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_shadow_hell_caprone_della_memoria_bruciata_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "2c7161fb7cba30f6f75bc502132f9f9a3b61cf9ece34ab1f7a352615647a6722",
+      "bytes": 1818059,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Caprone della memoria bruciata Corazzata A"
+      }
+    },
+    {
+      "id": "habitat_demoniaco_caprone_delle_fornaci",
+      "position": 69,
+      "letter": "C",
+      "asset": "assets/oculum/home_art/theme_habitat_demoniaco_caprone_delle_fornaci_canon_20261108_votes6.png",
+      "nativeSha256": "0abbd7df3409c4529727e80f46af72355d938df5b2958376657942f87680cb18",
+      "bytes": 1920688,
+      "width": 1585,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Caprone delle fornaci C"
+      }
+    },
+    {
+      "id": "habitat_demoniaco_caprone_delle_fornaci_variante_errante",
+      "position": 70,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_demoniaco_caprone_delle_fornaci_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "fd694ecf3dd1bcd3ea9e5e23da6bfe07ea190e9de1420e4457fd20bb4637fb33",
+      "bytes": 1958722,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Caprone delle fornaci Errante A"
+      }
+    },
+    {
+      "id": "cavaliere_morto_variante_errante",
+      "position": 73,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_cavaliere_morto_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "3f044c11ab9200678a513068da0054d83338ac331a7d12794f9d62a4abe97f02",
+      "bytes": 2332020,
+      "width": 1585,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cavaliere Morto Errante A"
+      }
+    },
+    {
+      "id": "habitat_morti_cavaliere_senza_epitaffio",
+      "position": 74,
+      "letter": "C",
+      "asset": "assets/oculum/home_art/theme_habitat_morti_cavaliere_senza_epitaffio_canon_20261108_votes6.png",
+      "nativeSha256": "ca6b6f490dc0849b80130aa96da6b34493a7804c585f15e327d25332448427a8",
+      "bytes": 2113864,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cavaliere senza epitaffio C"
+      }
+    },
+    {
+      "id": "habitat_morti_cavaliere_senza_epitaffio_variante_errante",
+      "position": 75,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_morti_cavaliere_senza_epitaffio_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "7d6a1b8a62294fa6ece303304777e45382c577d0cdf1b1e9dc1876c9ae6619f6",
+      "bytes": 2049781,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cavaliere senza epitaffio Errante A"
+      }
+    },
+    {
+      "id": "base_affogato_06",
+      "position": 76,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_affogato_06_canon_20261108_votes6.png",
+      "nativeSha256": "0403bea9259f40cdeee41dc022221bb14890c26fa27b85decd6240ab94e886c4",
+      "bytes": 1826571,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cavalluccio Corazzato A"
+      }
+    },
+    {
+      "id": "habitat_postea_centauro_monorotaia",
+      "position": 77,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_centauro_monorotaia_canon_20261108_votes6.png",
+      "nativeSha256": "7bf9fe371da27380aa00084338b76e994743c9f5b791c805d71d1cd43ba6495b",
+      "bytes": 2011165,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Centauro monorotaia A"
+      }
+    },
+    {
+      "id": "habitat_postea_centauro_monorotaia_variante_errante",
+      "position": 78,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_centauro_monorotaia_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "1e743618d31ed9c03dc54c6933b0e4384a29e3f9fa81bacf6cdcae0f8b95671b",
+      "bytes": 1999416,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Centauro monorotaia Errante A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_maggiore_centopiedi_del_quarzo_profondo",
+      "position": 79,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_maggiore_centopiedi_del_quarzo_profondo_canon_20261108_votes6.png",
+      "nativeSha256": "090b94cee31b8d23af2a139c2e5ca2a5f6aee17a827ad2a77defaf1d649c4ce7",
+      "bytes": 2193879,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Centopiedi del quarzo profondo A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_maggiore_centopiedi_del_quarzo_profondo_variante_rituale",
+      "position": 80,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_maggiore_centopiedi_del_quarzo_profondo_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "8a9346504935b7f994b96d34e63c62c7795883224703a3fae444ec09b2173d7b",
+      "bytes": 2062644,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Centopiedi del quarzo profondo Rituale A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_centopiedi_della_selce",
+      "position": 81,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_centopiedi_della_selce_canon_20261108_votes6.png",
+      "nativeSha256": "f5570976a768046ed4b850b00fa232d11d7954c240f522c2c6bf1e5bdb7f9ec3",
+      "bytes": 2180388,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Centopiedi della selce A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_centopiedi_della_selce_variante_corazzata",
+      "position": 82,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_centopiedi_della_selce_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "bf50f596a4f30db0f049eb7bc9200c6f3361195d28dbdbb6f10c79a04404b047",
+      "bytes": 2050502,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Centopiedi della selce Corazzata A"
+      }
+    },
+    {
+      "id": "hero_path_cervello",
+      "position": 83,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_hero_path_cervello_canon_20261108_votes6.png",
+      "nativeSha256": "a1ad3c12106696e1bfd54f2b4e56cdde8682cd7c86a65b456ed733513be90f0b",
+      "bytes": 1966396,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervello Errante A"
+      }
+    },
+    {
+      "id": "hero_path_cervello_variante_corazzata",
+      "position": 84,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_hero_path_cervello_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "9f43134737791d05db9372e632f065bfb6d379bc613df8a40434c948645c1224",
+      "bytes": 2084337,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervello Errante Corazzata A"
+      }
+    },
+    {
+      "id": "cervo_candela",
+      "position": 85,
+      "letter": "C",
+      "asset": "assets/oculum/home_art/theme_cervo_candela_canon_20261108_votes6.png",
+      "nativeSha256": "2bf527e547eac107d5c6726c68c1ff55d22e0bbd2a051388ce50af0586a18a18",
+      "bytes": 1920009,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo Candela C"
+      }
+    },
+    {
+      "id": "cervo_carne_aperta",
+      "position": 87,
+      "letter": "C",
+      "asset": "assets/oculum/home_art/theme_cervo_carne_aperta_canon_20261108_votes6.png",
+      "nativeSha256": "f1283ea8a7c98c5e1533337a8e88088a756a18725da6944340b3b83519f0c97d",
+      "bytes": 1948785,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo dalla Carne Aperta C"
+      }
+    },
+    {
+      "id": "habitat_morti_cervo_del_corteo_funebre",
+      "position": 88,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_morti_cervo_del_corteo_funebre_canon_20261108_votes6.png",
+      "nativeSha256": "ed6bc29d5dee9e1969909c987628760be98b0df74660997f5a3a318da8325e5c",
+      "bytes": 1953475,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo del corteo funebre A"
+      }
+    },
+    {
+      "id": "habitat_morti_cervo_del_corteo_funebre_variante_rituale",
+      "position": 89,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_morti_cervo_del_corteo_funebre_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "0524b77e54e00f120f7ccd6c5041a00a75f1be6f5131e051abcf6a2758f07e5d",
+      "bytes": 2058922,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo del corteo funebre Rituale A"
+      }
+    },
+    {
+      "id": "habitat_nuvole_rocciose_cervo_del_vento_minerale",
+      "position": 90,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_nuvole_rocciose_cervo_del_vento_minerale_canon_20261108_votes6.png",
+      "nativeSha256": "cadb906b6f60e16693840a75936ddd6556374eabf0b7f5477d6987872eb3e5d0",
+      "bytes": 2114192,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo del vento minerale A"
+      }
+    },
+    {
+      "id": "habitat_nuvole_rocciose_cervo_del_vento_minerale_variante_errante",
+      "position": 91,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_nuvole_rocciose_cervo_del_vento_minerale_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "435045db28d11b2b46526c8646a4f58daa0589593bdaae8c21b7eb74215c8510",
+      "bytes": 2201699,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo del vento minerale Errante A"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_cervo_delle_corna_di_vetro",
+      "position": 95,
+      "letter": "C",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_cervo_delle_corna_di_vetro_canon_20261108_votes6.png",
+      "nativeSha256": "b7a224c8c3219810faab93c743b2856b6e3919e7ffd423dbe7b2753c12b73ac4",
+      "bytes": 2067972,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo delle corna di vetro C"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_cervo_delle_corna_di_vetro_variante_veterana",
+      "position": 96,
+      "letter": "C",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_cervo_delle_corna_di_vetro_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "6d239b3da4e5620777cf3d78708c738baeb21946330ca08a0dd6e22e89512d36",
+      "bytes": 2162461,
+      "width": 1585,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo delle corna di vetro Veterana C"
+      }
+    },
+    {
+      "id": "habitat_affogato_cervo_delle_foreste_marine",
+      "position": 97,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_affogato_cervo_delle_foreste_marine_canon_20261108_votes6.png",
+      "nativeSha256": "b777677d244a18f4686047605e00a48c0e631cbe89ed12edce7b565f6a861722",
+      "bytes": 2218592,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo delle foreste marine A"
+      }
+    },
+    {
+      "id": "habitat_affogato_cervo_delle_foreste_marine_variante_errante",
+      "position": 98,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_affogato_cervo_delle_foreste_marine_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "345427281796e93249168413621bcdae74179f0d7fa09f83e3761b2f1ea0a4a4",
+      "bytes": 2210826,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo delle foreste marine Errante A"
+      }
+    },
+    {
+      "id": "habitat_foresta_elementale_cervo_delle_sorgenti",
+      "position": 101,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_foresta_elementale_cervo_delle_sorgenti_canon_20261108_votes6.png",
+      "nativeSha256": "c8ad2a1e4eaa93d58c304e5f19aeceab3189a2068be7fd32313199e45d62a666",
+      "bytes": 2293204,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo delle sorgenti A"
+      }
+    },
+    {
+      "id": "habitat_foresta_elementale_cervo_delle_sorgenti_variante_errante",
+      "position": 102,
+      "letter": "B",
+      "asset": "assets/oculum/home_art/theme_habitat_foresta_elementale_cervo_delle_sorgenti_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "fad16c543efb85564b0bd6c840396385f769ff5a8d0c666ccf76648fc9372881",
+      "bytes": 2195544,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo delle sorgenti Errante B"
+      }
+    },
+    {
+      "id": "base_caramella_06",
+      "position": 105,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_caramella_06_canon_20261108_votes6.png",
+      "nativeSha256": "7aea9787f10a87307b01b7e3affec5ab25b4801d3bd4b95d21858c7efcca7837",
+      "bytes": 1918120,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo di Biscotto A"
+      }
+    },
+    {
+      "id": "habitat_caramella_cervo_di_candy_cane",
+      "position": 106,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_cervo_di_candy_cane_canon_20261108_votes6.png",
+      "nativeSha256": "d3c2c3ec5e0857efb917fd279d42813ce3d3db656ec3c710e4a4829cbf1609cf",
+      "bytes": 2011040,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo di candy cane A"
+      }
+    },
+    {
+      "id": "habitat_caramella_cervo_di_candy_cane_variante_errante",
+      "position": 107,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_cervo_di_candy_cane_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "e16b8912e2dc109cfd6d06624e83314cbf42cf7572b4076613d3b79eceb5eaaa",
+      "bytes": 2026485,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cervo di candy cane Errante A"
+      }
+    },
+    {
+      "id": "habitat_postea_chimera_di_ricambi",
+      "position": 110,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_chimera_di_ricambi_canon_20261108_votes6.png",
+      "nativeSha256": "d4f15170b23b79ada7420c4663923afdd202a025ffe0a34236cf2fcf8bfa47a2",
+      "bytes": 2018805,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Chimera di ricambi A"
+      }
+    },
+    {
+      "id": "habitat_postea_chimera_di_ricambi_variante_rituale",
+      "position": 111,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_chimera_di_ricambi_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "b59691c3c541099cc89ff3a883fe8bdf80855fb0681f28f787743558b26a7ce7",
+      "bytes": 2051795,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Chimera di ricambi Rituale A"
+      }
+    },
+    {
+      "id": "ciclope_non_morto_variante_corazzata",
+      "position": 113,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_ciclope_non_morto_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "4c4d48fd0d79c9053c9b0b1deb6fe209d7f9197ecf353c27ba801247f230342c",
+      "bytes": 2111916,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Ciclope Non Morto Corazzata A"
+      }
+    },
+    {
+      "id": "habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante",
+      "position": 114,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "80aa1ab19c9728422c01dbe2f4344e54529886df83999902bb06475ff5973f82",
+      "bytes": 2184677,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cinghiale delle creste volanti Errante A"
+      }
+    },
+    {
+      "id": "habitat_postea_cinghiale_delle_discariche",
+      "position": 115,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_cinghiale_delle_discariche_canon_20261108_votes6.png",
+      "nativeSha256": "15862bac295889b23a295677f3b17b7af2fae393624fe5784d5e6da96f9834c2",
+      "bytes": 1977137,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cinghiale delle discariche A"
+      }
+    },
+    {
+      "id": "habitat_postea_cinghiale_delle_discariche_variante_rituale",
+      "position": 116,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_cinghiale_delle_discariche_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "d31288adad44bd68f080baa939cac26bf71950ddead084e22f9c3f1c7f35a17e",
+      "bytes": 2221277,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cinghiale delle discariche Rituale A"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_cinghiale_delle_stalattiti",
+      "position": 117,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_cinghiale_delle_stalattiti_canon_20261108_votes6.png",
+      "nativeSha256": "320d0a8f9827bd4a9f7bd7e1c24e09cee233e81ec7fb1f6d574155c2b997d501",
+      "bytes": 2222141,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cinghiale delle stalattiti A"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_cinghiale_delle_stalattiti_variante_corazzata",
+      "position": 118,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_cinghiale_delle_stalattiti_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "142c82abf03af6a05f415eb9ce393785ac82caf8a4806f4ff423743f25934e54",
+      "bytes": 2315949,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cinghiale delle stalattiti Corazzata A"
+      }
+    },
+    {
+      "id": "habitat_caramella_cinghiale_di_croccante",
+      "position": 119,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_cinghiale_di_croccante_canon_20261108_votes6.png",
+      "nativeSha256": "8a98ae0d087db587ef360a5b751c707a3b969270ec20e592cebaf96f434480bd",
+      "bytes": 2135089,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cinghiale di croccante A"
+      }
+    },
+    {
+      "id": "habitat_caramella_cinghiale_di_croccante_variante_rituale",
+      "position": 120,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_cinghiale_di_croccante_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "ac81350b207077622570d1efd6dd5c9c9cade6daacb0e4ec61cfa13c567f65d1",
+      "bytes": 2111365,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cinghiale di croccante Rituale A"
+      }
+    },
+    {
+      "id": "base_postea_05",
+      "position": 121,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_postea_05_canon_20261108_votes6.png",
+      "nativeSha256": "df47dce63e76292f0dfabec7e04b7b095cd5652a80df98ad5de997ef777941ef",
+      "bytes": 1769807,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Civetta a Molla A"
+      }
+    },
+    {
+      "id": "kobold_base_variante_corazzata",
+      "position": 123,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_kobold_base_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "7c327ece7b43882b3c364f4860023824563b9b00b1f6193f9a7b7d0fda45913c",
+      "bytes": 2163575,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Coboldo Corazzata A"
+      }
+    },
+    {
+      "id": "coboldo_di_brina_variante_corazzata",
+      "position": 124,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_coboldo_di_brina_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "fabbb20cf129cfe4f7b68976e6822524f7127a76aded5ca567bd1f5f68c57464",
+      "bytes": 2377350,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Coboldo di Brina Corazzata A"
+      }
+    },
+    {
+      "id": "base_caramella_04",
+      "position": 125,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_caramella_04_canon_20261108_votes6.png",
+      "nativeSha256": "d4c6a744a9a6947fd2f63778c93e21d2b1e72d7ccfee0310a4aa1d29e176eb23",
+      "bytes": 1814637,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Coccinella di Gelatina A"
+      }
+    },
+    {
+      "id": "base_foresta_06",
+      "position": 126,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_foresta_06_canon_20261108_votes6.png",
+      "nativeSha256": "c9786115305e9640db29df5d4402496245ca565c219cfb82ea7ca3428ccf4360",
+      "bytes": 1934348,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Coccinella di Giada A"
+      }
+    },
+    {
+      "id": "habitat_foresta_elementale_colibri_del_temporale",
+      "position": 127,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_foresta_elementale_colibri_del_temporale_canon_20261108_votes6.png",
+      "nativeSha256": "72cb444fdceb07bdf1fdde184cf447d08e8a55d90d6250882d1885aa5f0f4432",
+      "bytes": 2163384,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Colibri del temporale A"
+      }
+    },
+    {
+      "id": "habitat_foresta_elementale_colibri_del_temporale_variante_rituale",
+      "position": 128,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_foresta_elementale_colibri_del_temporale_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "7ca37d433c1bcf9c8ce4730cf55e46529a71aa4e923b4241359b27927aaea932",
+      "bytes": 2178396,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Colibri del temporale Rituale A"
+      }
+    },
+    {
+      "id": "collezionista_di_elementi",
+      "position": 129,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_collezionista_di_elementi_canon_20261108_votes6.png",
+      "nativeSha256": "d85da9fc739ec110c8758e16885acccd6f69f1891bf21a0b883a494ba7e91d88",
+      "bytes": 2025611,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Collezionista di Elementi A"
+      }
+    },
+    {
+      "id": "collezionista_di_elementi_variante_rituale",
+      "position": 130,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_collezionista_di_elementi_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "6ca16355b4a34767495053607f7dd4be8dc47d0e6bbb99b2b4f7f5643c722f9c",
+      "bytes": 2101765,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Collezionista di Elementi Rituale A"
+      }
+    },
+    {
+      "id": "habitat_angelico_colomba_delle_lame_bianche",
+      "position": 131,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_angelico_colomba_delle_lame_bianche_canon_20261108_votes6.png",
+      "nativeSha256": "3ff7e71221ada95240eb0f9c2dfdd379bd06fec54ec1fe0a3b322e94a1c0370e",
+      "bytes": 2430144,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Colomba delle lame bianche A"
+      }
+    },
+    {
+      "id": "habitat_angelico_colomba_delle_lame_bianche_variante_rituale",
+      "position": 132,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_angelico_colomba_delle_lame_bianche_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "c462cc52855f226f2dae1683d7e5a91cc39e59c08eff21c03eeb1b1263e54f2a",
+      "bytes": 2182448,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Colomba delle lame bianche Rituale A"
+      }
+    },
+    {
+      "id": "habitat_postea_colosso_della_sirena",
+      "position": 133,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_colosso_della_sirena_canon_20261108_votes6.png",
+      "nativeSha256": "6140dd4081d90b410d499c1b3ff16ea256382745b3bdba9231b9e83dd8b020fd",
+      "bytes": 2085381,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Colosso della sirena A"
+      }
+    },
+    {
+      "id": "habitat_postea_colosso_della_sirena_variante_veterana",
+      "position": 134,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_colosso_della_sirena_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "05fef10046355cbd329857e888d33ca81d81a14c5737c8ed114c96c7ef998ba3",
+      "bytes": 2294472,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Colosso della sirena Veterana A"
+      }
+    },
+    {
+      "id": "coro_facce_spezzate",
+      "position": 135,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_coro_facce_spezzate_canon_20261108_votes6.png",
+      "nativeSha256": "22ae7ff4efedf668b97f5097e5175a24bdce3377d91e7bdbc2cc48fa94081d97",
+      "bytes": 1999420,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Coro delle Facce Spezzate A"
+      }
+    },
+    {
+      "id": "coro_facce_spezzate_variante_corazzata",
+      "position": 136,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_coro_facce_spezzate_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "98fd59e06aa0ff2d417a0f5ab174466e8de8ec91a41f906ebf1b44397ba4af9a",
+      "bytes": 2349144,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Coro delle Facce Spezzate Corazzata A"
+      }
+    },
+    {
+      "id": "hero_path_rosso",
+      "position": 139,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_hero_path_rosso_canon_20261108_votes6.png",
+      "nativeSha256": "ac700c5266eb6bf9672c8afe4a9003e0718dccebc806d0b57843e7025f0f68df",
+      "bytes": 2008865,
+      "runtimeRevision": {
+        "asset": "assets/oculum/home_art/theme_hero_path_rosso_canon_20261108_votes6_red_eyes.png",
+        "nativeSha256": "ad73d542ddaa4633c85c41f7b18fe0501d5022f36501ac9abba16bc5a3753785",
+        "bytes": 1888632,
+        "width": 1585,
+        "height": 992,
+        "reason": "Baghest Slave con occhi rossi, come richiesto nelle scelte dei nomi"
+      },
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corrotto Rosso A"
+      }
+    },
+    {
+      "id": "hero_path_rosso_variante_veterana",
+      "position": 140,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_hero_path_rosso_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "4e0a48467e881e91621db9f10768b6a7290f7c4cb46725c8b137d40565e755fb",
+      "bytes": 1965056,
+      "runtimeRevision": {
+        "asset": "assets/oculum/home_art/theme_hero_path_rosso_variante_veterana_canon_20261108_votes6_red_eyes.png",
+        "nativeSha256": "715740a3aed05ccf933795d4cc8838515562022fcb19304c72f9adbc5026fe52",
+        "bytes": 1875468,
+        "width": 1585,
+        "height": 992,
+        "reason": "Baghest Slave Elité con occhi rossi secondo la regola dei Corrotti Rossi"
+      },
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corrotto Rosso Veterana A"
+      }
+    },
+    {
+      "id": "inspired_corvo_becco_orologio",
+      "position": 144,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_inspired_corvo_becco_orologio_canon_20261108_votes6.png",
+      "nativeSha256": "050b394ba492f4afc08b27e4863aafe976d9e1edad443080327b6a577e207845",
+      "bytes": 1999781,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo dal Becco d’Orologio A"
+      }
+    },
+    {
+      "id": "inspired_corvo_becco_orologio_variante_rituale",
+      "position": 145,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_inspired_corvo_becco_orologio_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "28700b6f7ef23e5045349027cb29d1d7d1e1a3c36ea1b21e984355c92e711255",
+      "bytes": 1933260,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo dal Becco d’Orologio Rituale A"
+      }
+    },
+    {
+      "id": "habitat_nuvole_rocciose_corvo_del_magnete_celeste",
+      "position": 146,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_nuvole_rocciose_corvo_del_magnete_celeste_canon_20261108_votes6.png",
+      "nativeSha256": "341c4412a021a538b6237d5a4383b540e201cc2a8e83fbb50c1cef24da3152e2",
+      "bytes": 2102213,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo del magnete celeste A"
+      }
+    },
+    {
+      "id": "habitat_nuvole_rocciose_corvo_del_magnete_celeste_variante_veterana",
+      "position": 147,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_nuvole_rocciose_corvo_del_magnete_celeste_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "2ae709f409c10eb51b4003253bf91b5a0b7aee6df5c708721f52e7cf87266d62",
+      "bytes": 2165630,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo del magnete celeste Veterana A"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_corvo_del_vento_bianco",
+      "position": 148,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_corvo_del_vento_bianco_canon_20261108_votes6.png",
+      "nativeSha256": "e50a14097085ac08f6cedad5eb9176654185563a19138dd2e51cdf3d217d0cbd",
+      "bytes": 2371911,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo del vento bianco A"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_corvo_del_vento_bianco_variante_corazzata",
+      "position": 149,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_corvo_del_vento_bianco_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "c85f7b9b9023570e3978c16c807c88ae229da727374deee43bf038043e91214c",
+      "bytes": 2345920,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo del vento bianco Corazzata A"
+      }
+    },
+    {
+      "id": "habitat_morti_corvo_delle_lapidi",
+      "position": 150,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_morti_corvo_delle_lapidi_canon_20261108_votes6.png",
+      "nativeSha256": "419b6e5c7f37af601823dd0657dbd5e4ac5639934e31be5d0aac3b604c813304",
+      "bytes": 2100575,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo delle lapidi A"
+      }
+    },
+    {
+      "id": "habitat_morti_corvo_delle_lapidi_variante_rituale",
+      "position": 151,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_morti_corvo_delle_lapidi_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "a20a85baeea8956e49e68f97592c5e19bae40b1f6d64c7e56011bd6e35b55449",
+      "bytes": 2195061,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo delle lapidi Rituale A"
+      }
+    },
+    {
+      "id": "habitat_mezzano_corvo_delle_monete_false",
+      "position": 152,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_mezzano_corvo_delle_monete_false_canon_20261108_votes6.png",
+      "nativeSha256": "9bda6a155ecb818d150da1a9f8228120535d8943ab0b0065e30512a8f937140d",
+      "bytes": 2050951,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo delle monete false A"
+      }
+    },
+    {
+      "id": "habitat_mezzano_corvo_delle_monete_false_variante_rituale",
+      "position": 153,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_mezzano_corvo_delle_monete_false_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "7d08747308b89462caa8654062729fcf3b3e6fe9ab623c0ca77d07139f195651",
+      "bytes": 2267526,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo delle monete false Rituale A"
+      }
+    },
+    {
+      "id": "habitat_caramella_corvo_di_cacao",
+      "position": 154,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_corvo_di_cacao_canon_20261108_votes6.png",
+      "nativeSha256": "a403076729fed45d963f28a8900a80f1badbe26cf1214ded7611b6588b18aff0",
+      "bytes": 2128302,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo di cacao A"
+      }
+    },
+    {
+      "id": "habitat_caramella_corvo_di_cacao_variante_errante",
+      "position": 155,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_corvo_di_cacao_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "b07c28910a745836e6c102d7a8b458cd8334f428232babdbe496cd8076491516",
+      "bytes": 1922631,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo di cacao Errante A"
+      }
+    },
+    {
+      "id": "base_foresta_08",
+      "position": 156,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_foresta_08_canon_20261108_votes6.png",
+      "nativeSha256": "4a2eb30af07383c012f1c2a52cd9192ace8ff856dac1ce318c0a54bd27ab6a1b",
+      "bytes": 1953255,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo di Corteccia A"
+      }
+    },
+    {
+      "id": "base_caramella_09",
+      "position": 157,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_caramella_09_canon_20261108_votes6.png",
+      "nativeSha256": "44f72f0dd2cab109c3655cfcb2476ea515399b956f2d9154aaf55ff0e2d8b78c",
+      "bytes": 2054019,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Corvo di Liquirizia A"
+      }
+    },
+    {
+      "id": "costrutto_rinsecchito_variante_corazzata",
+      "position": 158,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_costrutto_rinsecchito_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "7faaac81e687d49a16f469966bec62e79d10f0fd986e1f13513e71f67e70f745",
+      "bytes": 2290671,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Costrutto Rinsecchito Corazzata A"
+      }
+    },
+    {
+      "id": "crosty",
+      "position": 159,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_crosty_canon_20261108_votes6.png",
+      "nativeSha256": "f55b6b8b3a2bbc5c8ebd13f5473ce5b6a98b9a484b785f143cf664c471762d2e",
+      "bytes": 2009978,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Crosty A"
+      }
+    },
+    {
+      "id": "cultist_of_purple_eyes_variante_errante",
+      "position": 161,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_cultist_of_purple_eyes_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "77903c49900b0ba74f089dcda91a21e1e29cd8a369348f45966cde58066af5b5",
+      "bytes": 2314397,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cultista degli Occhi Viola Errante A"
+      }
+    },
+    {
+      "id": "cuore_lava_variante_corazzata",
+      "position": 162,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_cuore_lava_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "c38558ab05a3b65ad86848b6cbdc6c7f5802da473e92f2e78777be81d25e2375",
+      "bytes": 1929995,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Cuore della Caldera Corazzata A"
+      }
+    },
+    {
+      "id": "habitat_demoniaco_custode_dei_chiodi_roventi",
+      "position": 163,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_demoniaco_custode_dei_chiodi_roventi_canon_20261108_votes6.png",
+      "nativeSha256": "66ec4677036498cedde19b8db4a969be744d919f069bc73a1bd829f46f03281e",
+      "bytes": 2267806,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode dei chiodi roventi A"
+      }
+    },
+    {
+      "id": "habitat_demoniaco_custode_dei_chiodi_roventi_variante_veterana",
+      "position": 164,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_demoniaco_custode_dei_chiodi_roventi_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "237e6104a8c10564b4673a9ad34076ddbb7daefca773018b7a43317568f0bb8f",
+      "bytes": 2037533,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode dei chiodi roventi Veterana A"
+      }
+    },
+    {
+      "id": "habitat_postea_custode_dei_terminali",
+      "position": 165,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_custode_dei_terminali_canon_20261108_votes6.png",
+      "nativeSha256": "9120392e2e6d16a6e61005068c11a7a66e61bf72b3eee8066163e65715965917",
+      "bytes": 2082125,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode dei terminali A"
+      }
+    },
+    {
+      "id": "habitat_postea_custode_dei_terminali_variante_veterana",
+      "position": 166,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_postea_custode_dei_terminali_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "3dd537996deb9622326dbee209e9bfde4fb2c83ba57024f3d4bb9a6266765dad",
+      "bytes": 2137835,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode dei terminali Veterana A"
+      }
+    },
+    {
+      "id": "habitat_angelico_custode_del_coro_perduto",
+      "position": 169,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_angelico_custode_del_coro_perduto_canon_20261108_votes6.png",
+      "nativeSha256": "b9b7c245927dcd4dc36dc950aa6aa4d9805ad7873c9fcae9ee7f9ad7f1a623d6",
+      "bytes": 2029523,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del coro perduto A"
+      }
+    },
+    {
+      "id": "habitat_angelico_custode_del_coro_perduto_variante_errante",
+      "position": 170,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_angelico_custode_del_coro_perduto_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "816fa7e202182c7b9d7753d97dd0fdc484d8427ffc1acc7dfd7b9ca795d51d04",
+      "bytes": 2106038,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del coro perduto Errante A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_maggiore_custode_del_cuore_sotterraneo",
+      "position": 171,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_maggiore_custode_del_cuore_sotterraneo_canon_20261108_votes6.png",
+      "nativeSha256": "29d74d4048cd63cc5db4236393abf44046c5f63b61ef4691573f1dcf85be8fa0",
+      "bytes": 1969872,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del cuore sotterraneo A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_maggiore_custode_del_cuore_sotterraneo_variante_errante",
+      "position": 172,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_maggiore_custode_del_cuore_sotterraneo_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "052a2a61de6ccb0564da863f0fc7720a267025864f06a44de91919bdce2c1ee7",
+      "bytes": 2079238,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del cuore sotterraneo Errante A"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_custode_del_passo_sepolto",
+      "position": 177,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_custode_del_passo_sepolto_canon_20261108_votes6.png",
+      "nativeSha256": "40b3b45c90cbe81c89af38d9e4a8d92015a11865bc589eacf2a3bb79df2bfbc6",
+      "bytes": 2300898,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del passo sepolto A"
+      }
+    },
+    {
+      "id": "habitat_ghiaccio_custode_del_passo_sepolto_variante_veterana",
+      "position": 178,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_ghiaccio_custode_del_passo_sepolto_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "d03ffa78f19d0262c0ecc94c5dd9feee6e3f63798b2b969df68234b2d0d396a8",
+      "bytes": 2243529,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del passo sepolto Veterana A"
+      }
+    },
+    {
+      "id": "habitat_mezzano_custode_del_ponte_muschioso",
+      "position": 181,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_mezzano_custode_del_ponte_muschioso_canon_20261108_votes6.png",
+      "nativeSha256": "e346d0c5a651f42b40cbf3325dfd245ae58dd210df91fed7ca6d0c70cfe72f37",
+      "bytes": 1970574,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del ponte muschioso A"
+      }
+    },
+    {
+      "id": "habitat_mezzano_custode_del_ponte_muschioso_variante_errante",
+      "position": 182,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_mezzano_custode_del_ponte_muschioso_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "872e16be098048cbd90c5dc2e807c672f165e7b26b4b2e5bfed54c45b1f1c9e5",
+      "bytes": 1981007,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del ponte muschioso Errante A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_custode_del_pozzo_di_basalto",
+      "position": 183,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_custode_del_pozzo_di_basalto_canon_20261108_votes6.png",
+      "nativeSha256": "e351b9ae3d0b8952b650407105c5543775751caed59c5930337dfd06f30ebb02",
+      "bytes": 1940347,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del pozzo di basalto A"
+      }
+    },
+    {
+      "id": "habitat_sotterraneo_custode_del_pozzo_di_basalto_variante_rituale",
+      "position": 184,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sotterraneo_custode_del_pozzo_di_basalto_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "41b2c9ba339bbb51e68ae74b5d0ffc7631b9dcbefb767c06904b3eb777884726",
+      "bytes": 1927292,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del pozzo di basalto Rituale A"
+      }
+    },
+    {
+      "id": "habitat_oblio_custode_del_pozzo_muto",
+      "position": 185,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_oblio_custode_del_pozzo_muto_canon_20261108_votes6.png",
+      "nativeSha256": "d4ad1118d3f3abc351b430b4c58009f036c6812046eb43389e7e1d30b8edbe82",
+      "bytes": 2164142,
+      "width": 1585,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del pozzo muto A"
+      }
+    },
+    {
+      "id": "habitat_oblio_custode_del_pozzo_muto_variante_errante",
+      "position": 186,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_oblio_custode_del_pozzo_muto_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "7b89a6469529baaebe326bcbbe68a0666ed228e1c660c0e2776d3fa79a88df28",
+      "bytes": 2001735,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del pozzo muto Errante A"
+      }
+    },
+    {
+      "id": "habitat_sacro_custode_del_vetro_consacrato",
+      "position": 187,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sacro_custode_del_vetro_consacrato_canon_20261108_votes6.png",
+      "nativeSha256": "0bf0019417ed6eef4f0d06d087556886e64ad9f7e08e6a232dd04de4d13848ea",
+      "bytes": 1886159,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del vetro consacrato A"
+      }
+    },
+    {
+      "id": "habitat_sacro_custode_del_vetro_consacrato_variante_corazzata",
+      "position": 188,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_sacro_custode_del_vetro_consacrato_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "a2fe41364c48ddffbd8e7b874c163b92b69f803bd67c222eee81a81dc1705221",
+      "bytes": 1983619,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode del vetro consacrato Corazzata A"
+      }
+    },
+    {
+      "id": "custode_campana_cieca_variante_veterana",
+      "position": 189,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_custode_campana_cieca_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "74a3f03f88ccbe6dc32b5cf76b33136c5c041d220f03516d8dc020d80fe4f111",
+      "bytes": 2028721,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode della Campana Cieca Veterana A"
+      }
+    },
+    {
+      "id": "habitat_diabolico_custode_della_catena_diabolica",
+      "position": 190,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_diabolico_custode_della_catena_diabolica_canon_20261108_votes6.png",
+      "nativeSha256": "faf6b450211029236ece0dcd73be15456af43b318e7310322081833579565ed9",
+      "bytes": 2033046,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode della catena diabolica A"
+      }
+    },
+    {
+      "id": "habitat_diabolico_custode_della_catena_diabolica_variante_veterana",
+      "position": 191,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_diabolico_custode_della_catena_diabolica_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "ad41148e0a0a854e2db0d5abb2360344fd04183c58dcb7424145ca68a58dae2e",
+      "bytes": 1975722,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode della catena diabolica Veterana A"
+      }
+    },
+    {
+      "id": "habitat_affogato_custode_della_diga_di_perle",
+      "position": 192,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_affogato_custode_della_diga_di_perle_canon_20261108_votes6.png",
+      "nativeSha256": "55e89f97ec901e30d48af8c9ccdc54efadb1e484ff3e0aa21dd6127886a47dfe",
+      "bytes": 2225528,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode della diga di perle A"
+      }
+    },
+    {
+      "id": "habitat_affogato_custode_della_diga_di_perle_variante_corazzata",
+      "position": 193,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_affogato_custode_della_diga_di_perle_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "bd79cf2ec8d9758a555d1ed5cdf9f5a47c9c0efd52fc6156c3244566a5e71055",
+      "bytes": 2266283,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode della diga di perle Corazzata A"
+      }
+    },
+    {
+      "id": "habitat_caramella_custode_della_fontana_fondente",
+      "position": 194,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_custode_della_fontana_fondente_canon_20261108_votes6.png",
+      "nativeSha256": "fcc391c3a514ef32c7e51f5c458f6a8acfaed17f1b6807cf6caf73e1459d7ef4",
+      "bytes": 2125072,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode della fontana fondente A"
+      }
+    },
+    {
+      "id": "habitat_caramella_custode_della_fontana_fondente_variante_corazzata",
+      "position": 195,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_caramella_custode_della_fontana_fondente_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "f5bbc3f8db77825eccb26e9cb1e44bf0826fa127851098bb7949427043683630",
+      "bytes": 2092645,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode della fontana fondente Corazzata A"
+      }
+    },
+    {
+      "id": "habitat_angelico_custode_delle_piume_cucite",
+      "position": 198,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_angelico_custode_delle_piume_cucite_canon_20261108_votes6.png",
+      "nativeSha256": "8911396ac1df1d33070cc9f849a616c1f3a8fe600b1ffacbcabb7f12d0b5b2e2",
+      "bytes": 2014316,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode delle piume cucite A"
+      }
+    },
+    {
+      "id": "habitat_angelico_custode_delle_piume_cucite_variante_errante",
+      "position": 199,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_habitat_angelico_custode_delle_piume_cucite_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "38ca58d4d8bcd3d3f663d41721e8bf3060d45f0db0d12a346c24f561666efcec",
+      "bytes": 2041551,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Custode delle piume cucite Errante A"
+      }
+    },
+    {
+      "id": "dalatro",
+      "position": 202,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_dalatro_canon_20261108_votes6.png",
+      "nativeSha256": "0d8c237ff16d010076a97cf6c9bfe10095504bdd3e60e81f43bc0b28c86b7ca5",
+      "bytes": 1991486,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Dalàtro A"
+      }
+    },
+    {
+      "id": "dalatro_variante_veterana",
+      "position": 203,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_dalatro_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "c03a5d2e8ee6a7290fcc6feda08bebc31f89ef66aa6ea7c521d8b0da2ec69830",
+      "bytes": 2097975,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Dalàtro Veterana A"
+      }
+    },
+    {
+      "id": "base_affogato_09",
+      "position": 204,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_base_affogato_09_canon_20261108_votes6.png",
+      "nativeSha256": "9a92d95637b0131528d6e119e945019285b84d8af26a08eb11c386d9154f5c2c",
+      "bytes": 1971588,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Delfino delle Correnti Lente A"
+      }
+    },
+    {
+      "id": "demone_glaciale_intermedio_variante_errante",
+      "position": 205,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demone_glaciale_intermedio_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "f274beb6ffc59cc0272941de53422f82ff3c0cdffe7d47347f86be28c78cf5d0",
+      "bytes": 2176415,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demone Glaciale Intermedio Errante A"
+      }
+    },
+    {
+      "id": "demone_glaciale_maggiore_variante_veterana",
+      "position": 206,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demone_glaciale_maggiore_variante_veterana_canon_20261108_votes6.png",
+      "nativeSha256": "e695ef762f480ee2b41b822836668af3486d3ed1b562a1fdfb461127a455460c",
+      "bytes": 2033864,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demone Glaciale Maggiore Veterana A"
+      }
+    },
+    {
+      "id": "demone_glaciale_minore_variante_rituale",
+      "position": 207,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demone_glaciale_minore_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "3da86f6d4867846e77fac875303560b974dc57a19acaf0678413f6795a98b6bb",
+      "bytes": 2077501,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demone Glaciale Minore Rituale A"
+      }
+    },
+    {
+      "id": "demone_minore_variante_corazzata",
+      "position": 210,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demone_minore_variante_corazzata_canon_20261108_votes6.png",
+      "nativeSha256": "00a58b9d1fb671bba31dcef694618b4380a3ef08dd90ca99ca4124a49591e402",
+      "bytes": 2129921,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demone Minore Corazzata A"
+      }
+    },
+    {
+      "id": "demonietto_bruciante",
+      "position": 211,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demonietto_bruciante_canon_20261108_votes6.png",
+      "nativeSha256": "9d8e8ba38042ed935ecda0304fc34ba9b34b88455b6aef0596f3208dfce818ec",
+      "bytes": 1985266,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demonietto Bruciante A"
+      }
+    },
+    {
+      "id": "demonietto_bruciante_variante_errante",
+      "position": 212,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demonietto_bruciante_variante_errante_canon_20261108_votes6.png",
+      "nativeSha256": "52a76e0fc10c9975ceae9e617d5026f3c59b7c84cc9c8ddc967b7d66989f2c64",
+      "bytes": 2034437,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demonietto Bruciante Errante A"
+      }
+    },
+    {
+      "id": "demonietto_del_gelo",
+      "position": 213,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demonietto_del_gelo_canon_20261108_votes6.png",
+      "nativeSha256": "a2b7967bb149330167d85e722ebdc491bcd3d9c9336632df09e6649576de8461",
+      "bytes": 2086446,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demonietto del Gelo A"
+      }
+    },
+    {
+      "id": "demonietto_del_gelo_variante_rituale",
+      "position": 214,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_demonietto_del_gelo_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "8dcb39de53db11be0c3bcc566985e2db5b73fadde368ee4a3098dcc64120d2d5",
+      "bytes": 2120795,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Demonietto del Gelo Rituale A"
+      }
+    },
+    {
+      "id": "obliterated_devil_variante_rituale",
+      "position": 215,
+      "letter": "A",
+      "asset": "assets/oculum/home_art/theme_obliterated_devil_variante_rituale_canon_20261108_votes6.png",
+      "nativeSha256": "58f3e5cdef521ccebec3d72487a1526b3757e7d44334dacfe37da17cc738b5e7",
+      "bytes": 2071516,
+      "width": 1586,
+      "height": 992,
+      "kind": "desktop",
+      "preserveIllustrationFraming": true,
+      "approvalEvidence": {
+        "receipt": "docs/CONFERME_UTENTE_ARTWORK_2026-11-08_02.json",
+        "userAnswer": "Diavolo Obliterato Rituale A"
+      }
+    }
+  ]
+}

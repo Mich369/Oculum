@@ -16,6 +16,10 @@ const _previousReceipt =
     'design/approved-monster-desktops-2026-11-06-votes2.json';
 const _lotTwoReceipt =
     'design/approved-monster-desktops-2026-11-07-votes4.json';
+const _caproneReceipt =
+    'design/approved-monster-desktops-2026-11-08-votes5.json';
+const _nicknameLotReceipt =
+    'design/approved-monster-desktops-2026-11-08-votes6.json';
 const _campanaro = 'habitat_morti_campanaro_delle_anime_ferme';
 
 String _sha256(Uint8List bytes) => SHA256Digest()
@@ -53,6 +57,45 @@ Future<void> _expectExactDesktop(Map<String, dynamic> file) async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('nickname lot binds all 115 voted desktop themes by ID', () async {
+    final receipt =
+        jsonDecode(File(_nicknameLotReceipt).readAsStringSync())
+            as Map<String, dynamic>;
+    final files = (receipt['files'] as List).cast<Map<String, dynamic>>();
+    expect(files, hasLength(115));
+    expect(files.map((file) => file['id']).toSet(), oculumNovember8VotedMonsterIds);
+    for (final file in files) {
+      final id = file['id'] as String;
+      final revision = file['runtimeRevision'] as Map<String, dynamic>?;
+      final asset = (revision ?? file)['asset'] as String;
+      final bundled = await rootBundle.load(asset);
+      expect(bundled.lengthInBytes, (revision ?? file)['bytes'], reason: id);
+      final theme = _themeFor(id);
+      expect(theme.illustration, asset, reason: id);
+      expect(theme.preserveIllustrationFraming, isTrue, reason: id);
+    }
+  });
+
+  test('Caproni select the eight exact desktop approvals', () async {
+    final receipt =
+        jsonDecode(File(_caproneReceipt).readAsStringSync())
+            as Map<String, dynamic>;
+    final files = (receipt['files'] as List).cast<Map<String, dynamic>>();
+    expect(files.map((file) => file['id']).toSet(), {
+      'caprone_d_ossa',
+      'caprone_scheletrico_nero',
+      'habitat_diabolico_caprone_della_fossa_di_vetro',
+      'habitat_diabolico_caprone_della_fossa_di_vetro_variante_errante',
+      'habitat_foresta_elementale_caprone_della_brace_empia',
+      'habitat_foresta_elementale_caprone_della_brace_empia_variante_rituale',
+      'habitat_vero_inferno_caprone_dei_troni_bruciati',
+      'habitat_vero_inferno_caprone_dei_troni_bruciati_variante_corazzata',
+    });
+    for (final file in files) {
+      await _expectExactDesktop(file);
+    }
+  });
 
   test('exact approved desktop PNGs are bundled and selected by ID', () async {
     final receipt =

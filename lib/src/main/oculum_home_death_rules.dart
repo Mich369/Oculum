@@ -2,8 +2,9 @@ part of '../../main.dart';
 
 String oculumCombatHealthLabel(int hp, int maximumHp) {
   if (maximumHp <= 0 || hp <= 0) return '';
-  if (hp * 100 <= maximumHp * 30) return 'Morente';
-  if (hp * 100 <= maximumHp * 60) return 'Ferito';
+  if (hp * 4 <= maximumHp) return 'Morente';
+  if (hp * 2 <= maximumHp) return 'Gravemente ferito';
+  if (hp * 4 <= maximumHp * 3) return 'Ferito';
   return '';
 }
 
@@ -19,7 +20,9 @@ String oculumCombatTokenHealthLabel(Map token) {
     );
   }
   final label = '${token['healthLabel'] ?? ''}';
-  return const {'Ferito', 'Morente'}.contains(label) ? label : '';
+  return const {'Ferito', 'Gravemente ferito', 'Morente'}.contains(label)
+      ? label
+      : '';
 }
 
 int? oculumSheetFixedCloneHpMaximum(Map<String, dynamic> sheet) {

@@ -196,7 +196,7 @@ CharacterSkill oculumCreateThresholdSkill(
 
 extension _OculumStatThresholdSkills on _OculumHomePageState {
   int thresholdTemporaryHp() => skills.fold<int>(
-    0,
+    stat20WakingLifeRemaining(),
     (total, skill) =>
         total +
         max(0, readIntValue(skill.thresholdData['temporaryHpRemaining'])),
@@ -206,7 +206,7 @@ extension _OculumStatThresholdSkills on _OculumHomePageState {
       oculumTemporaryHpLimit + thresholdTemporaryHp();
 
   void consumeThresholdTemporaryHp(int amount) {
-    var remaining = max(0, amount);
+    var remaining = consumeStat20WakingLife(amount);
     for (final skill in skills) {
       final pool = max(
         0,

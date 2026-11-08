@@ -212,6 +212,9 @@ extension _OculumPawnCores on _OculumHomePageState {
       ),
     );
     if (!mounted || confirmed != true || !inventario.contains(item)) return;
+    final source = item.craftData['coreSource'];
+    final armored = source is Map && source['armored'] == true;
+    final postea = armored && source['posteaType'] == 'pawn';
     var remaining = 6000;
     setState(() {
       for (final m in metal) {
@@ -230,11 +233,13 @@ extension _OculumPawnCores on _OculumHomePageState {
       item.quantita--;
       if (item.quantita <= 0) inventario.remove(item);
       inventario.add(
-        oculumPawnInventoryItem()
+        oculumPawnInventoryItem(armored: armored)
           ..craftData = {
             'pawn': true,
+            if (armored) 'pawnArmored': true,
+            if (postea) 'posteaCompanion': 'pawn',
             'recoveryLevel': 10,
-            'coreSource': item.craftData['coreSource'],
+            'coreSource': source,
           },
       );
     });

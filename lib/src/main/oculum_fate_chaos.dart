@@ -18,6 +18,206 @@ Map<String, int> oculumFateGradeReward(int percentile, {int currentHp = 0}) {
   return result;
 }
 
+const _opposingChaosStats = ['resilienza', 'volonta', 'materia', 'oculum'];
+final _withoutOpposingChaos = Expando<bool>();
+
+Map<String, int> oculumOpposingChaosStatRoll(int Function(int) nextInt) => {
+  for (final stat in _opposingChaosStats) stat: nextInt(11) - 5,
+};
+
+extension _OculumOpposingChaos on _OculumHomePageState {
+  String fightMonsterElement(Map<String, dynamic> token) {
+    return oculumNormalizeElementId(
+      oculumSavedMonsterBookEntryById(
+            monsterBookIdForCombatToken(token),
+          )?.elementId ??
+          '${token['element'] ?? ''}',
+    );
+  }
+
+  bool _differentFightSides(
+    Map<String, dynamic> combatant,
+    Map<String, dynamic> source,
+  ) =>
+      '${combatant['side'] ?? 'ally'}' != '${source['side'] ?? 'ally'}' &&
+      publicInitiativeSourceTag(combatant) != publicInitiativeSourceTag(source);
+
+  bool _presentForElementalInfluence(Map<String, dynamic> token) =>
+      token['outsideFight'] != true &&
+      token['temporaryTurn'] != true &&
+      token['duplicateAction'] != true &&
+      !const {'dead', 'fled', 'expired'}.contains(token['status']);
+
+  void refreshOpposingChaosTurn(
+    Map<String, dynamic> token, {
+    required String fightInstanceId,
+  }) {
+    if (!_presentForElementalInfluence(token)) return;
+    final receipt = '$fightInstanceId:$masterInitiativeRound';
+    if (token['opposingChaosTurn'] == receipt) return;
+    token['opposingChaosTurn'] = receipt;
+    if (!masterInitiativeTokens.any(
+      (source) =>
+          _presentForElementalInfluence(source) &&
+          _differentFightSides(token, source) &&
+          fightMonsterElement(source) == 'caos',
+    )) {
+      if (token.remove('opposingChaosStats') != null) {
+        invalidateDerivedDataCaches();
+      }
+      return;
+    }
+    final stats = oculumOpposingChaosStatRoll(Random.secure().nextInt);
+    token['opposingChaosStats'] = stats;
+    invalidateDerivedDataCaches();
+    combatLogFor(
+      publicInitiativeSourceTag(token),
+      '[CHAOS] ${stats.entries.map((e) => '${e.key} ${e.value >= 0 ? '+' : ''}${e.value}').join(' · ')}',
+    );
+  }
+
+  Map? _opposingChaosForCurrentSheet() {
+    if (_withoutOpposingChaos[this] == true) return null;
+    final encounter = referenceTurnEncounter();
+    if (encounter['combatEnded'] == true ||
+        encounter['fightStarted'] == false) {
+      return null;
+    }
+    final raw = encounter['tokens'];
+    if (raw is! List) return null;
+    final tag = sheetTagAt(schedaCorrente);
+    for (final token in raw.whereType<Map<String, dynamic>>()) {
+      if (!_presentForElementalInfluence(token) ||
+          !combatTokenMatchesSheet(token, tag)) {
+        continue;
+      }
+      final stats = token['opposingChaosStats'];
+      if (stats is Map) return stats;
+    }
+    return null;
+  }
+
+  int opposingChaosModifier(String stat) =>
+      readIntValue(_opposingChaosForCurrentSheet()?[stat]).clamp(-5, 5);
+
+  // The Fight token holds its temporary modifiers. Derived fields exported
+  // with a sheet must not carry them into another encounter or an offline save.
+  T captureSheetWithoutOpposingChaos<T>(T Function() capture) {
+    if (_opposingChaosForCurrentSheet() == null) return capture();
+    _withoutOpposingChaos[this] = true;
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    try {
+      return capture();
+    } finally {
+      _withoutOpposingChaos[this] = null;
+      invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    }
+  }
+
+  void markOblivionFightExposure() {
+    final present = masterInitiativeTokens
+        .where(_presentForElementalInfluence)
+        .toList(growable: false);
+    final oblivionSides = {
+      for (final source in present)
+        if (fightMonsterElement(source) == 'oblio') source['side'] ?? 'ally',
+    };
+    if (oblivionSides.isEmpty) return;
+    for (final token in present) {
+      if (oblivionSides.any((side) => side != (token['side'] ?? 'ally'))) {
+        token['opposingOblivionExposed'] = true;
+      }
+    }
+  }
+
+  List<String> oblivionFightParticipants() {
+    markOblivionFightExposure();
+    return {
+      for (final token in masterInitiativeTokens)
+        if (token['opposingOblivionExposed'] == true &&
+            token['temporaryTurn'] != true &&
+            token['duplicateAction'] != true)
+          publicInitiativeSourceTag(token),
+    }.where((tag) => tag.isNotEmpty).toList();
+  }
+
+  String _oblivionFightKey(String campaign, String instance) =>
+      jsonEncode([campaign, instance]);
+
+  void recordOblivionArmorPain() {
+    final context = currentCombatSubtraitExperienceContext();
+    if (context == null) return;
+    final key = _oblivionFightKey(
+      permissionCampaignId,
+      context['fightInstanceId'] as String,
+    );
+    final receipts = <String>{
+      ...(planarState['oblivionArmorPain'] as List? ?? const [])
+          .whereType<String>(),
+      key,
+    };
+    planarState['oblivionArmorPain'] = receipts
+        .toList()
+        .reversed
+        .take(64)
+        .toList()
+        .reversed
+        .toList();
+  }
+
+  void receiveOblivionFightEnd(Map reward, {String? campaignId}) {
+    final participants = reward['oblivionFightParticipants'];
+    if (participants is! Map || '${reward['endedEncounterId'] ?? ''}'.isEmpty) {
+      return;
+    }
+    var changed = false;
+    for (final entry in participants.entries) {
+      final tag = entry.key;
+      final instance = entry.value;
+      if (tag is! String || instance is! String || instance.isEmpty) continue;
+      final key = _oblivionFightKey(
+        campaignId ?? permissionCampaignId,
+        instance,
+      );
+      if (!controlsOnlineCombatSheet(tag)) continue;
+      final index = localSheetIndexForOculumTag(tag);
+      if (index < 0) continue;
+      final sheet = schedePersonaggio[index];
+      final runtime = index == schedaCorrente
+          ? planarState
+          : Map<String, dynamic>.from(
+              sheet['planarRuntime'] as Map? ?? const {},
+            );
+      final receipts = <String>{
+        ...(runtime['oblivionFightEndReceipts'] as List? ?? const [])
+            .whereType<String>(),
+      };
+      if (!receipts.add(key)) continue;
+      runtime['oblivionFightEndReceipts'] = receipts.toList();
+      final pain = (runtime['oblivionArmorPain'] as List? ?? const [])
+          .whereType<String>()
+          .toSet();
+      final hurt = pain.remove(key);
+      runtime['oblivionArmorPain'] = pain.toList();
+      if (index != schedaCorrente) sheet['planarRuntime'] = runtime;
+      combatLogFor(
+        tag,
+        hurt ? 'non ricordo nulla, perché sento dolore?' : 'non ricordi nulla',
+      );
+      changed = true;
+    }
+    if (changed) programmaSalvataggio(invalidateCaches: false);
+  }
+
+  // This is the value used by rolls and derived subtalents. oculumTotale()
+  // remains the spendable pool used by costs, refills and the resource bar.
+  int oculumCombatStatTotal() {
+    final available = oculumTotale();
+    if (oculumAddormentato || isMeccanio || isThunderBot) return available;
+    return max(0, available + opposingChaosModifier('oculum'));
+  }
+}
+
 extension _OculumFateChaos on _OculumHomePageState {
   bool get identityIsChaos => planarState['identityFateChaos'] == 'Chaos';
 

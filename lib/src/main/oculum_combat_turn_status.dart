@@ -1,5 +1,20 @@
 part of '../../main.dart';
 
+Color combatParticipantSideColor(
+  Map token, {
+  Color neutral = Colors.orangeAccent,
+  Color fallback = Colors.greenAccent,
+}) {
+  final custom = readIntValue(token['colorArgb']);
+  if (custom != 0) return Color(custom);
+  return switch ('${token['side'] ?? ''}'.trim().toLowerCase()) {
+    'ally' || 'party' => Colors.greenAccent,
+    'enemy' => Colors.redAccent,
+    'neutral' => neutral,
+    _ => fallback,
+  };
+}
+
 String oculumFightOrdinal(int number) {
   if (number <= 0) return '';
   final text = StringBuffer();

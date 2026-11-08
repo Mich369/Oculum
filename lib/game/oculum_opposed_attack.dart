@@ -121,6 +121,13 @@ int oculumDamagePerTarget(
   return max(1, share + flatBonusPerTarget);
 }
 
+int oculumCandyWillSlamDamage(int damage, int will, int targetCount) =>
+    oculumDamagePerTarget(
+      damage * min(2, targetCount),
+      targetCount,
+      flatBonusPerTarget: will,
+    );
+
 /// Skill damage is an addition to the attacker's ordinary base damage. The
 /// fixed bonuses are split out so area attacks can add them to every target.
 int oculumAttackDamageWithAbilityBonus({

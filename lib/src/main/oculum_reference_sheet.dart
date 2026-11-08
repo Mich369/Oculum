@@ -1768,14 +1768,20 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                           itemCount: tokens.length,
                           itemBuilder: (context, row) {
                             final token = tokens[row];
+                            final wound = oculumCombatTokenHealthLabel(token);
                             return masterParticipantContextArea(
                               encounterId: id,
                               token: Map<String, dynamic>.from(token),
                               child: ListTile(
                                 dense: true,
+                                leading: Icon(
+                                  Icons.circle,
+                                  size: 12,
+                                  color: combatParticipantSideColor(token),
+                                ),
                                 title: Text(
                                   '${oculumReferenceEncounterTokenName(token)}'
-                                  '${oculumCombatTokenHealthLabel(token).isEmpty ? '' : ' · ${oculumCombatTokenHealthLabel(token)}'}',
+                                  '${wound.isEmpty ? '' : ' · $wound'}',
                                 ),
                                 trailing: canRemoveOwnEncounterToken(token)
                                     ? IconButton(
@@ -1983,6 +1989,8 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         )
         .map((effect) => canonicalDamageModifierName('${effect['preset']}'))
         .toList();
+    final physical = stat20PhysicalResistancePreset(elementId);
+    if (physical != null) temporary.add(physical);
     temporary.addAll(
       automaticMonsterPassiveEffects()
           .where(
@@ -2433,6 +2441,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
               readIntValue(raw['remaining']) == 0,
         );
         sheet['activeStructuredEffects'] = effects;
+        advanceInactiveSheetStatOpens(tag, sheet);
       }
     }
     token['updatedAt'] = DateTime.now().toIso8601String();

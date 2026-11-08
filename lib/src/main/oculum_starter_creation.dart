@@ -627,12 +627,17 @@ List<CharacterArt> oculumMonsterBookOpenPool(
   final future =
       candidates.keys.where((name) => candidates[name]! > atLevel).toList()
         ..shuffle(random);
-  final areaMove = eligible.where(multiTarget.contains).firstOrNull;
-  final chosen = [
+  final signatureId = '${monster.encounterRules['signatureSkillId'] ?? ''}';
+  final signature = monsterBookConcreteTechnique(signatureId)?.name;
+  final areaMove = eligible
+      .where((name) => name != signature && multiTarget.contains(name))
+      .firstOrNull;
+  final chosen = <String>{
+    if (signature != null && candidates.containsKey(signature)) signature,
     ?areaMove,
-    ...eligible.where((name) => name != areaMove),
+    ...eligible,
     ...future,
-  ].take(3).toSet();
+  }.take(3).toSet();
 
   final selectedNatural = [
     for (final skill in natural)
@@ -673,7 +678,7 @@ List<CharacterArt> oculumMonsterBookOpenPool(
 /// An assortment, not three simultaneous bonuses. Existing/custom titles are
 /// never rewritten; the selected visible title supplies its own trade-off.
 List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
-  final body = '${monster.id} ${monster.nameIt} ${monster.descIt}'
+  final body = '${monster.id} ${monster.speciesNameIt} ${monster.descIt}'
       .toLowerCase();
   final chaos =
       monster.elementId == 'chaos' ||
@@ -685,7 +690,8 @@ List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
           RegExp(
             r'privo di logica|creatura senza coscienza',
           ).hasMatch(monster.descIt.toLowerCase())) ||
-      (!chaos && RegExp(r'\blarva\b').hasMatch(monster.nameIt.toLowerCase()))) {
+      (!chaos &&
+          RegExp(r'\blarva\b').hasMatch(monster.speciesNameIt.toLowerCase()))) {
     return [];
   }
   final aerial = RegExp(

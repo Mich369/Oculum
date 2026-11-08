@@ -1600,16 +1600,39 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     _openDungeonMiniGame(openOnlinePanel: true, initialOnlineSession: selected);
   }
 
+  String _realtimeHealthLogLabel(Map data) {
+    if (data.containsKey('healthLabel')) {
+      return oculumRealtimePublicHealthLabel(data['healthLabel']);
+    }
+    final ratio = '${data['hp'] ?? ''}'.split('/');
+    final currentHp =
+        data['currentHp'] ?? (ratio.length == 2 ? ratio[0] : null);
+    final maximumHp = data['maxHp'] ?? (ratio.length == 2 ? ratio[1] : null);
+    return oculumCombatHealthLabel(
+      readIntValue(currentHp),
+      readIntValue(maximumHp),
+    );
+  }
+
+  String get _realtimeActiveHealthLabel {
+    final hp = hpCorrenti();
+    if (oculumCombatConfirmedDeath(hp: hp, deathWounds: feriteMorte)) {
+      return 'Morto';
+    }
+    return schedaAttivaCaduta
+        ? 'A terra'
+        : oculumCombatHealthLabel(hp, maxHp());
+  }
+
   String realtimeEventText(String event, Map<String, dynamic> payload) {
     final player = '${payload['playerName'] ?? '???'}';
 
     switch (event) {
       case 'hp_changed':
-        return '$player HP ${payload['currentHp'] ?? '?'}'
-            '/${payload['maxHp'] ?? '?'}'
-            ' • Temp ${payload['tempHp'] ?? 0}'
-            ' • Scudo ${payload['shield'] ?? 0}'
-            '${readIntValue(payload['larvalBroodMaxHp']) > 0 ? " • Nidiata ${payload['larvalBroodHp'] ?? 0}/${payload['larvalBroodMaxHp']}" : ''}';
+        final wound = _realtimeHealthLogLabel(payload);
+        return wound.isNotEmpty
+            ? '$player · $wound'
+            : t('$player · Vita aggiornata', '$player · Life updated');
       case 'oculum_changed':
         return '$player Oculum ${payload['currentOculum'] ?? '?'}'
             '/${payload['maxOculum'] ?? '?'}';
@@ -1672,9 +1695,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         return '$player ping';
       case 'sheet_sync_preview':
         final state = payload['smallState'];
-        return state is Map
-            ? '$player preview: HP ${state['hp'] ?? '?'} • Oculum ${state['oculum'] ?? '?'} • Lv ${state['level'] ?? '?'} • Gr ${state['grade'] ?? '?'}'
-            : '$player preview ricevuta';
+        if (state is! Map) return '$player preview ricevuta';
+        final health = _realtimeHealthLogLabel(state);
+        final preview = oculumRealtimePublicSheetPreview(state);
+        return [
+          t('$player · Anteprima scheda', '$player · Sheet preview'),
+          if (health.isNotEmpty) health,
+          if (preview['level'] != null) 'Lv ${preview['level']}',
+          if (preview['grade'] != null) 'Gr ${preview['grade']}',
+        ].join(' · ');
       case 'sheet_shared':
         return t(
           '$player ha condiviso ${payload['sheetName'] ?? 'una scheda'} da ${payload['campaignName'] ?? 'campagna online'}.',
@@ -1736,16 +1765,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final service = realtimeService;
     if (service?.isConnected != true) return;
 
-    unawaited(
-      service!.sendHpChanged(
-        currentHp: hpCorrenti(),
-        maxHp: maxHp(),
-        tempHp: hpTemp(),
-        shield: scudo(),
-        larvalBroodHp: broodRemainingHp(),
-        larvalBroodMaxHp: broodMaximumHp(),
-      ),
-    );
+    unawaited(service!.sendHpChanged(healthLabel: _realtimeActiveHealthLabel));
   }
 
   void sendRealtimeDamageReport({
@@ -1892,8 +1912,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     unawaited(
       service!.sendSheetSyncPreview(<String, dynamic>{
-        'hp': '${hpCorrenti()}/${maxHp()}',
-        'oculum': '${oculumTotale()}/${oculumMassimo()}',
+        'healthLabel': _realtimeActiveHealthLabel,
         'level': livelloController.text,
         'grade': gradoController.text,
       }),
@@ -2939,16 +2958,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'name': oculumReferenceEncounterTokenName(tokens[i]),
             'type': '${tokens[i]['type'] ?? 'Partecipante'}',
             'side': '${tokens[i]['side'] ?? 'ally'}',
+            if (readIntValue(tokens[i]['colorArgb']) != 0)
+              'colorArgb': readIntValue(tokens[i]['colorArgb']),
             'status': '${tokens[i]['status'] ?? 'ready'}',
             'corruptedByTag': corruptionOwnerForToken(tokens[i]),
             'downed': masterInitiativeTokenIsDowned(tokens[i]),
             'targetControlChancePercent': corruptionControlChanceForToken(
               tokens[i],
             ),
-            'healthLabel': oculumCombatHealthLabel(
-              readIntValue(tokens[i]['currentHp']),
-              readIntValue(tokens[i]['maxHp']),
-            ),
+            'healthLabel': oculumCombatTokenHealthLabel(tokens[i]),
             'spriteAssetPath': masterInitiativeTokenSpriteAsset(tokens[i]),
             'tokenSize': masterInitiativeTokenSize(tokens[i]),
             'initiativeRoll': readIntValue(tokens[i]['initiativeRoll']),
@@ -2973,6 +2991,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               'bottledCloudActionReceipts',
               'bottledCloudInterruptedGroups',
               'bottledCloudFastReactionTurn',
+              'opposingChaosStats',
             ])
               if (tokens[i].containsKey(key)) key: tokens[i][key],
             for (final key in [
@@ -3166,7 +3185,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
     if (serverSequence > 0) realtimeInitiativeServerSequence = serverSequence;
 
+    final snapshotRaw = payload['snapshot'];
     if (oculumInitiativePayloadClosesFight(payload)) {
+      final closingEncounter = snapshotRaw is Map
+          ? '${snapshotRaw['encounterId'] ?? onlineCombatEncounterId}'
+          : onlineCombatEncounterId;
+      expireBoneGoatAphoniaAtFightEnd(
+        closingEncounter,
+        campaignId: payload['campaignId']?.toString(),
+      );
       final previousClock = realtimeVisibleInitiativeSnapshot['worldClock'];
       final previousCampaign = realtimeVisibleInitiativeSnapshot['campaignId'];
       final previousCampaignName =
@@ -3192,12 +3219,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeEncounterSnapshots = <Map<String, dynamic>>[];
       realtimeSelectedEncounterId = '';
       clearTemporaryCombatResistanceEffects();
+      invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
       risultato = t('Fight chiusa dal Master.', 'Fight closed by the Master.');
       aggiungiLog(risultato);
       return;
     }
 
-    final snapshotRaw = payload['snapshot'];
     if (snapshotRaw is! Map) return;
     if (snapshotRaw['campaignId'] != null &&
         snapshotRaw['campaignId'] != payload['campaignId']) {
@@ -3206,6 +3233,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     receiveEncounterRewards(
       (snapshotRaw['completedEncounterRewards'] as List? ?? [])
           .whereType<Map>(),
+      campaignId: payload['campaignId']?.toString(),
     );
     final encountersRaw = snapshotRaw['encounters'];
     var selectedSnapshot = Map<String, dynamic>.from(snapshotRaw);
@@ -3264,6 +3292,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       syncOwnedWorldCalendarAndNeeds(clock);
     }
     if (realtimeVisibleInitiativeSnapshot['combatEnded'] == true) {
+      expireBoneGoatAphoniaAtFightEnd(
+        '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}',
+      );
       clearTemporaryCombatResistanceEffects();
     }
     final turnTokens = realtimeVisibleInitiativeSnapshot['tokens'];
@@ -3290,6 +3321,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     } else {
       realtimeLoggedInitiativeTurnKey = '';
     }
+    invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
     applyChainedFateCompletion(selectedSnapshot);
     receiveMasterRollRequests(selectedSnapshot);
     final aliases = (selectedSnapshot['mergedEncounterIds'] as List? ?? [])
@@ -3628,6 +3660,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void closeRealtimeInitiativeSnapshot() {
     realtimeHiddenEncounterIds.add(selectedMasterInitiativeGroupId);
+    expireBoneGoatAphoniaAtFightEnd(selectedMasterInitiativeGroupId);
     if (realtimeService?.isConnected != true || !realtimeIsMasterRole) {
       setState(() {
         masterInitiativePublished = false;
@@ -5343,11 +5376,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                           : Colors.black.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color:
-                            i == activeIndex ||
-                                readBoolValue(tokens[i]['active'])
-                            ? tertiaryColor
-                            : primaryColor.withValues(alpha: 0.35),
+                        color: combatParticipantSideColor(tokens[i]).withValues(
+                          alpha:
+                              i == activeIndex ||
+                                  readBoolValue(tokens[i]['active'])
+                              ? 1
+                              : .55,
+                        ),
                       ),
                     ),
                     child: Row(
@@ -5391,6 +5426,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                                   '${tokens[i]['status'] ?? 'ready'}',
                                 ),
                               ),
+                              if (oculumCombatTokenHealthLabel(
+                                tokens[i],
+                              ).isNotEmpty)
+                                smallInfoText(
+                                  oculumCombatTokenHealthLabel(tokens[i]),
+                                  color: Colors.orangeAccent,
+                                ),
                             ],
                           ),
                         ),

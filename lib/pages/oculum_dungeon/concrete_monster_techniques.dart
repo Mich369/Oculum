@@ -133,6 +133,35 @@ MonsterConcreteTechnique? monsterBookConcreteTechnique(String rawId) {
   final planar = oculumPlanarTechnique(id);
   if (planar != null) return planar;
   return _concreteTechniqueCache.putIfAbsent(id, () {
+    if (id == 'candy_will_slam') {
+      const effect = MonsterTechniqueEffect(
+        'planar',
+        '0',
+        target: 'candy_will_slam',
+        mode: 'prossima_azione',
+        recipient: 'nemico',
+        maximumTargets: 100,
+      );
+      return const MonsterConcreteTechnique(
+        name: 'Schianto di Volontà',
+        action:
+            'Schianta lo spadone contro più nemici. Aggiunge tutta la Volontà '
+            'a ciascuno. La quota di Danni è intera con uno o due nemici, '
+            'poi vale due volte i Danni divisi per il numero di bersagli',
+        element: 'fisico',
+        kind: 'danno',
+        requiredLevel: 0,
+        costResource: 'nessuna',
+        minimums: [0, 0, 0],
+        maximums: [0, 0, 0],
+        cooldownValues: [0, 0, 0],
+        forms: [
+          [effect],
+          [effect],
+          [effect],
+        ],
+      );
+    }
     if (id == 'collettore_martello_elementale') {
       return const MonsterConcreteTechnique(
         name: 'Martello del Collezionista',
@@ -662,7 +691,7 @@ List<MonsterTechniqueEffect>? _monsterTacticalForms(String id, int rank) {
   String,
 )
 _monsterAnatomy(MonsterBookEntry monster) {
-  final body = '${monster.id} ${monster.nameIt}'.toLowerCase();
+  final body = '${monster.id} ${monster.speciesNameIt}'.toLowerCase();
   if (RegExp(r'ragno|spider|filo|cucit|thread').hasMatch(body)) {
     return (
       'Zanne sotto la seta',

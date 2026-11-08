@@ -8,7 +8,7 @@ import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
   test(
-    'new base roster is complete and the Monster Book has no duplicate IDs',
+    'base roster preserves authored entries and excludes exact retired IDs',
     () {
       resetMonsterBookEntries();
       final entries = defaultMonsterBookEntries;
@@ -17,7 +17,23 @@ void main() {
       final baseCreatures = entries
           .where((entry) => entry.id.startsWith('base_'))
           .toList();
-      expect(baseCreatures, hasLength(80));
+      final authoredBaseIds = oculumCanonicalBasicTechniqueIds
+          .map((id) => id.substring(0, id.lastIndexOf('_')))
+          .toSet();
+      const retiredBaseIds = {
+        'base_mezzano_03',
+        'base_mezzano_10',
+        'base_nuvole_10',
+      };
+      expect(authoredBaseIds, hasLength(80));
+      expect(
+        baseCreatures.map((entry) => entry.id).toSet(),
+        authoredBaseIds.difference(retiredBaseIds),
+      );
+      for (final id in retiredBaseIds) {
+        expect(monsterById(id), isNull, reason: id);
+        expect(oculumSavedMonsterBookEntryById(id)?.id, id);
+      }
       for (final creature in baseCreatures) {
         expect(creature.nameIt, isNotEmpty);
         expect(creature.dropIds, hasLength(1), reason: creature.id);

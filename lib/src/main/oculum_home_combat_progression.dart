@@ -722,6 +722,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     group['combatEnded'] = false;
     for (final token in masterInitiativeTokens) {
       token.remove('cycleGoblinGiftClaimed');
+      token.remove('opposingChaosStats');
+      token.remove('opposingChaosTurn');
+      token.remove('opposingOblivionExposed');
       for (final key in [
         'outsideFight',
         'outsideFirstPending',
@@ -765,6 +768,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
     }
     captureActiveMasterInitiativeGroup();
+    for (final token in masterInitiativeTokens) {
+      if (monsterBookIdForCombatToken(token) == 'golem_carne') {
+        faunaForOwnedSheet(onlineCombatTokenTag(token), beginFleshGolemFight);
+      }
+    }
     sendRealtimeInitiativeSnapshotIfPublished();
     aggiungiLog(
       '[INIZIA FIGHT] Iniziative ritirate per tutti. La turnistica resta disponibile anche nel roleplay.',
@@ -1800,6 +1808,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool applyGlobalRollModifier = true,
     bool resourceAlreadySpent = false,
     bool defenseRoll = false,
+    bool attackRoll = false,
+    bool oculumPowered = false,
     String? actionLabel,
     void Function(int damageBonus)? onOculumDamageBonus,
     void Function(int naturalRoll, int total)? onResolved,
@@ -1852,6 +1862,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         consumeCombatHelp() +
         (applyGlobalRollModifier ? tiroGlobaleBonus() : 0) +
         oculumSpend.bonus +
+        dustInfusionRollBonus(
+          usesOculum: oculumSpend.spent > 0 || oculumPowered,
+          attack: attack || attackRoll,
+          defense: defenseRoll,
+        ) +
+        (attack || attackRoll ? posteaHomingPlasmaAttackBonus : 0) +
         reactionRollBonus;
     final rawTotal = rollTotalWithCritical(dado, faces, [bonusTotale]);
     final woundPercent = initiativeRoll
@@ -2018,6 +2034,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int? opposingTotal,
     int logPenalty = 0,
     bool appliesAttackDamageBonus = false,
+    bool oculumPowered = false,
     void Function(int damageBonus)? onOculumDamageBonus,
     void Function(int naturalRoll, int total)? onResolved,
     bool Function()? canCommitFortuneRoll,
@@ -2086,6 +2103,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         racialSubtraitRollBonus(stat.id) +
         tiroGlobaleBonus() +
         oculumSpend.bonus +
+        dustInfusionRollBonus(
+          usesOculum: oculumSpend.spent > 0 || oculumPowered,
+          attack: appliesAttackDamageBonus,
+          defense: defenseRoll,
+        ) +
+        (appliesAttackDamageBonus ? posteaHomingPlasmaAttackBonus : 0) +
         reactionRollBonus +
         (stat.id == 'drop'
             ? oculumDropDifficultyBonus(normalizedCampaignDifficulty())
@@ -2497,7 +2520,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
   }
 
-  int sheetIntValueAt(int index, String key, {int fallback = 0}) {
+  int sheetIntValueAt(
+    int index,
+    String key, {
+    int fallback = 0,
+    bool includeOpposingChaos = true,
+  }) {
     if (index < 0 || index >= schedePersonaggio.length) return fallback;
 
     if (index == schedaCorrente) {
@@ -2507,13 +2535,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         case 'grado':
           return leggiNumero(gradoController);
         case 'resilienza':
-          return resilienzaTotale();
+          return resilienzaTotale(includeOpposingChaos: includeOpposingChaos);
         case 'volonta':
-          return volontaTotale();
+          return volontaTotale(includeOpposingChaos: includeOpposingChaos);
         case 'materia':
-          return materiaTotale();
+          return materiaTotale(includeOpposingChaos: includeOpposingChaos);
         case 'oculum':
-          return oculumTotale();
+          return includeOpposingChaos
+              ? oculumCombatStatTotal()
+              : oculumTotale();
       }
     }
 
@@ -2752,18 +2782,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       case 'neutral':
         return t('Occhio ambra · Neutrale', 'Amber eye · Neutral');
       default:
-        return t('Occhio azzurro · Alleato', 'Blue eye · Ally');
-    }
-  }
-
-  Color masterInitiativeSideEyeColor(String side) {
-    switch (side) {
-      case 'enemy':
-        return Colors.redAccent;
-      case 'neutral':
-        return Colors.orangeAccent;
-      default:
-        return Colors.lightBlueAccent;
+        return t('Occhio verde · Alleato', 'Green eye · Ally');
     }
   }
 
@@ -4849,6 +4868,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       return;
     }
     setState(() {
+      expireBoneGoatAphoniaAtFightEnd(selectedMasterInitiativeGroupId);
       masterInitiativeTokens.clear();
       clearTemporaryCombatResistanceEffects();
       masterInitiativeRound = 0;
@@ -6074,6 +6094,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     int mantleProtectionPercent = 0,
     int magicShieldAbsorptionPercent = 0,
     bool bypassDefense = false,
+    bool bypassPhysicalArmor = false,
     bool bypassShields = false,
     int shieldDamageBonusPercent = 0,
     bool resolvedResistance = false,
@@ -6163,6 +6184,22 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         (sourceMonster?.isBoss ?? false) ||
         (sheetKind.contains('boss') && !isMiniBoss);
     final incomingElement = selectedIncomingDamageElement();
+    dannoInserito = applyStat35ResImmunity(
+      dannoInserito,
+      attackerGrade: enemyGrade,
+    );
+    if (dannoInserito > 0) {
+      final percent = consumeMateria35ImmaterialeHit(
+        element: incomingElement,
+        magicalAttack: magicalAttack,
+        attackKind: attackKind,
+      );
+      dannoInserito = dannoInserito * percent ~/ 100;
+    }
+    if (dannoInserito <= 0) {
+      reportIncomingCombatImpact(const _CombatLogImpact(), onImpact);
+      return;
+    }
     final previousElementalAdaptation = sheet['combatElementalAdaptation'];
     final elementalAdaptation =
         (isMiniBoss || isBoss) &&
@@ -6207,10 +6244,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final fortunaTotale = subtraitTotal('fortuna');
     final riflessiTotali = subtraitTotal('riflessi');
     final resistenzaTotale = subtraitTotal('resistenza');
-    final fortunaSchivataChance = oculumLuckDodgeChancePercent(
-      reflexes: riflessiTotali,
-      luck: fortunaTotale,
-    );
+    final fortunaSchivataChance =
+        oculumLuckDodgeChancePercent(
+          reflexes: riflessiTotali,
+          luck: fortunaTotale,
+        ) *
+        (posteaPerfectShield != null ? 2 : 1);
     final fortunaSchivataRoll = Random.secure().nextInt(10000);
     if (!resolvedResistance &&
         fortunaTotale > 0 &&
@@ -6221,14 +6260,26 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final fortunaOttenuta = oculumFortuneDodgeResourceReward(
         Random.secure().nextInt(3),
       );
+      final withShield = protezioniEquipaggiate().any(
+        (item) =>
+            oculumWearProtectionKind(item) == OculumWearProtectionKind.shield ||
+            item.craftData['wearProtectionKind'] == 'shield',
+      );
+      final dodgeText = withShield
+          ? t(
+              "Ti pari con lo scudo all'ultimo istante",
+              'You raise your shield at the last moment',
+            )
+          : t('Colpo schivato', 'Hit dodged');
       setState(() {
         fortuna += fortunaOttenuta;
         dannoSubitoController.clear();
         reportIncomingCombatImpact(
           const _CombatLogImpact(),
           onImpact,
-          empty: t('Colpo schivato', 'Hit dodged'),
+          empty: dodgeText,
         );
+        if (withShield && onImpact != null) aggiungiLog(dodgeText);
       });
       programmaSalvataggio();
       oculumCombatTheme.react(
@@ -6422,6 +6473,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           bonusScudiManuale +
           bonusScudiCorrosione +
           (misfortuneShieldTriggered ? misfortune.oculumShieldBonus : 0);
+      final physicalArmorDefense = bypassPhysicalArmor
+          ? protezioniEquipaggiate()
+                .where(isDreadBowPhysicalArmor)
+                .fold<int>(
+                  0,
+                  (sum, item) => sum + max(0, itemDefenseBonus(item)),
+                )
+          : 0;
       var dannoDopoDifesa = dannoInArrivo <= 0
           ? 0
           : ignoraDifesa
@@ -6429,7 +6488,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : max(
               1,
               dannoInArrivo -
-                  ((difesa() + max(0, additionalDefense)) *
+                  (max(
+                            0,
+                            difesa() +
+                                max(0, additionalDefense) -
+                                physicalArmorDefense,
+                          ) *
                           defenseMultiplier.clamp(1, 1.5))
                       .ceil(),
             );
@@ -6653,6 +6717,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       int temp = hpTemp();
       int hp = hpCorrenti();
       var hpPrima = hp;
+      beginFleshGolemFight();
       final oculumShieldBeforeDamage = oculumShield;
       final shieldBeforeDamage = shield;
       final safeHpPronto = hasSafeHpParserCommand();
@@ -6675,17 +6740,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 itemIntegrityShieldCurrent(item) > 0,
           )
           .toList(growable: false);
-      final integrityEffectOculumShields = inventario
+      final integrityEffectOculumShields = oculumShieldEquipment()
           .where(
             (item) =>
-                item.protegge &&
-                item.equipaggiata &&
-                canEquipInventoryItem(item) &&
-                (item.craftData['clothing'] == true ||
-                    item.craftData['titleItem'] == true ||
-                    item.craftData['senkaMask'] == true ||
-                    item.effettoIntegritaScudo.trim().isNotEmpty ||
-                    item.effettoRotturaScudo.isNotEmpty) &&
+                inventoryOculumShieldTracked(item) &&
                 itemIntegrityOculumShieldCurrent(item) > 0,
           )
           .toList(growable: false);
@@ -6780,12 +6838,23 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         shield = shieldResult.layer;
         rimanente = shieldResult.remaining;
         var shieldPointsSpent = shieldBefore - shield;
-        final ordinaryShield = max(0, shieldBefore - integrityShieldTotal);
+        final transformShield = posteaTransformShieldRemaining;
+        shieldPointsSpent = max(0, shieldPointsSpent - transformShield);
+        final ordinaryShieldBefore = max(0, shieldBefore - transformShield);
+        final reactive = posteaReactiveShieldPoints(ordinaryShieldBefore);
+        final ordinaryShield = max(
+          0,
+          ordinaryShieldBefore - integrityShieldTotal - reactive,
+        );
         if (hardIntegrityPriority) {
-          consumeIntegrityShieldPoints(shieldPointsSpent);
+          spendPosteaReactiveShield(
+            consumeIntegrityShieldPoints(shieldPointsSpent),
+          );
         } else {
           shieldPointsSpent = max(0, shieldPointsSpent - ordinaryShield);
-          consumeIntegrityShieldPoints(shieldPointsSpent);
+          consumeIntegrityShieldPoints(
+            spendPosteaReactiveShield(shieldPointsSpent),
+          );
         }
       }
       final oculumShieldAfterAbsorption = oculumShield;
@@ -6820,17 +6889,21 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
 
       final closingShield = blockingEquipmentShield;
+      var armorBroken = false;
+      if (rimanente > 0) interruptStat20OculumCharge();
       final protectionWorn = recordProtectionWear(
         rimanente > 0
             ? protezioniEquipaggiate().where(
                 (item) =>
                     oculumWearProtectionKind(item) ==
-                    OculumWearProtectionKind.armor,
+                        OculumWearProtectionKind.armor &&
+                    !(bypassPhysicalArmor && isDreadBowPhysicalArmor(item)),
               )
             : normalShieldBlocked && closingShield != null
             ? [closingShield]
             : const [],
         packetId: damagePacketId,
+        onArmorBroken: () => armorBroken = true,
       );
 
       if (temp > 0 && rimanente > 0) {
@@ -7059,7 +7132,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         }
         pawnPendingDamage = {};
         if (dannoModificato > 0) interruptArtAwakening();
+        recordFleshGolemLifeLoss(
+          hpLost: max(0, hpPrima - hp),
+          packetId: damagePacketId,
+        );
         registerVitalMemoryDamage(hpPrima - hp);
+        if (armorBroken && hp < hpPrima) recordOblivionArmorPain();
         final partialAwakeningLog = applicaRisveglioParzialeMetaHpSeServe(
           hpBefore: hpPrima,
           hpAfter: hp,
@@ -7272,11 +7350,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       checkAutomaticAshFromHpLoss(hpPrima, hp, source: t('danno', 'damage'));
       recordEscapeHpLoss(max(0, hpPrima - hp));
+      if (damagePacketId == null) {
+        final hpLost = max(0, hpPrima - hp);
+        recordStat35ResHpHit(hpLost: hpLost);
+        healStatOpenVitalEcho(hpLost);
+      }
       planarAfterHpDamage();
       controllaCadutaDopoDanno();
       controllaStatoForzaDopoHp();
     } finally {
       if (skullFormHit) advanceSkullFormHit();
+      if (damagePacketId == null) completePosteaArmorShocks();
       final impact = shieldImpact;
       if (impact != null) {
         queueOculumShieldBreakImpact(

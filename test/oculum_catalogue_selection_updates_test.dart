@@ -25,6 +25,46 @@ Object? _withoutEffectInstanceIds(Object? value) {
 void main() {
   tearDown(resetMonsterBookEntries);
 
+  test('confirmed nicknames retain their identity and respect custom names', () {
+    const id = 'habitat_shadow_hell_caprone_della_memoria_bruciata';
+    final entry = monsterById(id)!;
+    expect(entry.nameIt, 'Remnath');
+    expect(entry.speciesNameIt, 'Caprone della memoria bruciata');
+    expect(entry.creationProfileName, startsWith(entry.speciesNameIt));
+    expect(monsterById('hero_path_rosso')!.nameIt, 'Baghest Slave');
+    expect(monsterById('dalatro')!.nameIt, 'Dalàtro');
+    final restored = MonsterBookEntry.fromJson(entry.toJson());
+    expect(restored.speciesNameIt, entry.speciesNameIt);
+    expect(restored.creationProfileName, entry.creationProfileName);
+
+    configureMonsterBookEntries(
+      customEntries: [entry.copyWith(nameIt: 'Caprone personale')],
+    );
+    expect(monsterById(id)!.nameIt, 'Caprone personale');
+  });
+
+  test('manual exclusions preserve playable sources and their skills', () {
+    for (final id in const [
+      'habitat_mezzano_corvo_delle_monete_false',
+      'habitat_mezzano_corvo_delle_monete_false_variante_rituale',
+      'habitat_demoniaco_custode_dei_chiodi_roventi',
+      'habitat_demoniaco_custode_dei_chiodi_roventi_variante_veterana',
+    ]) {
+      final entry = monsterById(id)!;
+      expect(entry.visibleInMonsterBook, isFalse, reason: id);
+      expect(oculumIsRetiredMonsterId(id), isFalse, reason: id);
+      expect(monsterBookUsableSkillIds(entry), isNotEmpty, reason: id);
+      expect(oculumSavedMonsterBookEntryById(id), same(entry));
+      expect(
+        oculumBlackMarketMonsterBookPageEligible(
+          entry.copyWith(classificationTags: ['Aberrazione']),
+        ),
+        isFalse,
+        reason: id,
+      );
+    }
+  });
+
   test('only the named Duelist Wanderer retires, keeping its saved kit', () {
     const baseId = 'duellante_senza_palpebre';
     const retiredId = '${baseId}_variante_errante';
@@ -265,7 +305,8 @@ void main() {
       final variant = monsterById('${id}_variante_corazzata')!;
       expect(magma.nameIt, 'Cuore di Magma');
       expect(magma.nameEn, 'Magma Heart');
-      expect(variant.nameIt, 'Cuore di Magma Corazzata');
+      expect(variant.nameIt, 'Armored Emberheart');
+      expect(variant.speciesNameIt, 'Cuore di Magma Corazzata');
       expect(magma.hasNaturalFlight, isTrue);
       expect(variant.hasNaturalFlight, isTrue);
       expect(magma.descIt, contains('capace di volo naturale'));

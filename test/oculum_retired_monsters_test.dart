@@ -29,6 +29,68 @@ void main() {
   );
   tearDown(resetMonsterBookEntries);
 
+  test(
+    'lot retirements preserve selected forms and saved encounter sources',
+    () {
+      const retiredIds = [
+        'cavaliere_campana_ruggine',
+        'cavaliere_campana_ruggine_variante_errante',
+        'cervo_candela_variante_rituale',
+        'ciclope_del_fato_variante_errante',
+        'base_mezzano_03',
+        'crosty_variante_errante',
+        'habitat_isole_custode_del_faro_volante',
+        'habitat_isole_custode_del_faro_volante_variante_corazzata',
+        'demone_intermedio_variante_veterana',
+        'demone_maggiore_variante_rituale',
+        'hero_path_diverso_tank',
+      ];
+      const activeIds = [
+        'cervo_candela',
+        'ciclope_del_fato',
+        'crosty',
+        'demone_intermedio',
+        'demone_maggiore',
+        'hero_path_diverso_assalto',
+      ];
+      final customized = [
+        for (final id in retiredIds)
+          oculumSavedMonsterBookEntryById(id)!.copyWith(
+            nameIt: 'Voce personale salvata',
+            stats: {'level': 9, 'resilienza': 41},
+            skillIds: ['saved_lot_skill'],
+            imageBase64: 'c2F2ZWQtaW1hZ2U=',
+            encounterRules: {'celestialIdentity': 'lunare'},
+          ),
+      ];
+      configureMonsterBookEntries(customEntries: customized);
+
+      for (final entry in customized) {
+        final id = entry.id;
+        expect(oculumIsRetiredMonsterId(' $id '), isTrue, reason: id);
+        expect(defaultMonsterBookEntries.any((m) => m.id == id), isFalse);
+        expect(monsterBookEntries.any((m) => m.id == id), isFalse);
+        expect(monsterById(id), isNull);
+        expect(oculumBlackMarketMonsterBookPageEligible(entry), isFalse);
+        expect(getStatsForMonster(id), entry.stats);
+        expect(oculumSavedMonsterBookEntryById(id)?.toJson(), entry.toJson());
+        expect(
+          oculumCelestialAllegiance({'monsterBookSourceId': id}),
+          'lunare',
+        );
+      }
+      for (final id in activeIds) {
+        expect(monsterById(id), isNotNull, reason: id);
+      }
+      expect(
+        oculumIsRetiredMonsterId(
+          'cavaliere_campana_ruggine_variante_personale',
+        ),
+        isFalse,
+      );
+    },
+  );
+
   test('retired cycle sources cannot restore active encounters', () {
     configureMonsterBookEntries(customEntries: oculumCycleMonsterEntries);
     for (final id in retiredCycleIds) {

@@ -1,6 +1,50 @@
 part of 'monster_book.dart';
 
+const oculumBoneGoatChargeId = 'caprone_carica_fuoco';
+const oculumBoneGoatAphoniaRule = 'boneGoatCriticalAphoniaTurns';
+
 final _boneRuneEntries = <MonsterBookEntry>[
+  _authoredPlanar(
+    'caprone_d_ossa',
+    'Caprone d’ossa',
+    const ['diabolico'],
+    'fuoco',
+    'Caprone bipede con due braccia, due zampe e due corna ricurve a uncino. '
+        'Indossa un cappotto di cuoio sulla pelle e affronta i nemici caricando.',
+    '',
+    const [6, 5, 5, 6],
+    3,
+    false,
+    false,
+    const [oculumBoneGoatChargeId],
+    const {
+      'authoredCanonical': true,
+      'signatureSkillId': oculumBoneGoatChargeId,
+    },
+    const {},
+  ).copyWith(dropIds: const [], dropChances: const {}),
+  _authoredPlanar(
+    'caprone_scheletrico_nero',
+    'Caprone scheletrico nero',
+    const ['diabolico'],
+    'fuoco',
+    'Caprone più robusto, con scheletro nero, due braccia, due zampe, '
+        'corna a uncino e mantello scuro. Un suo critico andato a segno '
+        'può nascondere la Vita attuale del bersaglio per tre turni o fino '
+        'alla fine del Fight.',
+    '',
+    const [9, 6, 7, 8],
+    4,
+    false,
+    false,
+    const [oculumBoneGoatChargeId],
+    const {
+      'authoredCanonical': true,
+      'signatureSkillId': oculumBoneGoatChargeId,
+      oculumBoneGoatAphoniaRule: 3,
+    },
+    const {},
+  ).copyWith(dropIds: const [], dropChances: const {}),
   _canonicalCreature(
     'adoratore_bestia',
     'Adoratore della Bestia',
@@ -130,6 +174,38 @@ final _boneRuneEntries = <MonsterBookEntry>[
 ];
 
 final _boneRuneTechniques = <String, MonsterConcreteTechnique>{
+  oculumBoneGoatChargeId: _planarMove(
+    'Carica di Fuoco',
+    'Azione. Il Caprone carica con il fuoco. La forma I dà +5 al tiro '
+        'd’attacco e colpisce un nemico. Con la forma II il Caprone '
+        'resta incandescente durante e dopo la carica.',
+    'fuoco',
+    'danno',
+    [
+      for (final (bonus, targets) in [(5, 1), (10, 3), (20, 5)])
+        [
+          MonsterTechniqueEffect(
+            'danno',
+            targets == 1
+                ? '$bonus+oculum_spent'
+                : '0*danni+$bonus+oculum_spent',
+            mode: 'immediato',
+            recipient: 'nemico',
+            maximumTargets: targets,
+          ),
+          if (targets == 1)
+            const MonsterTechniqueEffect(
+              'modifica_statistica',
+              '5',
+              target: 'tiro_attacco',
+              mode: 'prossima_azione',
+            ),
+        ],
+    ],
+    minimums: [1, 3, 6],
+    maximums: [3, 6, 12],
+    cd: [2, 3, 4],
+  ),
   'monk_ki_hunt': _newPassive(
     'Ki Mortale accresciuto',
     'Quando attivi Ki Mortale ottieni un bonus 1d10: da 1 a 5 diventa +5 Ki, da 6 a 10 diventa +10. Una sola applicazione per attivazione.',

@@ -315,6 +315,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       receiveDefenseRetryPermission(event, payload);
       return;
     }
+    if (payload['action'] == 'stat_open_materia_move') {
+      unawaited(receiveStatOpenMateriaPermission(event, payload));
+      return;
+    }
     if (event == 'permission_request' &&
         payload['action'] == 'sheet_identity_conflict') {
       // This is a diagnostic request from a database-verified room member,
@@ -445,6 +449,12 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     bool preferFreeReaction = true,
     bool grantFastRollBonus = true,
   }) async {
+    if (stat20OculumChargeActive) {
+      aggiungiLog(
+        '[RICARICA DELL’OCULUM] Devi restare fermo fino al prossimo turno personale.',
+      );
+      return false;
+    }
     if (hasCondition('paralisi_fato')) {
       aggiungiLog('Paralisi dal Fato: Azioni e Reazioni bloccate.');
       return false;
@@ -453,6 +463,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     if (commanded != null) {
       if (commanded['executionResourceClaimed'] == true) return false;
       commanded['executionResourceClaimed'] = true;
+      consumeSwordBreakerDisarmAction();
       return true;
     }
     if (!currentTurnTrackerIsActive()) return true;
@@ -496,6 +507,15 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
             }.contains(selectedResource)
         ? '${spentToken?['lastTurnResource'] ?? selectedResource}'
         : selectedResource;
+    if (freeReaction != null ||
+        const {
+          'azione',
+          'azione_anticipata',
+          'reazione',
+          'reazione_veloce',
+        }.contains(actualResource)) {
+      consumeSwordBreakerDisarmAction();
+    }
     final spendId =
         '$tag:${DateTime.now().microsecondsSinceEpoch}:${pendingOnlineCombatTurnResourceSpends.length}';
     appliedOnlineCombatTurnResourceSpendIds.add(spendId);

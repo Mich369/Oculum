@@ -44,7 +44,7 @@ extension _OculumPostea on _OculumHomePageState {
         'kind': 'postea_companion',
         'companion': 'pawn',
         'name': 'Pawn Postea',
-        'cost': 250,
+        'cost': oculumPosteaPawnPrice,
         'desc':
             '10 Resilienza, 15 Volontà, 25 Materia. Intercetta gli attacchi al proprietario. Ogni turno vivo in fight +3 Resilienza temporanea; morto rinasce soltanto a scontro vinto, con +1 permanente a tutte le statistiche. Iniziativa propria, al primo giro solo Reazione veloce.',
       },
@@ -104,6 +104,7 @@ extension _OculumPostea on _OculumHomePageState {
       data.addAll({
         'pawn': true,
         'posteaCompanion': offer['companion'],
+        if (offer['pawnArmored'] == true) 'pawnArmored': true,
         'recoveryLevel': level,
         'purchaseGrade': grade,
       });

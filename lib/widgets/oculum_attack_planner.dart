@@ -72,6 +72,7 @@ class OculumAttackPlanner extends StatefulWidget {
     required this.targets,
     required this.choices,
     required this.chance,
+    this.targetColors = const {},
     this.initialTarget,
     this.initialChoice = 'vc',
     this.minimumTargets = 1,
@@ -82,6 +83,7 @@ class OculumAttackPlanner extends StatefulWidget {
     this.knowledgeRevision,
   });
   final Map<String, String> targets;
+  final Map<String, Color> targetColors;
   final List<OculumAttackChoice> choices;
   final OculumAttackChanceEstimate? Function(
     String target,
@@ -278,7 +280,13 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
               ),
               items: [
                 for (final e in widget.targets.entries)
-                  DropdownMenuItem(value: e.key, child: Text(e.value)),
+                  DropdownMenuItem(
+                    value: e.key,
+                    child: Text(
+                      e.value,
+                      style: TextStyle(color: widget.targetColors[e.key]),
+                    ),
+                  ),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -326,7 +334,10 @@ class _OculumAttackPlannerState extends State<OculumAttackPlanner> {
               ))
                 CheckboxListTile(
                   dense: true,
-                  title: Text(entry.value),
+                  title: Text(
+                    entry.value,
+                    style: TextStyle(color: widget.targetColors[entry.key]),
+                  ),
                   value: extraTargets.contains(entry.key),
                   onChanged:
                       targetAllowsSelectedChoice(entry.key) &&

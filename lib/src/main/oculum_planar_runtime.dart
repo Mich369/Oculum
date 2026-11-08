@@ -897,6 +897,11 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    advanceStat35Cooldowns();
+    tickStatOpenBuffs();
+    advanceStatOpenDominionPenalty();
+    tickStat20OculumCharge();
+    tickPosteaTransformArmor();
     tickSandTurn();
     tickGuardianGoldTurn();
     tickTotalPowerExhaustion();
@@ -959,6 +964,14 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void resetPlanarFight() {
+    endStat35OculumOverflow();
+    planarState.remove(_stat20OculumChargeKey);
+    resetStat20PhysicalResistance();
+    clearStatOpenFightEffects();
+    planarState.remove(_statOpenDominionPenaltyKey);
+    resetFleshGolemFight();
+    planarState.remove('stat35WillPressureEncounter');
+    endPosteaTransformArmor(publish: false);
     resetSandFight();
     resetGuardianGoldFight();
     planarState.remove('provokerShield');
@@ -1295,6 +1308,7 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
     monsterLoot: {
       'id': '$killId:$name',
       'monsterId': id,
+      'sourceMonsterBookId': monster.id,
       'material': true,
       'naturalDropRoll': natural,
     },
@@ -1612,6 +1626,7 @@ List<InventoryItem>? oculumPlanarNaturalDrops(
           monsterLoot: {
             'id': '$killId:$materialId',
             'monsterId': monster.id,
+            'catalogueDropId': materialId,
             'material': true,
             'weaponBonus': max(1, level),
             'armorBonus': max(1, grade),
@@ -1920,6 +1935,7 @@ void oculumPromotePendingChestLoot(Map<String, dynamic> chest) {
   );
   var weight = oculumPartyChestWeight(items.whereType<Map>());
   final remaining = <dynamic>[];
+  final promoted = <Map>[];
   for (final raw in pending) {
     if (raw is! Map || raw['item'] is! Map) continue;
     final item = raw['item'] as Map;
@@ -1927,6 +1943,7 @@ void oculumPromotePendingChestLoot(Map<String, dynamic> chest) {
         readDoubleValue(item['peso']) * max(1, readIntValue(item['quantita']));
     if (weight + itemWeight <= capacity + .000001) {
       items.add(raw);
+      promoted.add(item);
       weight += itemWeight;
     } else {
       remaining.add(raw);
@@ -1934,6 +1951,7 @@ void oculumPromotePendingChestLoot(Map<String, dynamic> chest) {
   }
   chest['items'] = items;
   chest['pendingLoot'] = remaining;
+  if (promoted.isNotEmpty) oculumRecordDeliveredMonsterDrops(chest, promoted);
 }
 
 extension _OculumPlanarSupport on _OculumHomePageState {

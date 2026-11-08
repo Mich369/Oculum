@@ -788,6 +788,45 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     return null;
   }
 
+  void expireBoneGoatAphoniaAtFightEnd(String encounter, {String? campaignId}) {
+    expireStat20WillPressureAtFightEnd(encounter, campaignId: campaignId);
+    if (encounter.isEmpty) return;
+    final campaign = campaignId ?? permissionCampaignId;
+    bool matchesFight(Object? metadata) =>
+        metadata is Map &&
+        metadata['boneGoatAphoniaEncounter'] == encounter &&
+        metadata['boneGoatAphoniaCampaign'] == campaign;
+
+    var changed = false;
+    for (var index = 0; index < schedePersonaggio.length; index++) {
+      final sheet = schedePersonaggio[index];
+      if (sheet['realtimeSharedSheet'] == true) continue;
+      if (index == schedaCorrente) {
+        final before = activeConditions.length;
+        activeConditions.removeWhere(
+          (condition) =>
+              condition.conditionType == 'vita_afona' &&
+              matchesFight(condition.metadata),
+        );
+        if (before == activeConditions.length) continue;
+        sheet['conditions'] = activeConditions.map((c) => c.toJson()).toList();
+      } else {
+        final conditions = sheet['conditions'] ?? sheet['activeConditions'];
+        if (conditions is! List) continue;
+        final remaining = conditions.where((condition) {
+          if (condition is! Map || condition['conditionType'] != 'vita_afona') {
+            return true;
+          }
+          return !matchesFight(condition['metadata']);
+        }).toList();
+        if (remaining.length == conditions.length) continue;
+        sheet['conditions'] = remaining;
+      }
+      changed = true;
+    }
+    if (changed) programmaSalvataggio();
+  }
+
   Map<String, dynamic>? conditionOverrideFor(String type) =>
       conditionDefinitionOverrides[type];
 
@@ -1016,15 +1055,15 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
         ? max(1, stage) + 1
         : stage;
     final isolatedSource = metadata?['referenceCurseSource'];
-    final existing = isolatedSource == null
-        ? getCondition(type)
-        : activeConditions
-              .where(
-                (c) =>
-                    c.conditionType == type &&
-                    c.metadata['referenceCurseSource'] == isolatedSource,
-              )
-              .firstOrNull;
+    final mealBuff = metadata?['mealBuff'] == true;
+    final existing = activeConditions.where((condition) {
+      if (condition.conditionType != type ||
+          (condition.metadata['mealBuff'] == true) != mealBuff) {
+        return false;
+      }
+      return (isolatedSource == null && type != 'vita_afona') ||
+          condition.metadata['referenceCurseSource'] == isolatedSource;
+    }).firstOrNull;
     final before = existing == null
         ? null
         : (existing.stage, existing.stacks, existing.duration);
@@ -1757,9 +1796,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     return corrosion == null ? 0 : oculumCorrosionPercent(corrosion.stage);
   }
 
-  int applyConditionHealingAmount(int requested) {
+  int applyConditionHealingAmount(int requested, {bool ignoreCurse = false}) {
     if (requested <= 0) return 0;
     clearSmokingHerbConfusion();
+    if (ignoreCurse) return requested;
     final cursed = getCondition('maledetto');
     if (cursed == null || statoForzaRimuoveMalus()) return requested;
     return oculumCursedHealing(requested, cursed.stage);

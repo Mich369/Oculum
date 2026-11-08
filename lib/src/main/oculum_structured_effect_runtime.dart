@@ -171,7 +171,11 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     return total;
   }
 
-  void applyStructuredHealing(String resource, int amount) {
+  void applyStructuredHealing(
+    String resource,
+    int amount, {
+    bool ignoreCurse = false,
+  }) {
     if (amount == 0) return;
     if (oculumNormalizeEffectResource(resource) == 'oculum') {
       if (amount > 0) {
@@ -183,7 +187,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       return;
     }
     final effectiveAmount = amount > 0
-        ? applyConditionHealingAmount(amount)
+        ? applyConditionHealingAmount(amount, ignoreCurse: ignoreCurse)
         : amount;
     final before = hpCorrenti();
     final after = (before + effectiveAmount).clamp(0, maxHp()).toInt();
@@ -862,16 +866,18 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               'periodicActive': false,
             },
           });
-          if (!isPeriodic && value > 0 && const {
-            'danno',
-            'danno_percentuale',
-            'difesa',
-            'difesa_percentuale',
-            'modifica_statistica',
-            'modifica_sottotratto',
-            'velocita',
-            'forza',
-          }.contains(effect.type)) {
+          if (!isPeriodic &&
+              value > 0 &&
+              const {
+                'danno',
+                'danno_percentuale',
+                'difesa',
+                'difesa_percentuale',
+                'modifica_statistica',
+                'modifica_sottotratto',
+                'velocita',
+                'forza',
+              }.contains(effect.type)) {
             if (effect.type == 'modifica_statistica' &&
                 const {'volonta', 'materia', 'oculum'}.contains(target)) {
               showSheetStatGain(target, value);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// Browsing a participant never changes initiative or advances the turn.
@@ -8,6 +10,8 @@ class OculumEncounterStage extends StatefulWidget {
     required this.activeIndex,
     required this.portraitBuilder,
     required this.accent,
+    this.participantColor,
+    this.healthLabel,
     this.onNextTurn,
     this.onIdentify,
     this.onReveal,
@@ -20,6 +24,8 @@ class OculumEncounterStage extends StatefulWidget {
   final int activeIndex;
   final Widget Function(Map<String, dynamic>) portraitBuilder;
   final Color accent;
+  final Color Function(Map<String, dynamic>)? participantColor;
+  final String Function(Map<String, dynamic>)? healthLabel;
   final VoidCallback? onNextTurn;
   final void Function(Map<String, dynamic>)? onIdentify;
   final void Function(Map<String, dynamic>)? onReveal;
@@ -33,6 +39,8 @@ class OculumEncounterStage extends StatefulWidget {
 
 class _OculumEncounterStageState extends State<OculumEncounterStage> {
   late final PageController _pages;
+  Timer? _teamColorDelay;
+  Object? _brightTeam;
   int _selected = 0;
   @override
   void initState() {
@@ -56,6 +64,7 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
 
   @override
   void dispose() {
+    _teamColorDelay?.cancel();
     _pages.dispose();
     super.dispose();
   }
@@ -65,6 +74,40 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
     duration: const Duration(milliseconds: 160),
     curve: Curves.easeOut,
   );
+
+  Color _participantColor(Map<String, dynamic> token) =>
+      widget.participantColor?.call(token) ?? widget.accent;
+
+  void _teamHover(Object? tokenId) {
+    _teamColorDelay?.cancel();
+    if (_brightTeam != null) setState(() => _brightTeam = null);
+    if (tokenId != null) {
+      _teamColorDelay = Timer(const Duration(milliseconds: 1300), () {
+        if (mounted) setState(() => _brightTeam = tokenId);
+      });
+    }
+  }
+
+  String _healthLabel(Map<String, dynamic> token) =>
+      widget.healthLabel?.call(token) ?? '';
+
+  String _participantStatus(Map<String, dynamic> token) {
+    switch (token['status']) {
+      case 'dead':
+        return 'Morto';
+      case 'fled':
+        return 'Fuggito';
+      case 'expired':
+        return 'Dissolto';
+      case 'downed':
+        return 'A terra';
+    }
+    if (token['downed'] == true) return 'A terra';
+    final side = token['side'] == 'enemy' ? 'Nemico' : 'In combattimento';
+    final wound = _healthLabel(token);
+    return wound.isEmpty ? side : '$side · $wound';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.tokens.isEmpty) return const SizedBox.shrink();
@@ -98,7 +141,9 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
             itemBuilder: (context, i) => Padding(
               padding: const EdgeInsets.only(right: 9),
               child: Tooltip(
-                message: '${widget.tokens[i]['name'] ?? '???'}',
+                message:
+                    '${widget.tokens[i]['name'] ?? '???'} · '
+                    '${_participantStatus(widget.tokens[i])}',
                 child: GestureDetector(
                   onLongPressStart: widget.onParticipantMenu == null
                       ? null
@@ -106,38 +151,48 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
                           widget.tokens[i],
                           details.globalPosition,
                         ),
-                  child: InkWell(
-                    key: ValueKey('encounter-avatar-${widget.tokens[i]['id']}'),
-                    onTap: () => _browse(i),
-                    onSecondaryTapDown: widget.onParticipantMenu == null
-                        ? null
-                        : (details) => widget.onParticipantMenu!(
-                            widget.tokens[i],
-                            details.globalPosition,
-                          ),
-                    onLongPress:
-                        widget.onParticipantMenu != null ||
-                            widget.onMoveToRole == null
-                        ? null
-                        : () => widget.onMoveToRole!(widget.tokens[i]),
-                    borderRadius: BorderRadius.circular(30),
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: i == _selected
-                              ? widget.accent
-                              : widget.tokens[i]['side'] == 'enemy'
-                              ? const Color(0xff8a3539)
-                              : const Color(0xff657a9c),
-                          width: i == _selected ? 2 : 1,
-                        ),
+                  child: MouseRegion(
+                    onEnter: (_) => _teamHover(widget.tokens[i]['id'] ?? i),
+                    onExit: (_) => _teamHover(null),
+                    child: InkWell(
+                      key: ValueKey(
+                        'encounter-avatar-${widget.tokens[i]['id']}',
                       ),
-                      child: ClipOval(
-                        child: widget.portraitBuilder(widget.tokens[i]),
+                      onTap: () => _browse(i),
+                      onSecondaryTapDown: widget.onParticipantMenu == null
+                          ? null
+                          : (details) => widget.onParticipantMenu!(
+                              widget.tokens[i],
+                              details.globalPosition,
+                            ),
+                      onLongPress:
+                          widget.onParticipantMenu != null ||
+                              widget.onMoveToRole == null
+                          ? null
+                          : () => widget.onMoveToRole!(widget.tokens[i]),
+                      borderRadius: BorderRadius.circular(30),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 240),
+                        width: 54,
+                        height: 54,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _participantColor(widget.tokens[i])
+                                .withValues(
+                                  alpha:
+                                      (widget.tokens[i]['id'] ?? i) ==
+                                          _brightTeam
+                                      ? 1
+                                      : .55,
+                                ),
+                            width: i == _selected ? 2 : 1,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: widget.portraitBuilder(widget.tokens[i]),
+                        ),
                       ),
                     ),
                   ),
@@ -177,7 +232,7 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
                     color: const Color(0xff0b0b0e),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: widget.accent.withValues(alpha: .5),
+                      color: _participantColor(token).withValues(alpha: .5),
                     ),
                   ),
                   child: Row(
@@ -230,13 +285,8 @@ class _OculumEncounterStageState extends State<OculumEncounterStage> {
                                 ],
                               ),
                               Text(
-                                'Lv. ${token['level'] ?? 0} · Grado ${token['grade'] ?? 0} · ${token['status'] == 'dead'
-                                    ? 'Morto'
-                                    : token['status'] == 'fled'
-                                    ? 'Fuggito'
-                                    : token['side'] == 'enemy'
-                                    ? 'Nemico'
-                                    : 'In combattimento'}',
+                                'Lv. ${token['level'] ?? 0} · Grado ${token['grade'] ?? 0} · '
+                                '${_participantStatus(token)}',
                               ),
                               if (blindSpot.isNotEmpty)
                                 Text(

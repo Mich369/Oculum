@@ -9,6 +9,21 @@ import 'oculum_room_activity.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+String oculumRealtimePublicHealthLabel(Object? value) {
+  const labels = {'Ferito', 'Gravemente ferito', 'Morente', 'A terra', 'Morto'};
+  return value is String && labels.contains(value) ? value : '';
+}
+
+Map<String, dynamic> oculumRealtimePublicSheetPreview(Map raw) {
+  final level = int.tryParse('${raw['level']}');
+  final grade = int.tryParse('${raw['grade']}');
+  return {
+    'healthLabel': oculumRealtimePublicHealthLabel(raw['healthLabel']),
+    'level': ?level,
+    'grade': ?grade,
+  };
+}
+
 // Supabase owns senderTag and canonicalizes it to uppercase. Match only the
 // same authenticated identity back to an existing packet reference; saved tags
 // and the server-owned role, session and user fields remain unchanged.
@@ -586,24 +601,10 @@ class OculumRealtimeService {
     await disconnect(notify: false);
   }
 
-  Future<void> sendHpChanged({
-    required int currentHp,
-    required int maxHp,
-    required int tempHp,
-    required int shield,
-    int larvalBroodHp = 0,
-    int larvalBroodMaxHp = 0,
-  }) {
+  Future<void> sendHpChanged({required String healthLabel}) {
     return _send('hp_changed', <String, dynamic>{
       'playerName': _displayName,
-      'currentHp': currentHp,
-      'maxHp': maxHp,
-      'tempHp': tempHp,
-      'shield': shield,
-      if (larvalBroodMaxHp > 0) ...{
-        'larvalBroodHp': larvalBroodHp.clamp(0, larvalBroodMaxHp),
-        'larvalBroodMaxHp': larvalBroodMaxHp,
-      },
+      'healthLabel': oculumRealtimePublicHealthLabel(healthLabel),
       'sentAt': _nowIso(),
     });
   }
@@ -924,7 +925,7 @@ class OculumRealtimeService {
   Future<void> sendSheetSyncPreview(Map<String, dynamic> smallState) {
     return _send('sheet_sync_preview', <String, dynamic>{
       'playerName': _displayName,
-      'smallState': smallState,
+      'smallState': oculumRealtimePublicSheetPreview(smallState),
       'sentAt': _nowIso(),
     });
   }

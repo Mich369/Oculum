@@ -607,6 +607,31 @@ void main() {
     },
   );
   testWidgets(
+    'a corrupted monster critical replaces the Fallen Eye with unique crystals',
+    (tester) async {
+      final (state, p) = await mount(tester);
+      final enemy = state.masterInitiativeTokens.last as Map;
+      enemy['monsterBookId'] = 'hero_path_rosso_variante_veterana';
+      p.recordCurrentEncounter();
+      final seed = Iterable<int>.generate(100).firstWhere(
+        (seed) => Random(seed).nextInt(20) == 19,
+      );
+      await confirm(tester, p.finishEncounter('encounter_1', random: Random(seed)));
+      final group = state.masterInitiativeGroups.first as Map;
+      final reward = (group['rewards'] as List).single as Map;
+      final items = ((reward['lootByParticipant'] as Map)[p.ownerTag()] as List)
+          .where((item) => (item['craftData'] as Map?)?['dustCrystal'] != null)
+          .toList();
+      expect(items.length, inInclusiveRange(1, 5));
+      expect(items.map((item) => item['monsterLoot']['id']).toSet(), hasLength(items.length));
+      expect((reward['fallenEyesByParticipant'] as Map)[p.ownerTag()], isEmpty);
+      expect(state.occhiCaduti, isEmpty);
+      await p.finishEncounter('encounter_1', random: Random(seed));
+      expect(group['rewards'], hasLength(1));
+      await closeFixture(tester, p);
+    },
+  );
+  testWidgets(
     'final settlement pays fled participant and manual dead NPC, replay/reload cannot duplicate',
     (tester) async {
       final (state, p) = await mount(tester, escaped: true);

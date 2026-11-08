@@ -750,13 +750,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     } finally {
       combatSupportTargeting = false;
     }
+    final spentOculum = max(0, oculumBefore - currentOculum());
+    final oculumPowered = spentOculum > 0;
 
     if (mounted &&
         currentSheetScrollId() == origin &&
         pendingSandTailAttack.isNotEmpty &&
         beforeSandTail != jsonEncode(pendingSandTailAttack) &&
         onlineAttackTokens().isNotEmpty) {
-      await planOnlineAttack(maximumTargets: 1);
+      await planOnlineAttack(maximumTargets: 1, oculumPowered: oculumPowered);
       return;
     }
 
@@ -765,7 +767,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         pendingMaskedAttack.isNotEmpty &&
         beforeMasked != jsonEncode(pendingMaskedAttack) &&
         onlineAttackTokens().isNotEmpty) {
-      await planOnlineAttack();
+      await planOnlineAttack(oculumPowered: oculumPowered);
       return;
     }
 
@@ -774,7 +776,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         beforeCycleAttack != cyclePreparedAttackSignature &&
         cycleHasPreparedAttack &&
         onlineAttackTokens().isNotEmpty) {
-      await planOnlineAttack();
+      await planOnlineAttack(oculumPowered: oculumPowered);
       return;
     }
 
@@ -783,7 +785,6 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         beforeEffects == jsonEncode(activeStructuredEffects)) {
       return;
     }
-    final spentOculum = max(0, oculumBefore - currentOculum());
     var targetLimits = oculumAttackTargetLimits(
       description,
       spentOculum > 0 ? spentOculum : oculumTotale(),
@@ -826,6 +827,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       await planOnlineAttack(
         minimumTargets: targetLimits.minimum,
         maximumTargets: targetLimits.maximum,
+        oculumPowered: oculumPowered,
       );
     }
   }
@@ -1230,6 +1232,18 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                ...stat35ActionWidgets(
+                  role,
+                  select: (action) => Navigator.pop(dialog, action),
+                ),
+                ...stat20ActionWidgets(
+                  role,
+                  select: (action) => Navigator.pop(dialog, action),
+                ),
+                ...statOpenActionWidgets(
+                  role,
+                  select: (action) => Navigator.pop(dialog, action),
+                ),
                 if (isLunarGuardianCoreCreature &&
                     role != OculumCombatAbilityRole.attack)
                   lunarGuardianCorePanel(),
@@ -1518,6 +1532,41 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             VoidCallback? details,
           })
         >[];
+    if (canActivatePosteaTransformArmor) {
+      entries.add((
+        name: t('Trasformazione Postea', 'Postea transformation'),
+        roles: {OculumCombatAbilityRole.support},
+        color: eyePupilGlowColor,
+        enabled: true,
+        hint: t(
+          'Attivazione gratuita, una volta per Riposo Lungo. I valori attivi sono modificabili nell’oggetto.',
+          'Free activation, once per Long Rest. Active values can be edited on the item.',
+        ),
+        details: null,
+        use: activatePosteaTransformArmor,
+      ));
+    }
+    for (final shield in [true, false]) {
+      final shot = availableGunFollowup(shield);
+      if (shot == null) continue;
+      final name = shield ? 'Gun Shield' : 'Gunblade';
+      entries.add((
+        name: '$name · ${t('Colpo gratuito', 'Free shot')}',
+        roles: {
+          shield
+              ? OculumCombatAbilityRole.defense
+              : OculumCombatAbilityRole.attack,
+        },
+        color: shield ? secondaryColor : eyePupilGlowColor,
+        enabled: true,
+        hint: t(
+          '${shot.name} · ${shot.damage} Danni perforanti · recupero ${shot.cooldown} turni personali.',
+          '${shot.name} · ${shot.damage} Piercing Damage · cooldown ${shot.cooldown} personal turns.',
+        ),
+        details: null,
+        use: () => unawaited(fireGunFollowup(shield)),
+      ));
+    }
     if (!currentCombatIsActive() &&
         namedStructuredCooldowns().any(
           (entry) =>

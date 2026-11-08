@@ -407,19 +407,6 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
         ...playerFog.map(_oculumVttDeepMap),
       ],
     };
-    publicScene['tokens'] = (publicScene['tokens'] as List)
-        .whereType<Map>()
-        .map((raw) {
-          final token = Map<String, dynamic>.from(raw);
-          for (final key in token.keys.toList()) {
-            final lower = key.toLowerCase();
-            if (lower.contains('private') || lower == 'masterNotes') {
-              token.remove(key);
-            }
-          }
-          return token;
-        })
-        .toList(growable: false);
     return <String, dynamic>{
       'version': oculumVttSaveVersion,
       'closed': false,
@@ -638,8 +625,13 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
       return;
     }
     final previousScene = realtimeVisibleVttScene;
-    realtimeVisibleVttSnapshot = snapshot;
     final sceneRaw = snapshot['scene'];
+    if (sceneRaw is Map) {
+      sceneRaw['tokens'] = _oculumVttPublicTokens(
+        _oculumVttMapList(sceneRaw['tokens']),
+      );
+    }
+    realtimeVisibleVttSnapshot = snapshot;
     realtimeVisibleVttScene = sceneRaw is Map
         ? OculumVttScene.fromJson(sceneRaw)
         : null;

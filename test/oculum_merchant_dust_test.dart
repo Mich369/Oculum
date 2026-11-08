@@ -9,13 +9,15 @@ import 'package:oculum/main.dart';
 void main() {
   test('merchant offer counts and selection stay varied but focused', () {
     final countRandom = Random(20261022);
-    var twelveOfferShops = 0;
+    final observedCounts = <int>{};
+    var totalOffers = 0;
     for (var index = 0; index < 20000; index++) {
       final count = oculumMerchantOfferCount(countRandom);
-      expect(count == 12 || (count >= 6 && count <= 9), isTrue);
-      if (count == 12) twelveOfferShops++;
+      observedCounts.add(count);
+      totalOffers += count;
     }
-    expect(twelveOfferShops / 20000, closeTo(.16, .01));
+    expect(observedCounts, unorderedEquals(List.generate(10, (i) => i + 3)));
+    expect(totalOffers / 20000, closeTo(6, .04));
 
     final offers = <Map<String, dynamic>>[
       for (var index = 0; index < 3; index++)
@@ -416,11 +418,7 @@ void main() {
     probe.switchMerchantProfile(secondMerchantId);
     probe.shopType('chef');
     final chefOffers = probe.shopOffers();
-    expect(
-      chefOffers.length == 12 ||
-          (chefOffers.length >= 6 && chefOffers.length <= 9),
-      isTrue,
-    );
+    expect(chefOffers.length, inInclusiveRange(3, 12));
     expect(chefOffers.every((offer) => offer['kind'] == 'food'), isTrue);
     expect(
       chefOffers.map(oculumMerchantOfferFamilyKey).toSet(),
@@ -430,6 +428,68 @@ void main() {
       state.merchantStock.where((offer) => offer['kind'] == 'food').length,
       greaterThanOrEqualTo(45),
     );
+
+    probe.shopType('fabbro');
+    final shopProfile = (state.merchantProfiles as List)
+        .whereType<Map>()
+        .singleWhere((profile) => profile['id'] == secondMerchantId);
+    final savedSelection = shopProfile['offerSelections']['fabbro'] as Map;
+    final stock = state.merchantStock as List;
+    for (var index = 0; index < 8; index++) {
+      stock.add(<String, dynamic>{
+        'id': 'legacy_slot_$index',
+        'kind': 'weapon',
+        'name': 'Arma di prova $index',
+        'cost': 20,
+        'remaining': 1,
+      });
+    }
+    if (!stock.any((offer) => offer['id'] == 'pawn_armored')) {
+      stock.add(oculumArmoredPawnMerchantOffer(postea: false));
+    }
+    const oldRandomIds = [
+      'pawn_armored',
+      'legacy_slot_0',
+      'legacy_slot_1',
+      'legacy_slot_2',
+      'legacy_slot_3',
+    ];
+    savedSelection['count'] = 6;
+    savedSelection['ids'] = ['pawn', ...oldRandomIds];
+    savedSelection.remove('fixedIds');
+    final oldShop = probe.shopOffers();
+    expect(oldShop, hasLength(7));
+    final fixedPawn = oldShop.first;
+    expect(fixedPawn['id'], anyOf('pawn', 'pawn_v2'));
+    expect(fixedPawn['pawnArmored'], isNot(true));
+    expect(
+      oldShop.skip(1).map((offer) => offer['id']),
+      containsAll(oldRandomIds),
+    );
+    expect(shopProfile['offerSelections']['fabbro']['fixedIds'], [
+      fixedPawn['id'],
+    ]);
+    stock.removeWhere((offer) => offer['id'] == 'pawn_v2');
+    stock.insert(0, oculumPawnV2MerchantOffer());
+    expect(
+      probe.shopOffers().map((offer) => offer['id']),
+      orderedEquals(oldShop.map((offer) => offer['id'])),
+    );
+    stock.singleWhere((offer) => offer['id'] == 'legacy_slot_2')['remaining'] =
+        0;
+    final restocked = probe.shopOffers();
+    expect(restocked, hasLength(7));
+    expect(restocked.first['id'], 'pawn');
+    expect(
+      restocked.map((offer) => offer['id']),
+      isNot(contains('legacy_slot_2')),
+    );
+    expect(
+      restocked.map((offer) => offer['id']),
+      containsAll(oldRandomIds.where((id) => id != 'legacy_slot_2')),
+    );
+    probe.shopType('chef');
+
     final hunterFoodOffer = state.merchantStock.singleWhere(
       (offer) => offer['id'] == 'meal_hunters_fervor',
     );
@@ -610,6 +670,58 @@ void main() {
     await tester.tap(merchantHeader);
     await tester.pumpAndSettle();
     expect(state.merchantIsOpen, isTrue);
+
+    probe.shopType('fabbro');
+    final inventory = state.inventario as List<InventoryItem>;
+    final previousInventory = inventory.toList();
+    inventory.clear();
+    await tester.pumpAndSettle();
+    final repairButton = find.widgetWithText(
+      OutlinedButton,
+      'Ripara · armi, armature e scudi',
+    );
+    final convertButton = find.widgetWithText(
+      OutlinedButton,
+      'Trasforma in Titolo Item',
+    );
+    expect(repairButton, findsOneWidget);
+    expect(convertButton, findsOneWidget);
+    tester.widget<OutlinedButton>(repairButton).onPressed!();
+    await tester.pumpAndSettle();
+    expect(find.text('Nessun equipaggiamento da riparare.'), findsOneWidget);
+    Navigator.of(tester.element(find.byType(SimpleDialog))).pop();
+    await tester.pumpAndSettle();
+    tester.widget<OutlinedButton>(convertButton).onPressed!();
+    await tester.pumpAndSettle();
+    expect(find.text('Nessun equipaggiamento convertibile.'), findsOneWidget);
+    Navigator.of(tester.element(find.byType(SimpleDialog))).pop();
+    await tester.pumpAndSettle();
+
+    final titleCandidate = InventoryItem(
+      nome: 'Spada di prova del Fabbro',
+      peso: 1,
+      quantita: 1,
+      note: '',
+      arma: true,
+    );
+    inventory.add(titleCandidate);
+    state.ascensionDustController.text = '3';
+    tester.widget<OutlinedButton>(convertButton).onPressed!();
+    await tester.pumpAndSettle();
+    expect(find.text('3 Dust'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(SimpleDialog),
+        matching: find.text(titleCandidate.nome),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(titleCandidate.craftData['titleItem'], isTrue);
+    expect(state.ascensionDustController.text, '0');
+    inventory
+      ..clear()
+      ..addAll(previousInventory);
+
     probe.shopType('alchimista');
     await tester.pumpAndSettle();
     final dustPrice = probe.dustPrice;
@@ -713,11 +825,18 @@ void main() {
     probe.shopType('alchimista');
     state.obserController.text = '1000';
     final alchemistOffers = probe.shopOffers();
+    final profile = (state.merchantProfiles as List)
+        .whereType<Map>()
+        .singleWhere(
+          (profile) => profile['id'] == state.merchantActiveProfileId,
+        );
+    final selection = profile['offerSelections']['alchimista'] as Map;
+    final fixedIds = selection['fixedIds'] as List;
     expect(
-      alchemistOffers.length == 12 ||
-          (alchemistOffers.length >= 6 && alchemistOffers.length <= 9),
-      isTrue,
+      alchemistOffers.take(fixedIds.length).map((offer) => offer['id']),
+      orderedEquals(fixedIds),
     );
+    expect(alchemistOffers.length - fixedIds.length, inInclusiveRange(3, 12));
     final sign = alchemistOffers.singleWhere((o) => o['kind'] == 'fate_sign');
     final signCost = probe.shopCost(sign);
     await probe.buyShopOffer(sign);

@@ -11,11 +11,22 @@ import tempfile
 import unittest
 
 from scripts.oculum_artwork_paths import artwork_paths
-from scripts.artwork_catalogue_visibility import is_retired
+from scripts.artwork_catalogue_visibility import is_retired, retirement_rules
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 HELPER = REPOSITORY / 'output/artwork/alternative_mostri_2026-11-05/aggiorna_alternative.py'
+
+
+class RuntimeRetirementRulesTest(unittest.TestCase):
+    def test_named_exact_ids_do_not_expand_to_families(self):
+        families, exact = retirement_rules(REPOSITORY)
+        self.assertTrue(is_retired('ciclope_del_fato_variante_errante', families, exact))
+        self.assertFalse(is_retired('ciclope_del_fato', families, exact))
+        self.assertTrue(is_retired('cavaliere_campana_ruggine', families, exact))
+        self.assertFalse(is_retired('cavaliere_campana_ruggine_variante_personale', families, exact))
+        self.assertTrue(is_retired('errante_con_la_sedia_variante_errante', families, exact))
+        self.assertTrue(is_retired('duellante_senza_palpebre_variante_errante', families, exact))
 
 
 @unittest.skipUnless(HELPER.is_file(), 'Local artwork review helper is not present in this checkout')

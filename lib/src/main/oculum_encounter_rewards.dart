@@ -779,9 +779,9 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         }
       }
       invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
-      return (resilienzaTotale() +
-              volontaTotale() +
-              materiaTotale() +
+      return (resilienzaTotale(includeOpposingChaos: false) +
+              volontaTotale(includeOpposingChaos: false) +
+              materiaTotale(includeOpposingChaos: false) +
               oculumTotale() +
               max(0, leggiNumero(livelloController)) +
               3 * max(0, leggiNumero(gradoController)) +
@@ -798,10 +798,15 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     }
   }
 
-  void receiveEncounterRewards(Iterable<Map> rewards) {
+  void receiveEncounterRewards(Iterable<Map> rewards, {String? campaignId}) {
     for (final reward in rewards) {
       receiveScostuFightSettlements(reward);
+      receiveOblivionFightEnd(reward, campaignId: campaignId);
       resolveCorruptionFightEnd('${reward['endedEncounterId'] ?? ''}');
+      expireBoneGoatAphoniaAtFightEnd(
+        '${reward['endedEncounterId'] ?? ''}',
+        campaignId: campaignId,
+      );
       for (final pawn in pawnGuardians.where(
         (p) => (reward['participants'] as List? ?? []).contains(p.ownerTag),
       )) {
@@ -903,7 +908,12 @@ extension _OculumEncounterRewards on _OculumHomePageState {
                   leggiNumero(oculumController)
             : ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(
                 0,
-                (sum, stat) => sum + max(0, sheetIntValueAt(i, stat)),
+                (sum, stat) =>
+                    sum +
+                    max(
+                      0,
+                      sheetIntValueAt(i, stat, includeOpposingChaos: false),
+                    ),
               );
         final resources = oculumEncounterResourcesForEnemies(
           defeated,
@@ -1419,7 +1429,12 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       final statsTotal = index >= 0
           ? const ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(
               0,
-              (sum, stat) => sum + max(0, sheetIntValueAt(index, stat)),
+              (sum, stat) =>
+                  sum +
+                  max(
+                    0,
+                    sheetIntValueAt(index, stat, includeOpposingChaos: false),
+                  ),
             )
           : max(
               0,
@@ -1444,6 +1459,15 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         'name': token['name'],
         'monsterBookId': monsterSource?.id ?? '${token['monsterBookId'] ?? ''}',
         'element': monsterSource?.elementId ?? '${token['element'] ?? ''}',
+        if (corruptionOwnerForToken(token).isNotEmpty ||
+            (index == schedaCorrente && index >= 0
+                ? activeConditions.any(
+                    (condition) => condition.conditionType == 'corruzione',
+                  )
+                : (sourceSheet['conditions'] as List? ?? const [])
+                      .whereType<Map>()
+                      .any((condition) => condition['conditionType'] == 'corruzione')))
+          'corruptedCriticalDrop': true,
         if (index >= 0 &&
             '${schedePersonaggio[index]['experienceFamilyId'] ?? ''}'
                 .trim()
@@ -1984,8 +2008,26 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         level: level,
         grade: grade,
       );
-      final total = rollTotalWithCritical(natural, 20, [bonus]);
+      final rollerLevel = participantLevels[rollerTag] ?? 0;
+      final total = rollTotalWithCritical(
+        natural,
+        20,
+        [bonus],
+        level: rollerLevel,
+        grade: readIntValue(rollerSheet['grado']),
+        difficulty: readIntValue(rollerSheet['difficoltaTiro']),
+      );
       final killId = '${enemy['id'] ?? monsterId}:$cooldownFightId';
+      final criticalDrop = oculumFallenEyeDropCreatesOnNaturalTwenty(
+        subtraitId: 'drop',
+        naturalRoll: natural,
+      );
+      final corruptedCritical = criticalDrop &&
+          (enemy['corruptedCriticalDrop'] == true ||
+              monster.encounterRules['corruptedCriticalDrop'] == true ||
+              oculumNormalizeElementId(monster.elementId) == 'corrotto' ||
+              oculumNormalizeElementId('${enemy['element'] ?? ''}') == 'corrotto');
+      final summon = oculumEncounterEnemyIsSummon(enemy);
       final dropped = oculumGenerateMonsterLoot(
         monster: monster,
         level: level,
@@ -2018,12 +2060,13 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         deck.craftData['namedDropKillId'] = killId;
         dropped.add(deck);
       }
-      final rollerLevel = participantLevels[rollerTag] ?? 0;
       // Do not consume a percentile roll when a crystal cannot drop. Besides
       // avoiding needless RNG, this keeps deterministic Drop sequences stable
       // for subsequent defeated monsters.
       final crystalEligible =
-          level >= rollerLevel + 3 && total >= 20 + level + 2 * grade;
+          !corruptedCritical &&
+          level >= rollerLevel + 3 &&
+          total >= 20 + level + 2 * grade;
       final crystal = crystalEligible
           ? oculumDustCrystalDrop(
               monsterLevel: level,
@@ -2034,8 +2077,16 @@ extension _OculumEncounterRewards on _OculumHomePageState {
               killId: killId,
             )
           : null;
-      if (crystal != null && !oculumEncounterEnemyIsSummon(enemy)) {
+      if (crystal != null && !summon) {
         dropped.add(crystal);
+      }
+      if (corruptedCritical && !summon) {
+        dropped.addAll(oculumCorruptedCriticalCrystals(
+          monsterPower: readIntValue(enemy['totalPower']),
+          rollerPower: scoutTotalPowerAt(rollerIndex),
+          random: encounterRandom,
+          killId: killId,
+        ));
       }
       if (monster.id == 'pupazzo_robotico_postea') {
         final sourceIndex = localSheetIndexForOculumTag(
@@ -2059,10 +2110,8 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         }
       }
       pooledLoot.addAll(dropped);
-      if (oculumFallenEyeDropCreatesOnNaturalTwenty(
-            subtraitId: 'drop',
-            naturalRoll: natural,
-          ) &&
+      if (criticalDrop &&
+          !corruptedCritical &&
           !knownEyeKillIds.contains(killId) &&
           candidateEyeKillIds.add(killId)) {
         final monsterTagForEye = '${enemy['monsterSheetTag'] ?? ''}';
@@ -2112,7 +2161,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         };
       }
       aggiungiLog(
-        '[DROP] ${enemy['name']}: $natural + $bonus = $total contro DT $difficulty${dropped.isEmpty ? ' · nessun bottino' : ' · ${dropped.length} oggetti'}; tiro di ${nomeSchedaPersonaggio(rollerIndex)}.',
+        '[DROP] ${enemy['name']}: $natural naturale ${signedRollPart(total - natural)} = $total contro DT $difficulty${dropped.isEmpty ? ' · nessun bottino' : ' · ${dropped.length} oggetti'}. Tiro di ${nomeSchedaPersonaggio(rollerIndex)}.',
       );
     }
     final lootByParticipant = oculumDistributeEncounterLoot(
@@ -2126,7 +2175,12 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           if (index < 0) return 0;
           return ['resilienza', 'volonta', 'materia', 'oculum'].fold<int>(
             0,
-            (total, stat) => total + max(0, sheetIntValueAt(index, stat)),
+            (total, stat) =>
+                total +
+                max(
+                  0,
+                  sheetIntValueAt(index, stat, includeOpposingChaos: false),
+                ),
           );
         })(),
     };
@@ -2157,6 +2211,10 @@ extension _OculumEncounterRewards on _OculumHomePageState {
                 }.contains('${token['status']}'),
           ),
       'endedEncounterId': id,
+      'oblivionFightParticipants': {
+        for (final tag in oblivionFightParticipants())
+          tag: combatSubtraitExperienceFightId(id, ownerTag: tag),
+      },
       'scostuSettlements': scostuFightSettlements(masterInitiativeTokens),
       'id': settlementId,
       'rewardMethod': rewardMethod,
@@ -2202,6 +2260,14 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       settlementId,
     }.toList();
     group.remove('pendingRewardSettlementId');
+    if (oculumRecordDeliveredMonsterDrops(
+      partyChest,
+      lootByParticipant.values.expand((items) => items),
+    )) {
+      partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
+      combatKnowledgeRevision.value++;
+      unawaited(sendPartyChestState());
+    }
     receiveEncounterRewards([reward]);
     expireSummoningEmblems(id);
     clearTemporaryCombatResistanceEffects();

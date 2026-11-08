@@ -6520,12 +6520,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     var hidden = _oculumVttBool(token['hidden']);
     var defeated = _oculumVttBool(token['defeated']);
     var dead = _oculumVttBool(token['dead']);
-    var side = '${token['side'] ?? 'neutral'}'.toLowerCase();
-    if (side != 'ally' && side != 'enemy' && side != 'neutral') {
-      side = 'neutral';
-    }
+    var side = '${token['side'] ?? 'neutral'}'.trim();
+    if (side.isEmpty) side = 'neutral';
+    final originalSide = side;
     var previewImageBase64 = '${token['imageBase64'] ?? ''}';
-    var previewColor = localMapTokenColor(token);
+    var customColor = readIntValue(token['colorArgb']);
 
     try {
       await showDialog<void>(
@@ -6535,7 +6534,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             final previewToken = <String, dynamic>{
               ...token,
               'imageBase64': previewImageBase64,
-              'colorArgb': previewColor.toARGB32(),
+              'colorArgb': customColor,
               'side': side,
             };
 
@@ -6576,7 +6575,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                                 }
                                 setDialogState(() {
                                   previewImageBase64 = base64Encode(bytes);
-                                  previewColor = predominantImageColor(bytes);
+                                  customColor = predominantImageColor(
+                                    bytes,
+                                  ).toARGB32();
                                 });
                               },
                               icon: const Icon(Icons.image_search),
@@ -6606,6 +6607,15 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                         decoration: fieldDecoration(t('Lato', 'Side')),
                         dropdownColor: const Color(0xFF10121A),
                         items: [
+                          if (!const {
+                            'ally',
+                            'enemy',
+                            'neutral',
+                          }.contains(originalSide))
+                            DropdownMenuItem(
+                              value: originalSide,
+                              child: Text(originalSide),
+                            ),
                           DropdownMenuItem(
                             value: 'ally',
                             child: Text(t('Alleato', 'Ally')),
@@ -6835,7 +6845,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                       token['type'] = cleanUiText(typeController.text).trim();
                       token['side'] = side;
                       token['imageBase64'] = previewImageBase64;
-                      token['colorArgb'] = previewColor.toARGB32();
+                      if (customColor != 0) token['colorArgb'] = customColor;
                       token['level'] = max(
                         0,
                         readIntValue(levelController.text),
@@ -7488,6 +7498,13 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   double localMapTokenMovementBudget(Map<String, dynamic> token) {
     final index = indexForLocalMapToken(token);
+    if (currentCombatIsActive() &&
+        index >= 0 &&
+        (schedePersonaggio[index]['planarRuntime']
+                as Map?)?[_stat20OculumChargeKey] ==
+            onlineCombatEncounterId) {
+      return 0;
+    }
     if (index < 0) {
       final custom = readDoubleValue(token['movementMaxMeters']);
       return custom > 0 ? custom : mapFreeTokenMovementValue();
@@ -7604,14 +7621,12 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     return allowed;
   }
 
-  Color localMapTokenColor(Map<String, dynamic> token) {
-    final custom = readIntValue(token['colorArgb']);
-    if (custom != 0) return Color(custom);
-    final side = '${token['side'] ?? ''}'.toLowerCase();
-    if (side == 'enemy') return Colors.redAccent;
-    if (side == 'neutral') return Colors.blueGrey.shade200;
-    return primaryColor;
-  }
+  Color localMapTokenColor(Map<String, dynamic> token) =>
+      combatParticipantSideColor(
+        token,
+        neutral: Colors.blueGrey.shade200,
+        fallback: primaryColor,
+      );
 
   String localMapTokenDisplayName(Map<String, dynamic> token) {
     final index = indexForLocalMapToken(token);
@@ -7943,12 +7958,15 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   Widget localMapTokenVitals(
     Map<String, dynamic> token,
     double width,
-    Color color,
-  ) {
-    final currentHp = max(0, readIntValue(token['currentHp']));
-    final maxHp = max(0, readIntValue(token['maxHp']));
-    final tempHp = max(0, readIntValue(token['tempHp']));
-    final shield = max(0, readIntValue(token['shield']));
+    Color color, {
+    bool publicToken = false,
+  }) {
+    final currentHp = publicToken
+        ? 0
+        : max(0, readIntValue(token['currentHp']));
+    final maxHp = publicToken ? 0 : max(0, readIntValue(token['maxHp']));
+    final tempHp = publicToken ? 0 : max(0, readIntValue(token['tempHp']));
+    final shield = publicToken ? 0 : max(0, readIntValue(token['shield']));
     final elevation = readDoubleValue(token['elevationMeters']);
     final conditions = localMapTokenConditions(token);
     final hpRatio = maxHp <= 0 ? 0.0 : (currentHp / maxHp).clamp(0.0, 1.0);
@@ -7963,23 +7981,26 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: SizedBox(
-              height: 4,
-              child: LinearProgressIndicator(
-                value: hpRatio,
-                backgroundColor: Colors.white.withValues(alpha: 0.14),
-                color: currentHp <= 0 && maxHp > 0 ? Colors.redAccent : color,
+          if (publicToken)
+            const SizedBox(height: 4)
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: SizedBox(
+                height: 4,
+                child: LinearProgressIndicator(
+                  value: hpRatio,
+                  backgroundColor: Colors.white.withValues(alpha: 0.14),
+                  color: currentHp <= 0 && maxHp > 0 ? Colors.redAccent : color,
+                ),
               ),
             ),
-          ),
           SizedBox(
             height: 10,
             child: Text(
               maxHp > 0
                   ? 'HP $currentHp/$maxHp${tempHp > 0 ? ' T$tempHp' : ''}${shield > 0 ? ' S$shield' : ''}'
-                  : '',
+                  : oculumVttTokenHealthLabel(token),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -8283,11 +8304,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                     final reactionUsed =
                         masterInitiativeReactionUsedTotal(token) > 0;
                     final isActive = i == active;
-                    final sideColor = '${token['side'] ?? ''}' == 'enemy'
-                        ? Colors.redAccent
-                        : isActive
-                        ? tertiaryColor
-                        : primaryColor;
+                    final sideColor = combatParticipantSideColor(token);
                     return ActionChip(
                       avatar: Icon(
                         reactionUsed

@@ -23,6 +23,256 @@ String oculumMonsterDropName(String id) => switch (id) {
         .join(' '),
 };
 
+// Some authored drops use a fuller item name than the catalogue label.
+// A legacy name is valid only for a drop listed by that exact monster entry.
+const _monsterBookDropAliases = <String, String>{
+  'mezza ala di fata': 'mezza_ala_fata',
+  'ossa di mammuth putrido': 'ossa_mammuth_putrido',
+  'funghetto cappuccio rosso cotto': 'funghetto_cappuccio_rosso',
+  'fibra spinosa di bramble': 'fibra_rovo_bramble',
+  'piuma conduttrice di thunderbird': 'piuma_conduttrice_thunderbird',
+  'ottone del fucile scostubanditi': 'ottone_fucile_scostubanditi',
+  'scheggia dell occhio viola': 'scheggia_occhio_viola',
+  'frammento dell occhio solare': 'frammento_occhio_solare',
+  'zanna del ricordo vuoto': 'zanna_ricordo_vuoto',
+  'piuma soffice di nuvi': 'piuma_nuvi',
+  'fodera incantata del cappello': 'fodera_cappello_incantato',
+  'bobina al plasma': 'bobina_plasma_coniglio',
+  'molla di pupazzo': 'molla_pupazzo',
+  'filamento di vetro': 'filamento_medusa_vetro',
+  'guscio elastico di nocciolo': 'guscio_nocciolo',
+  'dente di sharp': 'dente_sharp',
+  'scheggia di gelo infernale': 'scheggia_brace_lupo',
+  'filo ululante d oblio': 'filo_ululante_oblio',
+  'dente a circuito': 'dente_circuito_lupo',
+  'scroll coltello avvelenato': 'scroll_coltello_avvelenato',
+};
+
+Set<String> oculumPartyKnownMonsterDropIds(Map chest, String monsterId) {
+  final discoveries = chest['monsterDropDiscoveries'];
+  final known = discoveries is Map ? discoveries[monsterId] : null;
+  return known is List ? known.whereType<String>().toSet() : <String>{};
+}
+
+/// Records only catalogue drops in the actual assigned rewards or promoted
+/// encounter chest loot. Item names are a fallback for legacy reward records.
+bool oculumRecordDeliveredMonsterDrops(
+  Map<String, dynamic> chest,
+  Iterable<Map> deliveredItems,
+) {
+  final raw = chest['monsterDropDiscoveries'];
+  final discoveries = raw is Map
+      ? Map<String, dynamic>.from(raw)
+      : <String, dynamic>{};
+  final found = <String, Set<String>>{};
+  var changed = false;
+  for (final item in deliveredItems) {
+    final source = item['monsterLoot'];
+    if (source is! Map ||
+        '${source['id'] ?? ''}'.isEmpty ||
+        readIntValue(item['quantita']) <= 0) {
+      continue;
+    }
+    final monsterId =
+        '${source['sourceMonsterBookId'] ?? source['monsterId'] ?? ''}';
+    final monster = monsterBookEntryById(monsterId);
+    if (monster == null || monster.dropIds.isEmpty) continue;
+    final explicit = '${source['catalogueDropId'] ?? ''}';
+    final name = oculumNormalizeText('${item['nome'] ?? ''}');
+    final alias = _monsterBookDropAliases[name];
+    var dropId = explicit.isEmpty ? alias : explicit;
+    if (explicit.isEmpty && !monster.dropIds.contains(dropId)) {
+      dropId = monster.dropIds
+          .where((id) => oculumNormalizeText(oculumMonsterDropName(id)) == name)
+          .toSet()
+          .singleOrNull;
+    }
+    if (dropId == null || !monster.dropIds.contains(dropId)) continue;
+    final known = found.putIfAbsent(
+      monsterId,
+      () => oculumPartyKnownMonsterDropIds(chest, monsterId),
+    );
+    if (known.add(dropId)) changed = true;
+  }
+  if (changed) {
+    for (final entry in found.entries) {
+      discoveries[entry.key] = entry.value.toList()..sort();
+    }
+    chest['monsterDropDiscoveries'] = discoveries;
+  }
+  return changed;
+}
+
+const _relicWeaponShapes = [
+  ('sciabola', 'Sciabola', 'Lama ricurva a filo singolo, guardia ad arco.'),
+  (
+    'spadone',
+    'Spadone',
+    'Lama larga e lunga, ricasso alto e impugnatura a due mani.',
+  ),
+  (
+    'lancia',
+    'Lancia',
+    'Punta a foglia su un’asta sottile, con un collarino sotto il ferro.',
+  ),
+  ('stocco', 'Stocco', 'Lama dritta e stretta, coppa traforata e pomo minuto.'),
+  (
+    'alabarda',
+    'Alabarda',
+    'Asta lunga con mezzaluna, punta e becco posteriore.',
+  ),
+  ('arco', 'Arco', 'Flettenti ricurvi, corda tesa e presa centrale fasciata.'),
+  (
+    'balestra_a_una_mano',
+    'Balestra a una mano',
+    'Fusto corto, presa a pistola e un arco trasversale compatto.',
+  ),
+  ('spada', 'Spada', 'Lama a doppio filo, croce semplice e pomo sfaccettato.'),
+  ('ascia', 'Ascia', 'Testa larga e sbilanciata, cuneo visibile sull’asta.'),
+  (
+    'pugnale',
+    'Pugnale',
+    'Lama corta affilata e impugnatura stretta, con guardia corta.',
+  ),
+  ('mazza', 'Mazza', 'Testa pesante a coste, fissata su un manico corto.'),
+  (
+    'falce',
+    'Falce',
+    'Lama arcuata rivolta all’interno, fermata a un’asta lunga.',
+  ),
+];
+
+const _posteaRelicWeaponShapes = [
+  (
+    'lama_plasma',
+    'Lama al plasma',
+    'Filo luminoso fra due guide di ceramica; rune coperte nell’elsa.',
+  ),
+  (
+    'fucile_runico',
+    'Fucile runico',
+    'Canna lunga, spallaccio pieghevole e camera runica sigillata.',
+  ),
+  (
+    'mazza_impulso',
+    'Mazza a impulso',
+    'Testa a capsule schermate, aste di rame e impugnatura corta.',
+  ),
+  (
+    'lancia_elettrica',
+    'Lancia elettrica',
+    'Doppia punta conduttrice, innesti schermati sotto il manicotto.',
+  ),
+  (
+    'balestra_runica_a_una_mano',
+    'Balestra runica a una mano',
+    'Fusto compatto e bracci ribaltabili su un nucleo coperto.',
+  ),
+];
+
+const _sweetRelicWeaponShapes = [
+  (
+    'lancia_candy_cane',
+    'Lancia di candy cane',
+    'Asta a spirale bicolore con punta di zucchero temprato.',
+  ),
+  (
+    'lama_zucchero',
+    'Lama di zucchero',
+    'Filo traslucido, venature cristalline e impugnatura di cacao.',
+  ),
+  (
+    'martello_caramello',
+    'Martello di caramello',
+    'Testa ambrata e squadrata, rinforzata da croste di zucchero.',
+  ),
+  (
+    'arco_liquirizia',
+    'Arco di liquirizia',
+    'Flettenti scuri intrecciati attorno a una presa gommosa.',
+  ),
+  (
+    'balestra_cacao_a_una_mano',
+    'Balestra di cacao a una mano',
+    'Calcio di cacao, bracci di zucchero e corda di liquirizia.',
+  ),
+];
+
+({String name, String shape, String appearance}) _monsterRelicWeapon(
+  MonsterBookEntry monster,
+  int skillIndex,
+) {
+  if (monster.id == 'teschio_quattro_lame' && skillIndex == 0) {
+    return (
+      name: 'Ossivigil',
+      shape: 'sciabola',
+      appearance:
+          'Sciabola d’Osso del Teschio a Quattro Lame · Una delle quattro lame ricurve, in osso pallido macchiato con una guardia ad anelli d’ottone.',
+    );
+  }
+  final postea = monster.planeIds.contains('postea');
+  final sweet = monster.planeIds.contains('caramella');
+  final shapes = postea
+      ? _posteaRelicWeaponShapes
+      : sweet
+      ? _sweetRelicWeaponShapes
+      : _relicWeaponShapes;
+  final seed = oculumMonsterArtSeed(monster.id);
+  final (shape, family, silhouette) =
+      shapes[(seed + skillIndex) % shapes.length];
+  const names = [
+    'Ultima Vox',
+    'Vesperedge',
+    'Silentgate',
+    'Omen Thorn',
+    'Fracta Vigil',
+    'Buried Oath',
+    'Shade Listener',
+    'Vagus Seal',
+    'Duskwhisper',
+    'Midnight Fang',
+    'Custos Mirage',
+    'Threshold Dirge',
+    'Falltrace',
+    'Cinis Vow',
+  ];
+  final (theme, finish) = postea
+      ? ('Urbs Occulta', 'Metallo scuro e punti di rame opaco.')
+      : sweet
+      ? (
+          'Black Honey',
+          'Superficie lucida, con inclusioni di zucchero brunito.',
+        )
+      : switch (oculumNormalizeElementId(monster.elementId)) {
+          'gelo' => ('Frost', 'Finitura opaca con venature azzurro ghiaccio.'),
+          'fuoco' ||
+          'lava' => ('Ember', 'Metallo annerito con riflessi ramati.'),
+          'acqua' => ('Tide', 'Patina verde e incrostazioni madreperlacee.'),
+          'fulmine' => (
+            'Thunder',
+            'Piccole saldature ramate a forma di saetta.',
+          ),
+          'sacro' ||
+          'angelico' => ('Aurora', 'Finitura avorio e bordi dorati opachi.'),
+          'oscuro' ||
+          'necrotico' ||
+          'osso' => ('Crypt', 'Inserti d’osso e legature di cuoio scuro.'),
+          _ => (
+            'Ruins',
+            'Patina consumata, con legature e piccoli inserti dell’habitat.',
+          ),
+        };
+  final title = names[(seed ~/ shapes.length + skillIndex) % names.length];
+  final sourceNameEn = monster.nameEn.trim();
+  return (
+    name: sourceNameEn.isEmpty || sourceNameEn == monster.nameIt
+        ? '$title $theme'
+        : '$title $theme · $sourceNameEn',
+    shape: shape,
+    appearance: '$family di ${monster.nameIt} · $silhouette $finish',
+  );
+}
+
 /// Builds the codex of monster relics from authored monster Arts/Skills. The
 /// creature's base statistics are deliberately not copied onto the item.
 List<InventoryItem> oculumMonsterEquipmentCatalogue({
@@ -75,25 +325,10 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
         final damage = max(1, 2 + itemLevel + itemGrade * 2);
         final defense = max(1, 1 + itemLevel ~/ 2 + itemGrade);
         final itemId = 'monster-relic:${monster.id}:$skillIndex:$type';
-        final weapons = postea
-            ? [
-                'Lama al plasma',
-                'Fucile runico',
-                'Mazza a impulso',
-                'Lancia elettrica',
-              ]
-            : sweet
-            ? [
-                'Lancia di candy cane',
-                'Lama di zucchero',
-                'Martello di caramello',
-                'Arco di liquirizia',
-              ]
-            : ['Spada', 'Lancia', 'Ascia', 'Arco', 'Pugnale', 'Mazza'];
-        final familyName = weapon
-            ? weapons[(oculumMonsterArtSeed(monster.id) + skillIndex) %
-                  weapons.length]
-            : armor
+        final weaponDesign = weapon
+            ? _monsterRelicWeapon(monster, skillIndex)
+            : null;
+        final familyName = armor
             ? (postea
                   ? 'Armatura cyberpunk'
                   : sweet
@@ -104,7 +339,9 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
             : sweet
             ? 'Scudo di caramello'
             : equipment[type];
-        final name = '$familyName di ${monster.nameIt} · ${skill.nome}';
+        final name =
+            weaponDesign?.name ??
+            '$familyName di ${monster.nameIt} · ${skill.nome}';
         result.add(
           InventoryItem(
             nome: name,
@@ -115,6 +352,7 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
                 : 1.0,
             quantita: 1,
             note:
+                '${weaponDesign != null ? '${weaponDesign.appearance}\n' : ''}'
                 'Reliquia rara di ${monster.nameIt}. $style Colori e struttura riprendono la creatura: $sourceAppearance Materiali coerenti: $sourceMaterials. Riprende la Skill ${skill.nome} e il suo elemento ${monster.elementId}; non copia le statistiche base della creatura. Grado $itemGrade, livello $itemLevel. Richiede il livello $itemLevel per usare la Skill.',
             arma: weapon,
             protegge: !weapon,
@@ -165,6 +403,10 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
               'skillLevelRequired': itemLevel,
               'sourceSkillId': skill.nome,
               'sourceSkill': skill.toJson(),
+              if (weaponDesign != null) ...{
+                'weaponForm': weaponDesign.shape,
+                'weaponAppearance': weaponDesign.appearance,
+              },
             },
             monsterLoot: {
               'id': itemId,
@@ -183,7 +425,7 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
 }
 
 int oculumMonsterRelicDropThreshold(int grade) =>
-    25 + 2 * grade.clamp(0, 12).toInt();
+    30 + 10 * grade.clamp(0, 12).toInt();
 
 int oculumMonsterDropDifficulty({required int level, required int grade}) =>
     20 + max(0, level).toInt() + 3 * grade.clamp(0, 12).toInt();
@@ -300,7 +542,9 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     grade: safeGrade,
   );
   if (monster.id == 'pupazzo_robotico_postea') {
-    return [oculumDollRobotScraps(monster, safeLevel, safeGrade, killId)];
+    final scraps = oculumDollRobotScraps(monster, safeLevel, safeGrade, killId);
+    scraps.monsterLoot['catalogueDropId'] = 'scarti_robotici_pupazzo';
+    return [scraps];
   }
   final planarDrops = oculumPlanarNaturalDrops(
     monster,
@@ -382,6 +626,11 @@ List<InventoryItem> oculumGenerateMonsterLoot({
   if (monster.id == 'costrutto_rinsecchito') {
     final core = oculumCreatureCore(0, broken: true, maximumGrade: 3)
       ..nome = 'Nucleo rotto debole'
+      ..monsterLoot = {
+        'id': '$killId:broken-core',
+        'monsterId': monster.id,
+        'catalogueDropId': 'nucleo_rotto_debole',
+      }
       ..note =
           'Nucleo del Costrutto Rinsecchito, fascia Grado 0–III. Riparabile con Meccanica secondo le regole dei nuclei.';
     return _withManualDropPrices(
@@ -661,20 +910,23 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     );
   }
   final material = monster.id.startsWith('mammuth_in_decomposizione');
-  final dropNames = material
-      ? (random.nextInt(100) < 35 ? ['Ossa di mammuth putrido'] : <String>[])
+  final materialDrops = material
+      ? [
+          if (random.nextInt(100) < 35)
+            (id: 'ossa_mammuth_putrido', name: 'Ossa di mammuth putrido'),
+        ]
       : [
           for (final id in monster.dropIds)
             if (random.nextInt(100) <
                 (monster.dropChances[id]?.clamp(0, 100) ?? 35))
-              oculumMonsterDropName(id),
+              (id: id, name: oculumMonsterDropName(id)),
         ];
   final drops = <InventoryItem>[
     ...specialDrops,
     if (!monster.isNpc &&
         !RegExp(
           r'costrutto|construct|golem|automata|morto vivente|undead',
-        ).hasMatch('${monster.id} ${monster.nameIt}'.toLowerCase()) &&
+        ).hasMatch('${monster.id} ${monster.speciesNameIt}'.toLowerCase()) &&
         random.nextInt(100) < 45)
       InventoryItem(
         nome: 'Carne di mostro cruda',
@@ -692,16 +944,16 @@ List<InventoryItem> oculumGenerateMonsterLoot({
           'raw': true,
         },
       ),
-    for (var i = 0; i < dropNames.length; i++)
+    for (final (i, drop) in materialDrops.indexed)
       oculumArmadilloMaterialDrop(
-            dropNames[i],
+            drop.name,
             level: safeLevel,
             grade: safeGrade,
             receiptId: '$killId:material:$i',
-            metadata: metadata,
+            metadata: {...metadata, 'catalogueDropId': drop.id},
           ) ??
           InventoryItem(
-            nome: dropNames[i],
+            nome: drop.name,
             peso: oculumMonsterCyclePhase(monster).isNotEmpty ? .15 : 0,
             quantita: 1,
             gradoOggetto: safeGrade,
@@ -712,6 +964,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
             monsterLoot: {
               ...metadata,
               'id': '$killId:material:$i',
+              'catalogueDropId': drop.id,
               'material': true,
               'weaponBonus': safeLevel,
               'armorBonus': safeGrade,
