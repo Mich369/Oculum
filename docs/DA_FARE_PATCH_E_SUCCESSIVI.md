@@ -1,5 +1,15 @@
 # Oculum — attività, conferme e consegne
 
+## Voti definitivi del lotto da 50 e sezione Open — 9 novembre 2026
+
+L’ultimo invio copre tutti i 50 ID del lotto. Confermati 47 desktop, 44 rinomini e tre nomi esistenti. I tre ritiri riguardano le sole varianti indicate. Le Skill e le Open restano disponibili nei dati storici. Le righe senza selezione delle Skill conservano il corredo esistente. Custos Relay e Cinerstitch chiudono le scelte desktop, entrambi con la A. La conferma successiva assegna **Silvarkrath** al Baby Forest Demon Rituale e mantiene il desktop C.
+
+Copiati i 47 PNG nativi votati, 29 A, 8 B e 10 C, per 94.788.645 byte. Le 256 scelte precedenti restano nella ricevuta. Le tre Aberrazioni Angeliche in A hanno ali fuori dalla rappresentazione. Le due immagini B degli Arcangeli non rendono leggibili tutte e quattro le ali separatamente. Restano valide le anatomie di catalogo. [Ricevuta e note visive](CONFERME_UTENTE_ARTWORK_2026-11-09_01.json)
+
+Verifica locale con analisi Flutter pulita e 165 test passati. Controllati SHA dei PNG e collegamento per ID, rinomini, preservazione delle personalizzazioni, lookup dei ritiri, sezione Open, recuperi, manuale e log cumulativo. Le due voci Tombwake conservano il nome richiesto. La creazione da testo usa l’ID o il nome originario per distinguere le voci e privilegia i nomi completi delle varianti Elité. La verifica locale resta distinta da CI, pacchetti e prove online.
+
+La copia storica 279 è stata archiviata su G con verifica di 17.546 file su entrambi i dischi e collegamento dal percorso C precedente. Il backup 278 contiene file aggiunti dall’updater dopo il manifest e resta dov’è. La 281 è ancora installata durante le verifiche.
+
 ## Download per piattaforma e lotto senza voti precedenti — 9 novembre 2026
 
 Su richiesta dell’utente, l’indice pubblico e il menu web elencano i pacchetti delle piattaforme. I tre artefatti tecnici sono il bundle AAB per lo store, le catture UI e il rapporto Verifica Mostri. La CI li conserva. Le release storiche conservano i loro archivi. Windows normale e Windows Test hanno voci separate sia per lo ZIP sia per la cartella con runtime.

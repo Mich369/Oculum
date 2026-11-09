@@ -5,6 +5,20 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Open nella pagina Skill',
+    titleEn: 'Open on the Skill page',
+    contentIt: r'''
+Nella pagina Skill, apri la sezione Open per consultare le Open della scheda, le Skill associate e lo stato del recupero. I comandi seguono gli sblocchi, i costi e la turnistica già in uso. L’attivazione di una Open applica anche il suo Open Buff. Una Skill Open può essere usata anche quando la propria Open è spenta, rispettando i suoi requisiti e il suo recupero.
+
+Quando un mostro viene ritirato dal catalogo attivo, le schede già create conservano nome personalizzato, dati, Skill e Open. I vecchi identificativi restano riconosciuti.
+''',
+    contentEn: r'''
+On the Skill page, open the Open section to view the sheet’s Opens, linked Skills and recovery status. The controls follow the existing unlock, cost and turn rules. Activating an Open also applies its Open Buff. An Open Skill can be used while its own Open is inactive, subject to its requirements and recovery.
+
+When a monster leaves the active catalogue, existing sheets retain their custom name, data, Skills and Opens. Legacy identifiers remain recognized.
+''',
+  ),
+  ManualSection(
     titleIt: 'Scudi infranti e usura dell’equipaggiamento',
     titleEn: 'Shield breaks and equipment wear',
     contentIt: r'''

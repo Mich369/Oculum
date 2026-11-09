@@ -1,4 +1,7 @@
-# Download per piattaforma e Sfera Predatrice
+# Lotto mostri, Open e download per piattaforma
+
+- 47 desktop votati, 44 nomi aggiornati e tre varianti ritirate dal catalogo attivo. Le schede esistenti conservano dati, Skill e Open.
+- La pagina Skill ha una sezione Open con i comandi separati dalle Skill ordinarie e lo stato dei recuperi.
 
 - Il menu web mostra i pacchetti delle piattaforme, con Windows normale e Windows Test separati e l’APK firmato per Android.
 

@@ -265,8 +265,9 @@ extension _OculumOpenLifecycle on _OculumHomePageState {
 
   OculumOpenLifecycleProgress itemOpenLifecycle(
     InventoryItem item,
-    CharacterSkill ability,
-  ) {
+    CharacterSkill ability, {
+    bool persist = true,
+  }) {
     final index = oculumItemTitleAbilities(item).indexOf(ability);
     final saved = Map<String, dynamic>.from(
       item.craftData['titleOpenLifecycle'] as Map? ?? const {},
@@ -281,6 +282,7 @@ extension _OculumOpenLifecycle on _OculumHomePageState {
       legacyUsed: legacy,
       legacyActive: legacy,
     );
+    if (!persist) return state;
     if (state.id.isEmpty) state.id = _newOpenLifecycleId();
     saved['$index'] = state.toJson();
     item.craftData = {...item.craftData, 'titleOpenLifecycle': saved};

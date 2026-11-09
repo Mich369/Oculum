@@ -49,6 +49,30 @@ void main() {
     return OculumMonsterTheme(entry, oculumMonsterColors(entry).first);
   }
 
+  test('47 November 9 votes bind the exact selected desktop PNGs', () {
+    final manifest =
+        jsonDecode(
+              File(
+                'design/approved-monster-desktops-2026-11-09-votes7.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final approved = (manifest['files'] as List).cast<Map<String, dynamic>>();
+    expect(approved, hasLength(47));
+    expect(approved.map((file) => file['id']).toSet(), hasLength(47));
+    for (final file in approved) {
+      final id = file['id'] as String;
+      final theme = themeFor(id);
+      expect(theme.preserveIllustrationFraming, isTrue, reason: id);
+      expect(theme.illustration, file['asset'], reason: id);
+      final digest = SHA256Digest()
+          .process(File(file['asset'] as String).readAsBytesSync())
+          .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+          .join();
+      expect(digest, file['nativeSha256'], reason: id);
+    }
+  });
+
   test('23 approved packs bind all 69 exact PNG revisions', () {
     expect(files, hasLength(69));
     expect(files.map((f) => f['asset']).toSet(), hasLength(69));

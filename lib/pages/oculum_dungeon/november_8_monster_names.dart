@@ -147,16 +147,77 @@ final oculumNovember8VotedMonsterIds = Set<String>.unmodifiable({
   ..._november8HiddenMonsterBookIds,
 });
 
-MonsterBookEntry _withNovember8MonsterName(MonsterBookEntry entry) {
-  final name = _november8MonsterNames[entry.id];
+// These confirmations include names whose desktop vote is still pending.
+const _november9MonsterNames = <String, String>{
+  'habitat_sacro_aberrazione_del_coro_diviso_variante_errante': 'Schisma',
+  'aberrazione_oro_marmo_intermedia_angelica': "Aberrazione d'Oro",
+  'aberrazione_oro_marmo_intermedia_solare': 'Sunwalker',
+  'aberrazione_oro_marmo_maggiore_angelica': 'Angel Feather',
+  'aberrazione_oro_marmo_maggiore_solare': 'Angel Feather Elité',
+  'aberrazione_oro_marmo_minore_angelica': 'Aberrazione Minore Angelica',
+  'aberrazione_oro_marmo_minore_solare': 'Aberrazione Minore Solare',
+  'aberrazione_oro_marmo_superiore_angelica': 'Aberrazione Superiore Angelica',
+  'aberrazione_oro_marmo_superiore_solare': 'Aberrazione Superiore Sole',
+  'agla_variante_corazzata': 'Lorica Gleaner',
+  'habitat_isole_airone_delle_correnti_inverse': 'Ardea Upstream',
+  'habitat_isole_airone_delle_correnti_inverse_variante_rituale':
+      'Ardea Upstream Elité',
+  'ammasso_carne_ossa_errante_variante_rituale': 'Caro Ossis',
+  'ammasso_pustoloso': 'Caro Blisterhide',
+  'angelo_fustigatore_variante_rituale': 'Flagellum Vow',
+  'angelo_palpebra_sporca_variante_veterana': 'Iudex Blight',
+  'habitat_postea_anguilla_del_trasformatore_variante_errante': 'Runa Rivet',
+  'base_affogato_01': 'Pallor Current',
+  'habitat_affogato_anguilla_delle_campane_sommerse_variante_rituale':
+      'Pallor Current Elité',
+  'habitat_foresta_elementale_antico_dei_venti_elementi_variante_errante':
+      'Viginti Ward',
+  'araldo_raggio_angelico_variante_errante': 'Azurictus Bluecross',
+  'habitat_oblio_araldo_del_silenzio_assoluto': 'Nullivox Echoend',
+  'habitat_oblio_araldo_del_silenzio_assoluto_variante_errante':
+      'Mutavest Shadecross',
+  'habitat_sacro_araldo_del_sole_ferito': 'Soliscind Gildscar',
+  'habitat_sacro_araldo_del_sole_ferito_variante_errante':
+      'Soliscind Riftstride',
+  'habitat_vero_inferno_araldo_della_cenere_eterna_variante_rituale':
+      'Mostro Infernale',
+  'habitat_shadow_hell_araldo_della_fenditura_nera': 'Hollowgaze',
+  'habitat_shadow_hell_araldo_della_fenditura_nera_variante_veterana':
+      'Dark Beast',
+  'habitat_angelico_araldo_della_scala_luminosa': 'Scalalume Ivoryrise',
+  'habitat_angelico_araldo_della_scala_luminosa_variante_veterana':
+      'Scalalume Ivoryrise Elité',
+  'habitat_demoniaco_araldo_delle_cicatrici_ardenti': 'Cicathorn Firescar',
+  'habitat_demoniaco_araldo_delle_cicatrici_ardenti_variante_rituale':
+      'Cicathorn Brandrite',
+  'habitat_diabolico_araldo_delle_corone_fuse': 'Regnoth Crownsmelt',
+  'habitat_diabolico_araldo_delle_corone_fuse_variante_errante':
+      'Regnoth Thronewake',
+  'habitat_morti_araldo_delle_tombe_aperte': 'Tombwake',
+  'arcangelo_variante_errante': 'Ordinwing Wingstray',
+  'habitat_postea_archivista_della_citt_errante_variante_corazzata':
+      'Custos Relay',
+  'habitat_angelico_ariete_delle_porte_celesti': 'Ebur Ward',
+  'habitat_angelico_ariete_delle_porte_celesti_variante_corazzata':
+      'Lamella Bastion',
+  'baby_forest_demon_variante_rituale': 'Silvarkrath',
+  'habitat_morti_bambola_di_ceneri': 'Cinerstitch',
+  'habitat_morti_bambola_di_ceneri_variante_corazzata': 'Little CinerShield',
+  'habitat_morti_becchino_dalle_mani_lunghe_variante_errante': 'Gravemanus',
+  'bestia_invisibile_del_vantaggio': 'Occulthunt',
+};
+
+MonsterBookEntry _withVotedMonsterName(MonsterBookEntry entry) {
+  final name =
+      _november9MonsterNames[entry.id] ?? _november8MonsterNames[entry.id];
   if (name == null || name == entry.nameIt) return entry;
   return entry.copyWith(
     nameIt: name,
     nameEn: name,
     encounterRules: {
       ...entry.encounterRules,
-      'speciesNameIt': entry.nameIt,
-      'speciesNameEn': entry.nameEn,
+      'speciesNameIt': entry.speciesNameIt,
+      'speciesNameEn': entry.speciesNameEn,
     },
   );
 }

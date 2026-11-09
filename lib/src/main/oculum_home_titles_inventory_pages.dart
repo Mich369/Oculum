@@ -3095,89 +3095,99 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     );
   }
 
-  Widget freeSkillsPanel() {
+  bool isWrittenOpenSkill(CharacterSkill skill) => const {
+    'open',
+    'open skill',
+    'skill open',
+    'open mostro',
+    'monster open',
+  }.contains(oculumAbilityTypeWithPlacement(skill.tipo, '').toLowerCase());
+
+  Widget freeSkillsPanel({bool onlyOpens = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        sectionTitle(t('Skill Scritte', 'Written Skills')),
-        stat35ChoicePanel(),
-        creationSkillLearningPanel(),
-        gothicPanel(
-          borderColor: tertiaryColor,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                t('Crea Skill Libera', 'Create Free Skill'),
-                style: TextStyle(
-                  color: tertiaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              smallInfoText(
-                t(
-                  'Skill libere, tecniche, talenti, cerchi e poteri ottenuti da Titoli, oggetti o storia. Possono anche aggiungere stats, danni e difesa.',
-                  'Free skills, techniques, talents, circles and powers gained from Titles, items or story. They can also add stats, damage and defense.',
-                ),
-              ),
-              const SizedBox(height: 12),
-              campoTesto(
-                label: t('Nome Skill', 'Skill Name'),
-                controller: skillNomeController,
-                numero: false,
-              ),
-              const SizedBox(height: 12),
-              campoTesto(
-                label: t('Tipo Skill', 'Skill Type'),
-                controller: skillTipoController,
-                numero: false,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: campoTesto(
-                      label: t('Costo', 'Cost'),
-                      controller: skillCostoController,
-                      numero: false,
-                    ),
+        if (!onlyOpens) ...[
+          sectionTitle(t('Skill Scritte', 'Written Skills')),
+          stat35ChoicePanel(),
+          creationSkillLearningPanel(),
+          gothicPanel(
+            borderColor: tertiaryColor,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t('Crea Skill Libera', 'Create Free Skill'),
+                  style: TextStyle(
+                    color: tertiaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: campoTesto(
-                      label: 'Cooldown',
-                      controller: skillCooldownController,
-                      numero: false,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              campoTesto(
-                label: t('Descrizione Skill', 'Skill Description'),
-                controller: skillDescrizioneController,
-                numero: false,
-                maxLines: 5,
-              ),
-              const SizedBox(height: 12),
-              skillBonusCreateFields(),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: creaSkill,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: tertiaryColor,
-                  foregroundColor: tertiaryColor.computeLuminance() > 0.45
-                      ? Colors.black
-                      : Colors.white,
-                  minimumSize: const Size.fromHeight(50),
                 ),
-                child: Text(t('Crea Skill', 'Create Skill')),
-              ),
-            ],
+                const SizedBox(height: 8),
+                smallInfoText(
+                  t(
+                    'Skill libere, tecniche, talenti, cerchi e poteri ottenuti da Titoli, oggetti o storia. Possono anche aggiungere stats, danni e difesa.',
+                    'Free skills, techniques, talents, circles and powers gained from Titles, items or story. They can also add stats, damage and defense.',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                campoTesto(
+                  label: t('Nome Skill', 'Skill Name'),
+                  controller: skillNomeController,
+                  numero: false,
+                ),
+                const SizedBox(height: 12),
+                campoTesto(
+                  label: t('Tipo Skill', 'Skill Type'),
+                  controller: skillTipoController,
+                  numero: false,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: campoTesto(
+                        label: t('Costo', 'Cost'),
+                        controller: skillCostoController,
+                        numero: false,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: campoTesto(
+                        label: 'Cooldown',
+                        controller: skillCooldownController,
+                        numero: false,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                campoTesto(
+                  label: t('Descrizione Skill', 'Skill Description'),
+                  controller: skillDescrizioneController,
+                  numero: false,
+                  maxLines: 5,
+                ),
+                const SizedBox(height: 12),
+                skillBonusCreateFields(),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: creaSkill,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: tertiaryColor,
+                    foregroundColor: tertiaryColor.computeLuminance() > 0.45
+                        ? Colors.black
+                        : Colors.white,
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  child: Text(t('Crea Skill', 'Create Skill')),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
         LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth >= 760 ? 2 : 1;
@@ -3189,7 +3199,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               spacing: gap,
               runSpacing: gap,
               children: [
-                for (int i = 0; i < skills.length; i++)
+                for (final i in Iterable<int>.generate(
+                  skills.length,
+                ).where((i) => isWrittenOpenSkill(skills[i]) == onlyOpens))
                   SizedBox(
                     width: itemWidth,
                     child: functionAnchor(

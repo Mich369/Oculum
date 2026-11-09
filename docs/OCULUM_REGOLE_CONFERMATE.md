@@ -1,5 +1,12 @@
 # Oculum — registro delle regole confermate
 
+## Lotto da 50 e sezione Open nella pagina Skill
+
+- I voti per nome e desktop sono indipendenti. Una riga con «da scegliere» per il desktop conferma comunque il nome inviato. «Nessuna selezione» per le Skill conserva quelle esistenti. Nei nomi personalizzati si usano le iniziali maiuscole e si conserva la grafia scelta dall’utente per le parole composte.
+- La variante Rituale del Baby Forest Demon (`baby_forest_demon_variante_rituale`) si chiama **Silvarkrath**. La conferma successiva corregge il nome della bozza e conserva il desktop C.
+- Ritirati dal catalogo attivo Alce dagli Occhi Ciechi Rituale (`hero_path_alce_variante_rituale`), Araldo delle tombe aperte Errante (`habitat_morti_araldo_delle_tombe_aperte_variante_errante`) e Automate infermiere guasto Rituale (`habitat_postea_automate_infermiere_guasto_variante_rituale`). Restano consultabili tramite gli ID storici. Si conservano Skill, Open e salvataggi.
+- La pagina Skill ha una sezione dedicata alle Open. Si applicano gli stessi requisiti, costi, recuperi e modifiche salvate degli editor di origine.
+
 ## Pergamena Sfera Predatrice
 
 - Una pergamena di Skill Oculum è ottenibile dal mercante. La Skill sottrae Oculum ai nemici colpiti e lo raccoglie in una sfera. La quantità sottraibile e il numero massimo di nemici aumentano con la forma. La dichiarazione richiede almeno due bersagli. Si usa un tiro di Manifestazione del Potere e una difesa di Canalizzazione per ogni bersaglio.

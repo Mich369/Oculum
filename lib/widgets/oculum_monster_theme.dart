@@ -148,6 +148,56 @@ OculumCreatureColor oculumRollMonsterColor(
   return colors.last;
 }
 
+const _november9ApprovedDesktopIds = {
+  'aberrazione_oro_marmo_intermedia_angelica',
+  'aberrazione_oro_marmo_intermedia_solare',
+  'aberrazione_oro_marmo_maggiore_angelica',
+  'aberrazione_oro_marmo_maggiore_solare',
+  'aberrazione_oro_marmo_minore_angelica',
+  'aberrazione_oro_marmo_minore_solare',
+  'aberrazione_oro_marmo_superiore_angelica',
+  'aberrazione_oro_marmo_superiore_solare',
+  'agla_variante_corazzata',
+  'ammasso_carne_ossa_errante_variante_rituale',
+  'ammasso_pustoloso',
+  'angelo_fustigatore_variante_rituale',
+  'angelo_palpebra_sporca_variante_veterana',
+  'araldo_raggio_angelico_variante_errante',
+  'arcangelo',
+  'arcangelo_variante_errante',
+  'arpia_base_variante_veterana',
+  'baby_forest_demon_variante_rituale',
+  'base_affogato_01',
+  'bestia_invisibile_del_vantaggio',
+  'habitat_affogato_anguilla_delle_campane_sommerse_variante_rituale',
+  'habitat_angelico_araldo_della_scala_luminosa',
+  'habitat_angelico_araldo_della_scala_luminosa_variante_veterana',
+  'habitat_angelico_ariete_delle_porte_celesti',
+  'habitat_angelico_ariete_delle_porte_celesti_variante_corazzata',
+  'habitat_demoniaco_araldo_delle_cicatrici_ardenti',
+  'habitat_demoniaco_araldo_delle_cicatrici_ardenti_variante_rituale',
+  'habitat_diabolico_araldo_delle_corone_fuse',
+  'habitat_diabolico_araldo_delle_corone_fuse_variante_errante',
+  'habitat_foresta_elementale_antico_dei_venti_elementi_variante_errante',
+  'habitat_isole_airone_delle_correnti_inverse',
+  'habitat_isole_airone_delle_correnti_inverse_variante_rituale',
+  'habitat_morti_araldo_delle_tombe_aperte',
+  'habitat_morti_bambola_di_ceneri',
+  'habitat_morti_bambola_di_ceneri_variante_corazzata',
+  'habitat_morti_becchino_dalle_mani_lunghe_variante_errante',
+  'habitat_oblio_araldo_del_silenzio_assoluto',
+  'habitat_oblio_araldo_del_silenzio_assoluto_variante_errante',
+  'habitat_postea_anguilla_del_trasformatore_variante_errante',
+  'habitat_postea_archivista_della_citt_errante_variante_corazzata',
+  'habitat_postea_automate_infermiere_guasto',
+  'habitat_sacro_aberrazione_del_coro_diviso_variante_errante',
+  'habitat_sacro_araldo_del_sole_ferito',
+  'habitat_sacro_araldo_del_sole_ferito_variante_errante',
+  'habitat_shadow_hell_araldo_della_fenditura_nera',
+  'habitat_shadow_hell_araldo_della_fenditura_nera_variante_veterana',
+  'habitat_vero_inferno_araldo_della_cenere_eterna_variante_rituale',
+};
+
 const _november5ApprovedDesktopIds = {
   'minotauro_base',
   'minotauro_base_variante_errante',
@@ -377,6 +427,7 @@ class OculumMonsterTheme {
         'divoramitu_elite',
         'distruttor_caramella',
       }.contains(monster.id) ||
+      _november9ApprovedDesktopIds.contains(monster.id) ||
       oculumNovember8VotedMonsterIds.contains(monster.id) ||
       _caproneApprovedDesktopIds.contains(monster.id) ||
       _lotTwoApprovedDesktopIds.contains(monster.id) ||
@@ -551,6 +602,8 @@ class OculumMonsterTheme {
       'assets/oculum/home_art/theme_${monsterId}_canon_20261108.png',
     'hero_path_rosso' || 'hero_path_rosso_variante_veterana' =>
       'assets/oculum/home_art/theme_${monsterId}_canon_20261108_votes6_red_eyes.png',
+    final id when _november9ApprovedDesktopIds.contains(id) =>
+      'assets/oculum/home_art/theme_${id}_canon_20261109_votes7.png',
     final id when oculumNovember8VotedMonsterIds.contains(id) =>
       'assets/oculum/home_art/theme_${id}_canon_20261108_votes6.png',
     final id when _caproneApprovedDesktopIds.contains(id) =>

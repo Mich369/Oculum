@@ -12497,6 +12497,45 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
+  Widget skillsOpenPanel() {
+    return gothicPanel(
+      borderColor: eyePupilGlowColor,
+      padding: EdgeInsets.zero,
+      child: ExpansionTile(
+        key: sheetExpansionKey('skills_open'),
+        leading: Icon(Icons.auto_awesome, color: eyePupilGlowColor),
+        title: const Text('Open'),
+        subtitle: Text(
+          t('Attivazioni e Skill Open', 'Activations and Open Skills'),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        children: [
+          Builder(
+            builder: (_) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                smallInfoText(
+                  t(
+                    'Modifica le Open di Art, Titoli e Titoli Item nei rispettivi editor.',
+                    'Edit Art, Title and Item Title Opens in their respective editors.',
+                  ),
+                ),
+                for (final role in const [
+                  OculumCombatAbilityRole.attack,
+                  OculumCombatAbilityRole.support,
+                ])
+                  ...statOpenActionWidgets(role, select: (action) => action()),
+                combatAbilityQuickBar(onlyOpens: true),
+                if (skills.any(isWrittenOpenSkill))
+                  freeSkillsPanel(onlyOpens: true),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget skillsPage() {
     return responsivePageList(
       pageKey: 'skills',
@@ -12518,6 +12557,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           icon: const Icon(Icons.library_add),
           label: const Text('Scegli abilità dal catalogo'),
         ),
+        skillsOpenPanel(),
         freeSkillsPanel(),
       ],
     );

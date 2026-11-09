@@ -94,6 +94,100 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
   });
+  testWidgets('Skills separate Art and written Opens from ordinary skills', (
+    tester,
+  ) async {
+    final state = await fixtures.mountSheet(tester, const Size(1440, 1100));
+    final probe = OculumPerformanceProbe(state);
+    final art = CharacterArt(
+      nome: 'Art di prova',
+      tipo: 'Oculum Art',
+      descrizione: '',
+      skills: [],
+      openName: 'Soglia di prova',
+      openBuff: '@Difesa+5',
+      openSkill: '@Danni+2',
+      openUsedSinceLongRest: true,
+      openSkillCooldown: OculumAbilityCooldown(amount: 3, remaining: 2),
+    );
+    state.arti
+      ..clear()
+      ..add(art);
+    state.skills
+      ..clear()
+      ..addAll([
+        CharacterSkill(
+          nome: 'Open è solo nel nome',
+          tipo: 'Skill',
+          costo: '',
+          cooldown: '',
+          descrizione: '',
+        ),
+        CharacterSkill(
+          nome: 'Tempo Ghiacciato',
+          tipo: oculumAbilityTypeWithPlacement('Open mostro', 'attacco'),
+          costo: '15 Oculum',
+          cooldown: '6 turni',
+          descrizione: '',
+        ),
+      ]);
+    final pageKey = GlobalKey();
+    final entry = OverlayEntry(
+      builder: (_) => Positioned.fill(
+        child: Material(key: pageKey, child: probe.skillsPage()),
+      ),
+    );
+    Overlay.of(tester.element(find.byType(OculumHomePage))).insert(entry);
+    await tester.pump();
+    final page = find.byKey(pageKey);
+    final section = find.descendant(
+      of: page,
+      matching: find.widgetWithText(ExpansionTile, 'Attivazioni e Skill Open'),
+    );
+    Finder field(String name) => find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.controller?.text == name,
+    );
+    expect(section, findsOneWidget);
+    expect(field('Tempo Ghiacciato'), findsNothing);
+    await tester.tap(find.descendant(of: section, matching: find.text('Open')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    final openSkill = find.descendant(
+      of: section,
+      matching: find.widgetWithText(ListTile, 'Soglia di prova · Skill Open'),
+    );
+    expect(openSkill, findsOneWidget);
+    expect(tester.widget<ListTile>(openSkill).onTap, isNull);
+    expect(
+      find.descendant(of: section, matching: find.text('Recupero ai riposi')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: section, matching: find.text('Recupero · 2 turni')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: section, matching: field('Tempo Ghiacciato')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: section, matching: field('Open è solo nel nome')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: page, matching: field('Tempo Ghiacciato')),
+      findsOneWidget,
+    );
+    expect(art.openLifecycle, isEmpty);
+    expect(tester.takeException(), isNull);
+
+    entry.remove();
+    entry.dispose();
+    probe.cancelPendingSave();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
   testWidgets(
     'Fallen Eye growth excludes source base stats and labels have space',
     (tester) async {

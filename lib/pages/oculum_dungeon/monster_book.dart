@@ -5670,6 +5670,9 @@ const _retiredExactMonsterIds = <String>{
   'demone_intermedio_variante_veterana',
   'demone_maggiore_variante_rituale',
   'hero_path_diverso_tank',
+  'hero_path_alce_variante_rituale',
+  'habitat_morti_araldo_delle_tombe_aperte_variante_errante',
+  'habitat_postea_automate_infermiere_guasto_variante_rituale',
 };
 
 // Keep retired definitions for existing sheets, without offering them in the
@@ -5762,7 +5765,7 @@ List<MonsterBookEntry> _withoutDefaultMonsterImages(
   Iterable<MonsterBookEntry> entries,
 ) => List<MonsterBookEntry>.unmodifiable(
   entries.map((entry) {
-    final renamed = _withNovember8MonsterName(entry);
+    final renamed = _withVotedMonsterName(entry);
     return renamed.copyWith(spriteAssetPath: '', imageBase64: '');
   }),
 );
@@ -5915,7 +5918,7 @@ MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
         .toList(growable: false),
     dropIds: [...base.dropIds, 'frammento_variante_$styleId'],
   );
-  return _withNovember8MonsterName(variant);
+  return _withVotedMonsterName(variant);
 }
 
 List<MonsterBookEntry> _activeMonsterBookEntries = defaultMonsterBookEntries;

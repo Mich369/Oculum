@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Lotto mostri e pagina Skill — 9 novembre
+
+- Aggiornati 47 sfondi desktop con le immagini votate e 44 nomi di catalogo, fra cui Silvarkrath per il Baby Forest Demon Rituale. Tre varianti escono dal catalogo attivo. Le loro schede già create, le Skill e le Open restano disponibili tramite i dati storici.
+- Nella pagina Skill trovi una sezione Open con i comandi e lo stato dei recuperi, separata dalle Skill ordinarie. I requisiti e gli editor di origine restano validi.
+
 ## Download per piattaforma — 9 novembre
 
 - Il menu web e la pagina dei download elencano i pacchetti delle piattaforme. Windows e Windows Test hanno ciascuno il proprio ZIP e la propria cartella. Su Android trovi il pacchetto con l’APK firmato.

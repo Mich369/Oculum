@@ -1,5 +1,82 @@
 part of '../../main.dart';
 
+Iterable<String> _oculumGeneratedMonsterIdentities(
+  MonsterBookEntry monster, {
+  bool includeDisplayNames = true,
+}) => [
+  monster.id,
+  monster.speciesNameIt,
+  monster.speciesNameEn,
+  if (includeDisplayNames) ...[monster.nameIt, monster.nameEn],
+].map(oculumNormalizeText).where((label) => label.isNotEmpty);
+
+MonsterBookEntry? oculumMonsterBookEntryForGeneratedEntity(
+  String description,
+  String name,
+) {
+  final requestedName = oculumNormalizeText(name);
+  final details = oculumNormalizeText(description);
+  final text = '$requestedName $details'.trim();
+  if (text.isEmpty) return null;
+  final entries = monsterBookEntries;
+
+  for (final value in [name, description]) {
+    final source = value.trim().toLowerCase();
+    if (source.isEmpty) continue;
+    if (oculumIsRetiredMonsterId(source)) return null;
+    final byId = entries.where((entry) => entry.id == source).firstOrNull;
+    if (byId != null) return byId;
+  }
+
+  final exactDisplay = requestedName.isEmpty
+      ? const <MonsterBookEntry>[]
+      : entries
+            .where(
+              (entry) =>
+                  oculumNormalizeText(entry.nameIt) == requestedName ||
+                  oculumNormalizeText(entry.nameEn) == requestedName,
+            )
+            .toList(growable: false);
+  final exact = exactDisplay.isNotEmpty
+      ? exactDisplay
+      : entries
+            .where(
+              (entry) => _oculumGeneratedMonsterIdentities(
+                entry,
+                includeDisplayNames: false,
+              ).contains(requestedName),
+            )
+            .toList(growable: false);
+  if (exact.length == 1) return exact.single;
+  if (exact.isNotEmpty) {
+    return exact
+        .where(
+          (entry) => _oculumGeneratedMonsterIdentities(
+            entry,
+            includeDisplayNames: false,
+          ).any(details.contains),
+        )
+        .singleOrNull;
+  }
+
+  MonsterBookEntry? closest;
+  var longest = 0;
+  var ambiguous = false;
+  for (final entry in entries) {
+    for (final label in _oculumGeneratedMonsterIdentities(entry)) {
+      if (label.length < longest || !text.contains(label)) continue;
+      if (label.length > longest) {
+        closest = entry;
+        longest = label.length;
+        ambiguous = false;
+      } else if (closest?.id != entry.id) {
+        ambiguous = true;
+      }
+    }
+  }
+  return ambiguous ? null : closest;
+}
+
 Map<String, dynamic> _decodeOculumJsonMapInWorker(String raw) {
   final decoded = jsonDecode(raw);
   if (decoded is! Map) {
@@ -7492,30 +7569,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
   MonsterBookEntry? monsterBookEntryForGeneratedEntity(
     String description,
     String name,
-  ) {
-    final text = oculumNormalizeText('$name $description');
-    if (text.isEmpty) return null;
-    for (final monster in monsterBookEntries) {
-      if (_monsterIdentityMatches(monster, text)) {
-        return monster;
-      }
-    }
-    return null;
-  }
+  ) => oculumMonsterBookEntryForGeneratedEntity(description, name);
 
-  bool _monsterIdentityMatches(MonsterBookEntry monster, String text) {
-    for (final label in [
-      monster.id,
-      monster.nameIt,
-      monster.nameEn,
-      monster.speciesNameIt,
-      monster.speciesNameEn,
-    ]) {
-      final normalized = oculumNormalizeText(label);
-      if (normalized.isNotEmpty && text.contains(normalized)) return true;
-    }
-    return false;
-  }
+  bool _monsterIdentityMatches(MonsterBookEntry monster, String text) =>
+      _oculumGeneratedMonsterIdentities(monster).any(text.contains);
 
   String generatedEntityNotes({
     required String name,

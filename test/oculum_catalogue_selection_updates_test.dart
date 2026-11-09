@@ -43,6 +43,155 @@ void main() {
     expect(monsterById(id)!.nameIt, 'Caprone personale');
   });
 
+  test(
+    'new names preserve original identities and historical artwork votes',
+    () {
+      const dollId = 'habitat_morti_bambola_di_ceneri';
+      expect(monsterById(dollId)!.nameIt, 'Cinerstitch');
+      expect(monsterById(dollId)!.speciesNameIt, 'Bambola di ceneri');
+      expect(oculumNovember8VotedMonsterIds.contains(dollId), isFalse);
+      expect(
+        monsterById('${dollId}_variante_corazzata')!.nameIt,
+        'Little CinerShield',
+      );
+      expect(
+        monsterById('aberrazione_oro_marmo_intermedia_angelica')!.nameIt,
+        "Aberrazione d'Oro",
+      );
+      expect(
+        monsterById(
+          'habitat_vero_inferno_araldo_della_cenere_eterna_variante_rituale',
+        )!.nameIt,
+        'Mostro Infernale',
+      );
+      expect(monsterById('arcangelo')!.nameIt, 'Arcangelo');
+    expect(
+      monsterById('baby_forest_demon_variante_rituale')!.nameIt,
+      'Silvarkrath',
+    );
+      expect(
+        monsterById('arpia_base_variante_veterana')!.nameIt,
+        'Arpia Veterana',
+      );
+      expect(
+        monsterById('habitat_postea_automate_infermiere_guasto')!.nameIt,
+        'Automate infermiere guasto',
+      );
+    },
+  );
+
+  test('quick creation uses exact aliases and requires a unique identity', () {
+    const ardea = 'habitat_isole_airone_delle_correnti_inverse';
+    const tombHerald = 'habitat_morti_araldo_delle_tombe_aperte';
+    const tombKnight = 'habitat_morti_cavaliere_senza_epitaffio';
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity('', 'Ardea Upstream')?.id,
+      ardea,
+    );
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity('', 'Ardea Upstream Elité')?.id,
+      '${ardea}_variante_rituale',
+    );
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity(
+        'Incontro con Ardea Upstream Elité',
+        '',
+      )?.id,
+      '${ardea}_variante_rituale',
+    );
+    expect(monsterById(tombHerald)!.nameIt, 'Tombwake');
+    expect(monsterById(tombKnight)!.nameIt, 'Tombwake');
+    expect(oculumMonsterBookEntryForGeneratedEntity('', 'Tombwake'), isNull);
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity('', tombHerald)?.id,
+      tombHerald,
+    );
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity(tombKnight, 'Tombwake')?.id,
+      tombKnight,
+    );
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity(
+        'Araldo delle tombe aperte',
+        'Tombwake',
+      )?.id,
+      tombHerald,
+    );
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity(
+        '',
+        'Cavaliere senza epitaffio',
+      )?.id,
+      tombKnight,
+    );
+
+    final base = monsterById(ardea)!;
+    final variant = monsterById('${ardea}_variante_rituale')!;
+    configureMonsterBookEntries(
+      customEntries: [
+        variant.copyWith(
+          encounterRules: {
+            ...variant.encounterRules,
+            'speciesNameIt': base.nameIt,
+            'speciesNameEn': base.nameEn,
+          },
+        ),
+      ],
+    );
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity('', base.nameIt)?.id,
+      base.id,
+    );
+    expect(
+      oculumMonsterBookEntryForGeneratedEntity('', variant.nameIt)?.id,
+      variant.id,
+    );
+  });
+
+  test('the three exact new retirements retain saved skill and Open data', () {
+    const selected = {
+      'hero_path_alce': 'rituale',
+      'habitat_morti_araldo_delle_tombe_aperte': 'errante',
+      'habitat_postea_automate_infermiere_guasto': 'rituale',
+    };
+    final custom = <MonsterBookEntry>[];
+    for (final row in selected.entries) {
+      final id = '${row.key}_variante_${row.value}';
+      final saved = oculumSavedMonsterBookEntryById(id)!;
+      expect(monsterById(row.key), isNotNull, reason: row.key);
+      expect(monsterById(id), isNull, reason: id);
+      expect(oculumIsRetiredMonsterId(id), isTrue, reason: id);
+      expect(
+        oculumMonsterBookEntryForGeneratedEntity('', id),
+        isNull,
+        reason: id,
+      );
+      expect(
+        oculumBlackMarketMonsterBookPageEligible(saved),
+        isFalse,
+        reason: id,
+      );
+      expect(monsterBookUsableSkillIds(saved), isNotEmpty, reason: id);
+      custom.add(
+        saved.copyWith(
+          skillIds: [...saved.skillIds, 'personal_saved_skill'],
+          encounterRules: {
+            ...saved.encounterRules,
+            'savedOpen': 'Open personale',
+          },
+        ),
+      );
+    }
+    configureMonsterBookEntries(customEntries: custom);
+    for (final saved in custom) {
+      expect(monsterById(saved.id), isNull);
+      expect(
+        oculumSavedMonsterBookEntryById(saved.id)!.toJson(),
+        saved.toJson(),
+      );
+    }
+  });
+
   test('manual exclusions preserve playable sources and their skills', () {
     for (final id in const [
       'habitat_mezzano_corvo_delle_monete_false',

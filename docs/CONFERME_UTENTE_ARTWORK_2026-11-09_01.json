@@ -1,0 +1,785 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-09T05:00:20.416415+00:00",
+  "reviewedRows": 50,
+  "exactDesktopChoices": 47,
+  "oldCount": 256,
+  "newCount": 303,
+  "lotManifestSha256": "f9e467134b29e2b96fecfda991554550a3b98526bd4dd5a21b6389083c8d487f",
+  "gallerySha256": "363f8a53989cedec3ce552e2aaeaeaff1f9e2dbfcebd77cc5c351238d4410fac",
+  "r08ManifestSha256": "0bdea1f1f8a2a0dd0e83735e7243647ad39d5dea487c3fc43abe0d72399d6307",
+  "alternativeABManifestSha256": "c0385611f21b58983f91a727b4532a2fc1fa337d507287dea714a8f7c9e601fb",
+  "voteTextSha256": "43794ec03baa0713aa4fc60e21df44cbdbae98aa801b5559bb0c152208180cb3",
+  "desktopPendingIds": [],
+  "retiredWithoutDesktopVoteIds": [
+    "hero_path_alce_variante_rituale",
+    "habitat_morti_araldo_delle_tombe_aperte_variante_errante",
+    "habitat_postea_automate_infermiere_guasto_variante_rituale"
+  ],
+  "artisticVotes": [
+    {
+      "id": "habitat_sacro_aberrazione_del_coro_diviso_variante_errante",
+      "position": 1,
+      "letter": "B",
+      "originalName": "Aberrazione del coro diviso Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_sacro_aberrazione_del_coro_diviso_variante_errante_desktop_v2.jpg",
+        "sha256": "fa91d8389e975f1b1849f03fa5fdda38c83b0d8ae96362d4896f4087009963bf",
+        "nativeSha256": "5519b53995695f8f7765cceaef2a68976099990e83cba9f1a3e031893cd27878",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_sacro_aberrazione_del_coro_diviso_variante_errante_desktop_v2_5519b53995695f8f.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_sacro_aberrazione_del_coro_diviso_variante_errante_desktop_v2.json",
+        "provenanceSha256": "506950a264406de00ef171250084545d7c9ce5adb175f3cf76e26f957c00e880",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "aberrazione_oro_marmo_intermedia_angelica",
+      "position": 2,
+      "letter": "A",
+      "originalName": "Aberrazione Intermedia d’Oro e Ossa Marmoree · Angelica",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_intermedia_angelica_desktop_v1.jpg",
+        "sha256": "d4759805340fb2e2eb0f70c77d7fcc526133d5e07efa2b08564b801ccadb4b05",
+        "nativeSha256": "3c27ba38fe2aa885a47a676b87fad14a38c9ce406aeadf8cff8c9b672e1ce240",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-0c88db61-9196-47b4-9df6-299e73d1ba34.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_intermedia_angelica_desktop_v1.json",
+        "provenanceSha256": "e06c8644708c1064cf35e36a05b0b7868b32ac76f43140f2fcfcae705e8896c5",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "La A votata non mostra ali. Il requisito di due ali visibili riguardava le proposte C. L’anatomia colpibile del catalogo resta quella confermata."
+    },
+    {
+      "id": "aberrazione_oro_marmo_intermedia_solare",
+      "position": 3,
+      "letter": "C",
+      "originalName": "Aberrazione Intermedia d’Oro e Ossa Marmoree · Solare",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_aberrazione_oro_marmo_intermedia_solare_v1.png",
+        "sha256": "7e9a4f30bbda9390e19d0cbcdcd31473eb40949fda5f96dddbcaa485d322b72a",
+        "nativeSha256": "7e9a4f30bbda9390e19d0cbcdcd31473eb40949fda5f96dddbcaa485d322b72a",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b0d0-9788-7122-81f8-dd575f4e46b7\\exec-e06c8bdd-c4c5-45c0-a505-aa019ae216c8.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_aberrazione_oro_marmo_intermedia_solare_v1.provenance.json",
+        "provenanceSha256": "3f0f97b134e2ba4933a065e380e5fc570ea1a0b2fbeff0b697a6f9df0cfba6df",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "aberrazione_oro_marmo_maggiore_angelica",
+      "position": 4,
+      "letter": "C",
+      "originalName": "Aberrazione Maggiore d’Oro e Ossa Marmoree · Angelica",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_aberrazione_oro_marmo_maggiore_angelica_v2.png",
+        "sha256": "18f65cd79ab21cdda6539a71c52f196492ac03bfacfc7993baf4db8bf045cbe5",
+        "nativeSha256": "18f65cd79ab21cdda6539a71c52f196492ac03bfacfc7993baf4db8bf045cbe5",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-71a9c2f9-cf11-4977-a8e3-b5e037c15b9b.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_aberrazione_oro_marmo_maggiore_angelica_v2.provenance.json",
+        "provenanceSha256": "6cae9eb675b8af6b8cf74f6f1e7aed537f15519dc3770fee51271eab8e54e426",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "La C votata mostra due ali separate, come richiesto per le proposte C angeliche."
+    },
+    {
+      "id": "aberrazione_oro_marmo_maggiore_solare",
+      "position": 5,
+      "letter": "A",
+      "originalName": "Aberrazione Maggiore d’Oro e Ossa Marmoree · Solare",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_maggiore_solare_desktop_v1.jpg",
+        "sha256": "382d6730efdf8800ccbc279bbb006a03ef94a7c26c745ea08c52592adccdd501",
+        "nativeSha256": "460ce5cde5f7515967fa37d20e7f43d3d4c1c31c70f504497c2b8755d1224213",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-194b4234-31a0-4ecd-b475-1f2cf83cdb95.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_maggiore_solare_desktop_v1.json",
+        "provenanceSha256": "5b008cd431a21bab24fdf0bb35c91d04f17177c94446179aa0eb40c5f8fcec90",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "aberrazione_oro_marmo_minore_angelica",
+      "position": 6,
+      "letter": "A",
+      "originalName": "Aberrazione Minore d’Oro e Ossa Marmoree · Angelica",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_minore_angelica_desktop_v1.jpg",
+        "sha256": "397f94593c74bb73734dcdd872455b536d9c26e1fabdd52dbc4788d484c7c720",
+        "nativeSha256": "c936cab729cccffe7fc762f91cc4c5bda4464e87464382eac43cccadb4b0cf5c",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-27592064-7ba5-4a80-9cbc-45da481e4ead.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_minore_angelica_desktop_v1.json",
+        "provenanceSha256": "cf431197255034ad2025b00a6c6706c4d4a6fd01196357d8c5d2ce467a7869c1",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "La A votata non mostra ali. Il requisito di due ali visibili riguardava le proposte C. L’anatomia colpibile del catalogo resta quella confermata."
+    },
+    {
+      "id": "aberrazione_oro_marmo_minore_solare",
+      "position": 7,
+      "letter": "A",
+      "originalName": "Aberrazione Minore d’Oro e Ossa Marmoree · Solare",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_minore_solare_desktop_v1.jpg",
+        "sha256": "54273440907c038f055369841645f0cd66130aff5cdb40bd6b47d70e30e57ea8",
+        "nativeSha256": "c6f4319f514bf2f0a66d323c0d086e7864138b693020890608ea2f3111716bb6",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-aad3be61-c591-4d2f-89c3-faba0b00e90b.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_minore_solare_desktop_v1.json",
+        "provenanceSha256": "855cbc9e8dead467a04cf80ce8a29c700ef254e3bd64cdfe38d82f96a0b10297",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "aberrazione_oro_marmo_superiore_angelica",
+      "position": 8,
+      "letter": "A",
+      "originalName": "Aberrazione Superiore d’Oro e Ossa Marmoree · Angelica",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_superiore_angelica_desktop_v1.jpg",
+        "sha256": "49cc3b6cbacc86aa4133a7dffb6c03f1784bd086f0dfb51fdae17554d1946180",
+        "nativeSha256": "76375026117797bd38e4513b5159e0b7a7b4354658474c720f3a9804f88da394",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-c240e796-2026-4cbd-a92e-d9ec8557ceac.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/aberrazione_oro_marmo_superiore_angelica_desktop_v1.json",
+        "provenanceSha256": "0d211a7fd8c0a40babd3e1ed1634d31241cc49bc0206e348281c5b5e55839af6",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "La A votata non mostra ali. Il requisito di due ali visibili riguardava le proposte C. L’anatomia colpibile del catalogo resta quella confermata."
+    },
+    {
+      "id": "aberrazione_oro_marmo_superiore_solare",
+      "position": 9,
+      "letter": "C",
+      "originalName": "Aberrazione Superiore d’Oro e Ossa Marmoree · Solare",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_aberrazione_oro_marmo_superiore_solare_v1.png",
+        "sha256": "1d8839ab41e39666c24e248452d937726a6fc446e20a949d01258b79348368f6",
+        "nativeSha256": "1d8839ab41e39666c24e248452d937726a6fc446e20a949d01258b79348368f6",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b0d0-9788-7122-81f8-dd575f4e46b7\\exec-37f16b8a-3527-4b7e-a9b7-dddb035e553d.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_aberrazione_oro_marmo_superiore_solare_v1.provenance.json",
+        "provenanceSha256": "138c8e20442fc42c1ffe095cd851ef709cb2f6cdc28959c8e607950013541fb1",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "agla_variante_corazzata",
+      "position": 10,
+      "letter": "A",
+      "originalName": "Agla Corazzata",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/agla_variante_corazzata_desktop_v1.jpg",
+        "sha256": "ba1d1d656f8ed8d7bf2a5e32ea218cf3fe0ee1b41c7187c6f1967520db72144e",
+        "nativeSha256": "9e3f6036ec023d52fae9622269ebaa790bbe81b4c96522f639f3de5302f16672",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-5429727a-3e50-4668-a3cf-603b84f054fb.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/agla_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "9b9e2d9ec9a4ade3feb25d3f3122b4fb9cded948a303873be07a74bc1f7893b4",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_isole_airone_delle_correnti_inverse",
+      "position": 11,
+      "letter": "A",
+      "originalName": "Airone delle correnti inverse",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_isole_airone_delle_correnti_inverse_desktop_v1.jpg",
+        "sha256": "316fb499ae6ae5577f55d77e947f9b4a319e391d5d54c23409e11b4b156c6b77",
+        "nativeSha256": "adda498390bc46540bdfda56007b06ab0f12e73b44c89dd95b97d8c0250b66f6",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_isole_airone_delle_correnti_inverse_desktop_v1_adda498390bc4654.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_isole_airone_delle_correnti_inverse_desktop_v1.json",
+        "provenanceSha256": "ceeaa560675257814cd707fd163cfd7fd9a0190f83e5a4509ee4de24c377d8fe",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_isole_airone_delle_correnti_inverse_variante_rituale",
+      "position": 12,
+      "letter": "A",
+      "originalName": "Airone delle correnti inverse Rituale",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_isole_airone_delle_correnti_inverse_variante_rituale_desktop_v1.jpg",
+        "sha256": "dca1a3bf32657985630594c369bda2a4fd12ae822a2b73afa2c9f8fe52e7bd63",
+        "nativeSha256": "4129908f0647b3897fbff6438d37ba38625c8ade2431f082cda13b03d7fda664",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_isole_airone_delle_correnti_inverse_variante_rituale_desktop_v1_4129908f0647b389.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_isole_airone_delle_correnti_inverse_variante_rituale_desktop_v1.json",
+        "provenanceSha256": "d19279be30b7a648d1e60df196c95dcebe0b44a540364d824601fbd09cb86513",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "ammasso_carne_ossa_errante_variante_rituale",
+      "position": 14,
+      "letter": "A",
+      "originalName": "Ammasso di Carne ed Ossa Rituale",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ammasso_carne_ossa_errante_variante_rituale_desktop_v1.jpg",
+        "sha256": "079b00e07339909a1e6938e4234e6e54a5a0608f2312eab9cd8382b0ba83aa51",
+        "nativeSha256": "022388d33989f83f9fdfba2c9ae39a632a963e2fee769e45bb810338287bf928",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-4c7c9874-5d86-4e8a-9a48-928daa89ebe5.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ammasso_carne_ossa_errante_variante_rituale_desktop_v1.json",
+        "provenanceSha256": "2d75ba3eb4f81b5a01656a1c3936ab753554f94aaece5e82c2a60d924bad6317",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "ammasso_pustoloso",
+      "position": 15,
+      "letter": "B",
+      "originalName": "Ammasso Pustoloso",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/ammasso_pustoloso_desktop_v2.jpg",
+        "sha256": "fd778f33ab4ad79dbdbd590c950eb2ddfbbaef34faaee8cae0595ff2d91fecaf",
+        "nativeSha256": "5784b821a87c75ffcdf13fdcf4e17d65a3df6a832ce871b793ecfdd8da66552b",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-f5257927-7b1b-4d47-a1e8-577cce670b2c.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/ammasso_pustoloso_desktop_v2.json",
+        "provenanceSha256": "1b649567384ed4010e6d05c857a4092fa209a9f0ba3ca9d84fb87bf3b9c2aaa0",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "angelo_fustigatore_variante_rituale",
+      "position": 16,
+      "letter": "A",
+      "originalName": "Angelo Fustigatore Rituale",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/angelo_fustigatore_variante_rituale_desktop_v1.jpg",
+        "sha256": "68d198f876452d4c950d69f33d966ff396117e569b3fbfe42cc391bf11a0d5e0",
+        "nativeSha256": "9dc2de6006a2bdb2dd779a8a6edf185aefee1d9e6f862c0b970d0fb53fb95376",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-1d571df9-c16d-468c-8291-0e673f6555b5.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/angelo_fustigatore_variante_rituale_desktop_v1.json",
+        "provenanceSha256": "9e83fa48af04c60304c790a3bda50de06926f77429fb23ff87f817d0c2e0965a",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "angelo_palpebra_sporca_variante_veterana",
+      "position": 17,
+      "letter": "A",
+      "originalName": "Angelo Sporco della Palpebra Veterana",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/angelo_palpebra_sporca_variante_veterana_desktop_v1.jpg",
+        "sha256": "cc878f016bc8c0bf5bed535357c5c12c27d4b95e0b789af4eafa1a4d98e7e461",
+        "nativeSha256": "57ce40285b507a9c159f3eff48376e33fff631e3a939c1643a546e24acfc90c3",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1a958-a6ac-7db0-8880-10503a3c3b33\\exec-efd98560-efba-42c5-8601-1123d3098ab1.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/angelo_palpebra_sporca_variante_veterana_desktop_v1.json",
+        "provenanceSha256": "2af5ad1ff7eaaff04eda0e933785a6e108c74c45cc82136fbf0e20c67efad2b9",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_postea_anguilla_del_trasformatore_variante_errante",
+      "position": 18,
+      "letter": "A",
+      "originalName": "Anguilla del trasformatore Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_anguilla_del_trasformatore_variante_errante_desktop_v1.jpg",
+        "sha256": "d54b75d355d901f1410e557af3fb2b50bca62a352f4ab85e5af19c35712988aa",
+        "nativeSha256": "1e7a28ad35a62a692378577f1ee99995249cef4bf33a8139dff309e9aace009c",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_postea_anguilla_del_trasformatore_variante_errante_desktop_v1_1e7a28ad35a62a69.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_anguilla_del_trasformatore_variante_errante_desktop_v1.json",
+        "provenanceSha256": "419f7cc84816aed8861567fa26ba34202d11af9ced98efcb62e194db3935c4de",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "base_affogato_01",
+      "position": 19,
+      "letter": "A",
+      "originalName": "Anguilla delle Campane",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/base_affogato_01_desktop_v1.jpg",
+        "sha256": "f410c616179b2a51e0038d583b8cd0eb9630ad0abe9e0e09a5e4380b666bd912",
+        "nativeSha256": "09dc5516393e2f17b0044704f30355fe49baa413e49ae747f2554603b4385574",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-cdc9df26-c9ae-4336-ab81-b3dedf8fa918.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/base_affogato_01_desktop_v1.json",
+        "provenanceSha256": "e75013e34c38123c7e2fd33c1c9b3ef30d236039d47ea03ff701017f2c3951c9",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_affogato_anguilla_delle_campane_sommerse_variante_rituale",
+      "position": 20,
+      "letter": "A",
+      "originalName": "Anguilla delle campane sommerse Rituale",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_affogato_anguilla_delle_campane_sommerse_variante_rituale_desktop_v1.jpg",
+        "sha256": "49780d5967493cd35f353fec0d10f4d6a9917777b0fe63729a666aca1c1c8c77",
+        "nativeSha256": "f9caabd550b3dd88939d71eb43f361776e3a8e1af4b77e81748aaf7f159ffa0b",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-6d3ee8d5-ac54-4ef1-9f66-98022c8e2d30.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_affogato_anguilla_delle_campane_sommerse_variante_rituale_desktop_v1.json",
+        "provenanceSha256": "f0781b72232c56b8259863cb4d2bf7dfa613b2e359becb96c2110acb0c443326",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_foresta_elementale_antico_dei_venti_elementi_variante_errante",
+      "position": 21,
+      "letter": "C",
+      "originalName": "Antico dei venti elementi Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_habitat_foresta_elementale_antico_dei_venti_elementi_variante_errante_v2.png",
+        "sha256": "6d343f89681524ad209cb5c78fa37ce9af1ca5394753ddc32fbcae02a6749358",
+        "nativeSha256": "6d343f89681524ad209cb5c78fa37ce9af1ca5394753ddc32fbcae02a6749358",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-093e61ec-1a6e-477f-880e-1814dcaa4b87.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_habitat_foresta_elementale_antico_dei_venti_elementi_variante_errante_v2.provenance.json",
+        "provenanceSha256": "ea27929ff1ecb1172315108a46429474ba780bc21cb10af649b294194888b8dd",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "Nella C votata si distinguono due ali a foglia e sei arti uncinati."
+    },
+    {
+      "id": "araldo_raggio_angelico_variante_errante",
+      "position": 22,
+      "letter": "A",
+      "originalName": "Araldo del Raggio Angelico Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/araldo_raggio_angelico_variante_errante_desktop_v1.jpg",
+        "sha256": "bdaba76682e968edafffac56faa28239fe139e5171da8b2f6212b22a5f48d689",
+        "nativeSha256": "e2c23082c98269c3bb7ca10aa135d8ffdf43806499e41da5c133ee2c2f2d8bde",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-1f92d407-fea9-4871-9f87-a7164d270a0e.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/araldo_raggio_angelico_variante_errante_desktop_v1.json",
+        "provenanceSha256": "0a14ee3f4a5c4689312650063ce4b9cc7b628760aa450f119b02b15b58f50ddc",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_oblio_araldo_del_silenzio_assoluto",
+      "position": 23,
+      "letter": "A",
+      "originalName": "Araldo del silenzio assoluto",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_oblio_araldo_del_silenzio_assoluto_desktop_v1.jpg",
+        "sha256": "75ec8f2b63f7005e429490168947c1eecfaae3780e09c57fe4595756caf4dd8d",
+        "nativeSha256": "2958d2111d6ec07b32b59058338d5b3f1dacd2ad09f6d9bb7d25ed3d11b42990",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_oblio_araldo_del_silenzio_assoluto_desktop_v1_2958d2111d6ec07b.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_oblio_araldo_del_silenzio_assoluto_desktop_v1.json",
+        "provenanceSha256": "36c364799b4791986ab6435b238864a37c1c2e46b20579b2c204c8667abf75c5",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_oblio_araldo_del_silenzio_assoluto_variante_errante",
+      "position": 24,
+      "letter": "C",
+      "originalName": "Araldo del silenzio assoluto Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_habitat_oblio_araldo_del_silenzio_assoluto_variante_errante_v2.png",
+        "sha256": "91026d512d2a2cfa74f697b5bb6342faa8e341a117eebc45579279b41bd32e7f",
+        "nativeSha256": "91026d512d2a2cfa74f697b5bb6342faa8e341a117eebc45579279b41bd32e7f",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-05bbb37d-3034-4b34-9b7c-806cb67215a2.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_habitat_oblio_araldo_del_silenzio_assoluto_variante_errante_v2.provenance.json",
+        "provenanceSha256": "522a87e663233b3eb93d78bc378a0727024dbe524fbf60b3673b2602782653c3",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_sacro_araldo_del_sole_ferito",
+      "position": 25,
+      "letter": "A",
+      "originalName": "Araldo del sole ferito",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_sacro_araldo_del_sole_ferito_desktop_v1.jpg",
+        "sha256": "fc40e411d3a7f28d30e82b43308735936622b658b00fb6e79ed40f1c7869dade",
+        "nativeSha256": "92f1379fc551171a56087833fd99774ab81891b2f5b8972fc6e28beb16145550",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_sacro_araldo_del_sole_ferito_desktop_v1_92f1379fc551171a.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_sacro_araldo_del_sole_ferito_desktop_v1.json",
+        "provenanceSha256": "9b85dbd2736f0a8e7d0bae1155f7b5c713ba16455526d1c76198aef907c4f07f",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_sacro_araldo_del_sole_ferito_variante_errante",
+      "position": 26,
+      "letter": "B",
+      "originalName": "Araldo del sole ferito Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_sacro_araldo_del_sole_ferito_variante_errante_desktop_v2.jpg",
+        "sha256": "9dedff87cc9afdaed6cfcc83bb89d3eb74523952d57f5a79a2ce291de28fe96f",
+        "nativeSha256": "0e033eee007a376bb3138111f8c0ae8d9613961005d838f5e03baab6e736a712",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_sacro_araldo_del_sole_ferito_variante_errante_desktop_v2_0e033eee007a376b.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_sacro_araldo_del_sole_ferito_variante_errante_desktop_v2.json",
+        "provenanceSha256": "1dba8a3d4f9a2772106ce6445d89471d638b258e6071d8c53a364e4057bea5fb",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_vero_inferno_araldo_della_cenere_eterna_variante_rituale",
+      "position": 27,
+      "letter": "B",
+      "originalName": "Araldo della cenere eterna Rituale",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_vero_inferno_araldo_della_cenere_eterna_variante_rituale_desktop_v2.jpg",
+        "sha256": "9194da8abb5a98cacd2ecfa4afba4cd23d83224639e2376f4ae5bb278d3416c3",
+        "nativeSha256": "be710f3df5e7ac2415408564ada1b7b425545e9b0ecaede381d672791f3161d1",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_vero_inferno_araldo_della_cenere_eterna_variante_rituale_desktop_v2_be710f3df5e7ac24.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_vero_inferno_araldo_della_cenere_eterna_variante_rituale_desktop_v2.json",
+        "provenanceSha256": "059de770fd40fc3e3d85fb0fb14144e7af27e7ee73c793b8c162ad7fd91509ca",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_shadow_hell_araldo_della_fenditura_nera",
+      "position": 28,
+      "letter": "A",
+      "originalName": "Araldo della fenditura nera",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_shadow_hell_araldo_della_fenditura_nera_desktop_v1.jpg",
+        "sha256": "9dfac36288298b753f989b38f847eff7674b22944c1680bc251b9d3f304a535e",
+        "nativeSha256": "52271a6382fea4d7e15786294122d23fb91aa6dc85f4f7c52cccbfb07ff7a5f5",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_shadow_hell_araldo_della_fenditura_nera_desktop_v1_52271a6382fea4d7.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_shadow_hell_araldo_della_fenditura_nera_desktop_v1.json",
+        "provenanceSha256": "1ab86fb8dd6fcc2a927fbad5c33f2c7486840bb0be881d85fa85c1fb3aa55b1a",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_shadow_hell_araldo_della_fenditura_nera_variante_veterana",
+      "position": 29,
+      "letter": "A",
+      "originalName": "Araldo della fenditura nera Veterana",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_shadow_hell_araldo_della_fenditura_nera_variante_veterana_desktop_v1.jpg",
+        "sha256": "71e8c9caf84b452f12a62da987bf7b84840c898e712666f8b4df1d76ac1fa280",
+        "nativeSha256": "484afd7d6cae37ba0067fe19c0de70e0c06e33e1414afc1cc53ea7049e5cb3a3",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_shadow_hell_araldo_della_fenditura_nera_variante_veterana_desktop_v1_484afd7d6cae37ba.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_shadow_hell_araldo_della_fenditura_nera_variante_veterana_desktop_v1.json",
+        "provenanceSha256": "71ae5890e292a64f35f8598864ec4e4da07853cb0f28716aa2316889c8284699",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_angelico_araldo_della_scala_luminosa",
+      "position": 30,
+      "letter": "A",
+      "originalName": "Araldo della scala luminosa",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_araldo_della_scala_luminosa_desktop_v1.jpg",
+        "sha256": "52c2dec38db4cf3e40582cddbb9c07cc9382cfd4b165074a82ad129ffc81538c",
+        "nativeSha256": "59cb06fd4eddb4468fda0626737b2de0349ea8fd8f4910835d0e02b97219f023",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_angelico_araldo_della_scala_luminosa_desktop_v1_59cb06fd4eddb446.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_araldo_della_scala_luminosa_desktop_v1.json",
+        "provenanceSha256": "3942175646803a9a33099a6b584e981ae46c8a4773106fb00a2ca2a2215f5afa",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_angelico_araldo_della_scala_luminosa_variante_veterana",
+      "position": 31,
+      "letter": "A",
+      "originalName": "Araldo della scala luminosa Veterana",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_araldo_della_scala_luminosa_variante_veterana_desktop_v1.jpg",
+        "sha256": "2abdb911f9cf7f6f3b960179b94cbc1faf60a99797663bd7156642d9e376bab4",
+        "nativeSha256": "830a3faaa74e05cb331cc7333789e10f773aa2d334a47a0705f73150ee910ab9",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_angelico_araldo_della_scala_luminosa_variante_veterana_desktop_v1_830a3faaa74e05cb.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_araldo_della_scala_luminosa_variante_veterana_desktop_v1.json",
+        "provenanceSha256": "c82a02bd8d759d79c518fdf990f8745ebee749d758df2b5a95c0630c9b8ab095",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_demoniaco_araldo_delle_cicatrici_ardenti",
+      "position": 32,
+      "letter": "A",
+      "originalName": "Araldo delle cicatrici ardenti",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_demoniaco_araldo_delle_cicatrici_ardenti_desktop_v1.jpg",
+        "sha256": "c73c805ec9a1b959a0c72ec9032559df50d972e5cd2e0d293d4c3f82b5b53db4",
+        "nativeSha256": "950d182c47af7a27b081330f208a65d25fdefc780056ab9ea0d3479a4e9a4f5f",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_demoniaco_araldo_delle_cicatrici_ardenti_desktop_v1_950d182c47af7a27.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_demoniaco_araldo_delle_cicatrici_ardenti_desktop_v1.json",
+        "provenanceSha256": "d756b7739da039a274ae738fe33ecb2b82419146a24f9a27f2a0399be6e7208e",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_demoniaco_araldo_delle_cicatrici_ardenti_variante_rituale",
+      "position": 33,
+      "letter": "B",
+      "originalName": "Araldo delle cicatrici ardenti Rituale",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_demoniaco_araldo_delle_cicatrici_ardenti_variante_rituale_desktop_v2.jpg",
+        "sha256": "d0d328eb655a08916941fa08e7285f6e9569bddcbbb849ac73989a6108de8e02",
+        "nativeSha256": "cf4d354ffda2434df56a82b67fbe5d75881139d342e59006f45c1e7a0a801ffa",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_demoniaco_araldo_delle_cicatrici_ardenti_variante_rituale_desktop_v2_cf4d354ffda2434d.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_demoniaco_araldo_delle_cicatrici_ardenti_variante_rituale_desktop_v2.json",
+        "provenanceSha256": "400a787a5f01448aeddd85bcdd790e53174ed2a376ff4b7dc0d2f54c522cfbce",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_diabolico_araldo_delle_corone_fuse",
+      "position": 34,
+      "letter": "A",
+      "originalName": "Araldo delle corone fuse",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_diabolico_araldo_delle_corone_fuse_desktop_v1.jpg",
+        "sha256": "2b0e7838b10c772a43501c0fcb79e1d8a61d4be35a3bfa61f9543429ebcab47b",
+        "nativeSha256": "f16ff21b5e9a6ec52619daa0deff2b2165fb86084e7433c0430b3d3ca3e4c1c6",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_diabolico_araldo_delle_corone_fuse_desktop_v1_f16ff21b5e9a6ec5.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_diabolico_araldo_delle_corone_fuse_desktop_v1.json",
+        "provenanceSha256": "68472b37bcd1b36f67f1c2401a68d9dbff48edf4e658dd575b9547b6195005fb",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_diabolico_araldo_delle_corone_fuse_variante_errante",
+      "position": 35,
+      "letter": "C",
+      "originalName": "Araldo delle corone fuse Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_habitat_diabolico_araldo_delle_corone_fuse_variante_errante_v1.png",
+        "sha256": "9db42634e97535f1d2656036f830858311e69a1c211be0234a2b453879ce96d4",
+        "nativeSha256": "9db42634e97535f1d2656036f830858311e69a1c211be0234a2b453879ce96d4",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-de2570b4-a262-4df8-9d73-68d5d6b5e7f1.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_habitat_diabolico_araldo_delle_corone_fuse_variante_errante_v1.provenance.json",
+        "provenanceSha256": "ebf00fbfc2714d0dda3c315373d444f38b089368d655c92c76aad76dfc95924c",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_morti_araldo_delle_tombe_aperte",
+      "position": 36,
+      "letter": "A",
+      "originalName": "Araldo delle tombe aperte",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_araldo_delle_tombe_aperte_desktop_v1.jpg",
+        "sha256": "af8f9149988e777338df6b5bd9440faad40da82c99c32b8844cd2af232a11a67",
+        "nativeSha256": "941d8b7ce5ee31d386d79122a66f9a82fffc409b9ef5b9faf57e028d3e4e5f1a",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_morti_araldo_delle_tombe_aperte_desktop_v1_941d8b7ce5ee31d3.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_araldo_delle_tombe_aperte_desktop_v1.json",
+        "provenanceSha256": "f5f86d365fa231d54eea2fc945abb3fe31a169a940add37f71cdeed866451cef",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "arcangelo",
+      "position": 38,
+      "letter": "B",
+      "originalName": "Arcangelo",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/arcangelo_desktop_v2.jpg",
+        "sha256": "d80d558932deeeccc7c88ab583747c531f58d703167d3c5f7e6a9d7443bfbf3a",
+        "nativeSha256": "c8512d4e04f65f799086fc0d03d453ed019cb9b7a7693bb79c09fc0ba2d10373",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-fb92f326-7ea9-4bed-902b-f904567a1ecb.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/arcangelo_desktop_v2.json",
+        "provenanceSha256": "e3dbea7f7294a873e1416a06018d090a0b6390ff8dd770c53581ea5525f2862a",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "Le ali sovrapposte nella vista di profilo non rendono leggibili tutte e quattro le ali del canone."
+    },
+    {
+      "id": "arcangelo_variante_errante",
+      "position": 39,
+      "letter": "B",
+      "originalName": "Arcangelo Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/arcangelo_variante_errante_desktop_v2.jpg",
+        "sha256": "753c2a4aef4528a10fbd62845c3cab5d883cf2a77cb2cc74c34b1d6cf4919317",
+        "nativeSha256": "290efccb9213bc8bf5db209db396fb3f3a728ae0cb2593739c14e22f37d14e65",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a17946-004a-78d1-93b9-7cf8449aef29\\exec-647a69f3-6b4f-443f-b38d-60f06cc99b75.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/arcangelo_variante_errante_desktop_v2.json",
+        "provenanceSha256": "ff9401ade860206e01c7d80665b17bde63ebd2e976dd1ccf52d0c46ae85c267c",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "Le ali sovrapposte nella vista di profilo non rendono leggibili tutte e quattro le ali del canone. Nella scena compare un animale sullo sfondo, privo di un ruolo assegnato."
+    },
+    {
+      "id": "habitat_postea_archivista_della_citt_errante_variante_corazzata",
+      "position": 40,
+      "letter": "A",
+      "originalName": "Archivista della città errante Corazzata",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_archivista_della_citt_errante_variante_corazzata_desktop_v1.jpg",
+        "sha256": "f459a1915c6ae25d96d994e3af826e11d0b2c2e0e9711b4d53844710cc712d9b",
+        "nativeSha256": "42a261aee6b33511be6f258dac4fcf826a73feb7a9f83fa9185268a116ed2996",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_postea_archivista_della_citt_errante_variante_corazzata_desktop_v1_42a261aee6b33511.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_archivista_della_citt_errante_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "57ff86138ba1b6f39ac6e310e00c074e17c6d81646524add7240c5f4127d9213",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "La A votata mostra sei zampe uncinate e un carapace privo di ali."
+    },
+    {
+      "id": "habitat_angelico_ariete_delle_porte_celesti",
+      "position": 41,
+      "letter": "A",
+      "originalName": "Ariete delle porte celesti",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_ariete_delle_porte_celesti_desktop_v1.jpg",
+        "sha256": "effdcac3ac25e7d8ed345ed53959fa739ff18cdf06f55d06ea6a873ddb1c72ad",
+        "nativeSha256": "037033997d9f94b31563ccd3416c63ffdc5dfc2d592b0c39910be7ffc15c59b7",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_angelico_ariete_delle_porte_celesti_desktop_v1_037033997d9f94b3.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_ariete_delle_porte_celesti_desktop_v1.json",
+        "provenanceSha256": "9be7dc03acb8d3bc91cdf08121eda0fe596fb7f1bd38ab914f9772c9049c972e",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "Il profilo delle ali ripiegate si sovrappone al carapace e il lato destro tocca il bordo. Il paio di ali previsto dal catalogo non è interamente leggibile."
+    },
+    {
+      "id": "habitat_angelico_ariete_delle_porte_celesti_variante_corazzata",
+      "position": 42,
+      "letter": "A",
+      "originalName": "Ariete delle porte celesti Corazzata",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_ariete_delle_porte_celesti_variante_corazzata_desktop_v1.jpg",
+        "sha256": "b73915edb1536ac771e38e8a8646d158a6687726b8be7b34126436e4fc90161d",
+        "nativeSha256": "4fffb0466119751c6edcbe415a565753b95c89400d69f9e23e63889a320b9b92",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_angelico_ariete_delle_porte_celesti_variante_corazzata_desktop_v1_4fffb0466119751c.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_angelico_ariete_delle_porte_celesti_variante_corazzata_desktop_v1.json",
+        "provenanceSha256": "a0aeda7db7a9e658acc34e420a85ddbe2f10df2db7f1b5d6d1d7c268d71e6b6a",
+        "sourceKind": "native_imagegen_original_verified"
+      },
+      "visualReviewNote": "Il profilo delle ali ripiegate si sovrappone al carapace e il lato destro tocca il bordo. Il paio di ali previsto dal catalogo non è interamente leggibile."
+    },
+    {
+      "id": "arpia_base_variante_veterana",
+      "position": 43,
+      "letter": "C",
+      "originalName": "Arpia Veterana",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_arpia_base_variante_veterana_v2.png",
+        "sha256": "d292115801338362acc39cf6928c97cd26e85ee42f6b33b3604db2ece4a7144e",
+        "nativeSha256": "d292115801338362acc39cf6928c97cd26e85ee42f6b33b3604db2ece4a7144e",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-73c2f1ff-aaa9-432b-92b8-a0903a7dffb5.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_arpia_base_variante_veterana_v2.provenance.json",
+        "provenanceSha256": "da8938982cc2a1796e506b52a8ee44f3b2502fb7fea9701d48d9302d159985c3",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_postea_automate_infermiere_guasto",
+      "position": 44,
+      "letter": "A",
+      "originalName": "Automate infermiere guasto",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_automate_infermiere_guasto_desktop_v1.jpg",
+        "sha256": "bacd8309e8a746828110cd1744785fa2320a90a1ee877077e357e5784ca4c8f2",
+        "nativeSha256": "17f7da96054b40ce1b83a7458f09bc88c40a43daac93ff4080ef4ad715af1173",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_postea_automate_infermiere_guasto_desktop_v1_17f7da96054b40ce.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_postea_automate_infermiere_guasto_desktop_v1.json",
+        "provenanceSha256": "76a079923595642e4533dc87a541caf01a4e6518d63517568da0717e55ff0082",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "baby_forest_demon_variante_rituale",
+      "position": 46,
+      "letter": "C",
+      "originalName": "Baby Forest Demon Rituale",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_baby_forest_demon_variante_rituale_v1.png",
+        "sha256": "f2fb53d9cb773c924ff3bfe592ba133b513e2598caf496ac634d046243cbe641",
+        "nativeSha256": "f2fb53d9cb773c924ff3bfe592ba133b513e2598caf496ac634d046243cbe641",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-ac935a61-78ef-4dad-be43-9c079309d096.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_baby_forest_demon_variante_rituale_v1.provenance.json",
+        "provenanceSha256": "0d75d79bab094ec0987cde5877404124614c37eefd76bb2a7f0e58ddedd1ae22",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_morti_bambola_di_ceneri",
+      "position": 47,
+      "letter": "A",
+      "originalName": "Bambola di ceneri",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_bambola_di_ceneri_desktop_v1.jpg",
+        "sha256": "401921bf6f8ea74fa240b2abf604ce220efd11678e89f3f3b31c8a5a7a2fd42c",
+        "nativeSha256": "a52a17025ee8fa9799febd485e82110c24eb2db35609719c539a746585dcab18",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_morti_bambola_di_ceneri_desktop_v1_a52a17025ee8fa97.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_bambola_di_ceneri_desktop_v1.json",
+        "provenanceSha256": "206bbda60bf15c84b4734548d013e0a8a26987e4c7fbffdedf967af98fa386e2",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_morti_bambola_di_ceneri_variante_corazzata",
+      "position": 48,
+      "letter": "B",
+      "originalName": "Bambola di ceneri Corazzata",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_bambola_di_ceneri_variante_corazzata_desktop_v2.jpg",
+        "sha256": "c1fc49be928d9ca441bd8125059806a6e34a0574a5f680e0195b961d00aabbfe",
+        "nativeSha256": "6a964deb9069f683775ee093c1b5b9530d1a4cce2ebf94dd0592c4e1b26bfc1e",
+        "source": "G:\\Oculum-Artwork\\originali_2026-11-05\\habitat_morti_bambola_di_ceneri_variante_corazzata_desktop_v2_6a964deb9069f683.png",
+        "provenanceFile": "output/artwork/alternative_mostri_2026-11-05/habitat_morti_bambola_di_ceneri_variante_corazzata_desktop_v2.json",
+        "provenanceSha256": "fdc86dd29ae960ef4bdc5003a0474197c2e09ccb05e5b5eb4184b5c59f1d5b1a",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "habitat_morti_becchino_dalle_mani_lunghe_variante_errante",
+      "position": 49,
+      "letter": "C",
+      "originalName": "Becchino dalle mani lunghe Errante",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_habitat_morti_becchino_dalle_mani_lunghe_variante_errante_v1.png",
+        "sha256": "026f3b212ad80ca06a10598e22374d30cb9f98ca1ddca87a64580e2683a1eeab",
+        "nativeSha256": "026f3b212ad80ca06a10598e22374d30cb9f98ca1ddca87a64580e2683a1eeab",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-2d11e19c-b691-4e9e-b459-76013d0be3aa.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_habitat_morti_becchino_dalle_mani_lunghe_variante_errante_v1.provenance.json",
+        "provenanceSha256": "2403aed759740579df6dc890c0933e00cbb7cbd24e0bf524bdb8429fe863b929",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    },
+    {
+      "id": "bestia_invisibile_del_vantaggio",
+      "position": 50,
+      "letter": "C",
+      "originalName": "Bestia Invisibile del Vantaggio",
+      "artisticStatus": "canonical_user_vote",
+      "artwork": {
+        "file": "output/artwork/terze_C_lotti_50_2026-11-07/C_bestia_invisibile_del_vantaggio_v1.png",
+        "sha256": "343eb59fece5f6c7309049dcf361680b6ce3226f6a0bf5dfa7df496525b1ff4c",
+        "nativeSha256": "343eb59fece5f6c7309049dcf361680b6ce3226f6a0bf5dfa7df496525b1ff4c",
+        "source": "C:\\Users\\michy\\.codex\\generated_images\\01a1b087-8538-7ca3-af16-dfdfe2ab5f47\\exec-b9fbd1c6-fa8f-40b5-ad83-b37b372df9fc.png",
+        "provenanceFile": "G:\\Oculum-Artwork\\proposte_C_2026-11-06\\C_bestia_invisibile_del_vantaggio_v1.provenance.json",
+        "provenanceSha256": "1df328070e2757a186feee73bbee074ae783a3b5f3ecc4c924e55df0d544e4b5",
+        "sourceKind": "native_imagegen_original_verified"
+      }
+    }
+  ],
+  "totalNativePngBytes": 94788645,
+  "status": "SOURCE_ONLY_NOT_COMPILED_OR_PUBLISHED"
+}

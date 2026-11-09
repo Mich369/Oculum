@@ -1520,8 +1520,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   Widget combatAbilityQuickBar({
     OculumCombatAbilityRole? onlyRole,
     ValueChanged<VoidCallback>? onChoose,
+    bool onlyOpens = false,
   }) {
-    synchronizeFightStartCooldowns();
+    if (!onlyOpens) synchronizeFightStartCooldowns();
     Set<OculumCombatAbilityRole> rolesFor(
       Iterable<OculumStructuredEffect> effects, {
       String explicitType = '',
@@ -1542,7 +1543,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             VoidCallback? details,
           })
         >[];
-    if (canActivatePosteaTransformArmor) {
+    if (!onlyOpens && canActivatePosteaTransformArmor) {
       entries.add((
         name: t('Trasformazione Postea', 'Postea transformation'),
         roles: {OculumCombatAbilityRole.support},
@@ -1556,7 +1557,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         use: activatePosteaTransformArmor,
       ));
     }
-    for (final shield in [true, false]) {
+    for (final shield in onlyOpens ? const <bool>[] : const [true, false]) {
       final shot = availableGunFollowup(shield);
       if (shot == null) continue;
       final name = shield ? 'Gun Shield' : 'Gunblade';
@@ -1577,7 +1578,8 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         use: () => unawaited(fireGunFollowup(shield)),
       ));
     }
-    if (!currentCombatIsActive() &&
+    if (!onlyOpens &&
+        !currentCombatIsActive() &&
         namedStructuredCooldowns().any(
           (entry) =>
               !entry.cooldown.startsReady &&
@@ -1595,7 +1597,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         use: () => unawaited(showFightStartPreparations()),
       ));
     }
-    if (onlyRole != null) {
+    if (!onlyOpens && onlyRole != null) {
       final attack = onlyRole == OculumCombatAbilityRole.attack;
       final support = onlyRole == OculumCombatAbilityRole.support;
       if (attack &&
@@ -1742,12 +1744,15 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         ));
       }
 
-      addTitleSkill(null);
-      for (final extra in title.skillExtra) {
-        addTitleSkill(extra);
+      if (!onlyOpens) {
+        addTitleSkill(null);
+        for (final extra in title.skillExtra) {
+          addTitleSkill(extra);
+        }
       }
       void addTitleOpen(TitleOpenEntry? extra) {
-        if (extra?.usedSinceLongRest ?? title.openUsedSinceLongRest) return;
+        final used = extra?.usedSinceLongRest ?? title.openUsedSinceLongRest;
+        if (!onlyOpens && used) return;
         final name = extra?.nome ?? title.openName;
         final description =
             '${extra?.descrizione ?? title.openDescription}\n${extra?.openBuff ?? title.openBuff}';
@@ -1760,6 +1765,13 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           return;
         }
         final active = extra?.attiva ?? title.openAttiva;
+        final ready =
+            !onlyOpens ||
+            OculumOpenLifecycleProgress.fromJson(
+              extra?.openLifecycle ?? title.openLifecycle,
+              legacyUsed: used,
+              legacyActive: active,
+            ).ready;
         entries.add((
           name:
               '${active ? 'Chiudi' : 'Apri'} ${name.trim().isEmpty ? title.nome : name} · Titolo',
@@ -1775,8 +1787,11 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           color: statFormulaColor('oculum'),
           enabled:
               title.evoluto &&
+              (active || ready) &&
               !oculumCombatTextHasUnresolvedRequirement('$description\n$skill'),
-          hint: '$description\n$skill',
+          hint: onlyOpens && !active && !ready
+              ? t('Recupero ai riposi', 'Recovers with rests')
+              : '$description\n$skill',
           details: () => showCombatAbilityDetails(
             name: name,
             description: '$description\n$skill',
@@ -1801,7 +1816,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         addTitleOpen(extra);
       }
     }
-    for (final skill in skills.where((s) => s.equipaggiata && !s.passiva)) {
+    for (final skill in skills.where(
+      (s) => !onlyOpens && s.equipaggiata && !s.passiva,
+    )) {
       skill.ensureForms();
       final forms = skill.forme
           .where((f) => !f.tipo.toLowerCase().contains('passiv'))
@@ -1874,7 +1891,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       ));
     }
     for (final art in arti) {
-      for (final skill in art.skills) {
+      for (final skill in onlyOpens ? const <ArtSkill>[] : art.skills) {
         final eligibleForms = [
           for (var f = 1; f <= artMaxLevel(art); f++)
             if (leggiNumero(livelloController) >=
@@ -1960,62 +1977,116 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           use: () => chooseCombatAbilityForm(art: art, artSkill: skill),
         ));
       }
-      if (art.openName.trim().isNotEmpty) {
+      if (art.openName.trim().isNotEmpty ||
+          onlyOpens &&
+              (art.openDescription.trim().isNotEmpty ||
+                  art.openBuff.trim().isNotEmpty ||
+                  art.openSkill.trim().isNotEmpty ||
+                  art.openDescriptionEffects.isNotEmpty ||
+                  art.openBuffEffects.isNotEmpty ||
+                  art.openSkillEffects.isNotEmpty)) {
+        final openName = onlyOpens
+            ? artOpenDisplayName(art, arti.indexOf(art))
+            : art.openName;
+        final openReady =
+            !onlyOpens ||
+            OculumOpenLifecycleProgress.fromJson(
+              art.openLifecycle,
+              legacyUsed: art.openUsedSinceLongRest,
+              legacyActive: art.openAttiva,
+            ).ready;
+        final descriptionEffects = oculumResolveAbilityEffects(
+          art.openDescriptionEffects,
+          art.openDescription,
+          subtraits: hiddenEyeStats,
+        );
+        final skillEffects = oculumResolveAbilityEffects(
+          art.openSkillEffects,
+          art.openSkill,
+          subtraits: hiddenEyeStats,
+        );
+        final buffEffects = oculumResolveAbilityEffects(
+          art.openBuffEffects,
+          art.openBuff,
+          subtraits: hiddenEyeStats,
+        );
         final roles = rolesFor([
-          ...oculumResolveAbilityEffects(
-            art.openDescriptionEffects,
-            art.openDescription,
-            subtraits: hiddenEyeStats,
-          ),
-          ...oculumResolveAbilityEffects(
-            art.openSkillEffects,
-            art.openSkill,
-            subtraits: hiddenEyeStats,
-          ),
-          ...oculumResolveAbilityEffects(
-            art.openBuffEffects,
-            art.openBuff,
-            subtraits: hiddenEyeStats,
-          ),
+          ...descriptionEffects,
+          ...skillEffects,
+          ...buffEffects,
         ], explicitType: art.openSkillType);
-        if (!art.openUsedSinceLongRest &&
-            (onlyRole == null ||
-                art.openAttiva ||
-                ((art.openDescriptionCooldown?.ready ?? true) &&
-                    (art.openBuffCooldown?.ready ?? true)))) {
+        final cooldown = art.openDescriptionCooldown?.ready == false
+            ? art.openDescriptionCooldown
+            : art.openBuffCooldown?.ready == false
+            ? art.openBuffCooldown
+            : null;
+        if (onlyOpens ||
+            (!art.openUsedSinceLongRest &&
+                (onlyRole == null ||
+                    art.openAttiva ||
+                    ((art.openDescriptionCooldown?.ready ?? true) &&
+                        (art.openBuffCooldown?.ready ?? true))))) {
           entries.add((
-            name: '${art.openAttiva ? 'Chiudi' : 'Apri'} ${art.openName}',
+            name: '${art.openAttiva ? 'Chiudi' : 'Apri'} $openName',
             roles: roles,
             color: eyePupilGlowColor,
             enabled:
                 artOpenSbloccata(art) &&
-                art.inUso &&
-                art.switchPhase.isEmpty &&
-                (art.openDescriptionCooldown?.ready ?? true) &&
-                (art.openBuffCooldown?.ready ?? true) &&
-                (oculumRecognizedArtKind(art) == 'emblem' ||
-                    oculumArtCanActivate(
-                      art.integritaCorrente,
-                      cost: artUseCost(oculumArtActivationCost),
-                    )),
-            hint: 'Open · usa requisiti e costi originali',
+                ((onlyOpens && art.openAttiva) ||
+                    (openReady &&
+                        art.inUso &&
+                        art.switchPhase.isEmpty &&
+                        cooldown == null &&
+                        (oculumRecognizedArtKind(art) == 'emblem' ||
+                            oculumArtCanActivate(
+                              art.integritaCorrente,
+                              cost: artUseCost(oculumArtActivationCost),
+                            )))),
+            hint: !onlyOpens
+                ? 'Open · usa requisiti e costi originali'
+                : art.openAttiva
+                ? t('Open Buff attivo', 'Open Buff active')
+                : !openReady
+                ? t('Recupero ai riposi', 'Recovers with rests')
+                : cooldown != null
+                ? 'Recupero · ${cooldown.remaining} ${cooldown.unit}'
+                : '${art.nome} · Open e Open Buff',
             use: () => usaOpenArt(arti.indexOf(art)),
-            details: null,
+            details: onlyOpens
+                ? () => showCombatAbilityDetails(
+                    name: openName,
+                    description: '${art.openDescription}\n${art.openBuff}',
+                    color: eyePupilGlowColor,
+                    effects: [...descriptionEffects, ...buffEffects],
+                    locked: !artOpenSbloccata(art),
+                  )
+                : null,
           ));
         }
         if ((art.openSkill.trim().isNotEmpty ||
                 art.openSkillEffects.isNotEmpty) &&
             (onlyRole == null || (art.openSkillCooldown?.ready ?? true))) {
           entries.add((
-            name: '${art.openName} · Skill Open',
+            name: '$openName · Skill Open',
             roles: roles,
             color: eyePupilGlowColor,
             enabled:
                 artOpenSbloccata(art) &&
+                (!onlyOpens || art.inUso) &&
                 (art.openSkillCooldown?.ready ?? true) &&
                 combatAbilityCostAvailable(null, art.openSkill),
-            hint: 'Skill Open · cooldown originale',
-            details: null,
+            hint: onlyOpens && art.openSkillCooldown?.ready == false
+                ? 'Recupero · ${art.openSkillCooldown!.remaining} ${art.openSkillCooldown!.unit}'
+                : 'Skill Open · cooldown originale',
+            details: onlyOpens
+                ? () => showCombatAbilityDetails(
+                    name: '$openName · Skill Open',
+                    description: art.openSkill,
+                    color: eyePupilGlowColor,
+                    effects: skillEffects,
+                    locked: !artOpenSbloccata(art),
+                  )
+                : null,
             use: () => usaSkillOpenMostro(arti.indexOf(art)),
           ));
         }
@@ -2023,6 +2094,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
     for (final item in inventario.where(
       (item) =>
+          !onlyOpens &&
           item.quantita > 0 &&
           item.craftData['scroll'] is! Map &&
           isMerchantConsumable(item),
@@ -2040,7 +2112,8 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       ));
     }
     for (final item in inventario.where(
-      (item) => item.quantita > 0 && item.craftData['scroll'] is Map,
+      (item) =>
+          !onlyOpens && item.quantita > 0 && item.craftData['scroll'] is Map,
     )) {
       final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
       final effects = oculumScrollCombatEffects(scroll);
@@ -2073,16 +2146,23 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
     for (final item in inventario.where(
       (i) =>
-          i.equipaggiata &&
+          (onlyOpens || i.equipaggiata) &&
           i.quantita > 0 &&
-          (i.ability != null || i.titleAbility != null),
+          (i.titleAbility != null ||
+              (onlyOpens
+                  ? i.titleExtraAbilities.isNotEmpty
+                  : i.ability != null)),
     )) {
-      for (final ability in oculumAllEquipmentAbilities(item)) {
-        if (oculumItemTitleAbilities(item).contains(ability) &&
+      for (final ability
+          in onlyOpens
+              ? oculumItemTitleAbilities(item)
+              : oculumAllEquipmentAbilities(item)) {
+        if (!onlyOpens &&
+            oculumItemTitleAbilities(item).contains(ability) &&
             !oculumItemTitleEvolutionReady(item)) {
           continue;
         }
-        ability.ensureForms();
+        if (!onlyOpens) ability.ensureForms();
         for (final (index, form) in ability.forme.indexed) {
           if (onlyRole != null && form.cooldownStrutturato?.ready == false) {
             continue;
@@ -2104,15 +2184,25 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             itemLevel: oculumEquipmentSkillItemLevel(item, form),
             formLevel: form.livello,
           );
+          final recoveringOpen =
+              onlyOpens &&
+              index == 0 &&
+              !itemOpenLifecycle(item, ability, persist: false).ready;
           entries.add((
-            name: '${ability.nome} ${index + 1} · ${item.nome}',
+            name: onlyOpens
+                ? '${form.nome} · ${item.nome}'
+                : '${ability.nome} ${index + 1} · ${item.nome}',
             roles: roles,
             color: combatAbilityResourceColor([
               form.costoStrutturato?.resource ?? form.costo,
             ]),
             enabled:
                 canEquipInventoryItem(item) &&
-                itemTitleFormAvailable(item, form) &&
+                (onlyOpens
+                    ? item.equipaggiata &&
+                          oculumItemTitleEvolutionReady(item) &&
+                          !recoveringOpen
+                    : itemTitleFormAvailable(item, form)) &&
                 combatNaturalFormAvailable(form) &&
                 (form.cooldownStrutturato?.ready ?? true) &&
                 oculumEquipmentSkillLevelAvailable(
@@ -2120,8 +2210,9 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                   itemLevel: oculumEquipmentSkillItemLevel(item, form),
                   formLevel: form.livello,
                 ),
-            hint:
-                '${itemSkillLevelReady ? '' : 'Richiede livello $requiredEquipmentLevel dell’oggetto/personaggio.\n'}${item.titleAbility?.forme.contains(form) == true ? '${oculumItemTitleSummary(item)}\n' : ''}${form.descrizione}',
+            hint: recoveringOpen
+                ? t('Recupero ai riposi', 'Recovers with rests')
+                : '${itemSkillLevelReady ? '' : 'Richiede livello $requiredEquipmentLevel dell’oggetto/personaggio.\n'}${item.titleAbility?.forme.contains(form) == true ? '${oculumItemTitleSummary(item)}\n' : ''}${form.descrizione}',
             details: () => showCombatAbilityDetails(
               name: '${ability.nome} ${index + 1}',
               description: form.descrizione,
@@ -2160,7 +2251,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
               item.nome.toLowerCase().contains('armatura del patalpa') &&
               item.quantita > 0,
         );
-    if (hasPatalpaSummon) {
+    if (!onlyOpens && hasPatalpaSummon) {
       final fightsRemaining = max(
         0,
         readIntValue(activeSheet['patalpaSummonCooldownFightsRemaining']),
@@ -2175,6 +2266,35 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         details: null,
         use: restorePatalpaSummonCooldown,
       ));
+    }
+    if (onlyOpens) {
+      if (entries.isEmpty) return const SizedBox.shrink();
+      final canAct =
+          _stat35CanEdit &&
+          (!currentCombatIsActive() ||
+              controlsOnlineCombatSheet(sheetTagAt(schedaCorrente)));
+      return Column(
+        children: [
+          for (final entry in entries)
+            ListTile(
+              leading: Icon(Icons.auto_awesome, color: entry.color),
+              title: Text(entry.name),
+              subtitle: Text(
+                '${entry.enabled && canAct ? t('Disponibile · ', 'Available · ') : ''}${entry.hint.trim()}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: entry.enabled && canAct ? entry.use : null,
+              trailing: entry.details == null
+                  ? null
+                  : IconButton(
+                      tooltip: t('Dettagli', 'Details'),
+                      onPressed: entry.details,
+                      icon: const Icon(Icons.info_outline),
+                    ),
+            ),
+        ],
+      );
     }
     if (entries.isEmpty) return const SizedBox.shrink();
     Widget buildOptions(BuildContext context, BoxConstraints constraints) {

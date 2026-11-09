@@ -2,6 +2,12 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Open nella pagina Skill
+
+Nella pagina Skill, apri la sezione Open per consultare le Open della scheda, le Skill associate e lo stato del recupero. I comandi seguono gli sblocchi, i costi e la turnistica già in uso. L’attivazione di una Open applica anche il suo Open Buff. Una Skill Open può essere usata anche quando la propria Open è spenta, rispettando i suoi requisiti e il suo recupero.
+
+Quando un mostro viene ritirato dal catalogo attivo, le schede già create conservano nome personalizzato, dati, Skill e Open. I vecchi identificativi restano riconosciuti.
+
 ## Scudi infranti e usura dell’equipaggiamento
 
 Quando lo Scudo normale si infrange, Volontà e Materia effettive scendono di 2. Il malus cala di 1 a ogni turno personale. Una nuova rottura riparte da −2. Ricevere un altro Scudo normale lo annulla. Lo Scudo Oculum infranto dà −3 al prossimo tiro difensivo. Puoi selezionare i non alleati vicini per infliggere a ciascuno 10 + 5 × livello del portatore in Danni Oculum, soggetti alle protezioni.
