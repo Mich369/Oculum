@@ -1,11 +1,8 @@
-# Artwork dei mostri più leggero
+# Gambio di Orea Zalira e volo
 
-- 538 sfondi e reliquie in WebP senza perdita. Gli asset interessati pesano il 30,6% in meno, con i pixel originali verificati.
-- Le schede conservano immagini personalizzate, temi e riferimenti già salvati. I PNG originali restano nel progetto.
-
-- 47 desktop votati, 44 nomi aggiornati e tre varianti ritirate dal catalogo attivo. Le schede esistenti conservano dati, Skill e Open.
-- La pagina Skill ha una sezione Open con i comandi separati dalle Skill ordinarie e lo stato dei recuperi.
-
-- Il menu web mostra i pacchetti delle piattaforme, con Windows normale e Windows Test separati e l’APK firmato per Android.
+- Aggiunto Gambio al Monster Book di Orea Zalira. Il cucciolo ha il pelo color pesca e le orecchie a foglia.
+- Lo puoi generare come mostro neutrale di livello 1 con la sua Spintarella. Scheda e tecniche sono modificabili.
+- Le ali a sparizione si manifestano gratuitamente. Tre turni personali di volo per riposo e volo senza limite da 50 Riflessi.
+- Un volatore esperto può portare con sé un alleato durante la fuga. Un critico nemico valido sul volatore fa cadere entrambi.
 
 [Log cumulativo](REGISTRO_AGGIORNAMENTI.md)

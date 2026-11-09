@@ -841,6 +841,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
   }
 
   void syncPawnPresence() {
+    scheduleWingEscapeFallDrain();
     if (realtimeIsMasterRole) {
       sendPawnSnapshot();
       return;
@@ -1634,6 +1635,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         notifyActiveSheetSummaryChanged();
         programmaSalvataggio();
       }
+      scheduleWingEscapeFallDrain();
     }
   }
 

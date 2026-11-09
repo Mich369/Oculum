@@ -32,6 +32,8 @@ bool oculumEscapeAttackDieIsValid(Map packet) {
   return faces == 16 && natural != null && natural >= 1 && natural <= 16;
 }
 
+final _wingEscapeFallDrainActive = Expando<bool>();
+
 extension _OculumEscape on _OculumHomePageState {
   bool get escapeUsesMasterTokens =>
       escapeAuthority && _usesLocalMasterInitiative;
@@ -356,18 +358,43 @@ extension _OculumEscape on _OculumHomePageState {
     }
     final escapeId = '${request['escapeReactionOf'] ?? ''}';
     final record = onlineCombatRequests[escapeId];
-    if (record != null && record['kind'] == 'escape') {
+    final hit = request['outcome'] != OculumAttackOutcome.avoided.name;
+    final critical =
+        request['criticalShieldProtected'] != true &&
+        (request['forcedCritical'] == true ||
+            oculumAttackIsCritical(
+              readIntValue(request['attack']),
+              readIntValue(request['defense']),
+            ));
+    final hostile =
+        escapeCombatSide('${request['sourceTag']}') !=
+        escapeCombatSide('${request['targetTag']}');
+    if (escapeId.isEmpty &&
+        hit &&
+        critical &&
+        hostile &&
+        request['scope'] == permissionScope &&
+        request['encounterId'] == escapeEventEncounterId) {
+      final paired = onlineCombatRequests.values
+          .where(
+            (r) =>
+                r['kind'] == 'escape' &&
+                r['status'] == 'pending' &&
+                r['sourceTag'] == request['targetTag'] &&
+                r['flightPassengerAuthorized'] == true &&
+                _escapeCurrentPassenger(r, carrierFalling: true) != null,
+          )
+          .firstOrNull;
+      paired?.putIfAbsent('flightHostileCriticalId', () => id);
+    }
+    if (record != null &&
+        record['kind'] == 'escape' &&
+        record['status'] == 'pending' &&
+        record['sourceTag'] == request['targetTag'] &&
+        escapeRequestIsCurrent(record)) {
       final answers = Map<String, dynamic>.from(
         record['answers'] as Map? ?? {},
       );
-      final hit = request['outcome'] != OculumAttackOutcome.avoided.name;
-      final critical =
-          request['criticalShieldProtected'] != true &&
-          (request['forcedCritical'] == true ||
-              oculumAttackIsCritical(
-                readIntValue(request['attack']),
-                readIntValue(request['defense']),
-              ));
       final precision =
           '${request['choice']}'.startsWith('precisione') &&
           oculumEscapePrecisionStops(
@@ -379,6 +406,7 @@ extension _OculumEscape on _OculumHomePageState {
         'pending': false,
         'attackId': id,
         'stops': hit && (critical || precision),
+        if (hit && critical && hostile) 'criticalInterception': true,
       };
       record['answers'] = answers;
     }
@@ -453,15 +481,153 @@ extension _OculumEscape on _OculumHomePageState {
     record['noticeRevision'] = 1;
   }
 
-  Future<void> attemptEscape() async {
+  bool _escapeFlightUnverified(Map<String, dynamic> record) =>
+      record['passengerTag'] != null &&
+      record['flightPassengerAuthorized'] != true;
+
+  void _publishEscapeNotice(Map<String, dynamic> record) {
+    final revision = readIntValue(record['noticeRevision']) + 1;
+    if (_escapeFlightUnverified(record)) {
+      if (_escapeCurrentPassenger(record) != null &&
+          wingCarryEligibleForEscapeTag('${record['sourceTag']}')) {
+        record['flightPassengerAuthorized'] = true;
+      }
+    }
+    if (_escapeFlightUnverified(record)) {
+      record['noticed'] = <String, bool>{};
+    } else {
+      prepareEscapeNotice(record);
+    }
+    record['noticeRevision'] = revision;
+    unawaited(emitEscape({...record, 'stage': 'notice'}));
+  }
+
+  bool _escapeCanCarryPassenger(
+    String carrier,
+    String passenger, {
+    String? currentOffer,
+    bool carrierFalling = false,
+  }) {
+    final source = escapeToken(carrier);
+    final target = escapeToken(passenger);
+    bool available(Map<String, dynamic>? token) =>
+        token != null &&
+        token['outsideFight'] != true &&
+        token['encounterObject'] != true &&
+        !const {'dead', 'downed', 'fled', 'expired'}.contains(token['status']);
+    if (carrier == passenger ||
+        (carrierFalling
+            ? source == null || source['outsideFight'] == true
+            : !available(source)) ||
+        !available(target) ||
+        escapeCombatSide(carrier) != escapeCombatSide(passenger)) {
+      return false;
+    }
+    return !onlineCombatRequests.values.any(
+      (r) =>
+          r['kind'] == 'escape' &&
+          r['status'] == 'pending' &&
+          r['id'] != currentOffer &&
+          r['scope'] == permissionScope &&
+          r['encounterId'] == escapeEventEncounterId &&
+          escapeRequestIsCurrent(r) &&
+          (r['sourceTag'] == passenger ||
+              r['flightPassengerAuthorized'] == true &&
+                  (r['passengerTag'] == passenger ||
+                      r['passengerTag'] == carrier)),
+    );
+  }
+
+  String? _escapeCurrentPassenger(
+    Map<String, dynamic> record, {
+    bool carrierFalling = false,
+  }) {
+    final carrier = '${record['sourceTag'] ?? ''}';
+    final passenger = record['passengerTag'];
+    if (passenger is! String ||
+        passenger.isEmpty ||
+        record['scope'] != permissionScope ||
+        record['encounterId'] != escapeEventEncounterId ||
+        '${record['fightInstanceId'] ?? ''}' !=
+            '${escapeToken(carrier)?['fightInstanceId'] ?? ''}' ||
+        '${record['passengerFightInstanceId'] ?? ''}' !=
+            '${escapeToken(passenger)?['fightInstanceId'] ?? ''}' ||
+        !_escapeCanCarryPassenger(
+          carrier,
+          passenger,
+          currentOffer: '${record['id']}',
+          carrierFalling: carrierFalling,
+        )) {
+      return null;
+    }
+    return passenger;
+  }
+
+  Future<String?> _chooseEscapePassenger(
+    String carrier, {
+    bool allowSolo = false,
+  }) {
+    final candidates = escapeCombatTokens()
+        .where(
+          (token) =>
+              _escapeCanCarryPassenger(carrier, onlineCombatTokenTag(token)),
+        )
+        .toList();
+    if (candidates.isEmpty) return Future.value(allowSolo ? '' : null);
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Fuga in volo · scegli un compagno'),
+        children: [
+          if (allowSolo)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext, ''),
+              child: const Text('Fuga da solo'),
+            ),
+          for (final token in candidates)
+            SimpleDialogOption(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, onlineCombatTokenTag(token)),
+              child: Text(oculumReferenceEncounterTokenName(token)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> attemptWingEscapeWithPassenger() async {
+    alignCombatEncounterForRoll();
+    final source = sheetTagAt(schedaCorrente);
+    final scope = permissionScope;
+    final encounter = escapeEventEncounterId;
+    final passenger = await _chooseEscapePassenger(source);
+    if (!mounted ||
+        passenger == null ||
+        source != sheetTagAt(schedaCorrente) ||
+        scope != permissionScope ||
+        encounter != escapeEventEncounterId) {
+      return;
+    }
+    await attemptEscape(passengerTag: passenger);
+  }
+
+  Future<void> attemptEscape({String? passengerTag}) async {
     alignCombatEncounterForRoll();
     if (!currentCombatIsActive() || outsideFight) return;
     final tag = sheetTagAt(schedaCorrente), origin = currentSheetScrollId();
+    final scope = permissionScope, encounter = escapeEventEncounterId;
+    if (passengerTag != null &&
+        (!wingCarryEligibleForEscapeTag(tag) ||
+            !_escapeCanCarryPassenger(tag, passengerTag))) {
+      return;
+    }
     if (onlineCombatRequests.values.any(
       (r) =>
           r['kind'] == 'escape' &&
           r['status'] == 'pending' &&
-          r['sourceTag'] == tag &&
+          (r['sourceTag'] == tag ||
+              r['flightPassengerAuthorized'] == true &&
+                  r['passengerTag'] == tag) &&
           escapeRequestIsCurrent(r) &&
           r['encounterId'] == onlineCombatEncounterId,
     )) {
@@ -469,6 +635,14 @@ extension _OculumEscape on _OculumHomePageState {
     }
     if (!await spendCombatRollResource()) return;
     if (!mounted || currentSheetScrollId() != origin) return;
+    if (passengerTag != null &&
+        (scope != permissionScope ||
+            encounter != escapeEventEncounterId ||
+            !wingCarryEligibleForEscapeTag(tag) ||
+            !_escapeCanCarryPassenger(tag, passengerTag))) {
+      aggiungiLog('[FUGA] La fuga in volo non è più disponibile.');
+      return;
+    }
     final reflex = escapeSubtraitAt(schedaCorrente, 'riflessi'),
         veil = escapeSubtraitAt(schedaCorrente, 'velo');
     final movement = movimento(), stealth = veil > reflex;
@@ -485,6 +659,12 @@ extension _OculumEscape on _OculumHomePageState {
           'status': 'pending',
           'sourceTag': tag,
           'fightInstanceId': escapeToken(tag)?['fightInstanceId'],
+          if (passengerTag != null) ...{
+            'passengerTag': passengerTag,
+            'passengerFightInstanceId': escapeToken(
+              passengerTag,
+            )?['fightInstanceId'],
+          },
           'targetTag': tag,
           'sourceName': realtimeDisplayName(),
           'sourceSide': combatScoutSide(tag),
@@ -498,7 +678,13 @@ extension _OculumEscape on _OculumHomePageState {
         };
       },
     );
-    if (record == null || !mounted || currentSheetScrollId() != origin) return;
+    if (record == null ||
+        !mounted ||
+        currentSheetScrollId() != origin ||
+        scope != permissionScope ||
+        encounter != escapeEventEncounterId) {
+      return;
+    }
     attachPendingCombatTurnResources(record!);
     await emitEscape(record!);
     aggiungiLog(
@@ -544,11 +730,34 @@ extension _OculumEscape on _OculumHomePageState {
         (r) =>
             r['kind'] == 'escape' &&
             r['status'] == 'pending' &&
-            r['sourceTag'] == actor &&
+            (r['sourceTag'] == actor ||
+                r['flightPassengerAuthorized'] == true &&
+                    r['passengerTag'] == actor) &&
             r['encounterId'] == encounterId &&
             escapeRequestIsCurrent(r),
       )) {
         return;
+      }
+      String? flightPassenger;
+      if (wingCarryEligibleForEscapeTag(actor)) {
+        final fight = token['fightInstanceId'];
+        final scope = permissionScope;
+        final choice = await _chooseEscapePassenger(actor, allowSolo: true);
+        if (!mounted ||
+            choice == null ||
+            scope != permissionScope ||
+            encounterId != escapeEventEncounterId ||
+            !identical(escapeToken(actor), token) ||
+            fight != token['fightInstanceId']) {
+          return;
+        }
+        if (choice.isNotEmpty) {
+          if (!wingCarryEligibleForEscapeTag(actor) ||
+              !_escapeCanCarryPassenger(actor, choice)) {
+            return;
+          }
+          flightPassenger = choice;
+        }
       }
       final index = localSheetIndexForOculumTag(actor);
       int subtrait(String id, String alias) => index >= 0
@@ -622,6 +831,12 @@ extension _OculumEscape on _OculumHomePageState {
         'targetTag': actor,
         'encounterId': encounterId,
         'fightInstanceId': token['fightInstanceId'],
+        if (flightPassenger != null) ...{
+          'passengerTag': flightPassenger,
+          'passengerFightInstanceId': escapeToken(
+            flightPassenger,
+          )?['fightInstanceId'],
+        },
         'sourceName': oculumReferenceEncounterTokenName(token),
         'sourceSide': token['side'] ?? 'enemy',
         'natural': natural,
@@ -1053,6 +1268,10 @@ extension _OculumEscape on _OculumHomePageState {
       return;
     }
     if (!escapeRequestIsCurrent(record)) return;
+    if (_escapeFlightUnverified(record)) {
+      _publishEscapeNotice(record);
+      return;
+    }
     final answers = (record['answers'] as Map? ?? {}).values
         .whereType<Map>()
         .toList();
@@ -1078,7 +1297,9 @@ extension _OculumEscape on _OculumHomePageState {
               ).compareTo(readIntValue(a['movement']));
       });
     final best = blocks.firstOrNull;
+    final regularCritical = '${record['flightHostileCriticalId'] ?? ''}';
     final success =
+        regularCritical.isEmpty &&
         !answers.any((a) => a['stops'] == true) &&
         (best == null ||
             oculumEscapeWins(
@@ -1087,7 +1308,25 @@ extension _OculumEscape on _OculumHomePageState {
               readIntValue(record['movement']),
               readIntValue(best['movement']),
             ));
-    await emitEscape({
+    final interception = answers
+        .where((a) => a['criticalInterception'] == true)
+        .firstOrNull;
+    final criticalAttack = regularCritical.isNotEmpty
+        ? regularCritical
+        : interception?['attackId'] as String?;
+    final passenger =
+        criticalAttack != null ||
+            wingCarryEligibleForEscapeTag('${record['sourceTag']}')
+        ? _escapeCurrentPassenger(
+            record,
+            carrierFalling: criticalAttack != null,
+          )
+        : null;
+    if (record['passengerTag'] != null && passenger == null) {
+      await _cancelPairedEscape(record);
+      return;
+    }
+    final result = <String, dynamic>{
       'id': 'escape-result:${record['id']}',
       'escapeId': record['id'],
       'stage': 'result',
@@ -1096,7 +1335,281 @@ extension _OculumEscape on _OculumHomePageState {
       'success': success,
       'critical': readIntValue(record['natural']) == 20,
       'total': readIntValue(record['total']) + friendlyHelp,
+      'passengerTag': ?passenger,
+      if (passenger != null && criticalAttack != null) ...{
+        'flightFallAttackId': criticalAttack,
+        'flightFallCarrierRoll': 1 + Random.secure().nextInt(60),
+        'flightFallPassengerRoll': 1 + Random.secure().nextInt(60),
+      },
+    };
+    if (passenger == null || realtimeService?.isConnected != true) {
+      await emitEscape(result);
+      return;
+    }
+    // A failed send leaves the same resolution pending with the same rolls.
+    // No party movement or damage is applied until transport confirms it.
+    final draft = record.putIfAbsent('flightResultDraft', () => result);
+    final envelope = permissionEnvelope({
+      ...Map<String, dynamic>.from(draft as Map),
+      'escapeEvent': true,
+      'encounterId': encounterId,
     });
+    programmaSalvataggio();
+    final delivered = await realtimeService?.sendCombatEvent(
+      'combat_scout',
+      envelope,
+    );
+    if (!mounted || envelope['scope'] != permissionScope) return;
+    if (delivered != true) {
+      aggiungiLog('[FUGA] Invio della fuga in volo non confermato. Riprova.');
+      return;
+    }
+    receiveEscapeEvent(envelope, locallyAuthored: true);
+  }
+
+  Future<void> _cancelPairedEscape(Map<String, dynamic> record) async {
+    if (!escapeAuthority ||
+        record['status'] != 'pending' ||
+        record['passengerTag'] == null ||
+        record['scope'] != permissionScope ||
+        record['encounterId'] != escapeEventEncounterId ||
+        !escapeRequestIsCurrent(record)) {
+      return;
+    }
+    await emitEscape({
+      'id': 'escape-result:${record['id']}',
+      'escapeId': record['id'],
+      'stage': 'result',
+      'sourceTag': record['sourceTag'],
+      'targetTag': record['sourceTag'],
+      'success': false,
+      'flightCancelled': true,
+    });
+  }
+
+  Future<void> _retryPairedEscape(Map<String, dynamic> record) => emitEscape({
+    'id': '${record['id']}:flight-check:${record['noticeRevision']}',
+    'escapeId': record['id'],
+    'stage': 'flight_retry',
+    'sourceTag': record['sourceTag'],
+    'targetTag': record['sourceTag'],
+    'noticeRevision': record['noticeRevision'],
+  });
+
+  void _groundPairedEscape(String carrier, String passenger) {
+    if (!escapeAuthority || vttShowingRemoteScene) return;
+    final carrierToken = escapeToken(carrier);
+    final passengerToken = escapeToken(passenger);
+    if (carrierToken == null || passengerToken == null) return;
+    final source = localMapTokenForInitiativeToken(carrierToken);
+    final target = localMapTokenForInitiativeToken(passengerToken);
+    if (source == null && target == null) return;
+    if (source != null) source['elevationMeters'] = 0.0;
+    if (target != null) {
+      target['elevationMeters'] = 0.0;
+      if (source != null) {
+        target['x'] = localMapTokenAxis(source, 'x');
+        target['y'] = localMapTokenAxis(source, 'y');
+      }
+    }
+    markVttLegacyMapChanged();
+  }
+
+  bool _ownsWingEscapeFallTarget(String tag) {
+    final index = localSheetIndexForOculumTag(tag);
+    return index >= 0 &&
+        schedePersonaggio[index]['realtimeSharedSheet'] != true &&
+        (realtimeService?.isConnected != true ||
+            controlsOnlineCombatSheet(tag));
+  }
+
+  Map<String, dynamic> capturePendingWingEscapeFalls() => {
+    for (final entry in onlineCombatRequests.entries)
+      if (entry.value['wingEscapeFall'] case final Map fall)
+        entry.key: {
+          ...entry.value,
+          'wingEscapeFall': {
+            ...fall,
+            'rolls': Map<String, dynamic>.from(fall['rolls'] as Map),
+          },
+        },
+  };
+
+  void restorePendingWingEscapeFalls(Object? saved) {
+    onlineCombatRequests.removeWhere((_, r) => r['wingEscapeFall'] is Map);
+    if (saved is Map) {
+      for (final entry in saved.entries.take(200)) {
+        final record = entry.value;
+        if (entry.key is String &&
+            record is Map &&
+            record['id'] == entry.key &&
+            record['status'] == 'failed' &&
+            record['wingEscapeFall'] is Map &&
+            record['wingEscapeFall']['rolls'] is Map) {
+          onlineCombatRequests[entry.key as String] = Map<String, dynamic>.from(
+            record,
+          );
+        }
+      }
+    }
+    scheduleWingEscapeFallDrain();
+  }
+
+  void scheduleWingEscapeFallDrain() {
+    if (_wingEscapeFallDrainActive[this] == true ||
+        !onlineCombatRequests.values.any((r) => r['wingEscapeFall'] is Map)) {
+      return;
+    }
+    _wingEscapeFallDrainActive[this] = true;
+    // Let an in-flight Pawn waiter finish its HP application first.
+    unawaited(
+      Future<void>.delayed(Duration.zero, () async {
+        try {
+          while (mounted && pawnPendingDamage.isEmpty) {
+            var progressed = false;
+            final records = onlineCombatRequests.values
+                .where((r) => r['wingEscapeFall'] is Map)
+                .toList();
+            for (final record in records) {
+              if (!mounted || pawnPendingDamage.isNotEmpty) return;
+              if (await _drainWingEscapeFall(record)) progressed = true;
+            }
+            if (!progressed) return;
+          }
+        } finally {
+          _wingEscapeFallDrainActive[this] = null;
+        }
+      }),
+    );
+  }
+
+  Future<bool> _drainWingEscapeFall(Map<String, dynamic> record) async {
+    final scope = '${record['scope']}';
+    final encounter = '${record['encounterId']}';
+    if (scope != permissionScope) return false;
+    final previous = selectedMasterInitiativeGroupId;
+    if (escapeEventEncounterId != encounter) {
+      if (!escapeUsesMasterTokens ||
+          !masterInitiativeGroups.any((g) => g['id'] == encounter)) {
+        return false;
+      }
+      selectMasterInitiativeGroup(encounter);
+    }
+    try {
+      return await _applyPairedEscapeFall(record, scope, encounter);
+    } finally {
+      if (mounted &&
+          scope == permissionScope &&
+          escapeUsesMasterTokens &&
+          previous != encounter &&
+          selectedMasterInitiativeGroupId == encounter) {
+        captureActiveMasterInitiativeGroup();
+        selectMasterInitiativeGroup(previous);
+      }
+    }
+  }
+
+  Future<bool> _applyPairedEscapeFall(
+    Map<String, dynamic> record,
+    String scope,
+    String encounter,
+  ) async {
+    final fall = record['wingEscapeFall'] as Map;
+    final resultId = '${fall['id']}';
+    final interceptionId = '${fall['attackId']}';
+    final carrier = '${record['sourceTag']}';
+    final passenger = '${record['passengerTag']}';
+    final rolls = fall['rolls'] as Map;
+    final carrierToken = escapeToken(carrier);
+    final passengerToken = escapeToken(passenger);
+    if (carrierToken == null || passengerToken == null) return false;
+    if ('${carrierToken['fightInstanceId'] ?? ''}' !=
+            '${record['fightInstanceId'] ?? ''}' ||
+        '${passengerToken['fightInstanceId'] ?? ''}' !=
+            '${record['passengerFightInstanceId'] ?? ''}') {
+      // This encounter ID has since been reused for a different fight.
+      onlineCombatRequests['${record['id']}']?.remove('wingEscapeFall');
+      programmaSalvataggio();
+      return true;
+    }
+    var progressed = false;
+    for (final tag in rolls.keys.whereType<String>().toList()) {
+      if (!mounted ||
+          scope != permissionScope ||
+          encounter != escapeEventEncounterId ||
+          pawnPendingDamage.isNotEmpty) {
+        return progressed;
+      }
+      if (!_ownsWingEscapeFallTarget(tag)) continue;
+      final index = localSheetIndexForOculumTag(tag);
+      final roll = readIntValue(rolls[tag]);
+      final original = schedaCorrente;
+      salvaSchedaCorrenteInMemoria();
+      final global = catturaImpostazioniGlobali();
+      try {
+        if (index != original) {
+          schedaCorrente = index;
+          caricaStatoDaJson(schedePersonaggio[index]);
+          ripristinaImpostazioniGlobali(global);
+        }
+        if (pawnPendingDamage.isNotEmpty) return progressed;
+        final receipts = (planarState['wingEscapeFallReceipts'] as List? ?? [])
+            .whereType<String>()
+            .toList();
+        if (receipts.contains(resultId)) {
+          rolls.remove(tag);
+          progressed = true;
+          continue;
+        }
+        receipts.add(resultId);
+        if (receipts.length > 20) receipts.removeRange(0, receipts.length - 20);
+        planarState['wingEscapeFallReceipts'] = receipts;
+        final reflex = escapeSubtraitAt(index, 'riflessi');
+        final alreadyFell =
+            tag == carrier &&
+            planarState['lastWingFallInterceptionId'] == interceptionId;
+        endWingFlightForEscapeFall();
+        final damage = oculumWingFallDamage(roll, reflex);
+        if (!alreadyFell) {
+          aggiungiLog(
+            '[CADUTA] Fuga in volo: $damage Danni prima delle protezioni.',
+          );
+          if (damage > 0) {
+            final previousElement = incomingDamageElement;
+            incomingDamageElement = 'contundente';
+            try {
+              await applicaDannoSubito(dannoEsplicito: damage);
+            } finally {
+              if (mounted && schedaCorrente == index) {
+                incomingDamageElement = previousElement;
+              }
+            }
+          }
+        }
+        if (!mounted || scope != permissionScope || schedaCorrente != index) {
+          return progressed;
+        }
+        salvaSchedaCorrenteInMemoria();
+        rolls.remove(tag);
+        progressed = true;
+      } finally {
+        if (index != original &&
+            mounted &&
+            scope == permissionScope &&
+            schedaCorrente == index) {
+          schedaCorrente = original;
+          caricaStatoDaJson(schedePersonaggio[original]);
+          ripristinaImpostazioniGlobali(global);
+        }
+      }
+      programmaSalvataggio();
+    }
+    if (rolls.isEmpty) {
+      onlineCombatRequests['${record['id']}']?.remove('wingEscapeFall');
+      programmaSalvataggio();
+      return true;
+    }
+    return progressed;
   }
 
   List<Map<String, dynamic>> escapeRescueCandidates(Map<String, dynamic> hero) {
@@ -1248,16 +1761,24 @@ extension _OculumEscape on _OculumHomePageState {
         'answers': <String, dynamic>{},
         'escapePrepared': true,
       };
+      record
+        ..remove('flightResultDraft')
+        ..remove('flightHostileCriticalId')
+        ..remove('wingEscapeFall')
+        ..remove('flightPassengerAuthorized')
+        ..remove('noticeRevision')
+        ..remove('noticed');
       onlineCombatRequests[id] = record;
       if (escapeAuthority) {
-        prepareEscapeNotice(record);
-        unawaited(emitEscape({...record, 'stage': 'notice'}));
+        _publishEscapeNotice(record);
       }
     } else if (stage == 'notice') {
       if (!staff && realtimeService?.isConnected == true) return;
       final id = '${payload['id']}';
-      if (readIntValue(onlineCombatRequests[id]?['noticeRevision']) >=
-          readIntValue(payload['noticeRevision'])) {
+      final previous = onlineCombatRequests[id];
+      if (previous != null && previous['status'] != 'pending' ||
+          readIntValue(previous?['noticeRevision']) >=
+              readIntValue(payload['noticeRevision'])) {
         return;
       }
       onlineCombatRequests[id] = <String, dynamic>{
@@ -1265,6 +1786,20 @@ extension _OculumEscape on _OculumHomePageState {
         'kind': 'escape',
         'status': 'pending',
       };
+    } else if (stage == 'flight_retry') {
+      if (!escapeAuthority) return;
+      final record = onlineCombatRequests['${payload['escapeId']}'];
+      if (record == null ||
+          record['status'] != 'pending' ||
+          record['sourceTag'] != source ||
+          !_escapeFlightUnverified(record) ||
+          !escapeRequestIsCurrent(record) ||
+          record['scope'] != permissionScope ||
+          record['encounterId'] != escapeEventEncounterId ||
+          payload['noticeRevision'] != record['noticeRevision']) {
+        return;
+      }
+      _publishEscapeNotice(record);
     } else if (stage == 'answer') {
       final record = onlineCombatRequests['${payload['escapeId']}'];
       if (record == null ||
@@ -1291,14 +1826,68 @@ extension _OculumEscape on _OculumHomePageState {
     } else if (stage == 'result') {
       if (!staff && realtimeService?.isConnected == true) return;
       final record = onlineCombatRequests['${payload['escapeId']}'];
-      if (record == null || record['status'] != 'pending') return;
+      if (record == null ||
+          record['status'] != 'pending' ||
+          record['sourceTag'] != source ||
+          !escapeRequestIsCurrent(record)) {
+        return;
+      }
+      final passenger = payload['passengerTag'];
+      if (record['passengerTag'] != null &&
+          passenger == null &&
+          (payload['success'] == true || payload['flightCancelled'] != true)) {
+        return;
+      }
+      final fallAttack = payload['flightFallAttackId'];
+      final carrierRoll = readIntValue(payload['flightFallCarrierRoll']);
+      final passengerRoll = readIntValue(payload['flightFallPassengerRoll']);
+      final falling = fallAttack is String && fallAttack.isNotEmpty;
+      if (passenger != null &&
+          (passenger is! String ||
+              passenger !=
+                  _escapeCurrentPassenger(record, carrierFalling: falling) ||
+              record['flightPassengerAuthorized'] != true ||
+              eventId != 'escape-result:${record['id']}')) {
+        return;
+      }
+      if (falling &&
+          (passenger is! String ||
+              payload['success'] == true ||
+              carrierRoll < 1 ||
+              carrierRoll > 60 ||
+              passengerRoll < 1 ||
+              passengerRoll > 60)) {
+        return;
+      }
+      record.remove('flightResultDraft');
       record['status'] = payload['success'] == true ? 'escaped' : 'failed';
       if (payload['success'] == true) {
         recordCombatSuccessfulEscapeTrait(record);
         markOutsideFight(source, critical: payload['critical'] == true);
+        if (passenger is String) markOutsideFight(passenger);
+      } else if (fallAttack is String && falling && passenger is String) {
+        _groundPairedEscape(source, passenger);
+        final rolls = <String, int>{
+          if (_ownsWingEscapeFallTarget(source)) source: carrierRoll,
+          if (_ownsWingEscapeFallTarget(passenger)) passenger: passengerRoll,
+        };
+        if (rolls.isNotEmpty) {
+          record['wingEscapeFall'] = {
+            'id': eventId,
+            'attackId': fallAttack,
+            'rolls': rolls,
+          };
+          scheduleWingEscapeFallDrain();
+        }
       }
       aggiungiLog(
-        '[FUGA] ${record['sourceName']}: ${payload['success'] == true ? 'fuori fight' : 'fuga fermata'}.',
+        '[FUGA] ${record['sourceName']}: ${falling
+            ? 'il portatore e il compagno precipitano'
+            : payload['success'] == true
+            ? (passenger == null ? 'fuori fight' : 'fuori fight con il compagno')
+            : payload['flightCancelled'] == true
+            ? 'fuga in volo annullata'
+            : 'fuga fermata'}.',
       );
       if (escapeAuthority && payload['success'] == true) {
         scheduleEscapeFightEnd('${payload['encounterId']}');
@@ -1441,6 +2030,20 @@ extension _OculumEscape on _OculumHomePageState {
           icon: const Icon(Icons.directions_run),
           label: const Text('Fuga · Movimento + Riflessi/Velo'),
         ),
+      if (currentCombatIsActive() &&
+          !outsideFight &&
+          wingCarryEligibleAt(schedaCorrente) &&
+          escapeCombatTokens().any(
+            (token) => _escapeCanCarryPassenger(
+              sheetTagAt(schedaCorrente),
+              onlineCombatTokenTag(token),
+            ),
+          ))
+        OutlinedButton.icon(
+          onPressed: () => unawaited(attemptWingEscapeWithPassenger()),
+          icon: const Icon(Icons.flight_takeoff),
+          label: const Text('Fuga in volo con un compagno'),
+        ),
       if (outsideFight) ...[
         const Text('Fuori fight · cure, riparazioni e utilità su di te'),
         OutlinedButton(
@@ -1482,6 +2085,22 @@ extension _OculumEscape on _OculumHomePageState {
                 Text(
                   'Parità: vince chi ha più Movimento; a Movimento pari riesce la Fuga.',
                 ),
+                if (_escapeFlightUnverified(record)) ...[
+                  const Text(
+                    'Fuga in volo sospesa. Il Master deve verificare il volo e il compagno. Riprovare non spende un’altra Azione o Reazione.',
+                  ),
+                  if (record['sourceTag'] == tag &&
+                      readIntValue(record['noticeRevision']) > 0)
+                    TextButton(
+                      onPressed: () => unawaited(_retryPairedEscape(record)),
+                      child: const Text('Riprova verifica del volo'),
+                    ),
+                  if (escapeAuthority)
+                    TextButton(
+                      onPressed: () => unawaited(_cancelPairedEscape(record)),
+                      child: const Text('Annulla fuga in volo'),
+                    ),
+                ],
                 if ((record['noticed'] as Map? ?? {})[tag] == true &&
                     !(record['answers'] as Map? ?? {}).containsKey(tag))
                   Wrap(
@@ -1541,8 +2160,10 @@ extension _OculumEscape on _OculumHomePageState {
                 if (escapeAuthority)
                   TextButton(
                     onPressed: () => unawaited(concludeEscape(record)),
-                    child: const Text(
-                      'Concludi confronto · chi non risponde rinuncia',
+                    child: Text(
+                      _escapeFlightUnverified(record)
+                          ? 'Verifica il volo'
+                          : 'Concludi confronto · chi non risponde rinuncia',
                     ),
                   ),
               ],
@@ -1678,4 +2299,8 @@ extension _OculumEscape on _OculumHomePageState {
     group['escapeExperience'] = escapeExperienceByParticipant();
     await finishEncounter(escapeEventEncounterId, automatic: true);
   }
+}
+
+extension OculumWingEscapeProbe on OculumPerformanceProbe {
+  void retryWingEscapeFalls() => _state.scheduleWingEscapeFallDrain();
 }

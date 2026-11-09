@@ -1,5 +1,14 @@
 # Registro cumulativo per i giocatori
 
+## Gambio di Orea Zalira — 9 novembre
+
+- Nel Monster Book trovi Gambio, un cucciolo dal pelo color pesca e dalle orecchie a foglia. Puoi generarlo come mostro neutrale di livello 1 con la sua Spintarella.
+
+## Ali a sparizione e fuga in volo — 9 novembre
+
+- Da Supporto e utilità puoi manifestare e ritrarre gratuitamente le ali a sparizione. Hai tre turni personali di volo tra i riposi, oppure volo senza limite da 50 Riflessi.
+- Un volatore esperto può portare un alleato con sé durante una fuga. Se un nemico colpisce il volatore con un critico valido, cadono entrambi.
+
 ## Immagini dei mostri più leggere — 9 novembre
 
 - Oculum usa copie WebP senza perdita per 538 immagini dei lotti, compresi sfondi desktop, versioni per telefono e reliquie. I file dell’arte distribuita scendono da circa 1.081 a 750 MB, con gli stessi pixel, dimensioni e trasparenze.

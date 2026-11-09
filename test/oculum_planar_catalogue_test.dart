@@ -185,6 +185,36 @@ void main() {
       );
     }
   });
+  test('Gambio is a single neutral monster from Orea Zalira', () {
+    final entry = defaultMonsterBookEntries.singleWhere(
+      (entry) => entry.id == 'orea_gambio',
+    );
+    expect(entry.nameIt, 'Gambio');
+    expect(entry.presetType, 'Mostro');
+    expect(entry.planeIds, ['orea_zalira']);
+    expect(entry.generationSide, 'neutral');
+    expect(entry.stats['level'], 1);
+    expect(oculumMonsterNaturalAttitude(entry), contains('pacifico'));
+    expect(entry.skillIds, contains('realm_orea_gambio_0'));
+    expect(
+      oculumMonsterPrecisionAnatomy(entry).map((part) => part['id']),
+      isNot(contains('fold')),
+    );
+    for (var seed = 0; seed < 6; seed++) {
+      final loadout = oculumMonsterBookLoadout(entry, random: Random(seed));
+      expect([
+        ...loadout.skills.map((skill) => skill.nome),
+        ...?loadout.art?.skills.map((skill) => skill.nome),
+      ], contains('Spintarella di Gambio'));
+    }
+    expect(
+      oculumPlanarTechnique('realm_orea_gambio_0')?.costResource,
+      'volonta',
+    );
+    final restored = MonsterBookEntry.fromJson(entry.toJson());
+    expect(restored.planeIds, entry.planeIds);
+    expect(restored.generationSide, entry.generationSide);
+  });
   test('habitats and special rules survive JSON and custom overrides', () {
     final base = monsterBookEntryById('fire_shield')!;
     final restored = MonsterBookEntry.fromJson(base.toJson());

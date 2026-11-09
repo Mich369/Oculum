@@ -1,12 +1,36 @@
 # Oculum — attività, conferme e consegne
 
+## Gambio di Orea Zalira — 9 novembre 2026
+
+Confermati il nome Gambio, l’aspetto cuccioloso e la provenienza da Orea Zalira. Scheda iniziale modificabile con livello 1, generazione neutrale, pelo color pesca, quattro zampe, orecchie a foglia e una spintarella difensiva. È una quarta specie di Orea Zalira, con ID `orea_gambio`.
+
+La Spintarella è sempre nel gruppo di tecniche di un nuovo Gambio. Corretta la descrizione per evitare che il parser trasformi un dettaglio del terreno in una parte colpibile. Nome, descrizione, habitat, livello, statistiche, resistenze, punto debole e associazioni di Skill e bottini sono modificabili nel Monster Book. Le forme nella scheda mantengono gli editor di costi, requisiti, recupero ed effetti.
+
+Analisi Flutter pulita e 23 prove locali passate prima di estendere la patch al volo. Verificati ID unico, habitat, squadra neutrale, livello, tecnica e costo in Volontà, salvataggio JSON, catalogo planare e log offline.
+
+## Ali a sparizione e fuga in volo — 9 novembre 2026
+
+Confermati manifestazione gratuita, tre turni personali di volo tra riposi brevi o lunghi, soglia Riflessi 50 per il volo esperto senza limite di turni e possibilità di portare una persona in fuga. Un critico nemico riuscito contro il volatore durante quel tentativo fa cadere entrambi.
+
+La chiusura di uno scontro conserva lo stato di volo delle altre battaglie. La verifica online ritenta lo stesso tentativo senza addebiti aggiuntivi. La caduta in attesa della protezione di Pawn è legata a quello scontro e si può riprendere dal salvataggio. Una prova locale mirata ha verificato il danno al passeggero, il recupero dopo l’attesa, il rifiuto del danno duplicato e il ripristino dello scontro che il Master consultava. Questa prova non è una sessione online reale.
+
+Verifica finale locale di Gambio e volo: analisi Flutter senza rilievi, 182 test Flutter passati e due controlli Python sull’esportazione del manuale passati. Le regressioni includono la scelta della tecnica di Gambio alla generazione, l’anatomia colpibile, la quota e il Movimento, la ricarica dopo il riposo, la fuga singola e in coppia, la protezione di Pawn e l’assegnazione di EXP e bottini. CI, download, installazione e sessioni online hanno prove separate.
+
 ## WebP senza perdita per tutti i lotti integrati — 9 novembre 2026
 
 Convertiti 538 PNG dei mostri, 401 desktop, 68 telefono e 69 reliquie. Il confronto integrale dei pixel RGBA, delle dimensioni e dei profili presenti è riuscito per tutti. I derivati passano da 1.080.865.405 a 749.754.792 byte, con 331.110.613 byte risparmiati prima della compressione dei pacchetti. Conservati i PNG nativi e gli SHA delle scelte. Il bundle Flutter usa un solo file per asset e risolve i percorsi PNG storici nella visualizzazione, mantenendo le immagini personalizzate, i temi e le scelte già salvate.
 
 La ricevuta `design/optimized-monster-art.json` documenta percorsi, dimensioni, SHA e peso. Per aggiungere nuovi asset dei lotti si può passare a `scripts/prepare_lossless_monster_art.py` la lista completa delle sorgenti, inclusa la nuova immagine. Analisi Flutter senza rilievi e 180 test locali passati. Il test del bundle intercetta gli asset mancanti e conferma che il vecchio percorso risolve la copia corretta anche se importato con separatori Windows. I pesi effettivi di APK, ZIP e cartelle, la CI e la pubblicazione hanno verifiche distinte.
 
+Ottimizzate anche le anteprime locali di 179 gallerie. Verificati 2.307 PNG a risoluzione nativa e 3.914 riferimenti HTML. I file delle anteprime corrispondenti scendono da 4.812.861.293 a 3.307.040.362 byte, il 31,29% in meno. I 2.180 WebP distinti sono deduplicati per SHA su G. Rimossi i soli attributi aggiunti, tutti gli HTML coincidono con le copie di sicurezza. I riferimenti originali per clic, zoom e voti restano leggibili. In Chrome verificate tre gallerie, compresi il lotto corrente, il lotto storico con cinque PNG ripristinati per SHA e Postea. Conservati i JPEG esistenti e le immagini incorporate.
+
 Nel rilascio web 282 il codice compilato riportava il commit giusto, mentre HTML e bootstrap riportavano quello del workflow che ha avviato la pubblicazione. Checkout, Dart e marcatori ora usano lo stesso commit sorgente. Il test locale con due SHA distinti verifica HTML e bootstrap. Il mirror 282 ha caricato i nove archivi esatti ma ha incontrato un 504 durante la verifica anonima. La verifica ora prova una richiesta fresca e, se serve, l’endpoint pubblico dell’archivio. I nove archivi della 282 hanno risposto via endpoint pubblico con intestazione ZIP e lunghezza attese. I link memorizzati dal client conservano la forma canonica. Passati 19 test Python di pubblicazione.
+
+La 284 è stata sostituita durante la validazione per includere la prova Postea corretta. La CI 285 ha compilato `f3efecda` con tutti e nove i job riusciti. Analisi senza rilievi, 2.440 test Flutter passati e sei saltati. Sono passate quattro prove online autenticate automatizzate, 15 del diario e una di digitazione. Confronto con la 282 sui metadati CI degli archivi esterni: Windows normale da 1.531.897.447 a 1.340.151.487 byte, Android da 1.561.237.805 a 1.369.316.109 byte. L’APK firmato interno passa da 1.686.358.275 a 1.450.271.920 byte, codice `100285` e certificato invariato. Le misure sono al netto di tutte le modifiche della build, compresi i 47 nuovi desktop. [CI 285](https://github.com/Mich369/Oculum/actions/runs/42569845784)
+
+La pubblicazione automatica 285 espone nove archivi di piattaforma. Tutti e nove i link diretti hanno risposto in anonimo con la lunghezza e l’intestazione attese. SHA e dimensioni di release, indice e CI coincidono. Pages serve HTML, bootstrap e JavaScript con lo stesso SHA sorgente. Il WebP di Silvarkrath è stato scaricato da Pages e verificato per MIME, peso e SHA. In un profilo Chrome isolato, il log della 285 si chiude con clic esterno e il menu mostra i nove pacchetti, compresi Windows normale e Test separati, e il collegamento al log cumulativo. [Download pubblici](https://github.com/Mich369/Oculum/releases/tag/oculum-downloads) · [Pages](https://github.com/Mich369/Oculum/actions/runs/42575476735)
+
+Installata la 285 in `C:\Oculum App\oculum\build\distribution` dopo la verifica integrale dei nove archivi. Nel runtime di ciascuna edizione Windows e nell’APK sono presenti 538 WebP con SHA esatti e zero copie dei PNG sostituiti. Verificati 17.564 file dichiarati, oltre al manifest, senza difformità. Windows e Windows Test sono stati avviati separatamente. I 62 file preesistenti dei profili coincidono con le copie di sicurezza. La 281 è conservata in `distribution-backup-42569845784-20261109-083248178`. L’avvio locale verifica i processi e i profili. La consegna rimane in attesa della conferma richiesta dal registro.
 
 ## Voti definitivi del lotto da 50 e sezione Open — 9 novembre 2026
 

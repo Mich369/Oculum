@@ -2463,6 +2463,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
           }
         }
         advanceInactiveSheetStatOpens(tag, sheet);
+        advanceWingFlightTurnAt(schedePersonaggio.indexOf(sheet));
       }
     }
     token['updatedAt'] = DateTime.now().toIso8601String();

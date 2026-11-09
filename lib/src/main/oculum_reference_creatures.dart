@@ -575,6 +575,7 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
   }
 
   void referenceLongRest() {
+    resetWingFlight(rest: true);
     planarState.remove('mantleWear');
     planarState.remove('mantlePrepared');
     planarState.remove('lastAttackHp');
@@ -584,6 +585,7 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
   }
 
   void referenceShortRest() {
+    resetWingFlight(rest: true);
     activeStructuredEffects.removeWhere(
       (e) => e['referenceCurseShortRest'] == true,
     );

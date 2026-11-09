@@ -5,6 +5,28 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Ali a sparizione e fuga in volo',
+    titleEn: 'Retractable wings and airborne escape',
+    contentIt: r'''
+In Supporto e utilità puoi far comparire o ritrarre le ali a sparizione gratuitamente. Con meno di 50 Riflessi hai tre turni personali di volo, rinnovati al Riposo Breve o Lungo. Da 50 Riflessi sei un volatore esperto e il volo non ha un limite di turni.
+
+Il volo innato di creature come Cuore di Magma e Nuvi conserva le sue regole. Sulla mappa, salire e scendere usa il Movimento residuo del segnalino.
+
+Un volatore esperto può scegliere un alleato da portare con sé quando tenta la fuga in volo. Si usa il confronto di Fuga del volatore. Se un nemico lo colpisce con un critico valido durante il tentativo, entrambi cadono e restano nello scontro. Si applicano i danni da caduta già previsti, 1d60 meno i Riflessi di chi cade, minimo zero, poi le protezioni normali.
+
+Se il Master non ha ancora ricevuto lo stato di volo, usa Riprova verifica del volo. Resta lo stesso tentativo e non spendi un’altra Azione o Reazione.
+''',
+    contentEn: r'''
+In Help and utility, you can manifest or retract retractable wings for free. Below 50 Reflexes, you have three personal turns of flight, renewed by a Short or Long Rest. At 50 Reflexes you are an expert flyer and can fly without a turn limit.
+
+Creatures such as Heart of Magma and Nuvi keep their innate flight rules. On the map, ascending and descending use the token's remaining Movement.
+
+An expert flyer may choose one ally to carry when attempting an airborne escape. Resolve the flyer's usual Escape contest. If an enemy lands a valid critical hit on the flyer during the attempt, both fall and stay in the fight. Use the existing falling damage rule for each: 1d60 minus that character's Reflexes, at least zero, followed by normal protection.
+
+If the Master hasn't received the flight state yet, use the flight verification retry. The same attempt stays pending and costs no additional Action or Reaction.
+''',
+  ),
+  ManualSection(
     titleIt: 'Open nella pagina Skill',
     titleEn: 'Open on the Skill page',
     contentIt: r'''
@@ -741,6 +763,7 @@ Raggio Angelico e Richiamo dei Piranha si acquistano come pergamene apprendibili
 Meccanio possiede tre skill casuali (almeno una offensiva), Protezioni di Emergenza sempre disponibile e una sola Open casuale. Non ha Oculum né Art; usa Reazioni, salvo l'Azione dedicata al lancio di Sfera elettro nel turno dopo la carica. Forme I–III hanno cooldown separati. I bonus di rigenerazione con Scudo Oculum sono limitati dalle statistiche del padrone e terminano al suo Riposo Lungo. Le varianti selvatiche sono Malconcio (metà Scudo, skill al 75%), Primitivo (+3 Difesa, Scudo 120% Vita e Scudo Oculum 10% Vita) ed Élite (skill al 125%). I valori iniziali sono modificabili nel JSON della singola creatura. Per queste varianti: per addestrarne uno senza padrone, Meccanica deve pareggiare o superare 13 + livello + 3 × Grado. Puoi possederne uno solo. Aggredirlo imposta il rifiuto comandi al 60%; ogni tuo Riposo Breve sottrae 20 punti percentuali e ogni Lungo 50. In Supporto e utilità, Empatia sottrae il totale del tiro in punti percentuali dal rifiuto, minimo zero; puoi usarla una sola volta, recuperandola con un Riposo Breve o Lungo. Inganno è una alternativa con lo stesso unico uso: con dado naturale sotto 12 aumenta il rifiuto di 10 punti percentuali (massimo 100%), altrimenti lo riduce del totale come Empatia. Se il padrone protegge Meccanio con Aiuto in una difesa riuscita, il rifiuto scende di 5–30 punti percentuali casuali, minimo zero, una sola volta per attacco. Anche la difesa fallita riduce il rifiuto di 2–40 punti: 2 + 38 × frazione della Vita massima persa dal padrone durante la protezione, arrotondati; Scudi e HP temporanei non contano.
 Fluttuare è una versione ridotta delle Ali di Fata: volo per 1d4 turni, +3 Difesa e +3 Movimento, costo fisso 2 Oculum e CD 3 turni personali. Azione nel proprio turno o Reazione fuori turno. Nessuna immunità automatica; durata e bonus scadono insieme. Sono valori confermati e modificabili.
 Bringi è pacifico/neutrale, simile a uno scoiattolo con guance sempre piene. Risponde alla prima aggressione con 1d20 semi, ciascuno da 1 Vita; dopo tre colpi ricevuti spara 1d100+20 semi e ricomincia il conteggio. Vive nel Regno Mezzano e nella Foresta elementale.
+Gambio è un mostro cuccioloso di Orea Zalira. Ha il pelo color pesca e due orecchie a foglia. È neutrale quando lo generi dal Monster Book. Di solito si allontana se spaventato e si fa spazio con una spintarella se messo alle strette. Parte dal livello 1 con valori e tecniche modificabili.
 Il party ha tre quest contemporanee nella barra superiore. Le uccisioni iniziano a contare dalla comparsa della quest, escludono le evocazioni e richiedono nemici di livello almeno pari al riferimento del party. Gli obiettivi considerano il luogo corrente; la crescita del Velo parte dal valore migliore attuale del party. Le ricompense in Obser vanno nella cassa comune. Un unico tiro assegna al responsabile del completamento: 25% Ispirazione, 10% Super Ispirazione, 5% Ispirazione Oculum, 3% Schivata Oculum, 1% tutte e tre le Ispirazioni e una Schivata, 56% soltanto Obser. Le ricevute impediscono doppie assegnazioni; una quest completata viene sostituita.
 I premi speciali dei mostri assegnano scroll con apprendimento normale. Sharp usa il dado naturale almeno 18 per le scroll rare; Mosca Campana usa naturale almeno 15 per la polvere e almeno 18 per la campanella; Topino usa naturale 20 per il coltello avvelenato. Annichilimento crea un Titolo Malanno @res-30% che dura tre Riposi Lunghi.
 Gli aggiornamenti controllano i download pubblici GitHub, senza traffico Supabase, e riconoscono il commit della build. La stessa versione, una versione precedente o un ramo divergente non sostituiscono automaticamente l’app installata. Prima di installare viene salvata e verificata una copia JSON dei salvataggi. Windows mantiene anche il runtime precedente per il ripristino. Android usa la stessa firma e richiede la conferma del sistema; una firma diversa interrompe l’aggiornamento senza disinstallare.
@@ -748,6 +771,7 @@ Gli aggiornamenti controllano i download pubblici GitHub, senza traffico Supabas
     contentEn: r'''
 The planar bestiary contains 380 entries including authored variants without duplicates, including Piranha Mortale and the Angelic Ray herald. Piranha attack as a coordinated group, can inflict Bleeding, and summon up to two weak minions with their own initiative. Angelic Ray adds the attacker's Karma and the absolute value of a target's negative Karma to base damage, then deals ×2 to Demons, ×1.5 to Devils, and ×1.3 to Archdevils. Skill costs, forms, duration, cooldown and starting values remain editable on the saved sheet. Explicit costs in skill text are parsed before other numbers; when no cost is specified, Monster Book uses a positive resource appropriate to the creature or no cost, never an assumed Oculum or Materia cost. Variable maximum costs are allowed only when the effect scales with the spent resource. Fluttuare grants flight for 1d4 turns, +3 Defence and +3 Movement, costs two Oculum and has a three-personal-turn cooldown. It uses an Action on your turn or a Reaction outside it, without automatic immunity.
 Three campaign quests pay Obser into the party chest and use one confirmed percentile draw for the personal reward. Historical kills and summons do not count; receipts prevent duplicate rewards. Special monster rewards grant scrolls using normal learning rules. Annihilation lasts three Long Rests as a @res-30% Ailment Title.
+Gambio is a cuddly monster from Orea Zalira with peach-colored fur and two leaf-shaped ears. It starts neutral when created from the Monster Book and tends to flee when frightened, shoving only if cornered. Its starting level is 1, and its stats and techniques can be edited.
 Updates use public GitHub downloads, check source ancestry and archive integrity, and verify a JSON save backup before installation. Android preserves its signing identity and uses the system installation confirmation. Failed or older builds never automatically replace the installed app.
 ''',
   ),

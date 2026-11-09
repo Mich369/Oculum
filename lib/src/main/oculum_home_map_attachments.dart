@@ -6969,14 +6969,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     }
     final index = indexForLocalMapToken(token);
     if (index < 0) return false;
-    final sheet = schedePersonaggio[index];
-    final source = oculumSavedMonsterBookEntryById(
-      '${sheet['monsterBookSourceId'] ?? ''}',
-    );
-    final planar = sheet['planarRuntime'];
-    final damagedWings = planar is Map ? planar['damagedWings'] : null;
-    return source?.hasNaturalFlight == true &&
-        !(damagedWings is List && damagedWings.length >= 2);
+    final state = _wingFlightStateAt(index);
+    return (_wingFlightNaturalAt(index) || state['airborne'] == true) &&
+        _wingFlightAvailableAt(index, state);
   }
 
   Future<void> _showLocalMapTokenFlight(Map<String, dynamic> token) async {
@@ -7044,6 +7039,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final remaining = localMapTokenMovementRemaining(token);
     final delta = requested.clamp(-remaining, remaining).toDouble();
     if (delta == 0) return;
+    markNaturalWingAirborneAt(indexForLocalMapToken(token));
     final after = before + delta;
     setState(() {
       token['elevationMeters'] = after;
@@ -7548,6 +7544,53 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     final budget = localMapTokenMovementBudget(token);
     if (budget.isInfinite) return double.infinity;
     return max(0.0, budget - localMapTokenMovementUsed(token)).toDouble();
+  }
+
+  static const _wingElevationKey = 'elevationMeters';
+
+  Map<String, dynamic>? _currentLocalWingMapToken() => vttShowingRemoteScene
+      ? null
+      : localMapTokens
+            .where(
+              (token) =>
+                  indexForLocalMapToken(token) == schedaCorrente &&
+                  canManageLocalMapToken(token),
+            )
+            .firstOrNull;
+
+  double currentLocalWingElevation() =>
+      readDoubleValue(_currentLocalWingMapToken()?[_wingElevationKey]).abs();
+
+  void clearLocalWingElevation(String tag) {
+    if (vttShowingRemoteScene) return;
+    final index = localSheetIndexForOculumTag(tag);
+    if (index < 0) return;
+    var changed = false;
+    for (final token in localMapTokens) {
+      if (indexForLocalMapToken(token) != index) continue;
+      if (readDoubleValue(token[_wingElevationKey]) != 0) {
+        token[_wingElevationKey] = 0.0;
+        changed = true;
+      }
+    }
+    if (changed) notifyVttCanvasChanged(save: true);
+  }
+
+  List<Widget> wingFlightElevationControls(VoidCallback refresh) {
+    final token = _currentLocalWingMapToken();
+    if (token == null) return const [];
+    return [
+      OutlinedButton.icon(
+        onPressed: _canControlWingFlight
+            ? () async {
+                await _showLocalMapTokenFlight(token);
+                if (mounted) refresh();
+              }
+            : null,
+        icon: const Icon(Icons.height),
+        label: Text(t('Movimento in volo', 'Flight movement')),
+      ),
+    ];
   }
 
   bool prepareLocalMapTokenMovement(Map<String, dynamic> token) {

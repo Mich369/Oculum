@@ -897,6 +897,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
   }
 
   void tickPlanarTurn() {
+    advanceWingFlightTurnAt(schedaCorrente);
     advanceStat35Cooldowns();
     tickStatOpenBuffs();
     advanceStatOpenDominionPenalty();
@@ -940,7 +941,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     }
   }
 
-  void resetOwnedPlanarFightEffects() {
+  void resetOwnedPlanarFightEffects({
+    Set<String> wingParticipants = const {},
+    String? wingEncounterId,
+  }) {
     if (schedePersonaggio.isEmpty) return;
     salvaSchedaCorrenteInMemoria();
     final original = schedaCorrente;
@@ -953,7 +957,12 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
           caricaStatoDaJson(schedePersonaggio[index]);
           ripristinaImpostazioniGlobali(global);
         }
-        resetPlanarFight();
+        resetPlanarFight(
+          landWings: wingParticipants.contains(
+            normalizeOculumFriendTag(sheetTagAt(index)),
+          ),
+          wingEncounterId: wingEncounterId,
+        );
         salvaSchedaCorrenteInMemoria();
       }
     } finally {
@@ -963,7 +972,8 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     }
   }
 
-  void resetPlanarFight() {
+  void resetPlanarFight({bool landWings = true, String? wingEncounterId}) {
+    if (landWings) resetWingFlight(encounterId: wingEncounterId);
     endStat35OculumOverflow();
     clearOculumTheftFight();
     planarState.remove(_stat20OculumChargeKey);

@@ -1261,6 +1261,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                   totalPowerBurstStatus(),
                   provokerShieldStatus(),
                   guardianGoldificationControls(),
+                  wingFlightUtilityControls(),
                   escapeUtilityControls(),
                   escapeRequestsPanel(),
                   if (canSharpenWeapons && inventario.any(_isSharpenableWeapon))

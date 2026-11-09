@@ -1,5 +1,15 @@
 # Oculum — registro delle regole confermate
 
+## Ali a sparizione e fuga in volo
+
+- In genere le ali sono a sparizione. Farle apparire o ritrarle è un’azione gratuita.
+- Chi vola con queste ali e ha meno di 50 Riflessi dispone di 3 turni personali di volo. Un Riposo Breve o Lungo ripristina i turni. Da 50 Riflessi si è volatori esperti e si può volare senza limite di turni.
+- Un volatore esperto può fuggire portando con sé una persona. Se durante il tentativo un nemico mette a segno un critico contro il volatore, cadono entrambi.
+
+## Gambio
+
+- **Gambio** è un mostro dall’aspetto cuccioloso, originario di **Orea Zalira**.
+
 ## Lotto da 50 e sezione Open nella pagina Skill
 
 - I voti per nome e desktop sono indipendenti. Una riga con «da scegliere» per il desktop conferma comunque il nome inviato. «Nessuna selezione» per le Skill conserva quelle esistenti. Nei nomi personalizzati si usano le iniziali maiuscole e si conserva la grafia scelta dall’utente per le parole composte.

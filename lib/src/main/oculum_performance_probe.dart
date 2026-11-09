@@ -64,6 +64,8 @@ class OculumPerformanceProbe {
   int flightBonus(int value) =>
       _state.wingAdjustedFlightBonus(value, 'Fluttuare');
   bool get grounded => _state.wingsGrounded;
+  Widget wingFlightControls() => _state.wingFlightUtilityControls();
+  void clearMasterBoardForTest() => _state.clearMasterInitiativeTokens();
   void fractureHit(Map<String, dynamic> request, {int? percentile}) =>
       _state.resolveLimbCriticalDamage(
         request,

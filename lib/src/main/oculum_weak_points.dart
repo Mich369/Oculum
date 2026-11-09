@@ -189,22 +189,29 @@ extension _OculumWeakPoints on _OculumHomePageState {
   );
   List<Map<String, dynamic>> get publicPrecisionBodyParts => [
     for (final p in currentPrecisionBodyParts)
-      {
-        'id': p['id'],
-        'label': p['label'],
-        'penalty': p['penalty'],
-        'group': p['group'] ?? p['id'],
-        if (p['side'] != null) 'side': p['side'],
-        if (p['sideIndex'] != null) 'sideIndex': p['sideIndex'],
-      },
+      if (p['group'] != 'wings' || wingFlightWingsVisibleAt(schedaCorrente))
+        {
+          'id': p['id'],
+          'label': p['label'],
+          'penalty': p['penalty'],
+          'group': p['group'] ?? p['id'],
+          if (p['side'] != null) 'side': p['side'],
+          if (p['sideIndex'] != null) 'sideIndex': p['sideIndex'],
+        },
   ];
   List<Map<String, dynamic>> precisionPartsForToken(
     Map<String, dynamic> token,
   ) {
     final monster = monsterBookEntryById(monsterBookIdForCombatToken(token));
     final index = localSheetIndexForOculumTag(onlineCombatTokenTag(token));
+    final public = token['faunaPublic'];
+    final local =
+        index >= 0 && schedePersonaggio[index]['realtimeSharedSheet'] != true;
+    final wingsVisible =
+        local || public is! Map || public['wingFlightWingsVisible'] is! bool
+        ? wingFlightWingsVisibleAt(index)
+        : public['wingFlightWingsVisible'] == true;
     if (monster != null) {
-      final public = token['faunaPublic'];
       final runtime = index == schedaCorrente
           ? planarState
           : index >= 0
@@ -274,13 +281,16 @@ extension _OculumWeakPoints on _OculumHomePageState {
           explicitMasterAnatomy: custom is List && custom.isNotEmpty,
         ),
         closed: targetArmadilloClosed,
-      );
+      ).where((part) => wingsVisible || part['group'] != 'wings').toList();
     }
     final raw = index >= 0
         ? schedaJsonAt(index)['precisionBodyParts']
         : token['precisionBodyParts'];
     return (raw as List? ?? [])
         .whereType<Map>()
+        .where(
+          (part) => wingsVisible || (part['group'] ?? part['id']) != 'wings',
+        )
         .map((p) => Map<String, dynamic>.from(p))
         .toList();
   }

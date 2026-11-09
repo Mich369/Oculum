@@ -830,8 +830,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
   }
 
-  void clearTemporaryCombatResistanceEffects() {
-    resetOwnedPlanarFightEffects();
+  void clearTemporaryCombatResistanceEffects({
+    Iterable<Map> endedWingTokens = const [],
+    String? wingEncounterId,
+  }) {
+    resetOwnedPlanarFightEffects(
+      wingParticipants: {
+        for (final token in endedWingTokens)
+          normalizeOculumFriendTag(
+            onlineCombatTokenTag(Map<String, dynamic>.from(token)),
+          ),
+      }..remove(''),
+      wingEncounterId: wingEncounterId,
+    );
     forgetCombatDiscoveries(onlineCombatEncounterId);
     oculumRemoveCurrentCombatTemporaryEffects(temporaryCombatResistanceEffects);
   }
@@ -4872,8 +4883,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
     setState(() {
       expireBoneGoatAphoniaAtFightEnd(selectedMasterInitiativeGroupId);
+      final endingTokens = masterInitiativeTokens.toList();
       masterInitiativeTokens.clear();
-      clearTemporaryCombatResistanceEffects();
+      clearTemporaryCombatResistanceEffects(
+        endedWingTokens: endingTokens,
+        wingEncounterId: selectedMasterInitiativeGroupId,
+      );
       masterInitiativeRound = 0;
       masterInitiativeActiveIndex = 0;
       masterInitiativeManualOrder = false;
@@ -6133,9 +6148,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     if (dannoInserito == null || dannoInserito <= 0) return;
     if (!referenceAnatomicalTargetAvailable(hitBodyPart)) {
-      aggiungiLog(
-        '[ANATOMIA] Parte non colpibile: il nucleo è protetto oppure la bottiglia non è più presente.',
-      );
+      aggiungiLog('[ANATOMIA] La parte mirata è nascosta o non più presente.');
       return;
     }
     if (sandLavaPacketAlreadyResolved(damagePacketId)) return;

@@ -87,6 +87,7 @@ extension _OculumMinorConstruct on _OculumHomePageState {
 
   bool referenceAnatomicalTargetAvailable(String? part) {
     if (part == null || part.isEmpty) return true;
+    if (wingFlightTargetHidden(part)) return false;
     final guarded =
         faunaCurrentMonsterId == 'costrutto_minore' && part == 'core' ||
         isRunicGolemCoreCreature && part == 'core' ||

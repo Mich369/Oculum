@@ -1466,7 +1466,10 @@ extension _OculumEncounterRewards on _OculumHomePageState {
                   )
                 : (sourceSheet['conditions'] as List? ?? const [])
                       .whereType<Map>()
-                      .any((condition) => condition['conditionType'] == 'corruzione')))
+                      .any(
+                        (condition) =>
+                            condition['conditionType'] == 'corruzione',
+                      )))
           'corruptedCriticalDrop': true,
         if (index >= 0 &&
             '${schedePersonaggio[index]['experienceFamilyId'] ?? ''}'
@@ -2022,11 +2025,13 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         subtraitId: 'drop',
         naturalRoll: natural,
       );
-      final corruptedCritical = criticalDrop &&
+      final corruptedCritical =
+          criticalDrop &&
           (enemy['corruptedCriticalDrop'] == true ||
               monster.encounterRules['corruptedCriticalDrop'] == true ||
               oculumNormalizeElementId(monster.elementId) == 'corrotto' ||
-              oculumNormalizeElementId('${enemy['element'] ?? ''}') == 'corrotto');
+              oculumNormalizeElementId('${enemy['element'] ?? ''}') ==
+                  'corrotto');
       final summon = oculumEncounterEnemyIsSummon(enemy);
       final dropped = oculumGenerateMonsterLoot(
         monster: monster,
@@ -2081,12 +2086,14 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         dropped.add(crystal);
       }
       if (corruptedCritical && !summon) {
-        dropped.addAll(oculumCorruptedCriticalCrystals(
-          monsterPower: readIntValue(enemy['totalPower']),
-          rollerPower: scoutTotalPowerAt(rollerIndex),
-          random: encounterRandom,
-          killId: killId,
-        ));
+        dropped.addAll(
+          oculumCorruptedCriticalCrystals(
+            monsterPower: readIntValue(enemy['totalPower']),
+            rollerPower: scoutTotalPowerAt(rollerIndex),
+            random: encounterRandom,
+            killId: killId,
+          ),
+        );
       }
       if (monster.id == 'pupazzo_robotico_postea') {
         final sourceIndex = localSheetIndexForOculumTag(
@@ -2270,7 +2277,10 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     }
     receiveEncounterRewards([reward]);
     expireSummoningEmblems(id);
-    clearTemporaryCombatResistanceEffects();
+    clearTemporaryCombatResistanceEffects(
+      endedWingTokens: masterInitiativeTokens,
+      wingEncounterId: id,
+    );
     for (final request in onlineCombatRequests.values) {
       if (request['encounterId'] == id &&
           request['kind'] != 'encounter_reward') {

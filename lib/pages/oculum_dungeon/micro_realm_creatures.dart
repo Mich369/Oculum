@@ -307,6 +307,25 @@ const _microRealmCreatureSeeds = <Map<String, dynamic>>[
     'attack': 'Impulso del passo irregolare',
   },
   {
+    'id': 'orea_gambio',
+    'name': 'Gambio',
+    'realm': 'orea_zalira',
+    'element': 'fisico',
+    'stats': [2, 2, 3, 0],
+    'level': 1,
+    'generationSide': 'neutral',
+    'look':
+        'Cucciolo quadrupede dal pelo color pesca, con quattro zampette corte, due grandi occhi, due orecchie a foglia e una coda a ciuffo. Saltella e si rotola nelle conche morbide di Orea Zalira.',
+    'lookEn':
+        'A small, peach-furred quadruped with four short legs, two large eyes, two leaf-shaped ears and a tufted tail. It hops and rolls in the soft hollows of Orea Zalira.',
+    'weak': 'Il ventre morbido.',
+    'weakEn': 'Its soft belly.',
+    'attitude':
+        'Curioso e pacifico. Si avvicina a chi resta fermo e fugge se si spaventa. Se viene messo alle strette, prova a farsi spazio con una spintarella.',
+    'material': 'ciuffo_di_gambio',
+    'attack': 'Spintarella di Gambio',
+  },
+  {
     'id': 'black_dragon_shield',
     'name': 'BlackDragonShield',
     'realm': 'shadow_hell',
@@ -341,6 +360,8 @@ final _microRealmCreatureEntries = <MonsterBookEntry>[
       {
         'authoredCanonical': true,
         'naturalAttitude': s['attitude'],
+        if (s['generationSide'] case final String side) 'generationSide': side,
+        if (s['id'] == 'orea_gambio') 'signatureSkillId': 'realm_orea_gambio_0',
         if (s['id'] == 'golem_carne') 'hostileToMonsters': true,
         if (s['id'] == 'black_dragon_shield') ...{
           'criticalShields': 4,
@@ -356,6 +377,8 @@ final _microRealmCreatureEntries = <MonsterBookEntry>[
             }
           : const {},
     ).copyWith(
+      descEn: s['lookEn'] as String?,
+      weakPointEn: s['weakEn'] as String?,
       dropIds: ['${s['material']}'],
       dropChances: {'${s['material']}': 45},
       classificationTags: [

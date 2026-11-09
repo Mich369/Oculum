@@ -21,6 +21,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       'pawnGuardians': pawnGuardians.map((pawn) => pawn.toJson()).toList(),
       'pawnDamageReceipts': pawnDamageReceipts,
       'pawnPendingDamage': pawnPendingDamage,
+      'pendingWingEscapeFalls': capturePendingWingEscapeFalls(),
       'sheetSidebarFolders': sheetSidebarFolders
           .map((f) => Map<String, dynamic>.from(f))
           .toList(),
@@ -235,6 +236,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     }
     loadWorldClockCampaign(campaign);
     loadPawnCampaignState(campaign);
+    restorePendingWingEscapeFalls(campaign['pendingWingEscapeFalls']);
     campaignNameController.text =
         '${campaign['name'] ?? 'Campagna principale'}';
     schedePersonaggio

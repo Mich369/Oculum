@@ -676,6 +676,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeVisibleInitiativeSnapshot['campaignName'] = campaignName;
     }
     syncCurrentSheetEncounterTurn();
+    scheduleWingEscapeFallDrain();
   }
 
   void shareOwnedEncounterSheetsToStaff() {
@@ -3190,6 +3191,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       final closingEncounter = snapshotRaw is Map
           ? '${snapshotRaw['encounterId'] ?? onlineCombatEncounterId}'
           : onlineCombatEncounterId;
+      final closingSnapshot =
+          '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}' ==
+              closingEncounter
+          ? realtimeVisibleInitiativeSnapshot
+          : realtimeEncounterSnapshots
+                .where(
+                  (snapshot) => snapshot['encounterId'] == closingEncounter,
+                )
+                .firstOrNull;
+      final closingTokens = (closingSnapshot?['tokens'] as List? ?? const [])
+          .whereType<Map>();
       expireBoneGoatAphoniaAtFightEnd(
         closingEncounter,
         campaignId: payload['campaignId']?.toString(),
@@ -3218,7 +3230,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       }
       realtimeEncounterSnapshots = <Map<String, dynamic>>[];
       realtimeSelectedEncounterId = '';
-      clearTemporaryCombatResistanceEffects();
+      clearTemporaryCombatResistanceEffects(
+        endedWingTokens: closingTokens,
+        wingEncounterId: closingEncounter,
+      );
       invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
       risultato = t('Fight chiusa dal Master.', 'Fight closed by the Master.');
       aggiungiLog(risultato);
@@ -3251,6 +3266,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeSelectedEncounterId = '${selectedSnapshot['encounterId'] ?? ''}';
     }
     final previous = realtimeVisibleInitiativeSnapshot['tokens'];
+    final previousEncounter = realtimeVisibleInitiativeSnapshot['encounterId'];
     final previousClock =
         realtimeVisibleInitiativeSnapshot['campaignId'] == payload['campaignId']
         ? realtimeVisibleInitiativeSnapshot['worldClock']
@@ -3292,10 +3308,17 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       syncOwnedWorldCalendarAndNeeds(clock);
     }
     if (realtimeVisibleInitiativeSnapshot['combatEnded'] == true) {
-      expireBoneGoatAphoniaAtFightEnd(
-        '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}',
+      final endingEncounter =
+          '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
+      expireBoneGoatAphoniaAtFightEnd(endingEncounter);
+      clearTemporaryCombatResistanceEffects(
+        endedWingTokens: [
+          if (previousEncounter == endingEncounter && previous is List)
+            ...previous.whereType<Map>(),
+          if (incoming is List) ...incoming.whereType<Map>(),
+        ],
+        wingEncounterId: endingEncounter,
       );
-      clearTemporaryCombatResistanceEffects();
     }
     final turnTokens = realtimeVisibleInitiativeSnapshot['tokens'];
     if (turnTokens is List && turnTokens.isNotEmpty) {
@@ -3341,6 +3364,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
     syncCurrentSheetEncounterTurn();
     syncOwnedEncounterTurns();
+    scheduleWingEscapeFallDrain();
     shareOwnedEncounterSheetsToStaff();
     unawaited(retryPendingEncounterJoins());
     unawaited(replayOnlineCombatRequests());
@@ -3664,7 +3688,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (realtimeService?.isConnected != true || !realtimeIsMasterRole) {
       setState(() {
         masterInitiativePublished = false;
-        clearTemporaryCombatResistanceEffects();
+        clearTemporaryCombatResistanceEffects(
+          endedWingTokens: masterInitiativeTokens,
+          wingEncounterId: selectedMasterInitiativeGroupId,
+        );
       });
       programmaSalvataggio();
       return;
@@ -3672,7 +3699,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
     setState(() {
       masterInitiativePublished = false;
-      clearTemporaryCombatResistanceEffects();
+      clearTemporaryCombatResistanceEffects(
+        endedWingTokens: masterInitiativeTokens,
+        wingEncounterId: selectedMasterInitiativeGroupId,
+      );
       risultato = t('Fight chiusa per i player.', 'Fight closed for players.');
       aggiungiLog(risultato);
     });

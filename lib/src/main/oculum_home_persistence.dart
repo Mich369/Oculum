@@ -1512,6 +1512,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           oculumSheetRelicSelections.value[currentSheetScrollId()] ?? '',
       'masterAssignedThemeIds': masterAssignedThemeIds.toList()..sort(),
       'faunaPublic': {
+        'wingFlightWingsVisible': wingFlightWingsVisibleAt(schedaCorrente),
+        'wingCarryEligible': wingCarryEligibleAt(schedaCorrente),
         'evergreenDisguiseProtected': evergreenDisguiseProtected,
         'banditVendetta': planarState['banditVendetta'] == true,
         'solarFaceUncovered': solarFaceUncovered,
