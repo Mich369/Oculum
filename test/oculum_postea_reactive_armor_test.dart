@@ -43,6 +43,9 @@ void main() {
     state.resilienzaController.text = '30';
     probe.setResourceCurrent('resilienza', 30);
     probe.invalidateDerivedCaches();
+    // Isolate armor recovery from the independent random awakening at half HP.
+    state.schedePersonaggio[state.schedaCorrente]['partialAwakeningHalfHpTriggered'] =
+        true;
     state.masterInitiativeTokens.removeWhere(
       (dynamic token) => token['side'] == 'enemy',
     );

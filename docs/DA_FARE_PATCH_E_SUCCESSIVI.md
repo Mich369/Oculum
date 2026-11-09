@@ -16,6 +16,8 @@ Copiati i 47 PNG nativi votati, 29 A, 8 B e 10 C, per 94.788.645 byte. Le 256 sc
 
 Verifica locale con analisi Flutter pulita e 165 test passati. Controllati SHA dei PNG e collegamento per ID, rinomini, preservazione delle personalizzazioni, lookup dei ritiri, sezione Open, recuperi, manuale e log cumulativo. Le due voci Tombwake conservano il nome richiesto. La creazione da testo usa l’ID o il nome originario per distinguere le voci e privilegia i nomi completi delle varianti Elité. La verifica locale resta distinta da CI, pacchetti e prove online.
 
+La CI 283 ha completato l’analisi e riportato 2.437 test passati, uno fallito e sei saltati. Il test della corazza reattiva raggiunge 90/180 Vita e può attivare il Risveglio Totale casuale, che aggiunge 30 Vita. La fixture ora parte con quel tentativo già registrato e verifica esclusivamente danno, usura e Scudo della corazza. Il comportamento di gioco rimane disponibile. Passate 21 prove locali su armatura, usura, bundle e log. GitHub ha saltato pacchetti e pubblicazione per la 283. [CI 283](https://github.com/Mich369/Oculum/actions/runs/42565574873)
+
 La copia storica 279 è stata archiviata su G con verifica di 17.546 file su entrambi i dischi e collegamento dal percorso C precedente. Il backup 278 contiene file aggiunti dall’updater dopo il manifest e resta dov’è. La 281 è ancora installata durante le verifiche.
 
 ## Download per piattaforma e lotto senza voti precedenti — 9 novembre 2026
