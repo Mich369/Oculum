@@ -1,6 +1,20 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../pages/oculum_dungeon/monster_book.dart';
+import 'oculum_optimized_monster_art_assets.dart';
+
+/// Maps a canonical stock artwork key to its bundled lossless derivative.
+String? oculumMonsterArtworkAsset(String? source) {
+  const sourceDirectory = 'assets/oculum/home_art/';
+  final normalized = source?.replaceAll(r'\', '/');
+  if (normalized == null || !normalized.startsWith(sourceDirectory)) {
+    return source;
+  }
+  final filename = normalized.substring(sourceDirectory.length);
+  if (!oculumOptimizedMonsterArtFilenames.contains(filename)) return source;
+  final stem = filename.substring(0, filename.length - '.png'.length);
+  return 'assets/oculum/home_art_webp/$stem.webp';
+}
 
 /// Cosmetic data only: these weights never change a creature's statistics.
 @immutable
@@ -470,7 +484,10 @@ class OculumMonsterTheme {
         'cavaliere_morto',
         'scheletro_bombarolo',
       }.contains(monster.id);
-  String? get relicIllustration => switch (monster.id) {
+  String? get relicIllustration =>
+      oculumMonsterArtworkAsset(_relicIllustration);
+
+  String? get _relicIllustration => switch (monster.id) {
     'cavaliere_non_ritorno' =>
       'assets/oculum/home_art/relic_cavaliere_non_ritorno_canon_20261101.png',
     'deadly_sins' =>
@@ -593,7 +610,8 @@ class OculumMonsterTheme {
       'assets/oculum/home_art/relic_guardiano_solare_v2.png',
     _ => null,
   };
-  String? get illustration => desktopIllustrationForId(monster.id);
+  String? get illustration =>
+      oculumMonsterArtworkAsset(desktopIllustrationForId(monster.id));
 
   static String? desktopIllustrationForId(
     String monsterId,
@@ -797,7 +815,10 @@ class OculumMonsterTheme {
     'nuvi' => 'assets/oculum/home_art/creature_nuvi.png',
     _ => null,
   };
-  String? get illustrationMobile => switch (monster.id) {
+  String? get illustrationMobile =>
+      oculumMonsterArtworkAsset(_illustrationMobile);
+
+  String? get _illustrationMobile => switch (monster.id) {
     'cavaliere_non_ritorno' =>
       'assets/oculum/home_art/theme_cavaliere_non_ritorno_mobile_canon_20261101.png',
     'deadly_sins' =>

@@ -44,7 +44,10 @@ void main() {
           monster,
           oculumMonsterColors(monster).first,
         );
-        expect(theme.illustration, f['asset']);
+        expect(
+          theme.illustration,
+          oculumMonsterArtworkAsset(f['asset'] as String),
+        );
       }
     },
   );
@@ -65,7 +68,7 @@ void main() {
           file['kind'] == 'phone'
               ? theme.illustrationMobile
               : theme.relicIllustration,
-          file['asset'],
+          oculumMonsterArtworkAsset(file['asset'] as String),
         );
         final codec = await ui.instantiateImageCodec(bytes);
         final frame = await codec.getNextFrame();

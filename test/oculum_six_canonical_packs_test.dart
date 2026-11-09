@@ -106,7 +106,7 @@ void main() {
             'relic' => theme.relicIllustration,
             _ => null,
           };
-          expect(binding, f['asset']);
+          expect(binding, oculumMonsterArtworkAsset(f['asset'] as String));
         }
       }
     },

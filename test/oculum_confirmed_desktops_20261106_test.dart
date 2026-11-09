@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
@@ -15,6 +15,8 @@ import 'package:oculum/widgets/oculum_narrative_background.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
 import 'package:pointycastle/digests/sha256.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/oculum_monster_art_bundle.dart';
 
 // Native ImageGen PNG digests from the selected immutable source receipts.
 // JPEG gallery previews are not substituted for the selected originals.
@@ -149,17 +151,7 @@ void main() {
       final bytes = File(asset).readAsBytesSync();
       expect(bytes.take(8), [137, 80, 78, 71, 13, 10, 26, 10]);
       expect(_sha256(bytes), entry.value, reason: entry.key);
-      final bundled = await rootBundle.load(asset);
-      expect(
-        _sha256(
-          bundled.buffer.asUint8List(
-            bundled.offsetInBytes,
-            bundled.lengthInBytes,
-          ),
-        ),
-        entry.value,
-        reason: 'The native file must also be in the Flutter asset bundle.',
-      );
+      await expectBundledMonsterArt(asset);
     }
   });
 
@@ -170,13 +162,15 @@ void main() {
       if (id == _pendingBellCountId) {
         expect(
           theme.illustration,
-          'assets/oculum/home_art/theme_${id}_canon_20261106_votes2.png',
+          oculumMonsterArtworkAsset(
+            'assets/oculum/home_art/theme_${id}_canon_20261106_votes2.png',
+          ),
           reason:
               'The subsequently approved twelve-bell revision replaces the held ten-bell draft.',
         );
       } else {
         linked++;
-        expect(theme.illustration, _assetFor(id));
+        expect(theme.illustration, oculumMonsterArtworkAsset(_assetFor(id)));
         expect(theme.preserveIllustrationFraming, isTrue);
       }
       expect(
@@ -197,7 +191,9 @@ void main() {
     );
     expect(
       _themeFor('fire_shield').illustration,
-      'assets/oculum/home_art/theme_fire_shield_canon_20261101.png',
+      oculumMonsterArtworkAsset(
+        'assets/oculum/home_art/theme_fire_shield_canon_20261101.png',
+      ),
     );
   });
 
@@ -228,7 +224,10 @@ void main() {
       customEntry,
       oculumMonsterColors(customEntry).last,
     );
-    expect(theme.illustration, _assetFor('basilisco_base'));
+    expect(
+      theme.illustration,
+      oculumMonsterArtworkAsset(_assetFor('basilisco_base')),
+    );
     expect(jsonEncode(customEntry.toJson()), before);
     expect(theme.color.id, oculumMonsterColors(customEntry).last.id);
   });
@@ -286,7 +285,10 @@ void main() {
           final provider = image.image is ResizeImage
               ? (image.image as ResizeImage).imageProvider
               : image.image;
-          expect((provider as AssetImage).assetName, _assetFor(id));
+          expect(
+            (provider as AssetImage).assetName,
+            oculumMonsterArtworkAsset(_assetFor(id)),
+          );
           expect(image.fit, BoxFit.contain);
           await tester.runAsync(
             () => precacheImage(
@@ -327,7 +329,10 @@ void main() {
     final image = tester.widget<Image>(
       find.byKey(const ValueKey('monster-page-art-basilisco_base')),
     );
-    expect((image.image as AssetImage).assetName, _assetFor(entry.id));
+    expect(
+      (image.image as AssetImage).assetName,
+      oculumMonsterArtworkAsset(_assetFor(entry.id)),
+    );
     expect(image.fit, BoxFit.contain);
     expect(find.text('Scheda'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());

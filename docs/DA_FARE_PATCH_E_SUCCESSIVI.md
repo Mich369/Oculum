@@ -1,5 +1,13 @@
 # Oculum — attività, conferme e consegne
 
+## WebP senza perdita per tutti i lotti integrati — 9 novembre 2026
+
+Convertiti 538 PNG dei mostri, 401 desktop, 68 telefono e 69 reliquie. Il confronto integrale dei pixel RGBA, delle dimensioni e dei profili presenti è riuscito per tutti. I derivati passano da 1.080.865.405 a 749.754.792 byte, con 331.110.613 byte risparmiati prima della compressione dei pacchetti. Conservati i PNG nativi e gli SHA delle scelte. Il bundle Flutter usa un solo file per asset e risolve i percorsi PNG storici nella visualizzazione, mantenendo le immagini personalizzate, i temi e le scelte già salvate.
+
+La ricevuta `design/optimized-monster-art.json` documenta percorsi, dimensioni, SHA e peso. Per aggiungere nuovi asset dei lotti si può passare a `scripts/prepare_lossless_monster_art.py` la lista completa delle sorgenti, inclusa la nuova immagine. Analisi Flutter senza rilievi e 180 test locali passati. Il test del bundle intercetta gli asset mancanti e conferma che il vecchio percorso risolve la copia corretta anche se importato con separatori Windows. I pesi effettivi di APK, ZIP e cartelle, la CI e la pubblicazione hanno verifiche distinte.
+
+Nel rilascio web 282 il codice compilato riportava il commit giusto, mentre HTML e bootstrap riportavano quello del workflow che ha avviato la pubblicazione. Checkout, Dart e marcatori ora usano lo stesso commit sorgente. Il test locale con due SHA distinti verifica HTML e bootstrap. Il mirror 282 ha caricato i nove archivi esatti ma ha incontrato un 504 durante la verifica anonima. La verifica ora prova una richiesta fresca e, se serve, l’endpoint pubblico dell’archivio. I nove archivi della 282 hanno risposto via endpoint pubblico con intestazione ZIP e lunghezza attese. I link memorizzati dal client conservano la forma canonica. Passati 19 test Python di pubblicazione.
+
 ## Voti definitivi del lotto da 50 e sezione Open — 9 novembre 2026
 
 L’ultimo invio copre tutti i 50 ID del lotto. Confermati 47 desktop, 44 rinomini e tre nomi esistenti. I tre ritiri riguardano le sole varianti indicate. Le Skill e le Open restano disponibili nei dati storici. Le righe senza selezione delle Skill conservano il corredo esistente. Custos Relay e Cinerstitch chiudono le scelte desktop, entrambi con la A. La conferma successiva assegna **Silvarkrath** al Baby Forest Demon Rituale e mantiene il desktop C.

@@ -3226,7 +3226,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ? spriteAssetPath.isEmpty
               ? Center(child: fallbackIcon)
               : Image.asset(
-                  spriteAssetPath,
+                  oculumMonsterArtworkAsset(spriteAssetPath)!,
                   fit: BoxFit.cover,
                   cacheWidth: cacheSide,
                   cacheHeight: cacheSide,

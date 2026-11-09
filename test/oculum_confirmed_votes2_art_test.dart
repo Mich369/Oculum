@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/widgets/oculum_monster_theme.dart';
 import 'package:pointycastle/digests/sha256.dart';
+
+import 'support/oculum_monster_art_bundle.dart';
 
 String digest(Uint8List value) => SHA256Digest()
     .process(value)
@@ -24,7 +26,7 @@ void main() {
   final files = (receipt['files'] as List).cast<Map<String, dynamic>>();
 
   test(
-    '55 approved originals are bundled byte-identically and reachable',
+    '55 approved originals are preserved and their runtime artwork is bundled',
     () async {
       expect(files, hasLength(55));
       expect(files.map((x) => x['id']).toSet(), hasLength(55));
@@ -36,21 +38,16 @@ void main() {
           entry!,
           oculumMonsterColors(entry).first,
         );
-        expect(theme.illustration, row['asset'], reason: id);
-        expect(theme.preserveIllustrationFraming, isTrue, reason: id);
-        final bundled = await rootBundle.load(row['asset'] as String);
+        final canonical = row['asset'] as String;
         expect(
-          digest(
-            bundled.buffer.asUint8List(
-              bundled.offsetInBytes,
-              bundled.lengthInBytes,
-            ),
-          ),
-          row['nativeSha256'],
+          theme.illustration,
+          oculumMonsterArtworkAsset(canonical),
           reason: id,
         );
+        expect(theme.preserveIllustrationFraming, isTrue, reason: id);
+        await expectBundledMonsterArt(canonical);
         expect(
-          digest(File(row['asset'] as String).readAsBytesSync()),
+          digest(File(canonical).readAsBytesSync()),
           row['nativeSha256'],
           reason: id,
         );

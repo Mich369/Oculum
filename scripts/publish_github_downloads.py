@@ -12,6 +12,8 @@ import re
 import subprocess
 import sys
 import tempfile
+from time import sleep, time_ns
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -180,9 +182,33 @@ def notes(catalog):
     return "\n".join(lines)
 
 
-def verify_anonymous_download(entry):
+def verify_anonymous_download(entry, asset_id=None):
     """Verify public redirects, size and ZIP header without sending credentials."""
-    request = Request(entry["url"], headers={"Range": "bytes=0-3", "User-Agent": "Oculum-public-download-check"})
+    url = entry["url"]
+    for delay in (2, 5, None):
+        try:
+            _check_public_zip(entry, url)
+            return
+        except (URLError, TimeoutError) as error:
+            retryable = not isinstance(error, HTTPError) or error.code in {
+                408, 429, 500, 502, 503, 504,
+            }
+            if delay is None or not retryable:
+                raise RuntimeError(f"Public download failed for {entry['name']}: {error}") from error
+            print(f"Retrying anonymous download check for {entry['name']}: {error}", flush=True)
+            sleep(delay)
+            base_url = entry["url"]
+            if delay == 5 and type(asset_id) is int and asset_id > 0:
+                base_url = f"https://api.github.com/repos/{REPO}/releases/assets/{asset_id}"
+            url = f"{base_url}?oculum_check={time_ns()}"
+
+
+def _check_public_zip(entry, url):
+    headers = {"Range": "bytes=0-3", "Cache-Control": "no-cache",
+               "User-Agent": "Oculum-public-download-check"}
+    if url.startswith("https://api.github.com/"):
+        headers.update({"Accept": "application/octet-stream", "X-GitHub-Api-Version": "2022-11-28"})
+    request = Request(url, headers=headers)
     with urlopen(request, timeout=60) as response:
         if response.status not in (200, 206) or response.read(4) != b"PK\x03\x04":
             raise ValueError("Public download is unavailable or not an archive: " + entry["name"])
@@ -274,10 +300,12 @@ def publish(run_id):
             if path.stat().st_size != entry["bytes"] or entry["sha256"] != digest:
                 raise ValueError(f"Artifact integrity check failed: {filename}")
             gh("release", "upload", tag, str(path), "--repo", REPO)
-        if verified_release_assets(release(tag), tag, run["head_sha"], expected) != set(expected):
+        published = release(tag)
+        if verified_release_assets(published, tag, run["head_sha"], expected) != set(expected):
             raise ValueError("Versioned release is missing verified assets")
+        asset_ids = {asset["name"]: asset.get("id") for asset in published["assets"]}
         for entry in entries:
-            verify_anonymous_download(entry)
+            verify_anonymous_download(entry, asset_ids[entry["name"] + ".zip"])
         if not promote:
             print("Archived verified build without rolling back the public channel")
             return

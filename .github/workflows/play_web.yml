@@ -16,13 +16,15 @@ jobs:
   web:
     if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
+    env:
+      OCULUM_SOURCE_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ env.OCULUM_SOURCE_COMMIT }}
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -40,11 +42,11 @@ jobs:
           OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           flutter build web --release --base-href "${BASE_PATH}/" \
-            "--dart-define=OculumSourceCommit=${{ github.event.workflow_run.head_sha || github.sha }}" \
+            "--dart-define=OculumSourceCommit=${OCULUM_SOURCE_COMMIT}" \
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
       - name: Version published scripts
-        run: python3 -c "from pathlib import Path; import os; [p.write_text(p.read_text().replace('__OCULUM_BUILD__', os.environ['GITHUB_SHA'])) for p in [Path('build/web/index.html'), Path('build/web/flutter_bootstrap.js')]]"
+        run: python3 -c "from pathlib import Path; import os; [p.write_text(p.read_text().replace('__OCULUM_BUILD__', os.environ['OCULUM_SOURCE_COMMIT'])) for p in [Path('build/web/index.html'), Path('build/web/flutter_bootstrap.js')]]"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web

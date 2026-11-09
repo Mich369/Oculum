@@ -64,7 +64,11 @@ void main() {
       final id = file['id'] as String;
       final theme = themeFor(id);
       expect(theme.preserveIllustrationFraming, isTrue, reason: id);
-      expect(theme.illustration, file['asset'], reason: id);
+      expect(
+        theme.illustration,
+        oculumMonsterArtworkAsset(file['asset'] as String),
+        reason: id,
+      );
       final digest = SHA256Digest()
           .process(File(file['asset'] as String).readAsBytesSync())
           .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
@@ -96,7 +100,7 @@ void main() {
           'relic' => theme.relicIllustration,
           _ => null,
         };
-        expect(binding, file['asset']);
+        expect(binding, oculumMonsterArtworkAsset(file['asset'] as String));
       }
     }
   });

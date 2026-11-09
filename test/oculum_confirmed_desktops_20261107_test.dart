@@ -1,15 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/widgets/oculum_goth_ornaments.dart';
 import 'package:oculum/widgets/oculum_monster_theme.dart';
 import 'package:oculum/widgets/oculum_narrative_background.dart';
+import 'package:oculum/widgets/oculum_optimized_monster_art_assets.dart';
 import 'package:oculum/widgets/oculum_theme_sheet_art.dart';
 import 'package:pointycastle/digests/sha256.dart';
+
+import 'support/oculum_monster_art_bundle.dart';
 
 const _receipt = 'design/approved-monster-desktops-2026-11-07-votes3.json';
 const _previousReceipt =
@@ -40,16 +45,10 @@ Future<void> _expectExactDesktop(Map<String, dynamic> file) async {
   expect(bytes.take(8), [137, 80, 78, 71, 13, 10, 26, 10], reason: id);
   expect(bytes.length, file['bytes'], reason: id);
   expect(_sha256(bytes), sha, reason: id);
-  final bundled = await rootBundle.load(asset);
-  expect(
-    _sha256(
-      bundled.buffer.asUint8List(bundled.offsetInBytes, bundled.lengthInBytes),
-    ),
-    sha,
-    reason: id,
-  );
+  await expectBundledMonsterArt(asset);
   final theme = _themeFor(id);
-  expect(theme.illustration, asset, reason: id);
+  expect(OculumMonsterTheme.desktopIllustrationForId(id), asset, reason: id);
+  expect(theme.illustration, oculumMonsterArtworkAsset(asset), reason: id);
   expect(theme.preserveIllustrationFraming, isTrue, reason: id);
   expect(theme.illustrationMobile, isNull, reason: id);
   expect(theme.relicIllustration, isNull, reason: id);
@@ -58,21 +57,122 @@ Future<void> _expectExactDesktop(Map<String, dynamic> file) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test(
+    'converted monster artwork is bundled once under its WebP path',
+    () async {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final bundled = manifest.listAssets().toSet();
+      expect(oculumOptimizedMonsterArtFilenames, isNotEmpty);
+      for (final filename in oculumOptimizedMonsterArtFilenames) {
+        final original = 'assets/oculum/home_art/$filename';
+        final runtime = oculumMonsterArtworkAsset(original);
+        expect(runtime, endsWith('.webp'), reason: original);
+        expect(
+          oculumMonsterArtworkAsset(original.replaceAll('/', r'\')),
+          runtime,
+        );
+        expect(bundled.contains(runtime), isTrue, reason: runtime);
+        expect(bundled.contains(original), isFalse, reason: original);
+        expect(File(original).existsSync(), isTrue, reason: original);
+      }
+      for (final file in Directory(
+        'assets/oculum/home_art',
+      ).listSync().whereType<File>()) {
+        final filename = file.uri.pathSegments.last;
+        if (filename.startsWith('.')) continue;
+        final asset = oculumMonsterArtworkAsset(
+          'assets/oculum/home_art/$filename',
+        );
+        expect(bundled.contains(asset), isTrue, reason: filename);
+      }
+      expect(
+        oculumMonsterArtworkAsset('assets/oculum/home_art/amber_shore.png'),
+        'assets/oculum/home_art/amber_shore.png',
+      );
+      expect(
+        oculumMonsterArtworkAsset('user-authored/retained-sprite.png'),
+        'user-authored/retained-sprite.png',
+      );
+    },
+  );
+
+  test(
+    'desktop, mobile and relic WebP preserve all source RGBA pixels',
+    () async {
+      final goblin = _themeFor('goblin_kamikaze');
+      for (final (filename, runtime) in [
+        (
+          'theme_baby_forest_demon_variante_rituale_canon_20261109_votes7.png',
+          _themeFor('baby_forest_demon_variante_rituale').illustration,
+        ),
+        (
+          'theme_goblin_kamikaze_mobile_canon_20261101.png',
+          goblin.illustrationMobile,
+        ),
+        ('relic_goblin_kamikaze_canon_20261101.png', goblin.relicIllustration),
+      ]) {
+        expect(runtime, endsWith('.webp'), reason: filename);
+        final sourceBytes = File(
+          'assets/oculum/home_art/$filename',
+        ).readAsBytesSync();
+        final bundled = await rootBundle.load(runtime!);
+        expect(
+          bundled.lengthInBytes,
+          lessThan(sourceBytes.length),
+          reason: filename,
+        );
+        final bytes = bundled.buffer.asUint8List(
+          bundled.offsetInBytes,
+          bundled.lengthInBytes,
+        );
+        final source = img.decodePng(sourceBytes)!;
+        final optimized = img.decodeWebP(bytes)!;
+        expect(
+          (optimized.width, optimized.height),
+          (source.width, source.height),
+          reason: filename,
+        );
+        expect(
+          _sha256(optimized.getBytes(order: img.ChannelOrder.rgba)),
+          _sha256(source.getBytes(order: img.ChannelOrder.rgba)),
+          reason: filename,
+        );
+        final codec = await ui.instantiateImageCodec(bytes);
+        final image = (await codec.getNextFrame()).image;
+        expect(
+          (image.width, image.height),
+          (source.width, source.height),
+          reason: filename,
+        );
+        image.dispose();
+        codec.dispose();
+      }
+    },
+  );
+
   test('nickname lot binds all 115 voted desktop themes by ID', () async {
     final receipt =
         jsonDecode(File(_nicknameLotReceipt).readAsStringSync())
             as Map<String, dynamic>;
     final files = (receipt['files'] as List).cast<Map<String, dynamic>>();
     expect(files, hasLength(115));
-    expect(files.map((file) => file['id']).toSet(), oculumNovember8VotedMonsterIds);
+    expect(
+      files.map((file) => file['id']).toSet(),
+      oculumNovember8VotedMonsterIds,
+    );
     for (final file in files) {
       final id = file['id'] as String;
       final revision = file['runtimeRevision'] as Map<String, dynamic>?;
       final asset = (revision ?? file)['asset'] as String;
-      final bundled = await rootBundle.load(asset);
-      expect(bundled.lengthInBytes, (revision ?? file)['bytes'], reason: id);
+      expect(File(asset).lengthSync(), (revision ?? file)['bytes'], reason: id);
+      await expectBundledMonsterArt(asset);
       final theme = _themeFor(id);
-      expect(theme.illustration, asset, reason: id);
+      expect(
+        OculumMonsterTheme.desktopIllustrationForId(id),
+        asset,
+        reason: id,
+      );
+      expect(theme.illustration, oculumMonsterArtworkAsset(asset), reason: id);
       expect(theme.preserveIllustrationFraming, isTrue, reason: id);
     }
   });
@@ -97,24 +197,27 @@ void main() {
     }
   });
 
-  test('exact approved desktop PNGs are bundled and selected by ID', () async {
-    final receipt =
-        jsonDecode(File(_receipt).readAsStringSync()) as Map<String, dynamic>;
-    final files = (receipt['files'] as List).cast<Map<String, dynamic>>();
-    expect(files, hasLength(18));
-    expect(files.map((file) => file['id']).toSet(), hasLength(files.length));
-    expect(receipt['heldIds'], isEmpty);
-    final king = files.singleWhere((file) => file['id'] == 'king_slime');
-    expect(king['letter'], 'A');
-    expect(king['approvedRevision'], isTrue);
-    expect(
-      king['nativeSha256'],
-      '3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494',
-    );
-    for (final file in files) {
-      await _expectExactDesktop(file);
-    }
-  });
+  test(
+    'approved desktop PNGs stay exact and their runtime assets are bundled',
+    () async {
+      final receipt =
+          jsonDecode(File(_receipt).readAsStringSync()) as Map<String, dynamic>;
+      final files = (receipt['files'] as List).cast<Map<String, dynamic>>();
+      expect(files, hasLength(18));
+      expect(files.map((file) => file['id']).toSet(), hasLength(files.length));
+      expect(receipt['heldIds'], isEmpty);
+      final king = files.singleWhere((file) => file['id'] == 'king_slime');
+      expect(king['letter'], 'A');
+      expect(king['approvedRevision'], isTrue);
+      expect(
+        king['nativeSha256'],
+        '3455eccff020389fe88ea49c6d1a28b09c42fc1689fafd55290eda3cd4967494',
+      );
+      for (final file in files) {
+        await _expectExactDesktop(file);
+      }
+    },
+  );
 
   test(
     'the nine r08 votes select only their exact native desktop assets',
@@ -138,7 +241,10 @@ void main() {
       for (final file in files) {
         await _expectExactDesktop(file);
       }
-      expect(_themeFor('bunnys').illustration, isNot(endsWith('_votes4.png')));
+      expect(
+        OculumMonsterTheme.desktopIllustrationForId('bunnys'),
+        isNot(endsWith('_votes4.png')),
+      );
       expect(
         _themeFor('cane_di_cenere').illustration,
         isNot(_themeFor('cane_di_cenere_variante_errante').illustration),
@@ -149,11 +255,11 @@ void main() {
   test('the base Bandito and its Errante retain separate art', () {
     const base = 'habitat_mezzano_bandito_della_maschera_di_corteccia';
     expect(
-      _themeFor(base).illustration,
+      OculumMonsterTheme.desktopIllustrationForId(base),
       'assets/oculum/home_art/theme_${base}_canon_20261107_votes3.png',
     );
     expect(
-      _themeFor('${base}_variante_errante').illustration,
+      OculumMonsterTheme.desktopIllustrationForId('${base}_variante_errante'),
       'assets/oculum/home_art/theme_${base}_variante_errante_canon_20261106_votes2.png',
     );
     expect(
@@ -250,7 +356,10 @@ void main() {
         final source = provider is ResizeImage
             ? provider.imageProvider
             : provider;
-        expect((source as AssetImage).assetName, asset);
+        expect(
+          (source as AssetImage).assetName,
+          oculumMonsterArtworkAsset(asset),
+        );
         expect(image.fit, BoxFit.contain);
         expect(image.alignment, Alignment.centerRight);
       }

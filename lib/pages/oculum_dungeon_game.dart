@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../widgets/oculum_monster_theme.dart' show oculumMonsterArtworkAsset;
 import 'oculum_dungeon/monster_book.dart';
 import 'oculum_dungeon/run_evolution.dart';
 import 'oculum_dungeon/fallen_companion.dart';
@@ -29415,7 +29417,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     final normalized = canonicalDungeonSpriteAssetPath(path);
     if (normalized.startsWith('assets/oculum/') ||
         normalized.startsWith('assets/oculum_dungeon/generated_sprites/')) {
-      return normalized;
+      return oculumMonsterArtworkAsset(normalized);
     }
     return null;
   }

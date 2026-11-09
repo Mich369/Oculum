@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Immagini dei mostri più leggere — 9 novembre
+
+- Oculum usa copie WebP senza perdita per 538 immagini dei lotti, compresi sfondi desktop, versioni per telefono e reliquie. I file dell’arte distribuita scendono da circa 1.081 a 750 MB, con gli stessi pixel, dimensioni e trasparenze.
+- I PNG originali restano disponibili nel progetto. I riferimenti delle schede già salvate e le immagini personalizzate continuano a funzionare.
+
 ## Lotto mostri e pagina Skill — 9 novembre
 
 - Aggiornati 47 sfondi desktop con le immagini votate e 44 nomi di catalogo, fra cui Silvarkrath per il Baby Forest Demon Rituale. Tre varianti escono dal catalogo attivo. Le loro schede già create, le Skill e le Open restano disponibili tramite i dati storici.

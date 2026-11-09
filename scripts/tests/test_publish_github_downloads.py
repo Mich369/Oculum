@@ -5,6 +5,7 @@ import hashlib
 import base64
 from unittest.mock import patch
 from io import BytesIO
+from urllib.error import HTTPError
 
 spec = importlib.util.spec_from_file_location("publisher", Path(__file__).parents[1] / "publish_github_downloads.py")
 publisher = importlib.util.module_from_spec(spec)
@@ -309,3 +310,50 @@ class DownloadRecoveryTests(unittest.TestCase):
         with patch.object(publisher, "urlopen", return_value=wrong_range):
             with self.assertRaisesRegex(ValueError, "size mismatch"):
                 publisher.verify_anonymous_download(dict(name="Oculum-Windows",url="https://github.com/package.zip",bytes=100))
+
+    def test_anonymous_archive_check_retries_gateway_error_with_fresh_redirect(self):
+        class Response(BytesIO):
+            status = 206
+            headers = {"Content-Range": "bytes 0-3/100"}
+
+        url = "https://github.com/package.zip"
+        entry = dict(name="Oculum-Windows", url=url, bytes=100)
+        failure = HTTPError(url, 504, "Gateway Timeout", {}, None)
+        with patch.object(publisher, "urlopen", side_effect=[failure, Response(b"PK\x03\x04")]) as opening, \
+                patch.object(publisher, "time_ns", return_value=123), patch.object(publisher, "sleep") as waiting:
+            publisher.verify_anonymous_download(entry)
+
+        first, second = [call.args[0] for call in opening.call_args_list]
+        self.assertEqual(first.full_url, url)
+        self.assertEqual(second.full_url, url + "?oculum_check=123")
+        self.assertEqual(second.get_header("Range"), "bytes=0-3")
+        self.assertFalse(second.has_header("Authorization"))
+        self.assertEqual(entry["url"], url)
+        waiting.assert_called_once_with(2)
+
+    def test_anonymous_archive_check_does_not_retry_a_missing_file(self):
+        url = "https://github.com/package.zip"
+        failure = HTTPError(url, 404, "Not Found", {}, None)
+        with patch.object(publisher, "urlopen", side_effect=failure) as opening:
+            with self.assertRaisesRegex(RuntimeError, "Oculum-Windows.*404"):
+                publisher.verify_anonymous_download(dict(name="Oculum-Windows", url=url, bytes=100))
+        opening.assert_called_once()
+
+    def test_anonymous_archive_check_uses_release_asset_after_gateway_errors(self):
+        class Response(BytesIO):
+            status = 206
+            headers = {"Content-Range": "bytes 0-3/100"}
+
+        url = "https://github.com/package.zip"
+        entry = dict(name="Oculum-Windows", url=url, bytes=100)
+        failure = HTTPError(url, 504, "Gateway Timeout", {}, None)
+        with patch.object(publisher, "urlopen", side_effect=[failure, failure, Response(b"PK\x03\x04")]) as opening, \
+                patch.object(publisher, "time_ns", return_value=123), patch.object(publisher, "sleep"):
+            publisher.verify_anonymous_download(entry, asset_id=42)
+
+        request = opening.call_args.args[0]
+        self.assertEqual(request.full_url,
+                         f"https://api.github.com/repos/{publisher.REPO}/releases/assets/42?oculum_check=123")
+        self.assertEqual(request.get_header("Accept"), "application/octet-stream")
+        self.assertFalse(request.has_header("Authorization"))
+        self.assertEqual(entry["url"], url)
