@@ -1,4 +1,4 @@
-"""Mirror successful build artifacts to anonymous, immutable GitHub Releases.
+"""Mirror platform packages from successful builds to immutable GitHub Releases.
 
 Only metadata is merged into the central download page; old releases survive.
 Never execute or extract downloaded artifacts. Tokens stay in GH_TOKEN.
@@ -22,14 +22,11 @@ WORKFLOWS = {"Build distribution"}
 WORKFLOW_PATHS = {".github/workflows/build_distribution.yml"}
 PUBLIC_ARTIFACTS = (
     "Oculum-macOS", "Oculum-Windows", "Oculum-Test-Windows",
-    "Oculum-Linux", "Oculum-Android",
+    "Oculum-Linux", "Oculum-Android", "Oculum-Web", "Oculum-iOS-unsigned",
+    "Oculum-Windows-Folder", "Oculum-Test-Windows-Folder",
 )
-EXTRA_ARCHIVES = (
-    "Oculum-Android-AAB",
-    "Oculum-Web", "Oculum-iOS-unsigned", "Oculum-UI-Catture",
-    "Oculum-Windows-Folders", "Oculum-Windows-Folder", "Oculum-Test-Windows-Folder",
-    "Oculum-Verifica-Mostri",
-)
+LEGACY_ARCHIVES = {"Oculum-Android-AAB", "Oculum-UI-Catture",
+                   "Oculum-Windows-Folders", "Oculum-Verifica-Mostri"}
 
 
 def gh(*args, **kwargs):
@@ -68,7 +65,10 @@ def asset_name(artifact):
         raise ValueError("Unsafe artifact name")
     if artifact.get("expired") is not False or not isinstance(artifact.get("id"), int):
         raise ValueError("Missing or expired artifact")
-    if artifact.get("size_in_bytes", 0) >= 2 * 1024 ** 3:
+    size = artifact.get("size_in_bytes")
+    if type(size) is not int or size <= 0:
+        raise ValueError("Missing artifact size")
+    if size >= 2 * 1024 ** 3:
         raise ValueError("Artifact exceeds GitHub Release asset size limit")
     return artifact["name"] + ".zip"
 
@@ -90,20 +90,45 @@ def select_public_artifacts(artifacts):
 
 
 def select_release_archives(artifacts):
-    """Publish every reviewed build archive; keep five platforms in the UI."""
+    """Publish only supported platform packages; keep known extras in Actions."""
     selected = select_public_artifacts(artifacts)
     seen = set(PUBLIC_ARTIFACTS)
     for artifact in artifacts:
         name = artifact.get("name")
         if name in PUBLIC_ARTIFACTS:
             continue
-        if name not in EXTRA_ARCHIVES or name in seen:
+        if name not in LEGACY_ARCHIVES or name in seen:
             raise ValueError("Unreviewed or duplicate archive: " + str(name))
         seen.add(name)
-        selected.append(artifact)
     for artifact in selected:
         asset_name(artifact)
     return selected
+
+
+def archive_entry(artifact, tag):
+    filename = asset_name(artifact)
+    digest = artifact.get("digest") or ""
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+        raise ValueError(f"Missing or invalid artifact digest: {filename}")
+    return {"name": artifact["name"], "bytes": artifact["size_in_bytes"],
+            "sha256": digest,
+            "url": f"https://github.com/{REPO}/releases/download/{tag}/{filename}"}
+
+
+def verified_release_assets(released, tag, commit, expected):
+    if (not released or released.get("tag_name") != tag or released.get("draft") is not False
+            or released.get("target_commitish") != commit):
+        raise ValueError("Versioned release does not match the verified build")
+    verified = set()
+    for asset in released.get("assets", []):
+        name = asset.get("name")
+        entry = expected.get(name)
+        if (entry is None or name in verified or asset.get("state") != "uploaded"
+                or (asset.get("size"), asset.get("digest"), asset.get("browser_download_url"))
+                != (entry["bytes"], entry["sha256"], entry["url"])):
+            raise ValueError(f"Release asset does not match the verified artifact: {name}")
+        verified.add(name)
+    return verified
 
 
 def read_catalog(body):
@@ -136,7 +161,7 @@ def read_update_notes(commit):
 
 def notes(catalog):
     lines = ["# Oculum — download pubblici", "",
-             "Artifact completi delle ultime build riuscite, scaricabili senza account.",
+             "Pacchetti delle ultime build riuscite, scaricabili senza account.",
              "Ogni gruppo indica il commit verificato. I file ZIP conservano gli artifact originali.", ""]
     for item in sorted(catalog.values(), key=lambda item: item["workflow"]):
         lines += [f"## {item.get('runName', item['workflow'])}", "",
@@ -150,8 +175,6 @@ def notes(catalog):
             lines.append("")
         for artifact in item["artifacts"]:
             lines.append(f"- [{artifact['name']}]({artifact['url']}) — {artifact['bytes'] / 1024 ** 2:.1f} MB")
-        if item.get("runId"):
-            lines += ["", f"[Archivio completo della build](https://github.com/{REPO}/releases/tag/oculum-build-{item['runId']}) — include anche Web, iOS non firmato e catture di verifica."]
         lines.append("")
     lines.append(MARKER + json.dumps(catalog, ensure_ascii=True, separators=(",", ":")) + " -->")
     return "\n".join(lines)
@@ -163,10 +186,10 @@ def verify_anonymous_download(entry):
     with urlopen(request, timeout=60) as response:
         if response.status not in (200, 206) or response.read(4) != b"PK\x03\x04":
             raise ValueError("Public download is unavailable or not an archive: " + entry["name"])
-        total = response.headers.get("Content-Range", "").split("/")[-1]
-        if response.status == 200:
-            total = response.headers.get("Content-Length", "")
-        if total and (not total.isdigit() or int(total) != entry["bytes"]):
+        valid_size = (response.headers.get("Content-Range") == f"bytes 0-3/{entry['bytes']}"
+                      if response.status == 206
+                      else response.headers.get("Content-Length") == str(entry["bytes"]))
+        if not valid_size:
             raise ValueError("Public download size mismatch: " + entry["name"])
 
 
@@ -215,43 +238,52 @@ def publish(run_id):
         page += 1
     if not artifacts:
         raise ValueError("Successful distribution has no downloadable artifacts")
-    artifacts = select_release_archives(artifacts)
+    selected = select_release_archives(artifacts)
     tag = f"oculum-build-{run_id}"
+    entries = [archive_entry(artifact, tag) for artifact in selected]
+    expected = {entry["name"] + ".zip": entry for entry in entries}
+    existing = release(tag)
+    present = set()
+    if existing:
+        # A previously published full mirror can be re-indexed in place. Do
+        # not add, remove or replace its internal artifacts.
+        existing_names = {asset.get("name") for asset in existing.get("assets", [])}
+        for artifact in artifacts:
+            name = artifact.get("name")
+            if name in LEGACY_ARCHIVES and name + ".zip" in existing_names:
+                expected[name + ".zip"] = archive_entry(artifact, tag)
+        present = verified_release_assets(existing, tag, run["head_sha"], expected)
     current = release(CHANNEL)
     catalog = read_catalog(current.get("body") or "") if current else {}
     promote = can_promote_channel(catalog, run_id)
-    # The public channel lists only the coordinated five-platform build. Other
-    # older per-workflow releases remain intact and directly accessible.
-    catalog = {
-        key: value for key, value in catalog.items()
-        if value.get("workflow") == "Build distribution"
-    }
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
-        if not release(tag):
+        if not existing:
             gh("release", "create", tag, "--repo", REPO, "--target", run["head_sha"],
                "--title", f"{run['name']} — {run['head_sha'][:7]}", "--prerelease",
                "--latest=false", "--notes", f"Verified build: {run['html_url']}")
-        entries = []
-        for artifact in artifacts:
-            filename = asset_name(artifact)
+        for artifact, entry in zip(selected, entries, strict=True):
+            filename = entry["name"] + ".zip"
+            if filename in present:
+                continue
             path = root / filename
             with path.open("wb") as stream:
                 gh("api", f"repos/{REPO}/actions/artifacts/{artifact['id']}/zip", stdout=stream)
             with path.open("rb") as stream:
                 digest = "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
-            if path.stat().st_size != artifact["size_in_bytes"] or artifact.get("digest") != digest:
+            if path.stat().st_size != entry["bytes"] or entry["sha256"] != digest:
                 raise ValueError(f"Artifact integrity check failed: {filename}")
-            gh("release", "upload", tag, str(path), "--repo", REPO, "--clobber")
-            entries.append({"name": artifact["name"], "bytes": path.stat().st_size,
-                            "sha256": digest,
-                            "url": f"https://github.com/{REPO}/releases/download/{tag}/{filename}"})
+            gh("release", "upload", tag, str(path), "--repo", REPO)
+        if verified_release_assets(release(tag), tag, run["head_sha"], expected) != set(expected):
+            raise ValueError("Versioned release is missing verified assets")
         for entry in entries:
             verify_anonymous_download(entry)
         if not promote:
             print("Archived verified build without rolling back the public channel")
             return
-        catalog[str(workflow_id)] = {
+        # The channel points to one latest platform build. Versioned releases
+        # and their historical archives remain available at their own tags.
+        catalog = {str(workflow_id): {
             "workflow": workflow["name"], "runName": run["name"],
             "runId": run["id"], "commit": run["head_sha"],
             "runUrl": run["html_url"],
@@ -259,7 +291,7 @@ def publish(run_id):
             "changelogPath": "docs/REGISTRO_AGGIORNAMENTI.md",
             "changelogBaseline": "b917217d98d16861a5bbaf1706d78825d883c970",
             "artifacts": entries,
-        }
+        }}
         note_file = root / "downloads.md"
         note_file.write_text(notes(catalog), encoding="utf-8")
         if current:

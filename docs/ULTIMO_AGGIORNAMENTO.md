@@ -1,4 +1,6 @@
-# Sfera Predatrice — aggiornamento in preparazione
+# Download per piattaforma e Sfera Predatrice
+
+- Il menu web mostra i pacchetti delle piattaforme, con Windows normale e Windows Test separati e l’APK firmato per Android.
 
 - La pergamena può apparire fra le offerte casuali dell’Alchimista. Sottrae Oculum a due o più nemici con Manifestazione del Potere contro Canalizzazione.
 - Puoi recuperare l’Oculum sottratto fino al massimo più 5, oppure ottenere +3 a tutte le statistiche per nemico da cui lo sottrai, per tre turni personali.

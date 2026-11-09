@@ -1,5 +1,13 @@
 # Oculum — attività, conferme e consegne
 
+## Download per piattaforma e lotto senza voti precedenti — 9 novembre 2026
+
+Su richiesta dell’utente, l’indice pubblico e il menu web elencano i pacchetti delle piattaforme. I tre artefatti tecnici sono il bundle AAB per lo store, le catture UI e il rapporto Verifica Mostri. La CI li conserva. Le release storiche conservano i loro archivi. Windows normale e Windows Test hanno voci separate sia per lo ZIP sia per la cartella con runtime.
+
+Aggiornato l’indice pubblico della build 281 senza sostituire i suoi archivi. Verificati i nove URL senza autenticazione e i nove pulsanti del menu web in Chrome, con il log cumulativo disponibile. Per il filtro permanente, analisi Flutter pulita, sette test Flutter e sedici test Python passati. [Pagina Download](https://github.com/Mich369/Oculum/releases/tag/oculum-downloads)
+
+Preparata una galleria locale di 50 mostri senza voto registrato, con 150 immagini A/B/C confrontate con gli SHA delle ricevute, 150 nuove proposte di nome e 719 voci Skill dal catalogo. Le schede includono il nome attuale, un campo personalizzato, la selezione delle Skill e l’esportazione della bozza. Le scelte dell’utente verranno registrate dopo l’invio della bozza.
+
 ## Sfera Predatrice — aggiornamento successivo alla 279
 
 Pergamena Oculum ottenibile fra le offerte casuali dell’Alchimista. La ricarica usa solo Oculum effettivamente sottratto, con eccesso massimo 5. L’amplificazione dà +3 a tutte le statistiche per nemico da cui è stato sottratto Oculum e dura tre turni personali. La Skill appresa usa una Azione, zero Oculum e tre turni di recupero. Le cinque forme e i limiti iniziali sono modificabili. La build 279 è stata congelata prima di questa richiesta.
@@ -7,6 +15,10 @@ Pergamena Oculum ottenibile fra le offerte casuali dell’Alchimista. La ricaric
 Verifica locale mirata del 8 novembre. Analisi Flutter senza problemi e 104 test passati. Coperti acquisto, JSON delle forme, lancio appreso a riserva zero, selezione di due bersagli distinti, cap con riserva temporaneamente soppressa, difesa senza doppio addebito, chiusura delle richieste per bersagli divenuti alleati, progressione, Open e log cumulativo. La difesa Sfera è stata provata localmente. La verifica in una partita online reale resta separata.
 
 La CI 280 ha registrato 2.432 test passati, uno fallito e 6 saltati. Il test di Risveglio Vitale cambiava la data mostrata senza avanzare l’orologio di campagna, che governa il recupero. Il valore rimasto dal primo risveglio poteva rientrare casualmente nell’intervallo atteso. La fixture ora avanza l’orologio e verifica che la Vita temporanea sia stata registrata per il giorno successivo. Il 9 novembre sono passate 59 prove locali su Resilienza, orologio, riposi, pergamene e Sfera. La build 280 è stata fermata prima della produzione dei pacchetti. [CI 280](https://github.com/Mich369/Oculum/actions/runs/42529469085)
+
+La CI 281 ha compilato `0ee95c4e` con nove job riusciti. Analisi pulita, 2.433 test Flutter passati e 6 saltati. In passaggi separati sono passate quattro prove online autenticate generali, 15 del diario, una di digitazione e 34 dei comandi di pubblicazione. Sono stati verificati dodici download senza login, con lunghezze attese, e il commit pubblicato su Pages. La prova in Chrome ha aggiornato il sito da una versione precedente, mostrato il log `0ee95c4e` e aperto il menu Scarica Oculum con dodici archivi. La prova di combattimento online della Sfera resta distinta. [CI 281](https://github.com/Mich369/Oculum/actions/runs/42533139551) · [Download pubblici](https://github.com/Mich369/Oculum/releases/tag/oculum-build-42533139551)
+
+Installata la 281 da dodici archivi verificati, con 17.546 file e zero difformità. L’APK firmato ha codice `100281`. Windows e Windows Test sono stati avviati separatamente e i 62 file preesistenti dei profili sono rimasti identici. La 279 è conservata nella copia `distribution-backup-42533139551-20261109-052844816`. L’avvio locale certifica i processi e i profili. La chiusura della consegna attende la conferma richiesta dal registro.
 
 ## Pubblicazione 279 — 8 novembre 2026
 

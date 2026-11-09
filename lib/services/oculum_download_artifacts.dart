@@ -12,14 +12,10 @@ const _requiredArtifactNames = <String>[
 ];
 
 const _extraArtifactNames = <String>[
-  'Oculum-Android-AAB',
   'Oculum-Web',
   'Oculum-iOS-unsigned',
-  'Oculum-UI-Catture',
-  'Oculum-Windows-Folders',
   'Oculum-Windows-Folder',
   'Oculum-Test-Windows-Folder',
-  'Oculum-Verifica-Mostri',
 ];
 
 const oculumCumulativeUpdateLogUrl =

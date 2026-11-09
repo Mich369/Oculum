@@ -1,5 +1,9 @@
 # Registro cumulativo per i giocatori
 
+## Download per piattaforma — 9 novembre
+
+- Il menu web e la pagina dei download elencano i pacchetti delle piattaforme. Windows e Windows Test hanno ciascuno il proprio ZIP e la propria cartella. Su Android trovi il pacchetto con l’APK firmato.
+
 ## Pergamena Sfera Predatrice — 8 novembre
 
 - L’Alchimista può offrire Sfera Predatrice fra le scorte casuali. Sottrae Oculum a due o più nemici con Manifestazione del Potere contro Canalizzazione. La ricarica usa solo l’Oculum sottratto e arriva fino al massimo più 5. L’amplificazione dà +3 a tutte le statistiche per nemico da cui hai sottratto Oculum, per tre turni personali.

@@ -11,6 +11,11 @@ publisher = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(publisher)
 
 
+def mirror_asset(entry):
+    return dict(name=entry["name"] + ".zip", state="uploaded", size=entry["bytes"],
+                digest=entry["sha256"], browser_download_url=entry["url"])
+
+
 class DownloadPublicationTests(unittest.TestCase):
     def test_android_builds_finish_before_packaging_and_keep_signature_checks(self):
         workflow = (Path(__file__).parents[2] / ".github/workflows/build_distribution.yml").read_text(encoding="utf-8")
@@ -29,7 +34,7 @@ class DownloadPublicationTests(unittest.TestCase):
         # A diagnostic Gradle retry must never turn the original failure green.
         self.assertIn('exit "$bundle_status"', workflow[bundle:verify_bundle])
 
-    def test_android_apk_and_aab_are_separate_reviewed_release_assets(self):
+    def test_android_aab_stays_in_ci_while_the_apk_is_public(self):
         # This real growth boundary broke publication when the two packages
         # were combined. Keep APK identity stable for older app updaters.
         apk = dict(name="Oculum-Android", id=1, expired=False, size_in_bytes=1_140_000_000)
@@ -41,13 +46,15 @@ class DownloadPublicationTests(unittest.TestCase):
         required = [dict(name=name, id=index+10, expired=False, size_in_bytes=4)
                     for index,name in enumerate(publisher.PUBLIC_ARTIFACTS) if name != "Oculum-Android"]
         selected = publisher.select_release_archives([aab, *required, apk])
-        self.assertIn(aab, selected)
-        self.assertEqual(len(publisher.select_public_artifacts(selected)), 5)
+        self.assertNotIn(aab, selected)
+        self.assertIn(apk, selected)
+        self.assertEqual(len(selected), 9)
         workflow = (Path(__file__).parents[2] / ".github/workflows/build_distribution.yml").read_text(encoding="utf-8")
         apk_upload = workflow.split("name: Upload Android APK artifact",1)[1].split("name: Upload Android App Bundle artifact",1)[0]
         self.assertIn("name: Oculum-Android\n", apk_upload)
         self.assertIn("Oculum-Android-release.apk", apk_upload)
         self.assertNotIn("Oculum-Android-release.aab", apk_upload)
+        self.assertIn("name: Oculum-Android-AAB\n", workflow)
 
     def test_update_log_uses_the_exact_built_commit(self):
         content = base64.b64encode("# Log\n\n- Bug fix\n- Nuovi mostri\n".encode()).decode()
@@ -76,10 +83,14 @@ class DownloadPublicationTests(unittest.TestCase):
                    head_repository={"full_name": publisher.REPO})
         workflow = dict(name="Build distribution", path=".github/workflows/build_distribution.yml")
         payload = b"PK\x03\x04"
+        names = publisher.PUBLIC_ARTIFACTS + tuple(sorted(publisher.LEGACY_ARCHIVES))
         artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=len(payload),
                           digest="sha256:" + hashlib.sha256(payload).hexdigest())
-                     for index, name in enumerate(publisher.PUBLIC_ARTIFACTS, start=1)]
+                     for index, name in enumerate(names, start=1)]
         published = []
+        assets = []
+        downloads = []
+        tag = "oculum-build-42"
 
         def api(path):
             if path == "actions/runs/42":
@@ -94,16 +105,30 @@ class DownloadPublicationTests(unittest.TestCase):
 
         def gh(*args, **kwargs):
             if args[0] == "api":
+                downloads.append(int(args[1].split("/")[-2]))
                 kwargs["stdout"].write(payload)
+            if args[:2] == ("release", "upload"):
+                self.assertNotIn("--clobber", args)
+                filename = Path(args[3]).name
+                artifact = next(a for a in artifacts if a["name"] + ".zip" == filename)
+                assets.append(mirror_asset(publisher.archive_entry(artifact, tag)))
             if "--notes-file" in args:
                 published.append(Path(args[args.index("--notes-file") + 1]).read_text(encoding="utf-8"))
 
+        def release(name):
+            if name == tag and assets:
+                return dict(tag_name=tag, draft=False, target_commitish=run["head_sha"], assets=assets)
+            return None
+
         with patch.object(publisher, "api", side_effect=api), \
                 patch.object(publisher, "gh", side_effect=gh), \
-                patch.object(publisher, "release", return_value=None), \
+                patch.object(publisher, "release", side_effect=release), \
                 patch.object(publisher, "read_update_notes", return_value=["Bug fix", "Nuovi mostri"]), \
-                patch.object(publisher, "verify_anonymous_download"):
+                patch.object(publisher, "verify_anonymous_download") as check_anonymous:
             publisher.publish("42")
+        self.assertEqual(downloads, list(range(1, 10)))
+        self.assertEqual(len(assets), 9)
+        self.assertEqual(check_anonymous.call_count, 9)
         self.assertEqual(len(published), 1)
         entry = publisher.read_catalog(published[0])["7"]
         self.assertEqual(entry["workflow"], "Build distribution")
@@ -112,6 +137,7 @@ class DownloadPublicationTests(unittest.TestCase):
         self.assertIn("Oculum — download pubblici", published[0])
         self.assertIn("Log aggiornamento:",published[0])
         self.assertEqual(entry["changes"],["Bug fix","Nuovi mostri"])
+        self.assertEqual([a["name"] for a in entry["artifacts"]], list(publisher.PUBLIC_ARTIFACTS))
         self.assertNotIn("â€", published[0])
         self.assertNotIn("Â", published[0])
 
@@ -140,12 +166,12 @@ class DownloadPublicationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 publisher.asset_name({**artifact, **patch})
 
-    def test_only_publishes_the_complete_five_platform_set(self):
+    def test_only_publishes_the_complete_platform_set(self):
         artifacts = [
             {"name": name, "id": index, "expired": False, "size_in_bytes": 4}
             for index, name in enumerate(publisher.PUBLIC_ARTIFACTS, start=1)
         ]
-        artifacts += [{"name": "Oculum-iOS-unsigned", "id": 99}]
+        artifacts += [{"name": "Oculum-UI-Catture", "id": 99}]
         self.assertEqual(
             [item["name"] for item in publisher.select_public_artifacts(artifacts)],
             list(publisher.PUBLIC_ARTIFACTS),
@@ -161,12 +187,12 @@ class DownloadPublicationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             publisher.read_catalog("An unrelated release must never be overwritten")
 
-    def test_full_release_keeps_extra_archives_without_exposing_unknown_files(self):
-        names = publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_ARCHIVES
+    def test_full_ci_build_excludes_internal_archives_from_new_public_mirrors(self):
+        names = publisher.PUBLIC_ARTIFACTS + tuple(sorted(publisher.LEGACY_ARCHIVES))
         artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=4)
                      for index, name in enumerate(names, start=1)]
-        self.assertEqual(len(publisher.select_release_archives(artifacts)), len(names))
-        self.assertEqual(len(publisher.select_public_artifacts(artifacts)), 5)
+        self.assertEqual([a["name"] for a in publisher.select_release_archives(artifacts)],
+                         list(publisher.PUBLIC_ARTIFACTS))
         with self.assertRaisesRegex(ValueError, "Unreviewed"):
             publisher.select_release_archives(artifacts + [dict(name="private-saves")])
         with self.assertRaisesRegex(ValueError, "duplicate"):
@@ -175,8 +201,73 @@ class DownloadPublicationTests(unittest.TestCase):
                                runId=42, runUrl="https://github.com/Mich369/Oculum/actions/runs/42",
                                artifacts=[])}
         notes = publisher.notes(catalog)
-        self.assertIn("releases/tag/oculum-build-42", notes)
+        self.assertNotIn("releases/tag/oculum-build-42", notes)
         self.assertEqual(publisher.read_catalog(notes), catalog)
+
+    def test_reindexing_existing_release_preserves_its_historical_archives(self):
+        commit = "a" * 40
+        tag = "oculum-build-42"
+        run = dict(id=42, workflow_id=7, name="Build distribution", conclusion="success",
+                   status="completed", head_branch="main", head_sha=commit,
+                   html_url=f"https://github.com/{publisher.REPO}/actions/runs/42",
+                   repository={"full_name": publisher.REPO}, head_repository={"full_name": publisher.REPO})
+        workflow = dict(name="Build distribution", path=".github/workflows/build_distribution.yml")
+        extras = ("Oculum-UI-Catture", "Oculum-Verifica-Mostri", "Oculum-Android-AAB")
+        artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=4,
+                          digest="sha256:" + "a" * 64)
+                     for index, name in enumerate(publisher.PUBLIC_ARTIFACTS + extras, start=1)]
+        old_entries = [publisher.archive_entry(a, tag) for a in artifacts]
+        assets = [mirror_asset(entry) for entry in old_entries]
+        released = dict(tag_name=tag, draft=False, target_commitish=commit, assets=assets)
+        old_item = dict(workflow=workflow["name"], commit=commit, runId=42,
+                        runUrl=run["html_url"], artifacts=old_entries)
+        channel = dict(body=publisher.notes({"7": old_item, "6": {**old_item, "runId": 41}}))
+        updated = []
+
+        def api(path):
+            if path == "actions/runs/42":
+                return run
+            if path == "actions/workflows/7":
+                return workflow
+            if path.startswith("actions/workflows/7/runs?"):
+                return {"workflow_runs": [run]}
+            if path.startswith("actions/runs/42/artifacts?"):
+                return {"artifacts": artifacts}
+            self.fail("Unexpected API request: " + path)
+
+        def gh(*args, **kwargs):
+            self.assertEqual(args[:3], ("release", "edit", publisher.CHANNEL))
+            updated.append(Path(args[args.index("--notes-file") + 1]).read_text(encoding="utf-8"))
+
+        with patch.object(publisher, "api", side_effect=api), \
+                patch.object(publisher, "gh", side_effect=gh), \
+                patch.object(publisher, "release", side_effect=lambda name: released if name == tag else channel), \
+                patch.object(publisher, "read_update_notes", return_value=[]), \
+                patch.object(publisher, "verify_anonymous_download") as check_anonymous:
+            publisher.publish("42")
+        self.assertEqual(len(assets), 12)
+        self.assertEqual(check_anonymous.call_count, 9)
+        self.assertEqual(len(updated), 1)
+        catalog = publisher.read_catalog(updated[0])
+        self.assertEqual(list(catalog), ["7"])
+        self.assertEqual([a["name"] for a in catalog["7"]["artifacts"]], list(publisher.PUBLIC_ARTIFACTS))
+        for name in extras:
+            self.assertNotIn(name, updated[0])
+
+    def test_release_asset_digest_and_exact_allowed_names_are_checked(self):
+        tag = "oculum-build-42"
+        commit = "a" * 40
+        entry = publisher.archive_entry(dict(name="Oculum-Windows", id=1,
+            expired=False, size_in_bytes=4, digest="sha256:" + "b" * 64), tag)
+        asset = mirror_asset(entry)
+        release = dict(tag_name=tag, draft=False, target_commitish=commit, assets=[asset])
+        expected = {asset["name"]: entry}
+        self.assertEqual(publisher.verified_release_assets(release, tag, commit, expected), set(expected))
+        for change in ({"digest": "sha256:" + "a" * 64}, {"name": "Oculum-UI-Catture.zip"},
+                       {"size": 5}, {"state": "starter"}):
+            with self.assertRaisesRegex(ValueError, "Release asset"):
+                publisher.verified_release_assets({**release, "assets": [{**asset, **change}]},
+                                                  tag, commit, expected)
 
 
 class DownloadRecoveryTests(unittest.TestCase):
@@ -212,4 +303,9 @@ class DownloadRecoveryTests(unittest.TestCase):
             self.assertFalse(opening.call_args.args[0].has_header("Authorization"))
         with patch.object(publisher, "urlopen", return_value=Response(b"HTML")):
             with self.assertRaises(ValueError):
+                publisher.verify_anonymous_download(dict(name="Oculum-Windows",url="https://github.com/package.zip",bytes=100))
+        wrong_range = Response(b"PK\x03\x04")
+        wrong_range.headers = {"Content-Range": "bytes 1-4/100"}
+        with patch.object(publisher, "urlopen", return_value=wrong_range):
+            with self.assertRaisesRegex(ValueError, "size mismatch"):
                 publisher.verify_anonymous_download(dict(name="Oculum-Windows",url="https://github.com/package.zip",bytes=100))
