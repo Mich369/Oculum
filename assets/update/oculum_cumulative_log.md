@@ -1,5 +1,9 @@
 # Registro cumulativo per i giocatori
 
+## Risveglio e Scudo — 13 novembre
+
+- Un colpo assorbito interamente dallo Scudo lascia disponibile il tentativo di Risveglio a metà Vita.
+
 ## Gambio di Orea Zalira — 9 novembre
 
 - Nel Monster Book trovi Gambio, un cucciolo dal pelo color pesca e dalle orecchie a foglia. Puoi generarlo come mostro neutrale di livello 1 con la sua Spintarella.

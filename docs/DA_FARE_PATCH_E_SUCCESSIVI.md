@@ -1,5 +1,13 @@
 # Oculum — attività, conferme e consegne
 
+## Risveglio dopo un colpo assorbito — 13 novembre 2026
+
+La CI 286 ha superato l’analisi Flutter e ha riportato 2.446 test passati, uno fallito e sei saltati. Nel test di Resilienza 35 un colpo assorbito dallo Scudo ha attivato il Risveglio Piccolo, portando la Vita da 100 a 112. La build non ha prodotto pacchetti. [CI 286](https://github.com/Mich369/Oculum/actions/runs/42606691828)
+
+Il Risveglio a metà Vita ora richiede che il colpo faccia perdere Vita. I colpi che raggiungono la Vita possono ancora attivarlo sulle schede già sotto soglia. Il test verifica che la parata lasci disponibile il tentativo, poi isola la rigenerazione dal tiro casuale durante i colpi successivi.
+
+Analisi Flutter senza rilievi e 13 test locali passati su Risveglio, Resilienza 35, corazza di Postea, fuga in volo e log. CI della correzione, pacchetti e prove online reali restano verifiche distinte.
+
 ## Gambio di Orea Zalira — 9 novembre 2026
 
 Confermati il nome Gambio, l’aspetto cuccioloso e la provenienza da Orea Zalira. Scheda iniziale modificabile con livello 1, generazione neutrale, pelo color pesca, quattro zampe, orecchie a foglia e una spintarella difensiva. È una quarta specie di Orea Zalira, con ID `orea_gambio`.

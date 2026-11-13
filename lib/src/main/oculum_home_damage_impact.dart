@@ -333,6 +333,7 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
     bool oculumDodgeUsedToday = false,
   }) {
     if (hpAfter <= 0 ||
+        hpAfter >= hpBefore ||
         maxHp() <= 0 ||
         hpAfter > (maxHp() / 2).ceil() ||
         risveglioParzialeMetaHpGiaTentato()) {

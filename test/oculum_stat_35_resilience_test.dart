@@ -13,8 +13,11 @@ void main() {
       state.resilienzaController.text = '35';
       probe.setResourceCurrent('resilienza', 35);
       state.currentHpController.text = '100';
-      final runtime =
-          state.schedePersonaggio[state.schedaCorrente]['planarRuntime'] as Map;
+      Map currentSheet() =>
+          state.schedePersonaggio[state.schedaCorrente] as Map;
+      final runtime = currentSheet()['planarRuntime'] as Map;
+      const awakeningKey = 'partialAwakeningHalfHpTriggered';
+      currentSheet()[awakeningKey] = false;
       runtime['stat35'] = {
         'choices': {'resilienza': 'res_regen'},
       };
@@ -22,7 +25,10 @@ void main() {
       await probe.damageResolved(5, bypassDefense: true);
       expect(probe.currentHp(), 100);
       expect(runtime['stat35ResRegen'], isNull);
+      expect(currentSheet()[awakeningKey], isFalse);
 
+      // The real Life hits below half Life can trigger a separate random roll.
+      currentSheet()[awakeningKey] = true;
       for (final expected in [90, 80, 78]) {
         await probe.damageResolved(
           10,
