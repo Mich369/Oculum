@@ -20,6 +20,11 @@ class MaximumNaturalRoll implements Random {
   double nextDouble() => .99;
 }
 
+class _OrdinaryNaturalRoll extends MaximumNaturalRoll {
+  @override
+  int nextInt(int max) => min(7, max - 1);
+}
+
 class _EscapeTransport extends OculumRealtimeService {
   _EscapeTransport()
     : super(
@@ -132,6 +137,50 @@ Future<OverlayEntry> showReplies(
 }
 
 void main() {
+  testWidgets('a pending sheet roll cannot spend a reaction on escape', (
+    tester,
+  ) async {
+    final (state, probe, _, _) = await prepareReply(tester, online: false);
+    probe.selectEncounter('encounter_1');
+    state.updateOculumHomeUi(() {
+      state.paginaCorrente = 0;
+      state.activeGameMod = '';
+      state.temiOldSchool = false;
+      state.nuovoDesignOculum = 'cattedrale';
+      state.referenceSheetSection = 'general';
+      state.datiCaricati = true;
+      state.difficoltaTiroController.text = '100';
+      state.ispirazioniController.text = '1';
+      state.superIspirazioniController.text = '0';
+      state.ispirazioniOculumController.text = '0';
+      state.fortuna = 0;
+      state.fatePactUsed = true;
+      state.proponiFortunaDopoTiro = false;
+      state.slotMachineRollsEnabled = false;
+    });
+    probe.setSheetRollRandom(natural: _OrdinaryNaturalRoll());
+    await tester.pump();
+    final stat = find.byKey(const ValueKey('sheet_stat_roll_resilienza'));
+    await tester.ensureVisible(stat.first);
+    await tester.tap(stat.hitTestable().first);
+    await tester.pump();
+    final review = find.byKey(const ValueKey('sheet_roll_review'));
+    expect(review, findsWidgets);
+
+    await probe.attemptEscape();
+    final encounter = probe.combatTurnEncounter();
+    expect(((encounter['tokens'] as List).first as Map)['reactionUsed'], 0);
+    expect(encounter['activeIndex'], 1);
+    expect(
+      (state.onlineCombatRequests as Map).values.whereType<Map>().where(
+        (request) => request['sourceTag'] == probe.ownerTag(),
+      ),
+      isEmpty,
+    );
+    expect(review, findsWidgets);
+    await closeFixture(tester, probe);
+  });
+
   for (final online in [false, true]) {
     for (final kind in ['block', 'help']) {
       testWidgets(

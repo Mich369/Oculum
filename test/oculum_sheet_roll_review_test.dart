@@ -156,4 +156,48 @@ void main() {
     expect(state.ispirazioniOculumController.text, '0');
     await closeFixture(tester, probe);
   });
+
+  testWidgets('switching sheets waits until the player confirms the roll', (
+    tester,
+  ) async {
+    final (state, probe) = await _sheet(
+      tester,
+      natural: _FixedRoll(7),
+      rescue: _FixedRoll(49),
+      base: 1,
+    );
+    state.schedePersonaggio.add({
+      ...probe.snapshot(),
+      'id': 'OTHER-HERO',
+      'sheetTag': 'OTHER-HERO',
+      'nome': 'Altra scheda',
+    });
+    await _rollFromSheet(tester);
+
+    final switcher = tester.widget<PopupMenuButton<int>>(
+      find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is PopupMenuButton<int> &&
+                widget.tooltip == 'Cambia scheda',
+          )
+          .first,
+    );
+    switcher.onSelected!(1);
+    await tester.pump();
+    expect(state.schedaCorrente, 0);
+    expect(_review(), findsWidgets);
+
+    tester
+        .widget<TextButton>(
+          find.widgetWithText(TextButton, 'Conferma tiro').first,
+        )
+        .onPressed!();
+    await tester.pump();
+    expect(_review(), findsNothing);
+    switcher.onSelected!(1);
+    await tester.pump();
+    expect(state.schedaCorrente, 1);
+    await closeFixture(tester, probe);
+  });
 }

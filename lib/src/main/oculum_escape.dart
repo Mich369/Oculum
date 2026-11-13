@@ -596,6 +596,7 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> attemptWingEscapeWithPassenger() async {
+    if (!requireConfirmedSheetRoll()) return;
     alignCombatEncounterForRoll();
     final source = sheetTagAt(schedaCorrente);
     final scope = permissionScope;
@@ -612,6 +613,7 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> attemptEscape({String? passengerTag}) async {
+    if (!requireConfirmedSheetRoll()) return;
     alignCombatEncounterForRoll();
     if (!currentCombatIsActive() || outsideFight) return;
     final tag = sheetTagAt(schedaCorrente), origin = currentSheetScrollId();
@@ -1186,6 +1188,9 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> answerEscape(Map<String, dynamic> record, String kind) async {
+    if ((kind == 'block' || kind == 'attack') && !requireConfirmedSheetRoll()) {
+      return;
+    }
     // The reference panel follows the current sheet's fight even when another
     // encounter is selected in the Master board or the shared snapshot. Spend
     // the reply in that same fight, as the attack planner already does.
@@ -1993,6 +1998,7 @@ extension _OculumEscape on _OculumHomePageState {
   }
 
   Future<void> returnToFight(String mode) async {
+    if (!requireConfirmedSheetRoll()) return;
     alignCombatEncounterForRoll();
     if (!outsideFight || !const {'velo', 'riflessi'}.contains(mode)) return;
     if (!await requestUtilitySpend('azione', preferFreeReaction: false)) return;

@@ -1212,6 +1212,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
   }
 
   Future<void> showCombatActionPanel(OculumCombatAbilityRole role) async {
+    if (!requireConfirmedSheetRoll()) return;
     alignCombatEncounterForRoll();
     if (parasiteOwnerLocked) {
       await showDialog<void>(

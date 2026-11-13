@@ -5410,7 +5410,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (index < 0 || index >= schedePersonaggio.length) return;
 
     await cambiaSchedaPersonaggio(index);
-    if (!mounted) return;
+    if (!mounted || schedaCorrente != index) return;
 
     setState(() {
       paginaCorrente = 0;
@@ -5949,6 +5949,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   Future<void> duplicaSchedaPersonaggio(int index) async {
+    if (!requireConfirmedSheetRoll()) return;
     if (index < 0 || index >= schedePersonaggio.length) return;
 
     salvaSchedaCorrenteInMemoria();
@@ -6018,6 +6019,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<void> cambiaSchedaPersonaggio(int index) async {
     if (index < 0 || index >= schedePersonaggio.length) return;
     if (index == schedaCorrente) return;
+    if (!requireConfirmedSheetRoll()) return;
 
     salvaSchedaCorrenteInMemoria();
     final globali = catturaImpostazioniGlobali();
@@ -6066,6 +6068,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Future<void> eliminaSchedaPersonaggio(int index) async {
     if (index < 0 || index >= schedePersonaggio.length) return;
+    if (!requireConfirmedSheetRoll()) return;
 
     if (schedePersonaggio.length <= 1) {
       setState(() {

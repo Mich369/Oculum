@@ -276,6 +276,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (draft['defenseReason'] != null)
         'defenseReason': draft['defenseReason'],
       if (draft['defenseHelp'] != null) 'defenseHelp': draft['defenseHelp'],
+      if (draft['opposedDefenseSenkaBonus'] != null)
+        'opposedDefenseSenkaBonus': draft['opposedDefenseSenkaBonus'],
+      if (draft['opposedDefenseSenkaReward'] == true)
+        'opposedDefenseSenkaReward': true,
+      if (draft['concentrationDefenseBonus'] != null)
+        'concentrationDefenseBonus': draft['concentrationDefenseBonus'],
       if (draft['unusedFastDefenseBonus'] != null)
         'unusedFastDefenseBonus': draft['unusedFastDefenseBonus'],
       if (draft['combat_attackTurnResourceSpendIds'] != null)
@@ -2202,6 +2208,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool statOpenKnights = false,
     String? statOpenId,
   }) async {
+    if (!requireConfirmedSheetRoll()) return;
     alignCombatEncounterForRoll();
     final openId = statOpenId ?? (statOpenKnights ? _statOpenKnights : '');
     final openTrack = statOpenTrack(openId);
@@ -3073,6 +3080,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         encounter != onlineCombatEncounterId) {
       return;
     }
+    if (!requireConfirmedSheetRoll()) return;
     if (sandTailAttack &&
         (controlledPlan.targetIds.length != 1 ||
             masked.isNotEmpty ||
@@ -3118,6 +3126,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (!mounted ||
         currentSheetScrollId() != origin ||
         encounter != onlineCombatEncounterId) {
+      return;
+    }
+    if (!requireConfirmedSheetRoll()) {
+      await flushPendingCombatTurnResources();
       return;
     }
     if (materiaMove != null &&
@@ -3252,7 +3264,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       fixedBonuses: flatDamageBonus - areaDamageBonus,
       abilityDamageBonus: abilityDamageBonus,
     );
-    final preparedSkill = takePreparedSkill('attacco');
+    final preparedAttack = planarState['preparedSkill'];
+    final preparedSkill =
+        preparedAttack is Map && preparedAttack['kind'] == 'attacco'
+        ? Map<String, dynamic>.from(preparedAttack)
+        : <String, dynamic>{};
     final concentrationSheet = schedePersonaggio[schedaCorrente];
     final concentrationPending =
         concentrationSheet['combatConcentrationPending'] == true;
@@ -3377,6 +3393,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               effect['target'] == 'explosive_cards_damage',
         ) &&
         _canNegotiateOpposedAttack(hatTargets);
+    if (!negotiate && preparedSkill.isNotEmpty) takePreparedSkill('attacco');
+    bool preparedAttackStillAvailable() =>
+        preparedSkill.isEmpty ||
+        identical(planarState['preparedSkill'], preparedAttack);
     String attackPacketId(int hit, String tag) =>
         hatTargets.length == 1 ? id : '$id:$hit:$tag';
     int? stagedFlatAttackBonus;
@@ -3444,6 +3464,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         if (openMateria) total += statOpenValue(openId, 'precisionBonus');
         commitStatOpenSkill(openId);
       }
+      if (negotiate && preparedSkill.isNotEmpty) takePreparedSkill('attacco');
       if (dominionReceipt != null) {
         total -= takeStatOpenDominionPenalty(receipt: dominionReceipt);
       }
@@ -4286,6 +4307,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     ) async {
       final scope = permissionScope;
       final current = (sheetFeedbackTarget, activeCampaignId);
+      final turn = _turnSpendRetryScope(encounter);
       final combatTokens = onlineCombatTokens();
       String fightId(Iterable<Map<String, dynamic>> tokens, String tag) =>
           '${tokens.where((token) => onlineCombatTokenTag(token) == tag).firstOrNull?['fightInstanceId'] ?? ''}';
@@ -4302,10 +4324,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           scope == permissionScope &&
           current == (sheetFeedbackTarget, activeCampaignId) &&
           encounter == onlineCombatEncounterId &&
+          _turnSpendRetryScope(encounter) == turn &&
           targetsAvailableForFortune() &&
           controlsOnlineCombatSheet(sourceTag) &&
           !outsideFight &&
           sameFight() &&
+          preparedAttackStillAvailable() &&
           currentCombatIsActive();
       if (!isCurrent()) return null;
       stagedFlatAttackBonus = attackFlatBonus();
@@ -4433,11 +4457,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         reviewOpposed: negotiate ? reviewAttack : null,
       );
       if (!mounted || currentSheetScrollId() != origin) return;
-      clearMeccanioAttack();
-      if (consumeNextAttackStructuredEffects()) {
-        aggiungiLog(
-          '$label · Danni per bersaglio $damagePerTarget, bonus del prossimo attacco consumati una sola volta.',
-        );
+      if (!negotiate || stagedReviewCompleted) {
+        clearMeccanioAttack();
+        if (consumeNextAttackStructuredEffects()) {
+          aggiungiLog(
+            '$label · Danni per bersaglio $damagePerTarget, bonus del prossimo attacco consumati una sola volta.',
+          );
+        }
       }
     }
     if (negotiate &&
@@ -5723,6 +5749,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final concentrationPending =
           schedePersonaggio[schedaCorrente]['combatConcentrationPending'] ==
           true;
+      final stagedDefense = request['opposedRollDraft'] == true;
       final collectorDefensePenalty = oculumElementCollectorDefensePenalty(
         sourceMonsterBookId: '${request['sourceMonsterBookId'] ?? ''}',
         incomingElement: '${request['element'] ?? ''}',
@@ -5759,18 +5786,27 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
 
       void resolved(int natural, int total) {
-        request.putIfAbsent(
-          'unusedFastDefenseBonus',
-          () => consumePendingFastReactionConsequenceBonus(),
-        );
+        if (!stagedDefense) {
+          request.putIfAbsent(
+            'unusedFastDefenseBonus',
+            () => consumePendingFastReactionConsequenceBonus(),
+          );
+        }
         defenseNatural = natural;
-        var penalized = defenseTotalForRoll(
-          total,
-          senkaBonus: consumeSenkaStepBonus(),
-        );
+        final senkaBonus = stagedDefense
+            ? readIntValue(senkaRuntime['stepRollBonus'])
+            : consumeSenkaStepBonus();
+        if (stagedDefense && senkaBonus != 0) {
+          request['opposedDefenseSenkaBonus'] = senkaBonus;
+        }
+        var penalized = defenseTotalForRoll(total, senkaBonus: senkaBonus);
         if (request['senkaStepDefense'] == true &&
             penalized > readIntValue(request['attack'])) {
-          grantSenkaStepReward('${request['id']}', defense: true);
+          if (stagedDefense) {
+            request['opposedDefenseSenkaReward'] = true;
+          } else {
+            grantSenkaStepReward('${request['id']}', defense: true);
+          }
           penalized += 5;
         }
         if (collectorDefensePenalty > 0) {
@@ -5786,6 +5822,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         final bonus = (penalized * 0.12).ceil();
         request['concentrationDefenseBonus'] = bonus;
         defense = penalized + bonus;
+        if (stagedDefense) return;
         schedePersonaggio[schedaCorrente]['combatConcentrationPending'] = false;
         aggiungiLog(
           '[CONCENTRAZIONE] Difesa +$bonus (+12%) per questa risposta.',
@@ -6046,6 +6083,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final reviewReply = request['opposedRollFinal'] == true
         ? request['opposedRollDefenseReply'] as Map?
         : null;
+    if (reviewReply != null) {
+      final senkaBonus = request.remove('opposedDefenseSenkaBonus');
+      if (senkaBonus != null && senkaRuntime['stepRollBonus'] == senkaBonus) {
+        consumeSenkaStepBonus();
+      }
+      if (request.remove('opposedDefenseSenkaReward') == true) {
+        grantSenkaStepReward(id, defense: true);
+      }
+      final concentrationBonus = request['concentrationDefenseBonus'];
+      final sheet = schedePersonaggio[schedaCorrente];
+      if (concentrationBonus != null &&
+          sheet['combatConcentrationPending'] == true) {
+        sheet['combatConcentrationPending'] = false;
+        aggiungiLog(
+          '[CONCENTRAZIONE] Difesa +$concentrationBonus (+12%) per questa risposta.',
+        );
+      }
+    }
     applyEscapeReturnBonus(request);
     final counterPercent = counterAttackDamagePercent(request, defense);
     final isCounter = counterPercent != null;

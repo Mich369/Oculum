@@ -4,6 +4,7 @@
 
 - Nel risultato di un tiro fallito puoi scegliere fra Ispirazioni, Fortuna magica e Patto del Fato quando si applicano e hai ancora la risorsa.
 - L’Ispirazione Oculum si usa solo su un critico negativo e ha il 50% di renderlo positivo. Nei Chained Fate un fallimento normale costa due Ispirazioni base o una Super.
+- Prima di cambiare scheda o avviare una nuova azione dalla scheda, conferma il tiro aperto nel risultato.
 
 ## Risveglio e Scudo — 13 novembre
 

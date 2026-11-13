@@ -6,6 +6,10 @@ Confermati un solo uso di Ispirazione per tiro, Patto separato, Fortuna magica d
 
 Analisi Flutter pulita e 65 test locali passati. I widget della scheda verificano fallimento normale, opzioni disponibili, spesa della Fortuna, entrambi gli esiti Oculum, doppio clic e riserve esaurite. Una prova con trasporto simulato verifica che l’attacco misto aspetti tutte le difese e usi un solo nuovo dado prima dei pacchetti finali, rifiutando risposte con identità discordante. Il flusso condiviso copre attacchi con un tiro comune e bersagli remoti su client compatibili. Intercettazioni, contrattacchi, alcune raffiche con colpi consecutivi e bersagli gestiti dallo stesso dispositivo conservano la risoluzione precedente. Verifica con client reali, CI e nuovi pacchetti da registrare separatamente.
 
+La revisione ha rilevato che l’annullamento di un attacco in attesa delle difese poteva consumare bonus del difensore. La Fuga avviata mentre il risultato di un altro tiro era aperto poteva spendere una risorsa di turno prima di essere bloccata. Anche il cambio di scheda poteva chiudere il tiro dopo averne pagato il costo. Annullata la 289 prima della produzione dei pacchetti. [CI 289](https://github.com/Mich369/Oculum/actions/runs/43514232593)
+
+La conferma del tiro ora precede il cambio di scheda e l’avvio di Fuga, Blocco, Rientro e Attacco. L’annullamento conserva i bonus di Senka, Concentrazione, Reazione conservata e la tecnica d’attacco preparata. L’attacco in attesa viene annullato se il turno cambia prima della conferma. Passati 72 test Flutter e analisi senza rilievi. Le prove su attacco condiviso, annullamento e cambio turno usano trasporto simulato. Da verificare l’uso dello stesso bonus da due difese contemporanee, la riconnessione se manca la bozza e il flusso con client reali. La CI e i pacchetti della correzione restano da verificare.
+
 ## Risveglio dopo un colpo assorbito — 13 novembre 2026
 
 La CI 286 ha superato l’analisi Flutter e ha riportato 2.446 test passati, uno fallito e sei saltati. Nel test di Resilienza 35 un colpo assorbito dallo Scudo ha attivato il Risveglio Piccolo, portando la Vita da 100 a 112. La build non ha prodotto pacchetti. [CI 286](https://github.com/Mich369/Oculum/actions/runs/42606691828)
@@ -15,6 +19,8 @@ Il Risveglio a metà Vita ora richiede che il colpo faccia perdere Vita. I colpi
 Analisi Flutter senza rilievi e 13 test locali passati su Risveglio, Resilienza 35, corazza di Postea, fuga in volo e log. CI della correzione, pacchetti e prove online reali restano verifiche distinte.
 
 Il runner della 287 ha usato Flutter 3.50.0. L’analisi si è fermata con 206 segnalazioni informative di deprecazione, prima dei test e della generazione dei pacchetti. Le pipeline GitHub ora usano Flutter 3.47.9, la versione con cui era passata l’analisi della 286. Sono passati 19 test Python e una prova PowerShell simulata sulla pubblicazione. [CI 287](https://github.com/Mich369/Oculum/actions/runs/43490873504)
+
+La 288 ha superato l’analisi Flutter con 2.447 test passati e 6 saltati. Sono passate quattro prove online autenticate automatizzate e 15 prove del diario. Verificati i nove archivi senza login, i loro SHA-256 e il commit dei file serviti da Pages. Installati Windows e Windows Test separati, i rispettivi ZIP e l’APK firmato `100288`. Verificati 17.565 file incluso il manifest, l’avvio dei due EXE e i 62 file dei profili senza variazioni. Il primo controllo locale della firma APK ha superato il limite di tempo. La verifica sullo stesso APK con Java 21 ha confermato firma, certificato e codice versione. [CI 288](https://github.com/Mich369/Oculum/actions/runs/43496781481) · [Pacchetti 288](https://github.com/Mich369/Oculum/releases/tag/oculum-build-43496781481)
 
 ## Gambio di Orea Zalira — 9 novembre 2026
 

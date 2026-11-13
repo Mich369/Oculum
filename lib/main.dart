@@ -5118,8 +5118,9 @@ class _OculumHomePageState extends State<OculumHomePage>
                           return;
                         }
                         if (value == 'new_sheet') {
-                          if (paginaCorrente != onlinePageIndex ||
-                              realtimeCanBrowseOtherSheets) {
+                          if ((paginaCorrente != onlinePageIndex ||
+                                  realtimeCanBrowseOtherSheets) &&
+                              requireConfirmedSheetRoll()) {
                             creaNuovaSchedaPersonaggio();
                           }
                           return;
@@ -5354,7 +5355,11 @@ class _OculumHomePageState extends State<OculumHomePage>
                           paginaCorrente == onlinePageIndex &&
                               !realtimeCanBrowseOtherSheets
                           ? null
-                          : () => creaNuovaSchedaPersonaggio(),
+                          : () {
+                              if (requireConfirmedSheetRoll()) {
+                                creaNuovaSchedaPersonaggio();
+                              }
+                            },
                       icon: Icon(
                         Icons.add_circle,
                         color: tertiaryColor,

@@ -47,6 +47,22 @@ class _SheetRollReview {
 }
 
 extension _OculumSheetRollReview on _OculumHomePageState {
+  bool requireConfirmedSheetRoll() {
+    if (!mounted) return false;
+    if (sheetRollReview == null) return true;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(
+          t(
+            'Conferma prima il tiro in sospeso.',
+            'Confirm the pending roll first.',
+          ),
+        ),
+      ),
+    );
+    return false;
+  }
+
   Future<_ReviewedSheetRoll?> reviewFailedSheetRoll({
     required String label,
     required int natural,
