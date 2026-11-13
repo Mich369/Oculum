@@ -2757,8 +2757,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           icon: Icons.lightbulb,
           color: Colors.amber,
           cap: inspirationCap('base'),
-          onUse: usaIspirazioneBase,
-          useLabel: t('Usa Ispirazione', 'Use Inspiration'),
         ),
         resourceCounter(
           title: t('Super Ispirazioni', 'Super Inspirations'),
@@ -2770,36 +2768,28 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           icon: Icons.flash_on,
           color: Colors.orangeAccent,
           cap: inspirationCap('super'),
-          onUse: usaSuperIspirazione,
-          useLabel: t('Usa Super Ispirazione', 'Use Super Inspiration'),
         ),
         resourceCounter(
           title: t('Ispirazioni Oculum', 'Oculum Inspirations'),
           subtitle: t(
-            'Permettono di ritirare un critico mantenendolo tale, oppure trasformarsi in 2 Ispirazioni base. Sono legate a momenti in cui l’Oculum del personaggio risponde alla storia.',
-            'Allow you to reroll a critical while keeping it critical, or become 2 base Inspirations. They are tied to moments where the character’s Oculum answers the story.',
+            'Nel risultato puoi spendere un’Ispirazione Oculum su un critico negativo. Hai il 50% di ottenere un critico positivo. Puoi anche convertirla in 2 Ispirazioni base.',
+            'Spend an Oculum Inspiration on a negative critical in the roll result. It has a 50% chance to become a positive critical. You can also convert it into 2 base Inspirations.',
           ),
           controller: ispirazioniOculumController,
           icon: Icons.visibility,
           color: primaryColor,
           cap: inspirationCap('oculum'),
-          onUse: usaIspirazioneOculum,
-          useLabel: t('Usa come critico mantenuto', 'Use as kept critical'),
           onAltUse: convertiIspirazioneOculum,
           altUseLabel: t('Converti in 2 base', 'Convert into 2 base'),
         ),
         gothicPanel(
           child: ListTile(
             leading: Icon(Icons.auto_awesome, color: primaryColor),
-            title: Text(t('Accordo col Fato', 'Pact with Fate')),
+            title: Text(t('Patto del Fato', 'Pact with Fate')),
             subtitle: Text(
               fatePactUsed
-                  ? 'Accordo consumato: una sola volta per personaggio.'
-                  : 'Un solo tiro. Sul critico negativo: 20% opzione Oculum, 80% Super Ispirazione.',
-            ),
-            trailing: FilledButton(
-              onPressed: fatePactUsed ? null : useFatePact,
-              child: Text(t('Usa', 'Use')),
+                  ? t('Già usato. Il Patto vale una sola volta per personaggio.', 'Already used. The Pact works once per character.')
+                  : t('Disponibile nel risultato di un tiro fallito.', 'Available in the result of a failed roll.'),
             ),
           ),
         ),

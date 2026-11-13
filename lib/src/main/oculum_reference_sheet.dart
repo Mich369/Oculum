@@ -251,7 +251,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                   (t('Difesa', 'Defense'), difesa(), Icons.security),
                 ])
                   OutlinedButton.icon(
-                    onPressed: () => tiraValoreSpeciale(
+                    onPressed: () => rollSheetValue(
                       entry.$1,
                       entry.$2,
                       applyGlobalRollModifier: false,
@@ -569,7 +569,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         ),
-                        onPressed: () => tiraSottotrattoOcchio(stat),
+                        onPressed: () => rollSheetSubtrait(stat),
                         child: Text(
                           '${stat.nome} · ${hiddenEyeTotal(stat) >= 0 ? '+' : ''}${hiddenEyeTotal(stat)}',
                           style: TextStyle(
@@ -1239,7 +1239,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             ),
                           ),
                         OutlinedButton.icon(
-                          onPressed: () => tiraValoreSpeciale(
+                          onPressed: () => rollSheetValue(
                             'Iniziativa',
                             iniziativa(),
                             applyGlobalRollModifier: false,
@@ -1435,7 +1435,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
             ),
             ValueListenableBuilder<int>(
               valueListenable: diceResultRevision,
-              builder: (context, revision, child) => dadoMostrato.isEmpty
+              builder: (context, revision, child) =>
+                  dadoMostrato.isEmpty && sheetRollReview == null
                   ? sheetWeakPointSummary()
                   : diceResultPanel(),
             ),
@@ -1507,6 +1508,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             ),
                           ),
                           child: InkWell(
+                            key: ValueKey('sheet_stat_roll_${stats[i].$1}'),
                             borderRadius: BorderRadius.circular(8),
                             hoverColor: statFormulaColor(
                               stats[i].$1,
@@ -1514,7 +1516,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                             splashColor: statFormulaColor(
                               stats[i].$1,
                             ).withValues(alpha: .18),
-                            onTap: () => tiraStat(stats[i].$2, stats[i].$3),
+                            onTap: () =>
+                                rollSheetStat(stats[i].$2, stats[i].$3),
                             onLongPress: () => vaiAllaFunzione(
                               page: 0,
                               anchorId: 'sheet_editable_values_${stats[i].$1}',

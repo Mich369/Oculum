@@ -432,6 +432,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     OculumCombatAbilityRole role, {
     HiddenEyeStat? stat,
   }) async {
+    if (sheetRollReview != null) return;
     alignCombatEncounterForRoll();
     final origin = currentSheetScrollId();
     if (outsideFight && role != OculumCombatAbilityRole.support) {
@@ -447,6 +448,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       await tiraSottotrattoOcchio(
         stat!,
         actionLabel: 'Medicina · cura',
+        reviewFailure: true,
         onResolved: (natural, total) {
           if (!mounted || currentSheetScrollId() != origin) return;
           final amount = max(0, total) * (natural == 20 ? 2 : 1);
@@ -481,6 +483,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       await tiraSottotrattoOcchio(
         stat,
         resourceAlreadySpent: true,
+        reviewFailure: true,
         defenseRoll: role == OculumCombatAbilityRole.defense,
         appliesAttackDamageBonus: role == OculumCombatAbilityRole.attack,
       );
@@ -490,6 +493,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
         role == OculumCombatAbilityRole.attack ? vc() : cm(),
         applyGlobalRollModifier: false,
         resourceAlreadySpent: true,
+        reviewFailure: true,
       );
     }
   }

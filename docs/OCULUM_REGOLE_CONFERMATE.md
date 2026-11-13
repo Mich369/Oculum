@@ -1,5 +1,13 @@
 # Oculum — registro delle regole confermate
 
+## Risorse dopo un tiro fallito
+
+- Nel risultato della scheda compaiono solo le opzioni applicabili e disponibili per quel tiro. Il giocatore sceglie se usarle prima di confermare il risultato. Le Ispirazioni modificano quel tiro e si può usare un solo tipo di Ispirazione per tiro.
+- L’Ispirazione base ritira un fallimento non critico. La Super può ritirare anche un critico. Nel Chained Fate attivo, un partecipante paga due Ispirazioni base oppure una Super per ritirare un fallimento normale.
+- L’Ispirazione Oculum richiede un critico negativo. Costa una sola Ispirazione Oculum anche nel Chained Fate. Il tiro diventa un critico positivo nel 50% dei casi e resta un critico negativo nell’altro 50%.
+- La Fortuna magica aggiunge un punto al totale per ogni punto speso. Il Patto del Fato è separato dall’unico uso di Ispirazione e conserva il suo limite di una volta per scheda.
+- Se almeno un bersaglio ferma un attacco online basato su un tiro condiviso, il giocatore può ritirare l’intero attacco prima che si applichino gli effetti a qualsiasi bersaglio.
+
 ## Ali a sparizione e fuga in volo
 
 - In genere le ali sono a sparizione. Farle apparire o ritrarle è un’azione gratuita.

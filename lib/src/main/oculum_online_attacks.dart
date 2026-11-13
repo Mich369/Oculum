@@ -71,7 +71,435 @@ List<String> oculumRedirectAttackHits(
   return (minimum: 1, maximum: 1);
 }
 
+class _OpposedAttackReview {
+  _OpposedAttackReview(this.requests);
+
+  final Map<String, Map<String, dynamic>> requests;
+  final replies = <String, Map<String, dynamic>>{};
+  final ready = Completer<bool>();
+}
+
+final _opposedAttackReviews = Expando<Map<String, _OpposedAttackReview>>();
+
 extension _OculumOnlineAttacks on _OculumHomePageState {
+  Map<String, _OpposedAttackReview> get _activeOpposedAttackReviews =>
+      _opposedAttackReviews[this] ??= {};
+
+  bool _canNegotiateOpposedAttack(Iterable<String> targets) {
+    if (realtimeService?.isConnected != true) return false;
+    return targets.every((tag) {
+      if (controlsOnlineCombatSheet(tag)) return false;
+      return realtimeUsers.any((user) {
+        if (user['opposedRollReview'] != true) return false;
+        final tags = user['localSheetTags'];
+        return tags is List
+            ? tags.any((value) => oculumSameSheetIdentity(value, tag))
+            : oculumSameSheetIdentity(user['activeSheetTag'], tag);
+      });
+    });
+  }
+
+  Future<bool> _sendOpposedReviewEvent(
+    Map<String, dynamic> request,
+    String stage,
+  ) async {
+    if (realtimeService?.isConnected != true ||
+        request['scope'] != permissionScope ||
+        request['encounterId'] != onlineCombatEncounterId) {
+      return false;
+    }
+    final owner =
+        '${stage == 'defense' ? request['targetTag'] : request['sourceTag']}';
+    if (!controlsOnlineCombatSheet(owner)) return false;
+    final payload = <String, dynamic>{
+      ...permissionEnvelope(request),
+      'senderTag': owner,
+      'opposedRollReviewStage': stage,
+    };
+    try {
+      return await realtimeService!.sendCombatEvent('combat_scout', payload);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _receiveOpposedReviewEvent(Map<String, dynamic> payload) {
+    if (!validPermissionSender(payload) ||
+        payload['scope'] != permissionScope ||
+        payload['encounterId'] != onlineCombatEncounterId) {
+      return;
+    }
+    final id = '${payload['id'] ?? ''}';
+    final group = '${payload['attackGroupId'] ?? ''}';
+    final source = '${payload['sourceTag'] ?? ''}';
+    final target = '${payload['targetTag'] ?? ''}';
+    final stage = payload['opposedRollReviewStage'];
+    if (id.isEmpty ||
+        id.length > 160 ||
+        group.isEmpty ||
+        group.length > 128 ||
+        source.isEmpty ||
+        target.isEmpty ||
+        source == target) {
+      return;
+    }
+    if (stage == 'defense') {
+      if (payload['senderTag'] != target ||
+          !controlsOnlineCombatSheet(source)) {
+        return;
+      }
+      final review = _activeOpposedAttackReviews[group];
+      final draft = review?.requests[id];
+      if (review == null ||
+          draft == null ||
+          draft['sourceTag'] != source ||
+          draft['targetTag'] != target ||
+          draft['scope'] != payload['scope'] ||
+          draft['encounterId'] != payload['encounterId'] ||
+          payload['defense'] is! int ||
+          payload['attackAdjustment'] is! int ||
+          readIntValue(payload['defense']).abs() > 100000000 ||
+          readIntValue(payload['attackAdjustment']).abs() > 100000000 ||
+          !const {'roll', 'avoid', 'hit'}.contains(payload['comparison'])) {
+        return;
+      }
+      review.replies.putIfAbsent(id, () => payload);
+      if (review.replies.length == review.requests.length &&
+          !review.ready.isCompleted) {
+        review.ready.complete(true);
+      }
+      return;
+    }
+    if (payload['senderTag'] != source || !controlsOnlineCombatSheet(target)) {
+      return;
+    }
+    final previous = onlineCombatRequests[id];
+    if (previous != null &&
+        (previous['attackGroupId'] != group ||
+            previous['sourceTag'] != source ||
+            previous['targetTag'] != target ||
+            previous['scope'] != permissionScope ||
+            previous['encounterId'] != onlineCombatEncounterId ||
+            previous['opposedRollDraft'] != true)) {
+      return;
+    }
+    if (stage == 'cancel') {
+      if (previous != null && previous['status'] == 'pending') {
+        previous['status'] = 'cancelled';
+        notifyActiveSheetSummaryChanged();
+        programmaSalvataggio();
+      } else if (previous == null && onlineCombatRequests.length < 200) {
+        // Hold a tombstone in case a retried proposal arrives after cancel.
+        onlineCombatRequests[id] = {
+          ...payload,
+          'opposedRollDraft': true,
+          'status': 'cancelled',
+        };
+      }
+      return;
+    }
+    if (stage != 'proposal') return;
+    if (previous != null) {
+      if (previous['status'] != 'pending') return;
+      if (previous['opposedRollDefenseReply']
+          case final Map<String, dynamic> reply) {
+        unawaited(_sendOpposedReviewEvent(reply, 'defense'));
+      }
+      return;
+    }
+    if (payload['comparison'] != 'roll') return;
+    final tags = onlineCombatTokens();
+    if (!tags.any(
+          (token) =>
+              onlineCombatTokenTag(token) == source &&
+              '${token['fightInstanceId'] ?? ''}' ==
+                  '${payload['sourceFightInstance'] ?? ''}',
+        ) ||
+        !tags.any(
+          (token) =>
+              onlineCombatTokenTag(token) == target &&
+              '${token['fightInstanceId'] ?? ''}' ==
+                  '${payload['targetFightInstance'] ?? ''}',
+        ) ||
+        combatScoutSide(source) == combatScoutSide(target) ||
+        escapeTokenIsOut(target) ||
+        payload['attack'] is! int ||
+        readIntValue(payload['attack']).abs() > 100000000 ||
+        onlineCombatRequests.length >= 200 &&
+            onlineCombatRequests.values.every(
+              (request) => request['status'] == 'pending',
+            )) {
+      return;
+    }
+    if (onlineCombatRequests.length >= 200) {
+      onlineCombatRequests.remove(
+        onlineCombatRequests.entries
+            .firstWhere((entry) => entry.value['status'] != 'pending')
+            .key,
+      );
+    }
+    final draft = Map<String, dynamic>.from(payload)
+      ..remove('opposedRollReviewStage')
+      ..['opposedRollDraft'] = true
+      ..['opposedDraftAttack'] = payload['attack']
+      ..['status'] = 'pending';
+    // The proposal deliberately carries no damage packet or turn receipts.
+    onlineCombatRequests[id] = draft;
+    if (mounted) setState(() {});
+    programmaSalvataggio();
+  }
+
+  bool _acceptOpposedFinalAttack(Map<String, dynamic> packet) {
+    final id = '${packet['id']}';
+    final draft = onlineCombatRequests[id];
+    final reply = draft?['opposedRollDefenseReply'];
+    if (draft?['opposedRollDraft'] != true ||
+        draft?['status'] != 'pending' ||
+        reply is! Map ||
+        draft?['sourceTag'] != packet['sourceTag'] ||
+        draft?['targetTag'] != packet['targetTag'] ||
+        draft?['scope'] != packet['scope'] ||
+        draft?['encounterId'] != packet['encounterId'] ||
+        draft?['attackGroupId'] != packet['attackGroupId']) {
+      return false;
+    }
+    final request = <String, dynamic>{
+      ...packet,
+      'status': 'pending',
+      'opposedRollFinalAttack': packet['attack'],
+      'opposedRollDefenseReply': reply,
+      'opposedRollDefenseBase': draft!['opposedRollDefenseBase'],
+      'opposedRollDefenseNatural': draft['opposedRollDefenseNatural'],
+      'opposedRollDefenseChoice': draft['opposedRollDefenseChoice'],
+      if (draft['defenseElement'] != null)
+        'defenseElement': draft['defenseElement'],
+      if (draft['defenseReason'] != null)
+        'defenseReason': draft['defenseReason'],
+      if (draft['defenseHelp'] != null) 'defenseHelp': draft['defenseHelp'],
+      if (draft['unusedFastDefenseBonus'] != null)
+        'unusedFastDefenseBonus': draft['unusedFastDefenseBonus'],
+      if (draft['combat_attackTurnResourceSpendIds'] != null)
+        'combat_attackTurnResourceSpendIds':
+            draft['combat_attackTurnResourceSpendIds'],
+      if (draft['masterTurnResourcesApplied'] == true)
+        'masterTurnResourcesApplied': true,
+      if (draft['masterActionResourceApplied'] == true) ...{
+        'masterActionResourceApplied': true,
+        'masterActionResourceTag': draft['masterActionResourceTag'],
+      },
+    }..remove('damageDisplayImpact');
+    onlineCombatRequests[id] = request;
+    receiveLocalCombatAttack(request);
+    unawaited(_finishOpposedDefense(request));
+    if (mounted) setState(() {});
+    programmaSalvataggio();
+    return true;
+  }
+
+  Future<void> _finishOpposedDefense(Map<String, dynamic> request) async {
+    final id = '${request['id']}';
+    if (request['opposedRollFinal'] != true ||
+        request['opposedRollDefenseReply'] is! Map ||
+        request['status'] != 'pending' ||
+        request['targetTag'] != sheetTagAt(schedaCorrente) ||
+        !onlineCombatResolving.add(id)) {
+      return;
+    }
+    try {
+      await applyResolvedOnlineDefense(
+        request,
+        '${request['opposedRollDefenseChoice']}',
+        readIntValue(request['opposedRollDefenseBase']),
+        defenseNatural: readIntValue(request['opposedRollDefenseNatural']),
+      );
+    } finally {
+      onlineCombatResolving.remove(id);
+    }
+  }
+
+  Future<void> _submitOpposedDefense(
+    Map<String, dynamic> draft,
+    String choice,
+    int defense,
+    int natural,
+  ) async {
+    if (draft['opposedRollDefenseReply'] != null) return;
+    final reply = _opposedDefenseComparison(draft, choice, defense);
+    draft['opposedRollDefenseBase'] = defense;
+    draft['opposedRollDefenseNatural'] = natural;
+    draft['opposedRollDefenseChoice'] = choice;
+    draft['opposedRollDefenseReply'] = reply;
+    await _sendOpposedReviewEvent(reply, 'defense');
+    if (mounted) setState(() {});
+    programmaSalvataggio();
+  }
+
+  Map<String, dynamic> _opposedDefenseComparison(
+    Map<String, dynamic> draft,
+    String choice,
+    int defense,
+  ) {
+    final preview = Map<String, dynamic>.from(draft);
+    prepareGuardianGoldIncomingAttack(preview);
+    if (combatScoutSide('${draft['sourceTag']}') !=
+        combatScoutSide('${draft['targetTag']}')) {
+      preview['attack'] =
+          readIntValue(preview['attack']) +
+          readIntValue(planarState['totalPowerExposureAccuracy']);
+    }
+    if (oculumLusierDisdainsTarget(
+      sourceHp: readIntValue(preview['lusierDisdainSourceHp']),
+      sourceMaximumHp: readIntValue(preview['lusierDisdainSourceMaxHp']),
+      targetHp: hpCorrenti(),
+      targetMaximumHp: maxHp(),
+    )) {
+      preview['attack'] = readIntValue(preview['attack']) - 5;
+    }
+    preview['attack'] =
+        readIntValue(preview['attack']) -
+        will35PressurePenalty +
+        stat20WillPressureAttackModifiers(preview).bonus;
+    var comparison = 'roll';
+    if (const {'mantello', 'coda_sabbia'}.contains(choice)) comparison = 'hit';
+    if (choice == _materia20FreeDodge ||
+        !referenceAnatomicalTargetAvailable(
+          '${draft['targetBodyPart'] ?? ''}',
+        ) ||
+        isLunarGuardianCoreCreature &&
+            draft['targetBodyPart'] == 'core' &&
+            !lunarGuardianCoreExposed ||
+        senkaEvadesAsShadow(draft) ||
+        faunaCurrentMonsterId == 'smiling_storm' &&
+            draft['baseAttack'] == true &&
+            readIntValue(draft['sourcePlanarStats']) <=
+                resilienzaTotale() +
+                    volontaTotale() +
+                    materiaTotale() +
+                    oculumTotale()) {
+      comparison = 'avoid';
+    }
+    final prepared = planarState['preparedSkill'];
+    var comparedDefense = defense;
+    if (!const {
+      'mantello',
+      'coda_sabbia',
+      _materia20FreeDodge,
+    }.contains(choice)) {
+      comparedDefense +=
+          -preparedArtWeakPointPenalty +
+          (choice == 'riflessi'
+              ? max(
+                  0,
+                  readIntValue(planarState['evergreenDodge']) -
+                      max(0, vantaggioTiroBonus()),
+                ).toInt()
+              : 0) +
+          (prepared is Map && prepared['kind'] == 'difesa'
+              ? readIntValue(prepared['rollBonus'])
+              : 0) +
+          readIntValue(planarState['defenseRollBonus']) +
+          readIntValue(planarState['defenseRollPenalty']) +
+          (maskedShadowActive ? 5 : 0) +
+          (planarState['maskedTeleport'] == true ? 10 : 0) +
+          (choice == 'cm'
+              ? 0
+              : lunarDefenseRollBonus + referenceDefenseRollBonus);
+      if (planarState['doppioneCopy'] == true) {
+        comparedDefense = (comparedDefense / 4).floor();
+      }
+    }
+    return <String, dynamic>{
+      for (final field in [
+        'id',
+        'scope',
+        'encounterId',
+        'attackGroupId',
+        'sourceTag',
+        'targetTag',
+      ])
+        field: draft[field],
+      'defense': comparedDefense,
+      'attackAdjustment':
+          readIntValue(preview['attack']) -
+          readIntValue(draft['opposedDraftAttack']),
+      'comparison': comparison,
+    };
+  }
+
+  Future<({int natural, int total, int fortune, String note})?>
+  _reviewOpposedAttack({
+    required String label,
+    required String group,
+    required Map<String, Map<String, dynamic>> requests,
+    required int natural,
+    required int faces,
+    required int total,
+    required int Function(int) totalForNatural,
+    required int Function(int, String) targetAttack,
+    required bool Function() isCurrent,
+  }) async {
+    final reviews = _activeOpposedAttackReviews;
+    final review = _OpposedAttackReview(requests);
+    reviews[group] = review;
+    var completed = false;
+    try {
+      for (var attempt = 0; attempt < 15 && isCurrent(); attempt++) {
+        for (final request in requests.values) {
+          if (!review.replies.containsKey('${request['id']}')) {
+            await _sendOpposedReviewEvent(request, 'proposal');
+          }
+        }
+        if (await review.ready.future.timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => false,
+        )) {
+          break;
+        }
+      }
+      if (!isCurrent() || review.replies.length != requests.length) {
+        if (mounted) {
+          aggiungiLog(
+            '[ATTACCO] Difese non ricevute per tutti i bersagli. Nessun colpo applicato.',
+          );
+        }
+        return null;
+      }
+      bool succeeds(int die, int rolledTotal) =>
+          review.replies.values.every((reply) {
+            if (reply['comparison'] == 'avoid') return false;
+            if (reply['comparison'] == 'hit') return true;
+            final draft = requests[reply['id']]!;
+            final finalAttack =
+                targetAttack(rolledTotal, '${draft['targetTag']}') +
+                readIntValue(reply['attackAdjustment']);
+            return oculumAttackOutcome(
+                  finalAttack,
+                  readIntValue(reply['defense']),
+                  difficulty: '${draft['difficulty']}',
+                ) !=
+                OculumAttackOutcome.avoided;
+          });
+      final result = await reviewFailedSheetRoll(
+        label: label,
+        natural: natural,
+        faces: faces,
+        total: total,
+        totalForNatural: totalForNatural,
+        succeeds: succeeds,
+        canCommit: isCurrent,
+      );
+      completed = result != null && isCurrent();
+      return completed ? result : null;
+    } finally {
+      if (identical(reviews[group], review)) reviews.remove(group);
+      if (!completed) {
+        for (final request in requests.values) {
+          unawaited(_sendOpposedReviewEvent(request, 'cancel'));
+        }
+      }
+    }
+  }
+
   void prepareGuardianGoldIncomingAttack(Map<String, dynamic> request) {
     if (!guardianGoldWallActive ||
         request.containsKey('guardianGoldAppliedPenalty')) {
@@ -2920,6 +3348,70 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             : rabbitHat
             ? oculumRabbitHatHits(controlledPlan.targetIds, hatStage)
             : controlledPlan.targetIds);
+    final negotiate =
+        incomingAttack == null &&
+        escapeReactionOf == null &&
+        freeReactionId == null &&
+        schiantoReactionId == null &&
+        preparedAttackTotal == null &&
+        forcedCommand == null &&
+        !isLarvalParasite &&
+        !maskedVolley &&
+        moonVolley == null &&
+        !boneVolley &&
+        cycleSpines == 0 &&
+        cycleStomp == 0 &&
+        hatTargets.length == hatTargets.toSet().length &&
+        !hatTargets.any(
+          (tag) => oculumFateCoreReflects(
+            monsterBookEntryById(monsterBookIdForCombatToken(byId[tag]!)),
+            '${chosenBodyParts[tag]?['id']}',
+          ),
+        ) &&
+        onlineCombatRequests['escape-return:$sourceTag']?['status'] !=
+            'ready' &&
+        !planarState.containsKey('totalPowerBurstDamage') &&
+        !targetEffects.any(
+          (effect) =>
+              effect['type'] == 'planar' ||
+              effect['target'] == 'explosive_cards_damage',
+        ) &&
+        _canNegotiateOpposedAttack(hatTargets);
+    String attackPacketId(int hit, String tag) =>
+        hatTargets.length == 1 ? id : '$id:$hit:$tag';
+    int? stagedFlatAttackBonus;
+    int? stagedAttackPercent;
+    int? stagedRawTotal;
+    Map<String, int>? stagedTargetOffsets;
+    int attackFlatBonus() =>
+        (openKnights ? statOpenKnightRollBonusFor(openId) : 0) +
+        (openMateria ? statOpenValue(openId, 'precisionBonus') : 0) -
+        (dominionReceipt == null
+            ? 0
+            : readIntValue(_statOpenFightDominionPenalty()?['amount'])) +
+        (aimed ? materia35AimPrecisionBonus : 0) +
+        (senkaStepPending ? 0 : readIntValue(senkaRuntime['stepRollBonus'])) +
+        (robotAttack['kind'] == 'shoulder' ? -3 : 0) +
+        (robotAttack['kind'] == 'automatic' ? 6 : 0) +
+        (rabbitHat ? oculumRabbitHatRollBonus(hatStage) : 0) +
+        (controlledPlan.choiceId == 'vc'
+            ? 0
+            : lunarAttackBonus + referenceAttackBonus) +
+        (maskedVolley && !maskedPrecision ? 5 : 0) +
+        (maskedArrows ? (maskedArrowCount == 3 ? 9 : 3) : 0) +
+        readIntValue(preparedSkill['rollBonus']) +
+        activeStructuredEffectBonus('tiro_attacco') +
+        planarAttackRollBonus() -
+        artWeakPenalty +
+        (maskedShadowActive ? 0 : shadowRollForAction);
+    int targetAttack(int roll, String tag) {
+      final adjusted = roll + stagedFlatAttackBonus!;
+      return adjusted +
+          (adjusted * stagedAttackPercent! / 100).floor() +
+          stagedTargetOffsets![tag]!;
+    }
+
+    var stagedReviewCompleted = false;
     var weaponWearCommitted = false;
     void resolved(int natural, int total) {
       if (!mounted ||
@@ -3127,7 +3619,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               stackable: false,
             ).toJson(),
         ];
-        final requestId = hatTargets.length == 1 ? id : '$id:$hit:$selectedTag';
+        final requestId = attackPacketId(hit, selectedTag);
         final precisionHit = precisionStat == null
             ? const OculumPrecisionHitResult(
                 fragilityStages: 0,
@@ -3304,6 +3796,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             'targetBodyPartLabel': chosenBodyParts[selectedTag]!['label'],
           'targetName': '${byId[selectedTag]!['name'] ?? '???'}',
           'attackGroupId': id,
+          if (stagedReviewCompleted) 'opposedRollFinal': true,
           'choice': controlledPlan.choiceId,
           if (controlledPlan.choiceId == 'precisione_punto_debole')
             'targetWeakPointPrecision': true,
@@ -3315,11 +3808,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 .toSet()
                 .join(' + '),
           'reason': controlledPlan.reason,
-          'attack':
-              total -
-              readIntValue(chosenBodyParts[selectedTag]?['penalty']) +
-              lusierReplyBonus(selectedTag).accuracy +
-              scostuVeteranAccuracyAgainst(selectedTag),
+          'attack': stagedReviewCompleted
+              ? targetAttack(stagedRawTotal!, selectedTag)
+              : total -
+                    readIntValue(chosenBodyParts[selectedTag]?['penalty']) +
+                    lusierReplyBonus(selectedTag).accuracy +
+                    scostuVeteranAccuracyAgainst(selectedTag),
           'natural': natural,
           'dieFaces': attackRollFaces,
           if (rabbitHat) 'rabbitHatAdaptRoll': Random.secure().nextInt(100),
@@ -3784,6 +4278,104 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return controlledPlan.targetIds.every(active.contains);
     }
 
+    Future<({int natural, int total, int fortune, String note})?> reviewAttack(
+      int natural,
+      int faces,
+      int total,
+      int Function(int) totalForNatural,
+    ) async {
+      final scope = permissionScope;
+      final current = (sheetFeedbackTarget, activeCampaignId);
+      final combatTokens = onlineCombatTokens();
+      String fightId(Iterable<Map<String, dynamic>> tokens, String tag) =>
+          '${tokens.where((token) => onlineCombatTokenTag(token) == tag).firstOrNull?['fightInstanceId'] ?? ''}';
+      bool sameFight() {
+        final now = onlineCombatTokens();
+        return [
+          sourceTag,
+          ...hatTargets,
+        ].every((tag) => fightId(now, tag) == fightId(combatTokens, tag));
+      }
+
+      bool isCurrent() =>
+          mounted &&
+          scope == permissionScope &&
+          current == (sheetFeedbackTarget, activeCampaignId) &&
+          encounter == onlineCombatEncounterId &&
+          targetsAvailableForFortune() &&
+          controlsOnlineCombatSheet(sourceTag) &&
+          !outsideFight &&
+          sameFight() &&
+          currentCombatIsActive();
+      if (!isCurrent()) return null;
+      stagedFlatAttackBonus = attackFlatBonus();
+      stagedAttackPercent = activeStructuredEffectBonus('attacco_percentuale');
+      stagedTargetOffsets = {
+        for (final tag in hatTargets)
+          tag:
+              counterBonus +
+              (controlledPlan.choiceId == 'schianto' ? schiantoBonus : 0) -
+              readIntValue(chosenBodyParts[tag]?['penalty']) +
+              lusierReplyBonus(tag).accuracy +
+              scostuVeteranAccuracyAgainst(tag),
+      };
+      final requests = <String, Map<String, dynamic>>{};
+      for (var hit = 0; hit < hatTargets.length; hit++) {
+        final tag = hatTargets[hit];
+        final packetId = attackPacketId(hit, tag);
+        requests[packetId] = {
+          'id': packetId,
+          'attackGroupId': id,
+          'scope': scope,
+          'encounterId': encounter,
+          'sourceTag': sourceTag,
+          'sourceFightInstance': fightId(combatTokens, sourceTag),
+          'sourceName': realtimeDisplayName(),
+          'sourceVelo': escapeSubtraitAt(schedaCorrente, 'velo'),
+          'targetTag': tag,
+          'targetFightInstance': fightId(combatTokens, tag),
+          'targetName': byId[tag]?['name'],
+          'attack': targetAttack(total, tag),
+          'difficulty': normalizedCampaignDifficulty(),
+          'comparison': 'roll',
+          'choice': controlledPlan.choiceId,
+          'element': element,
+          'sourceMonsterBookId': sourceMonsterId,
+          'targetBodyPart': ?chosenBodyParts[tag]?['id'],
+          'targetBodyPartLabel': ?chosenBodyParts[tag]?['label'],
+          'baseAttack':
+              targetEffects.isEmpty &&
+              !activeStructuredEffects.any(
+                (e) => e['mode'] == 'prossima_azione',
+              ),
+          'sourcePlanarStats':
+              resilienzaTotale() +
+              volontaTotale() +
+              materiaTotale() +
+              oculumTotale(),
+          'canHitIntangible':
+              monsterBookEntryById(
+                sourceMonsterId,
+              )?.encounterRules['canHitIntangible'] ==
+              true,
+        };
+      }
+      final answer = await _reviewOpposedAttack(
+        label: label,
+        group: id,
+        requests: requests,
+        natural: natural,
+        faces: faces,
+        total: total,
+        totalForNatural: totalForNatural,
+        targetAttack: targetAttack,
+        isCurrent: isCurrent,
+      );
+      stagedReviewCompleted = answer != null;
+      stagedRawTotal = answer?.total;
+      return answer;
+    }
+
     if (allFateCores) {
       resolved(0, 0);
       finishArtWeakPointAction();
@@ -3798,6 +4390,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         actionLabel: label,
         onResolved: resolved,
         canCommitFortuneRoll: targetsAvailableForFortune,
+        reviewOpposed: negotiate ? reviewAttack : null,
       );
     } else if (controlledPlan.choiceId == 'vc') {
       await tiraValoreSpeciale(
@@ -3813,6 +4406,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
         onResolved: resolved,
         canCommitFortuneRoll: targetsAvailableForFortune,
+        reviewOpposed: negotiate ? reviewAttack : null,
       );
     } else {
       final stat = hiddenEyeStats
@@ -3836,6 +4430,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
         onResolved: resolved,
         canCommitFortuneRoll: targetsAvailableForFortune,
+        reviewOpposed: negotiate ? reviewAttack : null,
       );
       if (!mounted || currentSheetScrollId() != origin) return;
       clearMeccanioAttack();
@@ -3844,6 +4439,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           '$label · Danni per bersaglio $damagePerTarget, bonus del prossimo attacco consumati una sola volta.',
         );
       }
+    }
+    if (negotiate &&
+        !stagedReviewCompleted &&
+        mounted &&
+        currentSheetScrollId() == origin &&
+        encounter == onlineCombatEncounterId) {
+      await flushPendingCombatTurnResources();
     }
   }
 
@@ -4367,6 +4969,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
     }
     if (event == 'combat_scout') {
+      if (payload.containsKey('opposedRollReviewStage')) {
+        _receiveOpposedReviewEvent(payload);
+        return;
+      }
       if (payload['guardianGoldEvent'] == true) {
         receiveGuardianGoldState(payload);
         return;
@@ -4435,6 +5041,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           readIntValue(payload['damage']) > 100000000) {
         return;
       }
+      if (payload['opposedRollFinal'] == true &&
+          controlsOnlineCombatSheet(target)) {
+        final existing = onlineCombatRequests[id];
+        if (_acceptOpposedFinalAttack(payload) ||
+            existing?['opposedRollFinal'] == true) {
+          unawaited(
+            sendCombatAcknowledgement(onlineCombatRequests[id]!, 'attack'),
+          );
+        }
+        return;
+      }
+      if (onlineCombatRequests[id]?['opposedRollDraft'] == true) return;
       if (!onlineCombatRequests.containsKey(id) &&
           (payload['sourceRewardTotalPower'] is num ||
               payload['rewardTotalPowerCurrent'] is num)) {
@@ -4992,6 +5610,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     final tag = sheetTagAt(schedaCorrente);
     final id = '${request['id']}';
+    if (request['opposedRollDefenseReply'] != null) return;
     if (request['firstDefense'] != null &&
         request['defenseRetryApproved'] != true) {
       return;
@@ -5109,21 +5728,46 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         incomingElement: '${request['element'] ?? ''}',
         defenseElement: '${request['defenseElement'] ?? ''}',
       );
-      void resolved(int natural, int total) {
-        request.putIfAbsent(
-          'unusedFastDefenseBonus',
-          () => consumePendingFastReactionConsequenceBonus(),
-        );
-        defenseNatural = natural;
-        var penalized =
+      int defenseTotalForRoll(int total, {required int senkaBonus}) {
+        final penalized =
             total +
             guardianGoldDefenseBonus(request) +
             emergencyBonus -
             collectorDefensePenalty +
             (choice == 'cm'
                 ? max(0, readIntValue(request['posteaCmBonus'])).toInt()
-                : 0);
-        penalized += consumeSenkaStepBonus();
+                : 0) +
+            senkaBonus;
+        return penalized;
+      }
+
+      bool defenseSucceeds(int _, int total) {
+        var defense = defenseTotalForRoll(
+          total,
+          senkaBonus: readIntValue(senkaRuntime['stepRollBonus']),
+        );
+        if (concentrationPending) defense += (defense * 0.12).ceil();
+        final reply = _opposedDefenseComparison(request, choice, defense);
+        if (reply['comparison'] != 'roll') return true;
+        return oculumAttackOutcome(
+              readIntValue(request['opposedDraftAttack']) +
+                  readIntValue(reply['attackAdjustment']),
+              readIntValue(reply['defense']),
+              difficulty: '${request['difficulty'] ?? 'normale'}',
+            ) ==
+            OculumAttackOutcome.avoided;
+      }
+
+      void resolved(int natural, int total) {
+        request.putIfAbsent(
+          'unusedFastDefenseBonus',
+          () => consumePendingFastReactionConsequenceBonus(),
+        );
+        defenseNatural = natural;
+        var penalized = defenseTotalForRoll(
+          total,
+          senkaBonus: consumeSenkaStepBonus(),
+        );
         if (request['senkaStepDefense'] == true &&
             penalized > readIntValue(request['attack'])) {
           grantSenkaStepReward('${request['id']}', defense: true);
@@ -5176,6 +5820,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           actionLabel: 'Difesa contro ${request['sourceName']}',
           onResolved: resolved,
           canCommitFortuneRoll: stillPending,
+          reviewFailure:
+              request['opposedRollDraft'] == true &&
+              request['senkaStepDefense'] != true,
+          reviewSucceeded: defenseSucceeds,
         );
       } else {
         final stat = hiddenEyeStats
@@ -5191,6 +5839,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         );
       }
       if (!mounted || defense == null || sheetTagAt(schedaCorrente) != tag) {
+        return;
+      }
+      if (request['opposedRollDraft'] == true) {
+        await _submitOpposedDefense(request, choice, defense!, defenseNatural);
         return;
       }
       if (request['firstDefense'] == null &&
@@ -5333,8 +5985,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         pawnPendingDamage.isNotEmpty) {
       return;
     }
+    if (request['opposedRollFinal'] == true &&
+        request['opposedRollDefenseReply'] == null) {
+      return;
+    }
     if (outsideFight) {
       request['status'] = 'cancelled';
+      return;
+    }
+    if (request['opposedRollDraft'] == true) {
+      await _submitOpposedDefense(request, choice, defense, defenseNatural);
       return;
     }
     if (request['kind'] == oculumOculumTheftKind) {
@@ -5383,6 +6043,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       defenseNatural = 0;
       request['sandTailParry'] = true;
     }
+    final reviewReply = request['opposedRollFinal'] == true
+        ? request['opposedRollDefenseReply'] as Map?
+        : null;
     applyEscapeReturnBonus(request);
     final counterPercent = counterAttackDamagePercent(request, defense);
     final isCounter = counterPercent != null;
@@ -5429,6 +6092,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       defense = (defense / 4).floor();
     }
     if (mantleDefense) defense = referenceResistanceValue;
+    // Apply the prepared resources once above, then use the comparison that
+    // this defender already accepted for the whole attack group's review.
+    if (reviewReply != null && reviewReply['comparison'] == 'roll') {
+      defense = readIntValue(reviewReply['defense']);
+    }
     final incomingPlanar = (request['effects'] as List? ?? [])
         .whereType<Map>()
         .where((e) => e['type'] == 'planar')
@@ -5453,7 +6121,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['stat20WillPressureAppliedBonus'] = pressure.bonus;
       request['attack'] = readIntValue(request['attack']) + pressure.bonus;
     }
-    final attack = bell ? 25 : readIntValue(request['attack']);
+    final attack = reviewReply != null
+        ? readIntValue(request['opposedRollFinalAttack']) +
+              readIntValue(reviewReply['attackAdjustment'])
+        : bell
+        ? 25
+        : readIntValue(request['attack']);
+    if (reviewReply != null) request['attack'] = attack;
     if (materiaDodge) {
       defense = attack;
       defenseNatural = 0;
@@ -5589,6 +6263,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 volontaTotale() +
                 materiaTotale() +
                 oculumTotale()) {
+      outcome = OculumAttackOutcome.avoided;
+    }
+    if (reviewReply?['comparison'] == 'avoid') {
       outcome = OculumAttackOutcome.avoided;
     }
     final pressureCritical =
@@ -7076,6 +7753,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                       )
                     : null,
               )
+            else if (request['opposedRollDefenseReply'] != null &&
+                request['status'] == 'pending')
+              ListTile(
+                title: Text(
+                  '${request['sourceName']} · ${request['targetName'] ?? nomeController.text}',
+                ),
+                subtitle: Text(
+                  request['opposedRollDraft'] == true
+                      ? 'Difesa registrata. In attesa del risultato finale dell’attacco.'
+                      : 'Attacco confermato. La difesa già registrata verrà applicata.',
+                ),
+                trailing: request['opposedRollDraft'] == true
+                    ? null
+                    : TextButton(
+                        onPressed: () => _finishOpposedDefense(request),
+                        child: const Text('Applica il risultato'),
+                      ),
+              )
             else
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -7190,7 +7885,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                               ),
                             ),
                           if (request['firstDefense'] == null &&
-                              request['referenceMadnessWave'] != true)
+                              request['referenceMadnessWave'] != true &&
+                              request['opposedRollDraft'] != true)
                             Tooltip(
                               message:
                                   'Rispondi con un attacco: parità 50% a entrambi; vittoria solo danni tuoi; perdi di 1–3: 75% ricevuto e 25% inflitto; altrimenti danni ricevuti pieni. Una sola Azione (anche anticipata se sei il prossimo) o una Reazione.',

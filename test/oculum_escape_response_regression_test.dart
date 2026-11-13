@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
@@ -6,6 +8,17 @@ import 'package:oculum/services/oculum_realtime_service.dart';
 import 'package:oculum/widgets/oculum_attack_planner.dart';
 import 'oculum_escape_provoker_test.dart' as fixtures;
 import 'oculum_october27_resources_test.dart' show closeFixture;
+
+class MaximumNaturalRoll implements Random {
+  @override
+  int nextInt(int max) => max - 1;
+
+  @override
+  bool nextBool() => true;
+
+  @override
+  double nextDouble() => .99;
+}
 
 class _EscapeTransport extends OculumRealtimeService {
   _EscapeTransport()
@@ -297,9 +310,7 @@ void main() {
             online: online,
           );
           record['lastAggressor'] = p.ownerTag();
-          // Inspiration deterministically selects one of the die's two ends.
-          // Either branch must retain the actual d16 natural and critical UI.
-          state.ispirazioneOculumCriticoInAttesa = true;
+          p.setSheetRollRandom(natural: MaximumNaturalRoll());
           final opening = p.planAttack(escapeReactionOf: '${record['id']}');
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 400));
@@ -314,12 +325,10 @@ void main() {
               .whereType<Map>()
               .singleWhere((r) => r['escapeReactionOf'] == record['id']);
           expect(packet['dieFaces'], 16);
-          expect(packet['natural'], isIn([1, 16]));
-          expect(packet['natural'], inInclusiveRange(1, 16));
+          expect(packet['natural'], 16);
           expect(state.dadoMostratoFacce, 16);
           expect(state.tiroCriticoUno, packet['natural'] == 1);
           expect(state.tiroCriticoVenti, packet['natural'] == 16);
-          expect(state.ispirazioneOculumCriticoInAttesa, isFalse);
           if (online) {
             final delivered = transport!.sent.singleWhere(
               (r) => r['event'] == 'combat_attack',
@@ -344,7 +353,7 @@ void main() {
       expect(p.criticalModifier(1, 16), -(8 + 3 + 3));
       expect(p.criticalModifier(15, 16), 0);
       expect(p.criticalModifier(20, 20), 10 + 3 + 6);
-      state.ispirazioneOculumCriticoInAttesa = true;
+      p.setSheetRollRandom(natural: MaximumNaturalRoll());
       final opening = p.planAttack();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -358,7 +367,7 @@ void main() {
           .whereType<Map>()
           .singleWhere((r) => r['kind'] != 'escape' && r['choice'] == 'vc');
       expect(packet['dieFaces'], 20);
-      expect(packet['natural'], isIn([1, 20]));
+      expect(packet['natural'], 20);
       expect(state.dadoMostratoFacce, 20);
       await closeFixture(tester, p);
     },

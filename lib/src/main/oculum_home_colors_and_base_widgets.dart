@@ -3693,6 +3693,8 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     return ValueListenableBuilder<int>(
       valueListenable: diceResultRevision,
       builder: (context, revision, child) {
+        final review = sheetRollReview;
+        if (review != null) return sheetRollReviewPanel(review);
         final coreRepairResult = ultimoRisultatoAggiustaNucleo;
         if (coreRepairResult != null && coreRepairResult.message == risultato) {
           return aggiustaNucleoResultPanel(coreRepairResult);

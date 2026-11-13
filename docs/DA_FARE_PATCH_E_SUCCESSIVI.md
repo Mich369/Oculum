@@ -1,5 +1,11 @@
 # Oculum — attività, conferme e consegne
 
+## Ispirazioni, Fortuna e Patto nel risultato — 13 novembre 2026
+
+Confermati un solo uso di Ispirazione per tiro, Patto separato, Fortuna magica disponibile, due Ispirazioni base o una Super per un fallimento normale nel Chained Fate e una sola Ispirazione Oculum per un critico negativo anche nel Chained Fate. Il tentativo Oculum produce esattamente metà critici positivi e metà negativi. I salvataggi con un ritentativo Oculum già pagato lo recuperano come un’Ispirazione Oculum da usare su un tiro valido.
+
+Analisi Flutter pulita e 65 test locali passati. I widget della scheda verificano fallimento normale, opzioni disponibili, spesa della Fortuna, entrambi gli esiti Oculum, doppio clic e riserve esaurite. Una prova con trasporto simulato verifica che l’attacco misto aspetti tutte le difese e usi un solo nuovo dado prima dei pacchetti finali, rifiutando risposte con identità discordante. Il flusso condiviso copre attacchi con un tiro comune e bersagli remoti su client compatibili. Intercettazioni, contrattacchi, alcune raffiche con colpi consecutivi e bersagli gestiti dallo stesso dispositivo conservano la risoluzione precedente. Verifica con client reali, CI e nuovi pacchetti da registrare separatamente.
+
 ## Risveglio dopo un colpo assorbito — 13 novembre 2026
 
 La CI 286 ha superato l’analisi Flutter e ha riportato 2.446 test passati, uno fallito e sei saltati. Nel test di Resilienza 35 un colpo assorbito dallo Scudo ha attivato il Risveglio Piccolo, portando la Vita da 100 a 112. La build non ha prodotto pacchetti. [CI 286](https://github.com/Mich369/Oculum/actions/runs/42606691828)

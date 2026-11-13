@@ -4,6 +4,10 @@ part of '../../main.dart';
 /// No listeners, storage, or work are installed unless a test creates a probe.
 @visibleForTesting
 class OculumPerformanceProbe {
+  void setSheetRollRandom({Random? natural, Random? rescue}) {
+    _state.sheetRollNaturalRandom = natural;
+    _state.sheetRollRescueRandom = rescue;
+  }
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
   Widget settings() => _state.settingsPage();

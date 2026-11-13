@@ -4676,7 +4676,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     : () => apriDannoCuraDalCentroPartita(target: 'hp'),
                 onRoll: vitaAfonaAttiva()
                     ? null
-                    : () => tiraValoreSpeciale('HP', hpCorrenti()),
+                    : () => rollSheetValue('HP', hpCorrenti()),
                 onDecrease: vitaAfonaAttiva()
                     ? null
                     : () => modificaHpRapido(-1),
@@ -4694,7 +4694,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   anchorId: 'sheet_shield',
                   logTitle: t('Scudo', 'Shield'),
                 ),
-                onRoll: () => tiraValoreSpeciale(t('Scudo', 'Shield'), scudo()),
+                onRoll: () => rollSheetValue(t('Scudo', 'Shield'), scudo()),
                 onDecrease: () => modificaScudoRapido(-1),
                 onIncrease: () => modificaScudoRapido(1),
               ),
@@ -4710,7 +4710,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     anchorId: 'sheet_hp',
                     logTitle: t('Scudo Oculum', 'Oculum Shield'),
                   ),
-                  onRoll: () => tiraValoreSpeciale(
+                  onRoll: () => rollSheetValue(
                     t('Scudo Oculum', 'Oculum Shield'),
                     scudoOculum(),
                   ),
@@ -4748,11 +4748,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   page: 0,
                   anchorId: 'sheet_editable_values_volonta',
                 ),
-                onRoll: () => tiraValoreSpeciale(
-                  'VC',
-                  vc(),
-                  applyGlobalRollModifier: false,
-                ),
+                onRoll: () =>
+                    rollSheetValue('VC', vc(), applyGlobalRollModifier: false),
               ),
               quickStatTile(
                 label: 'CM',
@@ -4763,11 +4760,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   page: 0,
                   anchorId: 'sheet_editable_values_materia',
                 ),
-                onRoll: () => tiraValoreSpeciale(
-                  'CM',
-                  cm(),
-                  applyGlobalRollModifier: false,
-                ),
+                onRoll: () =>
+                    rollSheetValue('CM', cm(), applyGlobalRollModifier: false),
               ),
               quickStatTile(
                 label: t('Danno', 'Damage'),
@@ -4776,7 +4770,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 color: elementColor(elementoDannoDominante()),
                 onTap: () => apriDannoCuraDalCentroPartita(target: 'damage'),
                 onRoll: () =>
-                    tiraValoreSpeciale(t('Danno', 'Damage'), dannoTotale()),
+                    rollSheetValue(t('Danno', 'Damage'), dannoTotale()),
                 onDecrease: () => modificaBuffMalusRapido(
                   rawKey: 'Danni',
                   label: t('Danno', 'Damage'),
@@ -4809,7 +4803,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       logTitle: t('Difesa', 'Defense'),
                     ),
                     onRoll: () =>
-                        tiraValoreSpeciale(t('Difesa', 'Defense'), difesa()),
+                        rollSheetValue(t('Difesa', 'Defense'), difesa()),
                     onDecrease: () => modificaDifesaRapida(-1),
                     onIncrease: () => modificaDifesaRapida(1),
                   );
@@ -4826,7 +4820,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 icon: Icons.reply_all,
                 color: Colors.orangeAccent,
                 onTap: mostraModificaRapida,
-                onRoll: () => tiraValoreSpeciale(
+                onRoll: () => rollSheetValue(
                   t('Reazioni', 'Reactions'),
                   reazioniTotali(),
                 ),
@@ -4875,21 +4869,15 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 label: t('Tira VC', 'Roll VC'),
                 icon: Icons.casino,
                 color: tertiaryColor,
-                onPressed: () => tiraValoreSpeciale(
-                  'VC',
-                  vc(),
-                  applyGlobalRollModifier: false,
-                ),
+                onPressed: () =>
+                    rollSheetValue('VC', vc(), applyGlobalRollModifier: false),
               ),
               quickCommandButton(
                 label: t('Tira CM', 'Roll CM'),
                 icon: Icons.security,
                 color: primaryColor,
-                onPressed: () => tiraValoreSpeciale(
-                  'CM',
-                  cm(),
-                  applyGlobalRollModifier: false,
-                ),
+                onPressed: () =>
+                    rollSheetValue('CM', cm(), applyGlobalRollModifier: false),
               ),
               quickCommandButton(
                 label: compact ? '+ATK' : '+1 Attacco',
@@ -6036,7 +6024,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         Navigator.pop(sheetContext);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          unawaited(tiraSottotrattoOcchio(stat));
+          unawaited(rollSheetSubtrait(stat));
         });
       },
       icon: const Icon(Icons.add),
@@ -8466,12 +8454,12 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         valueBuilder: () => '+${iniziativa()}',
         icon: Icons.directions_run,
         color: const Color(0xFF7EE7C8),
-        onTap: () => tiraValoreSpeciale(
+        onTap: () => rollSheetValue(
           t('Iniziativa', 'Initiative'),
           iniziativa(),
           applyGlobalRollModifier: false,
         ),
-        onRoll: () => tiraValoreSpeciale(
+        onRoll: () => rollSheetValue(
           t('Iniziativa', 'Initiative'),
           iniziativa(),
           applyGlobalRollModifier: false,
@@ -9011,8 +8999,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               massimo: resilienzaMassimo(),
               bonusSkillForma: skillFormaBonus('resilienza'),
               color: const Color(0xFF2ECC71),
-              onRoll: () =>
-                  tiraStat(t('Resilienza', 'Resilience'), resilienzaTotale()),
+              onRoll: () => rollSheetStat(
+                t('Resilienza', 'Resilience'),
+                resilienzaTotale(),
+              ),
               onEdit: () => vaiAllaFunzione(
                 page: 0,
                 anchorId: 'sheet_editable_values_resilienza',
@@ -9033,7 +9023,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               massimo: volontaMassimo(),
               bonusSkillForma: skillFormaBonus('volonta'),
               color: const Color(0xFFE74C3C),
-              onRoll: () => tiraStat(t('Volontà', 'Will'), volontaTotale()),
+              onRoll: () =>
+                  rollSheetStat(t('Volontà', 'Will'), volontaTotale()),
               onEdit: () => vaiAllaFunzione(
                 page: 0,
                 anchorId: 'sheet_editable_values_volonta',
@@ -9054,7 +9045,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               massimo: materiaMassimo(),
               bonusSkillForma: skillFormaBonus('materia'),
               color: const Color(0xFF44A7FF),
-              onRoll: () => tiraStat('Materia', materiaTotale()),
+              onRoll: () => rollSheetStat('Materia', materiaTotale()),
               onEdit: () => vaiAllaFunzione(
                 page: 0,
                 anchorId: 'sheet_editable_values_materia',
@@ -9075,7 +9066,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
               massimo: oculumDisplayMassimo(),
               bonusSkillForma: skillFormaBonus('oculum'),
               color: oculumStatFormulaColor,
-              onRoll: () => tiraStat('Oculum', oculumCombatStatTotal()),
+              onRoll: () => rollSheetStat('Oculum', oculumCombatStatTotal()),
               onEdit: () => vaiAllaFunzione(
                 page: 0,
                 anchorId: 'sheet_editable_values_oculum',
@@ -9208,7 +9199,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                       : () => apriDannoCuraDalCentroPartita(target: 'hp'),
                   onRoll: vitaAfonaAttiva()
                       ? null
-                      : () => tiraValoreSpeciale('HP', hpCorrenti()),
+                      : () => rollSheetValue('HP', hpCorrenti()),
                   onDecrease: vitaAfonaAttiva()
                       ? null
                       : () => modificaHpRapido(-1),
@@ -9222,7 +9213,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   icon: Icons.favorite_border,
                   color: Colors.greenAccent,
                   onTap: () => vaiAllaFunzione(page: 0, anchorId: 'sheet_hp'),
-                  onRoll: () => tiraValoreSpeciale('HP Temp', hpTemp()),
+                  onRoll: () => rollSheetValue('HP Temp', hpTemp()),
                   onDecrease: () => modificaHpTempRapido(-1),
                   onIncrease: () => modificaHpTempRapido(1),
                 ),
@@ -9233,8 +9224,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   color: Colors.lightBlueAccent,
                   onTap: () =>
                       vaiAllaFunzione(page: 0, anchorId: 'sheet_shield'),
-                  onRoll: () =>
-                      tiraValoreSpeciale(t('Scudo', 'Shield'), scudo()),
+                  onRoll: () => rollSheetValue(t('Scudo', 'Shield'), scudo()),
                   onDecrease: () => modificaScudoRapido(-1),
                   onIncrease: () => modificaScudoRapido(1),
                 ),
@@ -9245,7 +9235,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 icon: Icons.shield_moon,
                 color: Colors.white,
                 onTap: () => vaiAllaFunzione(page: 0, anchorId: 'sheet_hp'),
-                onRoll: () => tiraValoreSpeciale(
+                onRoll: () => rollSheetValue(
                   t('Scudo Critico', 'Critical Shield'),
                   scudoCritico(),
                 ),
@@ -9289,8 +9279,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                   anchorId: 'sheet_defense_bonus',
                   logTitle: t('Difesa', 'Defense'),
                 ),
-                onRoll: () =>
-                    tiraValoreSpeciale(t('Difesa', 'Defense'), difesa()),
+                onRoll: () => rollSheetValue(t('Difesa', 'Defense'), difesa()),
                 onDecrease: () => modificaDifesaRapida(-1),
                 onIncrease: () => modificaDifesaRapida(1),
               ),
@@ -9305,7 +9294,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 icon: Icons.reply_all,
                 color: Colors.orangeAccent,
                 onTap: mostraModificaRapida,
-                onRoll: () => tiraValoreSpeciale(
+                onRoll: () => rollSheetValue(
                   t('Reazioni', 'Reactions'),
                   reazioniTotali(),
                 ),
@@ -9332,7 +9321,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                     : elementColor(domDan),
                 onTap: () => apriDannoCuraDalCentroPartita(target: 'damage'),
                 onRoll: () =>
-                    tiraValoreSpeciale(t('Danno', 'Damage'), dannoTotale()),
+                    rollSheetValue(t('Danno', 'Damage'), dannoTotale()),
                 onDecrease: () => modificaBuffMalusRapido(
                   rawKey: 'Danni',
                   label: t('Danno', 'Damage'),
@@ -10171,7 +10160,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
         'Iniziativa',
         'Determina il tuo posto nel turno',
         Icons.hourglass_bottom,
-        () => tiraValoreSpeciale('Iniziativa', iniziativa()),
+        () => rollSheetValue('Iniziativa', iniziativa()),
       ),
       basicAction(
         'Danno / Cura',

@@ -1561,7 +1561,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'ispirazioni': ispirazioniController.text,
       'superIspirazioni': superIspirazioniController.text,
       'ispirazioniOculum': ispirazioniOculumController.text,
-      'ispirazioneOculumCriticoInAttesa': ispirazioneOculumCriticoInAttesa,
       'combatHelpPending':
           schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
           ? readIntValue(schedePersonaggio[schedaCorrente]['combatHelpPending'])
@@ -1815,6 +1814,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   void caricaStatoDaJson(Map<String, dynamic> json) {
+    cancelPendingSheetRollReview();
     loadingThresholdSheet = true;
     try {
       _caricaStatoDaJsonConSoglia(json);
@@ -2128,9 +2128,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ispirazioniController.text = '${json['ispirazioni'] ?? '0'}';
     superIspirazioniController.text = '${json['superIspirazioni'] ?? '0'}';
     ispirazioniOculumController.text = '${json['ispirazioniOculum'] ?? '0'}';
-    ispirazioneOculumCriticoInAttesa = readBoolValue(
-      json['ispirazioneOculumCriticoInAttesa'],
-    );
+    // Return a legacy prepaid critical reroll to the sheet's usable balance.
+    if (readBoolValue(json.remove('ispirazioneOculumCriticoInAttesa'))) {
+      ispirazioniOculumController.text =
+          '${leggiNumero(ispirazioniOculumController) + 1}';
+      json['ispirazioniOculum'] = ispirazioniOculumController.text;
+    }
     final savedDefenseRolls = json['combatDefenseRollIds'];
     combatDefenseRollIds
       ..clear()

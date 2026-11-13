@@ -2,6 +2,16 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Risorse dopo un tiro fallito
+
+Nel risultato puoi scegliere un’opzione disponibile o confermare il tiro. L’Ispirazione base ritira un fallimento normale e la Super ritira anche un critico. Nel Chained Fate un partecipante paga due Ispirazioni base o una Super per un fallimento normale.
+
+L’Ispirazione Oculum costa un punto, anche nel Chained Fate, ed è disponibile solo sul critico negativo. Ha il 50% di probabilità di trasformarlo in un critico positivo. Puoi usare una sola Ispirazione per tiro. La Fortuna magica dà +1 al totale per punto speso, con lo stesso naturale.
+
+Il Patto del Fato è un uso separato, una volta per scheda. Sul fallimento normale offre il ritentativo base. Sul critico negativo ha l’80% di dare il ritentativo Super e il 20% di offrire il nuovo critico 50/50. Se rifiuti quest’ultima scelta, conservi il tiro e ricevi un’Ispirazione base.
+
+Negli attacchi online che raccolgono insieme le difese, se almeno un bersaglio ferma il tiro condiviso, puoi ritirare l’intero attacco prima degli effetti. Tutti i bersagli devono essere su client compatibili. Alcune mosse speciali risolvono le difese in sequenza.
+
 ## Ali a sparizione e fuga in volo
 
 In Supporto e utilità puoi far comparire o ritrarre le ali a sparizione gratuitamente. Con meno di 50 Riflessi hai tre turni personali di volo, rinnovati al Riposo Breve o Lungo. Da 50 Riflessi sei un volatore esperto e il volo non ha un limite di turni.

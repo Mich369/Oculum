@@ -4,6 +4,7 @@ part of '../../main.dart';
 
 extension _OculumHomeDicePage on _OculumHomePageState {
   Future<void> openDiceInCurrentScreen() async {
+    final previousReview = sheetRollReview;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -69,6 +70,10 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       },
     );
     if (!mounted) return;
+    final review = sheetRollReview;
+    if (review != null && !identical(review, previousReview)) {
+      _confirmSheetRoll(review);
+    }
     dadoOverlayTimer?.cancel();
     dadoOverlayRevealTimer?.cancel();
     mostraOverlayDado = false;
@@ -78,6 +83,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
   }
 
   Future<void> tiraDadoCustom(int facce) async {
+    if (sheetRollReview != null) return;
     final quantita = min(
       1000,
       max(1, int.tryParse(diceAmountController.text) ?? 1),
@@ -118,20 +124,46 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       }
     }
 
+    var baseTotal = totale + modificatore;
+    var rescueNote = '';
+    int? magicalLuck;
+    if (quantita == 1 && baseTotal < 0) {
+      final reviewed = await reviewFailedSheetRoll(
+        label: '1d$facce',
+        natural: totale - modificatoreCritico,
+        faces: facce,
+        total: baseTotal,
+        totalForNatural: (roll) =>
+            roll + criticalDieModifier(roll, facce) + modificatore,
+        succeeds: (_, total) => total >= 0,
+      );
+      if (!mounted || reviewed == null) return;
+      final natural = reviewed.natural;
+      modificatoreCritico = criticalDieModifier(natural, facce);
+      totale = natural + modificatoreCritico;
+      baseTotal = totale + modificatore;
+      criticoUno = natural == 1;
+      criticoMax = natural == facce;
+      tiriConCritico[0] = modificatoreCritico == 0
+          ? '$natural'
+          : '$natural${signedRollPart(modificatoreCritico)}';
+      rescueNote = reviewed.note;
+      magicalLuck = reviewed.fortune;
+    } else {
+      magicalLuck = canOfferMagicalLuckOnRoll(schedaCorrente)
+          ? await offerMagicalLuckOnRoll(
+              label: '${quantita}d$facce',
+              natural: '${totale - modificatoreCritico}',
+              total: baseTotal,
+            )
+          : 0;
+    }
+    if (!mounted || magicalLuck == null) return;
     final formulaDadi = tiriConCritico.length == 1
         ? tiriConCritico.first
         : tiriConCritico.length <= 40
         ? tiriConCritico.join(' + ')
         : totale.toString();
-    final baseTotal = totale + modificatore;
-    final magicalLuck = canOfferMagicalLuckOnRoll(schedaCorrente)
-        ? await offerMagicalLuckOnRoll(
-            label: '${quantita}d$facce',
-            natural: '${totale - modificatoreCritico}',
-            total: baseTotal,
-          )
-        : 0;
-    if (magicalLuck == null) return;
     final finale = baseTotal + magicalLuck;
     final testoMod = modificatore == 0
         ? ''
@@ -167,7 +199,7 @@ extension _OculumHomeDicePage on _OculumHomePageState {
       tiroCriticoUno = criticoUno;
       tiroCriticoVenti = criticoMax;
       risultato =
-          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formula$testoCritico$testoGlobale$testoAiuto$testoBonusReazioni$testoDt$zeroOutcome';
+          '${t('Lancio', 'Roll')} ${quantita}d$facce: $formula$testoCritico$testoGlobale$testoAiuto$testoBonusReazioni$testoDt$zeroOutcome$rescueNote';
       aggiungiLog(
         oculumResolvedRollLog(label: '${quantita}d$facce', total: finale),
       );

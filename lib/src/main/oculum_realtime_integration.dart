@@ -980,6 +980,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'masterClaimId': realtimeMasterClaimId,
         'platform': oculumClientPlatformLabel(),
         'protocolVersion': 4,
+        'opposedRollReview': true,
         'knowledgePublicKey': diaryKnowledgeSync.publicKey,
         'knowledgeSenderTag': diaryKnowledgeSenderTag(),
       },

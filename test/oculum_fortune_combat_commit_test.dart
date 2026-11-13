@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
@@ -6,6 +9,21 @@ import 'package:oculum/widgets/oculum_attack_planner.dart';
 
 import 'oculum_escape_provoker_test.dart' as fixtures;
 import 'oculum_october27_resources_test.dart' show closeFixture;
+
+class _FixedOpposedDie implements Random {
+  _FixedOpposedDie(this.value);
+
+  final int value;
+
+  @override
+  int nextInt(int max) => value % max;
+
+  @override
+  bool nextBool() => nextInt(2) == 1;
+
+  @override
+  double nextDouble() => nextInt(100) / 100;
+}
 
 class _FortuneCombatTransport extends OculumRealtimeService {
   _FortuneCombatTransport()
@@ -168,6 +186,134 @@ Future<void> _confirmLuck(WidgetTester tester, int spend) async {
 }
 
 void main() {
+  testWidgets('A mixed opposed attack rerolls its shared die before any hit', (
+    tester,
+  ) async {
+    final (state, p, transport) = await _mount(tester);
+    final snapshot = state.realtimeVisibleInitiativeSnapshot as Map;
+    final owner = Map<String, dynamic>.from((snapshot['tokens'] as List).single)
+      ..['side'] = 'party'
+      ..['fightInstanceId'] = 'source-instance';
+    final defenders = ['TARGET-A', 'TARGET-B'];
+    snapshot['tokens'] = <Map<String, dynamic>>[
+      owner,
+      for (final tag in defenders)
+        {
+          'id': tag,
+          'sheetTag': tag,
+          'name': tag,
+          'side': 'enemy',
+          'status': 'active',
+          'fightInstanceId': '$tag-instance',
+          'currentHp': 100,
+          'maxHp': 100,
+        },
+    ];
+    state.realtimeUsers = <Map<String, dynamic>>[
+      for (final tag in defenders)
+        {
+          'sessionId': '$tag-session',
+          'activeSheetTag': tag,
+          'role': 'player',
+          'opposedRollReview': true,
+        },
+    ];
+    state.updateOculumHomeUi(() {
+      state.paginaCorrente = 0;
+      state.activeGameMod = '';
+      state.temiOldSchool = false;
+      state.nuovoDesignOculum = 'cattedrale';
+      state.referenceSheetSection = 'general';
+      state.datiCaricati = true;
+      state.proponiFortunaDopoTiro = false;
+      state.ispirazioniController.text = '1';
+      state.superIspirazioniController.text = '0';
+      state.ispirazioniOculumController.text = '0';
+      state.fortuna = 0;
+      state.fatePactUsed = true;
+    });
+    p.setSheetRollRandom(
+      natural: _FixedOpposedDie(7),
+      rescue: _FixedOpposedDie(19),
+    );
+    await tester.pump();
+
+    unawaited(p.planAttack(minimum: 2, maximum: 2));
+    await _waitFor(tester, find.byType(OculumAttackPlanner));
+    final additionalTarget = find.widgetWithText(CheckboxListTile, 'TARGET-B');
+    await tester.ensureVisible(additionalTarget);
+    await tester.tap(additionalTarget);
+    await tester.pump();
+    await tester.tap(find.text('Dichiara e tira'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final proposals = {
+      for (final (event, data) in transport.sent)
+        if (event == 'combat_scout' &&
+            data['opposedRollReviewStage'] == 'proposal')
+          data['targetTag']: data,
+    };
+    Iterable<Map<String, dynamic>> attacks() =>
+        transport.sent.where((e) => e.$1 == 'combat_attack').map((e) => e.$2);
+    expect(proposals.keys, unorderedEquals(defenders));
+    expect(attacks(), isEmpty);
+    final review = find.byKey(const ValueKey('sheet_roll_review'));
+
+    void respond(String target, int adjustment, {String? sessionOwner}) {
+      final proposal = proposals[target]!;
+      p.receiveCombat('combat_scout', {
+        ...proposal,
+        'sessionId': '${sessionOwner ?? target}-session',
+        'senderRole': 'player',
+        'senderTag': target,
+        'opposedRollReviewStage': 'defense',
+        'defense': (proposal['attack'] as int) + adjustment,
+        'attackAdjustment': 0,
+        'comparison': 'roll',
+      });
+    }
+
+    respond('TARGET-A', -20);
+    respond('TARGET-B', 2, sessionOwner: 'TARGET-A');
+    await tester.pump();
+    expect(review, findsNothing);
+    expect(attacks(), isEmpty);
+
+    respond('TARGET-B', 2);
+    await tester.pump();
+    expect(review, findsWidgets);
+    expect(attacks(), isEmpty);
+    tester
+        .widget<OutlinedButton>(
+          find.widgetWithText(OutlinedButton, 'Ispirazione').first,
+        )
+        .onPressed!();
+    await tester.pump();
+    final confirm = find.widgetWithText(TextButton, 'Conferma tiro');
+    if (confirm.evaluate().isNotEmpty) {
+      tester.widget<TextButton>(confirm.first).onPressed!();
+    }
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(attacks(), hasLength(2));
+    expect(
+      attacks().map((packet) => packet['targetTag']),
+      unorderedEquals(defenders),
+    );
+    expect(attacks().map((packet) => packet['natural']), everyElement(20));
+    expect(
+      attacks().map((packet) => packet['opposedRollFinal']),
+      everyElement(true),
+    );
+    expect(
+      attacks().map((packet) => packet['attackGroupId']).toSet(),
+      hasLength(1),
+    );
+    expect(state.ispirazioniController.text, '0');
+    await closeFixture(tester, p);
+  });
+
   for (final spend in [0, 1]) {
     testWidgets(
       'Luck confirmation keeps the authenticated late counter target ($spend spent)',

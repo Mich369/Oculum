@@ -3265,10 +3265,6 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       (e) => e['effectId'] == 'thunder_tp_roll',
     );
     invalidateDerivedDataCaches();
-    lastValidRollSnapshot = dadoMostrato.trim().isEmpty
-        ? risultato.trim()
-        : dadoMostrato.trim();
-    lastValidRollCancelled = false;
     applicaConsumoElevatoDopoTiro(consumoStatKey);
     processConditionRoll();
     final before = currentTemporaryOculumState();
@@ -3295,20 +3291,6 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       invalidateCaches: false,
       delay: const Duration(milliseconds: 2600),
     );
-  }
-
-  String cancelPreviousRollForInspiration() {
-    final previous = lastValidRollSnapshot.trim();
-    if (previous.isEmpty || lastValidRollCancelled) {
-      return t(
-        'Nessun tiro precedente attivo da annullare.',
-        'No active previous roll to cancel.',
-      );
-    }
-    lastValidRollCancelled = true;
-    dadoMostrato = '${t('ANNULLATO', 'CANCELLED')}: $previous';
-    notifyDiceResultChanged();
-    return '${t('Tiro precedente annullato', 'Previous roll cancelled')}: $previous.';
   }
 
   bool handleDifficultyChange(String difficulty) {

@@ -6,6 +6,7 @@ import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/widgets/oculum_attack_planner.dart';
 import 'oculum_escape_provoker_test.dart' as fixtures;
+import 'oculum_escape_response_regression_test.dart' show MaximumNaturalRoll;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 
 Future<(dynamic, OculumPerformanceProbe)> _mount(
@@ -276,7 +277,7 @@ void main() {
       expect(p.sandTailReady, true);
       expect(find.byType(OculumAttackPlanner), findsNothing);
       record['noticed'] = <String, dynamic>{p.ownerTag(): true};
-      state.ispirazioneOculumCriticoInAttesa = true;
+      p.setSheetRollRandom(natural: MaximumNaturalRoll());
       final turn = state.playerReportedTurn;
       final opening = p.answerEscape(record, 'attack');
       await _pumpDialog(tester);
@@ -292,7 +293,7 @@ void main() {
           .singleWhere((r) => r['escapeReactionOf'] == record['id']);
       expect(packet['sandTailAttack'], true);
       expect(packet['dieFaces'], 16);
-      expect(packet['natural'], isIn([1, 16]));
+      expect(packet['natural'], 16);
       expect('${packet['sandTailClaim']}', isNotEmpty);
       expect(p.sandTailReady, false);
       expect(p.prepareSandTail('parry'), false);

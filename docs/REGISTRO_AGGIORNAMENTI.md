@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Risorse nei risultati dei tiri — 13 novembre
+
+- Nel risultato di un tiro fallito puoi scegliere fra Ispirazioni, Fortuna magica e Patto del Fato quando si applicano e hai ancora la risorsa.
+- L’Ispirazione Oculum si usa solo su un critico negativo e ha il 50% di renderlo positivo. Nei Chained Fate un fallimento normale costa due Ispirazioni base o una Super.
+
 ## Risveglio e Scudo — 13 novembre
 
 - Un colpo assorbito interamente dallo Scudo lascia disponibile il tentativo di Risveglio a metà Vita.

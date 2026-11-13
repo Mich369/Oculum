@@ -41,6 +41,7 @@ import 'services/oculum_auth_service.dart';
 import 'services/oculum_progression_surge.dart';
 import 'services/oculum_blind_spot.dart';
 import 'services/oculum_fate_pact.dart';
+import 'services/oculum_roll_rescue.dart';
 import 'services/oculum_memory_inspiration.dart';
 import 'services/oculum_auth_ui.dart';
 import 'services/oculum_cloud_save_service.dart';
@@ -124,6 +125,7 @@ part 'src/main/oculum_home_damage_impact.dart';
 part 'src/main/oculum_home_image_cache.dart';
 part 'src/main/oculum_home_combat_progression.dart';
 part 'src/main/oculum_home_resources_rest_titles_data.dart';
+part 'src/main/oculum_sheet_roll_review.dart';
 part 'src/main/oculum_design_system.dart';
 part 'src/main/oculum_element_themes.dart';
 part 'src/main/oculum_reference_sheet.dart';
@@ -2071,9 +2073,9 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   bool tiroCriticoUno = false;
   bool tiroCriticoVenti = false;
-  // Persistente: una Ispirazione Oculum decide il prossimo dado dell'utente,
-  // anche dopo chiusura e riapertura della scheda.
-  bool ispirazioneOculumCriticoInAttesa = false;
+  _SheetRollReview? sheetRollReview;
+  Random? sheetRollNaturalRandom;
+  Random? sheetRollRescueRandom;
   final Map<String, int> esperienzaCriticaStatistiche = <String, int>{
     'resilienza': 0,
     'volonta': 0,
@@ -2093,8 +2095,6 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool onlineCombatReplayInFlight = false;
   bool combatSupportTargeting = false;
   final Map<String, int> coreMasteryPoints = <String, int>{};
-  String lastValidRollSnapshot = '';
-  bool lastValidRollCancelled = false;
 
   String dadoOverlay = '';
   int dadoOverlayFacce = 20;
@@ -4135,6 +4135,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   void dispose() {
+    cancelPendingSheetRollReview();
     oculumSheetRelicSelections.removeListener(onSheetRelicChanged);
     sheetFeedback.dispose();
     oculumUpdateTimer?.cancel();

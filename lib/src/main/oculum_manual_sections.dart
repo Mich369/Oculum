@@ -5,6 +5,28 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Risorse dopo un tiro fallito',
+    titleEn: 'Resources after a failed roll',
+    contentIt: r'''
+Nel risultato puoi scegliere un’opzione disponibile o confermare il tiro. L’Ispirazione base ritira un fallimento normale e la Super ritira anche un critico. Nel Chained Fate un partecipante paga due Ispirazioni base o una Super per un fallimento normale.
+
+L’Ispirazione Oculum costa un punto, anche nel Chained Fate, ed è disponibile solo sul critico negativo. Ha il 50% di probabilità di trasformarlo in un critico positivo. Puoi usare una sola Ispirazione per tiro. La Fortuna magica dà +1 al totale per punto speso, con lo stesso naturale.
+
+Il Patto del Fato è un uso separato, una volta per scheda. Sul fallimento normale offre il ritentativo base. Sul critico negativo ha l’80% di dare il ritentativo Super e il 20% di offrire il nuovo critico 50/50. Se rifiuti quest’ultima scelta, conservi il tiro e ricevi un’Ispirazione base.
+
+Negli attacchi online che raccolgono insieme le difese, se almeno un bersaglio ferma il tiro condiviso, puoi ritirare l’intero attacco prima degli effetti. Tutti i bersagli devono essere su client compatibili. Alcune mosse speciali risolvono le difese in sequenza.
+''',
+    contentEn: r'''
+In the result, choose an available option or confirm the roll. A base Inspiration rerolls an ordinary failure. A Super Inspiration can also reroll a critical. In Chained Fate, a participant pays two base Inspirations or one Super for an ordinary failure.
+
+An Oculum Inspiration costs one point, including in Chained Fate, and is available only on a negative critical. It has a 50% chance to turn it into a positive critical. You can use one Inspiration per roll. Magical Luck adds +1 to the total per point spent and keeps the natural die value.
+
+The Pact with Fate is separate and can be used once per character. It grants a base reroll on an ordinary failure. On a negative critical, it has an 80% chance to grant a Super reroll and a 20% chance to offer the 50/50 critical reroll. Decline that choice to keep the roll and receive a base Inspiration.
+
+For online attacks that collect defenses together, a successful defense by any target lets you reroll the entire attack before effects apply. All targets must use compatible clients. Some special moves resolve defenses in sequence.
+''',
+  ),
+  ManualSection(
     titleIt: 'Ali a sparizione e fuga in volo',
     titleEn: 'Retractable wings and airborne escape',
     contentIt: r'''
