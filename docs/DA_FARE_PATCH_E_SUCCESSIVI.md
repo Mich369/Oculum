@@ -8,6 +8,8 @@ Il Risveglio a metà Vita ora richiede che il colpo faccia perdere Vita. I colpi
 
 Analisi Flutter senza rilievi e 13 test locali passati su Risveglio, Resilienza 35, corazza di Postea, fuga in volo e log. CI della correzione, pacchetti e prove online reali restano verifiche distinte.
 
+Il runner della 287 ha usato Flutter 3.50.0. L’analisi si è fermata con 206 segnalazioni informative di deprecazione, prima dei test e della generazione dei pacchetti. Le pipeline GitHub ora usano Flutter 3.47.9, la versione con cui era passata l’analisi della 286. Sono passati 19 test Python e una prova PowerShell simulata sulla pubblicazione. [CI 287](https://github.com/Mich369/Oculum/actions/runs/43490873504)
+
 ## Gambio di Orea Zalira — 9 novembre 2026
 
 Confermati il nome Gambio, l’aspetto cuccioloso e la provenienza da Orea Zalira. Scheda iniziale modificabile con livello 1, generazione neutrale, pelo color pesca, quattro zampe, orecchie a foglia e una spintarella difensiva. È una quarta specie di Orea Zalira, con ID `orea_gambio`.
