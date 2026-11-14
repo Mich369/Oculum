@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,17 @@ import 'package:oculum/main.dart';
 import 'oculum_escape_provoker_test.dart' show mountFight;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 import 'oculum_protection_wear_test.dart' show prepareProtectionFixture;
+
+class _FailedParryDie implements Random {
+  @override
+  int nextInt(int max) => 0;
+
+  @override
+  bool nextBool() => false;
+
+  @override
+  double nextDouble() => 0;
+}
 
 void main() {
   testWidgets('Postea transformation spends and expires its own buffers', (
@@ -77,10 +89,16 @@ void main() {
     for (final key in stats) {
       expect(probe.resourceCurrent(key), 26, reason: key);
     }
-    await probe.damageResolved(250, bypassDefense: true);
-    expect(probe.currentHp(), 120);
-    expect(probe.shieldTotal(), 175);
-    await probe.damageResolved(30, bypassDefense: true, bypassShields: true);
+    // Keep the transformed Oculum reserve while failing any passive parry.
+    probe.setSheetRollRandom(natural: _FailedParryDie());
+    try {
+      await probe.damageResolved(250, bypassDefense: true);
+      expect(probe.currentHp(), 120);
+      expect(probe.shieldTotal(), 175);
+      await probe.damageResolved(30, bypassDefense: true, bypassShields: true);
+    } finally {
+      probe.setSheetRollRandom();
+    }
     expect(probe.currentHp(), 90);
     expect(probe.maximumHp(), initialMaximum + 10);
     expect(probe.payArtResources({'resilienza': 2, 'hp': 4}), true);

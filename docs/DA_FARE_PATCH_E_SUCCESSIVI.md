@@ -22,6 +22,10 @@ La distribuzione 291 ha compilato `68f45935` con analisi pulita e 2.462 test pas
 
 La configurazione del test Guardiano Lunare ora azzera gli effetti casuali estranei al trasferimento di Danni fra Scudi, nucleo e corpo. Durante il danno il motore riattiva i sottotratti di default, perciò il solo flag di sblocco non disabilitava le protezioni casuali. Il log CI non identifica quale protezione è scattata. Passate 23 prove Flutter locali su nucleo, difesa, Scudi, idempotenza e riferimenti delle immagini. La nuova prova macOS resta da verificare.
 
+Installata la 291 con Windows e Windows Test in cartelle separate, ZIP e APK firmato `100291`. Verificati i nove archivi anonimi e i tre file del sito, 17.565 file locali incluso il manifest, l’avvio dei due EXE e 62 file dei profili senza variazioni. La 290 è conservata nel backup. [Pacchetti 291](https://github.com/Mich369/Oculum/releases/tag/oculum-build-43531900642)
+
+La CI principale 292 ha compilato `a0c23423` con analisi pulita, 2.462 test passati e 6 saltati. Passate quattro prove online autenticate automatizzate, 15 del diario e una di digitazione. Il Guardiano Lunare ha passato il test anche nel job macOS ausiliario. Quel job ha trovato un diverso test instabile sulla corazza trasformante di Postea, con 214 Scudo al posto di 175. La differenza di 39 coincide con la riduzione della Parata Oculum a riserva 26. Il test forza ora il fallimento della parata durante i due colpi e mantiene attiva la riserva trasformata. Passate 13 prove Flutter locali. La nuova verifica macOS e la distribuzione 292 restano da verificare. [CI 292](https://github.com/Mich369/Oculum/actions/runs/43539092724) · [Job macOS ausiliario 292](https://github.com/Mich369/Oculum/actions/runs/43539093170)
+
 ## Risveglio dopo un colpo assorbito — 13 novembre 2026
 
 La CI 286 ha superato l’analisi Flutter e ha riportato 2.446 test passati, uno fallito e sei saltati. Nel test di Resilienza 35 un colpo assorbito dallo Scudo ha attivato il Risveglio Piccolo, portando la Vita da 100 a 112. La build non ha prodotto pacchetti. [CI 286](https://github.com/Mich369/Oculum/actions/runs/42606691828)
