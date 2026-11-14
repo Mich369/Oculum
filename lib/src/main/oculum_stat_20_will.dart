@@ -123,11 +123,6 @@ extension _OculumStat20Will on _OculumHomePageState {
   int get stat20WillPressureMaxTargets =>
       stat35Value(_stat20WillPressure, 'maxTargets', fallback: 10).clamp(1, 10);
 
-  String _stat20WillCombatTeam(Map token) {
-    final side = '${token['side'] ?? 'ally'}';
-    return side == 'party' ? 'ally' : side;
-  }
-
   Map<String, dynamic>? _stat20WillCombatToken(String tag) =>
       onlineCombatTokens()
           .where((token) => combatTokenMatchesSheet(token, tag))
@@ -145,7 +140,7 @@ extension _OculumStat20Will on _OculumHomePageState {
     Map<String, dynamic> target,
   ) =>
       onlineCombatTokenTag(target).isNotEmpty &&
-      _stat20WillCombatTeam(source) != _stat20WillCombatTeam(target) &&
+      !combatParticipantsShareTeam(source, target) &&
       target['outsideFight'] != true &&
       target['mechaOccupied'] != true &&
       !masterInitiativeTokenIsDead(target) &&
@@ -304,8 +299,7 @@ extension _OculumStat20Will on _OculumHomePageState {
       final caster = _stat20WillCombatToken(
         '${metadata['stat20WillPressureCaster'] ?? ''}',
       );
-      if (caster == null ||
-          _stat20WillCombatTeam(caster) != _stat20WillCombatTeam(attacker)) {
+      if (caster == null || !combatParticipantsShareTeam(caster, attacker)) {
         continue;
       }
       final bonus = max(0, readIntValue(metadata['stat20WillPressureBonus']));

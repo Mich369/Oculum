@@ -32,6 +32,22 @@ function Assert-Child([string]$Path, [string]$Root) {
   }
 }
 
+function Remove-CompletedUpdateTemporaryPath([string]$Path, [string]$Root) {
+  try {
+    Assert-Child $Path $Root
+    if (Test-Path -LiteralPath $Path -PathType Container) {
+      foreach ($entry in @(Get-ChildItem -LiteralPath $Path -Recurse -Force)) {
+        Assert-Child $entry.FullName $Path
+      }
+      Remove-Item -LiteralPath $Path -Recurse -Force
+    } elseif (Test-Path -LiteralPath $Path -PathType Leaf) {
+      Remove-Item -LiteralPath $Path -Force
+    }
+  } catch {
+    Write-Warning 'An update temporary file could not be removed.'
+  }
+}
+
 function Write-UpdateStatus([string]$State, [string]$Message) {
   $candidateId = if ($candidate) { $candidate.Id } else { $null }
   $record = [ordered]@{
@@ -170,6 +186,13 @@ try {
   if (!$confirmed) { throw 'Oculum started but did not confirm its source and first frame; backup retained' }
   Write-UpdateStatus 'success' 'Oculum confirmed the installed version and startup'
   'success' | Set-Content -LiteralPath (Join-Path $work 'result.txt')
+  Remove-CompletedUpdateTemporaryPath $unpack $work
+  Remove-CompletedUpdateTemporaryPath $inner $work
+  Remove-CompletedUpdateTemporaryPath $staged $target
+  $download = Join-Path $work 'release.zip'
+  if ([string]::Equals([IO.Path]::GetFullPath($config.archive), $download, [StringComparison]::OrdinalIgnoreCase)) {
+    Remove-CompletedUpdateTemporaryPath $download $work
+  }
 } catch {
   $problem = $_.Exception.Message
   $rollbackErrors = [Collections.Generic.List[string]]::new()

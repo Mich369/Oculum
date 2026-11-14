@@ -40,7 +40,7 @@ class OculumNarrativeBackground extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 Image.asset(
-                  image,
+                  oculumMonsterArtworkAsset(image)!,
                   key: ValueKey(
                     'narrative-background-${monster?.id ?? pack.id}',
                   ),

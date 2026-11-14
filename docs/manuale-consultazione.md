@@ -2,13 +2,27 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Costo delle forme superiori
+
+Una forma attiva più forte ha un costo maggiore, salvo eccezioni confermate. Un recupero più lungo conta come costo maggiore. Le passive possono mantenere lo stesso costo.
+
+La Skill Open dei Cavalieri Rossi richiede un’Azione. Ai livelli 150 e 200 spende anche 4 e 8 Volontà attuale, rispettivamente. Il recupero condiviso è di 4, 5, 5 e 6 turni personali secondo la forma.
+
+## Squadre nel Fight della scheda
+
+Nel menu Fight della scheda il Master può creare squadre, scegliere colori distinti e spostare i partecipanti. Le impostazioni appartengono al singolo Fight. Gli alleati predefiniti sono verdi e i nemici predefiniti rossi. Una squadra gialla può attaccare entrambi.
+
+I colpi contro un membro della propria squadra sono non letali. A 0 Vita il bersaglio resta a terra e il colpo non avvia i tiri di morte. I colpi della stessa squadra subiscono il 25% di Resistenza quando coincidono sia Fato o Chaos sia Luna, Sole o Niente. Con una qualsiasi differenza si applica il danno pieno, sempre non letale.
+
 ## Risorse dopo un tiro fallito
 
-Nel risultato puoi scegliere un’opzione disponibile o confermare il tiro. L’Ispirazione base ritira un fallimento normale e la Super ritira anche un critico. Nel Chained Fate un partecipante paga due Ispirazioni base o una Super per un fallimento normale.
+Nel risultato puoi scegliere un’opzione disponibile o confermare il tiro. L’Ispirazione base ritira un fallimento con naturale da 2 a 19, anche se classificato come critico. La Super può ritirare anche i critici con naturale 1 o 20. Nel Chained Fate un partecipante paga due Ispirazioni base o una Super per un tiro idoneo.
 
 L’Ispirazione Oculum costa un punto, anche nel Chained Fate, ed è disponibile solo sul critico negativo. Ha il 50% di probabilità di trasformarlo in un critico positivo. Puoi usare una sola Ispirazione per tiro. La Fortuna magica dà +1 al totale per punto speso, con lo stesso naturale.
 
 Il Patto del Fato è un uso separato, una volta per scheda. Sul fallimento normale offre il ritentativo base. Sul critico negativo ha l’80% di dare il ritentativo Super e il 20% di offrire il nuovo critico 50/50. Se rifiuti quest’ultima scelta, conservi il tiro e ricevi un’Ispirazione base.
+
+Per Chaos, al posto del Patto, l’orologio di gioco effettua un sorteggio automatico ogni 9 ore. Il 20% dà niente, il 50% un’Ispirazione base, il 20% una Super Ispirazione e il 10% un’Ispirazione Oculum.
 
 Negli attacchi online che raccolgono insieme le difese, se almeno un bersaglio ferma il tiro condiviso, puoi ritirare l’intero attacco prima degli effetti. Tutti i bersagli devono essere su client compatibili. Alcune mosse speciali risolvono le difese in sequenza.
 

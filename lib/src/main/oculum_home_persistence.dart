@@ -4023,13 +4023,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<void> _creaBackupDelSalvataggioCorrente(
     SharedPreferences prefs, {
     bool force = false,
+    Future<String?>? currentRead,
   }) async {
-    final current = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
-    if (!await _rawLooksLikeMeaningfulSave(current)) return;
-
-    final backup1 = await _readSaveBlob(prefs, _backupSaveKey1);
-    if (backup1 == current) return;
-
     final now = DateTime.now();
     final lastRotation = ultimaRotazioneBackupAt;
     if (!force &&
@@ -4037,6 +4032,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
         now.difference(lastRotation) < const Duration(seconds: 45)) {
       return;
     }
+
+    final current =
+        await (currentRead ??
+            _readSaveBlob(prefs, _OculumHomePageState.saveKey));
+    if (!await _rawLooksLikeMeaningfulSave(current)) return;
+
+    final backup1 = await _readSaveBlob(prefs, _backupSaveKey1);
+    if (backup1 == current) return;
 
     final backup2 = await _readSaveBlob(prefs, _backupSaveKey2);
     if (backup2 != null && backup2.isNotEmpty) {
@@ -4095,11 +4098,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
         contentSignature: contentSignature,
       );
     }
-    final previous = await _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+    final previousRead = _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+    final previous = await previousRead;
 
     // Se esiste un salvataggio vero e la nuova scrittura sembra una scheda vuota,
     // non lo sovrascrivo. Il reset intenzionale usa cancellaSalvataggio().
-    if (await _rawLooksLikeMeaningfulSave(previous) && !dataLooksMeaningful) {
+    if (!dataLooksMeaningful && await _rawLooksLikeMeaningfulSave(previous)) {
       salvataggioBloccatoPerErrore = true;
       ultimoErroreCaricamentoSalvataggio =
           'Scrittura bloccata: la nuova memoria sembrava vuota e avrebbe sovrascritto un salvataggio esistente.';
@@ -4112,7 +4116,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       );
     }
 
-    await _creaBackupDelSalvataggioCorrente(prefs);
+    await _creaBackupDelSalvataggioCorrente(prefs, currentRead: previousRead);
     if (diarySignature.isNotEmpty &&
         diarySignature != ultimoArchivioDiarioFirma) {
       await _buildDiaryArchiveFromRecentSaves(

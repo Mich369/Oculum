@@ -169,7 +169,7 @@ class OculumThemeRelicBanner extends StatelessWidget {
                           child: Opacity(
                             opacity: presentation.relicOpacity,
                             child: Image.asset(
-                              pack.relic,
+                              oculumMonsterArtworkAsset(pack.relic)!,
                               width: iconSize,
                               height: iconSize,
                               cacheWidth:
@@ -369,7 +369,7 @@ Future<void> showOculumRelicPicker(
                               children: [
                                 Expanded(
                                   child: Image.asset(
-                                    pack.relic,
+                                    oculumMonsterArtworkAsset(pack.relic)!,
                                     fit: BoxFit.contain,
                                     filterQuality: FilterQuality.high,
                                     cacheWidth: 256,

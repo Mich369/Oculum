@@ -386,17 +386,14 @@ extension _OculumStormBandits on _OculumHomePageState {
     Map<String, dynamic> source,
     Map<String, dynamic> target,
   ) {
-    String side(Map<String, dynamic> token) {
-      final value = '${token['side'] ?? 'ally'}';
-      return value == 'party' ? 'ally' : value;
-    }
-
     return onlineCombatTokenTag(target).isNotEmpty &&
         !oculumSameSheetIdentity(
           onlineCombatTokenTag(source),
           onlineCombatTokenTag(target),
         ) &&
-        side(source) != side(target) &&
+        combatParticipantTeamId(source) != 'neutral' &&
+        combatParticipantTeamId(target) != 'neutral' &&
+        !combatParticipantsShareTeam(source, target) &&
         !const {'dead', 'fled', 'expired'}.contains(target['status']) &&
         target['outsideFight'] != true &&
         target['mechaOccupied'] != true;

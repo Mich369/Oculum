@@ -430,6 +430,16 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
           'installer_opened',
           'Conferma di installazione Android aperta.',
         );
+        // Android has already copied and verified the separate APK it opens.
+        // The downloaded ZIP is owned by this attempt and is no longer needed.
+        try {
+          if (await FileSystemEntity.type(archive.path, followLinks: false) ==
+              FileSystemEntityType.file) {
+            await archive.delete();
+          }
+        } catch (_) {
+          // Cache cleanup must not change the successful installer handoff.
+        }
 
         return;
       }

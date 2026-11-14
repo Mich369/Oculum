@@ -106,6 +106,8 @@ Map<String, dynamic> _receiveAttack(
   OculumPerformanceProbe p,
   String id, {
   int attack = 10,
+  int damage = 0,
+  int natural = 10,
 }) {
   p.receiveCombat('combat_attack', {
     'id': id,
@@ -121,8 +123,8 @@ Map<String, dynamic> _receiveAttack(
     'targetName': 'Defender',
     'choice': 'vc',
     'attack': attack,
-    'natural': 10,
-    'damage': 0,
+    'natural': natural,
+    'damage': damage,
     'element': 'fisico',
     'level': 0,
     'grade': 0,
@@ -186,6 +188,176 @@ Future<void> _confirmLuck(WidgetTester tester, int spend) async {
 }
 
 void main() {
+  for (final (chaos, celestial, expectedLoss) in [
+    (false, 'nessuna', 30),
+    (true, 'nessuna', 40),
+    (false, 'lunare', 40),
+  ]) {
+    testWidgets(
+      'Friendly fire resolves affinity $chaos/$celestial at zero Life',
+      (tester) async {
+        final (state, p, _) = await _mount(tester);
+        final sheet = state.schedePersonaggio[state.schedaCorrente] as Map;
+        final runtime = sheet['planarRuntime'] as Map;
+        runtime['identityFateChaos'] = 'Fato';
+        runtime['identityCelestial'] = 'nessuna';
+        state.resilienzaController.text = '20';
+        state.currentResilienzaController.text = '20';
+        state.volontaController.text = '0';
+        state.currentVolontaController.text = '0';
+        state.materiaController.text = '0';
+        state.currentMateriaController.text = '0';
+        state.currentHpController.text = '90';
+        state.hpTempController.text = '0';
+        state.scudoController.text = '0';
+        state.scudoOculumController.text = '0';
+        state.schivataOculumRiduzionePronta = 0;
+        for (final dynamic stat in state.hiddenEyeStats) {
+          if (const {'fortuna', 'riflessi', 'resistenza'}.contains(stat.id)) {
+            // The damage path restores default subtrait unlocks. Keep their
+            // derived totals below zero to isolate the team resistance.
+            stat.valore = -1000;
+          }
+        }
+        p.invalidateDerivedCaches();
+        final tokens =
+            state.realtimeVisibleInitiativeSnapshot['tokens'] as List;
+        (tokens.single as Map)['fightTeamId'] = 'yellow';
+        tokens.add(<String, dynamic>{
+          'id': 'LATE-ATTACKER',
+          'sheetTag': 'LATE-ATTACKER',
+          'name': 'Attacker',
+          'status': 'ready',
+          'side': 'enemy',
+          'fightTeamId': 'yellow',
+          'fightChaos': chaos,
+          'fightCelestial': celestial,
+        });
+        final first = _receiveAttack(
+          state,
+          p,
+          'friendly-soft',
+          attack: 30,
+          damage: 40 + p.defenseTotal(),
+        );
+        await tester.runAsync(
+          () => p.resolveCombatDefense(first, 'cm', 20, natural: 10),
+        );
+        final receipt = first['damageReceipt'] as Map;
+        expect(
+          receipt['hpLost'],
+          expectedLoss,
+          reason: 'Resolved attack ${first['attack']}/${first['defense']} '
+              'with damage ${first['damage']} and receipt $receipt. '
+              'Recent log: ${(state.logEventi as List).take(12).toList()}',
+        );
+        final lethal = _receiveAttack(
+          state,
+          p,
+          'friendly-critical',
+          attack: 120,
+          damage: 500,
+          natural: 20,
+        );
+        await tester.runAsync(
+          () => p.resolveCombatDefense(lethal, 'cm', 0, natural: 10),
+        );
+        expect(state.currentHpController.text, '0');
+        expect(state.personaggioCaduto, true);
+        expect(state.feriteMorte, 0);
+        expect(
+          state.schedePersonaggio[state.schedaCorrente]['friendlyFireDowned'],
+          true,
+        );
+        await closeFixture(tester, p);
+      },
+    );
+  }
+
+  testWidgets('A blocked pet summon spends neither Action nor Skill cost', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    final owner = state.schedePersonaggio[state.schedaCorrente] as Map;
+    owner['patalpaSummonCooldownFightsRemaining'] = 2;
+    final cooldown = OculumAbilityCooldown(amount: 3);
+    state.currentVolontaController.text = '9';
+    final form = CharacterSkillForm(
+      costoStrutturato: OculumSkillCost(
+        resource: 'volonta',
+        amountExpression: '1',
+      ),
+      cooldownStrutturato: cooldown,
+      effettiStrutturati: [
+        OculumStructuredEffect(
+          type: 'evocazione',
+          target: 'patalpa_compagno',
+          valueExpression: '1',
+        ),
+      ],
+    );
+    expect(await p.useConfiguredForTest(form), isFalse);
+    expect(state.currentVolontaController.text, '9');
+    expect(cooldown.ready, isTrue);
+    expect(
+      (state.masterInitiativeTokens as List).any(
+        (dynamic token) => token['actionUsed'] == true,
+      ),
+      isFalse,
+    );
+    expect(state.schedePersonaggio, hasLength(1));
+    await closeFixture(tester, p);
+  });
+
+  testWidgets(
+    'Piranha skill creates a team pet with no Skill and enforces live capacity',
+    (tester) async {
+      final (state, p) = await fixtures.mountFight(tester);
+      final tokens = state.masterInitiativeTokens as List;
+      final owner =
+          tokens.firstWhere(
+                (dynamic token) => token['sheetTag'] == p.ownerTag(),
+              )
+              as Map;
+      owner['fightTeamId'] = 'yellow';
+      owner['fightInstanceId'] = 'fish-fight';
+      final piranha = OculumStructuredEffect(
+        type: 'costrutto',
+        target: 'Piranha minore',
+        valueExpression: '3',
+        duration: '1',
+      );
+      List<Map> pets() => (state.schedePersonaggio as List)
+          .whereType<Map>()
+          .where((sheet) => sheet['summonKind'] == 'piranha_minore')
+          .toList();
+      p.applyEffects([piranha]);
+      p.applyEffects([piranha]);
+      await tester.pump();
+      expect(pets(), hasLength(2));
+      expect(pets().map((pet) => pet['skills']), everyElement(isEmpty));
+      final participants = tokens.where(
+        (dynamic token) => token['summonKind'] == 'piranha_minore',
+      );
+      expect(participants, hasLength(2));
+      expect(
+        participants.map((dynamic token) => token['fightTeamId']),
+        everyElement('yellow'),
+      );
+      expect(
+        await p.useConfiguredForTest(
+          CharacterSkillForm(effettiStrutturati: [piranha]),
+        ),
+        isFalse,
+      );
+      pets().first['currentHp'] = '0';
+      p.applyEffects([piranha]);
+      await tester.pump();
+      expect(pets(), hasLength(3));
+      await closeFixture(tester, p);
+    },
+  );
+
   testWidgets('Cancelling a staged attack preserves pending defense bonuses', (
     tester,
   ) async {

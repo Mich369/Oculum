@@ -45,25 +45,34 @@ extension _OculumStatOpenNewTracks on _OculumHomePageState {
         (statOpenOwnBuff(id) ? max(0, statOpenValue(id, 'penaltyBuff')) : 0);
   }
 
-  int statOpenAttackCost(String id) => statOpenTrack(id) == 'oculum_meridian'
-      ? max(0, statOpenValue(id, 'cost'))
+  int statOpenAttackCost(String id) =>
+      const {'oculum_meridian', 'will_knights'}.contains(statOpenTrack(id))
+      ? statOpenValue(id, 'cost')
       : 0;
 
   bool canPayStatOpenAttack(String id) {
     if (statOpenTrack(id).isEmpty) return false;
     final cost = statOpenAttackCost(id);
-    return cost == 0 ||
-        (!hasCondition('oculum_sigillato') &&
-            readIntValue(planarState['mortalKiLock']) <= 0 &&
-            oculumTotale() >= cost &&
-            currentTemporaryOculumState().total - currentOculumRuntimeFloor() >=
-                cost);
+    if (cost == 0) return true;
+    if (statOpenTrack(id) == 'will_knights') return currentVolonta() >= cost;
+    return !hasCondition('oculum_sigillato') &&
+        readIntValue(planarState['mortalKiLock']) <= 0 &&
+        oculumTotale() >= cost &&
+        currentTemporaryOculumState().total - currentOculumRuntimeFloor() >=
+            cost;
   }
 
   bool payStatOpenAttack(String id) {
     if (!canPayStatOpenAttack(id)) return false;
     final cost = statOpenAttackCost(id);
     if (cost == 0) return true;
+    if (statOpenTrack(id) == 'will_knights') {
+      currentVolontaController.text = '${currentVolonta() - cost}';
+      syncVisibleCurrentStatEditor('volonta');
+      invalidateDerivedDataCaches();
+      notifyActiveSheetSummaryChanged();
+      return true;
+    }
     final before = currentTemporaryOculumState().total;
     spendOculum(cost);
     return before - currentTemporaryOculumState().total == cost;

@@ -1,10 +1,32 @@
 part of '../../main.dart';
 
+String combatParticipantTeamId(Map token) {
+  final assigned = '${token['fightTeamId'] ?? ''}'.trim();
+  if (assigned.isNotEmpty) return assigned;
+  final side = '${token['side'] ?? ''}'.trim().toLowerCase();
+  return switch (side) {
+    '' || 'party' => 'ally',
+    _ => side,
+  };
+}
+
+bool combatParticipantsShareTeam(Map first, Map second) =>
+    combatParticipantTeamId(first) == combatParticipantTeamId(second);
+
 Color combatParticipantSideColor(
   Map token, {
   Color neutral = Colors.orangeAccent,
   Color fallback = Colors.greenAccent,
 }) {
+  final teamColor = readIntValue(token['fightTeamColorArgb']);
+  if (teamColor != 0) return Color(teamColor);
+  if ('${token['fightTeamId'] ?? ''}'.isNotEmpty) {
+    return switch (combatParticipantTeamId(token)) {
+      'enemy' => Colors.redAccent,
+      'neutral' => neutral,
+      _ => fallback,
+    };
+  }
   final custom = readIntValue(token['colorArgb']);
   if (custom != 0) return Color(custom);
   return switch ('${token['side'] ?? ''}'.trim().toLowerCase()) {

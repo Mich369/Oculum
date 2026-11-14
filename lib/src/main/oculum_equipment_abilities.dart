@@ -998,6 +998,15 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
           )
           .toList();
     }
+    bool summonIsAvailable() {
+      if (paymentOnly) return true;
+      final issue = summonAvailabilityIssue(effects);
+      if (issue == null) return true;
+      aggiungiLog(issue);
+      return false;
+    }
+
+    if (!summonIsAvailable()) return false;
     final resolved = cost ?? OculumSkillCost(resource: 'nessuna');
     if (!resolved.isValid(subtraits: hiddenEyeStats)) {
       aggiungiLog('$source: costo non valido.');
@@ -1324,6 +1333,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     // Validate the complete payment before consuming a turn resource. A
     // composite primary cost and an additional cost may name the same stat.
     if (!canPayArtSkillPayments(selectedPayments)) return false;
+    if (!summonIsAvailable()) return false;
     if (!armadilloCanUseAbility(effects)) return false;
     if (sandTailMode != null && !canPrepareSandTail(sandTailMode)) return false;
     final robotTechnique = effects

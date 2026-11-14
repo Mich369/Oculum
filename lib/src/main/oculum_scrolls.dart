@@ -1218,6 +1218,13 @@ extension _OculumScrolls on _OculumHomePageState {
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
       return;
     }
+    if (const {'technique', 'shadow_clone'}.contains(kind)) {
+      final issue = summonAvailabilityIssue(oculumScrollCombatEffects(data));
+      if (issue != null) {
+        aggiungiLog(issue);
+        return;
+      }
+    }
     if (kind == 'corruption' &&
         currentCombatIsActive() &&
         !await spendCombatRollResource()) {

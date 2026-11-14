@@ -186,7 +186,7 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
           if (!oculumThemeStoryIds.contains(pack.id))
             pack.scene(mobile: mobile, variant: variant),
         ]) {
-          precacheImage(AssetImage(asset), context);
+          precacheImage(AssetImage(oculumMonsterArtworkAsset(asset)!), context);
         }
       }
     }
@@ -350,7 +350,9 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
                         child: Opacity(
                           opacity: sheetPresentation.relicOpacity,
                           child: Image.asset(
-                            pack.scene(mobile: mobile, variant: variant),
+                            oculumMonsterArtworkAsset(
+                              pack.scene(mobile: mobile, variant: variant),
+                            )!,
                             // Wide decorative strips must never be enlarged
                             // to cover a tall sheet: that crops the artwork
                             // into a blurred block behind the reading area.

@@ -88,6 +88,12 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
+  void clearMasterParticipantFightTeam(Map<String, dynamic> token) {
+    token.remove('fightTeamId');
+    token.remove('fightTeamColorArgb');
+    token.remove('teamName');
+  }
+
   String masterParticipantRestoredSide(Map<String, dynamic> token) {
     final previous = '${token['masterSideBeforeEnemy'] ?? ''}';
     if (const {'party', 'ally', 'neutral'}.contains(previous)) return previous;
@@ -111,8 +117,16 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
 
   List<PopupMenuEntry<String>> masterParticipantMenuEntries(
     String encounterId,
-    Map<String, dynamic> token,
-  ) => [
+    Map<String, dynamic> token, {
+    bool includeFightTeam = false,
+  }) => [
+    if (includeFightTeam &&
+        canManageFightTeams(encounterId) &&
+        !masterInitiativeTokenIsTemporary(token))
+      PopupMenuItem(
+        value: 'fightTeam',
+        child: Text(t('Cambia squadra', 'Change team')),
+      ),
     CheckedPopupMenuItem<String>(
       value: 'toggleEnemy',
       checked: token['side'] == 'enemy',
@@ -205,6 +219,7 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
     String encounterId,
     Map<String, dynamic> displayed, {
     Offset? position,
+    bool includeFightTeam = false,
   }) async {
     if (!haPermessiMaster) return;
     if (!masterParticipantUsesRemote) captureActiveMasterInitiativeGroup();
@@ -223,7 +238,11 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
         Rect.fromLTWH(point.dx, point.dy, 1, 1),
         Offset.zero & overlay.size,
       ),
-      items: masterParticipantMenuEntries(encounterId, token),
+      items: masterParticipantMenuEntries(
+        encounterId,
+        token,
+        includeFightTeam: includeFightTeam,
+      ),
     );
     if (result == null) return;
     await applyMasterParticipantCommand(anchor, result);
@@ -235,6 +254,14 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
   ) async {
     final token = resolveMasterParticipantAnchor(anchor);
     if (token == null) return;
+    if (command == 'fightTeam') {
+      await chooseReferenceParticipantFightTeam(
+        anchor.encounterId,
+        token,
+        expectedFightId: anchor.fightId,
+      );
+      return;
+    }
     if (command == 'baghestPurify') {
       await showBaghestPurification(publicInitiativeSourceTag(token));
       return;
@@ -288,6 +315,7 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
           token['masterSideBeforeEnemy'] = token['side'] ?? 'neutral';
         }
         token['side'] = side;
+        clearMasterParticipantFightTeam(token);
       });
     } else if (command == 'toggleEnemy') {
       setState(() {
@@ -298,6 +326,7 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
           token['masterSideBeforeEnemy'] = token['side'] ?? 'neutral';
           token['side'] = 'enemy';
         }
+        clearMasterParticipantFightTeam(token);
       });
     } else if (command == 'toggleDead' ||
         const {
@@ -491,6 +520,7 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
     required String encounterId,
     required Map<String, dynamic> token,
     required Widget child,
+    bool includeFightTeam = false,
   }) => !haPermessiMaster
       ? child
       : GestureDetector(
@@ -499,11 +529,13 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
             encounterId,
             token,
             position: details.globalPosition,
+            includeFightTeam: includeFightTeam,
           ),
           onLongPressStart: (details) => showMasterParticipantMenu(
             encounterId,
             token,
             position: details.globalPosition,
+            includeFightTeam: includeFightTeam,
           ),
           child: child,
         );

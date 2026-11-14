@@ -2,6 +2,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('lightweight draft recognition proposes only explicit known summons', () {
+    final result = oculumRecognizeSkillDraft(
+      'Richiama il compagno Patalpa. Evoca un clone di ombra con 12 Vita per 3 turni. '
+      'Non evocare un vecchio amore. Se cadi evoca un Patalpa.',
+    );
+    expect(
+      result.effects
+          .where((effect) => effect.type == 'evocazione')
+          .map((effect) => effect.target),
+      ['patalpa_compagno', 'clone_ombra'],
+    );
+    final clone = result.effects.last;
+    expect((clone.valueExpression, clone.duration), ('12', '3'));
+    expect(result.unrecognizedText, contains('Non evocare'));
+    expect(result.unrecognizedText, contains('Se cadi'));
+  });
+
   test('generic cost fields recognize resources and named items', () {
     for (final entry in {
       'Oculum': 'oculum',
@@ -361,11 +378,57 @@ void main() {
       'Se colpisci ottieni +5 Materia',
       'Quando perdi Vita ottieni +2 Volontà',
       'Non ottieni +3 Resilienza',
+      'Non recuperi 7 Vita',
+      'Non applica Bruciatura al bersaglio',
+      'Se colpisci, cura 7 Vita e ottieni +5 Materia',
     ]) {
       final result = oculumParseAbilityMechanics(text);
       expect(result.effects, isEmpty, reason: text);
       expect(result.unrecognizedText, contains(text));
     }
+  });
+  test('an unrecognized shield or a negated action leaves a separate heal', () {
+    final parsed = oculumParseAbilityMechanics(
+      'Cura 7 Vita a 2 alleati, ottieni 10 Scudo Oculum e non recuperi 3 Oculum',
+    );
+    final heal = parsed.effects.single;
+    expect(heal.type, 'cura');
+    expect(heal.valueExpression, '7');
+    expect(heal.recipient, 'alleato');
+    expect(heal.maximumTargets, 2);
+    expect(parsed.unrecognizedText, contains('10 Scudo Oculum'));
+    expect(parsed.unrecognizedText, contains('non recuperi 3 Oculum'));
+  });
+  test(
+    'each explicit action has its own recipient, frequency and penetration',
+    () {
+      final parsed = oculumParseAbilityMechanics(
+        'Cura 7 Vita a 2 alleati e rigenera 3 Oculum ogni 2 turni. '
+        'Infliggi 5 danni da fuoco e infliggi 8 danni da ghiaccio oltre Difesa.',
+      );
+      final healing = parsed.effects
+          .where((effect) => effect.type == 'cura')
+          .toList();
+      expect(healing, hasLength(2));
+      expect(healing.first.frequency, isEmpty);
+      expect(healing.first.maximumTargets, 2);
+      expect(healing.last.frequency, '2');
+      expect(healing.last.maximumTargets, 0);
+      final damage = parsed.effects
+          .where((effect) => effect.type == 'danno')
+          .toList();
+      expect(damage, hasLength(2));
+      expect(damage.first.elementType, 'fuoco');
+      expect(damage.first.bypassDefense, isFalse);
+      expect(damage.last.bypassDefense, isTrue);
+    },
+  );
+  test('negative penetration stays out of an executable damage effect', () {
+    final parsed = oculumParseAbilityMechanics(
+      'Infliggi 8 danni fisici, non ignora la Difesa e non ignora gli Scudi.',
+    );
+    expect(parsed.effects.single.bypassDefense, isFalse);
+    expect(parsed.effects.single.bypassShields, isFalse);
   });
   test('semantic matching preserves timing differences and ignores IDs', () {
     final first = oculumParseAbilityMechanics(

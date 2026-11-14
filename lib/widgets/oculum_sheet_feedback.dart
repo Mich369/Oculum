@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'oculum_goth_ornaments.dart';
+import 'oculum_monster_theme.dart';
 
 enum OculumFeedbackKind {
   lifeDamage,
@@ -164,7 +165,9 @@ class _FeedbackAnimation extends StatelessWidget {
               widthFactor: .90,
               heightFactor: .80,
               child: Image.asset(
-                'assets/oculum/home_art/sheet_damage_scratch.png',
+                oculumMonsterArtworkAsset(
+                  'assets/oculum/home_art/sheet_damage_scratch.png',
+                )!,
                 fit: BoxFit.contain,
                 filterQuality: FilterQuality.medium,
                 color: damageTint?.withValues(alpha: .35),

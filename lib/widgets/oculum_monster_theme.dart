@@ -4,6 +4,7 @@ import '../pages/oculum_dungeon/monster_book.dart';
 import 'oculum_optimized_monster_art_assets.dart';
 
 /// Maps a canonical stock artwork key to its bundled lossless derivative.
+/// The original key remains valid in saved sheets, themes and campaigns.
 String? oculumMonsterArtworkAsset(String? source) {
   const sourceDirectory = 'assets/oculum/home_art/';
   final normalized = source?.replaceAll(r'\', '/');

@@ -5,23 +5,55 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Costo delle forme superiori',
+    titleEn: 'Higher-form costs',
+    contentIt: r'''
+Una forma attiva più forte ha un costo maggiore, salvo eccezioni confermate. Un recupero più lungo conta come costo maggiore. Le passive possono mantenere lo stesso costo.
+
+La Skill Open dei Cavalieri Rossi richiede un’Azione. Ai livelli 150 e 200 spende anche 4 e 8 Volontà attuale, rispettivamente. Il recupero condiviso è di 4, 5, 5 e 6 turni personali secondo la forma.
+''',
+    contentEn: r'''
+A stronger active form has a higher cost, with confirmed exceptions. A longer cooldown counts as a higher cost. Passive forms can have the same cost.
+
+The Red Knights Open Skill costs one Action. At levels 150 and 200 it also spends 4 and 8 current Will, respectively. Its shared cooldown is 4, 5, 5 or 6 personal turns, depending on the form.
+''',
+  ),
+  ManualSection(
+    titleIt: 'Squadre nel Fight della scheda',
+    titleEn: 'Teams in the character sheet Fight',
+    contentIt: r'''
+Nel menu Fight della scheda il Master può creare squadre, scegliere colori distinti e spostare i partecipanti. Le impostazioni appartengono al singolo Fight. Gli alleati predefiniti sono verdi e i nemici predefiniti rossi. Una squadra gialla può attaccare entrambi.
+
+I colpi contro un membro della propria squadra sono non letali. A 0 Vita il bersaglio resta a terra e il colpo non avvia i tiri di morte. I colpi della stessa squadra subiscono il 25% di Resistenza quando coincidono sia Fato o Chaos sia Luna, Sole o Niente. Con una qualsiasi differenza si applica il danno pieno, sempre non letale.
+''',
+    contentEn: r'''
+In the character sheet's Fight menu, the Master can create teams, choose distinct colors and move participants. The settings belong to that Fight. The default allies are green and the default enemies red. A yellow team can attack both.
+
+Hits against a teammate are nonlethal. At 0 Health the target is downed and the hit does not start death saves. Teammates have 25% Resistance to the hit when both affiliations match, Fate or Chaos and Moon, Sun or None. A difference in either affiliation allows full damage while the hit remains nonlethal.
+''',
+  ),
+  ManualSection(
     titleIt: 'Risorse dopo un tiro fallito',
     titleEn: 'Resources after a failed roll',
     contentIt: r'''
-Nel risultato puoi scegliere un’opzione disponibile o confermare il tiro. L’Ispirazione base ritira un fallimento normale e la Super ritira anche un critico. Nel Chained Fate un partecipante paga due Ispirazioni base o una Super per un fallimento normale.
+Nel risultato puoi scegliere un’opzione disponibile o confermare il tiro. L’Ispirazione base ritira un fallimento con naturale da 2 a 19, anche se classificato come critico. La Super può ritirare anche i critici con naturale 1 o 20. Nel Chained Fate un partecipante paga due Ispirazioni base o una Super per un tiro idoneo.
 
 L’Ispirazione Oculum costa un punto, anche nel Chained Fate, ed è disponibile solo sul critico negativo. Ha il 50% di probabilità di trasformarlo in un critico positivo. Puoi usare una sola Ispirazione per tiro. La Fortuna magica dà +1 al totale per punto speso, con lo stesso naturale.
 
 Il Patto del Fato è un uso separato, una volta per scheda. Sul fallimento normale offre il ritentativo base. Sul critico negativo ha l’80% di dare il ritentativo Super e il 20% di offrire il nuovo critico 50/50. Se rifiuti quest’ultima scelta, conservi il tiro e ricevi un’Ispirazione base.
 
+Per Chaos, al posto del Patto, l’orologio di gioco effettua un sorteggio automatico ogni 9 ore. Il 20% dà niente, il 50% un’Ispirazione base, il 20% una Super Ispirazione e il 10% un’Ispirazione Oculum.
+
 Negli attacchi online che raccolgono insieme le difese, se almeno un bersaglio ferma il tiro condiviso, puoi ritirare l’intero attacco prima degli effetti. Tutti i bersagli devono essere su client compatibili. Alcune mosse speciali risolvono le difese in sequenza.
 ''',
     contentEn: r'''
-In the result, choose an available option or confirm the roll. A base Inspiration rerolls an ordinary failure. A Super Inspiration can also reroll a critical. In Chained Fate, a participant pays two base Inspirations or one Super for an ordinary failure.
+In the result, choose an available option or confirm the roll. A base Inspiration rerolls a failure with a natural 2 through 19, including criticals in that range. A Super Inspiration can also reroll criticals on a natural 1 or 20. In Chained Fate, a participant pays two base Inspirations or one Super for an eligible roll.
 
 An Oculum Inspiration costs one point, including in Chained Fate, and is available only on a negative critical. It has a 50% chance to turn it into a positive critical. You can use one Inspiration per roll. Magical Luck adds +1 to the total per point spent and keeps the natural die value.
 
 The Pact with Fate is separate and can be used once per character. It grants a base reroll on an ordinary failure. On a negative critical, it has an 80% chance to grant a Super reroll and a 20% chance to offer the 50/50 critical reroll. Decline that choice to keep the roll and receive a base Inspiration.
+
+For Chaos, the game clock automatically rolls every 9 in-game hours in place of the Pact. The odds are 20% no reward, 50% one base Inspiration, 20% one Super Inspiration and 10% one Oculum Inspiration.
 
 For online attacks that collect defenses together, a successful defense by any target lets you reroll the entire attack before effects apply. All targets must use compatible clients. Some special moves resolve defenses in sequence.
 ''',

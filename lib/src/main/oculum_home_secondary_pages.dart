@@ -2785,11 +2785,26 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         gothicPanel(
           child: ListTile(
             leading: Icon(Icons.auto_awesome, color: primaryColor),
-            title: Text(t('Patto del Fato', 'Pact with Fate')),
+            title: Text(
+              identityIsChaos
+                  ? t('Ispirazione del Chaos', 'Chaos Inspiration')
+                  : t('Patto del Fato', 'Pact with Fate'),
+            ),
             subtitle: Text(
-              fatePactUsed
-                  ? t('Già usato. Il Patto vale una sola volta per personaggio.', 'Already used. The Pact works once per character.')
-                  : t('Disponibile nel risultato di un tiro fallito.', 'Available in the result of a failed roll.'),
+              identityIsChaos
+                  ? t(
+                      'Ogni 9 ore di gioco · 20% nessuna, 50% base, 20% Super, 10% Oculum.',
+                      'Every 9 in-game hours · 20% none, 50% base, 20% Super, 10% Oculum.',
+                    )
+                  : fatePactUsed
+                  ? t(
+                      'Già usato. Il Patto vale una sola volta per personaggio.',
+                      'Already used. The Pact works once per character.',
+                    )
+                  : t(
+                      'Disponibile nel risultato di un tiro fallito.',
+                      'Available in the result of a failed roll.',
+                    ),
             ),
           ),
         ),

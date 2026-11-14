@@ -73,8 +73,10 @@ extension _OculumFightRewardPower on _OculumHomePageState {
   bool rewardPowerTokenParticipates(Map token) =>
       token['outsideFight'] != true &&
       !const {'fled', 'dead', 'expired'}.contains('${token['status'] ?? ''}');
-  int? fightRewardPowerForToken(Map<String, dynamic> token) {
-    final index = localSheetIndexForOculumTag(publicInitiativeSourceTag(token));
+  int? fightRewardPowerForToken(Map<String, dynamic> token, {int? sheetIndex}) {
+    final index =
+        sheetIndex ??
+        localSheetIndexForOculumTag(publicInitiativeSourceTag(token));
     if (index == schedaCorrente && index >= 0) {
       return currentEncounterRewardTotalPower();
     }
@@ -88,6 +90,35 @@ extension _OculumFightRewardPower on _OculumHomePageState {
         (token['potenzaTotale'] is num
             ? max(0, readIntValue(token['potenzaTotale']))
             : null);
+  }
+
+  int Function(Map<String, dynamic>) buildFightRewardSheetIndexLookup({
+    bool resolveSourceAlias = true,
+  }) {
+    final sourcesByTag = <String, String>{};
+    final indexesByNormalizedTag = <String, int>{};
+    for (var index = 0; index < schedePersonaggio.length; index++) {
+      final sheet = schedePersonaggio[index];
+      final tag = '${sheet['sheetTag'] ?? sheet['id'] ?? ''}';
+      // Both legacy scans choose the first sheet. Source aliases use exact
+      // tags, then sheet lookup uses the normalized alias or original tag.
+      sourcesByTag.putIfAbsent(
+        tag,
+        () => '${sheet['realtimeSourceSheetTag'] ?? ''}',
+      );
+      final normalized = normalizeOculumFriendTag(tag).toUpperCase();
+      if (normalized.isNotEmpty) {
+        indexesByNormalizedTag.putIfAbsent(normalized, () => index);
+      }
+    }
+    return (token) {
+      final tag = '${token['sheetTag'] ?? token['id'] ?? ''}';
+      final source = resolveSourceAlias ? sourcesByTag[tag] ?? '' : '';
+      final normalized = normalizeOculumFriendTag(
+        source.isEmpty ? tag : source,
+      ).toUpperCase();
+      return indexesByNormalizedTag[normalized] ?? -1;
+    };
   }
 
   String fightRewardInstanceId(Map<String, dynamic> group, Map token) {
@@ -138,7 +169,10 @@ extension _OculumFightRewardPower on _OculumHomePageState {
     }
   }
 
-  void sampleFightRewardPowerToken(Map<String, dynamic> token) {
+  void sampleFightRewardPowerToken(
+    Map<String, dynamic> token, {
+    int Function(Map<String, dynamic>)? sheetIndexForToken,
+  }) {
     if (!rewardPowerTokenParticipates(token)) return;
     final group = masterInitiativeGroups
         .where((group) => '${group['id']}' == selectedMasterInitiativeGroupId)
@@ -148,7 +182,10 @@ extension _OculumFightRewardPower on _OculumHomePageState {
         group['combatEnded'] == true) {
       return;
     }
-    final power = fightRewardPowerForToken(token);
+    final power = fightRewardPowerForToken(
+      token,
+      sheetIndex: sheetIndexForToken?.call(token),
+    );
     if (power == null) return;
     oculumRecordFightRewardPowerSample(
       token,
@@ -171,10 +208,15 @@ extension _OculumFightRewardPower on _OculumHomePageState {
         group['combatEnded'] == true) {
       return;
     }
-    markOblivionFightExposure();
+    late final localIndexes = buildFightRewardSheetIndexLookup(
+      resolveSourceAlias: realtimeIsMasterRole || localTurnCombat,
+    );
+    int lookup(Map<String, dynamic> token) => localIndexes(token);
+    markOblivionFightExposure(sheetIndexForToken: lookup);
     refreshOpposingChaosTurn(
       token,
       fightInstanceId: fightRewardInstanceId(group, token),
+      sheetIndexForToken: lookup,
     );
     final power = fightRewardPowerForToken(token);
     if (power == null) return;

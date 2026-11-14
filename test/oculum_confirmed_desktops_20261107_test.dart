@@ -58,6 +58,34 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
+    'legacy Senka and feedback artwork resolve to bundled derivatives',
+    () async {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final bundled = manifest.listAssets().toSet();
+      for (final filename in [
+        'theme_senka_kamaria_v3.png',
+        'theme_senka_kamaria_mobile_v2.png',
+        'relic_senka_kamaria_v1.png',
+        'sheet_damage_scratch.png',
+      ]) {
+        final source = 'assets/oculum/home_art/$filename';
+        final runtime = oculumMonsterArtworkAsset(source)!;
+        expect(runtime, endsWith('.webp'));
+        expect(bundled, contains(runtime));
+        expect(bundled, isNot(contains(source)));
+      }
+      for (final filename in [
+        'canva_spirit_duelist.png',
+        'cathedral_eye.png',
+      ]) {
+        final source = 'assets/oculum/home_art/$filename';
+        expect(oculumMonsterArtworkAsset(source), source);
+        expect(bundled, contains(source));
+      }
+    },
+  );
+
+  test(
     'converted monster artwork is bundled once under its WebP path',
     () async {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);

@@ -545,6 +545,7 @@ extension _OculumWingDamage on _OculumHomePageState {
           damage,
           element: 'contundente',
           source: 'Caduta',
+          attack: Map<String, dynamic>.from(request),
         );
       }
     }

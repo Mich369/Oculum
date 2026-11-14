@@ -2939,6 +2939,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       if (group.containsKey('fightStarted'))
         'fightStarted': group['fightStarted'] == true,
       'mergedEncounterIds': group['mergedEncounterIds'] ?? const <String>[],
+      if (group['fightTeams'] is List) 'fightTeams': group['fightTeams'],
       if (group['chainedFate'] is Map) 'chainedFate': group['chainedFate'],
       if (group['rollRequests'] is List) 'rollRequests': group['rollRequests'],
       'name': group['name'],
@@ -2960,11 +2961,15 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'name': oculumReferenceEncounterTokenName(tokens[i]),
             'type': '${tokens[i]['type'] ?? 'Partecipante'}',
             'side': '${tokens[i]['side'] ?? 'ally'}',
+            ...fightTeamTokenFields(group, tokens[i]),
+            ...fightTokenAffiliations(tokens[i]),
             if (readIntValue(tokens[i]['colorArgb']) != 0)
               'colorArgb': readIntValue(tokens[i]['colorArgb']),
             'status': '${tokens[i]['status'] ?? 'ready'}',
             'corruptedByTag': corruptionOwnerForToken(tokens[i]),
             'downed': masterInitiativeTokenIsDowned(tokens[i]),
+            if (tokens[i]['friendlyFireDowned'] == true)
+              'friendlyFireDowned': true,
             'targetControlChancePercent': corruptionControlChanceForToken(
               tokens[i],
             ),
@@ -4406,6 +4411,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'hpTemp': '${token['hpTemp'] ?? 0}',
       'scudo': '${token['shield'] ?? 0}',
       'personaggioCaduto': masterInitiativeTokenIsDowned(token),
+      'friendlyFireDowned': token['friendlyFireDowned'] == true,
       'feriteMorte': readIntValue(token['deathWounds']),
       'volontaVitale': readIntValue(token['vitalWills']),
       'realtimeDeathOutcomeIt': '${token['realtimeDeathOutcomeIt'] ?? ''}',

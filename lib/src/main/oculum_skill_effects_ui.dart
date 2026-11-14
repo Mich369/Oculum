@@ -1175,7 +1175,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         'Costrutto con Vita propria',
         'Construct with its own HP',
       ),
-      'evocazione' => t('Evocazione con scheda', 'Summon with a sheet'),
+      'evocazione' => t('Evoca un compagno', 'Summon a companion'),
       'difesa' => t('Difesa', 'Defense'),
       'cura' => t('Cura / rigenerazione', 'Healing / regeneration'),
       'modifica_statistica' => t(
@@ -1235,7 +1235,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
 
   List<String> structuredEffectTargetOptions(String type) {
     final values = <String>[];
-    if (type == 'preparazione') {
+    if (type == 'evocazione') {
+      values.addAll(_structuredSummonNames.keys);
+    } else if (type == 'preparazione') {
       values.addAll(['attacco', 'difesa']);
     } else if (type == 'planar') {
       values.addAll({
@@ -1783,6 +1785,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     }
 
     OculumStructuredEffect currentEffect() {
+      final summonTarget = normalizedStructuredTarget(targetController.text);
+      final fixedSummon =
+          type == 'evocazione' &&
+          _structuredSummonNames.containsKey(summonTarget) &&
+          summonTarget != 'clone_ombra';
       return OculumStructuredEffect(
         id: seed.id,
         sourceScrollGrade: seed.sourceScrollGrade,
@@ -1800,7 +1807,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         type: type,
         target: targetController.text.trim(),
         resource: resource,
-        valueExpression: valueController.text.trim(),
+        valueExpression: fixedSummon && valueController.text.trim().isEmpty
+            ? '1'
+            : valueController.text.trim(),
         mode: mode,
         duration: durationController.text.trim(),
         durationUnit: durationUnit,
@@ -1858,6 +1867,13 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
         error = '';
 
         switch (preset) {
+          case 'evocazione':
+            type = 'evocazione';
+            mode = 'immediato';
+            recipient = 'se_stesso';
+            targetController.clear();
+            valueController.clear();
+            elementTypeController.clear();
           case 'muro':
             type = 'scudo';
             mode = 'immediato';
@@ -1921,20 +1937,38 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               final isCost = type == 'consumo_risorsa';
               final isConversion = type == 'conversione_risorsa';
               final isState = type == 'stato';
+              final isSummon = type == 'evocazione';
+              final summonTarget = normalizedStructuredTarget(
+                targetController.text,
+              );
+              final isShadowClone = isSummon && summonTarget == 'clone_ombra';
+              final hasUnknownSavedSummon =
+                  isSummon &&
+                  seed.type == 'evocazione' &&
+                  seed.target.trim().isNotEmpty &&
+                  !_structuredSummonNames.containsKey(
+                    normalizedStructuredTarget(seed.target),
+                  );
+              final unknownSavedSummon =
+                  hasUnknownSavedSummon &&
+                  targetController.text.trim() == seed.target.trim();
               final hasFrequency =
                   oculumStructuredEffectFrequency(frequencyController.text) > 0;
               final supportsDuration =
-                  mode == 'finche_attivo' ||
-                  mode == 'rigenerazione' ||
-                  hasFrequency ||
-                  type == 'modifica_statistica' ||
-                  type == 'modifica_sottotratto' ||
-                  type == 'velocita' ||
-                  type == 'forza' ||
-                  type == 'stato';
+                  isShadowClone ||
+                  !isSummon &&
+                      (mode == 'finche_attivo' ||
+                          mode == 'rigenerazione' ||
+                          hasFrequency ||
+                          type == 'modifica_statistica' ||
+                          type == 'modifica_sottotratto' ||
+                          type == 'velocita' ||
+                          type == 'forza' ||
+                          type == 'stato');
               final preview = oculumStructuredEffectDescription(
                 currentEffect(),
                 subtraits: hiddenEyeStats,
+                english: linguaInglese,
               );
 
               return AlertDialog(
@@ -1970,6 +2004,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                   ('muro', Icons.shield, 'Muro', 'Wall'),
                                   ('cura', Icons.favorite, 'Cura', 'Healing'),
                                   (
+                                    'evocazione',
+                                    Icons.pets,
+                                    'Compagno',
+                                    'Companion',
+                                  ),
+                                  (
                                     'bonus',
                                     Icons.trending_up,
                                     'Bonus',
@@ -1997,10 +2037,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        if (!const {
-                          'danno',
-                          'danno_percentuale',
-                        }.contains(type))
+                        if (!isSummon &&
+                            !const {
+                              'danno',
+                              'danno_percentuale',
+                            }.contains(type))
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
                             dense: true,
@@ -2017,10 +2058,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             onChanged: (value) =>
                                 setDialogState(() => criticalOnly = value),
                           ),
-                        if (!const {
-                          'danno',
-                          'danno_percentuale',
-                        }.contains(type))
+                        if (!isSummon &&
+                            !const {
+                              'danno',
+                              'danno_percentuale',
+                            }.contains(type))
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
                             dense: true,
@@ -2081,6 +2123,10 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           onChanged: (value) {
                             if (value == null) return;
                             setDialogState(() {
+                              if (value == 'evocazione' && type != value) {
+                                targetController.clear();
+                                recipient = 'se_stesso';
+                              }
                               type = value;
                               final nextModes = modesFor(type);
                               if (!nextModes.contains(mode)) {
@@ -2201,23 +2247,24 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             }),
                           ),
                         ],
-                        TextField(
-                          controller: elementTypeController,
-                          decoration:
-                              fieldDecoration(
-                                t(
-                                  'Tipo / elemento opzionale',
-                                  'Optional type / element',
+                        if (!isSummon)
+                          TextField(
+                            controller: elementTypeController,
+                            decoration:
+                                fieldDecoration(
+                                  t(
+                                    'Tipo / elemento opzionale',
+                                    'Optional type / element',
+                                  ),
+                                ).copyWith(
+                                  helperText: t(
+                                    'Esempi: Ghiaccio, Fuoco, Cenere, Fisico',
+                                    'Examples: Ice, Fire, Ash, Physical',
+                                  ),
                                 ),
-                              ).copyWith(
-                                helperText: t(
-                                  'Esempi: Ghiaccio, Fuoco, Cenere, Fisico',
-                                  'Examples: Ice, Fire, Ash, Physical',
-                                ),
-                              ),
-                          onChanged: (_) =>
-                              scheduleDialogRefresh(setDialogState),
-                        ),
+                            onChanged: (_) =>
+                                scheduleDialogRefresh(setDialogState),
+                          ),
                         const SizedBox(height: 10),
                         if (isState) ...[
                           DropdownButtonFormField<String>(
@@ -2248,7 +2295,76 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           ),
                           const SizedBox(height: 10),
                         ],
-                        if (needsTarget) ...[
+                        if (isSummon) ...[
+                          DropdownButtonFormField<String>(
+                            key: const ValueKey('structured_effect_companion'),
+                            initialValue:
+                                _structuredSummonNames.containsKey(summonTarget)
+                                ? summonTarget
+                                : unknownSavedSummon
+                                ? seed.target
+                                : null,
+                            isExpanded: true,
+                            dropdownColor: const Color(0xFF10121A),
+                            decoration: fieldDecoration(
+                              t('Compagno', 'Companion'),
+                            ),
+                            items: [
+                              for (final entry
+                                  in _structuredSummonNames.entries)
+                                DropdownMenuItem(
+                                  value: entry.key,
+                                  child: Text(
+                                    t(entry.value.$1, entry.value.$2),
+                                  ),
+                                ),
+                              if (hasUnknownSavedSummon)
+                                DropdownMenuItem(
+                                  value: seed.target,
+                                  child: Text(
+                                    t(
+                                      'Evocazione salvata · ${seed.target}',
+                                      'Saved summon · ${seed.target}',
+                                    ),
+                                  ),
+                                ),
+                            ],
+                            onChanged: (value) => setDialogState(() {
+                              targetController.text = value ?? '';
+                              if (value == 'clone_ombra') {
+                                if (valueController.text.trim().isEmpty) {
+                                  valueController.text = '10';
+                                }
+                                if (durationController.text.trim().isEmpty) {
+                                  durationController.text = 'oculum';
+                                }
+                                durationUnit = 'turni';
+                              }
+                              error = '';
+                            }),
+                          ),
+                          const SizedBox(height: 6),
+                          if (_structuredSummonNames.containsKey(summonTarget))
+                            smallInfoText(
+                              isShadowClone
+                                  ? t(
+                                      'Crea una scheda temporanea. Il clone si dissolve allo scadere dei turni.',
+                                      'Creates a temporary sheet. The clone disappears when its turns expire.',
+                                    )
+                                  : t(
+                                      'Crea una scheda temporanea per il Fight, con le regole proprie del compagno.',
+                                      'Creates a temporary sheet for the fight using the companion’s own rules.',
+                                    ),
+                            )
+                          else if (unknownSavedSummon)
+                            smallInfoText(
+                              t(
+                                'Questa evocazione è salvata, ma il gioco non la riconosce. Puoi scegliere un compagno supportato.',
+                                'This summon is saved but unsupported. You can choose a supported companion.',
+                              ),
+                            ),
+                          const SizedBox(height: 10),
+                        ] else if (needsTarget) ...[
                           DropdownButtonFormField<String>(
                             initialValue:
                                 targetOptions.contains(targetController.text)
@@ -2323,46 +2439,63 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           ),
                           const SizedBox(height: 10),
                         ],
-                        TextField(
-                          controller: valueController,
-                          decoration:
-                              fieldDecoration(
-                                isState
-                                    ? t('Stadio o formula', 'Stage or formula')
-                                    : t('Valore o formula', 'Value or formula'),
-                              ).copyWith(
-                                helperText:
-                                    '10, 1d6+@Danni, @Res+1, OculumSpeso*2',
-                              ),
-                          onChanged: (_) =>
-                              scheduleDialogRefresh(setDialogState),
-                        ),
+                        if (!isSummon || isShadowClone || unknownSavedSummon)
+                          TextField(
+                            controller: valueController,
+                            decoration:
+                                fieldDecoration(
+                                  isState
+                                      ? t(
+                                          'Stadio o formula',
+                                          'Stage or formula',
+                                        )
+                                      : isShadowClone
+                                      ? t('Vita del clone', 'Clone HP')
+                                      : t(
+                                          'Valore o formula',
+                                          'Value or formula',
+                                        ),
+                                ).copyWith(
+                                  helperText:
+                                      '10, 1d6+@Danni, @Res+1, OculumSpeso*2',
+                                ),
+                            onChanged: (_) =>
+                                scheduleDialogRefresh(setDialogState),
+                          ),
                         const SizedBox(height: 10),
-                        TextField(
-                          controller: frequencyController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: oculumNonNegativeIntegerFormatters,
-                          decoration:
-                              fieldDecoration(
-                                t(
-                                  'Ripeti ogni N turni/tiri (opzionale)',
-                                  'Repeat every N turns/rolls (optional)',
+                        if (!isSummon || unknownSavedSummon)
+                          TextField(
+                            controller: frequencyController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: oculumNonNegativeIntegerFormatters,
+                            decoration:
+                                fieldDecoration(
+                                  t(
+                                    'Ripeti ogni N turni/tiri (opzionale)',
+                                    'Repeat every N turns/rolls (optional)',
+                                  ),
+                                ).copyWith(
+                                  helperText: t(
+                                    'Esempio: 3 = agisce al 3°, 6°, 9° turno. Lascia vuoto per agire subito una volta.',
+                                    'Example: 3 = acts on turns 3, 6 and 9. Leave empty to act once immediately.',
+                                  ),
                                 ),
-                              ).copyWith(
-                                helperText: t(
-                                  'Esempio: 3 = agisce al 3°, 6°, 9° turno. Lascia vuoto per agire subito una volta.',
-                                  'Example: 3 = acts on turns 3, 6 and 9. Leave empty to act once immediately.',
-                                ),
-                              ),
-                          onChanged: (_) =>
-                              scheduleDialogRefresh(setDialogState),
-                        ),
+                            onChanged: (_) =>
+                                scheduleDialogRefresh(setDialogState),
+                          ),
                         if (supportsDuration) ...[
                           const SizedBox(height: 10),
                           TextField(
                             controller: durationController,
-                            decoration: fieldDecoration(t('Durata', 'Duration'))
-                                .copyWith(
+                            decoration:
+                                fieldDecoration(
+                                  isShadowClone
+                                      ? t(
+                                          'Durata del clone in turni',
+                                          'Clone duration in turns',
+                                        )
+                                      : t('Durata', 'Duration'),
+                                ).copyWith(
                                   helperText: hasFrequency
                                       ? t(
                                           'Lascia vuoto per continuare senza una scadenza automatica.',
@@ -2374,85 +2507,91 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 scheduleDialogRefresh(setDialogState),
                           ),
                           const SizedBox(height: 8),
+                          if (!isShadowClone)
+                            DropdownButtonFormField<String>(
+                              initialValue:
+                                  <String>[
+                                    'turni',
+                                    'tiri',
+                                  ].contains(durationUnit)
+                                  ? durationUnit
+                                  : 'turni',
+                              dropdownColor: const Color(0xFF10121A),
+                              decoration: fieldDecoration(
+                                t('Durata misurata in', 'Duration measured in'),
+                              ),
+                              items: <DropdownMenuItem<String>>[
+                                DropdownMenuItem(
+                                  value: 'turni',
+                                  child: Text(t('Turni', 'Turns')),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'tiri',
+                                  child: Text(t('Tiri', 'Rolls')),
+                                ),
+                              ],
+                              onChanged: (value) => setDialogState(() {
+                                durationUnit = value ?? 'turni';
+                              }),
+                            ),
+                        ],
+                        const SizedBox(height: 10),
+                        if (!isSummon || unknownSavedSummon)
                           DropdownButtonFormField<String>(
-                            initialValue:
-                                <String>['turni', 'tiri'].contains(durationUnit)
-                                ? durationUnit
-                                : 'turni',
+                            initialValue: recipient,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(
-                              t('Durata misurata in', 'Duration measured in'),
+                              t('Bersaglio', 'Recipient'),
                             ),
                             items: <DropdownMenuItem<String>>[
                               DropdownMenuItem(
-                                value: 'turni',
-                                child: Text(t('Turni', 'Turns')),
+                                value: 'se_stesso',
+                                child: Text(t('Se stesso', 'Self')),
                               ),
                               DropdownMenuItem(
-                                value: 'tiri',
-                                child: Text(t('Tiri', 'Rolls')),
+                                value: 'bersaglio',
+                                child: Text(t('Bersaglio', 'Target')),
+                              ),
+                              DropdownMenuItem(
+                                value: 'alleato',
+                                child: Text(
+                                  t('Alleati / Se stessi', 'Allies / Self'),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'area',
+                                child: Text(t('Area', 'Area')),
                               ),
                             ],
                             onChanged: (value) => setDialogState(() {
-                              durationUnit = value ?? 'turni';
+                              recipient = value ?? 'se_stesso';
                             }),
                           ),
-                        ],
                         const SizedBox(height: 10),
-                        DropdownButtonFormField<String>(
-                          initialValue: recipient,
-                          dropdownColor: const Color(0xFF10121A),
-                          decoration: fieldDecoration(
-                            t('Bersaglio', 'Recipient'),
+                        if (!isSummon || unknownSavedSummon)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: minimumTargetsController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: fieldDecoration(
+                                    'Bersagli / colpi minimi (auto se vuoto)',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: maximumTargetsController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: fieldDecoration(
+                                    'Bersagli / colpi massimi (auto se vuoto)',
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          items: <DropdownMenuItem<String>>[
-                            DropdownMenuItem(
-                              value: 'se_stesso',
-                              child: Text(t('Se stesso', 'Self')),
-                            ),
-                            DropdownMenuItem(
-                              value: 'bersaglio',
-                              child: Text(t('Bersaglio', 'Target')),
-                            ),
-                            DropdownMenuItem(
-                              value: 'alleato',
-                              child: Text(
-                                t('Alleati / Se stessi', 'Allies / Self'),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'area',
-                              child: Text(t('Area', 'Area')),
-                            ),
-                          ],
-                          onChanged: (value) => setDialogState(() {
-                            recipient = value ?? 'se_stesso';
-                          }),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: minimumTargetsController,
-                                keyboardType: TextInputType.number,
-                                decoration: fieldDecoration(
-                                  'Bersagli / colpi minimi (auto se vuoto)',
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: maximumTargetsController,
-                                keyboardType: TextInputType.number,
-                                decoration: fieldDecoration(
-                                  'Bersagli / colpi massimi (auto se vuoto)',
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 10),
                         ExpansionTile(
                           tilePadding: EdgeInsets.zero,
@@ -2684,11 +2823,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                       ? t('attivo', 'enabled')
                                       : t('disattivato', 'disabled'),
                                   structuredEffectTypeLabel(type),
-                                  recipient == 'se_stesso'
-                                      ? t('su di te', 'on self')
-                                      : recipient == 'area'
-                                      ? t('in area', 'in an area')
-                                      : t('sul bersaglio', 'on target'),
+                                  if (!isSummon)
+                                    recipient == 'se_stesso'
+                                        ? t('su di te', 'on self')
+                                        : recipient == 'area'
+                                        ? t('in area', 'in an area')
+                                        : t('sul bersaglio', 'on target'),
                                   if (hasFrequency)
                                     '${t('ogni', 'every')} ${frequencyController.text} $durationUnit',
                                   if (supportsDuration &&
@@ -2720,11 +2860,35 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                   ElevatedButton.icon(
                     onPressed: () {
                       final effect = currentEffect();
+                      if (isSummon &&
+                          !_structuredSummonNames.containsKey(
+                            normalizedStructuredTarget(effect.target),
+                          ) &&
+                          !(unknownSavedSummon &&
+                              effect.target == seed.target.trim())) {
+                        setDialogState(
+                          () => error = t(
+                            'Scegli un compagno.',
+                            'Choose a companion.',
+                          ),
+                        );
+                        return;
+                      }
+                      if (isShadowClone && effect.duration.trim().isEmpty) {
+                        setDialogState(
+                          () => error = t(
+                            'Inserisci la durata del clone.',
+                            'Enter the clone’s duration.',
+                          ),
+                        );
+                        return;
+                      }
                       if (effect.valueExpression.trim().isEmpty &&
                           effect.diceExpression.trim().isNotEmpty) {
                         effect.valueExpression = '0';
                       }
-                      if (effect.valueExpression.trim().isEmpty) {
+                      if (effect.valueExpression.trim().isEmpty &&
+                          !unknownSavedSummon) {
                         setDialogState(() {
                           error = t(
                             'Inserisci almeno un valore o una formula.',
@@ -2816,6 +2980,93 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
     List<OculumStructuredEffect>? previousEffects,
     String storageId = '',
   }) {
+    Future<void> reviewFreeText() async {
+      final existing = effects.map(oculumStructuredEffectSemanticKey).toSet();
+      final parsed = oculumRecognizeSkillDraft(
+        freeText,
+        subtraits: hiddenEyeStats,
+      );
+      final candidates = parsed.effects
+          .where(
+            (effect) =>
+                !existing.contains(oculumStructuredEffectSemanticKey(effect)),
+          )
+          .toList();
+      final selected = List<bool>.filled(candidates.length, true);
+      final choice = await showDialog<List<OculumStructuredEffect>>(
+        context: context,
+        builder: (dialog) => StatefulBuilder(
+          builder: (_, refresh) => AlertDialog(
+            title: Text(t('Riconosci testo libero', 'Recognize free text')),
+            scrollable: true,
+            content: SizedBox(
+              width: 480,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (candidates.isEmpty)
+                    Text(
+                      t(
+                        'Nessun nuovo effetto da aggiungere.',
+                        'No new effects to add.',
+                      ),
+                    ),
+                  for (var index = 0; index < candidates.length; index++)
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: selected[index],
+                      onChanged: (value) =>
+                          refresh(() => selected[index] = value ?? false),
+                      title: Text(
+                        structuredEffectTypeLabel(candidates[index].type),
+                      ),
+                      subtitle: Text(
+                        oculumStructuredEffectDescription(
+                          candidates[index],
+                          subtraits: hiddenEyeStats,
+                          english: linguaInglese,
+                        ),
+                      ),
+                    ),
+                  if (parsed.unrecognizedText.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(t('Da configurare a mano', 'Configure manually')),
+                    SelectableText(parsed.unrecognizedText),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialog).pop(),
+                child: Text(t('Annulla', 'Cancel')),
+              ),
+              FilledButton(
+                onPressed: selected.contains(true)
+                    ? () => Navigator.of(dialog).pop([
+                        for (var index = 0; index < candidates.length; index++)
+                          if (selected[index]) candidates[index],
+                      ])
+                    : null,
+                child: Text(t('Aggiungi selezionati', 'Add selected')),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!mounted || choice == null) return;
+      final current = effects.map(oculumStructuredEffectSemanticKey).toSet();
+      setState(() {
+        for (final effect in choice) {
+          if (current.add(oculumStructuredEffectSemanticKey(effect))) {
+            effects.add(effect);
+          }
+        }
+        onChanged();
+      });
+      programmaSalvataggio();
+    }
+
     Future<void> editEffect(int? index) async {
       final updated = await showStructuredEffectDialog(
         initial: index == null ? null : effects[index],
@@ -2892,6 +3143,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                       oculumStructuredEffectDescription(
                         effect,
                         subtraits: hiddenEyeStats,
+                        english: linguaInglese,
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -2985,75 +3237,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                 ),
               if (freeText.trim().isNotEmpty)
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.rule),
-                  label: const Text('Parser abilità · formule e requisiti'),
-                  onPressed: () {
-                    final parsed = oculumParseAbilityMechanics(
-                      freeText,
-                      subtraits: hiddenEyeStats,
-                    );
-                    final existing = {
-                      for (final e in effects)
-                        oculumStructuredEffectSemanticKey(e),
-                    };
-                    setState(() {
-                      var added = 0;
-                      for (final effect in parsed.effects) {
-                        if (existing.add(
-                          oculumStructuredEffectSemanticKey(effect),
-                        )) {
-                          effects.add(effect);
-                          added++;
-                        }
-                      }
-                      onChanged();
-                      risultato =
-                          '$added effetti aggiunti. Testo originale conservato. Da verificare: ${parsed.unrecognizedText}';
-                      aggiungiLog(risultato);
-                    });
-                    programmaSalvataggio();
-                  },
-                ),
-              if (freeText.trim().isNotEmpty)
-                OutlinedButton.icon(
-                  onPressed: () {
-                    final parsed = oculumParseAbilityMechanics(
-                      freeText,
-                      subtraits: hiddenEyeStats,
-                    );
-                    if (parsed.effects.isEmpty) {
-                      setState(() {
-                        risultato = t(
-                          'Nessun effetto riconosciuto. Il testo originale è stato conservato.',
-                          'No effect recognized. Original text was preserved.',
-                        );
-                      });
-                      return;
-                    }
-                    setState(() {
-                      final existing = {
-                        for (final effect in effects)
-                          oculumStructuredEffectSemanticKey(effect),
-                      };
-                      for (final effect in parsed.effects) {
-                        if (existing.add(
-                          oculumStructuredEffectSemanticKey(effect),
-                        )) {
-                          effects.add(effect);
-                        }
-                      }
-                      onChanged();
-                      risultato = parsed.unrecognizedText.isEmpty
-                          ? t(
-                              'Effetti riconosciuti. Il testo originale è stato conservato.',
-                              'Effects recognized. Original text was preserved.',
-                            )
-                          : '${t('Parte non riconosciuta', 'Unrecognized part')}: '
-                                '${parsed.unrecognizedText}';
-                      aggiungiLog(risultato);
-                    });
-                    programmaSalvataggio();
-                  },
+                  onPressed: () => unawaited(reviewFreeText()),
                   icon: const Icon(Icons.auto_awesome),
                   label: Text(
                     t('Riconosci testo libero', 'Recognize free text'),

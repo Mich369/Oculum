@@ -290,6 +290,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
   Widget referenceTurnControlsBody() {
     final remote = !referenceUsesLocalTurnState;
     final encounter = referenceTurnEncounter();
+    final encounterId = '${encounter['encounterId'] ?? ''}';
     final hasFight = (encounter['tokens'] as List? ?? const []).isNotEmpty;
     final round = readIntValue(encounter['round']);
     final label = hasFight
@@ -298,7 +299,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     final canStep = !remote || realtimeIsCoMasterRole;
     void step(int delta) {
       if (hasFight) {
-        stepReferenceTurn(delta, '${encounter['encounterId'] ?? ''}');
+        stepReferenceTurn(delta, encounterId);
       } else {
         setPlayerReportedTurn(playerReportedTurn + delta);
       }
@@ -354,6 +355,14 @@ extension _OculumReferenceSheet on _OculumHomePageState {
             onPressed: canStep ? () => step(1) : null,
             icon: Icon(Icons.chevron_right),
           ),
+          if (canManageFightTeams(encounterId))
+            IconButton(
+              key: const ValueKey('reference_fight_teams'),
+              tooltip: t('Squadre del Fight', 'Fight teams'),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => showReferenceFightTeams(encounterId),
+              icon: const Icon(Icons.groups_outlined),
+            ),
         ],
       ),
     );
@@ -1592,6 +1601,332 @@ extension _OculumReferenceSheet on _OculumHomePageState {
 }
 
 extension _OculumReferenceEncounters on _OculumHomePageState {
+  static const _fightTeamPalette = [
+    (Color(0xFFEFD055), 'Giallo', 'Yellow'),
+    (Color(0xFF69ACFF), 'Blu', 'Blue'),
+    (Color(0xFFBC91FB), 'Viola', 'Purple'),
+    (Color(0xFF43D2D9), 'Ciano', 'Cyan'),
+    (Color(0xFFF78AC1), 'Rosa', 'Pink'),
+    (Color(0xFFFC9B59), 'Arancio', 'Orange'),
+    (Color(0xFF8FDC7A), 'Verde chiaro', 'Light green'),
+    (Color(0xFFDCD7E7), 'Argento', 'Silver'),
+  ];
+
+  String _fightTeamColorHex(Color color) =>
+      '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
+  Color? _fightTeamColorFromHex(String value) {
+    final rgb = value.trim().replaceFirst(RegExp(r'^#'), '');
+    if (rgb.length != 6 || !RegExp(r'^[\da-fA-F]+$').hasMatch(rgb)) {
+      return null;
+    }
+    return Color(0xFF000000 | int.parse(rgb, radix: 16));
+  }
+
+  void _showFightTeamUpdateError() {
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(
+          t(
+            'Impossibile aggiornare la squadra. Riapri il menu del Fight.',
+            'Could not update the team. Reopen the Fight menu.',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _editReferenceFightTeam(
+    String encounterId,
+    String expectedFightId, {
+    _FightTeam? team,
+  }) async {
+    final otherTeams = fightTeams(
+      encounterId,
+    ).where((other) => other.id != team?.id).toList();
+    final usedColors = {for (final other in otherTeams) other.color.toARGB32()};
+    final usedNames = {
+      for (final other in otherTeams) other.name.toLowerCase(),
+    };
+    final suggestions = _fightTeamPalette
+        .where((item) => !usedColors.contains(item.$1.toARGB32()))
+        .toList();
+    final suggested = suggestions.firstOrNull?.$1 ?? _fightTeamPalette.first.$1;
+    final fixedName = const {'ally', 'enemy', 'neutral'}.contains(team?.id);
+    var name = team?.name ?? '';
+    var hex = _fightTeamColorHex(team?.color ?? suggested);
+    var hexFieldRevision = 0;
+    final result = await showDialog<({String name, Color color})>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, refresh) {
+          final color = _fightTeamColorFromHex(hex);
+          final used = color != null && usedColors.contains(color.toARGB32());
+          final duplicateName = usedNames.contains(name.trim().toLowerCase());
+          return AlertDialog(
+            scrollable: true,
+            title: Text(
+              team == null
+                  ? t('Nuova squadra', 'New team')
+                  : t('Modifica squadra', 'Edit team'),
+            ),
+            content: SizedBox(
+              width: 440,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    key: const ValueKey('reference_fight_team_name'),
+                    initialValue: name,
+                    readOnly: fixedName,
+                    maxLength: 40,
+                    decoration: InputDecoration(
+                      labelText: t('Nome della squadra', 'Team name'),
+                      counterText: '',
+                      errorText: duplicateName
+                          ? t('Nome già usato.', 'Name already in use.')
+                          : null,
+                    ),
+                    onChanged: (value) => refresh(() => name = value),
+                  ),
+                  const SizedBox(height: 12),
+                  if (suggestions.isNotEmpty) ...[
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final (swatch, italian, english) in suggestions)
+                          ChoiceChip(
+                            avatar: Icon(Icons.circle, color: swatch, size: 16),
+                            label: Text(t(italian, english)),
+                            selected: color?.toARGB32() == swatch.toARGB32(),
+                            onSelected: (_) => refresh(() {
+                              hex = _fightTeamColorHex(swatch);
+                              hexFieldRevision++;
+                            }),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  TextFormField(
+                    key: ValueKey('reference_fight_team_hex_$hexFieldRevision'),
+                    initialValue: hex,
+                    decoration: InputDecoration(
+                      labelText: t('Colore personalizzato', 'Custom color'),
+                      hintText: '#RRGGBB',
+                      prefixIcon: Icon(Icons.circle, color: color, size: 20),
+                      errorText: color == null
+                          ? t('Usa il formato #RRGGBB.', 'Use #RRGGBB format.')
+                          : used
+                          ? t('Colore già usato.', 'Color already in use.')
+                          : null,
+                    ),
+                    onChanged: (value) => refresh(() => hex = value),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog),
+                child: Text(t('Annulla', 'Cancel')),
+              ),
+              FilledButton(
+                onPressed:
+                    color == null ||
+                        used ||
+                        duplicateName ||
+                        name.trim().isEmpty
+                    ? null
+                    : () {
+                        final selectedColor = _fightTeamColorFromHex(hex);
+                        final selectedName = name.trim();
+                        if (selectedColor == null ||
+                            usedColors.contains(selectedColor.toARGB32()) ||
+                            selectedName.isEmpty ||
+                            usedNames.contains(selectedName.toLowerCase())) {
+                          return;
+                        }
+                        Navigator.pop(dialog, (
+                          name: selectedName,
+                          color: selectedColor,
+                        ));
+                      },
+                child: Text(t('Salva', 'Save')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (!mounted || result == null) return false;
+    final saved = saveFightTeam(
+      encounterId,
+      teamId: team?.id,
+      name: result.name,
+      color: result.color,
+      expectedFightId: expectedFightId,
+    );
+    if (!saved) _showFightTeamUpdateError();
+    return saved;
+  }
+
+  Future<bool> chooseReferenceParticipantFightTeam(
+    String encounterId,
+    Map<String, dynamic> token, {
+    String? expectedFightId,
+  }) async {
+    if (!canManageFightTeams(encounterId) ||
+        masterInitiativeTokenIsTemporary(token)) {
+      return false;
+    }
+    final fightId = expectedFightId ?? masterParticipantFightId(encounterId);
+    if (fightId != masterParticipantFightId(encounterId)) return false;
+    final currentTeamId = combatParticipantTeamId(token);
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialog) => SimpleDialog(
+        title: Text(oculumReferenceEncounterTokenName(token)),
+        children: [
+          for (final team in fightTeams(encounterId))
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialog, team.id),
+              child: Row(
+                children: [
+                  Icon(Icons.circle, size: 16, color: team.color),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(team.name)),
+                  if (team.id == currentTeamId)
+                    const Icon(Icons.check, size: 18),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null || selected == currentTeamId) return false;
+    final assigned = assignFightTeam(
+      encounterId,
+      '${token['id'] ?? token['sheetTag'] ?? ''}',
+      selected,
+      expectedFightId: fightId,
+    );
+    if (!assigned) _showFightTeamUpdateError();
+    return assigned;
+  }
+
+  Future<void> showReferenceFightTeams(String encounterId) async {
+    if (!canManageFightTeams(encounterId)) return;
+    final fightId = masterParticipantFightId(encounterId);
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (context, refresh) {
+          final teams = fightTeams(encounterId);
+          final teamById = {for (final team in teams) team.id: team};
+          final tokens = masterParticipantTokens(encounterId);
+          return AlertDialog(
+            scrollable: true,
+            title: Text(t('Squadre del Fight', 'Fight teams')),
+            content: SizedBox(
+              width: 460,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final team in teams)
+                    ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.circle, color: team.color, size: 18),
+                      title: Text(team.name),
+                      trailing: const Icon(Icons.edit_outlined, size: 18),
+                      onTap: () async {
+                        if (await _editReferenceFightTeam(
+                              encounterId,
+                              fightId,
+                              team: team,
+                            ) &&
+                            context.mounted) {
+                          refresh(() {});
+                        }
+                      },
+                    ),
+                  TextButton.icon(
+                    key: const ValueKey('reference_fight_team_add'),
+                    onPressed: () async {
+                      if (await _editReferenceFightTeam(encounterId, fightId) &&
+                          context.mounted) {
+                        refresh(() {});
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: Text(t('Nuova squadra', 'New team')),
+                  ),
+                  if (tokens.isNotEmpty) ...[
+                    const Divider(),
+                    Text(t('Partecipanti', 'Participants')),
+                    for (final token in tokens)
+                      Builder(
+                        builder: (context) {
+                          final temporary = masterInitiativeTokenIsTemporary(
+                            token,
+                          );
+                          final team = teamById[combatParticipantTeamId(token)];
+                          return ListTile(
+                            key: ValueKey(
+                              "reference_fight_team_participant_${token['id'] ?? token['sheetTag']}",
+                            ),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.circle,
+                              color: combatParticipantSideColor(token),
+                              size: 16,
+                            ),
+                            title: Text(
+                              oculumReferenceEncounterTokenName(token),
+                            ),
+                            subtitle: Text(
+                              team?.name ?? '${token['teamName'] ?? ''}',
+                            ),
+                            trailing: temporary
+                                ? null
+                                : const Icon(Icons.swap_horiz, size: 18),
+                            onTap: temporary
+                                ? null
+                                : () async {
+                                    if (await chooseReferenceParticipantFightTeam(
+                                          encounterId,
+                                          token,
+                                          expectedFightId: fightId,
+                                        ) &&
+                                        context.mounted) {
+                                      refresh(() {});
+                                    }
+                                  },
+                          );
+                        },
+                      ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog),
+                child: Text(t('Chiudi', 'Close')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Map<String, int> currentSheetTurnResourceCounts() {
     final tag = sheetTagAt(schedaCorrente);
     final encounter = referenceTurnEncounter();
@@ -1718,6 +2053,9 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                 final tokens = (group['tokens'] as List? ?? [])
                     .whereType<Map>()
                     .toList();
+                final teamNames = {
+                  for (final team in fightTeams(id)) team.id: team.name,
+                };
                 final round = readIntValue(group['round']);
                 final activeIndex = tokens.isEmpty
                     ? 0
@@ -1772,9 +2110,16 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                           itemBuilder: (context, row) {
                             final token = tokens[row];
                             final wound = oculumCombatTokenHealthLabel(token);
+                            final projectedTeamName =
+                                '${token['teamName'] ?? ''}'.trim();
+                            final teamName = projectedTeamName.isNotEmpty
+                                ? projectedTeamName
+                                : teamNames[combatParticipantTeamId(token)] ??
+                                      '';
                             return masterParticipantContextArea(
                               encounterId: id,
                               token: Map<String, dynamic>.from(token),
+                              includeFightTeam: true,
                               child: ListTile(
                                 dense: true,
                                 leading: Icon(
@@ -1811,6 +2156,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                     Text(
                                       [
                                         '${token['type'] ?? "Partecipante"}',
+                                        teamName,
                                         oculumReferenceEncounterInitiativeText(
                                           token,
                                         ),
@@ -1874,6 +2220,13 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                         ),
                       ),
                     encounterRoleFolder(group, id, local: local),
+                    if (canManageFightTeams(id))
+                      TextButton.icon(
+                        key: ValueKey('reference_fight_teams_$id'),
+                        onPressed: () => showReferenceFightTeams(id),
+                        icon: const Icon(Icons.groups_outlined),
+                        label: Text(t('Squadre del Fight', 'Fight teams')),
+                      ),
                     if (local)
                       TextButton.icon(
                         onPressed: () => encounterFightStarted(id)

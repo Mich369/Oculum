@@ -256,6 +256,26 @@ List<OculumStructuredEffect> oculumResolveAbilityEffects(
   return null;
 }
 
+Iterable<String> _oculumIndependentAbilityClauses(String sentence) {
+  // A leading or trailing condition can govern both actions in a sentence.
+  // Preserve its scope for the conditional parser and manual review.
+  if (RegExp(
+    r'\bse\s+(?!stess[oa]\b)|\b(?:quando|qualora|critico)\b',
+    caseSensitive: false,
+  ).hasMatch(sentence)) {
+    return [sentence];
+  }
+  const verbs =
+      r'(?:infliggi|infligge|causi|causa|colpisci|cura|curi|recupera|recuperi|rigenera|rigeneri|guarisci|ottieni|ottiene|ricevi|riceve|guadagni|guadagna|applica|applichi|aggiungi|aumenta|aumenti|riduci|riduce|rimuovi|sottrai|perdi|perde|evoca|richiama)';
+  return sentence.split(
+    RegExp(
+      r'(?:,\s*(?:(?:e\s+poi|e|poi|ma)\s+)?|\s+(?:e\s+poi|e|poi|ma)\s+)'
+      '(?=(?:non\\s+)?$verbs\\b|(?:\\+\\s*)?\\d+\\s+Scudo\\s+Oculum\\b)',
+      caseSensitive: false,
+    ),
+  );
+}
+
 /// Parses executable clauses, never costs/requirements or arbitrary prose.
 /// Unrecognized clauses remain visible to the author instead of becoming buffs.
 OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
@@ -291,7 +311,10 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
   }
   clauses.add(raw.substring(start));
   for (final clause
-      in clauses.map((c) => c.trim()).where((c) => c.isNotEmpty)) {
+      in clauses
+          .expand(_oculumIndependentAbilityClauses)
+          .map((c) => c.trim())
+          .where((c) => c.isNotEmpty)) {
     if (raw.toLowerCase().contains('fiammata del non ricordo') &&
         RegExp(r'\bcritico\b', caseSensitive: false).hasMatch(clause) &&
         RegExp(
@@ -355,7 +378,7 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
       continue;
     }
     if (RegExp(
-      r'\bse\s+(?!stess[oa]\b)|\b(?:quando|qualora)\b|\b(?:con|al)\s+(?:un\s+)?critico\b|\bnon\s+(?:ottieni|guadagni|ricevi|infliggi|curi|aumenta|aggiungi)\b|\bsubisc\w*\s+[^;]*danni\s+ogni\b|\bScudo\s+Oculum\b',
+      r'\bse\s+(?!stess[oa]\b)|\b(?:quando|qualora)\b|\b(?:con|al)\s+(?:un\s+)?critico\b|\bnon\s+(?:ottien\w*|guadagn\w*|ricev\w*|infligg\w*|cur\w*|aument\w*|aggiung\w*|recuper\w*|rigener\w*|guarisc\w*|applic\w*|caus\w*|colpisc\w*|rimuov\w*|sottra\w*|perd\w*|evoc\w*|richiam\w*)\b|\bsubisc\w*\s+[^;]*danni\s+ogni\b|\bScudo\s+Oculum\b',
       caseSensitive: false,
     ).hasMatch(clause)) {
       leftovers.add(clause);
@@ -368,7 +391,7 @@ OculumFreeTextEffectParseResult oculumParseAbilityMechanics(
     );
     for (final effect in parsed.effects) {
       final targets = oculumAttackTargetLimits(clause, 1);
-      if (targets.maximum > 1) {
+      if (targets.maximum > 1 && effect.recipient != 'se_stesso') {
         effect.minimumTargets = targets.minimum;
         effect.maximumTargets = targets.maximum;
       }
@@ -1097,14 +1120,26 @@ OculumFreeTextEffectParseResult _oculumParseAbilityClause(
   }
   // Penetration belongs to the chosen defender's damage packet, never to
   // permanent defensive settings on the caster.
-  final beyondDefense = RegExp(
-    r'\b(?:oltre\s+difesa|ignora\s+(?:la\s+)?difesa)\b',
-    caseSensitive: false,
-  ).hasMatch(text);
-  final beyondShields = RegExp(
-    r'\b(?:oltre\s+scud[oi]|ignora\s+(?:(?:lo|gli)\s+)?scud[oi])\b',
-    caseSensitive: false,
-  ).hasMatch(text);
+  bool hasUnnegatedModifier(RegExp pattern) => pattern
+      .allMatches(text)
+      .any(
+        (match) => !RegExp(
+          r'\bnon\s+(?:(?:pu[oò]|deve)\s+)?$',
+          caseSensitive: false,
+        ).hasMatch(text.substring(0, match.start)),
+      );
+  final beyondDefense = hasUnnegatedModifier(
+    RegExp(
+      r'\b(?:oltre\s+difesa|ignora\s+(?:la\s+)?difesa)\b',
+      caseSensitive: false,
+    ),
+  );
+  final beyondShields = hasUnnegatedModifier(
+    RegExp(
+      r'\b(?:oltre\s+scud[oi]|ignora\s+(?:(?:lo|gli)\s+)?scud[oi])\b',
+      caseSensitive: false,
+    ),
+  );
   final shieldBonus = RegExp(
     r'\+(\d+)\s*%\s*(?:danni\s*)?(?:agli|a(?:llo|i)?)\s+scud[oi]',
     caseSensitive: false,

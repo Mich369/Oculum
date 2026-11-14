@@ -227,6 +227,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           case 'rimuovi_vita':
             final before = hpCorrenti();
             currentHpController.text = max(0, before - value.abs()).toString();
+            if (effect['friendlyFire'] == true && before > 0) {
+              resolveFriendlyFireKnockout();
+            }
             showSheetFeedback(
               OculumFeedbackKind.lifeDamage,
               amount: before - hpCorrenti(),
@@ -287,6 +290,81 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     return changed;
   }
 
+  String _summonFightKey(String owner) =>
+      combatSubtraitExperienceFightId(onlineCombatEncounterId, ownerTag: owner);
+
+  int _livingSummonCount(String kind, String owner) {
+    final fight = _summonFightKey(owner);
+    final encounter = onlineCombatEncounterId;
+    return schedePersonaggio.where((sheet) {
+      if (sheet['isSummon'] != true ||
+          sheet['summonKind'] != kind ||
+          !oculumSameSheetIdentity(sheet['summonerTag'], owner) ||
+          sheet['summonExpired'] == true ||
+          readIntValue(sheet['currentHp']) <= 0) {
+        return false;
+      }
+      final instance = '${sheet['summonFightInstanceId'] ?? ''}';
+      return instance.isEmpty
+          ? sheet['summonEncounterId'] == encounter
+          : instance == fight;
+    }).length;
+  }
+
+  String? summonAvailabilityIssue(Iterable<OculumStructuredEffect> effects) {
+    final selected = effects.where(
+      (effect) =>
+          effect.enabled &&
+          (effect.type == 'evocazione' ||
+              effect.type == 'costrutto' &&
+                  normalizedStructuredTarget(effect.target) ==
+                      'piranha_minore'),
+    );
+    if (selected.isEmpty) return null;
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return 'Evocazione non disponibile: manca la scheda evocatrice.';
+    }
+    final owner = schedePersonaggio[schedaCorrente];
+    final tag = sheetTagAt(schedaCorrente);
+    final planned = <String, int>{};
+    for (final effect in selected) {
+      final kind = normalizedStructuredTarget(effect.target);
+      planned.update(kind, (count) => count + 1, ifAbsent: () => 1);
+      switch (kind) {
+        case 'patalpa_compagno':
+          final cooldown = readIntValue(
+            owner['patalpaSummonCooldownFightsRemaining'],
+          );
+          if (cooldown > 0) {
+            return 'Richiamo del Patalpa: cooldown di $cooldown fight.';
+          }
+          if (_livingSummonCount('patalpa_richiamo', tag) + planned[kind]! >
+              1) {
+            return 'Il Patalpa è già presente nello scontro.';
+          }
+          break;
+        case 'un_vecchio_amore':
+          if (owner['monsterBookSourceId'] != 'cavaliere_morto' ||
+              owner['deadKnightOldLoveSummonedFightId'] ==
+                  _summonFightKey(tag) ||
+              _livingSummonCount(kind, tag) + planned[kind]! > 1) {
+            return 'Un vecchio amore è riservata al Cavaliere Morto, una volta per fight.';
+          }
+          break;
+        case 'piranha_minore':
+          if (_livingSummonCount(kind, tag) + planned[kind]! > 2) {
+            return 'Possono restare al massimo due Piranha minori vivi nello stesso scontro.';
+          }
+          break;
+        case 'clone_ombra':
+          break;
+        default:
+          return 'Evocazione non riconosciuta: ${effect.target}.';
+      }
+    }
+    return null;
+  }
+
   List<String> applyStructuredEffectsOnActivation(
     Iterable<OculumStructuredEffect> effects, {
     required String source,
@@ -296,6 +374,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     bool applyFusionBonus = true,
     Map<String, dynamic>? rewardRequest,
     int resolvedHpDamage = 0,
+    bool friendlyFire = false,
+    bool friendlyFireResisted = false,
   }) {
     if (applyFusionBonus) effects = dustFusionArtEffects(effects);
     final messages = <String>[];
@@ -389,6 +469,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         final negative =
             effect.mode == 'diminuzione' || effect.type.startsWith('rimuovi_');
         var value = negative ? -roll.value.abs() : roll.value;
+        if (friendlyFireResisted && effect.type == 'rimuovi_vita') {
+          value = value * 3 ~/ 4;
+        }
         final duration = max(0, roll.baseDuration + roll.durationBonus);
         final effectTarget = oculumStructuredEffectTargetKey(effect);
         final target = effect.type == 'stato'
@@ -553,6 +636,15 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             notifyActiveSheetSummaryChanged();
             break;
           case 'evocazione':
+            final issue = summonAvailabilityIssue([effect]);
+            if (issue != null) {
+              messages.add(issue);
+              continue;
+            }
+            if (normalizedStructuredTarget(effect.target) == 'piranha_minore') {
+              if (value > 0) createPiranhaMinion(hp: value, source: source);
+              continue;
+            }
             if (normalizedStructuredTarget(effect.target) ==
                 'patalpa_compagno') {
               final summonIndex = createPatalpaCompanionSheet(source: source);
@@ -613,7 +705,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               );
               continue;
             }
-            if (effect.target.trim().toLowerCase() == 'piranha minore') {
+            if (normalizedStructuredTarget(effect.target) == 'piranha_minore') {
               final created = createPiranhaMinion(hp: value, source: source);
               messages.add(
                 created
@@ -675,6 +767,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             if (isPeriodic) break;
             final hpBeforeRemoval = hpCorrenti();
             currentHpController.text = max(0, hpCorrenti() + value).toString();
+            if (friendlyFire && hpBeforeRemoval > 0) {
+              resolveFriendlyFireKnockout();
+            }
             showSheetFeedback(
               OculumFeedbackKind.lifeDamage,
               amount: hpBeforeRemoval - hpCorrenti(),
@@ -692,14 +787,18 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             scheduleRealtimeOculumChanged();
             break;
           case 'consumo_risorsa':
-            final amount = roll.value.abs();
+            var amount = roll.value.abs();
             final resource = oculumNormalizeEffectResource(effect.resource);
             if (resource == 'vita') {
+              if (friendlyFireResisted) amount = amount * 3 ~/ 4;
               final hpBeforeRemoval = hpCorrenti();
               currentHpController.text = max(
                 0,
                 hpBeforeRemoval - amount,
               ).toString();
+              if (friendlyFire && hpBeforeRemoval > 0) {
+                resolveFriendlyFireKnockout();
+              }
               checkAutomaticAshFromHpLoss(
                 hpBeforeRemoval,
                 hpCorrenti(),
@@ -856,6 +955,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             },
             'value': value,
             'stackable': effect.stackable,
+            if (friendlyFire && effect.type == 'rimuovi_vita')
+              'friendlyFire': true,
             // -1 rappresenta una periodicità senza scadenza. I vecchi
             // salvataggi continuano a usare soltanto durate positive.
             'remaining': effectiveDuration > 0 ? effectiveDuration : -1,
@@ -1019,6 +1120,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         ..['summonEncounterId'] = onlineCombatEncounterId.isNotEmpty
             ? onlineCombatEncounterId
             : selectedMasterInitiativeGroupId
+        ..['summonFightInstanceId'] = _summonFightKey(ownerTag)
         ..['summonExpired'] = false
         ..['summonKind'] = summonKind
         ..['notePersonaggio'] = summonDescription
@@ -1090,12 +1192,6 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             (item) => '${item['sheetTag'] ?? ''}' == actualTag,
             orElse: () => <String, dynamic>{},
           );
-          if (token.isNotEmpty && asSummon) {
-            final ownerToken = masterInitiativeTokens
-                .where((t) => publicInitiativeSourceTag(t) == ownerTag)
-                .firstOrNull;
-            if (ownerToken != null) token['side'] = ownerToken['side'];
-          }
           if (token.isNotEmpty && !asSummon) {
             token['oculumShadowClone'] = true;
             token['shadowCloneTurnsRemaining'] = duration;
@@ -1116,30 +1212,13 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
 
   bool createPiranhaMinion({required int hp, required String source}) {
     final ownerTag = sheetTagAt(schedaCorrente);
-    final existing = schedePersonaggio.where(
-      (sheet) =>
-          sheet['isSummon'] == true &&
-          sheet['summonKind'] == 'piranha_minore' &&
-          '${sheet['summonerTag'] ?? ''}' == ownerTag &&
-          sheet['summonExpired'] != true,
-    );
-    if (existing.length >= 2) return false;
-    final skill = CharacterSkill(
-      nome: 'Morso minore',
-      tipo: 'Attacco evocazione',
-      costo: 'Nessun costo',
-      cooldown: '1 turno',
-      descrizione: '@Danni+1 Acqua',
-      danni: 1,
-      equipaggiata: true,
-    );
+    if (_livingSummonCount('piranha_minore', ownerTag) >= 2) return false;
     final summonIndex = createShadowCloneSheet(
       hp: hp,
       duration: 3,
       source: source,
       displayName: 'Piranha minore di ${nomeSchedaPersonaggio(schedaCorrente)}',
       asSummon: true,
-      summonSkills: [skill],
       summonKind: 'piranha_minore',
       summonDescription:
           'Piccolo alleato acquatico. 1 Resilienza, 0 Volontà/Materia/Oculum; non può evocare altri Piranha.',
@@ -1177,15 +1256,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       return -1;
     }
     final ownerTag = sheetTagAt(schedaCorrente);
-    final fightId = onlineCombatEncounterId.isNotEmpty
-        ? onlineCombatEncounterId
-        : selectedMasterInitiativeGroupId;
+    final fightId = _summonFightKey(ownerTag);
     final alreadyCalled =
-        masterInitiativeTokens.any(
-          (token) =>
-              token['summonKind'] == 'un_vecchio_amore' &&
-              '${token['summonerTag'] ?? ''}' == ownerTag,
-        ) ||
+        _livingSummonCount('un_vecchio_amore', ownerTag) > 0 ||
         '${owner['deadKnightOldLoveSummonedFightId'] ?? ''}' == fightId;
     if (alreadyCalled) return -1;
 
@@ -1216,8 +1289,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       summonDescription:
           'Donna scheletrica evocata dal terreno, capelli color $hair, armatura di pelle e arco. Summon del Cavaliere Morto, livello $level, Grado $grade. Vale il doppio dell’EXP massima di una Summon. La scheda e l’abilità restano modificabili.',
     );
-    owner['deadKnightOldLoveSummonedFightId'] = fightId;
     if (summonIndex >= 0) {
+      schedePersonaggio[schedaCorrente]['deadKnightOldLoveSummonedFightId'] =
+          fightId;
       schedePersonaggio[summonIndex]['summonKind'] = 'un_vecchio_amore';
     }
     programmaSalvataggio();
@@ -1240,11 +1314,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
       return -1;
     }
     final ownerTag = sheetTagAt(schedaCorrente);
-    final alreadyCalled = masterInitiativeTokens.any(
-      (token) =>
-          token['summonKind'] == 'patalpa_richiamo' &&
-          '${token['summonerTag'] ?? ''}' == ownerTag,
-    );
+    final alreadyCalled = _livingSummonCount('patalpa_richiamo', ownerTag) > 0;
     if (alreadyCalled) return -1;
     final level = max(0, readIntValue(owner['livello']));
     final grade = max(0, readIntValue(owner['grado']));
@@ -1297,8 +1367,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           'level': level,
           'stats': stats,
         };
-      owner['patalpaSummonCooldownFightsRemaining'] = 3;
-      owner['patalpaSummonCooldownLastEncounterId'] = '';
+      final currentOwner = schedePersonaggio[schedaCorrente];
+      currentOwner['patalpaSummonCooldownFightsRemaining'] = 3;
+      currentOwner['patalpaSummonCooldownLastEncounterId'] = '';
       programmaSalvataggio();
     }
     return summonIndex;

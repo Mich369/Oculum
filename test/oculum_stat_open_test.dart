@@ -113,6 +113,54 @@ void main() {
     await closeFixture(tester, probe);
   });
 
+  for (final (level, cost, hits) in [(150, 4, 16), (200, 8, 36)]) {
+    testWidgets('Cavalieri Rossi level $level spends Will once per cast', (
+      tester,
+    ) async {
+      final (state, probe) = await mountFight(tester);
+      state.livelloController.text = '$level';
+      state.volontaController.text = '35';
+      state.masterInitiativeActiveIndex = 0;
+      final runtime =
+          state.schedePersonaggio[state.schedaCorrente]['planarRuntime'] as Map;
+      runtime['stat35'] = {
+        'choices20': {'volonta': 'will_heavy_slam'},
+        'choices': {'volonta': 'will_pressure'},
+      };
+      final id = 'will_knights_$level';
+      probe.setResourceCurrent('volonta', cost - 1);
+      await probe.useStatOpenAttack(id, 'ENEMY');
+      expect(find.text('Dichiara e tira'), findsNothing);
+      expect(probe.visibleResourceCurrent('volonta'), cost - 1);
+
+      probe.setResourceCurrent('volonta', cost + 3);
+      final action = probe.useStatOpenAttack(id, 'ENEMY');
+      Future<void> settleDialog() async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+      }
+
+      await settleDialog();
+      await tester.tap(find.text('Dichiara e tira'));
+      await settleDialog();
+      await tester.tap(find.text('Conferma gruppi'));
+      await settleDialog();
+      await action;
+      expect(probe.visibleResourceCurrent('volonta'), 3);
+      final requests = (state.onlineCombatRequests as Map).values
+          .whereType<Map>()
+          .where((packet) => packet['statOpenId'] == id);
+      expect(requests, hasLength(4));
+      expect(
+        requests
+            .map((packet) => packet['statOpenGroupHits'] as int)
+            .reduce((a, b) => a + b),
+        hits,
+      );
+      await closeFixture(tester, probe);
+    });
+  }
+
   testWidgets('one defense resolves all strikes in the group once', (
     tester,
   ) async {

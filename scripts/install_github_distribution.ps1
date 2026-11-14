@@ -1,7 +1,8 @@
 param(
   [Parameter(Mandatory = $true)][long]$RunId,
   [string]$GitHubRepo = 'Mich369/Oculum',
-  [switch]$UseRangeDownload
+  [switch]$UseRangeDownload,
+  [switch]$DeduplicateWindowsRuntime
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,6 +26,82 @@ function Assert-BuildChild([string]$Path) {
       ((Get-Item -LiteralPath $resolved -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
     throw "Build path is a link: $Path"
   }
+}
+
+function Join-VerifiedRuntimeFile([string]$Root, [string]$Relative) {
+  $path = [IO.Path]::GetFullPath((Join-Path $Root $Relative))
+  $prefix = $Root + [IO.Path]::DirectorySeparatorChar
+  if ([IO.Path]::IsPathRooted($Relative) -or !$path.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Unsafe runtime path: $Relative"
+  }
+  $item = Get-Item -LiteralPath $path -Force
+  if ($item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+    throw "Expected a regular runtime file: $Relative"
+  }
+  for ($parent = $item.Directory; $null -ne $parent; $parent = $parent.Parent) {
+    if ($parent.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+      throw "Runtime path passes through a reparse point: $Relative"
+    }
+    if ($parent.FullName -eq $Root) { return $item }
+  }
+  throw "Runtime file is outside staging: $Relative"
+}
+
+function Optimize-VerifiedWindowsRuntime([string]$StagingRoot, [object[]]$Files) {
+  $root = [IO.Path]::GetFullPath($StagingRoot).TrimEnd([char[]]'\/')
+  $records = @{}
+  foreach ($record in $Files) {
+    $records[([string]$record.path).Replace('\', '/')] = $record
+  }
+  $linked = 0
+  [long]$linkedBytes = 0
+  $copyFallback = 0
+  foreach ($path in $records.Keys) {
+    if ($path -notmatch '^windows/((?:[^/]+\.dll|oculum\.exe)|data/(?:app\.so|icudtl\.dat|flutter_assets/.+))$') { continue }
+    $relative = $Matches[1]
+    $sourceRecord = $records[$path]
+    $source = $null
+    foreach ($destination in @($relative, "windows-test/$relative")) {
+      $targetRecord = $records[$destination]
+      if ($null -eq $targetRecord -or $targetRecord.bytes -ne $sourceRecord.bytes -or $targetRecord.sha256 -ne $sourceRecord.sha256) { continue }
+      if ($null -eq $source) {
+        $source = Join-VerifiedRuntimeFile $root $path
+        if ($source.LinkType -or $source.Length -ne $sourceRecord.bytes -or
+            (Get-FileHash -LiteralPath $source.FullName -Algorithm SHA256).Hash -ne $sourceRecord.sha256) {
+          throw "Runtime source changed before deduplication: $path"
+        }
+      }
+      $target = Join-VerifiedRuntimeFile $root $destination
+      if ($target.LinkType -or $target.Length -ne $targetRecord.bytes -or
+          (Get-FileHash -LiteralPath $target.FullName -Algorithm SHA256).Hash -ne $targetRecord.sha256) {
+        throw "Runtime destination changed before deduplication: $destination"
+      }
+      $temporary = Join-Path $target.DirectoryName ('.oculum-link-' + [guid]::NewGuid().ToString('N'))
+      $backup = "$temporary-original"
+      try {
+        New-Item -ItemType HardLink -Path $temporary -Value $source.FullName -ErrorAction Stop | Out-Null
+      } catch {
+        if ([IO.File]::Exists($temporary)) { [IO.File]::Delete($temporary) }
+        $copyFallback++
+        continue
+      }
+      try {
+        [IO.File]::Move($target.FullName, $backup)
+        try {
+          [IO.File]::Move($temporary, $target.FullName)
+        } catch {
+          [IO.File]::Move($backup, $target.FullName)
+          throw
+        }
+        [IO.File]::Delete($backup)
+      } finally {
+        if ([IO.File]::Exists($temporary)) { [IO.File]::Delete($temporary) }
+      }
+      $linked++
+      $linkedBytes += $sourceRecord.bytes
+    }
+  }
+  return [pscustomobject]@{ files = $linked; bytes = $linkedBytes; copiesRetained = $copyFallback }
 }
 
 $runJson = & gh api "repos/$GitHubRepo/actions/runs/$RunId"
@@ -192,6 +269,12 @@ $manifest = [ordered]@{
 }
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $stagingRoot 'BUILD-VERIFICATE.json') -Encoding utf8
 & $verifier -ExpectedCommit $commit -DistributionRoot $stagingRoot
+if ($DeduplicateWindowsRuntime) {
+  # Same-build runtime files only. ZIPs, mutable settings and previous
+  # distributions retain independent files. A normal install remains the default.
+  $dedup = Optimize-VerifiedWindowsRuntime $stagingRoot $manifest.files
+  Write-Host "Windows staging hard links=$($dedup.files) duplicate logical bytes=$($dedup.bytes) copies retained=$($dedup.copiesRetained)"
+}
 $active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
   $_.Path -and $_.Path.StartsWith($distRoot + '\', [StringComparison]::OrdinalIgnoreCase)
 })

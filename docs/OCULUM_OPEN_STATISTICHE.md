@@ -51,8 +51,8 @@ I Cavalieri Rossi sono due forme spettrali della Volontà del personaggio. Fanno
 |---|---|---|
 | 50 · Cavalieri Rossi | +10% Danni e +2 al tiro di Volontà della Skill. | **Carica dei Quattro.** Quattro colpi totali da 35% di D. 1 Azione, recupero 4 turni. |
 | 100 · Compagnia Scarlatta | +14% Danni e +3 al tiro di Volontà della Skill. | **Marcia della Compagnia.** Otto colpi da 30% di D. 1 Azione, recupero 5 turni. |
-| 150 · Guardia del Vespro Rosso | +18% Danni e +4 al tiro di Volontà della Skill. | **Fendente del Vespro.** Sedici colpi da 28% di D. 1 Azione, recupero 5 turni. |
-| 200 · Ordine della Corona Rossa | +22% Danni e +5 al tiro di Volontà della Skill. | **Ultima Carica dell’Ordine.** Trentasei colpi da 26% di D. 1 Azione, recupero 6 turni. |
+| 150 · Guardia del Vespro Rosso | +18% Danni e +4 al tiro di Volontà della Skill. | **Fendente del Vespro.** Sedici colpi da 28% di D. 1 Azione e 4 Volontà, recupero 5 turni. |
+| 200 · Ordine della Corona Rossa | +22% Danni e +5 al tiro di Volontà della Skill. | **Ultima Carica dell’Ordine.** Trentasei colpi da 26% di D. 1 Azione e 8 Volontà, recupero 6 turni. |
 
 Il conteggio comprende tutta la sequenza. A livello 50, quattro colpi riusciti sullo stesso bersaglio sommano 4 × 35% di D prima delle sue protezioni e degli arrotondamenti di ciascun colpo.
 

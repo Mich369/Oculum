@@ -1,5 +1,21 @@
 # Oculum — attività, conferme e consegne
 
+## Prestazioni, ingombro e revisione delle Skill — 14 novembre 2026
+
+Base installata 293 (`4665925f`). Il checkout primario misurato contiene 400.221.772.777 byte logici, dei quali 382.488.586.252 in build, 12.297.373.581 in Git e 2.881.836.161 in asset sorgente. La misura esclude i punti di reparse. La distribuzione installata contiene 13.675.669.184 byte logici, inclusi gli archivi multipiattaforma. Una cartella Windows autonoma contiene 1.387.936.117 byte. Dopo l’uso, le cartelle profilo contengono 936.633.161 byte e l’area temporanea dell’aggiornamento 10.150.229.332 byte. I backup espliciti in Documenti contengono 542.937.689 byte. Le copie temporanee di salvataggio restano protette.
+
+Benchmark Flutter debug con immagini sintetiche, stesso scenario e Windows. A 100 schede, dieci cambi turno passano da 3,196 a 2,651 secondi, il salvataggio da 17,977 a 17,599 secondi, il picco campionato RSS del processo di test da 601.653.248 a 585.076.736 byte. A 1.000 schede, i cambi turno passano da 187,300 a 176,529 secondi. Entrambe le prove a 1.000 si fermano al limite di cinque minuti durante il salvataggio. I risultati misurano il processo di test su Windows e non sono una misura di memoria o fluidità su telefoni.
+
+Verificati pixel RGBA, dimensioni e impronte dei 28 asset WebP derivati. Differenza esatta negli asset inclusi pari a 19.662.680 byte. Windows può condividere i file identici fra le tre cartelle runtime della stessa build con un’opzione dell’installer. La distribuzione 293 contiene 2.745.875.810 byte logici di runtime replicato. Il risparmio della nuova installazione e il peso degli archivi release si misurano sui pacchetti prodotti. Passati nove test del programma di aggiornamento Windows, inclusi rollback e pulizia. Android libera il solo ZIP temporaneo dopo la consegna all’installer. La prova su dispositivo resta da eseguire.
+
+L’audit del catalogo ha confrontato 49.677 forme di mostri e NPC fra Monster Book, Art, Skill naturali ed equipaggiamento, senza divergenze in quel confronto. Il rapporto giocatore comprende 63 definizioni e 13 Gradi di pergamene. Il confronto non certifica ogni effetto in combattimento. Dardo di fuoco mantiene il costo fisso confermato. Artigli mostruosi usa 1/2/3 Materia. Nei Cavalieri Rossi i livelli 150 e 200 consumano 4 e 8 Volontà in più. Il recupero più lungo vale come costo maggiore. Restano da rivedere le forme con effetti più forti e costi invariati prive di una regola specifica.
+
+## Squadre nel Fight della scheda — 14 novembre 2026
+
+Confermati creazione di squadre, colori e assegnazione dei partecipanti dal menu Fight della scheda del Master. Il danno tra compagni è non letale anche a 0 Vita, dove il bersaglio resta a terra. La Resistenza del 25% richiede la coincidenza di entrambe le appartenenze Fato/Chaos e Luna/Sole/Niente. Il ruolo della scheda resta indipendente dalla squadra assegnata nello scontro.
+
+Analisi Flutter senza rilievi. Nelle prove mirate sono passati editor della squadra, evocazioni, parser, costi delle Open a 150 e 200, regole delle Ispirazioni e layout a larghezza telefono. Il test del fuoco amico è stato rieseguito da solo e tutti e tre i casi sono passati. È emerso un risultato intermittente nella prova cumulativa, da controllare in CI. I test di riconnessione con trasporto simulato e i controlli di importazione dei formati legacy sono distinti dalla prova di aggiornamento su una copia isolata di un profilo reale.
+
 ## Ispirazioni, Fortuna e Patto nel risultato — 13 novembre 2026
 
 Confermati un solo uso di Ispirazione per tiro, Patto separato, Fortuna magica disponibile, due Ispirazioni base o una Super per un fallimento normale nel Chained Fate e una sola Ispirazione Oculum per un critico negativo anche nel Chained Fate. Il tentativo Oculum produce esattamente metà critici positivi e metà negativi. I salvataggi con un ritentativo Oculum già pagato lo recuperano come un’Ispirazione Oculum da usare su un tiro valido.
@@ -25,6 +41,14 @@ La configurazione del test Guardiano Lunare ora azzera gli effetti casuali estra
 Installata la 291 con Windows e Windows Test in cartelle separate, ZIP e APK firmato `100291`. Verificati i nove archivi anonimi e i tre file del sito, 17.565 file locali incluso il manifest, l’avvio dei due EXE e 62 file dei profili senza variazioni. La 290 è conservata nel backup. [Pacchetti 291](https://github.com/Mich369/Oculum/releases/tag/oculum-build-43531900642)
 
 La CI principale 292 ha compilato `a0c23423` con analisi pulita, 2.462 test passati e 6 saltati. Passate quattro prove online autenticate automatizzate, 15 del diario e una di digitazione. Il Guardiano Lunare ha passato il test anche nel job macOS ausiliario. Quel job ha trovato un diverso test instabile sulla corazza trasformante di Postea, con 214 Scudo al posto di 175. La differenza di 39 coincide con la riduzione della Parata Oculum a riserva 26. Il test forza ora il fallimento della parata durante i due colpi e mantiene attiva la riserva trasformata. Passate 13 prove Flutter locali. La nuova verifica macOS e la distribuzione 292 restano da verificare. [CI 292](https://github.com/Mich369/Oculum/actions/runs/43539092724) · [Job macOS ausiliario 292](https://github.com/Mich369/Oculum/actions/runs/43539093170)
+
+Installata la 292 con Windows e Windows Test separati, ZIP e APK firmato `100292`. Verificati i nove archivi anonimi, il commit servito da Pages, 17.565 file locali, l’avvio di entrambi gli EXE e 62 file dei profili senza variazioni. La 291 resta nel backup. [Pacchetti 292](https://github.com/Mich369/Oculum/releases/tag/oculum-build-43539092724)
+
+Il workflow macOS ausiliario della 293 ha superato 2.462 test, incluso Postea, con 6 saltati. È riuscita anche la build nativa e la prerelease macOS è stata aggiornata. Il job ha usato il pacchetto senza firma Developer ID e notarizzazione. L’avvio su un Mac e la distribuzione 293 restano verifiche distinte. [CI macOS 293](https://github.com/Mich369/Oculum/actions/runs/43545044140) · [Prerelease macOS](https://github.com/Mich369/Oculum/releases/tag/oculum-macos-latest)
+
+Per preparare la 293 sono stati liberati 12,62 GB di estrazioni temporanee. Tutti i file utili rimossi avevano una copia verificata per SHA-256 negli ZIP conservati o nei backup. Restano disponibili le 128 catture PNG dei due lotti di estrazione, i pacchetti installati, le versioni precedenti e i profili.
+
+La CI principale 293 ha compilato `4665925f` con nove job riusciti, analisi senza rilievi, 2.462 test passati e 6 saltati. Passate separatamente quattro prove online autenticate automatizzate, 15 del diario e una di digitazione. La 293 è installata con Windows e Windows Test separati, ZIP e APK firmato `100293`. Verificati 17.565 file incluso il manifest, l’avvio dei due EXE e 62 file dei profili senza variazioni. La 292 resta nel backup. Verificati nove download senza login e il commit di HTML, bootstrap e app su Pages. La prova interattiva con giocatori collegati resta distinta. [CI 293](https://github.com/Mich369/Oculum/actions/runs/43545044161) · [Pacchetti 293](https://github.com/Mich369/Oculum/releases/tag/oculum-build-43545044161)
 
 ## Risveglio dopo un colpo assorbito — 13 novembre 2026
 

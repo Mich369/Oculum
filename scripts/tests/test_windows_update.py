@@ -133,6 +133,7 @@ class WindowsUpdateTests(unittest.TestCase):
             self.assertEqual(sentinel.read_text(), '{"keep":"all saves"}')
             status = json.loads((work/"update-status.json").read_text(encoding="utf-8-sig"))
             if unsafe or missing or crash or held_instance or locked_dll:
+                self.assertTrue(archive.is_file())
                 self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertEqual((target/"flutter_windows.dll").read_text(), "previous-runtime")
                 self.assertEqual((target/"data/old-scene.png").read_bytes(), b"old-scene")
@@ -142,6 +143,7 @@ class WindowsUpdateTests(unittest.TestCase):
                 if held_instance:
                     self.assertIn("still open", (work/"error.txt").read_text())
             elif wrong_ack:
+                self.assertTrue(archive.is_file())
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(status["state"], "unconfirmed")
                 self.assertFalse((work/"result.txt").exists())
@@ -155,14 +157,22 @@ class WindowsUpdateTests(unittest.TestCase):
                 self.assertEqual((Path(status["backup"])/"flutter_windows.dll").read_text(), "previous-runtime")
                 self.assertEqual((work/"result.txt").read_text().strip(), "success")
                 self.assertEqual(status["state"], "success")
+                self.assertFalse(archive.exists())
+                self.assertFalse(list(work.glob("unpacked-*")))
+                self.assertFalse(list(work.glob("runtime-*")))
+                self.assertFalse(list(target.glob(".oculum-update-staged-*")))
+                self.assertTrue((work/"unpacked").is_dir())
+                self.assertTrue((work/"runtime").is_dir())
             if retry:
+                failed_extractions = list(work.glob("unpacked-*"))
                 self.compile_app(source, exe, edition, "ready")
                 make_archive()
                 retried = run_helper()
                 time.sleep(1.6)
                 self.assertEqual(retried.returncode, 0, retried.stdout + retried.stderr)
                 self.assertEqual((work/"result.txt").read_text().strip(), "success")
-                self.assertEqual(len(list(work.glob("unpacked-*"))), 2)
+                self.assertEqual(list(work.glob("unpacked-*")), failed_extractions)
+                self.assertFalse(archive.exists())
                 self.assertEqual(sentinel.read_text(), '{"keep":"all saves"}')
 
     def test_normal_replaces_entire_runtime_and_requires_startup_ack(self): self.exercise()

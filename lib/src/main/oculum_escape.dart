@@ -44,6 +44,16 @@ extension _OculumEscape on _OculumHomePageState {
       escapeUsesMasterTokens ? masterInitiativeTokens : onlineCombatTokens();
   String escapeCombatSide(String tag) =>
       '${escapeCombatTokens().where((t) => onlineCombatTokenTag(t) == tag).firstOrNull?['side'] ?? 'ally'}';
+  String escapeCombatTeam(String tag) => combatParticipantTeamId(
+    escapeCombatTokens()
+            .where((token) => combatTokenMatchesSheet(token, tag))
+            .firstOrNull ??
+        const {},
+  );
+  String escapeRecordTeam(Map record) => combatParticipantTeamId({
+    'fightTeamId': record['sourceTeam'],
+    'side': record['sourceSide'],
+  });
   void moveEncounterMemberToRole(String encounterId, Map token) {
     if (!escapeAuthority || !haPermessiMaster) return;
     final group = masterInitiativeGroups
@@ -367,8 +377,8 @@ extension _OculumEscape on _OculumHomePageState {
               readIntValue(request['defense']),
             ));
     final hostile =
-        escapeCombatSide('${request['sourceTag']}') !=
-        escapeCombatSide('${request['targetTag']}');
+        escapeCombatTeam('${request['sourceTag']}') !=
+        escapeCombatTeam('${request['targetTag']}');
     if (escapeId.isEmpty &&
         hit &&
         critical &&
@@ -520,7 +530,7 @@ extension _OculumEscape on _OculumHomePageState {
             ? source == null || source['outsideFight'] == true
             : !available(source)) ||
         !available(target) ||
-        escapeCombatSide(carrier) != escapeCombatSide(passenger)) {
+        !combatParticipantsShareTeam(source!, target!)) {
       return false;
     }
     return !onlineCombatRequests.values.any(
@@ -669,7 +679,8 @@ extension _OculumEscape on _OculumHomePageState {
           },
           'targetTag': tag,
           'sourceName': realtimeDisplayName(),
-          'sourceSide': combatScoutSide(tag),
+          'sourceSide': escapeCombatSide(tag),
+          'sourceTeam': escapeCombatTeam(tag),
           'natural': natural,
           'total': total,
           'movement': movement,
@@ -841,6 +852,7 @@ extension _OculumEscape on _OculumHomePageState {
         },
         'sourceName': oculumReferenceEncounterTokenName(token),
         'sourceSide': token['side'] ?? 'enemy',
+        'sourceTeam': combatParticipantTeamId(token),
         'natural': natural,
         'total': total,
         'movement': movement,
@@ -958,7 +970,7 @@ extension _OculumEscape on _OculumHomePageState {
             source['fightInstanceId'] != record['fightInstanceId']) {
       return false;
     }
-    final friendly = actor['side'] == record['sourceSide'];
+    final friendly = combatParticipantTeamId(actor) == escapeRecordTeam(record);
     if (kind == 'pass') return true;
     if (kind == 'block' && friendly) return false;
     final free =
@@ -992,7 +1004,7 @@ extension _OculumEscape on _OculumHomePageState {
         .where((t) => combatTokenMatchesSheet(t, '${packet['sourceTag']}'))
         .firstOrNull;
     if (source == null ||
-        source['side'] == record['sourceSide'] ||
+        combatParticipantTeamId(source) == escapeRecordTeam(record) ||
         source['outsideFight'] == true ||
         !masterInitiativeTokenCanAct(source)) {
       return false;
@@ -1025,7 +1037,8 @@ extension _OculumEscape on _OculumHomePageState {
         (t) => combatTokenMatchesSheet(t, actorTag),
       );
       final record = onlineCombatRequests[escapeId]!;
-      final friendly = actor['side'] == record['sourceSide'];
+      final friendly =
+          combatParticipantTeamId(actor) == escapeRecordTeam(record);
       final free =
           !totalPowerTokenExhausted(actor) &&
           (friendly ? record['freeHelper'] : record['lastAggressor']) ==
@@ -1204,7 +1217,7 @@ extension _OculumEscape on _OculumHomePageState {
         (record['noticed'] as Map? ?? {})[tag] != true) {
       return;
     }
-    final friendly = escapeCombatSide(tag) == record['sourceSide'];
+    final friendly = escapeCombatTeam(tag) == escapeRecordTeam(record);
     final free =
         !totalPowerExhausted &&
         (friendly
@@ -1815,7 +1828,7 @@ extension _OculumEscape on _OculumHomePageState {
       final answers = Map<String, dynamic>.from(
         record['answers'] as Map? ?? {},
       );
-      final friendly = escapeCombatSide(source) == record['sourceSide'];
+      final friendly = escapeCombatTeam(source) == escapeRecordTeam(record);
       payload['friendly'] = friendly;
       if (payload['answer'] == 'help') {
         payload['bonus'] =
@@ -2112,7 +2125,7 @@ extension _OculumEscape on _OculumHomePageState {
                   Wrap(
                     spacing: 6,
                     children: [
-                      if (combatScoutSide(tag) != record['sourceSide'])
+                      if (escapeCombatTeam(tag) != escapeRecordTeam(record))
                         TextButton(
                           onPressed: () =>
                               unawaited(answerEscape(record, 'block')),
@@ -2123,7 +2136,7 @@ extension _OculumEscape on _OculumHomePageState {
                                 : 'Blocca · Azione/Reazione',
                           ),
                         ),
-                      if (combatScoutSide(tag) != record['sourceSide'] &&
+                      if (escapeCombatTeam(tag) != escapeRecordTeam(record) &&
                           record['lastAggressor'] == tag)
                         Tooltip(
                           message: totalPowerExhausted
@@ -2143,7 +2156,7 @@ extension _OculumEscape on _OculumHomePageState {
                         onPressed: () =>
                             unawaited(answerEscape(record, 'help')),
                         child: Text(
-                          (combatScoutSide(tag) == record['sourceSide']
+                          (escapeCombatTeam(tag) == escapeRecordTeam(record)
                                           ? record['freeHelper']
                                           : record['lastAggressor']) ==
                                       tag &&

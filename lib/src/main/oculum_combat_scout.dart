@@ -212,12 +212,16 @@ extension _OculumCombatScout on _OculumHomePageState {
     if (mounted) setState(() {});
   }
 
-  String monsterBookIdForCombatToken(Map<String, dynamic> token) {
+  String monsterBookIdForCombatToken(
+    Map<String, dynamic> token, {
+    int? sheetIndex,
+  }) {
     final fromToken =
         '${token['monsterBookId'] ?? token['monsterBookSourceId'] ?? ''}'
             .trim();
     if (fromToken.isNotEmpty) return fromToken;
-    final index = localSheetIndexForOculumTag(onlineCombatTokenTag(token));
+    final index =
+        sheetIndex ?? localSheetIndexForOculumTag(onlineCombatTokenTag(token));
     if (index < 0 || index >= schedePersonaggio.length) return '';
     return '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}'.trim();
   }
@@ -227,11 +231,7 @@ extension _OculumCombatScout on _OculumHomePageState {
       return false;
     }
     final targetTag = onlineCombatTokenTag(token);
-    final discovery =
-        combatDiscoveries[combatDiscoveryKey(
-          targetTag,
-          combatScoutSide(sheetTagAt(schedaCorrente)),
-        )];
+    final discovery = discoveredCombatTarget(targetTag);
     return discovery?['weakPoint'] == true ||
         monsterBookPartyKnowsWeakPoint(monsterBookIdForCombatToken(token));
   }
@@ -283,15 +283,25 @@ extension _OculumCombatScout on _OculumHomePageState {
     return candidates.firstOrNull;
   }
 
-  String combatScoutSide(String tag) =>
-      '${onlineCombatTokens().where((t) => onlineCombatTokenTag(t) == tag).firstOrNull?['side'] ?? 'ally'}';
+  String combatScoutSide(String tag) {
+    final token = onlineCombatTokens()
+        .where((token) => onlineCombatTokenTag(token) == tag)
+        .firstOrNull;
+    return combatParticipantTeamId(token ?? const {});
+  }
+
   String combatDiscoveryKey(String target, String side) =>
       '$activeCampaignId:$onlineCombatEncounterId:$side:$target';
+  Map<String, dynamic>? combatDiscoveryForTeam(String target, String team) =>
+      combatDiscoveries[combatDiscoveryKey(target, team)] ??
+      (team == 'ally'
+          ? combatDiscoveries[combatDiscoveryKey(target, 'party')]
+          : null);
   Map<String, dynamic>? discoveredCombatTarget(String target) =>
-      combatDiscoveries[combatDiscoveryKey(
+      combatDiscoveryForTeam(
         target,
         combatScoutSide(sheetTagAt(schedaCorrente)),
-      )];
+      );
 
   int activeCombatScoutVelo() {
     final stat = hiddenEyeStats

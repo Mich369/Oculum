@@ -1,9 +1,25 @@
 # Oculum — registro delle regole confermate
 
+## Ispirazione del Chaos
+
+- Per Chaos, il Patto del Fato è sostituito da un sorteggio automatico ogni 9 ore dell’orologio di gioco. Il 20% dà niente, il 50% un’Ispirazione base, il 20% una Super Ispirazione e il 10% un’Ispirazione Oculum.
+- Il Patto del Fato può ritirare anche un critico negativo, come la Super Ispirazione. Restano validi la possibilità di scelta Oculum e il limite di un uso per scheda.
+
+## Costo delle forme superiori
+
+- Una forma attiva più forte deve avere un costo maggiore, salvo eccezioni confermate. Anche un recupero più lungo conta come costo maggiore. Le passive possono avere lo stesso costo.
+- I Cavalieri Rossi richiedono 1 Azione. Le forme di livello 150 e 200 richiedono anche 4 e 8 Volontà attuale rispettivamente. I recuperi personali restano 4, 5, 5 e 6 turni.
+
+## Squadre nel Fight della scheda
+
+- Nel menu Fight della scheda il Master può creare squadre senza un limite di numero, scegliere i colori e spostare i partecipanti. Il verde identifica gli alleati predefiniti e il rosso i nemici predefiniti. Per esempio, una squadra gialla può attaccare sia i verdi sia i rossi.
+- Un colpo contro la propria squadra è non letale. Può portare il bersaglio a 0 Vita, dove resta a terra senza morire per quel colpo.
+- Un bersaglio della stessa squadra ha il 25% di Resistenza al colpo solo se le due appartenenze coincidono entrambe. Fato o Chaos è un’appartenenza distinta da Luna, Sole o Niente. Se differisce almeno una delle due, anche quando una è Niente, il colpo conserva il danno pieno e resta non letale.
+
 ## Risorse dopo un tiro fallito
 
 - Nel risultato della scheda compaiono solo le opzioni applicabili e disponibili per quel tiro. Il giocatore sceglie se usarle prima di confermare il risultato. Le Ispirazioni modificano quel tiro e si può usare un solo tipo di Ispirazione per tiro.
-- L’Ispirazione base ritira un fallimento non critico. La Super può ritirare anche un critico. Nel Chained Fate attivo, un partecipante paga due Ispirazioni base oppure una Super per ritirare un fallimento normale.
+- L’Ispirazione base ritira un tiro fallito con naturale da 2 a 19, anche se classificato come critico. Il naturale 1 o 20 è escluso. La Super può ritirare anche i critici. Nel Chained Fate attivo, un partecipante paga due Ispirazioni base oppure una Super per un tiro idoneo.
 - L’Ispirazione Oculum richiede un critico negativo. Costa una sola Ispirazione Oculum anche nel Chained Fate. Il tiro diventa un critico positivo nel 50% dei casi e resta un critico negativo nell’altro 50%.
 - La Fortuna magica aggiunge un punto al totale per ogni punto speso. Il Patto del Fato è separato dall’unico uso di Ispirazione e conserva il suo limite di una volta per scheda.
 - Se almeno un bersaglio ferma un attacco online basato su un tiro condiviso, il giocatore può ritirare l’intero attacco prima che si applichino gli effetti a qualsiasi bersaglio.

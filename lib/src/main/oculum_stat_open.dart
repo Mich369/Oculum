@@ -69,6 +69,7 @@ const _statOpenTracks = {
       }),
       _StatOpenTier('Guardia del Vespro Rosso', 'Fendente del Vespro', {
         'hits': 16,
+        'cost': 4,
         'damagePercent': 28,
         'cooldown': 5,
         'damageBuffPercent': 18,
@@ -76,6 +77,7 @@ const _statOpenTracks = {
       }),
       _StatOpenTier('Ordine della Corona Rossa', 'Ultima Carica dell’Ordine', {
         'hits': 36,
+        'cost': 8,
         'damagePercent': 26,
         'cooldown': 6,
         'damageBuffPercent': 22,
@@ -450,6 +452,7 @@ extension _OculumStatOpen on _OculumHomePageState {
     if (track == 'res_stone_memory') {
       await activateStatOpenResilience(id);
     } else {
+      if (!canPayStatOpenAttack(id)) return;
       await planOnlineAttack(
         statOpenId: id,
         maximumTargets: track == 'will_knights'
@@ -579,7 +582,7 @@ extension _OculumStatOpen on _OculumHomePageState {
 
   String _statOpenSkillSummary(String id) => switch (statOpenTrack(id)) {
     'will_knights' =>
-      '${statOpenKnightHitsFor(id)} colpi da ${statOpenValue(id, 'damagePercent')}% dei Danni, un tiro di Volontà.',
+      '${statOpenAttackCost(id) > 0 ? '${statOpenAttackCost(id)} Volontà · ' : ''}${statOpenKnightHitsFor(id)} colpi da ${statOpenValue(id, 'damagePercent')}% dei Danni, un tiro di Volontà.',
     'res_stone_memory' =>
       'Cura la Vita persa da te e dai tuoi alleati per ${statOpenValue(id, 'durationTurns')} turni personali.',
     'will_oath' =>
@@ -629,7 +632,7 @@ extension _OculumStatOpen on _OculumHomePageState {
               ? 'Recupero del percorso · $cooldown turni personali'
               : '1 Azione · ${_statOpenSkillSummary(id)}',
         ),
-        onTap: statOpenSkillReady(id)
+        onTap: statOpenSkillReady(id) && canPayStatOpenAttack(id)
             ? () => select(() => unawaited(activateStatOpenSkill(id)))
             : null,
       ),

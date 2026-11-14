@@ -101,7 +101,7 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
         oculumThemeAssetPacks[selection] ??
         oculumThemeAssetPacks[visualThemeDecorationPresetId()] ??
         oculumThemeAssetPacks['classic_reliquary']!;
-    return pack.storyScene;
+    return oculumMonsterArtworkAsset(pack.storyScene)!;
   }
 
   String get displayedHomeArtwork => homeArtworkChoice.isNotEmpty

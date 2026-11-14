@@ -2039,7 +2039,12 @@ extension _OculumPlanarSupport on _OculumHomePageState {
 }
 
 extension _OculumBringiDamage on _OculumHomePageState {
-  Future<void> applyPlanarSeedDamage(String tag, int damage) async {
+  Future<void> applyPlanarSeedDamage(
+    String tag,
+    int damage, {
+    bool friendlyFire = false,
+    bool friendlyFireResisted = false,
+  }) async {
     if (!controlsOnlineCombatSheet(tag)) return;
     final index = localSheetIndexForOculumTag(tag);
     if (index < 0) return;
@@ -2052,9 +2057,14 @@ extension _OculumBringiDamage on _OculumHomePageState {
         caricaStatoDaJson(schedePersonaggio[index]);
         ripristinaImpostazioniGlobali(global);
       }
-      currentHpController.text = '${max(0, hpCorrenti() - damage)}';
-      planarAfterHpDamage();
-      controllaCadutaDopoDanno();
+      final incoming = friendlyFireResisted ? damage * 3 ~/ 4 : damage;
+      currentHpController.text = '${max(0, hpCorrenti() - incoming)}';
+      if (friendlyFire && hpCorrenti() <= 0) {
+        resolveFriendlyFireKnockout();
+      } else {
+        planarAfterHpDamage();
+        controllaCadutaDopoDanno();
+      }
       salvaSchedaCorrenteInMemoria();
       programmaSalvataggio();
       sendRealtimeHpChanged();

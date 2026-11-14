@@ -151,15 +151,10 @@ extension _OculumStat35Resilience on _OculumHomePageState {
   ) {
     final sourceTag = onlineCombatTokenTag(source);
     final targetTag = onlineCombatTokenTag(target);
-    String team(Map<String, dynamic> token) {
-      final side = '${token['side'] ?? 'ally'}';
-      return side == 'party' ? 'ally' : side;
-    }
-
     return sourceTag.isNotEmpty &&
         targetTag.isNotEmpty &&
         !oculumSameSheetIdentity(sourceTag, targetTag) &&
-        team(source) == team(target) &&
+        combatParticipantsShareTeam(source, target) &&
         source['outsideFight'] != true &&
         target['outsideFight'] != true &&
         !masterInitiativeTokenIsDead(target) &&

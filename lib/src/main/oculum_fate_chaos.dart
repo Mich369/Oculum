@@ -1,5 +1,18 @@
 part of '../../main.dart';
 
+String? oculumChaosInspirationType(int percentile) {
+  RangeError.checkValueInInterval(percentile, 0, 99, 'percentile');
+  return switch (percentile) {
+    < 20 => null,
+    < 70 => 'base',
+    < 90 => 'super',
+    _ => 'oculum',
+  };
+}
+
+int oculumChaosInspirationIntervals(int now, int anchor) =>
+    max(0, now - anchor) ~/ oculumWorldDaySeconds;
+
 // ignore_for_file: invalid_use_of_protected_member
 
 /// Exactly one percentile draw per newly reached grade. Zero-based input.
@@ -26,10 +39,10 @@ Map<String, int> oculumOpposingChaosStatRoll(int Function(int) nextInt) => {
 };
 
 extension _OculumOpposingChaos on _OculumHomePageState {
-  String fightMonsterElement(Map<String, dynamic> token) {
+  String fightMonsterElement(Map<String, dynamic> token, {int? sheetIndex}) {
     return oculumNormalizeElementId(
       oculumSavedMonsterBookEntryById(
-            monsterBookIdForCombatToken(token),
+            monsterBookIdForCombatToken(token, sheetIndex: sheetIndex),
           )?.elementId ??
           '${token['element'] ?? ''}',
     );
@@ -39,7 +52,7 @@ extension _OculumOpposingChaos on _OculumHomePageState {
     Map<String, dynamic> combatant,
     Map<String, dynamic> source,
   ) =>
-      '${combatant['side'] ?? 'ally'}' != '${source['side'] ?? 'ally'}' &&
+      !combatParticipantsShareTeam(combatant, source) &&
       publicInitiativeSourceTag(combatant) != publicInitiativeSourceTag(source);
 
   bool _presentForElementalInfluence(Map<String, dynamic> token) =>
@@ -51,6 +64,7 @@ extension _OculumOpposingChaos on _OculumHomePageState {
   void refreshOpposingChaosTurn(
     Map<String, dynamic> token, {
     required String fightInstanceId,
+    int Function(Map<String, dynamic>)? sheetIndexForToken,
   }) {
     if (!_presentForElementalInfluence(token)) return;
     final receipt = '$fightInstanceId:$masterInitiativeRound';
@@ -60,7 +74,11 @@ extension _OculumOpposingChaos on _OculumHomePageState {
       (source) =>
           _presentForElementalInfluence(source) &&
           _differentFightSides(token, source) &&
-          fightMonsterElement(source) == 'caos',
+          fightMonsterElement(
+                source,
+                sheetIndex: sheetIndexForToken?.call(source),
+              ) ==
+              'caos',
     )) {
       if (token.remove('opposingChaosStats') != null) {
         invalidateDerivedDataCaches();
@@ -114,17 +132,24 @@ extension _OculumOpposingChaos on _OculumHomePageState {
     }
   }
 
-  void markOblivionFightExposure() {
+  void markOblivionFightExposure({
+    int Function(Map<String, dynamic>)? sheetIndexForToken,
+  }) {
+    late final localIndexes = buildFightRewardSheetIndexLookup(
+      resolveSourceAlias: realtimeIsMasterRole || localTurnCombat,
+    );
+    final lookup = sheetIndexForToken ?? (token) => localIndexes(token);
     final present = masterInitiativeTokens
         .where(_presentForElementalInfluence)
         .toList(growable: false);
     final oblivionSides = {
       for (final source in present)
-        if (fightMonsterElement(source) == 'oblio') source['side'] ?? 'ally',
+        if (fightMonsterElement(source, sheetIndex: lookup(source)) == 'oblio')
+          combatParticipantTeamId(source),
     };
     if (oblivionSides.isEmpty) return;
     for (final token in present) {
-      if (oblivionSides.any((side) => side != (token['side'] ?? 'ally'))) {
+      if (oblivionSides.any((side) => side != combatParticipantTeamId(token))) {
         token['opposingOblivionExposed'] = true;
       }
     }
@@ -238,6 +263,13 @@ extension _OculumFateChaos on _OculumHomePageState {
           () => activeCriticalGrade(),
         );
         planarState['identityFateChaos'] = value;
+        final progress = worldNeedsData;
+        if (value == 'Chaos') {
+          progress['chaosInspirationAt'] = worldClockSeconds;
+        } else {
+          progress.remove('chaosInspirationAt');
+        }
+        worldNeedsCampaigns[worldNeedsCampaignKey] = progress;
         planarState.remove('chaosStats');
         if (value == 'Chaos' && currentCombatIsActive()) refreshChaosStats();
         invalidateDerivedDataCaches();
@@ -245,6 +277,29 @@ extension _OculumFateChaos on _OculumHomePageState {
       programmaSalvataggio();
     },
   );
+
+  bool syncChaosInspiration(Map<String, dynamic> progress, int now) {
+    if (!identityIsChaos) return false;
+    final saved = progress['chaosInspirationAt'];
+    if (saved == null) {
+      progress['chaosInspirationAt'] = now;
+      return false;
+    }
+    final anchor = readIntValue(saved);
+    final intervals = oculumChaosInspirationIntervals(now, anchor);
+    if (intervals == 0) return false;
+    progress['chaosInspirationAt'] = anchor + intervals * oculumWorldDaySeconds;
+    final messages = <String>[];
+    final random = Random.secure();
+    for (var interval = 0; interval < intervals; interval++) {
+      final type = oculumChaosInspirationType(random.nextInt(100));
+      if (type != null) grantInspirationWithCap(type, 1, messages);
+    }
+    aggiungiLog(
+      '[Chaos] ${messages.isEmpty ? t('Nessuna Ispirazione.', 'No Inspiration.') : messages.join(' · ')}',
+    );
+    return true;
+  }
 
   void rewardIdentityGrades(int previous, int next, {int? percentile}) {
     final claimed = max(

@@ -138,6 +138,7 @@ extension _OculumWeakPoints on _OculumHomePageState {
       damage,
       element: '${request['element'] ?? 'fisico'}',
       source: 'Nucleo con fata',
+      attack: request,
     );
   }
 

@@ -403,8 +403,8 @@ final _boneRuneTechniques = <String, MonsterConcreteTechnique>{
         ],
     ],
     costResource: 'materia',
-    minimums: [1, 1, 2],
-    maximums: [1, 1, 2],
+    minimums: [1, 2, 3],
+    maximums: [1, 2, 3],
     cd: [2, 2, 2],
   ),
   'bone_monster_guard': _planarMove(

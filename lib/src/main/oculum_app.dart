@@ -169,8 +169,7 @@ Future<void> loadOculumGraphicsPreference() async {
 
 Future<void> setOculumGraphicsPreference(bool enabled) async {
   oculumGraphicsEnabled.value = enabled;
-  PaintingBinding.instance.imageCache.maximumSizeBytes =
-      (enabled ? 96 : 40) * 1024 * 1024;
+  _configureOculumRuntimeCaches();
   final prefs = await SharedPreferences.getInstance();
   await prefs.setBool('oculum.graphicsEnabled', enabled);
 }

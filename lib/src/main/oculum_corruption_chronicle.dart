@@ -180,9 +180,11 @@ extension _OculumCorruptionChronicle on _OculumHomePageState {
               child: Opacity(
                 opacity: .68,
                 child: Image.asset(
-                  red
-                      ? 'assets/oculum/home_art/creature_baghest_red_corruption_v1.png'
-                      : 'assets/oculum/home_art/creature_oculian_purple_corruption_v1.png',
+                  oculumMonsterArtworkAsset(
+                    red
+                        ? 'assets/oculum/home_art/creature_baghest_red_corruption_v1.png'
+                        : 'assets/oculum/home_art/creature_oculian_purple_corruption_v1.png',
+                  )!,
                   key: ValueKey(
                     red ? 'corruption_baghest' : 'corruption_oculian',
                   ),

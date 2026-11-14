@@ -79,6 +79,24 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
 
   bool get schedaAttivaCaduta => personaggioCaduto || hpCorrenti() <= 0;
 
+  bool get friendlyFireDowned =>
+      hpCorrenti() <= 0 &&
+      schedaCorrente >= 0 &&
+      schedaCorrente < schedePersonaggio.length &&
+      schedePersonaggio[schedaCorrente]['friendlyFireDowned'] == true;
+
+  void resolveFriendlyFireKnockout() {
+    if (hpCorrenti() > 0 ||
+        personaggioCaduto ||
+        feriteMorte >= deathWoundLimit ||
+        schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    schedePersonaggio[schedaCorrente]['friendlyFireDowned'] = true;
+    segnaSchedaAttivaCaduta(friendlyFire: true);
+  }
+
   int sheetMaxHpForDeathAt(int index) {
     if (index == schedaCorrente) return max(1, maxHp());
     if (index < 0 || index >= schedePersonaggio.length) return 1;
@@ -199,6 +217,9 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         : readBoolValue(schedePersonaggio[index]['personaggioCaduto']) ||
               sheetCurrentHpForDeathAt(index) <= 0;
     token['currentHp'] = sheetCurrentHpForDeathAt(index);
+    token['friendlyFireDowned'] =
+        readIntValue(token['currentHp']) <= 0 &&
+        schedePersonaggio[index]['friendlyFireDowned'] == true;
     token['maxHp'] = sheetMaxHpForDeathAt(index);
     token['currentOculum'] = sheetCurrentOculumForDeathAt(index);
     token['maxOculum'] = sheetMaxOculumForDeathAt(index);
@@ -253,20 +274,23 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
-  void segnaSchedaAttivaCaduta() {
+  void segnaSchedaAttivaCaduta({bool friendlyFire = false}) {
     if (personaggioCaduto) return;
     personaggioCaduto = true;
     feriteMorte = 0;
     volontaVitale = 0;
-    risultato = t(
-      'Sei a terra. Al tuo turno effettua un tiro contro la morte.',
-      'You are down. Make a death save on your turn.',
-    );
+    risultato = friendlyFire
+        ? t('Sei a terra per un colpo alleato.', 'A teammate knocked you down.')
+        : t(
+            'Sei a terra. Al tuo turno effettua un tiro contro la morte.',
+            'You are down. Make a death save on your turn.',
+          );
     aggiungiLog(risultato);
     syncCurrentSheetDeathStateToInitiative();
   }
 
   void controllaCadutaDopoDanno() {
+    if (friendlyFireDowned) return;
     if (hpCorrenti() <= 0 && tryConstructLastStrength()) return;
     if (hpCorrenti() > 0 || personaggioCaduto) return;
     segnaSchedaAttivaCaduta();
@@ -304,6 +328,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     );
     impostaScudoTotale(shield);
     personaggioCaduto = false;
+    schedePersonaggio[schedaCorrente].remove('friendlyFireDowned');
     personaggioSvenuto = false;
     feriteMorte = 0;
     volontaVitale = 0;
@@ -327,6 +352,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   void effettuaTiroMorteSchedaAttiva() {
+    if (friendlyFireDowned) return;
     if (!schedaAttivaCaduta) {
       updateOculumHomeUi(() {
         risultato = t(
@@ -460,6 +486,8 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     sheet['scudo'] = '$shield';
     sheet['hpTemp'] = '$temporaryHp';
     sheet['personaggioCaduto'] = downed;
+    sheet['friendlyFireDowned'] =
+        hp <= 0 && token['friendlyFireDowned'] == true;
     sheet['feriteMorte'] = wounds;
     sheet['volontaVitale'] = vital;
     final outcomeIt = '${token['realtimeDeathOutcomeIt'] ?? ''}'.trim();
@@ -511,6 +539,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
       token['hpTemp'] = max(readIntValue(token['hpTemp']), grantedTemporaryHp);
     }
     token['deathWounds'] = 0;
+    token['friendlyFireDowned'] = false;
     token['vitalWills'] = 0;
     token['downed'] = false;
     token['status'] = 'ready';
@@ -544,7 +573,10 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   void resolveMasterInitiativeDeathSaveInPlace(Map<String, dynamic> token) {
-    if (!masterInitiativeTokenIsDowned(token)) return;
+    if (!masterInitiativeTokenIsDowned(token) ||
+        token['friendlyFireDowned'] == true) {
+      return;
+    }
     final roll = tiraD20();
     final difficulty = readIntValue(token['rollDifficulty']);
     final total = roll + modificatoreDifficoltaTiro(difficulty: difficulty);
@@ -671,6 +703,12 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
       final targetName = '${target['name'] ?? '???'}';
 
       if (roll == 1) {
+        if (target['friendlyFireDowned'] == true) {
+          aggiungiLog(
+            t('Il compagno rimane a terra.', 'Your companion stays down.'),
+          );
+          return;
+        }
         target['deathWounds'] = min(
           deathWoundLimit,
           readIntValue(target['deathWounds']) + 1,

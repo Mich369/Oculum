@@ -3,6 +3,102 @@
   "codec": "WebP lossless",
   "files": [
     {
+      "original": "assets/oculum/home_art/anime_reliquary.png",
+      "originalSha256": "76a494471a8aa1a5b3e10d9558c3abacf7d936d603728c49a350586516356df4",
+      "originalBytes": 2297098,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/anime_reliquary.webp",
+      "runtimeSha256": "70ad3f3524afc4cc332b886c21c4968ee40f84cbd6e45c8136cc4ff43ad2e12a",
+      "runtimeBytes": 1567920,
+      "rgbaSha256": "354589ef571d062f17a190d58744babe86106c6fc08f245c93e9b2f94065619e"
+    },
+    {
+      "original": "assets/oculum/home_art/character_erik_i_reference_v1.png",
+      "originalSha256": "d5b036a9f168d17b9568b59339a00353c632d737929cadcf40837161be68dbc7",
+      "originalBytes": 2568752,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/character_erik_i_reference_v1.webp",
+      "runtimeSha256": "557c24f29d32acf62d600184325026949ab3a274e2ea4b224eebf4acd778033e",
+      "runtimeBytes": 1807196,
+      "rgbaSha256": "73d0625e6808a4b55fc374523239a9f9ccb3fe97f62d52361df9d5a01d67c0c8"
+    },
+    {
+      "original": "assets/oculum/home_art/character_haniel_battle_v1.png",
+      "originalSha256": "d5cd73ce124b8380de467de257ff6205898d7402451d6e169ca7fcc66828369c",
+      "originalBytes": 2823226,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/character_haniel_battle_v1.webp",
+      "runtimeSha256": "ea7b24a6712971f292cfe88ab402a89ab7646f687d4cf18214a137f39e52e09d",
+      "runtimeBytes": 2093614,
+      "rgbaSha256": "903fb45e3bc93baff65765ee4a4b4ae1db557ca6295cdc5f5b8d0d8d9fa94e90"
+    },
+    {
+      "original": "assets/oculum/home_art/character_haniel_v2.png",
+      "originalSha256": "5fd70ab61c3d056f55057c05c63f89ca95b5a95b1167bbf04db23d300b1b77f6",
+      "originalBytes": 2087022,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/character_haniel_v2.webp",
+      "runtimeSha256": "761564993fab8a3a3d202dfec7cff1ee03cec27a5d9617df5bf6bddd40fdb936",
+      "runtimeBytes": 1494784,
+      "rgbaSha256": "e14ab1e68ae5cf06f8fb74eae5255e17e76469f2d8f18bb003efbda147582244"
+    },
+    {
+      "original": "assets/oculum/home_art/character_haniel_v3.png",
+      "originalSha256": "2f0696f5d55089745cffe5d9992da6797f4c548e2a2f02335b1c3223bea214ca",
+      "originalBytes": 2140589,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/character_haniel_v3.webp",
+      "runtimeSha256": "34c8d9cde3fffdc735d8ffe888017e7c7ad92546be8c3438c5f5a0d5864d80b6",
+      "runtimeBytes": 1532892,
+      "rgbaSha256": "0c4f9764cdc9a8c76cb5578e434fae693744233d420473b6c8405701bf9de2db"
+    },
+    {
+      "original": "assets/oculum/home_art/character_haniel_v4.png",
+      "originalSha256": "51d4ed1460c57e556b4c7e9093ffbb05cec27dd18c4db59cc7973d080baf7c6a",
+      "originalBytes": 2037056,
+      "width": 1065,
+      "height": 1477,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/character_haniel_v4.webp",
+      "runtimeSha256": "fc1ad5c13c836c1d4275c9409b12d5b6cc66c4bbbe01c9714e2e3c0e086374ca",
+      "runtimeBytes": 1476392,
+      "rgbaSha256": "cb1a4660000e7a1c3a366eaddb1dc6963f18dedc56e7465ada58c7918ed326c0"
+    },
+    {
+      "original": "assets/oculum/home_art/character_lusier_iii_v1.png",
+      "originalSha256": "c4b5356a0259bd76e97881098a14943e177622ef2aed25dc99769b84f67ec8c0",
+      "originalBytes": 2850826,
+      "width": 1024,
+      "height": 1536,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/character_lusier_iii_v1.webp",
+      "runtimeSha256": "a767229ebc73b2b88fa279b18a40078dbdf490d9ea37e7256a33a083d8254ddf",
+      "runtimeBytes": 1922044,
+      "rgbaSha256": "f6b73c24acf8a42ba571a435583598cde83467207f1a5af0150d670cd42e9af0"
+    },
+    {
+      "original": "assets/oculum/home_art/character_sky_v2.png",
+      "originalSha256": "6347b1547252e8e010d6951c73a09d157f7f88391391769fb85e5df81c1345a6",
+      "originalBytes": 2354925,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/character_sky_v2.webp",
+      "runtimeSha256": "ce658166c1142197beb5f035ddb6dcd9ceea836067b5bb07f279888bbe29f89f",
+      "runtimeBytes": 1724368,
+      "rgbaSha256": "19b0a48298cb37296ec4e278c265c74ad8d6d162d5de2157ca73701509e1c746"
+    },
+    {
       "original": "assets/oculum/home_art/creature_angelico.png",
       "originalSha256": "bb4c9ac13cf0ac357440aaf26882c415ede4ece4d74fed34a60171c812dec443",
       "originalBytes": 2975461,
@@ -13,6 +109,42 @@
       "runtimeSha256": "c2c10d8c1bd15c44a1a57f6bb4500506ab2c4d7a9b2230ef23e349f9eb25113a",
       "runtimeBytes": 2145660,
       "rgbaSha256": "2ce3b363589cf0af13c28c57bc003a8c6dad3bc09a24fc97ff0cba5f473f12cc"
+    },
+    {
+      "original": "assets/oculum/home_art/creature_baghest_red_corruption_v1.png",
+      "originalSha256": "9a32ebe03d325edbf2ebd871b889ecc048f6473023898adcda86b3a2887fd37c",
+      "originalBytes": 1997242,
+      "width": 1122,
+      "height": 1402,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_baghest_red_corruption_v1.webp",
+      "runtimeSha256": "daa0a547425119ecb2d522d96e1ab7f8f51c48d20fcfd86784c3a29de1810b28",
+      "runtimeBytes": 1435570,
+      "rgbaSha256": "9693b6bd0ea3b9b945e35f3fd228d83a1b9d8341acd05fe27c65eee6a8f916fa"
+    },
+    {
+      "original": "assets/oculum/home_art/creature_grofix_v1.png",
+      "originalSha256": "6026ebbbaba58ad6ba77f96ae263b5e015dc5fc521bdddca6c0bebdb1d14cb98",
+      "originalBytes": 2891303,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_grofix_v1.webp",
+      "runtimeSha256": "c43a8cbf5bb16105459c639424a412c5bd44a702769b0a58dd60c2f6207f2acc",
+      "runtimeBytes": 1964382,
+      "rgbaSha256": "ea60cb9559ebd383745ec0031a8aedfd432f0b43d0fca56db7013d69e0efb794"
+    },
+    {
+      "original": "assets/oculum/home_art/creature_guardiano_solare_v1.png",
+      "originalSha256": "2967807efd897ab4598575ff8ecbc59f23ff3a7256e054ae6b976df1affb0fcf",
+      "originalBytes": 2566818,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_guardiano_solare_v1.webp",
+      "runtimeSha256": "d2e5f427f2fb5212d6af25210872d0d7e4b424f2f17f13e6b7b782ac03e4a56c",
+      "runtimeBytes": 1917968,
+      "rgbaSha256": "8c0172ce3f915d8fbed71e455fe3918025bb092429644176b8e73fe732185223"
     },
     {
       "original": "assets/oculum/home_art/creature_mostro_lunare_demoniaco_v1.png",
@@ -51,6 +183,30 @@
       "rgbaSha256": "f66f8483beea6e7a6d17065cb7b3a459af43bc47e7fdac4abf3688eee6f5b9a9"
     },
     {
+      "original": "assets/oculum/home_art/creature_oculian_purple_corruption_v1.png",
+      "originalSha256": "f916c1d526037e62dc3ae7f4ad2ff3836cf00f19a8e9dad2e74761f6e0602554",
+      "originalBytes": 2312963,
+      "width": 1024,
+      "height": 1536,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_oculian_purple_corruption_v1.webp",
+      "runtimeSha256": "293ccb793191161b5d36092c0341dae4b7f21e287b8439e1202c47aac1c1c41f",
+      "runtimeBytes": 1455952,
+      "rgbaSha256": "106d5a6adfd7e381920841ce0919abe3b47855f63faa8fda4a7e1a56a692782a"
+    },
+    {
+      "original": "assets/oculum/home_art/creature_ombra.png",
+      "originalSha256": "71a6a7329c72ddd6fe563e0db477b3b033f94b8403fccb4c05ecce6c773daaee",
+      "originalBytes": 2211420,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_ombra.webp",
+      "runtimeSha256": "84316308c0a9f72252c61870b16910ce29448ca01c189b53034bb30a6902de9c",
+      "runtimeBytes": 1619114,
+      "rgbaSha256": "201d7b8b1c942dc56ab09710c228df6be58987f16361b1d495515289dae735ed"
+    },
+    {
       "original": "assets/oculum/home_art/creature_ombra_v2.png",
       "originalSha256": "08daaf02acbe9010ce14cca2eb64a3032249c4da8d7036858daf4beb8ba727ec",
       "originalBytes": 2075060,
@@ -87,6 +243,42 @@
       "rgbaSha256": "70f397d55669580b82624162292d730a999feb21d12b2aa5363e6a75dbb5bec9"
     },
     {
+      "original": "assets/oculum/home_art/creature_serafino_solare_v1.png",
+      "originalSha256": "20b21c7d399754aa806a437d0b44424347c5abd0d1d97b642fa67598ca93818c",
+      "originalBytes": 3070218,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_serafino_solare_v1.webp",
+      "runtimeSha256": "4d6087b122823bca86279e20a0c54886c25df3627283e20a9687db858cd5eafe",
+      "runtimeBytes": 2239974,
+      "rgbaSha256": "769796f5387310f47cf3a2c8105d93cc4d45f15318ee0229e9fa3aa1d8605d37"
+    },
+    {
+      "original": "assets/oculum/home_art/creature_serafino_solare_v2.png",
+      "originalSha256": "1d3705023f177211107a0d8f0ae9dcbd3f0aa65f1264f43b5e0933a8bac5c999",
+      "originalBytes": 2933492,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_serafino_solare_v2.webp",
+      "runtimeSha256": "3a32c655b845e47915834fae7558297f60122e8bf52c7a56a0dce06b9ec03d99",
+      "runtimeBytes": 2177840,
+      "rgbaSha256": "821f8248d0365325f7049b70173af1268a73435d5bb4b0c6217616c1a8e33382"
+    },
+    {
+      "original": "assets/oculum/home_art/creature_solare.png",
+      "originalSha256": "f14b4ebed68dc2f933c283b5a0199ccdfcbb414dc889fd1505d5dd917888fd11",
+      "originalBytes": 2508183,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/creature_solare.webp",
+      "runtimeSha256": "edbcb1fbb3a7498b98384b4df86464f870926b7a43ecd237e5d083d97eda6794",
+      "runtimeBytes": 1876804,
+      "rgbaSha256": "a24bda06677a11a7feb53d3a28d8502d201f582d1d90a1e43833f5f097b9b4fe"
+    },
+    {
       "original": "assets/oculum/home_art/creature_solare_v2.png",
       "originalSha256": "5296d4b7c19470157f8ac65e40bf9fe0a68f2dc66385be73e5894e691e92a5a1",
       "originalBytes": 2689818,
@@ -109,6 +301,18 @@
       "runtimeSha256": "136becb98f475b2cc856f3146560a0107cc804bff9dadc81e835056709a44edf",
       "runtimeBytes": 1534854,
       "rgbaSha256": "4afd380ce9b5d6c5e6fe0a19f0f9d0ad7c1510ddc086921f488e31fc268e018f"
+    },
+    {
+      "original": "assets/oculum/home_art/item_ancient_desert_dragon_claw_v1.png",
+      "originalSha256": "21430ed3a409056d1b1861a0cfc335e92855371467c8705491c01f7935244021",
+      "originalBytes": 3262603,
+      "width": 1254,
+      "height": 1254,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/item_ancient_desert_dragon_claw_v1.webp",
+      "runtimeSha256": "658d5343410c7aaf5fdafdea91b6d7208853279e3d2708ac4bbe7dc318fbe289",
+      "runtimeBytes": 2220068,
+      "rgbaSha256": "66e24db6adc9a29e8eb763fb26dda9eeab966768e8bd12be8e245d6d9f13ab0a"
     },
     {
       "original": "assets/oculum/home_art/relic_aberrazione_metallica_angelica_v1.png",
@@ -831,6 +1035,18 @@
       "rgbaSha256": "39ebb8379cfb84c97757a62428e96048ae38de218f82646cd322eb52bcc053ea"
     },
     {
+      "original": "assets/oculum/home_art/relic_senka_kamaria_v1.png",
+      "originalSha256": "527e7f4f42b2b364eb34a76871e08695431a9cbc6dd2e57232fb84e0caf71e0f",
+      "originalBytes": 2414689,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/relic_senka_kamaria_v1.webp",
+      "runtimeSha256": "3331f03967f38637ef4d167570654fbdfc089f6a5c4ec0f379d283203b8a0dd5",
+      "runtimeBytes": 1553788,
+      "rgbaSha256": "6dba57bf84fde112ebeabf0eb1e6659efa0f3e0fff08d56bf4c8f5b5cd8009de"
+    },
+    {
       "original": "assets/oculum/home_art/relic_shadow_devil_v1.png",
       "originalSha256": "7a7e526e3328d7537ab3d67e55a929f8cb79f629c15790cda951d8b23c9b9a1c",
       "originalBytes": 787523,
@@ -937,6 +1153,30 @@
       "runtimeSha256": "cb9c070abd15fb0d3b6f9d55b019ad98d5a63ae1a5b55d4474bb186b496ea9ea",
       "runtimeBytes": 117140,
       "rgbaSha256": "1bc2f341e14b8bcbfcf8991e767d5c4d7af964e9897383210430e4846c06492d"
+    },
+    {
+      "original": "assets/oculum/home_art/sheet_damage_scratch.png",
+      "originalSha256": "3660332a8f61a229ab93fd372c61ec46a0ecd780ed453495de2b18a4cd67a21e",
+      "originalBytes": 19160,
+      "width": 540,
+      "height": 316,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/sheet_damage_scratch.webp",
+      "runtimeSha256": "962a93773e2b7c09fb09e4df4974592d862279d5a873d71ac53bcb5ba5b43e1f",
+      "runtimeBytes": 12644,
+      "rgbaSha256": "7f92af1e15b09c2ee1277b3ce57366aef696402dfebf7175a6de9de9b7efc101"
+    },
+    {
+      "original": "assets/oculum/home_art/solar_islands.png",
+      "originalSha256": "bdbebd19fb2b7d50349dd371b71852c37e6828ae158706c83974816f078e6cb4",
+      "originalBytes": 3200825,
+      "width": 1792,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/solar_islands.webp",
+      "runtimeSha256": "0a29b4e3fccf439d5af45c7d3c82afdea5f882b60fe545ed8dd7fc83dacfe01e",
+      "runtimeBytes": 2095540,
+      "rgbaSha256": "5b034f6e84a4a50775a14e93f57a760d2020e455dee3a70e340d6fe1c93b4f08"
     },
     {
       "original": "assets/oculum/home_art/theme_aberrazione_metallica_angelica_mobile_v1.png",
@@ -2041,6 +2281,18 @@
       "runtimeSha256": "5dc4ba0eaa507ae932dac6b1a2c7fa16fee861d11fbb00bb4de26e06b346a491",
       "runtimeBytes": 1492434,
       "rgbaSha256": "0064677a14486186cc57285a4ace0d5a194269ade3a8bee50bb1105bc8275f7f"
+    },
+    {
+      "original": "assets/oculum/home_art/theme_ciclo_guardiano_dodici_rintocchi_canon_20261106.png",
+      "originalSha256": "ed5545b262118185425a4e851cbdb0b1bb339d5456c0bb16b4c2b685a0bd559d",
+      "originalBytes": 2335850,
+      "width": 1586,
+      "height": 992,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_ciclo_guardiano_dodici_rintocchi_canon_20261106.webp",
+      "runtimeSha256": "555ef5663af3859ff2de1af1a2972e3907fd6683dae727e1e1c5291507ac446e",
+      "runtimeBytes": 1723634,
+      "rgbaSha256": "ac5280044be9b823318d400d4018888a38ae6fd2166629d07a1911a59eb7663c"
     },
     {
       "original": "assets/oculum/home_art/theme_ciclo_guardiano_dodici_rintocchi_canon_20261106_votes2.png",
@@ -3363,6 +3615,18 @@
       "rgbaSha256": "924107d00e59e169328d3ef5bc59b88dbe9a7dc25ed3d8eb38697eeec25bac72"
     },
     {
+      "original": "assets/oculum/home_art/theme_guardia_solare_elite_v1.png",
+      "originalSha256": "9ede26f0cc26589742ce548b6683fd161b62e18a064b9d216c68b922ed9e34ca",
+      "originalBytes": 2386484,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_guardia_solare_elite_v1.webp",
+      "runtimeSha256": "fe42e17704f68e8438cddc110b770a7759826d7842218868626d73c7b4c6b7bc",
+      "runtimeBytes": 1755166,
+      "rgbaSha256": "a801b0e9b7f7083369d8bd1d456d17f8828df5fca78246884930fa8b818be934"
+    },
+    {
       "original": "assets/oculum/home_art/theme_guardia_solare_elite_v2.png",
       "originalSha256": "5c152d5798ebfe648336c1dfc362b2a524424563ad8f483b54018fe77cd56812",
       "originalBytes": 2661746,
@@ -3373,6 +3637,18 @@
       "runtimeSha256": "10abdb9158a5a58a80e59674ce7a09c4d62ceb914ef9ee2a6ebaf90b0ef4d320",
       "runtimeBytes": 2044164,
       "rgbaSha256": "00a0ba79580ec5144d3bd9b521d200aaa383ca0db4875d264cfb95a0120f50a0"
+    },
+    {
+      "original": "assets/oculum/home_art/theme_guardia_solare_v1.png",
+      "originalSha256": "c06ed68b842d5a6fa10047f08138df69768f34b455ffdb14fd8ae43b7674ea4c",
+      "originalBytes": 2204956,
+      "width": 1536,
+      "height": 1024,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_guardia_solare_v1.webp",
+      "runtimeSha256": "8de54f3ca7837b8a31a892cb9f0604855786331183aafbe16dd5bc1a8d42b5b6",
+      "runtimeBytes": 1591440,
+      "rgbaSha256": "5c894828bfa25a93fff6ec92f4d4cf04de3d8174c6f9f807998b501ea4e4cd51"
     },
     {
       "original": "assets/oculum/home_art/theme_guardia_solare_v2.png",
@@ -6073,6 +6349,66 @@
       "runtimeSha256": "9cc44c6b448774849ca1b257d837f294bdae2d823f084908691df5b81bb331d8",
       "runtimeBytes": 1817288,
       "rgbaSha256": "859e7d1cd144cea0b477adfb45725b1bb83c8f796f04be6d1b55bf018c1fa7c3"
+    },
+    {
+      "original": "assets/oculum/home_art/theme_senka_kamaria_mobile_v1.png",
+      "originalSha256": "cb9cbf8068ee12a8daaa32b0d171712df6c7bf5c7ba34631e20030dcb6f47427",
+      "originalBytes": 2795733,
+      "width": 941,
+      "height": 1672,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_senka_kamaria_mobile_v1.webp",
+      "runtimeSha256": "35149ef733c92bef8dbc9c0793a112afe7e75a04c52b6dd3a0fb4ab93e51609b",
+      "runtimeBytes": 2093164,
+      "rgbaSha256": "46d8a1a49756b608474716a377c7f676c5bca6eba3bb6ec39c586a373edc16d7"
+    },
+    {
+      "original": "assets/oculum/home_art/theme_senka_kamaria_mobile_v2.png",
+      "originalSha256": "adf7ec2a9a770e135062886dfcabc14c2ef639dddb57b363c3477079ebde8cf3",
+      "originalBytes": 3002336,
+      "width": 941,
+      "height": 1672,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_senka_kamaria_mobile_v2.webp",
+      "runtimeSha256": "52db9b4ed0b668fb4673f34458f15f5e8856c0fc895dc5e1076dc800714de425",
+      "runtimeBytes": 2331558,
+      "rgbaSha256": "9a4fca7e2f7018913dca6edb59a2e0934ff2aa8490baf86111390dae04979103"
+    },
+    {
+      "original": "assets/oculum/home_art/theme_senka_kamaria_v1.png",
+      "originalSha256": "cc1fc859c3a1807312a431d670df689eae343134782c4e7e35076bff29503e00",
+      "originalBytes": 2524425,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_senka_kamaria_v1.webp",
+      "runtimeSha256": "4f73b31ca0722a974a8e2ed8cc5a73efe9bc5884f1ca3a8ba2efc1c9aef3fd7c",
+      "runtimeBytes": 1864596,
+      "rgbaSha256": "8d3b718edc33dbc692f2af2abee94022c57442c8300a04fda44d9d25f525122a"
+    },
+    {
+      "original": "assets/oculum/home_art/theme_senka_kamaria_v2.png",
+      "originalSha256": "2e4dd77ece2f1561e908623e6a318e433263fc5df0b4229f07b12100fe994cb7",
+      "originalBytes": 2960542,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_senka_kamaria_v2.webp",
+      "runtimeSha256": "f1b6a7292bda29dd323c9bb41eaffc5299d0ad577a7fe996f189ca1d065ddfcc",
+      "runtimeBytes": 2259558,
+      "rgbaSha256": "f1b51ea26c95da4820004051e6f7d1f4d2cd92518f3778ca18f2ea9552c4a6a2"
+    },
+    {
+      "original": "assets/oculum/home_art/theme_senka_kamaria_v3.png",
+      "originalSha256": "49aa09778f8fac3ff66576ca9daf4800bc964d5fc0e360ac4d721981997b9dfb",
+      "originalBytes": 3046920,
+      "width": 1672,
+      "height": 941,
+      "status": "webp_lossless",
+      "runtime": "assets/oculum/home_art_webp/theme_senka_kamaria_v3.webp",
+      "runtimeSha256": "f2cd3c3d46e85bfc3cb13d6aefad922175fb9a7b3f7287004b869f45c90f3299",
+      "runtimeBytes": 2335006,
+      "rgbaSha256": "5929e0ce29f72835acbc10230ec900ad2983c0a310775ab3fcb33d3dcef0e08d"
     },
     {
       "original": "assets/oculum/home_art/theme_serafino_angelico_canon_20261106.png",

@@ -221,7 +221,6 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               '${token['fightInstanceId'] ?? ''}' ==
                   '${payload['targetFightInstance'] ?? ''}',
         ) ||
-        combatScoutSide(source) == combatScoutSide(target) ||
         escapeTokenIsOut(target) ||
         payload['attack'] is! int ||
         readIntValue(payload['attack']).abs() > 100000000 ||
@@ -2048,6 +2047,74 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       oculumSameSheetIdentity(publicInitiativeSourceTag(token), tag) ||
       oculumSameSheetIdentity(token['sheetTag'] ?? token['id'], tag);
 
+  ({bool friendly, bool resisted}) _friendlyFireFor(
+    Map<String, dynamic> request,
+  ) {
+    final sourceTag = '${request['sourceTag'] ?? ''}';
+    final targetTag = '${request['targetTag'] ?? ''}';
+    if (sourceTag.isEmpty || targetTag.isEmpty || sourceTag == targetTag) {
+      return (friendly: false, resisted: false);
+    }
+    final tokens = onlineCombatTokens();
+    final source = tokens
+        .where((token) => combatTokenMatchesSheet(token, sourceTag))
+        .firstOrNull;
+    final target = tokens
+        .where((token) => combatTokenMatchesSheet(token, targetTag))
+        .firstOrNull;
+    if (source == null ||
+        target == null ||
+        !combatParticipantsShareTeam(source, target)) {
+      return (friendly: false, resisted: false);
+    }
+    ({bool? chaos, String? celestial}) alignment(
+      Map<String, dynamic> token,
+      String tag, {
+      Object? chaosFallback,
+      Object? celestialFallback,
+    }) {
+      final index = localSheetIndexForOculumTag(tag);
+      if (index >= 0 && controlsOnlineCombatSheet(tag)) {
+        final sheet = schedePersonaggio[index];
+        return (
+          chaos:
+              (sheet['planarRuntime'] as Map?)?['identityFateChaos'] == 'Chaos',
+          celestial: oculumCelestialAllegiance(sheet),
+        );
+      }
+      final chaos = token['fightChaos'] ?? chaosFallback;
+      final celestial = token['fightCelestial'] ?? celestialFallback;
+      return (
+        chaos: chaos is bool ? chaos : null,
+        celestial: const {'solare', 'lunare', 'nessuna'}.contains(celestial)
+            ? celestial as String
+            : null,
+      );
+    }
+
+    final attacker = alignment(
+      source,
+      sourceTag,
+      chaosFallback: request['sourceChaos'],
+      celestialFallback: request['sourceCelestial'],
+    );
+    final defender = alignment(target, targetTag);
+    return (
+      friendly: true,
+      resisted:
+          attacker.chaos != null &&
+          attacker.celestial != null &&
+          attacker == defender,
+    );
+  }
+
+  bool _attackTokenIsOpponent(Map<String, dynamic> token, String sourceTeam) {
+    final targetTeam = combatParticipantTeamId(token);
+    return sourceTeam != 'neutral' &&
+        targetTeam != 'neutral' &&
+        targetTeam != sourceTeam;
+  }
+
   List<Map<String, dynamic>> onlineAttackTokens() {
     final tokens = onlineCombatTokens();
     final own = sheetTagAt(schedaCorrente);
@@ -2062,6 +2129,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (actingToken == null) {
       return [];
     }
+    final ownTeam = combatParticipantTeamId(actingToken);
     final eligible = tokens
         .where(
           (t) =>
@@ -2079,7 +2147,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         ),
       );
     }
-    return eligible;
+    return [
+      ...eligible.where((token) => _attackTokenIsOpponent(token, ownTeam)),
+      ...eligible.where((token) => !_attackTokenIsOpponent(token, ownTeam)),
+    ];
   }
 
   Map<String, dynamic>? counterAttackResponse(Map<String, dynamic> original) {
@@ -2411,9 +2482,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     );
     if (candyWillSlam) {
       final side = combatScoutSide(sheetTagAt(schedaCorrente));
-      tokens.removeWhere(
-        (token) => combatScoutSide(onlineCombatTokenTag(token)) == side,
-      );
+      tokens.removeWhere((token) => !_attackTokenIsOpponent(token, side));
     }
     final moonVolley = senkaMoonVolleyPending ?? lunarGuardianVolleyPending;
     if (stat35Attack || milestoneAttack) {
@@ -2467,9 +2536,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (moonVolley != null) {
       maximumTargets = max(1, readIntValue(moonVolley['cuts']));
       final side = combatScoutSide(sheetTagAt(schedaCorrente));
-      tokens.removeWhere(
-        (t) => combatScoutSide(onlineCombatTokenTag(t)) == side,
-      );
+      tokens.removeWhere((token) => !_attackTokenIsOpponent(token, side));
     }
     if (activeStructuredEffects.any(
       (e) =>
@@ -2478,9 +2545,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           (e['effect'] as Map)['target'] == 'lusier_open_ray',
     )) {
       final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
-      tokens.removeWhere(
-        (t) => combatScoutSide(onlineCombatTokenTag(t)) == ownSide,
-      );
+      tokens.removeWhere((token) => !_attackTokenIsOpponent(token, ownSide));
     }
     if (incomingAttack != null) {
       tokens.removeWhere(
@@ -2499,9 +2564,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final freeReaction = onlineCombatRequests[freeReactionId];
     if (robotAttack.isNotEmpty) {
       final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
-      tokens.removeWhere(
-        (token) => combatScoutSide(onlineCombatTokenTag(token)) == ownSide,
-      );
+      tokens.removeWhere((token) => !_attackTokenIsOpponent(token, ownSide));
       if (robotAttack['allOpponents'] == true) {
         minimumTargets = tokens.length;
         maximumTargets = tokens.length;
@@ -2754,9 +2817,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         fallback: 1,
       ).clamp(1, maximumTargets);
       final side = combatScoutSide(sheetTagAt(schedaCorrente));
-      tokens.removeWhere(
-        (t) => combatScoutSide(onlineCombatTokenTag(t)) == side,
-      );
+      tokens.removeWhere((token) => !_attackTokenIsOpponent(token, side));
       byId.removeWhere((key, value) => !tokens.contains(value));
       if (tokens.isEmpty) return;
     }
@@ -2812,13 +2873,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final replayElement = isElementCollector
         ? oculumMonsterCollectedElement(adaptationState)
         : '';
-    final ownSide =
-        onlineCombatTokens()
-            .where((t) => onlineCombatTokenTag(t) == sheetTagAt(schedaCorrente))
-            .firstOrNull?['side'] ??
-        'ally';
+    final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
     final explosionTargets = tokens
-        .where((t) => (t['side'] ?? 'ally') != ownSide)
+        .where((token) => _attackTokenIsOpponent(token, ownSide))
         .map(onlineCombatTokenTag)
         .toList();
     if (allOpponents && explosionTargets.isEmpty) return;
@@ -2846,7 +2903,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             context: context,
             builder: (_) => OculumAttackPlanner(
               targets: {
-                for (final e in byId.entries) e.key: faunaTargetName(e.value),
+                for (final e in byId.entries)
+                  e.key: combatParticipantTeamId(e.value) == ownSide
+                      ? '${faunaTargetName(e.value)} · ${t('Danni non letali', 'Nonlethal damage')}'
+                      : faunaTargetName(e.value),
               },
               targetColors: {
                 for (final e in byId.entries)
@@ -5395,10 +5455,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         );
       }
       if (readIntValue(payload['bringiRetaliation']) > 0) {
+        final friendlyFire = _friendlyFireFor(request);
         unawaited(
           applyPlanarSeedDamage(
             '${request['sourceTag']}',
             readIntValue(payload['bringiRetaliation']).clamp(1, 120),
+            friendlyFire: friendlyFire.friendly,
+            friendlyFireResisted: friendlyFire.resisted,
           ),
         );
       }
@@ -5412,6 +5475,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             '${request['sourceTag']}',
             provokerReflection,
             source: 'Scudo del provocatore',
+            attack: request,
           ),
         );
       }
@@ -5421,7 +5485,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (reflected > 0 &&
           controlsOnlineCombatSheet('${request['sourceTag']}')) {
         unawaited(
-          applyRunicReflectedDamage('${request['sourceTag']}', reflected),
+          applyRunicReflectedDamage(
+            '${request['sourceTag']}',
+            reflected,
+            attack: request,
+          ),
         );
       }
       request['outcome'] = outcome.name;
@@ -5485,7 +5553,30 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         } else {
           request.remove('damageDisplayImpact');
         }
-        if (readIntValue(rawReceipt['hpLost']) > 0 && realtimeIsMasterRole) {
+        final friendlyFire = _friendlyFireFor(request);
+        if (realtimeIsMasterRole && payload['friendlyFireDowned'] is bool) {
+          final downed = payload['friendlyFireDowned'] == true;
+          for (final token in masterInitiativeTokens.where(
+            (token) =>
+                combatTokenMatchesSheet(token, '${request['targetTag']}'),
+          )) {
+            if (downed &&
+                friendlyFire.friendly &&
+                !masterInitiativeTokenIsDead(token)) {
+              token['friendlyFireDowned'] = true;
+              token['currentHp'] = 0;
+              token['downed'] = true;
+              token['status'] = 'downed';
+            } else if (!downed && token['friendlyFireDowned'] == true) {
+              token['friendlyFireDowned'] = false;
+            }
+          }
+          captureActiveMasterInitiativeGroup();
+          sendRealtimeInitiativeSnapshotIfPublished();
+        }
+        if (readIntValue(rawReceipt['hpLost']) > 0 &&
+            realtimeIsMasterRole &&
+            !friendlyFire.friendly) {
           final targetIndex = localSheetIndexForOculumTag(
             '${request['targetTag']}',
           );
@@ -5516,7 +5607,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           payload['guardianGoldReflection'] as Map,
         );
       }
-      recordEncounterRewardCombatResult(request);
+      if (!_friendlyFireFor(request).friendly) {
+        recordEncounterRewardCombatResult(request);
+      }
       applyBottledCloudStopResult(
         request,
         hit:
@@ -5549,6 +5642,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             thornDamage,
             element: 'natura',
             source: 'Scudo di rovi',
+            attack: request,
           ),
         );
       }
@@ -6034,6 +6128,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       await _submitOpposedDefense(request, choice, defense, defenseNatural);
       return;
     }
+    final friendlyFire = _friendlyFireFor(request);
+    final wasFriendlyFireDowned = friendlyFireDowned;
     if (request['kind'] == oculumOculumTheftKind) {
       await resolveOculumTheftDefense(request, choice, defense);
       return;
@@ -6804,13 +6900,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             enemyGrade: readIntValue(request['grade']),
             attackKind: '${request['choice'] ?? ''}',
             magicalAttack: (request['effects'] as List? ?? []).isNotEmpty,
+            friendlyFire: friendlyFire.friendly,
+            friendlyFireResisted: friendlyFire.resisted,
             nonLethal:
-                request['sourceMonsterBookId'] == 'scostubanditi' ||
-                const {
-                  'scostubandito_errato',
-                  'scostubandito_veterano_errato',
-                }.contains(request['sourceMonsterBookId']) ||
-                request['faunaNonLethal'] == true,
+                !friendlyFire.friendly &&
+                (request['sourceMonsterBookId'] == 'scostubanditi' ||
+                    const {
+                      'scostubandito_errato',
+                      'scostubandito_veterano_errato',
+                    }.contains(request['sourceMonsterBookId']) ||
+                    request['faunaNonLethal'] == true),
             nonLethalBanditSourceId: '${request['sourceMonsterBookId'] ?? ''}',
             nonLethalRobberyPercent: readIntValue(
               request['faunaRobberyPercent'],
@@ -6948,6 +7047,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             bypassDefense: true,
             enemyLevel: readIntValue(request['level']),
             magicalAttack: request['magicalAttack'] == true,
+            friendlyFire: friendlyFire.friendly,
+            friendlyFireResisted: friendlyFire.resisted,
           );
         }
       } finally {
@@ -6990,6 +7091,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '${request['sourceTag']}',
         readIntValue(request['provokerReflectedDamage']),
         source: 'Scudo del provocatore',
+        attack: request,
       );
       if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
     }
@@ -7045,7 +7147,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       unawaited(sendPartyChestState());
     }
-    if (readIntValue(receipt['hpLost']) > 0 && schedePersonaggio.isNotEmpty) {
+    if (!friendlyFire.friendly &&
+        readIntValue(receipt['hpLost']) > 0 &&
+        schedePersonaggio.isNotEmpty) {
       schedePersonaggio[schedaCorrente]['lastDamageSourceTag'] =
           request['sourceTag'];
       schedePersonaggio[schedaCorrente]['lastDamageTitleItemIds'] =
@@ -7057,7 +7161,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         'killerTotalPower': request['sourceTotalPower'],
       };
     }
-    if (readIntValue(receipt['hpLost']) > 0) {
+    if (!friendlyFire.friendly && readIntValue(receipt['hpLost']) > 0) {
       planarState['deadlyLastHpDamage'] = {
         'id': request['id'],
         'hpLost': readIntValue(receipt['hpLost']),
@@ -7087,14 +7191,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         'soulOnly': const {'anima', 'danno_anima'}.contains(request['element']),
       };
     }
-    planarAfterHpDamage();
+    if (!friendlyFireDowned) planarAfterHpDamage();
     if ((request['referenceMadnessWave'] == true ||
             isLusierDerision(request)) &&
         outcome != OculumAttackOutcome.avoided &&
         faunaReceipt('doppione-wave:$id')) {
       modificaFollia(1, daMostro: true);
     }
-    if (planarState['doppioneCopy'] == true &&
+    if (!friendlyFire.friendly &&
+        planarState['doppioneCopy'] == true &&
         outcome != OculumAttackOutcome.avoided &&
         readIntValue(request['damage']) > 0) {
       currentHpController.text = '0';
@@ -7130,7 +7235,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request,
       hit: !resisted && outcome != OculumAttackOutcome.avoided,
     );
-    recordEncounterRewardCombatResult(request);
+    if (!friendlyFire.friendly) recordEncounterRewardCombatResult(request);
     // The hit is absorbed with the equipment that was active when it landed.
     // Only then may the critical interrupt the transformation.
     if (outcome != OculumAttackOutcome.avoided) {
@@ -7284,6 +7389,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               bypassDefense: effect.bypassDefense,
               bypassShields: effect.bypassShields,
               resistanceBypassDamage: effect.bypassResistance ? amount : 0,
+              friendlyFire: friendlyFire.friendly,
+              friendlyFireResisted: friendlyFire.resisted,
             );
             continue;
           }
@@ -7390,6 +7497,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             applyFusionBonus: false,
             rewardRequest: request,
             resolvedHpDamage: readIntValue(receipt['hpLost']),
+            friendlyFire: friendlyFire.friendly,
+            friendlyFireResisted: friendlyFire.resisted,
           );
           if (effect.id.startsWith('senka_grapple_') &&
               activeConditions.any((c) => c.conditionType == 'immobilizzato')) {
@@ -7477,6 +7586,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     final reply = {
       ...request,
+      if (friendlyFire.friendly || wasFriendlyFireDowned)
+        'friendlyFireDowned': friendlyFireDowned,
       'bringiRetaliation': bringiRetaliation,
       'brambleRetaliation':
           brambleShieldBefore > readIntValue(planarState['brambleShield']) &&
@@ -7503,6 +7614,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         readIntValue(reply['brambleRetaliation']),
         element: 'natura',
         source: 'Scudo di rovi',
+        attack: request,
       );
     }
     if (readIntValue(reply['runicReflectedDamage']) > 0 &&
@@ -7510,6 +7622,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       await applyRunicReflectedDamage(
         '${request['sourceTag']}',
         readIntValue(reply['runicReflectedDamage']),
+        attack: request,
       );
     }
     if (!shieldImpact && !materiaDodge) attachPendingCombatTurnResources(reply);
@@ -7584,7 +7697,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     int damage, {
     String element = '',
     String source = 'Specchio runico',
+    Map<String, dynamic>? attack,
   }) async {
+    final friendlyFire = attack == null ? null : _friendlyFireFor(attack);
     final index = localSheetIndexForOculumTag(target);
     if (index < 0) return;
     final original = schedaCorrente;
@@ -7600,7 +7715,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final previousElement = incomingDamageElement;
       if (element.isNotEmpty) incomingDamageElement = element;
       try {
-        await applicaDannoSubito(dannoEsplicito: damage);
+        await applicaDannoSubito(
+          dannoEsplicito: damage,
+          friendlyFire: friendlyFire?.friendly == true,
+          friendlyFireResisted: friendlyFire?.resisted == true,
+        );
       } finally {
         incomingDamageElement = previousElement;
       }

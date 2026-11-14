@@ -2,6 +2,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/services/oculum_roll_rescue.dart';
 
 void main() {
+  test('base Inspiration checks the natural even when marked critical', () {
+    for (var natural = 1; natural <= 20; natural++) {
+      expect(
+        oculumRollRescueOptions(
+          failed: true,
+          negativeCritical: natural == 1,
+          positiveCritical: natural >= 16,
+          natural: natural,
+          base: 1,
+        ).contains(OculumRollRescue.base),
+        natural >= 2 && natural <= 19,
+      );
+    }
+  });
+
   test('ordinary failures never offer Oculum Inspiration', () {
     expect(
       oculumRollRescueOptions(

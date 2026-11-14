@@ -7,6 +7,7 @@ Set<OculumRollRescue> oculumRollRescueOptions({
   required bool failed,
   required bool negativeCritical,
   bool positiveCritical = false,
+  int? natural,
   int base = 0,
   int superInspiration = 0,
   int oculum = 0,
@@ -18,9 +19,12 @@ Set<OculumRollRescue> oculumRollRescueOptions({
 }) {
   if (!failed) return const {};
   final ordinary = !negativeCritical && !positiveCritical;
+  final baseEligible = natural == null
+      ? ordinary
+      : natural >= 2 && natural <= 19;
   return {
     if (!inspirationUsed) ...{
-      if (ordinary &&
+      if (baseEligible &&
           base >= oculumBaseInspirationCost(chainedFate: chainedFate))
         OculumRollRescue.base,
       if (superInspiration > 0) OculumRollRescue.superInspiration,

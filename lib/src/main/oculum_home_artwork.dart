@@ -517,7 +517,9 @@ class _OculumHomeGalleryState extends State<_OculumHomeGallery> {
       child: SizedBox.expand(
         key: ValueKey(scene),
         child: Image.asset(
-          'assets/oculum/home_art/${scenes[scene]}.png',
+          oculumMonsterArtworkAsset(
+            'assets/oculum/home_art/${scenes[scene]}.png',
+          )!,
           fit: BoxFit.cover,
           filterQuality: FilterQuality.high,
           excludeFromSemantics: true,

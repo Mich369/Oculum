@@ -577,6 +577,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aliases.addAll(
         (group['mergedEncounterIds'] as List? ?? []).whereType<String>(),
       );
+      final sourceTeams = group['fightTeams'];
+      if (sourceTeams is List) {
+        final existing = (destination['fightTeams'] as List? ?? const [])
+            .whereType<Map>()
+            .toList();
+        final teamIds = existing.map((team) => team['id']).toSet();
+        destination['fightTeams'] = [
+          ...existing,
+          for (final team in sourceTeams.whereType<Map>())
+            if ('${team['id']}'.startsWith('team:') && teamIds.add(team['id']))
+              team,
+        ];
+      }
       for (final raw in (group['tokens'] as List? ?? []).whereType<Map>()) {
         final token = Map<String, dynamic>.from(raw);
         if (tags.add('${token['sheetTag'] ?? token['id']}')) tokens.add(token);
@@ -3501,10 +3514,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void normalizeMasterInitiativeTokens() {
     removeExpiredTemporaryInitiativeTurns();
+    final teamGroup = masterParticipantGroup(selectedMasterInitiativeGroupId);
     final sheetIndexesByTag = <String, int>{
       for (var i = 0; i < schedePersonaggio.length; i++)
         '${schedePersonaggio[i]['sheetTag'] ?? ''}': i,
     };
+    late final rewardSheetIndexForToken = buildFightRewardSheetIndexLookup();
+    int rewardSheetIndex(Map<String, dynamic> token) =>
+        rewardSheetIndexForToken(token);
 
     for (int i = 0; i < masterInitiativeTokens.length; i++) {
       final token = masterInitiativeTokens[i];
@@ -3513,6 +3530,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['type'] = '${token['type'] ?? ''}'.trim();
       token['side'] =
           '${token['side'] ?? masterInitiativeSideFromType('${token['type']}')}';
+      if (teamGroup != null) refreshFightTeamToken(teamGroup, token);
       token['status'] = '${token['status'] ?? 'ready'}';
       token['notes'] = '${token['notes'] ?? ''}';
       token['tokenSize'] = masterInitiativeTokenSize(token);
@@ -3546,7 +3564,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       refreshAuraPowerRevision(token, sheetIndex);
       refreshWoundedInitiativeToken(token, sheetIndex: sheetIndex);
-      sampleFightRewardPowerToken(token);
+      sampleFightRewardPowerToken(token, sheetIndexForToken: rewardSheetIndex);
       if (sheetIndex >= 0) token['reflexes'] = sheetReflexesAt(sheetIndex);
       if (sheetIndex >= 0 &&
           isMeccanioBookId(
@@ -3842,6 +3860,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             '${schedePersonaggio[index]['summonInstanceId'] ?? tag}',
         'summonerTag':
             '${schedePersonaggio[index]['summonerTag'] ?? schedePersonaggio[index]['shadowCloneOwnerTag'] ?? ''}',
+        if (schedePersonaggio[index]['summonKind'] != null)
+          'summonKind': schedePersonaggio[index]['summonKind'],
         'fateAllowsExp': readBoolValue(
           schedePersonaggio[index]['fateAllowsExp'],
         ),
@@ -3936,6 +3956,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'deathWounds': index == schedaCorrente
           ? feriteMorte
           : readIntValue(schedePersonaggio[index]['feriteMorte']),
+      'friendlyFireDowned':
+          sheetCurrentHpForDeathAt(index) <= 0 &&
+          schedePersonaggio[index]['friendlyFireDowned'] == true,
       'vitalWills': index == schedaCorrente
           ? volontaVitale
           : readIntValue(schedePersonaggio[index]['volontaVitale']),
@@ -3984,6 +4007,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       token['reactionAt'] = previous['reactionAt'];
       token['actionUsed'] = previous['actionUsed'] ?? false;
       token['deathWounds'] = previous['deathWounds'] ?? token['deathWounds'];
+      if (readIntValue(token['currentHp']) <= 0) {
+        token['friendlyFireDowned'] =
+            previous['friendlyFireDowned'] ?? token['friendlyFireDowned'];
+      }
       token['vitalWills'] = previous['vitalWills'] ?? token['vitalWills'];
       token['downed'] = previous['downed'] ?? token['downed'];
       token['reportedTurn'] = previous['reportedTurn'] ?? token['reportedTurn'];
@@ -4008,6 +4035,25 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       masterInitiativeTokens[existingIndex] = {...previous, ...token};
     } else {
+      final summoner = '${token['summonerTag'] ?? ''}';
+      if (summoner.isNotEmpty) {
+        final owner = masterInitiativeTokens
+            .where(
+              (participant) => combatTokenMatchesSheet(participant, summoner),
+            )
+            .firstOrNull;
+        if (owner != null) {
+          token['side'] = owner['side'] ?? token['side'];
+          for (final key in [
+            'fightTeamId',
+            'fightTeamColorArgb',
+            'teamName',
+            'fightInstanceId',
+          ]) {
+            if (owner.containsKey(key)) token[key] = owner[key];
+          }
+        }
+      }
       masterInitiativeTokens.add(token);
     }
 
@@ -4985,6 +5031,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         'name': '$name + ${t('azione extra', 'extra action')}',
         'type': '${source['type'] ?? t('Partecipante', 'Participant')}',
         'side': '${source['side'] ?? 'ally'}',
+        if (source.containsKey('fightTeamId'))
+          'fightTeamId': source['fightTeamId'],
         'imageBase64': '${source['imageBase64'] ?? ''}',
         'spriteAssetPath': masterInitiativeTokenSpriteAsset(source),
         'tokenSize': masterInitiativeTokenSize(source),
@@ -6280,6 +6328,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     String? damagePacketId,
     bool magicalAttack = false,
     bool nonLethal = false,
+    bool friendlyFire = false,
+    bool friendlyFireResisted = false,
     int nonLethalRobberyPercent = 75,
     String nonLethalBanditSourceId = '',
     bool criticalShieldAlreadyBroken = false,
@@ -6339,6 +6389,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
         ? schedePersonaggio[schedaCorrente]
         : <String, dynamic>{};
+    if (hpCorrenti() > 0) sheet.remove('friendlyFireDowned');
     final sheetKind = tipoSchedaPersonaggio(
       schedaCorrente,
     ).trim().toLowerCase();
@@ -6878,6 +6929,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (scudoCriticoAttivo) {
         dannoFinale = max(1, (dannoFinale / 2).ceil());
       }
+      if (friendlyFireResisted) dannoFinale = dannoFinale * 3 ~/ 4;
 
       int rimanente = dannoFinale;
       rimanente = absorbProvokerShield(rimanente, bypassShields: ignoraScudi);
@@ -7130,8 +7182,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (rimanente > 0 &&
           isLunarGuardianCoreCreature &&
           hitBodyPart == 'core') {
+        final coreDamage = friendlyFire
+            ? min(
+                rimanente,
+                max(0, readIntValue(lunarGuardianCoreState['coreHp']) - 1),
+              )
+            : rimanente;
         rimanente = applyLunarGuardianCoreDamage(
-          rimanente,
+          coreDamage,
           requestId: damagePacketId,
         );
       } else if (rimanente > 0 &&
@@ -7142,7 +7200,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (rimanente > 0) {
         hp = max(0, hp - rimanente);
       }
+      if (!friendlyFire && rimanente > 0 && hp == 0 && friendlyFireDowned) {
+        sheet.remove('friendlyFireDowned');
+      }
       final lunarGuardianCoreDestroyed =
+          !friendlyFire &&
           isLunarGuardianCoreCreature &&
           hitBodyPart == 'core' &&
           lunarGuardianCoreExposed &&
@@ -7155,7 +7217,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         hpBefore: hpPrima,
         hpAfter: hp,
         element: incomingElement,
-        doubleCritical: doubleCritical,
+        doubleCritical: doubleCritical && !friendlyFire,
         criticalProtected: criticalDebuffsBlocked,
         packetId: damagePacketId,
         percentile: sandLavaPercentile,
@@ -7218,7 +7280,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           );
         }
       }
-      if (nonLethal && !lunarGuardianCoreDestroyed && hp <= 0 && hpPrima > 0) {
+      if (!friendlyFire &&
+          nonLethal &&
+          !lunarGuardianCoreDestroyed &&
+          hp <= 0 &&
+          hpPrima > 0) {
         hp = 1;
         scostuNonLethalDefeat(
           robberyPercent: nonLethalRobberyPercent,
@@ -7228,7 +7294,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       recordStructuralHpDamage(damagePacketId, hpPrima, hp);
       if (lunarGuardianCoreDestroyed && hpPrima > 0) {
         recordFaunaFallenTurn();
-      } else if (hp <= 0 && hpPrima > 0 && !nonLethal) {
+      } else if (hp <= 0 && hpPrima > 0 && !nonLethal && !friendlyFire) {
         final revived = tryFuocherelliSecondLife(
           hp,
           incomingElement,
@@ -7242,6 +7308,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         }
       }
       if (safeHpPronto &&
+          !friendlyFire &&
           !lunarGuardianCoreDestroyed &&
           hp <= 0 &&
           hpPrima > 0) {
@@ -7524,8 +7591,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         recordStat35ResHpHit(hpLost: hpLost);
         healStatOpenVitalEcho(hpLost);
       }
-      planarAfterHpDamage();
-      controllaCadutaDopoDanno();
+      if (friendlyFire && hpCorrenti() <= 0) {
+        resolveFriendlyFireKnockout();
+      } else {
+        planarAfterHpDamage();
+        controllaCadutaDopoDanno();
+      }
       controllaStatoForzaDopoHp();
     } finally {
       if (skullFormHit) advanceSkullFormHit();

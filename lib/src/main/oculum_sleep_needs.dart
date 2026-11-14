@@ -188,6 +188,7 @@ extension _OculumSleepAndNeeds on _OculumHomePageState {
           'calendarOriginDay': origin,
           'calendarOriginOrdinal': readIntValue(clock['calendarOriginOrdinal']),
         };
+        final chaosRolled = syncChaosInspiration(saved, now);
         worldNeedsCampaigns[worldNeedsCampaignKey] = saved;
         final afterAsh = worldNeedsEffectiveAsh();
         if (progress.episodes.length > previousEpisodes) {
@@ -201,6 +202,7 @@ extension _OculumSleepAndNeeds on _OculumHomePageState {
         }
         if (delta > 0 ||
             previousDay != day ||
+            chaosRolled ||
             progress.episodes.length != previousEpisodes) {
           dirtyTags.add(tag);
         }

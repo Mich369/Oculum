@@ -34,6 +34,12 @@ const List<String> oculumStructuredEffectTypes = <String>[
   'preparazione',
 ];
 
+const _structuredSummonNames = <String, (String, String)>{
+  'clone_ombra': ('Clone d’ombra', 'Shadow Clone'),
+  'patalpa_compagno': ('Patalpa compagno', 'Patalpa Companion'),
+  'un_vecchio_amore': ('Un vecchio amore', 'An Old Love'),
+};
+
 int oculumTargetPercentageDamage({
   required int percent,
   required int hp,
@@ -1137,6 +1143,7 @@ String oculumStructuredEffectQuickCommand(
 String oculumStructuredEffectDescription(
   OculumStructuredEffect effect, {
   Iterable<HiddenEyeStat> subtraits = const <HiddenEyeStat>[],
+  bool english = false,
 }) {
   final custom = effect.customDisplayText.trim();
   final frequency = oculumStructuredEffectFrequency(effect.frequency);
@@ -1215,8 +1222,25 @@ String oculumStructuredEffectDescription(
         '${effect.target.isEmpty ? 'Costrutto' : effect.target}: $displayedValue Vita',
       );
     case 'evocazione':
+      final key = oculumDynamicFormulaKey(target);
+      final labels = _structuredSummonNames[key];
+      if (labels == null) {
+        return target.isEmpty
+            ? (english ? 'Choose a companion' : 'Scegli un compagno')
+            : (english
+                  ? 'Unsupported summon · $target'
+                  : 'Evocazione non riconosciuta · $target');
+      }
+      final name = english ? labels.$2 : labels.$1;
+      if (key == 'clone_ombra') {
+        final duration = effect.duration.trim();
+        return withPeriod(
+          '$name · $displayedValue ${english ? 'HP' : 'Vita'}'
+          '${duration.isEmpty ? '' : ' · $duration ${english ? 'turns' : 'turni'}'}',
+        );
+      }
       return withPeriod(
-        '${effect.target.isEmpty ? 'Evocazione' : effect.target}: $displayedValue Vita',
+        '$name · ${english ? 'until the fight ends' : 'fino a fine Fight'}',
       );
     case 'difesa':
       return withPeriod('Difesa + $displayedValue');

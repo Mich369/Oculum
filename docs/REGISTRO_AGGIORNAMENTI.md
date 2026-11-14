@@ -1,5 +1,19 @@
 # Registro cumulativo per i giocatori
 
+## Skill, prestazioni e spazio — 14 novembre
+
+- Per Chaos, il sorteggio automatico delle Ispirazioni scatta ogni 9 ore di gioco. Le schede del Fato possono continuare a usare il Patto anche su un critico negativo.
+- «Riconosci testo libero» mostra gli effetti prima di aggiungerli e lascia visibili i passaggi da configurare. Il riconoscimento delle evocazioni supportate funziona sul dispositivo.
+- L’editor permette di scegliere il compagno da evocare. I tentativi bloccati non spendono la risorsa della Skill. I Piranha minori conservano l’attacco normale.
+- Le forme superiori dei Cavalieri Rossi richiedono anche 4 Volontà al livello 150 e 8 al livello 200. Gli Artigli mostruosi costano 1, 2 e 3 Materia.
+- Il passaggio di turno riusa un indice delle schede. I salvataggi evitano alcune riletture dei backup già protetti e la cache grafica rispetta il limite previsto per la piattaforma anche dopo un cambio di impostazione.
+- Sostituite 28 immagini incluse con WebP senza perdita. L’aggiornamento Windows libera le copie temporanee dopo la conferma di avvio. Android libera lo ZIP dopo aver passato l’APK al programma di installazione.
+
+## Squadre nel Fight della scheda — 14 novembre
+
+- Dal menu Fight della scheda il Master può creare squadre, cambiarne nome e colore e spostare i partecipanti. Una squadra aggiuntiva può attaccare i membri di entrambe le squadre predefinite.
+- I colpi tra compagni possono portare a 0 Vita e lasciare il bersaglio a terra senza ucciderlo. Il bersaglio ha il 25% di Resistenza quando coincidono sia Fato o Chaos sia Luna, Sole o Niente.
+
 ## Risorse nei risultati dei tiri — 13 novembre
 
 - Nel risultato di un tiro fallito puoi scegliere fra Ispirazioni, Fortuna magica e Patto del Fato quando si applicano e hai ancora la risorsa.
