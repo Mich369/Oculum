@@ -77,6 +77,18 @@ class DownloadPublicationTests(unittest.TestCase):
         self.assertNotIn("private prose", result)
 
     def test_published_catalog_preserves_updater_identity_with_dynamic_run_name(self):
+        self.assert_publish_with_listed_runs([42], promotes=True)
+
+    def test_verified_run_is_published_when_the_success_list_lags(self):
+        for listed_ids in ([], [41]):
+            with self.subTest(listed_ids=listed_ids):
+                self.assert_publish_with_listed_runs(listed_ids, promotes=True)
+
+    def test_older_verified_run_is_archived_without_changing_the_channel(self):
+        self.assert_publish_with_listed_runs([100], promotes=False)
+        self.assert_publish_with_listed_runs([], promotes=False, channel_id=100)
+
+    def assert_publish_with_listed_runs(self, listed_ids, *, promotes, channel_id=None):
         run = dict(id=42, workflow_id=7, name="Build distribution main @ " + "a" * 40,
                    conclusion="success", status="completed", head_branch="main",
                    head_sha="a" * 40, html_url="https://github.com/Mich369/Oculum/actions/runs/42",
@@ -91,6 +103,7 @@ class DownloadPublicationTests(unittest.TestCase):
         published = []
         assets = []
         downloads = []
+        created_tags = []
         tag = "oculum-build-42"
 
         def api(path):
@@ -99,7 +112,7 @@ class DownloadPublicationTests(unittest.TestCase):
             if path == "actions/workflows/7":
                 return workflow
             if path.startswith("actions/workflows/7/runs?"):
-                return {"workflow_runs": [run]}
+                return {"workflow_runs": [dict(run, id=run_id) for run_id in listed_ids]}
             if path.startswith("actions/runs/42/artifacts?"):
                 return {"artifacts": artifacts}
             self.fail("Unexpected API request: " + path)
@@ -108,6 +121,8 @@ class DownloadPublicationTests(unittest.TestCase):
             if args[0] == "api":
                 downloads.append(int(args[1].split("/")[-2]))
                 kwargs["stdout"].write(payload)
+            if args[:2] == ("release", "create"):
+                created_tags.append(args[2])
             if args[:2] == ("release", "upload"):
                 self.assertNotIn("--clobber", args)
                 filename = Path(args[3]).name
@@ -119,6 +134,10 @@ class DownloadPublicationTests(unittest.TestCase):
         def release(name):
             if name == tag and assets:
                 return dict(tag_name=tag, draft=False, target_commitish=run["head_sha"], assets=assets)
+            if name == publisher.CHANNEL and channel_id is not None:
+                return {"body": publisher.notes({"7": dict(workflow=workflow["name"],
+                    commit="b" * 40, runId=channel_id, artifacts=[],
+                    runUrl=f"https://github.com/{publisher.REPO}/actions/runs/{channel_id}")})}
             return None
 
         with patch.object(publisher, "api", side_effect=api), \
@@ -130,6 +149,11 @@ class DownloadPublicationTests(unittest.TestCase):
         self.assertEqual(downloads, list(range(1, 10)))
         self.assertEqual(len(assets), 9)
         self.assertEqual(check_anonymous.call_count, 9)
+        self.assertIn(tag, created_tags)
+        if not promotes:
+            self.assertEqual(created_tags, [tag])
+            self.assertEqual(published, [])
+            return
         self.assertEqual(len(published), 1)
         entry = publisher.read_catalog(published[0])["7"]
         self.assertEqual(entry["workflow"], "Build distribution")

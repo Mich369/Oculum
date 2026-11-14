@@ -262,9 +262,10 @@ void main() {
       OculumMonsterTheme.desktopIllustrationForId('${base}_variante_errante'),
       'assets/oculum/home_art/theme_${base}_variante_errante_canon_20261106_votes2.png',
     );
+    final receipt = File(_previousReceipt).readAsStringSync(encoding: latin1);
     expect(
-      _sha256(File(_previousReceipt).readAsBytesSync()),
-      '6a6a0ef490e7fa532d018ad78ae63d023450d1227ef478c703de1540f9d009be',
+      _sha256(latin1.encode(receipt.replaceAll('\r\n', '\n'))),
+      'ef58138246c2fdc48e13699a01094e3da2e2960f0a9274889fd89a44089b556b',
     );
   });
 

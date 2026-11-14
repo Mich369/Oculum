@@ -249,11 +249,6 @@ def publish(run_id):
     workflow = api(f"actions/workflows/{run['workflow_id']}")
     validate_run(run, workflow)
     workflow_id = run["workflow_id"]
-    branch_query = urlencode({"branch": run["head_branch"], "status": "success", "per_page": 1})
-    latest = api(f"actions/workflows/{workflow_id}/runs?{branch_query}")
-    if not latest.get("workflow_runs") or latest["workflow_runs"][0]["id"] != run["id"]:
-        print("A newer successful build exists; keeping its download channel")
-        return
     artifacts = []
     page = 1
     while True:
@@ -279,9 +274,6 @@ def publish(run_id):
             if name in LEGACY_ARCHIVES and name + ".zip" in existing_names:
                 expected[name + ".zip"] = archive_entry(artifact, tag)
         present = verified_release_assets(existing, tag, run["head_sha"], expected)
-    current = release(CHANNEL)
-    catalog = read_catalog(current.get("body") or "") if current else {}
-    promote = can_promote_channel(catalog, run_id)
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         if not existing:
@@ -306,7 +298,20 @@ def publish(run_id):
         asset_ids = {asset["name"]: asset.get("id") for asset in published["assets"]}
         for entry in entries:
             verify_anonymous_download(entry, asset_ids[entry["name"] + ".zip"])
-        if not promote:
+        # The listing can lag the completion event. A missing or older listed
+        # run cannot invalidate the requested run's verified release.
+        branch_query = urlencode({"branch": run["head_branch"], "status": "success", "per_page": 1})
+        latest = api(f"actions/workflows/{workflow_id}/runs?{branch_query}")
+        newer_run_exists = any(
+            type(candidate.get("id")) is int and candidate["id"] > run["id"]
+            and candidate.get("status") == "completed" and candidate.get("conclusion") == "success"
+            and candidate.get("event") not in {"pull_request", "pull_request_target"}
+            and candidate.get("head_repository", {}).get("full_name") == REPO
+            for candidate in latest.get("workflow_runs", [])
+        )
+        current = release(CHANNEL)
+        catalog = read_catalog(current.get("body") or "") if current else {}
+        if newer_run_exists or not can_promote_channel(catalog, run_id):
             print("Archived verified build without rolling back the public channel")
             return
         # The channel points to one latest platform build. Versioned releases
