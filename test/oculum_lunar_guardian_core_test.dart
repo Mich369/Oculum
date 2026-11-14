@@ -23,16 +23,19 @@ Future<(dynamic, OculumPerformanceProbe)> _mount(WidgetTester tester) async {
   state.scudoController.text = '0';
   state.scudoOculumController.text = '0';
   state.scudoOculumMaxController.text = '100';
-  probe.invalidateDerivedCaches();
-  state.currentHpController.text = '${probe.maximumHp()}';
   // Isolate the exact shield/core transfer from independent random passive
-  // mitigation and the quarter-HP force-state lottery. Their own suites keep
-  // exercising those mechanics; the expected 20 core / 60 body HP stays exact.
+  // mitigation. Damage processing restores the default unlocked subtraits.
+  state.fortuna = 0;
+  state.karmaController.text = '-1'; // Cancels the level 3 Luck bonus.
+  state.oculumController.text = '0';
+  state.currentOculumController.text = '0';
   for (final dynamic stat in state.hiddenEyeStats) {
-    if (const {'fortuna', 'resistenza', 'riflessi'}.contains(stat.id)) {
-      stat.unlocked = false;
+    if (const {'resistenza', 'riflessi'}.contains(stat.id)) {
+      stat.valore = -50;
     }
   }
+  probe.invalidateDerivedCaches();
+  state.currentHpController.text = '${probe.maximumHp()}';
   state.statoForzaAttivo = '';
   state.statoForzaPronto = false;
   return (state, probe);
@@ -225,6 +228,9 @@ void main() {
     'production incoming damage crosses both shields before damaging only the exposed core and its proportional body share',
     (tester) async {
       final (state, p) = await _mount(tester);
+      for (final stat in ['fortuna', 'resistenza', 'riflessi']) {
+        expect(p.subtraitValue(stat), lessThanOrEqualTo(0), reason: stat);
+      }
       final core = p.lunarGuardianCoreState()
         ..['armorIntegrity'] = 0
         ..['coreExposed'] = true
