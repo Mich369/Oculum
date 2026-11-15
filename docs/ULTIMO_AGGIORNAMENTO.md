@@ -7,7 +7,7 @@
 - Il baratto accetta più oggetti e riconosce tutto il resto. Se disponibile, un secondo articolo costa il 15% in meno. Per il Fato ogni 9 Obser di mancia danno 1 Fortuna.
 - La ricerca di Skill, oggetti e mostri accetta frammenti di nome. «Demon» trova Forest Demon, dando precedenza ai risultati più vicini.
 - Nella ricerca dei nomi dei proiettili, i termini affini trovano gli stessi gruppi e gli elementi della scheda aperta vengono mostrati per primi.
-- Ventidue temi dai lotti scelti, compresi Ventyclaw D, Syntermoltys E, Viscuprum F, Visbunnys E, Karnyrattle F, Silvarkrath A, Lorica Gleaner E e Ossyblayn D. Gli Armadilli di Cristallo e della Sabbia usano la tavola C. Anche i nomi precedenti restano ricercabili.
+- Ventitré temi dai lotti scelti, compresi Aurystride D, Ventyclaw D, Syntermoltys E e Viscuprum F. Gli Armadilli di Cristallo e della Sabbia usano la tavola C. Anche i nomi precedenti restano ricercabili.
 - Nuovi temi per Sanguifeng, Aculotide e Vesanybel. Cerca Vesanybel anche come Custode della Campana Cieca o Vesanybell.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google, anche per cambiare turno e usare i comandi rapidi dei partecipanti nel Fight condiviso.
 - Ventybleyd è il nuovo nome della Fata Cacciatrice. Karyklaw è il nuovo nome del Crostaceo corazzato. Gli incontri di viaggio conservano gli oggetti del catalogo e i valori base dei mostri.
