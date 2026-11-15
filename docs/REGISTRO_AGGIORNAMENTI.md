@@ -17,6 +17,7 @@
 - La Bandita Veterana usa la tavola C, sul ponte sotto la pioggia. La grafia precedente Bandito Veterana resta ricercabile.
 - L’Arpia Veterana diventa Ventyclaw e usa la tavola D in volo di traverso. La Larva di Lava Corazzata diventa Syntermoltys e usa la tavola E fra due pareti. I nomi precedenti restano ricercabili.
 - Il Golem Runico Veterano diventa Viscuprum e usa la tavola F, che mostra il nucleo dietro le piastre infrante. In combattimento il nucleo diventa mirabile dopo la rottura delle piastre.
+- L’Armadillo di Cristallo usa la tavola C «Annusa la vena». L’Armadillo della Sabbia usa la C «Ventre tra le rocce». Il ventre di entrambi è mirabile nella forma aperta.
 - Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google. Da entrambi può cambiare il turno del Fight condiviso e usare i comandi rapidi disponibili sui partecipanti. Il secondo dispositivo sincronizza le modifiche con il principale.
 - La Fata Cacciatrice usa il nome Ventybleyd e la tavola F. Il Crostaceo corazzato usa il nome Karyklaw e la tavola B. Negli incontri di viaggio il generatore conserva l’inventario del catalogo e i valori base dei mostri anche quando il catalogo usa il formato statistico storico.
