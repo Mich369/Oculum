@@ -17,6 +17,7 @@
 - Anymareap è la terza Art della Combattente dell’Anima Elité. Divide i Danni base spirituali fra un massimo di tre nemici e usa un’Azione. Il costo iniziale di 4 Oculum e il recupero di 4 turni personali sono modificabili.
 - Confermate le tavole di Ratygrinh, Acuagoblin Territoriale, Oblyvuard, Lignoryt e Lunavyr. I nomi precedenti restano ricercabili.
 - Nel selettore dei mostri del Master, una descrizione breve appare sotto il nome.
+- Cambiando l’elemento di un mostro si aggiornano le sue resistenze ereditate. Le resistenze personalizzate rimangono modificabili nell’editor del Bestiario.
 
 - Nel generatore Master, Tab o la lente trovano l’ID del mostro e propongono alternative per refusi e omonimi.
 - Il catalogo Skill del Master accetta alias e grafie simili. Le forme del dossier vengono preparate all’apertura e il catalogo oggetti riusa i calcoli ripetuti.
