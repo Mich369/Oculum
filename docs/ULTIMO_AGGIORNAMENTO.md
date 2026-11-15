@@ -1,4 +1,28 @@
-# Squadre nel Fight della scheda
+# Bestiario e porzioni dei pasti
+
+- Anymareap è la terza Art della Combattente dell’Anima Elité. Divide i Danni base spirituali fra un massimo di tre nemici e usa un’Azione. Il costo iniziale di 4 Oculum e il recupero di 4 turni personali sono modificabili.
+- Confermate le tavole di Ratygrinh, Acuagoblin Territoriale, Oblyvuard, Lignoryt e Lunavyr. I nomi precedenti restano ricercabili.
+- Nel selettore dei mostri del Master, una descrizione breve appare sotto il nome.
+
+- Nel generatore Master, Tab o la lente trovano l’ID del mostro e propongono alternative per refusi e omonimi.
+- Il catalogo Skill del Master accetta alias e grafie simili. Le forme del dossier vengono preparate all’apertura e il catalogo oggetti riusa i calcoli ripetuti.
+- Le nuove schede dei mostri ordinari possono ricevere una Open aggiuntiva più debole, sbloccata dal livello 3 e potenziata in base al Grado.
+- Bunnys vola con le orecchie. Sonoreye e Topo Mutante hanno tecniche proprie. I topolini di più richiami possono coesistere e scompaiono dopo il primo morso.
+- Aculotide usa tre spine perforanti, un guizzo in verticale e uno scoppio d’Acqua alla morte. Oculiath ha un uncino colpibile.
+- L’Oculiath minore ha il 60% della Vita derivata dalla Resilienza, un raggio da +2/+6/+20 Danni e lo stesso uncino del base. Il Maggiore perde il raggio del singolo occhio distrutto.
+- La Terramaul di Terramaund è mirabile. Frutibush conserva il volo se gli colpiscono la piega del corpo. La Combattente dell’Anima e l’Elité hanno temi distinti.
+- Frutibush vola, cura e può distribuire le Foglie Lama. Aggiornati gli sfondi del Re Goblin e del Frutibush. La barra della scheda lascia intravedere lo sfondo e i pulsanti reagiscono al passaggio del mouse in 1,3 secondi.
+- La sazietà degli alimenti si può modificare nell’inventario. Le porzioni di cibi diversi si sommano.
+
+## Sfere, mercanti e campagne
+
+- L’Alchimista può offrire pergamene delle Sfere elementali I–III e della Sfera Predatrice I–V. Il lancio diretto usa la forma acquistata. La Skill appresa conserva costi, recuperi ed effetti modificabili.
+- Con Fuoco o Lava puoi spendere un’Azione per liberare un alleato dal Gelo. Seleziona l’alleato in «Colpisci il ghiaccio». L’effetto si risolve senza tiro o perdita di Vita.
+- Nel Fight locale la Sfera Spirituale concede al lanciatore un attacco gratuito contro il corpo inerme, utilizzabile una volta finché dura l’effetto.
+- I frammenti del Simbolo della Luna valgono 60 Obser a Vaitern. A Lost Town i prezzi d’acquisto salgono del 25%.
+- Gli override del Monster Book appartengono alla campagna. Importare una scheda o usare Annulla preserva il catalogo attivo.
+
+## Squadre nel Fight della scheda
 
 - Il Master può creare squadre, cambiarne nome e colore e spostare i partecipanti dal menu Fight della scheda.
 - A 0 Vita per un colpo della propria squadra si resta a terra. La Resistenza del 25% si applica quando coincidono entrambe le appartenenze.

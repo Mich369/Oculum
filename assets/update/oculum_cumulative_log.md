@@ -1,5 +1,33 @@
 # Registro cumulativo per i giocatori
 
+## Anymareap e scelte del Bestiario — 15 novembre
+
+- La Combattente dell’Anima Elité eredita le Art della Normale e ottiene Anymareap. Con un’Azione il teschio ripartisce i Danni base spirituali tra uno, due o tre nemici distinti. Il costo iniziale è 4 Oculum e il recupero è di 4 turni personali. Le schede Elité precedenti ricevono l’Art senza perdere le personalizzazioni.
+- Confermate cinque tavole del lotto 04. Ratygrinh usa G, Acuagoblin Territoriale usa E, Oblyvuard e Lignoryt usano B, Lunavyr conserva H. I nomi precedenti restano ricercabili.
+- Nella creazione dei mostri del Master, una descrizione breve del Bestiario compare sotto ciascun nome. Il selettore carica le righe mentre scorri.
+
+## Sfere, mercanti e Monster Book — 14 novembre
+
+- L’Alchimista può offrire le pergamene elementali I–III e la Sfera Predatrice I–V. Ogni pergamena usa la forma riportata sull’oggetto e costa solo un’Azione. Le Sfere elementali apprese spendono 3/6/12 Oculum, o 3/5/9 Materia per chi non possiede Oculum, con recuperi di 3/4/5 turni personali.
+- Logorato Acido applica danno e usura dello Scudo nel tempo. Recuperare almeno un punto di Vita arresta l’effetto. Il congelamento di Gelo blocca il Movimento e le risorse del turno. Chi è congelato può liberarsi con Volontà o con il proprio Fuoco o Lava. Chi dispone di Fuoco o Lava può anche scegliere «Colpisci il ghiaccio» e spendere un’Azione per liberare un alleato congelato, senza tiro né danni.
+- Nel Fight sulle schede controllate localmente, la Sfera Spirituale rende inerme il corpo e concede al lanciatore un solo attacco gratuito contro quel bersaglio, utilizzabile finché dura l’effetto. Annullare la preparazione conserva l’opportunità.
+- A Vaitern si possono scambiare i frammenti del Simbolo della Luna per 60 Obser ciascuno oppure usarli per pagare un acquisto. Il rincaro del Mercante di Lost Town è del 25%.
+- Gli override del Monster Book si salvano nella campagna. Riaprire, importare o annullare modifiche a una scheda conserva il catalogo della campagna. I valori di Resistenza del catalogo si applicano finché la scheda non li personalizza.
+
+## Bestiario e porzioni dei pasti — 14 novembre
+
+- Il Master può completare il nome di un mostro in un ID con Tab o la lente. Con un refuso o più corrispondenze può scegliere dalle alternative. Il Monster Book Party ricerca i nomi già identificati.
+- Nel catalogo di assegnazione del Master, cerca le Skill per nome, alias in italiano o inglese e grafie simili. I dettagli delle forme dei mostri vengono preparati quando si apre la Skill. Il catalogo degli oggetti riusa i calcoli di materiali e ricette.
+- I mostri ordinari con Open generiche ne ricevono una tra le due candidate per Grado. La variante debole delle Open compatibili si sblocca al livello 3. Parte dal 25% degli effetti numerici e cresce del 10% di quel valore per Grado. I corredi speciali conservano i propri limiti.
+- Re Goblin, Oculiath, Oculiath Maggiore, Osservatore del Sole, Sanguifang, Combattente dell’Anima, Sonoreye e Topo Mutante hanno tecniche proprie. Il Topo Mutante può tenere in campo più richiami e ciascun topolino scompare dopo il primo morso. Bunnys vola con le orecchie e ha due cure distinte.
+- Aculotide può distribuire tre spine perforanti su avversari diversi o concentrarle su uno solo. Con Guizzo può alzarsi fino a 2 metri fino al proprio turno successivo. Alla morte confermata colpisce con uno scoppio d’Acqua chi lo ha colpito in mischia nel turno. L’Oculiath base ha un solo uncino colpibile.
+- L’Oculiath base può afferrare e trasportare un bersaglio con l’uncino in un Fight gestito dal Master con entrambe le schede disponibili localmente. Frutibush vola, cura gli alleati e può distribuire fino a 3, 6 o 12 Foglie Lama.
+- L’Oculiath minore ha il 60% della Vita derivata dalla Resilienza del base e aggiunge 2/6/20 Danni a 16/25/30 metri. Può trasportare un bersaglio con l’uncino. Il Maggiore perde il raggio del singolo occhio distrutto. Il Minore usa la tavola D dell’acquedotto e il Maggiore la G in avorio e vermiglione.
+- La Terramaul ha integrità propria. Frutibush continua a volare se perde la piega del corpo. La Combattente dell’Anima normale e l’Elité hanno temi distinti.
+- Aggiornato lo sfondo del Re Goblin, con la tavola in cui poggia un piede sul masso. Aggiunto lo sfondo del Frutibush volante.
+- Lo sfondo della scheda è visibile dietro la barra laterale. I pulsanti diventano gradualmente più opachi in 1,3 secondi al passaggio del mouse.
+- Si possono combinare porzioni di cibi diversi per completare un pasto. La sazietà si modifica nell’inventario. I buff dei singoli cibi si applicano al consumo e le regole del pasto scattano al completamento.
+
 ## Skill, prestazioni e spazio — 14 novembre
 
 - Per Chaos, il sorteggio automatico delle Ispirazioni scatta ogni 9 ore di gioco. Le schede del Fato possono continuare a usare il Patto anche su un critico negativo.
