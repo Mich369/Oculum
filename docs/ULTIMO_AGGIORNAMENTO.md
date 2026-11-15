@@ -26,6 +26,8 @@
 - RockRhyno ha il nuovo sfondo desktop G1 «Carica frontale nel salto».
 - Alaryft ha un nuovo sfondo desktop. Le quattro zampe uncinate e le due corna sono mirabili singolarmente.
 - Nuovi sfondi per Visbark, Ombra Ignota e Nyvowl. I nomi Troll Veterana e Gufo di Neve Blu restano ricercabili.
+- Cloudtusk e Tryjaw hanno nuovi sfondi. Nell’Idra puoi mirare alle singole teste, alle zampe e alla coda.
+- La Pietra della Resurrezione si compra al Mercato Nero o dall’Alchimista e si usa in campagna locale. Il limite dipende dalla difficoltà e segue l’orologio della campagna.
 
 - Nel generatore Master, Tab o la lente trovano l’ID del mostro e propongono alternative per refusi e omonimi.
 - Il catalogo Skill del Master accetta alias e grafie simili. Le forme del dossier vengono preparate all’apertura e il catalogo oggetti riusa i calcoli ripetuti.
