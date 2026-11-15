@@ -21,6 +21,11 @@
 - Nell’editor del Bestiario, cambiare elemento aggiorna le resistenze ereditate e conserva quelle personalizzate. Il campo «Resistenze personalizzate» consente di intervenire sui singoli elementi. Corretto anche un errore alla chiusura dell’editor.
 - Grofix usa la tavola F «Stretto nella faglia» in Expressive Ink su desktop. Su telefono resta la composizione approvata in precedenza.
 - L’Armadillo di Legno usa la tavola A «Sotto le radici». Snorlo Corazzata usa la tavola G «Cancello divelto», distinta dallo sfondo dello Snorlo base.
+- Divoramitù usa la tavola F «Scatto sul pendio», Distruttor Caramella la B «Spadone sollevato» e Baby Rock Rhino la E «Il sasso presso l’acqua».
+- In Snorlo Corazzata si possono colpire separatamente testa, ogni occhio e ciascuna delle due gambe, oltre alle quattro braccia, al corpo e alla giuntura.
+- Divoramitù Elité e l’Aberrazione Intermedia Angelica adottano la tavola F dei rispettivi lotti. Baby Rock Rhino Veterana diventa Visrhyno e adotta la tavola D «Guardia sulla terrazza». Anche il nome precedente rimane ricercabile.
+- Baby Rock Rhino ha un corno e quattro zampe mirabili separatamente. A inizio Fight ottiene Scudo normale pari al 25% della Vita massima, arrotondato per eccesso. Quando quello Scudo si rompe, il nucleo diventa mirabile. La pergamena rara di Petryguard ha il 5% al tiro del bottino e insegna la Passiva dello Scudo.
+- Tutti i tipi di ali si possono ritirare gratuitamente. Se una forma ha durata e CD, il ritiro volontario riduce il CD della durata rimasta. Le due ali dell’Aberrazione Intermedia Angelica sono mirabili mentre sono esposte.
 - Sunwalker diventa Aurystride e usa la tavola D «Arresto con mano a terra». Le due braccia e le due gambe sono mirabili. I punti deboli restano il torace e la giuntura.
 - I pulsanti lasciano intravedere un po’ di più lo sfondo a riposo. Le scritte e le icone restano piene e il menu della scheda si illumina gradualmente in 1,3 secondi.
 - Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
