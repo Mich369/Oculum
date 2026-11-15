@@ -27,6 +27,8 @@
 - Alaryft ha un nuovo sfondo desktop. Le quattro zampe uncinate e le due corna sono mirabili singolarmente.
 - Nuovi sfondi per Visbark, Ombra Ignota e Nyvowl. I nomi Troll Veterana e Gufo di Neve Blu restano ricercabili.
 - Cloudtusk e Tryjaw hanno nuovi sfondi. Nell’Idra puoi mirare alle singole teste, alle zampe e alla coda.
+- Nuovi sfondi desktop per Ignyshell, Vaghyuil, Navigatore dell’Aria e Ragno della linfa acida. Nel Ragno puoi mirare singolarmente a otto zampe.
+- Necthrall, Boss Spirituale, controlla un nemico e può spendere la sua Reazione per difendersi. Il Legame di Necthrall premia la vittoria e applica ad Aiuto una sola volta il bonus più alto.
 - La Pietra della Resurrezione si compra al Mercato Nero o dall’Alchimista e si usa in campagna locale. Il limite dipende dalla difficoltà e segue l’orologio della campagna.
 
 - Nel generatore Master, Tab o la lente trovano l’ID del mostro e propongono alternative per refusi e omonimi.
