@@ -1,7 +1,7 @@
 # Mercato, baratto e Bestiario
 
 - Nuovi sfondi per Senka e i tre Solari. Senka ha anche una reliquia aggiornata e uno sfondo Ombra Mascherata quando equipaggia la maschera nel suo tema.
-- Le rotture degli Scudi hanno fratture di vetro e bordi d’inchiostro. Cambiano anche gli effetti di danno, cura, risorse, potenziamenti e condizioni.
+- Gli Scudi si frantumano come vetro. I Danni alla Vita mostrano tre tagli scuri, gocce ai lati e un bordeaux più marcato sui colpi pesanti. Rinnovati anche cure, risorse, potenziamenti e condizioni.
 - Dal Mercato puoi visitare le botteghe dei giocatori e cambiare colore RGB/HEX e nome Online. Il Master ha una bottega privata e può applicare sconti con rimborso della sola differenza.
 - Il baratto accetta più oggetti e riconosce tutto il resto. Se disponibile, un secondo articolo costa il 15% in meno. Per il Fato ogni 9 Obser di mancia danno 1 Fortuna.
 - La ricerca di Skill, oggetti e mostri accetta frammenti di nome. «Demon» trova Forest Demon, dando precedenza ai risultati più vicini.
