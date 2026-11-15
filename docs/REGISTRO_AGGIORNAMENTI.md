@@ -15,6 +15,8 @@
 - Lorica Gleaner usa la tavola E. L’Ammasso pustoloso diventa Ossyblayn e usa D. I nomi precedenti restano ricercabili.
 - Il Fustigatore rituale adotta il nome Miruslash e l’Arcangelo Errante Vagarwyngh. Entrambi usano la tavola E. Vagarwyngh ha due ali mirabili dopo l’esiliazione dell’Ala Nera. Flagellum Vow e Ordinwing Wingstray restano ricercabili.
 - La Bandita Veterana usa la tavola C, sul ponte sotto la pioggia. La grafia precedente Bandito Veterana resta ricercabile.
+- L’Arpia Veterana diventa Ventyclaw e usa la tavola D in volo di traverso. La Larva di Lava Corazzata diventa Syntermoltys e usa la tavola E fra due pareti. I nomi precedenti restano ricercabili.
+- Il Golem Runico Veterano diventa Viscuprum e usa la tavola F, che mostra il nucleo dietro le piastre infrante. In combattimento il nucleo diventa mirabile dopo la rottura delle piastre.
 - Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google. Da entrambi può cambiare il turno del Fight condiviso e usare i comandi rapidi disponibili sui partecipanti. Il secondo dispositivo sincronizza le modifiche con il principale.
 - La Fata Cacciatrice usa il nome Ventybleyd e la tavola F. Il Crostaceo corazzato usa il nome Karyklaw e la tavola B. Negli incontri di viaggio il generatore conserva l’inventario del catalogo e i valori base dei mostri anche quando il catalogo usa il formato statistico storico.
