@@ -7,6 +7,7 @@
 - Nei selettori di Skill, oggetti e mostri si può cercare una parte del nome. Per esempio «demon» trova Forest Demon dopo i nomi che corrispondono esattamente o iniziano con Demon.
 - La ricerca riconosce termini affini per i nomi dei proiettili nelle Skill, nel catalogo oggetti e nel Monster Book. Per queste ricerche dà precedenza ai risultati degli elementi della scheda aperta.
 - Aggiornati i temi desktop di Ferryfur, Glayswuolf, Bunnys, Visbunnys, Fatomhol, Forest Demon Errato, Sensimoss, Dolyfern, Acuagoblin Predatore e Acuagoblin Curioso. Durafèr, Bunnys Veterana, Ciclope del Fato e Sciamano Malizioso restano ricercabili con le grafie precedenti.
+- Caro Ossis rituale si chiama Karnyrattle e usa la tavola F. Silvarkrath conserva il nome e usa la tavola A.
 - Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google. Da entrambi può cambiare il turno del Fight condiviso e usare i comandi rapidi disponibili sui partecipanti. Il secondo dispositivo sincronizza le modifiche con il principale.
 - La Fata Cacciatrice usa il nome Ventybleyd e la tavola F. Il Crostaceo corazzato usa il nome Karyklaw e la tavola B. Negli incontri di viaggio il generatore conserva l’inventario del catalogo e i valori base dei mostri anche quando il catalogo usa il formato statistico storico.
