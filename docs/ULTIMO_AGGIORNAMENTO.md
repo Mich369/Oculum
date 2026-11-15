@@ -23,6 +23,7 @@
 - Tre nuovi sfondi per Divoramitù, Distruttor Caramella e Baby Rock Rhino. Snorlo Corazzata ha testa, occhi e gambe mirabili separatamente.
 - Nuovi sfondi per Divoramitù Elité, Aberrazione Intermedia Angelica e Visrhyno, già Baby Rock Rhino Veterana.
 - Baby Rock Rhino, RockRhyno intermedio e Visrhyno aprono il Fight con Scudo normale e possono dare la pergamena rara di Petryguard. Ritirare volontariamente le ali con durata e CD recupera il CD pari alla durata residua.
+- RockRhyno ha il nuovo sfondo desktop G1 «Carica frontale nel salto».
 
 - Nel generatore Master, Tab o la lente trovano l’ID del mostro e propongono alternative per refusi e omonimi.
 - Il catalogo Skill del Master accetta alias e grafie simili. Le forme del dossier vengono preparate all’apertura e il catalogo oggetti riusa i calcoli ripetuti.
