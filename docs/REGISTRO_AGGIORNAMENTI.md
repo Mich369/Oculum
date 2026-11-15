@@ -34,6 +34,8 @@
 - Il Meccanio Malconcio Errante diventa Vaghyuil e usa «Alla leva». Il Navigatore dell’Aria conserva il nome e usa la G «La fenditura dei venti».
 - Necthrall è una Marionettista di classe Boss e di elemento Spirituale. Con un’Azione tenta il controllo di un nemico, che può resistere con Volontà. Il controllo dura fino al turno successivo del Boss o alla rottura del fuso. In Difesa può spendere la Reazione della marionetta per ottenere +3 CM.
 - I vincitori ottengono il Legame di Necthrall. Con Aiuta compagno conta una sola volta il bonus più alto tra chi tira e chi ha contribuito, da +1 a +12 in base al livello. Il Master può anche assegnarlo dal catalogo Skill.
+- L’installer Windows controlla PowerShell prima del download. Se serve `pwsh`, lo segnala prima di creare le cartelle di preparazione.
+- Necthbind usa i costi e il recupero della forma salvata anche dal pulsante rapido del Fight. Annullare la scelta o confermare un bersaglio che nel frattempo è stato sostituito lascia intatte le risorse.
 - Nelle campagne locali, un alleato può usare la Pietra della Resurrezione per riportare in vita una creatura al 50% della Vita massima, arrotondato per eccesso. La finestra è di 18/18/9/3 ore di campagna da Facile a Oculum. Nel Fight costa un’Azione. Il Mercato Nero estrae il prezzo base da 120 a 160 Obser e l’Alchimista da 160 a 250, una volta per negozio.
 - Tutti i tipi di ali si possono ritirare gratuitamente. Se una forma ha durata e CD, il ritiro volontario riduce il CD della durata rimasta. Le due ali dell’Aberrazione Intermedia Angelica sono mirabili mentre sono esposte.
 - Sunwalker diventa Aurystride e usa la tavola D «Arresto con mano a terra». Le due braccia e le due gambe sono mirabili. I punti deboli restano il torace e la giuntura.
