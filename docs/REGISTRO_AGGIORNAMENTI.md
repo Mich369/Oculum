@@ -4,6 +4,7 @@
 
 - Aggiunti i Forest Demon Errati. La famiglia li rinnega e negli incontri di viaggio combattono da soli. A parità di livello, la potenza sale dal Baby comune al Baby Errato, poi all’adulto comune e all’Errato adulto. Il Forest Demon adulto usa il tema G «Ruggito sulle gradinate».
 - Aggiornati i temi del Baby Forest Demon, di Sonorays e di Cynerveil. Sonoreye, Cynervail e Cinervail restano ricercabili.
+- Le tavole G del lotto a inchiostro diventano i temi di Ferrumhol, Osycleiv, Rubrymhol, Dyurahyd, Umbracryp e Nuptayd. Nebulyveil usa la tavola H del Forest Demon Blu. La ricerca conserva anche i nomi precedenti.
 - La Combattente dell’Anima Elité eredita le Art della Normale e ottiene Anymareap. Con un’Azione il teschio ripartisce i Danni base spirituali tra uno, due o tre nemici distinti. Il costo iniziale è 4 Oculum e il recupero è di 4 turni personali. Le schede Elité precedenti ricevono l’Art senza perdere le personalizzazioni.
 - Confermate cinque tavole del lotto 04. Ratygrinh usa G, Acuagoblin Territoriale usa E, Oblyvuard e Lignoryt usano B, Lunavyr conserva H. I nomi precedenti restano ricercabili.
 - Nella creazione dei mostri del Master, una descrizione breve del Bestiario compare sotto ciascun nome. Il selettore carica le righe mentre scorri.

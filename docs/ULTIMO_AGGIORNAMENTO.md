@@ -2,6 +2,7 @@
 
 - Aggiunti Baby Forest Demon Errato e Forest Demon Errato, entrambi solitari. Il Forest Demon adulto conserva il nome e usa la tavola G «Ruggito sulle gradinate».
 - Aggiornati anche i temi di Baby Forest Demon, Sonorays e Cynerveil. Le grafie precedenti restano ricercabili.
+- Aggiunti i temi G di Ferrumhol, Osycleiv, Rubrymhol, Dyurahyd, Umbracryp e Nuptayd e il tema H di Nebulyveil.
 - Anymareap è la terza Art della Combattente dell’Anima Elité. Divide i Danni base spirituali fra un massimo di tre nemici e usa un’Azione. Il costo iniziale di 4 Oculum e il recupero di 4 turni personali sono modificabili.
 - Confermate le tavole di Ratygrinh, Acuagoblin Territoriale, Oblyvuard, Lignoryt e Lunavyr. I nomi precedenti restano ricercabili.
 - Nel selettore dei mostri del Master, una descrizione breve appare sotto il nome.
