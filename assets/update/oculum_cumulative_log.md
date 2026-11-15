@@ -2,6 +2,7 @@
 
 ## Anymareap e scelte del Bestiario — 15 novembre
 
+- Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google. Da entrambi può cambiare il turno del Fight condiviso e usare i comandi rapidi disponibili sui partecipanti. Il secondo dispositivo sincronizza le modifiche con il principale.
 - La Fata Cacciatrice usa il nome Ventybleyd e la tavola F. Il Crostaceo corazzato usa il nome Karyklaw e la tavola B. Negli incontri di viaggio il generatore conserva l’inventario del catalogo e i valori base dei mostri anche quando il catalogo usa il formato statistico storico.
 - Aggiunti i Forest Demon Errati. La famiglia li rinnega e negli incontri di viaggio combattono da soli. A parità di livello, la potenza sale dal Baby comune al Baby Errato, poi all’adulto comune e all’Errato adulto. Il Forest Demon adulto usa il tema G «Ruggito sulle gradinate».
 - Aggiornati i temi del Baby Forest Demon, di Sonorays e di Cynerveil. Sonoreye, Cynervail e Cinervail restano ricercabili.
