@@ -1,5 +1,6 @@
 # Bestiario e porzioni dei pasti
 
+- Ventybleyd è il nuovo nome della Fata Cacciatrice. Karyklaw è il nuovo nome del Crostaceo corazzato. Gli incontri di viaggio conservano gli oggetti del catalogo e i valori base dei mostri.
 - Aggiunti Baby Forest Demon Errato e Forest Demon Errato, entrambi solitari. Il Forest Demon adulto conserva il nome e usa la tavola G «Ruggito sulle gradinate».
 - Aggiornati anche i temi di Baby Forest Demon, Sonorays e Cynerveil. Le grafie precedenti restano ricercabili.
 - Aggiunti i temi G di Ferrumhol, Osycleiv, Rubrymhol, Dyurahyd, Umbracryp e Nuptayd e il tema H di Nebulyveil.
