@@ -26,6 +26,8 @@
 - Divoramitù Elité e l’Aberrazione Intermedia Angelica adottano la tavola F dei rispettivi lotti. Baby Rock Rhino Veterana diventa Visrhyno e adotta la tavola D «Guardia sulla terrazza». Anche il nome precedente rimane ricercabile.
 - Baby Rock Rhino, RockRhyno intermedio e Visrhyno hanno un corno e quattro zampe mirabili separatamente. A inizio Fight ottengono Scudo normale pari al 25% della Vita massima, arrotondato per eccesso. Quando quello Scudo si rompe, il nucleo diventa mirabile. La pergamena rara di Petryguard insegna la Passiva dello Scudo. Può uscire al tiro del bottino con il 6%, 9% e 12% rispettivamente.
 - RockRhyno usa lo sfondo desktop G1 «Carica frontale nel salto», con il corno puntato verso chi guarda.
+- La Regina delle gole vulcaniche diventa Alaryft e usa la tavola G «Discesa sulla fenditura». Si possono mirare separatamente le quattro zampe uncinate e ciascun corno. Restano mirabili gli occhi, le ali e la giuntura ventrale con il suo bordo.
+- La Troll Veterana adotta il nome Visbark. Il nome precedente resta ricercabile.
 - Tutti i tipi di ali si possono ritirare gratuitamente. Se una forma ha durata e CD, il ritiro volontario riduce il CD della durata rimasta. Le due ali dell’Aberrazione Intermedia Angelica sono mirabili mentre sono esposte.
 - Sunwalker diventa Aurystride e usa la tavola D «Arresto con mano a terra». Le due braccia e le due gambe sono mirabili. I punti deboli restano il torace e la giuntura.
 - I pulsanti lasciano intravedere un po’ di più lo sfondo a riposo. Le scritte e le icone restano piene e il menu della scheda si illumina gradualmente in 1,3 secondi.
