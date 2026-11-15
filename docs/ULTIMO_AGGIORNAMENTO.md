@@ -19,6 +19,7 @@
 - Nel selettore dei mostri del Master, una descrizione breve appare sotto il nome.
 - Cambiando l’elemento di un mostro si aggiornano le sue resistenze ereditate. Le resistenze personalizzate rimangono modificabili nell’editor del Bestiario.
 - Grofix ha il nuovo sfondo desktop F «Stretto nella faglia».
+- Nuovi sfondi per l’Armadillo di Legno e Snorlo Corazzata.
 
 - Nel generatore Master, Tab o la lente trovano l’ID del mostro e propongono alternative per refusi e omonimi.
 - Il catalogo Skill del Master accetta alias e grafie simili. Le forme del dossier vengono preparate all’apertura e il catalogo oggetti riusa i calcoli ripetuti.
