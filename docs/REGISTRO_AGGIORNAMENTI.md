@@ -2,6 +2,9 @@
 
 ## Anymareap e scelte del Bestiario — 15 novembre
 
+- Il tema di Senka usa la tavola C «Sotto le radici» con il passante dai capelli argentati, lo sfondo A su telefono e la nuova reliquia della maschera a due occhi. Equipaggiare la maschera con il tema Senka attivo mostra Ombra Mascherata A.
+- Le Guardie Solari comune ed Elité usano la tavola C. Il Guardiano usa C1, accovacciato con l’arco e le due frecce. Nel Bestiario si può mirare al fianco sotto lo scudo, alla giuntura interna del gomito dell’Elité e alla giuntura posteriore del ginocchio del Guardiano. Anche le visiere sono mirabili.
+- L’inchiostro dei nuovi temi si usa anche negli effetti. Gli Scudi che cedono si frantumano in schegge con bordi scuri e riflessi opachi. Danni, cure, risorse, potenziamenti e condizioni usano accenti a pennello differenziati.
 - Le sfere del Mercato aprono le botteghe degli altri giocatori e permettono di cambiare il proprio nome Online e colore RGB/HEX. Il Master autenticato ha una bottega privata e può ridurre il prezzo delle offerte o di una vendita conclusa. In quest’ultimo caso il gioco restituisce al compratore la sola differenza.
 - Il Mercante accetta più oggetti in baratto fuori dalle zone solari. Puoi prendere il resto in Obser o spendere parte del credito su un secondo articolo scontato del 15%. Se il credito non compra un secondo articolo, si aggiunge al resto lo sconto sul primo secondo difficoltà. In Oculum è 0–2% a sorte. Per un articolo già scontato dal Master il valore è fisso 0/3/6/9% da Oculum a Facile. Chi è del Fato ottiene un punto di Fortuna per ogni 9 Obser lasciati di mancia.
 - Nei selettori di Skill, oggetti e mostri si può cercare una parte del nome. Per esempio «demon» trova Forest Demon dopo i nomi che corrispondono esattamente o iniziano con Demon.
