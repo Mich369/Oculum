@@ -2,6 +2,8 @@
 
 ## Anymareap e scelte del Bestiario — 15 novembre
 
+- Nei selettori di Skill, oggetti e mostri si può cercare una parte del nome. Per esempio «demon» trova Forest Demon dopo i nomi che corrispondono esattamente o iniziano con Demon.
+- Aggiornati i temi desktop di Ferryfur, Glayswuolf, Bunnys, Fatomhol, Forest Demon Errato, Sensimoss e Dolyfern. Durafèr, Ciclope del Fato e Sciamano Malizioso restano ricercabili con le grafie precedenti.
 - Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google. Da entrambi può cambiare il turno del Fight condiviso e usare i comandi rapidi disponibili sui partecipanti. Il secondo dispositivo sincronizza le modifiche con il principale.
 - La Fata Cacciatrice usa il nome Ventybleyd e la tavola F. Il Crostaceo corazzato usa il nome Karyklaw e la tavola B. Negli incontri di viaggio il generatore conserva l’inventario del catalogo e i valori base dei mostri anche quando il catalogo usa il formato statistico storico.

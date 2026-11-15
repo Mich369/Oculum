@@ -1,5 +1,7 @@
 # Bestiario e porzioni dei pasti
 
+- La ricerca di Skill, oggetti e mostri accetta frammenti di nome. «Demon» trova Forest Demon, dando precedenza ai risultati più vicini.
+- Sette nuovi temi dal lotto scelto. Ferryfur, Fatomhol e Dolyfern mantengono anche i nomi precedenti nella ricerca.
 - Nuovi temi per Sanguifeng, Aculotide e Vesanybel. Cerca Vesanybel anche come Custode della Campana Cieca o Vesanybell.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google, anche per cambiare turno e usare i comandi rapidi dei partecipanti nel Fight condiviso.
 - Ventybleyd è il nuovo nome della Fata Cacciatrice. Karyklaw è il nuovo nome del Crostaceo corazzato. Gli incontri di viaggio conservano gli oggetti del catalogo e i valori base dei mostri.
