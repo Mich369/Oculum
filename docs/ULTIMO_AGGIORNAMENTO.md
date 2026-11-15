@@ -1,12 +1,12 @@
 # Mercato, baratto e Bestiario
 
 - Nuovi sfondi per Senka e i tre Solari. Senka ha anche una reliquia aggiornata e uno sfondo Ombra Mascherata quando equipaggia la maschera nel suo tema.
-- Gli Scudi si frantumano come vetro. I Danni alla Vita mostrano tre tagli scuri, gocce ai lati e un bordeaux più marcato sui colpi pesanti. Rinnovati anche cure, risorse, potenziamenti e condizioni.
+- Gli Scudi si frantumano come vetro. I Danni alla Vita mostrano tre tagli scuri, gocce ai lati e un bordeaux più marcato sui colpi pesanti. Gli effetti sono sopra le finestre e i pulsanti restano cliccabili.
 - Dal Mercato puoi visitare le botteghe dei giocatori e cambiare colore RGB/HEX e nome Online. Il Master ha una bottega privata e può applicare sconti con rimborso della sola differenza.
 - Il baratto accetta più oggetti e riconosce tutto il resto. Se disponibile, un secondo articolo costa il 15% in meno. Per il Fato ogni 9 Obser di mancia danno 1 Fortuna.
 - La ricerca di Skill, oggetti e mostri accetta frammenti di nome. «Demon» trova Forest Demon, dando precedenza ai risultati più vicini.
 - Nella ricerca dei nomi dei proiettili, i termini affini trovano gli stessi gruppi e gli elementi della scheda aperta vengono mostrati per primi.
-- Dodici temi dai lotti scelti, compresi Visbunnys E, Karnyrattle F e Silvarkrath A. Anche i nomi precedenti restano ricercabili.
+- Diciassette temi dai lotti scelti, compresi Visbunnys E, Karnyrattle F, Silvarkrath A, Lorica Gleaner E e Ossyblayn D. Miruslash e Vagarwyngh usano entrambi E. La Bandita Veterana usa C. Anche i nomi precedenti restano ricercabili.
 - Nuovi temi per Sanguifeng, Aculotide e Vesanybel. Cerca Vesanybel anche come Custode della Campana Cieca o Vesanybell.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google, anche per cambiare turno e usare i comandi rapidi dei partecipanti nel Fight condiviso.
 - Ventybleyd è il nuovo nome della Fata Cacciatrice. Karyklaw è il nuovo nome del Crostaceo corazzato. Gli incontri di viaggio conservano gli oggetti del catalogo e i valori base dei mostri.
