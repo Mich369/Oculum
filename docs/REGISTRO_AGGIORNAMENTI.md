@@ -13,7 +13,7 @@
 - Aggiornati i temi desktop di Ferryfur, Glayswuolf, Bunnys, Visbunnys, Fatomhol, Forest Demon Errato, Sensimoss, Dolyfern, Acuagoblin Predatore e Acuagoblin Curioso. Durafèr, Bunnys Veterana, Ciclope del Fato e Sciamano Malizioso restano ricercabili con le grafie precedenti.
 - Caro Ossis rituale si chiama Karnyrattle e usa la tavola F. Silvarkrath conserva il nome e usa la tavola A.
 - Lorica Gleaner usa la tavola E. L’Ammasso pustoloso diventa Ossyblayn e usa D. I nomi precedenti restano ricercabili.
-- Il Fustigatore rituale adotta il nome Miruslash e l’Arcangelo Errante Vagarwyngh. Entrambi usano la tavola E. Flagellum Vow e Ordinwing Wingstray restano ricercabili.
+- Il Fustigatore rituale adotta il nome Miruslash e l’Arcangelo Errante Vagarwyngh. Entrambi usano la tavola E. Vagarwyngh ha due ali mirabili dopo l’esiliazione dell’Ala Nera. Flagellum Vow e Ordinwing Wingstray restano ricercabili.
 - La Bandita Veterana usa la tavola C, sul ponte sotto la pioggia. La grafia precedente Bandito Veterana resta ricercabile.
 - Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google. Da entrambi può cambiare il turno del Fight condiviso e usare i comandi rapidi disponibili sui partecipanti. Il secondo dispositivo sincronizza le modifiche con il principale.
