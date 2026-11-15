@@ -1,5 +1,6 @@
 # Bestiario e porzioni dei pasti
 
+- Nuovi temi per Sanguifeng, Aculotide e Vesanybel. Cerca Vesanybel anche come Custode della Campana Cieca o Vesanybell.
 - Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google, anche per cambiare turno e usare i comandi rapidi dei partecipanti nel Fight condiviso.
 - Ventybleyd è il nuovo nome della Fata Cacciatrice. Karyklaw è il nuovo nome del Crostaceo corazzato. Gli incontri di viaggio conservano gli oggetti del catalogo e i valori base dei mostri.
 - Aggiunti Baby Forest Demon Errato e Forest Demon Errato, entrambi solitari. Il Forest Demon adulto conserva il nome e usa la tavola G «Ruggito sulle gradinate».
