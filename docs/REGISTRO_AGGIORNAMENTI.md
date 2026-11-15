@@ -19,6 +19,7 @@
 - Il Golem Runico Veterano diventa Viscuprum e usa la tavola F, che mostra il nucleo dietro le piastre infrante. In combattimento il nucleo diventa mirabile dopo la rottura delle piastre.
 - L’Armadillo di Cristallo usa la tavola C «Annusa la vena». L’Armadillo della Sabbia usa la C «Ventre tra le rocce». Il ventre di entrambi è mirabile nella forma aperta.
 - Nell’editor del Bestiario, cambiare elemento aggiorna le resistenze ereditate e conserva quelle personalizzate. Il campo «Resistenze personalizzate» consente di intervenire sui singoli elementi. Corretto anche un errore alla chiusura dell’editor.
+- Grofix usa la tavola F «Stretto nella faglia» in Expressive Ink su desktop. Su telefono resta la composizione approvata in precedenza.
 - Sunwalker diventa Aurystride e usa la tavola D «Arresto con mano a terra». Le due braccia e le due gambe sono mirabili. I punti deboli restano il torace e la giuntura.
 - I pulsanti lasciano intravedere un po’ di più lo sfondo a riposo. Le scritte e le icone restano piene e il menu della scheda si illumina gradualmente in 1,3 secondi.
 - Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
