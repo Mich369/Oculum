@@ -33,6 +33,12 @@
 - Cloudtusk e Tryjaw hanno nuovi sfondi. Nell’Idra puoi mirare alle singole teste, alle zampe e alla coda.
 - Nuovi sfondi desktop per Ignyshell, Vaghyuil, Navigatore dell’Aria e Ragno della linfa acida. Nel Ragno puoi mirare singolarmente a otto zampe.
 - Necthrall, Boss Spirituale, controlla un nemico e può spendere la sua Reazione per difendersi. Il Legame di Necthrall premia la vittoria e applica ad Aiuto una sola volta il bonus più alto.
+- Dodici temi desktop scelti, tra cui Necthrall G e Aurybone F2 con due ali. I sei nuovi nomi si trovano anche cercando quelli precedenti.
+- Altri tre temi desktop scelti per Sygilscyel B, Sempre verde G e Imbrytoad H. Scarabeo del Sigillo Ardente e Rospo delle Gronde Marce restano ricercabili.
+- Nuovi temi desktop per Cervydew F, Delyrmoth G, Lapyorbit G, Pesce Mutato G e Medusa del Vetro Blu F. Lapyorbit ha due braccia mirabili singolarmente.
+- Il limite base degli Occhi dei Caduti segue la stessa statistica del proprietario, con margini +3/+6/+9 per Comune, Non comune e Raro. Gli Occhi Oculum usano i loro valori reali. I bonus di rarità si applicano a parte.
+- Imbrytoad espone due sacche mirabili singolarmente durante le Reazioni che precedono Sputo delle gronde.
+- Il Regno Sommerso è immerso nell’Eiva respirabile. Puoi esplorare la Barriera del Corallo Cavo e la Selva delle Fronde d’Eiva e incontrare due nuovi pesci umanoidi, Pysciwarden G e Constacuas H.
 - L’installer e il generatore della distribuzione completa controllano PowerShell prima di scaricare o compilare.
 - Necthbind applica i costi e il recupero configurati dal Master anche dal pulsante rapido.
 - La Pietra della Resurrezione si compra al Mercato Nero o dall’Alchimista e si usa in campagna locale. Il limite dipende dalla difficoltà e segue l’orologio della campagna.
