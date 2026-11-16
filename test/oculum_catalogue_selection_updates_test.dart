@@ -201,6 +201,13 @@ void main() {
     expect(oculumLookupMonsterId('Forisplit').exact?.id, guard.id);
   });
 
+  test('Tessyfin retains the submerged family ID and its original alias', () {
+    final fish = monsterById('eiva_tassello_cupole')!;
+    expect(fish.nameIt, 'Tessyfin');
+    expect(oculumLookupMonsterId('Tessyfin').exact?.id, fish.id);
+    expect(oculumLookupMonsterId('Tassello delle cupole').exact?.id, fish.id);
+  });
+
   test('Lapyorbit has two separate arms alongside its body and core', () {
     final golem = monsterById(
       'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti',

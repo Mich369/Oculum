@@ -195,6 +195,8 @@ Iterable<String> oculumMonsterNameSearchAliases(MonsterBookEntry entry) {
     },
     if (entry.id.split('_variante_').first == 'eiva_serracapo_mosaici')
       'Serracapo dei mosaici',
+    if (entry.id.split('_variante_').first == 'eiva_tassello_cupole')
+      'Tassello delle cupole',
     if (entry.id.split('_variante_').first == 'affogato_vortice_delle_arcate')
       'Vortice delle Arcate',
     if (entry.id == '${oculumPredoneBoomerangId}_variante_buio')

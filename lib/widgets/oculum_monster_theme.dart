@@ -756,6 +756,7 @@ class OculumMonsterTheme {
     'ciclo_rospo_gronde_marce' ||
     'ciclo_scarabeo_sigillo_ardente' ||
     'eiva_serracapo_mosaici' ||
+    'eiva_tassello_cupole' ||
     'habitat_caramella_medusa_di_confettura' ||
     'hero_path_diverso_ascia_variante_corazzata' ||
     'pesce_mutato' ||

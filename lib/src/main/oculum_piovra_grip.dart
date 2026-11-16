@@ -300,8 +300,9 @@ extension _OculumPiovraGrip on _OculumHomePageState {
     if (realtimeService?.isConnected != true ||
         realtimeVisibleInitiativeSnapshot['fightStarted'] != true ||
         realtimeVisibleInitiativeSnapshot['combatEnded'] == true ||
-        !controlsOnlineCombatSheet(tag))
+        !controlsOnlineCombatSheet(tag)) {
       return null;
+    }
     final target = _remotePiovraToken(tag);
     if (target == null || !_piovraTokenActive(target)) return null;
     for (final holder in onlineCombatTokens()) {
@@ -313,8 +314,9 @@ extension _OculumPiovraGrip on _OculumHomePageState {
           record['scope'] == permissionScope &&
           record['sourceFight'] == holder['fightInstanceId'] &&
           record['targetFight'] == target['fightInstanceId'] &&
-          _piovraTokenActive(holder))
+          _piovraTokenActive(holder)) {
         return (target, record);
+      }
     }
     return null;
   }
@@ -391,8 +393,9 @@ extension _OculumPiovraGrip on _OculumHomePageState {
           lost is! int ||
           lost < 0 ||
           lost > 100000000 ||
-          !_removePiovraTick(target, tick))
+          !_removePiovraTick(target, tick)) {
         return;
+      }
       _healPiovraGrip(onlineCombatTokenTag(holder), tick, lost);
     } else if (stage == 'inapplicable') {
       _releasePiovraGrip(holder);
@@ -427,8 +430,9 @@ extension _OculumPiovraGrip on _OculumHomePageState {
     if (!mounted ||
         realtimeService?.isConnected != true ||
         realtimeIsMasterRole ||
-        _piovraRemoteSync[this] == true)
+        _piovraRemoteSync[this] == true) {
       return;
+    }
     final tag = sheetTagAt(schedaCorrente);
     if (!controlsOnlineCombatSheet(tag)) return;
     final snapshot = realtimeVisibleInitiativeSnapshot;

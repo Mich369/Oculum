@@ -331,30 +331,26 @@ List<MonsterTechniqueEffect> _sunkenEffects(_SunkenMove move, int form) {
   }
 }
 
-MonsterConcreteTechnique _sunkenTechnique(_SunkenForm form, _SunkenMove move) =>
-    _planarMove(
-      move.name,
-      move.description,
-      form.element,
-      switch (move.kind) {
-        'scatto_tre_maree' => 'danno',
-        'orbita_boomerang' => 'difesa',
-        'iniziativa' => 'movimento',
-        'stato_su_critico' => 'danno',
-        _ => move.kind,
-      },
-      [for (var level = 0; level < 3; level++) _sunkenEffects(move, level)],
-      costResource: move.kind == 'scatto_tre_maree' ? 'nessuna' : 'oculum',
-      minimums: move.kind == 'scatto_tre_maree'
-          ? const [0, 0, 0]
-          : const [1, 2, 3],
-      maximums: move.kind == 'scatto_tre_maree'
-          ? const [0, 0, 0]
-          : const [1, 2, 3],
-      cd: move.kind == 'scatto_tre_maree'
-          ? const [0, 0, 0]
-          : const [2, 2, 3],
-    );
+MonsterConcreteTechnique _sunkenTechnique(
+  _SunkenForm form,
+  _SunkenMove move,
+) => _planarMove(
+  move.name,
+  move.description,
+  form.element,
+  switch (move.kind) {
+    'scatto_tre_maree' => 'danno',
+    'orbita_boomerang' => 'difesa',
+    'iniziativa' => 'movimento',
+    'stato_su_critico' => 'danno',
+    _ => move.kind,
+  },
+  [for (var level = 0; level < 3; level++) _sunkenEffects(move, level)],
+  costResource: move.kind == 'scatto_tre_maree' ? 'nessuna' : 'oculum',
+  minimums: move.kind == 'scatto_tre_maree' ? const [0, 0, 0] : const [1, 2, 3],
+  maximums: move.kind == 'scatto_tre_maree' ? const [0, 0, 0] : const [1, 2, 3],
+  cd: move.kind == 'scatto_tre_maree' ? const [0, 0, 0] : const [2, 2, 3],
+);
 
 final _sunkenRealmTechniques = <String, MonsterConcreteTechnique>{
   for (final family in _sunkenFamilies)
@@ -1453,7 +1449,7 @@ const _sunkenLastFamilies = <_SunkenFamily>[
   ),
   _SunkenFamily(
     id: 'eiva_tassello_cupole',
-    name: 'Tassello delle cupole',
+    name: 'Tessyfin',
     areaId: 'corallo_cavo',
     description:
         'Pesce triangolare grande quanto uno scudo, con tre pinne asimmetriche e un occhio su ciascun lato largo. Ha il ventre di cotto a scacchi e una gola molle scoperta sul bordo anteriore.',

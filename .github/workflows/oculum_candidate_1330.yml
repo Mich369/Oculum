@@ -88,12 +88,25 @@ jobs:
           cache: true
       - run: flutter config --enable-windows-desktop
       - run: flutter pub get
+      - name: Isolate the QA application-data directory
+        if: matrix.save_profile == 'qa_20261116_1330'
+        shell: pwsh
+        run: |
+          $rc = (Resolve-Path -LiteralPath 'windows/runner/Runner.rc').Path
+          $source = [IO.File]::ReadAllText($rc)
+          $oldProduct = 'VALUE "ProductName", "oculum" "\0"'
+          $qaProduct = 'VALUE "ProductName", "oculum-qa-20261116-1330" "\0"'
+          if ([regex]::Matches($source, [regex]::Escape($oldProduct)).Count -ne 1) {
+            throw 'The QA runner must replace exactly one default ProductName.'
+          }
+          [IO.File]::WriteAllText($rc, $source.Replace($oldProduct, $qaProduct))
       - name: Compile the edition
         shell: pwsh
         env:
           SAVE_PROFILE: ${{ matrix.save_profile }}
-          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
-          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+          # Empty defines would use the application's public defaults.
+          OCULUM_SUPABASE_URL: ${{ matrix.save_profile == 'qa_20261116_1330' && 'https://qa.invalid' || secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ matrix.save_profile == 'qa_20261116_1330' && 'disabled' || secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           $defines = @(
             "--dart-define=OculumSourceCommit=$env:GITHUB_SHA"
@@ -109,6 +122,7 @@ jobs:
           EDITION_FOLDER: ${{ matrix.folder }}
           EDITION_EXE: ${{ matrix.executable }}
           ARTIFACT_NAME: ${{ matrix.artifact }}
+          SAVE_PROFILE: ${{ matrix.save_profile }}
         run: |
           $ErrorActionPreference = 'Stop'
           $release = (Resolve-Path -LiteralPath 'build/windows/x64/runner/Release').Path
@@ -125,6 +139,12 @@ jobs:
           foreach ($relative in $required) {
             if (!(Test-Path -LiteralPath (Join-Path $folder $relative) -PathType Leaf)) {
               throw "Runtime file missing: $relative"
+            }
+          }
+          if ($env:SAVE_PROFILE -eq 'qa_20261116_1330') {
+            $product = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $folder $env:EDITION_EXE)).ProductName
+            if ($product -cne 'oculum-qa-20261116-1330') {
+              throw 'The QA executable does not declare its isolated ProductName.'
             }
           }
           $files = @(Get-ChildItem -LiteralPath $folder -Force -Recurse -File)

@@ -222,6 +222,8 @@ void main() {
           '44047a480291affb0ac198d086ea379a28b19bab48899767774b081ea27ec7ce',
       'base_ghiaccio_05':
           '8cbeca98b5e893a24788d5b009345f29dd8ba97b2721cfef3547ad35849a2200',
+      'eiva_tassello_cupole':
+          '48f0c4b154aaa4bea8a2005c18db525c2092c0daed576349c215d1791b40177b',
       'habitat_caramella_medusa_di_confettura':
           '2a4f69f0cf45ac6a149f56313d19af503a8b5634363e8d36716bb470cf692c91',
       'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante':
@@ -244,6 +246,7 @@ void main() {
         oculumMonsterColors(monster).first,
       );
       final suffix = switch (id) {
+        'eiva_tassello_cupole' ||
         'habitat_caramella_medusa_di_confettura' ||
         'hero_path_diverso_ascia_variante_corazzata' ||
         'ragno_putrido' => '20261116',
