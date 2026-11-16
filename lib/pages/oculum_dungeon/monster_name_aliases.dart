@@ -131,6 +131,10 @@ const _pronouncedMonsterNames = <String, ({String name, String spelling})>{
     name: 'Gragaloryx',
     spelling: 'Graga Rana Azzurra Corazzata',
   ),
+  'habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata': (
+    name: 'Vyridfrost',
+    spelling: 'Lince di brina verde Corazzata',
+  ),
   'hero_path_diverso_ascia_variante_corazzata': (
     name: 'Forisplit',
     spelling: 'Diverso Spaccaporte Corazzata',

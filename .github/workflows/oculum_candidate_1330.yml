@@ -209,7 +209,7 @@ jobs:
     timeout-minutes: 50
     env:
       # The first candidate used 100294. This workflow has its own run counter.
-      OCULUM_ANDROID_BUILD_NUMBER: '100296'
+      OCULUM_ANDROID_BUILD_NUMBER: '100297'
     steps:
       - uses: actions/checkout@v6
         with:

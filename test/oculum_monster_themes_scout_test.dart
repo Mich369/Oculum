@@ -230,6 +230,8 @@ void main() {
           'f2454b19146c7ca88cc49d134094d49f7194a74e1ed095020f27958a0db9ca07',
       'habitat_caramella_medusa_di_confettura':
           '2a4f69f0cf45ac6a149f56313d19af503a8b5634363e8d36716bb470cf692c91',
+      'habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata':
+          'dc17072a046fbd7bb7fa8fc395f8d4566d21c4430aa9a48991031c3f3c79c85a',
       'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante':
           '5fed06388c0d4661c0529fe87b8a43d69ff23404585310a0209274238935109e',
       'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti':
@@ -254,6 +256,7 @@ void main() {
         'eiva_tassello_cupole' ||
         'graga_rana_azzurra_variante_corazzata' ||
         'habitat_caramella_medusa_di_confettura' ||
+        'habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata' ||
         'hero_path_diverso_ascia_variante_corazzata' ||
         'ragno_putrido' => '20261116',
         _ => '20261116_riallineamento',

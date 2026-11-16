@@ -75,6 +75,16 @@ STANDALONE_PACKAGES = frozenset({
     'expressive_ink_senka_staging_next',
 }) | LARGE_LOT_PACKAGES
 LETTER_PACKAGES = {
+    'expressive_ink_graga_azzurra_corazzata_20261116': (
+        'graga_rana_azzurra_variante_corazzata', 'CONFERMA-GRAGALORYX.json',
+    ),
+    'expressive_ink_lince_di_brina_verde_20261116': (
+        'habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata',
+        'CONFERMA-VYRIDFROST.json',
+    ),
+    'expressive_ink_mantide_della_vampa_20261116': (
+        'ciclo_mantide_vampa', 'CONFERMA-TAVOLA-C.json',
+    ),
     'expressive_ink_medusa_di_confettura_20261116': (
         'habitat_caramella_medusa_di_confettura', 'CONFERMA-TAVOLA-B.json',
     ),
@@ -82,6 +92,7 @@ LETTER_PACKAGES = {
     'expressive_ink_spaccaporte_corazzata_20261116': (
         'hero_path_diverso_ascia_variante_corazzata', 'CONFERMA-FORISPLIT.json',
     ),
+    'expressive_ink_tassello_cupole_20261116': ('eiva_tassello_cupole', 'CONFERMA-TESSYFIN.json'),
 }
 CLEANUP_MANIFEST = 'MANIFEST-PULIZIA.json'
 STANDALONE_IMAGE_ID = re.compile(r'[a-z0-9]+(?:[-_][a-z0-9]+)*')

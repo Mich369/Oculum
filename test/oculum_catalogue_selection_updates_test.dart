@@ -226,6 +226,18 @@ void main() {
     expect(monsterById('graga_rana_azzurra')!.nameIt, 'Graga Rana Azzurra');
   });
 
+  test('Vyridfrost renames only the armored lynx and retains its alias', () {
+    const base = 'habitat_foresta_elementale_lince_di_brina_verde';
+    final lynx = monsterById('${base}_variante_corazzata')!;
+    expect(lynx.nameIt, 'Vyridfrost');
+    expect(oculumLookupMonsterId('Vyridfrost').exact?.id, lynx.id);
+    expect(
+      oculumLookupMonsterId('Lince di brina verde Corazzata').exact?.id,
+      lynx.id,
+    );
+    expect(monsterById(base)!.nameIt, 'Lince di brina verde');
+  });
+
   test('Lapyorbit has two separate arms alongside its body and core', () {
     final golem = monsterById(
       'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti',
