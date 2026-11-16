@@ -248,6 +248,20 @@ void main() {
       ritualId,
     );
     expect(monsterById(baseId)!.nameIt, 'Regina delle miniere mute');
+    final parts = oculumMonsterPrecisionAnatomy(monsterById(ritualId)!);
+    final legs = parts.where((part) => part['group'] == 'legs');
+    expect(legs.map((part) => part['id']), [
+      for (var number = 1; number <= 6; number++) 'legs_$number',
+    ]);
+    expect(legs.map((part) => part['label']).toSet(), hasLength(6));
+    expect(legs.every((part) => part['weak'] == false), isTrue);
+    expect(parts.where((part) => part['group'] == 'eyes'), hasLength(2));
+    expect(parts.where((part) => part['group'] == 'wings'), hasLength(2));
+    expect(
+      oculumMonsterPrecisionAnatomy(monsterById(baseId)!)
+          .where((part) => part['group'] == 'legs'),
+      isEmpty,
+    );
   });
 
   test('Lapyorbit has two separate arms alongside its body and core', () {

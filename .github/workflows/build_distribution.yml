@@ -10,6 +10,7 @@ on:
     branches-ignore:
       - "codex/oculum-verifica-20261116-1330"
       - "codex/oculum-verifica-20261116-tacyantel"
+      - "codex/oculum-verifica-20261116-tacyantel-anatomia"
 
 permissions:
   contents: read

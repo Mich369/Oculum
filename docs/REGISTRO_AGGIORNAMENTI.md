@@ -9,7 +9,7 @@
 - La Mantide della Vampa si chiama Ignytis e usa la tavola C «Ombra sul pavimento di scorie». Resta ricercabile con il nome precedente.
 - La Graga Rana Azzurra Corazzata si chiama Gragaloryx e usa la tavola G «Atterraggio sotto il tronco». Il nome precedente resta ricercabile.
 - La Lince di brina verde Corazzata si chiama Vyridfrost e usa la tavola G «In agguato dietro la lastra di brina». Il nome precedente resta ricercabile.
-- La Regina delle miniere mute Rituale si chiama Tacyantel e usa la tavola G «Riflesso nel pozzo cieco». Il nome precedente resta ricercabile.
+- La Regina delle miniere mute Rituale si chiama Tacyantel, usa la tavola G «Riflesso nel pozzo cieco» e ha sei zampe mirabili singolarmente. Il nome precedente resta ricercabile.
 - In un Fight gestito dal Master sullo stesso dispositivo, Azzeramento delle vulnerabilità e Tenacia liberano anche dalla Presa di Octocruor quando rimuovono «Afferrato». Il danno già risolto e la cura che ne deriva si registrano normalmente.
 
 ## Anymareap e scelte del Bestiario — 15 novembre

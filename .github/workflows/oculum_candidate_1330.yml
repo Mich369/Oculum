@@ -4,7 +4,7 @@ run-name: Oculum candidate @ ${{ github.sha }}
 on:
   push:
     branches:
-      - codex/oculum-verifica-20261116-tacyantel
+      - codex/oculum-verifica-20261116-tacyantel-anatomia
 
 permissions:
   contents: read
@@ -51,6 +51,7 @@ jobs:
           test/oculum_catalogue_selection_updates_test.dart
           test/oculum_armadillo_creatures_test.dart
           test/oculum_physical_anatomy_regression_test.dart
+          test/oculum_anatomical_parts_runtime_test.dart
           test/oculum_piovra_grip_test.dart
           test/oculum_conditions_test.dart
           test/oculum_save_profile_test.dart
@@ -208,8 +209,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
-      # Version code follows the last verified signed candidate 100297.
-      OCULUM_ANDROID_BUILD_NUMBER: '100298'
+      # The preceding signed candidate used versionCode 100298.
+      OCULUM_ANDROID_BUILD_NUMBER: '100299'
     steps:
       - uses: actions/checkout@v6
         with:

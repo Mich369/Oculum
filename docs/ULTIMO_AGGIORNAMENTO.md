@@ -7,7 +7,7 @@
 - La Mantide della Vampa diventa Ignytis e usa la tavola C «Ombra sul pavimento di scorie».
 - La Graga Rana Azzurra Corazzata diventa Gragaloryx e usa la tavola G «Atterraggio sotto il tronco».
 - La Lince di brina verde Corazzata diventa Vyridfrost e usa la tavola G «In agguato dietro la lastra di brina».
-- La Regina delle miniere mute Rituale diventa Tacyantel e usa la tavola G «Riflesso nel pozzo cieco».
+- La Regina delle miniere mute Rituale diventa Tacyantel, usa la tavola G «Riflesso nel pozzo cieco» e ha sei zampe mirabili singolarmente.
 - Nei Fight locali, rimuovere «Afferrato» con uno Stato di Forza chiude anche la Presa di Octocruor.
 
 - Nuovi sfondi per Senka e i tre Solari. Senka ha anche una reliquia aggiornata e uno sfondo Ombra Mascherata quando equipaggia la maschera nel suo tema.

@@ -26,6 +26,7 @@
 
 ## Nomi e anatomie del bestiario
 
+- **Tacyantel**, Regina delle miniere mute Rituale, ha sei zampe uncinate mirabili singolarmente. Il punto debole è la cerniera ventrale sotto il bordo delle piastre. Le anatomie personalizzate del Master conservano la precedenza.
 - La Fata Cacciatrice diventa Ventybleyd con la tavola F. Il Crostaceo corazzato diventa Karyklaw con la tavola B. I nomi precedenti restano ricercabili.
 - Scelte G del lotto Expressive Ink del 15 novembre: Ferrumhol (Ferrugryp), Osycleiv (nome mantenuto), Rubrymhol (Errante della Forza), Dyurahyd (Errante della Resistenza), Umbracryp (Larva del Vespro) e Nuptayd (Sposa della Marea Nera). Il Forest Demon Blu diventa Nebulyveil con la tavola H. I nomi precedenti restano alias di ricerca.
 - I Forest Demon Errati sono rinnegati dalla famiglia e combattono da soli. Il Baby Errato supera il Baby comune e resta sotto l’adulto comune. L’Errato adulto supera l’adulto comune. La tavola G, «Ruggito sulle gradinate», è il tema definitivo dell’adulto comune, che mantiene il nome Forest Demon. Il Baby Errato usa l’allegato scelto dall’utente. Sonorays usa la tavola C e Cynerveil la G. Le grafie precedenti restano ricercabili.

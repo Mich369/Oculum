@@ -218,6 +218,28 @@ void main() {
     await closeFixture(tester, p);
   });
 
+  testWidgets('A hit on one of Tacyantel’s six legs stays on that leg', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    state.schedePersonaggio[state.schedaCorrente]['monsterBookSourceId'] =
+        'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale';
+    state.scudoCriticoController.text = '0';
+    p.invalidateDerivedCaches();
+    expect(
+      p.anatomicalPartsForCurrentSheet().where((part) => part['group'] == 'legs'),
+      hasLength(6),
+    );
+    await p.anatomicalTargetHit(
+      {'id': 'leg-hit', 'sourceTag': 'ENEMY', 'targetBodyPart': 'legs_6'},
+      hpLost: 1,
+      critical: true,
+    );
+    final parts = p.anatomicalPartsSnapshot()['parts'] as Map;
+    expect(parts.keys.where((id) => '$id'.startsWith('legs_')), ['legs_6']);
+    await closeFixture(tester, p);
+  });
+
   testWidgets('Pawn exposes two separate floating hands, never invented arms', (
     tester,
   ) async {

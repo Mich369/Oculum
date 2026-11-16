@@ -269,6 +269,8 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
                 'umanoide, testa, quattro braccia, due gambe e due occhi',
               'habitat_demoniaco_regina_delle_gole_vulcaniche' =>
                 'quattro zampe uncinate, due corna, due ali membranose',
+              'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale' =>
+                'sei zampe uncinate',
               final id when oculumRhinoStoneguardMonsterIds.contains(id) =>
                 'quadrupede, quattro zampe, testa e un corno',
               'ciclope_non_morto' =>
@@ -394,6 +396,8 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
                 'habitat_foresta_elementale_ragno_della_linfa_acida' => {
                   'legs': 8,
                 },
+                'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale' =>
+                  {'legs': 6},
                 final id when oculumRhinoStoneguardMonsterIds.contains(id) => {
                   'arms': 0,
                   'legs': 4,
