@@ -43,6 +43,7 @@
 - Octocruor, la Piovra succhiasangue, usa la tavola D. Pynnasway, il Palmatore dei nastri, usa la tavola G.
 - Il nuovo Predone del Boomerang usa un’orbita protettiva da −12 Danni in mischia e −6 a distanza per tre Azioni proprie.
 - Spada corta, guanto d’arme, Lama Orbita e pergamene possono uscire come bottino del Predone. Octocruor ha due tecniche innate più tre Skill Art sorteggiate.
+- La Lama Orbita usa Affinità e ha 5 turni di recupero modificabili dall’inventario. Se cade, si raccoglie a contatto.
 - L’installer e il generatore della distribuzione completa controllano PowerShell prima di scaricare o compilare.
 - Necthbind applica i costi e il recupero configurati dal Master anche dal pulsante rapido.
 - La Pietra della Resurrezione si compra al Mercato Nero o dall’Alchimista e si usa in campagna locale. Il limite dipende dalla difficoltà e segue l’orologio della campagna.
