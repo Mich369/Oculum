@@ -28,6 +28,7 @@
 - Nuovi sfondi per Visbark, Ombra Ignota e Nyvowl. I nomi Troll Veterana e Gufo di Neve Blu restano ricercabili.
 - L’Ombra Ignota ha un solo occhio mirabile nel preset. I salvataggi precedenti conservano la ferita più grave e le scoperte già fatte.
 - L’Art L’Ombra ferma i colpi Fisici prima che consumino Scudi o Vita.
+- Durante l’Art puoi mirare all’occhio con Precisione usando gli attacchi non fisici già ammessi.
 - La pergamena del Costrutto Minore resta nel bottino degli esemplari ordinari. Gli evocati non lasciano bottino.
 - Cloudtusk e Tryjaw hanno nuovi sfondi. Nell’Idra puoi mirare alle singole teste, alle zampe e alla coda.
 - Nuovi sfondi desktop per Ignyshell, Vaghyuil, Navigatore dell’Aria e Ragno della linfa acida. Nel Ragno puoi mirare singolarmente a otto zampe.
