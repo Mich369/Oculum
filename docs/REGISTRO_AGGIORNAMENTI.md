@@ -1,5 +1,9 @@
 # Registro cumulativo per i giocatori
 
+## Riallineamento dei temi del Bestiario — 16 novembre
+
+- Otto temi stock adottano il nuovo inchiostro ispirato al Re Goblin. Faldavela A, Balena Dai Mille Occhi B, Octocruor C, Nyvowl C, Tryjaw C, Cloudtusk B, Lapyorbit B e Armadillo della Sabbia B. I nomi, le parti mirabili e le personalizzazioni delle schede conservano i valori esistenti.
+
 ## Anymareap e scelte del Bestiario — 15 novembre
 
 - Il tema di Senka usa la tavola C «Sotto le radici» con il passante dai capelli argentati, lo sfondo A su telefono e la nuova reliquia della maschera a due occhi. Equipaggiare la maschera con il tema Senka attivo mostra Ombra Mascherata A.

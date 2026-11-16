@@ -1,5 +1,7 @@
 # Mercato, baratto e Bestiario
 
+- Otto temi del Bestiario sono stati riallineati allo stile del Re Goblin. Faldavela, Balena Dai Mille Occhi, Octocruor, Nyvowl, Tryjaw, Cloudtusk, Lapyorbit e Armadillo della Sabbia.
+
 - Nuovi sfondi per Senka e i tre Solari. Senka ha anche una reliquia aggiornata e uno sfondo Ombra Mascherata quando equipaggia la maschera nel suo tema.
 - Gli Scudi si frantumano come vetro. I Danni alla Vita mostrano tre tagli scuri, gocce ai lati e un bordeaux più marcato sui colpi pesanti. Gli effetti sono sopra le finestre e i pulsanti restano cliccabili.
 - I pulsanti a riposo sono un po’ più trasparenti. Testi e icone rimangono leggibili e il menu della scheda mantiene la transizione di 1,3 secondi quando passi sopra un tasto.
@@ -40,7 +42,7 @@
 - Imbrytoad espone due sacche mirabili singolarmente durante le Reazioni che precedono Sputo delle gronde.
 - Il Regno Sommerso è immerso nell’Eiva respirabile. Puoi esplorare la Barriera del Corallo Cavo e la Selva delle Fronde d’Eiva e incontrare due nuovi pesci umanoidi, Pysciwarden G e Constacuas H.
 - Nel Bestiario ci sono 60 nuove voci ostili del Regno Sommerso, ripartite in 20 famiglie con due varianti elementali ciascuna. Nuovi sfondi scelti per Balena Dai Mille Occhi, Dentysnap, Luxryf, Undathread e Faldavela.
-- Octocruor, la Piovra succhiasangue, usa la tavola D. Pynnasway, il Palmatore dei nastri, usa la tavola G.
+- Octocruor è il nome della Piovra succhiasangue. Pynnasway, il Palmatore dei nastri, usa la tavola G.
 - Il nuovo Predone del Boomerang usa un’orbita protettiva da −12 Danni in mischia e −6 a distanza per tre Azioni proprie.
 - Il Predone adotta il nome Falxfin e lo sfondo G1 «Vedetta sopra la cupola».
 - Malleysaw adotta la tavola G e Corallwhirl la F. Si trovano anche cercando Serracapo dei mosaici e Vortice delle Arcate.
