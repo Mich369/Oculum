@@ -487,6 +487,111 @@ Map<String, List<Map<String, dynamic>>> oculumDistributeEncounterLoot({
   return assignments;
 }
 
+bool oculumBindEncounterLamaOrbita(
+  InventoryItem item, {
+  required String ownerTag,
+  required Iterable<String> ownedElements,
+}) {
+  final state = item.craftData[oculumLamaOrbitaId];
+  final acquisition = item.monsterLoot['lamaOrbitaAcquisition'];
+  final physicalId = '${item.monsterLoot['id'] ?? ''}';
+  if (item.monsterLoot['catalogueDropId'] != oculumLamaOrbitaId ||
+      state is! Map ||
+      '${state['ownerTag'] ?? ''}'.isNotEmpty ||
+      acquisition is! Map ||
+      physicalId.isEmpty ||
+      ownerTag.isEmpty) {
+    return false;
+  }
+  final previousOwnerTag = '${acquisition['previousOwnerTag'] ?? ''}';
+  if (previousOwnerTag.isEmpty) return false;
+  item.craftData = {
+    ...item.craftData,
+    oculumLamaOrbitaId: {
+      ...state,
+      'physicalId': physicalId,
+      'previousOwnerTag': previousOwnerTag,
+      'ownerTag': ownerTag,
+      'affinity': oculumLamaOrbitaStartingAffinity(
+        ownedElements: ownedElements,
+        killedPreviousOwner: oculumSameSheetIdentity(
+          ownerTag,
+          acquisition['killerTag'],
+        ),
+      ),
+    },
+  };
+  return true;
+}
+
+/// The authoritative settlement records each real whale death once and adds
+/// personal scrolls directly to the killer's normal reward receipt.
+bool oculumAwardBalenaKillScrolls({
+  required MonsterBookEntry monster,
+  required Map<String, dynamic> records,
+  required Map<String, List<Map<String, dynamic>>> lootByParticipant,
+  required Iterable<Map> defeated,
+  required String settlementId,
+}) {
+  if (monster.id != oculumBalenaMilleOcchiId || settlementId.isEmpty) {
+    return false;
+  }
+  final seenKills = <String>{
+    for (final record in records.values.whereType<Map>())
+      ...((record['killIds'] as List? ?? const []).whereType<String>()),
+  };
+  var changed = false;
+  for (final enemy in defeated) {
+    if (enemy['monsterBookId'] != oculumBalenaMilleOcchiId ||
+        enemy['balenaDeathConfirmed'] != true ||
+        oculumEncounterEnemyIsSummon(enemy)) {
+      continue;
+    }
+    final killer = lootByParticipant.keys
+        .where((tag) => oculumSameSheetIdentity(tag, enemy['killerTag']))
+        .firstOrNull;
+    final sheetTag = '${enemy['monsterSheetTag'] ?? ''}'.trim();
+    final whaleTag = sheetTag.isNotEmpty
+        ? sheetTag
+        : '${enemy['id'] ?? ''}'.trim();
+    if (killer == null || whaleTag.isEmpty) continue;
+    final killId =
+        '$settlementId:${whaleTag.replaceAll(RegExp(r'\s+'), '').toUpperCase()}';
+    if (!seenKills.add(killId)) continue;
+    final ledgerKey = killer.replaceAll(RegExp(r'\s+'), '').toUpperCase();
+    final record = Map<String, dynamic>.from(
+      records[ledgerKey] as Map? ?? const {},
+    );
+    final killIds = <String>{
+      ...(record['killIds'] as List? ?? const []).whereType<String>(),
+      killId,
+    };
+    final granted = (record['grantedSkillIds'] as List? ?? const [])
+        .whereType<String>()
+        .toSet();
+    for (final skill in [
+      if (killIds.length >= 5) oculumBalenaEyesSkillId,
+      if (enemy['deathPlaneId'] == 'affogato') oculumBalenaTeleportSkillId,
+    ]) {
+      if (!granted.add(skill)) continue;
+      final scroll = oculumBalenaFormOneScroll(
+        monster,
+        skill,
+        receipt: 'balena:personal:$ledgerKey:$skill',
+        grade: readIntValue(enemy['grade']),
+      );
+      lootByParticipant[killer]!.add(scroll.toJson());
+    }
+    records[ledgerKey] = {
+      ...record,
+      'killIds': killIds.toList(),
+      'grantedSkillIds': granted.toList(),
+    };
+    changed = true;
+  }
+  return changed;
+}
+
 /// A kill can yield at most one Fallen Eye, even when several clients report
 /// the same natural-20 Drop. The strongest source goes to the least-developed
 /// participant; any remaining eyes are assigned randomly without duplication.
@@ -611,6 +716,18 @@ bool oculumEncounterEnemyIsSummon(Map enemy) {
       source.contains('summon') ||
       source.contains('evocaz');
 }
+
+bool _oculumIsSummonedMinorConstruct(String monsterId, Map enemy) =>
+    monsterId == 'costrutto_minore' && oculumEncounterEnemyIsSummon(enemy);
+
+bool _oculumConfirmedRareEquipmentDeath(Map token, Map sheet) =>
+    oculumEncounterEnemyKilled(token) &&
+    !oculumEncounterEnemyIsSummon(token) &&
+    !oculumEncounterEnemyIsSummon(sheet) &&
+    !readBoolValue(token['occhioCaduto']) &&
+    !readBoolValue(sheet['occhioCaduto']) &&
+    '${token['summonKind'] ?? ''}'.isEmpty &&
+    '${sheet['summonKind'] ?? ''}'.isEmpty;
 
 Map<String, int> oculumSummonExperienceShares({
   required Map enemy,
@@ -799,10 +916,19 @@ extension _OculumEncounterRewards on _OculumHomePageState {
   }
 
   void receiveEncounterRewards(Iterable<Map> rewards, {String? campaignId}) {
+    final newlyRewardedOtherSheets = <int>{};
     for (final reward in rewards) {
       receiveScostuFightSettlements(reward);
       receiveOblivionFightEnd(reward, campaignId: campaignId);
       resolveCorruptionFightEnd('${reward['endedEncounterId'] ?? ''}');
+      expireOculiathHolds(
+        '${reward['endedEncounterId'] ?? ''}',
+        campaignId: campaignId,
+      );
+      expirePiovraGrips(
+        '${reward['endedEncounterId'] ?? ''}',
+        campaignId: campaignId,
+      );
       expireBoneGoatAphoniaAtFightEnd(
         '${reward['endedEncounterId'] ?? ''}',
         campaignId: campaignId,
@@ -825,6 +951,16 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           ? rawDefeated.whereType<Map>().toList()
           : <Map>[];
       final closesWholeFight = '${reward['endedEncounterId'] ?? ''}'.isNotEmpty;
+      final grantsMarionettista =
+          closesWholeFight &&
+          reward['won'] == true &&
+          reward['outcome'] == 'victory' &&
+          reward['marionettistaKilled'] == true &&
+          defeated.any(
+            (entry) =>
+                entry['monsterBookId'] == 'marionettista_boss' &&
+                !oculumEncounterEnemyIsSummon(entry),
+          );
       if (id.isEmpty ||
           !newMethod &&
               legacyAmount <= 0 &&
@@ -855,6 +991,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
               continue;
             }
             eye['ownerSheetId'] = '${eye['ownerSheetId'] ?? ''}';
+            _refreshFallenEyeStats(eye);
             occhiCaduti.add(eye);
             seenIds.add(eyeId);
             if (sourceKillId.isNotEmpty) seenKills.add(sourceKillId);
@@ -867,6 +1004,11 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         if (schedePersonaggio[i]['realtimeSharedSheet'] == true) continue;
         final tag = sheetTagAt(i);
         if (!(reward['participants'] as List? ?? []).contains(tag)) continue;
+        if (grantsMarionettista &&
+            _grantMarionettistaHelp(i) &&
+            i != schedaCorrente) {
+          newlyRewardedOtherSheets.add(i);
+        }
         final key = 'reward:$id:$tag';
         if (onlineCombatRequests.containsKey(key)) continue;
         if ((schedePersonaggio[i]['claimedEncounterRewardIds'] as List? ?? [])
@@ -1046,6 +1188,11 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     }
     claimQueuedEncounterRewards();
     programmaSalvataggio();
+    if (canShareRealtimeSheetToStaff) {
+      for (final index in newlyRewardedOtherSheets) {
+        sendRealtimeSharedSheetAt(index);
+      }
+    }
   }
 
   void claimQueuedEncounterRewards() {
@@ -1169,6 +1316,19 @@ extension _OculumEncounterRewards on _OculumHomePageState {
             (item) => InventoryItem.fromJson(Map<String, dynamic>.from(item)),
           )
           .toList();
+      if ('${reward['endedEncounterId'] ?? ''}'.isNotEmpty &&
+          items.any(
+            (item) => item.monsterLoot['lamaOrbitaAcquisition'] is Map,
+          )) {
+        final ownedElements = usableSheetSearchElements();
+        for (final item in items) {
+          oculumBindEncounterLamaOrbita(
+            item,
+            ownerTag: tag,
+            ownedElements: ownedElements,
+          );
+        }
+      }
       if (items.isNotEmpty) {
         if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length) {
           final current = schedePersonaggio[schedaCorrente];
@@ -1377,9 +1537,11 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     final defeated = <Map<String, dynamic>>[];
     final participants = <String>{};
     final countedEnemies = <String>{};
+    var marionettistaKilled = false;
     for (final token in tokens) {
       if (masterInitiativeTokenIsTemporary(token)) continue;
       if (token['encounterObject'] == true) continue;
+      confirmCombatDeathMetadata(token);
       if (token['side'] != 'enemy') {
         participants.add(publicInitiativeSourceTag(token));
         continue;
@@ -1444,6 +1606,14 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       final monsterSource = index >= 0
           ? monsterLootSourceForSheet(schedePersonaggio[index])
           : null;
+      final monsterId =
+          monsterSource?.id ??
+          monsterBookIdForCombatToken(token, sheetIndex: index);
+      if (monsterId == 'marionettista_boss' &&
+          oculumEncounterEnemyKilled(token) &&
+          !oculumEncounterEnemyIsSummon(token)) {
+        marionettistaKilled = true;
+      }
       defeated.add({
         'id': token['id'],
         'sheetTag': enemyTag,
@@ -1457,7 +1627,17 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           ),
         ),
         'name': token['name'],
-        'monsterBookId': monsterSource?.id ?? '${token['monsterBookId'] ?? ''}',
+        'monsterBookId': monsterId,
+        if (monsterId == oculumPredoneBoomerangId ||
+            monsterId.startsWith('${oculumPredoneBoomerangId}_variante_'))
+          'predoneLootDeathConfirmed':
+              _oculumConfirmedRareEquipmentDeath(token, sourceSheet),
+        if (monsterId == oculumBalenaMilleOcchiId) ...{
+          'balenaDeathConfirmed':
+              _oculumConfirmedRareEquipmentDeath(token, sourceSheet),
+          if (token['deathPlaneId'] != null)
+            'deathPlaneId': token['deathPlaneId'],
+        },
         'element': monsterSource?.elementId ?? '${token['element'] ?? ''}',
         if (corruptionOwnerForToken(token).isNotEmpty ||
             (index == schedaCorrente && index >= 0
@@ -1981,10 +2161,22 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     for (final enemy in defeated) {
       collectObserverTearCurrency(enemy, cooldownFightId);
       final monsterId = '${enemy['monsterBookId'] ?? ''}';
+      if (_oculumIsSummonedMinorConstruct(monsterId, enemy)) continue;
+      if (monsterId == oculumBalenaMilleOcchiId &&
+          (enemy['balenaDeathConfirmed'] != true ||
+              oculumEncounterEnemyIsSummon(enemy))) {
+        continue;
+      }
       final monster = monsterId.isEmpty
           ? null
           : monsterBookEntryById(monsterId);
       if (monster == null || partyTags.isEmpty) continue;
+      if (monster.encounterRules[oculumEivaFamilyIdRule] ==
+              oculumPredoneBoomerangId &&
+          (enemy['predoneLootDeathConfirmed'] != true ||
+              oculumEncounterEnemyIsSummon(enemy))) {
+        continue;
+      }
       final rollerTag = partyTags[rollerCursor++ % partyTags.length];
       final rollerIndex = localSheetIndexForOculumTag(rollerTag);
       if (rollerIndex < 0) continue;
@@ -2116,6 +2308,16 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           }
         }
       }
+      if (enemy['predoneLootDeathConfirmed'] == true && !summon) {
+        for (final item in dropped.where(
+          (item) => item.monsterLoot['catalogueDropId'] == oculumLamaOrbitaId,
+        )) {
+          item.monsterLoot['lamaOrbitaAcquisition'] = {
+            'previousOwnerTag': enemy['sheetTag'] ?? enemy['id'],
+            'killerTag': enemy['killerTag'],
+          };
+        }
+      }
       pooledLoot.addAll(dropped);
       if (criticalDrop &&
           !corruptedCritical &&
@@ -2175,6 +2377,26 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       items: pooledLoot,
       participantTags: partyTags,
     );
+    final balena =
+        defeated.any(
+          (enemy) => enemy['monsterBookId'] == oculumBalenaMilleOcchiId,
+        )
+        ? monsterBookEntryById(oculumBalenaMilleOcchiId)
+        : null;
+    var balenaRecordsChanged = false;
+    if (balena != null) {
+      final balenaRecords = Map<String, dynamic>.from(
+        partyChest['balenaKillRewards'] as Map? ?? const {},
+      );
+      balenaRecordsChanged = oculumAwardBalenaKillScrolls(
+        monster: balena,
+        records: balenaRecords,
+        lootByParticipant: lootByParticipant,
+        defeated: defeated,
+        settlementId: settlementId,
+      );
+      if (balenaRecordsChanged) partyChest['balenaKillRewards'] = balenaRecords;
+    }
     final participantStatTotals = <String, int>{
       for (final tag in partyTags)
         tag: (() {
@@ -2198,6 +2420,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
     for (final entry in fallenEyesByParticipant.entries) {
       for (final eye in entry.value) {
         eye['ownerSheetId'] = entry.key;
+        _refreshFallenEyeStats(eye);
       }
     }
     final reward = <String, dynamic>{
@@ -2206,6 +2429,8 @@ extension _OculumEncounterRewards on _OculumHomePageState {
           group['escapeExperience'] as Map,
         ),
       'won': outcome == 'victory',
+      if (marionettistaKilled && outcome == 'victory')
+        'marionettistaKilled': true,
       'legacyWon':
           defeated.isNotEmpty &&
           !(group['tokens'] as List? ?? []).whereType<Map>().any(
@@ -2267,16 +2492,19 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       settlementId,
     }.toList();
     group.remove('pendingRewardSettlementId');
-    if (oculumRecordDeliveredMonsterDrops(
+    final discoveredDrops = oculumRecordDeliveredMonsterDrops(
       partyChest,
       lootByParticipant.values.expand((items) => items),
-    )) {
+    );
+    if (balenaRecordsChanged || discoveredDrops) {
       partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
-      combatKnowledgeRevision.value++;
+      if (discoveredDrops) combatKnowledgeRevision.value++;
       unawaited(sendPartyChestState());
     }
     receiveEncounterRewards([reward]);
     expireSummoningEmblems(id);
+    expireGoblinRoyalGuards(id);
+    expireMutantRatPups(id);
     clearTemporaryCombatResistanceEffects(
       endedWingTokens: masterInitiativeTokens,
       wingEncounterId: id,
@@ -2288,6 +2516,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         request['freeReaction'] = false;
       }
     }
+    _archiveLocalResurrectionCorpses(group);
     final allies = oculumBoardAfterFight(masterInitiativeTokens);
     masterInitiativeTokens
       ..clear()

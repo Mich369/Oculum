@@ -2,6 +2,37 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+const _campaignMonsterBookFields = [
+  'monsterBookCustomEntries',
+  'monsterBookRemovedIds',
+];
+
+Map<String, dynamic> _campaignMonsterBookJson(
+  Map<String, dynamic> campaign,
+  List<Map<String, dynamic>> sheets,
+) {
+  bool hasBook(Map<String, dynamic> value) =>
+      _campaignMonsterBookFields.any((key) => value[key] is List);
+
+  bool isLocalLegacySheet(Map<String, dynamic> sheet) =>
+      !readBoolValue(sheet['realtimeSharedSheet']) &&
+      '${sheet['realtimeSourceSheetTag'] ?? ''}'.trim().isEmpty &&
+      '${sheet['sheetAssignmentReceipt'] ?? ''}'.trim().isEmpty &&
+      hasBook(sheet);
+
+  final index = readIntValue(campaign['schedaCorrente']);
+  final selected = index >= 0 && index < sheets.length ? sheets[index] : null;
+  final origin = hasBook(campaign)
+      ? campaign
+      : selected != null && isLocalLegacySheet(selected)
+      ? selected
+      : sheets.where(isLocalLegacySheet).firstOrNull;
+  return <String, dynamic>{
+    for (final key in _campaignMonsterBookFields)
+      key: origin?[key] is List ? oculumCopyJsonTree(origin![key]) : [],
+  };
+}
+
 extension _OculumCampaigns on _OculumHomePageState {
   String generateCampaignId() {
     return 'camp_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(999999)}';
@@ -17,6 +48,10 @@ extension _OculumCampaigns on _OculumHomePageState {
     return <String, dynamic>{
       'id': activeCampaignId.isEmpty ? generateCampaignId() : activeCampaignId,
       'name': activeCampaignName(),
+      'monsterBookCustomEntries': monsterBookCustomEntries
+          .map((entry) => entry.toJson())
+          .toList(growable: false),
+      'monsterBookRemovedIds': monsterBookRemovedIds.toList()..sort(),
       'worldClock': worldClockCampaignJson(),
       'pawnGuardians': pawnGuardians.map((pawn) => pawn.toJson()).toList(),
       'pawnDamageReceipts': pawnDamageReceipts,
@@ -132,6 +167,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       'name': '${data['campaignName'] ?? 'Campagna principale'}',
       'schedaCorrente': readIntValue(data['schedaCorrente']),
       'schedePersonaggio': sheets,
+      ..._campaignMonsterBookJson(data, sheets),
       'occhiCaduti':
           (data['occhiCaduti'] is List ? data['occhiCaduti'] as List : const [])
               .whereType<Map>()
@@ -202,6 +238,8 @@ extension _OculumCampaigns on _OculumHomePageState {
     if (sheets.isEmpty) {
       sheets.add(statoVuotoPersonaggio());
     }
+
+    restoreMonsterBookCustomization(_campaignMonsterBookJson(campaign, sheets));
 
     sheetSidebarFolders
       ..clear()
@@ -424,6 +462,7 @@ extension _OculumCampaigns on _OculumHomePageState {
 
     setState(() {
       activeCampaignId = newId;
+      restoreMonsterBookCustomization(const {});
       sessionMaterialsByMaster.clear();
       campaignNameController.text = name;
       newCampaignNameController.clear();
@@ -490,6 +529,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       );
       if (campagneOculum.isEmpty) {
         activeCampaignId = generateCampaignId();
+        restoreMonsterBookCustomization(const {});
         sessionMaterialsByMaster.clear();
         campaignNameController.text = t('Campagna principale', 'Main campaign');
         schedePersonaggio
@@ -758,7 +798,16 @@ extension _OculumCampaigns on _OculumHomePageState {
         (campaign) => '${campaign['id'] ?? ''}' == destinationChoice,
       );
       if (index < 0) return;
-      target = Map<String, dynamic>.from(campagneOculum[index]);
+      final savedTarget = campagneOculum[index];
+      final targetSheets = savedTarget['schedePersonaggio'];
+      target = <String, dynamic>{
+        ...savedTarget,
+        ..._campaignMonsterBookJson(savedTarget, [
+          if (targetSheets is List)
+            for (final sheet in targetSheets.whereType<Map>())
+              Map<String, dynamic>.from(sheet),
+        ]),
+      };
     }
 
     try {

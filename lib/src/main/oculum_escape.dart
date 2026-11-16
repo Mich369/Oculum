@@ -1584,8 +1584,9 @@ extension _OculumEscape on _OculumHomePageState {
         planarState['wingEscapeFallReceipts'] = receipts;
         final reflex = escapeSubtraitAt(index, 'riflessi');
         final alreadyFell =
-            tag == carrier &&
-            planarState['lastWingFallInterceptionId'] == interceptionId;
+            wingFlightLevitationAt(index) ||
+            (tag == carrier &&
+                planarState['lastWingFallInterceptionId'] == interceptionId);
         endWingFlightForEscapeFall();
         final damage = oculumWingFallDamage(roll, reflex);
         if (!alreadyFell) {

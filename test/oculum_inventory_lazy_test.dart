@@ -5,6 +5,38 @@ import 'package:oculum/main.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  testWidgets('Master grants keep catalog clones independent of saved items', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(834, 1000),
+    );
+    state.datiCaricati = false;
+    final probe = OculumPerformanceProbe(state);
+    final source = InventoryItem(
+      nome: 'Reliquia personale per test catalogo',
+      peso: 1.5,
+      quantita: 7,
+      note: 'Mantieni questa descrizione',
+      equipaggiata: true,
+      craftData: {'test': 'personalizzato'},
+    );
+    final duplicate = InventoryItem.fromJson(source.toJson())..quantita = 3;
+    state.inventario.addAll([source, duplicate]);
+    final before = jsonEncode(source.toJson());
+    final catalogItem = probe.masterCatalogItems().singleWhere(
+      (item) => item.nome == source.nome,
+    );
+    expect(catalogItem.quantita, 1);
+    expect(catalogItem.equipaggiata, isFalse);
+    expect(catalogItem.craftData['test'], 'personalizzato');
+    catalogItem.note = 'Copia modificata';
+    expect(jsonEncode(source.toJson()), before);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   test(
     'catalog index combines search, grade and hybrid categories without changing custom JSON',
     () {
@@ -45,6 +77,119 @@ void main() {
       expect(jsonEncode(custom.toJson()), before);
     },
   );
+
+  test('item searches put closer names before fragments and notes', () {
+    InventoryItem item(String name, {String note = ''}) =>
+        InventoryItem(nome: name, peso: 0, quantita: 1, note: note);
+
+    final noteMatch = item('Reliquia', note: 'Forgiata da un Demon');
+    final firstFragment = item('Vyrdemon');
+    final secondFragment = item('Arcdemon');
+    final middleFragment = item('Oculdemonix');
+    final wordPrefix = item('Gemma Demonium');
+    final wordMatch = item('Sigillo Demon');
+    final namePrefix = item('Demonward');
+    final exact = item('Demon');
+    final items = [
+      noteMatch,
+      firstFragment,
+      secondFragment,
+      middleFragment,
+      wordPrefix,
+      wordMatch,
+      namePrefix,
+      exact,
+    ];
+    final index = OculumInventorySearchIndex(items);
+
+    final matches = index.search(query: ' DEMON ');
+    expect(matches.take(4), [exact, namePrefix, wordMatch, wordPrefix]);
+    expect(
+      matches.skip(4).take(3),
+      unorderedEquals([firstFragment, secondFragment, middleFragment]),
+    );
+    expect(
+      matches.indexOf(firstFragment),
+      lessThan(matches.indexOf(secondFragment)),
+    );
+    expect(matches.last, same(noteMatch));
+    expect(index.search(), orderedEquals(items));
+  });
+
+  test('related projectile names prioritize items for the sheet elements', () {
+    final fire = InventoryItem(
+      nome: 'Palla di brace',
+      peso: 0,
+      quantita: 1,
+      note: '',
+      elementoDanno: 'Fuoco',
+    );
+    final waterScroll = InventoryItem(
+      nome: 'Sfera di quarzo',
+      peso: 0,
+      quantita: 1,
+      note: '',
+      craftData: {
+        'scroll': {'element': 'water', 'grade': 2},
+      },
+    );
+    final waterAbility = InventoryItem(
+      nome: 'Dardo di vetro',
+      peso: 0,
+      quantita: 1,
+      note: '',
+      ability: CharacterSkill(
+        nome: 'Risveglio',
+        tipo: 'Attacco',
+        costo: '',
+        cooldown: '',
+        descrizione: '',
+        forme: [
+          CharacterSkillForm(
+            effettiStrutturati: [
+              OculumStructuredEffect(type: 'danno', elementType: 'acqua'),
+            ],
+          ),
+        ],
+      ),
+    );
+    final noteMatch = InventoryItem(
+      nome: 'Reliquia',
+      peso: 0,
+      quantita: 1,
+      note: 'Portava una sfera alla cintura.',
+    );
+    final index = OculumInventorySearchIndex([
+      fire,
+      noteMatch,
+      waterAbility,
+      waterScroll,
+    ]);
+    const preferred = {'acqua', 'fisico'};
+
+    for (final query in ['sfera', 'dardo', 'palla', 'sparo energetico']) {
+      final matches = index.search(query: query, preferredElements: preferred);
+      expect(matches.take(2), unorderedEquals([waterScroll, waterAbility]));
+      expect(matches[2], same(fire));
+    }
+    expect(
+      index.search(query: 'sfera', preferredElements: preferred).last,
+      same(noteMatch),
+    );
+    expect(
+      index.search(
+        query: 'dardo',
+        category: 'scroll',
+        grade: 2,
+        preferredElements: preferred,
+      ),
+      [same(waterScroll)],
+    );
+    expect(
+      index.search(query: 'sfera', preferredElements: {'fuoco'}).first,
+      same(fire),
+    );
+  });
 
   testWidgets('closed inventory panels build their body only after a click', (
     tester,

@@ -1,5 +1,35 @@
 part of 'monster_book.dart';
 
+const _affogatoFishHumanoidAnatomy = <Map<String, dynamic>>[
+  {'id': 'body', 'group': 'body', 'label': 'Corpo'},
+  {'id': 'head', 'group': 'head', 'label': 'Testa'},
+  {'id': 'eyes_1', 'group': 'eyes', 'label': 'Occhio destro', 'side': 'right'},
+  {'id': 'eyes_2', 'group': 'eyes', 'label': 'Occhio sinistro', 'side': 'left'},
+  {
+    'id': 'gills_1',
+    'group': 'gills',
+    'label': 'Branchia destra',
+    'side': 'right',
+    'weak': true,
+  },
+  {
+    'id': 'gills_2',
+    'group': 'gills',
+    'label': 'Branchia sinistra',
+    'side': 'left',
+    'weak': true,
+  },
+  {'id': 'arms_1', 'group': 'arms', 'label': 'Braccio destro', 'side': 'right'},
+  {
+    'id': 'arms_2',
+    'group': 'arms',
+    'label': 'Braccio sinistro',
+    'side': 'left',
+  },
+  {'id': 'legs_1', 'group': 'legs', 'label': 'Gamba destra', 'side': 'right'},
+  {'id': 'legs_2', 'group': 'legs', 'label': 'Gamba sinistra', 'side': 'left'},
+];
+
 // Authored roles, not a second colour or a stat multiplier of the same kit.
 final _canonicalPlanarVariants = <MonsterBookEntry>[
   ..._faunaVariantEntries,
@@ -113,6 +143,61 @@ final _canonicalPlanarVariants = <MonsterBookEntry>[
     'Il piccolo anello opaco sotto la campana.',
     ['glass_jelly_percent', 'glass_jelly_guard'],
     'filamento_medusa_vetro',
+  ),
+  _canonicalCreature(
+    'affogato_vedetta_dei_canali',
+    'Vedetta dei Canali',
+    '',
+    ['affogato'],
+    'acqua',
+    [3, 4, 4, 1],
+    2,
+    'Abitante longilineo del Regno Affogato, dai lineamenti di pesce, con due braccia, due gambe e due ventagli branchiali ai lati del collo. Percorre i canali cittadini immersi nell’Eiva con una lancia di canna.',
+    'Le due branchie esposte ai lati del collo.',
+    ['affogato_vedetta_canalstryke'],
+    'fibra_di_canna_dei_canali',
+    precisionBodyParts: _affogatoFishHumanoidAnatomy,
+    signatureSkillId: 'affogato_vedetta_canalstryke',
+  ).copyWith(
+    nameEn: 'Canal Lookout',
+    descEn:
+        'A slender fish humanoid with two arms, two legs and two gill fans along the neck. A resident of the Drowned Realm, it patrols the city’s canals within the Eiva carrying a reed spear.',
+    weakPointEn: 'The exposed gill fans on either side of the neck.',
+    classificationTags: const ['Umanoide', 'Creatura planare'],
+    canWieldWeapons: true,
+    weaponTags: const ['Lancia di canna'],
+    inventoryItems: const [
+      {
+        'nome': 'Lancia di canna',
+        'peso': 1.0,
+        'quantita': 1,
+        'arma': true,
+        'equipaggiata': true,
+        'bonusDanno': 2,
+        'elementoDanno': 'Acqua',
+      },
+    ],
+  ),
+  _canonicalCreature(
+    'affogato_custode_della_chiusa',
+    'Custode della Chiusa',
+    '',
+    ['affogato'],
+    'acqua',
+    [5, 4, 3, 2],
+    3,
+    'Abitante massiccio del Regno Affogato, con testa di razza, due braccia, due gambe e due ventagli branchiali laterali. Sorveglia disarmato le chiuse cittadine immerse nell’Eiva. Le placche del suo torace fanno parte del corpo.',
+    'I ventagli branchiali ai lati della testa, oltre il bordo delle placche toraciche.',
+    ['affogato_custode_valvaguard'],
+    'scaglia_della_chiusa',
+    precisionBodyParts: _affogatoFishHumanoidAnatomy,
+    signatureSkillId: 'affogato_custode_valvaguard',
+  ).copyWith(
+    nameEn: 'Sluice Guardian',
+    descEn:
+        'A broad, ray-headed fish humanoid with two arms, two legs and two gill fans. It keeps watch over the city sluices within the Eiva, unarmed. The shell plates on its chest are part of its body.',
+    weakPointEn: 'The gill fans beyond the edges of the chest plates.',
+    classificationTags: const ['Umanoide', 'Creatura planare'],
   ),
   _canonicalCreature(
     'nocciolo_corazzato',
@@ -697,6 +782,8 @@ MonsterBookEntry _canonicalCreature(
   String material, {
   bool peaceful = false,
   Map<String, String> resistances = const {},
+  List<Map<String, dynamic>> precisionBodyParts = const [],
+  String? signatureSkillId,
 }) =>
     _authoredPlanar(
       id,
@@ -713,6 +800,9 @@ MonsterBookEntry _canonicalCreature(
       {
         'authoredCanonical': true,
         if (parent.isNotEmpty) 'canonicalVariantOf': parent,
+        if (precisionBodyParts.isNotEmpty)
+          'precisionBodyParts': precisionBodyParts,
+        'signatureSkillId': ?signatureSkillId,
         'dispositions': peaceful ? ['pacifico', 'neutrale'] : ['ostile'],
       },
       resistances,
@@ -1094,6 +1184,43 @@ final _canonicalVariantTechniques = <String, MonsterConcreteTechnique>{
     maximums: [1, 2, 3],
     cd: [3, 3, 4],
     level: 2,
+  ),
+  'affogato_vedetta_canalstryke': _planarMove(
+    'Canalstryke',
+    'Incanala l’energia d’Acqua lungo la lancia di canna per il prossimo affondo contro un nemico',
+    'acqua',
+    'attacco',
+    [
+      for (final damage in [3, 6, 9])
+        [
+          MonsterTechniqueEffect(
+            'danno',
+            '$damage',
+            mode: 'prossima_azione',
+            recipient: 'nemico',
+          ),
+        ],
+    ],
+    costResource: 'materia',
+    minimums: [1, 2, 3],
+    maximums: [1, 2, 3],
+    cd: [2, 3, 3],
+    level: 2,
+  ),
+  'affogato_custode_valvaguard': _planarMove(
+    'Valvaguard',
+    'Si mette di traverso e serra le placche del torace, aumentando la propria Difesa per un turno',
+    'acqua',
+    'difesa',
+    [
+      for (final defense in [3, 5, 7])
+        [MonsterTechniqueEffect('difesa', '$defense', mode: 'temporaneo')],
+    ],
+    costResource: 'volonta',
+    minimums: [1, 2, 3],
+    maximums: [1, 2, 3],
+    cd: [3, 3, 4],
+    level: 3,
   ),
   'armored_seed_shell': _planarMove(
     'Guscio elastico',

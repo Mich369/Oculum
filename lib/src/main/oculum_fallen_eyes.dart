@@ -366,6 +366,171 @@ const List<String> oculumFallenEyeCommonStatKeys = [
   'oculum',
 ];
 
+int? oculumFallenEyeOwnerStatAllowance(String rarity) => switch (rarity) {
+  'comune' => 3,
+  'non_comune' => 6,
+  'raro' => 9,
+  _ => null,
+};
+
+const _fallenEyeStatFields = <String, (String, String)>{
+  'resilienza': ('currentResilienza', 'derivedResilienzaTotal'),
+  'volonta': ('currentVolonta', 'derivedVolontaTotal'),
+  'materia': ('currentMateria', 'derivedMateriaTotal'),
+  'oculum': ('currentOculum', 'derivedOculumTotal'),
+};
+
+Map<String, int> _oculumFallenEyeReadBaseStats(Map sheet) => {
+  for (final stat in oculumFallenEyeCommonStatKeys)
+    if (sheet.containsKey(stat)) stat: readIntValue(sheet[stat]),
+};
+
+int _oculumFallenEyeCommonStatMalus(Map eye, String stat) {
+  if (eye['rarity'] != 'comune' || !readBoolValue(eye['commonMalusApplied'])) {
+    return 0;
+  }
+  final effect = '${eye['commonMalusEffect'] ?? ''}'.split(':');
+  return effect.length == 3 && effect.first == 'stat' && effect[1] == stat
+      ? readIntValue(effect[2])
+      : 0;
+}
+
+int _oculumFallenEyeRarityStatAdjustment(Map eye, String stat) {
+  final bonuses = eye['oculumRarityStatBonuses'];
+  if (eye['rarity'] == 'oculum' && bonuses is Map) {
+    return readIntValue(bonuses[stat]);
+  }
+  return _oculumFallenEyeCommonStatMalus(eye, stat);
+}
+
+Map<String, int> _oculumFallenEyeUncappedBaseStats(Map eye, Map sheet) {
+  final saved = eye['uncappedBaseStats'];
+  if (saved is Map) return _oculumFallenEyeReadBaseStats(saved);
+  // Legacy saves keep their own authored stats. Recover a known penalty only.
+  return {
+    for (final entry in _oculumFallenEyeReadBaseStats(sheet).entries)
+      entry.key:
+          entry.value - _oculumFallenEyeRarityStatAdjustment(eye, entry.key),
+  };
+}
+
+/// Update only the effective body. The lossless source lives on the Eye
+/// record, independently of the projected or shared character sheet.
+bool oculumFallenEyeProjectOwnerStats(
+  Map<String, dynamic> eye,
+  Map<String, dynamic> sheet,
+  Map<String, int>? ownerStats, {
+  bool restoreUncapped = false,
+  bool captureEdits = false,
+}) {
+  final allowance = oculumFallenEyeOwnerStatAllowance('${eye['rarity'] ?? ''}');
+  if (!restoreUncapped && (allowance == null || ownerStats == null)) {
+    if (allowance == null && captureEdits) {
+      eye['uncappedBaseStats'] = {
+        for (final entry in _oculumFallenEyeReadBaseStats(sheet).entries)
+          entry.key:
+              entry.value -
+              _oculumFallenEyeRarityStatAdjustment(eye, entry.key),
+      };
+    }
+    return false;
+  }
+  final previouslyProjected = eye['projectedBaseStats'];
+  final uncapped = _oculumFallenEyeUncappedBaseStats(eye, sheet);
+  final before = _oculumFallenEyeReadBaseStats(sheet);
+  if (captureEdits && previouslyProjected is Map) {
+    // Attribute a real sheet edit to the source without turning the previous
+    // ceiling into the new source. Owner changes never enter this branch.
+    for (final entry in before.entries) {
+      if (!previouslyProjected.containsKey(entry.key)) continue;
+      final delta = entry.value - readIntValue(previouslyProjected[entry.key]);
+      if (delta == 0) continue;
+      uncapped[entry.key] = max(
+        0,
+        (uncapped[entry.key] ?? entry.value) + delta,
+      );
+    }
+  }
+  if (uncapped.isEmpty) return false;
+  eye['uncappedBaseStats'] = uncapped;
+  final projected = <String, int>{};
+  final oldResilience = readIntValue(
+    sheet['derivedResilienzaTotal'],
+    fallback: readIntValue(
+      sheet['currentResilienza'],
+      fallback: before['resilienza'] ?? 1,
+    ),
+  );
+  var changed = false;
+  for (final entry in uncapped.entries) {
+    final stat = entry.key;
+    final ownerStat = ownerStats?[stat];
+    if (!restoreUncapped && ownerStat == null) {
+      if (before[stat] != null) projected[stat] = before[stat]!;
+      continue;
+    }
+    final capped = restoreUncapped
+        ? entry.value
+        : min(entry.value, max(0, ownerStat!) + allowance!);
+    final effective = capped + _oculumFallenEyeRarityStatAdjustment(eye, stat);
+    projected[stat] = effective;
+    final previous = before[stat];
+    if (previous == null || previous == effective) continue;
+    changed = true;
+    sheet[stat] = '$effective';
+    final (currentKey, derivedKey) = _fallenEyeStatFields[stat]!;
+    final current = readIntValue(sheet[currentKey], fallback: previous);
+    final nextCurrent = max(0, current + effective - previous);
+    sheet[currentKey] = '$nextCurrent';
+    if (sheet.containsKey(derivedKey)) {
+      sheet[derivedKey] =
+          readIntValue(sheet[derivedKey]) + nextCurrent - current;
+    }
+    if (stat == 'oculum' && sheet.containsKey('maxOculum')) {
+      sheet['maxOculum'] = max(
+        0,
+        readIntValue(sheet['maxOculum']) + effective - previous,
+      );
+    }
+    if (stat == 'resilienza' && readIntValue(sheet['derivedMaxHp']) > 0) {
+      final newResilience = readIntValue(
+        sheet['derivedResilienzaTotal'],
+        fallback: nextCurrent,
+      );
+      final multiplier = readIntValue(
+        sheet['hpGradeMultiplier'],
+        // Same legacy baseline used by oculumSheetHpMaximum. Its later
+        // conversion still applies the current Grade and level multiplier.
+        fallback: 10,
+      );
+      final monsterId = '${sheet['monsterBookSourceId'] ?? ''}';
+      sheet['derivedMaxHp'] = max(
+        1,
+        readIntValue(sheet['derivedMaxHp']) +
+            oculumOculiathHealthFromResilience(
+              monsterId,
+              max(1, newResilience) * multiplier,
+            ) -
+            oculumOculiathHealthFromResilience(
+              monsterId,
+              max(1, oldResilience) * multiplier,
+            ),
+      );
+      sheet['hpGradeMultiplier'] = multiplier;
+    }
+  }
+  if (restoreUncapped) {
+    eye.remove('projectedBaseStats');
+  } else {
+    eye['projectedBaseStats'] = projected;
+  }
+  if (changed && sheet.containsKey('currentHp')) {
+    sheet['currentHp'] =
+        '${min(readIntValue(sheet['currentHp']), oculumSheetHpMaximum(sheet))}';
+  }
+  return changed;
+}
+
 /// Bonus granted only while an Eye of the Fallen is actually summoned.
 /// Ties are resolved in the stable order used by the character sheet.
 const List<String> oculumFallenEyeSummonStatKeys = [
@@ -477,6 +642,15 @@ void oculumFallenEyeApplyOculumBuff(Map<String, dynamic> sheet, String effect) {
             .toString();
   }
 }
+
+Map<String, int> _oculumFallenEyeOculumStatBonus(
+  Map<String, int> base,
+  Map<String, dynamic> sheet,
+) => {
+  for (final entry in base.entries)
+    if (readIntValue(sheet[entry.key]) > entry.value)
+      entry.key: readIntValue(sheet[entry.key]) - entry.value,
+};
 
 /// The stored effect, rather than its display label, is the authoritative
 /// record. This makes a common Eye's penalty survive summon, save/load, and
@@ -731,6 +905,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     if (id.isEmpty) return;
     final eye = fallenEyeForId(id);
     if (eye == null) return;
+    oculumFallenEyeProjectOwnerStats(eye, sheet, _fallenEyeOwnerBaseStats(eye));
     _restoreFallenEyeMonsterPowers(eye);
     eye['sheetData'] = sheet;
     oculumFallenEyeApplyInheritedPowers(eye);
@@ -776,6 +951,143 @@ extension _OculumFallenEyes on _OculumHomePageState {
   Map<String, dynamic> _cloneJsonMap(Map<String, dynamic> value) =>
       oculumCopyJsonTree(value) as Map<String, dynamic>;
 
+  Map<String, int>? _fallenEyeOwnerBaseStats(Map<String, dynamic> eye) {
+    final ownerId = '${eye['ownerSheetId'] ?? ''}';
+    final ownerIndex = localSheetIndexForOculumTag(ownerId);
+    if (ownerIndex < 0) return null;
+    final owner = schedePersonaggio[ownerIndex];
+    if (readBoolValue(owner['realtimeSharedSheet'])) return null;
+    final stats = _oculumFallenEyeReadBaseStats(owner);
+    final tag = normalizeOculumFriendTag(ownerId).toUpperCase();
+    for (final other in occhiCaduti) {
+      // Prior releases left the known bonuses in the owner's base when a
+      // summoned Eye died. Copies clear the summon tag and can be ignored.
+      final legacyDeadSummon =
+          oculumFallenEyeIsDead(other) &&
+          '${other['summonedSheetTag'] ?? ''}'.isNotEmpty;
+      if ((!readBoolValue(other['active']) && !legacyDeadSummon) ||
+          normalizeOculumFriendTag(
+                '${other['ownerSheetId'] ?? ''}',
+              ).toUpperCase() !=
+              tag) {
+        continue;
+      }
+      final bonuses = other['summonStatBonuses'];
+      if (bonuses is! Map) continue;
+      for (final stat in stats.keys.toList()) {
+        stats[stat] = stats[stat]! - readIntValue(bonuses[stat]);
+      }
+    }
+    return stats;
+  }
+
+  bool _refreshFallenEyeStats(
+    Map<String, dynamic> eye, {
+    bool includeActiveSheet = true,
+    bool updateVisible = false,
+  }) {
+    final data = eye['sheetData'];
+    if (data is! Map) return false;
+    final id = '${eye['id'] ?? ''}';
+    final activeIndex =
+        includeActiveSheet && id.isNotEmpty && readBoolValue(eye['active'])
+        ? schedePersonaggio.indexWhere((sheet) => sheet['occhioCadutoId'] == id)
+        : -1;
+    final visible = updateVisible && activeIndex == schedaCorrente;
+    final sheet = activeIndex < 0
+        ? Map<String, dynamic>.from(data)
+        : visible
+        ? {...schedePersonaggio[activeIndex], ...statoCorrenteJson()}
+        : schedePersonaggio[activeIndex];
+    final changed = oculumFallenEyeProjectOwnerStats(
+      eye,
+      sheet,
+      _fallenEyeOwnerBaseStats(eye),
+      captureEdits: visible,
+    );
+    if (changed) {
+      if (activeIndex >= 0) schedePersonaggio[activeIndex] = sheet;
+      if (visible) _applyFallenEyeStatsToCurrentControllers(sheet);
+      eye['sheetData'] = activeIndex >= 0 ? _cloneJsonMap(sheet) : sheet;
+    }
+    return changed;
+  }
+
+  void _applyFallenEyeStatsToCurrentControllers(Map<String, dynamic> sheet) {
+    final wasLoading = loadingThresholdSheet;
+    loadingThresholdSheet = true;
+    try {
+      for (final entry in _fallenEyeStatFields.entries) {
+        final stat = entry.key;
+        final currentKey = entry.value.$1;
+        if (sheet.containsKey(stat)) {
+          baseStatController(stat).text = '${sheet[stat]}';
+        }
+        if (sheet.containsKey(currentKey)) {
+          currentStatController(stat).text = '${sheet[currentKey]}';
+        }
+        syncVisibleCurrentStatEditor(stat);
+      }
+      if (sheet.containsKey('currentHp')) {
+        currentHpController.text = '${sheet['currentHp']}';
+      }
+    } finally {
+      loadingThresholdSheet = wasLoading;
+    }
+    invalidateDerivedDataCaches();
+  }
+
+  void refreshFallenEyesForOwner(
+    Map<String, dynamic> sheet, {
+    bool updateVisible = false,
+    bool shareChanges = false,
+  }) {
+    if (occhiCaduti.isEmpty) return;
+    final tag = normalizeOculumFriendTag(
+      '${sheet['sheetTag'] ?? sheet['id'] ?? ''}',
+    ).toUpperCase();
+    if (tag.isEmpty) return;
+    var changed = false;
+    final changedSummons = <String>{};
+    for (final eye in occhiCaduti) {
+      if (normalizeOculumFriendTag(
+            '${eye['ownerSheetId'] ?? ''}',
+          ).toUpperCase() !=
+          tag) {
+        continue;
+      }
+      if (_refreshFallenEyeStats(eye, updateVisible: updateVisible)) {
+        changed = true;
+        if (shareChanges && readBoolValue(eye['active'])) {
+          final summon = '${eye['summonedSheetTag'] ?? ''}';
+          if (summon.isNotEmpty) changedSummons.add(summon);
+        }
+      }
+    }
+    if (changed) _touchFallenEyes();
+    if (changedSummons.isEmpty || !canShareRealtimeSheetToStaff) return;
+    final service = realtimeService;
+    final campaign = activeCampaignId;
+    // Delivery can save the selected sheet. Run it after this save completes
+    // its synchronous update, and only for summons with changed stats.
+    unawaited(
+      Future<void>.microtask(() async {
+        for (final summon in changedSummons) {
+          if (!mounted ||
+              realtimeService != service ||
+              activeCampaignId != campaign) {
+            return;
+          }
+          final index = localSheetIndexForOculumTag(summon);
+          if (index >= 0 &&
+              readBoolValue(schedePersonaggio[index]['occhioCaduto'])) {
+            await sendRealtimeSheetToStaffAt(index);
+          }
+        }
+      }),
+    );
+  }
+
   /// Un Occhio conserva soltanto il corpo della fonte. Inventario, quest,
   /// condizioni, Titoli, note e dati online restano separati. Le tecniche
   /// vengono ereditate a parte e rese disponibili secondo la rarità.
@@ -792,6 +1104,8 @@ extension _OculumFallenEyes on _OculumHomePageState {
     for (final key in const <String>[
       'currentHp',
       'monsterBookSourceId',
+      'monsterBaseStats',
+      'fallenEyeLevelStatBonuses',
       'derivedMaxHp',
       'hpGradeMultiplier',
       'manualHpMaximumAdjustment',
@@ -866,6 +1180,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final id =
         'fallen_eye_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(999999)}';
     final current = _fallenEyeBodyFromSource(source);
+    final uncappedStats = _oculumFallenEyeReadBaseStats(current);
     current['currentHp'] = max(
       readIntValue(current['currentHp'], fallback: 0),
       oculumSheetHpMaximum(current),
@@ -907,6 +1222,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
       'name': '${current['nome'] ?? 'Occhio Caduto'}',
       'rarity': selectedRarity,
       'originalRarity': selectedRarity,
+      'uncappedBaseStats': uncappedStats,
+      if (oculumBuffEffect.isNotEmpty)
+        'oculumRarityStatBonuses': _oculumFallenEyeOculumStatBonus(
+          uncappedStats,
+          current,
+        ),
       'bond': naturalAwakening ? 1000 : 0,
       'awakened': naturalAwakening,
       'rebirthsUsed': 0,
@@ -1060,9 +1381,12 @@ extension _OculumFallenEyes on _OculumHomePageState {
                   return false;
                 }
                 if (query.isEmpty) return true;
-                return oculumNormalizeText(
-                  '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.presetType} ${entry.elementId} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
-                ).contains(query);
+                return oculumMonsterNameSearchAliases(entry).any(
+                      (alias) => oculumNormalizeText(alias).contains(query),
+                    ) ||
+                    oculumNormalizeText(
+                      '${entry.nameIt} ${entry.nameEn} ${entry.id} ${entry.presetType} ${entry.elementId} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
+                    ).contains(query);
               })
               .toList(growable: false);
           return AlertDialog(
@@ -1157,7 +1481,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
     String? name,
     String? rarity,
   }) async {
+    salvaSchedaCorrenteInMemoria();
     final eye = _newFallenEye(source, name: name, rarity: rarity);
+    _refreshFallenEyeStats(eye);
     oculumFallenEyeApplyInheritedPowers(eye);
     setState(() {
       occhiCaduti.add(eye);
@@ -1260,6 +1586,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
         copy['id'] = id;
         copy['ownerSheetId'] = '${target['sheetTag']}';
         copy['active'] = false;
+        copy.remove('summonStatBonuses');
         copy['summonedSheetTag'] = '';
         // Copy preserves death, bond and spent rebirths.
         copy['createdAt'] = DateTime.now().toIso8601String();
@@ -1274,6 +1601,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
           copy['rareAttributeBonus'],
         );
         copy['sheetData'] = data;
+        _refreshFallenEyeStats(copy);
         created.add(copy);
       }
       occhiCaduti.addAll(created);
@@ -1693,6 +2021,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
   int repairMissingFallenEyeSheets() {
     var restored = 0;
     for (final eye in occhiCaduti) {
+      _refreshFallenEyeStats(eye);
       if (!readBoolValue(eye['active']) || oculumFallenEyeIsDead(eye)) continue;
       final id = '${eye['id'] ?? ''}';
       final owner = '${eye['ownerSheetId'] ?? ''}';
@@ -1750,6 +2079,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
         bonuses,
         multiplier: multiplier,
       );
+      refreshFallenEyesForOwner(
+        schedePersonaggio[ownerIndex],
+        updateVisible: true,
+      );
       return;
     }
     final wasLoading = loadingThresholdSheet;
@@ -1797,15 +2130,13 @@ extension _OculumFallenEyes on _OculumHomePageState {
       );
       return;
     }
+    _refreshFallenEyeStats(eye);
     final sheet = _cloneJsonMap(
       Map<String, dynamic>.from(eye['sheetData'] as Map),
     );
     final ownerBonuses = ownerIndex >= 0
         ? oculumFallenEyeSummonStatBonuses(schedePersonaggio[ownerIndex])
         : <String, int>{};
-    if (ownerIndex >= 0) {
-      applyFallenEyeOwnerBonuses(ownerIndex, ownerBonuses);
-    }
     eye['summonStatBonuses'] = ownerBonuses;
     sheet['occhioCadutoId'] = eye['id'];
     sheet['occhioCaduto'] = true;
@@ -1854,6 +2185,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
           '${schedePersonaggio[summonedIndex]['sheetTag'] ?? ''}';
       eye['usesBlankSummonSlot'] = true;
       eye['active'] = true;
+      applyFallenEyeOwnerBonuses(ownerIndex, ownerBonuses);
       // During a combat, the summoned Fallen Eye joins its owner's current
       // local or Master-hosted initiative automatically. Outside combat the
       // existing summon flow remains unchanged.
@@ -2129,9 +2461,6 @@ extension _OculumFallenEyes on _OculumHomePageState {
 
   Future<void> deactivateFallenEye(Map<String, dynamic> eye) async {
     salvaSchedaCorrenteInMemoria();
-    final summonBonuses = (eye['summonStatBonuses'] as Map? ?? const {}).map(
-      (key, value) => MapEntry('$key', readIntValue(value)),
-    );
     final id = '${eye['id']}';
     var index = schedePersonaggio.indexWhere(
       (x) => '${x['occhioCadutoId'] ?? ''}' == id,
@@ -2179,27 +2508,33 @@ extension _OculumFallenEyes on _OculumHomePageState {
         }
       });
     }
-    final ownerIndex = schedePersonaggio.indexWhere(
-      (candidate) =>
-          '${candidate['sheetTag'] ?? ''}' == '${eye['ownerSheetId'] ?? ''}',
-    );
-    if (ownerIndex >= 0) {
-      applyFallenEyeOwnerBonuses(
-        ownerIndex,
-        Map<String, int>.from(summonBonuses),
-        multiplier: -1,
-      );
-    }
     // Anche se lo slot è stato già rimosso (vecchio salvataggio/sync), lo
     // stato persistente deve sempre passare a disevocato.
     setState(() {
       eye['active'] = false;
-      eye.remove('summonStatBonuses');
+      _releaseFallenEyeOwnerBonuses(eye);
       eye.remove('summonSlotPlacementBefore');
       eye['summonedSheetTag'] = '';
       _touchFallenEyes();
     });
     await salvaDati();
+  }
+
+  void _releaseFallenEyeOwnerBonuses(Map<String, dynamic> eye) {
+    final bonuses = eye.remove('summonStatBonuses');
+    if (bonuses is! Map || bonuses.isEmpty) return;
+    final ownerIndex = localSheetIndexForOculumTag(
+      '${eye['ownerSheetId'] ?? ''}',
+    );
+    if (ownerIndex < 0 ||
+        readBoolValue(schedePersonaggio[ownerIndex]['realtimeSharedSheet'])) {
+      return;
+    }
+    applyFallenEyeOwnerBonuses(
+      ownerIndex,
+      bonuses.map((key, value) => MapEntry('$key', readIntValue(value))),
+      multiplier: -1,
+    );
   }
 
   Future<void> dismissFallenEye(Map<String, dynamic> eye) async {
@@ -2301,20 +2636,46 @@ extension _OculumFallenEyes on _OculumHomePageState {
     data['feriteMorte'] = 3;
     data['personaggioCaduto'] = false;
     eye['sheetData'] = data;
+    _releaseFallenEyeOwnerBonuses(eye);
     _touchFallenEyes();
     programmaSalvataggio();
   }
 
   /// Chiamato dal salvataggio della scheda: la collezione legge sempre lo stesso
   /// ID e riceve l'ultimo snapshot, senza salvare tutte le altre schede.
-  void syncFallenEyeFromSheet(Map<String, dynamic> sheet) {
+  bool syncFallenEyeFromSheet(
+    Map<String, dynamic> sheet, {
+    Map<String, dynamic>? previous,
+    bool updateControllers = true,
+  }) {
     final id = '${sheet['occhioCadutoId'] ?? ''}';
-    if (id.isEmpty) return;
+    if (id.isEmpty) {
+      if (previous == null ||
+          _fallenEyeStatFields.keys.any(
+            (stat) => readIntValue(previous[stat]) != readIntValue(sheet[stat]),
+          )) {
+        refreshFallenEyesForOwner(
+          sheet,
+          updateVisible: !updateControllers,
+          shareChanges: true,
+        );
+      }
+      return false;
+    }
     final eye = fallenEyeForId(id);
-    if (eye == null) return;
+    if (eye == null) return false;
     if (oculumFallenEyeIsDead(eye)) {
       sheet['currentHp'] = '0';
       sheet['feriteMorte'] = 3;
+    }
+    final changed = oculumFallenEyeProjectOwnerStats(
+      eye,
+      sheet,
+      _fallenEyeOwnerBaseStats(eye),
+      captureEdits: true,
+    );
+    if (changed && updateControllers) {
+      _applyFallenEyeStatsToCurrentControllers(sheet);
     }
     eye['sheetData'] = _cloneJsonMap(sheet);
     eye['name'] = '${sheet['nome'] ?? eye['name']}';
@@ -2323,6 +2684,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
       segnaFallenEyeMortoDaScheda(sheet);
     }
     _touchFallenEyes();
+    return changed;
   }
 
   /// Older saves only kept the Common penalty as text. On their first summon,
@@ -2377,10 +2739,15 @@ extension _OculumFallenEyes on _OculumHomePageState {
     final data = _cloneJsonMap(
       Map<String, dynamic>.from(eye['sheetData'] as Map? ?? const {}),
     );
+    final base = _oculumFallenEyeReadBaseStats(data);
     oculumFallenEyeApplyOculumBuff(data, effect);
     eye['sheetData'] = data;
     eye['oculumBuffEffect'] = effect;
     eye['oculumBuffApplied'] = true;
+    eye['oculumRarityStatBonuses'] = _oculumFallenEyeOculumStatBonus(
+      base,
+      data,
+    );
     final activeIndex = schedePersonaggio.indexWhere(
       (sheet) => '${sheet['occhioCadutoId'] ?? ''}' == '${eye['id']}',
     );
@@ -2388,6 +2755,7 @@ extension _OculumFallenEyes on _OculumHomePageState {
   }
 
   Future<void> reforgeFallenEye(Map<String, dynamic> eye) async {
+    salvaSchedaCorrenteInMemoria();
     final current = '${eye['rarity'] ?? 'comune'}';
     final target = oculumFallenEyeNextRarity(current);
     final credits = readIntValue(eye['reforgeQuestCredits']);
@@ -2449,6 +2817,11 @@ extension _OculumFallenEyes on _OculumHomePageState {
           'originalRarity',
           () => oculumFallenEyeOriginalRarity(eye),
         );
+        final previousData = eye['sheetData'] as Map;
+        eye['uncappedBaseStats'] = _oculumFallenEyeUncappedBaseStats(
+          eye,
+          previousData,
+        );
         eye['rarity'] = target;
         _restoreFallenEyeMonsterPowers(eye);
         oculumFallenEyeApplyInheritedPowers(eye);
@@ -2459,7 +2832,10 @@ extension _OculumFallenEyes on _OculumHomePageState {
             final data = _cloneJsonMap(
               Map<String, dynamic>.from(eye['sheetData'] as Map? ?? const {}),
             );
-            oculumFallenEyeApplyCommonMalus(data, effect, multiplier: -1);
+            if (!effect.startsWith('stat:') ||
+                _fallenEyeOwnerBaseStats(eye) == null) {
+              oculumFallenEyeApplyCommonMalus(data, effect, multiplier: -1);
+            }
             eye['sheetData'] = data;
             final activeIndex = schedePersonaggio.indexWhere(
               (sheet) => '${sheet['occhioCadutoId'] ?? ''}' == '${eye['id']}',
@@ -2476,7 +2852,26 @@ extension _OculumFallenEyes on _OculumHomePageState {
             Random.secure().nextInt(100),
           );
         }
-        if (target == 'oculum') _ensureOculumEyeBuffApplied(eye);
+        if (target == 'oculum') {
+          final data = eye['sheetData'] as Map<String, dynamic>;
+          oculumFallenEyeProjectOwnerStats(
+            eye,
+            data,
+            null,
+            restoreUncapped: true,
+          );
+          _ensureOculumEyeBuffApplied(eye);
+        } else {
+          _refreshFallenEyeStats(eye, includeActiveSheet: false);
+        }
+        final activeIndex = schedePersonaggio.indexWhere(
+          (sheet) => '${sheet['occhioCadutoId'] ?? ''}' == '${eye['id']}',
+        );
+        if (activeIndex >= 0) {
+          final data = _cloneJsonMap(eye['sheetData'] as Map<String, dynamic>);
+          schedePersonaggio[activeIndex] = data;
+          if (activeIndex == schedaCorrente) caricaStatoDaJson(data);
+        }
       } else {
         eye['reforgeFailureStreak'] = failureStreak + 1;
       }
@@ -2796,11 +3191,20 @@ extension _OculumFallenEyes on _OculumHomePageState {
   Future<void> _showCreateFallenEyeDialog({
     Map<String, dynamic>? editingEye,
   }) async {
+    if (editingEye != null) salvaSchedaCorrenteInMemoria();
     var draft = _cloneJsonMap(
       editingEye == null
           ? schedePersonaggio[schedaCorrente]
           : Map<String, dynamic>.from(editingEye['sheetData'] as Map),
     );
+    if (editingEye != null) {
+      for (final entry in _oculumFallenEyeUncappedBaseStats(
+        editingEye,
+        draft,
+      ).entries) {
+        draft[entry.key] = '${entry.value}';
+      }
+    }
     final name = TextEditingController(text: '${draft['nome'] ?? ''}');
     final level = TextEditingController(text: '${draft['livello'] ?? '1'}');
     final hp = TextEditingController(text: '${draft['currentHp'] ?? ''}');
@@ -3032,7 +3436,9 @@ extension _OculumFallenEyes on _OculumHomePageState {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Statistiche',
+                    editingEye == null
+                        ? 'Statistiche'
+                        : 'Statistiche di origine',
                     style: TextStyle(
                       color: primaryColor,
                       fontWeight: FontWeight.w900,
@@ -3223,6 +3629,16 @@ extension _OculumFallenEyes on _OculumHomePageState {
         );
       } else {
         final rarity = selectedRarity ?? '${editingEye['rarity'] ?? 'comune'}';
+        final originalStats = _oculumFallenEyeReadBaseStats(draft);
+        final previous = editingEye['sheetData'] as Map;
+        for (final entry in _fallenEyeStatFields.entries) {
+          for (final key in [entry.key, entry.value.$1]) {
+            if (previous.containsKey(key)) draft[key] = previous[key];
+          }
+        }
+        if (previous.containsKey('maxOculum')) {
+          draft['maxOculum'] = previous['maxOculum'];
+        }
         final originalArts = (draft['fallenEyeOriginalArts'] as List)
             .whereType<Map>()
             .map((art) => Map<String, dynamic>.from(art))
@@ -3233,20 +3649,28 @@ extension _OculumFallenEyes on _OculumHomePageState {
         setState(() {
           editingEye['name'] = draft['nome'];
           editingEye['rarity'] = rarity;
+          editingEye['uncappedBaseStats'] = originalStats;
           editingEye['originalArts'] = originalArts;
           editingEye['activeArts'] = originalArts
               .take(oculumFallenEyeEffectiveArtLimit(editingEye, rarity))
               .toList();
           editingEye['sheetData'] = _cloneJsonMap(draft);
           oculumFallenEyeApplyInheritedPowers(editingEye);
+          final data = editingEye['sheetData'] as Map<String, dynamic>;
+          oculumFallenEyeProjectOwnerStats(
+            editingEye,
+            data,
+            _fallenEyeOwnerBaseStats(editingEye),
+            restoreUncapped: oculumFallenEyeOwnerStatAllowance(rarity) == null,
+          );
           final activeIndex = schedePersonaggio.indexWhere(
             (sheet) =>
                 '${sheet['occhioCadutoId'] ?? ''}' == '${editingEye['id']}',
           );
           if (activeIndex >= 0) {
-            schedePersonaggio[activeIndex] = _cloneJsonMap(
-              editingEye['sheetData'] as Map<String, dynamic>,
-            );
+            final current = _cloneJsonMap(data);
+            schedePersonaggio[activeIndex] = current;
+            if (activeIndex == schedaCorrente) caricaStatoDaJson(current);
           }
           _touchFallenEyes();
         });

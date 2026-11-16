@@ -358,6 +358,7 @@ extension _OculumRebirthRage on _OculumHomePageState {
           currentHpController.text = '$received';
           personaggioCaduto = false;
           feriteMorte = 0;
+          _closeLocalResurrectionDeath(schedePersonaggio[schedaCorrente]);
           syncCurrentSheetDeathStateToInitiative();
         }
         planarState[key] = received;

@@ -98,14 +98,7 @@ extension _OculumOculumTheft on _OculumHomePageState {
     if (raw is! Map) return;
     final skill = CharacterSkill.fromJson(Map<String, dynamic>.from(raw));
     skill.ensureForms();
-    final form = skill.forme.reversed
-        .where(
-          (form) => form.effettiStrutturati.any(
-            (effect) =>
-                effect.enabled && effect.target == oculumOculumTheftKind,
-          ),
-        )
-        .firstOrNull;
+    final form = _oculumTheftScrollForm(data, skill);
     if (form == null) return;
     await _castOculumTheft(
       skill.nome,

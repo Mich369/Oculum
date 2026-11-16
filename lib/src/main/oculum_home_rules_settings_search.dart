@@ -2401,12 +2401,15 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
     }
     final selectedMonster = _resolveTutorialMonsterPreset();
     final wizard = readIntValue(creationDraft['wizardVersion']) >= 2;
-    final selectedPool = wizard
+    final fixedSoulFighterKit =
+        wizard && oculumIsSoulFighter(selectedMonster?.id ?? '');
+    final chooseStartingSkills = wizard && !fixedSoulFighterKit;
+    final selectedPool = chooseStartingSkills
         ? tutorialSkillPool()
               .where((s) => tutorialChosenSkills.contains(s.nome))
               .toList()
         : <CharacterSkill>[];
-    if (wizard &&
+    if (chooseStartingSkills &&
         (selectedPool.length != 3 ||
             selectedPool.any(
               (s) =>
@@ -2608,19 +2611,20 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       trattiRazziali.removeWhere(
         (tratto) => tratto.chiaveSistema.startsWith('tutorial_'),
       );
-      arti.removeWhere(
-        (esistente) => oculumStarterArtChoices().any(
-          (starter) => starter.nome == esistente.nome,
-        ),
-      );
-      // Cambiare preset nel tutorial sostituisce solo la precedente Art
-      // generata dal Monster Book: nessuna Art personale o legacy viene
-      // eliminata, ma la nuova creatura non accumula peculiarita' duplicate.
-      arti.removeWhere(
-        (esistente) =>
-            esistente.tipo == 'Art Mostro' &&
-            esistente.descrizione.startsWith('Peculiarità del Monster Book'),
-      );
+      if (!fixedSoulFighterKit) {
+        arti.removeWhere(
+          (esistente) => oculumStarterArtChoices().any(
+            (starter) => starter.nome == esistente.nome,
+          ),
+        );
+        // Cambiare preset nel tutorial sostituisce solo la precedente Art
+        // generata dal Monster Book, senza rimuovere le Art personali.
+        arti.removeWhere(
+          (esistente) =>
+              esistente.tipo == 'Art Mostro' &&
+              esistente.descrizione.startsWith('Peculiarità del Monster Book'),
+        );
+      }
       // Gli equipaggiamenti dati dal Book al mostro sono marcati: riapplicare
       // il tutorial li sostituisce senza toccare l'inventario normale del player.
       inventario.removeWhere(
@@ -2691,17 +2695,20 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
             selectedMonster,
           ).where((title) => knownTitleKeys.add(title.chiaveSistema)),
         );
-        final loadout = wizard
+        final loadout = chooseStartingSkills
             ? null
             : oculumMonsterBookLoadout(
                 selectedMonster,
                 random: Random(),
                 level: livello,
+                grade: grado,
               );
-        final importedArt = wizard
+        final importedArt = chooseStartingSkills
             ? oculumMonsterBookImportArt(selectedMonster)
             : loadout?.art;
-        final monsterArt = importedArt == null ||
+        final monsterArt =
+            !chooseStartingSkills ||
+                importedArt == null ||
                 oculumMonsterHasFixedProgressionSkills(selectedMonster)
             ? importedArt
             : oculumCompleteMonsterOpen(
@@ -2711,7 +2718,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 grade: grado,
               );
         skills.addAll(
-          wizard
+          chooseStartingSkills
               ? [
                   ...oculumMonsterBookSkills(
                     selectedMonster,
@@ -2720,30 +2727,56 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                 ]
               : loadout!.skills,
         );
-        if (wizard && monsterArt != null) {
+        if (chooseStartingSkills && monsterArt != null) {
           monsterArt.skills = monsterArt.skills
               .where(
                 (s) => s.tipoPerLivello(1).toLowerCase().contains('passiv'),
               )
               .toList();
         }
-        // Il Book usa la Prima Art già presente nella scheda: non aggiunge una
-        // quarta sezione. Una Prima Art personalizzata resta intatta e la
-        // peculiarità viene inserita davanti, così la nuova creatura continua
-        // ad avere la sua Art leggibile nella prima sezione.
-        final firstBaseIndex = arti.indexWhere(
-          (candidate) =>
-              candidate.nome == 'Prima Art' &&
-              candidate.tipo == 'Oculum Art' &&
-              candidate.descrizione ==
-                  'La prima manifestazione del potere personale.',
-        );
-        if (monsterArt != null) {
-          if (firstBaseIndex >= 0) {
-            arti[firstBaseIndex] = monsterArt;
-          } else {
-            arti.insert(0, monsterArt);
+        if (fixedSoulFighterKit) {
+          final previousId = faunaCurrentMonsterId;
+          if (previousId != selectedMonster.id) {
+            final previous = oculumIsSoulFighter(previousId)
+                ? monsterBookEntryById(previousId)
+                : null;
+            // The catalogue identifies inherited Arts without relying on the
+            // editable names or effects of the player's saved Arts.
+            final inheritedNames = {
+              if (previous != null)
+                for (final art in _tutorialSoulFighterArts(previous)) art.nome,
+            };
+            arti.addAll(
+              _tutorialSoulFighterArts(
+                selectedMonster,
+              ).where((art) => !inheritedNames.contains(art.nome)),
+            );
           }
+        } else {
+          // Usa la Prima Art di base solo quando è ancora un segnaposto.
+          final firstBaseIndex = arti.indexWhere(
+            (candidate) =>
+                candidate.nome == 'Prima Art' &&
+                candidate.tipo == 'Oculum Art' &&
+                candidate.descrizione ==
+                    'La prima manifestazione del potere personale.',
+          );
+          if (monsterArt != null) {
+            if (firstBaseIndex >= 0) {
+              arti[firstBaseIndex] = monsterArt;
+            } else {
+              arti.insert(0, monsterArt);
+            }
+          }
+          arti.addAll(oculumMonsterBookAdditionalArts(selectedMonster));
+        }
+        final weakOpen =
+            loadout?.weakOpen ??
+            (chooseStartingSkills && monsterArt != null
+                ? oculumMonsterBookWeakOpen(selectedMonster, monsterArt)
+                : null);
+        if (weakOpen != null && !arti.any(oculumIsMonsterWeakOpen)) {
+          arti.add(weakOpen);
         }
         razzaController.clear();
         backgroundController.text =
@@ -3124,6 +3157,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
                                 const SizedBox(height: 8),
                                 OculumMonsterPicker(
                                   selectedId: tutorialMonsterPresetId,
+                                  preferredElements: usableSheetSearchElements,
                                   entries: monsterBookEntries
                                       .where(
                                         (entry) =>
@@ -3617,8 +3651,10 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
   // =====================================================
 
   List<Map<String, dynamic>> searchResults(String query) {
-    final q = query.trim().toLowerCase();
+    final q = oculumNormalizeText(query);
     if (q.isEmpty) return [];
+    final nameQuery = OculumNameQuery(q);
+    final preferredElements = sheetElementsForNameSearch(q);
 
     final results = <Map<String, dynamic>>[];
     final labels = linguaInglese ? pageNamesEn : pageNamesIt;
@@ -3844,8 +3880,20 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
       required String haystack,
       required int page,
       String? anchorId,
+      String? searchName,
+      Set<String> Function()? searchElements,
     }) {
-      final score = oculumSearchScore(q, '$title $subtitle $haystack');
+      final literal = nameQuery.score(oculumNormalizeText(searchName ?? title));
+      final score = literal > 0
+          ? 1000 +
+                nameQuery.rank(
+                  literal,
+                  preferredElement:
+                      preferredElements.isNotEmpty &&
+                      (searchElements?.call().any(preferredElements.contains) ??
+                          false),
+                )
+          : min(500, oculumSearchScore(q, '$title $subtitle $haystack'));
       if (score <= 0) return;
       results.add({
         'title': title,
@@ -3890,9 +3938,14 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         title: skill.nome.trim().isEmpty
             ? t('Skill senza nome', 'Unnamed skill')
             : skill.nome,
+        searchElements: () => abilityDeclaredElements(
+          skill.forme.expand((form) => form.effettiStrutturati),
+          [skill.descrizione],
+        ),
         subtitle: t('Skill creata dall’utente', 'User-created skill'),
         haystack:
-            '${skill.tipo} ${skill.costo} ${skill.cooldown} ${skill.descrizione}',
+            '${skill.tipo} ${skill.costo} ${skill.cooldown} ${skill.descrizione} '
+            '${oculumRhinoStoneguardSearchAliases(skill.scrollData)}',
         page: 4,
         anchorId: 'free_skill_$i',
       );
@@ -3910,6 +3963,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
 
       addUserResult(
         title: '${t('Open', 'Open')}: ${artOpenDisplayName(art, i)}',
+        searchName: artOpenDisplayName(art, i),
         subtitle: t('Open Art', 'Art Open'),
         haystack:
             '${art.openName} ${art.openDescription} ${art.openBuff} ${art.openSkill}',
@@ -3922,6 +3976,11 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         addUserResult(
           title:
               '${t('Skill', 'Skill')}: ${skill.nome.trim().isEmpty ? '${skillIndex + 1}' : skill.nome}',
+          searchName: skill.nome,
+          searchElements: () => abilityDeclaredElements(
+            skill.effettiPerLivello.expand((effects) => effects),
+            [skill.evo1, skill.evo2, skill.evo3, skill.evo4, skill.evo5],
+          ),
           subtitle: art.nome.trim().isEmpty
               ? t('Skill Art', 'Art Skill')
               : '${t('Skill Art', 'Art Skill')}: ${art.nome}',
@@ -3938,6 +3997,7 @@ A Fire hit is reduced, then loses 6 damage; if you survive under 25% HP you gain
         title: item.nome.trim().isEmpty
             ? t('Oggetto senza nome', 'Unnamed item')
             : item.nome,
+        searchElements: () => oculumInventorySearchElements(item),
         subtitle: item.arma && item.protegge
             ? t('Arma / Protezione', 'Weapon / Protection')
             : item.arma

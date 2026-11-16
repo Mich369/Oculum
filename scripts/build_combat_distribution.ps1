@@ -1,25 +1,37 @@
 param(
   [switch]$StageOnly,
+  [switch]$WindowsOnly,
   [string]$FlutterRoot = 'C:\Users\michy\flutter',
-  [ValidateRange(1, 180)][int]$BuildTimeoutMinutes = 45
+  [ValidateRange(1, 180)][int]$BuildTimeoutMinutes = 45,
+  [switch]$IncludeDatedWindowsFolders
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+if ($WindowsOnly -and !$StageOnly) {
+  throw 'WindowsOnly requires StageOnly. The active distribution requires a signed Android package.'
+}
+if ($WindowsOnly -and $IncludeDatedWindowsFolders) {
+  throw 'WindowsOnly already stages separate Windows and Windows Test folders.'
+}
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $buildRoot = Join-Path $projectRoot 'build'
-$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$staging = Join-Path $buildRoot "distribution-combat-$stamp"
+$stamp = (Get-Date -Format 'yyyyMMdd-HHmmssfff') + '-' + [guid]::NewGuid().ToString('N')
+$staging = Join-Path $buildRoot 'distribution-combat-work'
+$deliveredStage = Join-Path $buildRoot "distribution-combat-$stamp"
 $distribution = Join-Path $buildRoot 'distribution'
 $backup = Join-Path $buildRoot "distribution-backup-$stamp"
 $dartRuntime = Join-Path $FlutterRoot 'bin/cache/dart-sdk/bin/dart.exe'
 $flutterTool = Join-Path $FlutterRoot 'bin/cache/flutter_tools.snapshot'
 $flutterPackages = Join-Path $FlutterRoot 'packages/flutter_tools/.dart_tool/package_config.json'
 $verifier = Join-Path $PSScriptRoot 'verify_distribution.ps1'
-foreach ($requiredTool in @($dartRuntime, $flutterTool, $flutterPackages, $verifier)) {
+$swapHelper = Join-Path $PSScriptRoot 'oculum_distribution_swap.ps1'
+foreach ($requiredTool in @($dartRuntime, $flutterTool, $flutterPackages, $verifier, $swapHelper)) {
   if (!(Test-Path -LiteralPath $requiredTool -PathType Leaf)) { throw "Missing build tool: $requiredTool" }
 }
 . (Join-Path $PSScriptRoot 'build_process.ps1')
+. $swapHelper
+if (!$StageOnly) { Assert-OculumRollbackEnvironment }
 Set-Location -LiteralPath $projectRoot
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
@@ -29,9 +41,29 @@ function Assert-BuildFolder([string]$Path) {
     throw "Unsafe build destination: $full"
   }
   if ((Test-Path -LiteralPath $full) -and
-      ((Get-Item -LiteralPath $full).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+      ((Get-Item -LiteralPath $full -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
     throw "Build destination is a link: $full"
   }
+}
+
+function Remove-IncompleteStage {
+  Assert-BuildFolder $staging
+  $root = Get-Item -LiteralPath $buildRoot -Force
+  if (!$root.PSIsContainer -or ($root.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+    throw 'Build root must be an ordinary directory'
+  }
+  if (!(Test-Path -LiteralPath $staging -PathType Container)) { return }
+  $directories = [Collections.Generic.Stack[string]]::new()
+  $directories.Push($staging)
+  while ($directories.Count) {
+    foreach ($entry in Get-ChildItem -LiteralPath ($directories.Pop()) -Force) {
+      if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+        throw "Incomplete stage contains a link: $($entry.FullName)"
+      }
+      if ($entry.PSIsContainer) { $directories.Push($entry.FullName) }
+    }
+  }
+  Remove-Item -LiteralPath $staging -Recurse -Force
 }
 
 function Get-SourceFingerprint {
@@ -47,13 +79,29 @@ function Get-SourceFingerprint {
   finally { $sha.Dispose() }
 }
 
+function Get-SourceCommit {
+  $commit = & git rev-parse --verify HEAD
+  if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-f]{40}$') {
+    throw 'Cannot read build source commit'
+  }
+  return $commit
+}
+
+function Assert-BuildSource([string]$Message) {
+  if ((Get-SourceCommit) -ne $baseCommit -or
+      (Get-SourceFingerprint) -ne $sourceFingerprint -or
+      (Get-SourceCommit) -ne $baseCommit) {
+    throw $Message
+  }
+}
+
 function Invoke-FlutterBuild([string]$Name, [string[]]$BuildArguments) {
   $log = Join-Path $buildRoot "combat-build-$Name-$stamp.log"
   Write-Output "BUILD $Name -> $log"
   # The SDK and platform artifacts are already installed. Invoke the cached
   # tool directly to avoid flutter.bat's silent bootstrap lock retry and the
   # nested PowerShell/cmd PTY deadlock. Builds run sequentially in this script.
-  $arguments = @("--packages=$flutterPackages", $flutterTool, '--no-version-check', '--suppress-analytics') + $BuildArguments + @("--dart-define=OculumSourceCommit=$(& git rev-parse HEAD)")
+  $arguments = @("--packages=$flutterPackages", $flutterTool, '--no-version-check', '--suppress-analytics') + $BuildArguments + @("--dart-define=OculumSourceCommit=$baseCommit")
   Invoke-OculumBuildProcess -FilePath $dartRuntime -Arguments $arguments -WorkingDirectory $projectRoot `
     -LogPath $log -Description "Build $Name" -TimeoutSeconds ($BuildTimeoutMinutes * 60) `
     -Environment @{ FLUTTER_ROOT = $FlutterRoot; FLUTTER_ALREADY_LOCKED = 'true' }
@@ -102,25 +150,42 @@ function Copy-WindowsEdition([string]$Name, [string]$Executable, [string]$Zip) {
   New-CheckedZip $folder $Zip
 }
 
-foreach ($folder in @($staging, $distribution, $backup)) { Assert-BuildFolder $folder }
+foreach ($folder in @($staging, $deliveredStage, $distribution, $backup)) { Assert-BuildFolder $folder }
 New-Item -ItemType Directory -Path $buildRoot -Force | Out-Null
+$buildDirectory = Get-Item -LiteralPath $buildRoot -Force
+if (!$buildDirectory.PSIsContainer -or ($buildDirectory.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+  throw 'Build root must be an ordinary directory'
+}
 $buildLock = [IO.File]::Open((Join-Path $buildRoot 'distribution-build.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+$ownsStage = $false
+$verifiedStage = $false
 try {
+# Preserve anything left by an interrupted run before reusing this directory.
+if (Test-Path -LiteralPath $staging) {
+  $recoveryStage = Join-Path $buildRoot "distribution-combat-recovery-$stamp"
+  Assert-BuildFolder $recoveryStage
+  [IO.Directory]::Move($staging, $recoveryStage)
+  Write-Warning "Previous temporary staging preserved in $recoveryStage"
+}
 New-Item -ItemType Directory -Path $staging | Out-Null
+$ownsStage = $true
+$baseCommit = Get-SourceCommit
 $sourceFingerprint = Get-SourceFingerprint
-$baseCommit = (& git rev-parse HEAD).Trim()
-if ($LASTEXITCODE -ne 0) { throw 'Cannot read base commit' }
 $dirty = @(& git status --porcelain -- lib assets windows android web pubspec.yaml pubspec.lock).Count -gt 0
 
-Invoke-FlutterBuild 'web' @('build', 'web', '--release', '--no-pub', '--base-href', '/Oculum/')
-$web = Join-Path $staging 'web'
-New-Item -ItemType Directory -Path $web | Out-Null
-Get-ChildItem -LiteralPath (Join-Path $buildRoot 'web') | Copy-Item -Destination $web -Recurse -Force
-New-CheckedZip $web 'Oculum-Web.zip'
+if (!$WindowsOnly) {
+  Invoke-FlutterBuild 'web' @('build', 'web', '--release', '--no-pub', '--base-href', '/Oculum/')
+  $web = Join-Path $staging 'web'
+  New-Item -ItemType Directory -Path $web | Out-Null
+  Get-ChildItem -LiteralPath (Join-Path $buildRoot 'web') | Copy-Item -Destination $web -Recurse -Force
+  New-CheckedZip $web 'Oculum-Web.zip'
+}
 
 Invoke-FlutterBuild 'windows' @('build', 'windows', '--release', '--no-pub', '--dart-define=OculumSaveProfile=')
 Copy-WindowsEdition 'windows' 'oculum.exe' 'Oculum-Windows.zip'
-Get-ChildItem -LiteralPath (Join-Path $staging 'windows') | Copy-Item -Destination $staging -Recurse -Force
+if (!$WindowsOnly) {
+  Get-ChildItem -LiteralPath (Join-Path $staging 'windows') | Copy-Item -Destination $staging -Recurse -Force
+}
 
 Invoke-FlutterBuild 'windows-test' @('build', 'windows', '--release', '--no-pub', '--dart-define=OculumSaveProfile=test')
 Copy-WindowsEdition 'windows-test' 'Oculum-Test.exe' 'Oculum-Test-Windows.zip'
@@ -129,32 +194,35 @@ if ((Get-FileHash -LiteralPath (Join-Path $staging 'windows/data/app.so')).Hash 
   throw 'Windows and Windows Test must use different compiled save profiles'
 }
 
-Invoke-FlutterBuild 'android' @('build', 'apk', '--release', '--no-pub', '--dart-define=OculumSaveProfile=')
-$apkSource = Join-Path $buildRoot 'app\outputs\flutter-apk\app-release.apk'
-$apk = Join-Path $staging 'Oculum-Android-release.apk'
-Copy-Item -LiteralPath $apkSource -Destination $apk
-if ((Get-FileHash -LiteralPath $apkSource).Hash -ne (Get-FileHash -LiteralPath $apk).Hash) { throw 'APK copy mismatch' }
-$apkZip = [IO.Compression.ZipFile]::OpenRead($apk)
-try {
-  foreach ($required in @('AndroidManifest.xml', 'classes.dex', 'lib/arm64-v8a/libapp.so')) {
-    if (!$apkZip.GetEntry($required)) { throw "APK missing $required" }
-  }
-} finally { $apkZip.Dispose() }
+if (!$WindowsOnly) {
+  Invoke-FlutterBuild 'android' @('build', 'apk', '--release', '--no-pub', '--dart-define=OculumSaveProfile=')
+  $apkSource = Join-Path $buildRoot 'app\outputs\flutter-apk\app-release.apk'
+  $apk = Join-Path $staging 'Oculum-Android-release.apk'
+  Copy-Item -LiteralPath $apkSource -Destination $apk
+  if ((Get-FileHash -LiteralPath $apkSource).Hash -ne (Get-FileHash -LiteralPath $apk).Hash) { throw 'APK copy mismatch' }
+  $apkZip = [IO.Compression.ZipFile]::OpenRead($apk)
+  try {
+    foreach ($required in @('AndroidManifest.xml', 'classes.dex', 'lib/arm64-v8a/libapp.so')) {
+      if (!$apkZip.GetEntry($required)) { throw "APK missing $required" }
+    }
+  } finally { $apkZip.Dispose() }
+}
 
-# Keep an easy-to-copy edition containing only the unpacked Windows folders.
-# This satisfies the separate-folder handoff without mixing ZIP/APK files into it.
-$unpacked = Join-Path $staging "Oculum-$stamp"
-New-Item -ItemType Directory -Path $unpacked | Out-Null
-Copy-Item -LiteralPath (Join-Path $staging 'windows') -Destination (Join-Path $unpacked 'Windows') -Recurse
-Copy-Item -LiteralPath (Join-Path $staging 'windows-test') -Destination (Join-Path $unpacked 'Windows Test') -Recurse
+if ($IncludeDatedWindowsFolders) {
+  $unpacked = Join-Path $staging "Oculum-$stamp"
+  New-Item -ItemType Directory -Path $unpacked | Out-Null
+  Copy-Item -LiteralPath (Join-Path $staging 'windows') -Destination (Join-Path $unpacked 'Windows') -Recurse
+  Copy-Item -LiteralPath (Join-Path $staging 'windows-test') -Destination (Join-Path $unpacked 'Windows Test') -Recurse
+}
 
-if ((Get-SourceFingerprint) -ne $sourceFingerprint) { throw 'Build sources changed during compilation; staged packages not installed' }
+Assert-BuildSource 'Build sources changed during compilation; staged packages not installed'
 foreach ($doc in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'AGGIORNAMENTI_2026-10-19.md')) {
   Copy-Item -LiteralPath (Join-Path $projectRoot "docs/$doc") -Destination $staging
 }
 $manifest = [ordered]@{
   commit = $baseCommit
   buildOrigin = 'local'
+  distributionComplete = !$WindowsOnly
   sourceDirty = $dirty
   sourceTreeSha256 = $sourceFingerprint
   builtAtUtc = [DateTime]::UtcNow.ToString('o')
@@ -163,29 +231,46 @@ $manifest = [ordered]@{
   })
 }
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $staging 'BUILD-VERIFICATE.json') -Encoding utf8
-Write-Output "STAGED $staging"
-& $verifier -ExpectedCommit $baseCommit -DistributionRoot $staging
-if ($StageOnly) { return }
-$active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
-  $_.Path -and $_.Path.StartsWith($distribution + '\', [StringComparison]::OrdinalIgnoreCase)
-})
-if ($active.Count) { throw "Save and close Oculum before replacement. Verified packages remain in $staging" }
-foreach ($folder in @($staging, $distribution, $backup)) { Assert-BuildFolder $folder }
-if (Test-Path -LiteralPath $distribution) { Move-Item -LiteralPath $distribution -Destination $backup }
-try {
-  Move-Item -LiteralPath $staging -Destination $distribution
-  & $verifier -ExpectedCommit $baseCommit -DistributionRoot $distribution
+if (!$WindowsOnly) {
+  & $verifier -ExpectedCommit $baseCommit -DistributionRoot $staging
 }
-catch {
-  if ((Test-Path -LiteralPath $distribution) -and !(Test-Path -LiteralPath $staging)) {
-    Move-Item -LiteralPath $distribution -Destination $staging
-  }
-  if (!(Test-Path -LiteralPath $distribution) -and (Test-Path -LiteralPath $backup)) {
-    Move-Item -LiteralPath $backup -Destination $distribution
-  }
-  throw
+$verifiedStage = $true
+if ($StageOnly) {
+  [IO.Directory]::Move($staging, $deliveredStage)
+  if ($WindowsOnly) { Write-Output "STAGED WINDOWS ONLY $deliveredStage" }
+  else { Write-Output "STAGED $deliveredStage" }
+  return
+}
+Write-Output "STAGED $staging"
+Invoke-OculumDistributionSwap -BuildRoot $buildRoot -DistributionRoot $distribution -StagingRoot $staging -BackupRoot $backup -RetainSingleVerifiedBackup -VerifyRollback {
+  param($rollbackPath)
+  $receipt = Get-Content -LiteralPath (Join-Path $rollbackPath 'BUILD-VERIFICATE.json') -Raw | ConvertFrom-Json
+  & $verifier -ExpectedCommit $receipt.commit -DistributionRoot $rollbackPath | Out-Null
+} -BeforeSwap {
+  Assert-BuildSource 'Build sources changed before installation'
+  $active = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
+    $_.Path -and $_.Path.StartsWith($distribution + '\', [StringComparison]::OrdinalIgnoreCase)
+  })
+  if ($active.Count) { throw "Save and close Oculum before replacement. Verified packages remain in $staging" }
+} -VerifyInstalled {
+  & $verifier -ExpectedCommit $baseCommit -DistributionRoot $distribution
+  Assert-BuildSource 'Build sources changed during installation'
 }
 Write-Output "INSTALLED $distribution; previous release preserved in $backup"
 } finally {
-  $buildLock.Dispose()
+  try {
+    if ($ownsStage -and (Test-Path -LiteralPath $staging)) {
+      if ($verifiedStage) {
+        # An installation blocked after verification remains recoverable.
+        [IO.Directory]::Move($staging, $deliveredStage)
+        Write-Warning "Verified packages preserved in $deliveredStage"
+      } else {
+        Remove-IncompleteStage
+      }
+    }
+  } catch {
+    Write-Warning ("Staging retained in {0}: {1}" -f $staging, $_.Exception.Message)
+  } finally {
+    $buildLock.Dispose()
+  }
 }

@@ -1,0 +1,135 @@
+part of 'monster_book.dart';
+
+const _ironAndBoneCreatureEntries = <MonsterBookEntry>[
+  MonsterBookEntry(
+    id: 'ferrugryp',
+    nameIt: 'Ferrugryp',
+    nameEn: 'Ferrugryp',
+    descIt:
+        'Costrutto di ferro ossidato con una feritoia nella testa, due braccia e due gambe. Il maglio è collegato all’argano sul fianco da una catena.',
+    descEn:
+        'A rusted iron construct with a slit in its head, two arms and two legs. A chain connects its hammer to the winch at its side.',
+    elementId: 'metallo',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    weakPointIt: 'L’argano sul fianco si può mirare.',
+    weakPointEn: 'The winch at its side can be targeted.',
+    stats: {
+      'level': 0,
+      'resilienza': 9,
+      'volonta': 7,
+      'materia': 8,
+      'oculum': 3,
+    },
+    encounterRules: {
+      'authoredCanonical': true,
+      'hasAnatomicalWeakPoint': false,
+      'precisionBodyParts': [
+        {'id': 'body', 'group': 'body', 'label': 'Corpo', 'material': 'metal'},
+        {'id': 'head', 'group': 'head', 'label': 'Testa', 'material': 'metal'},
+        {
+          'id': 'arms_1',
+          'group': 'arms',
+          'label': 'Braccio destro',
+          'material': 'metal',
+          'side': 'right',
+        },
+        {
+          'id': 'arms_2',
+          'group': 'arms',
+          'label': 'Braccio sinistro',
+          'material': 'metal',
+          'side': 'left',
+        },
+        {
+          'id': 'legs_1',
+          'group': 'legs',
+          'label': 'Gamba destra',
+          'material': 'metal',
+          'side': 'right',
+        },
+        {
+          'id': 'legs_2',
+          'group': 'legs',
+          'label': 'Gamba sinistra',
+          'material': 'metal',
+          'side': 'left',
+        },
+        {
+          'id': oculumFerrugrypWinchPart,
+          'group': 'winch',
+          'label': 'Argano sul fianco',
+          'material': 'metal',
+        },
+      ],
+    },
+    skillIds: [],
+    dropIds: [],
+  ),
+  MonsterBookEntry(
+    id: 'osycleiv',
+    nameIt: 'Osycleiv',
+    nameEn: 'Osycleiv',
+    descIt:
+        'Creatura funeraria a strati d’osso, con una calotta senza occhi e una lama ossea che cresce da uno dei due avambracci.',
+    descEn:
+        'A funerary creature made of layered bone, with an eyeless skullcap and an organic bone blade growing out of one forearm.',
+    elementId: 'necrotico',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    weakPointIt: 'Nessun punto debole anatomico confermato.',
+    weakPointEn: 'No confirmed anatomical weak point.',
+    stats: {
+      'level': 0,
+      'resilienza': 6,
+      'volonta': 7,
+      'materia': 6,
+      'oculum': 7,
+    },
+    encounterRules: {
+      'authoredCanonical': true,
+      'hasAnatomicalWeakPoint': false,
+      'precisionBodyParts': [
+        {'id': 'body', 'group': 'body', 'label': 'Corpo', 'material': 'bone'},
+        {
+          'id': 'head',
+          'group': 'head',
+          'label': 'Testa e calotta',
+          'material': 'bone',
+        },
+        {
+          'id': 'arms_1',
+          'group': 'arms',
+          'label': 'Braccio con mano artigliata',
+          'material': 'bone',
+        },
+        {
+          'id': 'arms_2',
+          'group': 'arms',
+          'label': 'Braccio con lama organica',
+          'material': 'bone',
+        },
+        {
+          'id': 'legs_1',
+          'group': 'legs',
+          'label': 'Gamba destra',
+          'material': 'bone',
+          'side': 'right',
+        },
+        {
+          'id': 'legs_2',
+          'group': 'legs',
+          'label': 'Gamba sinistra',
+          'material': 'bone',
+          'side': 'left',
+        },
+      ],
+    },
+    skillIds: [],
+    dropIds: [],
+  ),
+];

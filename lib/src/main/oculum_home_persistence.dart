@@ -1,5 +1,7 @@
 part of '../../main.dart';
 
+const _oculumAnymareapGrantField = 'soulFighterEliteAnymareapGranted';
+
 Iterable<String> _oculumGeneratedMonsterIdentities(
   MonsterBookEntry monster, {
   bool includeDisplayNames = true,
@@ -9,6 +11,83 @@ Iterable<String> _oculumGeneratedMonsterIdentities(
   monster.speciesNameEn,
   if (includeDisplayNames) ...[monster.nameIt, monster.nameEn],
 ].map(oculumNormalizeText).where((label) => label.isNotEmpty);
+
+Iterable<String> _oculumGeneratedMonsterAliases(MonsterBookEntry monster) =>
+    oculumMonsterNameSearchAliases(
+      monster,
+    ).map(oculumNormalizeText).where((label) => label.isNotEmpty);
+
+({MonsterBookEntry? exact, List<MonsterBookEntry> suggestions})
+oculumLookupMonsterId(
+  String value, {
+  Set<String> preferredElements = const {},
+}) {
+  final query = oculumNormalizeText(value);
+  if (query.isEmpty) return (exact: null, suggestions: const []);
+  final nameQuery = OculumNameQuery(query);
+  final id = value.trim().toLowerCase();
+  final direct = monsterById(id);
+  if (direct?.visibleInMonsterBook == true) {
+    return (exact: direct, suggestions: const []);
+  }
+
+  final exactMatches = <MonsterBookEntry>[];
+  final candidates = <(MonsterBookEntry, Set<String>)>[];
+  for (final entry in monsterBookEntries) {
+    if (!entry.visibleInMonsterBook) continue;
+    final labels = {
+      ..._oculumGeneratedMonsterIdentities(entry),
+      ..._oculumGeneratedMonsterAliases(entry),
+    };
+    if (labels.contains(query)) exactMatches.add(entry);
+    candidates.add((entry, labels));
+  }
+  if (exactMatches.length == 1) {
+    return (exact: exactMatches.single, suggestions: const []);
+  }
+  if (exactMatches.isNotEmpty) {
+    return (exact: null, suggestions: exactMatches.take(6).toList());
+  }
+
+  final ranked = <(MonsterBookEntry, int)>[];
+  for (final (entry, labels) in candidates) {
+    final score = labels.fold(0, (best, label) {
+      final literal = nameQuery.score(label);
+      if (literal > 0) return max(best, literal);
+      if (best > 500) return best;
+      final fuzzy = min(500, oculumSearchScore(query, label));
+      if (query.length < 4 || (query.length - label.length).abs() > 2) {
+        return max(best, fuzzy);
+      }
+      final distance = oculumLevenshtein(query, label);
+      return max(best, distance <= 2 ? max(fuzzy, 500 - 50 * distance) : fuzzy);
+    });
+    if (score >= 50) {
+      ranked.add((
+        entry,
+        nameQuery.rank(
+          score,
+          preferredElement: preferredElements.contains(
+            oculumNormalizeElementId(entry.elementId),
+          ),
+        ),
+      ));
+    }
+  }
+  ranked.sort((a, b) {
+    final scoreOrder = b.$2.compareTo(a.$2);
+    if (scoreOrder != 0) return scoreOrder;
+    final nameOrder = a.$1.nameIt.compareTo(b.$1.nameIt);
+    return nameOrder != 0 ? nameOrder : a.$1.id.compareTo(b.$1.id);
+  });
+  return (
+    exact: null,
+    suggestions: ranked
+        .take(6)
+        .map((match) => match.$1)
+        .toList(growable: false),
+  );
+}
 
 MonsterBookEntry? oculumMonsterBookEntryForGeneratedEntity(
   String description,
@@ -37,7 +116,7 @@ MonsterBookEntry? oculumMonsterBookEntryForGeneratedEntity(
                   oculumNormalizeText(entry.nameEn) == requestedName,
             )
             .toList(growable: false);
-  final exact = exactDisplay.isNotEmpty
+  final exactLegacy = exactDisplay.isNotEmpty
       ? exactDisplay
       : entries
             .where(
@@ -45,6 +124,14 @@ MonsterBookEntry? oculumMonsterBookEntryForGeneratedEntity(
                 entry,
                 includeDisplayNames: false,
               ).contains(requestedName),
+            )
+            .toList(growable: false);
+  final exact = exactLegacy.isNotEmpty || requestedName.isEmpty
+      ? exactLegacy
+      : entries
+            .where(
+              (entry) =>
+                  _oculumGeneratedMonsterAliases(entry).contains(requestedName),
             )
             .toList(growable: false);
   if (exact.length == 1) return exact.single;
@@ -62,9 +149,16 @@ MonsterBookEntry? oculumMonsterBookEntryForGeneratedEntity(
   MonsterBookEntry? closest;
   var longest = 0;
   var ambiguous = false;
+  final boundedText = ' $text ';
   for (final entry in entries) {
-    for (final label in _oculumGeneratedMonsterIdentities(entry)) {
-      if (label.length < longest || !text.contains(label)) continue;
+    final matches = {
+      ..._oculumGeneratedMonsterIdentities(entry).where(text.contains),
+      ..._oculumGeneratedMonsterAliases(
+        entry,
+      ).where((label) => boundedText.contains(' $label ')),
+    };
+    for (final label in matches) {
+      if (label.length < longest) continue;
       if (label.length > longest) {
         closest = entry;
         longest = label.length;
@@ -1020,7 +1114,13 @@ extension _OculumHomePersistence on _OculumHomePageState {
   void assicuraArtiBase() {
     final base = artiBase();
 
-    if (arti.isEmpty) {
+    final firstWeak = arti.indexWhere(oculumIsMonsterWeakOpen);
+    final normalCount = arti
+        .where((art) => !oculumIsMonsterWeakOpen(art))
+        .length;
+    if (firstWeak >= 0 && normalCount < base.length) {
+      arti.insertAll(firstWeak, base.skip(normalCount));
+    } else if (arti.isEmpty) {
       arti.addAll(base);
     } else {
       while (arti.length < base.length) {
@@ -1029,6 +1129,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     for (final art in arti) {
+      if (oculumIsMonsterWeakOpen(art)) continue;
       while (art.skills.length < 3) {
         art.skills.add(
           ArtSkill(nome: '${t('Skill', 'Skill')} ${art.skills.length + 1}'),
@@ -1040,7 +1141,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
 
       final index = arti.indexOf(art);
-      if (index >= 0 && index < base.length) {
+      if (index >= 0 && index < base.length && !oculumIsAnymareapArt(art)) {
         final baseArt = base[index];
         if (art.openName.trim().isEmpty) art.openName = baseArt.openName;
         if (art.openDescription.trim().isEmpty) {
@@ -1364,10 +1465,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'inMasterParty': false,
       'countsForPartyStats': true,
       'masterSideOverride': '',
-      'monsterBookCustomEntries': monsterBookCustomEntries
-          .map((entry) => entry.toJson())
-          .toList(),
-      'monsterBookRemovedIds': monsterBookRemovedIds.toList()..sort(),
       'realtimeRevokedAccessTags': <String>[],
       'partyMembri': [],
       'fonteExpSelezionata': 'normale',
@@ -1512,19 +1609,27 @@ extension _OculumHomePersistence on _OculumHomePageState {
           oculumSheetRelicSelections.value[currentSheetScrollId()] ?? '',
       'masterAssignedThemeIds': masterAssignedThemeIds.toList()..sort(),
       'faunaPublic': {
+        _elementalSphereIceInstanceKey: _activeElementalSphereIceInstance,
+        if (_canThawElementalSphereIceWithHeat()) _elementalSphereHeatKey: true,
+        if (elementalSphereSoulSeparated) 'elementalSphereSoulSeparated': true,
         'wingFlightWingsVisible': wingFlightWingsVisibleAt(schedaCorrente),
         'wingCarryEligible': wingCarryEligibleAt(schedaCorrente),
         'evergreenDisguiseProtected': evergreenDisguiseProtected,
         'banditVendetta': planarState['banditVendetta'] == true,
+        _necthrallPublicHelp: _marionettistaHelpValueAt(schedaCorrente),
         'solarFaceUncovered': solarFaceUncovered,
         if (isArmadilloCreature) 'armadillo': armadilloPublicState,
         'bottledCloudFastReactions': bottledCloudFastReactionBonus,
         if (faunaCurrentMonsterId == 'nuvola_in_bottiglia')
           'bottledCloudPhase': bottledCloudPhaseNumber,
+        if (faunaCurrentMonsterId == oculumImbrytoadId)
+          _imbrytoadSpitKey: imbrytoadSpitWindow,
         if (faunaCurrentMonsterId == 'costrutto_minore')
           'minorConstructCoreExposed': minorConstructCoreExposed,
         if (isRunicGolemCoreCreature)
           'runicGolemCoreExposed': runicGolemCoreExposed,
+        if (oculumRhinoStoneguardMonsterIds.contains(faunaCurrentMonsterId))
+          _rhinoCorePublicKey: babyRockRhinoCorePublic,
       },
       'precisionBodyParts': publicPrecisionBodyParts,
       'homeArtworkFollowsTheme': homeArtworkFollowsTheme,
@@ -1565,6 +1670,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
           schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
           ? readIntValue(schedePersonaggio[schedaCorrente]['combatHelpPending'])
           : 0,
+      if (schedaCorrente >= 0 &&
+          schedaCorrente < schedePersonaggio.length &&
+          schedePersonaggio[schedaCorrente][_necthrallGranted] == true)
+        _necthrallGranted: true,
       'combatDefenseRollIds': combatDefenseRollIds.toList(),
       'coreMasteryPoints': Map<String, int>.from(coreMasteryPoints),
       'esperienzaCriticaStatistiche': Map<String, int>.from(
@@ -1765,10 +1874,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
           schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
           ? '${schedePersonaggio[schedaCorrente]['masterSideOverride'] ?? ''}'
           : '',
-      'monsterBookCustomEntries': monsterBookCustomEntries
-          .map((entry) => entry.toJson())
-          .toList(),
-      'monsterBookRemovedIds': monsterBookRemovedIds.toList()..sort(),
+      if (schedaCorrente >= 0 &&
+          schedaCorrente < schedePersonaggio.length &&
+          schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ==
+              oculumSoulFighterEliteId &&
+          (schedePersonaggio[schedaCorrente][_oculumAnymareapGrantField] ==
+                  true ||
+              arti.any(oculumIsAnymareapArt)))
+        _oculumAnymareapGrantField: true,
       if (schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length)
         for (final key in [
           'monsterBookSourceId',
@@ -1868,7 +1981,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
           : 'normal';
     }
     if (activeGameMod == 'oculus') paginaCorrente = 0;
-    restoreMonsterBookCustomization(json);
     homeArtworkFollowsTheme = json['homeArtworkFollowsTheme'] == true;
     masterAssignedThemeIds
       ..clear()
@@ -2498,9 +2610,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
           (x) => CharacterArt.fromJson(Map<String, dynamic>.from(x)),
         ),
       );
+    if (json['monsterBookSourceId'] == oculumSoulFighterEliteId &&
+        json[_oculumAnymareapGrantField] != true &&
+        (artiRaw == null || artiRaw is List)) {
+      if (!arti.any(oculumIsAnymareapArt)) {
+        final art = oculumAnymareapArt();
+        arti.add(art);
+        json['arti'] = [if (artiRaw is List) ...artiRaw, art.toJson()];
+      }
+      json[_oculumAnymareapGrantField] = true;
+    }
     assicuraArtiBase();
     if (tipoSchedaController.text.toLowerCase().contains('mostro')) {
       for (final art in arti) {
+        if (oculumIsAnymareapArt(art)) continue;
         oculumCompleteMonsterOpen(
           art,
           name: nomeController.text,
@@ -3250,6 +3373,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
     'masterEnemyFullSheetVisibility',
     'masterPublicDiceVisible',
     'masterAskPublicDiceConfirmation',
+    'personalMarketScopes',
+    'personalMarketPending',
+    'privateMasterMarkets',
+    'personalMarketLocalOrbArgb',
+    'realtimeName',
   };
 
   void _memorizzaCampiTopLevelSconosciuti(Map<String, dynamic> data) {
@@ -4332,7 +4460,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       }
 
       schedePersonaggio[schedaCorrente] = next;
-      if (contentChanged) syncFallenEyeFromSheet(next);
+      if (contentChanged) syncFallenEyeFromSheet(next, previous: previous);
       salvataggioMutazioneNota = false;
       if (kDebugMode || kProfileMode) {
         debugPrint(
@@ -4500,6 +4628,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     schedePersonaggio[schedaCorrente] = next;
+    if (contentChanged) syncFallenEyeFromSheet(next, previous: previous);
     salvataggioMutazioneNota = false;
   }
 
@@ -4532,6 +4661,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       schedePersonaggio[index] = sheet;
       schedaCorrente = index;
       caricaStatoDaJson(sheet);
+      refreshFallenEyesForOwner(sheet);
     } finally {
       applyingHistorySnapshot = false;
     }
@@ -4603,6 +4733,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'oculumSentFriendRequests': sentOculumFriendRequests,
       'blockedOculumFriends': blockedOculumFriends,
       'oculumUsername': oculumUsernameController.text,
+      'realtimeName': realtimeNameController.text,
+      'personalMarketLocalOrbArgb': personalMarketLocalOrbArgb,
+      'personalMarketScopes': Map.of(personalMarketScopes),
+      'personalMarketPending': Map.of(personalMarketPending),
+      if (privateMasterMarkets.isNotEmpty)
+        'privateMasterMarkets': Map.of(privateMasterMarkets),
       'masterKickRequiresConfirmation': masterKickRequiresConfirmation,
       'masterEnemyFullSheetVisibility': masterEnemyFullSheetVisibility,
       'masterPublicDiceVisible': masterPublicDiceVisible,
@@ -4662,8 +4798,25 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (!oculumUsesIsolatedSaveProfile &&
         authState.canSyncToCloud &&
         authState.userId != null) {
+      final marketJournal =
+          savePayload['personalMarketPending']
+              as Map<String, Map<String, dynamic>>;
+      final cloudMarketJournal = <String, Map<String, dynamic>>{
+        for (final entry in marketJournal.entries)
+          if (entry.value['requesterUserId'] == authState.userId &&
+              entry.value['privateMaster'] != true)
+            entry.key: entry.value,
+      };
+      final needsMarketFilter =
+          savePayload.containsKey('privateMasterMarkets') ||
+          cloudMarketJournal.length != marketJournal.length;
+      final cloudSafePayload = needsMarketFilter
+          ? (Map<String, dynamic>.of(savePayload)
+              ..remove('privateMasterMarkets')
+              ..['personalMarketPending'] = cloudMarketJournal)
+          : savePayload;
       final cloudPayload = oculumSessionMaterialCloudSaveForMaster(
-        savePayload,
+        cloudSafePayload,
         authState.userId!,
       );
       unawaited(
@@ -4690,6 +4843,23 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
   Future<void> salvaDatiSoloLocale() =>
       _salvaDatiSerializzato(soloLocale: true);
+
+  Future<bool> salvaDatiMercatoConfermati(
+    String collection,
+    String key, {
+    String? receiptId,
+  }) async {
+    await salvaDatiSoloLocale();
+    final raw = ultimoRawSalvataggioConfermato;
+    if (raw == null || raw.isEmpty) return false;
+    final local = await _decodeOculumJsonMap(raw);
+    final entries = local[collection];
+    if (entries is! Map || entries[key] is! Map) return false;
+    if (receiptId == null) return true;
+    final state = entries[key] as Map;
+    final receipts = state['receipts'];
+    return receipts is Map && receipts.containsKey(receiptId);
+  }
 
   Future<bool> importaBackupCompletoProtetto(
     Map<String, dynamic> backup,
@@ -4761,6 +4931,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (!mounted) return;
       setState(() {
         extraTopLevelSaveFields.clear();
+        restoreMonsterBookCustomization(const {});
         schedePersonaggio
           ..clear()
           ..add(statoVuotoPersonaggio());
@@ -4953,6 +5124,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
 
         final repairedEyes = repairMissingFallenEyeSheets();
         caricaStatoDaJson(schedePersonaggio[schedaCorrente]);
+        _restorePersonalMarketSettings(data);
         if (repairedEyes > 0) {
           aggiungiLog(
             'Ripristinate $repairedEyes schede di Occhi dei Caduti già evocati, senza nuovi costi o ricompense.',
@@ -4975,6 +5147,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
       });
 
       ultimoRawSalvataggioConfermato = raw;
+      scheduleOculiathDamageDrain();
+      schedulePiovraGripTicks();
       oculumProfileMark('save_load_first_frame_ready');
       if (kDebugMode || kProfileMode) {
         debugPrint(
@@ -5015,6 +5189,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       if (!mounted) return;
       setState(() {
         extraTopLevelSaveFields.clear();
+        restoreMonsterBookCustomization(const {});
         schedePersonaggio
           ..clear()
           ..add(statoVuotoPersonaggio());
@@ -5062,6 +5237,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       archived['archivedAt'] = DateTime.now().toIso8601String();
       campagneOculum.add(archived);
 
+      restoreMonsterBookCustomization(const {});
       schedePersonaggio
         ..clear()
         ..add(statoVuotoPersonaggio());
@@ -5111,13 +5287,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   String nomeSchedaPersonaggio(int index) {
-    if (index >= 0 &&
-        index < schedePersonaggio.length &&
-        (partyChest['forgottenCharacterTags'] as List? ?? const []).contains(
-          '${schedePersonaggio[index]['sheetTag'] ?? schedePersonaggio[index]['id'] ?? ''}',
-        )) {
-      return 'Identità dimenticata';
-    }
+    if (sheetIdentityForgotten(index)) return oculumForgottenCharacterName;
     if (index < 0 || index >= schedePersonaggio.length) {
       return '???';
     }
@@ -5445,6 +5615,31 @@ extension _OculumHomePersistence on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  void _restorePersonalMarketSettings(Map<String, dynamic> data) {
+    for (final (target, key) in [
+      (personalMarketScopes, 'personalMarketScopes'),
+      (personalMarketPending, 'personalMarketPending'),
+      (privateMasterMarkets, 'privateMasterMarkets'),
+    ]) {
+      final raw = data[key];
+      if (raw is Map) {
+        target
+          ..clear()
+          ..addAll({
+            for (final e in raw.entries)
+              if (e.value is Map)
+                '${e.key}': Map<String, dynamic>.from(e.value as Map),
+          });
+      }
+    }
+    personalMarketLocalOrbArgb = readIntValue(
+      data['personalMarketLocalOrbArgb'],
+      fallback: personalMarketLocalOrbArgb,
+    ).clamp(0, 0xffffffff);
+    final name = data['realtimeName'];
+    if (name is String) realtimeNameController.text = name;
+  }
+
   Map<String, dynamic> catturaImpostazioniGlobali() {
     return <String, dynamic>{
       'liveEncounterSnapshot': Map<String, dynamic>.from(
@@ -5467,6 +5662,19 @@ extension _OculumHomePersistence on _OculumHomePageState {
         for (final e in partyChestCampaigns.entries)
           e.key: Map<String, dynamic>.from(e.value),
       },
+      'personalMarketScopes': {
+        for (final e in personalMarketScopes.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
+      'personalMarketPending': {
+        for (final e in personalMarketPending.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
+      'privateMasterMarkets': {
+        for (final e in privateMasterMarkets.entries)
+          e.key: Map<String, dynamic>.from(e.value),
+      },
+      'personalMarketLocalOrbArgb': personalMarketLocalOrbArgb,
       'partyChestPending': {
         for (final e in partyChestPending.entries)
           e.key: Map<String, dynamic>.from(e.value),
@@ -5571,6 +5779,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         }
       }
     }
+    _restorePersonalMarketSettings(globali);
     monsterBookPartyDiscoveries.clear();
     if (globali['monsterBookPartyDiscoveries'] is Map) {
       for (final e in (globali['monsterBookPartyDiscoveries'] as Map).entries) {
@@ -5630,8 +5839,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
     relayRoomCode = relayRoomController.text.trim().toUpperCase();
     realtimeRoomController.text =
         '${globali['realtimeRoom'] ?? realtimeRoomController.text}';
-    realtimeNameController.text =
-        '${globali['realtimeName'] ?? realtimeNameController.text}';
     mapMode = '${globali['mapMode'] ?? mapMode}' == 'online'
         ? 'online'
         : 'image';
@@ -6574,10 +6781,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   void restoreMonsterBookCustomization(Map<String, dynamic> json) {
-    final hasCustom = json.containsKey('monsterBookCustomEntries');
-    final hasRemoved = json.containsKey('monsterBookRemovedIds');
-    if (!hasCustom && !hasRemoved) return;
-
     final restoredEntries = <MonsterBookEntry>[];
     final entriesRaw = json['monsterBookCustomEntries'];
     if (entriesRaw is List) {
@@ -6611,25 +6814,14 @@ extension _OculumHomePersistence on _OculumHomePageState {
     monsterBookRemovedIds
       ..clear()
       ..addAll(restoredRemoved);
-    configureMonsterBookEntries(
-      customEntries: monsterBookCustomEntries,
-      removedIds: monsterBookRemovedIds,
-    );
+    _configureCampaignMonsterBook();
   }
 
-  void syncMonsterBookCustomizationToSheets() {
+  void _configureCampaignMonsterBook() {
     configureMonsterBookEntries(
       customEntries: monsterBookCustomEntries,
       removedIds: monsterBookRemovedIds,
     );
-    final entriesJson = monsterBookCustomEntries
-        .map((entry) => entry.toJson())
-        .toList(growable: false);
-    final removedJson = monsterBookRemovedIds.toList()..sort();
-    for (final sheet in schedePersonaggio) {
-      sheet['monsterBookCustomEntries'] = jsonDecode(jsonEncode(entriesJson));
-      sheet['monsterBookRemovedIds'] = List<String>.from(removedJson);
-    }
   }
 
   bool receiveRealtimeMonsterBookSnapshot(Map<String, dynamic> payload) {
@@ -6665,7 +6857,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     monsterBookRemovedIds
       ..clear()
       ..addAll(removed);
-    syncMonsterBookCustomizationToSheets();
+    _configureCampaignMonsterBook();
     aggiungiLog(
       t(
         'Monster Book aggiornato dal Master.',
@@ -6704,7 +6896,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         monsterBookCustomEntries.add(entry);
       }
       monsterBookRemovedIds.remove(entry.id);
-      syncMonsterBookCustomizationToSheets();
+      _configureCampaignMonsterBook();
       risultato = t(
         'Preset Monster Book salvato: ${entry.nameIt}.',
         'Monster Book preset saved: ${entry.nameEn}.',
@@ -6722,7 +6914,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     setState(() {
       monsterBookCustomEntries.removeWhere((custom) => custom.id == entry.id);
       monsterBookRemovedIds.add(entry.id);
-      syncMonsterBookCustomizationToSheets();
+      _configureCampaignMonsterBook();
       risultato = t(
         'Preset rimosso dal Monster Book: ${entry.nameIt}.',
         'Preset removed from the Monster Book: ${entry.nameEn}.',
@@ -6737,7 +6929,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     setState(() {
       monsterBookCustomEntries.clear();
       monsterBookRemovedIds.clear();
-      syncMonsterBookCustomizationToSheets();
+      _configureCampaignMonsterBook();
       risultato = t(
         'Monster Book ripristinato ai preset originali.',
         'Monster Book restored to the original presets.',
@@ -7646,14 +7838,20 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ensureQuickNpcSkills();
     final pawnCreatureOwner = pawnSenderTag;
     final createWithOculusRules = oculusModActive;
-    final baseName = quickSheetNameController.text.trim().isEmpty
+    final enteredName = quickSheetNameController.text.trim();
+    final baseName =
+        enteredName.isEmpty ||
+            (enteredName == '???' && monsterBookSource != null)
         ? (fallbackName?.trim().isNotEmpty == true
               ? fallbackName!.trim()
-              : '???')
-        : quickSheetNameController.text.trim();
-    final description = cleanUiText(
+              : monsterBookSource?.nameIt ?? '???')
+        : enteredName;
+    final enteredDescription = cleanUiText(
       quickSheetDescriptionController.text,
     ).trim();
+    final description = enteredDescription.isEmpty && monsterBookSource != null
+        ? systemMonsterGeneratorDescription(monsterBookSource)
+        : enteredDescription;
     final humanoidSource =
         monsterBookSource ??
         monsterBookEntryForGeneratedEntity(description, baseName);
@@ -7871,6 +8069,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
       final elements = <String>{
         if (selectedType.toLowerCase() == 'npc' && matchedMonster == null)
           quickNpcSkillElement
+        else if (monsterBookSource != null &&
+            monsterBookSource.elementId.trim().isNotEmpty)
+          monsterBookSource.elementId
         else if (quickSheetElementController.text.trim().isNotEmpty)
           quickSheetElementController.text.trim()
         else
@@ -7924,13 +8125,6 @@ extension _OculumHomePersistence on _OculumHomePageState {
               '${((matchedMonster?.stats['shield'] ?? 0) * variantMultiplier).round()}';
           scudoCriticoController.text =
               '${matchedMonster?.stats['criticalShield'] ?? 0}';
-          final fixedResistance = readIntValue(
-            matchedMonster?.stats['resistancePercent'],
-          );
-          if (fixedResistance > 0) {
-            buffMalusRapidiController.text =
-                '@Resistenza+$fixedResistance% Colpi';
-          }
           if (kind == 'Serafino') {
             scudoOculumMaxController.text = '0';
             scudoOculumController.text = '0';
@@ -7952,9 +8146,15 @@ extension _OculumHomePersistence on _OculumHomePageState {
             scudoCriticoController.text = '2';
             scudoOculumMaxController.text = '${livello * 5}';
             scudoOculumController.text = '${livello * 5}';
-            buffMalusRapidiController.text =
-                '${buffMalusRapidiController.text} @Resistenza+60% Colpi';
           }
+        }
+        if (matchedMonster?.id == 'cavaliere_non_ritorno') {
+          scudoCriticoController.text =
+              '${matchedMonster!.stats['criticalShield']}';
+          schivateOculumBonus = max(
+            0,
+            (matchedMonster.stats['oculumDodge'] ?? 0) - schivataOculumBase(),
+          );
         }
         quickSheetType = selectedType;
         final normalizedSide = generationSide.trim().toLowerCase();
@@ -8020,6 +8220,11 @@ extension _OculumHomePersistence on _OculumHomePageState {
             '@VC+5 @CM+4 @Reazione+1 @ReazioneVeloce+1 @Danni+${max(18, livello * 6 + 18)} ${elementDisplayName(variantElement)} @Difesa+${max(12, livello * 3 + 12)} ${elementDisplayName(variantElement)}',
           if (matchedMonster?.stats['damageBonus'] == 15) '@Danni+15',
           if (matchedMonster?.stats['defenseBonus'] == 5) '@Difesa+5',
+          if (usesFixedLevelZeroBase &&
+              (matchedMonster?.stats['resistancePercent'] ?? 0) > 0)
+            '@Resistenza+${matchedMonster!.stats['resistancePercent']}% Colpi'
+          else if (!usesFixedLevelZeroBase && kind == 'Serafino')
+            '@Resistenza+60% Colpi',
         ].join(' ');
 
         skills
@@ -8639,6 +8844,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
                 matchedMonster,
                 random: monsterLoadoutRandom ?? Random(),
                 level: livello,
+                grade: grado,
               );
         final generatedArt = matchedMonster != null
             ? loadout?.art
@@ -8684,9 +8890,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
           }
         }
         if (generatedArt != null) {
-          if (!(matchedMonster?.id.startsWith('pawn_guardiano') ?? false) &&
-              (selectedType.toLowerCase().contains('mostro') ||
-                  matchedMonster != null)) {
+          if (matchedMonster == null &&
+              selectedType.toLowerCase().contains('mostro')) {
             oculumCompleteMonsterOpen(
               generatedArt,
               name: kind,
@@ -8696,7 +8901,12 @@ extension _OculumHomePersistence on _OculumHomePageState {
           }
           arti
             ..clear()
-            ..add(generatedArt);
+            ..add(generatedArt)
+            ..addAll(
+              matchedMonster == null
+                  ? const <CharacterArt>[]
+                  : oculumMonsterBookAdditionalArts(matchedMonster),
+            );
         } else if (skills.isEmpty && matchedMonster == null) {
           skills.add(
             generatedEntitySkill(
@@ -8713,6 +8923,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
             monsterBookUsableSkillIds(matchedMonster).isEmpty) {
           skills.clear();
           arti.clear();
+        } else if (loadout?.weakOpen case final weakOpen?) {
+          arti.add(weakOpen);
         }
         if (selectedType.toLowerCase().contains('mostro') ||
             matchedMonster != null) {

@@ -61,6 +61,339 @@ bool oculumSkeletonThrowRecovered(
     ? total >= attack * 2
     : total > oculumSkeletonThrowDifficulty(natural, attack, metres);
 
+const _imbrytoadSpitKey = 'imbrytoadSpit';
+
+extension _OculumImbrytoadSpit on _OculumHomePageState {
+  bool allowImbrytoadSpitDeclaration(Iterable<OculumStructuredEffect> effects) {
+    if (faunaCurrentMonsterId != oculumImbrytoadId ||
+        !effects.any(
+          (effect) => effect.enabled && oculumIsImbrytoadSpitEffect(effect.id),
+        )) {
+      return true;
+    }
+    if (currentCombatIsActive() &&
+        !outsideFight &&
+        imbrytoadSpitWindow == null &&
+        _imbrytoadTokenFor(sheetTagAt(schedaCorrente)) != null) {
+      return true;
+    }
+    aggiungiLog('[IMBRYTOAD] Serve un Fight senza uno Sputo già dichiarato.');
+    return false;
+  }
+
+  Map<String, dynamic>? _imbrytoadTokenFor(String tag) =>
+      _writableOnlineCombatTokens()
+          .where((token) => combatTokenMatchesSheet(token, tag))
+          .firstOrNull;
+
+  bool _imbrytoadTokenInFight(Map<String, dynamic> token) =>
+      masterInitiativeTokenCanAct(token) && token['outsideFight'] != true;
+
+  bool _imbrytoadWindowMatches(Map window, Map<String, dynamic> token) =>
+      window['scope'] == permissionScope &&
+      window['encounterId'] == onlineCombatEncounterId &&
+      window['fightInstanceId'] == token['fightInstanceId'] &&
+      _imbrytoadTokenInFight(token);
+
+  Map<String, dynamic>? get imbrytoadSpitWindow {
+    if (faunaCurrentMonsterId != oculumImbrytoadId || outsideFight) return null;
+    final window = planarState[_imbrytoadSpitKey];
+    if (window is! Map || window['id'] is! int) return null;
+    final token = _imbrytoadTokenFor(sheetTagAt(schedaCorrente));
+    return token != null && _imbrytoadWindowMatches(window, token)
+        ? Map<String, dynamic>.from(window)
+        : null;
+  }
+
+  Map<String, dynamic>? imbrytoadSpitWindowForToken(
+    Map<String, dynamic> token,
+  ) {
+    if (monsterBookIdForCombatToken(token) != oculumImbrytoadId) return null;
+    final tag = onlineCombatTokenTag(token);
+    if (oculumSameSheetIdentity(tag, sheetTagAt(schedaCorrente)) &&
+        controlsOnlineCombatSheet(tag)) {
+      return imbrytoadSpitWindow;
+    }
+    final public = token['faunaPublic'];
+    final window = public is Map ? public[_imbrytoadSpitKey] : null;
+    return window is Map &&
+            window['closed'] != true &&
+            _imbrytoadWindowMatches(window, token)
+        ? Map<String, dynamic>.from(window)
+        : null;
+  }
+
+  Iterable<String> _imbrytoadTags(Object? raw) =>
+      (raw is List ? raw : const []).whereType<String>();
+
+  bool _imbrytoadCanRespondWithToken(Map<String, dynamic> token) =>
+      _imbrytoadTokenInFight(token) &&
+      masterInitiativeReactionAvailable(token, round: _onlineCombatRound()) > 0;
+
+  bool _imbrytoadParticipantHasSheet(String tag) =>
+      localSheetIndexForOculumTag(tag) >= 0 ||
+      realtimeUsers.any(
+        (user) =>
+            _imbrytoadTags(user['localSheetTags']).contains(tag) ||
+            user['activeSheetTag'] == tag,
+      );
+
+  void beginImbrytoadSpit() {
+    if (faunaCurrentMonsterId != oculumImbrytoadId ||
+        !currentCombatIsActive() ||
+        outsideFight ||
+        imbrytoadSpitWindow != null) {
+      return;
+    }
+    final tag = sheetTagAt(schedaCorrente);
+    final token = _imbrytoadTokenFor(tag);
+    if (token == null || !_imbrytoadTokenInFight(token)) return;
+    final team = combatParticipantTeamId(token);
+    final window = <String, dynamic>{
+      'id': DateTime.now().microsecondsSinceEpoch,
+      'scope': permissionScope,
+      'encounterId': onlineCombatEncounterId,
+      'fightInstanceId': token['fightInstanceId'],
+      'responders': [
+        for (final opponent in _writableOnlineCombatTokens())
+          if (_attackTokenIsOpponent(opponent, team) &&
+              _imbrytoadCanRespondWithToken(opponent) &&
+              _imbrytoadParticipantHasSheet(onlineCombatTokenTag(opponent)))
+            onlineCombatTokenTag(opponent),
+      ],
+      'passed': <String>[],
+    };
+    planarState[_imbrytoadSpitKey] = window;
+    aggiungiLog(
+      '[IMBRYTOAD] Sputo dichiarato. Le due sacche si gonfiano: Reazioni avversarie aperte.',
+    );
+    _publishImbrytoadSpit(window);
+  }
+
+  void _publishImbrytoadSpit(Map<String, dynamic> window) {
+    publishReferenceCreatureAnatomyState();
+    if (_usesLocalMasterInitiative) sendRealtimeInitiativeSnapshotIfPublished();
+    unawaited(
+      realtimeService?.sendCombatEvent(
+        'combat_scout',
+        permissionEnvelope({
+          'id': 'imbrytoad-${window['id']}',
+          'imbrytoadSpitEvent': 'state',
+          'sourceTag': sheetTagAt(schedaCorrente),
+          'encounterId': onlineCombatEncounterId,
+          'window': window,
+        }),
+      ),
+    );
+  }
+
+  Iterable<Map<String, dynamic>> _imbrytoadReactionPackets(
+    int id,
+    String tag,
+  ) => onlineCombatRequests.values.where(
+    (request) =>
+        request['scope'] == permissionScope &&
+        request['encounterId'] == onlineCombatEncounterId &&
+        request['imbrytoadSpitReaction'] == id &&
+        request['targetTag'] == tag &&
+        request['status'] != 'cancelled',
+  );
+
+  bool imbrytoadMaySpit(int id) {
+    final window = imbrytoadSpitWindow;
+    if (window == null || window['id'] != id || hpCorrenti() <= 0) return false;
+    final tag = sheetTagAt(schedaCorrente);
+    final packets = _imbrytoadReactionPackets(id, tag).toList();
+    if (packets.any((packet) => packet['status'] != 'resolved')) return false;
+    final passed = _imbrytoadTags(window['passed']).toSet();
+    return _imbrytoadTags(window['responders']).every((responder) {
+      final token = _imbrytoadTokenFor(responder);
+      return passed.contains(responder) ||
+          packets.any((packet) => packet['sourceTag'] == responder) ||
+          token == null ||
+          !_imbrytoadCanRespondWithToken(token);
+    });
+  }
+
+  bool imbrytoadMayReact(String target, int id) {
+    final token = _imbrytoadTokenFor(sheetTagAt(schedaCorrente));
+    return token != null &&
+        _imbrytoadCanRespondWithToken(token) &&
+        _imbrytoadMayPass(target, id);
+  }
+
+  bool _imbrytoadMayPass(String target, int id) {
+    final owner = _imbrytoadTokenFor(target);
+    final responder = sheetTagAt(schedaCorrente);
+    final token = _imbrytoadTokenFor(responder);
+    if (owner == null ||
+        token == null ||
+        !_imbrytoadTokenInFight(token) ||
+        !_attackTokenIsOpponent(token, combatParticipantTeamId(owner))) {
+      return false;
+    }
+    final window = imbrytoadSpitWindowForToken(owner);
+    return window?['id'] == id &&
+        _imbrytoadTags(window?['responders']).contains(responder) &&
+        !_imbrytoadTags(window?['passed']).contains(responder) &&
+        !_imbrytoadReactionPackets(
+          id,
+          target,
+        ).any((p) => p['sourceTag'] == responder);
+  }
+
+  void finishImbrytoadSpit(int id) {
+    final window = imbrytoadSpitWindow;
+    if (window?['id'] != id) return;
+    planarState.remove(_imbrytoadSpitKey);
+    aggiungiLog('[IMBRYTOAD] Sputa. Le due sacche si sgonfiano.');
+    _publishImbrytoadSpit({...window!, 'closed': true});
+  }
+
+  void _recordImbrytoadPass(String target, String actor, int id) {
+    faunaForOwnedSheet(target, () {
+      final window = imbrytoadSpitWindow;
+      if (window?['id'] != id ||
+          !_imbrytoadTags(window?['responders']).contains(actor) ||
+          _imbrytoadReactionPackets(
+            id,
+            target,
+          ).any((p) => p['sourceTag'] == actor)) {
+        return;
+      }
+      final passed = _imbrytoadTags(window?['passed']).toSet();
+      if (!passed.add(actor)) return;
+      final updated = {...window!, 'passed': passed.toList()};
+      planarState[_imbrytoadSpitKey] = updated;
+      _publishImbrytoadSpit(updated);
+    });
+  }
+
+  void receiveImbrytoadSpitEvent(Map<String, dynamic> payload) {
+    if (!validPermissionSender(payload) ||
+        payload['encounterId'] != onlineCombatEncounterId ||
+        payload['senderTag'] != payload['sourceTag']) {
+      return;
+    }
+    if (payload['imbrytoadSpitEvent'] == 'pass') {
+      final id = payload['windowId'];
+      if (id is int) {
+        _recordImbrytoadPass(
+          '${payload['targetTag']}',
+          '${payload['sourceTag']}',
+          id,
+        );
+      }
+
+      return;
+    }
+    final token = _imbrytoadTokenFor('${payload['sourceTag']}');
+    final window = payload['window'];
+    if (token == null ||
+        monsterBookIdForCombatToken(token) != oculumImbrytoadId ||
+        window is! Map ||
+        window['id'] is! int ||
+        !_imbrytoadWindowMatches(window, token)) {
+      return;
+    }
+    final public = Map<String, dynamic>.from(
+      token['faunaPublic'] as Map? ?? const {},
+    );
+    final previous = public[_imbrytoadSpitKey];
+    if (previous is Map &&
+        (readIntValue(previous['id']) > readIntValue(window['id']) ||
+            previous['id'] == window['id'] && previous['closed'] == true)) {
+      return;
+    }
+    public[_imbrytoadSpitKey] = {
+      ...window,
+      'passed': {
+        if (previous is Map && previous['id'] == window['id'])
+          ..._imbrytoadTags(previous['passed']),
+        ..._imbrytoadTags(window['passed']),
+      }.toList(),
+    };
+    token['faunaPublic'] = public;
+    notifyActiveSheetSummaryChanged();
+    programmaSalvataggio();
+    if (_usesLocalMasterInitiative) sendRealtimeInitiativeSnapshotIfPublished();
+    if (mounted) setState(() {});
+  }
+
+  Iterable<Widget> imbrytoadSpitActions(
+    void Function(VoidCallback) select,
+  ) sync* {
+    final own = imbrytoadSpitWindow;
+    if (own != null) {
+      final id = own['id'] as int;
+      yield ListTile(
+        title: const Text('Sputa'),
+        subtitle: Text(
+          imbrytoadMaySpit(id)
+              ? 'Le Reazioni si sono concluse.'
+              : 'In attesa delle Reazioni avversarie.',
+        ),
+        enabled: imbrytoadMaySpit(id),
+        onTap: () =>
+            select(() => unawaited(planOnlineAttack(imbrytoadSpitId: id))),
+      );
+    }
+    for (final token in _writableOnlineCombatTokens()) {
+      final window = imbrytoadSpitWindowForToken(token);
+      final target = onlineCombatTokenTag(token);
+      final id = window?['id'];
+      if (id is! int || !_imbrytoadMayPass(target, id)) continue;
+      if (imbrytoadMayReact(target, id)) {
+        yield ListTile(
+          title: const Text('Reagisci allo Sputo'),
+          subtitle: const Text(
+            'Attacca Imbrytoad spendendo una Reazione. Puoi mirare alle sacche con Precisione.',
+          ),
+          onTap: () => select(
+            () => unawaited(
+              planOnlineAttack(targetId: target, imbrytoadReactionOf: id),
+            ),
+          ),
+        );
+      }
+      yield ListTile(
+        title: const Text('Passa la Reazione allo Sputo'),
+        onTap: () => select(() {
+          if (!_imbrytoadMayPass(target, id)) return;
+          final actor = sheetTagAt(schedaCorrente);
+          _recordImbrytoadPass(target, actor, id);
+          unawaited(
+            realtimeService?.sendCombatEvent(
+              'combat_scout',
+              permissionEnvelope({
+                'id': 'imbrytoad-$id-pass-$actor',
+                'imbrytoadSpitEvent': 'pass',
+                'sourceTag': actor,
+                'targetTag': target,
+                'encounterId': onlineCombatEncounterId,
+                'windowId': id,
+              }),
+            ),
+          );
+        }),
+      );
+    }
+  }
+}
+
+extension OculumImbrytoadProbe on OculumPerformanceProbe {
+  Map<String, dynamic>? imbrytoadWindow() => _state.imbrytoadSpitWindow;
+  bool imbrytoadReady(int id) => _state.imbrytoadMaySpit(id);
+  void receiveImbrytoadEvent(Map<String, dynamic> packet) =>
+      _state.receiveImbrytoadSpitEvent(packet);
+  Future<void> playImbrytoadSpit(int id, {int? total, int? natural}) =>
+      _state.planOnlineAttack(
+        imbrytoadSpitId: id,
+        preparedAttackTotal: total,
+        preparedAttackNatural: natural,
+      );
+}
+
 extension _OculumCycleExpansion on _OculumHomePageState {
   Map<String, dynamic> get cycleRules => faunaCurrentMonsterId.isEmpty
       ? const {}
@@ -471,6 +804,7 @@ extension _OculumCycleExpansion on _OculumHomePageState {
   }
 
   void resetCycleFight() {
+    planarState.remove(_imbrytoadSpitKey);
     for (final key in [
       'cycleCriticalCount',
       'cycleCloudChance',
@@ -483,7 +817,11 @@ extension _OculumCycleExpansion on _OculumHomePageState {
       planarState.remove(key);
     }
     activeStructuredEffects.removeWhere(
-      (e) => e['effectId'] == 'cycle_rigid_cloud',
+      (e) =>
+          e['effectId'] == 'cycle_rigid_cloud' ||
+          oculumIsPredoneOrbitTarget(e['target']) ||
+          (faunaCurrentMonsterId == oculumImbrytoadId &&
+              oculumIsImbrytoadSpitEffect(e['effectId'])),
     );
   }
 }

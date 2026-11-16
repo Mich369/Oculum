@@ -124,4 +124,41 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     },
   );
+  testWidgets(
+    'Logorato Acido ticks only at end of turn and ends on actual Life healed',
+    (tester) async {
+      final dynamic state = await fixtures.mountSheet(
+        tester,
+        const Size(1440, 900),
+      );
+      final probe = OculumPerformanceProbe(state);
+      state.datiCaricati = false;
+      state.currentHpController.text = '999999';
+      state.scudoController.text = '1000';
+      final full = probe.currentHp();
+      probe.addCondition('logorato_acido');
+      final effect = probe.conditions.singleWhere(
+        (condition) => condition.conditionType == 'logorato_acido',
+      );
+      expect(effect.duration, 3);
+      probe.tickConditions(OculumConditionTickTrigger.startTurn);
+      expect(effect.duration, 3);
+      expect(state.scudoController.text, '1000');
+      probe.applyHealing(5);
+      expect(probe.conditions, contains(effect));
+
+      probe.tickConditions(OculumConditionTickTrigger.endTurn);
+      expect(effect.duration, 2);
+      expect(probe.currentHp(), full);
+      expect(int.parse(state.scudoController.text as String), lessThan(1000));
+      state.currentHpController.text = '${full - 5}';
+      probe.applyHealing(1);
+      expect(probe.currentHp(), full - 4);
+      expect(probe.conditions, isNot(contains(effect)));
+
+      probe.cancelPendingSave();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
 }

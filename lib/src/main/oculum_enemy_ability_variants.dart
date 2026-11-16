@@ -85,21 +85,27 @@ String oculumCatalogueProgressLabel(
   OculumCatalogueEntry entry,
   int characterLevel,
 ) {
+  final count = entry.natural?.id == oculumMarionettistaHelpPassiveId
+      ? entry.natural!.forme.length
+      : 3;
   var usable = 0;
-  for (var form = 1; form <= 3; form++) {
+  for (var form = 1; form <= count; form++) {
     if (oculumCatalogueRequiredLevel(entry, form) <= characterLevel) {
       usable = form;
     }
   }
-  final next = min(3, usable + 1);
+  final next = min(count, usable + 1);
+  const roman = ['I', 'II', 'III', 'IV'];
   return usable == 0
       ? 'Livello richiesto ${oculumCatalogueRequiredLevel(entry)}'
-      : '${const ['I', 'II', 'III'][usable - 1]}${usable < 3 ? ' · prossima ${const ['I', 'II', 'III'][next - 1]}, lvl ${oculumCatalogueRequiredLevel(entry, next)}' : ''}';
+      : '${roman[usable - 1]}${usable < count ? ' · prossima ${roman[next - 1]}, lvl ${oculumCatalogueRequiredLevel(entry, next)}' : ''}';
 }
 
 List<OculumCatalogueEntry> oculumAbilityCatalogueEntries({
   List<CharacterArt> arts = const [],
   String? elementFilter,
+  bool includeAdditionalMonsterArts = false,
+  bool includeMasterPassives = false,
 }) {
   final entries =
       <({String id, String label, ArtSkill art, CharacterSkill? natural})>[];
@@ -119,6 +125,26 @@ List<OculumCatalogueEntry> oculumAbilityCatalogueEntries({
       natural: null,
     ));
   }
+  if (includeMasterPassives &&
+      (elementFilter == null || elementFilter == 'spirituale')) {
+    final passive = oculumMarionettistaHelpPassive();
+    entries.add((
+      id: 'marionettista_boss:${passive.id}',
+      label: '${passive.nome} · Passiva di Necthrall',
+      art: ArtSkill(
+        nome: passive.nome,
+        evo1: passive.forme[0].descrizione,
+        evo2: passive.forme[1].descrizione,
+        evo3: passive.forme[2].descrizione,
+        evo4: passive.forme[3].descrizione,
+        tipiPerLivello: [for (final form in passive.forme) form.tipo],
+        effettiPerLivello: [
+          for (final form in passive.forme) form.effettiStrutturati,
+        ],
+      ),
+      natural: passive,
+    ));
+  }
   for (final monster in monsterBookEntries) {
     if (elementFilter != null &&
         oculumNormalizeElementId(monster.elementId) != elementFilter) {
@@ -134,6 +160,20 @@ List<OculumCatalogueEntry> oculumAbilityCatalogueEntries({
         art: skill,
         natural: natural[skill.nome],
       ));
+    }
+    if (includeAdditionalMonsterArts) {
+      for (final (artIndex, art) in oculumMonsterBookAdditionalArts(
+        monster,
+      ).indexed) {
+        for (final (skillIndex, skill) in art.skills.indexed) {
+          entries.add((
+            id: '${monster.id}:art:$artIndex:$skillIndex',
+            label: '${skill.nome} · ${monster.nameIt}',
+            art: skill,
+            natural: null,
+          ));
+        }
+      }
     }
   }
   // Include Art techniques alongside creature skills. Saved definitions are
@@ -321,10 +361,18 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
     String initialElement = '',
     int? catalogueLevel,
     Set<String> excludedNames = const {},
+    bool masterAssignment = false,
   }) async {
+    if (masterAssignment && !haPermessiMaster) return;
     final originSheet = currentSheetScrollId();
     catalogueLevel ??= leggiNumero(livelloController);
-    final entries = choices ?? oculumAbilityCatalogueEntries(arts: arti);
+    final entries =
+        choices ??
+        oculumAbilityCatalogueEntries(
+          arts: arti,
+          includeAdditionalMonsterArts: masterAssignment,
+          includeMasterPassives: masterAssignment && destination == null,
+        );
     final selected = <String>{};
     var query = '';
     var role = initialRole;
@@ -336,12 +384,7 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
       context: context,
       builder: (dialog) => StatefulBuilder(
         builder: (dialog, refresh) {
-          final visible = entries
-              .where(
-                (e) => oculumNormalizeText(
-                  e.label,
-                ).contains(oculumNormalizeText(query)),
-              )
+          final eligible = entries
               .where(
                 (e) => !excludedNames.contains(oculumNormalizeText(e.art.nome)),
               )
@@ -355,19 +398,29 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                       e.art.effettiEvoluzione(1),
                       explicitType: e.art.tipoPerLivello(1),
                     ).contains(role),
-              )
-              .toList();
+              );
+          final visible = oculumRankMasterSkillChoices(
+            eligible,
+            query,
+            preferredElements: sheetElementsForNameSearch(query),
+          );
           return AlertDialog(
-            title: Text('Catalogo abilità · ${five ? 5 : 3} evoluzioni'),
+            title: Text(
+              masterAssignment
+                  ? 'Assegna Skill'
+                  : 'Catalogo abilità · ${five ? 5 : 3} evoluzioni',
+            ),
             content: SizedBox(
               width: 1000,
               height: min(620.0, MediaQuery.sizeOf(dialog).height * .72),
               child: Column(
                 children: [
                   TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Cerca abilità, creatura o Art',
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      labelText: masterAssignment
+                          ? 'Cerca per nome o alias della Skill'
+                          : 'Cerca abilità, creatura o Art',
+                      prefixIcon: const Icon(Icons.search),
                     ),
                     onChanged: (v) => refresh(() => query = v),
                   ),
@@ -419,6 +472,11 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                       ),
                     ],
                   ),
+                  if (masterAssignment && visible.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('Nessuna Skill corrispondente ai filtri.'),
+                    ),
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -446,11 +504,18 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                                     width: width,
                                     child: Builder(
                                       builder: (context) {
-                                        final art = oculumAbilityWithEvolutions(
-                                          entry.art,
-                                          five ? 5 : 3,
-                                        );
                                         final natural = entry.natural;
+                                        final formCount = natural?.id ==
+                                                oculumMarionettistaHelpPassiveId
+                                            ? natural!.forme.length
+                                            : five ? 5 : 3;
+                                        final art = natural?.id ==
+                                                oculumMarionettistaHelpPassiveId
+                                            ? entry.art
+                                            : oculumAbilityWithEvolutions(
+                                                entry.art,
+                                                formCount,
+                                              );
                                         String cost(int form) =>
                                             natural != null &&
                                                 !five &&
@@ -491,7 +556,7 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                                             message: [
                                               for (
                                                 var form = 1;
-                                                form <= 3;
+                                                form <= formCount;
                                                 form++
                                               )
                                                 '${artLevelRoman(form)} · Livello ${oculumCatalogueRequiredLevel(entry, form)} · ${cost(form)} · CD ${art.cooldownPerLivello[form - 1].amount}\n${natural != null && natural.forme.length >= form ? natural.forme[form - 1].descrizione : art.testoEvoluzione(form)}\n${art.effettiEvoluzione(form).map(oculumStructuredEffectDescription).join(' · ')}',
@@ -520,7 +585,11 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                                                 ),
                                               ),
                                               title: Text(
-                                                entry.label,
+                                                masterAssignment
+                                                    ? oculumMasterSkillChoiceLabel(
+                                                        entry,
+                                                      )
+                                                    : entry.label,
                                                 style: TextStyle(
                                                   color: abilityBenefitColor(
                                                     effects,
@@ -540,7 +609,7 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                                               children: [
                                                 for (
                                                   var form = 1;
-                                                  form <= (five ? 5 : 3);
+                                                  form <= formCount;
                                                   form++
                                                 )
                                                   Padding(
@@ -581,6 +650,8 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
                 child: Text(
                   onPicked == null
                       ? 'Aggiungi ${selected.length} abilità'
+                      : masterAssignment
+                      ? 'Assegna Skill'
                       : 'Scegli skill',
                 ),
               ),
@@ -591,6 +662,7 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
     );
     if (!mounted ||
         approved != true ||
+        masterAssignment && !haPermessiMaster ||
         originSheet != currentSheetScrollId() ||
         destination != null && !arti.contains(destination)) {
       return;
@@ -622,7 +694,12 @@ extension _OculumAbilityCatalogue on _OculumHomePageState {
               entry.art.tipoPerLivello(1).toLowerCase().contains('passiv')
               ? 'Passiva del catalogo'
               : 'Skill del catalogo';
-          if (!skills.any((s) => s.nome == skill.nome)) skills.add(skill);
+          if (!skills.any((s) =>
+              s.nome == skill.nome ||
+              skill.id == oculumMarionettistaHelpPassiveId &&
+                  s.id == skill.id)) {
+            skills.add(skill);
+          }
         }
       }
       aggiungiLog(

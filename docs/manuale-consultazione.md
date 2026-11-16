@@ -2,6 +2,58 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Corallwhirl e Scatto delle Tre Maree
+
+Lo Scatto delle Tre Maree triplica il Movimento disponibile per lo scatto. Colpisce tutti i nemici attraversati. Dividi i Danni base fra quei nemici, poi aggiungi per ciascuno tutti i metri effettivamente percorsi. Lo Scatto infligge +120% Danni agli Scudi.
+
+Per ciascun nemico lo Scatto usa l’elemento tra Acqua e Contundente al quale oppone meno resistenza. A parità di resistenza sceglie casualmente uno dei due.
+
+## Falxfin e Lama Orbita
+
+Il Predone combatte con una spada corta da +3 Danni. Il guanto d’arme alloggia la Lama Orbita e dà +3 Danni, +4 Difesa e +10 Scudo. L’Art Orbita del Boomerang riduce i Danni ricevuti di 12 in mischia e di 6 a distanza per le tre Azioni successive del Predone. I colpi subiti e le Reazioni non fanno avanzare la durata.
+
+La Lama Orbita porta Acqua, Metallo e Vento e ha un campo Affinità al posto del livello. L’equipaggiamento è raro. La spada e il guanto possono portare una tecnica del Predone abbattuto. Le tecniche possono anche uscire in forma di pergamena.
+
+Lanciare la Lama usa un’Azione o una Reazione, con un recupero di cinque turni personali che parte dal lancio. Un solo d100 stabilisce cinque, tre, due o un giro con fasce consecutive di Affinità ÷ 2%, Affinità%, 2 × Affinità% e il resto. Il tiro d’attacco si riusa per tutti i giri sui bersagli scelti dell’area, con +5 alla difficoltà per ogni giro successivo. Una difesa critica che blocca la Lama la fa tornare in mano.
+
+La Lama colpisce anche chi manca in mischia il lanciatore. Quel colpo automatico è critico solo se l’attaccante ha fatto 1 naturale. Ogni giro con almeno un colpo riuscito dà +10 Affinità, anche se colpisce più bersagli. La Lama aggiunge l’Affinità ai Danni, con un massimo di +300. Al primo ritiro dal bottino, avere Acqua, Metallo o Vento dà +10. Chi ha ucciso il precedente possessore parte con −5. Se valgono entrambe le condizioni, parte a +5.
+
+Fino a 60 Affinità incluse, con 1 naturale al lancio la Lama fa un solo giro e cade a terra. Si recupera a contatto, con un’Azione in Fight o gratuitamente fuori dal Fight.
+
+## Octocruor, Piovra succhiasangue
+
+La Piovra ha sempre Morso e Presa succhiasangue, più tre Skill Art da un pool di nove. Il Morso aggiunge 1d12 + 3 × Grado ai Danni. La Presa infligge 1d6 + Grado a ogni turno personale della preda finché si libera. La Piovra recupera metà della Vita effettivamente tolta da ciascuna tecnica, arrotondata per difetto.
+
+Per afferrare, la Piovra usa la più alta fra Forza, Riflessi e Precisione e aggiunge +5 ai livelli 0–2, +10 ai livelli 3–5 e +15 dal livello 6. Il bersaglio risponde con Riflessi. Dopo l’aggancio, spendere un’Azione permette di tentare la liberazione con Forza o Controllo corporeo. Per mantenere la presa la Piovra tira con la stessa statistica più alta e lo stesso bonus di livello.
+
+## Sfere elementali e pergamene
+
+Le Sfere elementali apprese hanno tre forme. Costano 1 Azione e 3/6/12 Oculum, con recupero di 3/4/5 turni personali. Chi non possiede Oculum spende 3/5/9 Materia. Avere esaurito la propria riserva di Oculum non permette di passare alla Materia. Le soglie di critico sono 20/19/18 naturale. Il doppio critico richiede anche almeno il doppio della Difesa. Gli effetti speciali scattano se il colpo toglie almeno 1 Vita.
+
+Le pergamene monouso delle Sfere elementali usano la forma acquistata e costano solo 1 Azione. Le pergamene ordinarie hanno forme I–III. Per le Defiled Skill e per la Sfera Predatrice sono previste anche le forme IV e V. Le fasce di prezzo sono 56–79, 80–98, 99–120, 125–160 e 169–220 Obser.
+
+Gli effetti delle Sfere in Facile usano l’80% della potenza e durano un turno in meno. In Normale usano i valori base. In Difficile usano il 120% e un turno in più. In Oculum usano il 135% e due turni in più.
+
+Acido applica Logorato. A ogni turno personale tira 1d30 × la differenza di Grado a favore del bersaglio, con moltiplicatore minimo ×1. Metà logora lo Scudo e il resto passa dalle protezioni ordinarie. Recuperare almeno 1 Vita termina l’effetto.
+
+Gelo blocca Movimento, Azioni e Reazioni. Puoi spendere un’Azione per tirare Volontà contro 10 + livello del lanciatore + 2 × Grado, oppure usare un’Azione con il tuo Fuoco o Lava. Un alleato con Fuoco o Lava può spendere un’Azione e scegliere il compagno congelato per liberarlo senza tiro né danni.
+
+Lo Spirituale separa lo spirito dal corpo. Il corpo perde Movimento, Azioni, Reazioni e difese attive. Per almeno due turni, finché il corpo resta inerme, il lanciatore può effettuare un solo attacco gratuito contro di lui.
+
+Fulmine può colpire fino a tre nemici aggiuntivi nella stessa area della mappa del bersaglio principale. Con tre, il danno secondario è il 75% del danno offensivo per ciascuno. Con meno, il totale dei secondari si divide fra quelli scelti. Se il principale è l’unico nemico disponibile e il danno base gli toglie Vita, il colpo unico fa il 150% passando dalle protezioni normali.
+
+## Vaitern e Lost Town
+
+Vaitern è una città del Regno Mezzano. Il Simbolo della Luna ha due mezze lune opposte e un centro in argento annerito e craterizzato. A Vaitern un frammento si scambia per 60 Obser o vale 60 Obser in un acquisto. Gli eventuali Obser mancanti si pagano dalla borsa. Il pagamento in frammenti non dà resto. A Lost Town gli acquisti dal Mercante costano il 25% in più.
+
+Il baratto col Mercante permette di offrire più oggetti e usare tutto il valore eccedente. È escluso nelle zone solari, compresa la parte alta di Lost Town. Il credito residuo si può ritirare in Obser o spendere per un secondo articolo scontato del 15%. Se il credito non permette un secondo acquisto, al resto si aggiunge lo sconto sul primo. In Oculum si estrae 0%, 1% o 2%. In Difficile, Normale e Facile i valori base 6%, 9% e 12% ricevono 1 o 2 punti casuali. Se l’articolo era già scontato dal Master, in quel ramo lo sconto è fisso: 0%, 3%, 6% o 9% nelle quattro difficoltà. Per i personaggi del Fato, ogni 9 Obser di resto lasciati come mancia danno 1 Fortuna spendibile.
+
+## Combattente dell’Anima Elité
+
+L’Elité conserva il corredo della Combattente dell’Anima normale. La sua terza Oculum Art esclusiva, Anymareap, usa il teschio spettrale per colpire fino a tre nemici e ripartisce fra loro i Danni spirituali.
+
+Anymareap richiede 1 Azione. Il costo iniziale di 4 Oculum e il recupero di 4 turni personali sono modificabili. L’Art divide i Danni base dell’attacco fra i nemici scelti e arrotonda ciascuna quota per eccesso. Ogni nemico risolve la propria difesa.
+
 ## Costo delle forme superiori
 
 Una forma attiva più forte ha un costo maggiore, salvo eccezioni confermate. Un recupero più lungo conta come costo maggiore. Le passive possono mantenere lo stesso costo.
@@ -28,7 +80,7 @@ Negli attacchi online che raccolgono insieme le difese, se almeno un bersaglio f
 
 ## Ali a sparizione e fuga in volo
 
-In Supporto e utilità puoi far comparire o ritrarre le ali a sparizione gratuitamente. Con meno di 50 Riflessi hai tre turni personali di volo, rinnovati al Riposo Breve o Lungo. Da 50 Riflessi sei un volatore esperto e il volo non ha un limite di turni.
+In Supporto e utilità puoi far comparire o ritrarre le ali a sparizione gratuitamente. Puoi ritirare volontariamente tutti i tipi di ali. Se una forma ha sia durata sia CD, ritirarla sottrae la durata residua dal CD ancora da recuperare, fino a zero. Con 2 turni di durata residua e 5 di CD ne restano 3. Le due ali dell’Aberrazione Intermedia Angelica sono mirabili mentre sono esposte. Con meno di 50 Riflessi hai tre turni personali di volo con le ali a sparizione, rinnovati al Riposo Breve o Lungo. Da 50 Riflessi sei un volatore esperto e il volo non ha un limite di turni.
 
 Il volo innato di creature come Cuore di Magma e Nuvi conserva le sue regole. Sulla mappa, salire e scendere usa il Movimento residuo del segnalino.
 
@@ -87,6 +139,8 @@ Sulla mappa locale o del Master, apri il menu del token collegato alla scheda co
 Il Custode con Mani Inverse e il suo Rituale sono ritirati dal catalogo attivo, dai nuovi incontri e dalla vendita di nuove pagine. Gli ID e le definizioni restano disponibili alle schede, alle pagine già ottenute e alle personalizzazioni salvate.
 
 I bersagli di Precisione delle voci base seguono le immagini scelte. Il Ciclope Non Morto C ha un occhio centrale, due braccia e due gambe. La Sentinella a Spirali A ha una lente centrale. Le anatomie personalizzate dal Master mantengono la precedenza.
+
+Venemuk, in precedenza Ragno Putrido, ha otto occhi mirabili singolarmente con Precisione. Le personalizzazioni anatomiche del Master restano prioritarie.
 
 ## Assassino NPC nemico, ritiri e Scarabeo — 6 novembre
 
@@ -167,6 +221,7 @@ Bilanciamento iniziale delegato e modificabile: a 90 minuti Vita almeno 75%, met
 Fame, sete e sonno hanno registri separati sul tempo della campagna. Un giorno senza cibo O acqua dà +3 Cenere e −1 a una statistica casuale, una sola volta se mancano entrambi. Il malus condiviso rimane finché tutti i bisogni che l'hanno causato sono soddisfatti. Ogni tre giorni senza dormire: −1 RES e −1 OCU. Mangiare rimuove solo i malus della fame, bere quelli della sete, dormire quelli del sonno. Le penalità restano separate dai debuff di altre fonti. I Costrutti non biologici non hanno fame/sete ma richiedono riposo o manutenzione; profili ed esenzioni sono modificabili. Nessun bisogno umano è dedotto automaticamente per cloni, Occhi o specie di fisiologia non definita.
 
 Una giornata di campagna dura nove ore. Per il fabbisogno servono due pasti in fasce distinte. Il primo vale dalla mattina fino alle 05:30 del giorno di gioco, il secondo dalle 05:30 fino a notte. Negli ultimi 30 minuti della notte si può anticipare il primo pasto del giorno successivo dopo aver coperto la seconda fascia del giorno in corso. La cena è quindi disponibile già nell’ultima mezz’ora della fascia pomeridiana dedicata ai pasti. Le fasce si accreditano una volta ciascuna. Si può ordinare ancora e ricevere gli effetti del cibo consumato.
+Nell’inventario la sazietà per unità è modificabile. Cibi diversi si sommano nella fascia in corso. I buff del cibo si applicano al consumo. I bonus del pasto, il fabbisogno e il Riposo Breve si aggiornano a pasto completo.
 Completare le due fasce dà +2 Resilienza e +1 a Volontà, Materia e Oculum oltre ai bonus propri del cibo. Il terzo pasto effettivo del giorno aggiunge una sola volta +1 a tutte e quattro le statistiche, anche se la seconda fascia è ancora da coprire. Quando si copre quella fascia, il relativo bonus si aggiunge. I bonus dei pasti e del cibo scadono al Riposo Lungo o alla durata propria più breve dell’effetto.
 Un pasto fuori dal Fight vale come Riposo Breve al massimo una volta ogni 4 ore e 30 dal precedente recupero tramite pasto. Un giorno con una sola fascia accreditata lascia un malus leggero che scompare al prossimo pasto. Impostazione iniziale modificabile: −1 a una statistica casuale, senza aggiungere Cenere. Restano applicabili le regole di digiuno completo, sete ed esenzioni dei Costrutti.
 Corruzione: contano le Notti effettivamente trascorse, anche restando svegli, una volta al passaggio Notte→Mattina; un Lungo di giorno non aggiunge una Notte. Conservati notti già segnate e crediti Anti-corruzione.
@@ -245,6 +300,8 @@ Il Clone d'ombra personale di Senka costa1–10 Materia e ha Vita=Materia spesa�
 
 Guardia Solare: Potenza13 a livello0, fragile e fastidiosa; élite56, equilibrata; Guardiano126, colosso lento e potente con due frecce d'oro e raggi. A queste basi si aggiungono i punti di livello e Grado previsti. Serafini Solari e Angelici sono nuovi miniboss distinti dal Serafino Boss precedente; sei ali, volti belli e inquietanti, occhi sulle ali. Angeli due ali, Arcangeli quattro nel canone di Oculum. La dicitura visibile è sempre Chaos.
 
+Vagarwyngh, l’Arcangelo Errante, ha due ali mirabili. Ha perso le altre due durante l’esiliazione dell’Ala Nera.
+
 Queste regole confermate non certificano che ogni automatismo sia già implementato e distribuito. Consultare il rapporto di verifica della versione.
 
 ## Fortuna magica, costi e creature del 27 ottobre 2026
@@ -260,6 +317,8 @@ Mostro di sabbia è un miniboss; Mezzo demone cosciente può essere aggressivo e
 ## Trasparenza e correzioni dei tiri del 26 ottobre 2026
 
 Le superfici trasparenti aumentano gradualmente di opacità fino alla piena visibilità in tre secondi quando il puntatore le evidenzia. Il tocco evidenzia il pannello per la stessa durata; le preferenze di accessibilità per ridurre le animazioni sono rispettate. Testi, icone e bersagli cliccabili restano visibili. Le due trasparenze di base rimangono regolabili separatamente da 0 a 40%.
+
+Il menu della scheda raggiunge l’opacità piena in 1,3 secondi. Le cornici e gli sfondi dei pulsanti a riposo sono più trasparenti. Il pulsante selezionato resta evidenziato e testi e icone mantengono la piena opacità.
 
 Un tiro richiesto dal Master è completato soltanto dopo il lancio effettivo. Se mancano le risorse previste, la richiesta resta disponibile per riprovare. Una richiesta di Percezione del Master effettua direttamente il tiro richiesto. Le Azioni supplementari possono pagare i tiri; Sfinimento continua a bloccare le Reazioni, conservando le Azioni.
 
@@ -389,6 +448,7 @@ Valori iniziali modificabili: tecniche 1/2/3 Oculum, requisiti al livello base d
 Precisione sceglie prima la parte del corpo e poi il singolo arto, solo se esistono più parti dello stesso tipo: Braccia → Destra 1, Sinistra 1, Destra 2, Sinistra 2. L'anatomia deriva dalla descrizione fisica, non dalle appendici evocate da una skill; conserva quantità diverse di braccia, ali, code, teste e zampe. I punti deboli già definiti nel Monster Book prevalgono sulle deduzioni. Colpire un punto debole lo rivela. Il Master può usare Punto debole scoperto per rivelarlo per tutti gli esemplari della stessa voce, senza sbloccare le varianti.
 Punti delle Art del personaggio: Oculum occhi; Martial piccola sfera nei legamenti, Precisione −2; Emblem posizione scelta dell'emblema; Illness testa; Rune basso ventre; Defiled nessuno. Un colpo riuscito al punto dell'Art applica −3 ai tiri della sola Art per una Azione. I mostri usano esclusivamente i punti del proprio Monster Book. Il riepilogo resta sotto i log.
 I disegni confermati completano l’anatomia del catalogo: Mosca Campana ha sei zampe e quattro ali, Topino due braccia e due gambe, Pawn due mani sospese senza arti aggiunti, Bramble quattro tentacoli locomotori. Il simbolo oculare sull’elmo chiuso dei Solari è una visiera metallica, non un occhio biologico esposto. I cristalli lunari restano parti separate con le proprie regole. Il Gigante di sabbia non possiede un nucleo anatomico da mirare. Integrità e lesioni seguono il materiale: sabbia disgregata, fibre lacerate o meccanismi danneggiati, senza attribuire fratture ossee a ogni creatura. Anatomie e valori personalizzati dal Master continuano a prevalere.
+Lapyorbit ha due braccia mirabili separatamente oltre a Corpo e Nucleo. Quando Imbrytoad dichiara Sputo delle gronde, le due sacche golari si gonfiano e si possono mirare singolarmente durante le Reazioni avversarie. Si sgonfiano quando parte lo Sputo.
 Un critico mirato che danneggia la Vita di un'ala la danneggia: prima ala dimezza i bonus del volo, due ali diverse impediscono di volare e causano 1d60 − bonus Riflessi della creatura che cade, minimo zero, poi le normali protezioni. Le ali si recuperano al Riposo Lungo o con intervento del Master. Colpire nuovamente la stessa ala non conta come una seconda ala.
 Un critico mirato agli arti con perdita di Vita applica Frattura a un nuovo arto, massimo tre arti distinti. Il malus ai tiri che usano gli arti fratturati è −1/−2/−3; nessun effetto sui tiri non pertinenti. Sullo stesso arto non si applica una nuova Frattura. Una volta raggiunte tre Fratture, ogni successivo critico che toglie Vita aumenta il malus di un punto e sorteggia al 50% Danni oppure Difesa, riducendo quel valore del malus totale; il malus precedente sull'altro valore rimane. Esempio: quarto critico −4 Danni, quinto −5 Difesa: restano entrambi e i tiri pertinenti hanno −5. Ogni tiro sostituisce solo il valore già presente dello stesso tipo. Serve la cura appropriata della condizione, non un reset della battaglia.
 Scudi critici: mentre proteggono il colpo impediscono Fratture e gli altri debuff che richiedono un critico, anche se quel colpo spezza l’ultima carica. Non bloccano gli effetti ordinari della tecnica. Gli editor degli effetti consentono Solo su colpo critico, salvato nel JSON.
@@ -428,12 +488,16 @@ DeadlySins Boss: 13 Oculum anche al livello 0. Colpo potenziato iniziale I +Forz
 Monster Book: contatori party per campagna, variante separata e totale specie; mostri uccisi effettivamente registrati, senza duplicati per lo stesso corpo. La fine del fight conserva party e NPC alleati e distribuisce il bottino dei nemici uccisi.
 Animazioni: la variante Viva aggiunge una lieve atmosfera al lato della scena; braci, neve e foschia dipendono dal tema. Nessuna deformazione dell’illustrazione o spostamento dei controlli. Rispetta movimento ridotto/disattivato e sospensione dell’app.
 
+## Forest Demon Errati
+
+I Forest Demon Errati sono rinnegati dalla famiglia e combattono da soli nella Foresta Elementale. Un incontro di viaggio con un Errato genera un solo avversario. A parità di livello il Baby Errato è più forte del Baby comune e più debole dell’adulto comune. L’Errato adulto è più forte dell’adulto comune. Ognuno eredita le tecniche e i materiali della sua fascia d’età. I Forest Demon comuni ed Errati hanno quattro zampe, due occhi, due corna laterali, un corno nasale e una coda.
+
 ## Maschere, Percezione e temi — 25 ottobre 2026
 
 Elementi: Demoniaco e Diabolico restano distinti anche nei nomi inglesi. Difesa Diabolica riduce del 75% i danni Demoniaci, senza requisito di Vita e senza riduzione reciproca automatica. Demoniaco, Nuvola e Roccia sono disponibili con temi propri: gli elementi selezionabili sono 61. Le resistenze già salvate non vengono rinominate o sovrascritte.
 Consultazione Monster Book: aspetto e comportamento, habitat, statistiche base, punto debole, resistenze, abilità, Buff Open, Skill Open e drop sono separati. Ogni skill mostra le tre forme, requisiti, costo effettivo, cooldown, bersagli dichiarati ed effetti. Le attivazioni gratuite sono indicate chiaramente; nessun costo statistico viene mostrato come un finto 0/0. Nel Party le informazioni ancora ignote restano protette. La consultazione non cambia gli effetti o il JSON personalizzato.
 Uomo con la maschera: quattro colori, Verde (Resilienza e Ricordo Vitale permanente secondo la condizione esistente), Rosso (Volontà), Blu (Materia), Viola (Oculum). Pugno serio è gratuito in Azioni/Reazioni, CD condiviso 3 turni: tira Schianto e aggiunge il totale al danno, poi +10/20/50% secondo la forma. Concatenazione blu usa una sola Azione o Reazione, CD condiviso 2 turni. Riflessi +5: 1d5+1 / 1d6+3 / 1d8+5 colpi, ciascuno da un terzo dei Danni; Precisione, disponibile solo dopo la scoperta del punto debole: 1d3+1 / 1d5+2 / 1d6+3 colpi, ciascuno da tre settimi dei Danni e con la normale Fragilità di Precisione applicata prima del singolo colpo. Puoi distribuire la raffica fra bersagli fino al numero di colpi; il danno si divide fra loro e aumenta del 5% per bersaglio. Inizia l’ultimo aggressore, se selezionato, altrimenti l’ordine è casuale. Una difesa critica positiva che supera l’attacco ferma tutti i colpi futuri; dal terzo colpo basta il critico positivo di un bersaglio selezionato, anche prima che venga il suo colpo. I danni già subiti restano. Il Viola recupera 2 Oculum al proprio turno; se già pieno ha il 20% di ricevere 1 temporaneo.
-L’Ombra Ignota è una variante separata: maschera nera a spirale con un solo foro a mandorla e un occhio viola. L’Art L’Ombra rende immune al Fisico e aggiunge +5 ai tiri di Attacco e Difesa: forma I una propria azione, II fino alla fine del turno corrente, III fino al prossimo turno personale. Se prima in iniziativa, +3 Danni e +1 Difesa ogni 10 livelli, minimo +2 e +1. Teletrasporto nell’ombra: +9 al prossimo Attacco oppure +10 alla prossima Difesa, senza doppio consumo di Azione/Reazione; chance 10/15/30% di una Reazione veloce extra secondo l’ultima forma dell’Art.
+L’Ombra Ignota è una variante separata: maschera nera a spirale con un solo foro a mandorla e un occhio viola. L’anatomia predefinita offre un solo occhio come bersaglio di Precisione. L’Art L’Ombra rende immune al Fisico e aggiunge +5 ai tiri di Attacco e Difesa: forma I una propria azione, II fino alla fine del turno corrente, III fino al prossimo turno personale. Durante L’Ombra i colpi Fisici vengono annullati prima di consumare gli Scudi o ridurre la Vita. Tutti gli attacchi non fisici già ammessi contro di lei possono mirare direttamente all’unico occhio con Precisione anche mentre l’Art è attiva. Se prima in iniziativa, +3 Danni e +1 Difesa ogni 10 livelli, minimo +2 e +1. Teletrasporto nell’ombra: +9 al prossimo Attacco oppure +10 alla prossima Difesa, senza doppio consumo di Azione/Reazione; chance 10/15/30% di una Reazione veloce extra secondo l’ultima forma dell’Art.
 Assassini Solari: maschera d’oro con sole inciso, raggi, piccoli soli e arco con due frecce solari, +3 al tiro. Assassini Angelici: arco con tre frecce angeliche, +9 al tiro, fino a tre bersagli; +25% Danni contro Chaos. Ogni tre colpi che tolgono Vita recuperano il 5% della Vita corrente per eccesso, senza risorgere a zero. Contatore azzerato a fine fight. Costi, forme, cooldown ed effetti restano modificabili e salvati.
 Cinque creature comuni di livello iniziale 1: Vèndulo, Rascalume, Brumìlio, Gùravo e Mìrula; nessun bonus straordinario alle statistiche, due tecniche e materiali coerenti per ciascuna. Il catalogo planare comprende ora 380 voci fra specie e varianti.
 Percezione, Investigazione, Furbizia e Valutazione: con dado naturale almeno 18 e lettura riuscita, il confronto di Livello + somma delle quattro statistiche dà solo un giudizio narrativo. Entro ±10% siete alla pari o quasi; fra 10 e 35% leggermente più forte/debole, oltre 35% nettamente; avversario almeno doppio: impossibile da battere. Non rivela il punteggio. Se la lettura fallisce, il log indica solo la statistica più alta che ostacola la percezione.
@@ -475,6 +539,7 @@ Controattacco contro un colpo ancora da difendere: vincendo infliggi danni pieni
 
 Specie base e varianti del Monster Book: Lupo, Goblin, Coboldo e Gnoll hanno ciascuno la propria voce base; Lupo comune e Lupo Gigante restano specie distinte. Varianti nuove: Goblin Incendiario, Coboldo Minatore, Coboldo Runico di Postea, Gnoll delle Nevi e Gnoll Diabolico. Ogni variante ha descrizione e punto debole propri, un drop materiale distintivo e due skill non condivise con le altre voci. Minatore: piccozza e riparo di scisto; Runico: Fulmine e paratia; Gnoll delle Nevi: falce e rallentamento nelle forme superiori; Gnoll Diabolico: lancia e passo della brace; Goblin Incendiario: pece e fumo. Gli habitat corrispondono ai piani. Le skill hanno forme I–III, costi Oculum 1/2/3 e cooldown; i valori si possono modificare.
 Nuovo catalogo: 80 creature base, dieci per ciascuno di otto habitat (Mezzano, Sotterraneo, Terre di ghiaccio, Nuvole rocciose, Regno affogato, Foresta elementale, Postea e Regno Caramella). Hanno statistiche iniziali contenute, descrizione anatomica, punto debole, drop materiale e due tecniche specifiche con forme, costo e cooldown modificabili. Le loro tecniche apprendibili compaiono nel catalogo Skill e nell’indice delle pergamene; ogni skill mantiene il proprio costo dichiarato in Oculum, statistiche, oggetti o materiali.
+Il Regno Sommerso, detto anche Regno Affogato, è interamente immerso nell’Eiva, acqua magica molto potente in cui gli abitanti vivono e respirano. Nel pannello del regno puoi scegliere la Barriera del Corallo Cavo, fra case e coralli rossi, o la Selva delle Fronde d’Eiva, con flora acquatica magica. La scheda conserva la scelta dell’area. Pysciwarden, già Vedetta dei Canali, e Constacuas, già Custode della Chiusa, sono pesci umanoidi d’Acqua con due branchie mirabili singolarmente. Pysciwarden usa Canalstryke con la lancia di canna. Constacuas rinforza la Difesa con Valvaguard. Le tecniche e i valori iniziali sono modificabili.
 Cristalli di Ascension Dust: Piccolo 1d3 (40–60 Obser), Medio 1d6+2 (90–120), Grande 1d10+2 (150–200). Si conservano come materiali crafting o si rompono a scelta. Drop aggiuntivo: nemico ucciso almeno tre livelli sopra chi tira, totale Drop almeno 20 + livello nemico + 2×Grado, poi estrazione unica 25/15/6/54% per piccolo/medio/grande/nulla. Fusione I/II/III visibile solo possedendo la taglia: consuma un cristallo, +1/+2/+3 a tutte le statistiche e +10/+20/+30% agli effetti positivi Art e Skill per 1d3/1d6+1/1d10+2 Riposi Lunghi; +5/+10/+15% a Danni e Difesa personali. Una fusione attiva alla volta, sostituibile; in fight usa Azione propria. A fine scontro party e NPC buoni rimangono sulla board, conservando tutti i drop assegnati.
 Parassita larvale: 1/0/0/0 statistiche, Riflessi +9–15 e Vita fissa. Unico attacco Infiltrazione, con Azione e Riflessi. Ospite controllato dal Master, parassita non colpibile dentro di esso. Il proprietario tenta Resistenza o Volontà una volta per turno spendendo Azione, contro il tiro precedente del parassita; penalità crescente −3 fino a −9. Fallire entro cinque toglie una Reazione al controllore; fallire di uno dà anche −4 al suo prossimo tiro. Critico che danneggia la Vita dell’ospite: +5 al prossimo tentativo. Medicina naturale 14 con Riflessi9/10,15 con11/12,16 con13,17 con14,18 con15 uccide il parassita. Una Open dell’ospite lo uccide e libera il personaggio; il controllore non può usarla.
 Martire Mortale dà metà EXP e alla morte potenzia massimo tre alleati scelti dal Master: +10% a tutte le statistiche, +10% ogni dieci livelli, durata livello/5 per difetto (minimo uno).
@@ -789,6 +854,8 @@ Le tecniche dei mostri vengono create sulla forma 0: nessuna forma è ancora in 
 
 Gli Occhi dei Caduti conservano le tecniche della creatura selezionata. La rarità permette di usare 0 Art per Comune, 1 per Non Comune, 2 per Raro e 3 per Oculum. Le altre rimangono conservate e diventano disponibili con il Reforge. Gli oggetti e i Titoli del proprietario non vengono copiati.
 
+Confronta separatamente Resilienza, Volontà, Materia e Oculum con la stessa statistica del proprietario. Il valore base dell’Occhio è il minore tra il suo valore reale e quello del proprietario più 3 per Comune, più 6 per Non comune o più 9 per Raro. Un Occhio Oculum usa i valori reali. Il limite si aggiorna quando cambiano le statistiche del proprietario. I bonus di rarità si calcolano a parte e i valori reali restano conservati.
+
 ## 14. Risorse e Diario
 
 Gli Obser sono pietre o monete con inciso un occhio. Li spendi come valuta, ma possono anche essere un pegno, una ricompensa o un oggetto dal valore rituale, secondo lo scambio che rappresentano.
@@ -876,6 +943,7 @@ Villaggi:
 Summon:
 - i mostri evocati danno al massimo 5 + Grado EXP;
 - la ricompensa vale una sola volta per evocazione;
+- la pergamena del Costrutto Minore si ottiene dal tiro Drop degli esemplari ordinari. I Costrutti Minori evocati non lasciano bottino;
 - una Summon tua non dona EXP, salvo che il Fato la renda realmente ostile.
 
 ## 17. Critici, Fragilità ed EXP dei tiri
@@ -2485,6 +2553,52 @@ Online, in una turnistica, dichiari il bersaglio. VC è il tiro di attacco ordin
 
 La presenza online dichiara tutte le schede possedute dalla sessione: cambiare scheda aggiorna subito la presenza, quindi una richiesta di attacco non viene persa durante il cambio. Master e Co-Master condividono il registro in sola lettura delle schede dei partecipanti nella stessa turnistica; dal partecipante puoi aprire «Apri scheda». Le copie online non trasferiscono la proprietà della scheda al personale.
 
+Per usare PC e telefono come Master, accedi con lo stesso account Google proprietario della stanza e apri lo stesso codice stanza sui due dispositivi. Sul secondo dispositivo puoi consultare il Fight pubblicato, cambiare turno e usare i comandi rapidi dei partecipanti disponibili. Le modifiche vengono applicate dal dispositivo principale e condivise nella stanza. Se il dispositivo principale è scollegato, il secondo attende che torni online.
+
 Master e Co-Master possono modificare soltanto le schede condivise e autorizzate. Le modifiche a Vita, Scudo e HP temporanei raggiungono il proprietario mantenendo il tag originale; le copie di consultazione non acquisiscono la proprietà. L'invio o la richiesta della scheda attiva funziona anche senza amicizia fra i tag. In caso di conflitto di proprietà serve l'account originale oppure una copia esplicita con un nuovo tag.
 
 Le modifiche autorizzate seguono l'ordine delle revisioni confermate dal server: un autosalvataggio locale non annulla una modifica online più recente, le revisioni già applicate non vengono ripetute e i dati privati non modificati restano conservati.
+
+## Oculiath
+
+L’Oculiath vola con due ali e attacca con il raggio del suo unico occhio. Il suo uncino ventrale è colpibile. Con un’Azione o una Reazione può afferrare un bersaglio a contatto con Volontà attuale inferiore alla sua e trasportarlo in volo. Il bersaglio si può liberare con una prova di Forza o Controllo corporeo contro la Volontà dell’Oculiath. La presa termina anche al rilascio o alla distruzione dell’uncino. La distanza di caduta si ricava dalla quota raggiunta con il Movimento nei turni di presa e dalla superficie di arrivo.
+
+Il Minore ha il 60% della Vita derivata dalla Resilienza del base, arrotondata per difetto con un minimo di 1, e aggiunge 2/6/20 Danni a 16/25/30 metri. Ha lo stesso uncino del base. Il Maggiore levita e dispone di un raggio per occhio integro. Perde il raggio dell’occhio distrutto e può ancora usare gli altri.
+
+## Frutibush e Terramaund
+
+Frutibush conserva il volo quando viene colpito alla piega del corpo, anche se questa perde tutta l’integrità. Terramaund impugna la Terramaul, una mazza con integrità propria che può essere mirata e rotta separatamente dal braccio.
+
+## Snorlo Corazzata e Baby Rock Rhino
+
+Puoi mirare separatamente alla testa, a ciascun occhio e a ciascuna delle due gambe di Snorlo Corazzata. Restano mirabili il corpo, le quattro braccia e la giuntura.
+
+Baby Rock Rhino, RockRhyno intermedio e Visrhyno hanno un corno e quattro zampe mirabili separatamente. Ricevono Scudo normale al 25% della Vita massima, arrotondato per eccesso, all’inizio di ogni Fight. Il nucleo diventa mirabile quando quello Scudo si rompe. Dopo averli uccisi, il tiro del bottino può dare la rara pergamena di Petryguard con probabilità rispettivamente del 6%, 9% e 12%. Chi apprende la Passiva riceve lo Scudo all’inizio di ogni Fight.
+
+## Alaryft, Tryjaw e Ragno della linfa acida
+
+Alaryft, già Regina delle gole vulcaniche, ha quattro zampe uncinate, due corna e due ali membranose. Puoi mirare a ciascuna zampa e ciascun corno oltre a corpo, occhi, ali, giuntura ventrale e bordo. La giuntura e il bordo indicano il punto debole sotto le piastre.
+
+Tryjaw, già Idra, ha tre teste, quattro zampe e una coda mirabili separatamente. Corpo e piega del corpo restano bersagliabili.
+
+Nel Ragno della linfa acida puoi mirare singolarmente a tutte e otto le zampe, al corpo e alla testa. Durante la tecnica si scopre il nodo sensoriale dietro la cresta.
+
+Aurybone si trova anche come Aberrazione Superiore Angelica. Le due ali raffigurate nella tavola F2 sono due parti anatomiche distinte.
+
+## Pietra della Resurrezione
+
+Un alleato può usare la pietra su una creatura morta. La finestra dalla morte effettiva è di 18 ore in Facile e Normale, 9 in Difficile e 3 in Oculum, secondo l’orologio della campagna. Nel Fight si spende un’Azione. Fuori dal Fight si spende solo la pietra. Il bersaglio torna al 50% della Vita massima, arrotondato per eccesso.
+
+In una campagna locale, i mostri senza scheda con una morte registrata restano disponibili alla Pietra dopo la chiusura del Fight, entro la finestra. Quando un alleato li resuscita, ricompaiono fuori dal Fight nel gruppo dello scontro d’origine.
+
+Il Mercato Nero estrae il prezzo base da 120 a 160 Obser e l’Alchimista da 160 a 250. Il prezzo estratto resta associato al negozio. Gli sconti del Master e le tariffe della città si applicano normalmente.
+
+## Necthrall, la Marionettista
+
+Necthrall è un Boss di elemento Spirituale. Spende un’Azione per tentare di controllare un nemico. Il bersaglio può resistere con una prova di Volontà contro la DT del Boss. Il controllo dura fino all’inizio del prossimo turno personale di Necthrall. Il fuso alla cintura è mirabile separatamente e romperlo libera subito il bersaglio.
+
+Quando si difende, Necthrall può spendere una Reazione disponibile del nemico controllato per ottenere +3 CM alla propria Difesa. Il Master può modificare la DT e il bonus nelle Regole speciali del preset del Bestiario. La DT iniziale è 18.
+
+Nelle forme di Necthbind puoi modificare i costi in risorse e il recupero. Il tentativo spende un’Azione e applica il costo e il recupero anche se il bersaglio resiste. Il pulsante rapido del Fight usa le forme equipaggiate disponibili.
+
+Chi vince il Fight sconfiggendo Necthrall ottiene la Passiva Legame di Necthrall. Il bonus ad Aiuta compagno è +1 ai livelli 0–2, +3 ai livelli 3–9, +9 ai livelli 10–24 e +12 dal livello 25. Tra chi tira e chi ha contribuito all’Aiuto si usa una sola volta il valore più alto.

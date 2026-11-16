@@ -1,9 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
+import 'package:oculum/widgets/oculum_monster_theme.dart';
 
 import 'oculum_october27_resources_test.dart' show closeFixture;
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
@@ -23,25 +25,292 @@ Object? _withoutEffectInstanceIds(Object? value) {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   tearDown(resetMonsterBookEntries);
 
-  test('confirmed nicknames retain their identity and respect custom names', () {
-    const id = 'habitat_shadow_hell_caprone_della_memoria_bruciata';
-    final entry = monsterById(id)!;
-    expect(entry.nameIt, 'Remnath');
-    expect(entry.speciesNameIt, 'Caprone della memoria bruciata');
-    expect(entry.creationProfileName, startsWith(entry.speciesNameIt));
-    expect(monsterById('hero_path_rosso')!.nameIt, 'Baghest Slave');
-    expect(monsterById('dalatro')!.nameIt, 'Dalàtro');
-    final restored = MonsterBookEntry.fromJson(entry.toJson());
-    expect(restored.speciesNameIt, entry.speciesNameIt);
-    expect(restored.creationProfileName, entry.creationProfileName);
+  test('confirmed creature names retain searchable original spellings', () {
+    const names = {
+      'sonoreye': ['Sonorays', 'Sonoreye'],
+      'cynervail': ['Cynerveil', 'Cynervail', 'Cinervail'],
+      'ferrugryp': ['Ferrumhol', 'Ferrugryp', 'Ferrugrip'],
+      'fata_cacciatrice': ['Ventybleyd', 'Fata Cacciatrice', 'Ventyblade'],
+      'crostaceo_corazzato': ['Karyklaw', 'Crostaceo corazzato', 'Karyclaw'],
+      'durafur': ['Ferryfur', 'Durafèr', 'Durafur', 'Ferrifur'],
+      'ciclope_del_fato': ['Fatomhol', 'Ciclope del Fato', 'Fatummaul'],
+      'sciamano_malizioso': ['Dolyfern', 'Sciamano Malizioso', 'Dolifern'],
+      'custode_campana_cieca': [
+        'Vesanybel',
+        'Vesanybell',
+        'Custode della Campana Cieca',
+        'Keeper of the Blind Bell',
+      ],
+      'errante_della_forza': ['Rubrymhol', 'Errante della Forza', 'Rubrymaul'],
+      'errante_della_resistenza': [
+        'Dyurahyd',
+        'Errante della Resistenza',
+        'Durahide',
+      ],
+      'ciclo_forest_demon_blu': [
+        'Nebulyveil',
+        'Forest Demon Blu',
+        'Nebulaveil',
+      ],
+      'larva_del_vespro': ['Umbracryp', 'Larva del Vespro', 'Umbracreep'],
+      'sposa_marea_nera': ['Nuptayd', 'Sposa della Marea Nera', 'Nuptatide'],
+    };
+    for (final MapEntry(:key, :value) in names.entries) {
+      expect(monsterById(key)!.nameIt, value.first);
+      for (final name in value) {
+        expect(oculumLookupMonsterId(name).exact?.id, key, reason: name);
+      }
+    }
+  });
+
+  test(
+    'the latest voted names preserve previous labels and distinct forms',
+    () {
+      const names = {
+        'scheletro_bombarolo': [
+          'Ossyfling',
+          'Scheletro Bombarolo',
+          'Bomber Skeleton',
+        ],
+        'armaiolo_della_fila_lunga_variante_rituale': [
+          'Mirusforge',
+          'Armaiolo della spada e scudo Rituale',
+          'Armaiolo della Fila Lunga Rituale',
+          'Sword and Shield Armorer Rituale',
+        ],
+        'lupo_infernale_del_ghiaccio': [
+          'Gelyfang',
+          'Lupo Infernale del Ghiaccio',
+          'Infernal Ice Wolf',
+        ],
+        'bambola_vapium_variante_veterana': [
+          'Visvapyr',
+          'Bambola di Vapium Veterana',
+          'Vapium Doll Veterana',
+        ],
+        'larva_del_vespro_variante_errante': [
+          'Umbraskulk',
+          'Larva del Vespro Errante',
+          'Vesper Larva Errante',
+        ],
+        'aberrazione_oro_marmo_superiore_angelica': [
+          'Aurybone',
+          'Aberrazione Superiore Angelica',
+          'Aberrazione Superiore d’Oro e Ossa Marmoree · Angelica',
+          'Superior Gold-and-Marble Aberration · Angelic',
+        ],
+      };
+      for (final MapEntry(:key, :value) in names.entries) {
+        final entry = monsterById(key)!;
+        expect(entry.nameIt, value.first);
+        expect(entry.nameEn, value.first);
+        expect(oculumMonsterNameSearchAliases(entry), containsAll(value));
+        for (final label in value) {
+          expect(oculumLookupMonsterId(label).exact?.id, key, reason: label);
+        }
+      }
+      expect(monsterById('bambola_vapium')!.nameIt, 'Bambola di Vapium');
+      expect(monsterById('larva_del_vespro')!.nameIt, 'Umbracryp');
+      expect(monsterById('lupo_delle_nevi')!.nameIt, 'Glayswuolf');
+      expect(
+        monsterById('aberrazione_oro_marmo_intermedia_angelica')!.nameIt,
+        "Aberrazione d'Oro",
+      );
+    },
+  );
+
+  test(
+    'the ten newest plates resolve under the chosen and old names',
+    () async {
+      const names = {
+        'affogato_custode_della_chiusa': ['Constacuas', 'Custode della Chiusa'],
+        'affogato_vedetta_dei_canali': ['Pysciwarden', 'Vedetta dei Canali'],
+        'base_affogato_08': ['Medusa del Vetro Blu'],
+        'ciclo_cervo_radure_miti': ['Cervydew', 'Cervo delle Radure Miti'],
+        'ciclo_falena_delirio': ['Delyrmoth', 'Falena del Delirio'],
+        'ciclo_scarabeo_sigillo_ardente': [
+          'Sygilscyel',
+          'Scarabeo del Sigillo Ardente',
+        ],
+        'sempre_verde': ['Sempre verde'],
+        'pesce_mutato': ['Pesce Mutato'],
+        'ciclo_rospo_gronde_marce': ['Imbrytoad', 'Rospo delle Gronde Marce'],
+        'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti': [
+          'Lapyorbit',
+          'Golem delle ghiaie orbitanti',
+        ],
+      };
+      for (final MapEntry(key: id, value: labels) in names.entries) {
+        final monster = monsterById(id)!;
+        expect(monster.nameIt, labels.first);
+        for (final label in labels) {
+          expect(oculumLookupMonsterId(label).exact?.id, id, reason: label);
+        }
+        final theme = OculumMonsterTheme(
+          monster,
+          oculumMonsterColors(monster).first,
+        );
+        final suffix =
+            id == 'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti'
+            ? '20261116_riallineamento'
+            : '20261116';
+        final desktop =
+            'assets/oculum/home_art_authored/theme_${id}_canon_$suffix.webp';
+        expect(theme.illustration, desktop);
+        expect(theme.illustrationMobile, isNull);
+        expect(theme.relicIllustration, isNull);
+        final bytes = await rootBundle.load(desktop);
+        expect(
+          String.fromCharCodes(
+            bytes.buffer.asUint8List(bytes.offsetInBytes + 8, 4),
+          ),
+          'WEBP',
+        );
+      }
+    },
+  );
+
+  test('Venemuk and Forisplit retain their original catalogue IDs', () {
+    final spider = monsterById('ragno_putrido')!;
+    expect(spider.nameIt, 'Venemuk');
+    expect(oculumLookupMonsterId('Ragno Putrido').exact?.id, spider.id);
+    expect(oculumLookupMonsterId('Venemuk').exact?.id, spider.id);
+    final eyes = oculumMonsterPrecisionAnatomy(
+      spider,
+    ).where((part) => part['group'] == 'eyes').map((part) => part['id']);
+    expect(eyes, List.generate(8, (index) => 'eyes_${index + 1}'));
+    final custom = spider.copyWith(
+      encounterRules: {
+        ...spider.encounterRules,
+        'precisionBodyParts': [
+          {'id': 'custom_head', 'label': 'Testa', 'group': 'head'},
+        ],
+      },
+    );
+    expect(oculumMonsterPrecisionAnatomy(custom).single['id'], 'custom_head');
+
+    final guard = monsterById('hero_path_diverso_ascia_variante_corazzata')!;
+    expect(guard.nameIt, 'Forisplit');
+    expect(
+      oculumLookupMonsterId('Diverso Spaccaporte Corazzata').exact?.id,
+      guard.id,
+    );
+    expect(oculumLookupMonsterId('Forisplit').exact?.id, guard.id);
+  });
+
+  test('Lapyorbit has two separate arms alongside its body and core', () {
+    final golem = monsterById(
+      'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti',
+    )!;
+    final parts = oculumMonsterPrecisionAnatomy(golem);
+    expect(parts.map((part) => part['id']), containsAll(['body', 'core']));
+    final arms = parts.where((part) => part['group'] == 'arms');
+    expect(arms.map((part) => part['id']), ['arms_1', 'arms_2']);
+    expect(arms.map((part) => part['side']), ['right', 'left']);
+  });
+
+  test('the chosen creature themes resolve to bundled WebP assets', () async {
+    const ids = [
+      'forest_demon',
+      'baby_forest_demon',
+      'forest_demon_errato',
+      'baby_forest_demon_errato',
+      'sonoreye',
+      'cynervail',
+      'ferrugryp',
+      'fata_cacciatrice',
+      'crostaceo_corazzato',
+      'sanguifang',
+      'aculotide',
+      'custode_campana_cieca',
+      'durafur',
+      'lupo_delle_nevi',
+      'bunnys',
+      'ciclope_del_fato',
+      'sensimoss',
+      'sciamano_malizioso',
+      'osycleiv',
+      'errante_della_forza',
+      'errante_della_resistenza',
+      'ciclo_forest_demon_blu',
+      'larva_del_vespro',
+      'sposa_marea_nera',
+    ];
+    for (final id in ids) {
+      final asset = OculumMonsterTheme.desktopIllustrationForId(id)!;
+      expect(asset, contains('/theme_${id}_'));
+      expect(asset, endsWith('.webp'));
+      expect((await rootBundle.load(asset)).lengthInBytes, greaterThan(0));
+      expect(monsterById(id)!.spriteAssetPath, isEmpty);
+    }
+  });
+
+  test('Lignoryt and its older spellings find the same wood golem', () {
+    const id = 'lignobark';
+    expect(monsterById(id)!.nameIt, 'Lignoryt');
+    for (final name in ['Lignoryt', 'Lignobarc', 'Lignobark']) {
+      expect(oculumLookupMonsterId(name).exact?.id, id, reason: name);
+    }
+  });
+
+  test('Lunavyr and its old names find the evolved raven by exact ID', () {
+    const id = 'corvo_della_morte_evoluto';
+    final raven = monsterById(id)!;
+    expect(raven.nameIt, 'Lunavyr');
+    expect(raven.speciesNameIt, 'Corvo della Morte');
+    for (final name in [
+      'Lunavyr',
+      'Corvo della Morte evoluto',
+      'Evolved Death Raven',
+    ]) {
+      expect(oculumLookupMonsterId(name).exact?.id, id, reason: name);
+    }
+  });
+
+  test('spoken, source and historical spellings select the same wolf ID', () {
+    const id = 'lupo_delle_nevi';
+    final wolf = monsterById(id)!;
+    expect(wolf.nameIt, 'Glayswuolf');
+    expect(wolf.speciesNameIt, 'Lupo delle Nevi');
+    for (final name in ['Glayswuolf', 'glacewolf', 'Lupo delle Nevi', id]) {
+      expect(oculumLookupMonsterId(name).exact?.id, id, reason: name);
+      expect(
+        oculumMonsterBookEntryForGeneratedEntity('', name)?.id,
+        id,
+        reason: name,
+      );
+    }
+    expect(oculumLookupMonsterId('Glacewol').suggestions.first.id, id);
 
     configureMonsterBookEntries(
-      customEntries: [entry.copyWith(nameIt: 'Caprone personale')],
+      customEntries: [wolf.copyWith(nameIt: 'Lupo del Master')],
     );
-    expect(monsterById(id)!.nameIt, 'Caprone personale');
+    expect(oculumLookupMonsterId('Glacewolf').exact?.nameIt, 'Lupo del Master');
   });
+
+  test(
+    'confirmed nicknames retain their identity and respect custom names',
+    () {
+      const id = 'habitat_shadow_hell_caprone_della_memoria_bruciata';
+      final entry = monsterById(id)!;
+      expect(entry.nameIt, 'Remnath');
+      expect(entry.speciesNameIt, 'Caprone della memoria bruciata');
+      expect(entry.creationProfileName, startsWith(entry.speciesNameIt));
+      expect(monsterById('hero_path_rosso')!.nameIt, 'Baghest Slave');
+      expect(monsterById('dalatro')!.nameIt, 'Dalàtro');
+      final restored = MonsterBookEntry.fromJson(entry.toJson());
+      expect(restored.speciesNameIt, entry.speciesNameIt);
+      expect(restored.creationProfileName, entry.creationProfileName);
+
+      configureMonsterBookEntries(
+        customEntries: [entry.copyWith(nameIt: 'Caprone personale')],
+      );
+      expect(monsterById(id)!.nameIt, 'Caprone personale');
+    },
+  );
 
   test(
     'new names preserve original identities and historical artwork votes',
@@ -65,14 +334,11 @@ void main() {
         'Mostro Infernale',
       );
       expect(monsterById('arcangelo')!.nameIt, 'Arcangelo');
-    expect(
-      monsterById('baby_forest_demon_variante_rituale')!.nameIt,
-      'Silvarkrath',
-    );
       expect(
-        monsterById('arpia_base_variante_veterana')!.nameIt,
-        'Arpia Veterana',
+        monsterById('baby_forest_demon_variante_rituale')!.nameIt,
+        'Silvarkrath',
       );
+      expect(monsterById('arpia_base_variante_veterana')!.nameIt, 'Ventyclaw');
       expect(
         monsterById('habitat_postea_automate_infermiere_guasto')!.nameIt,
         'Automate infermiere guasto',
@@ -345,32 +611,29 @@ void main() {
     expect(restored.presetType, 'Mostro Mini Boss');
   });
 
-  test(
-    'Armorer base and Ritual keep separate IDs and inherit the new name',
-    () {
-      final base = monsterById('armaiolo_della_fila_lunga')!;
-      final ritual = monsterById('armaiolo_della_fila_lunga_variante_rituale')!;
-      expect(base.nameIt, 'Armaiolo della spada e scudo');
-      expect(ritual.nameIt, 'Armaiolo della spada e scudo Rituale');
-      expect(base.id, isNot(ritual.id));
-      expect(base.stats['level'], 82);
-      expect(base.isBoss, isTrue);
-      expect(base.skillIds, contains('longrank_style'));
-      expect(ritual.skillIds, contains('longrank_style_variante_rituale'));
-      final custom = MonsterBookEntry.fromJson(
-        base
-            .copyWith(
-              nameIt: 'Armaiolo personale',
-              imageBase64: 'saved-custom-image',
-              skillIds: ['custom_armorer_skill'],
-              stats: {'level': 3, 'materia': 44},
-            )
-            .toJson(),
-      );
-      configureMonsterBookEntries(customEntries: [custom]);
-      expect(monsterById(base.id)!.toJson(), custom.toJson());
-    },
-  );
+  test('Armorer base and Mirusforge keep separate IDs and their own names', () {
+    final base = monsterById('armaiolo_della_fila_lunga')!;
+    final ritual = monsterById('armaiolo_della_fila_lunga_variante_rituale')!;
+    expect(base.nameIt, 'Armaiolo della spada e scudo');
+    expect(ritual.nameIt, 'Mirusforge');
+    expect(base.id, isNot(ritual.id));
+    expect(base.stats['level'], 82);
+    expect(base.isBoss, isTrue);
+    expect(base.skillIds, contains('longrank_style'));
+    expect(ritual.skillIds, contains('longrank_style_variante_rituale'));
+    final custom = MonsterBookEntry.fromJson(
+      base
+          .copyWith(
+            nameIt: 'Armaiolo personale',
+            imageBase64: 'saved-custom-image',
+            skillIds: ['custom_armorer_skill'],
+            stats: {'level': 3, 'materia': 44},
+          )
+          .toJson(),
+    );
+    configureMonsterBookEntries(customEntries: [custom]);
+    expect(monsterById(base.id)!.toJson(), custom.toJson());
+  });
 
   test('Beetle size is descriptive and retains its existing baseline', () {
     final beetle = monsterById('ciclo_scarabeo_sigillo_ardente')!;
@@ -454,7 +717,11 @@ void main() {
       final variant = monsterById('${id}_variante_corazzata')!;
       expect(magma.nameIt, 'Cuore di Magma');
       expect(magma.nameEn, 'Magma Heart');
-      expect(variant.nameIt, 'Armored Emberheart');
+      expect(variant.nameIt, 'Ignyshell');
+      expect(
+        oculumMonsterNameSearchAliases(variant),
+        contains('Armored Emberheart'),
+      );
       expect(variant.speciesNameIt, 'Cuore di Magma Corazzata');
       expect(magma.hasNaturalFlight, isTrue);
       expect(variant.hasNaturalFlight, isTrue);

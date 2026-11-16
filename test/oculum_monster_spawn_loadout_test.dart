@@ -66,17 +66,60 @@ void main() {
     },
   );
 
-  test('catalogue moves remain aligned when only growth skills are present', () {
-    final idrax = monsterById('idrax')!;
-    final growth = idrax.skillIds
-        .where((id) => id.startsWith(oculumMonsterProgressionPrefix))
-        .toList();
-    final art = oculumMonsterBookArt(idrax.copyWith(skillIds: growth));
+  test('ordinary Open pools use the actual grade and persist one draw', () {
+    final monster = monsterById('mimic_base')!;
+    List<CharacterArt> pool({int? grade, int? level}) =>
+        oculumMonsterBookOpenPool(monster, grade: grade, level: level);
+    int power(CharacterArt open) => int.parse(
+      open.openBuffEffects
+          .singleWhere((effect) => effect.target == 'monster_open_power')
+          .valueExpression,
+    );
+    final gradeZero = pool(grade: 0, level: 10);
+    final gradeOne = pool(level: 10);
+    final gradeTwelve = pool(grade: 12);
+    for (final candidatePool in [gradeZero, gradeOne, gradeTwelve]) {
+      expect(candidatePool, hasLength(2));
+      expect(candidatePool.map((open) => open.openName).toSet(), hasLength(2));
+    }
+    for (var i = 0; i < 2; i++) {
+      expect(power(gradeOne[i]), greaterThan(power(gradeZero[i])));
+      expect(power(gradeTwelve[i]), greaterThan(power(gradeOne[i])));
+      expect(gradeOne[i].openDescription, contains('Richiede livello 10'));
+      expect(gradeTwelve[i].openDescription, contains('Richiede livello 200'));
+    }
+    final assigned = oculumMonsterBookLoadout(
+      monster,
+      random: Random(7),
+      level: 10,
+      grade: 0,
+    ).art!;
+    final candidate = gradeZero.singleWhere(
+      (open) => open.openName == assigned.openName,
+    );
+    final saved = CharacterArt.fromJson(assigned.toJson());
+    expect(saved.openName, candidate.openName);
+    expect(power(saved), power(candidate));
     expect(
-      art.skills.map((skill) => skill.nome),
-      growth.map((id) => monsterBookConcreteTechnique(id)!.name),
+      saved.openSkillCooldown?.amount,
+      candidate.openSkillCooldown?.amount,
     );
   });
+
+  test(
+    'catalogue moves remain aligned when only growth skills are present',
+    () {
+      final idrax = monsterById('idrax')!;
+      final growth = idrax.skillIds
+          .where((id) => id.startsWith(oculumMonsterProgressionPrefix))
+          .toList();
+      final art = oculumMonsterBookArt(idrax.copyWith(skillIds: growth));
+      expect(
+        art.skills.map((skill) => skill.nome),
+        growth.map((id) => monsterBookConcreteTechnique(id)!.name),
+      );
+    },
+  );
 
   test('level-zero spawns prefer techniques usable at their level', () {
     final monster = monsterById('teschio_quattro_lame')!;

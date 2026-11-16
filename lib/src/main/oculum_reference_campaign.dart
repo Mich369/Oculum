@@ -84,6 +84,82 @@ class _OculumSettledDetailState extends State<OculumSettledDetail> {
   Widget build(BuildContext context) => widget.builder(context);
 }
 
+class _ReferenceSheetMenuButton extends StatefulWidget {
+  const _ReferenceSheetMenuButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    required this.animate,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool animate;
+
+  @override
+  State<_ReferenceSheetMenuButton> createState() =>
+      _ReferenceSheetMenuButtonState();
+}
+
+class _ReferenceSheetMenuButtonState extends State<_ReferenceSheetMenuButton> {
+  bool hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final surface = widget.selected
+        ? scheme.secondaryContainer
+        : scheme.surfaceContainerHigh;
+    return Semantics(
+      selected: widget.selected,
+      child: Material(
+        color: surface.withValues(
+          alpha: hovered ? 1 : (widget.selected ? .36 : .08),
+        ),
+        animateColor: true,
+        animationDuration: widget.animate
+            ? const Duration(milliseconds: 1300)
+            : Duration.zero,
+        child: InkWell(
+          onTap: widget.onTap,
+          onHover: (value) => setState(() => hovered = value),
+          hoverColor: Colors.transparent,
+          focusColor: scheme.secondary.withValues(alpha: .30),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
+            child: Row(
+              children: [
+                Icon(
+                  widget.icon,
+                  size: 16,
+                  color: widget.selected
+                      ? scheme.secondary
+                      : scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: widget.selected
+                          ? scheme.onSurface
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 extension _OculumReferenceCampaign on _OculumHomePageState {
   String get homeHeroImagePath {
     if (!homeArtworkFollowsTheme) {
@@ -396,71 +472,46 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
       ),
       ('Resistenze', Icons.shield_outlined, false, openResistanceDetails),
     ];
-    return Container(
-      width: 142,
-      decoration: BoxDecoration(
-        color: Color(0xff09090c),
-        border: Border(right: BorderSide(color: Color(0xff594447))),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Text(
-              nomeController.text.trim().isEmpty
-                  ? 'Scheda'
-                  : nomeController.text,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Georgia',
-                fontSize: 16,
-                color: Color(0xffded5cb),
-              ),
-            ),
-          ),
-          for (final entry in entries)
-            Material(
-              color: entry.$3
-                  ? Theme.of(context).colorScheme.secondaryContainer
-                  : Colors.transparent,
-              child: InkWell(
+    return ValueListenableBuilder<OculumThemePresentation>(
+      valueListenable: oculumThemePresentation,
+      builder: (context, presentation, title) => Container(
+        key: const ValueKey('reference-sheet-side-menu'),
+        width: 142,
+        decoration: BoxDecoration(
+          color: const Color(
+            0xff09090c,
+          ).withValues(alpha: 1 - presentation.surfaceTransparency),
+          border: const Border(right: BorderSide(color: Color(0xff594447))),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            title!,
+            for (final entry in entries)
+              _ReferenceSheetMenuButton(
+                label: entry.$1,
+                icon: entry.$2,
+                selected: entry.$3,
                 onTap: entry.$4,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 13,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        entry.$2,
-                        size: 16,
-                        color: entry.$3
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          entry.$1,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: entry.$3
-                                ? Theme.of(context).colorScheme.onSurface
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                animate:
+                    presentation.motion == OculumThemeMotion.complete &&
+                    !MediaQuery.disableAnimationsOf(context),
               ),
-            ),
-        ],
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Text(
+          nomeController.text.trim().isEmpty ? 'Scheda' : nomeController.text,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontFamily: 'Georgia',
+            fontSize: 16,
+            color: Color(0xffded5cb),
+          ),
+        ),
       ),
     );
   }
@@ -1083,9 +1134,13 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
       final selected = inventario.contains(referenceSelectedItem)
           ? referenceSelectedItem
           : null;
-      final visible = OculumInventorySearchIndex(
-        inventario,
-      ).search(query: query, category: category);
+      final visible = OculumInventorySearchIndex(inventario).search(
+        query: query,
+        category: category,
+        preferredElements: query.trim().isEmpty
+            ? const {}
+            : usableSheetSearchElements(),
+      );
       return CustomScrollView(
         key: sheetScrollKey('inventory'),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -1252,16 +1307,19 @@ extension _OculumReferenceCampaign on _OculumHomePageState {
                                 onPressed: () => donateReferenceItem(selected),
                                 child: Text(t('Dona', 'Give')),
                               ),
-                              OutlinedButton(
-                                onPressed: merchantIsOpen
-                                    ? () =>
-                                          sellInventoryItemToMerchant(selected)
-                                    : null,
-                                child: Text(
-                                  '${t('Vendi', 'Sell')} · ${merchantSaleValue(selected)} Obser',
+                              if (!oculumIsLunarSymbolPiece(selected))
+                                OutlinedButton(
+                                  onPressed: merchantIsOpen
+                                      ? () => sellInventoryItemToMerchant(
+                                          selected,
+                                        )
+                                      : null,
+                                  child: Text(
+                                    '${t('Vendi', 'Sell')} · ${merchantSaleValue(selected)} Obser',
+                                  ),
                                 ),
-                              ),
-                              if (!merchantIsOpen)
+                              if (!merchantIsOpen &&
+                                  !oculumIsLunarSymbolPiece(selected))
                                 TextButton(
                                   onPressed: showMerchantDialog,
                                   child: Text(

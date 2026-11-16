@@ -296,6 +296,7 @@ extension _OculumPawnCores on _OculumHomePageState {
                 OculumMonsterPicker(
                   entries: monsterBookEntries.where((e) => !e.isNpc).toList(),
                   selectedId: selected,
+                  preferredElements: usableSheetSearchElements,
                   onSelected: (id) => refresh(() => selected = id),
                 ),
                 DropdownButton<int>(

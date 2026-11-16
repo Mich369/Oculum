@@ -73,6 +73,7 @@ class OculumRealtimeService {
     required this.onEvent,
     required this.onPresenceChanged,
     required this.onStatusChanged,
+    this.displayNameProvider,
     this.presenceDataProvider,
     this.onConnected,
     this.onAccessRequested,
@@ -150,6 +151,7 @@ class OculumRealtimeService {
   final void Function(String event, Map<String, dynamic> payload) onEvent;
   final void Function(List<Map<String, dynamic>> users) onPresenceChanged;
   final void Function(String status) onStatusChanged;
+  final String Function()? displayNameProvider;
   final Map<String, dynamic> Function()? presenceDataProvider;
   final void Function()? onConnected;
   final Future<bool?> Function(String userId, String displayName)?
@@ -180,6 +182,10 @@ class OculumRealtimeService {
 
   final String _presenceKey;
   final SupabaseClient? _client;
+  GoTrueClient? _roomAuth;
+  String? _roomUserId;
+  StreamSubscription<AuthState>? _roomAuthSubscription;
+  bool _roomAccountChanged = false;
   RealtimeChannel? _channel;
   bool _connected = false;
   bool _pollingFallback = false;
@@ -224,14 +230,22 @@ class OculumRealtimeService {
       .subtract(const Duration(minutes: 5))
       .toIso8601String();
 
+  bool get _roomIdentityIsCurrent =>
+      !_roomAccountChanged &&
+      _roomUserId != null &&
+      _roomAuth?.currentSession?.user.id == _roomUserId;
+
   bool get _transportActive =>
-      _connected && !_disposed && (_channel != null || _pollingFallback);
+      _connected &&
+      !_disposed &&
+      _roomIdentityIsCurrent &&
+      (_channel != null || _pollingFallback);
 
   bool get isConnected => _transportActive && _presenceRegistered;
-  bool get isConnecting => _connecting != null;
+  bool get isConnecting => _connecting != null && !_roomAccountChanged;
   bool get isAwaitingApproval => _awaitingApproval;
   bool get masterRoleUnavailable => _masterRoleUnavailable;
-  bool get requiresUserAction => _requiresUserAction;
+  bool get requiresUserAction => _requiresUserAction || _roomAccountChanged;
 
   String get normalizedRoomId {
     final clean = roomId.trim().replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
@@ -244,8 +258,26 @@ class OculumRealtimeService {
       : 'oculum_secure_$_secureRoomId';
 
   Future<void> connect() {
-    if (_disposed || isConnected) return Future<void>.value();
+    if (_disposed || _roomAccountChanged || isConnected) {
+      return Future<void>.value();
+    }
+    if (_roomUserId != null && !_roomIdentityIsCurrent) {
+      _handleRoomAccountChange();
+      return Future<void>.value();
+    }
     return _connecting ??= _connect().whenComplete(() => _connecting = null);
+  }
+
+  void _handleRoomAccountChange() {
+    if (_disposed || _roomAccountChanged || _roomIdentityIsCurrent) return;
+    _roomAccountChanged = true;
+    _secureRoomId = null;
+    authenticatedRole = null;
+    _pendingVerifiedEvents.clear();
+    // This presence key and pending room data belong to the previous account.
+    // A manual Connect creates a new service and resolves membership afresh.
+    unawaited(disconnect(notify: false));
+    _safeStatus('Account cambiato. Premi Connetti per rientrare nella stanza.');
   }
 
   Future<void> _connect() async {
@@ -271,12 +303,27 @@ class OculumRealtimeService {
 
     try {
       final client = _client ?? Supabase.instance.client;
-      if (client.auth.currentSession == null) {
-        await client.auth.signInAnonymously().timeout(
-          const Duration(seconds: 20),
-        );
+      final auth = client.auth;
+      if (_roomUserId == null && auth.currentSession == null) {
+        await auth.signInAnonymously().timeout(const Duration(seconds: 20));
       }
       if (_disposed || generation != _generation) return;
+      if (_roomUserId == null) {
+        final userId = auth.currentSession?.user.id;
+        if (userId == null) {
+          throw StateError('Sessione online non disponibile.');
+        }
+        _roomAuth = auth;
+        _roomUserId = userId;
+        _roomAuthSubscription = auth.onAuthStateChange.listen(
+          (_) => _handleRoomAccountChange(),
+          onError: (Object error, StackTrace stack) {},
+        );
+      }
+      if (!_roomIdentityIsCurrent) {
+        _handleRoomAccountChange();
+        return;
+      }
       final requestedRole = presenceDataProvider?.call()['role'];
       var membership = Map<String, dynamic>.from(
         await client
@@ -324,7 +371,7 @@ class OculumRealtimeService {
             .from('oculum_room_members')
             .select('role,status')
             .eq('room_id', pendingRoomId)
-            .eq('user_id', client.auth.currentUser!.id)
+            .eq('user_id', _roomUserId!)
             .maybeSingle()
             .timeout(const Duration(seconds: 20));
         if (updated == null) {
@@ -442,11 +489,10 @@ class OculumRealtimeService {
     } catch (error) {
       if (_disposed || generation != _generation) return;
       await disconnect(notify: false);
-      if (_disposed) return;
-      final client = _client ?? Supabase.instance.client;
+      if (_disposed || _roomAccountChanged) return;
       if (_secureRoomId != null &&
           authenticatedRole != null &&
-          client.auth.currentSession != null) {
+          _roomIdentityIsCurrent) {
         await _startHttpPollingFallback(
           'WebSocket non disponibile; uso la sincronizzazione HTTPS: $error',
         );
@@ -526,7 +572,10 @@ class OculumRealtimeService {
   }
 
   Future<void> _startHttpPollingFallback(String status) async {
-    if (_disposed || _secureRoomId == null || authenticatedRole == null) {
+    if (_disposed ||
+        !_roomIdentityIsCurrent ||
+        _secureRoomId == null ||
+        authenticatedRole == null) {
       return;
     }
     _fallbackPollingTimer?.cancel();
@@ -598,6 +647,7 @@ class OculumRealtimeService {
 
   Future<void> dispose() async {
     _disposed = true;
+    await _roomAuthSubscription?.cancel();
     await disconnect(notify: false);
   }
 
@@ -1166,7 +1216,9 @@ class OculumRealtimeService {
   Future<void> refreshPresence() => _trackPresence();
 
   String? get authenticatedUserId =>
-      (_client ?? Supabase.instance.client).auth.currentUser?.id;
+      _roomIdentityIsCurrent ? _roomUserId : null;
+
+  String get roomSessionId => _presenceKey;
 
   String newSheetTransferId() {
     final random = Random.secure();
@@ -1634,7 +1686,10 @@ class OculumRealtimeService {
     final channel = _channel;
     final generation = _generation;
     bool stale() =>
-        _disposed || _generation != generation || _channel != channel;
+        _disposed ||
+        !_roomIdentityIsCurrent ||
+        _generation != generation ||
+        _channel != channel;
     if (!_transportActive ||
         (channel == null && !_pollingFallback) ||
         (_nextRoomRefresh != null &&
@@ -1770,7 +1825,7 @@ class OculumRealtimeService {
           .eq('id', id)
           .maybeSingle()
           .timeout(const Duration(seconds: 10));
-      if (_disposed ||
+      if (!isConnected ||
           _channel != channel ||
           record == null ||
           record['event'] != event ||
@@ -1871,6 +1926,7 @@ class OculumRealtimeService {
     String event,
     Map<String, dynamic> payload,
   ) {
+    if (!_roomIdentityIsCurrent) return false;
     if (_deliveredEvents.contains(id)) return true;
     try {
       _deliverVerifiedEvent(event, payload);
@@ -1936,8 +1992,7 @@ class OculumRealtimeService {
     }
 
     if (event == 'room_member_removed' &&
-        normalized['targetUserId'] ==
-            (_client ?? Supabase.instance.client).auth.currentUser?.id) {
+        normalized['targetUserId'] == _roomUserId) {
       _safeStatus(
         normalized['action'] == 'ban'
             ? 'Sei stato bannato da questa stanza.'
@@ -1999,7 +2054,7 @@ class OculumRealtimeService {
   }
 
   Future<void> _readPresence() async {
-    if (_disposed) return;
+    if (_disposed || !_roomIdentityIsCurrent) return;
 
     final channel = _channel;
     final generation = _generation;
@@ -2012,7 +2067,12 @@ class OculumRealtimeService {
       final data = await (_client ?? Supabase.instance.client)
           .rpc('oculum_room_presence', params: {'p_room': _secureRoomId})
           .timeout(const Duration(seconds: 10));
-      if (_disposed || _generation != generation || _channel != channel) return;
+      if (_disposed ||
+          !_roomIdentityIsCurrent ||
+          _generation != generation ||
+          _channel != channel) {
+        return;
+      }
       final users = (data as List)
           .whereType<Map>()
           .map((row) => Map<String, dynamic>.from(row))
@@ -2061,7 +2121,9 @@ class OculumRealtimeService {
       final now = DateTime.now();
       _activity.observe(users, now);
       if (hadWarning && _activity.warningAt == null) onIdleWarning?.call(false);
-      if (authenticatedRole == 'master' && !_idleClosing) {
+      if (authenticatedRole == 'master' &&
+          presenceDataProvider?.call()['masterWriterCapable'] != false &&
+          !_idleClosing) {
         if (_activity.shouldWarn(now)) {
           _activity.warn(now);
           onIdleWarning?.call(true);
@@ -2107,7 +2169,7 @@ class OculumRealtimeService {
   }
 
   String get _displayName {
-    final clean = playerName.trim();
+    final clean = (displayNameProvider?.call() ?? playerName).trim();
     return clean.isEmpty ? 'Oculum Player' : clean;
   }
 

@@ -4,9 +4,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'oculum_october27_resources_test.dart' show closeFixture;
+import 'oculum_theme_effects_portrait_test.dart' as fixtures;
+
 void main() {
+  testWidgets('party search only matches names that the party discovered', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(1440, 1000),
+    );
+    final probe = OculumPerformanceProbe(state);
+    state.updateOculumHomeUi(() {
+      state.paginaCorrente = 18;
+      state.modalitaMaster = false;
+      state.sonoCoMaster = false;
+    });
+    const monsterId = 'habitat_shadow_hell_caprone_della_memoria_bruciata';
+    final monster = monsterById(monsterId)!;
+    probe.rememberMonsterDiscovery(monsterId, seen: true);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final search = find.byKey(const ValueKey('party_monster_book_name_search'));
+    expect(search, findsOneWidget);
+    expect(
+      find.text('Creatura non identificata · Punto debole: ???'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(search, monster.speciesNameIt);
+    await tester.pump();
+    expect(
+      find.text('Creatura non identificata · Punto debole: ???'),
+      findsNothing,
+    );
+    expect(find.text(monster.nameIt), findsNothing);
+
+    probe.rememberMonsterDiscovery(monsterId, nameKnown: true);
+    await tester.pump();
+    expect(find.text(monster.nameIt), findsOneWidget);
+    await closeFixture(tester, probe);
+  });
+
   testWidgets(
     'Master snapshot enables purchased weak points without sharing monster sheets',
     (tester) async {

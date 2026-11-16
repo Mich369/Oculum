@@ -7,6 +7,26 @@ import 'package:oculum/widgets/oculum_hover_surface.dart';
 import 'package:oculum/widgets/oculum_art_button.dart';
 
 void main() {
+  test('idle button finish keeps the slider endpoints and selected emphasis', () {
+    const defaults = OculumThemePresentation();
+    expect(
+      oculumIdleButtonOpacity(defaults, secondaryControls: true, states: {}),
+      closeTo(.707, .001),
+    );
+    for (final state in [WidgetState.selected, WidgetState.disabled]) {
+      expect(
+        oculumIdleButtonOpacity(defaults, secondaryControls: false, states: {state}),
+        closeTo(.66, .001),
+      );
+    }
+    for (final transparency in [0.0, .4]) {
+      final presentation = defaults.copyWith(surfaceTransparency: transparency);
+      expect(
+        oculumIdleButtonOpacity(presentation, secondaryControls: false, states: {}),
+        closeTo(1 - transparency, .001),
+      );
+    }
+  });
   test(
     'secondary controls preserve independent transparency and safe bounds',
     () {
@@ -118,7 +138,7 @@ void main() {
             )
             .first,
       );
-      expect(material('Attacco').color!.a, closeTo(.66, .01));
+      expect(material('Attacco').color!.a, closeTo(.632, .01));
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);
       await mouse.moveTo(
@@ -130,7 +150,7 @@ void main() {
       await mouse.moveTo(tester.getCenter(find.text('Attacco')));
       await tester.pumpAndSettle();
       expect(material('Attacco').color!.a, 1);
-      expect(material('Difesa').color!.a, closeTo(.66, .01));
+      expect(material('Difesa').color!.a, closeTo(.632, .01));
       await tester.tap(find.text('Attacco'));
       expect(clicks, 1);
       expect(

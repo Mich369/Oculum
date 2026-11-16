@@ -30,6 +30,52 @@ String oculumAnatomicalAttackReceiptId({
 Map<String, dynamic> _partMap(Object? value) =>
     value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
 
+/// Project the old two-eye defaults onto the Ombra Ignota's single eye.
+/// Keep the prior records outside the active parts so a repair lasts on reload.
+Map<String, dynamic> oculumProjectOmbraIgnotaEyeState(
+  Map<String, dynamic> state,
+  Set<String> legacyIds,
+) {
+  final parts = _partMap(state['parts']);
+  final legacy = <String, dynamic>{
+    for (final id in legacyIds)
+      if (parts.containsKey(id)) id: parts.remove(id),
+  };
+  if (legacy.isEmpty) return state;
+
+  final previous = _partMap(parts['eyes']);
+  var worst = previous;
+  var injured = previous['injured'] == true;
+  for (final value in legacy.values) {
+    final wound = _partMap(value);
+    if (wound.isEmpty) continue;
+    final maximum = math.max(1, _partInt(wound['maximumHp'], 1));
+    final damage = _partInt(wound['damageTaken']).clamp(0, maximum);
+    final worstMaximum = math.max(1, _partInt(worst['maximumHp'], 1));
+    final worstDamage = _partInt(worst['damageTaken']).clamp(0, worstMaximum);
+    if (worst.isEmpty || damage * worstMaximum > worstDamage * maximum) {
+      worst = wound;
+    }
+    injured = injured || wound['injured'] == true || damage == maximum;
+  }
+  if (worst.isNotEmpty) {
+    parts['eyes'] = {
+      ...worst,
+      'label': 'Occhio',
+      'group': 'eyes',
+      'injured': injured,
+    };
+  }
+  return {
+    ...state,
+    'parts': parts,
+    'legacyOmbraEyeParts': {
+      ..._partMap(state['legacyOmbraEyeParts']),
+      ...legacy,
+    },
+  };
+}
+
 /// Numerical defaults are editable balance data, not a second source of body
 /// locations. The caller must supply the creature's actual, saved anatomy.
 const oculumAnatomicalPartDefaultFractions = <String, double>{

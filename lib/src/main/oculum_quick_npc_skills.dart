@@ -3,26 +3,161 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 List<MonsterBookEntry>? _npcCatalogueSource;
-final _npcElementChoices = <String, List<OculumCatalogueEntry>>{};
+final _npcElementChoices = <(String, bool), List<OculumCatalogueEntry>>{};
 
-List<OculumCatalogueEntry> oculumQuickNpcSkillChoices(String element) {
+String oculumMasterSkillChoiceLabel(OculumCatalogueEntry entry) {
+  final fantasy = oculumMonsterSkillDisplayName(entry.art.nome);
+  return fantasy == null || fantasy == entry.art.nome
+      ? entry.label
+      : '$fantasy · ${entry.label}';
+}
+
+List<OculumCatalogueEntry> oculumRankMasterSkillChoices(
+  Iterable<OculumCatalogueEntry> choices,
+  String value, {
+  Set<String> preferredElements = const {},
+}) {
+  final query = oculumNormalizeText(value);
+  if (query.isEmpty) return choices.toList(growable: false);
+  final nameQuery = OculumNameQuery(query);
+  final maxDistance = query.length < 7 ? 1 : 2;
+
+  bool matchesPreferredElement(OculumCatalogueEntry entry) {
+    final natural = entry.natural;
+    final elements =
+        <String>{
+              '${natural?.scrollData['element'] ?? ''}',
+              for (final level in entry.art.effettiPerLivello)
+                for (final effect in level)
+                  if (effect.enabled) effect.elementType,
+              for (final form in natural?.forme ?? const <CharacterSkillForm>[])
+                for (final effect in form.effettiStrutturati)
+                  if (effect.enabled) effect.elementType,
+            }
+            .map(oculumNormalizeElementId)
+            .where(
+              (element) =>
+                  element.isNotEmpty &&
+                  !const {
+                    'sconosciuto',
+                    'tutti',
+                    'tuttiidanni',
+                  }.contains(element),
+            );
+    if (elements.isNotEmpty) return elements.any(preferredElements.contains);
+    final monster = monsterBookEntryById(entry.id.split(':').first);
+    return monster != null &&
+        preferredElements.contains(oculumNormalizeElementId(monster.elementId));
+  }
+
+  (int, bool, int) score(OculumCatalogueEntry entry) {
+    if (oculumNormalizeText(entry.id) == query ||
+        oculumNormalizeText(entry.natural?.id ?? '') == query) {
+      return (1000, true, 0);
+    }
+    final skillNames = {
+      entry.art.nome,
+      if (entry.natural != null) entry.natural!.nome,
+      ...oculumMonsterSkillSearchAliases(entry.art.nome),
+    }.map(oculumNormalizeText).where((name) => name.isNotEmpty).toSet();
+    final nameMatch = skillNames.fold(
+      0,
+      (best, name) => max(best, nameQuery.score(name)),
+    );
+    if (nameMatch == 1000) return (nameMatch, true, 0);
+
+    final monster = monsterBookEntryById(entry.id.split(':').first);
+    final sources = {
+      entry.label,
+      if (monster != null) ...oculumMonsterNameSearchAliases(monster),
+    }.map(oculumNormalizeText);
+    final sourceMatch = sources.fold(
+      0,
+      (best, name) => max(best, oculumNameMatchScore(query, name)),
+    );
+    final literalMatch = max(nameMatch, sourceMatch);
+    if (literalMatch > 0) {
+      return (literalMatch, literalMatch == nameMatch, 0);
+    }
+
+    if (query.length < 4) return (0, false, 0);
+    var fuzzyMatch = 0;
+    for (final name in skillNames) {
+      if ((query.length - name.length).abs() <= maxDistance) {
+        final distance = oculumLevenshtein(query, name);
+        if (distance <= maxDistance) {
+          fuzzyMatch = max(fuzzyMatch, maxDistance + 1 - distance);
+        }
+      }
+    }
+    return (0, false, fuzzyMatch);
+  }
+
+  final ranked =
+      <
+        ({
+          OculumCatalogueEntry entry,
+          int literalMatch,
+          bool matchesSkillName,
+          int fuzzyMatch,
+          int index,
+        })
+      >[];
+  for (final (index, entry) in choices.indexed) {
+    final (literalMatch, matchesSkillName, fuzzyMatch) = score(entry);
+    if (literalMatch > 0 || fuzzyMatch > 0) {
+      ranked.add((
+        entry: entry,
+        literalMatch: nameQuery.rank(
+          literalMatch,
+          preferredElement:
+              preferredElements.isNotEmpty &&
+              literalMatch >= 520 &&
+              matchesPreferredElement(entry),
+        ),
+        matchesSkillName: matchesSkillName,
+        fuzzyMatch: fuzzyMatch,
+        index: index,
+      ));
+    }
+  }
+  ranked.sort((a, b) {
+    final byLiteral = b.literalMatch.compareTo(a.literalMatch);
+    if (byLiteral != 0) return byLiteral;
+    if (a.matchesSkillName != b.matchesSkillName) {
+      return a.matchesSkillName ? -1 : 1;
+    }
+    final byFuzzy = b.fuzzyMatch.compareTo(a.fuzzyMatch);
+    return byFuzzy != 0 ? byFuzzy : a.index.compareTo(b.index);
+  });
+  return ranked.map((match) => match.entry).toList(growable: false);
+}
+
+List<OculumCatalogueEntry> oculumQuickNpcSkillChoices(
+  String element, {
+  bool includeAdditionalMonsterArts = false,
+}) {
   final normalized = oculumNormalizeElementId(element);
   if (!identical(_npcCatalogueSource, monsterBookEntries)) {
     _npcCatalogueSource = monsterBookEntries;
     _npcElementChoices.clear();
   }
-  if (_npcElementChoices.containsKey(normalized)) {
-    return _npcElementChoices[normalized]!;
-  }
+  final cacheKey = (normalized, includeAdditionalMonsterArts);
+  final cached = _npcElementChoices[cacheKey];
+  if (cached != null) return cached;
   final known = <String>{};
-  final entries = oculumAbilityCatalogueEntries(elementFilter: normalized)
-      .where(
-        (e) =>
-            oculumCatalogueElement(e) == normalized &&
-            !e.art.tipoPerLivello(1).toLowerCase().contains('passiv') &&
-            known.add(oculumNormalizeText(e.art.nome)),
-      )
-      .toList();
+  final entries =
+      oculumAbilityCatalogueEntries(
+            elementFilter: normalized,
+            includeAdditionalMonsterArts: includeAdditionalMonsterArts,
+          )
+          .where(
+            (e) =>
+                oculumCatalogueElement(e) == normalized &&
+                !e.art.tipoPerLivello(1).toLowerCase().contains('passiv') &&
+                known.add(oculumNormalizeText(e.art.nome)),
+          )
+          .toList();
   for (final role in OculumCombatAbilityRole.values) {
     final physical = normalized == 'fisico';
     final name = physical
@@ -103,7 +238,7 @@ List<OculumCatalogueEntry> oculumQuickNpcSkillChoices(String element) {
       a,
     ).compareTo(oculumCatalogueRequiredLevel(b)),
   );
-  return _npcElementChoices[normalized] = List.unmodifiable(entries);
+  return _npcElementChoices[cacheKey] = List.unmodifiable(entries);
 }
 
 Map<OculumCombatAbilityRole, CharacterSkill> oculumQuickNpcDefaults(
@@ -176,7 +311,11 @@ extension _OculumQuickNpcSkills on _OculumHomePageState {
             padding: const EdgeInsets.only(bottom: 6),
             child: OutlinedButton.icon(
               onPressed: () => showAbilityCatalogue(
-                choices: oculumQuickNpcSkillChoices(quickNpcSkillElement),
+                masterAssignment: true,
+                choices: oculumQuickNpcSkillChoices(
+                  quickNpcSkillElement,
+                  includeAdditionalMonsterArts: true,
+                ),
                 initialRole: entry.key,
                 initialElement: quickNpcSkillElement,
                 catalogueLevel:

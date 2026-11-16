@@ -1326,6 +1326,93 @@ void main() {
     expect(await sending, isFalse);
   });
 
+  test('linking Google to the same UUID preserves the room session', () async {
+    final previous = OculumRealtimeService.supabaseAvailable;
+    OculumRealtimeService.supabaseAvailable = true;
+    addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+    final client = _Client();
+    addTearDown(client.dispose);
+    final service = OculumRealtimeService(
+      client: client,
+      roomId: 'oauth-link',
+      playerName: 'Master',
+      presenceDataProvider: () => {'role': 'master'},
+      onEvent: (_, _) {},
+      onPresenceChanged: (_) {},
+      onStatusChanged: (_) {},
+    );
+    addTearDown(service.dispose);
+    await service.connect();
+    expect(service.authenticatedUserId, 'owner');
+    final session = client.auth.currentSession!;
+    await client.auth.setInitialSession(
+      jsonEncode({
+        ...session.toJson(),
+        'user': {
+          ...session.user.toJson(),
+          'app_metadata': {'provider': 'google'},
+          'is_anonymous': false,
+        },
+      }),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(service.isConnected, isTrue);
+    expect(service.authenticatedRole, 'master');
+    expect(service.authenticatedUserId, 'owner');
+    expect(service.requiresUserAction, isFalse);
+    expect(client.backend.openRoomCalls, 1);
+  });
+
+  for (final signOut in [false, true]) {
+    test(
+      'room stops after ${signOut ? 'logout' : 'switching account'}',
+      () async {
+        final previous = OculumRealtimeService.supabaseAvailable;
+        OculumRealtimeService.supabaseAvailable = true;
+        addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+        final client = _Client();
+        addTearDown(client.dispose);
+        var lastPresence = <Map<String, dynamic>>[];
+        final service = OculumRealtimeService(
+          client: client,
+          roomId: 'oauth-change',
+          playerName: 'Master',
+          presenceDataProvider: () => {'role': 'master'},
+          onEvent: (_, _) {},
+          onPresenceChanged: (users) => lastPresence = users,
+          onStatusChanged: (_) {},
+        );
+        addTearDown(service.dispose);
+        await service.connect();
+        expect(lastPresence, isNotEmpty);
+        expect(service.isConnected, isTrue);
+        expect(service.authenticatedRole, 'master');
+        if (signOut) {
+          await client.auth.signOut();
+        } else {
+          final session = client.auth.currentSession!;
+          await client.auth.setInitialSession(
+            jsonEncode({
+              ...session.toJson(),
+              'user': {...session.user.toJson(), 'id': 'another-user'},
+            }),
+          );
+        }
+        await Future<void>.delayed(Duration.zero);
+        expect(service.isConnected, isFalse);
+        expect(service.authenticatedRole, isNull);
+        expect(service.authenticatedUserId, isNull);
+        expect(service.requiresUserAction, isTrue);
+        expect(lastPresence, isEmpty);
+        expect(await service.setRoomPassword('stale'), isFalse);
+        await service.connect();
+        expect(client.backend.openRoomCalls, 1);
+        expect(client.backend.passwordWrites, 0);
+        expect(client.auth.currentUser?.id, signOut ? null : 'another-user');
+      },
+    );
+  }
+
   test('Master promotion and a returning session trigger a new delivery', () {
     const player = {'role': 'player', 'sessionId': 'one'};
     const master = {'role': 'master', 'sessionId': 'one'};

@@ -15,6 +15,138 @@ const oculumInventoryCatalogCategoryLabels = <String, String>{
   'companion': 'Compagni ed evocazioni',
 };
 
+List<InventoryItem> oculumLunarSymbolPieces() => [
+  for (final piece in const [
+    ('left', 'Mezzaluna sinistra', 'Left crescent'),
+    ('center', 'Disco centrale', 'Central disc'),
+    ('right', 'Mezzaluna destra', 'Right crescent'),
+  ])
+    InventoryItem(
+      nome: 'Simbolo della Luna · ${piece.$2}',
+      peso: .01,
+      quantita: 1,
+      note:
+          '${piece.$2} in argento annerito, segnato da crateri. '
+          'Pezzo del Simbolo della Luna · Vaitern · 60 Obser.',
+      craftData: {
+        'lunarSymbol': {
+          'piece': piece.$1,
+          'nameEn': piece.$3,
+          'location': 'Vaitern',
+          'obserPerPiece': 60,
+        },
+      },
+    ),
+];
+
+bool oculumIsLunarSymbolPiece(InventoryItem item) {
+  final symbol = item.craftData['lunarSymbol'];
+  return symbol is Map &&
+      const {'left', 'center', 'right'}.contains(symbol['piece']);
+}
+
+class _LunarSymbolPainter extends CustomPainter {
+  const _LunarSymbolPainter(this.piece, {required this.lit});
+
+  final String piece;
+  final bool lit;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = min(size.width / 170, size.height / 120);
+    canvas.save();
+    canvas.translate(
+      (size.width - 170 * scale) / 2,
+      (size.height - 120 * scale) / 2,
+    );
+    canvas.scale(scale);
+    final center = Offset(switch (piece) {
+      'left' => 65,
+      'right' => 105,
+      _ => 85,
+    }, 60);
+    final disk = Path()..addOval(Rect.fromCircle(center: center, radius: 25));
+    final face = piece == 'center'
+        ? disk
+        : Path.combine(
+            PathOperation.difference,
+            disk,
+            Path()..addOval(
+              Rect.fromCircle(
+                center: center.translate(piece == 'left' ? 11 : -11, 0),
+                radius: 24,
+              ),
+            ),
+          );
+    final bounds = face.getBounds();
+    final colors = lit
+        ? const [
+            Color(0xff342475),
+            Color(0xffdf87bb),
+            Color(0xff9cdbf7),
+            Color(0xff497edc),
+            Color(0xff9158d4),
+          ]
+        : const [Color(0xff948f9a), Color(0xff3c3846), Color(0xff171621)];
+    if (lit) {
+      canvas.drawPath(
+        face,
+        Paint()
+          ..color = const Color(0xaa9370e7)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+    }
+    canvas.drawPath(
+      face,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ).createShader(bounds),
+    );
+    canvas.save();
+    canvas.clipPath(face);
+    for (final crater in const [
+      (-15.0, -9.0, 4.0),
+      (-16.0, 9.0, 3.5),
+      (-6.0, -17.0, 3.0),
+      (8.0, -4.0, 5.5),
+      (13.0, 12.0, 4.0),
+      (-5.0, 15.0, 3.0),
+    ]) {
+      final offset = center.translate(crater.$1, crater.$2);
+      canvas.drawCircle(
+        offset,
+        crater.$3,
+        Paint()..color = const Color(0x88403953),
+      );
+      canvas.drawArc(
+        Rect.fromCircle(center: offset, radius: crater.$3),
+        .2,
+        2.4,
+        false,
+        Paint()
+          ..color = const Color(0x668f879b)
+          ..style = PaintingStyle.stroke,
+      );
+    }
+    canvas.restore();
+    canvas.drawPath(
+      face,
+      Paint()
+        ..color = lit ? const Color(0xffccb9f8) : const Color(0xffaaa3b4)
+        ..strokeWidth = 1.2
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_LunarSymbolPainter oldDelegate) =>
+      piece != oldDelegate.piece || lit != oldDelegate.lit;
+}
+
 int oculumInventoryCatalogGrade(InventoryItem item) {
   final scroll = item.craftData['scroll'];
   return max(
@@ -47,6 +179,7 @@ Set<String> oculumInventoryCatalogCategories(InventoryItem item) {
     categories.addAll({'companion', 'consumable'});
   }
   if (item.craftData['powerScanner'] == true ||
+      item.craftData['resurrectionStone'] == true ||
       item.statGemStat.isNotEmpty ||
       item.craftData['fateSign'] is Map ||
       item.craftData['chaosSign'] is Map ||
@@ -57,6 +190,26 @@ Set<String> oculumInventoryCatalogCategories(InventoryItem item) {
   return categories;
 }
 
+Set<String> oculumInventorySearchElements(InventoryItem item) {
+  final direct = oculumNormalizeElementId(item.elementoDanno);
+  final scroll = item.craftData['scroll'];
+  final abilities = <CharacterSkill>[
+    ?item.ability,
+    ?item.titleAbility,
+    ...item.titleExtraAbilities,
+    ...item.materialAbilities,
+  ];
+  return {
+    if (direct != 'fisico' || item.arma || item.bonusDanno > 0) direct,
+    if (scroll is Map && scroll['element'] is String)
+      oculumNormalizeElementId(scroll['element'] as String),
+    for (final ability in abilities)
+      for (final form in ability.forme)
+        for (final effect in form.effettiStrutturati)
+          if (effect.enabled) oculumNormalizeElementId(effect.elementType),
+  }..removeAll(const {'sconosciuto', 'tutti', 'tuttiidanni'});
+}
+
 /// Disposable search metadata. It never mutates or serializes its source items.
 class OculumInventorySearchIndex {
   OculumInventorySearchIndex(Iterable<InventoryItem> items)
@@ -64,15 +217,24 @@ class OculumInventorySearchIndex {
         for (final item in items)
           (
             item: item,
-            text: '${item.nome} ${item.note} ${item.buff} ${item.elementoDanno}'
-                .toLowerCase(),
+            name: oculumNormalizeText(item.nome),
+            text: oculumNormalizeText(
+              '${item.nome} ${item.note} ${item.buff} ${item.elementoDanno} '
+              '${oculumRhinoStoneguardSearchAliases(item.craftData['scroll'])}',
+            ),
             grade: oculumInventoryCatalogGrade(item),
             categories: oculumInventoryCatalogCategories(item),
           ),
       ];
 
   final List<
-    ({InventoryItem item, String text, int grade, Set<String> categories})
+    ({
+      InventoryItem item,
+      String name,
+      String text,
+      int grade,
+      Set<String> categories,
+    })
   >
   _entries;
 
@@ -80,18 +242,48 @@ class OculumInventorySearchIndex {
     String query = '',
     String category = 'all',
     int grade = -1,
+    Set<String> preferredElements = const {},
   }) {
-    final terms = query.toLowerCase().trim().split(RegExp(r'\s+'))
-      ..removeWhere((term) => term.isEmpty);
-    return [
-      for (final entry in _entries)
-        if ((grade < 0 || entry.grade == grade) &&
-            (category == 'all' ||
-                (category == 'equipped' && entry.item.equipaggiata) ||
-                entry.categories.contains(category)) &&
-            terms.every(entry.text.contains))
-          entry.item,
-    ];
+    final normalizedQuery = oculumNormalizeText(query);
+    final eligible = _entries.where(
+      (entry) =>
+          (grade < 0 || entry.grade == grade) &&
+          (category == 'all' ||
+              (category == 'equipped' && entry.item.equipaggiata) ||
+              entry.categories.contains(category)),
+    );
+    if (normalizedQuery.isEmpty) {
+      return [for (final entry in eligible) entry.item];
+    }
+    final terms = normalizedQuery.split(' ');
+    final nameQuery = OculumNameQuery(normalizedQuery);
+    final prioritizeElement =
+        nameQuery.hasRelatedNames && preferredElements.isNotEmpty;
+    final ranked = <({InventoryItem item, int order, int score})>[];
+    for (final (order, entry) in eligible.indexed) {
+      final textMatch = terms.every(entry.text.contains);
+      if (!textMatch && !nameQuery.hasRelatedNames) continue;
+      final score = nameQuery.score(entry.name);
+      if (!textMatch && score <= 0) continue;
+      ranked.add((
+        item: entry.item,
+        order: order,
+        score: nameQuery.rank(
+          score,
+          preferredElement:
+              prioritizeElement &&
+              score > 0 &&
+              oculumInventorySearchElements(
+                entry.item,
+              ).any(preferredElements.contains),
+        ),
+      ));
+    }
+    ranked.sort((a, b) {
+      final byRelevance = b.score.compareTo(a.score);
+      return byRelevance != 0 ? byRelevance : a.order.compareTo(b.order);
+    });
+    return [for (final match in ranked) match.item];
   }
 }
 
@@ -187,6 +379,9 @@ class _OculumMasterCatalogBrowserState
       query: _query,
       grade: owner.masterItemGradeFilter,
       category: owner.masterItemCategoryFilter,
+      preferredElements: _query.trim().isEmpty
+          ? const {}
+          : owner.usableSheetSearchElements(),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1934,6 +2129,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       ),
       source:
           '${skill.nome.trim().isEmpty ? t('Skill senza nome', 'Unnamed skill') : skill.nome.trim()} - $formName',
+      sourceCooldown: form.cooldownStrutturato,
       spentResources: <String, num>{'oculum': oculumImmesso},
     );
     if (structuredMessages.isNotEmpty) {
@@ -2012,6 +2208,10 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
       return;
     }
+    if (_isNecthrallBindForm(form)) {
+      await selectNecthrallBind(skill, form);
+      return;
+    }
     if (skill.id == oculumOculumTheftKind) {
       if (leggiNumero(livelloController) < readIntValue(form.livello)) {
         aggiungiLog('${skill.nome}: richiede livello ${form.livello}.');
@@ -2026,7 +2226,19 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       await useLearnedOculumTheft(skill, formIndex);
       return;
     }
-    final effectiveCost = oculumCharacterSkillFormCost(form);
+    final elementalSphere = oculumIsElementalSphereForm(form);
+    if (elementalSphere &&
+        (!currentCombatIsActive() ||
+            outsideFight ||
+            onlineAttackTokens().isEmpty)) {
+      aggiungiLog(
+        'La Sfera elementale richiede un Fight con un bersaglio disponibile.',
+      );
+      return;
+    }
+    final effectiveCost = elementalSphere
+        ? effectiveElementalSphereCost(form)
+        : oculumCharacterSkillFormCost(form);
     if (effectiveCost != null) {
       if (leggiNumero(livelloController) < readIntValue(form.livello)) {
         aggiungiLog('${skill.nome}: richiede livello ${form.livello}.');
@@ -3023,6 +3235,22 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           color: Colors.grey.shade300,
         ),
         const SizedBox(height: 10),
+        if (skill.scrollData['passiveId'] == oculumRhinoStoneguardPassiveId)
+          campoModello(
+            label: t(
+              'Scudo normale a inizio Fight (% Vita massima)',
+              'Normal Shield at Fight start (% maximum Life)',
+            ),
+            initialValue:
+                '${readIntValue(skill.scrollData['startingShieldPercent'], fallback: oculumRhinoStoneguardShieldPercent)}',
+            onChanged: (value) {
+              skill.scrollData['startingShieldPercent'] = max(
+                0,
+                readIntValue(value),
+              );
+              programmaSalvataggio();
+            },
+          ),
         if (skill.scrollData['kind'] == 'corruption') ...[
           campoModello(
             label: t(
@@ -3184,6 +3412,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   ),
                   child: Text(t('Crea Skill', 'Create Skill')),
                 ),
+                if (haPermessiMaster)
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        showAbilityCatalogue(masterAssignment: true),
+                    icon: const Icon(Icons.library_add_outlined),
+                    label: Text(t('Assegna Skill', 'Assign Skill')),
+                  ),
               ],
             ),
           ),
@@ -5578,15 +5813,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         ..['quantita'] = 1
         ..['equipaggiata'] = false;
       final key = jsonEncode(normalized);
-      unique.putIfAbsent(
-        key,
-        () => InventoryItem.fromJson(item.toJson())
-          ..quantita = 1
-          ..equipaggiata = false,
-      );
+      unique.putIfAbsent(key, () => InventoryItem.fromJson(normalized));
     }
 
     add(oculumAntiCorruptionStone());
+    add(oculumResurrectionStone());
+    add(oculumRhinoStoneguardScroll());
+    for (final piece in oculumLunarSymbolPieces()) {
+      add(piece);
+    }
     for (final echo in oculumMonsterEchoScrolls) {
       for (var grade = 0; grade <= 12; grade++) {
         add(oculumMonsterEchoScrollItem(echo.id, grade));
@@ -5644,6 +5879,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       if (recipe.resultName.trim().isEmpty) continue;
       final grams =
           double.tryParse(recipe.resultGrams.replaceAll(',', '.')) ?? 0;
+      final bonuses = oculumCraftedEquipmentBonuses(recipe);
       add(
         InventoryItem(
           nome: recipe.resultName,
@@ -5654,25 +5890,27 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           protegge:
               recipe.forgeTarget == 'armor' ||
               recipe.forgeTarget == 'protezione',
-          bonusDanno: oculumCraftedEquipmentBonuses(recipe).damage,
-          bonusDifesa: oculumCraftedEquipmentBonuses(recipe).defense,
-          elementoDanno: oculumCraftedEquipmentBonuses(recipe).element,
-          gradoOggetto: oculumCraftedEquipmentBonuses(recipe).grade,
-          gradoRichiesto: oculumCraftedEquipmentBonuses(recipe).grade,
+          bonusDanno: bonuses.damage,
+          bonusDifesa: bonuses.defense,
+          elementoDanno: bonuses.element,
+          gradoOggetto: bonuses.grade,
+          gradoRichiesto: bonuses.grade,
           monsterLoot: oculumCraftedEquipmentSkillData(recipe),
         ),
       );
     }
+    final materialLevels = oculumDefaultMaterialLevels();
     for (final material in [
       ...oculumAuthoredMaterials,
       ...oculumAdditionalCraftingMaterials,
     ]) {
+      final materialLevel = materialLevels[material.id] ?? 0;
       add(
         InventoryItem(
           nome: material.name,
           peso: material.minKg,
           quantita: 1,
-          livelloOggetto: oculumDefaultMaterialLevels()[material.id] ?? 0,
+          livelloOggetto: materialLevel,
           note:
               '${material.effect} Grado: ${material.grade < 0 ? 'variabile' : material.grade}. '
               'Peso configurabile: ${material.minKg}–${material.maxKg} kg.',
@@ -5681,7 +5919,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           craftData: {
             'material': material.id,
             'materialGrade': max(0, material.grade),
-            'materialLevel': oculumDefaultMaterialLevels()[material.id] ?? 0,
+            'materialLevel': materialLevel,
             'active': false,
             'activeBuff': material.active,
             'effect': material.effect,
@@ -5734,24 +5972,18 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
         ),
       );
     }
-    final needle = masterItemSearchController.text.trim().toLowerCase();
     final items = unique.values.toList()
       ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
     if (!applyFilters) return items;
-    return items
-        .where(
-          (item) =>
-              (masterItemGradeFilter < 0 ||
-                  oculumInventoryCatalogGrade(item) == masterItemGradeFilter) &&
-              (masterItemCategoryFilter == 'all' ||
-                  oculumInventoryCatalogCategories(
-                    item,
-                  ).contains(masterItemCategoryFilter)) &&
-              '${item.nome} ${item.note} ${item.buff} ${item.elementoDanno}'
-                  .toLowerCase()
-                  .contains(needle),
-        )
-        .toList();
+    final query = masterItemSearchController.text;
+    return OculumInventorySearchIndex(items).search(
+      query: query,
+      category: masterItemCategoryFilter,
+      grade: masterItemGradeFilter,
+      preferredElements: query.trim().isEmpty
+          ? const {}
+          : usableSheetSearchElements(),
+    );
   }
 
   List<Map<String, dynamic>> _masterOnlinePlayers() => realtimeUsers
@@ -6269,6 +6501,8 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
 
     final item = inventario[i];
     final itemColor = item.equipaggiata ? tertiaryColor : primaryColor;
+    final itemFood = item.monsterLoot['food'];
+    final mealSatiety = itemFood is Map ? oculumFoodMealSatiety(itemFood) : 0;
     final totalBuff = item.buff.trim().isEmpty
         ? 0
         : parseTitleQuickCommands(
@@ -6326,6 +6560,14 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       final copy = copiaOggetto(item)
         ..nome = '${item.nome} - ${t('copia', 'copy')}'
         ..equipaggiata = false;
+      if (copy.craftData[oculumLamaOrbitaId] case final Map orbita) {
+        copy.craftData = {
+          ...copy.craftData,
+          oculumLamaOrbitaId: Map<String, dynamic>.from(orbita)
+            ..remove('physicalId')
+            ..remove(_lamaOrbitaCooldown),
+        };
+      }
       setState(() {
         inventario.insert(currentIndex + 1, copy);
         aggiungiLog('Oggetto duplicato: ${item.nome}.');
@@ -6336,6 +6578,47 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
     void sellItemToMerchant() {
       if (!merchantIsOpen || !inventario.contains(item)) return;
       sellInventoryItemToMerchant(item);
+    }
+
+    Future<void> showLunarSymbol() async {
+      final symbol = item.craftData['lunarSymbol'];
+      if (!oculumIsLunarSymbolPiece(item) ||
+          !inventario.contains(item) ||
+          item.quantita <= 0 ||
+          symbol is! Map) {
+        return;
+      }
+      var lit = false;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, refresh) => AlertDialog(
+            title: Text(item.nome),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CustomPaint(
+                  size: const Size(170, 120),
+                  painter: _LunarSymbolPainter('${symbol['piece']}', lit: lit),
+                ),
+                Text(item.note),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(t('Chiudi', 'Close')),
+              ),
+              FilledButton(
+                onPressed: () => refresh(() => lit = !lit),
+                child: Text(
+                  lit ? t('Spegni', 'Dim') : t('Illumina', 'Light up'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     Future<void> showInventoryContextMenu(Offset position) async {
@@ -6349,6 +6632,11 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
           position.dy,
         ),
         items: <PopupMenuEntry<String>>[
+          if (oculumIsLunarSymbolPiece(item))
+            PopupMenuItem<String>(
+              value: 'lunar_symbol',
+              child: Text(t('Mostra il simbolo', 'Show symbol')),
+            ),
           if (item.craftData['recipeBook'] is Map)
             const PopupMenuItem<String>(
               value: 'read_recipe_book',
@@ -6474,6 +6762,23 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               ),
             ),
           ),
+          if (item.craftData[oculumLamaOrbitaId] case final Map orbita)
+            PopupMenuItem<String>(
+              value: orbita['lost'] == true
+                  ? 'recover_orbita'
+                  : 'launch_orbita',
+              enabled: orbita['lost'] == true
+                  ? canRecoverLamaOrbita(item)
+                  : canLaunchLamaOrbita(item),
+              child: ListTile(
+                leading: const Icon(Icons.loop),
+                title: Text(
+                  orbita['lost'] == true
+                      ? t('Raccogli Lama Orbita', 'Pick up Orbit Blade')
+                      : t('Lancia Lama Orbita', 'Launch Orbit Blade'),
+                ),
+              ),
+            ),
           PopupMenuItem<String>(
             value: 'send',
             child: ListTile(
@@ -6510,7 +6815,7 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
               title: Text(t('Cerca nel manuale', 'Search in manual')),
             ),
           ),
-          if (merchantIsOpen)
+          if (merchantIsOpen && !oculumIsLunarSymbolPiece(item))
             PopupMenuItem<String>(
               value: 'sell',
               child: ListTile(
@@ -6533,6 +6838,15 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
       );
       if (!mounted || choice == null || !inventario.contains(item)) return;
       switch (choice) {
+        case 'launch_orbita':
+          await launchLamaOrbita(item);
+          break;
+        case 'recover_orbita':
+          await recoverLamaOrbita(item);
+          break;
+        case 'lunar_symbol':
+          await showLunarSymbol();
+          break;
         case 'costume_jump':
           await useDollCostumeJump(item);
           break;
@@ -6690,6 +7004,17 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   padding: EdgeInsets.zero,
                   icon: Icon(Icons.bolt_outlined, color: tertiaryColor),
                 ),
+              if (oculumIsLunarSymbolPiece(item))
+                IconButton(
+                  tooltip: t('Mostra il simbolo', 'Show symbol'),
+                  onPressed: item.quantita > 0 ? showLunarSymbol : null,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 34,
+                    height: 30,
+                  ),
+                  padding: EdgeInsets.zero,
+                  icon: Icon(Icons.dark_mode_outlined, color: tertiaryColor),
+                ),
               IconButton(
                 constraints: const BoxConstraints.tightFor(
                   width: 30,
@@ -6722,7 +7047,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   color: Colors.grey.shade300,
                   icon: Icons.scale,
                 ),
-                if (item.arma)
+                if (item.arma ||
+                    item.craftData['eivaWeaponId'] ==
+                        oculumLamaOrbitaGauntletId)
                   compactInventoryChip(
                     label:
                         'DAN ${itemAttackBonus(item) >= 0 ? '+' : ''}${itemAttackBonus(item)}',
@@ -6749,7 +7076,13 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                     color: oculumStatFormulaColor,
                     icon: Icons.visibility,
                   ),
-                if (item.arma || item.protegge)
+                if (item.craftData[oculumLamaOrbitaId] case final Map orbita)
+                  compactInventoryChip(
+                    label: 'Affinità ${readIntValue(orbita['affinity'])}',
+                    color: tertiaryColor,
+                    icon: Icons.loop,
+                  )
+                else if (item.arma || item.protegge)
                   compactInventoryChip(
                     label: 'LIV ${item.livelloOggetto}',
                     color: tertiaryColor,
@@ -6931,6 +7264,38 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                         item.quantita = max(1, int.tryParse(value.trim()) ?? 1);
                       },
                     ),
+                    if (mealSatiety > 0)
+                      DropdownButtonFormField<int>(
+                        initialValue: mealSatiety,
+                        decoration: InputDecoration(
+                          labelText: t(
+                            'Sazietà per unità',
+                            'Satiety per serving',
+                          ),
+                        ),
+                        items: [
+                          for (final units in {
+                            2,
+                            3,
+                            oculumMealSatietyFull,
+                            mealSatiety,
+                          })
+                            DropdownMenuItem(
+                              value: units,
+                              child: Text(mealSatietyLabel(units)),
+                            ),
+                        ],
+                        onChanged: (units) {
+                          if (units == null || itemFood is! Map) return;
+                          setState(() {
+                            item.monsterLoot = {
+                              ...item.monsterLoot,
+                              'food': {...itemFood, 'mealSatietyUnits': units},
+                            };
+                          });
+                          programmaSalvataggio();
+                        },
+                      ),
                     campoModello(
                       label: t('Grado oggetto', 'Item grade'),
                       initialValue: item.gradoOggetto.toString(),
@@ -7419,7 +7784,9 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    if (inventario[i].arma)
+                    if (inventario[i].arma ||
+                        inventario[i].craftData['eivaWeaponId'] ==
+                            oculumLamaOrbitaGauntletId)
                       statChip('DMG', itemAttackBonus(inventario[i])),
                     if (inventario[i].protegge)
                       statChip('DIF', itemDefenseBonus(inventario[i])),
@@ -7429,7 +7796,34 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       statChip('SO', itemOculumShieldBonus(inventario[i])),
                     if (oculumCanInfuseEquipment(inventario[i]))
                       inventoryDustInfusionButton(inventario[i]),
-                    if (inventario[i].arma || inventario[i].protegge)
+                    if (inventario[i].craftData[oculumLamaOrbitaId]
+                        case final Map orbita)
+                      ActionChip(
+                        avatar: const Icon(Icons.loop, size: 16),
+                        label: Text(
+                          orbita['lost'] == true
+                              ? t('Lama a terra', 'Dropped Blade')
+                              : lamaOrbitaInFlight(inventario[i])
+                              ? t('Lama in volo', 'Blade in flight')
+                              : 'Affinità ${readIntValue(orbita['affinity'])}',
+                        ),
+                        backgroundColor: tertiaryColor.withValues(alpha: .16),
+                        onPressed: canRecoverLamaOrbita(inventario[i])
+                            ? () => recoverLamaOrbita(inventario[i])
+                            : canLaunchLamaOrbita(inventario[i])
+                            ? () => launchLamaOrbita(inventario[i])
+                            : null,
+                      ),
+                    if (lamaOrbitaCooldownRemaining(inventario[i]) > 0)
+                      Chip(
+                        avatar: const Icon(Icons.hourglass_bottom, size: 16),
+                        label: Text(
+                          '${t('Ricarica', 'Cooldown')} '
+                          '${lamaOrbitaCooldownRemaining(inventario[i])}',
+                        ),
+                      ),
+                    if (inventario[i].craftData[oculumLamaOrbitaId] is! Map &&
+                        (inventario[i].arma || inventario[i].protegge))
                       Chip(
                         avatar: const Icon(Icons.lock_clock_outlined, size: 16),
                         label: Text('Livello ${inventario[i].livelloOggetto}'),
@@ -7523,21 +7917,55 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       );
                     },
                   ),
-                  campoModello(
-                    label: 'Livello oggetto',
-                    initialValue: '${inventario[i].livelloOggetto}',
-                    onChanged: (v) {
-                      final item = inventario[i];
-                      changeInventoryOculumShieldCapacity(
-                        item,
-                        () => item.livelloOggetto = (int.tryParse(v) ?? 0)
-                            .clamp(0, 10000),
-                        chargeNewCapacity: false,
-                      );
-                      invalidateDerivedDataCaches();
-                      programmaSalvataggio();
-                    },
-                  ),
+                  if (inventario[i].craftData[oculumLamaOrbitaId]
+                      case final Map orbita)
+                    campoModello(
+                      label: t('Affinità', 'Affinity'),
+                      initialValue: '${readIntValue(orbita['affinity'])}',
+                      onChanged: (text) {
+                        final affinity = int.tryParse(text.trim());
+                        if (affinity == null) return;
+                        final item = inventario[i];
+                        item.craftData = {
+                          ...item.craftData,
+                          oculumLamaOrbitaId: {
+                            ...?item.craftData[oculumLamaOrbitaId] as Map?,
+                            'affinity': min(
+                              affinity,
+                              oculumLamaOrbitaMaximumAffinity,
+                            ),
+                          },
+                        };
+                        invalidateDerivedDataCaches();
+                        programmaSalvataggio();
+                      },
+                    )
+                  else
+                    campoModello(
+                      label: 'Livello oggetto',
+                      initialValue: '${inventario[i].livelloOggetto}',
+                      onChanged: (v) {
+                        final item = inventario[i];
+                        changeInventoryOculumShieldCapacity(
+                          item,
+                          () => item.livelloOggetto = (int.tryParse(v) ?? 0)
+                              .clamp(0, 10000),
+                          chargeNewCapacity: false,
+                        );
+                        invalidateDerivedDataCaches();
+                        programmaSalvataggio();
+                      },
+                    ),
+                  if (inventario[i].craftData[oculumLamaOrbitaId] is Map)
+                    campoModello(
+                      label: t('Ricarica · turni', 'Cooldown · turns'),
+                      initialValue: '${lamaOrbitaCooldownDuration(inventario[i])}',
+                      onChanged: (text) {
+                        final turns = int.tryParse(text.trim());
+                        if (turns == null) return;
+                        setLamaOrbitaCooldownDuration(inventario[i], turns);
+                      },
+                    ),
                   if (inventario[i].craftData['powerScanner'] == true)
                     campoModello(
                       label: 'Rilevatore · utilizzi rimanenti',

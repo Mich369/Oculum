@@ -3557,7 +3557,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     setState(() {
       final before = hpCorrenti();
       final next = (before + delta).clamp(0, maxHp()).toInt();
-      currentHpController.text = next.toString();
+      writeHealedLife(next);
       risultato =
           'HP attuali: ${next - before >= 0 ? '+' : ''}${next - before} ($next/${maxHp()}).';
       aggiungiLog(risultato);

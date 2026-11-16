@@ -2001,11 +2001,13 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
       tempOculum = consumedFoodBonuses['oculum'] ?? 0;
 
       recuperaStatsAttualiConRiposoBreve();
-      currentHpController.text = oculumShortRestHpAfter(
-        current: hpPrima,
-        maximum: maxHp(),
-        d100: tiroCuraHp,
-      ).toString();
+      writeHealedLife(
+        oculumShortRestHpAfter(
+          current: hpPrima,
+          maximum: maxHp(),
+          d100: tiroCuraHp,
+        ),
+      );
       final hpRecuperati = hpCorrenti() - hpPrima;
       ricaricaScudoOculum();
 
@@ -2232,12 +2234,14 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
 
       if (fulfillSleepNeed) satisfyPersonalNeed('sleep');
 
-      currentHpController.text = oculumSleepHpTarget(
-        hpCorrenti(),
-        maxHp(),
-        sleepMinutes,
-        rules: recovery,
-      ).toString();
+      writeHealedLife(
+        oculumSleepHpTarget(
+          hpCorrenti(),
+          maxHp(),
+          sleepMinutes,
+          rules: recovery,
+        ),
+      );
       malusTiriOculumPostEsplosione = 0;
       aggiustaNucleoUsato = false;
       scannerRiposiLunghi = min(3, scannerRiposiLunghi + 1);
@@ -3244,6 +3248,7 @@ extension _OculumHomeResourcesRestTitlesData on _OculumHomePageState {
         final messages = applyStructuredEffectsOnActivation(
           effects,
           source: '$displayName — Skill del Titolo',
+          sourceCooldown: cooldown,
         );
         if (messages.isNotEmpty) {
           setState(() {

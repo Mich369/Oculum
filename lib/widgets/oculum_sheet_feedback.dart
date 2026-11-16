@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'oculum_goth_ornaments.dart';
-import 'oculum_monster_theme.dart';
 
 enum OculumFeedbackKind {
   lifeDamage,
@@ -12,6 +11,7 @@ enum OculumFeedbackKind {
   shieldBroken,
   oculumShield,
   oculumShieldBroken,
+  criticalShieldBroken,
   heal,
   oculum,
   will,
@@ -29,6 +29,7 @@ class OculumSheetFeedback {
     this.amount = 1,
     this.tint,
     this.showSkulls = false,
+    this.lifeCapacity,
   });
 
   final OculumFeedbackKind kind;
@@ -36,6 +37,14 @@ class OculumSheetFeedback {
   final int amount;
   final Color? tint;
   final bool showSkulls;
+  final int? lifeCapacity;
+
+  double get lifeDamageIntensity {
+    final capacity = lifeCapacity;
+    final total = capacity != null && capacity > 0 ? capacity : amount + 22;
+    if (total <= 0) return 0;
+    return (amount / total).clamp(0.0, 1.0).toDouble();
+  }
 }
 
 /// A transient display layer. Listening starts with the next event, so
@@ -57,6 +66,7 @@ class OculumSheetFeedbackLayer extends StatefulWidget {
 
 class _OculumSheetFeedbackLayerState extends State<OculumSheetFeedbackLayer> {
   final _active = <OculumFeedbackKind, OculumSheetFeedback>{};
+  final _awaitingTarget = <OculumFeedbackKind, OculumSheetFeedback>{};
 
   @override
   void initState() {
@@ -70,10 +80,14 @@ class _OculumSheetFeedbackLayerState extends State<OculumSheetFeedbackLayer> {
     if (oldWidget.events != widget.events) {
       oldWidget.events.removeListener(_receive);
       widget.events.addListener(_receive);
-    }
-    if (oldWidget.events != widget.events ||
-        oldWidget.target != widget.target) {
       _active.clear();
+      _awaitingTarget.clear();
+    } else if (oldWidget.target != widget.target) {
+      _active.clear();
+      if (_awaitingTarget.values.firstOrNull?.target == widget.target) {
+        _active.addAll(_awaitingTarget);
+      }
+      _awaitingTarget.clear();
     }
   }
 
@@ -86,25 +100,47 @@ class _OculumSheetFeedbackLayerState extends State<OculumSheetFeedbackLayer> {
   void _receive() {
     final event = widget.events.value;
     if (event == null) {
+      _awaitingTarget.clear();
       if (_active.isNotEmpty) setState(_active.clear);
     } else if (event.target == widget.target) {
-      setState(() {
-        // Each shield has one effect. A break replaces a recent light hit.
-        switch (event.kind) {
-          case OculumFeedbackKind.shield:
-          case OculumFeedbackKind.shieldBroken:
-            _active.remove(OculumFeedbackKind.shield);
-            _active.remove(OculumFeedbackKind.shieldBroken);
-          case OculumFeedbackKind.oculumShield:
-          case OculumFeedbackKind.oculumShieldBroken:
-            _active.remove(OculumFeedbackKind.oculumShield);
-            _active.remove(OculumFeedbackKind.oculumShieldBroken);
-          default:
-            break;
-        }
-        _active[event.kind] = event;
+      _awaitingTarget.clear();
+      setState(() => _recordEffect(_active, event));
+    } else {
+      // The app overlay adopts the new sheet after the sheet's rebuild.
+      // Briefly retain live events during that handoff.
+      if (_awaitingTarget.values.firstOrNull?.target != event.target) {
+        _awaitingTarget.clear();
+      }
+      _recordEffect(_awaitingTarget, event);
+      final binding = WidgetsBinding.instance;
+      binding.addPostFrameCallback((_) {
+        binding.addPostFrameCallback((_) {
+          if (_awaitingTarget[event.kind] == event) {
+            _awaitingTarget.remove(event.kind);
+          }
+        });
       });
     }
+  }
+
+  void _recordEffect(
+    Map<OculumFeedbackKind, OculumSheetFeedback> effects,
+    OculumSheetFeedback event,
+  ) {
+    // A break replaces a recent light hit on the same shield.
+    switch (event.kind) {
+      case OculumFeedbackKind.shield:
+      case OculumFeedbackKind.shieldBroken:
+        effects.remove(OculumFeedbackKind.shield);
+        effects.remove(OculumFeedbackKind.shieldBroken);
+      case OculumFeedbackKind.oculumShield:
+      case OculumFeedbackKind.oculumShieldBroken:
+        effects.remove(OculumFeedbackKind.oculumShield);
+        effects.remove(OculumFeedbackKind.oculumShieldBroken);
+      default:
+        break;
+    }
+    effects[event.kind] = event;
   }
 
   @override
@@ -153,38 +189,15 @@ class _FeedbackAnimation extends StatelessWidget {
           OculumFeedbackKind.heal ||
           OculumFeedbackKind.oculum => 2200,
           OculumFeedbackKind.shieldBroken ||
-          OculumFeedbackKind.oculumShieldBroken => 1270,
+          OculumFeedbackKind.oculumShieldBroken ||
+          OculumFeedbackKind.criticalShieldBroken => 1270,
           _ => 1050,
         },
       ),
       onEnd: onEnd,
-      // This is the approved stand-alone scratch texture. It is decoded only
-      // when an enabled feedback layer receives a real Life impact.
-      child: damage
-          ? FractionallySizedBox(
-              widthFactor: .90,
-              heightFactor: .80,
-              child: Image.asset(
-                oculumMonsterArtworkAsset(
-                  'assets/oculum/home_art/sheet_damage_scratch.png',
-                )!,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.medium,
-                color: damageTint?.withValues(alpha: .35),
-                colorBlendMode: BlendMode.srcATop,
-                excludeFromSemantics: true,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
-              ),
-            )
-          : null,
-      builder: (context, t, scratch) => CustomPaint(
+      builder: (context, t, _) => CustomPaint(
         painter: _FeedbackPainter(event, t, damageTint),
-        child: scratch == null
-            ? const SizedBox.expand()
-            : Opacity(
-                opacity: _ease(t / .06) * (1 - _ease((t - .12) / .45)),
-                child: scratch,
-              ),
+        child: const SizedBox.expand(),
       ),
     );
   }
@@ -217,6 +230,15 @@ class _FeedbackPainter extends CustomPainter {
   final OculumSheetFeedback event;
   final double progress;
   final Color? damageTint;
+  static const _ink = Color(0xFF180F1B);
+
+  double get _lifeInkIntensity {
+    final fraction = event.lifeDamageIntensity;
+    if (fraction <= .45) return fraction;
+    if (fraction <= .60) return .45 + (fraction - .45) * (5 / 3);
+    if (fraction <= .70) return .70 + (fraction - .60) * 1.4;
+    return .84 + (fraction - .70) * (8 / 15);
+  }
 
   Color get _color =>
       event.tint ??
@@ -227,6 +249,7 @@ class _FeedbackPainter extends CustomPainter {
         OculumFeedbackKind.oculumShield ||
         OculumFeedbackKind.oculumShieldBroken ||
         OculumFeedbackKind.oculum => const Color(0xFFB587FF),
+        OculumFeedbackKind.criticalShieldBroken => const Color(0xFFE6BE73),
         OculumFeedbackKind.heal => const Color(0xFF58DFA5),
         OculumFeedbackKind.will => const Color(0xFFD04751),
         OculumFeedbackKind.matter => const Color(0xFF64D6FF),
@@ -245,12 +268,14 @@ class _FeedbackPainter extends CustomPainter {
     _edgeAura(canvas, size, unit, fade);
     switch (event.kind) {
       case OculumFeedbackKind.lifeDamage:
+        _lifeDamage(canvas, size, unit);
         if (event.showSkulls) _skulls(canvas, size, unit, progress);
       case OculumFeedbackKind.shield:
       case OculumFeedbackKind.shieldBroken:
       case OculumFeedbackKind.oculumShield:
       case OculumFeedbackKind.oculumShieldBroken:
-        _shield(canvas, center, unit, fade);
+      case OculumFeedbackKind.criticalShieldBroken:
+        _shield(canvas, size, center, unit, fade);
       case OculumFeedbackKind.oculum:
         _oculum(canvas, size, unit, fade);
       case OculumFeedbackKind.matter:
@@ -268,9 +293,17 @@ class _FeedbackPainter extends CustomPainter {
   }
 
   void _edgeAura(Canvas canvas, Size size, double unit, double fade) {
-    // Four softly lit edges, with a transparent center under the sheet.
+    // Pigment settles along the edges, leaving the sheet legible.
+    final lifeDamage = event.kind == OculumFeedbackKind.lifeDamage;
+    final severity = lifeDamage ? _lifeInkIntensity : 0.0;
     final (depth, strength) = switch (event.kind) {
-      OculumFeedbackKind.lifeDamage => (.18, .29),
+      OculumFeedbackKind.lifeDamage => (
+        .12 + .18 * severity,
+        .26 + .52 * severity,
+      ),
+      OculumFeedbackKind.shieldBroken ||
+      OculumFeedbackKind.oculumShieldBroken ||
+      OculumFeedbackKind.criticalShieldBroken => (.22, .32),
       OculumFeedbackKind.matter => (.19, .33),
       OculumFeedbackKind.heal => (.17, .29),
       OculumFeedbackKind.will => (.16, .26),
@@ -278,6 +311,23 @@ class _FeedbackPainter extends CustomPainter {
     };
     final bounds = Offset.zero & size;
     final paint = Paint();
+    final edgeColor = switch (event.kind) {
+      OculumFeedbackKind.lifeDamage => Color.lerp(
+        _color,
+        Color.lerp(
+          const Color(0xFF510B24),
+          const Color(0xFF310516),
+          _ease((severity - .70) / .30),
+        )!,
+        severity * .89,
+      )!,
+      OculumFeedbackKind.shield ||
+      OculumFeedbackKind.shieldBroken ||
+      OculumFeedbackKind.oculumShield ||
+      OculumFeedbackKind.oculumShieldBroken ||
+      OculumFeedbackKind.criticalShieldBroken => _color,
+      _ => Color.lerp(_ink, _color, .73)!,
+    };
     for (final (start, end, span, opacity) in [
       (Alignment.centerLeft, Alignment.centerRight, size.width, strength),
       (
@@ -288,7 +338,11 @@ class _FeedbackPainter extends CustomPainter {
       ),
     ]) {
       final inset = unit * depth / span;
-      final tint = _color.withValues(alpha: opacity * fade);
+      final tint = Color.lerp(
+        _ink,
+        edgeColor,
+        .65,
+      )!.withValues(alpha: opacity * fade);
       paint.shader = LinearGradient(
         begin: start,
         end: end,
@@ -303,7 +357,8 @@ class _FeedbackPainter extends CustomPainter {
     final (speed, reach, bend, angular) = switch (event.kind) {
       OculumFeedbackKind.lifeDamage => (.60, .055, .029, true),
       OculumFeedbackKind.shieldBroken ||
-      OculumFeedbackKind.oculumShieldBroken => (.66, .08, .027, true),
+      OculumFeedbackKind.oculumShieldBroken ||
+      OculumFeedbackKind.criticalShieldBroken => (.66, .08, .027, true),
       OculumFeedbackKind.shield ||
       OculumFeedbackKind.oculumShield => (.39, .12, .012, true),
       OculumFeedbackKind.heal => (.38, .17, .026, false),
@@ -318,7 +373,7 @@ class _FeedbackPainter extends CustomPainter {
     final bottomLeft = Offset(0, size.height);
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.butt;
     for (final (start, end, inward, phase) in [
       (Offset.zero, topRight, const Offset(0, 1), 0.0),
       (topRight, bottomRight, const Offset(-1, 0), .09),
@@ -348,16 +403,103 @@ class _FeedbackPainter extends CustomPainter {
             filament,
             linePaint
               ..strokeWidth = math.max(3.0, unit * .009)
-              ..color = _color.withValues(alpha: .11 * peak),
+              ..color = _ink.withValues(alpha: .41 * peak),
           );
           canvas.drawPath(
             filament,
             linePaint
               ..strokeWidth = math.max(1.0, unit * .0028)
-              ..color = _color.withValues(alpha: .42 * peak),
+              ..color = edgeColor.withValues(alpha: .42 * peak),
+          );
+          canvas.drawLine(
+            turn + inward * (unit * .008),
+            Offset.lerp(turn, to, .38)! + inward * (unit * .004),
+            linePaint
+              ..strokeWidth = 1
+              ..color = edgeColor.withValues(alpha: .27 * peak),
           );
         }
       }
+    }
+  }
+
+  void _lifeDamage(Canvas canvas, Size size, double unit) {
+    final severity = _lifeInkIntensity;
+    final reveal = _ease(progress / .13);
+    final swipe = _ease(progress / .05) * (1 - _ease((progress - .19) / .43));
+    final red = Color.lerp(_color, const Color(0xFF54101E), .74)!;
+    final paint = Paint();
+    // Three cuts have the same direction. The middle one spans the impact.
+    for (final row in [-1, 0, 1]) {
+      final spread = row * size.height * .082;
+      final short = row.abs() * size.width * .092;
+      final from = Offset(
+        size.width * .132 + short,
+        size.height * .67 + spread,
+      );
+      final tip = Offset(size.width * .868 - short, size.height * .33 + spread);
+      final end = Offset.lerp(from, tip, reveal)!;
+      final stroke = end - from;
+      final normal =
+          Offset(-stroke.dy, stroke.dx) / math.max(1.0, stroke.distance);
+      final thickness = unit * (row == 0 ? .019 : .012) * (.8 + .5 * severity);
+      final left = from + stroke * .23 - normal * (thickness * .40);
+      final ridge = from + stroke * .57 - normal * (thickness * .60);
+      final nick = from + stroke * .72 + normal * (thickness * .05);
+      final shoulder = from + stroke * .86 - normal * (thickness * .31);
+      final lip = from + stroke * .46 + normal * (thickness * .63);
+      final cut = Path()
+        ..addPolygon([from, left, ridge, nick, shoulder, end, lip], true);
+      canvas.drawPath(
+        cut.shift(normal * (thickness * .26)),
+        paint..color = const Color(0xFF310916).withValues(alpha: .78 * swipe),
+      );
+      canvas.drawPath(cut, paint..color = red.withValues(alpha: .78 * swipe));
+      canvas.drawLine(
+        left,
+        ridge,
+        paint
+          ..strokeWidth = math.max(1.0, thickness * .095)
+          ..color = const Color(0xFF9E3546).withValues(alpha: .72 * swipe),
+      );
+    }
+
+    final fall = _ease((progress - .08) / .62);
+    final blood =
+        _ease((progress - .04) / .10) * (1 - _ease((progress - .42) / .51));
+    final count = 5 + (8 * severity).round();
+    for (var i = 0; i < count; i++) {
+      final lane = i ~/ 2;
+      final inset = .024 + (lane % 4) * .032;
+      final side = i.isEven ? inset : 1 - inset;
+      final drift = math.sin(i * 2.3) * unit * .014 * fall;
+      final x = size.width * side + drift;
+      final y =
+          size.height * (.034 + lane * .045 + fall * (.55 + (lane % 3) * .061));
+      final drop = unit * (.005 + (i % 4) * .002 + severity * .005);
+      final shape = Path()
+        ..moveTo(x + drop * .34, y - drop * 1.58)
+        ..quadraticBezierTo(
+          x - drop * 1.73,
+          y + drop * .93,
+          x - drop * .32,
+          y + drop,
+        )
+        ..quadraticBezierTo(
+          x + drop * 1.23,
+          y + drop * .99,
+          x + drop * .34,
+          y - drop * 1.58,
+        )
+        ..close();
+      canvas.drawPath(
+        shape.shift(Offset(drop * .25, drop * .22)),
+        paint..color = _ink.withValues(alpha: .69 * blood),
+      );
+      canvas.drawPath(
+        shape,
+        paint..color = const Color(0xFF6A172D).withValues(alpha: .86 * blood),
+      );
     }
   }
 
@@ -431,84 +573,141 @@ class _FeedbackPainter extends CustomPainter {
     }
   }
 
-  void _shield(Canvas canvas, Offset center, double unit, double fade) {
-    final oculum =
-        event.kind == OculumFeedbackKind.oculumShield ||
-        event.kind == OculumFeedbackKind.oculumShieldBroken;
+  void _shield(
+    Canvas canvas,
+    Size size,
+    Offset center,
+    double unit,
+    double fade,
+  ) {
+    final offset = switch (event.kind) {
+      OculumFeedbackKind.oculumShield ||
+      OculumFeedbackKind.oculumShieldBroken => const Offset(.10, 0),
+      OculumFeedbackKind.criticalShieldBroken => const Offset(0, -.13),
+      _ => const Offset(-.10, 0),
+    };
     final broken =
-        event.kind == OculumFeedbackKind.shieldBroken ||
-        event.kind == OculumFeedbackKind.oculumShieldBroken;
-    final light = Color.lerp(_color, Colors.white, .42)!;
-    final anchor = center.translate((oculum ? 1 : -1) * unit * .09, 0);
-    final ringFade = fade * (broken ? 1 - _ease((progress - .20) / .23) : 1);
-    for (var ring = 0; ring < 3; ring++) {
-      final radius =
-          unit *
-          (.13 + .24 * _ease(progress / (.52 + ring * .10)) + ring * .018);
-      final bounds = Rect.fromCenter(
-        center: anchor,
-        width: radius * 2,
-        height: radius * 1.48,
-      );
-      canvas.drawOval(
-        bounds,
-        Paint()..color = _color.withValues(alpha: .035 * ringFade),
-      );
-      canvas.drawOval(
-        bounds,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = math.max(1.0, unit * .004)
-          ..color = light.withValues(alpha: (.64 - ring * .11) * ringFade),
+        event.kind != OculumFeedbackKind.shield &&
+        event.kind != OculumFeedbackKind.oculumShield;
+    final anchor = center + offset * unit;
+    final light = Color.lerp(_color, const Color(0xFFFFEFD8), .47)!;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.bevel;
+    final fill = Paint();
+    final plateFade = fade * (broken ? 1 - _ease((progress - .19) / .23) : 1);
+    final radius = unit * (.19 + .13 * _ease(progress / .44));
+    const panel = [
+      Offset(-.87, -.45),
+      Offset(-.37, -.77),
+      Offset(.46, -.73),
+      Offset(.98, -.31),
+      Offset(.88, .28),
+      Offset(.39, .63),
+      Offset(-.15, .78),
+      Offset(-.76, .52),
+      Offset(-.96, .06),
+    ];
+    final rim = [for (final corner in panel) anchor + corner * radius];
+    final plate = Path()..addPolygon(rim, true);
+    canvas.drawPath(
+      plate,
+      fill..color = _ink.withValues(alpha: .14 * plateFade),
+    );
+    canvas.drawPath(
+      plate,
+      stroke
+        ..strokeWidth = math.max(2.5, unit * .008)
+        ..color = _ink.withValues(alpha: .63 * plateFade),
+    );
+    canvas.drawPath(
+      plate,
+      stroke
+        ..strokeWidth = math.max(1.0, unit * .002)
+        ..color = light.withValues(alpha: .59 * plateFade),
+    );
+    for (final i in [0, 2, 5, 7]) {
+      final edge = rim[(i + 1) % rim.length];
+      canvas.drawLine(
+        Offset.lerp(rim[i], edge, .2)!,
+        Offset.lerp(rim[i], edge, .8)!,
+        stroke
+          ..strokeWidth = math.max(1.0, unit * .003)
+          ..color = _color.withValues(alpha: .62 * plateFade),
       );
     }
     if (!broken) return;
 
     final crack =
-        _ease((progress - .05) / .12) * (1 - _ease((progress - .23) / .15));
-    for (var i = 0; i < 10; i++) {
-      final angle = 2 * math.pi * i / 10 + .19;
+        _ease((progress - .025) / .09) * (1 - _ease((progress - .22) / .19));
+    for (var i = 0; i < rim.length; i++) {
+      final edge = rim[i];
+      final direction = edge - anchor;
+      final normal = Offset(-direction.dy, direction.dx);
+      final notch = anchor + direction * .36 + normal * .12;
+      final join = anchor + direction * .70 - normal * .09;
       final path = Path()..moveTo(anchor.dx, anchor.dy);
-      for (var j = 1; j <= 3; j++) {
-        final bend = angle + .11 * math.sin(i + j * 1.9);
-        final distance = unit * j * (.047 + (i % 5) * .005);
-        path.lineTo(
-          anchor.dx + math.cos(bend) * distance,
-          anchor.dy + math.sin(bend) * distance * .76,
-        );
-      }
+      final branch = Offset.lerp(edge, rim[(i + 1) % rim.length], .39)!;
+      path
+        ..lineTo(notch.dx, notch.dy)
+        ..lineTo(join.dx, join.dy)
+        ..lineTo(edge.dx, edge.dy)
+        ..moveTo(join.dx, join.dy)
+        ..lineTo(branch.dx, branch.dy);
       canvas.drawPath(
         path,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6
-          ..color = light.withValues(alpha: .86 * crack),
+        stroke
+          ..strokeWidth = math.max(2.5, unit * .008)
+          ..color = _ink.withValues(alpha: .91 * crack),
+      );
+      canvas.drawPath(
+        path,
+        stroke
+          ..strokeWidth = math.max(1.0, unit * .002)
+          ..color = light.withValues(alpha: .88 * crack),
       );
     }
-    final flight = _ease((progress - .23) / .75);
-    final shardFade = _ease((progress - .20) / .14) * fade;
-    for (var i = 0; i < 28; i++) {
-      final direction = 2 * math.pi * i / 28;
-      final radius = unit * (.055 + flight * (.28 + (i % 7) * .034));
+    final flight = _ease((progress - .17) / .79);
+    final shardFade = _ease((progress - .15) / .13) * fade;
+    for (var i = 0; i < 24; i++) {
+      final direction = i * 2.4;
+      final distance = .24 + (i % 7) * .035;
+      final radiusX = unit * .06 + size.width * flight * distance;
+      final radiusY = unit * .06 + size.height * flight * distance;
       final position = anchor.translate(
-        radius * math.cos(direction),
-        radius * .73 * math.sin(direction) + unit * .08 * flight * flight,
+        radiusX * math.cos(direction),
+        radiusY * math.sin(direction) + size.height * .09 * flight * flight,
       );
-      final tip = unit * (.016 + (i % 4) * .006) * (1 - .35 * flight);
+      final tip = unit * (.012 + (i % 5) * .009) * (1 - .29 * flight);
       final angle = direction + ((i % 5) - 2) * flight;
-      final points = [
-        for (final offset in [0.0, 2.26, 4.4])
-          position + Offset.fromDirection(angle + offset, tip),
-      ];
-      final path = Path()..addPolygon(points, true);
+      final point = position + Offset.fromDirection(angle, tip * 1.58);
+      final shoulder = position + Offset.fromDirection(angle + 2.14, tip * .67);
+      final heel = position + Offset.fromDirection(angle + 3.50, tip);
+      final chip = position + Offset.fromDirection(angle + 4.87, tip * .36);
+      final path = Path()..addPolygon([point, shoulder, heel, chip], true);
       canvas.drawPath(
         path,
-        Paint()..color = _color.withValues(alpha: .28 * shardFade),
+        fill
+          ..color = Color.lerp(
+            _ink,
+            _color,
+            .52,
+          )!.withValues(alpha: .72 * shardFade),
+      );
+      canvas.drawPath(
+        Path()..addPolygon([point, shoulder, position], true),
+        fill..color = light.withValues(alpha: .61 * shardFade),
       );
       canvas.drawPath(
         path,
-        Paint()
-          ..style = PaintingStyle.stroke
+        stroke
+          ..strokeWidth = math.max(1.0, unit * .003)
+          ..color = _ink.withValues(alpha: .83 * shardFade),
+      );
+      canvas.drawLine(
+        point,
+        Offset.lerp(point, shoulder, .56)!,
+        stroke
           ..strokeWidth = 1
           ..color = light.withValues(alpha: .74 * shardFade),
       );
@@ -545,9 +744,16 @@ class _FeedbackPainter extends CustomPainter {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = width
-      ..strokeCap = StrokeCap.round
-      ..color = _color.withValues(alpha: .66 * fade);
+      ..strokeCap = StrokeCap.butt
+      ..color = Color.lerp(_ink, _color, .73)!.withValues(alpha: .64 * fade);
     for (final x in [size.width * .055, size.width * .945]) {
+      canvas.drawLine(
+        Offset(x + width, top + width),
+        Offset(x + width, top + length),
+        Paint()
+          ..strokeWidth = width * 1.5
+          ..color = _ink.withValues(alpha: .63 * fade),
+      );
       canvas.drawLine(Offset(x, top), Offset(x, top + length), paint);
       canvas.drawPath(
         Path()
@@ -568,7 +774,7 @@ class _FeedbackPainter extends CustomPainter {
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
           colors: [
-            _color.withValues(alpha: .54 * fade),
+            Color.lerp(_ink, _color, .60)!.withValues(alpha: .55 * fade),
             Colors.transparent,
           ],
           stops: [0, .28 + .43 * _ease(progress)],
@@ -625,27 +831,39 @@ class _FeedbackPainter extends CustomPainter {
         );
       canvas.drawPath(
         ember,
-        Paint()..color = _color.withValues(alpha: .46 * fade),
+        Paint()
+          ..color = Color.lerp(
+            _ink,
+            _color,
+            .68,
+          )!.withValues(alpha: .54 * fade),
       );
       _spark(canvas, Offset(x, y), tail * .22, fade);
     }
   }
 
   void _spark(Canvas canvas, Offset position, double radius, double opacity) {
-    canvas.drawCircle(
-      position,
-      radius * 2.4,
-      Paint()..color = _color.withValues(alpha: .16 * opacity),
+    final top = position.translate(radius * .32, -radius * 1.65);
+    final tip = position.translate(radius, radius * -.13);
+    final base = position.translate(-radius * .38, radius * 1.36);
+    final edge = position.translate(-radius * .93, radius * .12);
+    final flake = Path()..addPolygon([top, tip, base, edge], true);
+    canvas.drawPath(
+      flake.shift(Offset(radius * .29, radius * .32)),
+      Paint()..color = _ink.withValues(alpha: .67 * opacity),
     );
-    canvas.drawCircle(
-      position,
-      radius,
-      Paint()..color = _color.withValues(alpha: .71 * opacity),
+    canvas.drawPath(
+      flake,
+      Paint()
+        ..color = Color.lerp(
+          _ink,
+          _color,
+          .71,
+        )!.withValues(alpha: .75 * opacity),
     );
-    canvas.drawCircle(
-      position,
-      radius * .45,
-      Paint()..color = Colors.white.withValues(alpha: .58 * opacity),
+    canvas.drawPath(
+      Path()..addPolygon([top, tip, position], true),
+      Paint()..color = const Color(0xFFBEA17C).withValues(alpha: .43 * opacity),
     );
   }
 

@@ -50,6 +50,22 @@ void main() {
       expect(foe['side'], 'enemy');
       expect(token('OTHER')['fightTeamId'], isNull);
 
+      final activeTokens = state.masterInitiativeTokens as List<Map>;
+      final foeIndex = activeTokens.indexWhere(
+        (token) => token['id'] == 'ENEMY',
+      );
+      final typedFoe = Map<String, Object>.fromEntries([
+        for (final entry in activeTokens[foeIndex].entries)
+          if (entry.key is String && entry.value != null)
+            MapEntry(entry.key as String, entry.value as Object),
+      ]);
+      activeTokens[foeIndex] = typedFoe;
+      probe.sortInitiative();
+      expect(typedFoe['fightTeamId'], teamId);
+      expect(typedFoe['teamName'], 'Fendenti');
+      expect(typedFoe['fightTeamColorArgb'], 0xFF4E74BD);
+      expect(typedFoe['side'], 'enemy');
+
       await tap(
         find
             .descendant(

@@ -1,0 +1,264 @@
+name: Oculum candidate verification
+run-name: Oculum candidate @ ${{ github.sha }}
+
+on:
+  push:
+    branches:
+      - codex/oculum-verifica-20261116-1330
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oculum-candidate-1330
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Analyze and run candidate checks
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - run: flutter pub get
+      - name: Check cleanup, manual export and Android signing verification
+        shell: pwsh
+        run: |
+          New-Item -Path build -ItemType Directory -Force | Out-Null
+          $suites = @(
+            'scripts.tests.test_prune_unchosen_expressive_ink'
+            'scripts.tests.test_prune_rejected_expressive_ink'
+            'scripts.tests.test_export_manual_reference'
+            'scripts.tests.test_android_signing'
+          )
+          python -m unittest @suites
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - run: flutter analyze --no-pub
+      - name: Check themes, anatomy, catalogue and cumulative log
+        run: >-
+          flutter test --no-pub --concurrency=2
+          test/oculum_monster_themes_scout_test.dart
+          test/oculum_catalogue_selection_updates_test.dart
+          test/oculum_armadillo_creatures_test.dart
+          test/oculum_physical_anatomy_regression_test.dart
+          test/oculum_version_log_test.dart
+
+  windows:
+    name: Windows ${{ matrix.edition }}
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - edition: normal
+            folder: windows
+            executable: oculum.exe
+            save_profile: ''
+            artifact: Oculum-Windows
+          - edition: test
+            folder: windows-test
+            executable: Oculum-Test.exe
+            save_profile: test
+            artifact: Oculum-Test-Windows
+          - edition: QA 13:30
+            folder: windows-qa-1330
+            executable: Oculum-QA-1330.exe
+            save_profile: qa_20261116_1330
+            artifact: Oculum-QA-1330-Windows
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+      - name: Compile the edition
+        shell: pwsh
+        env:
+          SAVE_PROFILE: ${{ matrix.save_profile }}
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          $defines = @(
+            "--dart-define=OculumSourceCommit=$env:GITHUB_SHA"
+            "--dart-define=OculumSaveProfile=$env:SAVE_PROFILE"
+            "--dart-define=OculumSupabaseUrl=$env:OCULUM_SUPABASE_URL"
+            "--dart-define=OculumSupabasePublishableKey=$env:OCULUM_SUPABASE_PUBLISHABLE_KEY"
+          )
+          flutter build windows --release --no-pub @defines
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify the complete runtime and ZIP
+        shell: pwsh
+        env:
+          EDITION_FOLDER: ${{ matrix.folder }}
+          EDITION_EXE: ${{ matrix.executable }}
+          ARTIFACT_NAME: ${{ matrix.artifact }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $release = (Resolve-Path -LiteralPath 'build/windows/x64/runner/Release').Path
+          $folder = (New-Item -ItemType Directory -Force -Path "build/distribution/$env:EDITION_FOLDER").FullName
+          Get-ChildItem -LiteralPath $release -Force | Copy-Item -Destination $folder -Recurse -Force
+          if ($env:EDITION_EXE -ne 'oculum.exe') {
+            Rename-Item -LiteralPath (Join-Path $folder 'oculum.exe') -NewName $env:EDITION_EXE
+          }
+          $required = @(
+            $env:EDITION_EXE, 'flutter_windows.dll', 'WebView2Loader.dll',
+            'vcruntime140.dll', 'msvcp140.dll', 'data/app.so', 'data/icudtl.dat',
+            'data/flutter_assets/assets/update/oculum_cumulative_log.md'
+          )
+          foreach ($relative in $required) {
+            if (!(Test-Path -LiteralPath (Join-Path $folder $relative) -PathType Leaf)) {
+              throw "Runtime file missing: $relative"
+            }
+          }
+          $files = @(Get-ChildItem -LiteralPath $folder -Force -Recurse -File)
+          if ($env:EDITION_FOLDER -eq 'windows' -and
+              (Get-ChildItem -LiteralPath $folder -Force -Recurse).Name -match '(?i)oculum-(test|qa)|windows[ -](test|qa)') {
+            throw 'Windows normal contains a test or QA edition file.'
+          }
+          $archive = Join-Path (Split-Path -Parent $folder) "$env:ARTIFACT_NAME.zip"
+          [IO.Compression.ZipFile]::CreateFromDirectory($folder, $archive, [IO.Compression.CompressionLevel]::Optimal, $false)
+          $zip = [IO.Compression.ZipFile]::OpenRead($archive)
+          try {
+            $entries = @{}
+            foreach ($entry in $zip.Entries) {
+              if (!$entry.Name) { continue }
+              $name = $entry.FullName.Replace('\', '/')
+              if ($entries.ContainsKey($name)) { throw "Duplicate ZIP entry: $name" }
+              $entries[$name] = $entry
+            }
+            if ($entries.Count -ne $files.Count) { throw 'ZIP file count mismatch' }
+            foreach ($file in $files) {
+              $relative = [IO.Path]::GetRelativePath($folder, $file.FullName).Replace('\', '/')
+              $entry = $entries[$relative]
+              if (!$entry -or $entry.Length -ne $file.Length) { throw "ZIP entry missing: $relative" }
+              $stream = $entry.Open()
+              try {
+                $hash = (Get-FileHash -Algorithm SHA256 -InputStream $stream).Hash
+              } finally {
+                $stream.Dispose()
+              }
+              if ($hash -ne (Get-FileHash -LiteralPath $file.FullName).Hash) {
+                throw "ZIP entry hash mismatch: $relative"
+              }
+            }
+          } finally {
+            $zip.Dispose()
+          }
+          $sha = (Get-FileHash -LiteralPath $archive).Hash
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "Verified $($files.Count) files in $env:ARTIFACT_NAME.zip. SHA-256 $sha."
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: build/distribution/${{ matrix.artifact }}.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}-Folder
+          path: build/distribution/${{ matrix.folder }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  android:
+    name: Android APK with stable signature
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      # The installed release is 100293. This workflow has its own run counter.
+      OCULUM_ANDROID_BUILD_NUMBER: '100294'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - run: flutter pub get
+      - name: Restore the stable Android signing key
+        shell: bash
+        env:
+          OCULUM_ANDROID_KEYSTORE_BASE64: ${{ secrets.OCULUM_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$OCULUM_ANDROID_KEYSTORE_BASE64" || { echo "Missing stable Android signing secret"; exit 1; }
+          umask 077
+          keystore="$RUNNER_TEMP/oculum-candidate-release.keystore"
+          printf '%s' "$OCULUM_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          test -s "$keystore"
+          printf 'OCULUM_ANDROID_KEYSTORE_PATH=%s\n' "$keystore" >> "$GITHUB_ENV"
+      - name: Configure bounded Android build resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle_dir="${GRADLE_USER_HOME:-$HOME/.gradle}"
+          mkdir -p "$gradle_dir"
+          printf '\norg.gradle.jvmargs=-Xmx6G -XX:MaxMetaspaceSize=1G -XX:ReservedCodeCacheSize=256m\norg.gradle.workers.max=2\n' >> "$gradle_dir/gradle.properties"
+      - name: Compile Android
+        shell: bash
+        env:
+          OCULUM_ANDROID_STORE_PASSWORD: ${{ secrets.OCULUM_ANDROID_STORE_PASSWORD || 'android' }}
+          OCULUM_ANDROID_KEY_PASSWORD: ${{ secrets.OCULUM_ANDROID_KEY_PASSWORD || 'android' }}
+          OCULUM_ANDROID_KEY_ALIAS: ${{ secrets.OCULUM_ANDROID_KEY_ALIAS || 'androiddebugkey' }}
+          OCULUM_SUPABASE_URL: ${{ secrets.OCULUM_SUPABASE_URL }}
+          OCULUM_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.OCULUM_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          flutter build apk --release --no-pub \
+            "--build-number=$OCULUM_ANDROID_BUILD_NUMBER" \
+            "--dart-define=OculumSourceCommit=$GITHUB_SHA" \
+            "--dart-define=OculumSupabaseUrl=$OCULUM_SUPABASE_URL" \
+            "--dart-define=OculumSupabasePublishableKey=$OCULUM_SUPABASE_PUBLISHABLE_KEY"
+      - name: Remove temporary signing key
+        if: always()
+        shell: bash
+        run: rm -f -- "$RUNNER_TEMP/oculum-candidate-release.keystore"
+      - name: Verify the APK matches the installed signing identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='build/distribution/Oculum-Android-release.apk'
+          mkdir -p build/distribution
+          cp -- build/app/outputs/flutter-apk/app-release.apk "$apk"
+          python scripts/verify_android_signing.py \
+            --apk "$apk" \
+            --min-version-code "$OCULUM_ANDROID_BUILD_NUMBER" \
+            --report build/distribution/android-update-compatibility.json
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-Android
+          path: |
+            build/distribution/Oculum-Android-release.apk
+            build/distribution/android-update-compatibility.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

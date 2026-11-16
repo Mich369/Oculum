@@ -978,6 +978,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'targetControlChancePercent': controlChancePercent.clamp(0, 100),
     };
     onlineCombatRequests[id] = request;
+    if (memoryOfSelfBlocksCorruption(request, sheetIndex: index)) {
+      completeCorruptionApplication(request);
+      return;
+    }
     combatLogFor(
       targetTag,
       '[CORRUZIONE] $sourceName tenta il contagio. Puoi scegliere Crepa o Fermezza se il tuo livello è pari o superiore.',
@@ -1090,6 +1094,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final index = localSheetIndexForOculumTag(targetTag);
     if (index < 0) return;
     final sheet = schedePersonaggio[index];
+    final blockedByMemory = memoryOfSelfBlocksCorruption(
+      request,
+      sheetIndex: index,
+    );
     final tokens = realtimeService?.isConnected == true
         ? onlineCombatTokens()
         : masterInitiativeTokens;
@@ -1100,22 +1108,27 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               '${token['sheetTag'] ?? token['id']}' == targetTag,
         )
         .firstOrNull;
-    final chance = oculumCorruptionChanceAfterResistance(
-      chancePercent: request['fromMastery'] == true
-          ? 100
-          : oculumCorruptionScrollChance(
-              scrollGrade: readIntValue(request['scrollGrade']),
-              targetGrade: readIntValue(
-                token?['grade'],
-                fallback: sheetIntValueAt(index, 'grado'),
-              ),
-            ),
-      resistancePercent: index == schedaCorrente
-          ? currentCorruptionResistancePercent()
-          : oculumCorruptionResistanceInSheet(sheet),
-    );
-    final roll = Random.secure().nextInt(100) + 1;
-    final infected = request['corruptionResisted'] != true && roll <= chance;
+    final chance = blockedByMemory
+        ? 0
+        : oculumCorruptionChanceAfterResistance(
+            chancePercent: request['fromMastery'] == true
+                ? 100
+                : oculumCorruptionScrollChance(
+                    scrollGrade: readIntValue(request['scrollGrade']),
+                    targetGrade: readIntValue(
+                      token?['grade'],
+                      fallback: sheetIntValueAt(index, 'grado'),
+                    ),
+                  ),
+            resistancePercent: index == schedaCorrente
+                ? currentCorruptionResistancePercent()
+                : oculumCorruptionResistanceInSheet(sheet),
+          );
+    final roll = blockedByMemory ? 0 : Random.secure().nextInt(100) + 1;
+    var infected =
+        !blockedByMemory &&
+        request['corruptionResisted'] != true &&
+        roll <= chance;
     request.addAll({
       'phase': 'result',
       'status': 'resolved',
@@ -1123,15 +1136,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'roll': roll,
       'chancePercent': chance,
       'corruptorTag': request['sourceTag'],
+      if (blockedByMemory) 'blockedByMemoryOfSelf': true,
     });
     if (infected) {
       if (index == schedaCorrente) {
-        applyCondition(
+        infected = applyCondition(
           'corruzione',
           source: '${request['sourceName']}',
           metadata: corruptionInfectionMetadata(request, index),
         );
-        salvaSchedaCorrenteInMemoria();
+        if (infected) salvaSchedaCorrenteInMemoria();
       } else {
         _writeCorruptionConditionToSheet(
           sheet,
@@ -1145,6 +1159,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           metadata: corruptionInfectionMetadata(request, index),
         );
       }
+      request['infected'] = infected;
+    }
+    if (infected) {
       final masterToken = masterInitiativeTokens
           .where((token) => publicInitiativeSourceTag(token) == targetTag)
           .firstOrNull;
@@ -1158,7 +1175,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       sendRealtimeMasterVisibleTokenAt(index);
       sendRealtimeInitiativeSnapshotIfPublished();
     }
-    final message = request['corruptionResisted'] == true
+    final message = blockedByMemory
+        ? '[CORRUZIONE] ${request['targetName']}: $memoryOfSelfRedCorruptionMessage'
+        : request['corruptionResisted'] == true
         ? '[CORRUZIONE] ${request['targetName']} resiste con ${request['corruptionDefenseChoice']} ${request['corruptionDefense']} contro ${request['attack']}.'
         : '[CORRUZIONE] ${request['targetName']}: d100 $roll / $chance% · ${infected ? 'infettato' : 'resiste'}.';
     combatLogFor(targetTag, message);
@@ -1590,37 +1609,44 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (mounted) setState(() {});
   }
 
-  int consumeCombatHelp() {
-    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+  int consumeCombatHelp({int? sheetIndex}) {
+    final index = sheetIndex ?? schedaCorrente;
+    if (index < 0 || index >= schedePersonaggio.length) {
       return 0;
     }
-    final sheet = schedePersonaggio[schedaCorrente];
+    final sheet = schedePersonaggio[index];
+    final passiveBonus = _marionettistaPendingHelp(index);
+    final contributions =
+        (sheet['combatHelpPendingContributions'] as List? ?? const [])
+            .whereType<Map>();
+    final sources = (sheet['combatHelpPendingSources'] as List? ?? const []);
+    var bonus =
+        readIntValue(sheet['combatHelpPending']).clamp(-1000000, 1000000) +
+        passiveBonus;
+    sheet['combatHelpPending'] = 0;
     sheet['combatHelpLastContributions'] = [
-      for (final raw
-          in (sheet['combatHelpPendingContributions'] as List? ?? const [])
-              .whereType<Map>())
-        Map<String, dynamic>.from(raw),
+      for (final raw in contributions) Map<String, dynamic>.from(raw),
     ];
     sheet['combatHelpPendingContributions'] = <Map<String, dynamic>>[];
-    sheet['combatHelpLastSources'] = List<String>.from(
-      (sheet['combatHelpPendingSources'] as List? ?? []).map((v) => '$v'),
-    );
+    sheet['combatHelpLastSources'] = sources.map((v) => '$v').toList();
     sheet['combatHelpPendingSources'] = <String>[];
-    var bonus = readIntValue(
-      sheet['combatHelpPending'],
-    ).clamp(-1000000, 1000000);
-    final gratitudeEffects = activeStructuredEffects
-        .where(
-          (effect) =>
-              effect['mode'] == 'prossima_azione' &&
-              normalizedStructuredTarget('${effect['target'] ?? ''}') ==
-                  'tiro_globale' &&
-              ('${effect['source'] ?? ''}'.startsWith('Reazione Fulminea') ||
-                  '${effect['effectId'] ?? ''}'.startsWith(
-                    'gratitudine_next_action_',
-                  )),
-        )
-        .toList();
+    final gratitudeEffects =
+        (sheetIndex == null
+                ? activeStructuredEffects
+                : const <Map<String, dynamic>>[])
+            .where(
+              (effect) =>
+                  effect['mode'] == 'prossima_azione' &&
+                  normalizedStructuredTarget('${effect['target'] ?? ''}') ==
+                      'tiro_globale' &&
+                  ('${effect['source'] ?? ''}'.startsWith(
+                        'Reazione Fulminea',
+                      ) ||
+                      '${effect['effectId'] ?? ''}'.startsWith(
+                        'gratitudine_next_action_',
+                      )),
+            )
+            .toList();
     for (final effect in gratitudeEffects) {
       bonus += readIntValue(effect['value']);
     }
@@ -1628,11 +1654,17 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       activeStructuredEffects.removeWhere(gratitudeEffects.contains);
       invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
     }
-    if (bonus != 0) {
-      sheet['combatHelpPending'] = 0;
-      aggiungiLog(
-        '[AIUTO CONSUMATO] ${bonus >= 0 ? '+' : ''}$bonus applicato a questo tiro (attacco o difesa); aiuto consumato.',
+    if (bonus != 0 || passiveBonus > 0) {
+      combatLogFor(
+        sheetTagAt(index),
+        '[AIUTO CONSUMATO] ${bonus >= 0 ? '+' : ''}$bonus al tiro.'
+        '${passiveBonus > 0 ? ' Legame di Necthrall +$passiveBonus.' : ''}',
       );
+    }
+    if (bonus != 0 ||
+        contributions.isNotEmpty ||
+        sources.isNotEmpty ||
+        gratitudeEffects.isNotEmpty) {
       programmaSalvataggio();
     }
     return bonus;
@@ -1676,6 +1708,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   void receiveCombatHelp(Map<String, dynamic> payload) {
+    if (payload['helpMode'] == _elementalSphereIceHelpMode) {
+      receiveElementalSphereIceAlly(payload);
+      return;
+    }
+    if (payload['helpMode'] == _bunnysHelpMode) {
+      receiveBunnysHeal(payload);
+      return;
+    }
     if (payload['helpMode'] == _stat35ResGroupHealMode) {
       receiveStat35ResGroupHeal(payload);
       return;
@@ -1850,7 +1890,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final chance = readIntValue(payload['chancePercent']);
       combatLogFor(
         '${payload['corruptorTag']}',
-        payload['corruptionResisted'] == true
+        payload['blockedByMemoryOfSelf'] == true
+            ? '[CORRUZIONE] $targetName: $memoryOfSelfRedCorruptionMessage'
+            : payload['corruptionResisted'] == true
             ? '[CORRUZIONE] $targetName resiste con ${payload['corruptionDefenseChoice']} ${payload['corruptionDefense']} contro ${payload['attack']}.'
             : payload['infected'] == true
             ? '[CORRUZIONE] $targetName infettato: d100 $roll ≤ $chance%.'
@@ -1993,6 +2035,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     Map<String, dynamic> request,
     OculumAttackOutcome outcome,
   ) {
+    if (request['goblinGuardianIntercepted'] != null) {
+      return '[GUARDIA REALE] Il colpo destinato a ${request['targetName'] ?? 'Re Goblin'} è stato intercettato.';
+    }
     final receipt = request['damageReceipt'];
     final display = request['damageDisplayImpact'];
     final source = request['sourceName'] ?? t('Attaccante', 'Attacker');
@@ -2005,7 +2050,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               display: display is Map ? display : null,
             )
           : const _CombatLogImpact(),
-      empty: outcome == OculumAttackOutcome.avoided
+      empty:
+          outcome == OculumAttackOutcome.avoided &&
+              readIntValue(request['minimumDamageBeforeProtections']) <= 0
           ? t('Colpo evitato', 'Hit avoided')
           : null,
     );
@@ -2278,9 +2325,77 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     bool stat20WillPressure = false,
     bool statOpenKnights = false,
     String? statOpenId,
+    String? sphereSoulOpportunityId,
+    int? imbrytoadSpitId,
+    int? imbrytoadReactionOf,
+    List<OculumStructuredEffect>? elementalSphereScrollEffects,
+    bool Function()? elementalSphereScrollAvailable,
+    void Function(int natural, int total)? onElementalSphereScrollCommitted,
   }) async {
     if (!requireConfirmedSheetRoll()) return;
+    if (elementalSphereScrollAvailable?.call() == false) return;
+    final scrollSphere = elementalSphereScrollEffects
+        ?.where(
+          (effect) =>
+              effect.enabled && effect.target == oculumElementalSphereEffect,
+        )
+        .firstOrNull;
+    if (goblinRoyalGuardActiveSheet || mutantRatPupActiveSheet) return;
     alignCombatEncounterForRoll();
+    final imbrytoadReactionTarget = targetId;
+    bool imbrytoadPlanValid() =>
+        (imbrytoadSpitId == null || imbrytoadMaySpit(imbrytoadSpitId)) &&
+        (imbrytoadReactionOf == null ||
+            imbrytoadReactionTarget != null &&
+                imbrytoadMayReact(
+                  imbrytoadReactionTarget,
+                  imbrytoadReactionOf,
+                ));
+    if (imbrytoadSpitId == null && imbrytoadSpitWindow != null) {
+      aggiungiLog('[IMBRYTOAD] Usa «Sputa» dopo le Reazioni avversarie.');
+      return;
+    }
+    if (!imbrytoadPlanValid()) return;
+    final anymareap = activeStructuredEffects.where((entry) {
+      final effect = entry['effect'];
+      return entry['type'] == 'pending_target' &&
+          effect is Map &&
+          effect['id'] == oculumAnymareapEffect &&
+          effect['type'] == 'danno' &&
+          effect['recipient'] == 'nemico';
+    }).lastOrNull;
+    if (anymareap != null &&
+        (escapeReactionOf != null ||
+            freeReactionId != null ||
+            schiantoReactionId != null ||
+            counterAttackId != null ||
+            sphereSoulOpportunityId != null ||
+            resourceAlreadySpent ||
+            rabbitHat)) {
+      return;
+    }
+    final sphereSoulTarget = targetId;
+    final sphereSoulSource = sheetTagAt(schedaCorrente);
+    bool sphereSoulOpportunityStillAvailable() =>
+        sphereSoulOpportunityId == null ||
+        (sphereSoulTarget != null &&
+            localTurnCombat &&
+            realtimeService?.isConnected != true &&
+            !elementalSphereFrozen &&
+            !elementalSphereSoulSeparated &&
+            !hasCondition('paralisi_fato') &&
+            elementalSphereOpportunityFor(
+                  sphereSoulTarget,
+                  sphereSoulSource,
+                )?.conditionId ==
+                sphereSoulOpportunityId);
+    if (!sphereSoulOpportunityStillAvailable()) return;
+    final goblinVanish = max(0, pendingGoblinVanish);
+    final goblinRegalStrike = max(0, pendingGoblinRegalStrike);
+    if (goblinVanish > 0 || goblinRegalStrike > 0) {
+      minimumTargets = 1;
+      maximumTargets = 1;
+    }
     final openId = statOpenId ?? (statOpenKnights ? _statOpenKnights : '');
     final openTrack = statOpenTrack(openId);
     final openAttack = openId.isNotEmpty;
@@ -2353,6 +2468,57 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final cycleStomp = max(0, readIntValue(planarState['cycleLunarStomp']));
     final cycleBite = planarState['cycleLunarBite'] == true;
     final cycleThrow = planarState['cycleSkeletonThrow'] == true;
+    final oculiathRay = pendingOculiathRay;
+    final rayEyes = oculiathRay?.greater == true
+        ? oculiathWorkingEyes
+        : const [1];
+    final hasPrimaryRay = rayEyes.contains(1);
+    if (rayEyes.isEmpty) {
+      aggiungiLog('[OCULIATH] Nessun occhio integro per lanciare un raggio.');
+      return;
+    }
+    final aculotideCorona = oculiathRay?.aculotide == true;
+    final frutibushLeaves = oculiathRay?.frutibush == true;
+    if (oculumOculiathHasOnlyRay(faunaCurrentMonsterId) &&
+        (oculiathRay == null || stat35Attack || milestoneAttack || rabbitHat)) {
+      aggiungiLog('[OCULIATH] Prepara il raggio oculare per attaccare.');
+      return;
+    }
+    if (oculiathRay != null &&
+        (stat35Attack ||
+            milestoneAttack ||
+            rabbitHat ||
+            cycleSpines > 0 ||
+            cycleStomp > 0 ||
+            cycleBite ||
+            cycleThrow ||
+            sandTailPrepared.isNotEmpty ||
+            masked.isNotEmpty ||
+            pendingMeccanioAttack().isNotEmpty ||
+            readIntValue(planarState['boneFourSlash']) > 0 ||
+            senkaMoonVolleyPending != null ||
+            lunarGuardianVolleyPending != null)) {
+      aggiungiLog('Risolvi separatamente gli attacchi preparati.');
+      return;
+    }
+    if (frutibushLeaves && (goblinVanish > 0 || goblinRegalStrike > 0)) {
+      aggiungiLog('Risolvi separatamente gli attacchi preparati.');
+      return;
+    }
+    if (oculiathRay != null &&
+        onlineCombatRequests.values.any(
+          (request) =>
+              request['kind'] == 'masked_volley' &&
+              request['sourceTag'] == sheetTagAt(schedaCorrente) &&
+              request['encounterId'] == onlineCombatEncounterId &&
+              request['status'] == 'running' &&
+              (request['packets'] as List? ?? const []).whereType<Map>().any(
+                (packet) => packet['oculiathRayVolley'] == true,
+              ),
+        )) {
+      aggiungiLog('Completa prima la raffica in corso.');
+      return;
+    }
     if (oculumIsCommonGiantFamily(faunaCurrentMonsterId)) {
       maximumTargets = max(maximumTargets, 3);
     }
@@ -2401,6 +2567,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       fallback: 1,
     ).clamp(1, 3);
     final incomingAttack = onlineCombatRequests[counterAttackId];
+    final oculiathRayCount = oculiathRay == null
+        ? 0
+        : incomingAttack == null &&
+              freeReactionId == null &&
+              schiantoReactionId == null &&
+              escapeInterception == null
+        ? (oculiathRay.greater ? rayEyes.length : oculiathRay.count)
+        : 1;
     if (counterAttackId != null &&
         (incomingAttack == null ||
             incomingAttack['status'] != 'pending' ||
@@ -2458,7 +2632,33 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       return;
     }
-    if (freeReactionId == null &&
+    if (faunaCurrentMonsterId == oculumSonoreyeId &&
+        oculumSonoreyeBellIsBroken(anatomicalPartState) &&
+        activeStructuredEffects.any(
+          (entry) =>
+              entry['type'] == 'pending_target' &&
+              entry['effect'] is Map &&
+              oculumIsSonoreyeBellEffect(
+                '${(entry['effect'] as Map)['id'] ?? ''}',
+              ),
+        )) {
+      activeStructuredEffects.removeWhere(
+        (entry) =>
+            entry['type'] == 'pending_target' &&
+            entry['effect'] is Map &&
+            oculumIsSonoreyeBellEffect(
+              '${(entry['effect'] as Map)['id'] ?? ''}',
+            ),
+      );
+      aggiungiLog(
+        '[SONOREYE] La campana è rotta: il Rintocco preparato si spegne.',
+      );
+      programmaSalvataggio();
+      return;
+    }
+    if (goblinVanish <= 0 &&
+        goblinRegalStrike <= 0 &&
+        freeReactionId == null &&
         counterAttackId == null &&
         maximumTargets == 1) {
       for (final effect in activeStructuredEffects.where(
@@ -2480,7 +2680,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           effect['type'] == 'pending_target' &&
           effect['target'] == 'candy_will_slam',
     );
-    if (candyWillSlam) {
+    if (candyWillSlam || anymareap != null) {
       final side = combatScoutSide(sheetTagAt(schedaCorrente));
       tokens.removeWhere((token) => !_attackTokenIsOpponent(token, side));
     }
@@ -2593,6 +2793,28 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'status': 'active',
         });
       }
+    }
+    if (oculiathRay != null) {
+      final actor = sheetTagAt(schedaCorrente);
+      if (!aculotideCorona && !frutibushLeaves && oculiathRay.range <= 0) {
+        aggiungiLog('[RAGGIO OCULARE] Gittata non valida.');
+        return;
+      }
+      minimumTargets = 1;
+      maximumTargets = oculiathRayCount;
+      tokens.removeWhere(
+        (token) => oculiathMapTargetInRange(oculiathRay, actor, token) == false,
+      );
+      if (frutibushLeaves) {
+        final team = combatScoutSide(actor);
+        tokens.removeWhere((token) => !_attackTokenIsOpponent(token, team));
+      }
+    }
+    if (sphereSoulOpportunityId != null) {
+      minimumTargets = maximumTargets = 1;
+      tokens.removeWhere(
+        (token) => onlineCombatTokenTag(token) != sphereSoulTarget,
+      );
     }
     if (tokens.isEmpty) {
       await showDialog<void>(
@@ -2857,6 +3079,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final allOpponents =
         preparedEffects.any((e) => readBoolValue(e['allOpponents'])) ||
         suicideExplosion;
+    if (oculiathRay != null && allOpponents) {
+      aggiungiLog('Risolvi prima l’attacco ad area preparato.');
+      return;
+    }
     final isElementCollector = oculumIsElementCollector(sourceMonsterId);
     final adaptationState = sourceSheet['combatElementalAdaptation'] is Map
         ? Map<String, dynamic>.from(
@@ -2864,8 +3090,20 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           )
         : const <String, dynamic>{};
     final collectedElements = oculumMonsterCollectedElements(adaptationState);
-    final specificAttackElement = specificStructuredActionElement();
-    final attackElements = specificAttackElement.isNotEmpty
+    final anymareapEffect = anymareap?['effect'] as Map?;
+    final anymareapElement = anymareapEffect == null
+        ? ''
+        : oculumNormalizeElementId(
+            '${anymareapEffect['elementType'] ?? 'spirituale'}',
+          );
+    final specificAttackElement = anymareapElement.isNotEmpty
+        ? anymareapElement
+        : scrollSphere?.elementType ?? specificStructuredActionElement();
+    final attackElements = frutibushLeaves
+        ? ['natura']
+        : aculotideCorona
+        ? ['perforante']
+        : specificAttackElement.isNotEmpty
         ? [specificAttackElement]
         : isElementCollector && collectedElements.isNotEmpty
         ? collectedElements
@@ -2873,6 +3111,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final replayElement = isElementCollector
         ? oculumMonsterCollectedElement(adaptationState)
         : '';
+    if (oculiathRay != null) {
+      choices.removeWhere((choice) => choice.id != 'vc');
+      if (choices.isEmpty) return;
+      initialChoice = 'vc';
+    }
     final ownSide = combatScoutSide(sheetTagAt(schedaCorrente));
     final explosionTargets = tokens
         .where((token) => _attackTokenIsOpponent(token, ownSide))
@@ -2883,12 +3126,42 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       minimumTargets = explosionTargets.length;
       maximumTargets = explosionTargets.length;
     }
-    final forcedCommand = executingCorruptionCommand;
+    if (anymareapEffect != null) {
+      if (allOpponents ||
+          maskedPunch ||
+          sandTailPrepared.isNotEmpty ||
+          windStep ||
+          robotAttack['free'] == true) {
+        return;
+      }
+      minimumTargets = readIntValue(
+        anymareapEffect['minimumTargets'],
+        fallback: 1,
+      ).clamp(1, 100);
+      maximumTargets = readIntValue(
+        anymareapEffect['maximumTargets'],
+        fallback: 3,
+      ).clamp(minimumTargets, 100);
+    }
+    final balenaRay = balenaRayPreparation;
+    final balenaSourceTag = sheetTagAt(schedaCorrente);
+    if (balenaRay != null) {
+      if (allOpponents || oculiathRay != null || anymareapEffect != null) return;
+      minimumTargets = maximumTargets = 1;
+      byId.removeWhere((_, token) => !balenaRayTargetInRange(balenaSourceTag, token));
+      if (byId.isEmpty) {
+        aggiungiLog('[RAGGIO D’ACQUA] Nessun bersaglio nella gittata del raggio.');
+        return;
+      }
+    }
+    final forcedCommand = executingCombatCommand;
     final plan = forcedCommand != null
         ? OculumAttackPlan(
             '${forcedCommand['attackTarget']}',
             initialChoice,
-            'Comando della Corruzione',
+            forcedCommand['kind'] == _necthrallCommandKind
+                ? 'Comando di Necthrall'
+                : 'Comando della Corruzione',
             element: replayElement.isEmpty ? 'fisico' : replayElement,
           )
         : allOpponents
@@ -3035,8 +3308,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             element: redirectedPlan.element,
           )
         : redirectedPlan;
+    final currentTokens = onlineAttackTokens();
     final currentIds = {
-      for (final token in onlineAttackTokens()) onlineCombatTokenTag(token),
+      for (final token in currentTokens) onlineCombatTokenTag(token),
     };
     if (freeReactionId != null && freeReaction != null) {
       currentIds.add('${freeReaction['sourceTag'] ?? ''}');
@@ -3046,6 +3320,26 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         ) ||
         controlledPlan.targetIds.length < minimumTargets ||
         controlledPlan.targetIds.length > maximumTargets) {
+      return;
+    }
+    if (anymareap != null) {
+      final currentSide = combatScoutSide(sheetTagAt(schedaCorrente));
+      final opponents = {
+        for (final token in currentTokens)
+          if (_attackTokenIsOpponent(token, currentSide))
+            onlineCombatTokenTag(token),
+      };
+      final selected = controlledPlan.targetIds;
+      if (!activeStructuredEffects.contains(anymareap) ||
+          selected.toSet().length != selected.length ||
+          !opponents.containsAll(selected)) {
+        return;
+      }
+    }
+    if (sphereSoulOpportunityId != null &&
+        (controlledPlan.targetIds.length != 1 ||
+            controlledPlan.targetId != sphereSoulTarget ||
+            !sphereSoulOpportunityStillAvailable())) {
       return;
     }
     if (incomingAttack != null &&
@@ -3097,6 +3391,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             readIntValue(moonVolley['cuts']),
           );
     if (moonVolley != null && moonTargets == null) return;
+    final oculiathTargets = oculiathRay == null
+        ? null
+        : await planOculiathRayTargets(
+            oculiathRay,
+            controlledPlan.targetIds,
+            byId,
+            rayCount: oculiathRayCount,
+            hasPrimary: hasPrimaryRay,
+          );
+    if (oculiathRay != null && oculiathTargets == null) return;
     final knightGroups = openKnights
         ? await planStatOpenKnightGroups(
             controlledPlan.targetIds,
@@ -3108,6 +3412,17 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (!mounted ||
         currentSheetScrollId() != origin ||
         encounter != onlineCombatEncounterId) {
+      return;
+    }
+    if (oculiathRay != null &&
+        (!identical(pendingOculiathRay?.entry, oculiathRay.entry) ||
+            (oculiathRay.greater &&
+                !listEquals(rayEyes, oculiathWorkingEyes)) ||
+            !oculiathLiveTargetsInRange(
+              oculiathRay,
+              sheetTagAt(schedaCorrente),
+              oculiathTargets!,
+            ))) {
       return;
     }
     final materiaMove = openMateria
@@ -3141,6 +3456,19 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     if (!requireConfirmedSheetRoll()) return;
+    if (!imbrytoadPlanValid() ||
+        ((imbrytoadSpitId != null || imbrytoadReactionOf != null) &&
+            controlledPlan.targetIds.length != 1) ||
+        (imbrytoadReactionOf != null &&
+            controlledPlan.targetId != imbrytoadReactionTarget)) {
+      return;
+    }
+    if (balenaRay != null &&
+        (!identical(balenaRayPreparation, balenaRay) ||
+            controlledPlan.targetIds.length != 1 ||
+            !balenaRayTargetInRange(balenaSourceTag, byId[controlledPlan.targetId]!))) {
+      return;
+    }
     if (sandTailAttack &&
         (controlledPlan.targetIds.length != 1 ||
             masked.isNotEmpty ||
@@ -3166,15 +3494,36 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         (!statOpenSkillReady(openId) || !canPayStatOpenAttack(openId))) {
       return;
     }
+    final elementalSphereAttack =
+        scrollSphere != null ||
+        preparedEffects.any(
+          (effect) =>
+              effect['target'] == oculumElementalSphereEffect &&
+              effect['type'] == 'planar',
+        );
+    if (elementalSphereScrollAvailable?.call() == false) return;
+    if (forcedCommand?['kind'] == _necthrallCommandKind &&
+        !_necthrallCommandCanExecute(forcedCommand!)) {
+      return;
+    }
     final dominionReceipt = pendingStatOpenDominionPenaltyReceipt();
     if (!maskedPunch &&
         !sandTailAttack &&
         !windStep &&
         !resourceAlreadySpent &&
+        sphereSoulOpportunityId == null &&
         freeReactionId == null &&
         schiantoReactionId == null &&
         robotAttack['free'] != true &&
-        !(willRoll || openAttack || stat20OculumSphere || stat20WillSlam
+        !(imbrytoadReactionOf != null
+            ? await requestUtilitySpend('reazione', preferFreeReaction: false)
+            : willRoll ||
+                  openAttack ||
+                  stat20OculumSphere ||
+                  stat20WillSlam ||
+                  elementalSphereAttack ||
+                  anymareap != null ||
+                  goblinRegalStrike > 0
             ? await requestUtilitySpend('azione', preferFreeReaction: false)
             : incomingAttack != null
             ? await spendCounterAttackResource()
@@ -3206,7 +3555,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .map((tag) => '${byId[tag]!['name'] ?? '???'}')
         .join(', ');
     final label =
-        'Attacco contro $target${escapeInterception == null ? '' : ' · 1d16 contro la Fuga'}${controlledPlan.reason.isEmpty ? '' : ' · ${controlledPlan.reason}'}';
+        '${sphereSoulOpportunityId != null ? 'Attacco di opportunità' : 'Attacco'} contro $target${escapeInterception == null ? '' : ' · 1d16 contro la Fuga'}${controlledPlan.reason.isEmpty ? '' : ' · ${controlledPlan.reason}'}';
     final participatingWeapons =
         !stat35OculumBlast &&
             !milestoneAttack &&
@@ -3214,6 +3563,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             !independentTargetDamage &&
             !isLarvalParasite &&
             !sandTailAttack &&
+            oculiathRay == null &&
             moonVolley == null &&
             planarState['doppioneCopy'] != true
         ? armiEquipaggiate()
@@ -3232,8 +3582,28 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           effect['type'] == 'danno' &&
           oculumIsAngelRayEffectId('${effect['effectId'] ?? ''}'),
     );
-    final element = stat35OculumBlast || stat20OculumSphere || openOculum
+    final soulFighterCut = preparedEffects.any(
+      (effect) =>
+          effect['id'] == oculumSoulFighterCutEffect &&
+          effect['type'] == 'danno_percentuale',
+    );
+    final element = frutibushLeaves
+        ? 'natura'
+        : balenaRay != null
+        ? 'acqua'
+        : anymareap != null
+        ? (anymareapElement.isEmpty ? 'spirituale' : anymareapElement)
+        : stat35OculumBlast || stat20OculumSphere || openOculum
         ? 'oculum'
+        : soulFighterCut ||
+              (oculumIsSoulFighter(sourceMonsterId) &&
+                  oculiathRay == null &&
+                  robotAttack.isEmpty)
+        ? 'spirituale'
+        : aculotideCorona
+        ? 'perforante'
+        : oculiathRay != null
+        ? (specificAttackElement.isEmpty ? 'oculum' : specificAttackElement)
         : stat20WillSlam
         ? 'fisico'
         : sandTailAttack
@@ -3252,6 +3622,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         )
         .firstOrNull;
     final targetEffects = [
+      if (scrollSphere != null)
+        for (final effect in elementalSphereScrollEffects!)
+          if (effect.enabled) effect.toJson(),
       if (angelicRayPrepared)
         OculumStructuredEffect(
           id: 'raggio_angelico_forma_1_0',
@@ -3274,6 +3647,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       for (final e in activeStructuredEffects)
         if (e['type'] == 'pending_target' &&
             e['effect'] is Map &&
+            (e['effect'] as Map)['target'] != oculumOculiathRayRule &&
+            (e['effect'] as Map)['target'] != oculumGreaterOculiathRayRule &&
+            (e['effect'] as Map)['target'] != oculumAculotideCoronaEffect &&
+            (e['effect'] as Map)['target'] != oculumFrutibushLeafSkill &&
+            ((e['effect'] as Map)['target'] != oculumOculiathRayDamageRule ||
+                oculiathRay != null &&
+                    e['source'] == oculiathRay.entry['source']) &&
             (e['effect'] as Map)['recipient'] != 'alleato')
           {
             ...Map<String, dynamic>.from(e['effect'] as Map),
@@ -3322,7 +3702,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       // The pending effect contributes its flat bonus after splitting. It was
       // never part of preparedDamage and must not be subtracted from it.
       fixedBonuses: flatDamageBonus - areaDamageBonus,
-      abilityDamageBonus: abilityDamageBonus,
+      abilityDamageBonus: abilityDamageBonus +
+          (balenaRay == null ? 0 : oculumBalenaChargeDamage(0, balenaRayConcentrationTurns)),
     );
     final preparedAttack = planarState['preparedSkill'];
     final preparedSkill =
@@ -3349,7 +3730,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                     ? 0
                     : max(0, readIntValue(preparedSkill['roll']))),
           );
-    if (controlledPlan.targetIds.length > 1) {
+    if (controlledPlan.targetIds.length > 1 && oculiathRay == null) {
       aggiungiLog(
         '[DANNI AD AREA] Danno base $baseDamage ÷ ${controlledPlan.targetIds.length} colpi, arrotondato per eccesso, + bonus piatto $flatDamageBonus per ogni bersaglio = $damagePerTarget danni a bersaglio. Ogni bersaglio risolve la propria difesa e le proprie resistenze.',
       );
@@ -3400,6 +3781,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         planarState['laerSword'] == true ||
         sourceMonsterId == 'laer' && controlledPlan.choiceId == 'vc';
     final hatTargets =
+        oculiathTargets ??
         knightGroups?.map((group) => group.target).toList() ??
         moonTargets ??
         (windStep
@@ -3424,6 +3806,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             : rabbitHat
             ? oculumRabbitHatHits(controlledPlan.targetIds, hatStage)
             : controlledPlan.targetIds);
+    if (sphereSoulOpportunityId != null &&
+        (hatTargets.length != 1 || hatTargets.single != sphereSoulTarget)) {
+      aggiungiLog(
+        '[SFERA SPIRITUALE] Risolvi prima l’attacco multiplo preparato.',
+      );
+      return;
+    }
     final negotiate =
         incomingAttack == null &&
         escapeReactionOf == null &&
@@ -3437,7 +3826,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         !boneVolley &&
         cycleSpines == 0 &&
         cycleStomp == 0 &&
-        hatTargets.length == hatTargets.toSet().length &&
+        (oculiathRay != null ||
+            hatTargets.length == hatTargets.toSet().length) &&
         !hatTargets.any(
           (tag) => oculumFateCoreReflects(
             monsterBookEntryById(monsterBookIdForCombatToken(byId[tag]!)),
@@ -3454,9 +3844,18 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         ) &&
         _canNegotiateOpposedAttack(hatTargets);
     if (!negotiate && preparedSkill.isNotEmpty) takePreparedSkill('attacco');
+    bool oculiathRayStillAvailable() =>
+        oculiathRay == null ||
+        (identical(pendingOculiathRay?.entry, oculiathRay.entry) &&
+            (!oculiathRay.greater || listEquals(rayEyes, oculiathWorkingEyes)));
     bool preparedAttackStillAvailable() =>
-        preparedSkill.isEmpty ||
-        identical(planarState['preparedSkill'], preparedAttack);
+        (preparedSkill.isEmpty ||
+            identical(planarState['preparedSkill'], preparedAttack)) &&
+        elementalSphereScrollAvailable?.call() != false &&
+        sphereSoulOpportunityStillAvailable() &&
+        (forcedCommand?['kind'] != _necthrallCommandKind ||
+            _necthrallCommandCanExecute(forcedCommand!)) &&
+        oculiathRayStillAvailable();
     String attackPacketId(int hit, String tag) =>
         hatTargets.length == 1 ? id : '$id:$hit:$tag';
     int? stagedFlatAttackBonus;
@@ -3481,6 +3880,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         (maskedArrows ? (maskedArrowCount == 3 ? 9 : 3) : 0) +
         readIntValue(preparedSkill['rollBonus']) +
         activeStructuredEffectBonus('tiro_attacco') +
+        goblinVanish +
         planarAttackRollBonus() -
         artWeakPenalty +
         (maskedShadowActive ? 0 : shadowRollForAction);
@@ -3493,12 +3893,50 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
 
     var stagedReviewCompleted = false;
     var weaponWearCommitted = false;
+    var oculiathResolved = false;
+    var sphereScrollCommitted = false;
     void resolved(int natural, int total) {
       if (!mounted ||
           currentSheetScrollId() != origin ||
           encounter != onlineCombatEncounterId) {
         return;
       }
+      if (oculiathRay != null &&
+          (!oculiathRayStillAvailable() ||
+              !oculiathLiveTargetsInRange(
+                oculiathRay,
+                sourceTag,
+                hatTargets,
+              ))) {
+        return;
+      }
+      if (scrollSphere != null) {
+        if (sphereScrollCommitted ||
+            elementalSphereScrollAvailable?.call() == false) {
+          return;
+        }
+        sphereScrollCommitted = true;
+        onElementalSphereScrollCommitted?.call(natural, total);
+      }
+      if (imbrytoadSpitId != null) finishImbrytoadSpit(imbrytoadSpitId);
+      final leafDamage = frutibushLeaves
+          ? oculumFrutibushLeafDamage(
+              totalDamage: dannoTotale(),
+              grade: leggiNumero(gradoController),
+              form:
+                  oculumFrutibushLeafCaps.lastIndexWhere(
+                    (cap) => cap < oculiathRay!.count,
+                  ) +
+                  2,
+              enemyTags: hatTargets,
+            )
+          : const <int>[];
+      if (frutibushLeaves && leafDamage.length != hatTargets.length) return;
+      final leafTotalDamage = leafDamage.fold<int>(
+        0,
+        (sum, value) => sum + value,
+      );
+      if (oculiathRay != null) oculiathResolved = true;
       if (materia35Attack != null &&
           !commitMateria35Attack(materia35Attack, controlledPlan.targetId)) {
         return;
@@ -3524,6 +3962,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         if (openMateria) total += statOpenValue(openId, 'precisionBonus');
         commitStatOpenSkill(openId);
       }
+      if (sphereSoulOpportunityId != null &&
+          (!sphereSoulOpportunityStillAvailable() ||
+              !claimElementalSphereOpportunity(
+                targetTag: sphereSoulTarget!,
+                sourceTag: sphereSoulSource,
+                conditionId: sphereSoulOpportunityId,
+              ))) {
+        return;
+      }
       if (negotiate && preparedSkill.isNotEmpty) takePreparedSkill('attacco');
       if (dominionReceipt != null) {
         total -= takeStatOpenDominionPenalty(receipt: dominionReceipt);
@@ -3546,6 +3993,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (maskedArrows) total += maskedArrowCount == 3 ? 9 : 3;
       total += readIntValue(preparedSkill['rollBonus']);
       total += activeStructuredEffectBonus('tiro_attacco');
+      total += goblinVanish;
+      if (goblinVanish > 0) {
+        goblinVanishBehind(sourceTag, controlledPlan.targetId);
+        final targetName = oculumReferenceEncounterTokenName(
+          byId[controlledPlan.targetId]!,
+        );
+        aggiungiLog(
+          '[SPARIZIONE DEL RE] Il Re riappare alle spalle di $targetName. +$goblinVanish al tiro.',
+        );
+      }
       total += planarAttackRollBonus();
       total -= artWeakPenalty;
       if (!maskedShadowActive) total += shadowRollForAction;
@@ -3608,19 +4065,22 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       final resolvedFlatDamageBonus =
           flatDamageBonus + attackRollDamageBonus + attackOculumDamageBonus;
+      final damageTargets = oculiathRay == null
+          ? controlledPlan.targetIds.length
+          : 1;
       final ordinaryDamagePerTarget = independentTargetDamage
           ? abilityDamageBonus + attackOculumDamageBonus
           : concentrationPending
           ? (oculumDamagePerTarget(
                       baseDamage,
-                      controlledPlan.targetIds.length,
+                      damageTargets,
                       flatBonusPerTarget: resolvedFlatDamageBonus,
                     ) *
                     1.10)
                 .ceil()
           : oculumDamagePerTarget(
               baseDamage,
-              controlledPlan.targetIds.length,
+              damageTargets,
               flatBonusPerTarget: resolvedFlatDamageBonus,
             );
       final resolvedDamagePerTarget = candyWillSlam
@@ -3643,7 +4103,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           ? will35DecisiveDamage(ordinaryDamagePerTarget * 6)
           : windStep
           ? materia35WindStepDamage(ordinaryDamagePerTarget)
-          : ordinaryDamagePerTarget;
+          : ordinaryDamagePerTarget +
+                (goblinRegalStrike > 0
+                    ? oculumGoblinRegalStrikeBonus(
+                        scoutPowerReserveForActiveSheet().current,
+                        percent: goblinRegalStrike,
+                      )
+                    : 0);
       if (attackRollDamageBonus > 0) {
         aggiungiLog(
           '[FORMULA DEL TIRO] $controlledPlan.choiceId $total: +$attackRollDamageBonus Danni per bersaglio dalla formula del dado, arrotondata per difetto. Attacco multiplo: il bonus si applica a ogni bersaglio.',
@@ -3713,6 +4179,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               );
         final request = <String, dynamic>{
           'id': requestId,
+          'imbrytoadSpitReaction': ?imbrytoadReactionOf,
           if (sandTailAttack) ...{
             'sandTailAttack': true,
             'sandTailClaim': sandTailPrepared['nonce'],
@@ -3734,9 +4201,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'scope': permissionScope,
           'encounterId': encounter,
           'sourceTag': sourceTag,
-          'activityResource': _writableOnlineCombatTokens()
-              .where((t) => combatTokenMatchesSheet(t, sourceTag))
-              .firstOrNull?['lastTurnResource'],
+          'targetFightInstance': '${byId[selectedTag]?['fightInstanceId'] ?? ''}',
+          if (sphereSoulOpportunityId == null)
+            'activityResource': _writableOnlineCombatTokens()
+                .where((t) => combatTokenMatchesSheet(t, sourceTag))
+                .firstOrNull?['lastTurnResource'],
           'titleItemIds': equippedItemTitleIds(),
           if (participatingWeapons.any(
             (item) => item.craftData['posteaReactiveSword'] == true,
@@ -3932,6 +4401,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             'precisionDamagePercent': precisionHit.receivedDamagePercent,
           },
           'effects': effectsForTarget,
+          if (effectsForTarget.any(
+            (effect) => effect['target'] == oculumBiterBiteEffect,
+          ))
+            'sanguifangTotalDamage': dannoTotale(),
           'sourceWill': volontaTotale(),
           'sourcePlanarStats':
               resilienzaTotale() +
@@ -3956,7 +4429,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               : element,
           'level': activeCriticalLevel(),
           'grade': activeCriticalGrade(),
-          'difficulty': normalizedCampaignDifficulty(),
+          'difficulty': balenaOutgoingDifficulty(sourceMonsterId),
           'forcedCritical':
               (natural == 19 &&
                   hasPlanarTechnique('blade_skull_critical') &&
@@ -4133,6 +4606,59 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           request['baseAttack'] = false;
           request['damage'] = resolvedDamagePerTarget;
         }
+        if (frutibushLeaves) {
+          request['abilityName'] =
+              'Foglie Lama · ${hit + 1}/${hatTargets.length}';
+          request['baseAttack'] = false;
+          request['frutibushLeaf'] = true;
+          request['ranged'] = true;
+          if (hatTargets.length > 1 && !stagedReviewCompleted) {
+            request['oculiathRayVolley'] = true;
+          }
+          request['damage'] = leafDamage[hit];
+          request['damageTotal'] = leafTotalDamage;
+          request['damageTargetCount'] = hatTargets.length;
+        } else if (aculotideCorona) {
+          final total = resolvedDamagePerTarget + unusedFastDamageBonus;
+          request['abilityName'] =
+              'Corona di aculei · ${hit + 1}/${hatTargets.length}';
+          request['baseAttack'] = false;
+          request['aculotideSpine'] = true;
+          request['ranged'] = true;
+          if (hatTargets.length > 1 && !stagedReviewCompleted) {
+            request['oculiathRayVolley'] = true;
+          }
+          request['damage'] = hatTargets.length == 1
+              ? total
+              : oculumAculotideSpineDamage(total, hit);
+          request['damageTotal'] = total;
+          request['damageTargetCount'] = hatTargets.length;
+        } else if (oculiathRay != null) {
+          final primaryDamage = resolvedDamagePerTarget + unusedFastDamageBonus;
+          final eye = oculiathRay.greater ? rayEyes[hit] : 1;
+          final primaryCount = hasPrimaryRay ? 1 : 0;
+          request['abilityName'] = oculiathRay.greater
+              ? 'Raggi oculari · ${eye == 1 ? 'raggio principale' : 'raggio secondario ${eye - 1}'}'
+              : 'Raggio oculare';
+          request['baseAttack'] = false;
+          if (oculiathRay.greater) request['oculiathEye'] = eye;
+          if (hatTargets.length > 1 && !stagedReviewCompleted) {
+            request['oculiathRayVolley'] = true;
+            request['oculiathRange'] = oculiathRay.range;
+          }
+          request['damage'] = oculumOculiathRayDamage(
+            primaryDamage + corruptionRevengeDamage(selectedTag),
+            reduction: eye == 1 ? 0 : oculiathRay.reduction,
+          );
+          request['damageTotal'] =
+              primaryCount * primaryDamage +
+              (hatTargets.length - primaryCount) *
+                  oculumOculiathRayDamage(
+                    primaryDamage,
+                    reduction: oculiathRay.reduction,
+                  );
+          request['damageTargetCount'] = hatTargets.length;
+        }
         if (milestoneAttack) {
           request['baseAttack'] = false;
           if (stat20WillSlam) {
@@ -4227,7 +4753,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             total + readIntValue(request['totalPowerBurstAccuracy']),
             defenseNatural: natural,
           );
-        } else if (moonVolley != null ||
+        } else if (request['oculiathRayVolley'] == true ||
+            moonVolley != null ||
             maskedVolley ||
             boneVolley ||
             cycleSpines > 0) {
@@ -4244,7 +4771,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           '[OPEN MATERIA] Il rientro previsto non è più raggiungibile.',
         );
       }
-      if (moonVolley != null || maskedVolley || boneVolley || cycleSpines > 0) {
+      if (oculiathRay != null &&
+              hatTargets.length > 1 &&
+              !stagedReviewCompleted ||
+          moonVolley != null ||
+          maskedVolley ||
+          boneVolley ||
+          cycleSpines > 0) {
         startMaskedVolley(maskedPackets);
       }
       if (!weaponWearCommitted && weaponWearTargets.isNotEmpty) {
@@ -4356,7 +4889,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           active.add(reactionTarget);
         }
       }
-      return controlledPlan.targetIds.every(active.contains);
+      return elementalSphereScrollAvailable?.call() != false &&
+          sphereSoulOpportunityStillAvailable() &&
+          controlledPlan.targetIds.every(active.contains) &&
+          (oculiathRay == null ||
+              oculiathLiveTargetsInRange(oculiathRay, sourceTag, hatTargets));
     }
 
     Future<({int natural, int total, int fortune, String note})?> reviewAttack(
@@ -4420,7 +4957,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'targetFightInstance': fightId(combatTokens, tag),
           'targetName': byId[tag]?['name'],
           'attack': targetAttack(total, tag),
-          'difficulty': normalizedCampaignDifficulty(),
+          'difficulty': balenaOutgoingDifficulty(sourceMonsterId),
           'comparison': 'roll',
           'choice': controlledPlan.choiceId,
           'element': element,
@@ -4428,6 +4965,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'targetBodyPart': ?chosenBodyParts[tag]?['id'],
           'targetBodyPartLabel': ?chosenBodyParts[tag]?['label'],
           'baseAttack':
+              oculiathRay == null &&
               targetEffects.isEmpty &&
               !activeStructuredEffects.any(
                 (e) => e['mode'] == 'prossima_azione',
@@ -4485,6 +5023,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         applyGlobalRollModifier: false,
         rollFaces: attackRollFaces,
         attackRoll: true,
+        consumePreparedAttackEffects: oculiathRay == null,
         oculumPowered: oculumPowered,
         actionLabel: label,
         onOculumDamageBonus: (bonus) => attackOculumDamageBonus = bonus,
@@ -4532,6 +5071,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         currentSheetScrollId() == origin &&
         encounter == onlineCombatEncounterId) {
       await flushPendingCombatTurnResources();
+    }
+    if (oculiathResolved &&
+        mounted &&
+        currentSheetScrollId() == origin &&
+        encounter == onlineCombatEncounterId) {
+      consumeNextAttackStructuredEffects();
     }
   }
 
@@ -4594,6 +5139,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
   }
 
   Future<void> sendOnlineCombatRequest(Map<String, dynamic> request) async {
+    if (request[_lamaOrbitaCounter] != null) return;
+    if (_isMutantRatBite(request)) {
+      await dispatchMutantRatBite(request);
+      return;
+    }
     if (bottledCloudAttackInterrupted(request)) return;
     if (!escapeAttackAllowed(request)) return;
     final shieldImpact = request['oculumShieldBreakImpact'] == true;
@@ -4608,7 +5158,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           (gunFollowup && !validGunFollowup(payload))) {
         return;
       }
-    } else if (request['stat35WindStep'] != true) {
+    } else if (request['stat35WindStep'] != true &&
+        request['lamaOrbitaLaunchId'] == null) {
       attachPendingCombatTurnResources(request);
     }
     if (realtimeService?.isConnected != true && localTurnCombat) {
@@ -4802,7 +5353,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       applyConditionHealingAmount(incremental),
     );
     if (restored > 0) {
-      currentHpController.text = '${before + restored}';
+      writeHealedLife(before + restored);
       showSheetFeedback(OculumFeedbackKind.heal, amount: restored);
       sendRealtimeHpChanged();
       aggiungiLog(
@@ -4832,6 +5383,26 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             realtimeService?.isConnected != true ||
             sheetTagAt(schedaCorrente) != tag) {
           break;
+        }
+        if (_isMutantRatBite(request) &&
+            request['status'] == 'pending' &&
+            _resolvesMutantRatTurns &&
+            request['encounterId'] == selectedMasterInitiativeGroupId) {
+          await dispatchMutantRatBite(request);
+          continue;
+        }
+        if (request['helpMode'] == _bunnysHelpMode) {
+          await sendQueuedBunnysHeal(request);
+          continue;
+        }
+        if (request['helpMode'] == _elementalSphereIceHelpMode) {
+          await _replayElementalSphereIceAlly(request);
+          continue;
+        }
+        if (request['aculotideDeathBurst'] == true &&
+            request['aculotideDeathOutbound'] == true) {
+          await sendAculotideDeathBurst(request);
+          continue;
         }
         if (request['sourceTag'] == tag &&
             !oculumIsFreeProtectiveImpact(request) &&
@@ -4864,6 +5435,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           continue;
         }
         claimOnlineVampirism(request);
+        claimPiovraBite(request);
+        claimLamaOrbitaAttack(request);
+        if (request[_lamaOrbitaCounter] != null &&
+            controlsOnlineCombatSheet('${request['targetTag']}')) {
+          unawaited(resolveLamaOrbitaAutomaticHit(request));
+        }
+        if (request['sanguifangHit'] == true) {
+          claimSanguifangBite(request, hit: true);
+        }
         claimPlanarBellHealing(request);
         if (request['kind'] == 'help') {
           if (request['sourceTag'] == tag &&
@@ -4906,6 +5486,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       return;
     }
     recordEscapeAttack(request);
+    recordMutantRatAttackAttempt(request);
     if (request['received'] == true ||
         !controlsOnlineCombatSheet('${request['targetTag']}')) {
       return;
@@ -4914,6 +5495,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       applyTotalPowerExposure(request);
     }
     request['received'] = true;
+    if (request[_lamaOrbitaCounter] != null) {
+      unawaited(resolveLamaOrbitaAutomaticHit(request));
+      return;
+    }
     if (oculumIsFreeProtectiveImpact(request)) return;
     if (request['kind'] == 'fate_core_reflection') {
       final target = onlineCombatTokens()
@@ -5012,6 +5597,45 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     String event,
     Map<String, dynamic> payload,
   ) {
+    if (event == 'combat_attack' && payload['mutantRatBite'] == true) {
+      if (!validPermissionSender(payload, staff: true) ||
+          payload['senderRole'] != 'master' ||
+          !validMutantRatBite(payload) ||
+          !controlsOnlineCombatSheet('${payload['targetTag']}')) {
+        return;
+      }
+      final id = '${payload['id']}';
+      final request = onlineCombatRequests.putIfAbsent(
+        id,
+        () => {
+          'id': id,
+          'scope': permissionScope,
+          'encounterId': payload['encounterId'],
+          'sourceTag': payload['sourceTag'],
+          'sourceName': payload['sourceName'],
+          'targetTag': payload['targetTag'],
+          'kind': 'fauna_burst',
+          'choice': oculumMutantRatBite,
+          'abilityName': 'Morso del topolino',
+          'mutantRatBite': true,
+          'faunaBurst': true,
+          'baseAttack': false,
+          'attack': 1,
+          'natural': 10,
+          'damage': oculumMutantRatBiteDamage,
+          'element': 'fisico',
+          'difficulty': 'normale',
+          'effects': <Map<String, dynamic>>[],
+          'status': 'pending',
+        },
+      );
+      if (_isMutantRatBite(request) &&
+          request['sourceTag'] == payload['sourceTag'] &&
+          request['targetTag'] == payload['targetTag']) {
+        unawaited(resolveMutantRatBiteForTarget(request));
+      }
+      return;
+    }
     if (event == 'combat_attack' &&
         payload['kind'] == oculumOculumTheftKind &&
         !oculumTheftPacketFightMatches(payload)) {
@@ -5037,9 +5661,22 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         !validGunFollowup(payload)) {
       return;
     }
+    final aculotideBurst =
+        event == 'combat_attack' && payload['aculotideDeathBurst'] == true;
+    if (aculotideBurst && !validAculotideDeathBurst(payload)) return;
+    if (event == 'combat_help' &&
+        payload['helpMode'] == _elementalSphereIceHelpMode) {
+      receiveElementalSphereIceAlly(payload);
+      return;
+    }
     if (event == 'combat_help' &&
         payload['helpMode'] == _stat35ResGroupHealMode &&
         !validStat35ResGroupHeal(payload)) {
+      return;
+    }
+    if (event == 'combat_help' &&
+        payload['helpMode'] == _bunnysHelpMode &&
+        !validBunnysHeal(payload)) {
       return;
     }
     if (const {
@@ -5071,12 +5708,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         receiveCorruptionCommand(payload);
         return;
       }
+      if (payload['piovraGripReply'] is String) {
+        receivePiovraGripReply(payload);
+        return;
+      }
+      if (payload['necthrallEvent'] is String) {
+        receiveNecthrallEvent(payload);
+        return;
+      }
       if (payload['provokerEvent'] == true) {
         receiveProvokerState(payload);
         return;
       }
       if (payload['escapeEvent'] == true) {
         receiveEscapeEvent(payload);
+        return;
+      }
+      if (payload['imbrytoadSpitEvent'] != null) {
+        receiveImbrytoadSpitEvent(payload);
         return;
       }
       receiveCombatScout(payload);
@@ -5122,7 +5771,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     if (event == 'combat_attack') {
       if ((payload['senderTag'] != source &&
               !parasiteStaffPacket(payload, source) &&
-              !escapeNpcStaffAttack(payload)) ||
+              !escapeNpcStaffAttack(payload) &&
+              !aculotideBurst) ||
           readIntValue(payload['damage']) < 0 ||
           readIntValue(payload['damage']) > 100000000) {
         return;
@@ -5138,6 +5788,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         }
         return;
       }
+      if (payload[_lamaOrbitaCounter] != null) return;
       if (onlineCombatRequests[id]?['opposedRollDraft'] == true) return;
       if (!onlineCombatRequests.containsKey(id) &&
           (payload['sourceRewardTotalPower'] is num ||
@@ -5290,6 +5941,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         receiveRewardSupportReceiptsFromReply(payload);
         return;
       }
+      if (_isMutantRatBite(request)) {
+        if (!_resolvesMutantRatTurns || payload['mutantRatBite'] != true) {
+          return;
+        }
+        request['status'] = 'resolved';
+        finishMutantRatBite(request);
+        programmaSalvataggio();
+        return;
+      }
       final defense = readIntValue(payload['defense']);
       if (payload['targetRewardTotalPower'] is num) {
         recordFightRewardPowerSample(
@@ -5361,13 +6021,61 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final shadowAvoided =
           payload['senkaShadowAvoided'] == true ||
           payload['senkaImpaleUnavailable'] == true;
+      final maskedShadowAvoided =
+          payload['maskedShadowAvoided'] == true &&
+          _oculumMaskedShadowPhysicalElement(
+            '${request['element'] ?? 'fisico'}',
+          );
       final anatomicalUnavailable =
           payload['referenceAnatomicalTargetUnavailable'] == true;
       if (anatomicalUnavailable) {
         request['referenceAnatomicalTargetUnavailable'] = true;
       }
       if (shadowAvoided) request['senkaShadowAvoided'] = true;
-      final outcome = shadowAvoided || anatomicalUnavailable || materiaDodge
+      if (maskedShadowAvoided) request['maskedShadowAvoided'] = true;
+      final guardTag = '${payload['goblinGuardianIntercepted'] ?? ''}';
+      final guardRound = readIntValue(
+        payload['goblinGuardianReactionRound'],
+        fallback: -1,
+      );
+      final guard = guardTag.isEmpty
+          ? null
+          : _writableOnlineCombatTokens()
+                .where(
+                  (token) =>
+                      _isGoblinRoyalGuard(token) &&
+                      combatTokenMatchesSheet(token, guardTag),
+                )
+                .firstOrNull;
+      final kingToken = guard == null
+          ? null
+          : _writableOnlineCombatTokens()
+                .where(
+                  (token) =>
+                      combatTokenMatchesSheet(token, '${request['targetTag']}'),
+                )
+                .firstOrNull;
+      final goblinGuardIntercepted =
+          guard != null &&
+          kingToken != null &&
+          combatParticipantsShareTeam(guard, kingToken) &&
+          oculumSameSheetIdentity(guard['summonerTag'], request['targetTag']);
+      if (guard != null && goblinGuardIntercepted) {
+        request['goblinGuardianIntercepted'] = guardTag;
+        if (guardRound ==
+            readIntValue(guard['reactionPoolRound'], fallback: -2)) {
+          guard['reactionUsed'] = 1;
+          guard['reactionUsedRound'] = guardRound;
+          guard['updatedAt'] = DateTime.now().toIso8601String();
+        }
+      }
+      final outcome =
+          shadowAvoided ||
+              maskedShadowAvoided ||
+              anatomicalUnavailable ||
+              materiaDodge ||
+              (goblinGuardIntercepted &&
+                  payload['outcome'] == OculumAttackOutcome.avoided.name)
           ? OculumAttackOutcome.avoided
           : isCounter
           ? (counterPercent > 0
@@ -5405,6 +6113,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           payload['criticalShieldProtected'] == true;
       request['defense'] = defense;
       request['defenseChoice'] = payload['defenseChoice'];
+      request['defenseNatural'] = readIntValue(payload['defenseNatural']);
       if (payload['bodyPointDiscovery'] is Map) {
         request['bodyPointDiscovery'] = payload['bodyPointDiscovery'];
         rememberPrecisionBodyDiscovery(request);
@@ -5493,6 +6202,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         );
       }
       request['outcome'] = outcome.name;
+      resolveAculotideDodge(
+        request,
+        choice: '${payload['defenseChoice']}',
+        attack: attack,
+        defense: defense,
+        outcome: outcome,
+        rise: readDoubleValue(payload['aculotideDodgeRise']),
+      );
       for (final key in const [
         'corruptionFullHits',
         'corruptionRequiredHits',
@@ -5537,6 +6254,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           ])
             key: readIntValue(rawReceipt[key]).clamp(0, 100000000),
           'pawnPending': rawReceipt['pawnPending'] == true,
+          'targetDownedByHit': rawReceipt['targetDownedByHit'] == true,
           if (rawReceipt.containsKey('landedStrikes'))
             'landedStrikes': readIntValue(rawReceipt['landedStrikes']).clamp(
               0,
@@ -5609,6 +6327,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       }
       if (!_friendlyFireFor(request).friendly) {
         recordEncounterRewardCombatResult(request);
+        recordWhaleDamageAttribution(request);
       }
       applyBottledCloudStopResult(
         request,
@@ -5676,6 +6395,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         applyOnlineSchiantoActionSkip(payload);
       }
       claimOnlineVampirism(request);
+      claimPiovraBite(request);
+      claimLamaOrbitaAttack(request);
+      if (payload['sanguifangHit'] == true &&
+          outcome != OculumAttackOutcome.avoided &&
+          (isCounter || attack > defense)) {
+        request['sanguifangHit'] = true;
+        claimSanguifangBite(request, hit: true);
+      }
       senkaConfirmDamage(request);
       confirmPosteaSwordHit(request);
       faunaForOwnedSheet(source, () => offerGunbladeFollowup(request));
@@ -5720,6 +6447,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     Map<String, dynamic> request,
     String choice,
   ) async {
+    if (goblinRoyalGuardActiveSheet ||
+        mutantRatPupActiveSheet ||
+        elementalSphereFrozen ||
+        elementalSphereSoulSeparated) {
+      await applyResolvedOnlineDefense(request, 'nessuna', -1000000);
+      return;
+    }
     if (request['kind'] == oculumOculumTheftKind) {
       await defendOculumTheft(request, choice);
       return;
@@ -5822,6 +6556,24 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         request['defenseReason'] = description;
         aggiungiLog('[DIFESA · MANIFESTAZIONE] $description');
       }
+      final guizzoBonus = aculotideDodgeBonus(choice);
+      final guizzoRise = guizzoBonus > 0
+          ? await chooseAculotideDodgeRise()
+          : 0.0;
+      if (guizzoRise == null ||
+          !mounted ||
+          sheetTagAt(schedaCorrente) != tag ||
+          request['status'] != 'pending') {
+        return;
+      }
+      final usePuppetReaction =
+          _necthrallDefenseOffer(request) > 0 &&
+          await chooseNecthrallDefense(request);
+      if (!mounted ||
+          sheetTagAt(schedaCorrente) != tag ||
+          request['status'] != 'pending') {
+        return;
+      }
       int? defense;
       final defenseBase = choice == 'cm'
           ? cm()
@@ -5837,9 +6589,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             })();
       final emergencyBonus = meccanioEmergencyDefense(request, defenseBase);
       int defenseNatural = 0;
-      request['defenseHelp'] = readIntValue(
-        schedePersonaggio[schedaCorrente]['combatHelpPending'],
-      );
+      request['defenseHelp'] = _pendingCombatHelpAt(schedaCorrente);
       final concentrationPending =
           schedePersonaggio[schedaCorrente]['combatConcentrationPending'] ==
           true;
@@ -5849,16 +6599,22 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         incomingElement: '${request['element'] ?? ''}',
         defenseElement: '${request['defenseElement'] ?? ''}',
       );
-      int defenseTotalForRoll(int total, {required int senkaBonus}) {
+      int defenseTotalForRoll(
+        int total, {
+        required int senkaBonus,
+        int necthrallBonus = 0,
+      }) {
         final penalized =
             total +
             guardianGoldDefenseBonus(request) +
             emergencyBonus -
             collectorDefensePenalty +
+            guizzoBonus +
             (choice == 'cm'
                 ? max(0, readIntValue(request['posteaCmBonus'])).toInt()
                 : 0) +
-            senkaBonus;
+            senkaBonus +
+            necthrallBonus;
         return penalized;
       }
 
@@ -5866,6 +6622,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         var defense = defenseTotalForRoll(
           total,
           senkaBonus: readIntValue(senkaRuntime['stepRollBonus']),
+          necthrallBonus: usePuppetReaction
+              ? _necthrallDefenseOffer(request)
+              : 0,
         );
         if (concentrationPending) defense += (defense * 0.12).ceil();
         final reply = _opposedDefenseComparison(request, choice, defense);
@@ -5893,7 +6652,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         if (stagedDefense && senkaBonus != 0) {
           request['opposedDefenseSenkaBonus'] = senkaBonus;
         }
-        var penalized = defenseTotalForRoll(total, senkaBonus: senkaBonus);
+        var penalized = defenseTotalForRoll(
+          total,
+          senkaBonus: senkaBonus,
+          necthrallBonus: usePuppetReaction
+              ? spendNecthrallDefense(request)
+              : 0,
+        );
         if (request['senkaStepDefense'] == true &&
             penalized > readIntValue(request['attack'])) {
           if (stagedDefense) {
@@ -5972,6 +6737,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       if (!mounted || defense == null || sheetTagAt(schedaCorrente) != tag) {
         return;
       }
+      bindAculotideDodgeToDefense(request, choice, guizzoRise);
       if (request['opposedRollDraft'] == true) {
         await _submitOpposedDefense(request, choice, defense!, defenseNatural);
         return;
@@ -6124,6 +6890,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request['status'] = 'cancelled';
       return;
     }
+    if ((choice == _materia20FreeDodge || choice == 'mantello') &&
+        (elementalSphereFrozen || elementalSphereSoulSeparated)) {
+      return;
+    }
     if (request['opposedRollDraft'] == true) {
       await _submitOpposedDefense(request, choice, defense, defenseNatural);
       return;
@@ -6146,7 +6916,12 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       encounterId: '${request['encounterId']}',
     );
     request['targetLevel'] = leggiNumero(livelloController);
-    final shieldImpact = oculumIsFreeProtectiveImpact(request);
+    final mutantRatBite = _isMutantRatBite(request);
+    final automaticOrbit = request[_lamaOrbitaCounter] != null &&
+        choice == 'lama_orbita_passiva' &&
+        validLamaOrbitaCounter(request);
+    final shieldImpact =
+        oculumIsFreeProtectiveImpact(request) || mutantRatBite || automaticOrbit;
     final materiaDodge = choice == _materia20FreeDodge;
     if (materiaDodge && !claimMateria20FreeDodge(request)) return;
     final mantleDefense = choice == 'mantello';
@@ -6333,6 +7108,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         '[PUGNO ELETTRICO] ${elementDisplayName('${request['element']}')}: elemento più efficace sul bersaglio.',
       );
     }
+    if (request['corallwhirlDash'] == true &&
+        request['corallwhirlDashResolved'] != true) {
+      request['element'] = mostEffectiveIncomingElement(
+        const ['acqua', 'contundente'],
+        tieIndex: readIntValue(request['corallwhirlTie']),
+      );
+      request['corallwhirlDashResolved'] = true;
+    }
     var packetPercent = counterPercent ?? 100;
     if (request['counterAttackDamageOf'] != null &&
         const {
@@ -6393,6 +7176,25 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         'La forma ombra attraversa il colpo, incapace di raggiungere immateriali.',
       );
     }
+    if (maskedShadowActive) lunarGuardianResolveIncomingElement(request);
+    if (maskedShadowAvoidsPhysicalDamage('${request['element'] ?? 'fisico'}')) {
+      outcome = OculumAttackOutcome.avoided;
+      request['maskedShadowAvoided'] = true;
+      aggiungiLog('[L’OMBRA] Il colpo fisico attraversa la sagoma.');
+    }
+    if (outcome != OculumAttackOutcome.avoided &&
+        cynervailIncomingDamagePercent(
+              element: '${request['element'] ?? 'fisico'}',
+              magicalAttack: (request['effects'] as List? ?? []).isNotEmpty,
+              attackKind: '${request['choice'] ?? ''}',
+              hitBodyPart: '${request['targetBodyPart'] ?? ''}',
+              canHitIntangible: request['canHitIntangible'] == true,
+            ) ==
+            0) {
+      outcome = OculumAttackOutcome.avoided;
+      request['cynervailBodyPhased'] = true;
+      aggiungiLog('[IMMATERIALE] Il colpo attraversa Cynervail.');
+    }
     final senkaImpale = (request['effects'] as List? ?? [])
         .whereType<Map>()
         .any((e) => e['target'] == 'senka_shadow_impale');
@@ -6427,13 +7229,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         oculumAttackRollFaces(request) == 20 &&
         readIntValue(request['natural']) >= pressure.criticalMin;
     if (pressureCritical) request['forcedCritical'] = true;
-    final critical =
-        !materiaDodge &&
+    final critical = automaticOrbit
+        ? request['lamaOrbitaCritical'] == true
+        : !materiaDodge &&
         (request['forcedCritical'] == true ||
             oculumScostuPacketCritical(request) ||
             oculumAttackIsCritical(attack, defense));
     final doubleCritical =
-        !materiaDodge &&
+        !automaticOrbit && !materiaDodge &&
         oculumIsDoubleCritical(
           natural: readIntValue(request['natural']),
           total: attack,
@@ -6568,6 +7371,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       programmaSalvataggio();
     }
     request['outcome'] = outcome.name;
+    resolveAculotideDodge(
+      request,
+      choice: choice,
+      attack: attack,
+      defense: defense,
+      outcome: outcome,
+      rise: readDoubleValue(request['aculotideDodgeRise']),
+    );
     rewardMeccanioProtection(request);
     offerGunShieldFollowup(request);
     attachSwordBreakerParry(request);
@@ -6602,6 +7413,21 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         .where((effect) => oculumIsAngelRayEffectId('${effect['id'] ?? ''}'))
         .toList(growable: false);
     var resolvedAttackBaseDamage = readIntValue(request['damage']);
+    final soulFighterCut = (request['effects'] as List? ?? const [])
+        .whereType<Map>()
+        .where(
+          (effect) =>
+              effect['id'] == oculumSoulFighterCutEffect &&
+              effect['type'] == 'danno_percentuale',
+        )
+        .firstOrNull;
+    if (soulFighterCut != null) {
+      resolvedAttackBaseDamage = oculumSoulFighterDamage(
+        currentHp: hpCorrenti(),
+        percent: readIntValue(soulFighterCut['valueExpression']),
+      );
+      request['element'] = 'spirituale';
+    }
     resolvedAttackBaseDamage += await cycleSkeletonCollision(request, defense);
     if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
     resolvedAttackBaseDamage = oculumCycleCelestialDamage(
@@ -6643,6 +7469,14 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     var damage = outcome == OculumAttackOutcome.avoided || maskedCriticalStop
         ? 0
+        : automaticOrbit && critical
+        ? oculumOpposedDamage(
+            resolvedAttackBaseDamage,
+            max(1, attack),
+            0,
+            forcedCritical: true,
+            difficulty: '${request['difficulty'] ?? 'normale'}',
+          )
         : (tailDefense || mantleDefense || shieldImpact)
         ? resolvedAttackBaseDamage
         : isCounter
@@ -6677,6 +7511,43 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         readIntValue(request['stat20OculumSphereFactor'], fallback: 2),
       );
     }
+    final echoEffect = (request['effects'] as List? ?? const [])
+        .whereType<Map>()
+        .where(
+          (effect) =>
+              effect['type'] == 'planar' &&
+              oculumIsSonoreyeEchoEffect('${effect['id'] ?? ''}') &&
+              effect['target'] == oculumSonoreyeEchoMinimumEffect,
+        )
+        .firstOrNull;
+    final echoMinimum =
+        echoEffect == null ||
+            isCounter ||
+            shieldImpact ||
+            maskedCriticalStop ||
+            readIntValue(request['natural']) == 1 ||
+            request['referenceAnatomicalTargetUnavailable'] == true ||
+            request['lunarGuardianCoreUnavailable'] == true ||
+            request['senkaShadowAvoided'] == true ||
+            request['maskedShadowAvoided'] == true ||
+            request['cynervailBodyPhased'] == true
+        ? 0
+        : oculumSonoreyeEchoDamageFloor(
+            resolvedAttackBaseDamage,
+            readIntValue(echoEffect['valueExpression']),
+          );
+    if (echoMinimum > 0) {
+      request['minimumDamageBeforeProtections'] = echoMinimum;
+      damage = max(damage, echoMinimum);
+    }
+    recordAculotideMeleeHit(
+      request,
+      hit:
+          damage > 0 &&
+          !resisted &&
+          !friendlyFire.friendly &&
+          outcome != OculumAttackOutcome.avoided,
+    );
     lunarGuardianResolveIncomingElement(request);
     final incomingElement = oculumNormalizeElementId(
       '${request['element'] ?? 'fisico'}',
@@ -6701,9 +7572,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final defenseElement = resolveCombatDefenseElement(request);
     if (outcome != OculumAttackOutcome.avoided &&
         request['targetBodyPart'] != null) {
-      final point = currentPrecisionBodyParts
-          .where((p) => p['id'] == request['targetBodyPart'])
-          .firstOrNull;
+      final point = currentPrecisionBodyPartForId(request['targetBodyPart']);
       if (point?['weak'] == true) request['targetWeakPointPrecision'] = true;
     }
     if (posteaWeakPointProtected) request.remove('targetWeakPointPrecision');
@@ -6773,6 +7642,22 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       doubleCritical: doubleCritical,
     );
     if (lunarCrystalHit) damage = 0;
+    final groupHits =
+        statOpenTrack('${request['statOpenId'] ?? ''}') == 'will_knights'
+        ? readIntValue(request['statOpenGroupHits'], fallback: 1).clamp(1, 100)
+        : 1;
+    final goblinInterceptedFirstHit = await interceptWithGoblinRoyalGuard(
+      request,
+      damage: damage,
+      defense: defense,
+      defenseChoice: choice,
+      defenseNatural: defenseNatural,
+      critical: critical,
+      doubleCritical: doubleCritical,
+      wholePacket: groupHits == 1,
+    );
+    if (goblinInterceptedFirstHit && groupHits == 1) return;
+    if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
     // Persist the resolved request and crystal receipt before applying HP damage.
     await salvaDatiSoloLocale();
     if (!mounted || sheetTagAt(schedaCorrente) != tag) return;
@@ -6781,10 +7666,6 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       displayImpact = displayImpact?.merge(impact) ?? impact;
     }
 
-    final groupHits =
-        statOpenTrack('${request['statOpenId'] ?? ''}') == 'will_knights'
-        ? readIntValue(request['statOpenGroupHits'], fallback: 1).clamp(1, 100)
-        : 1;
     var groupOculumShieldLost = 0;
     var groupShieldLost = 0;
     var groupTempHpLost = 0;
@@ -6820,33 +7701,26 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 combatScoutSide('${request['sourceTag']}'),
               )]?['weakPoint'] ==
               true;
-      final precisionBasePreset = configuredIncomingDamagePreset();
+      final precisionPercentage = precisionStages > 0
+          ? oculumIncomingDamagePercentMultiplier(
+              configuredIncomingDamagePercentForType(incomingElement),
+            )
+          : null;
       final precisionPreset = precisionStages > 0
           ? oculumAdvanceDamagePreset(
-              precisionBasePreset,
-              precisionStages,
+              precisionPercentage == null
+                  ? configuredIncomingDamagePreset(incomingElement)
+                  : prossimoStadioCriticoPercentualeLibera(
+                      precisionPercentage,
+                    ).name,
+              precisionPercentage == null
+                  ? precisionStages
+                  : precisionStages - 1,
               scalaCriticaDanno(),
             )
           : null;
       final precisionAdjustedDamage = (damage * precisionDamagePercent / 100)
           .ceil();
-      final sourceMonster = monsterBookEntryById(
-        '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}',
-      );
-      final monsterResistancePreset =
-          sourceMonster?.incomingDamageResistancePresets[incomingElement];
-      final explicitResistance = oculumIncomingResistanceIsExplicit(
-        elementId: incomingElement,
-        savedPresets: incomingDamagePresets,
-        savedPercentages: dannoSubitoPercentPerTipo,
-        legacyPercentage: dannoSubitoPercentController.text,
-      );
-      final anatomyResistanceAdjustment =
-          monsterResistancePreset == null || explicitResistance
-          ? 0
-          : ((damageRuleMultiplierForCommand(monsterResistancePreset) - 1) *
-                    100)
-                .round();
       final weakPointFragilityAdjustment = discoveredWeakPoint ? 250 : 0;
       final sourceTag = '${request['sourceTag'] ?? ''}';
       final discovery = discoveredCombatTarget(sourceTag);
@@ -6866,7 +7740,11 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
         identified: identified,
       );
       try {
-        for (var strike = 0; strike < groupHits; strike++) {
+        for (
+          var strike = goblinInterceptedFirstHit ? 1 : 0;
+          strike < groupHits;
+          strike++
+        ) {
           final strikeId = groupHits == 1 ? id : '$id:strike:$strike';
           final strikeOculumShield = scudoOculum();
           final strikeShield = scudo();
@@ -6874,6 +7752,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           final strikeHp = hpCorrenti();
           await applicaDannoSubito(
             onImpact: captureImpact,
+            meleeAttack: oculumGuardianMeleeAttack(request),
             mantleProtectionPercent: readIntValue(
               request['mantleProtectionPercent'],
             ),
@@ -6900,6 +7779,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             enemyGrade: readIntValue(request['grade']),
             attackKind: '${request['choice'] ?? ''}',
             magicalAttack: (request['effects'] as List? ?? []).isNotEmpty,
+            canHitIntangible: request['canHitIntangible'] == true,
             friendlyFire: friendlyFire.friendly,
             friendlyFireResisted: friendlyFire.resisted,
             nonLethal:
@@ -6919,8 +7799,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 request['granCriticalShieldBroken'] == true,
             additionalDefense: transparencyDefense + unusedFastDefenseBonus,
             dannoEsplicito: precisionAdjustedDamage,
-            critico: critical,
-            doubleCritical: doubleCritical,
+            minimumDamageBeforeProtections: echoMinimum,
+            critico:
+                critical &&
+                (echoMinimum == 0 || outcome != OculumAttackOutcome.avoided),
+            doubleCritical:
+                doubleCritical &&
+                (echoMinimum == 0 || outcome != OculumAttackOutcome.avoided),
             criticalBonusMultiplier: critical ? 2 : 1,
             criticalDamageBonusOverride: doubleCritical
                 ? oculumDoubleCriticalDamageBonus(
@@ -6954,6 +7839,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                     : 1),
             incomingPacketPercent: packetPercent,
             bypassDefense:
+                mutantRatBite ||
                 activeStructuredEffectBonus('meccanio_oltre_difesa') > 0 ||
                 (readIntValue(planarState['armorHits']) > 0 &&
                     request['choice'] == 'schianto') ||
@@ -6972,6 +7858,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                       effect['type'] == 'danno' &&
                       readBoolValue(effect['bypassShields']),
                 ),
+            suppressDifficultyShieldBypass: mutantRatBite,
             shieldDamageBonusPercent: (request['effects'] as List? ?? const [])
                 .whereType<Map>()
                 .where((effect) => effect['type'] == 'danno')
@@ -6988,7 +7875,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 !critical && outcome == OculumAttackOutcome.reduced ? 1.5 : 1,
             enemyLevel: readIntValue(request['level']),
             enemyDifficulty: '${request['difficulty']}',
-            resolvedResistance: resisted,
+            resolvedResistance: resisted && echoMinimum == 0,
             resistancePresetOverride:
                 isLunarGuardianCoreCreature &&
                     request['targetBodyPart'] == 'core'
@@ -7006,7 +7893,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 (isLunarGuardianCoreCreature &&
                         request['targetBodyPart'] == 'core'
                     ? lunarGuardianCoreDamagePercentFor(incomingElement) - 100
-                    : anatomyResistanceAdjustment) +
+                    : 0) +
                 (isLunarGuardianCoreCreature &&
                         lunarGuardianInfernalCore &&
                         request['targetBodyPart'] == 'core'
@@ -7043,6 +7930,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             outcome != OculumAttackOutcome.avoided) {
           await applicaDannoSubito(
             onImpact: captureImpact,
+            meleeAttack: oculumGuardianMeleeAttack(request),
             dannoEsplicito: readIntValue(request['lusierBeyondDefense']),
             bypassDefense: true,
             enemyLevel: readIntValue(request['level']),
@@ -7071,6 +7959,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'hpLost': groupHits > 1
           ? groupHpLost
           : min(max(0, beforeHp), max(0, beforeHp - hpCorrenti())),
+      'targetDownedByHit':
+          beforeHp > 0 &&
+          hpCorrenti() <= 0 &&
+          outcome != OculumAttackOutcome.avoided,
       if (groupHits > 1) 'landedStrikes': landedStrikes,
       'pawnPending': pawnPendingDamage.isNotEmpty,
     };
@@ -7209,6 +8101,8 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     boneRuneAfterHpDamage();
     request['damageReceipt'] = receipt;
+    claimPiovraBite(request);
+    claimLamaOrbitaAttack(request);
     final actualHpLost = readIntValue(receipt['hpLost']);
     applyStat20WillSlamFracture(request, hpLost: actualHpLost);
     if (groupHits == 1) {
@@ -7217,6 +8111,15 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       completePosteaArmorShocks(damagePacketId: id);
     }
     recordStat35OculumHit(request);
+    resolveObserverAndBiterHit(
+      request,
+      hit:
+          outcome != OculumAttackOutcome.avoided &&
+          !resisted &&
+          (isCounter || attack > defense),
+      critical: critical,
+      doubleCritical: doubleCritical,
+    );
     confirmPosteaSwordHit(request);
     faunaForOwnedSheet(
       '${request['sourceTag'] ?? ''}',
@@ -7235,7 +8138,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       request,
       hit: !resisted && outcome != OculumAttackOutcome.avoided,
     );
-    if (!friendlyFire.friendly) recordEncounterRewardCombatResult(request);
+    if (!friendlyFire.friendly) {
+      recordEncounterRewardCombatResult(request);
+      recordWhaleDamageAttribution(request);
+    }
     // The hit is absorbed with the equipment that was active when it landed.
     // Only then may the critical interrupt the transformation.
     if (outcome != OculumAttackOutcome.avoided) {
@@ -7376,6 +8282,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             Map<String, dynamic>.from(raw),
           )..recipient = 'se_stesso';
           if (effect.type == 'danno_percentuale') {
+            if (effect.id == oculumSoulFighterCutEffect) continue;
             final amount = oculumTargetPercentageDamage(
               percent: readIntValue(effect.valueExpression),
               hp: hpCorrenti(),
@@ -7386,6 +8293,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             );
             await applicaDannoSubito(
               dannoEsplicito: amount,
+              meleeAttack: oculumGuardianMeleeAttack(request),
               bypassDefense: effect.bypassDefense,
               bypassShields: effect.bypassShields,
               resistanceBypassDamage: effect.bypassResistance ? amount : 0,
@@ -7405,6 +8313,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
                 'senka_thousand_cuts',
                 'senka_moon_cuts',
                 'senka_shadow_step',
+                oculumBiterBiteEffect,
               }.contains(effect.target)) {
             continue; // Included in the single damage packet.
           }
@@ -7416,7 +8325,84 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           if (!planarIsCriticalEffectAllowed(request, effect)) {
             continue;
           }
-          if (effect.requiresHpDamage && readIntValue(receipt['hpLost']) <= 0) {
+          final elementalSphere =
+              effect.type == 'planar' &&
+              effect.target == oculumElementalSphereEffect &&
+              const {
+                'acido',
+                'gelo',
+                'spirituale',
+              }.contains(effect.elementType);
+          final netHpLost = readIntValue(receipt['hpLost']);
+          final resolvedHpLost = elementalSphere
+              ? oculumElementalSphereLifeLost(
+                  impactLifeLost: displayImpact?.hpLost,
+                  netLifeLost: netHpLost,
+                )
+              : netHpLost;
+          if (effect.requiresHpDamage && resolvedHpLost <= 0) {
+            continue;
+          }
+          if (elementalSphere) {
+            if (friendlyFire.friendly || criticalShieldBlocksDebuffs(request)) {
+              continue;
+            }
+            final naturalMinimum = readIntValue(
+              effect.valueExpression,
+            ).clamp(18, 20).toInt();
+            final natural = readIntValue(request['natural']);
+            final difficulty = normalizedCampaignDifficulty(
+              '${request['difficulty'] ?? campaignDifficulty}',
+            );
+            final duration = int.tryParse(effect.duration) ?? 3;
+            final isSphereDoubleCritical =
+                oculumAttackRollFaces(request) == 20 &&
+                natural >= naturalMinimum &&
+                oculumIsDoubleCritical(
+                  natural: 20,
+                  total: attack,
+                  opposingTotal: defense,
+                );
+            final hpLost = resolvedHpLost;
+            if (effect.elementType == 'gelo') {
+              if (oculumElementalSphereCriticalTriggers(
+                    doubleCritical: isSphereDoubleCritical,
+                    hpLost: hpLost,
+                  ) &&
+                  faunaReceipt('sphere-ice:$id')) {
+                applyElementalSphereFreeze(
+                  request,
+                  durationTurns: duration,
+                  difficulty: difficulty,
+                );
+              }
+              continue;
+            }
+            if (effect.elementType == 'spirituale') {
+              if (oculumElementalSphereCriticalTriggers(
+                    doubleCritical: isSphereDoubleCritical,
+                    hpLost: hpLost,
+                  ) &&
+                  faunaReceipt('sphere-soul:$id')) {
+                applyElementalSphereSoulSeparation(
+                  request,
+                  durationTurns: duration,
+                  difficulty: difficulty,
+                );
+              }
+              continue;
+            }
+            final plan = oculumPlanElementalSphereAcid(
+              doubleCritical: isSphereDoubleCritical,
+              hpLost: hpLost,
+              casterGrade: readIntValue(request['grade']),
+              targetGrade: activeCriticalGrade(),
+              durationTurns: duration,
+              difficulty: difficulty,
+            );
+            if (plan != null && faunaReceipt('sphere-acid:$id')) {
+              applyElementalSphereAcidCondition(plan);
+            }
             continue;
           }
           if (effect.target == 'oblivion_forget_next') {
@@ -7465,6 +8451,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             continue;
           }
           if (request['kind'] == 'corruption_target') continue;
+          if (effect.type == 'stato' &&
+              effect.appliedState == 'corruzione' &&
+              effect.resource == 'corruption_red' &&
+              memoryOfSelfBlocksCorruption(const {'corruptionKind': 'rossa'})) {
+            aggiungiLog(memoryOfSelfRedCorruptionMessage);
+            continue;
+          }
           if (effect.type == 'stato' &&
               effect.appliedState == 'corruzione' &&
               await offerCorruptionResistance(request)) {
@@ -7631,6 +8624,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       'combat_defense',
       permissionEnvelope(reply),
     );
+    triggerLamaOrbitaCounter(request);
     if (request['guardianSecondaryEvent'] != true) {
       await dispatchGuardianSecondaryAttack(request);
       if (request['guardianGoldReflection'] is Map) {
@@ -7651,11 +8645,9 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     int defense,
   ) {
     final attack = readIntValue(request['attack']);
-    final vcWins = oculumVcCmInflictsDisadvantage(
-      '${request['choice']}',
-      attack,
-      defense,
-    );
+    final vcWins =
+        request['maskedShadowAvoided'] != true &&
+        oculumVcCmInflictsDisadvantage('${request['choice']}', attack, defense);
     final cmWins = oculumVcCmInflictsDisadvantage(
       defenseChoice,
       defense,
@@ -7814,7 +8806,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final tag = sheetTagAt(schedaCorrente);
     final helpBonus =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
-        ? readIntValue(schedePersonaggio[schedaCorrente]['combatHelpPending'])
+        ? _pendingCombatHelpAt(schedaCorrente)
         : 0;
     final outgoing = onlineCombatRequests.values
         .where(

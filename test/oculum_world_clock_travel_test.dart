@@ -265,11 +265,11 @@ void main() {
         final hpMultiplier = grade == 0
             ? (6 + level).clamp(6, 10).toInt()
             : (phase == 0
-                ? 6
-                : phase <= 2
-                ? 9
-                : 10) +
-            5 * grade;
+                      ? 6
+                      : phase <= 2
+                      ? 9
+                      : 10) +
+                  5 * grade;
         final hpPower = hpMultiplier ~/ (grade == 0 ? 10 : 5);
         expect(
           stats.values.fold<int>(0, (sum, value) => sum + readIntValue(value)) +
@@ -565,6 +565,82 @@ void main() {
       await closeFixture(tester, p);
     },
   );
+
+  testWidgets('a Forsaken Forest Demon keeps a single slot in a travel Fight', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    for (final monsterId in [
+      'baby_forest_demon_errato',
+      'forest_demon_errato',
+    ]) {
+      p.setWorldClock({
+        'events': [
+          {
+            'id': monsterId,
+            'realm': 'foresta_elementale',
+            'status': 'pending',
+            'party': [
+              {'power': 160},
+            ],
+          },
+        ],
+      });
+      expect(
+        p.worldChooseEvent(monsterId, 'fight', monsterId: monsterId, count: 8),
+        isTrue,
+      );
+      final event = (p.worldClockPrivate()['events'] as List).single as Map;
+      final creature = (event['creatures'] as List).single as Map;
+      expect(creature['monsterId'], monsterId);
+      expect(creature['power'], 200);
+      expect(p.worldPrepareEncounter(monsterId), isNotEmpty);
+      final sheet = state.schedePersonaggio.last;
+      expect(sheet['monsterBookSourceId'], monsterId);
+      expect(
+        sheet['monsterBaseStats'],
+        oculumMonsterCreationStats(monsterById(monsterId)!, 0),
+      );
+    }
+    await closeFixture(tester, p);
+  });
+
+  testWidgets('travel creatures keep authored gear through save and reopen', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    const monsterId = 'topino_avventuroso';
+    const eventId = 'adventurous-mouse';
+    p.setWorldClock({
+      'events': [
+        {
+          'id': eventId,
+          'realm': 'foresta_elementale',
+          'status': 'pending',
+          'party': [
+            {'power': 100},
+          ],
+        },
+      ],
+    });
+    expect(p.worldChooseEvent(eventId, 'fight', monsterId: monsterId), isTrue);
+    final encounter = p.worldPrepareEncounter(eventId);
+    expect(encounter, isNotEmpty);
+    final sheetCount = state.schedePersonaggio.length;
+    expect(p.worldPrepareEncounter(eventId), encounter);
+    expect(state.schedePersonaggio.length, sheetCount);
+
+    List<dynamic> torches(Object? inventory) => (inventory as List)
+        .whereType<Map>()
+        .where((item) => item['nome'] == 'Fiaccola')
+        .map((item) => item['quantita'])
+        .toList();
+    final sheet = state.schedePersonaggio.last;
+    expect(torches(sheet['inventario']), [6]);
+    p.load(jsonDecode(jsonEncode(sheet)) as Map<String, dynamic>);
+    expect(torches(p.snapshot()['inventario']), [6]);
+    await closeFixture(tester, p);
+  });
 
   testWidgets(
     'connected players cannot advance time and accept only authenticated fresh Master clocks',

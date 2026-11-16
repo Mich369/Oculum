@@ -1,8 +1,48 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/game/oculum_anatomical_parts.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
+  test('an old broken Ombra Ignota eye stays broken after projection', () {
+    final projected = oculumProjectOmbraIgnotaEyeState({
+      'parts': {
+        'eyes_1': {'maximumHp': 10, 'damageTaken': 10, 'injured': true},
+        'eyes_2': {'maximumHp': 99, 'damageTaken': 40, 'injured': true},
+      },
+    }, oculumOmbraIgnotaLegacyEyeIds);
+    expect((projected['parts'] as Map)['eyes'], {
+      'maximumHp': 10,
+      'damageTaken': 10,
+      'injured': true,
+      'label': 'Occhio',
+      'group': 'eyes',
+    });
+  });
+
+  test('the Terramaul breaks independently of Terramaund’s arm', () {
+    final golem = monsterBookEntryById('terramound')!;
+    final parts = (golem.encounterRules['precisionBodyParts'] as List)
+        .cast<Map>();
+    final maul = parts.singleWhere((part) => part['id'] == 'terramaul');
+    final integrity = oculumAnatomicalPartRule(
+      monsterId: golem.id,
+      physicalDescription: golem.descIt,
+      part: maul,
+      maximumBodyHp: 100,
+    );
+    final result = oculumApplyAnatomicalPartHit(
+      state: const {},
+      rule: integrity,
+      attackId: 'maul',
+      hpLost: integrity['maximumHp'] as int,
+      critical: false,
+      criticalShieldProtected: false,
+    );
+    expect(result.reachedZero, isTrue);
+    expect((result.state['parts'] as Map).keys, ['terramaul']);
+  });
+
   Map<String, dynamic> rule({
     String material = 'flesh',
     String id = 'arms_1',

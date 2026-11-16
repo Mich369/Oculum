@@ -233,6 +233,8 @@ void main() {
         await tester.pump();
         expect(find.text('Aspetto'), findsOneWidget);
         expect(find.text('Comportamento e particolarità'), findsOneWidget);
+        final skillTile = find.widgetWithText(ExpansionTile, 'Pugno serio');
+        expect(tester.widget<ExpansionTile>(skillTile).children, isEmpty);
         await tester.ensureVisible(find.text('Pugno serio'));
         await tester.tap(find.text('Pugno serio'));
         await tester.pump(const Duration(milliseconds: 300));
@@ -251,4 +253,38 @@ void main() {
       }
     },
   );
+
+  testWidgets('the Soul Fighter dossier shows the skills of both Arts', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(390, 844),
+    );
+    state.datiCaricati = false;
+    final probe = OculumPerformanceProbe(state);
+    final monster = monsterBookEntryById(oculumSoulFighterEliteId)!;
+    final overlay = OverlayEntry(
+      builder: (_) => Positioned.fill(
+        child: Material(
+          child: SingleChildScrollView(child: probe.monsterDossier(monster)),
+        ),
+      ),
+    );
+    Overlay.of(tester.element(find.byType(OculumHomePage))).insert(overlay);
+    await tester.pump();
+    expect(find.text('Taglio dell’Ultimo Respiro'), findsOneWidget);
+    expect(find.text('Mano della Veglia'), findsOneWidget);
+    final mark = find.text('Marchio dei Senza Nome');
+    await tester.ensureVisible(mark);
+    await tester.tap(mark);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Livello 0'), findsOneWidget);
+    expect(find.text('Bersagli: fino a 1'), findsOneWidget);
+    expect(find.text('Forma II'), findsNothing);
+    overlay.remove();
+    overlay.dispose();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
 }

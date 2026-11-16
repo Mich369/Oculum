@@ -501,8 +501,9 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     OculumStructuredEffect effect,
     int value,
     int duration,
-    String source,
-  ) {
+    String source, {
+    OculumAbilityCooldown? sourceCooldown,
+  }) {
     final state = planarState;
     if (activateArmadilloEffect(effect, value)) return;
     if (activateSandEffect(effect, value, duration)) return;
@@ -570,6 +571,9 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
       return;
     }
     switch (effect.target) {
+      case oculumAculotideDodgeEffect:
+        prepareAculotideDodge(value, duration);
+        break;
       case 'feralis_fury':
         startFeralisFury();
         break;
@@ -731,10 +735,9 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
           aggiungiLog('[ALI] Due ali danneggiate: il volo non è disponibile.');
           break;
         }
+        finishTimedWingFlight();
         state['flightTurns'] = max(1, duration);
-        activeStructuredEffects.removeWhere(
-          (e) => '${e['effectId']}'.startsWith('planar_flight_'),
-        );
+        bindTimedWingFlightCooldown(sourceCooldown);
         for (final target in ['difesa', 'movimento']) {
           activeStructuredEffects.add({
             'effectId': 'planar_flight_$target',
@@ -931,11 +934,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
         planarState[key] = readIntValue(planarState[key]) - 1;
       }
     }
-    if (readIntValue(planarState['flightTurns']) <= 0) {
-      activeStructuredEffects.removeWhere(
-        (e) => '${e['effectId']}'.startsWith('planar_flight_'),
-      );
-    }
+    if (readIntValue(planarState['flightTurns']) <= 0) finishTimedWingFlight();
     if (readIntValue(planarState['illusionTurns']) <= 0) {
       planarState.remove('illusionCopies');
     }
@@ -985,6 +984,9 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     endPosteaTransformArmor(publish: false);
     resetSandFight();
     resetGuardianGoldFight();
+    resetSolarObserverFight();
+    shatterElementalSphereIce();
+    clearElementalSphereSoulSeparation(wingEncounterId ?? onlineCombatEncounterId);
     planarState.remove('provokerShield');
     planarState.remove('provokerTurns');
     planarState.remove('provokerPendingReflection');
@@ -1020,9 +1022,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
       planarState.remove('posteaImmuneCondition');
       planarState.remove('posteaImmunityWaitingFight');
     }
-    activeStructuredEffects.removeWhere(
-      (e) => '${e['effectId']}'.startsWith('planar_flight_'),
-    );
+    finishTimedWingFlight();
     for (final key in const [
       'chaosStats',
       'chaosEncounter',
@@ -1038,7 +1038,6 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
       'bringiHits',
       'maxPower',
       'scalesTurns',
-      'flightTurns',
       'vanishTurns',
       'illusionTurns',
       'illusionCopies',
@@ -1103,6 +1102,10 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     bool magical = false,
     bool bypassShields = false,
   }) {
+    if (damage > 0 && maskedShadowAvoidsPhysicalDamage(element)) {
+      aggiungiLog('[L’OMBRA] Il colpo fisico attraversa la sagoma.');
+      return 0;
+    }
     final state = planarState;
     damage = (damage * silkResistanceMultiplier(element)).round();
     damage = feralisAdaptDamage(damage, element);
@@ -1114,19 +1117,6 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     if (feralisFuryActive) damage = (damage / 2).ceil();
     if (damage <= 0) return damage;
     damage = brambleAbsorbDamage(damage, element, bypassShields: bypassShields);
-    if (maskedShadowActive &&
-        const {
-          'fisico',
-          'taglio',
-          'contundente',
-          'perforante',
-          'fisico_taglio',
-          'fisico_contundente',
-          'fisico_perforante',
-        }.contains(element)) {
-      aggiungiLog('[L’OMBRA] Il colpo fisico attraversa la sagoma.');
-      return 0;
-    }
     final monsterId =
         schedaCorrente >= 0 && schedaCorrente < schedePersonaggio.length
         ? '${schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ?? ''}'

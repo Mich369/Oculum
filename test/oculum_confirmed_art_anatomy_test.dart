@@ -60,6 +60,21 @@ void main() {
       );
       expect(count('mostro_solare', 'eyes'), 2);
       expect(count('mostro_solare', 'horns'), 1);
+      const aurystride = 'aberrazione_oro_marmo_intermedia_solare';
+      expect(count(aurystride, 'arms'), 2);
+      expect(count(aurystride, 'legs'), 2);
+      expect(count(aurystride, 'eyes'), 0);
+      expect(
+        parts(aurystride)
+            .where((part) => part['weak'] == true)
+            .map((part) => part['id']),
+        unorderedEquals(['torso', 'joint']),
+      );
+      expect(count('arcangelo_variante_errante', 'wings'), 2);
+      expect(
+        monsterBookEntryById('arcangelo_variante_errante')!.descIt,
+        contains('esiliazione dell’Ala Nera'),
+      );
       final minor = parts('sciamano_malizioso_minore');
       expect(count('sciamano_malizioso_minore', 'arms'), 2);
       expect(count('sciamano_malizioso_minore', 'legs'), 2);
@@ -386,15 +401,19 @@ void main() {
   test(
     'solar helmets do not expose biological eyes; brothers retain custom anatomy',
     () {
-      for (final id in [
-        'guardia_solare',
-        'guardia_solare_elite',
-        'guardiano_solare',
+      for (final (id, weakId) in [
+        ('guardia_solare', 'shield_side_flank'),
+        ('guardia_solare_elite', 'inner_elbow'),
+        ('guardiano_solare', 'rear_knee'),
       ]) {
         expect(count(id, 'eyes'), 0);
         final visor = parts(id).singleWhere((p) => p['id'] == 'helmet_visor');
         expect(visor['material'], 'metal');
         expect(visor['weak'], false);
+        expect(
+          parts(id).where((p) => p['weak'] == true).map((p) => p['id']),
+          [weakId],
+        );
       }
     },
   );

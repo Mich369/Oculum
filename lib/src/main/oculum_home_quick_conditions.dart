@@ -409,6 +409,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       case 'rallentato':
         return '-25% ${t('Movimento', 'Movement')}';
       case 'immobilizzato':
+      case oculumSolarGoldCondition:
       case 'afferrato':
         return '${t('Movimento', 'Movement')} 0';
       case 'privo_reazioni':
@@ -420,6 +421,8 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       case 'bruciatura':
       case 'corrosione_acida':
         return '-${calculateConditionEffect(instance)} HP / tick';
+      case 'logorato_acido':
+        return t('1d30 × Grado / turno', '1d30 × Grade / turn');
     }
     final modifierMap = instance.metadata['modifiers'];
     if (modifierMap is Map && modifierMap[target.name] != null) {
@@ -1001,6 +1004,12 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }) {
     final definition = oculumConditionDefinition(type);
     if (definition == null) return false;
+    if (type == 'corruzione' &&
+        metadata != null &&
+        memoryOfSelfBlocksCorruption(metadata)) {
+      aggiungiLog(memoryOfSelfRedCorruptionMessage);
+      return false;
+    }
     if (lusierPreventsNegativeCondition(type, source)) return false;
     if (planarState['posteaImmuneCondition'] == type) {
       aggiungiLog(
@@ -1220,6 +1229,11 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   }
 
   void applyCustomCondition(OculumConditionInstance instance) {
+    if (instance.conditionType == 'corruzione' &&
+        memoryOfSelfBlocksCorruption(instance.metadata)) {
+      aggiungiLog(memoryOfSelfRedCorruptionMessage);
+      return;
+    }
     final same = activeConditions
         .where((item) => item.conditionType == instance.conditionType)
         .firstOrNull;
@@ -1278,6 +1292,12 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final definition = oculumConditionDefinition(instance.conditionType);
     final affectedTargets = conditionTargetsFor(instance);
     if (!activeConditions.remove(instance)) return false;
+    if (instance.conditionType == 'afferrato') {
+      clearRemovedPiovraGrip(instance);
+    }
+    if (instance.conditionType == oculumElementalSphereIceCondition) {
+      _publishElementalSphereIceChange();
+    }
     if (instance.conditionType == 'frattura') {
       restoreAnatomicalPartsByRecovery(
         'appropriate_treatment',
@@ -1731,8 +1751,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       }
     }
     if (target == OculumConditionTarget.movimento) {
+      if (elementalSphereFrozen || elementalSphereSoulSeparated) return 0;
       if (!statoForzaRimuoveMalus() &&
           (hasCondition('immobilizzato') ||
+              hasCondition(oculumSolarGoldCondition) ||
               hasCondition('afferrato') ||
               hasCondition('paralisi_fato'))) {
         return 0;
@@ -1805,6 +1827,133 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     return oculumCursedHealing(requested, cursed.stage);
   }
 
+  /// Commit an actual cure after its own modifiers and maximum Life.
+  void writeHealedLife(int after) {
+    final acid = getCondition('logorato_acido');
+    final before = acid == null ? null : hpCorrenti();
+    currentHpController.text = '$after';
+    if (acid != null &&
+        before != null &&
+        oculumElementalSphereAcidEndsOnHealing(hpCorrenti() - before)) {
+      removeCondition(acid, force: true, expired: true);
+    }
+  }
+
+  bool applyElementalSphereAcidCondition(OculumElementalSphereAcidPlan plan) =>
+      applyCondition(
+        'logorato_acido',
+        duration: plan.durationTurns,
+        source: 'Sfera Acida',
+        metadata: {
+          'acidGradeMultiplier': plan.gradeMultiplier,
+          'acidPowerPercent': plan.powerPercent,
+        },
+      );
+
+  void applyElementalSphereAcidTick(OculumConditionInstance instance) {
+    final beforeHp = hpCorrenti();
+    if (beforeHp <= 0) return;
+    final tick = oculumElementalSphereAcidTick(
+      Random.secure().nextInt(oculumElementalSphereAcidDieFaces) + 1,
+      gradeMultiplier: max(
+        1,
+        readIntValue(instance.metadata['acidGradeMultiplier']),
+      ),
+      powerPercent: readIntValue(instance.metadata['acidPowerPercent'], fallback: 100),
+    );
+    final oculumBefore = scudoOculum();
+    final shieldBefore = scudo();
+    final oculumDrain = min(oculumBefore, tick.shieldPoints);
+    final shieldDrain = min(shieldBefore, tick.shieldPoints - oculumDrain);
+    const element = 'acido';
+    final afterDefense = max<int>(1, tick.normalDamage - max<int>(0, difesa()));
+    final preset = modificatoreDannoDaNome(
+      configuredIncomingDamagePreset(element),
+    );
+    final configured = oculumIncomingDamagePercentMultiplier(
+      configuredIncomingDamagePercentForType(element),
+    );
+    final mitigated = configured == null
+        ? applicaModificatoreDannoCon(afterDefense, preset)
+        : applicaModificatoreDannoPercentuale(afterDefense, configured);
+    final elemental = mitigated > 0
+        ? applicaParserDanniSubiti(mitigated, element)
+        : mitigated;
+    final normalDamage = max(
+      0,
+      oculumAbilityResistanceDamage(
+        unmodifiedDamage: afterDefense,
+        modifiedDamage: elemental,
+        bonusPercent: abilityElementResistancePercent(element),
+      ),
+    );
+    final bonus = conditionShieldDamageBonusPercent();
+    final oculum = assorbiDannoDaScudoConBonus(
+      layer: oculumBefore - oculumDrain,
+      remaining: normalDamage,
+      bonusPercent: bonus,
+    );
+    final shield = assorbiDannoDaScudoConBonus(
+      layer: shieldBefore - shieldDrain,
+      remaining: oculum.remaining,
+      bonusPercent: bonus,
+    );
+    final temporary = hpTemp();
+    final afterHp = max<int>(
+      0,
+      beforeHp - max<int>(0, shield.remaining - temporary),
+    );
+    final oculumBroken = oculumBefore > 0 && oculum.layer == 0;
+    final shieldBroken = shieldBefore > 0 && shield.layer == 0;
+    if (oculum.layer != oculumBefore) {
+      scudoOculumController.text = '${oculum.layer}';
+    }
+    if (shield.layer != shieldBefore) impostaScudoTotale(shield.layer);
+    if (oculumBroken) planarState['oculumShieldBreakDefensePending'] = true;
+    if (shieldBroken) setNormalShieldBreakPenalty(2);
+    if (temporary > 0 && shield.remaining > 0) {
+      impostaHpTempTotali(max(0, temporary - shield.remaining));
+    }
+    currentHpController.text = '$afterHp';
+    final lifeLost = beforeHp - afterHp;
+    final impact = _CombatLogImpact(
+      hpLost: lifeLost,
+      oculumShieldLost: oculumBefore - oculum.layer,
+      oculumShieldBroken: oculumBroken,
+      shieldLost: shieldBefore - shield.layer,
+      shieldBroken: shieldBroken,
+    );
+    risultato = combatImpactLog(
+      '[DANNO SUBITO] ${conditionName(instance)}',
+      impact,
+    );
+    aggiungiLog(risultato);
+    showSheetFeedback(
+      oculumBroken
+          ? OculumFeedbackKind.oculumShieldBroken
+          : OculumFeedbackKind.oculumShield,
+      amount: impact.oculumShieldLost,
+      tint: oculumStatFormulaColor,
+    );
+    showSheetFeedback(
+      shieldBroken
+          ? OculumFeedbackKind.shieldBroken
+          : OculumFeedbackKind.shield,
+      amount: impact.shieldLost,
+    );
+    showSheetFeedback(OculumFeedbackKind.lifeDamage, amount: lifeLost);
+    if (lifeLost > 0) {
+      checkAutomaticAshFromHpLoss(
+        beforeHp,
+        afterHp,
+        source: conditionName(instance),
+      );
+      if (afterHp == 0) recordFaunaFallenTurn();
+    }
+    sendRealtimeHpChanged();
+    controllaStatoForzaDopoHp();
+  }
+
   int applyConditionIncomingDamage(int damage) {
     if (damage <= 0) return damage;
     final exposed = getCondition('esposto');
@@ -1869,7 +2018,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final before = hpCorrenti();
     final after = min(maxHp(), before + requested);
     final restored = after - before;
-    currentHpController.text = '$after';
+    writeHealedLife(after);
     if (restored > 0) sendRealtimeHpChanged();
     final message = t(
       'Vampirismo ${oculumRomanStage(instance.stage)}: +$restored HP ($source).',
@@ -1887,7 +2036,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final before = hpCorrenti();
     final after = min(maxHp(), before + requested);
     final restored = after - before;
-    currentHpController.text = '$after';
+    writeHealedLife(after);
     if (restored > 0) sendRealtimeHpChanged();
     if (restored > 0) {
       final message = t(
@@ -1920,7 +2069,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     final after = min(maxHp(), before + requested);
     final restored = after - before;
     instance.metadata['pendingHealing'] = max(0, pending - rawRequested);
-    currentHpController.text = '$after';
+    writeHealedLife(after);
     if (restored > 0) sendRealtimeHpChanged();
     final message = t(
       'Ricordo Vitale: +$restored HP, ${instance.metadata['pendingHealing']} da recuperare.',
@@ -2166,7 +2315,7 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
     );
     final restored = healed.current - beforeHp;
     final temporary = healed.temporary - beforeTemporary;
-    currentHpController.text = '${healed.current}';
+    writeHealedLife(healed.current);
     impostaHpTempTotali(healed.temporary);
     showSheetFeedback(OculumFeedbackKind.heal, amount: restored + temporary);
     final message = combatImpactLog(
@@ -2614,6 +2763,10 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
       if (instance.tickTrigger == trigger &&
           instance.conditionType == 'elettrizzato') {
         applyDirectConditionDamage(instance, oculumElectrifiedDamage(maxHp()));
+      }
+      if (instance.tickTrigger == trigger &&
+          instance.conditionType == 'logorato_acido') {
+        applyElementalSphereAcidTick(instance);
       }
       if (instance.tickTrigger == trigger &&
           instance.conditionType == 'rigenerazione') {

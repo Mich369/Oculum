@@ -287,7 +287,10 @@ extension _OculumSleepAndNeeds on _OculumHomePageState {
     final explicit = food['satisfiesNeeds'];
     if (explicit is! List) return;
     if (explicit.contains('food')) {
-      recordCharacterMeal(hydrate: explicit.contains('water'));
+      recordCharacterMeal(
+        hydrate: explicit.contains('water'),
+        satiety: oculumFoodMealSatiety(food),
+      );
     } else if (explicit.contains('water')) {
       satisfyPersonalNeed('water');
     }
@@ -587,9 +590,13 @@ extension _OculumSleepAndNeeds on _OculumHomePageState {
     final mealWindow = progress.isEarlyBreakfast(now)
         ? t('Primo pasto di domani', 'Tomorrow’s first meal')
         : mealWindowName(oculumMealWindowAt(now));
+    final satiety = progress.mealSatietyAt(now);
+    final mealProgress = satiety > 0
+        ? ' · ${t('Sazietà', 'Satiety')} ${mealSatietyLabel(satiety)}'
+        : '';
     return Text(
       automaticWorldNeedsEnabled
-          ? '${progress.enabled('food') ? 'Pasti ${progress.mealsToday(now)}/2 · $mealWindow · ' : ''}'
+          ? '${progress.enabled('food') ? 'Pasti ${progress.mealsToday(now)}/2 · $mealWindow$mealProgress · ' : ''}'
                 'Fame ${progress.daysWithout('food', now)} giorni · '
                 'Sete ${progress.daysWithout('water', now)} · '
                 'Sonno ${progress.daysWithout('sleep', now)} · '

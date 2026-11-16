@@ -182,6 +182,7 @@ extension _OculumFightRewardPower on _OculumHomePageState {
         group['combatEnded'] == true) {
       return;
     }
+    expireAculotideDodgeElevation(token);
     final power = fightRewardPowerForToken(
       token,
       sheetIndex: sheetIndexForToken?.call(token),

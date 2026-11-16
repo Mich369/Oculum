@@ -3,23 +3,144 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
+const _lookout = 'affogato_vedetta_dei_canali';
+const _guardian = 'affogato_custode_della_chiusa';
+
 void main() {
+  test(
+    'Affogato fish humanoids use ordinary encounter and progression data',
+    () {
+      final lookout = monsterBookEntryById(_lookout)!;
+      final guardian = monsterBookEntryById(_guardian)!;
+      for (final entry in [lookout, guardian]) {
+        expect(entry.planeIds, ['affogato']);
+        expect(entry.elementId, 'acqua');
+        expect(entry.presetType, 'Mostro');
+        expect(entry.classificationTags, contains('Umanoide'));
+        expect(entry.descIt, contains('Eiva'));
+        expect(entry.dropIds, hasLength(1));
+        expect(entry.dropChances[entry.dropIds.single], 50);
+        expect(entry.skillIds, hasLength(13));
+        expect(
+          entry.encounterRules['additionalProgressionSkills'],
+          hasLength(12),
+        );
+
+        final anatomy = oculumMonsterPrecisionAnatomy(entry);
+        expect(anatomy.map((part) => part['id']), [
+          'body',
+          'head',
+          'eyes_1',
+          'eyes_2',
+          'gills_1',
+          'gills_2',
+          'arms_1',
+          'arms_2',
+          'legs_1',
+          'legs_2',
+        ]);
+        expect(
+          anatomy
+              .where((part) => part['group'] == 'gills')
+              .map((part) => part['side']),
+          ['right', 'left'],
+        );
+        expect(
+          anatomy
+              .where((part) => part['weak'] == true)
+              .map((part) => part['id']),
+          ['gills_1', 'gills_2'],
+        );
+      }
+      expect(lookout.stats['level'], 2);
+      expect(guardian.stats['level'], 3);
+      final spear = InventoryItem.fromJson(lookout.inventoryItems.single);
+      expect(spear.nome, 'Lancia di canna');
+      expect(spear.arma, isTrue);
+      expect(spear.equipaggiata, isTrue);
+      expect(guardian.inventoryItems, isEmpty);
+    },
+  );
+
+  test('attack and guard keep their separate editable effects and costs', () {
+    ArtSkill artForm(String monsterId, String name) {
+      final entry = monsterBookEntryById(monsterId)!;
+      final skill = oculumMonsterBookArt(
+        entry,
+      ).skills.singleWhere((skill) => skill.nome == name);
+      return ArtSkill.fromJson(skill.toJson());
+    }
+
+    final attack = artForm(_lookout, 'Canalstryke');
+    final guard = artForm(_guardian, 'Valvaguard');
+    for (var form = 1; form <= 3; form++) {
+      final damage = attack.effettiEvoluzione(form).single;
+      expect(damage.type, 'danno');
+      expect(damage.valueExpression, '${form * 3}');
+      expect(damage.mode, 'prossima_azione');
+      expect(damage.recipient, 'nemico');
+      expect(attack.risorsaCostoPerLivello(form), 'materia');
+      expect(attack.oculumMinimoPerLivello(form), form);
+      expect(attack.oculumMassimoPerLivello(form), form);
+      expect(attack.cooldownPerLivello[form - 1].amount, [2, 3, 3][form - 1]);
+
+      final defense = guard.effettiEvoluzione(form).single;
+      expect(defense.type, 'difesa');
+      expect(defense.valueExpression, '${1 + 2 * form}');
+      expect(defense.mode, 'temporaneo');
+      expect(defense.duration, '1');
+      expect(defense.recipient, 'se_stesso');
+      expect(guard.risorsaCostoPerLivello(form), 'volonta');
+      expect(guard.oculumMinimoPerLivello(form), form);
+      expect(guard.oculumMassimoPerLivello(form), form);
+      expect(guard.cooldownPerLivello[form - 1].amount, [3, 3, 4][form - 1]);
+    }
+  });
+
+  test('spawn keeps its signature among three skills and one Open', () {
+    for (final (monsterId, signature) in [
+      (_lookout, 'Canalstryke'),
+      (_guardian, 'Valvaguard'),
+    ]) {
+      final entry = monsterBookEntryById(monsterId)!;
+      final opens = oculumMonsterBookOpenPool(entry).map((art) => art.openName);
+      expect(opens, hasLength(2));
+      for (var seed = 0; seed < 8; seed++) {
+        final kit = oculumMonsterBookLoadout(entry, random: Random(seed));
+        final art = kit.art!;
+        final skills = [
+          for (final skill in kit.skills)
+            if (!skill.passiva) skill.nome,
+          for (final skill in art.skills)
+            if (!skill.tipoPerLivello(1).toLowerCase().contains('passiv'))
+              skill.nome,
+        ];
+        expect(skills.toSet(), hasLength(3));
+        expect(skills, contains(signature));
+        expect(opens, contains(art.openName));
+      }
+    }
+  });
+
   test('confirmed Fluttuare uses fixed two Oculum and three-turn cooldown', () {
     final skill = oculumPlanarTechnique('air_navigator_float')!;
     expect(skill.minimums, [2, 2, 2]);
     expect(skill.maximums, [2, 2, 2]);
     expect(skill.cooldowns, [3, 3, 3]);
   });
-  test('389 authored entries, including Baghest and the two Caproni', () {
+  test('452 authored entries have distinct IDs, names and techniques', () {
     const goats = {'caprone_d_ossa', 'caprone_scheletrico_nero'};
-    expect(oculumPlanarMonsterEntries.length, 389);
+    expect(oculumPlanarMonsterEntries.length, 452);
     final ids = oculumPlanarMonsterEntries.map((e) => e.id).toSet();
-    expect(ids.length, 389);
-    expect(ids, containsAll({'manichino_baghest', ...goats}));
+    expect(ids.length, 452);
+    expect(
+      ids,
+      containsAll({'manichino_baghest', ...goats, _lookout, _guardian}),
+    );
     final names = oculumPlanarMonsterEntries
         .map((e) => e.nameIt.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''))
         .toSet();
-    expect(names.length, 389);
+    expect(names.length, 452);
     for (final e in oculumPlanarMonsterEntries) {
       final retired = oculumIsRetiredMonsterId(e.id);
       expect(

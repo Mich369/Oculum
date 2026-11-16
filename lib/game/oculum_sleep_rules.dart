@@ -5,6 +5,16 @@ const int oculumMealRestIntervalSeconds = 4 * 3600 + 30 * 60;
 const int oculumSecondMealStartsAt = 5 * 3600 + 30 * 60;
 const List<String> oculumPersonalNeeds = ['food', 'water', 'sleep'];
 const List<String> oculumMealWindows = ['first', 'second'];
+const int oculumMealSatietyFull = 6;
+
+int oculumFoodMealSatiety(Map food) {
+  final needs = food['satisfiesNeeds'];
+  if (needs is! List || !needs.contains('food')) return 0;
+  return _sleepInt(
+    food['mealSatietyUnits'],
+    oculumMealSatietyFull,
+  ).clamp(1, oculumMealSatietyFull);
+}
 
 String oculumMealWindowAt(int now) =>
     max(0, now) % oculumSleepDaySeconds < oculumSecondMealStartsAt
@@ -179,6 +189,10 @@ class OculumPersonalNeedsProgress {
        lastManualMealAt = _sleepInt(raw['lastManualMealAt'], -1),
        actualMealDay = _sleepInt(raw['actualMealDay'], -1),
        actualMealCount = _sleepInt(raw['actualMealCount']).clamp(0, 3),
+       partialMealWindow = raw['partialMealWindow']?.toString() ?? '',
+       partialMealUnits = _sleepInt(
+         raw['partialMealUnits'],
+       ).clamp(0, oculumMealSatietyFull - 1),
        episodes = [
          for (final entry in raw['episodes'] is List ? raw['episodes'] : [])
            if (entry is Map) Map<String, dynamic>.from(entry),
@@ -191,6 +205,8 @@ class OculumPersonalNeedsProgress {
   int lastMealShortRest, lastManualMealAt;
   int actualMealDay, actualMealCount;
   final Map<int, Set<String>> creditedMealDays;
+  String partialMealWindow;
+  int partialMealUnits;
   final List<Map<String, dynamic>> episodes;
   final Map<String, dynamic> config;
   // Derived body/race defaults are effective rules, never user configuration.
@@ -221,6 +237,13 @@ class OculumPersonalNeedsProgress {
   int get mealDeficitStatLoss =>
       max(0, _sleepInt(config['mealDeficitStatLoss'], 1));
 
+  String _mealPortionWindow(int now) => isEarlyBreakfast(now)
+      ? '${now ~/ oculumSleepDaySeconds + 1}:first'
+      : '${now ~/ oculumSleepDaySeconds}:${oculumMealWindowAt(now)}';
+
+  int mealSatietyAt(int now) =>
+      partialMealWindow == _mealPortionWindow(now) ? partialMealUnits : 0;
+
   ({
     String? window,
     bool consumed,
@@ -229,7 +252,12 @@ class OculumPersonalNeedsProgress {
     bool third,
     bool shortRest,
   })
-  recordMeal(int now, {required bool manual, required bool canRest}) {
+  recordMeal(
+    int now, {
+    required bool manual,
+    required bool canRest,
+    int satiety = oculumMealSatietyFull,
+  }) {
     final day = now ~/ oculumSleepDaySeconds;
     if (!enabled('food') ||
         now < processedThrough ||
@@ -245,6 +273,24 @@ class OculumPersonalNeedsProgress {
       );
     }
     advanceTo(now);
+    final combinedSatiety =
+        mealSatietyAt(now) + satiety.clamp(0, oculumMealSatietyFull);
+    if (combinedSatiety < oculumMealSatietyFull) {
+      if (combinedSatiety > 0) {
+        partialMealWindow = _mealPortionWindow(now);
+        partialMealUnits = combinedSatiety;
+      }
+      return (
+        window: null,
+        consumed: false,
+        early: false,
+        second: false,
+        third: false,
+        shortRest: false,
+      );
+    }
+    partialMealWindow = '';
+    partialMealUnits = 0;
     if (day != actualMealDay) {
       actualMealDay = day;
       actualMealCount = 0;
@@ -400,6 +446,8 @@ class OculumPersonalNeedsProgress {
       for (final entry in creditedMealDays.entries)
         '${entry.key}': entry.value.toList(),
     },
+    'partialMealWindow': partialMealWindow,
+    'partialMealUnits': partialMealUnits,
     if (lastMealShortRest >= 0) 'lastMealShortRest': lastMealShortRest,
     if (lastManualMealAt >= 0) 'lastManualMealAt': lastManualMealAt,
     if (actualMealDay >= 0) 'actualMealDay': actualMealDay,

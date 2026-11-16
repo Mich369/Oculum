@@ -607,6 +607,70 @@ void main() {
     },
   );
   testWidgets(
+    'a summoned Minor Construct retains capped EXP without rolling wild loot',
+    (tester) async {
+      final (state, p) = await mount(tester);
+      final wild = state.masterInitiativeTokens.last as Map<String, dynamic>;
+      wild.addAll({
+        'id': 'WILD-CONSTRUCT',
+        'sheetTag': 'WILD-CONSTRUCT',
+        'name': 'Costrutto Minore',
+        'monsterBookId': 'costrutto_minore',
+        'level': 1,
+      });
+      state.masterInitiativeTokens.insertAll(1, [
+        <String, dynamic>{
+          ...wild,
+          'id': 'SUMMON-NEW',
+          'sheetTag': 'SUMMON-NEW',
+          'isSummon': true,
+          'summonInstanceId': 'construct-summon',
+        },
+        <String, dynamic>{
+          ...wild,
+          'id': 'SUMMON-LEGACY',
+          'sheetTag': 'SUMMON-LEGACY',
+          'type': 'Evocazione',
+        },
+      ]);
+      p.recordCurrentEncounter();
+      final seed = Iterable<int>.generate(100000).firstWhere((seed) {
+        final rolls = Random(seed);
+        return rolls.nextInt(20) == 19 &&
+            rolls.nextInt(20) == 19 &&
+            rolls.nextInt(20) == 19;
+      });
+      await confirm(tester, p.finishEncounter('encounter_1', random: Random(seed)));
+
+      final group = state.masterInitiativeGroups.first as Map;
+      final reward = (group['rewards'] as List).single as Map;
+      final hero = p.ownerTag();
+      final defeated = (reward['defeated'] as List).whereType<Map>();
+      expect(defeated.where(oculumEncounterEnemyIsSummon), hasLength(2));
+      final expFromWild = oculumEncounterDifferenceExperience(
+        [defeated.singleWhere((enemy) => enemy['id'] == 'WILD-CONSTRUCT')],
+        characterStats: 10,
+        characterLevel: 1,
+        characterGrade: 0,
+        characterAverageTotalPower: (reward['participantPowers'] as Map)[hero]
+            as int,
+      );
+      expect((reward['commonExperienceByParticipant'] as Map)[hero], expFromWild + 10);
+      final loot = (reward['lootByParticipant'] as Map)[hero] as List;
+      final scroll = loot.whereType<Map>().singleWhere(
+        (item) => (item['monsterLoot'] as Map?)?['sourceSkillId'] ==
+            'minor_construct_summon',
+      );
+      expect((scroll['monsterLoot'] as Map)['id'], startsWith('WILD-CONSTRUCT:'));
+      final eyes = ((reward['fallenEyesByParticipant'] as Map)[hero] as List)
+          .whereType<Map>();
+      expect(eyes.single['sourceKillId'], startsWith('WILD-CONSTRUCT:'));
+      await p.finishEncounter('encounter_1', random: Random(seed));
+      expect(group['rewards'], hasLength(1));
+      await closeFixture(tester, p);
+    },
+  );
+  testWidgets(
     'a corrupted monster critical replaces the Fallen Eye with unique crystals',
     (tester) async {
       final (state, p) = await mount(tester);

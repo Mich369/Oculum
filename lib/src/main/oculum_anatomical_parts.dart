@@ -57,20 +57,33 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
     return max(max(0, netHpLost), max(0, readIntValue(receipt?['hpLost'])));
   }
 
-  Map<String, dynamic> get anatomicalPartState =>
-      Map<String, dynamic>.from(planarState['anatomicalParts'] as Map? ?? {});
+  Map<String, dynamic> get anatomicalPartState {
+    final state = Map<String, dynamic>.from(
+      planarState['anatomicalParts'] as Map? ?? {},
+    );
+    return oculumHasDefaultOmbraIgnotaEye(
+          monsterBookEntryById(faunaCurrentMonsterId),
+        )
+        ? oculumProjectOmbraIgnotaEyeState(state, oculumOmbraIgnotaLegacyEyeIds)
+        : state;
+  }
 
   Map<String, dynamic> anatomicalPartRuleFor(Map<String, dynamic> part) {
     final monster = monsterBookEntryById(faunaCurrentMonsterId);
     final catalogue = monster?.encounterRules['anatomicalPartRules'];
     final saved = planarState['anatomicalPartRules'];
     final id = '${part['id']}';
-    final defaults = catalogue is Map && catalogue[id] is Map
-        ? Map<String, dynamic>.from(catalogue[id] as Map)
-        : <String, dynamic>{};
-    final custom = saved is Map && saved[id] is Map
-        ? Map<String, dynamic>.from(saved[id] as Map)
-        : <String, dynamic>{};
+    final defaultOmbraEye =
+        id == 'eyes' && oculumHasDefaultOmbraIgnotaEye(monster);
+    Map<String, dynamic> rulesFor(Object? raw) {
+      if (raw is! Map) return {};
+      final rule =
+          raw[id] ?? (defaultOmbraEye ? raw['eyes_1'] ?? raw['eyes_2'] : null);
+      return rule is Map ? Map<String, dynamic>.from(rule) : {};
+    }
+
+    final defaults = rulesFor(catalogue);
+    final custom = rulesFor(saved);
     return oculumAnatomicalPartRule(
       monsterId: faunaCurrentMonsterId,
       physicalDescription: monster == null
@@ -94,7 +107,12 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
         monster?.id == 'costrutto_minore' &&
             const {'box', 'core'}.contains(request['targetBodyPart']) ||
         isRunicGolemCoreCreature &&
-            const {'chest_plates', 'core'}.contains(request['targetBodyPart']);
+            const {
+              'chest_plates',
+              'core',
+            }.contains(request['targetBodyPart']) ||
+        oculumRhinoStoneguardMonsterIds.contains(monster?.id) &&
+            request['targetBodyPart'] == 'core';
     if (protectedCoverHit &&
         (request['targetTag'] != sheetTagAt(schedaCorrente) ||
             !controlsOnlineCombatSheet(sheetTagAt(schedaCorrente)) ||
@@ -102,9 +120,7 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
             request['encounterId'] != onlineCombatEncounterId)) {
       return;
     }
-    final point = currentPrecisionBodyParts
-        .where((p) => p['id'] == request['targetBodyPart'])
-        .firstOrNull;
+    final point = currentPrecisionBodyPartForId(request['targetBodyPart']);
     // Generic part HP is for creatures from the Monster Book. Existing
     // character/Art/Senka mechanics remain exact and have no inferred pools.
     if (monster == null || point == null) {
@@ -143,6 +159,19 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
     if (result.duplicate) return;
     planarState['anatomicalParts'] = result.state;
     if (!result.applied) return;
+    if (faunaCurrentMonsterId == oculumNecthrallId &&
+        point['id'] == oculumNecthrallSpindle &&
+        result.reachedZero) {
+      breakNecthrallSpindle();
+    }
+    if (oculumOculiathHasHook(faunaCurrentMonsterId) &&
+        point['id'] == 'hook' &&
+        result.reachedZero) {
+      final carrier = escapeToken(sheetTagAt(schedaCorrente));
+      if (carrier != null) {
+        await releaseOculiathHold(carrier, reason: 'L’uncino si rompe.');
+      }
+    }
     if (faunaCurrentMonsterId == 'costrutto_minore' && point['id'] == 'box' ||
         isRunicGolemCoreCreature && point['id'] == 'chest_plates') {
       publishReferenceCreatureAnatomyState();

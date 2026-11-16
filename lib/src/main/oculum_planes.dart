@@ -336,6 +336,11 @@ extension _OculumPlanes on _OculumHomePageState {
       builder: (dialog) => SimpleDialog(
         title: const Text('Piano attuale'),
         children: [
+          if (selectedPlaneId == 'affogato')
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialog, 'explore:affogato'),
+              child: const Text('Esplora il Regno Sommerso'),
+            ),
           for (final folder in ['Piani naturali', 'Micro realtà'])
             ExpansionTile(
               title: Text(folder),
@@ -363,7 +368,12 @@ extension _OculumPlanes on _OculumHomePageState {
         ],
       ),
     );
-    if (selected == null || !mounted || selected == selectedPlaneId) return;
+    if (selected == null || !mounted) return;
+    if (selected == 'explore:affogato') {
+      if (selectedPlaneId == 'affogato') await showCurrentMicroRealm();
+      return;
+    }
+    if (selected == selectedPlaneId) return;
     _saveActiveMerchantProfileStock();
     schedePersonaggio[schedaCorrente]['selectedPlaneId'] = selected;
     restoreMonsterAppearance(schedePersonaggio[schedaCorrente]);

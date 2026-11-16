@@ -62,8 +62,25 @@ void main() {
       expect(oculumScrollCombatRoles(scroll, effects), {
         OculumCombatAbilityRole.attack,
       });
+      scroll.remove('maxForm');
+      expect(oculumScrollCombatEffects(scroll).first.maximumTargets, 6);
     },
   );
+
+  test('each purchased form caps the scroll without capping learned forms', () {
+    for (var form = 1; form <= 5; form++) {
+      final item = InventoryItem.fromJson(
+        oculumOculumTheftScrollItem(2, maxForm: form).toJson(),
+      );
+      final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
+      final effects = oculumScrollCombatEffects(scroll);
+      expect(scroll['maxForm'], form);
+      expect(scroll['willCost'], 0);
+      expect(effects.first.maximumTargets, form + 1);
+      expect(effects.first.valueExpression, '${1 + 2 * form}');
+      expect((scroll['authoredSkill'] as Map)['forme'], hasLength(5));
+    }
+  });
 
   testWidgets('the Alchemist can sell Sfera Predatrice as a random offer', (
     tester,
@@ -101,6 +118,10 @@ void main() {
     );
 
     final cost = probe.shopCost(offer);
+    final form = readIntValue(offer['scrollMaxForm']);
+    expect(form, inInclusiveRange(1, 5));
+    final price = oculumSkillScrollFormPriceRange(form);
+    expect(cost, inInclusiveRange(price.minimum, price.maximum));
     state.obserController.text = '${cost + 10}';
     await probe.buyShopOffer(offer);
     expect(state.obserController.text, '10');
@@ -111,6 +132,7 @@ void main() {
           (item) => item.craftData['scroll']?['kind'] == oculumOculumTheftKind,
         );
     expect(purchased.quantita, 1);
+    expect(purchased.craftData['scroll']['maxForm'], form);
     probe.shopType('fabbro');
     expect(
       probe.shopOffers().any(

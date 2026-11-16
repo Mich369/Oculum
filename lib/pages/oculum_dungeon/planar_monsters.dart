@@ -485,6 +485,8 @@ final List<MonsterBookEntry> oculumPlanarMonsterEntries = [
   ),
   ..._shieldCloudMonsterEntries,
   ..._canonicalPlanarVariants,
+  ..._sunkenRealmEntries,
+  ..._balenaMilleOcchiEntries,
   for (final habitat in _planarSpeciesNames.entries)
     for (var i = 0; i < habitat.value.length; i++)
       _buildPlanarMonster(
@@ -627,12 +629,26 @@ final Map<String, MonsterConcreteTechnique> _planarTechniques = {
       monster.skillIds[slot]: _buildPlanarTechnique(monster, slot),
 };
 MonsterConcreteTechnique? oculumPlanarTechnique(String rawId) =>
+    _mutantRatTechniques[rawId] ??
+    _acuagoblinTechniques[rawId] ??
+    _goblinKingTechniques[rawId] ??
+    _oculiathTechniques[rawId] ??
+    _solarObserverAndBiterTechniques[rawId] ??
+    _bunnysTechniques[rawId] ??
+    _cynervailTechniques[rawId] ??
+    _necthrallTechniques[rawId] ??
+    _oblyvuardTechniques[rawId] ??
+    _frutibushTechniques[rawId] ??
+    _sonoreyeTechniques[rawId] ??
+    _aculotideTechniques[rawId] ??
     _lunarGuardTechniques[rawId.replaceFirst(
       RegExp(r'_variante_[a-z]+$'),
       '',
     )] ??
     _cycleMonsterTechniques[rawId] ??
     _canonicalVariantTechniques[rawId] ??
+    _sunkenRealmTechniques[rawId] ??
+    _balenaMilleOcchiTechniques[rawId] ??
     _extraPlanarTechniques[rawId.replaceFirst(
       RegExp(r'_variante_[a-z]+$'),
       '',

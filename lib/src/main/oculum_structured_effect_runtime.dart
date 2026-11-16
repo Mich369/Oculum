@@ -191,7 +191,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
         : amount;
     final before = hpCorrenti();
     final after = (before + effectiveAmount).clamp(0, maxHp()).toInt();
-    currentHpController.text = after.toString();
+    writeHealedLife(after);
     showSheetFeedback(OculumFeedbackKind.heal, amount: after - before);
     if (after > before) {
       aggiungiLog(
@@ -200,7 +200,10 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     }
   }
 
-  bool tickActiveStructuredEffects(String unit) {
+  bool tickActiveStructuredEffects(
+    String unit, {
+    bool Function(Map<String, dynamic>)? include,
+  }) {
     final hpBeforeBuffRemoval = hpCorrenti();
     final normalizedUnit = oculumTurnUnit(unit);
     var changed = false;
@@ -210,6 +213,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           '${effect['target'] ?? ''}' == 'sotto_stress',
     );
     for (final effect in activeStructuredEffects) {
+      if (include?.call(effect) == false) continue;
       if (effect['mode'] == 'prossima_azione') continue;
       if (oculumTurnUnit('${effect['unit'] ?? ''}') != normalizedUnit) {
         continue;
@@ -358,6 +362,16 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           break;
         case 'clone_ombra':
           break;
+        case oculumGoblinGuardianKind:
+          if (!currentCombatIsActive() || outsideFight) {
+            return 'La Guardia reale può essere richiamata soltanto durante il Fight.';
+          }
+          break;
+        case oculumMutantRatSummon:
+          if (!currentCombatIsActive() || outsideFight) {
+            return 'I topolini possono essere richiamati soltanto durante il Fight.';
+          }
+          break;
         default:
           return 'Evocazione non riconosciuta: ${effect.target}.';
       }
@@ -368,6 +382,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
   List<String> applyStructuredEffectsOnActivation(
     Iterable<OculumStructuredEffect> effects, {
     required String source,
+    OculumAbilityCooldown? sourceCooldown,
     int? level,
     int? grade,
     Map<String, num> spentResources = const <String, num>{},
@@ -378,6 +393,30 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     bool friendlyFireResisted = false,
   }) {
     if (applyFusionBonus) effects = dustFusionArtEffects(effects);
+    if (effects.any(
+      (effect) => effect.enabled && oculumIsSonoreyeEchoEffect(effect.id),
+    )) {
+      activeStructuredEffects.removeWhere(
+        (entry) =>
+            entry['mode'] == 'prossima_azione' &&
+            oculumIsSonoreyeEchoEffect('${entry['effectId'] ?? ''}'),
+      );
+    }
+    bool isVolleyEffect(String target) =>
+        oculumOculiathIsRayEffect(target) ||
+        target == oculumAculotideCoronaEffect;
+    if (effects.any(
+      (effect) =>
+          effect.enabled &&
+          effect.type == 'planar' &&
+          isVolleyEffect(effect.target),
+    )) {
+      activeStructuredEffects.removeWhere(
+        (entry) =>
+            entry['type'] == 'pending_target' &&
+            isVolleyEffect('${entry['target']}'),
+      );
+    }
     final messages = <String>[];
     final variables = formulaValueContext();
     final resolvedVariables = <String, num>{
@@ -493,6 +532,16 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             effect.resource.startsWith('corruption_mastery:')
             ? effect.resource.substring('corruption_mastery:'.length)
             : '';
+        final appliesRedCorruption =
+            effect.type == 'stato' &&
+            target == 'corruzione' &&
+            effect.resource == 'corruption_red' &&
+            effect.recipient == 'se_stesso';
+        if (appliesRedCorruption &&
+            memoryOfSelfBlocksCorruption(const {'corruptionKind': 'rossa'})) {
+          messages.add(memoryOfSelfRedCorruptionMessage);
+          continue;
+        }
         if (effect.type == 'stato' &&
             target == 'corruzione' &&
             effect.recipient == 'se_stesso') {
@@ -547,7 +596,13 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           planarState['cycleLunarBite'] = true;
         }
         final effectiveRecipient =
-            combatSupportTargeting && effect.recipient == 'se_stesso'
+            combatSupportTargeting &&
+                effect.recipient == 'se_stesso' &&
+                !oculumIsPredoneOrbitTarget(target) &&
+                !const {
+                  oculumGoblinGuardianKind,
+                  oculumMutantRatSummon,
+                }.contains(effect.target)
             ? 'alleato'
             : effect.recipient;
         if (effectiveRecipient != 'se_stesso' && !preparedAttackBonus) {
@@ -559,7 +614,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             ..duration = '$duration'
             ..diceExpression = ''
             ..includeLevel = false
-            ..includeGrade = false;
+            ..includeGrade = false
+            ..scaleMonsterWeakOpen = false;
           if (effect.target == 'cycle_fate_gift' ||
               effect.target.contains('malicious_shaman_') ||
               effect.target == 'strange_presence_push') {
@@ -639,6 +695,27 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             final issue = summonAvailabilityIssue([effect]);
             if (issue != null) {
               messages.add(issue);
+              continue;
+            }
+            if (normalizedStructuredTarget(effect.target) ==
+                oculumGoblinGuardianKind) {
+              messages.add(
+                createGoblinRoyalGuard(form: value, source: source)
+                    ? 'Una Guardia reale si unisce al Fight.'
+                    : 'La Guardia reale non è stata evocata.',
+              );
+              continue;
+            }
+            if (normalizedStructuredTarget(effect.target) ==
+                oculumMutantRatSummon) {
+              final count = createMutantRatPups(count: value, source: source);
+              if (count > 0) {
+                messages.add(
+                  count == 1
+                      ? 'Un topolino si unisce al Fight.'
+                      : '$count topolini si uniscono al Fight.',
+                );
+              }
               continue;
             }
             if (normalizedStructuredTarget(effect.target) == 'piranha_minore') {
@@ -741,7 +818,13 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             prepareConcentratedSkill(effect, value, source);
             break;
           case 'planar':
-            activatePlanarEffect(effect, value, duration, source);
+            activatePlanarEffect(
+              effect,
+              value,
+              duration,
+              source,
+              sourceCooldown: sourceCooldown,
+            );
             break;
           case 'cura':
             if (!isPeriodic && effect.mode != 'rigenerazione') {
@@ -869,11 +952,18 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
                   'azioni' => OculumConditionDurationType.actions,
                   'riposi_brevi' => OculumConditionDurationType.shortRest,
                   'riposi_lunghi' => OculumConditionDurationType.longRest,
+                  _ when appliesRedCorruption && duration <= 0 =>
+                    OculumConditionDurationType.permanent,
                   _ => OculumConditionDurationType.turns,
                 },
                 source: source,
                 metadata: target == 'corrosione_acida'
                     ? {'acidDamage': value.abs(), 'element': 'acido'}
+                    : appliesRedCorruption
+                    ? corruptionInfectionMetadata({
+                        ...?rewardRequest,
+                        'corruptionKind': 'rossa',
+                      }, schedaCorrente)
                     : target == 'corruzione'
                     ? {
                         if (corruptionOwnerTag.isNotEmpty)
@@ -904,6 +994,7 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           'danno',
           'danno_percentuale',
           'difesa',
+          'difesa_percentuale',
           'modifica_statistica',
           'modifica_sottotratto',
           'velocita',
@@ -942,10 +1033,21 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
           }
           activeStructuredEffects.add(<String, dynamic>{
             'effectId': effect.id,
+            if (isBalenaRayEffect(effect.id) &&
+                schedePersonaggio[schedaCorrente]['combatConcentrationPending'] ==
+                    true)
+              'balenaFocusTurn': playerReportedTurn,
             'source': source,
             'type': effect.type,
             'mode': effect.mode,
             'target': target,
+            if (target == oculumGoblinVanishEffect ||
+                target == oculumGoblinRegalStrikeEffect) ...{
+              'goblinPreparedEncounterId': onlineCombatEncounterId,
+              'goblinPreparedFightId': _summonFightKey(
+                sheetTagAt(schedaCorrente),
+              ),
+            },
             'resource': effect.resource,
             if (effect.elementType.trim().isNotEmpty)
               'element': oculumNormalizeElementId(effect.elementType),
@@ -967,6 +1069,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
               'periodicActive': false,
             },
           });
+          if (preparedAttackBonus && oculumIsImbrytoadSpitEffect(effect.id)) {
+            beginImbrytoadSpit();
+          }
           if (!isPeriodic &&
               value > 0 &&
               const {
@@ -1625,24 +1730,36 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     try {
       if (effect.type == 'danno' || effect.type == 'danno_percentuale') {
         final amount = effect.type == 'danno_percentuale'
-            ? oculumTargetPercentageDamage(
-                percent: readIntValue(effect.valueExpression),
-                hp: hpCorrenti(),
-                temporaryHp: hpTemp(),
-                shield: scudo(),
-                oculumShield: scudoOculum(),
-                bypassShields: effect.bypassShields,
-              )
+            ? effect.id == oculumSoulFighterCutEffect
+                  ? oculumSoulFighterDamage(
+                      currentHp: hpCorrenti(),
+                      percent: readIntValue(effect.valueExpression),
+                    )
+                  : oculumTargetPercentageDamage(
+                      percent: readIntValue(effect.valueExpression),
+                      hp: hpCorrenti(),
+                      temporaryHp: hpTemp(),
+                      shield: scudo(),
+                      oculumShield: scudoOculum(),
+                      bypassShields: effect.bypassShields,
+                    )
             : max(0, readIntValue(effect.valueExpression));
-        await applicaDannoSubito(
-          dannoEsplicito: amount,
-          bypassDefense: effect.bypassDefense,
-          bypassShields: effect.bypassShields,
-          resistanceBypassDamage: effect.bypassResistance
-              ? max(0, readIntValue(effect.valueExpression))
-              : 0,
-          shieldDamageBonusPercent: effect.shieldDamageBonusPercent,
-        );
+        final previousElement = incomingDamageElement;
+        final spiritualCut = effect.id == oculumSoulFighterCutEffect;
+        if (spiritualCut) incomingDamageElement = 'spirituale';
+        try {
+          await applicaDannoSubito(
+            dannoEsplicito: amount,
+            bypassDefense: effect.bypassDefense,
+            bypassShields: effect.bypassShields,
+            resistanceBypassDamage: effect.bypassResistance
+                ? max(0, readIntValue(effect.valueExpression))
+                : 0,
+            shieldDamageBonusPercent: effect.shieldDamageBonusPercent,
+          );
+        } finally {
+          if (spiritualCut) incomingDamageElement = previousElement;
+        }
       } else {
         for (final message in applyStructuredEffectsOnActivation(
           [effect],

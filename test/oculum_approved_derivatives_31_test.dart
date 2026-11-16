@@ -37,17 +37,21 @@ void main() {
       expect(desktops, hasLength(19));
       expect(desktops.map((f) => f['id']).toSet(), hasLength(19));
       for (final f in desktops) {
+        final id = f['id'] as String;
         final bytes = File(f['asset'] as String).readAsBytesSync();
         expect(digest(bytes), f['sha256']);
-        final monster = monsterBookEntryById(f['id'] as String)!;
+        final monster = monsterBookEntryById(id)!;
         final theme = OculumMonsterTheme(
           monster,
           oculumMonsterColors(monster).first,
         );
-        expect(
-          theme.illustration,
-          oculumMonsterArtworkAsset(f['asset'] as String),
-        );
+        expect(theme.illustration, switch (id) {
+          'armadillo_sabbia' =>
+            'assets/oculum/home_art_authored/theme_${id}_canon_20261116_riallineamento.webp',
+          'lupo_infernale_del_ghiaccio' =>
+            'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp',
+          _ => oculumMonsterArtworkAsset(f['asset'] as String),
+        });
       }
     },
   );

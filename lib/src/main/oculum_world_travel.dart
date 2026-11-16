@@ -454,7 +454,9 @@ extension _OculumWorldTravel on _OculumHomePageState {
           .firstOrNull;
       if (monster == null) return false;
       final target = (power * 1.25).ceil();
-      final count = enemyCount.clamp(1, min(12, max(1, target))).toInt();
+      final count = monster.fightsAlone
+          ? 1
+          : enemyCount.clamp(1, min(12, max(1, target))).toInt();
       final creatures = <Map<String, dynamic>>[];
       for (var index = 0; index < count; index++) {
         final budget = target ~/ count + (index < target % count ? 1 : 0);
@@ -537,10 +539,16 @@ extension _OculumWorldTravel on _OculumHomePageState {
       final stats = Map<String, dynamic>.from(raw['stats'] as Map);
       final level = readIntValue(raw['level']),
           grade = readIntValue(raw['grade']);
+      final hp = oculumOculiathHealthFromResilience(
+        monster.id,
+        max(1, readIntValue(stats['resilienza'])) *
+            oculumHpMultiplierForGrade(grade, level: level),
+      );
       final loadout = oculumMonsterBookLoadout(
         monster,
         random: Random(),
         level: level,
+        grade: grade,
       );
       final tag = generaTagUnicoScheda(
         schedePersonaggio.length,
@@ -558,24 +566,26 @@ extension _OculumWorldTravel on _OculumHomePageState {
             'id': tag,
             'sheetTag': tag,
             'monsterBookSourceId': monster.id,
-            'monsterBaseStats': {
-              for (final key in const [
-                'resilienza',
-                'volonta',
-                'materia',
-                'oculum',
-              ])
-                key: monster.stats[key] ?? 0,
-            },
+            'monsterBaseStats': oculumMonsterCreationStats(monster, 0),
             'monsterStatPoints': '0',
             'worldTravelEventId': eventId,
             'worldTravelPowerOverride': readIntValue(raw['power']),
             'descrizioneCreatura': monster.descIt,
             'puntoDebole': monster.weakPointIt,
-            'currentHp':
-                '${readIntValue(stats['resilienza']) * oculumHpMultiplierForGrade(grade, level: level)}',
+            'currentHp': '$hp',
+            'inventario': [
+              for (final item in monster.inventoryItems)
+                InventoryItem.fromJson(
+                  Map<String, dynamic>.from(item),
+                ).toJson(),
+            ],
             'skills': loadout.skills.map((skill) => skill.toJson()).toList(),
-            'arti': [if (loadout.art case final art?) art.toJson()],
+            'arti': [
+              if (loadout.art case final art?) art.toJson(),
+              for (final art in oculumMonsterBookAdditionalArts(monster))
+                art.toJson(),
+              if (loadout.weakOpen case final weakOpen?) weakOpen.toJson(),
+            ],
             for (final key in const [
               'resilienza',
               'volonta',
@@ -600,12 +610,8 @@ extension _OculumWorldTravel on _OculumHomePageState {
         'monsterBookSourceId': monster.id,
         'side': 'enemy',
         'status': 'ready',
-        'currentHp':
-            readIntValue(stats['resilienza']) *
-            oculumHpMultiplierForGrade(grade, level: level),
-        'maxHp':
-            readIntValue(stats['resilienza']) *
-            oculumHpMultiplierForGrade(grade, level: level),
+        'currentHp': hp,
+        'maxHp': hp,
         'level': level,
         'grade': grade,
         'totalPower': readIntValue(raw['power']),
@@ -808,7 +814,7 @@ extension _OculumWorldTravel on _OculumHomePageState {
   Future<(String, int)?> chooseWorldTravelCreature(
     List<MonsterBookEntry> candidates,
   ) async {
-    String selected = candidates.first.id;
+    var selected = candidates.first;
     var count = 1;
     return showDialog<(String, int)>(
       context: context,
@@ -819,7 +825,7 @@ extension _OculumWorldTravel on _OculumHomePageState {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                initialValue: selected,
+                initialValue: selected.id,
                 isExpanded: true,
                 items: [
                   for (final monster in candidates)
@@ -831,19 +837,34 @@ extension _OculumWorldTravel on _OculumHomePageState {
                       ),
                     ),
                 ],
-                onChanged: (value) =>
-                    refresh(() => selected = value ?? selected),
+                onChanged: (value) {
+                  if (value == null) return;
+                  refresh(() {
+                    selected = candidates.firstWhere(
+                      (entry) => entry.id == value,
+                    );
+                    if (selected.fightsAlone) count = 1;
+                  });
+                },
               ),
               DropdownButtonFormField<int>(
+                key: ValueKey(selected.fightsAlone),
                 initialValue: count,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Numero di creature',
+                  helperText: selected.fightsAlone ? 'Combatte da solo' : null,
                 ),
                 items: [
-                  for (var value = 1; value <= 8; value++)
+                  for (
+                    var value = 1;
+                    value <= (selected.fightsAlone ? 1 : 8);
+                    value++
+                  )
                     DropdownMenuItem(value: value, child: Text('$value')),
                 ],
-                onChanged: (value) => refresh(() => count = value ?? 1),
+                onChanged: selected.fightsAlone
+                    ? null
+                    : (value) => refresh(() => count = value ?? 1),
               ),
             ],
           ),
@@ -853,7 +874,7 @@ extension _OculumWorldTravel on _OculumHomePageState {
               child: const Text('Annulla'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(dialog, (selected, count)),
+              onPressed: () => Navigator.pop(dialog, (selected.id, count)),
               child: const Text('Prepara'),
             ),
           ],

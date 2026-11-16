@@ -11,6 +11,45 @@ String oculumCombatHealthLabel(int hp, int maximumHp) {
 bool oculumCombatConfirmedDeath({required int hp, required int deathWounds}) =>
     hp <= 0 && deathWounds >= 3;
 
+const oculumForgottenCharacterName = 'Identità dimenticata';
+
+void oculumRecordBalenaKnockout(
+  Map<String, dynamic> target,
+  Map request, {
+  required String sourceMonsterId,
+}) {
+  final fight = '${target['fightInstanceId'] ?? ''}';
+  final receipt = request['damageReceipt'];
+  if (fight.isEmpty ||
+      fight != request['targetFightInstance'] ||
+      request['status'] != 'resolved' ||
+      request['outcome'] == OculumAttackOutcome.avoided.name ||
+      receipt is! Map ||
+      receipt['targetDownedByHit'] != true ||
+      readIntValue(receipt['hpLost']) <= 0) {
+    return;
+  }
+  if (sourceMonsterId == oculumBalenaMilleOcchiId) {
+    target['balenaKnockoutFight'] = fight;
+  } else {
+    target.remove('balenaKnockoutFight');
+  }
+}
+
+bool oculumConfirmCombatDeathMetadata(Map<String, dynamic> token) {
+  if (token['status'] != 'dead') return false;
+  final plane = '${token['fightPlaneId'] ?? ''}';
+  if (plane.isNotEmpty) token.putIfAbsent('deathPlaneId', () => plane);
+  final fight = '${token['fightInstanceId'] ?? ''}';
+  if (fight.isEmpty ||
+      token['balenaKnockoutFight'] != fight ||
+      token['forgottenByBalena'] == true) {
+    return false;
+  }
+  token['forgottenByBalena'] = true;
+  return true;
+}
+
 String oculumCombatTokenHealthLabel(Map token) {
   if (const {'dead', 'fled', 'expired'}.contains(token['status'])) return '';
   if (token.containsKey('currentHp') && token.containsKey('maxHp')) {
@@ -58,23 +97,98 @@ int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
     level: sheet.containsKey('livello') ? readIntValue(sheet['livello']) : null,
   );
   final saved = readIntValue(sheet['derivedMaxHp']);
+  final monsterId = '${sheet['monsterBookSourceId'] ?? ''}';
   if (saved > 0) {
     return max(
       1,
       saved +
-          resilience *
-              (multiplier -
-                  readIntValue(sheet['hpGradeMultiplier'], fallback: 10)),
+          oculumOculiathHealthFromResilience(monsterId, resilience * multiplier) -
+          oculumOculiathHealthFromResilience(
+            monsterId,
+            resilience * readIntValue(sheet['hpGradeMultiplier'], fallback: 10),
+          ),
     );
   }
   return max(
     1,
-    resilience * multiplier + readIntValue(sheet['manualHpMaximumAdjustment']),
+    oculumOculiathHealthFromResilience(monsterId, resilience * multiplier) +
+        readIntValue(sheet['manualHpMaximumAdjustment']),
   );
 }
 
 extension _OculumHomeDeathRules on _OculumHomePageState {
   static const int deathWoundLimit = 3;
+
+  void snapshotCombatFightPlane() {
+    final plane = selectedPlaneId;
+    for (final token in masterInitiativeTokens) {
+      token['fightPlaneId'] = plane;
+      if (!masterInitiativeTokenIsDead(token)) {
+        token.remove('deathPlaneId');
+        token.remove('balenaKnockoutFight');
+      }
+    }
+  }
+
+  bool campaignHasForgottenCharacter(Object? tag) =>
+      (partyChest['forgottenCharacterTags'] as List? ?? const []).any(
+        (forgotten) => oculumSameSheetIdentity(forgotten, tag),
+      );
+
+  bool sheetIdentityForgotten(int index) {
+    if (index < 0 || index >= schedePersonaggio.length) return false;
+    // Tag generation can read this display name before the tag is assigned.
+    final sheet = schedePersonaggio[index];
+    return campaignHasForgottenCharacter(sheet['sheetTag'] ?? sheet['id']) ||
+        campaignHasForgottenCharacter(sheet['realtimeSourceSheetTag']);
+  }
+
+  void confirmCombatDeathMetadata(Map<String, dynamic> token) {
+    if (!oculumConfirmCombatDeathMetadata(token)) return;
+    final tag = publicInitiativeSourceTag(token);
+    if (tag.isEmpty || campaignHasForgottenCharacter(tag)) return;
+    partyChest['forgottenCharacterTags'] = [
+      ...(partyChest['forgottenCharacterTags'] as List? ?? const []),
+      tag,
+    ];
+    partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
+    programmaSalvataggio();
+    unawaited(sendPartyChestState());
+  }
+
+  void recordWhaleDamageAttribution(Map<String, dynamic> request) {
+    if (!haPermessiMaster ||
+        realtimeService?.isConnected == true && !realtimeIsMasterRole) {
+      return;
+    }
+    final group = rewardSupportEncounter('${request['encounterId'] ?? ''}');
+    if (group == null || group['combatEnded'] == true) return;
+    final tokens = rewardSupportTokens(group);
+    final sourceTag = '${request['sourceTag'] ?? ''}';
+    final targetTag = '${request['targetTag'] ?? ''}';
+    final attacker = tokens
+        .where((token) => combatTokenMatchesSheet(token, sourceTag))
+        .firstOrNull;
+    final target = tokens
+        .where((token) => combatTokenMatchesSheet(token, targetTag))
+        .firstOrNull;
+    if (attacker == null || target == null) return;
+    final previous = target['balenaKnockoutFight'];
+    oculumRecordBalenaKnockout(
+      target,
+      request,
+      sourceMonsterId: monsterBookIdForCombatToken(attacker),
+    );
+    if (previous == target['balenaKnockoutFight']) return;
+    confirmCombatDeathMetadata(target);
+    if (group['id'] == selectedMasterInitiativeGroupId) {
+      captureActiveMasterInitiativeGroup();
+    } else {
+      group['tokens'] = tokens;
+    }
+    programmaSalvataggio();
+    sendRealtimeInitiativeSnapshotIfPublished();
+  }
   static const int vitalWillLimit = 3;
 
   bool get schedaAttivaCaduta => personaggioCaduto || hpCorrenti() <= 0;
@@ -211,6 +325,8 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     if (tokenIndex < 0 && participant == null) return;
 
     final token = participant ?? masterInitiativeTokens[tokenIndex];
+    final sheetWindow = schedePersonaggio[index][_resurrectionWindowKey];
+    if (sheetWindow != null) token[_resurrectionWindowKey] = sheetWindow;
     final isCurrent = index == schedaCorrente;
     final downed = isCurrent
         ? schedaAttivaCaduta
@@ -256,7 +372,10 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
       token['status'] = 'dead';
       token['automaticDeath'] = true;
       token['downed'] = false;
+      confirmCombatDeathMetadata(token);
       generateMonsterLootForDeath(index);
+      resolveBunnysDeathHealing(index, token);
+      resolveAculotideDeath(index, token);
     } else if (readIntValue(token['currentHp']) > 0 &&
         readBoolValue(token['automaticDeath'])) {
       token['automaticDeath'] = false;
@@ -265,6 +384,11 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     } else if (!masterInitiativeTokenIsDead(token) &&
         token['status'] != 'fled') {
       token['status'] = downed ? 'downed' : 'ready';
+    }
+    if (readIntValue(token['currentHp']) > 0 &&
+        !masterInitiativeTokenIsDead(token)) {
+      token.remove('balenaKnockoutFight');
+      token.remove('deathPlaneId');
     }
     token['updatedAt'] = DateTime.now().toIso8601String();
   }
@@ -319,6 +443,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     );
 
     currentHpController.text = hp.toString();
+    _closeLocalResurrectionDeath(schedePersonaggio[schedaCorrente]);
     applyTemporaryOculumState(
       TemporaryOculumState(
         normalCurrent: oculum,
@@ -352,7 +477,10 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
   }
 
   void effettuaTiroMorteSchedaAttiva() {
-    if (friendlyFireDowned) return;
+    if (friendlyFireDowned ||
+        oculumCombatConfirmedDeath(hp: hpCorrenti(), deathWounds: feriteMorte)) {
+      return;
+    }
     if (!schedaAttivaCaduta) {
       updateOculumHomeUi(() {
         risultato = t(
@@ -403,11 +531,13 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
           syncCurrentSheetDeathStateToInitiative();
         }
       } else {
+        final newlyDead = feriteMorte == deathWoundLimit - 1;
         feriteMorte = min(deathWoundLimit, feriteMorte + 1);
         risultato =
             'Tiro contro la morte: $rollText${roll == 1 ? ' critico negativo' : ''}. Ferite $feriteMorte/$deathWoundLimit.';
         if (feriteMorte >= deathWoundLimit) {
           personaggioCaduto = false;
+          if (newlyDead) _recordLocalResurrectionDeath(schedePersonaggio[schedaCorrente]);
           risultato =
               'Tiro contro la morte: terza Ferita. Il personaggio e morto.';
           segnaFallenEyeMortoDaScheda(schedePersonaggio[schedaCorrente]);
@@ -462,13 +592,26 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
 
   void applyMasterInitiativeTokenVitalsToSource(Map<String, dynamic> token) {
     resolveLavastrelloNestDestroyed(token);
+    confirmCombatDeathMetadata(token);
+    final hp = max(0, readIntValue(token['currentHp']));
+    if (hp > 0 && token['status'] != 'dead') {
+      token.remove('balenaKnockoutFight');
+      token.remove('deathPlaneId');
+    }
     final index = masterInitiativeSheetIndexForToken(token);
     if (index < 0) return;
 
     final downed = masterInitiativeTokenIsDowned(token);
     final sheet = schedePersonaggio[index];
-    final hp = max(0, readIntValue(token['currentHp']));
-    if (token['status'] == 'dead') generateMonsterLootForDeath(index);
+    if (hp > 0 && token['status'] != 'dead') {
+      _closeLocalResurrectionDeath(token);
+      _closeLocalResurrectionDeath(sheet);
+    }
+    if (token['status'] == 'dead') {
+      generateMonsterLootForDeath(index);
+      resolveBunnysDeathHealing(index, token);
+      resolveAculotideDeath(index, token);
+    }
     final oculum = max(0, readIntValue(token['currentOculum']));
     final shield = max(0, readIntValue(token['shield']));
     final temporaryHp = readIntValue(
@@ -632,6 +775,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
     if (wounds >= deathWoundLimit) {
       token['downed'] = false;
       token['status'] = 'dead';
+      _recordLocalResurrectionTokenDeath(token);
       risultato =
           'Tiro contro la morte di $name: $rollText. Terza Ferita: morto.';
     } else {
@@ -716,6 +860,7 @@ extension _OculumHomeDeathRules on _OculumHomePageState {
         if (readIntValue(target['deathWounds']) >= deathWoundLimit) {
           target['downed'] = false;
           target['status'] = 'dead';
+          _recordLocalResurrectionTokenDeath(target);
           risultato =
               'Rialza compagno: 1 critico. $targetName riceve la terza Ferita e muore.';
         } else {

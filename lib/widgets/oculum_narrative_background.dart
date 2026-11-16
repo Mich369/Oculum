@@ -8,8 +8,13 @@ import 'oculum_narrative_atmosphere.dart';
 /// The entire decorative layer is excluded from input and accessibility.
 /// Controls remain ordinary Flutter widgets above it on readable surfaces.
 class OculumNarrativeBackground extends StatelessWidget {
-  const OculumNarrativeBackground({super.key, required this.sheetId});
+  const OculumNarrativeBackground({
+    super.key,
+    required this.sheetId,
+    this.senkaMaskActive = false,
+  });
   final String sheetId;
+  final bool senkaMaskActive;
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: Listenable.merge([
@@ -24,15 +29,21 @@ class OculumNarrativeBackground extends StatelessWidget {
       final monster = oculumMonsterThemeById(presentation.artPackId);
       final pack = oculumResolveThemeArt(spec, presentation);
       final mobile = MediaQuery.sizeOf(context).width < 600;
+      final preserveMonsterFraming = mobile
+          ? monster?.preserveMobileIllustrationFraming
+          : monster?.preserveIllustrationFraming;
+      final storyImage =
+          (senkaMaskActive ? pack.maskedStorySceneAsset : null) ??
+          (mobile
+              ? pack.storySceneMobileAsset ?? pack.storyScene
+              : pack.storyScene);
       final image =
           (mobile
               ? monster?.illustrationMobile ?? monster?.illustration
               : monster?.illustration) ??
           (monster != null
               ? 'assets/oculum/theme_stories/webp/plane_${monster.monster.planeIds.firstOrNull ?? 'mezzano'}.webp'
-              : mobile
-              ? pack.storySceneMobileAsset ?? pack.storyScene
-              : pack.storyScene);
+              : storyImage);
       return IgnorePointer(
         child: ExcludeSemantics(
           child: RepaintBoundary(
@@ -45,7 +56,7 @@ class OculumNarrativeBackground extends StatelessWidget {
                     'narrative-background-${monster?.id ?? pack.id}',
                   ),
                   fit:
-                      (monster?.preserveIllustrationFraming == true ||
+                      (preserveMonsterFraming == true ||
                           pack.preserveStoryFraming)
                       ? BoxFit.contain
                       : BoxFit.cover,

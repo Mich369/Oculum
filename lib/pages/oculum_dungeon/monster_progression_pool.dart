@@ -54,6 +54,17 @@ bool oculumMonsterHasFixedProgressionSkills(MonsterBookEntry entry) =>
       'demonietto_bruciante',
       'demonietto_del_gelo',
       'coboldo_di_brina',
+      oculumGoblinKingId,
+      oculumMutantRatId,
+      oculumOculiathId,
+      oculumLesserOculiathId,
+      oculumGreaterOculiathId,
+      'soul_fighter',
+      oculumSonoreyeId,
+      oculumCynervailId,
+      oculumAculotideId,
+      'durafur',
+      'sensimoss',
     }.contains(entry.id.split('_variante_').first) ||
     (entry.formTags.contains('Creatura Minore') && entry.skillIds.isEmpty);
 
@@ -66,7 +77,8 @@ MonsterBookEntry _withMonsterProgressionPool(MonsterBookEntry entry) {
     _progressionOwners[id] = entry;
   }
   // Keep legacy IDs resolvable, but do not add moves to a single-skill species.
-  if (oculumMonsterHasFixedProgressionSkills(entry)) {
+  if (oculumMonsterHasFixedProgressionSkills(entry) ||
+      entry.encounterRules['authoredSkillPool'] == true) {
     return entry;
   }
   return entry.copyWith(

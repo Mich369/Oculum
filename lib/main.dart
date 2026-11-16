@@ -38,6 +38,7 @@ import 'package:webview_flutter/webview_flutter.dart' as mobile_webview;
 import 'package:webview_windows/webview_windows.dart' as windows_webview;
 
 import 'services/oculum_auth_service.dart';
+import 'services/oculum_secure_auth_storage.dart';
 import 'services/oculum_progression_surge.dart';
 import 'services/oculum_blind_spot.dart';
 import 'services/oculum_fate_pact.dart';
@@ -85,9 +86,17 @@ import 'widgets/oculum_monster_picker.dart';
 import 'widgets/oculum_attack_planner.dart';
 import 'game/oculum_opposed_attack.dart';
 import 'game/oculum_combat_scout_rules.dart';
+import 'game/oculum_goblin_king_rules.dart';
+import 'game/oculum_lama_orbita_rules.dart';
+import 'game/oculum_mutant_rat_rules.dart';
+import 'game/oculum_observer_biter_rules.dart';
+import 'game/oculum_oculiath_rules.dart';
+import 'game/oculum_elemental_sphere_rules.dart';
 import 'game/oculum_hp_rules.dart';
 import 'game/oculum_sleep_rules.dart';
+import 'game/oculum_resurrection_stone.dart';
 import 'game/oculum_anatomical_parts.dart';
+import 'game/oculum_name_search.dart';
 export 'game/oculum_anatomical_parts.dart';
 export 'game/oculum_hp_rules.dart';
 export 'game/oculum_sleep_rules.dart';
@@ -122,6 +131,7 @@ part 'src/main/oculum_conditions.dart';
 part 'src/main/oculum_home_quick_conditions.dart';
 part 'src/main/oculum_mod.dart';
 part 'src/main/oculum_home_death_rules.dart';
+part 'src/main/oculum_resurrection_stone.dart';
 part 'src/main/oculum_home_damage_impact.dart';
 part 'src/main/oculum_home_image_cache.dart';
 part 'src/main/oculum_home_combat_progression.dart';
@@ -163,6 +173,8 @@ part 'src/main/oculum_baghest_puppet.dart';
 part 'src/main/oculum_combat_scout.dart';
 part 'src/main/oculum_master_roll_requests.dart';
 part 'src/main/oculum_encounter_rewards.dart';
+part 'src/main/oculum_marionettista_help.dart';
+part 'src/main/oculum_necthrall_fight.dart';
 part 'src/main/oculum_progression_log.dart';
 part 'src/main/oculum_master_participant_menu.dart';
 part 'src/main/oculum_reward_support_tracking.dart';
@@ -178,18 +190,34 @@ part 'src/main/oculum_lunar_guardians.dart';
 part 'src/main/oculum_lunar_guardian_core.dart';
 part 'src/main/oculum_own_power_visibility.dart';
 part 'src/main/oculum_party_chest.dart';
+part 'src/main/oculum_personal_market_rules.dart';
+part 'src/main/oculum_personal_market.dart';
+part 'src/main/oculum_personal_market_ui.dart';
 part 'src/main/oculum_item_titles.dart';
 part 'src/main/oculum_micro_realms.dart';
 part 'src/main/oculum_blacksmith.dart';
 part 'src/main/oculum_recipe_books.dart';
 part 'src/main/oculum_party_quests.dart';
 part 'src/main/oculum_planar_runtime.dart';
+part 'src/main/oculum_goblin_king.dart';
+part 'src/main/oculum_mutant_rat.dart';
+part 'src/main/oculum_oculiath.dart';
+part 'src/main/oculum_oculiath_release.dart';
+part 'src/main/oculum_oculiath_scratches.dart';
+part 'src/main/oculum_aculotide.dart';
+part 'src/main/oculum_solar_observer_and_biter.dart';
+part 'src/main/oculum_elemental_sphere_ice.dart';
+part 'src/main/oculum_elemental_sphere_spiritual.dart';
+part 'src/main/oculum_bunnys.dart';
+part 'src/main/oculum_cynervail.dart';
+part 'src/main/oculum_soul_fighter.dart';
 part 'src/main/oculum_sand_creatures.dart';
 part 'src/main/oculum_armadillo_creatures.dart';
 part 'src/main/oculum_reference_creatures.dart';
 part 'src/main/oculum_celestial_runtime.dart';
 part 'src/main/oculum_bottled_cloud.dart';
 part 'src/main/oculum_minor_construct.dart';
+part 'src/main/oculum_baby_rock_rhino.dart';
 part 'src/main/oculum_mecha.dart';
 part 'src/main/oculum_will_inventory.dart';
 part 'src/main/oculum_masked_men.dart';
@@ -205,12 +233,18 @@ part 'src/main/oculum_weak_points.dart';
 part 'src/main/oculum_wing_damage.dart';
 part 'src/main/oculum_anatomical_parts.dart';
 part 'src/main/oculum_quick_npc_skills.dart';
+part 'src/main/oculum_monster_skill_names.dart';
 part 'src/main/oculum_mobile_sheet.dart';
 part 'src/main/oculum_fauna_crafting.dart';
 part 'src/main/oculum_monster_appearance.dart';
 part 'src/main/oculum_prepared_skills.dart';
 part 'src/main/oculum_fate_chaos.dart';
 part 'src/main/oculum_cycle_expansion.dart';
+part 'src/main/oculum_balena_mille_occhi.dart';
+part 'src/main/oculum_piovra_bite.dart';
+part 'src/main/oculum_piovra_grip.dart';
+part 'src/main/oculum_lama_orbita_runtime.dart';
+part 'src/main/oculum_corallwhirl_tides.dart';
 part 'src/main/oculum_escape.dart';
 part 'src/main/oculum_provoker_shield.dart';
 part 'src/main/oculum_total_power_burst.dart';
@@ -255,6 +289,7 @@ part 'src/main/oculum_story_session_notes.dart';
 part 'src/main/oculum_home_recipes.dart';
 part 'src/main/oculum_home_titles_inventory_pages.dart';
 part 'src/main/oculum_home_merchant.dart';
+part 'src/main/oculum_merchant_barter.dart';
 part 'src/main/oculum_smoking_herbs.dart';
 part 'src/main/oculum_fate_sign.dart';
 part 'src/main/oculum_scrolls.dart';
@@ -269,6 +304,7 @@ part 'src/main/oculum_home_dialogs_quick_edit.dart';
 part 'src/main/oculum_fallen_eyes.dart';
 part 'src/main/oculum_summoning_emblem.dart';
 part 'src/main/oculum_starter_creation.dart';
+part 'src/main/oculum_monster_weak_open.dart';
 part 'src/main/oculum_creation_progression.dart';
 part 'src/main/oculum_ability_element_resistance.dart';
 part 'src/main/oculum_senka_runtime.dart';
@@ -625,18 +661,19 @@ Future<bool> _initializeOculumSupabase() async {
       return false;
     }
 
-    final sessionStorage = OculumSessionStorage(
-      persistSessionKey: oculumAuthSessionStorageKey(
-        Uri.parse(supabaseUrl).host.split('.').first,
-        browser: kIsWeb,
-      ),
-    );
+    final projectRef = Uri.parse(supabaseUrl).host.split('.').first;
+    final sessionKey = oculumAuthSessionStorageKey(projectRef, browser: kIsWeb);
+    final sessionStorage = OculumSessionStorage(persistSessionKey: sessionKey);
     OculumAuthService.sessionStorage = sessionStorage;
     await Supabase.initialize(
       url: supabaseUrl,
       publishableKey: supabasePublishableKey,
+      debug: false,
       authOptions: FlutterAuthClientOptions(
         localStorage: sessionStorage,
+        pkceAsyncStorage: kIsWeb
+            ? null
+            : OculumSecurePkceStorage(namespace: sessionKey),
         authFlowType: AuthFlowType.pkce,
         autoRefreshToken: true,
         detectSessionInUri: true,
@@ -796,6 +833,7 @@ class OculumHomePage extends StatefulWidget {
 class _OculumHomePageState extends State<OculumHomePage>
     with WidgetsBindingObserver {
   Size layoutViewport = const Size(900, 900);
+  _OculumAppFeedbackHostState? _appFeedbackHost;
 
   @override
   void didChangeDependencies() {
@@ -933,6 +971,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   bool artActivationAvailable(int artIndex) {
     if (artIndex < 0 || artIndex >= arti.length) return false;
+    if (oculumIsMonsterWeakOpen(arti[artIndex])) return true;
     final current = arti[artIndex].integritaCorrente;
     final effectiveCurrent = current < 0
         ? oculumArtMaximumValue(
@@ -1741,9 +1780,11 @@ class _OculumHomePageState extends State<OculumHomePage>
   String monsterBookKnowledgeFilter = 'all';
   bool monsterBookFinishedOnly = false;
   String partyBookHabitatFilter = '';
+  String partyBookNameSearch = '';
   final recipeSearchController = TextEditingController();
 
   final quickSheetNameController = TextEditingController(text: '???');
+  final quickSheetMonsterIdController = TextEditingController();
   final quickSheetElementController = TextEditingController();
   final quickSheetLevelController = TextEditingController(text: '0');
   final quickSheetGradeController = TextEditingController(text: '0');
@@ -2118,6 +2159,8 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool longRestInProgress = false;
   bool _meditationInProgress = false;
   bool _weaponSharpeningInProgress = false;
+  final Set<String> _solarGoldProofsInFlight = {};
+  bool _elementalSphereIceReleaseInFlight = false;
   bool aggiustaNucleoUsato = false;
   bool aggiustaNucleoInCorso = false;
   String statoForzaAttivo = '';
@@ -2317,6 +2360,10 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, Map<String, dynamic>> monsterBookPartyDiscoveries = {};
   final Map<String, Map<String, dynamic>> partyChestCampaigns = {};
   final Map<String, Map<String, dynamic>> partyChestPending = {};
+  final Map<String, Map<String, dynamic>> personalMarketScopes = {};
+  final Map<String, Map<String, dynamic>> personalMarketPending = {};
+  final Map<String, Map<String, dynamic>> privateMasterMarkets = {};
+  int personalMarketLocalOrbArgb = 0xff9fba97;
   final ValueNotifier<int> combatKnowledgeRevision = ValueNotifier(0);
   final Set<String> onlineCombatResolving = {};
   final Map<String, Completer<List<String>>> corruptionTargetChoices = {};
@@ -2337,6 +2384,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   bool realtimeFirstPresenceHandled = false;
   bool realtimeMasterBlockedByPresence = false;
   String realtimeMasterClaimId = '';
+  String? realtimeSameAccountMasterSession;
   bool masterKickRequiresConfirmation = true;
   bool masterEnemyFullSheetVisibility = false;
   bool masterPublicDiceVisible = false;
@@ -4139,6 +4187,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   void dispose() {
     cancelPendingSheetRollReview();
     oculumSheetRelicSelections.removeListener(onSheetRelicChanged);
+    _appFeedbackHost?.detach(sheetFeedback);
     sheetFeedback.dispose();
     oculumUpdateTimer?.cancel();
     for (final timer in pawnDamageRetryTimers.values) {
@@ -4364,6 +4413,7 @@ class _OculumHomePageState extends State<OculumHomePage>
     monsterBookSearchController.dispose();
 
     quickSheetNameController.dispose();
+    quickSheetMonsterIdController.dispose();
     quickSheetElementController.dispose();
     quickSheetLevelController.dispose();
     quickSheetGradeController.dispose();
@@ -4854,6 +4904,19 @@ class _OculumHomePageState extends State<OculumHomePage>
     }
 
     final sheetTheme = currentMonsterTheme(_cachedAppTypographyTheme!);
+    final feedbackHost = context
+        .getInheritedWidgetOfExactType<_OculumAppFeedbackScope>()
+        ?.host;
+    if (!identical(_appFeedbackHost, feedbackHost)) {
+      _appFeedbackHost?.detach(sheetFeedback);
+      _appFeedbackHost = feedbackHost;
+    }
+    feedbackHost?.present((
+      events: sheetFeedback,
+      target: sheetFeedbackTarget,
+      theme: sheetTheme,
+      visible: !modalitaLeggera && !modalitaVeloce && !oculusModActive,
+    ));
     final home = OculumRoomActivitySurface(
       onActivity: () => realtimeService?.recordUserActivity(),
       child: Theme(
@@ -5483,6 +5546,7 @@ class _OculumHomePageState extends State<OculumHomePage>
                         Positioned.fill(
                           child: OculumNarrativeBackground(
                             sheetId: currentSheetScrollId(),
+                            senkaMaskActive: senkaMaskActive,
                           ),
                         ),
                         Positioned.fill(child: corruptionBackdrop()),
@@ -5559,7 +5623,7 @@ class _OculumHomePageState extends State<OculumHomePage>
       fit: StackFit.expand,
       children: [
         home,
-        if (safePage == 0 && !oculusModActive)
+        if (feedbackHost == null && !oculusModActive)
           Positioned.fill(
             child: Theme(data: sheetTheme, child: sheetFeedbackLayer()),
           ),

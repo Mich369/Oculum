@@ -3,10 +3,12 @@ import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'oculum_save_profile.dart';
+import 'oculum_secure_auth_storage.dart';
 
 const String oculumOAuthRedirectUrl = String.fromEnvironment(
   'OculumOAuthRedirectUrl',
@@ -14,7 +16,7 @@ const String oculumOAuthRedirectUrl = String.fromEnvironment(
 );
 const bool _googleOAuthConfigured = bool.fromEnvironment(
   'OculumGoogleOAuthEnabled',
-  defaultValue: false,
+  defaultValue: true,
 );
 const bool _appleOAuthConfigured = bool.fromEnvironment(
   'OculumAppleOAuthEnabled',
@@ -26,16 +28,24 @@ enum OculumAuthProvider { google, apple }
 enum OculumBackendAuthEventType {
   signedIn,
   signedOut,
+  passwordRecovery,
   tokenRefreshed,
   userUpdated,
   userDeleted,
 }
 
 class OculumBackendUser {
-  const OculumBackendUser({required this.id, this.provider});
+  const OculumBackendUser({
+    required this.id,
+    this.provider,
+    this.hasVerifiedEmail = false,
+    this.identityProviders = const <String>{},
+  });
 
   final String id;
   final String? provider;
+  final bool hasVerifiedEmail;
+  final Set<String> identityProviders;
 }
 
 class OculumBackendAuthEvent {
@@ -57,6 +67,27 @@ abstract class OculumAuthBackend {
   Future<void> signOut();
 }
 
+abstract class OculumIdentityLinkBackend {
+  Future<bool> linkGoogle({required String redirectTo});
+}
+
+String oculumWebAuthRedirect(Uri page) => Uri(
+  scheme: page.scheme,
+  host: page.host,
+  port: page.hasPort ? page.port : null,
+  path: page.path,
+).toString();
+
+String get oculumPlatformAuthRedirect {
+  if (kIsWeb) return oculumWebAuthRedirect(Uri.base);
+  if (defaultTargetPlatform == TargetPlatform.windows &&
+      oculumSaveProfile.trim() == 'test' &&
+      oculumOAuthRedirectUrl == 'com.mich.oculum://login-callback') {
+    return 'com.mich.oculum.test://login-callback';
+  }
+  return oculumOAuthRedirectUrl;
+}
+
 /// Optional capability so existing offline/test backends remain compatible.
 abstract class OculumEmailAuthBackend {
   Future<void> signInAnonymously();
@@ -74,73 +105,128 @@ abstract class OculumEmailAuthBackend {
 
 /// Preserves the SDK's existing session key while honoring the user's choice.
 class OculumSessionStorage extends LocalStorage {
-  OculumSessionStorage({required String persistSessionKey})
-    : _storage = SharedPreferencesLocalStorage(
-        persistSessionKey: persistSessionKey,
-      );
+  OculumSessionStorage({
+    required String persistSessionKey,
+    OculumSecureAuthStorage? secureStorage,
+    bool useBrowserStorage = kIsWeb,
+  }) : _key = persistSessionKey,
+       _secure = useBrowserStorage
+           ? null
+           : secureStorage ?? OculumSecureAuthStorage(),
+       _browser = SharedPreferencesLocalStorage(
+         persistSessionKey: persistSessionKey,
+       );
   static String get rememberKey =>
       oculumProfiledStorageKey('oculum.auth.remember_access');
-  final LocalStorage _storage;
+  final String _key;
+  final OculumSecureAuthStorage? _secure;
+  final LocalStorage _browser;
   late SharedPreferences _prefs;
+  Future<void> _storageTail = Future<void>.value();
+
+  Future<T> _serialize<T>(Future<T> Function() operation) {
+    final result = _storageTail.then((_) => operation());
+    _storageTail = result.then<void>((_) {}, onError: (_, _) {});
+    return result;
+  }
 
   @override
   Future<void> initialize() async {
     _prefs = await SharedPreferences.getInstance();
-    await _storage.initialize();
+    if (_secure == null) await _browser.initialize();
     if (!(_prefs.getBool(rememberKey) ?? true)) {
-      await _storage.removePersistedSession();
+      await removePersistedSession();
     }
   }
 
   @override
-  Future<bool> hasAccessToken() async =>
-      (_prefs.getBool(rememberKey) ?? true) && await _storage.hasAccessToken();
+  Future<bool> hasAccessToken() async => await accessToken() != null;
+
   @override
-  Future<String?> accessToken() async => (_prefs.getBool(rememberKey) ?? true)
-      ? await _storage.accessToken()
-      : null;
+  Future<String?> accessToken() => _serialize(() async {
+    if (!(_prefs.getBool(rememberKey) ?? true)) return null;
+    final secure = _secure;
+    return secure == null
+        ? _browser.accessToken()
+        : secure.read(_key, legacy: _prefs);
+  });
+
   @override
-  Future<void> removePersistedSession() => _storage.removePersistedSession();
-  @override
-  Future<void> persistSession(String session) async {
-    if (_prefs.getBool(rememberKey) ?? true) {
-      await _storage.persistSession(session);
-    } else {
-      await _storage.removePersistedSession();
-    }
+  Future<void> removePersistedSession() => _serialize(_removeSession);
+
+  Future<void> _removeSession() {
+    final secure = _secure;
+    return secure == null
+        ? _browser.removePersistedSession()
+        : secure.delete(_key, legacy: _prefs);
   }
+
+  @override
+  Future<void> persistSession(String session) => _serialize(() async {
+    if (_prefs.getBool(rememberKey) ?? true) {
+      final secure = _secure;
+      if (secure == null) {
+        await _browser.persistSession(session);
+      } else {
+        await secure.write(_key, session, legacy: _prefs);
+      }
+    } else {
+      await _removeSession();
+    }
+  });
 }
 
 class SupabaseOculumAuthBackend
-    implements OculumAuthBackend, OculumEmailAuthBackend {
+    implements
+        OculumAuthBackend,
+        OculumEmailAuthBackend,
+        OculumIdentityLinkBackend {
   SupabaseClient get _client => Supabase.instance.client;
+  static const _windowsOAuth = MethodChannel('oculum/windows_oauth');
+
+  Future<void> _prepareNativeRedirect(String? redirectTo) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.windows) return;
+    final registered = redirectTo == null
+        ? false
+        : await _windowsOAuth.invokeMethod<bool>(
+            'registerCallback',
+            redirectTo,
+          );
+    if (registered != true) {
+      throw const AuthException('Windows OAuth callback registration failed');
+    }
+  }
+
+  OculumBackendUser _mapUser(User user) => OculumBackendUser(
+    id: user.id,
+    hasVerifiedEmail:
+        user.emailConfirmedAt != null &&
+        (user.email?.trim().isNotEmpty ?? false),
+    provider: user.isAnonymous
+        ? 'anonymous'
+        : user.appMetadata['provider']?.toString(),
+    identityProviders: {
+      for (final identity in user.identities ?? const <UserIdentity>[])
+        identity.provider,
+    },
+  );
 
   @override
   OculumBackendUser? get currentUser {
     final user = _client.auth.currentUser;
     if (user == null || _client.auth.currentSession == null) return null;
-    return OculumBackendUser(
-      id: user.id,
-      provider: user.isAnonymous
-          ? 'anonymous'
-          : user.appMetadata['provider']?.toString(),
-    );
+    return _mapUser(user);
   }
 
   @override
   Stream<OculumBackendAuthEvent> get events =>
       _client.auth.onAuthStateChange.map((data) {
         final user = data.session?.user;
-        final mappedUser = user == null
-            ? null
-            : OculumBackendUser(
-                id: user.id,
-                provider: user.isAnonymous
-                    ? 'anonymous'
-                    : user.appMetadata['provider']?.toString(),
-              );
+        final mappedUser = user == null ? null : _mapUser(user);
         final type = switch (data.event) {
           AuthChangeEvent.signedIn => OculumBackendAuthEventType.signedIn,
+          AuthChangeEvent.passwordRecovery =>
+            OculumBackendAuthEventType.passwordRecovery,
           AuthChangeEvent.tokenRefreshed =>
             OculumBackendAuthEventType.tokenRefreshed,
           AuthChangeEvent.userUpdated => OculumBackendAuthEventType.userUpdated,
@@ -157,7 +243,8 @@ class SupabaseOculumAuthBackend
   Future<bool> startOAuth(
     OculumAuthProvider provider, {
     required String? redirectTo,
-  }) {
+  }) async {
+    await _prepareNativeRedirect(redirectTo);
     return _client.auth.signInWithOAuth(
       provider == OculumAuthProvider.apple
           ? OAuthProvider.apple
@@ -166,7 +253,22 @@ class SupabaseOculumAuthBackend
       authScreenLaunchMode: kIsWeb
           ? LaunchMode.platformDefault
           : LaunchMode.externalApplication,
-      scopes: provider == OculumAuthProvider.apple ? 'name email' : null,
+      scopes: provider == OculumAuthProvider.apple
+          ? 'name email'
+          : 'openid email profile',
+    );
+  }
+
+  @override
+  Future<bool> linkGoogle({required String redirectTo}) async {
+    await _prepareNativeRedirect(redirectTo);
+    return _client.auth.linkIdentity(
+      OAuthProvider.google,
+      redirectTo: redirectTo,
+      scopes: 'openid email profile',
+      authScreenLaunchMode: kIsWeb
+          ? LaunchMode.platformDefault
+          : LaunchMode.externalApplication,
     );
   }
 
@@ -191,9 +293,7 @@ class SupabaseOculumAuthBackend
     }
   }
 
-  String get _emailRedirect => kIsWeb
-      ? Uri.base.replace(query: '', fragment: '').toString()
-      : oculumOAuthRedirectUrl;
+  String get _emailRedirect => oculumPlatformAuthRedirect;
 
   @override
   Future<void> linkGuestEmailPassword(String email, String password) async {
@@ -210,12 +310,33 @@ class SupabaseOculumAuthBackend
 
   @override
   Future<void> setPassword(String password) async {
-    await _client.auth.updateUser(UserAttributes(password: password));
+    final auth = _client.auth;
+    final expectedUser = auth.currentSession?.user.id;
+    final result = await auth.updateUser(UserAttributes(password: password));
+    final current = auth.currentSession;
+    if (current == null || result.user?.id != expectedUser) {
+      throw const AuthException('Password session changed');
+    }
+    // Another browser tab can change the session during the SDK request.
+    // This checks local consistency only. Supabase authorizes the update.
+    final token = current.accessToken.split('.');
+    final claims =
+        jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(token[1]))))
+            as Map<String, dynamic>;
+    if (claims['sub'] != current.user.id) {
+      await auth.signOut(scope: SignOutScope.local);
+      throw const AuthException('Password session changed');
+    }
+    if (current.user.id != expectedUser) {
+      throw const AuthException('Password session changed');
+    }
   }
 
   @override
   Future<void> requestPasswordReset(String email) async {
-    await _client.auth.resetPasswordForEmail(email, redirectTo: _emailRedirect);
+    final redirect = _emailRedirect;
+    await _prepareNativeRedirect(redirect);
+    await _client.auth.resetPasswordForEmail(email, redirectTo: redirect);
   }
 
   @override
@@ -331,6 +452,33 @@ class OculumAuthService extends ChangeNotifier {
   bool rememberAccess = true;
   static OculumSessionStorage? sessionStorage;
   OculumAuthProvider? _lastAttemptedProvider;
+  bool _lastAttemptWasLink = false;
+  String? _linkingGoogleUserId;
+  final _passwordRecovery = ValueNotifier<String?>(null);
+  final _invalidAuthLink = ValueNotifier<int>(0);
+  bool _completingPasswordRecovery = false;
+  bool _disposed = false;
+
+  ValueListenable<String?> get passwordRecovery => _passwordRecovery;
+  ValueListenable<int> get invalidAuthLink => _invalidAuthLink;
+  static const invalidAuthLinkMessage =
+      'Link non più valido. Richiedine uno nuovo e aprilo nello stesso browser o nella stessa app in cui lo hai richiesto.';
+  bool get hasVerifiedEmail {
+    final user = _backend?.currentUser;
+    return user != null && user.id == state.userId && user.hasVerifiedEmail;
+  }
+
+  bool get hasGoogleIdentity {
+    final user = _backend?.currentUser;
+    return user?.identityProviders.contains('google') == true ||
+        user?.provider == 'google';
+  }
+
+  bool get canLinkGoogle =>
+      state.isAuthenticated &&
+      _backend is OculumIdentityLinkBackend &&
+      isProviderSupported(OculumAuthProvider.google) &&
+      !hasGoogleIdentity;
 
   final ValueNotifier<OculumAuthState> stateNotifier = ValueNotifier(
     const OculumAuthState(
@@ -350,13 +498,25 @@ class OculumAuthService extends ChangeNotifier {
   bool get appleConfigured => _appleConfiguredOverride ?? _appleOAuthConfigured;
 
   bool isProviderSupported(OculumAuthProvider provider) {
-    if (provider == OculumAuthProvider.google) return googleConfigured;
+    if (provider == OculumAuthProvider.google) {
+      // The Linux tarball has no protocol handler installation.
+      return googleConfigured &&
+          (kIsWeb || defaultTargetPlatform != TargetPlatform.linux);
+    }
     return appleConfigured;
   }
 
   String providerAvailabilityLabel(OculumAuthProvider provider) {
     if (!isSupabaseReady) return 'Supabase non configurato';
-    if (!isProviderSupported(provider)) return 'Prossimamente';
+    if (!isProviderSupported(provider)) {
+      if (provider == OculumAuthProvider.google &&
+          googleConfigured &&
+          !kIsWeb &&
+          defaultTargetPlatform == TargetPlatform.linux) {
+        return 'Disponibile nella versione web';
+      }
+      return 'Prossimamente';
+    }
     return 'Disponibile';
   }
 
@@ -369,9 +529,7 @@ class OculumAuthService extends ChangeNotifier {
     await _authSubscription?.cancel();
     _authSubscription = _backend?.events.listen(
       _handleBackendEvent,
-      onError: (_) => _showRecoverableError(
-        'Sessione non disponibile. Puoi continuare in modalità locale.',
-      ),
+      onError: _handleBackendError,
     );
 
     final currentUser = _backend?.currentUser;
@@ -399,13 +557,19 @@ class OculumAuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(OculumSessionStorage.rememberKey, remember);
     rememberAccess = remember;
-    if (!remember) {
-      await sessionStorage?.removePersistedSession();
-    } else if (_backend is SupabaseOculumAuthBackend) {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session != null) {
-        await sessionStorage?.persistSession(jsonEncode(session.toJson()));
+    try {
+      if (!remember) {
+        await sessionStorage?.removePersistedSession();
+      } else if (_backend is SupabaseOculumAuthBackend) {
+        final session = Supabase.instance.client.auth.currentSession;
+        if (session != null) {
+          await sessionStorage?.persistSession(jsonEncode(session.toJson()));
+        }
       }
+    } catch (_) {
+      _showRecoverableError(
+        'Lo storage della sessione non è disponibile. I dati locali restano accessibili.',
+      );
     }
     notifyListeners();
   }
@@ -480,10 +644,45 @@ class OculumAuthService extends ChangeNotifier {
   Future<bool> requestPasswordReset(String email) =>
       _runEmailOperation(() async {
         final normalized = _validateEmail(email);
-        await (_backend as OculumEmailAuthBackend).requestPasswordReset(
-          normalized,
-        );
+        try {
+          await (_backend as OculumEmailAuthBackend).requestPasswordReset(
+            normalized,
+          );
+        } on AuthException catch (error) {
+          if (error.code != 'user_not_found') rethrow;
+        }
       });
+
+  Future<bool> completePasswordRecovery(
+    String accountId,
+    String password,
+  ) async {
+    if (_completingPasswordRecovery ||
+        _passwordRecovery.value != accountId ||
+        _backend?.currentUser?.id != accountId) {
+      return false;
+    }
+    _completingPasswordRecovery = true;
+    try {
+      final success = await _runEmailOperation(() async {
+        _validatePassword(password);
+        await (_backend as OculumEmailAuthBackend).setPassword(password);
+      }, timeout: null);
+      if (!success ||
+          _passwordRecovery.value != accountId ||
+          _backend?.currentUser?.id != accountId) {
+        return false;
+      }
+      _passwordRecovery.value = null;
+      return true;
+    } finally {
+      _completingPasswordRecovery = false;
+    }
+  }
+
+  void dismissPasswordRecovery() {
+    if (!_completingPasswordRecovery) _passwordRecovery.value = null;
+  }
 
   static String _validateEmail(String email) {
     final normalized = email.trim();
@@ -517,7 +716,10 @@ class OculumAuthService extends ChangeNotifier {
     await _applySignedIn(user);
   });
 
-  Future<bool> _runEmailOperation(Future<void> Function() operation) async {
+  Future<bool> _runEmailOperation(
+    Future<void> Function() operation, {
+    Duration? timeout = const Duration(seconds: 20),
+  }) async {
     if (_operationInProgress) return false;
     if (_backend is! OculumEmailAuthBackend) {
       _showRecoverableError(
@@ -527,7 +729,8 @@ class OculumAuthService extends ChangeNotifier {
     }
     _operationInProgress = true;
     try {
-      await operation().timeout(const Duration(seconds: 20));
+      final result = operation();
+      await (timeout == null ? result : result.timeout(timeout));
       return true;
     } on AuthException catch (error) {
       _showRecoverableError(_friendlyAuthError(error.message));
@@ -544,8 +747,16 @@ class OculumAuthService extends ChangeNotifier {
     return false;
   }
 
-  Future<bool> signInWithGoogle({String? redirectTo}) =>
-      _signIn(OculumAuthProvider.google, redirectTo: redirectTo);
+  Future<bool> signInWithGoogle({String? redirectTo}) => state.isAuthenticated
+      ? _signIn(
+          OculumAuthProvider.google,
+          redirectTo: redirectTo,
+          linkIdentity: true,
+        )
+      : _signIn(OculumAuthProvider.google, redirectTo: redirectTo);
+
+  Future<bool> linkGoogle() =>
+      _signIn(OculumAuthProvider.google, linkIdentity: true);
 
   Future<bool> signInWithApple({String? redirectTo}) =>
       _signIn(OculumAuthProvider.apple, redirectTo: redirectTo);
@@ -553,15 +764,17 @@ class OculumAuthService extends ChangeNotifier {
   Future<bool> retryLastSignIn() async {
     final provider = _lastAttemptedProvider;
     if (provider == null) return false;
-    return _signIn(provider);
+    return _signIn(provider, linkIdentity: _lastAttemptWasLink);
   }
 
   Future<bool> _signIn(
     OculumAuthProvider provider, {
     String? redirectTo,
+    bool linkIdentity = false,
   }) async {
     if (_operationInProgress) return false;
     _lastAttemptedProvider = provider;
+    _lastAttemptWasLink = linkIdentity;
     if (_backend == null) {
       _showRecoverableError(
         'Supabase non è configurato. Puoi continuare in modalità locale.',
@@ -574,7 +787,8 @@ class OculumAuthService extends ChangeNotifier {
       );
       return false;
     }
-    final effectiveRedirect = redirectTo ?? oculumOAuthRedirectUrl;
+    if (linkIdentity && !canLinkGoogle) return false;
+    final effectiveRedirect = redirectTo ?? oculumPlatformAuthRedirect;
     if (_requireOAuthRedirect && !kIsWeb && effectiveRedirect.isEmpty) {
       _showRecoverableError(
         '${_providerName(provider)} richiede ancora la configurazione OAuth.',
@@ -582,8 +796,9 @@ class OculumAuthService extends ChangeNotifier {
       return false;
     }
     _operationInProgress = true;
+    if (linkIdentity) _linkingGoogleUserId = _backend!.currentUser?.id;
     if (!await _connectivityCheck()) {
-      _operationInProgress = false;
+      _cancelPendingOperation();
       _setState(
         OculumAuthState(
           isAuthenticated: state.isAuthenticated,
@@ -604,14 +819,20 @@ class OculumAuthService extends ChangeNotifier {
         isGuest: state.isGuest,
         isLoading: true,
         userId: state.userId,
-        provider: _providerId(provider),
-        message: 'Completa l’accesso nel browser di sistema.',
+        provider: linkIdentity ? state.provider : _providerId(provider),
+        message: linkIdentity
+            ? 'Completa il collegamento a Google nel browser di sistema.'
+            : 'Completa l’accesso nel browser di sistema.',
       ),
     );
     try {
-      final launched = await _backend!
-          .startOAuth(provider, redirectTo: kIsWeb ? null : effectiveRedirect)
-          .timeout(const Duration(seconds: 15));
+      final operation = linkIdentity
+          ? (_backend as OculumIdentityLinkBackend).linkGoogle(
+              redirectTo: effectiveRedirect,
+            )
+          : _backend!.startOAuth(provider, redirectTo: effectiveRedirect);
+      final launched = await operation.timeout(const Duration(seconds: 15));
+      if (!_operationInProgress) return launched;
       if (!launched) {
         _finishOperationWithError('Impossibile aprire il browser di accesso.');
         return false;
@@ -638,6 +859,7 @@ class OculumAuthService extends ChangeNotifier {
   }
 
   Future<bool> continueAsGuest() async {
+    _passwordRecovery.value = null;
     _cancelPendingOperation();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_guestModePrefsKey, true);
@@ -675,6 +897,15 @@ class OculumAuthService extends ChangeNotifier {
     } catch (_) {
       // Local cleanup must remain available when the remote endpoint is down.
     }
+    try {
+      await sessionStorage?.removePersistedSession();
+    } catch (_) {
+      await continueAsGuest();
+      _showRecoverableError(
+        'Impossibile confermare la rimozione della sessione dal dispositivo.',
+      );
+      return false;
+    }
     await continueAsGuest();
     return true;
   }
@@ -687,24 +918,79 @@ class OculumAuthService extends ChangeNotifier {
 
   Future<void> _handleBackendEvent(OculumBackendAuthEvent event) async {
     switch (event.type) {
+      case OculumBackendAuthEventType.passwordRecovery:
+        final user = event.user;
+        if (user != null &&
+            user.provider != 'anonymous' &&
+            _backend?.currentUser?.id == user.id) {
+          await _applySignedIn(user);
+          if (!_disposed &&
+              _backend?.currentUser?.id == user.id &&
+              state.userId == user.id) {
+            _passwordRecovery.value = user.id;
+          }
+        }
       case OculumBackendAuthEventType.signedIn:
       case OculumBackendAuthEventType.tokenRefreshed:
       case OculumBackendAuthEventType.userUpdated:
         final user = event.user ?? _backend?.currentUser;
-        if (user != null) await _applySignedIn(user);
+        if (user != null) {
+          final expectedLinkUser = _linkingGoogleUserId;
+          if (expectedLinkUser != null) {
+            if (user.id != expectedLinkUser) {
+              _finishOperationWithError(
+                'Il collegamento non ha confermato lo stesso account Oculum.',
+              );
+              await signOut();
+              _showRecoverableError(
+                'Collegamento non riuscito. Accedi al tuo account Oculum.',
+              );
+              return;
+            }
+            if (!user.identityProviders.contains('google') &&
+                user.provider != 'google') {
+              return;
+            }
+          }
+          await _applySignedIn(user);
+        }
       case OculumBackendAuthEventType.signedOut:
       case OculumBackendAuthEventType.userDeleted:
         await continueAsGuest();
     }
   }
 
+  void _handleBackendError(Object error) {
+    const invalidLinkCodes = {
+      'otp_expired',
+      'flow_state_expired',
+      'flow_state_not_found',
+      'bad_code_verifier',
+      'invalid_grant',
+    };
+    if (error is AuthPKCEGrantCodeExchangeError ||
+        (error is AuthException &&
+            (invalidLinkCodes.contains(error.code) ||
+                invalidLinkCodes.contains(error.statusCode) ||
+                error.message.toLowerCase().contains('code verifier')))) {
+      _invalidAuthLink.value++;
+      _showRecoverableError(invalidAuthLinkMessage);
+      return;
+    }
+    _showRecoverableError(
+      'Sessione non disponibile. Puoi continuare in modalità locale.',
+    );
+  }
+
   Future<void> _applySignedIn(OculumBackendUser user) async {
+    if (_passwordRecovery.value != user.id) _passwordRecovery.value = null;
     _cancelPendingOperation();
     final provider = user.provider ?? _providerId(_lastAttemptedProvider);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_guestModePrefsKey, false);
     await prefs.setString(_userIdPrefsKey, user.id);
     if (provider != null) await prefs.setString(_providerPrefsKey, provider);
+    if (_disposed || _backend?.currentUser?.id != user.id) return;
     _setState(
       OculumAuthState(
         isAuthenticated: true,
@@ -725,6 +1011,7 @@ class OculumAuthService extends ChangeNotifier {
 
   void _cancelPendingOperation() {
     _operationInProgress = false;
+    _linkingGoogleUserId = null;
     _oauthTimer?.cancel();
     _oauthTimer = null;
   }
@@ -743,6 +1030,7 @@ class OculumAuthService extends ChangeNotifier {
   }
 
   void _setState(OculumAuthState next) {
+    if (_disposed) return;
     stateNotifier.value = next;
     notifyListeners();
   }
@@ -759,7 +1047,23 @@ class OculumAuthService extends ChangeNotifier {
 
   static String _friendlyAuthError(String message) {
     final normalized = message.toLowerCase();
+    if (normalized.contains('callback registration')) {
+      return 'Impossibile configurare il ritorno a Oculum su Windows.';
+    }
+    if (normalized.contains('identity') && normalized.contains('already')) {
+      return 'Questo account Google è già collegato a un account Oculum.';
+    }
+    if (normalized.contains('manual linking')) {
+      return 'Il collegamento Google non è ancora abilitato in Supabase.';
+    }
     if (normalized.contains('cancel')) return 'Accesso annullato.';
+    if (normalized.contains('password session changed')) {
+      return 'La sessione è cambiata. Accedi di nuovo e verifica la password.';
+    }
+    if (normalized.contains('rate limit') ||
+        normalized.contains('security purposes')) {
+      return 'Attendi prima di inviare un’altra richiesta e riprova.';
+    }
     if (normalized.contains('provider') || normalized.contains('enabled')) {
       return 'Provider non configurato in Supabase.';
     }
@@ -780,9 +1084,12 @@ class OculumAuthService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _oauthTimer?.cancel();
     _authSubscription?.cancel();
     stateNotifier.dispose();
+    _passwordRecovery.dispose();
+    _invalidAuthLink.dispose();
     super.dispose();
   }
 }

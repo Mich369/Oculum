@@ -16,7 +16,8 @@ void main() {
   String fixtureTag(int i) =>
       'BenchmarkOcu:${i < 3 ? 3690 : 410 + (i % 470)}X${i.toString().padLeft(3, '0')}';
   TestWidgetsFlutterBinding.ensureInitialized();
-  testWidgets('large campaign reproducible performance', (tester) async {
+
+  Future<void> runBenchmark(WidgetTester tester, Directory directory) async {
     SharedPreferences.setMockInitialValues({});
     final regular = await rootBundle.load('assets/fonts/Poppins-Regular.ttf');
     for (final family in [
@@ -38,9 +39,6 @@ void main() {
           ))
           .load();
     }
-    final directory = Directory(
-      'build/performance-fixture-${DateTime.now().microsecondsSinceEpoch}',
-    )..createSync(recursive: true);
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       (_) async => directory.absolute.path,
@@ -288,7 +286,6 @@ void main() {
       await tester.runAsync(() async {
         state.sharedPreferencesFuture = SharedPreferences.getInstance();
         state.saveBlobDirectoryFuture = Future<Directory>.value(directory);
-        state.progressJournalWriteChain = Future<void>.value();
         await probe.save();
       });
     });
@@ -325,8 +322,50 @@ void main() {
         const JsonEncoder.withIndent('  ').convert(report),
       );
     });
-    probe.cancelPendingSave();
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 2));
+  }
+
+  testWidgets('large campaign reproducible performance', (tester) async {
+    final buildDirectory = Directory('build')..createSync(recursive: true);
+    final directory = buildDirectory.createTempSync('performance-fixture-');
+    var safeToDelete = true;
+    addTearDown(() {
+      if (safeToDelete && directory.existsSync()) {
+        directory.deleteSync(recursive: true);
+      }
+    });
+    final previousRebuildCallback = debugOnRebuildDirtyWidget;
+    try {
+      await runBenchmark(tester, directory);
+    } finally {
+      debugOnRebuildDirtyWidget = previousRebuildCallback;
+      final sheet = find.byType(OculumHomePage);
+      if (sheet.evaluate().isNotEmpty) {
+        safeToDelete = false;
+        final dynamic state = tester.state(sheet);
+        OculumPerformanceProbe(state).cancelPendingSave();
+        // The measured save is explicit. Skip the extra save started by dispose.
+        state.datiCaricati = false;
+        await tester.pumpWidget(const SizedBox.shrink());
+        var workersDone = false;
+        Future.wait<void>([
+          state.initialSheetLoad as Future<void>,
+          state.progressJournalWriteChain as Future<void>,
+        ]).then<void>(
+          (_) => workersDone = true,
+          onError: (Object _, StackTrace _) => workersDone = true,
+        );
+        final drainDeadline = Stopwatch()..start();
+        while (!workersDone || state.saveRequestQueue.isRunning == true) {
+          if (drainDeadline.elapsed > const Duration(minutes: 1)) {
+            fail('Benchmark workers still own ${directory.path}');
+          }
+          await tester.pump();
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
+          );
+        }
+        safeToDelete = true;
+      }
+    }
   }, timeout: const Timeout(Duration(minutes: 5)));
 }

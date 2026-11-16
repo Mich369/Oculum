@@ -11,6 +11,10 @@ String oculumMonsterDropName(String id) => switch (id) {
   'piume_arpia' => 'Piume di arpia',
   'occhio_basilisco' => 'Occhio di basilisco',
   'membrana_pipistrello' => 'Membrana di pipistrello gigante',
+  oculumRhinoStoneguardDropId => oculumRhinoStoneguardScrollName,
+  oculumBalenaRaySkillId => 'Pergamena di Raggio d’Acqua Compressa I',
+  oculumBalenaEyesSkillId => 'Pergamena di Occhi della Balena I',
+  oculumBalenaTeleportSkillId => 'Pergamena di Teletrasporto ad Acqua I',
   _ =>
     id
         .replaceAll('_', ' ')
@@ -198,6 +202,128 @@ const _sweetRelicWeaponShapes = [
   ),
 ];
 
+const _authoredMonsterRelicDesigns = {
+  oculumGoblinKingId: {
+    'weapon': (
+      'Regiscut',
+      'sciabola',
+      'Sciabola corta del Re Goblin, con tacche da corona sul dorso e guardia di bronzo aperta.',
+    ),
+    'armor': (
+      'Vespermail',
+      'armatura',
+      'Corazza del Re Goblin in brigantina bordeaux, con pettorale consunto e mantello scuro a lembo verde.',
+    ),
+    'shield': (
+      'Crownward',
+      'scudo',
+      'Scudo del Re Goblin, con bordo a corona di bronzo scheggiata e legature di corda.',
+    ),
+  },
+  oculumSoulFighterId: {
+    'weapon': (
+      'Animablade',
+      'spada',
+      'Lama della Combattente dell’Anima con sguscio di giada pallida, traslucido come la sua spada spirituale.',
+    ),
+    'armor': (
+      'Velumshade',
+      'armatura',
+      'Corazza della Combattente dell’Anima, con mantella salvia e piastre dal profilo della sua maschera.',
+    ),
+    'shield': (
+      'Ossawatch',
+      'scudo',
+      'Scudo della Combattente dell’Anima con umbone a teschio pallido e una mano spettrale incisa.',
+    ),
+  },
+  oculumOculiathId: {
+    'weapon': (
+      'Iriscross',
+      'balestra_a_una_mano',
+      'Balestra dell’Oculiath con un solo mirino a iride e flettenti color membrana bordeaux.',
+    ),
+    'armor': (
+      'Membraneward',
+      'armatura',
+      'Corazza dell’Oculiath in piastre di osso sopra giunti di membrana bordeaux.',
+    ),
+    'shield': (
+      'Oculusguard',
+      'scudo',
+      'Scudo dell’Oculiath, con un’apertura a iride grigio-violetta sotto una cresta di osso.',
+    ),
+  },
+  oculumLesserOculiathId: {
+    'weapon': (
+      'Iryshort',
+      'balestra_a_una_mano',
+      'Balestra corta dalla sagoma dell’Oculiath minore, con mirino a iride rossa e flettenti verde cupo.',
+    ),
+    'armor': (
+      'Viridveil',
+      'armatura',
+      'Corazza a piastre minute unite da membrane verdi che richiamano le ali dell’Oculiath minore.',
+    ),
+    'shield': (
+      'Rubeogard',
+      'scudo',
+      'Scudo con umbone rosso circondato da un anello di piastre e un motivo a uncino.',
+    ),
+  },
+  oculumGreaterOculiathId: {
+    'weapon': (
+      'Pentaray',
+      'mazza',
+      'Mazza corta dell’Oculiath Maggiore, in carapace stratificato con una grande cavità e quattro minori.',
+    ),
+    'armor': (
+      'Basaltshroud',
+      'armatura',
+      'Corazza dell’Oculiath Maggiore con strati di chitina basaltica, larghi sopra e sottili ai bordi.',
+    ),
+    'shield': (
+      'Carapaxguard',
+      'scudo',
+      'Scudo dell’Oculiath Maggiore, con un grande umbone olivastro, quattro borchie minori e scaglie basaltiche.',
+    ),
+  },
+  oculumSolarObserverId: {
+    'weapon': (
+      'Solbrand',
+      'sciabola',
+      'Sciabola dell’Osservatore del Sole con disco a otto raggi al centro della guardia biforcuta.',
+    ),
+    'armor': (
+      'Solvelum',
+      'armatura',
+      'Corazza dell’Osservatore del Sole a scaglie di bronzo, con sottostrati petrolio e rosso ruggine.',
+    ),
+    'shield': (
+      'Solscutum',
+      'scudo',
+      'Scudo dell’Osservatore del Sole, con disco dorato a otto raggi fra due nervature ad ala.',
+    ),
+  },
+  oculumBitingWandererId: {
+    'weapon': (
+      'Sanguident',
+      'pugnale',
+      'Pugnale di Sanguifang con lama a zanna, impugnatura a scaglie oliva e legatura viola.',
+    ),
+    'armor': (
+      'Olivafang',
+      'armatura',
+      'Corazza lamellare di Sanguifang, con scaglie verde oliva e rinforzi viola a membrana.',
+    ),
+    'shield': (
+      'Vesperiris',
+      'scudo',
+      'Scudo di Sanguifang con un solo umbone nero a iride rossa e bordo di membrana viola.',
+    ),
+  },
+};
+
 ({String name, String shape, String appearance}) _monsterRelicWeapon(
   MonsterBookEntry monster,
   int skillIndex,
@@ -290,6 +416,8 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
   for (final monster in entries) {
     if (monster.isNpc || monster.id.startsWith('pawn_guardiano')) continue;
     final art = oculumMonsterBookArt(monster);
+    final authoredDesigns =
+        _authoredMonsterRelicDesigns[monster.id.split('_variante_').first];
     final postea = monster.planeIds.contains('postea');
     final sweet = monster.planeIds.contains('caramella');
     final style = postea
@@ -325,9 +453,11 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
         final damage = max(1, 2 + itemLevel + itemGrade * 2);
         final defense = max(1, 1 + itemLevel ~/ 2 + itemGrade);
         final itemId = 'monster-relic:${monster.id}:$skillIndex:$type';
-        final weaponDesign = weapon
+        final authored = authoredDesigns?[type];
+        final weaponDesign = weapon && authored == null
             ? _monsterRelicWeapon(monster, skillIndex)
             : null;
+        final appearance = authored?.$3 ?? weaponDesign?.appearance;
         final familyName = armor
             ? (postea
                   ? 'Armatura cyberpunk'
@@ -339,9 +469,10 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
             : sweet
             ? 'Scudo di caramello'
             : equipment[type];
-        final name =
-            weaponDesign?.name ??
-            '$familyName di ${monster.nameIt} · ${skill.nome}';
+        final name = authored != null
+            ? '${authored.$1}${skillIndex == 0 ? '' : ' · ${skill.nome}'}'
+            : weaponDesign?.name ??
+                  '$familyName di ${monster.nameIt} · ${skill.nome}';
         result.add(
           InventoryItem(
             nome: name,
@@ -352,7 +483,7 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
                 : 1.0,
             quantita: 1,
             note:
-                '${weaponDesign != null ? '${weaponDesign.appearance}\n' : ''}'
+                '${appearance == null ? '' : '$appearance\n'}'
                 'Reliquia rara di ${monster.nameIt}. $style Colori e struttura riprendono la creatura: $sourceAppearance Materiali coerenti: $sourceMaterials. Riprende la Skill ${skill.nome} e il suo elemento ${monster.elementId}; non copia le statistiche base della creatura. Grado $itemGrade, livello $itemLevel. Richiede il livello $itemLevel per usare la Skill.',
             arma: weapon,
             protegge: !weapon,
@@ -403,9 +534,10 @@ List<InventoryItem> oculumMonsterEquipmentCatalogue({
               'skillLevelRequired': itemLevel,
               'sourceSkillId': skill.nome,
               'sourceSkill': skill.toJson(),
-              if (weaponDesign != null) ...{
-                'weaponForm': weaponDesign.shape,
-                'weaponAppearance': weaponDesign.appearance,
+              if (authored != null) 'equipmentAppearance': authored.$3,
+              if (weapon && appearance != null) ...{
+                'weaponForm': authored?.$2 ?? weaponDesign!.shape,
+                'weaponAppearance': appearance,
               },
             },
             monsterLoot: {
@@ -505,6 +637,109 @@ Map<String, dynamic>? oculumRollMonsterRelicFoundBuff(Random random) {
   };
 }
 
+/// The whale awards Form I even when the defeated creature is high level.
+InventoryItem oculumBalenaFormOneScroll(
+  MonsterBookEntry monster,
+  String skillId, {
+  required String receipt,
+  required int grade,
+}) {
+  final item = oculumPlanarTechniqueScroll(
+    monster,
+    skillId,
+    receipt: receipt,
+    grade: grade.clamp(0, 12).toInt(),
+  );
+  item.nome = '${item.nome} · Forma I';
+  final scroll = item.craftData['scroll'] as Map;
+  scroll['maxForm'] = 1;
+  item.monsterLoot['catalogueDropId'] = skillId;
+  return item;
+}
+
+List<InventoryItem> _predoneAuthoredDrops({
+  required MonsterBookEntry monster,
+  required int level,
+  required int grade,
+  required int natural,
+  required int total,
+  required int difficulty,
+  required String killId,
+  required Random random,
+}) {
+  final rules = monster.encounterRules;
+  final scrollIds = (rules['predoneLootScrollIds'] as List? ?? const [])
+      .whereType<String>()
+      .where((id) => oculumPlanarTechnique(id) != null)
+      .toList(growable: false);
+  final minimum = readIntValue(
+    rules['predoneScrollNaturalMinimum'],
+    fallback: 18,
+  ).clamp(1, 20);
+  final drops = [
+    if (scrollIds.isNotEmpty && natural >= minimum)
+      for (final id in natural == 20
+          ? scrollIds
+          : [scrollIds[(natural - minimum) % scrollIds.length]])
+        oculumPlanarTechniqueScroll(
+          monster,
+          id,
+          receipt: '$killId:$id',
+          level: level,
+          grade: grade,
+        )..monsterLoot.addAll({
+          'catalogueDropId': id,
+          'naturalDropRoll': natural,
+        }),
+  ];
+  final threshold = max(difficulty, oculumMonsterRelicDropThreshold(grade));
+  final chance = readIntValue(
+    rules['predoneEquipmentDropPercent'],
+    fallback: 10,
+  ).clamp(0, 100);
+  const equipmentIds = {
+    oculumLamaOrbitaId,
+    'spada_corta_del_predone',
+    'guanto_d_arme_di_orbita',
+  };
+  final presets = monster.inventoryItems
+      .where(
+        (item) => equipmentIds.contains(
+          (item['craftData'] as Map?)?['eivaWeaponId'],
+        ),
+      )
+      .toList(growable: false);
+  if (presets.isNotEmpty && total >= threshold && random.nextInt(100) < chance) {
+    final item = InventoryItem.fromJson(
+      jsonDecode(jsonEncode(presets[random.nextInt(presets.length)]))
+          as Map<String, dynamic>,
+    );
+    final equipmentId = item.craftData['eivaWeaponId'];
+    item.equipaggiata = false;
+    if (item.ability == null &&
+        scrollIds.isNotEmpty &&
+        equipmentId != oculumLamaOrbitaId) {
+      final skillId = equipmentId == 'guanto_d_arme_di_orbita'
+          ? scrollIds.first
+          : scrollIds.last;
+      final art = oculumMonsterBookArt(monster.copyWith(skillIds: [skillId]));
+      item.ability = oculumEquipmentAbilityFromArt(art.skills.first);
+    }
+    item.monsterLoot = {
+      ...item.monsterLoot,
+      'id': '$killId:predone:$equipmentId',
+      'catalogueDropId': equipmentId,
+      'monsterId': monster.id,
+      'material': false,
+      'naturalDropRoll': natural,
+      'dropTotal': total,
+      'dropThreshold': threshold,
+    };
+    drops.add(item);
+  }
+  return _withManualDropPrices(drops, level: level, grade: grade);
+}
+
 /// Generated once for a confirmed kill; no loot is awarded for a mere KO.
 List<InventoryItem> oculumGenerateMonsterLoot({
   required MonsterBookEntry monster,
@@ -541,6 +776,19 @@ List<InventoryItem> oculumGenerateMonsterLoot({
     level: safeLevel,
     grade: safeGrade,
   );
+  if (monster.encounterRules[oculumEivaFamilyIdRule] ==
+      oculumPredoneBoomerangId) {
+    return _predoneAuthoredDrops(
+      monster: monster,
+      level: safeLevel,
+      grade: safeGrade,
+      natural: natural,
+      total: resolvedDropTotal,
+      difficulty: dropDifficulty,
+      killId: killId,
+      random: random,
+    );
+  }
   if (monster.id == 'pupazzo_robotico_postea') {
     final scraps = oculumDollRobotScraps(monster, safeLevel, safeGrade, killId);
     scraps.monsterLoot['catalogueDropId'] = 'scarti_robotici_pupazzo';
@@ -576,7 +824,15 @@ List<InventoryItem> oculumGenerateMonsterLoot({
       grade: safeGrade,
     );
   }
-  final cycleScrollDrops = <InventoryItem>[];
+  final cycleScrollDrops = <InventoryItem>[
+    if (monster.id == oculumBalenaMilleOcchiId && natural == 20)
+      oculumBalenaFormOneScroll(
+        monster,
+        oculumBalenaRaySkillId,
+        receipt: '$killId:$oculumBalenaRaySkillId',
+        grade: safeGrade,
+      )..monsterLoot['naturalDropRoll'] = natural,
+  ];
   if (monster.id == 'costrutto_minore' && resolvedDropTotal >= dropDifficulty) {
     cycleScrollDrops.add(
       oculumPlanarTechniqueScroll(
@@ -917,8 +1173,14 @@ List<InventoryItem> oculumGenerateMonsterLoot({
         ]
       : [
           for (final id in monster.dropIds)
-            if (random.nextInt(100) <
-                (monster.dropChances[id]?.clamp(0, 100) ?? 35))
+            if (!(monster.id == oculumBalenaMilleOcchiId &&
+                    const {
+                      oculumBalenaRaySkillId,
+                      oculumBalenaEyesSkillId,
+                      oculumBalenaTeleportSkillId,
+                    }.contains(id)) &&
+                random.nextInt(100) <
+                    (monster.dropChances[id]?.clamp(0, 100) ?? 35))
               (id: id, name: oculumMonsterDropName(id)),
         ];
   final drops = <InventoryItem>[
@@ -945,31 +1207,46 @@ List<InventoryItem> oculumGenerateMonsterLoot({
         },
       ),
     for (final (i, drop) in materialDrops.indexed)
-      oculumArmadilloMaterialDrop(
-            drop.name,
-            level: safeLevel,
-            grade: safeGrade,
-            receiptId: '$killId:material:$i',
-            metadata: {...metadata, 'catalogueDropId': drop.id},
-          ) ??
-          InventoryItem(
-            nome: drop.name,
-            peso: oculumMonsterCyclePhase(monster).isNotEmpty ? .15 : 0,
-            quantita: 1,
-            gradoOggetto: safeGrade,
-            gradoRichiesto: safeGrade,
-            note: material
-                ? 'Materiale — Mammuth livello $safeLevel, grado $safeGrade. Arma: +$safeLevel Danni; armatura: +$safeGrade Difesa. La combinazione porta l’equipaggiamento almeno al grado del materiale, anche dal fabbro. Non puoi combinarlo da solo se il tuo grado è inferiore.'
-                : 'Drop ottenuto all’uccisione di ${monster.nameIt}, livello $safeLevel, grado $safeGrade.',
-            monsterLoot: {
-              ...metadata,
-              'id': '$killId:material:$i',
-              'catalogueDropId': drop.id,
-              'material': true,
-              'weaponBonus': safeLevel,
-              'armorBonus': safeGrade,
-            },
-          ),
+      if (oculumRhinoStoneguardDropChances.containsKey(monster.id) &&
+          drop.id == oculumRhinoStoneguardDropId)
+        oculumRhinoStoneguardScroll(
+          grade: safeGrade,
+          loot: {
+            'id': '$killId:$oculumRhinoStoneguardDropId',
+            'monsterId': monster.id,
+            'sourceMonsterBookId': monster.id,
+            'catalogueDropId': drop.id,
+            'naturalDropRoll': natural,
+            'dropTotal': resolvedDropTotal,
+            'dropDifficulty': dropDifficulty,
+          },
+        )
+      else
+        oculumArmadilloMaterialDrop(
+              drop.name,
+              level: safeLevel,
+              grade: safeGrade,
+              receiptId: '$killId:material:$i',
+              metadata: {...metadata, 'catalogueDropId': drop.id},
+            ) ??
+            InventoryItem(
+              nome: drop.name,
+              peso: oculumMonsterCyclePhase(monster).isNotEmpty ? .15 : 0,
+              quantita: 1,
+              gradoOggetto: safeGrade,
+              gradoRichiesto: safeGrade,
+              note: material
+                  ? 'Materiale — Mammuth livello $safeLevel, grado $safeGrade. Arma: +$safeLevel Danni; armatura: +$safeGrade Difesa. La combinazione porta l’equipaggiamento almeno al grado del materiale, anche dal fabbro. Non puoi combinarlo da solo se il tuo grado è inferiore.'
+                  : 'Drop ottenuto all’uccisione di ${monster.nameIt}, livello $safeLevel, grado $safeGrade.',
+              monsterLoot: {
+                ...metadata,
+                'id': '$killId:material:$i',
+                'catalogueDropId': drop.id,
+                'material': true,
+                'weaponBonus': safeLevel,
+                'armorBonus': safeGrade,
+              },
+            ),
   ];
   if ((monster.id == 'slime_blu' ||
           monster.id == 'slime_blu_helmeted' ||
@@ -1176,7 +1453,11 @@ extension _OculumMonsterLoot on _OculumHomePageState {
       final monster = sheetIndex >= 0
           ? monsterLootSourceForSheet(schedePersonaggio[sheetIndex])
           : monsterBookEntryById('${token['monsterBookId'] ?? ''}');
-      if (monster == null || monster.isNpc) continue;
+      if (monster == null ||
+          monster.isNpc ||
+          _oculumIsSummonedMinorConstruct(monster.id, token)) {
+        continue;
+      }
       pending.add(token);
     }
     if (pending.isEmpty || !canActWithoutMasterApproval) {
@@ -1275,6 +1556,7 @@ extension _OculumMonsterLoot on _OculumHomePageState {
       token['downed'] = false;
       token['deathWounds'] = 3;
       token['currentHp'] = 0;
+      _recordLocalResurrectionTokenDeath(token);
       applyMasterInitiativeTokenVitalsToSource(token);
       generateMonsterLootForDeath(index);
       salvaSchedaCorrenteInMemoria();

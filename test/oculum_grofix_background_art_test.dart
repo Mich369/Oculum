@@ -22,6 +22,15 @@ void main() {
           monster,
           oculumMonsterColors(monster).first,
         );
+        expect(
+          theme.illustration,
+          'assets/oculum/home_art_authored/theme_grofix_canon_20261115.webp',
+        );
+        expect(
+          theme.illustrationMobile,
+          'assets/oculum/home_art_webp/theme_grofix_mobile_v1.webp',
+        );
+        expect(theme.preserveIllustrationFraming, isTrue);
         oculumSheetRelicSelections.value = {'grofix-preview': theme.id};
         var taps = 0;
         await tester.pumpWidget(
@@ -55,6 +64,7 @@ void main() {
           ),
         );
         final image = tester.widget<Image>(find.byType(Image).first);
+        expect(image.fit, width < 600 ? BoxFit.cover : BoxFit.contain);
         final provider = image.image;
         final asset = provider is ResizeImage
             ? provider.imageProvider

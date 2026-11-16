@@ -39,7 +39,7 @@ extension _OculumMateria20 on _OculumHomePageState {
       stat20Choice('materia') == _materia20QuickAction &&
       stat35Cooldown(_materia20QuickAction) == 0 &&
       !totalPowerExhausted &&
-      executingCorruptionCommand == null &&
+      executingCombatCommand == null &&
       _materia20QuickRunning[this] != true;
 
   Future<void> activateMateria20QuickAction() async {

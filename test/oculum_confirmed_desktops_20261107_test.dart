@@ -195,12 +195,21 @@ void main() {
       expect(File(asset).lengthSync(), (revision ?? file)['bytes'], reason: id);
       await expectBundledMonsterArt(asset);
       final theme = _themeFor(id);
+      final current =
+          id ==
+              'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante'
+          ? 'assets/oculum/home_art_authored/theme_${id}_canon_20261116_riallineamento.webp'
+          : asset;
       expect(
         OculumMonsterTheme.desktopIllustrationForId(id),
-        asset,
+        current,
         reason: id,
       );
-      expect(theme.illustration, oculumMonsterArtworkAsset(asset), reason: id);
+      expect(
+        theme.illustration,
+        oculumMonsterArtworkAsset(current),
+        reason: id,
+      );
       expect(theme.preserveIllustrationFraming, isTrue, reason: id);
     }
   });

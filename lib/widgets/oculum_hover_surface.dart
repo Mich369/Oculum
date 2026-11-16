@@ -8,6 +8,23 @@ const oculumSurfaceRevealDuration = Duration(seconds: 3);
 Color oculumSurfaceColor(Color color, double opacity) =>
     color.withValues(alpha: color.a * opacity.clamp(0, 1));
 
+double oculumIdleButtonOpacity(
+  OculumThemePresentation presentation, {
+  required bool secondaryControls,
+  required Set<WidgetState> states,
+}) {
+  final transparency = (secondaryControls
+      ? presentation.controlTransparency
+      : presentation.surfaceTransparency).clamp(0.0, .4).toDouble();
+  final opacity = 1.0 - transparency;
+  if (states.contains(WidgetState.selected) ||
+      states.contains(WidgetState.disabled)) {
+    return opacity;
+  }
+  // Make normal buttons a little lighter without moving the slider endpoints.
+  return opacity - .55 * transparency * (1 - transparency / .4);
+}
+
 BoxDecoration oculumSurfaceDecoration(BoxDecoration value, double opacity) =>
     value.copyWith(
       color: value.color == null
@@ -176,10 +193,11 @@ class _OculumSurfaceButtonState extends State<OculumSurfaceButton> {
           color,
           active || scope?.highlightAll == true
               ? 1
-              : 1 -
-                    (scope?.secondaryControls == true
-                        ? oculumThemePresentation.value.controlTransparency
-                        : oculumThemePresentation.value.surfaceTransparency),
+              : oculumIdleButtonOpacity(
+                  oculumThemePresentation.value,
+                  secondaryControls: scope?.secondaryControls == true,
+                  states: states,
+                ),
         );
       }),
     );

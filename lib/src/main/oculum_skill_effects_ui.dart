@@ -1243,6 +1243,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       values.addAll({
         ..._planarSelfRules.values,
         ..._planarTargetRules.values,
+        oculumOculiathRayRule,
+        oculumGreaterOculiathRayRule,
+        oculumAcuagoblinDodgeEffect,
+        oculumBunnysHealSkill,
+        oculumBunnysDeathHealSkill,
         'annihilation',
       });
     } else if (type == 'modifica_statistica') {
@@ -1291,16 +1296,27 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
   }) {
     final value = cooldown ?? OculumAbilityCooldown();
 
-    void update({int? amount, String? unit, bool? startsReady}) {
+    void update({
+      int? amount,
+      String? unit,
+      bool? startsReady,
+      int? initialRemaining,
+    }) {
       final nextAmount = max(0, amount ?? value.amount);
       final nextStartsReady = startsReady ?? value.startsReady;
+      final initial = nextStartsReady
+          ? null
+          : initialRemaining ?? value.initialRemaining;
       onChanged(
         OculumAbilityCooldown(
           amount: nextAmount,
           unit: unit ?? value.unit,
           startsReady: nextStartsReady,
-          remaining: startsReady != null
-              ? (nextStartsReady ? 0 : nextAmount)
+          initialRemaining: initial?.clamp(0, nextAmount).toInt(),
+          remaining: startsReady != null || initialRemaining != null
+              ? (nextStartsReady
+                    ? 0
+                    : (initial ?? nextAmount).clamp(0, nextAmount).toInt())
               : cooldown == null
               ? (nextStartsReady ? 0 : nextAmount)
               : value.remaining.clamp(0, nextAmount).toInt(),
@@ -1368,12 +1384,25 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
           ),
           subtitle: Text(
             t(
-              'Se disattivato, parte con tutto il cooldown rimanente.',
-              'When disabled, it starts with the full cooldown remaining.',
+              'Se disattivato, puoi scegliere quanto recupero resta all’inizio.',
+              'When disabled, you can choose the remaining cooldown at the start.',
             ),
           ),
           onChanged: (next) => update(startsReady: next),
         ),
+        if (!value.startsReady && value.amount > 0)
+          campoModello(
+            fieldKey: ValueKey('cooldown_initial_$storageId'),
+            label: t(
+              'Recupero rimanente all’inizio',
+              'Cooldown remaining at start',
+            ),
+            initialValue: '${value.openingDelay}',
+            keyboardType: TextInputType.number,
+            inputFormatters: oculumNonNegativeIntegerFormatters,
+            enableCommandAutocomplete: false,
+            onChanged: (raw) => update(initialRemaining: readIntValue(raw)),
+          ),
       ],
     );
   }
@@ -1942,6 +1971,15 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                 targetController.text,
               );
               final isShadowClone = isSummon && summonTarget == 'clone_ombra';
+              final isOculiathRay =
+                  type == 'planar' &&
+                  const {
+                    oculumOculiathRayRule,
+                    oculumGreaterOculiathRayRule,
+                  }.contains(targetController.text);
+              final isGreaterOculiathRay =
+                  isOculiathRay &&
+                  targetController.text == oculumGreaterOculiathRayRule;
               final hasUnknownSavedSummon =
                   isSummon &&
                   seed.type == 'evocazione' &&
@@ -1955,6 +1993,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               final hasFrequency =
                   oculumStructuredEffectFrequency(frequencyController.text) > 0;
               final supportsDuration =
+                  isGreaterOculiathRay ||
                   isShadowClone ||
                   !isSummon &&
                       (mode == 'finche_attivo' ||
@@ -2444,7 +2483,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             controller: valueController,
                             decoration:
                                 fieldDecoration(
-                                  isState
+                                  isOculiathRay
+                                      ? t('Gittata in metri', 'Range in metres')
+                                      : isState
                                       ? t(
                                           'Stadio o formula',
                                           'Stage or formula',
@@ -2489,7 +2530,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             controller: durationController,
                             decoration:
                                 fieldDecoration(
-                                  isShadowClone
+                                  isGreaterOculiathRay
+                                      ? t(
+                                          'Riduzione raggi secondari (%)',
+                                          'Secondary ray reduction (%)',
+                                        )
+                                      : isShadowClone
                                       ? t(
                                           'Durata del clone in turni',
                                           'Clone duration in turns',
@@ -2507,7 +2553,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 scheduleDialogRefresh(setDialogState),
                           ),
                           const SizedBox(height: 8),
-                          if (!isShadowClone)
+                          if (!isShadowClone && !isGreaterOculiathRay)
                             DropdownButtonFormField<String>(
                               initialValue:
                                   <String>[

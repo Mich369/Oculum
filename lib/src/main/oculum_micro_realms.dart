@@ -11,6 +11,19 @@ const oculumMicroRealmLore = <String, String>{
       'Un regno di carne viva sospeso nel vuoto più totale: nessun mondo, stella, luna o sole in lontananza. Terreno palpitante, sangue, pustole e membrane formano un ambiente organico abitato da creature di carne, tendini e ossa. Le forme dei suoi predatori e dei suoi manufatti derivano da questo stesso tessuto vivente.',
 };
 
+const _sunkenRealmAreas = <String, ({String name, String description})>{
+  'corallo_cavo': (
+    name: 'Barriera del Corallo Cavo',
+    description:
+        'Un quartiere immerso tra grandi coralli rossi. I polipi ambrati crescono nelle cavità della barriera, accanto alle strade e alle case.',
+  ),
+  'fronde_eiva': (
+    name: 'Selva delle Fronde d’Eiva',
+    description:
+        'Tra arcate sommerse crescono alghe dalle venature dorate, roselle acquatiche e piante con piccoli baccelli luminosi. Le fronde seguono la corrente dell’Eiva.',
+  ),
+};
+
 String oculumPlaneDescription(String id) {
   if (oculumMicroRealmLore[id] case final lore?) return lore;
   return switch (id) {
@@ -42,7 +55,7 @@ String oculumPlaneDescription(String id) {
       'Il vero inferno: dominio estremo di Fuoco, Lava e potere diabolico, dal Grado IX.',
     'isole' => 'Isole volanti: correnti, nubi, acqua e ricevitori di fulmini.',
     'affogato' =>
-      'Regno affogato: ambiente acquatico in cui si respira normalmente.',
+      'Il Regno Sommerso, detto anche Regno Affogato, è interamente immerso nell’Eiva. Quest’acqua magica molto potente permette agli abitanti di vivere e respirare anche nelle strade, nelle case e tra le barriere coralline.',
     'sotterraneo' || 'sotterraneo_maggiore' =>
       'Regno sotterraneo: Roccia, Terra e Buio, cunicoli e vene minerali. Sottoterra non compaiono sole, luna o raggi dal cielo.',
     _ =>
@@ -191,19 +204,36 @@ List<OculumRecipe> oculumRealmCraftingRecipes(String now) => [
 ];
 
 extension _OculumMicroRealms on _OculumHomePageState {
-  Widget realmIndicator() => Tooltip(
-    key: const ValueKey('current_realm_indicator'),
-    message:
-        '${selectedPlane.name}\n${oculumPlaneDescription(selectedPlaneId)}',
-    waitDuration: const Duration(milliseconds: 900),
-    triggerMode: TooltipTriggerMode.longPress,
-    child: IconButton(
-      onPressed: selectCurrentPlane,
-      visualDensity: VisualDensity.compact,
-      icon: const Icon(Icons.public),
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-    ),
-  );
+  String? get activeSunkenRealmAreaId {
+    if (selectedPlaneId != 'affogato' ||
+        schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length) {
+      return null;
+    }
+    final runtime = schedePersonaggio[schedaCorrente]['planarRuntime'];
+    final id = runtime is Map ? runtime['affogatoAreaId'] : null;
+    return id is String && _sunkenRealmAreas.containsKey(id) ? id : null;
+  }
+
+  Widget realmIndicator() {
+    final area = _sunkenRealmAreas[activeSunkenRealmAreaId];
+    return Tooltip(
+      key: const ValueKey('current_realm_indicator'),
+      message: [
+        selectedPlane.name,
+        oculumPlaneDescription(selectedPlaneId),
+        if (area != null) area.name,
+      ].join('\n'),
+      waitDuration: const Duration(milliseconds: 900),
+      triggerMode: TooltipTriggerMode.longPress,
+      child: IconButton(
+        onPressed: selectCurrentPlane,
+        visualDensity: VisualDensity.compact,
+        icon: const Icon(Icons.public),
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      ),
+    );
+  }
 
   Map<String, dynamic> get realmExploration =>
       planarState.putIfAbsent('realmExploration', () => <String, dynamic>{})
@@ -347,7 +377,11 @@ extension _OculumMicroRealms on _OculumHomePageState {
       context: context,
       builder: (dialog) => StatefulBuilder(
         builder: (dialog, update) => AlertDialog(
-          title: Text(selectedPlane.name),
+          title: Text(
+            selectedPlaneId == 'affogato'
+                ? 'Regno Sommerso'
+                : selectedPlane.name,
+          ),
           content: SizedBox(
             width: 600,
             child: SingleChildScrollView(
@@ -356,6 +390,48 @@ extension _OculumMicroRealms on _OculumHomePageState {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(oculumPlaneDescription(selectedPlaneId)),
+                  if (selectedPlaneId == 'affogato') ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final MapEntry(key: id, value: area)
+                            in _sunkenRealmAreas.entries)
+                          ChoiceChip(
+                            label: Text(area.name),
+                            selected: activeSunkenRealmAreaId == id,
+                            onSelected: (selected) {
+                              if (!mounted || selectedPlaneId != 'affogato') {
+                                return;
+                              }
+                              if (selected) {
+                                planarState['affogatoAreaId'] = id;
+                              } else {
+                                planarState.remove('affogatoAreaId');
+                              }
+                              programmaSalvataggio();
+                              // ignore: invalid_use_of_protected_member
+                              setState(() {});
+                              update(() {});
+                            },
+                          ),
+                      ],
+                    ),
+                    if (activeSunkenRealmAreaId case final id?) ...[
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/oculum/home_art_authored/realm_affogato_$id.webp',
+                          semanticLabel: _sunkenRealmAreas[id]!.name,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(_sunkenRealmAreas[id]!.description),
+                    ],
+                  ],
                   if (selectedPlaneId == 'deserto_divoratore') ...[
                     const SizedBox(height: 12),
                     const Text(

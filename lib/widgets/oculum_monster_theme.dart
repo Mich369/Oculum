@@ -424,6 +424,93 @@ const _november6SecondApprovedDesktopAssets = <String, String>{
       'assets/oculum/home_art/theme_weak_horror_lacrimante_canon_20261106_votes2.png',
 };
 
+const _november15ApprovedDesktopIds = {
+  'aberrazione_oro_marmo_intermedia_angelica',
+  'aberrazione_oro_marmo_intermedia_solare',
+  'aberrazione_oro_marmo_superiore_angelica',
+  'aculotide',
+  'acuagoblin_variante_curioso',
+  'acuagoblin_variante_predatore',
+  'acuagoblin_variante_territoriale',
+  'agla_variante_corazzata',
+  'air_navigator',
+  'ammasso_carne_ossa_errante_variante_rituale',
+  'ammasso_pustoloso',
+  'angelo_fustigatore_variante_rituale',
+  'arcangelo_variante_errante',
+  'armadillo_cristallo',
+  'armadillo_legno',
+  'armadillo_sabbia',
+  'armaiolo_della_fila_lunga_variante_rituale',
+  'arpia_base_variante_veterana',
+  'baby_forest_demon',
+  'baby_forest_demon_variante_rituale',
+  'baby_rock_rhino',
+  'baby_rock_rhino_variante_intermedia',
+  'baby_rock_rhino_variante_veterana',
+  'bambola_vapium_variante_veterana',
+  'bandito_base_variante_veterana',
+  'base_ghiaccio_05',
+  'bunnys',
+  'bunnys_variante_veterana',
+  'ciclo_forest_demon_blu',
+  'ciclope_del_fato',
+  'corvo_della_morte_evoluto',
+  'crostaceo_corazzato',
+  'cuore_lava_variante_corazzata',
+  'custode_campana_cieca',
+  'cynervail',
+  'demone_glaciale_minore',
+  'distruttor_caramella',
+  'divoramitu',
+  'divoramitu_elite',
+  'durafur',
+  'errante_della_forza',
+  'errante_della_resistenza',
+  'fata_cacciatrice',
+  'ferrugryp',
+  'forest_demon',
+  'forest_demon_errato',
+  'golem_runico_variante_veterana',
+  'grofix',
+  'guardia_solare',
+  'guardia_solare_elite',
+  'guardiano_solare',
+  'habitat_demoniaco_regina_delle_gole_vulcaniche',
+  'habitat_foresta_elementale_ragno_della_linfa_acida',
+  'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante',
+  'idra_base',
+  'larva_del_vespro',
+  'larva_del_vespro_variante_errante',
+  'larva_lava_variante_corazzata',
+  'lignobark',
+  'lupo_delle_nevi',
+  'lupo_infernale_del_ghiaccio',
+  'mammuth_in_decomposizione',
+  'marionettista_boss',
+  'meccanio_ammaccato_variante_errante',
+  'oblyvuard',
+  'ombra_ignota',
+  'osycleiv',
+  'pawn_guardiano',
+  'pinepine',
+  'sanguifang',
+  'scheletro_bombarolo',
+  'sciamano_malizioso',
+  'sensimoss',
+  'snorlo',
+  'snorlo_variante_corazzata',
+  'sonoreye',
+  'sposa_marea_nera',
+  'topo_mutante',
+  'troll_base_variante_veterana',
+};
+
+const _forestDemonErratoDesktopIds = {
+  'baby_forest_demon_errato',
+  'forest_demon_errato',
+};
+
 @immutable
 class OculumMonsterTheme {
   const OculumMonsterTheme(this.monster, this.color);
@@ -441,7 +528,13 @@ class OculumMonsterTheme {
         'divoramitu',
         'divoramitu_elite',
         'distruttor_caramella',
+        'goblin_king',
+        'soul_fighter',
+        'soul_fighter_variante_elite',
+        'terramound',
       }.contains(monster.id) ||
+      _november15ApprovedDesktopIds.contains(monster.id) ||
+      _forestDemonErratoDesktopIds.contains(monster.id) ||
       _november9ApprovedDesktopIds.contains(monster.id) ||
       oculumNovember8VotedMonsterIds.contains(monster.id) ||
       _caproneApprovedDesktopIds.contains(monster.id) ||
@@ -485,6 +578,17 @@ class OculumMonsterTheme {
         'cavaliere_morto',
         'scheletro_bombarolo',
       }.contains(monster.id);
+
+  // Preserve the dedicated full-bleed compositions on phones.
+  bool get preserveMobileIllustrationFraming =>
+      !const {
+        'grofix',
+        'mammuth_in_decomposizione',
+        'pawn_guardiano',
+        'pinepine',
+      }.contains(monster.id) &&
+      preserveIllustrationFraming;
+
   String? get relicIllustration =>
       oculumMonsterArtworkAsset(_relicIllustration);
 
@@ -617,8 +721,52 @@ class OculumMonsterTheme {
   static String? desktopIllustrationForId(
     String monsterId,
   ) => switch (monsterId) {
-    'divoramitu' || 'divoramitu_elite' || 'distruttor_caramella' =>
-      'assets/oculum/home_art/theme_${monsterId}_canon_20261108.png',
+    'goblin_king' =>
+      'assets/oculum/home_art_authored/theme_goblin_king_canon_20261114_v2.webp',
+    'soul_fighter' =>
+      'assets/oculum/home_art_authored/theme_soul_fighter_canon_20261114_v2.webp',
+    'soul_fighter_variante_elite' ||
+    'terramound' ||
+    'frutibush' ||
+    'oculiath' ||
+    'oculiath_minore' ||
+    'oculiath_maggiore' =>
+      'assets/oculum/home_art_authored/theme_${monsterId}_canon_20261114.webp',
+    'solgaze' || 'solgaze_variante_muschiosa' =>
+      'assets/oculum/home_art_authored/theme_${monsterId}_canon_20261114.webp',
+    'affogato_faldavela' ||
+    'armadillo_sabbia' ||
+    'balena_dai_mille_occhi' ||
+    'base_ghiaccio_05' ||
+    'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante' ||
+    'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti' ||
+    'idra_base' ||
+    'piovra_succhiasangue' =>
+      'assets/oculum/home_art_authored/theme_${monsterId}_canon_20261116_riallineamento.webp',
+    'affogato_custode_della_chiusa' ||
+    'affogato_palmatore_dei_nastri' ||
+    'affogato_predone_delle_nasse' ||
+    'affogato_sentinella_di_basalto' ||
+    'affogato_tessitore_della_corrente' ||
+    'affogato_vedetta_dei_canali' ||
+    'affogato_vortice_delle_arcate' ||
+    'base_affogato_08' ||
+    'ciclo_cervo_radure_miti' ||
+    'ciclo_falena_delirio' ||
+    'ciclo_rospo_gronde_marce' ||
+    'ciclo_scarabeo_sigillo_ardente' ||
+    'eiva_serracapo_mosaici' ||
+    'habitat_caramella_medusa_di_confettura' ||
+    'hero_path_diverso_ascia_variante_corazzata' ||
+    'pesce_mutato' ||
+    'piranha_mortale' ||
+    'ragno_putrido' ||
+    'sempre_verde' =>
+      'assets/oculum/home_art_authored/theme_${monsterId}_canon_20261116.webp',
+    final id when _november15ApprovedDesktopIds.contains(id) =>
+      'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp',
+    final id when _forestDemonErratoDesktopIds.contains(id) =>
+      'assets/oculum/home_art_authored/theme_${id}_20261115.webp',
     'hero_path_rosso' || 'hero_path_rosso_variante_veterana' =>
       'assets/oculum/home_art/theme_${monsterId}_canon_20261108_votes6_red_eyes.png',
     final id when _november9ApprovedDesktopIds.contains(id) =>
@@ -706,10 +854,6 @@ class OculumMonsterTheme {
       'assets/oculum/home_art/theme_cloud_beast_canon_20261031.png',
     'armadillo_cristallo' =>
       'assets/oculum/home_art/theme_armadillo_cristallo_canon_20261031.png',
-    'armadillo_legno' =>
-      'assets/oculum/home_art/theme_armadillo_legno_canon_20261031.png',
-    'armadillo_sabbia' =>
-      'assets/oculum/home_art/theme_armadillo_sabbia_canon_20261031.png',
     'feralis' => 'assets/oculum/home_art/theme_feralis_canon_20261031.png',
     'laer' => 'assets/oculum/home_art/theme_laer_canon_20261031.png',
     'mostro_solare' =>
@@ -734,15 +878,12 @@ class OculumMonsterTheme {
       'assets/oculum/home_art/theme_manichino_baghest_canon_20261031.png',
     'sciamano_malizioso' =>
       'assets/oculum/home_art/theme_sciamano_malizioso_v1.png',
-    'custode_campana_cieca' =>
-      'assets/oculum/home_art/theme_custode_campana_cieca_v1.png',
     'mammuth_in_decomposizione' =>
       'assets/oculum/home_art/theme_mammuth_decomposizione_v1.png',
     'armadillo_corazzato' =>
       'assets/oculum/home_art/theme_armadillo_corazzato_v1.png',
     'weak_horror_mastino' =>
       'assets/oculum/home_art/theme_mastino_cripta_v1.png',
-    'forest_demon' => 'assets/oculum/home_art/theme_forest_demon_v1.png',
     'ciclo_forest_demon_blu' =>
       'assets/oculum/home_art/theme_forest_demon_blu_v1.png',
     'mezzo_demone_massiccio' =>
@@ -781,12 +922,6 @@ class OculumMonsterTheme {
     'guardia_infernale_ik_elite' =>
       'assets/oculum/home_art/theme_guardia_infernale_ik_elite_v1.png',
     'pinepine' => 'assets/oculum/home_art/theme_pinepine_v2.png',
-    'grofix' => 'assets/oculum/home_art/theme_grofix_v1.png',
-    'guardia_solare' => 'assets/oculum/home_art/theme_guardia_solare_v2.png',
-    'guardia_solare_elite' =>
-      'assets/oculum/home_art/theme_guardia_solare_elite_v2.png',
-    'guardiano_solare' =>
-      'assets/oculum/home_art/theme_guardiano_solare_v4.png',
     'mostro_lunare' => 'assets/oculum/home_art/creature_mostro_lunare_v1.png',
     'mostro_lunare_demoniaco' =>
       'assets/oculum/home_art/creature_mostro_lunare_demoniaco_v1.png',
@@ -800,8 +935,6 @@ class OculumMonsterTheme {
       'assets/oculum/theme_stories/webp/creature_feralis.webp',
     'granscostumato' =>
       'assets/oculum/theme_stories/webp/creature_granscostumato.webp',
-    'sempre_verde' =>
-      'assets/oculum/theme_stories/webp/creature_sempre_verde.webp',
     'lavastrello' =>
       'assets/oculum/theme_stories/webp/creature_lavastrello.webp',
     'thunderbird' =>
@@ -809,7 +942,6 @@ class OculumMonsterTheme {
     'scostubanditi' =>
       'assets/oculum/theme_stories/webp/creature_scostubanditi.webp',
     'bramble' => 'assets/oculum/home_art/theme_bramble_v3.png',
-    'ombra_ignota' => 'assets/oculum/home_art/creature_ombra_v2.png',
     'uomo_maschera_solare' => 'assets/oculum/home_art/creature_solare_v2.png',
     'uomo_maschera_angelica' => 'assets/oculum/home_art/creature_angelico.png',
     'uomo_maschera_viola' => 'assets/oculum/home_art/creature_viola.png',
@@ -906,9 +1038,6 @@ class OculumMonsterTheme {
       'assets/oculum/home_art/theme_mezzo_demone_massiccio_mobile_v1.png',
     'weak_horror_mastino' =>
       'assets/oculum/home_art/theme_mastino_cripta_mobile_v1.png',
-    'forest_demon' => 'assets/oculum/home_art/theme_forest_demon_mobile_v1.png',
-    'ciclo_forest_demon_blu' =>
-      'assets/oculum/home_art/theme_forest_demon_blu_mobile_v1.png',
     'mezzo_demone_cosciente' =>
       'assets/oculum/home_art/theme_mezzo_demone_cosciente_mobile_v1.png',
     'nuvola_in_bottiglia' =>

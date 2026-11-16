@@ -4,6 +4,112 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test(
+    'Fallen Eye caps each source stat independently of its rarity effect',
+    () {
+      final source = <String, dynamic>{
+        'resilienza': '30',
+        'volonta': '10',
+        'materia': '9',
+        'oculum': '8',
+      };
+      const owner = {'resilienza': 3, 'volonta': 20, 'materia': 5, 'oculum': 0};
+      const expected = {
+        'comune': ['6', '10', '7', '3'],
+        'non_comune': ['9', '10', '9', '6'],
+        'raro': ['12', '10', '9', '8'],
+        'oculum': ['30', '10', '9', '8'],
+      };
+      for (final entry in expected.entries) {
+        final sheet = {...source, if (entry.key == 'comune') 'materia': '8'};
+        final eye = <String, dynamic>{
+          'rarity': entry.key,
+          'commonMalusEffect': 'stat:materia:-1',
+          'commonMalusApplied': entry.key == 'comune',
+        };
+        oculumFallenEyeProjectOwnerStats(eye, sheet, owner);
+        expect(source.keys.map((stat) => sheet[stat]), entry.value);
+        if (entry.key == 'oculum') continue;
+        expect(eye['uncappedBaseStats'], {
+          for (final key in source.keys) key: readIntValue(source[key]),
+        });
+        expect(oculumFallenEyeProjectOwnerStats(eye, sheet, owner), isFalse);
+        expect(oculumFallenEyeProjectOwnerStats(eye, sheet, null), isFalse);
+      }
+    },
+  );
+
+  test(
+    'Fallen Eye converts old cached HP with the saved legacy multiplier',
+    () {
+      final eye = <String, dynamic>{'rarity': 'comune'};
+      final sheet = <String, dynamic>{
+        'livello': '0',
+        'grado': '0',
+        'resilienza': '20',
+        'currentResilienza': '20',
+        'currentHp': '100',
+        'derivedMaxHp': 207,
+        'manualHpMaximumAdjustment': 7,
+      };
+      expect(oculumSheetHpMaximum(sheet), 127);
+      expect(
+        oculumFallenEyeProjectOwnerStats(eye, sheet, {'resilienza': 3}),
+        isTrue,
+      );
+      expect(sheet['resilienza'], '6');
+      expect(oculumSheetHpMaximum(sheet), 43);
+      expect(sheet['currentHp'], '43');
+    },
+  );
+
+  test(
+    'Eye stat edits and Reforge use the saved source under a low owner cap',
+    () {
+      final eye = <String, dynamic>{
+        'rarity': 'raro',
+        'rareAttribute': 'danno',
+        'rareAttributeBonus': 50,
+      };
+      final sheet = <String, dynamic>{
+        'resilienza': '30',
+        'currentResilienza': '27',
+        'derivedResilienzaTotal': 27,
+        'derivedMaxHp': 270,
+        'hpGradeMultiplier': 10,
+        'currentHp': '20',
+        'volonta': '40',
+      };
+      const owner = {'resilienza': 5, 'volonta': 2};
+      expect(oculumFallenEyeProjectOwnerStats(eye, sheet, owner), isTrue);
+      expect(sheet['resilienza'], '14');
+      expect(sheet['currentResilienza'], '11');
+      expect(sheet['derivedResilienzaTotal'], 11);
+      expect(oculumSheetHpMaximum(sheet), 110);
+      expect(sheet['currentHp'], '20');
+      expect(sheet['volonta'], '11');
+      sheet['volonta'] = '12';
+      oculumFallenEyeProjectOwnerStats(eye, sheet, owner, captureEdits: true);
+      expect(sheet['volonta'], '11');
+      expect((eye['uncappedBaseStats'] as Map)['volonta'], 41);
+      eye['rarity'] = 'oculum';
+      expect(
+        oculumFallenEyeProjectOwnerStats(
+          eye,
+          sheet,
+          null,
+          restoreUncapped: true,
+        ),
+        isTrue,
+      );
+      expect(sheet['volonta'], '41');
+      expect(sheet['resilienza'], '30');
+      expect(oculumSheetHpMaximum(sheet), 270);
+      expect(eye['rareAttributeBonus'], 50);
+      expect(eye.containsKey('projectedBaseStats'), isFalse);
+    },
+  );
+
   test('summoned Fallen Eye boosts highest and second highest stats', () {
     final sheet = <String, dynamic>{
       'resilienza': '12',

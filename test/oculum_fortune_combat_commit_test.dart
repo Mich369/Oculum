@@ -198,6 +198,9 @@ void main() {
       (tester) async {
         final (state, p, _) = await _mount(tester);
         final sheet = state.schedePersonaggio[state.schedaCorrente] as Map;
+        // The independent 50% Life awakening can restore Life after the hit.
+        // This test measures team resistance before verifying non-lethal KO.
+        sheet['partialAwakeningHalfHpTriggered'] = true;
         final runtime = sheet['planarRuntime'] as Map;
         runtime['identityFateChaos'] = 'Fato';
         runtime['identityCelestial'] = 'nessuna';

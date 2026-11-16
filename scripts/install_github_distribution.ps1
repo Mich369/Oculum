@@ -2,7 +2,7 @@ param(
   [Parameter(Mandatory = $true)][long]$RunId,
   [string]$GitHubRepo = 'Mich369/Oculum',
   [switch]$UseRangeDownload,
-  [switch]$DeduplicateWindowsRuntime
+  [switch]$DeduplicateWindowsRuntime = $true
 )
 
 $ErrorActionPreference = 'Stop'
@@ -104,6 +104,56 @@ function Optimize-VerifiedWindowsRuntime([string]$StagingRoot, [object[]]$Files)
   return [pscustomobject]@{ files = $linked; bytes = $linkedBytes; copiesRetained = $copyFallback }
 }
 
+function Get-CommitDistributionDocuments([string]$ProjectRoot, [string]$Commit) {
+  $documents = [ordered]@{
+    'titoli-statistiche-critici.md' = 'LEGGIMI-MODIFICHE.md'
+    'temi-oculum.md' = 'LEGGIMI-TEMI.md'
+    'pawn-catalogo-permessi.md' = 'LEGGIMI-PAWN-CATALOGO.md'
+    'skill-art-dadi-turni.md' = 'LEGGIMI-SKILL-ART.md'
+  }
+  foreach ($name in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'combattimento-parser-2026-10-18.md', 'REGISTRO_AGGIORNAMENTI.md', 'VERIFICA_MOSTRI_AGGIUNTI.md', 'ULTIMO_AGGIORNAMENTO.md')) {
+    $documents[$name] = $name
+  }
+
+  $git = (Get-Command git -CommandType Application -TotalCount 1).Source
+  $contents = [ordered]@{}
+  foreach ($document in $documents.GetEnumerator()) {
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo.FileName = $git
+    $process.StartInfo.WorkingDirectory = $ProjectRoot
+    $process.StartInfo.Arguments = "cat-file blob ${Commit}:docs/$($document.Key)"
+    $process.StartInfo.UseShellExecute = $false
+    $process.StartInfo.RedirectStandardOutput = $true
+    $output = [IO.MemoryStream]::new()
+    try {
+      if (!$process.Start()) { throw 'Cannot start Git to read release documentation' }
+      # Stream the blob bytes directly to preserve encoding and line endings.
+      $process.StandardOutput.BaseStream.CopyTo($output)
+      $process.WaitForExit()
+      if ($process.ExitCode -ne 0) { throw "Cannot read docs/$($document.Key) from commit $Commit" }
+      $contents[$document.Value] = $output.ToArray()
+    } finally {
+      $output.Dispose()
+      $process.Dispose()
+    }
+  }
+  return $contents
+}
+
+function Test-InstalledReleaseDocumentation([string]$Root, [System.Collections.IDictionary]$Documents) {
+  # Older installers copied checked-out files, which could have CRLF line endings.
+  # Decode one byte per character so the comparison permits only that conversion.
+  $byteEncoding = [Text.Encoding]::GetEncoding(28591)
+  foreach ($document in $Documents.GetEnumerator()) {
+    $path = Join-Path $Root $document.Key
+    if (![IO.File]::Exists($path)) { return $false }
+    $installedText = $byteEncoding.GetString([IO.File]::ReadAllBytes($path)).Replace("`r`n", "`n")
+    $committedText = $byteEncoding.GetString($document.Value).Replace("`r`n", "`n")
+    if (![string]::Equals($installedText, $committedText, [StringComparison]::Ordinal)) { return $false }
+  }
+  return $true
+}
+
 $runJson = & gh api "repos/$GitHubRepo/actions/runs/$RunId"
 if ($LASTEXITCODE -ne 0) { throw 'Cannot read GitHub run' }
 $run = $runJson | ConvertFrom-Json
@@ -121,6 +171,24 @@ function Assert-CurrentBuildSources {
 }
 Assert-CurrentBuildSources
 foreach ($path in @($distRoot, $stagingRoot, $downloadRoot)) { Assert-BuildChild $path }
+$releaseDocuments = $null
+$installedReceipt = Join-Path $distRoot 'BUILD-VERIFICATE.json'
+if (Test-Path -LiteralPath $installedReceipt -PathType Leaf) {
+  $receiptFile = Get-Item -LiteralPath $installedReceipt -Force
+  if ($receiptFile.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+    throw 'Installed distribution receipt is a link'
+  }
+  $installed = Get-Content -LiteralPath $installedReceipt -Raw | ConvertFrom-Json
+  if ($installed.commit -eq $commit -and $installed.githubRun -eq $run.html_url) {
+    & $verifier -ExpectedCommit $commit -DistributionRoot $distRoot
+    $releaseDocuments = Get-CommitDistributionDocuments $projectRoot $commit
+    if (Test-InstalledReleaseDocumentation $distRoot $releaseDocuments) {
+      Write-Host "GitHub run $RunId is already installed and verified. No new stage or backup was created."
+      return
+    }
+  }
+}
+Assert-OculumRollbackEnvironment
 if ((Test-Path -LiteralPath $stagingRoot) -or (Test-Path -LiteralPath $downloadRoot)) {
   throw 'Fresh staging path already exists; inspect it before retrying'
 }
@@ -252,12 +320,11 @@ Get-ChildItem -LiteralPath $downloadRoot -Directory | Where-Object Name -NotIn @
   Assert-DownloadedItem $_.FullName
   Move-Item -LiteralPath $_.FullName -Destination (Join-Path $stagingRoot $_.Name)
 }
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/titoli-statistiche-critici.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-MODIFICHE.md')
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/temi-oculum.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-TEMI.md')
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/pawn-catalogo-permessi.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-PAWN-CATALOGO.md')
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/skill-art-dadi-turni.md') -Destination (Join-Path $stagingRoot 'LEGGIMI-SKILL-ART.md')
-foreach ($reference in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'combattimento-parser-2026-10-18.md', 'REGISTRO_AGGIORNAMENTI.md', 'VERIFICA_MOSTRI_AGGIUNTI.md', 'ULTIMO_AGGIORNAMENTO.md')) {
-  Copy-Item -LiteralPath (Join-Path $projectRoot ('docs/' + $reference)) -Destination (Join-Path $stagingRoot $reference)
+if ($null -eq $releaseDocuments) {
+  $releaseDocuments = Get-CommitDistributionDocuments $projectRoot $commit
+}
+foreach ($document in $releaseDocuments.GetEnumerator()) {
+  [IO.File]::WriteAllBytes((Join-Path $stagingRoot $document.Key), $document.Value)
 }
 $manifest = [ordered]@{
   commit = $commit
@@ -271,7 +338,8 @@ $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $stagi
 & $verifier -ExpectedCommit $commit -DistributionRoot $stagingRoot
 if ($DeduplicateWindowsRuntime) {
   # Same-build runtime files only. ZIPs, mutable settings and previous
-  # distributions retain independent files. A normal install remains the default.
+  # distributions retain independent files. Disable if independent copies of
+  # the same runtime are needed in each folder.
   $dedup = Optimize-VerifiedWindowsRuntime $stagingRoot $manifest.files
   Write-Host "Windows staging hard links=$($dedup.files) duplicate logical bytes=$($dedup.bytes) copies retained=$($dedup.copiesRetained)"
 }
@@ -287,7 +355,11 @@ foreach ($record in $manifest.files) {
 }
 $backupRoot = Join-Path $buildRoot ("distribution-backup-$RunId-" + (Get-Date -Format 'yyyyMMdd-HHmmssfff'))
 foreach ($path in @($distRoot, $stagingRoot, $backupRoot)) { Assert-BuildChild $path }
-Invoke-OculumDistributionSwap -BuildRoot $buildRoot -DistributionRoot $distRoot -StagingRoot $stagingRoot -BackupRoot $backupRoot -BeforeSwap {
+Invoke-OculumDistributionSwap -BuildRoot $buildRoot -DistributionRoot $distRoot -StagingRoot $stagingRoot -BackupRoot $backupRoot -RetainSingleVerifiedBackup -VerifyRollback {
+  param($rollbackPath)
+  $receipt = Get-Content -LiteralPath (Join-Path $rollbackPath 'BUILD-VERIFICATE.json') -Raw | ConvertFrom-Json
+  & $verifier -ExpectedCommit $receipt.commit -DistributionRoot $rollbackPath | Out-Null
+} -BeforeSwap {
   Assert-CurrentBuildSources
   $activeBeforeSwap = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
     $_.Path -and $_.Path.StartsWith($distRoot + '\', [StringComparison]::OrdinalIgnoreCase)

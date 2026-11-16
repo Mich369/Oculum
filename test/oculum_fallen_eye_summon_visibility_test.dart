@@ -149,12 +149,12 @@ void main() {
           'nome': 'Riccio ereditato',
           'livello': '3',
           'grado': '1',
-          'resilienza': '3',
+          'resilienza': '24',
           'volonta': '3',
           'materia': '3',
           'oculum': '3',
           'currentHp': '45',
-          'currentResilienza': '3',
+          'currentResilienza': '24',
           'currentVolonta': '3',
           'currentMateria': '3',
           'currentOculum': '3',
@@ -190,6 +190,19 @@ void main() {
         sheets.singleWhere((s) => s['occhioCadutoId'] == eye['id']) as Map,
       );
       expect(sheet['arti'], isNotEmpty);
+      expect(
+        sheet['resilienza'],
+        '12',
+      ); // The owner's summon bonus is separate.
+      expect((eye['uncappedBaseStats'] as Map)['resilienza'], 24);
+      probe.increaseBaseStat('resilienza', 8);
+      probe.saveSheet();
+      expect(
+        sheets.singleWhere(
+          (s) => s['occhioCadutoId'] == eye['id'],
+        )['resilienza'],
+        '20',
+      );
       final originalBond = eye['bond'];
       sheets.removeWhere((s) => s['occhioCadutoId'] == eye['id']);
       await runWithFrames(() => probe.activateFallenEye(eye));
@@ -222,6 +235,11 @@ void main() {
         hasLength(1),
       );
       expect(probe.sheetTagsInFolder('owner-folder'), [ownerTag, blankTag]);
+      expect((restoredEye['uncappedBaseStats'] as Map)['resilienza'], 24);
+      expect((restoredEye['sheetData'] as Map)['resilienza'], '20');
+      probe.increaseBaseStat('resilienza', -8);
+      probe.saveSheet();
+      expect((restoredEye['sheetData'] as Map)['resilienza'], '12');
       await runWithFrames(() => probe.deactivateFallenEye(restoredEye));
       await tester.pump();
       expect(probe.sheetTagsInFolder('owner-folder'), [ownerTag]);
@@ -234,6 +252,24 @@ void main() {
           reason: '$stat bonus remained after dismiss',
         );
       }
+      await runWithFrames(() => probe.activateFallenEye(restoredEye));
+      final activeSheets =
+          state.schedePersonaggio as List<Map<String, dynamic>>;
+      final eyeIndex = activeSheets.indexWhere(
+        (s) => s['occhioCadutoId'] == eye['id'],
+      );
+      expect(eyeIndex, isNonNegative);
+      expect(probe.snapshot()['volonta'], after['volonta']);
+      activeSheets[eyeIndex]
+        ..['currentHp'] = '0'
+        ..['feriteMorte'] = 3;
+      probe.recordFallenEyeDeathAt(eyeIndex);
+      expect(oculumFallenEyeIsDead(restoredEye), isTrue);
+      expect(restoredEye['summonStatBonuses'], isNull);
+      expect(probe.snapshot()['volonta'], before['volonta']);
+      expect(probe.snapshot()['resilienza'], before['resilienza']);
+      probe.recordFallenEyeDeathAt(eyeIndex);
+      expect(probe.snapshot()['volonta'], before['volonta']);
       probe.cancelPendingSave();
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));

@@ -170,7 +170,12 @@ void main() {
         );
       } else {
         linked++;
-        expect(theme.illustration, oculumMonsterArtworkAsset(_assetFor(id)));
+        expect(
+          theme.illustration,
+          id == 'snorlo'
+              ? 'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp'
+              : oculumMonsterArtworkAsset(_assetFor(id)),
+        );
         expect(theme.preserveIllustrationFraming, isTrue);
       }
       expect(

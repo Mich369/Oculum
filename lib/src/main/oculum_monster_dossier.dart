@@ -1,5 +1,48 @@
 part of '../../main.dart';
 
+/// Build a Skill's form descriptions only while its disclosure tile is open.
+class _OculumMonsterReadingSkillTile extends StatefulWidget {
+  const _OculumMonsterReadingSkillTile({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.buildForms,
+  });
+
+  final Widget title;
+  final Widget subtitle;
+  final List<Widget> Function() buildForms;
+
+  @override
+  State<_OculumMonsterReadingSkillTile> createState() =>
+      _OculumMonsterReadingSkillTileState();
+}
+
+class _OculumMonsterReadingSkillTileState
+    extends State<_OculumMonsterReadingSkillTile> {
+  bool _opened = false;
+  List<Widget>? _forms;
+
+  @override
+  void didUpdateWidget(covariant _OculumMonsterReadingSkillTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _forms = null;
+  }
+
+  @override
+  Widget build(BuildContext context) => ExpansionTile(
+    key: widget.key,
+    title: widget.title,
+    subtitle: widget.subtitle,
+    onExpansionChanged: (expanded) {
+      // Keep the contents during the collapse animation. The tile itself
+      // discards their elements while closed.
+      if (expanded && !_opened) setState(() => _opened = true);
+    },
+    children: _opened ? (_forms ??= widget.buildForms()) : const [],
+  );
+}
+
 int oculumMonsterBookPower(MonsterBookEntry entry) => oculumScoutPower(
   entry.stats['level'] ?? 0,
   [
@@ -348,6 +391,11 @@ extension _OculumMonsterDossier on _OculumHomePageState {
     Set<String>? knownDropIds,
   }) {
     final art = oculumMonsterBookArt(monster);
+    final skills = [
+      ...art.skills,
+      for (final additionalArt in oculumMonsterBookAdditionalArts(monster))
+        ...additionalArt.skills,
+    ];
     final dropBonus =
         monster.dropIds.any(
           (id) => knownDropIds == null || knownDropIds.contains(id),
@@ -362,7 +410,7 @@ extension _OculumMonsterDossier on _OculumHomePageState {
           style: TextStyle(color: tertiaryColor),
         ),
         monsterReadingHeading('Abilità', Icons.auto_awesome_outlined),
-        for (final indexed in art.skills.indexed)
+        for (final indexed in skills.indexed)
           monsterReadingSkill(monster, indexed.$2, indexed.$1),
         for (final open in oculumMonsterBookOpenPool(
           monster,
@@ -484,13 +532,14 @@ extension _OculumMonsterDossier on _OculumHomePageState {
     int index,
   ) {
     final effects = skill.effettiEvoluzione(1);
+    final cost = oculumMonsterReadingCost(skill, 1);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: abilityColorFrame(
-        cost: oculumMonsterReadingCost(skill, 1),
+        cost: cost,
         effects: effects,
         padding: EdgeInsets.zero,
-        child: ExpansionTile(
+        child: _OculumMonsterReadingSkillTile(
           key: ValueKey('monster-reading-${monster.id}-$index'),
           title: Text(
             skill.nome,
@@ -499,13 +548,16 @@ extension _OculumMonsterDossier on _OculumHomePageState {
               fontWeight: FontWeight.w800,
             ),
           ),
-          subtitle: Text(oculumMonsterReadingCost(skill, 1)),
-          children: [
+          subtitle: Text(cost),
+          buildForms: () => [
             for (var form = 1; form <= 3; form++)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-                child: monsterReadingForm(monster, skill, index, form),
-              ),
+              if (!oculumIsSoulFighter(monster.id) ||
+                  skill.testoEvoluzione(form) != '???' ||
+                  skill.effettiEvoluzione(form).isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                  child: monsterReadingForm(monster, skill, index, form),
+                ),
           ],
         ),
       ),
@@ -523,12 +575,15 @@ extension _OculumMonsterDossier on _OculumHomePageState {
         .effettiEvoluzione(form)
         .where((e) => e.enabled)
         .toList();
+    final firstLevel = oculumIsSoulFighter(monster.id)
+        ? 0
+        : monsterBookSkillRequiredLevel(monster, index);
     final level =
         RegExp(
           r'Richiede livello\s+(\d+)',
           caseSensitive: false,
         ).firstMatch(text)?[1] ??
-        '${monsterBookSkillRequiredLevel(monster, index) + (form - 1) * 3}';
+        '${firstLevel + (form - 1) * 3}';
     final cd = skill.cooldownPerLivello[form - 1];
     final passive = skill.tipoPerLivello(form).toLowerCase().contains('passiv');
     final free = effects.any(

@@ -7,6 +7,105 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oculum/main.dart';
 
 void main() {
+  test('barter allows towns and travellers unless the place is solar', () {
+    expect(oculumMerchantCanBarterAt('city'), isTrue);
+    expect(oculumMerchantCanBarterAt('outside'), isTrue);
+    expect(oculumMerchantCanBarterAt(''), isTrue);
+    expect(oculumMerchantCanBarterAt('solar'), isFalse);
+  });
+
+  test('barter fallback distinguishes difficulty and Master discounts', () {
+    final random = Random(369);
+    final oculumRolls = List.generate(
+      6000,
+      (_) => oculumMerchantBarterFallbackPercent('oculum', random),
+    );
+    expect(oculumRolls.toSet(), {0, 1, 2});
+    for (var value = 0; value < 3; value++) {
+      expect(
+        oculumRolls.where((roll) => roll == value).length,
+        inInclusiveRange(1800, 2200),
+      );
+    }
+    const difficulties = ['oculum', 'difficile', 'normale', 'facile'];
+    expect(
+      [
+        for (final difficulty in difficulties)
+          oculumMerchantBarterFallbackPercent(
+            difficulty,
+            random,
+            masterDiscounted: true,
+          ),
+      ],
+      [0, 3, 6, 9],
+    );
+    expect(
+      List.generate(
+        20,
+        (_) => oculumMerchantBarterFallbackPercent('medio', random),
+      ).toSet(),
+      {10, 11},
+    );
+    expect(
+      List.generate(
+        20,
+        (_) => oculumMerchantBarterFallbackPercent('difficile', random),
+      ).toSet(),
+      {7, 8},
+    );
+    expect(
+      List.generate(
+        20,
+        (_) => oculumMerchantBarterFallbackPercent('facile', random),
+      ).toSet(),
+      {13, 14},
+    );
+  });
+
+  test(
+    'barter spends pledged credit, applies one discount and debits the elected tip',
+    () {
+      OculumMerchantBarterQuote? quote({
+        int credit = 200,
+        int wallet = 0,
+        bool hasSecond = false,
+        int? secondPrice,
+        int tip = 0,
+        bool fate = true,
+      }) => oculumMerchantBarterQuote(
+        firstPrice: 100,
+        offerCredit: credit,
+        availableObser: wallet,
+        hasSecondOffer: hasSecond,
+        fallbackDiscount: 10,
+        secondPrice: secondPrice,
+        tip: tip,
+        fate: fate,
+      );
+
+      expect(quote()?.cashChange, 110);
+      expect(quote()?.luck, 0);
+      expect(quote(hasSecond: true)?.cashChange, 100);
+      final second = quote(hasSecond: true, secondPrice: 80, tip: 19)!;
+      expect(second.firstObser, 100);
+      expect(second.secondObser, 68);
+      expect(second.cashChange, 13);
+      expect(second.tip, 19);
+      expect(second.luck, 2);
+      expect(
+        quote(hasSecond: true, secondPrice: 80, tip: 19, fate: false)?.luck,
+        0,
+      );
+      expect(quote(hasSecond: true, secondPrice: 80, tip: 33), isNull);
+      expect(quote(hasSecond: true, secondPrice: 120), isNull);
+      expect(quote(credit: 70, wallet: 29), isNull);
+      expect(quote(credit: 70, wallet: 30)?.cashChange, -30);
+      expect(quote(credit: 70, wallet: 30)?.fallbackDiscount, 0);
+      expect(quote(credit: 100)?.cashChange, 0);
+      expect(quote(credit: 100)?.fallbackDiscount, 0);
+    },
+  );
+
   test('merchant offer counts and selection stay varied but focused', () {
     final countRandom = Random(20261022);
     final observedCounts = <int>{};

@@ -7,8 +7,8 @@ on:
     branches:
       - main
   push:
-    branches:
-      - "**"
+    branches-ignore:
+      - "codex/oculum-verifica-20261116-1330"
 
 permissions:
   contents: read

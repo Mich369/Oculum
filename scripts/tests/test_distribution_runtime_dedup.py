@@ -46,6 +46,9 @@ class DistributionRuntimeDedupTests(unittest.TestCase):
         quote = lambda path: "'" + str(path).replace("'", "''") + "'"
         command = (
             "$ErrorActionPreference='Stop'; "
+            # A PowerShell 7 parent can put its modules first in the inherited path.
+            "Import-Module (Join-Path $PSHOME "
+            "'Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1'); "
             "$tokens=$null; $errors=$null; "
             "$script = [System.Management.Automation.Language.Parser]::ParseFile(" +
             quote(INSTALLER) + ",[ref]$tokens,[ref]$errors); "
@@ -54,8 +57,8 @@ class DistributionRuntimeDedupTests(unittest.TestCase):
             "$n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and "
             "$n.Name -in @('Join-VerifiedRuntimeFile', 'Optimize-VerifiedWindowsRuntime') }, "
             "$false) | ForEach-Object { Invoke-Expression $_.Extent.Text }; "
-            "$records = @(Get-Content -LiteralPath " + quote(manifest) +
-            " -Raw | ConvertFrom-Json); "
+            "$records = Get-Content -LiteralPath " + quote(manifest) +
+            " -Raw | ConvertFrom-Json; "
             + setup + " Optimize-VerifiedWindowsRuntime " + quote(self.stage) +
             " $records | ConvertTo-Json -Compress"
         )

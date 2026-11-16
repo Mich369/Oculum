@@ -12,6 +12,7 @@ class OculumThemeAssetPack {
     this.identityPrefix = 'identity',
     this.storySceneAsset,
     this.storySceneMobileAsset,
+    this.maskedStorySceneAsset,
     this.relicAsset,
     this.preserveStoryFraming = false,
   });
@@ -19,6 +20,7 @@ class OculumThemeAssetPack {
   final String? framePackId;
   final String identityPrefix;
   final String? storySceneAsset, storySceneMobileAsset, relicAsset;
+  final String? maskedStorySceneAsset;
   final bool preserveStoryFraming;
   String get _frameId => framePackId ?? id;
   String buttonFrame(String state) =>
@@ -45,10 +47,14 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     'Filamenti d’ombra e riflesso lunare protettivo',
     framePackId: 'moon_iron',
     identityPrefix: 'senka-identity',
-    storySceneAsset: 'assets/oculum/home_art/theme_senka_kamaria_v3.png',
+    storySceneAsset:
+        'assets/oculum/home_art_authored/theme_senka_kamaria_canon_20261115.webp',
     storySceneMobileAsset:
-        'assets/oculum/home_art/theme_senka_kamaria_mobile_v2.png',
-    relicAsset: 'assets/oculum/home_art/relic_senka_kamaria_v1.png',
+        'assets/oculum/home_art_authored/theme_senka_kamaria_mobile_canon_20261115.webp',
+    maskedStorySceneAsset:
+        'assets/oculum/home_art_authored/theme_senka_ombra_mascherata_canon_20261115.webp',
+    relicAsset:
+        'assets/oculum/home_art_authored/relic_senka_kamaria_canon_20261115.webp',
     preserveStoryFraming: true,
   ),
   ...oculumStoryThemePacks,

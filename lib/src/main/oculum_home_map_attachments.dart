@@ -7047,6 +7047,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         token['movementUsedMeters'] =
             localMapTokenMovementUsed(token) + delta.abs();
       }
+      syncOculiathPassenger(token);
       final name = localMapTokenDisplayName(token);
       final metres = after.toStringAsFixed(1);
       aggiungiLog(
@@ -7450,9 +7451,13 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   int sheetMovementAt(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return 0;
     if (index == schedaCorrente) return movimento();
+    final sheet = schedePersonaggio[index];
+    if (elementalSphereFrozenInSheet(sheet) ||
+        elementalSphereSoulSeparatedInSheet(sheet)) {
+      return 0;
+    }
     final derived = readIntValue(
-      schedePersonaggio[index]['derivedUnwoundedMovimento'] ??
-          schedePersonaggio[index]['derivedMovimento'],
+      sheet['derivedUnwoundedMovimento'] ?? sheet['derivedMovimento'],
       fallback: -1,
     );
     return oculumWoundedMovement(
@@ -7594,6 +7599,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   bool prepareLocalMapTokenMovement(Map<String, dynamic> token) {
+    if (isOculiathHeldMapToken(token)) return false;
     final initiativeToken = initiativeTokenForLocalMapToken(token);
     if (initiativeToken != null &&
         masterInitiativeReactionUsedTotal(initiativeToken) > 0) {
@@ -7771,6 +7777,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         canvasWidth,
         canvasHeight,
       );
+      syncOculiathPassenger(token);
     }
     notifyVttCanvasChanged();
   }
@@ -7781,6 +7788,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     double canvasHeight,
   ) {
     final group = localMapTokenDragGroup(anchor);
+    if (group.any(isOculiathHeldMapToken)) return;
     if (activeVttScene.snapToGrid && activeVttScene.gridType != 'none') {
       final anchorPoint = Offset(
         localMapTokenAxis(anchor, 'x') * canvasWidth,
@@ -7829,7 +7837,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         }
       }
     }
-    notifyVttCanvasChanged(save: true);
+    var carried = false;
+    for (final token in group) {
+      if (syncOculiathPassenger(token)) carried = true;
+    }
+    notifyVttCanvasChanged(save: true, publish: carried);
     for (final token in group) {
       if (modalitaMaster && realtimeService?.isConnected == true) {
         unawaited(sendAuthoritativeVttTokenPosition(token));
