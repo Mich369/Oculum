@@ -42,6 +42,7 @@
 - Nel Bestiario ci sono 60 nuove voci ostili del Regno Sommerso, ripartite in 20 famiglie con due varianti elementali ciascuna. Nuovi sfondi scelti per Balena Dai Mille Occhi, Dentysnap, Luxryf, Undathread e Faldavela.
 - Octocruor, la Piovra succhiasangue, usa la tavola D. Pynnasway, il Palmatore dei nastri, usa la tavola G.
 - Il nuovo Predone del Boomerang usa un’orbita protettiva da −12 Danni in mischia e −6 a distanza per tre Azioni proprie.
+- Il Predone adotta il nome Falxfin e lo sfondo G1 «Vedetta sopra la cupola».
 - Spada corta, guanto d’arme, Lama Orbita e pergamene possono uscire come bottino del Predone. Octocruor ha due tecniche innate più tre Skill Art sorteggiate.
 - La Lama Orbita usa Affinità e ha 5 turni di recupero modificabili dall’inventario. Se cade, si raccoglie a contatto.
 - L’installer e il generatore della distribuzione completa controllano PowerShell prima di scaricare o compilare.
