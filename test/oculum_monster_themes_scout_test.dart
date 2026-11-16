@@ -236,6 +236,8 @@ void main() {
           '5fed06388c0d4661c0529fe87b8a43d69ff23404585310a0209274238935109e',
       'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti':
           '7db5fcfc67d04e1976adb542837911dcdb7106641b7b4193cdd62c60c79e9888',
+      'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale':
+          '8ef480ac1c8bb9c846c475544e2cfcc7aad72692f98127c8c9665319e4710be0',
       'hero_path_diverso_ascia_variante_corazzata':
           'b67f3e05b5533869ef192f34a80f20484891d157a18ad787cf45a035571fe720',
       'idra_base':
@@ -257,6 +259,7 @@ void main() {
         'graga_rana_azzurra_variante_corazzata' ||
         'habitat_caramella_medusa_di_confettura' ||
         'habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata' ||
+        'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale' ||
         'hero_path_diverso_ascia_variante_corazzata' ||
         'ragno_putrido' => '20261116',
         _ => '20261116_riallineamento',

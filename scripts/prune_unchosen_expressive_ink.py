@@ -88,6 +88,10 @@ LETTER_PACKAGES = {
     'expressive_ink_medusa_di_confettura_20261116': (
         'habitat_caramella_medusa_di_confettura', 'CONFERMA-TAVOLA-B.json',
     ),
+    'expressive_ink_regina_delle_miniere_mute_rituale_20261116': (
+        'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale',
+        'CONFERMA-TACYANTEL.json',
+    ),
     'expressive_ink_ragno_putrido_20261116': ('ragno_putrido', 'CONFERMA-VENEMUK.json'),
     'expressive_ink_spaccaporte_corazzata_20261116': (
         'hero_path_diverso_ascia_variante_corazzata', 'CONFERMA-FORISPLIT.json',

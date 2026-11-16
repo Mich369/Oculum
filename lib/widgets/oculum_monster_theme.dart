@@ -761,6 +761,7 @@ class OculumMonsterTheme {
     'graga_rana_azzurra_variante_corazzata' ||
     'habitat_caramella_medusa_di_confettura' ||
     'habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata' ||
+    'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale' ||
     'hero_path_diverso_ascia_variante_corazzata' ||
     'pesce_mutato' ||
     'piranha_mortale' ||

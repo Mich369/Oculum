@@ -135,6 +135,10 @@ const _pronouncedMonsterNames = <String, ({String name, String spelling})>{
     name: 'Vyridfrost',
     spelling: 'Lince di brina verde Corazzata',
   ),
+  'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale': (
+    name: 'Tacyantel',
+    spelling: 'Regina delle miniere mute Rituale',
+  ),
   'hero_path_diverso_ascia_variante_corazzata': (
     name: 'Forisplit',
     spelling: 'Diverso Spaccaporte Corazzata',

@@ -28,6 +28,8 @@ La Graga Rana Azzurra Corazzata si chiama **Gragaloryx**, da *Graga* e *lorica*,
 
 La Lince di brina verde Corazzata si chiama **Vyridfrost** (vì-rid-frost), da *viridis* e *frost*, «brina verde». La G «In agguato dietro la lastra di brina» mostra quattro zampe e una coda lunga. Il nodo sensoriale è dietro la cresta. [WebP canonico](../assets/oculum/home_art_authored/theme_habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata_canon_20261116.webp).
 
+La Regina delle miniere mute Rituale si chiama **Tacyantel** e usa la G «Riflesso nel pozzo cieco». I sei arti uncinati sono un dettaglio della tavola. [WebP canonico](../assets/oculum/home_art_authored/theme_habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale_canon_20261116.webp)
+
 **Regno Sommerso (Regno Affogato).** Il regno intero è immerso nell’Eiva, un’acqua magica molto potente in cui gli abitanti vivono e respirano. Anche le strade, le case e le rovine restano immerse. Mostrare zone coralline e flora acquatica magica. Le scene usano lo stesso inchiostro del Re Goblin, con vegetazione, sedimento e luce filtrata nell’Eiva fino al fondo dell’inquadratura.
 
 Pysciwarden, già Vedetta dei Canali, usa la tavola G «Dal fondo sotto il ponte». Constacuas, già Custode della Chiusa, usa la tavola H «Le catene d’ardesia». Entrambi hanno due branchie, due braccia e due gambe. I nomi di ruolo restano ricercabili.

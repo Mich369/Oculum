@@ -4,7 +4,7 @@ run-name: Oculum candidate @ ${{ github.sha }}
 on:
   push:
     branches:
-      - codex/oculum-verifica-20261116-1330
+      - codex/oculum-verifica-20261116-tacyantel
 
 permissions:
   contents: read
@@ -208,8 +208,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
-      # The first candidate used 100294. This workflow has its own run counter.
-      OCULUM_ANDROID_BUILD_NUMBER: '100297'
+      # Version code follows the last verified signed candidate 100297.
+      OCULUM_ANDROID_BUILD_NUMBER: '100298'
     steps:
       - uses: actions/checkout@v6
         with:

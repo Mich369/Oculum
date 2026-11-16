@@ -9,6 +9,7 @@ on:
   push:
     branches-ignore:
       - "codex/oculum-verifica-20261116-1330"
+      - "codex/oculum-verifica-20261116-tacyantel"
 
 permissions:
   contents: read

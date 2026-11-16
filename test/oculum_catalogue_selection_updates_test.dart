@@ -238,6 +238,18 @@ void main() {
     expect(monsterById(base)!.nameIt, 'Lince di brina verde');
   });
 
+  test('Tacyantel renames the ritual queen and retains its alias', () {
+    const baseId = 'habitat_sotterraneo_regina_delle_miniere_mute';
+    const ritualId = '${baseId}_variante_rituale';
+    expect(monsterById(ritualId)!.nameIt, 'Tacyantel');
+    expect(oculumLookupMonsterId('Tacyantel').exact?.id, ritualId);
+    expect(
+      oculumLookupMonsterId('Regina delle miniere mute Rituale').exact?.id,
+      ritualId,
+    );
+    expect(monsterById(baseId)!.nameIt, 'Regina delle miniere mute');
+  });
+
   test('Lapyorbit has two separate arms alongside its body and core', () {
     final golem = monsterById(
       'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti',
