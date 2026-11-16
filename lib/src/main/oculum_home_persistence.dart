@@ -46,7 +46,18 @@ oculumLookupMonsterId(
     return (exact: exactMatches.single, suggestions: const []);
   }
   if (exactMatches.isNotEmpty) {
-    return (exact: null, suggestions: exactMatches.take(6).toList());
+    final displayMatches = exactMatches
+        .where(
+          (entry) =>
+              oculumNormalizeText(entry.nameIt) == query ||
+              oculumNormalizeText(entry.nameEn) == query,
+        )
+        .toList(growable: false);
+    if (displayMatches.length == 1) {
+      return (exact: displayMatches.single, suggestions: const []);
+    }
+    final ambiguous = displayMatches.isEmpty ? exactMatches : displayMatches;
+    return (exact: null, suggestions: ambiguous.take(6).toList());
   }
 
   final ranked = <(MonsterBookEntry, int)>[];

@@ -753,6 +753,7 @@ class OculumMonsterTheme {
     'base_affogato_08' ||
     'ciclo_cervo_radure_miti' ||
     'ciclo_falena_delirio' ||
+    'ciclo_mantide_vampa' ||
     'ciclo_rospo_gronde_marce' ||
     'ciclo_scarabeo_sigillo_ardente' ||
     'eiva_serracapo_mosaici' ||

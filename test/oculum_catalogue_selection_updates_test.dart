@@ -208,6 +208,13 @@ void main() {
     expect(oculumLookupMonsterId('Tassello delle cupole').exact?.id, fish.id);
   });
 
+  test('Ignytis retains its original cycle monster ID and name alias', () {
+    final mantis = monsterById('ciclo_mantide_vampa')!;
+    expect(mantis.nameIt, 'Ignytis');
+    expect(oculumLookupMonsterId('Ignytis').exact?.id, mantis.id);
+    expect(oculumLookupMonsterId('Mantide della Vampa').exact?.id, mantis.id);
+  });
+
   test('Lapyorbit has two separate arms alongside its body and core', () {
     final golem = monsterById(
       'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti',

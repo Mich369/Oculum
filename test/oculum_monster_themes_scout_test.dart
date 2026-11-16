@@ -222,6 +222,8 @@ void main() {
           '44047a480291affb0ac198d086ea379a28b19bab48899767774b081ea27ec7ce',
       'base_ghiaccio_05':
           '8cbeca98b5e893a24788d5b009345f29dd8ba97b2721cfef3547ad35849a2200',
+      'ciclo_mantide_vampa':
+          '9f6febc61d9880e8b9dbd1bd17e85d5d9c88316524bdcd0c5bed67a6a43531d9',
       'eiva_tassello_cupole':
           '48f0c4b154aaa4bea8a2005c18db525c2092c0daed576349c215d1791b40177b',
       'habitat_caramella_medusa_di_confettura':
@@ -246,6 +248,7 @@ void main() {
         oculumMonsterColors(monster).first,
       );
       final suffix = switch (id) {
+        'ciclo_mantide_vampa' ||
         'eiva_tassello_cupole' ||
         'habitat_caramella_medusa_di_confettura' ||
         'hero_path_diverso_ascia_variante_corazzata' ||

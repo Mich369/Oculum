@@ -51,6 +51,7 @@ jobs:
           test/oculum_catalogue_selection_updates_test.dart
           test/oculum_armadillo_creatures_test.dart
           test/oculum_physical_anatomy_regression_test.dart
+          test/oculum_piovra_grip_test.dart
           test/oculum_version_log_test.dart
 
   windows:

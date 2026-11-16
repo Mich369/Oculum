@@ -81,6 +81,7 @@ const _pronouncedMonsterNames = <String, ({String name, String spelling})>{
     spelling: 'Cervo delle Radure Miti',
   ),
   'ciclo_falena_delirio': (name: 'Delyrmoth', spelling: 'Falena del Delirio'),
+  'ciclo_mantide_vampa': (name: 'Ignytis', spelling: 'Mantide della Vampa'),
   'ciclo_forest_demon_blu': (name: 'Nebulyveil', spelling: 'Nebulaveil'),
   'ciclo_rospo_gronde_marce': (
     name: 'Imbrytoad',
@@ -195,8 +196,9 @@ Iterable<String> oculumMonsterNameSearchAliases(MonsterBookEntry entry) {
     },
     if (entry.id.split('_variante_').first == 'eiva_serracapo_mosaici')
       'Serracapo dei mosaici',
-    if (entry.id.split('_variante_').first == 'eiva_tassello_cupole')
-      'Tassello delle cupole',
+    if (entry.id == 'eiva_tassello_cupole') 'Tassello delle cupole',
+    if (entry.id.startsWith('eiva_tassello_cupole_variante_'))
+      entry.nameIt.replaceFirst('Tessyfin', 'Tassello delle cupole'),
     if (entry.id.split('_variante_').first == 'affogato_vortice_delle_arcate')
       'Vortice delle Arcate',
     if (entry.id == '${oculumPredoneBoomerangId}_variante_buio')

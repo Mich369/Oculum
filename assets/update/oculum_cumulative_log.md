@@ -6,6 +6,7 @@
 - Il Ragno Putrido diventa Venemuk, adotta la tavola F e ha otto occhi mirabili singolarmente. Il Diverso Spaccaporte Corazzata diventa Forisplit e usa la tavola G. I nomi precedenti restano ricercabili.
 - La Medusa di confettura usa il nuovo tema «Risalita sulla crosta» nel Regno Caramella.
 - Il Tassello delle cupole del Regno Sommerso si chiama Tessyfin e usa la tavola G «La rovesciata nella cupola». Il nome precedente resta ricercabile.
+- La Mantide della Vampa si chiama Ignytis e usa la tavola C «Ombra sul pavimento di scorie». Resta ricercabile con il nome precedente.
 
 ## Anymareap e scelte del Bestiario — 15 novembre
 
