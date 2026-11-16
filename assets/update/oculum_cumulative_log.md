@@ -30,6 +30,8 @@
 - La Troll Veterana adotta il nome Visbark e la tavola D2 con il volto rivisto. Il nome precedente resta ricercabile.
 - Ombra Ignota mantiene il nome e usa la tavola B «Mano sul mosaico». Il Gufo di Neve Blu diventa Nyvowl e usa la D «Decollo nella gola». Si trova anche con il nome precedente.
 - L’Ombra Ignota ha un solo occhio nel selettore di Precisione anche con descrizioni abbreviate. Se il salvataggio conteneva i due vecchi bersagli, l’occhio conserva la ferita più grave e gli indizi restano validi. Le anatomie personalizzate del Master conservano le loro parti.
+- Durante L’Ombra un colpo Fisico viene annullato prima di intaccare gli Scudi o la Vita dell’Ombra Ignota.
+- Il Costrutto Minore evocato non genera bottino. Il tiro Drop degli esemplari ordinari può ancora assegnare la pergamena.
 - L’Idra adotta il nome Tryjaw e la tavola G «La svolta nel fossato». Sono mirabili separatamente tre teste, quattro zampe e una coda. Cloudtusk usa la C «Virata sopra il burrone».
 - Il Cuore di Lava Corazzato diventa Ignyshell e usa la tavola E «Nucleo sul baratro». Il Ragno della linfa acida usa la E «Tra le foglie dall’alto». Si possono mirare tutte e otto le sue zampe singolarmente.
 - Il Meccanio Malconcio Errante diventa Vaghyuil e usa «Alla leva». Il Navigatore dell’Aria conserva il nome e usa la G «La fenditura dei venti».
