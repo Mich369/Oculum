@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/services/oculum_auth_service.dart';
 import 'package:oculum/services/oculum_save_profile.dart';
@@ -36,6 +37,7 @@ void main() {
 
   test('Supabase Auth session uses the active save profile key', () async {
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     final profile = oculumSaveProfile.trim();
     final key = oculumAuthSessionStorageKey('project');
     expect(
@@ -44,14 +46,20 @@ void main() {
           ? 'oculum.auth.remember_access'
           : 'oculum.auth.remember_access__$profile',
     );
-    final storage = OculumSessionStorage(persistSessionKey: key);
+    final storage = OculumSessionStorage(
+      persistSessionKey: key,
+      useBrowserStorage: false,
+    );
     await storage.initialize();
     await storage.persistSession('session-for-$profile');
 
     final prefs = await SharedPreferences.getInstance();
+    const vault = FlutterSecureStorage();
     expect(await storage.hasAccessToken(), isTrue);
-    expect(prefs.containsKey(key), isTrue);
+    expect(await vault.read(key: key), 'session-for-$profile');
+    expect(prefs.containsKey(key), isFalse);
     if (profile.isNotEmpty) {
+      expect(await vault.read(key: 'sb-project-auth-token'), isNull);
       expect(prefs.containsKey('sb-project-auth-token'), isFalse);
     }
   });

@@ -42,87 +42,112 @@ void main() {
     expect(oculumPiovraGripHealing(7, percent: 150), 7);
   });
 
-  testWidgets(
-    'configured grip spends an action and drains on the target turn',
-    (tester) async {
-      final (state, probe) = await mountFight(tester);
-      final source = probe.ownerTag();
-      const target = 'PreyOcu:3690GRIP';
-      final sourceSheet = probe.snapshot()
-        ..['monsterBookSourceId'] = 'piovra_succhiasangue'
-        ..['currentHp'] = '20'
-        ..['resilienza'] = '80'
-        ..['currentResilienza'] = '80';
-      state.schedePersonaggio[0] = sourceSheet;
-      probe.load(sourceSheet);
-      state.schedePersonaggio.add({
-        ...sourceSheet,
-        'id': target,
-        'sheetTag': target,
-        'nome': 'Preda di prova',
-        'monsterBookSourceId': '',
-        'currentHp': '40',
-      });
-      final tokens = (state.masterInitiativeTokens as List)
-          .cast<Map<String, dynamic>>();
-      final holder = tokens.first;
-      holder['side'] = 'enemy';
-      holder['fightInstanceId'] = 'grip-fixture';
-      tokens
-        ..removeRange(1, tokens.length)
-        ..add({
+  for (final clearWithForceState in [false, true]) {
+    testWidgets(
+      clearWithForceState
+          ? 'vulnerability reset removes the grip from the board and the prey'
+          : 'configured grip spends an action and drains on the target turn',
+      (tester) async {
+        final (state, probe) = await mountFight(tester);
+        final source = probe.ownerTag();
+        const target = 'PreyOcu:3690GRIP';
+        final sourceSheet = probe.snapshot()
+          ..['monsterBookSourceId'] = 'piovra_succhiasangue'
+          ..['currentHp'] = '20'
+          ..['resilienza'] = '80'
+          ..['currentResilienza'] = '80';
+        state.schedePersonaggio[0] = sourceSheet;
+        probe.load(sourceSheet);
+        state.schedePersonaggio.add({
+          ...sourceSheet,
           'id': target,
           'sheetTag': target,
-          'name': 'Preda di prova',
-          'side': 'party',
-          'status': 'ready',
-          'fightInstanceId': 'grip-fixture',
+          'nome': 'Preda di prova',
+          'monsterBookSourceId': '',
+          'currentHp': '40',
+          'resilienza': '10',
+          'currentResilienza': '10',
         });
-      probe.recordCurrentEncounter();
-      probe.setSheetRollRandom(natural: _GripRolls([19, 2]));
-      final hpBefore = state.currentHpController.text;
-      final selecting = probe.useConfiguredForTest(
-        CharacterSkillForm(
-          nome: 'I',
-          livello: '0',
-          effettiStrutturati: [
-            OculumStructuredEffect(
-              type: 'planar',
-              target: oculumPiovraGripEffect,
-              valueExpression: '7',
-              bypassDefense: true,
-              elementType: 'acqua',
-              recipient: 'nemico',
-            ),
-          ],
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      expect(find.text('Preda di prova'), findsWidgets);
-      await tester.tap(find.text('Preda di prova').last);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      expect(await selecting, isTrue);
-      expect(holder['actionUsed'], isTrue);
-      expect(holder['piovraGrip'], isA<Map>());
-      expect(holder['sheetTag'], source);
-      expect(tokens.last['piovraGripTickId'], startsWith('piovra:'));
-      final targetState = state.schedePersonaggio[1] as Map;
-      expect(targetState['conditions'].toString(), contains('afferrato'));
-      final lifeLost = 40 - int.parse('${targetState['currentHp']}');
-      expect(lifeLost, inInclusiveRange(1, 7));
-      expect(targetState['logEventi'].toString(), contains('Vita −$lifeLost'));
-      expect(
-        int.parse(state.currentHpController.text),
-        int.parse(hpBefore) + lifeLost ~/ 2,
-      );
-      probe.clearMasterBoardForTest();
-      expect(
-        state.schedePersonaggio[1]['conditions'].toString(),
-        isNot(contains('afferrato')),
-      );
-      await closeFixture(tester, probe);
-    },
-  );
+        final tokens = (state.masterInitiativeTokens as List)
+            .cast<Map<String, dynamic>>();
+        final holder = tokens.first;
+        holder['side'] = 'enemy';
+        holder['fightInstanceId'] = 'grip-fixture';
+        tokens
+          ..removeRange(1, tokens.length)
+          ..add({
+            'id': target,
+            'sheetTag': target,
+            'name': 'Preda di prova',
+            'side': 'party',
+            'status': 'ready',
+            'fightInstanceId': 'grip-fixture',
+          });
+        probe.recordCurrentEncounter();
+        probe.setSheetRollRandom(natural: _GripRolls([19, 2]));
+        final hpBefore = state.currentHpController.text;
+        final selecting = probe.useConfiguredForTest(
+          CharacterSkillForm(
+            nome: 'I',
+            livello: '0',
+            effettiStrutturati: [
+              OculumStructuredEffect(
+                type: 'planar',
+                target: oculumPiovraGripEffect,
+                valueExpression: '7',
+                bypassDefense: true,
+                elementType: 'acqua',
+                recipient: 'nemico',
+              ),
+            ],
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(find.text('Preda di prova'), findsWidgets);
+        await tester.tap(find.text('Preda di prova').last);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(await selecting, isTrue);
+        expect(holder['actionUsed'], isTrue);
+        expect(holder['piovraGrip'], isA<Map>());
+        expect(holder['sheetTag'], source);
+        expect(tokens.last['piovraGripTickId'], startsWith('piovra:'));
+        final targetState = state.schedePersonaggio[1] as Map;
+        expect(targetState['conditions'].toString(), contains('afferrato'));
+        final lifeLost = 40 - int.parse('${targetState['currentHp']}');
+        expect(
+          lifeLost,
+          inInclusiveRange(1, 7),
+          reason: targetState['logEventi'].toString(),
+        );
+        expect(
+          targetState['logEventi'].toString(),
+          contains('Vita −$lifeLost'),
+        );
+        expect(
+          int.parse(state.currentHpController.text),
+          int.parse(hpBefore) + lifeLost ~/ 2,
+        );
+        if (clearWithForceState) {
+          state.schedaCorrente = 1;
+          probe.load(Map<String, dynamic>.from(targetState));
+          probe.activateForce('azzeramento_vulnerabilita');
+          expect(
+            probe.snapshot()['conditions'].toString(),
+            isNot(contains('afferrato')),
+          );
+          expect(holder['piovraGrip'], isNull);
+          probe.saveSheet();
+        } else {
+          probe.clearMasterBoardForTest();
+        }
+        expect(
+          state.schedePersonaggio[1]['conditions'].toString(),
+          isNot(contains('afferrato')),
+        );
+        await closeFixture(tester, probe);
+      },
+    );
+  }
 }

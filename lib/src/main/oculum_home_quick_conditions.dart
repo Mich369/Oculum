@@ -970,12 +970,17 @@ extension _OculumHomeQuickConditions on _OculumHomePageState {
   bool hasCondition(String type) => getCondition(type) != null;
 
   int removeNegativeConditionsForVulnerabilityReset() {
-    final affected = activeConditions
+    final negative = activeConditions
         .where(oculumConditionIsNegative)
-        .expand(conditionTargetsFor)
-        .toSet();
+        .toList(growable: false);
+    final affected = negative.expand(conditionTargetsFor).toSet();
     final removed = oculumRemoveNegativeConditions(activeConditions);
     if (removed <= 0) return 0;
+    for (final condition in negative) {
+      if (condition.conditionType == 'afferrato') {
+        clearRemovedPiovraGrip(condition);
+      }
+    }
     notifyConditionsChanged(affected);
     return removed;
   }

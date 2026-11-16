@@ -52,6 +52,8 @@ jobs:
           test/oculum_armadillo_creatures_test.dart
           test/oculum_physical_anatomy_regression_test.dart
           test/oculum_piovra_grip_test.dart
+          test/oculum_conditions_test.dart
+          test/oculum_save_profile_test.dart
           test/oculum_version_log_test.dart
 
   windows:
@@ -207,7 +209,7 @@ jobs:
     timeout-minutes: 50
     env:
       # The first candidate used 100294. This workflow has its own run counter.
-      OCULUM_ANDROID_BUILD_NUMBER: '100295'
+      OCULUM_ANDROID_BUILD_NUMBER: '100296'
     steps:
       - uses: actions/checkout@v6
         with:
