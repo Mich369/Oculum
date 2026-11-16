@@ -7,6 +7,7 @@
 - La Medusa di confettura usa il nuovo tema «Risalita sulla crosta» nel Regno Caramella.
 - Il Tassello delle cupole del Regno Sommerso si chiama Tessyfin e usa la tavola G «La rovesciata nella cupola». Il nome precedente resta ricercabile.
 - La Mantide della Vampa si chiama Ignytis e usa la tavola C «Ombra sul pavimento di scorie». Resta ricercabile con il nome precedente.
+- La Graga Rana Azzurra Corazzata si chiama Gragaloryx e usa la tavola G «Atterraggio sotto il tronco». Il nome precedente resta ricercabile.
 
 ## Anymareap e scelte del Bestiario — 15 novembre
 

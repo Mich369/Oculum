@@ -206,8 +206,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
-      # The installed release is 100293. This workflow has its own run counter.
-      OCULUM_ANDROID_BUILD_NUMBER: '100294'
+      # The first candidate used 100294. This workflow has its own run counter.
+      OCULUM_ANDROID_BUILD_NUMBER: '100295'
     steps:
       - uses: actions/checkout@v6
         with:

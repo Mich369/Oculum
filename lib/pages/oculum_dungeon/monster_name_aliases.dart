@@ -127,6 +127,10 @@ const _pronouncedMonsterNames = <String, ({String name, String spelling})>{
   oculumOblyvuardId: (name: 'Oblyvuard', spelling: 'Oblivuard'),
   'idra_base': (name: 'Tryjaw', spelling: 'Hydra'),
   'ragno_putrido': (name: 'Venemuk', spelling: 'Ragno Putrido'),
+  'graga_rana_azzurra_variante_corazzata': (
+    name: 'Gragaloryx',
+    spelling: 'Graga Rana Azzurra Corazzata',
+  ),
   'hero_path_diverso_ascia_variante_corazzata': (
     name: 'Forisplit',
     spelling: 'Diverso Spaccaporte Corazzata',

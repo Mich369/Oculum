@@ -215,6 +215,17 @@ void main() {
     expect(oculumLookupMonsterId('Mantide della Vampa').exact?.id, mantis.id);
   });
 
+  test('Gragaloryx names only the armored variant and retains its alias', () {
+    final frog = monsterById('graga_rana_azzurra_variante_corazzata')!;
+    expect(frog.nameIt, 'Gragaloryx');
+    expect(oculumLookupMonsterId('Gragaloryx').exact?.id, frog.id);
+    expect(
+      oculumLookupMonsterId('Graga Rana Azzurra Corazzata').exact?.id,
+      frog.id,
+    );
+    expect(monsterById('graga_rana_azzurra')!.nameIt, 'Graga Rana Azzurra');
+  });
+
   test('Lapyorbit has two separate arms alongside its body and core', () {
     final golem = monsterById(
       'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti',

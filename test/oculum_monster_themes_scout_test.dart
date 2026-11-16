@@ -226,6 +226,8 @@ void main() {
           '9f6febc61d9880e8b9dbd1bd17e85d5d9c88316524bdcd0c5bed67a6a43531d9',
       'eiva_tassello_cupole':
           '48f0c4b154aaa4bea8a2005c18db525c2092c0daed576349c215d1791b40177b',
+      'graga_rana_azzurra_variante_corazzata':
+          'f2454b19146c7ca88cc49d134094d49f7194a74e1ed095020f27958a0db9ca07',
       'habitat_caramella_medusa_di_confettura':
           '2a4f69f0cf45ac6a149f56313d19af503a8b5634363e8d36716bb470cf692c91',
       'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante':
@@ -250,6 +252,7 @@ void main() {
       final suffix = switch (id) {
         'ciclo_mantide_vampa' ||
         'eiva_tassello_cupole' ||
+        'graga_rana_azzurra_variante_corazzata' ||
         'habitat_caramella_medusa_di_confettura' ||
         'hero_path_diverso_ascia_variante_corazzata' ||
         'ragno_putrido' => '20261116',

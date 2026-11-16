@@ -5,6 +5,7 @@
 - La Medusa di confettura del Regno Caramella usa la tavola B «Risalita sulla crosta».
 - Il Tassello delle cupole del Regno Sommerso diventa Tessyfin e usa la tavola G «La rovesciata nella cupola».
 - La Mantide della Vampa diventa Ignytis e usa la tavola C «Ombra sul pavimento di scorie».
+- La Graga Rana Azzurra Corazzata diventa Gragaloryx e usa la tavola G «Atterraggio sotto il tronco».
 
 - Nuovi sfondi per Senka e i tre Solari. Senka ha anche una reliquia aggiornata e uno sfondo Ombra Mascherata quando equipaggia la maschera nel suo tema.
 - Gli Scudi si frantumano come vetro. I Danni alla Vita mostrano tre tagli scuri, gocce ai lati e un bordeaux più marcato sui colpi pesanti. Gli effetti sono sopra le finestre e i pulsanti restano cliccabili.
