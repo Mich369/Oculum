@@ -1,6 +1,7 @@
 # Mercato, baratto e Bestiario
 
 - Otto temi del Bestiario sono stati riallineati allo stile del Re Goblin. Faldavela, Balena Dai Mille Occhi, Octocruor, Nyvowl, Tryjaw, Cloudtusk, Lapyorbit e Armadillo della Sabbia.
+- Venemuk usa la F e ha otto occhi mirabili. Forisplit usa la G. Cerca anche Ragno Putrido e Diverso Spaccaporte Corazzata.
 
 - Nuovi sfondi per Senka e i tre Solari. Senka ha anche una reliquia aggiornata e uno sfondo Ombra Mascherata quando equipaggia la maschera nel suo tema.
 - Gli Scudi si frantumano come vetro. I Danni alla Vita mostrano tre tagli scuri, gocce ai lati e un bordeaux più marcato sui colpi pesanti. Gli effetti sono sopra le finestre e i pulsanti restano cliccabili.

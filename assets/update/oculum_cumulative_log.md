@@ -3,6 +3,7 @@
 ## Riallineamento dei temi del Bestiario — 16 novembre
 
 - Otto temi stock adottano il nuovo inchiostro ispirato al Re Goblin. Faldavela A, Balena Dai Mille Occhi B, Octocruor C, Nyvowl C, Tryjaw C, Cloudtusk B, Lapyorbit B e Armadillo della Sabbia B. I nomi, le parti mirabili e le personalizzazioni delle schede conservano i valori esistenti.
+- Il Ragno Putrido diventa Venemuk, adotta la tavola F e ha otto occhi mirabili singolarmente. Il Diverso Spaccaporte Corazzata diventa Forisplit e usa la tavola G. I nomi precedenti restano ricercabili.
 
 ## Anymareap e scelte del Bestiario — 15 novembre
 
