@@ -35,6 +35,7 @@
 - L’installer e il generatore della distribuzione completa controllano PowerShell prima di scaricare o compilare.
 - Necthbind applica i costi e il recupero configurati dal Master anche dal pulsante rapido.
 - La Pietra della Resurrezione si compra al Mercato Nero o dall’Alchimista e si usa in campagna locale. Il limite dipende dalla difficoltà e segue l’orologio della campagna.
+- I mostri senza scheda con una morte registrata restano disponibili per la Pietra anche dopo il Fight, entro la finestra prevista.
 
 - Nel generatore Master, Tab o la lente trovano l’ID del mostro e propongono alternative per refusi e omonimi.
 - Il catalogo Skill del Master accetta alias e grafie simili. Le forme del dossier vengono preparate all’apertura e il catalogo oggetti riusa i calcoli ripetuti.

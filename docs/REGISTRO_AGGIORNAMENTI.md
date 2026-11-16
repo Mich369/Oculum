@@ -40,6 +40,7 @@
 - L’installer Windows controlla PowerShell prima del download. Se serve `pwsh`, lo segnala prima di creare le cartelle di preparazione.
 - Necthbind usa i costi e il recupero della forma salvata anche dal pulsante rapido del Fight. Annullare la scelta o confermare un bersaglio che nel frattempo è stato sostituito lascia intatte le risorse.
 - Nelle campagne locali, un alleato può usare la Pietra della Resurrezione per riportare in vita una creatura al 50% della Vita massima, arrotondato per eccesso. La finestra è di 18/18/9/3 ore di campagna da Facile a Oculum. Nel Fight costa un’Azione. Il Mercato Nero estrae il prezzo base da 120 a 160 Obser e l’Alchimista da 160 a 250, una volta per negozio.
+- I mostri senza scheda con una morte registrata possono essere resuscitati da un alleato anche dopo la fine del Fight, entro la finestra. Tornano nel gruppo d’origine fuori dal combattimento.
 - Tutti i tipi di ali si possono ritirare gratuitamente. Se una forma ha durata e CD, il ritiro volontario riduce il CD della durata rimasta. Le due ali dell’Aberrazione Intermedia Angelica sono mirabili mentre sono esposte.
 - Sunwalker diventa Aurystride e usa la tavola D «Arresto con mano a terra». Le due braccia e le due gambe sono mirabili. I punti deboli restano il torace e la giuntura.
 - I pulsanti lasciano intravedere un po’ di più lo sfondo a riposo. Le scritte e le icone restano piene e il menu della scheda si illumina gradualmente in 1,3 secondi.
