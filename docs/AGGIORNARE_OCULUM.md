@@ -16,7 +16,7 @@ In questo caso scarica il pacchetto Windows completo ed estrailo **in una nuova 
 
 ## Android
 
-Per installare o aggiornare scegli **Oculum-Android**, che contiene l’APK e il rapporto di compatibilità della firma. La pagina pubblica elenca i pacchetti delle piattaforme. L’App Bundle per lo store, le catture UI e i rapporti di verifica restano nei risultati della CI.
+Per installare o aggiornare scegli **Oculum-Android**, che contiene l’APK e il rapporto di compatibilità della firma. La pagina pubblica e il menu web includono anche **Oculum-Android-AAB** per lo store, **Oculum-UI-Catture** e **Oculum-Verifica-Mostri**, in archivi separati.
 
 Apri l’APK verificato e conferma l’aggiornamento nel programma di installazione Android. L’aggiornamento diretto richiede lo stesso identificativo applicazione, lo stesso certificato di firma e un codice versione ammesso dal dispositivo. I nuovi APK usano la firma stabile del progetto.
 
