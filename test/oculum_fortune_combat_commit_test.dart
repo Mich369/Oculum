@@ -198,6 +198,9 @@ void main() {
       (tester) async {
         final (state, p, _) = await _mount(tester);
         final sheet = state.schedePersonaggio[state.schedaCorrente] as Map;
+        // Measure team resistance independently of the random half-Life
+        // awakening, which can restore Life after the incoming hit.
+        sheet['partialAwakeningHalfHpTriggered'] = true;
         final runtime = sheet['planarRuntime'] as Map;
         runtime['identityFateChaos'] = 'Fato';
         runtime['identityCelestial'] = 'nessuna';
