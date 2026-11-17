@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Distribuzione pubblica e squadre — 17 novembre
+
+- Corretto un errore di tipo durante l’aggiornamento dei partecipanti alle squadre Fight, che interrompeva combattimenti e apertura di alcune schede.
+- I download pubblici e il menu web includono anche Android App Bundle, catture di verifica dell’interfaccia e rapporti dei mostri. Windows normale e Windows Test conservano pacchetti e cartelle runtime separati.
+
 ## Skill, prestazioni e spazio — 14 novembre
 
 - Per Chaos, il sorteggio automatico delle Ispirazioni scatta ogni 9 ore di gioco. Le schede del Fato possono continuare a usare il Patto anche su un critico negativo.

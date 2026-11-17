@@ -35,7 +35,7 @@ class DownloadPublicationTests(unittest.TestCase):
         # A diagnostic Gradle retry must never turn the original failure green.
         self.assertIn('exit "$bundle_status"', workflow[bundle:verify_bundle])
 
-    def test_android_aab_stays_in_ci_while_the_apk_is_public(self):
+    def test_android_aab_and_apk_are_public_in_separate_archives(self):
         # This real growth boundary broke publication when the two packages
         # were combined. Keep APK identity stable for older app updaters.
         apk = dict(name="Oculum-Android", id=1, expired=False, size_in_bytes=1_140_000_000)
@@ -47,9 +47,9 @@ class DownloadPublicationTests(unittest.TestCase):
         required = [dict(name=name, id=index+10, expired=False, size_in_bytes=4)
                     for index,name in enumerate(publisher.PUBLIC_ARTIFACTS) if name != "Oculum-Android"]
         selected = publisher.select_release_archives([aab, *required, apk])
-        self.assertNotIn(aab, selected)
+        self.assertIn(aab, selected)
         self.assertIn(apk, selected)
-        self.assertEqual(len(selected), 9)
+        self.assertEqual(len(selected), 10)
         workflow = (Path(__file__).parents[2] / ".github/workflows/build_distribution.yml").read_text(encoding="utf-8")
         apk_upload = workflow.split("name: Upload Android APK artifact",1)[1].split("name: Upload Android App Bundle artifact",1)[0]
         self.assertIn("name: Oculum-Android\n", apk_upload)
@@ -96,7 +96,7 @@ class DownloadPublicationTests(unittest.TestCase):
                    head_repository={"full_name": publisher.REPO})
         workflow = dict(name="Build distribution", path=".github/workflows/build_distribution.yml")
         payload = b"PK\x03\x04"
-        names = publisher.PUBLIC_ARTIFACTS + tuple(sorted(publisher.LEGACY_ARCHIVES))
+        names = publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_PUBLIC_ARTIFACTS + tuple(sorted(publisher.LEGACY_ARCHIVES))
         artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=len(payload),
                           digest="sha256:" + hashlib.sha256(payload).hexdigest())
                      for index, name in enumerate(names, start=1)]
@@ -146,9 +146,9 @@ class DownloadPublicationTests(unittest.TestCase):
                 patch.object(publisher, "read_update_notes", return_value=["Bug fix", "Nuovi mostri"]), \
                 patch.object(publisher, "verify_anonymous_download") as check_anonymous:
             publisher.publish("42")
-        self.assertEqual(downloads, list(range(1, 10)))
-        self.assertEqual(len(assets), 9)
-        self.assertEqual(check_anonymous.call_count, 9)
+        self.assertEqual(downloads, list(range(1, 13)))
+        self.assertEqual(len(assets), 12)
+        self.assertEqual(check_anonymous.call_count, 12)
         self.assertIn(tag, created_tags)
         if not promotes:
             self.assertEqual(created_tags, [tag])
@@ -162,7 +162,8 @@ class DownloadPublicationTests(unittest.TestCase):
         self.assertIn("Oculum — download pubblici", published[0])
         self.assertIn("Log aggiornamento:",published[0])
         self.assertEqual(entry["changes"],["Bug fix","Nuovi mostri"])
-        self.assertEqual([a["name"] for a in entry["artifacts"]], list(publisher.PUBLIC_ARTIFACTS))
+        self.assertEqual([a["name"] for a in entry["artifacts"]],
+                         list(publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_PUBLIC_ARTIFACTS))
         self.assertNotIn("â€", published[0])
         self.assertNotIn("Â", published[0])
 
@@ -212,12 +213,12 @@ class DownloadPublicationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             publisher.read_catalog("An unrelated release must never be overwritten")
 
-    def test_full_ci_build_excludes_internal_archives_from_new_public_mirrors(self):
-        names = publisher.PUBLIC_ARTIFACTS + tuple(sorted(publisher.LEGACY_ARCHIVES))
+    def test_full_ci_build_mirrors_reviewed_outputs_and_rejects_private_archives(self):
+        names = publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_PUBLIC_ARTIFACTS + tuple(sorted(publisher.LEGACY_ARCHIVES))
         artifacts = [dict(name=name, id=index, expired=False, size_in_bytes=4)
                      for index, name in enumerate(names, start=1)]
         self.assertEqual([a["name"] for a in publisher.select_release_archives(artifacts)],
-                         list(publisher.PUBLIC_ARTIFACTS))
+                         list(publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_PUBLIC_ARTIFACTS))
         with self.assertRaisesRegex(ValueError, "Unreviewed"):
             publisher.select_release_archives(artifacts + [dict(name="private-saves")])
         with self.assertRaisesRegex(ValueError, "duplicate"):
@@ -271,13 +272,14 @@ class DownloadPublicationTests(unittest.TestCase):
                 patch.object(publisher, "verify_anonymous_download") as check_anonymous:
             publisher.publish("42")
         self.assertEqual(len(assets), 12)
-        self.assertEqual(check_anonymous.call_count, 9)
+        self.assertEqual(check_anonymous.call_count, 12)
         self.assertEqual(len(updated), 1)
         catalog = publisher.read_catalog(updated[0])
         self.assertEqual(list(catalog), ["7"])
-        self.assertEqual([a["name"] for a in catalog["7"]["artifacts"]], list(publisher.PUBLIC_ARTIFACTS))
+        self.assertEqual([a["name"] for a in catalog["7"]["artifacts"]],
+                         list(publisher.PUBLIC_ARTIFACTS + publisher.EXTRA_PUBLIC_ARTIFACTS))
         for name in extras:
-            self.assertNotIn(name, updated[0])
+            self.assertIn(name, updated[0])
 
     def test_release_asset_digest_and_exact_allowed_names_are_checked(self):
         tag = "oculum-build-42"

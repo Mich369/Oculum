@@ -6,7 +6,7 @@ import 'package:oculum/services/oculum_download_artifacts.dart';
 
 void main() {
   test(
-    'public downloads list only trusted platform packages from a mixed catalog',
+    'public downloads include reviewed build outputs from a mixed catalog',
     () async {
       const platformNames = [
         'Oculum-macOS',
@@ -18,6 +18,9 @@ void main() {
         'Oculum-iOS-unsigned',
         'Oculum-Windows-Folder',
         'Oculum-Test-Windows-Folder',
+        'Oculum-Android-AAB',
+        'Oculum-UI-Catture',
+        'Oculum-Verifica-Mostri',
       ];
       final group = {
         'runId': 123,
@@ -25,9 +28,6 @@ void main() {
         'workflow': 'Build distribution',
         'artifacts': [
           for (final name in [
-            'Oculum-Android-AAB',
-            'Oculum-UI-Catture',
-            'Oculum-Verifica-Mostri',
             'Oculum-Windows-Folders',
             'Oculum-Altro',
             ...platformNames.reversed,

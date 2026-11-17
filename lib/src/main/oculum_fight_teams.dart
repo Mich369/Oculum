@@ -52,7 +52,7 @@ extension _OculumFightTeams on _OculumHomePageState {
       encounterId.isNotEmpty &&
       masterParticipantGroup(encounterId) != null;
 
-  Map<String, dynamic> fightTeamTokenFields(
+  Map<String, Object> fightTeamTokenFields(
     Map<String, dynamic> group,
     Map token,
   ) {

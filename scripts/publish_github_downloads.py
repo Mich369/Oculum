@@ -27,8 +27,9 @@ PUBLIC_ARTIFACTS = (
     "Oculum-Linux", "Oculum-Android", "Oculum-Web", "Oculum-iOS-unsigned",
     "Oculum-Windows-Folder", "Oculum-Test-Windows-Folder",
 )
-LEGACY_ARCHIVES = {"Oculum-Android-AAB", "Oculum-UI-Catture",
-                   "Oculum-Windows-Folders", "Oculum-Verifica-Mostri"}
+EXTRA_PUBLIC_ARTIFACTS = ("Oculum-Android-AAB", "Oculum-UI-Catture",
+                          "Oculum-Verifica-Mostri")
+LEGACY_ARCHIVES = {"Oculum-Windows-Folders"}
 
 
 def gh(*args, **kwargs):
@@ -92,16 +93,18 @@ def select_public_artifacts(artifacts):
 
 
 def select_release_archives(artifacts):
-    """Publish only supported platform packages; keep known extras in Actions."""
+    """Mirror reviewed build outputs, preserving the complete platform set."""
     selected = select_public_artifacts(artifacts)
     seen = set(PUBLIC_ARTIFACTS)
     for artifact in artifacts:
         name = artifact.get("name")
         if name in PUBLIC_ARTIFACTS:
             continue
-        if name not in LEGACY_ARCHIVES or name in seen:
+        if name not in (*EXTRA_PUBLIC_ARTIFACTS, *LEGACY_ARCHIVES) or name in seen:
             raise ValueError("Unreviewed or duplicate archive: " + str(name))
         seen.add(name)
+    for name in EXTRA_PUBLIC_ARTIFACTS:
+        selected.extend(artifact for artifact in artifacts if artifact.get("name") == name)
     for artifact in selected:
         asset_name(artifact)
     return selected
@@ -292,6 +295,7 @@ def publish(run_id):
             if path.stat().st_size != entry["bytes"] or entry["sha256"] != digest:
                 raise ValueError(f"Artifact integrity check failed: {filename}")
             gh("release", "upload", tag, str(path), "--repo", REPO)
+            path.unlink()
         published = release(tag)
         if verified_release_assets(published, tag, run["head_sha"], expected) != set(expected):
             raise ValueError("Versioned release is missing verified assets")
