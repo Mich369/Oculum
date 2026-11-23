@@ -158,7 +158,13 @@ extension _OculumOpenLifecycle on _OculumHomePageState {
       bonus = state.skillBonus >= 0
           ? state.skillBonus
           : art.openBuffEffects
-                .where((effect) => effect.target == 'monster_open_power')
+                .where(
+                  (effect) =>
+                      effect.target ==
+                      (oculumIsMonsterWeakOpen(art)
+                          ? _monsterWeakOpenPower
+                          : 'monster_open_power'),
+                )
                 .fold<int>(
                   0,
                   (sum, effect) =>
@@ -219,7 +225,10 @@ extension _OculumOpenLifecycle on _OculumHomePageState {
           .where(
             (effect) =>
                 effect['source'] == source &&
-                effect['target'] == 'monster_open_power',
+                effect['target'] ==
+                    (oculumIsMonsterWeakOpen(art)
+                        ? _monsterWeakOpenPower
+                        : 'monster_open_power'),
           )
           .fold<int>(
             0,

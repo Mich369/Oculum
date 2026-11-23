@@ -31,6 +31,16 @@ List<String> oculumMaskedVolleyOrder(
   return [for (var i = 0; i < hits; i++) targets[i % targets.length]];
 }
 
+bool _oculumMaskedShadowPhysicalElement(String element) => const {
+  'fisico',
+  'taglio',
+  'contundente',
+  'perforante',
+  'fisicotaglio',
+  'fisicocontundente',
+  'fisicoperforante',
+}.contains(oculumNormalizeElementId(element));
+
 extension _OculumMaskedMen on _OculumHomePageState {
   Map<String, dynamic> get pendingMaskedAttack =>
       Map<String, dynamic>.from(planarState['maskedAttack'] as Map? ?? {});
@@ -44,6 +54,9 @@ extension _OculumMaskedMen on _OculumHomePageState {
         : readIntValue(shadow['form']) != 3 ||
               readIntValue(shadow['turn']) == playerReportedTurn;
   }
+
+  bool maskedShadowAvoidsPhysicalDamage(String element) =>
+      maskedShadowActive && _oculumMaskedShadowPhysicalElement(element);
 
   int get maskedShadowForm =>
       readIntValue((planarState['maskedShadow'] as Map?)?['form']);
@@ -260,11 +273,13 @@ extension _OculumMaskedMen on _OculumHomePageState {
   ) {
     if (request['maskedVolley'] != true &&
         request['boneVolley'] != true &&
-        request['cycleSpines'] != true) {
+        request['cycleSpines'] != true &&
+        request['oculiathRayVolley'] != true) {
       return;
     }
     if (request['boneVolley'] != true &&
         request['cycleSpines'] != true &&
+        request['oculiathRayVolley'] != true &&
         oculumMaskedVolleyStops(
           natural,
           total,
@@ -295,7 +310,12 @@ extension _OculumMaskedMen on _OculumHomePageState {
           readIntValue(record['boneSuccessfulHits']) + 1;
     }
     final packets = (record['packets'] as List).whereType<Map>().toList();
-    final next = readIntValue(record['next']);
+    var next = readIntValue(record['next']);
+    while (next < packets.length &&
+        packets[next]['oculiathRayVolley'] == true &&
+        !oculiathMayDispatchRay(Map<String, dynamic>.from(packets[next]))) {
+      next++;
+    }
     if (next >= packets.length) {
       record['status'] = 'resolved';
       return;

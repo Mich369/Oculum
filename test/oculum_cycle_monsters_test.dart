@@ -100,11 +100,28 @@ void main() {
           hasLength(activeMatches),
           reason: monster.id,
         );
-        expect(
-          defaultMonsterBookEntries.where((m) => m.nameIt == monster.nameIt),
-          hasLength(activeMatches),
-        );
-        expect(oculumSavedMonsterBookEntryById(monster.id), isNotNull);
+        final canonical = oculumSavedMonsterBookEntryById(monster.id);
+        expect(canonical, isNotNull, reason: monster.id);
+        if (activeMatches == 1) {
+          expect(
+            defaultMonsterBookEntries
+                .singleWhere((m) => m.id == monster.id)
+                .nameIt,
+            canonical!.nameIt,
+            reason: monster.id,
+          );
+          expect(
+            oculumMonsterNameSearchAliases(canonical),
+            contains(monster.nameIt),
+            reason: 'Il nome storico resta ricercabile dopo il rinomino',
+          );
+          final legacyLookup = oculumLookupMonsterId(monster.nameIt);
+          expect(
+            legacyLookup.exact?.id == monster.id ||
+                legacyLookup.suggestions.any((m) => m.id == monster.id),
+            isTrue,
+          );
+        }
         expect(monster.weakPointDescriptionIt, isNotEmpty);
         expect(monster.planeIds, isNotEmpty);
         expect(monster.spriteAssetPath, isEmpty);

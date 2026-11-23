@@ -136,6 +136,7 @@ extension _DungeonTextRpg on _OculumDungeonGameDialogState {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, update) {
+          final search = query.trim().toLowerCase();
           final matches = monsterBookEntries.where((monster) {
             final type = monster.isBoss
                 ? 'Boss'
@@ -143,9 +144,12 @@ extension _DungeonTextRpg on _OculumDungeonGameDialogState {
                 ? 'Mini Boss'
                 : 'Mostro';
             return (category == 'Tutti' || category == type) &&
-                '${monster.nameIt} ${monster.nameEn} ${monster.elementId} ${monster.descIt}'
-                    .toLowerCase()
-                    .contains(query.toLowerCase());
+                ('${monster.nameIt} ${monster.nameEn} ${monster.elementId} ${monster.descIt}'
+                        .toLowerCase()
+                        .contains(search) ||
+                    oculumMonsterNameSearchAliases(
+                      monster,
+                    ).any((alias) => alias.toLowerCase().contains(search)));
           }).toList();
           return AlertDialog(
             title: Text(t('Scegli il tuo mostro', 'Choose your monster')),

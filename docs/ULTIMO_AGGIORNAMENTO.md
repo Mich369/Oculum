@@ -1,12 +1,10 @@
-# Distribuzione pubblica — 17 novembre
+# Fight Creator e arretrati dell’app — 23 novembre
 
-- Corretto il crash durante l’aggiornamento delle squadre Fight e l’apertura di alcune schede.
-- Download pubblici completi: aggiunti AAB Android, catture UI e rapporti di verifica dei mostri, anche nel menu web.
-- Windows normale e Windows Test mantengono ZIP e cartelle con runtime separati.
-- Il Master può creare squadre e personalizzarne nomi, colori e partecipanti dal menu Fight.
-- Le evocazioni supportate si scelgono nell’editor; «Riconosci testo libero» mostra un’anteprima degli effetti.
-- Chaos riceve il sorteggio delle Ispirazioni ogni 9 ore di gioco. Il Patto del Fato resta disponibile sui critici negativi.
-- Ridotte ricerche in turnistica, riletture dei salvataggi e copie temporanee; 28 immagini sono ora WebP senza perdita.
-- Abilità, costi, durate, bersagli ed effetti restano modificabili negli editor e salvabili nel JSON della scheda.
+- Nuovi nemici del Fight Creator: 20% di probabilità di nascere con il 25–75% della Vita massima. Una sola estrazione per creatura, salvata e modificabile dalla scheda.
+- Corretto l’errore chiudendo l’editor delle Schivate Oculum extra aperto con il tasto destro; cariche consumate conservate.
+- Presenti Fight Creator nella prima pagina Master, quantità multiple, squadre, confronto delle Potenze e suggerimenti per area. Le bozze restano private fino alla pubblicazione esplicita del Fight.
+- EXP comune da nemici morti o a terra; Drop da morte confermata. Allenamento non letale con bonus +150 e +100 secondo le regole confermate.
+- Conservati Rebirth, Occhi dei Caduti, azioni gratuite, token esagonali, scoperte del Monster Book e temi a piena pagina.
+- Abilità, costi, durate, bersagli, effetti, Vita, squadre e aspetto restano modificabili e salvabili nel JSON.
 
-[Log cumulativo](REGISTRO_AGGIORNAMENTI.md)
+[Log cumulativo](REGISTRO_AGGIORNAMENTI.md) · [Verifiche e attività aperte](VERIFICA_ARRETRATI_APP_2026-11-23.md)

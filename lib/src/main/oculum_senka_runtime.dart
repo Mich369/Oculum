@@ -94,8 +94,12 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
     Map<String, Map<String, dynamic>> byId,
     int cuts, {
     String hitLabel = 'tagli lunari',
+    bool allowNoHitsOnFirst = false,
   }) async {
-    if (targets.isEmpty || targets.length > cuts) return null;
+    if (targets.isEmpty ||
+        targets.length > cuts + (allowNoHitsOnFirst ? 1 : 0)) {
+      return null;
+    }
     if (targets.length == 1) return List.filled(cuts, targets.single);
     final amounts = [
       cuts - targets.length + 1,
@@ -122,7 +126,8 @@ extension _OculumSenkaRuntime on _OculumHomePageState {
                         ),
                       ),
                       IconButton(
-                        onPressed: amounts[i] > 1
+                        onPressed:
+                            amounts[i] > (allowNoHitsOnFirst && i == 0 ? 0 : 1)
                             ? () => update(() => amounts[i]--)
                             : null,
                         icon: const Icon(Icons.remove),

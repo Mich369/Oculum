@@ -49,7 +49,19 @@ void main() {
     return OculumMonsterTheme(entry, oculumMonsterColors(entry).first);
   }
 
-  test('47 November 9 votes bind the exact selected desktop PNGs', () {
+  test('47 November 9 selected desktop PNGs stay exact after later votes', () {
+    const revisedNovember15 = {
+      'aberrazione_oro_marmo_intermedia_angelica',
+      'aberrazione_oro_marmo_intermedia_solare',
+      'aberrazione_oro_marmo_superiore_angelica',
+      'agla_variante_corazzata',
+      'ammasso_carne_ossa_errante_variante_rituale',
+      'ammasso_pustoloso',
+      'angelo_fustigatore_variante_rituale',
+      'arcangelo_variante_errante',
+      'arpia_base_variante_veterana',
+      'baby_forest_demon_variante_rituale',
+    };
     final manifest =
         jsonDecode(
               File(
@@ -66,7 +78,9 @@ void main() {
       expect(theme.preserveIllustrationFraming, isTrue, reason: id);
       expect(
         theme.illustration,
-        oculumMonsterArtworkAsset(file['asset'] as String),
+        revisedNovember15.contains(id)
+            ? 'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp'
+            : oculumMonsterArtworkAsset(file['asset'] as String),
         reason: id,
       );
       final digest = SHA256Digest()

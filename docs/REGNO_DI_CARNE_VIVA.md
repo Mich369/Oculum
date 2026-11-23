@@ -15,3 +15,8 @@ Il regno è la patria dell’Errante. Vi sorgono città costruite di carne e oss
 1. **La Soglia della Sutura.** La cisti si apre su un pendio di carne color fegato. Una fila di costole infisse segna il passaggio fra due masse saldate. A ogni pulsazione rossa la cucitura si illumina a tratti e rivela il profilo delle case oltre il pendio.
 2. **Il Borgo delle Costole Basse.** Le case sono incastrate fra grandi costole inclinate. Dietro le finestre di osso sottile si intravede il movimento di chi abita al piano alto. Nella taverna, tavoli di osso levigato e panche fissate alla parete seguono l’andamento della carne, che freme sotto il pavimento.
 3. **La Spianata dei Palchi.** Una distesa di tessuto scuro porta i solchi lasciati dalle cariche dei cervi. Palchi vecchi e ricoperti di fibre sporgono ai lati, mentre più avanti un Occhio Quadrilama cambia direzione a scatti, tenendo l’occhio centrale rivolto al movimento più vicino. Dal ciglio si vede il vuoto fra le masse del regno.
+
+
+## Scelta della scena — 17 novembre 2026
+
+Approvata la tavola A della **Soglia della Sutura**, ID `carne_viva_soglia_della_sutura`, come immagine Home ambientale. La scelta riguarda il desktop mostrato, senza approvare una composizione telefono o una reliquia. Il luogo conserva cisti, costole, due masse di carne unite dalla sutura e vuoto assoluto. Nessuna creatura o nuova regola è stata introdotta. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/carne_viva_soglia_della_sutura/CONFERMA-SCELTA.json).

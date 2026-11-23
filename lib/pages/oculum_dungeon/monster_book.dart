@@ -1,5 +1,20 @@
 import 'dart:math';
 import '../../game/hero_path/hero_content.dart';
+import '../../game/oculum_ferrugryp_rules.dart';
+import '../../game/oculum_frutibush_rules.dart';
+import '../../game/oculum_spectral_pair_rules.dart';
+import '../../game/oculum_goblin_king_rules.dart';
+import '../../game/oculum_lama_orbita_rules.dart';
+import '../../game/oculum_name_search.dart';
+import '../../game/oculum_mutant_rat_rules.dart';
+import '../../game/oculum_oculiath_rules.dart';
+
+export '../../game/oculum_frutibush_rules.dart'
+    show
+        oculumFrutibushId,
+        oculumFrutibushLeafCaps,
+        oculumFrutibushLeafDamage,
+        oculumFrutibushLeafSkill;
 
 part 'weak_horror_monsters.dart';
 part 'spine_hedgehog.dart';
@@ -20,6 +35,9 @@ part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
 part 'monster_progression_pool.dart';
 part 'planar_monsters.dart';
+part 'sunken_realm_monsters.dart';
+part 'sunken_realm_reference_families.dart';
+part 'balena_mille_occhi.dart';
 part 'canonical_monster_variants.dart';
 part 'ice_creatures.dart';
 part 'masked_monsters.dart';
@@ -39,15 +57,62 @@ part 'non_return_undead.dart';
 part 'cycle_monsters.dart';
 part 'cycle_suggested_monsters.dart';
 part 'november_8_monster_names.dart';
+part 'monster_name_aliases.dart';
+part 'goblin_king.dart';
+part 'mutant_rat.dart';
+part 'acuagoblin.dart';
+part 'iron_and_bone_creatures.dart';
+part 'oblyvuard.dart';
+part 'frutibush.dart';
+part 'albashard_atrawisp.dart';
+part 'oculiath.dart';
+part 'solar_observer_and_biter.dart';
+part 'bunnys.dart';
+part 'cynervail.dart';
+part 'necthrall.dart';
+part 'soul_fighter.dart';
+part 'earth_wood_wanderers.dart';
+part 'sonoreye.dart';
+part 'aculotide.dart';
+part 'volenterosi.dart';
+part 'lineage_creatures.dart';
+
+const oculumBabyRockRhinoId = 'baby_rock_rhino';
+const oculumIntermediateRockRhynoId = 'baby_rock_rhino_variante_intermedia';
+const oculumVeteranBabyRockRhinoId = 'baby_rock_rhino_variante_veterana';
+const oculumRhinoStoneguardPassiveId = 'rhino_stoneguard_passive';
+const oculumRhinoStoneguardDropId =
+    'pergamena_guardia_di_pietra_del_rinoceronte';
+const oculumRhinoStoneguardShieldPercent = 25;
+const oculumRhinoStoneguardDropChances = {
+  oculumBabyRockRhinoId: 6,
+  oculumIntermediateRockRhynoId: 9,
+  oculumVeteranBabyRockRhinoId: 12,
+};
 
 bool oculumMonsterBookNameIsDiscovered(Map<String, dynamic>? knowledge) =>
     knowledge?['nameKnown'] == true || knowledge?['pagePurchased'] == true;
+
+int oculumMonsterNameMatchScore(
+  MonsterBookEntry entry,
+  OculumNameQuery query, {
+  required String Function(String) normalize,
+}) {
+  if (query.normalized.isEmpty) return 0;
+  var best = 0;
+  for (final name in oculumMonsterNameSearchAliases(entry)) {
+    best = max(best, query.score(normalize(name)));
+    if (best == 1000) break;
+  }
+  return best;
+}
 
 class MonsterBookEntry {
   final String id;
   final List<String> planeIds;
   final Map<String, dynamic> encounterRules;
   bool get hasNaturalFlight => encounterRules['naturalFlight'] == true;
+  bool get fightsAlone => encounterRules['solitaryEncounter'] == true;
   final String nameIt;
   final String nameEn;
   String get speciesNameIt => '${encounterRules['speciesNameIt'] ?? nameIt}';
@@ -2909,6 +2974,41 @@ MonsterBookEntry _inspiredMonster({
   dropChances: dropChances,
 );
 
+const _forsakenForestDemonRules = <String, dynamic>{
+  'authoredCanonical': true,
+  'solitaryEncounter': true,
+};
+
+final _forsakenBabyForestDemon = _manualMonsterBookEntries
+    .firstWhere((entry) => entry.id == 'baby_forest_demon')
+    .copyWith(
+      id: 'baby_forest_demon_errato',
+      nameIt: 'Baby Forest Demon Errato',
+      nameEn: 'Forsaken Baby Forest Demon',
+      descIt:
+          'Rinnegato dalla famiglia, combatte da solo. È più forte di un Baby Forest Demon comune e resta sotto un adulto. Ha quattro zampe, due occhi, due corna laterali, un corno nasale e una coda. Le placche dorsali sono color rame.',
+      descEn:
+          'Rejected by its family, this young Forest Demon fights alone. It has four legs, two eyes, two side horns, one nasal horn, a tail and copper-coloured plates.',
+      planeIds: const ['foresta_elementale'],
+      encounterRules: _forsakenForestDemonRules,
+      stats: const {'hp': 125, 'atk': 26, 'def': 15, 'spd': 13},
+    );
+
+final _forsakenAdultForestDemon = _craftedMonsterBookEntries
+    .firstWhere((entry) => entry.id == 'forest_demon')
+    .copyWith(
+      id: 'forest_demon_errato',
+      nameIt: 'Forest Demon Errato',
+      nameEn: 'Forsaken Forest Demon',
+      descIt:
+          'Rinnegato dalla famiglia, combatte da solo ed è più forte di un Forest Demon adulto comune. Ha quattro zampe robuste, due occhi, due corna laterali, un corno nasale, una coda spessa e placche dorsali color rame ossidato.',
+      descEn:
+          'Rejected by its family, this solitary adult is stronger than an ordinary Forest Demon. It has four strong legs, two eyes, two side horns, one nasal horn, a thick tail and oxidised copper-coloured plates.',
+      planeIds: const ['foresta_elementale'],
+      encounterRules: _forsakenForestDemonRules,
+      stats: const {'hp': 225, 'atk': 40, 'def': 21, 'spd': 12},
+    );
+
 final List<MonsterBookEntry> _inspiredMonsterBookEntries = [
   _inspiredMonster(
     id: 'vespa_rovinata',
@@ -3689,7 +3789,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     dropIds: ['roccia_scadente_500g'],
   ),
   MonsterBookEntry(
-    id: 'baby_rock_rhino',
+    id: oculumBabyRockRhinoId,
     nameIt: 'Baby Rock Rhino',
     nameEn: 'Baby Rock Rhino',
     descIt:
@@ -3701,6 +3801,7 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     isBoss: false,
     isNullFateless: false,
     stats: {'hp': 75, 'atk': 14, 'def': 15, 'spd': 11},
+    encounterRules: {'startingStoneShieldPercent': 25},
     skillIds: ['devastating_charge_i', 'backward_dash_i', 'rocky_dash_i'],
     dropIds: ['roccia_500g', 'core_debole_rotto'],
   ),
@@ -3894,9 +3995,9 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     nameIt: 'Ciclope del Fato',
     nameEn: 'Fate Cyclops',
     descIt:
-        'Umanoide neutrale, Senza Grado/IV/IX. Ha un solo occhio con iride violetta e pupilla verticale, due orecchie appuntite, due braccia robuste e due gambe corte. La testa tondeggiante si raccorda al torso panciuto; una breve cresta di spine ossee scure corre sulla sommità del capo, senza capelli. Attacco di Fortuna può dare +200/+300/+600% danni ma lo sbilancia se il dado non raggiunge la soglia. Difesa del Fato e Raggio Oculare lo rendono un duellante che punisce Oculum. Non è ostile senza motivo.',
+        'Umanoide neutrale, Senza Grado/IV/IX. Ha un solo occhio con iride violetta e pupilla verticale, due orecchie appuntite, due braccia robuste e due gambe corte. Due ali membranose si aprono dietro le spalle e impugna una mazza macchiata di sangue. La testa tondeggiante si raccorda al torso panciuto; una breve cresta di spine ossee scure corre sulla sommità del capo, senza capelli. Attacco di Fortuna può dare +200/+300/+600% danni ma lo sbilancia se il dado non raggiunge la soglia. Difesa del Fato e Raggio Oculare lo rendono un duellante che punisce Oculum. Non è ostile senza motivo.',
     descEn:
-        'Neutral fate cyclops with one violet iris and vertical pupil, two pointed ears, two robust arms and two short legs. Its rounded head joins a large-bellied torso, with a short dark bony spine crest rather than hair. Not hostile without reason.',
+        'Neutral fate cyclops with one violet iris and vertical pupil, two pointed ears, two robust arms and two short legs. It has two membranous wings and carries a bloodstained mace. Its rounded head joins a large-bellied torso, with a short dark bony spine crest rather than hair. Not hostile without reason.',
     elementId: 'oculum',
     spriteAssetPath: '',
     isMiniBoss: false,
@@ -4364,9 +4465,14 @@ const List<MonsterBookEntry> _manualMonsterBookEntries = [
     id: 'bunnys',
     nameIt: 'Bunnys',
     nameEn: 'Bunnys',
+    encounterRules: {
+      'naturalFlight': true,
+      'signatureSkillId': oculumBunnysHealSkill,
+    },
     descIt:
-        'Senza Grado/II/IV. Supporto di branco: alla morte cura il 50% della Vita degli alleati; Cura restituisce il 25% di salute spendendo Oculum pari al livello; Rinsecchito applica la condizione fisica se supera un tiro di Oculum o Resilienza. Non è un semplice nemico: va gestito prima che salvi tutto il gruppo.',
-    descEn: 'Support rabbit creature.',
+        'Quadrupede con quattro zampe, due occhi, una coda corta e due orecchie piumate con cui vola. Senza Grado/II/IV. Alla morte cura ogni alleato del 50% della sua Vita attuale. Cura restituisce a un avversario scelto il 25% della sua Vita attuale e spende Oculum pari al livello di quel bersaglio. Rinsecchito applica la condizione fisica se supera un tiro di Oculum o Resilienza.',
+    descEn:
+        'Quadruped with four legs, two eyes, a short tail and two feathered ears for flight. Ungraded/II/IV. On death it heals each ally by 50% of their current Life. Heal restores 25% of the selected enemy’s current Life and costs Oculum equal to that target’s level.',
     elementId: 'natura',
     spriteAssetPath: '',
     isMiniBoss: false,
@@ -4948,7 +5054,15 @@ List<MonsterBookEntry> _humanizeLegacyMonsterEntries(
 ) {
   return entries
       .map((entry) {
-        if (entry.descIt.contains('Ruolo in scena:')) return entry;
+        if (entry.descIt.contains('Ruolo in scena:')) {
+          return entry;
+        }
+        if (entry.fightsAlone) {
+          return entry.copyWith(
+            descIt: '${entry.descIt.trim()} Ruolo in scena: combatte da solo.',
+            descEn: '${entry.descEn.trim()} Scene role: fights alone.',
+          );
+        }
         final role = _legacyMonsterRole(entry);
         final skills = entry.skillIds.isEmpty
             ? 'le sue tecniche personali'
@@ -5148,7 +5262,26 @@ String _inspiredMonsterSkillText(String rawId) {
       'III/$finisher. Richiede livello 6. $costIII.';
 }
 
+// These two catalogue factories are explicitly authored and do not use the
+// generated ConcreteTechnique fallback. Keep their Book prose faithful to
+// the forms that the importer and drop equipment actually persist.
+String _explicitFactoryMonsterSkillText(String id) => switch (id) {
+  'soul_fighter_cut' =>
+    'Taglio dell’Ultimo Respiro — I/Danni spirituali pari al 20% della Vita attuale del bersaglio. Costo: 3 Oculum. CD 4 turni. Una sola forma.',
+  'soul_fighter_guard' =>
+    'Mano della Veglia — I/Conferisce 12 Scudo Oculum a un alleato. Costo: 2 Oculum. CD 3 turni. Una sola forma.',
+  'soul_fighter_skull' =>
+    'Marchio dei Senza Nome — I/Un colpo spirituale riduce di 3 la Difesa del bersaglio per un turno. Costo: 2 Oculum. CD 3 turni. Una sola forma.',
+  'durafur_fur_fury' =>
+    'Furia del Pelo Ferrigno — I/+30 Danni per 3 turni; II/+40 Danni per 3 turni; III/+60 Danni per 3 turni. Nessun costo. CD 5 turni; a inizio Fight deve recuperare 2 turni.',
+  _ => '',
+};
+
 String monsterBookSkillText(String rawId) {
+  final explicitFactory = _explicitFactoryMonsterSkillText(
+    rawId.replaceFirst(RegExp(r'_variante_[a-z]+$'), ''),
+  );
+  if (explicitFactory.isNotEmpty) return explicitFactory;
   final planar = oculumPlanarTechnique(rawId);
   if (planar != null) return planar.text();
   final runicAcid = oculumRunicAcidSkillText(
@@ -5656,7 +5789,6 @@ const _retiredExactMonsterIds = <String>{
   'base_mezzano_03',
   'crosty_variante_errante',
   'habitat_vero_inferno_custode_del_cancello_senza_ritorno',
-  'habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale',
   'habitat_isole_custode_del_faro_volante',
   'habitat_isole_custode_del_faro_volante_variante_corazzata',
   'habitat_nuvole_rocciose_custode_del_monolite_sospeso',
@@ -5681,6 +5813,7 @@ bool oculumIsRetiredMonsterId(String id) =>
     _retiredExactMonsterIds.contains(id.trim()) ||
     const {
       'cuore_filo',
+      'fabbro_senza_lingua',
       'ragno_obser_falsi',
       'ciclo_ragno_fili_giurati',
       'ciclo_rondine_respiro_lieve',
@@ -5696,50 +5829,74 @@ final List<MonsterBookEntry>
 _builtinMonsterBookEntriesIncludingLegacy = List.unmodifiable(
   _withoutDefaultMonsterImages(
     _withMonsterSkillNarration(
-      _withMonsterProgressionPools(
-        _withMonsterVariants(
-          _withFallbackMonsterSkills(
-            _humanizeLegacyMonsterEntries([
-              ..._craftedMonsterBookEntries,
-              ..._inspiredMonsterBookEntries,
-              ..._weakHorrorMonsterBookEntries,
-              ..._sandAndHalfDemonEntries,
-              ..._tacticalCreatureEntries,
-              ..._octoberCreatureEntries,
-              ..._celestialReferenceEntries,
-              ..._microRealmCreatureEntries,
-              ..._armadilloCreatureEntries,
-              ..._solarGuardAndGrofixEntries,
-              ..._lunarGuardEntries,
-              ..._spineHedgehogEntries,
-              ..._spineHedgehogVariantEntries,
-              ..._packLeaderMonsterBookEntries,
-              ..._lavaMonsterEntries,
-              ..._necromancerMonsterEntries,
-              ..._runicAcidMonsterEntries,
-              ...oculumPlanarMonsterEntries,
-              ...oculumCycleMonsterEntries,
-              ..._suggestedGiantEntries,
-              ..._witheredConstructWhiteLarvaEntries,
-              ..._goldMarbleAberrationEntries,
-              ..._elementalCollectorEntries,
-              ..._manualMonsterBookEntries,
-              ..._heroPathMonsterBookEntries(),
-              ..._generateMonsterTier(
-                count: targetNormalMonsterCount - _staticNormalMonsterCount < 2
-                    ? 2
-                    : targetNormalMonsterCount - _staticNormalMonsterCount,
-                tier: _GeneratedMonsterTier.normal,
-              ),
-              ..._generateMonsterTier(
-                count: targetMiniBossMonsterCount - _staticMiniBossMonsterCount,
-                tier: _GeneratedMonsterTier.miniBoss,
-              ),
-              ..._generateMonsterTier(
-                count: targetBossMonsterCount - _staticBossMonsterCount,
-                tier: _GeneratedMonsterTier.boss,
-              ),
-            ]),
+      _humanizeLegacyMonsterEntries(
+        _withMonsterProgressionPools(
+          _withMonsterVariants(
+            _withFallbackMonsterSkills(
+              _humanizeLegacyMonsterEntries([
+                ..._craftedMonsterBookEntries,
+                ..._inspiredMonsterBookEntries,
+                ..._weakHorrorMonsterBookEntries,
+                ..._sandAndHalfDemonEntries,
+                _volenterosi,
+                _resilium,
+                _material,
+                ..._tacticalCreatureEntries,
+                ..._octoberCreatureEntries,
+                ..._celestialReferenceEntries,
+                ..._mutantRatEntries,
+                ..._acuagoblinEntries,
+                ..._ironAndBoneCreatureEntries,
+                _oblyvuardMonster,
+                _frutibushMonster,
+                _goblinKingMonster,
+                ..._oculiathEntries,
+                ..._solarObserverAndBiterEntries,
+                _soulFighterMonster,
+                _soulFighterEliteMonster,
+                _sonoreyeMonster,
+                _cynervailMonster,
+                _necthrallMonster,
+                _aculotideMonster,
+                ..._earthWoodWandererEntries,
+                ..._microRealmCreatureEntries,
+                ..._armadilloCreatureEntries,
+                ..._solarGuardAndGrofixEntries,
+                ..._lunarGuardEntries,
+                ..._spineHedgehogEntries,
+                ..._spineHedgehogVariantEntries,
+                ..._packLeaderMonsterBookEntries,
+                ..._lavaMonsterEntries,
+                ..._necromancerMonsterEntries,
+                ..._runicAcidMonsterEntries,
+                ...oculumPlanarMonsterEntries,
+                ...oculumCycleMonsterEntries,
+                ..._suggestedGiantEntries,
+                ..._witheredConstructWhiteLarvaEntries,
+                ..._goldMarbleAberrationEntries,
+                ..._elementalCollectorEntries,
+                ..._manualMonsterBookEntries,
+                _forsakenBabyForestDemon,
+                _forsakenAdultForestDemon,
+                ..._heroPathMonsterBookEntries(),
+                ..._generateMonsterTier(
+                  count:
+                      targetNormalMonsterCount - _staticNormalMonsterCount < 2
+                      ? 2
+                      : targetNormalMonsterCount - _staticNormalMonsterCount,
+                  tier: _GeneratedMonsterTier.normal,
+                ),
+                ..._generateMonsterTier(
+                  count:
+                      targetMiniBossMonsterCount - _staticMiniBossMonsterCount,
+                  tier: _GeneratedMonsterTier.miniBoss,
+                ),
+                ..._generateMonsterTier(
+                  count: targetBossMonsterCount - _staticBossMonsterCount,
+                  tier: _GeneratedMonsterTier.boss,
+                ),
+              ]),
+            ),
           ),
         ),
       ),
@@ -5765,7 +5922,7 @@ List<MonsterBookEntry> _withoutDefaultMonsterImages(
   Iterable<MonsterBookEntry> entries,
 ) => List<MonsterBookEntry>.unmodifiable(
   entries.map((entry) {
-    final renamed = _withVotedMonsterName(entry);
+    final renamed = _withPronouncedMonsterName(_withVotedMonsterName(entry));
     return renamed.copyWith(spriteAssetPath: '', imageBase64: '');
   }),
 );
@@ -5799,8 +5956,51 @@ List<MonsterBookEntry> _withMonsterVariants(
     ),
   ];
   final result = <MonsterBookEntry>[];
+  void addEntry(MonsterBookEntry entry) {
+    if (entry.id == oculumWeldSpiderId) {
+      result.add(
+        entry.copyWith(
+          skillIds: [...entry.skillIds, oculumWeldSpiderBeamSkill],
+          descIt: entry.descIt.replaceFirst('Le due tecniche', 'Le tecniche'),
+        ),
+      );
+      return;
+    }
+    final stoneguardChance = oculumRhinoStoneguardDropChances[entry.id];
+    result.add(
+      stoneguardChance != null
+          ? entry.copyWith(
+              encounterRules: {
+                ...entry.encounterRules,
+                'startingStoneShieldPercent':
+                    oculumRhinoStoneguardShieldPercent,
+              },
+              dropIds: [...entry.dropIds, oculumRhinoStoneguardDropId],
+              dropChances: {
+                ...entry.dropChances,
+                oculumRhinoStoneguardDropId: stoneguardChance,
+              },
+            )
+          : entry,
+    );
+  }
+
   for (final entry in entries) {
-    result.add(entry);
+    addEntry(entry);
+    if (entry.id == oculumBabyRockRhinoId) {
+      addEntry(
+        entry.copyWith(
+          id: oculumIntermediateRockRhynoId,
+          nameIt: 'RockRhyno',
+          nameEn: 'RockRhyno',
+          descIt:
+              'Rinoceronte di pietra intermedio, con una massa tra il Baby Rock Rhino e Visrhyno. Ruolo in scena: alterna scatti difensivi e cariche.',
+          descEn:
+              'Intermediate stone rhino, with a size between Baby Rock Rhino and Visrhyno. Scene role: alternates defensive dashes and charges.',
+          stats: {'hp': 99, 'atk': 18, 'def': 19, 'spd': 11},
+        ),
+      );
+    }
     if (entry.id.contains('_variante_') ||
         entry.encounterRules['authoredCanonical'] == true ||
         entry.id.startsWith(oculumSpineHedgehogId)) {
@@ -5829,20 +6029,28 @@ List<MonsterBookEntry> _withMonsterVariants(
           _ => pair.value,
         },
     };
+    final exiledArchangel = entry.id == 'arcangelo' && style.id == 'errante';
+    final exiledArchangelIt = exiledArchangel
+        ? 'Gli restano due ali mirabili. Le altre gli sono state strappate durante l’esiliazione dell’Ala Nera. '
+        : '';
+    final exiledArchangelEn = exiledArchangel
+        ? 'Two targetable wings remain. The other pair was torn off during the exile of the Black Wing. '
+        : '';
     final variant = entry.copyWith(
       id: '${entry.id}_variante_${style.id}',
       nameIt: '${entry.nameIt} ${style.label}',
       nameEn: '${entry.nameEn} ${style.label}',
       descIt:
-          'Variante ${style.label.toLowerCase()} (dal livello $level): ${style.role}. ${entry.descIt}',
-      descEn: '${style.label} variant of ${entry.nameEn}. ${entry.descEn}',
+          'Variante ${style.label.toLowerCase()} (dal livello $level): ${style.role}. $exiledArchangelIt${entry.descIt}',
+      descEn:
+          '${style.label} variant of ${entry.nameEn}. $exiledArchangelEn${entry.descEn}',
       stats: stats,
       skillIds: entry.skillIds
           .map((skill) => '${skill}_variante_${style.id}')
           .toList(growable: false),
       dropIds: [...entry.dropIds, 'frammento_variante_${style.id}'],
     );
-    if (includeGeneratedVariant) result.add(variant);
+    if (includeGeneratedVariant) addEntry(variant);
   }
   return result;
 }
@@ -5918,7 +6126,7 @@ MonsterBookEntry? _generatedVariantForHiddenBase(String id) {
         .toList(growable: false),
     dropIds: [...base.dropIds, 'frammento_variante_$styleId'],
   );
-  return _withVotedMonsterName(variant);
+  return _withPronouncedMonsterName(_withVotedMonsterName(variant));
 }
 
 List<MonsterBookEntry> _activeMonsterBookEntries = defaultMonsterBookEntries;
@@ -5989,15 +6197,35 @@ void resetMonsterBookEntries() {
 }
 
 Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
+  yield _forsakenBabyForestDemon;
+  yield _forsakenAdultForestDemon;
   yield* _craftedMonsterBookEntries;
   yield* _goldMarbleAberrationEntries;
   yield* _elementalCollectorEntries;
   yield* _inspiredMonsterBookEntries;
   yield* _weakHorrorMonsterBookEntries;
   yield* _sandAndHalfDemonEntries;
+  yield _volenterosi;
+  yield _resilium;
+  yield _material;
   yield* _tacticalCreatureEntries;
   yield* _octoberCreatureEntries;
   yield* _celestialReferenceEntries;
+  yield* _mutantRatEntries;
+  yield* _acuagoblinEntries;
+  yield* _ironAndBoneCreatureEntries;
+  yield _oblyvuardMonster;
+  yield _frutibushMonster;
+  yield _goblinKingMonster;
+  yield* _oculiathEntries;
+  yield* _solarObserverAndBiterEntries;
+  yield _soulFighterMonster;
+  yield _soulFighterEliteMonster;
+  yield _sonoreyeMonster;
+  yield _cynervailMonster;
+  yield _necthrallMonster;
+  yield _aculotideMonster;
+  yield* _earthWoodWandererEntries;
   yield* _microRealmCreatureEntries;
   yield* _armadilloCreatureEntries;
   yield* _solarGuardAndGrofixEntries;
@@ -6166,6 +6394,8 @@ List<MonsterBookEntry> _withFallbackMonsterSkills(
       monster.skillIds.isNotEmpty ||
               monster.formTags.contains('Creatura Minore')
           ? monster
+          : monster.encounterRules['authoredCanonical'] == true
+          ? monster.copyWith(skillIds: monsterBookUsableSkillIds(monster))
           : MonsterBookEntry(
               id: monster.id,
               nameIt: monster.nameIt,
@@ -6339,6 +6569,13 @@ MonsterBookEntry? monsterById(String id) {
 /// Le Art dei mostri non sono tutte disponibili al livello zero. La soglia
 /// usa potenza e tenuta della creatura, senza alterare le Skill legacy.
 int monsterBookSkillRequiredLevel(MonsterBookEntry monster, int skillIndex) {
+  if (skillIndex >= 0 &&
+      skillIndex < monster.skillIds.length &&
+      monster.skillIds[skillIndex] == oculumWeldSpiderBeamSkill) {
+    return monsterBookConcreteTechnique(
+      oculumWeldSpiderBeamSkill,
+    )!.requiredLevel;
+  }
   if (monster.id.startsWith(oculumSpineHedgehogId)) {
     return [0, 2, 1][skillIndex.clamp(0, 2)];
   }

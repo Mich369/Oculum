@@ -842,6 +842,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
 
   void syncPawnPresence() {
     scheduleWingEscapeFallDrain();
+    scheduleOculiathDamageDrain();
     if (realtimeIsMasterRole) {
       sendPawnSnapshot();
       return;
@@ -1080,7 +1081,10 @@ extension _OculumPawnRuntime on _OculumHomePageState {
     }
   }
 
-  void addPawnToInitiative(OculumPawnGuardian pawn) {
+  void addPawnToInitiative(
+    OculumPawnGuardian pawn, {
+    bool rollInitiative = true,
+  }) {
     if (pawnRemoteAuthority) {
       if (pawnControlledBy(pawn, pawnSenderTag) || realtimeIsCoMasterRole) {
         unawaited(
@@ -1100,7 +1104,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       final previous = selectedMasterInitiativeGroupId;
       selectMasterInitiativeGroup(encounter);
       try {
-        addPawnToInitiative(pawn);
+        addPawnToInitiative(pawn, rollInitiative: rollInitiative);
       } finally {
         selectMasterInitiativeGroup(previous);
       }
@@ -1132,14 +1136,16 @@ extension _OculumPawnRuntime on _OculumHomePageState {
       oculum: pawn.stats['oculum']!,
       karma: 0,
     );
-    final natural = tiraD20(countsAsCooldownRoll: false);
-    final initiative = rollTotalWithCritical(
-      natural,
-      20,
-      [baseInitiative],
-      level: pawn.level,
-      grade: pawn.grade,
-    );
+    final natural = rollInitiative ? tiraD20(countsAsCooldownRoll: false) : 0;
+    final initiative = !rollInitiative
+        ? baseInitiative
+        : rollTotalWithCritical(
+            natural,
+            20,
+            [baseInitiative],
+            level: pawn.level,
+            grade: pawn.grade,
+          );
     setState(
       () => masterInitiativeTokens.add({
         'id': pawn.id,
@@ -1636,6 +1642,7 @@ extension _OculumPawnRuntime on _OculumHomePageState {
         programmaSalvataggio();
       }
       scheduleWingEscapeFallDrain();
+      scheduleOculiathDamageDrain();
     }
   }
 

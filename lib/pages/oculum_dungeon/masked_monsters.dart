@@ -101,7 +101,7 @@ final _maskedMonsterEntries = <MonsterBookEntry>[
     [5, 6, 6, 8],
     5,
     'Una figura umana silenziosa indossa un mantello scuro e una maschera nera ovale, con solchi profondi a spirale che convergono su un’unica apertura laterale. Il foro è sagomato esattamente come un occhio e aderisce al suo contorno: mostra un solo occhio viola acceso, senza altra pelle visibile. L’Oculum Art L’Ombra gli permette di assottigliarsi in una sagoma intangibile al Fisico, spostarsi fra ombre e legare il movimento dei nemici con filamenti scuri.',
-    'L’unico occhio visibile mentre l’ombra torna a essere solida.',
+    'L’unico occhio viola. Mentre L’Ombra è attiva, gli attacchi non fisici già ammessi possono mirarlo con Precisione.',
     [
       'masked_shadow_form',
       'masked_shadow_teleport',

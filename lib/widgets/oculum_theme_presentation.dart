@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_asset_packs.dart';
+import 'oculum_theme_availability.dart';
 import 'oculum_combat_theme.dart';
 import 'oculum_monster_theme.dart';
 
@@ -135,6 +136,7 @@ OculumThemePresentation oculumThemePresentationForSheet(String sheetId) {
 }
 
 Future<void> setOculumSheetRelic(String sheetId, String artPackId) async {
+  if (!oculumIsThemeSelectable(artPackId)) return;
   final key = sheetId.trim();
   if (key.isEmpty) return;
   final selections = Map<String, String>.of(oculumSheetRelicSelections.value);
@@ -149,6 +151,11 @@ Future<void> setOculumSheetRelic(String sheetId, String artPackId) async {
 }
 
 Future<void> setOculumThemePresentation(OculumThemePresentation value) async {
+  // Keep an already loaded legacy pack while changing its other settings.
+  if (value.artPackId != oculumThemePresentation.value.artPackId &&
+      !oculumIsThemeSelectable(value.artPackId)) {
+    return;
+  }
   oculumThemePresentation.value = value;
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString('oculum.themeMotion', value.motion.name);
@@ -175,6 +182,12 @@ class OculumThemePresentationControls extends StatelessWidget {
   ) => ValueListenableBuilder<OculumThemePresentation>(
     valueListenable: oculumThemePresentation,
     builder: (context, value, _) {
+      final String? selectableArtPackId =
+          !oculumIsThemeSelectable(value.artPackId)
+          ? null
+          : oculumThemeAssetPacks.containsKey(value.artPackId)
+          ? value.artPackId
+          : '';
       final family = Theme.of(context).extension<OculumGothOrnaments>()?.family;
       final stillLabel = switch (family) {
         OculumGothFamily.botanical =>
@@ -302,9 +315,10 @@ class OculumThemePresentationControls extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 14, 12, 0),
             child: DropdownButtonFormField<String>(
               key: ValueKey('theme-art-pack-${value.artPackId}'),
-              initialValue: oculumThemeAssetPacks.containsKey(value.artPackId)
-                  ? value.artPackId
-                  : '',
+              initialValue: selectableArtPackId,
+              hint: Text(
+                english ? 'Previous theme retained' : 'Tema precedente mantenuto',
+              ),
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: english ? 'Relic artwork' : 'Reliquia del tema',
@@ -318,7 +332,9 @@ class OculumThemePresentationControls extends StatelessWidget {
                         : 'Segui il tema selezionato',
                   ),
                 ),
-                for (final pack in oculumThemeAssetPacks.values)
+                for (final pack in oculumThemeAssetPacks.values.where(
+                  (pack) => oculumIsThemeSelectable(pack.id),
+                ))
                   DropdownMenuItem(
                     value: pack.id,
                     child: Text(pack.name, overflow: TextOverflow.ellipsis),

@@ -7047,6 +7047,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         token['movementUsedMeters'] =
             localMapTokenMovementUsed(token) + delta.abs();
       }
+      syncOculiathPassenger(token);
       final name = localMapTokenDisplayName(token);
       final metres = after.toStringAsFixed(1);
       aggiungiLog(
@@ -7450,15 +7451,73 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   int sheetMovementAt(int index) {
     if (index < 0 || index >= schedePersonaggio.length) return 0;
     if (index == schedaCorrente) return movimento();
-    final derived = readIntValue(
-      schedePersonaggio[index]['derivedUnwoundedMovimento'] ??
-          schedePersonaggio[index]['derivedMovimento'],
+    final sheet = schedePersonaggio[index];
+    if (elementalSphereFrozenInSheet(sheet) ||
+        elementalSphereSoulSeparatedInSheet(sheet)) {
+      return 0;
+    }
+    final rawConditions = sheet['conditions'] ?? sheet['activeConditions'];
+    final conditions = rawConditions is List
+        ? rawConditions.whereType<Map>().map(
+            (row) => '${row['conditionType'] ?? row['type'] ?? ''}',
+          )
+        : const <String>[];
+    final suppressPenalties =
+        sheet['statoForzaAttivo'] == 'azzeramento_vulnerabilita';
+    if (oculumMovementBlockedByConditions(
+      conditions,
+      suppressPenalties: suppressPenalties,
+    )) {
+      return 0;
+    }
+    final level = sheetIntValueAt(index, 'livello');
+    final materia = readIntValue(
+      sheet['derivedMateriaTotal'],
+      fallback: sheetIntValueAt(index, 'materia'),
+    );
+    final base = oculumBaseMovement(level: level, materia: materia);
+    var derived = readIntValue(
+      sheet['derivedUnwoundedMovimento'] ?? sheet['derivedMovimento'],
       fallback: -1,
     );
+    final savedBase = readIntValue(sheet['derivedMovementBase'], fallback: -1);
+    final useRawSnapshot =
+        savedBase >= 0 &&
+        savedBase != base &&
+        sheet['derivedMovementBeforeConditions'] != null;
+    if (useRawSnapshot ||
+        (derived > 0 && sheet['derivedMovementLevelAdjusted'] != true)) {
+      final percent = oculumMovementConditionPercent(
+        conditions,
+        positiveMultiplier: oculumPositiveConditionMultiplier(
+          '${sheet['campaignDifficulty'] ?? 'normale'}',
+        ),
+        suppressPenalties: suppressPenalties,
+      );
+      if (useRawSnapshot) {
+        final before = readIntValue(sheet['derivedMovementBeforeConditions']) +
+            base - savedBase;
+        derived = before <= 0
+            ? 0
+            : max(
+                0,
+                before +
+                    oculumDerivedConditionPercentDelta(before, percent) +
+                    readIntValue(sheet['derivedMovementConditionFlat']),
+              );
+      } else {
+        // Old rounded totals did not retain their value before conditions.
+        final oldBase = max(0, 30 + materia ~/ 6);
+        derived = max(
+          0,
+          derived + base - oldBase +
+              oculumDerivedConditionPercentDelta(base, percent) -
+              oculumDerivedConditionPercentDelta(oldBase, percent),
+        );
+      }
+    }
     return oculumWoundedMovement(
-      derived >= 0
-          ? derived
-          : max(0, 30 + sheetIntValueAt(index, 'materia') ~/ 6),
+      derived >= 0 ? derived : base,
       hp: sheetCurrentHpForDeathAt(index),
       maxHp: sheetMaxHpForDeathAt(index),
     );
@@ -7594,6 +7653,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   bool prepareLocalMapTokenMovement(Map<String, dynamic> token) {
+    if (isOculiathHeldMapToken(token)) return false;
     final initiativeToken = initiativeTokenForLocalMapToken(token);
     if (initiativeToken != null &&
         masterInitiativeReactionUsedTotal(initiativeToken) > 0) {
@@ -7771,6 +7831,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         canvasWidth,
         canvasHeight,
       );
+      syncOculiathPassenger(token);
     }
     notifyVttCanvasChanged();
   }
@@ -7781,6 +7842,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     double canvasHeight,
   ) {
     final group = localMapTokenDragGroup(anchor);
+    if (group.any(isOculiathHeldMapToken)) return;
     if (activeVttScene.snapToGrid && activeVttScene.gridType != 'none') {
       final anchorPoint = Offset(
         localMapTokenAxis(anchor, 'x') * canvasWidth,
@@ -7829,7 +7891,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         }
       }
     }
-    notifyVttCanvasChanged(save: true);
+    var carried = false;
+    for (final token in group) {
+      if (syncOculiathPassenger(token)) carried = true;
+    }
+    notifyVttCanvasChanged(save: true, publish: carried);
     for (final token in group) {
       if (modalitaMaster && realtimeService?.isConnected == true) {
         unawaited(sendAuthoritativeVttTokenPosition(token));

@@ -38,6 +38,7 @@ const _structuredSummonNames = <String, (String, String)>{
   'clone_ombra': ('Clone d’ombra', 'Shadow Clone'),
   'patalpa_compagno': ('Patalpa compagno', 'Patalpa Companion'),
   'un_vecchio_amore': ('Un vecchio amore', 'An Old Love'),
+  oculumMutantRatSummon: ('Topolini dagli occhi verdi', 'Green-Eyed Rat Pups'),
 };
 
 int oculumTargetPercentageDamage({
@@ -174,17 +175,27 @@ class OculumAbilityCooldown {
     this.amount = 0,
     this.unit = 'turni',
     this.startsReady = true,
+    this.initialRemaining,
     int? remaining,
     this.outsideReadyAt,
     this.encounterKey = '',
-  }) : _remaining = max(0, remaining ?? (startsReady ? 0 : amount));
+    this.wingFlightActivationId = '',
+  }) : _remaining = max(
+         0,
+         remaining ?? (startsReady ? 0 : (initialRemaining ?? amount)),
+       );
 
   int amount;
   String unit;
   bool startsReady;
+  final int? initialRemaining;
+  int get openingDelay => startsReady
+      ? 0
+      : (initialRemaining ?? amount).clamp(0, max(0, amount)).toInt();
   int _remaining;
   DateTime? outsideReadyAt;
   String encounterKey;
+  String wingFlightActivationId;
 
   int secondsRemaining({DateTime? now}) => outsideReadyAt == null
       ? max(0, _remaining) * 6
@@ -210,7 +221,7 @@ class OculumAbilityCooldown {
       return false;
     }
     outsideReadyAt = (now ?? DateTime.now()).add(
-      Duration(seconds: max(0, amount) * 6),
+      Duration(seconds: openingDelay * 6),
     );
     return true;
   }
@@ -220,7 +231,7 @@ class OculumAbilityCooldown {
     encounterKey = key;
     if (!startsReady) {
       final prepared = outsideReadyAt;
-      remaining = prepared == null ? amount : remaining;
+      remaining = prepared == null ? openingDelay : remaining;
     } else if (outsideReadyAt != null) {
       remaining = remaining;
     }
@@ -248,10 +259,13 @@ class OculumAbilityCooldown {
     'amount': amount,
     'unit': unit,
     'startsReady': startsReady,
+    if (initialRemaining != null) 'initialRemaining': openingDelay,
     'remaining': remaining,
     if (outsideReadyAt != null)
       'outsideReadyAt': outsideReadyAt!.toIso8601String(),
     if (encounterKey.isNotEmpty) 'encounterKey': encounterKey,
+    if (wingFlightActivationId.isNotEmpty)
+      'wingFlightActivationId': wingFlightActivationId,
   };
 
   factory OculumAbilityCooldown.fromJson(Map<String, dynamic> json) {
@@ -262,11 +276,15 @@ class OculumAbilityCooldown {
         json['startsReady'] ?? json['parteCarico'],
         fallback: true,
       ),
+      initialRemaining: json.containsKey('initialRemaining')
+          ? max(0, readIntValue(json['initialRemaining']))
+          : null,
       remaining: json.containsKey('remaining') || json.containsKey('rimanente')
           ? max(0, readIntValue(json['remaining'] ?? json['rimanente']))
           : null,
       outsideReadyAt: DateTime.tryParse('${json['outsideReadyAt'] ?? ''}'),
       encounterKey: '${json['encounterKey'] ?? ''}',
+      wingFlightActivationId: '${json['wingFlightActivationId'] ?? ''}',
     );
   }
 }
@@ -531,6 +549,7 @@ class OculumStructuredEffect {
     this.allOpponents = false,
     this.criticalOnly = false,
     this.requiresHpDamage = false,
+    this.scaleMonsterWeakOpen = false,
   }) : id = id?.trim().isNotEmpty == true
            ? id!.trim()
            : 'effect_${DateTime.now().microsecondsSinceEpoch}';
@@ -541,6 +560,7 @@ class OculumStructuredEffect {
   bool allOpponents;
   bool criticalOnly;
   bool requiresHpDamage;
+  bool scaleMonsterWeakOpen;
   String type;
   int sourceScrollGrade;
   int chargeOculumPerTurn;
@@ -624,6 +644,7 @@ class OculumStructuredEffect {
     'bypassResistance': bypassResistance,
     if (criticalOnly) 'criticalOnly': true,
     if (requiresHpDamage) 'requiresHpDamage': true,
+    if (scaleMonsterWeakOpen) 'scaleMonsterWeakOpen': true,
     'shieldDamageBonusPercent': shieldDamageBonusPercent,
     'damagePerTarget': damagePerTarget,
     'killSource': killSource,
@@ -695,6 +716,7 @@ class OculumStructuredEffect {
       allOpponents: readBoolValue(json['allOpponents']),
       criticalOnly: readBoolValue(json['criticalOnly']),
       requiresHpDamage: readBoolValue(json['requiresHpDamage']),
+      scaleMonsterWeakOpen: readBoolValue(json['scaleMonsterWeakOpen']),
     );
   }
 }
@@ -1071,16 +1093,17 @@ OculumStructuredEffectRoll oculumResolveStructuredEffectRoll(
       : 0;
   final sharedBonus = levelBonus + gradeBonus;
   final diceForDuration = effect.diceDestination == 'durata';
+  final resolvedValue = effect.diceDestination == 'moltiplicatore'
+      ? (baseValue + sharedBonus) * (isTick ? 1 : additionalDice.total)
+      : baseValue + sharedBonus + (diceForDuration ? 0 : additionalDice.total);
   return OculumStructuredEffectRoll(
     baseValue: baseValue,
     dice: dice,
     levelBonus: levelBonus,
     gradeBonus: gradeBonus,
-    value: effect.diceDestination == 'moltiplicatore'
-        ? (baseValue + sharedBonus) * (isTick ? 1 : additionalDice.total)
-        : baseValue +
-              sharedBonus +
-              (diceForDuration ? 0 : additionalDice.total),
+    value: effect.scaleMonsterWeakOpen
+        ? _oculumScaleMonsterWeakOpenValue(resolvedValue, grade)
+        : resolvedValue,
     durationBonus: diceForDuration ? additionalDice.total : 0,
     baseDuration: baseDuration,
   );
@@ -1194,6 +1217,8 @@ String oculumStructuredEffectDescription(
   final displayedValue =
       '$value$dice$progressionText$elementText$damageBypassText';
   switch (effect.type) {
+    case 'planar' when oculumWeldSpiderSustainNames.containsKey(target):
+      return '${oculumWeldSpiderSustainNames[target]} · $value';
     case 'planar':
     case 'meccanio':
     case 'preparazione':
@@ -1232,6 +1257,11 @@ String oculumStructuredEffectDescription(
                   : 'Evocazione non riconosciuta · $target');
       }
       final name = english ? labels.$2 : labels.$1;
+      if (key == oculumMutantRatSummon) {
+        return withPeriod(
+          '$name · $displayedValue · ${english ? 'vanish after biting' : 'scompaiono dopo il morso'}',
+        );
+      }
       if (key == 'clone_ombra') {
         final duration = effect.duration.trim();
         return withPeriod(

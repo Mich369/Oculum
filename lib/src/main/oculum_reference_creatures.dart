@@ -159,6 +159,8 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
   ) async {
     final tag = sheetTagAt(schedaCorrente), id = '${request['id']}';
     if (!referenceMantleAvailable ||
+        elementalSphereFrozen ||
+        elementalSphereSoulSeparated ||
         !controlsOnlineCombatSheet(tag) ||
         request['targetTag'] != tag ||
         request['status'] != 'pending' ||
@@ -175,6 +177,8 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
       }
       if (!mounted ||
           sheetTagAt(schedaCorrente) != tag ||
+          elementalSphereFrozen ||
+          elementalSphereSoulSeparated ||
           request['status'] != 'pending') {
         return;
       }

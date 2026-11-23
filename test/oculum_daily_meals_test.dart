@@ -116,4 +116,78 @@ void main() {
     meals.recordMeal(9 * hour + minute, manual: false, canRest: true);
     expect(meals.episodes, isEmpty);
   });
+
+  test('different foods complete one meal and legacy food is a full meal', () {
+    final a = oculumFoodMealSatiety({
+      'satisfiesNeeds': ['food'],
+      'mealSatietyUnits': 2,
+    });
+    final b = oculumFoodMealSatiety({
+      'satisfiesNeeds': ['food', 'water'],
+      'mealSatietyUnits': 3,
+    });
+    expect(
+      oculumFoodMealSatiety({
+        'satisfiesNeeds': ['food'],
+      }),
+      6,
+    );
+    expect(
+      oculumFoodMealSatiety({
+        'satisfiesNeeds': ['water'],
+      }),
+      0,
+    );
+    final meals = OculumPersonalNeedsProgress.fromJson({}, now: 0);
+    expect(
+      meals.recordMeal(hour, manual: false, canRest: true, satiety: a).consumed,
+      isFalse,
+    );
+    expect(meals.last['food'], 0);
+    expect(meals.mealsToday(hour), 0);
+    expect(meals.lastMealShortRest, -1);
+    expect(
+      meals.recordMeal(hour, manual: false, canRest: true, satiety: b).consumed,
+      isFalse,
+    );
+    expect(meals.mealSatietyAt(hour), 5);
+    final restored = OculumPersonalNeedsProgress.fromJson(
+      jsonDecode(jsonEncode(meals.toJson())) as Map,
+      now: hour,
+    );
+    final result = restored.recordMeal(
+      hour,
+      manual: false,
+      canRest: true,
+      satiety: a,
+    );
+    expect(result.consumed, isTrue);
+    expect(result.shortRest, isTrue);
+    expect(restored.mealsToday(hour), 1);
+    expect(restored.actualMealCount, 1);
+    expect(restored.mealSatietyAt(hour), 0);
+  });
+
+  test('satiety belongs to the meal window and early breakfast carries', () {
+    final meals = OculumPersonalNeedsProgress.fromJson({}, now: 0);
+    meals.recordMeal(5 * hour, manual: false, canRest: true, satiety: 3);
+    expect(meals.mealSatietyAt(6 * hour), 0);
+    meals.recordMeal(6 * hour, manual: false, canRest: true);
+    meals.recordMeal(
+      8 * hour + 30 * minute,
+      manual: false,
+      canRest: true,
+      satiety: 3,
+    );
+    expect(meals.mealSatietyAt(9 * hour), 3);
+    final breakfast = meals.recordMeal(
+      9 * hour,
+      manual: false,
+      canRest: true,
+      satiety: 3,
+    );
+    expect(breakfast.window, 'first');
+    expect(breakfast.shortRest, isFalse);
+    expect(meals.mealsToday(9 * hour), 1);
+  });
 }

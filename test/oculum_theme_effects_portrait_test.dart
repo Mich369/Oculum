@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
+import 'package:oculum/widgets/oculum_narrative_background.dart';
+import 'package:oculum/widgets/oculum_theme_presentation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<dynamic> mountSheet(
@@ -63,6 +66,66 @@ Future<dynamic> mountSheet(
 }
 
 void main() {
+  testWidgets(
+    'sheet menu reveals its surface over 1300 ms and stays tappable',
+    (tester) async {
+      final state = await mountSheet(tester, const Size(1440, 900));
+      final previous = oculumThemePresentation.value;
+      addTearDown(() => oculumThemePresentation.value = previous);
+      oculumThemePresentation.value = const OculumThemePresentation();
+      state.updateOculumHomeUi(() {
+        state.modalitaDesktop = true;
+        state.nuovoDesignOculum = 'cattedrale';
+        state.temiOldSchool = false;
+        state.paginaCorrente = 0;
+        state.referenceSheetSection = 'general';
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final sidebar = find.byKey(const ValueKey('reference-sheet-side-menu'));
+      final sidebarBox =
+          tester.widget<Container>(sidebar).decoration as BoxDecoration;
+      expect(sidebarBox.color!.a, lessThan(1));
+      expect(
+        tester
+            .getRect(find.byType(OculumNarrativeBackground))
+            .contains(tester.getCenter(sidebar)),
+        isTrue,
+      );
+
+      final stats = find.descendant(
+        of: sidebar,
+        matching: find.text('Statistiche'),
+      );
+      final button = find.descendant(
+        of: sidebar,
+        matching: find.ancestor(of: stats, matching: find.byType(Material)),
+      );
+      final surface = find.descendant(
+        of: button,
+        matching: find.byType(PhysicalModel),
+      );
+      double alpha() => tester.widget<PhysicalModel>(surface).color.a;
+      final idle = alpha();
+      expect(idle, closeTo(.08, .001));
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: tester.getCenter(stats));
+      await tester.pump();
+      expect(alpha(), closeTo(idle, .001));
+      await tester.pump(const Duration(milliseconds: 650));
+      expect(alpha(), inExclusiveRange(idle, 1));
+      await tester.pump(const Duration(milliseconds: 650));
+      expect(alpha(), 1);
+      await mouse.removePointer();
+      await tester.tap(stats);
+      await tester.pump();
+      expect(state.referenceSheetSection, 'statistics');
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   testWidgets(
     'monster techniques add only their bonus and expire after the attack',
     (tester) async {

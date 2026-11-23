@@ -2,20 +2,33 @@ part of '../../main.dart';
 
 const oculumMicroRealmLore = <String, String>{
   'deserto_divoratore':
-      'Un’unica micro realtà in due zone: Deserto Divoratore e Deserto di Vetro. La sabbia è cristallina, umida e tagliente. Piante mobili con un nucleo centrale cercano di divorare ciò che vedono. Forzieri di arenaria affiorano fra le dune. Sotto i piedi possono aprirsi discese piramidali verso l’interno di un occhio: conducono a wormhole e dimensioni segrete. Qui si trova la variante azzurra dell’Ancient Desert Dragon Claw, che trasforma in vetro anziché arenaria.',
+      'Il terreno è azzurro e tagliente, distinto dai deserti ordinari del Regno Mezzano. Ampie dune chiare azzurre sono interrotte da ammassi scuri di tentacoli e vegetazione mobile attorno a nuclei; voragini circolari affondano verso grandi occhi nel terreno. Rocce azzurre taglienti affiorano in alcune zone, senza sostituire tutte le dune. Un’unica micro realtà in due zone: Deserto Divoratore e Deserto di Vetro. La sabbia è cristallina, umida e tagliente. Piante mobili con un nucleo centrale cercano di divorare ciò che vedono. Forzieri di arenaria affiorano fra le dune. Sotto i piedi possono aprirsi discese piramidali verso l’interno di un occhio: conducono a wormhole e dimensioni segrete. Qui si trova la variante azzurra dell’Ancient Desert Dragon Claw, che trasforma in vetro anziché arenaria.',
   'reame_cristallo':
       'Caverne e laghi luminosi fra pilastri di cristallo. Colossi minerali, predatori smeraldo, figure di ossidiana e costrutti prismatici custodiscono vene proprie di questo luogo. Percezione e alternative coerenti possono rivelarle. Più alto il Grado, più raro il ritrovamento. Puoi decidere se estrarre e quanto: non puoi estrarre un materiale di Grado superiore al tuo. Il Metallo runico di Postea non si trova qui.',
   'orea_zalira':
-      'Cielo e terra mutano in forme morbide e astratte sotto due soli privi di occhi. Creature buffe e innaturali abitano una natura viva e imprevedibile, con alberi flosci e altri rigidi, e fiumi che sembrano lava. Il tempo alterna velocità e lentezza. Il reame sembra osservare silenziosamente i visitatori, fra chaos e armonia. Lo controlla un essere ignoto, ancora senza nome, che non è fatato né del Chaos.',
+      'Cielo e terra mutano in forme morbide e astratte sotto due soli privi di occhi. Creature buffe e innaturali, di varie forme comprese quelle sferiche, abitano una natura viva e imprevedibile, con alberi flosci e altri rigidi, e fiumi che sembrano lava. Il tempo alterna velocità e lentezza. Il reame sembra osservare silenziosamente i visitatori, fra chaos e armonia. Lo controlla un essere ignoto, ancora senza nome, che non è fatato né del Chaos.',
   'carne_viva':
       'Un regno di carne viva sospeso nel vuoto più totale: nessun mondo, stella, luna o sole in lontananza. Terreno palpitante, sangue, pustole e membrane formano un ambiente organico abitato da creature di carne, tendini e ossa. Le forme dei suoi predatori e dei suoi manufatti derivano da questo stesso tessuto vivente.',
+};
+
+const _sunkenRealmAreas = <String, ({String name, String description})>{
+  'corallo_cavo': (
+    name: 'Barriera del Corallo Cavo',
+    description:
+        'Un quartiere immerso tra grandi coralli rossi. I polipi ambrati crescono nelle cavità della barriera, accanto alle strade e alle case.',
+  ),
+  'fronde_eiva': (
+    name: 'Selva delle Fronde d’Eiva',
+    description:
+        'Tra arcate sommerse crescono alghe dalle venature dorate, roselle acquatiche e piante con piccoli baccelli luminosi. Le fronde seguono la corrente dell’Eiva.',
+  ),
 };
 
 String oculumPlaneDescription(String id) {
   if (oculumMicroRealmLore[id] case final lore?) return lore;
   return switch (id) {
     'mezzano' =>
-      'Regno mezzano: terre e città del mondo ordinario di Oculum, con mercati e creature di diversi habitat.',
+      'Regno mezzano: terre, città e deserti ordinari del mondo di Oculum, distinti dal Deserto Divoratore; mercati e creature di diversi habitat.',
     'postea' =>
       'Micro realtà di un futuro errato, fondata sulle rune: innesti riparabili, tecnologia runica e il mercato di Rusty.',
     'caramella' =>
@@ -42,7 +55,7 @@ String oculumPlaneDescription(String id) {
       'Il vero inferno: dominio estremo di Fuoco, Lava e potere diabolico, dal Grado IX.',
     'isole' => 'Isole volanti: correnti, nubi, acqua e ricevitori di fulmini.',
     'affogato' =>
-      'Regno affogato: ambiente acquatico in cui si respira normalmente.',
+      'Il Regno Sommerso, detto anche Regno Affogato, è interamente immerso nell’Eiva. Quest’acqua magica molto potente permette agli abitanti di vivere e respirare anche nelle strade, nelle case e tra le barriere coralline.',
     'sotterraneo' || 'sotterraneo_maggiore' =>
       'Regno sotterraneo: Roccia, Terra e Buio, cunicoli e vene minerali. Sottoterra non compaiono sole, luna o raggi dal cielo.',
     _ =>
@@ -191,19 +204,109 @@ List<OculumRecipe> oculumRealmCraftingRecipes(String now) => [
 ];
 
 extension _OculumMicroRealms on _OculumHomePageState {
-  Widget realmIndicator() => Tooltip(
-    key: const ValueKey('current_realm_indicator'),
-    message:
-        '${selectedPlane.name}\n${oculumPlaneDescription(selectedPlaneId)}',
-    waitDuration: const Duration(milliseconds: 900),
-    triggerMode: TooltipTriggerMode.longPress,
-    child: IconButton(
-      onPressed: selectCurrentPlane,
-      visualDensity: VisualDensity.compact,
-      icon: const Icon(Icons.public),
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-    ),
-  );
+  Map<String, dynamic>? get activePartyWormhole {
+    final saved = partyChest['wormholeTransit'];
+    return saved is Map && saved['active'] == true
+        ? Map<String, dynamic>.from(saved)
+        : null;
+  }
+
+  bool enterPartyWormhole({int? natural}) {
+    if (!canManagePartyQuests ||
+        selectedPlaneId != 'deserto_divoratore' ||
+        activePartyWormhole != null ||
+        (natural != null && (natural < 1 || natural > 20))) {
+      return false;
+    }
+    refreshPartyChestMembers();
+    final tags = <String>{
+      ...((partyChest['members'] as Map?)?.keys.map((key) => '$key') ??
+          const <String>[]),
+      for (final index in masterPartyIndexes())
+        if (!isEnemySheetAt(index)) sheetTagAt(index),
+      if (realtimeService?.isConnected != true &&
+          schedaCorrente >= 0 &&
+          schedaCorrente < schedePersonaggio.length &&
+          !isEnemySheetAt(schedaCorrente))
+        sheetTagAt(schedaCorrente),
+    }..remove('');
+    if (tags.isEmpty) return false;
+    final die = natural ?? Random.secure().nextInt(20) + 1;
+    final outcome = oculumWormholeOutcome(die);
+    partyChest['wormholeTransit'] = {
+      'active': true,
+      'dimensionId': 'secret:${DateTime.now().microsecondsSinceEpoch}',
+      'originRealm': 'deserto_divoratore',
+      'die': die,
+      'outcome': outcome,
+      'participants': tags.toList()..sort(),
+    };
+    partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
+    aggiungiLog(
+      '[WORMHOLE DEL PARTY] Fortuna naturale $die: tutto il party nella stessa dimensione segreta ${outcome.replaceAll('_', ' ')}. Un solo tiro e una sola destinazione.',
+    );
+    programmaSalvataggio();
+    unawaited(sendPartyChestState());
+    return true;
+  }
+
+  void finishPartyWormhole() {
+    if (!canManagePartyQuests || activePartyWormhole == null) return;
+    partyChest['wormholeTransit'] = {...activePartyWormhole!, 'active': false};
+    partyChest['revision'] = readIntValue(partyChest['revision']) + 1;
+    programmaSalvataggio();
+    unawaited(sendPartyChestState());
+  }
+
+  bool prepareDesertoSharpContact() {
+    if (schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length ||
+        selectedPlaneId != 'deserto_divoratore' ||
+        !controlsOnlineCombatSheet(
+          normalizeOculumFriendTag(sheetTagAt(schedaCorrente)),
+        )) {
+      return false;
+    }
+    final die = Random.secure().nextInt(12) + 1;
+    incomingDamageElement = 'taglio';
+    dannoSubitoController.text = '$die';
+    aggiungiLog(
+      '[DESERTO DIVORATORE] Contatto diretto o caduta: 1d12 Taglio = $die aggiuntivi. Applica le normali protezioni nel pannello Danni subiti. Nessun Danno per il semplice camminare.',
+    );
+    programmaSalvataggio();
+    return true;
+  }
+
+  String? get activeSunkenRealmAreaId {
+    if (selectedPlaneId != 'affogato' ||
+        schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length) {
+      return null;
+    }
+    final runtime = schedePersonaggio[schedaCorrente]['planarRuntime'];
+    final id = runtime is Map ? runtime['affogatoAreaId'] : null;
+    return id is String && _sunkenRealmAreas.containsKey(id) ? id : null;
+  }
+
+  Widget realmIndicator() {
+    final area = _sunkenRealmAreas[activeSunkenRealmAreaId];
+    return Tooltip(
+      key: const ValueKey('current_realm_indicator'),
+      message: [
+        selectedPlane.name,
+        oculumPlaneDescription(selectedPlaneId),
+        if (area != null) area.name,
+      ].join('\n'),
+      waitDuration: const Duration(milliseconds: 900),
+      triggerMode: TooltipTriggerMode.longPress,
+      child: IconButton(
+        onPressed: selectCurrentPlane,
+        visualDensity: VisualDensity.compact,
+        icon: const Icon(Icons.public),
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      ),
+    );
+  }
 
   Map<String, dynamic> get realmExploration =>
       planarState.putIfAbsent('realmExploration', () => <String, dynamic>{})
@@ -347,7 +450,11 @@ extension _OculumMicroRealms on _OculumHomePageState {
       context: context,
       builder: (dialog) => StatefulBuilder(
         builder: (dialog, update) => AlertDialog(
-          title: Text(selectedPlane.name),
+          title: Text(
+            selectedPlaneId == 'affogato'
+                ? 'Regno Sommerso'
+                : selectedPlane.name,
+          ),
           content: SizedBox(
             width: 600,
             child: SingleChildScrollView(
@@ -355,29 +462,94 @@ extension _OculumMicroRealms on _OculumHomePageState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (activePartyWormhole case final transit?) ...[
+                    Text(
+                      'Dimensione segreta ${'${transit['outcome']}'.replaceAll('_', ' ')} · party unito · tiro ${transit['die']}',
+                    ),
+                    if (canManagePartyQuests)
+                      TextButton(
+                        onPressed: () {
+                          finishPartyWormhole();
+                          update(() {});
+                        },
+                        child: const Text('Termina la visita alla dimensione'),
+                      ),
+                    const SizedBox(height: 12),
+                  ],
                   Text(oculumPlaneDescription(selectedPlaneId)),
+                  if (selectedPlaneId == 'affogato') ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final MapEntry(key: id, value: area)
+                            in _sunkenRealmAreas.entries)
+                          ChoiceChip(
+                            label: Text(area.name),
+                            selected: activeSunkenRealmAreaId == id,
+                            onSelected: (selected) {
+                              if (!mounted || selectedPlaneId != 'affogato') {
+                                return;
+                              }
+                              if (selected) {
+                                planarState['affogatoAreaId'] = id;
+                              } else {
+                                planarState.remove('affogatoAreaId');
+                              }
+                              programmaSalvataggio();
+                              // ignore: invalid_use_of_protected_member
+                              setState(() {});
+                              update(() {});
+                            },
+                          ),
+                      ],
+                    ),
+                    if (activeSunkenRealmAreaId case final id?) ...[
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/oculum/home_art_authored/realm_affogato_$id.webp',
+                          semanticLabel: _sunkenRealmAreas[id]!.name,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(_sunkenRealmAreas[id]!.description),
+                    ],
+                  ],
                   if (selectedPlaneId == 'deserto_divoratore') ...[
                     const SizedBox(height: 12),
                     const Text(
+                      'Terreno azzurro e tagliente: cadute e contatto diretto aggiungono 1d12 Taglio, con le normali protezioni. Camminare normalmente non infligge Danni.',
+                    ),
+                    TextButton.icon(
+                      icon: const Icon(Icons.warning_amber_outlined),
+                      label: const Text(
+                        'Contatto o caduta · prepara 1d12 Taglio',
+                      ),
+                      onPressed: () {
+                        if (!prepareDesertoSharpContact()) return;
+                        Navigator.pop(dialog);
+                        apriDannoCuraDalCentroPartita();
+                      },
+                    ),
+                    const Text(
                       'Due zone: Deserto Divoratore e Deserto di Vetro. Un critico dell’Artiglio azzurro trasforma il punto colpito in vetro; il teletrasporto rende di vetro anche il portatore.',
                     ),
+                    const Text(
+                      'Occhi: discese piramidali verso l’interno possono formarsi sotto i vostri piedi e condurre a un wormhole. Un solo tiro Fortuna porta tutto il party nella stessa dimensione segreta: 1 negativa eccezionale, 2–10 negativa, 11–19 positiva, 20 positiva eccezionale.',
+                    ),
                     TextButton(
-                      onPressed: () {
-                        final die = Random.secure().nextInt(20) + 1;
-                        final outcome = oculumWormholeOutcome(die);
-                        realmExploration['wormhole'] = {
-                          'die': die,
-                          'outcome': outcome,
-                        };
-                        aggiungiLog(
-                          '[WORMHOLE] Fortuna naturale $die: dimensione segreta $outcome.',
-                        );
-                        programmaSalvataggio();
-                        update(() {});
-                      },
-                      child: const Text(
-                        'Entra nel wormhole · tiro Fortuna 1d20',
-                      ),
+                      onPressed:
+                          !canManagePartyQuests || activePartyWormhole != null
+                          ? null
+                          : () {
+                              enterPartyWormhole();
+                              update(() {});
+                            },
+                      child: const Text('Party nel wormhole · Fortuna 1d20'),
                     ),
                     if (realmExploration['wormhole'] is Map)
                       Text(

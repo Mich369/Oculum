@@ -8,6 +8,61 @@ int? oculumScrollDropGrade(String subtraitId, int total) =>
 int oculumScrollValue(int grade) =>
     300 * pow(grade.clamp(0, 12) + 1, 2).toInt();
 
+const oculumRhinoStoneguardName = 'Petryguard';
+const oculumRhinoStoneguardScrollName =
+    'Pergamena rara · $oculumRhinoStoneguardName';
+
+String oculumRhinoStoneguardSearchAliases(Object? scroll) =>
+    scroll is Map && scroll['passiveId'] == oculumRhinoStoneguardPassiveId
+    ? 'Guardia di pietra del Rinoceronte Stoneguard'
+    : '';
+
+InventoryItem oculumRhinoStoneguardScroll({
+  int grade = 0,
+  Map<String, dynamic> loot = const {},
+}) {
+  final scrollGrade = grade.clamp(0, 12).toInt();
+  const passiveDescription =
+      'All’inizio di ogni nuovo Fight ottieni Scudo normale in percentuale '
+      'della Vita massima, arrotondato per eccesso. Valore iniziale: '
+      '$oculumRhinoStoneguardShieldPercent%.';
+  final skill = CharacterSkill(
+    id: oculumRhinoStoneguardPassiveId,
+    nome: oculumRhinoStoneguardName,
+    tipo: 'Passiva',
+    costo: '0',
+    cooldown: 'A ogni nuovo Fight',
+    descrizione: passiveDescription,
+  );
+  return InventoryItem(
+    nome: oculumRhinoStoneguardScrollName,
+    peso: .1,
+    quantita: 1,
+    gradoOggetto: scrollGrade,
+    elementoDanno: 'terra',
+    note: 'Bottino raro della famiglia Baby Rock Rhino. Monouso per l’apprendimento. '
+        '$passiveDescription',
+    craftData: {
+      'rarity': 'raro',
+      'manualPriceObser': oculumScrollValue(scrollGrade),
+      'scroll': {
+        'id': oculumRhinoStoneguardPassiveId,
+        'kind': oculumRhinoStoneguardPassiveId,
+        'passiveId': oculumRhinoStoneguardPassiveId,
+        'startingShieldPercent': oculumRhinoStoneguardShieldPercent,
+        'name': oculumRhinoStoneguardName,
+        'element': 'terra',
+        'grade': scrollGrade,
+        'description': passiveDescription,
+        'willCost': 0,
+        'cooldownTurns': 0,
+        'authoredSkill': skill.toJson(),
+      },
+    },
+    monsterLoot: loot,
+  );
+}
+
 String oculumScrollKindForElement(String element) => switch (element) {
   'gelo' || 'ghiaccio' => 'attack',
   'fuoco' || 'fiamma' => 'attack',
@@ -169,11 +224,22 @@ List<OculumStructuredEffect> oculumScrollCombatEffects(
   Map<String, dynamic> data, {
   int? resolvedDamage,
 }) {
-  if (data['kind'] == oculumOculumTheftKind && data['authoredSkill'] is Map) {
+  if (data['kind'] == oculumRhinoStoneguardPassiveId) return const [];
+  if ((data['kind'] == oculumOculumTheftKind ||
+          data['kind'] == oculumElementalSphereEffect) &&
+      data['authoredSkill'] is Map) {
     final skill = CharacterSkill.fromJson(
       Map<String, dynamic>.from(data['authoredSkill'] as Map),
     );
-    return skill.forme.last.effettiStrutturati;
+    if (skill.forme.isEmpty) return const [];
+    if (data['kind'] == oculumOculumTheftKind) {
+      return _oculumTheftScrollForm(data, skill)?.effettiStrutturati ??
+          const [];
+    }
+    final form = readIntValue(data['maxForm'], fallback: 3);
+    return skill
+        .forme[form.clamp(1, skill.forme.length) - 1]
+        .effettiStrutturati;
   }
   final configured = oculumReadStructuredEffects(data['effects']);
   if (configured.isNotEmpty) {
@@ -308,6 +374,8 @@ Set<OculumCombatAbilityRole> oculumScrollCombatRoles(
   Iterable<OculumStructuredEffect> effects,
 ) {
   switch ('${data['kind'] ?? ''}') {
+    case oculumRhinoStoneguardPassiveId:
+      return const {};
     case 'gratitudine':
     case 'utility':
     case 'heal':
@@ -350,12 +418,201 @@ Set<OculumCombatAbilityRole> oculumScrollCombatRoles(
 
 const oculumOculumTheftScrollDescription =
     'Sfera Predatrice. Scegli almeno due nemici. Con la pergamena usi '
-    'la forma più alta configurata, una volta, spendendo 1 Azione e nessuna '
+    'la forma indicata sull’articolo, una volta, spendendo 1 Azione e nessuna '
     'riserva. Recuperi soltanto l’Oculum sottratto, fino al massimale +5 '
     'durante il Fight. Amplifica dà +3 alle quattro statistiche per ogni '
     'nemico a cui sottrai Oculum, per 3 turni personali.';
 
 const oculumTheftUsesRequirement = 'oculumTheftUses';
+const _oculumTheftFormLabels = ['I', 'II', 'III', 'IV', 'V'];
+
+String _oculumTheftFormLabel(int form) => _oculumTheftFormLabels[form - 1];
+
+CharacterSkillForm? _oculumTheftScrollForm(
+  Map<String, dynamic> data,
+  CharacterSkill skill,
+) {
+  final cap = readIntValue(data['maxForm'], fallback: 5).clamp(1, 5);
+  return skill.forme
+      .take(cap)
+      .where(
+        (form) => form.effettiStrutturati.any(
+          (effect) => effect.enabled && effect.target == oculumOculumTheftKind,
+        ),
+      )
+      .lastOrNull;
+}
+
+const oculumElementalSphereEffect = 'elemental_sphere';
+
+const _elementalSphereOculumCosts = [3, 6, 12];
+const _elementalSphereForms = ['I', 'II', 'III'];
+
+bool oculumIsElementalSphereForm(CharacterSkillForm form) =>
+    form.effettiStrutturati.any(
+      (effect) =>
+          effect.enabled && effect.target == oculumElementalSphereEffect,
+    );
+
+int oculumElementalSphereMateriaCost(int oculumCost) =>
+    (3 * max(0, oculumCost) + 3) ~/ 4;
+
+OculumSkillCost? oculumElementalSphereEffectiveCost(
+  CharacterSkillForm form, {
+  required bool possessesOculum,
+  required int Function(String) evaluateCost,
+}) {
+  final cost = oculumCharacterSkillFormCost(form);
+  if (cost == null ||
+      possessesOculum ||
+      cost.resource != 'oculum' ||
+      !oculumIsElementalSphereForm(form)) {
+    return cost;
+  }
+  return OculumSkillCost.fromJson({
+    ...cost.toJson(),
+    'resource': 'materia',
+    if (!cost.variable)
+      'amountExpression':
+          '${oculumElementalSphereMateriaCost(evaluateCost(cost.amountExpression))}',
+    'minimum': oculumElementalSphereMateriaCost(cost.minimum),
+    'maximum': oculumElementalSphereMateriaCost(cost.maximum),
+  });
+}
+
+({int minimum, int maximum}) oculumSkillScrollFormPriceRange(int form) =>
+    switch (form.clamp(1, 5)) {
+      1 => (minimum: 56, maximum: 79),
+      2 => (minimum: 80, maximum: 98),
+      3 => (minimum: 99, maximum: 120),
+      4 => (minimum: 125, maximum: 160),
+      _ => (minimum: 169, maximum: 220),
+    };
+
+({int minimum, int maximum}) oculumElementalSphereScrollPriceRange(int form) =>
+    oculumSkillScrollFormPriceRange(form.clamp(1, 3));
+
+int oculumElementalSphereScrollPrice(int form, Random random) {
+  return _oculumSkillScrollFormPrice(form.clamp(1, 3), random);
+}
+
+int _oculumSkillScrollFormPrice(int form, Random random) {
+  final range = oculumSkillScrollFormPriceRange(form);
+  return range.minimum + random.nextInt(range.maximum - range.minimum + 1);
+}
+
+String oculumElementalSphereFormLabel(int form) =>
+    _elementalSphereForms[form.clamp(1, _elementalSphereForms.length) - 1];
+
+final oculumElementalSphereElements = List<String>.unmodifiable(
+  oculumDefaultElementIds.where(
+    (element) => element != 'sconosciuto' && element != 'cura',
+  ),
+);
+
+String oculumElementalSphereName(String element) =>
+    'Sfera elementale · ${oculumElementDisplayIt(element)}';
+
+String oculumElementalSphereDescription(String element) => switch (element) {
+  'acido' =>
+    'Un colpo di Acido. Con doppio critico e perdita di almeno 1 Vita, '
+        'l’Acido continua a bruciare fino alla prima cura effettiva o alla scadenza.',
+  'fulmine' =>
+    'Un colpo di Fulmine. Con doppio critico e perdita di almeno 1 Vita, '
+        'il fulmine può raggiungere fino a tre altri nemici.',
+  _ => 'Un colpo di ${oculumElementDisplayIt(element)}.',
+};
+
+InventoryItem oculumElementalSphereScrollItem(
+  String element,
+  int grade, {
+  int maxForm = 3,
+  int? paidObser,
+}) {
+  if (!oculumElementalSphereElements.contains(element)) {
+    throw ArgumentError.value(element, 'element', 'Elemento non acquistabile');
+  }
+  final g = grade.clamp(0, 12).toInt();
+  final formLimit = maxForm.clamp(1, _elementalSphereForms.length).toInt();
+  final scrollForm = oculumElementalSphereFormLabel(formLimit);
+  final price = oculumElementalSphereScrollPriceRange(formLimit);
+  final priceText = paidObser != null && paidObser > 0
+      ? 'Prezzo di acquisto: $paidObser Obser.'
+      : 'Prezzo: ${price.minimum}–${price.maximum} Obser.';
+  final name = oculumElementalSphereName(element);
+  final description = oculumElementalSphereDescription(element);
+  final skill = CharacterSkill(
+    id: 'elemental_sphere/$element',
+    nome: name,
+    tipo: 'Attacco',
+    costo: '1 Azione + 3/6/12 Oculum',
+    cooldown: '3/4/5 turni personali',
+    descrizione: description,
+    equipaggiata: true,
+    forme: [
+      for (final (index, roman) in _elementalSphereForms.indexed)
+        CharacterSkillForm(
+          nome: 'Forma $roman',
+          tipo: 'Attacco',
+          costo: '1 Azione + ${_elementalSphereOculumCosts[index]} Oculum',
+          cooldown: '${3 + index} turni personali',
+          descrizione: description,
+          costoStrutturato: OculumSkillCost(
+            resource: 'oculum',
+            amountExpression: '${_elementalSphereOculumCosts[index]}',
+          ),
+          cooldownStrutturato: OculumAbilityCooldown(amount: 3 + index),
+          effettiStrutturati: [
+            OculumStructuredEffect(
+              id: 'elemental_sphere/$element/${index + 1}',
+              type: 'planar',
+              target: oculumElementalSphereEffect,
+              recipient: 'nemico',
+              elementType: element,
+              valueExpression: '${20 - index}',
+              duration: const {'acido', 'gelo', 'spirituale'}.contains(element)
+                  ? '${3 * (index + 1)}'
+                  : '0',
+              maximumTargets: 1,
+            ),
+            OculumStructuredEffect(
+              id: 'elemental_sphere/$element/${index + 1}/damage',
+              type: 'danno',
+              target: 'danni',
+              recipient: 'se_stesso',
+              elementType: element,
+              valueExpression: '${index * 3}',
+              mode: 'prossima_azione',
+              maximumTargets: 1,
+            ),
+          ],
+        ),
+    ],
+  );
+  return InventoryItem(
+    nome: '[$name] [Pergamena] [Forma $scrollForm] [Grado $g]',
+    peso: .1,
+    quantita: 1,
+    gradoOggetto: g,
+    elementoDanno: element,
+    note:
+        '$description\nMonouso. Lancia la Forma $scrollForm con un’Azione. '
+        'Nessun costo di riserva. $priceText',
+    craftData: {
+      'scroll': {
+        'id': 'elemental_sphere/$element',
+        'name': name,
+        'element': element,
+        'grade': g,
+        'kind': oculumElementalSphereEffect,
+        'maxForm': formLimit,
+        'description': description,
+        'willCost': 0,
+        'authoredSkill': skill.toJson(),
+      },
+    },
+  );
+}
 
 CharacterSkill oculumOculumTheftSkill() => CharacterSkill(
   id: oculumOculumTheftKind,
@@ -411,17 +668,27 @@ CharacterSkill oculumOculumTheftSkill() => CharacterSkill(
   ],
 );
 
-InventoryItem oculumOculumTheftScrollItem(int grade) {
+InventoryItem oculumOculumTheftScrollItem(
+  int grade, {
+  int maxForm = 5,
+  int? paidObser,
+}) {
   final g = grade.clamp(0, 12).toInt();
+  final limit = maxForm.clamp(1, 5).toInt();
+  final label = _oculumTheftFormLabel(limit);
+  final range = oculumSkillScrollFormPriceRange(limit);
+  final price = paidObser == null
+      ? '${range.minimum}–${range.maximum}'
+      : '$paidObser';
   return InventoryItem(
-    nome: '[Sfera Predatrice] [Pergamena] [Grado $g]',
+    nome: '[Sfera Predatrice] [Pergamena $label] [Grado $g]',
     peso: .1,
     quantita: 1,
     gradoOggetto: g,
     note:
         '$oculumOculumTheftScrollDescription '
         'Apprendibile con 20 naturale, DT ${oculumScrollLearningDifficulty(g)} '
-        'e prova di apprendimento. Valore ${oculumScrollValue(g)} Obser.',
+        'e prova di apprendimento. Prezzo $price Obser.',
     craftData: {
       'scroll': {
         'id': oculumOculumTheftKind,
@@ -429,6 +696,7 @@ InventoryItem oculumOculumTheftScrollItem(int grade) {
         'element': 'oculum',
         'grade': g,
         'kind': oculumOculumTheftKind,
+        'maxForm': limit,
         'description': oculumOculumTheftScrollDescription,
         'willCost': 0,
         'authoredSkill': oculumOculumTheftSkill().toJson(),
@@ -880,6 +1148,50 @@ InventoryItem oculumScrollItem(
 }
 
 extension _OculumScrolls on _OculumHomePageState {
+  OculumSkillCost? effectiveElementalSphereCost(CharacterSkillForm form) =>
+      oculumElementalSphereEffectiveCost(
+        form,
+        possessesOculum: oculumMassimoNaturale() > 0,
+        evaluateCost: (expression) => oculumEvaluateStructuredEffectValue(
+          OculumStructuredEffect(valueExpression: expression),
+          variables: formulaValueContext(),
+          subtraits: hiddenEyeStats,
+        ),
+      );
+
+  void _maybeLearnElementalSphereFromScroll(
+    Map<String, dynamic> data,
+    int natural,
+    int total,
+  ) {
+    final raw = data['authoredSkill'];
+    if (natural != 20 || raw is! Map) return;
+    final skill = CharacterSkill.fromJson({
+      ...Map<String, dynamic>.from(raw),
+      'scrollData': {...data, 'learned': true},
+      'equipaggiata': true,
+    });
+    if (skills.any((entry) => entry.id == skill.id)) return;
+    final random = Random.secure();
+    if (!oculumScrollCanLearn(
+      natural,
+      total,
+      readIntValue(data['grade']),
+      random.nextInt(100),
+      difficulty: normalizedCampaignDifficulty(),
+      bonusPercent: currentCombatIsActive() ? random.nextInt(3) + 1 : 0,
+      luck: scrollLearningLuck,
+      characterGrade: activeCriticalGrade(),
+      skillLevel: readIntValue(data['skillLevel']),
+      characterLevel: leggiNumero(livelloController),
+      matchingElement: scrollMatchesUsableElement(data),
+    )) {
+      return;
+    }
+    setState(() => skills.add(skill));
+    aggiungiLog('Skill appresa: ${skill.nome}.');
+  }
+
   void maybeLearnOculumTheftFromScroll(
     Map<String, dynamic> data, {
     required int natural,
@@ -940,7 +1252,10 @@ extension _OculumScrolls on _OculumHomePageState {
 
   bool scrollMatchesUsableElement(Map<String, dynamic> data) {
     final wanted = oculumNormalizeElementId('${data['element'] ?? ''}');
-    if (wanted.isEmpty) return false;
+    return wanted.isNotEmpty && usableSheetSearchElements().contains(wanted);
+  }
+
+  Set<String> usableSheetSearchElements() {
     final elements = <String>{
       oculumNormalizeElementId(elementoDannoDominante()),
     };
@@ -988,8 +1303,13 @@ extension _OculumScrolls on _OculumHomePageState {
         }
       }
     }
-    return elements.contains(wanted);
+    return elements;
   }
+
+  Set<String> sheetElementsForNameSearch(String query) =>
+      OculumNameQuery(oculumNormalizeText(query)).hasRelatedNames
+      ? usableSheetSearchElements()
+      : const {};
 
   void showMonsterScrollEcho(String monster, String asset) {
     final assetText = asset.trim().isEmpty ? '' : ' ($asset)';
@@ -1054,8 +1374,57 @@ extension _OculumScrolls on _OculumHomePageState {
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
       return;
     }
+    final kind = '${data['kind']}';
+    final studyOnly = kind == oculumRhinoStoneguardPassiveId;
+    if (studyOnly) {
+      if (item == null) return;
+      if (skills.any((skill) => skill.id == oculumRhinoStoneguardPassiveId)) {
+        aggiungiLog('$oculumRhinoStoneguardName è già stata appresa.');
+        return;
+      }
+    }
     if (data['kind'] == oculumOculumTheftKind && item != null) {
       await useOculumTheftScroll(data, item);
+      return;
+    }
+    if (data['kind'] == oculumElementalSphereEffect && item != null) {
+      if (!currentCombatIsActive() ||
+          outsideFight ||
+          onlineAttackTokens().isEmpty) {
+        aggiungiLog(
+          'La Sfera elementale richiede un Fight con un bersaglio disponibile.',
+        );
+        return;
+      }
+      final effects = oculumScrollCombatEffects(data);
+      if (!effects.any(
+        (effect) =>
+            effect.enabled && effect.target == oculumElementalSphereEffect,
+      )) {
+        return;
+      }
+      var committed = false;
+      bool available() =>
+          !committed &&
+          mounted &&
+          currentSheetScrollId() == origin &&
+          inventario.contains(item) &&
+          item.quantita > 0;
+      await planOnlineAttack(
+        elementalSphereScrollEffects: effects,
+        elementalSphereScrollAvailable: available,
+        onElementalSphereScrollCommitted: (natural, total) {
+          if (!available()) return;
+          committed = true;
+          setState(() {
+            item.quantita--;
+            if (item.quantita == 0) inventario.remove(item);
+          });
+          aggiungiLog('Pergamena consumata: ${data['name']}.');
+          _maybeLearnElementalSphereFromScroll(data, natural, total);
+          programmaSalvataggio();
+        },
+      );
       return;
     }
     final g = readIntValue(data['grade']).clamp(0, 12);
@@ -1077,7 +1446,6 @@ extension _OculumScrolls on _OculumHomePageState {
       characterGrade: learningGrade,
       matchingElement: elementAffinity,
     );
-    final kind = '${data['kind']}';
     if (kind == 'corruption' && !currentCombatIsActive()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1194,9 +1562,16 @@ extension _OculumScrolls on _OculumHomePageState {
                 ),
                 const SizedBox(height: 10),
               ],
-              Text(
-                '${data['description']}\n\n${kind == 'corruption' ? 'La pergamena non richiede una prova di attivazione né Volontà. La possibilità indicata dipende solo dal Grado del bersaglio e dalla sua eventuale resistenza alla Corruzione.' : 'Consuma una pergamena. Per apprendere serve 20 naturale e totale ≥ $learningDifficulty: +2 DT per ogni livello richiesto dalla skill sopra il tuo.\nCosto: $cost Volontà · DT attivazione ${oculumScrollDifficulty(g)} · ricarica $cooldown turni. Il tiro usa Volontà, bonus e Oculum preparato.'} Il Master vede il risultato e i bersagli.',
-              ),
+              if (studyOnly)
+                Text(
+                  '${data['description']}\n\nConsumala per tentare di apprendere '
+                  'la passiva. Servono 20 naturale, totale ≥ $learningDifficulty '
+                  'e il normale tiro percentuale di apprendimento.',
+                )
+              else
+                Text(
+                  '${data['description']}\n\n${kind == 'corruption' ? 'La pergamena non richiede una prova di attivazione né Volontà. La possibilità indicata dipende solo dal Grado del bersaglio e dalla sua eventuale resistenza alla Corruzione.' : 'Consuma una pergamena. Per apprendere serve 20 naturale e totale ≥ $learningDifficulty: +2 DT per ogni livello richiesto dalla skill sopra il tuo.\nCosto: $cost Volontà · DT attivazione ${oculumScrollDifficulty(g)} · ricarica $cooldown turni. Il tiro usa Volontà, bonus e Oculum preparato.'} Il Master vede il risultato e i bersagli.',
+                ),
             ],
           ),
         ),
@@ -1207,15 +1582,19 @@ extension _OculumScrolls on _OculumHomePageState {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Usa e tira'),
+            child: Text(studyOnly ? 'Studia e tira' : 'Usa e tira'),
           ),
         ],
       ),
     );
     if (confirmed != true ||
         !mounted ||
-        (item == null && currentSheetScrollId() != origin) ||
+        ((item == null || studyOnly) && currentSheetScrollId() != origin) ||
         (item != null && (!inventario.contains(item) || item.quantita <= 0))) {
+      return;
+    }
+    if (studyOnly &&
+        skills.any((skill) => skill.id == oculumRhinoStoneguardPassiveId)) {
       return;
     }
     if (const {'technique', 'shadow_clone'}.contains(kind)) {
@@ -1251,19 +1630,22 @@ extension _OculumScrolls on _OculumHomePageState {
         spend.bonus;
     final total = rollTotalWithCritical(natural, 20, [bonus]);
     final success =
-        kind == 'corruption' ||
-        natural != 1 &&
-            total >= oculumScrollDifficulty(g) &&
-            (slotMachineRollsEnabled
-                ? resolveSlotMachineSuccess(naturalRoll: natural)
-                : total > 0);
+        !studyOnly &&
+        (kind == 'corruption' ||
+            natural != 1 &&
+                total >= oculumScrollDifficulty(g) &&
+                (slotMachineRollsEnabled
+                    ? resolveSlotMachineSuccess(naturalRoll: natural)
+                    : total > 0));
     final formula = rollFormulaWithCritical(
       roll: natural,
       faces: 20,
       bonuses: [bonus],
     );
     final source = 'pergamena/${data['element']}/$kind';
-    var outcome = success
+    var outcome = studyOnly
+        ? 'Tentativo di apprendimento della passiva.'
+        : success
         ? '${data['description']}'
         : 'Tiro fallito: nessun effetto.';
     var resolvedAttackDamage = 0;
@@ -1324,7 +1706,9 @@ extension _OculumScrolls on _OculumHomePageState {
       outcome +=
           '\nDanni per bersaglio: ${(dannoTotale() * g * .5).ceil()}. Il Master conferma i bersagli.';
     }
-    var learned = '';
+    var learned = studyOnly && (natural != 20 || total < learningDifficulty)
+        ? '\nSkill non appresa: servono 20 naturale e totale ≥ $learningDifficulty.'
+        : '';
     setState(() {
       dadoMostrato = formula;
       dadoMostratoFacce = 20;

@@ -588,7 +588,21 @@ extension _OculumCreationProgression on _OculumHomePageState {
     return '$oculumTheftUses/$needed lanci validi';
   }
 
+  MonsterBookEntry? get _tutorialSoulFighterPreset {
+    if (!tutorialGeneraMostro) return null;
+    final id = tutorialMonsterVariantId.isNotEmpty
+        ? tutorialMonsterVariantId
+        : tutorialMonsterPresetId;
+    return oculumIsSoulFighter(id) ? monsterBookEntryById(id) : null;
+  }
+
+  List<CharacterArt> _tutorialSoulFighterArts(MonsterBookEntry monster) => [
+    ?oculumMonsterBookImportArt(monster),
+    ...oculumMonsterBookAdditionalArts(monster),
+  ];
+
   List<CharacterSkill> tutorialSkillPool() {
+    if (_tutorialSoulFighterPreset != null) return [];
     final monster = tutorialGeneraMostro && tutorialMonsterPresetId.isNotEmpty
         ? monsterBookEntryById(
             tutorialMonsterVariantId.isNotEmpty
@@ -817,6 +831,20 @@ extension _OculumCreationProgression on _OculumHomePageState {
   }
 
   Widget tutorialSkillsPage(StateSetter update) {
+    final fixedPreset = _tutorialSoulFighterPreset;
+    if (fixedPreset != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Oculum Art della creatura'),
+          for (final art in _tutorialSoulFighterArts(fixedPreset))
+            ListTile(
+              title: Text(art.nome),
+              subtitle: Text(art.skills.map((skill) => skill.nome).join(' · ')),
+            ),
+        ],
+      );
+    }
     final pool = tutorialSkillPool();
     final selected = tutorialChosenSkills;
     return Column(
@@ -938,7 +966,7 @@ extension _OculumCreationProgression on _OculumHomePageState {
         hiddenEyeStats.map((s) => s.id),
       ),
       visited.contains(4),
-      tutorialChosenSkills.length == 3,
+      _tutorialSoulFighterPreset != null || tutorialChosenSkills.length == 3,
       visited.contains(6),
     ];
     return (tests.where((v) => v).length * 100 ~/ tests.length);
@@ -1057,7 +1085,12 @@ extension _OculumCreationProgression on _OculumHomePageState {
       Text(
         'Livello ${tutorialLevelController.text} · ${tutorialGeneraMostro ? 'Grado dal livello della creatura' : tutorialArtName}',
       ),
-      Text('Skill scelte: ${tutorialChosenSkills.join(' · ')}'),
+      if (_tutorialSoulFighterPreset case final fixedPreset?)
+        Text(
+          'Oculum Art: ${_tutorialSoulFighterArts(fixedPreset).map((art) => art.nome).join(' · ')}',
+        )
+      else
+        Text('Skill scelte: ${tutorialChosenSkills.join(' · ')}'),
       for (final pair in const [
         ('personality', 'Carattere'),
         ('appearance', 'Aspetto'),

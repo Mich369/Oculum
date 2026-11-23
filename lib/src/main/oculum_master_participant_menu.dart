@@ -137,6 +137,12 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
       checked: token['status'] == 'dead',
       child: Text(t('Morto', 'Dead')),
     ),
+    if (_localResurrection && token['status'] == 'dead' &&
+        token[_resurrectionWindowKey] is Map)
+      PopupMenuItem(
+        value:'resurrectionStone',
+        child:Text(t('Usa Pietra della Resurrezione', 'Use Resurrection Stone')),
+      ),
     for (final request in escapeRequestsForToken(
       encounterId,
       publicInitiativeSourceTag(token),
@@ -266,6 +272,10 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
       await showBaghestPurification(publicInitiativeSourceTag(token));
       return;
     }
+    if (command == 'resurrectionStone') {
+      await _delegateLocalResurrectionStone(token);
+      return;
+    }
     if (command.startsWith('escapeReply:')) {
       final decoded = jsonDecode(command.substring('escapeReply:'.length));
       if (decoded is! List || decoded.length != 2) return;
@@ -346,6 +356,8 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
         token['automaticDeath'] = false;
         token['downed'] = status == 'downed';
         if (status == 'dead') {
+          confirmCombatDeathMetadata(token);
+          _recordLocalResurrectionTokenDeath(token);
           token['rewardDeathRound'] =
               anchor.encounterId == selectedMasterInitiativeGroupId
               ? masterInitiativeRound
@@ -358,6 +370,13 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
           );
         }
         if (status == 'fled') recordPlanarMonsterEscape(token);
+        if (command == 'toggleDead' && status == 'ready') {
+          token.remove('balenaKnockoutFight');
+          token.remove('deathPlaneId');
+          _closeLocalResurrectionDeath(token);
+          final index = masterInitiativeSheetIndexForToken(token);
+          if (index >= 0) _closeLocalResurrectionDeath(schedePersonaggio[index]);
+        }
       });
     } else {
       return;
@@ -372,12 +391,15 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
     Map<String, dynamic> values = const {},
   }) async {
     final token = resolveMasterParticipantAnchor(anchor);
-    if (!masterParticipantUsesRemote || token == null) {
+    if (!masterParticipantUsesRemote ||
+        token == null ||
+        !realtimeCanControlSameAccountFight) {
       return;
     }
     final delivered = await realtimeService?.sendCombatEvent(
       'initiative_control',
       permissionEnvelope({
+        ...realtimeMasterCommandRoute,
         'id':
             'participant:${DateTime.now().microsecondsSinceEpoch}:${sheetTagAt(schedaCorrente)}',
         'encounterId': anchor.encounterId,
@@ -403,7 +425,7 @@ extension _OculumMasterParticipantMenu on _OculumHomePageState {
   Future<void> receiveMasterParticipantControl(
     Map<String, dynamic> payload,
   ) async {
-    if (!realtimeIsMasterRole || !validPermissionSender(payload, staff: true)) {
+    if (!validRealtimeStaffFightControl(payload)) {
       return;
     }
     final id = '${payload['id'] ?? ''}';

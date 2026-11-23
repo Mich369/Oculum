@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/widgets/oculum_theme_asset_packs.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
@@ -78,12 +79,12 @@ void main() {
     },
   );
   test(
-    'every registered theme relic is a real PNG with transparent pixels',
+    'every registered theme relic is a real PNG or WebP with transparent pixels',
     () async {
       for (final pack in oculumThemeAssetPacks.values) {
         final bytes = await File(pack.relic).readAsBytes();
         expect(bytes.length, greaterThan(100), reason: pack.id);
-        expect(bytes.take(8), [
+        final isPng = listEquals(bytes.take(8).toList(), const [
           137,
           80,
           78,
@@ -92,7 +93,15 @@ void main() {
           10,
           26,
           10,
-        ], reason: pack.id);
+        ]);
+        final isWebP =
+            String.fromCharCodes(bytes.take(4)) == 'RIFF' &&
+            String.fromCharCodes(bytes.skip(8).take(4)) == 'WEBP';
+        expect(
+          isPng || isWebP,
+          isTrue,
+          reason: '${pack.id}: expected a real PNG or WebP container',
+        );
         final codec = await ui.instantiateImageCodec(bytes, targetWidth: 64);
         final image = (await codec.getNextFrame()).image;
         final pixels = await image.toByteData(

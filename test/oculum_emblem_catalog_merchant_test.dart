@@ -178,6 +178,106 @@ void main() {
   );
 
   test(
+    'the three lunar symbol pieces are editable items that survive JSON',
+    () {
+      final pieces = oculumLunarSymbolPieces();
+      expect(pieces, hasLength(3));
+      expect(pieces.map((item) => item.nome).toSet(), hasLength(3));
+      final identities = <String>{};
+      for (final item in pieces) {
+        expect(oculumInventoryCatalogCategories(item), {'item'});
+        item.nome = 'Nome personalizzato';
+        final copy = InventoryItem.fromJson(item.toJson());
+        expect(copy.nome, item.nome);
+        expect(oculumIsLunarSymbolPiece(copy), isTrue);
+        final metadata = copy.craftData['lunarSymbol'] as Map;
+        identities.add(metadata['piece'] as String);
+        expect(metadata['location'], 'Vaitern');
+        expect(metadata['obserPerPiece'], 60);
+      }
+      expect(identities, {'left', 'center', 'right'});
+    },
+  );
+
+  test('Vaitern accepts complete 60 Obser pieces plus the exact balance', () {
+    expect(oculumVaiternPaymentRange(cost: 125, obser: 5, pieces: 3), (
+      minimum: 2,
+      maximum: 2,
+    ));
+    expect(oculumVaiternPaymentRange(cost: 125, obser: 4, pieces: 3), isNull);
+    expect(oculumVaiternPaymentRange(cost: 125, obser: 5, pieces: 1), isNull);
+    expect(oculumVaiternPaymentRange(cost: 59, obser: 59, pieces: 3), isNull);
+    expect(oculumVaiternPaymentRange(cost: 125, obser: 125, pieces: 3), (
+      minimum: 1,
+      maximum: 2,
+    ));
+  });
+
+  test('Lost Town adds 25 percent to the final ordinary purchase price', () {
+    expect(oculumLostTownMerchantPrice(0), 0);
+    expect(oculumLostTownMerchantPrice(2), 3);
+    expect(oculumLostTownMerchantPrice(100), 125);
+    expect(oculumLostTownMerchantPrice(125), 156);
+  });
+
+  testWidgets('Vaitern pays 125 with two pieces and only 5 Obser', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(1440, 900),
+    );
+    final probe = OculumPerformanceProbe(state);
+    final offer = <String, dynamic>{
+      'id': 'test_vaitern_vial',
+      'kind': 'oculum_vial',
+      'name': 'Fiala di Oculum',
+      'cost': 125,
+      'remaining': 1,
+    };
+    state.merchantActiveProfileId = 'merchant_vaitern';
+    state.merchantProfiles.add(<String, dynamic>{
+      'id': 'merchant_vaitern',
+      'name': 'Vaitern',
+      'pricePercent': 100,
+    });
+    state.merchantStock.add(offer);
+    state.inventario.clear();
+    final pieces = oculumLunarSymbolPieces();
+    state.inventario.addAll(pieces);
+    state.obserController.text = '4';
+    await probe.buyShopOffer(offer);
+    expect(state.inventario, hasLength(3));
+    expect(state.obserController.text, '4');
+
+    state.obserController.text = '5';
+    final action = probe.buyShopOffer(offer);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('Saldo in Obser: 5'), findsOneWidget);
+    final pay = find.text('Usa i pezzi');
+    await tester.tap(pay);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await action;
+    expect(state.obserController.text, '0');
+    final inventory = (state.inventario as List).cast<InventoryItem>();
+    expect(inventory.where(oculumIsLunarSymbolPiece), [pieces.last]);
+    expect(
+      inventory.where((item) => item.nome == 'Fiala di Oculum'),
+      hasLength(1),
+    );
+    await probe.buyShopOffer(offer);
+    expect(
+      inventory.where((item) => item.nome == 'Fiala di Oculum'),
+      hasLength(1),
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  test(
     'placement preserves element text and overrides automatic attack placement',
     () {
       final type = oculumAbilityTypeWithPlacement('Fuoco', 'difesa');

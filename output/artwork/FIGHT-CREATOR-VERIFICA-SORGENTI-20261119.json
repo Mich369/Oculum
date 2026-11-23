@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "atUtc": "2026-11-19T00:23:30.845101+00:00",
+  "status": "source_verified_packages_pending",
+  "tests": 9,
+  "testLog": "build/qa-20261118/FIGHT-CREATOR-TEST-FINAL.log",
+  "analysisLog": "build/qa-20261118/FIGHT-CREATOR-ANALYZE-CLEAN.log",
+  "masterOnly": true,
+  "coMasterExcluded": true,
+  "testedLayouts": [
+    "1920x1080",
+    "1080x1920",
+    "390x844"
+  ],
+  "guardiansDeduplicatedAndAssignedWithOwner": true,
+  "privateDraftNotPersistedOrBroadcast": true,
+  "existingEncountersPreserved": true,
+  "newEncountersUnpublishedAndUnstarted": true,
+  "areaSuggestionsTested": "affogato",
+  "newSignedApkProduced": false,
+  "nativeAndAuthenticatedOnlineValidation": "not_run_for_this_change",
+  "publicationHeldForChoices": true,
+  "woundedEnemyGeneration": "pending",
+  "customizationNotes": "output/artwork/FIGHT-CREATOR-COSA-PUOI-MODIFICARE.md"
+}

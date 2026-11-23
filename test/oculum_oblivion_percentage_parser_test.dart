@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
@@ -473,4 +474,70 @@ void main() {
     await pending;
     await closeFixture(tester, p);
   });
+  testWidgets(
+    'long creature effect stays editable and round-trips on a phone',
+    (tester) async {
+      final (_, p) = await cleanFight(tester);
+      tester.view.physicalSize = const Size(390, 844);
+      await tester.pump();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'The underlying sheet must fit before opening the editor.',
+      );
+      const target = 'plasma_percentuale_aggancio_principale';
+      final pending = p.editEffect(
+        OculumStructuredEffect(
+          type: 'planar',
+          target: target,
+          recipient: 'nemico',
+          valueExpression: '50',
+          criticalOnly: true,
+          requiresHpDamage: true,
+          minimumTargets: 1,
+          maximumTargets: 2,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(tester.takeException(), isNull);
+
+      final hpGate = find.widgetWithText(
+        SwitchListTile,
+        'Richiede Danni alla Vita',
+      );
+      expect(hpGate, findsOneWidget);
+      await tester.ensureVisible(hpGate);
+      expect(tester.widget<SwitchListTile>(hpGate).value, isTrue);
+      await tester.tap(hpGate);
+      await tester.pump();
+      expect(tester.widget<SwitchListTile>(hpGate).value, isFalse);
+      await tester.tap(hpGate);
+      await tester.pump();
+      expect(tester.widget<SwitchListTile>(hpGate).value, isTrue);
+      expect(tester.takeException(), isNull);
+
+      final save = find.text('Salva effetto').last;
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      final saved = await pending;
+      expect(saved, isNotNull);
+      expect(saved!.type, 'planar');
+      expect(saved.target, target);
+      expect(saved.recipient, 'bersaglio');
+      expect(saved.valueExpression, '50');
+      expect(saved.criticalOnly, isTrue);
+      expect(saved.requiresHpDamage, isTrue);
+      expect(saved.minimumTargets, 1);
+      expect(saved.maximumTargets, 2);
+      final roundTrip = OculumStructuredEffect.fromJson(
+        jsonDecode(jsonEncode(saved.toJson())),
+      );
+      expect(roundTrip.toJson(), saved.toJson());
+      expect(tester.takeException(), isNull);
+      await closeFixture(tester, p);
+    },
+  );
 }

@@ -244,10 +244,7 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
     final hpGain =
         max(1, (maximumHp / profile.milestoneHpDivisor).ceil()) * soglie;
     final effectiveHpGain = applyConditionHealingAmount(hpGain);
-    currentHpController.text = min(
-      maximumHp,
-      hpCorrenti() + effectiveHpGain,
-    ).toString();
+    writeHealedLife(min(maximumHp, hpCorrenti() + effectiveHpGain));
 
     final shieldMax = scudoOculumMax();
     final shieldGain = shieldMax <= 0
@@ -292,10 +289,7 @@ extension _OculumHomeDamageImpact on _OculumHomePageState {
     final requestedOculumGain = progress.recoveries;
     final hpPrima = hpCorrenti();
     final maximumHp = maxHp();
-    currentHpController.text = max(
-      hpPrima,
-      min(maximumHp, hpPrima + hpGain),
-    ).toString();
+    writeHealedLife(max(hpPrima, min(maximumHp, hpPrima + hpGain)));
     final oculumGain = addOculum(
       requestedOculumGain,
       scheduleSave: false,

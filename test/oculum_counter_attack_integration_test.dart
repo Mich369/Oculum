@@ -245,6 +245,162 @@ void main() {
         hpAfter,
         reason: 'Duplicate resolution must never repeat either packet',
       );
+
+      Future<Map<String, dynamic>> runReturnedHit(
+        String id, {
+        int natural = 19,
+        int counterTotal = 25,
+        bool regenerates = false,
+        bool meccanio = false,
+      }) async {
+        final sourceIndex = (state.schedePersonaggio as List).indexWhere(
+          (dynamic sheet) => sheet['sheetTag'] == sourceTag,
+        );
+        state.schedePersonaggio[sourceIndex]
+          ..['monsterBookSourceId'] = meccanio ? 'meccanio' : ''
+          // Meccanio stores its own maximum; an absent state defaults to20HP.
+          ..['meccanio'] = meccanio
+              ? <String, dynamic>{'maximumHp': 400}
+              : <String, dynamic>{}
+          ..['currentHp'] = '400'
+          ..['scudo'] = '100'
+          ..['scudoBonusConsumati'] = 0
+          ..['scudoCritico'] = '0'
+          ..['incomingDamagePresets'] = {
+            'fisico': 'Normale',
+            'fuoco': regenerates ? 'Rigenerazione Perfetta' : 'Normale',
+          }
+          ..['dannoSubitoPercentPerTipo'] = <String, String>{}
+          ..['dannoSubitoPercent'] = '';
+        final request = <String, dynamic>{
+          'id': id,
+          'sourceTag': sourceTag,
+          'sourceName': 'Attacker',
+          'targetTag': tag,
+          'targetName': 'Defender',
+          'scope': probe.permissionScope,
+          'encounterId': encounter,
+          'status': 'pending',
+          'attack': 20,
+          'natural': 10,
+          'damage': 40,
+          'choice': 'vc',
+          'element': meccanio ? 'fulmine' : 'fuoco',
+          'level': 0,
+          'grade': 0,
+          'difficulty': 'normale',
+          'effects': const <Map<String, dynamic>>[],
+          'counterAttackResponse': {
+            'id': 'counter:$id',
+            'sourceTag': tag,
+            'sourceName': 'Defender',
+            'targetTag': sourceTag,
+            'targetName': 'Attacker',
+            'scope': probe.permissionScope,
+            'encounterId': encounter,
+            'status': 'pending',
+            'attack': counterTotal,
+            'natural': natural,
+            'damage': 20,
+            'choice': 'vc',
+            'element': 'fisico',
+            'level': 6,
+            'grade': 2,
+            'difficulty': 'normale',
+            'effects': [
+              {'type': 'danno', 'bypassDefense': true, 'bypassShields': true},
+            ],
+          },
+        };
+        state.onlineCombatRequests[id] = request;
+        await tester.runAsync(
+          () => probe.resolveCombatDefense(
+            request,
+            'controattacco',
+            counterTotal,
+            natural: natural,
+          ),
+        );
+        return request;
+      }
+
+      final returned = await runReturnedHit('return-grade2');
+      expect(returned['counterDamageReceipt']['hpLost'], 20);
+      expect(returned['counterReflectionReceipt']['hpLost'], 0);
+      expect(
+        returned['counterReflectionReceipt']['shieldLost'],
+        greaterThan(0),
+      );
+      final packet =
+          state.onlineCombatRequests['counter-reflect:return-grade2'];
+      expect(packet['element'], 'fuoco');
+      expect(packet['effects'], isEmpty);
+      expect(packet['status'], 'resolved');
+      final savedSource = (state.schedePersonaggio as List).firstWhere(
+        (dynamic sheet) => sheet['sheetTag'] == sourceTag,
+      );
+      final sourceHp = savedSource['currentHp'];
+      final sourceShield = savedSource['scudo'];
+      await tester.runAsync(() => probe.resolveCounterReplyForTest(returned));
+      final replayedSource = (state.schedePersonaggio as List).firstWhere(
+        (dynamic sheet) => sheet['sheetTag'] == sourceTag,
+      );
+      expect(replayedSource['currentHp'], sourceHp);
+      expect(
+        replayedSource['scudo'],
+        sourceShield,
+        reason:
+            'Restoring the selected sheet must keep the returned-hit receipt',
+      );
+
+      final belowThreshold = await runReturnedHit(
+        'below-threshold',
+        natural: 18,
+      );
+      expect(belowThreshold['counterDamageReceipt']['hpLost'], 20);
+      expect(belowThreshold['counterReflectionReceipt'], isNull);
+      final tied = await runReturnedHit(
+        'tied-natural20',
+        natural: 20,
+        counterTotal: 20,
+      );
+      expect(tied['counterDamageReceipt']['hpLost'], 10);
+      expect(tied['counterReflectionReceipt'], isNull);
+
+      final regeneration = await runReturnedHit(
+        'regen-do-not-return',
+        regenerates: true,
+      );
+      expect(regeneration['counterDamageReceipt']['hpLost'], 20);
+      expect(regeneration['counterReflectionSkipped'], 'regeneration');
+      expect(regeneration['counterReflectionReceipt']['hpLost'], 0);
+      final regeneratingSource = (state.schedePersonaggio as List).firstWhere(
+        (dynamic sheet) => sheet['sheetTag'] == sourceTag,
+      );
+      expect(
+        regeneratingSource['currentHp'],
+        '380',
+        reason:
+            'Only the counterattack damages; the original fire hit never heals',
+      );
+      expect(regeneratingSource['scudo'], '100');
+      final robot = await runReturnedHit(
+        'meccanio-no-reflected-repair',
+        meccanio: true,
+      );
+      expect(robot['counterReflectionSkipped'], 'regeneration');
+      expect(robot['counterReflectionReceipt']['hpLost'], 0);
+      final robotSource = (state.schedePersonaggio as List).firstWhere(
+        (dynamic sheet) => sheet['sheetTag'] == sourceTag,
+      );
+      final robotCounterLoss = robot['counterDamageReceipt']['hpLost'] as int;
+      expect(robotCounterLoss, greaterThan(0));
+      expect(
+        int.parse('${robotSource['currentHp']}'),
+        400 - robotCounterLoss,
+        reason:
+            'Meccanio keeps its own protections, but receives no reflected repair',
+      );
       probe.cancelPendingSave();
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));

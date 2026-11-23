@@ -695,7 +695,15 @@ extension _OculumStormBandits on _OculumHomePageState {
         caricaStatoDaJson(schedePersonaggio[index]);
         ripristinaImpostazioniGlobali(global);
       }
-      if (!faunaReceipt('burst:${request['id']}')) return;
+      if (_isMutantRatBite(request)) {
+        if (request['status'] != 'pending' ||
+            outsideFight ||
+            pawnPendingDamage.isNotEmpty) {
+          return;
+        }
+      } else if (!faunaReceipt('burst:${request['id']}')) {
+        return;
+      }
       onlineCombatRequests['${request['id']}'] = request;
       await applyResolvedOnlineDefense(request, 'cm', 0);
       if (request['faunaPush'] == true) {

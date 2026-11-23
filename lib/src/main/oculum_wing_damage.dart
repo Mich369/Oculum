@@ -8,6 +8,8 @@ double oculumWingFlightMultiplier(int damaged) => damaged >= 2
 int oculumWingFallDamage(int roll, int reflexes) =>
     max(0, roll.clamp(1, 60) - max(0, reflexes)).toInt();
 
+const _wingFlightCooldownActivationKey = 'wingFlightCooldownActivationId';
+
 const oculumWingFlightTurnLimit = 3;
 const oculumWingFlightExpertReflexes = 50;
 
@@ -145,10 +147,14 @@ extension _OculumWingDamage on _OculumHomePageState {
     r'flight|fluttu|volo|ali di fata',
     caseSensitive: false,
   ).hasMatch(source);
-  int wingAdjustedFlightBonus(int value, String source) =>
-      value > 0 && wingFlightSource(source)
-      ? (value * oculumWingFlightMultiplier(damagedWingIds.length)).floor()
-      : value;
+  int wingAdjustedFlightBonus(int value, String source) {
+    if (value <= 0 || !wingFlightSource(source)) return value;
+    if (!wingFlightWingsVisibleAt(schedaCorrente) &&
+        _wingFlightHasWingsAt(schedaCorrente)) {
+      return 0;
+    }
+    return (value * oculumWingFlightMultiplier(damagedWingIds.length)).floor();
+  }
 
   MonsterBookEntry? _wingFlightMonsterAt(int index) {
     final id = '${schedePersonaggio[index]['monsterBookSourceId'] ?? ''}';
@@ -174,6 +180,10 @@ extension _OculumWingDamage on _OculumHomePageState {
 
   bool _wingFlightNaturalAt(int index) =>
       _wingFlightMonsterAt(index)?.hasNaturalFlight == true;
+
+  bool wingFlightLevitationAt(int index) =>
+      _wingFlightMonsterAt(index)?.encounterRules['levitationWithoutFall'] ==
+      true;
 
   Map<String, dynamic> _wingFlightStateAt(int index) {
     final runtime = schedePersonaggio[index]['planarRuntime'];
@@ -207,7 +217,9 @@ extension _OculumWingDamage on _OculumHomePageState {
       return;
     }
     final state = _wingFlightStateAt(index);
-    if (state['airborne'] == true) return;
+    if (state['airborne'] == true || !_wingFlightAvailableAt(index, state)) {
+      return;
+    }
     state['airborne'] = true;
     _bindWingFlightToEncounter(index, state);
     _storeWingFlightAt(index, state);
@@ -218,15 +230,17 @@ extension _OculumWingDamage on _OculumHomePageState {
     final runtime = schedePersonaggio[index]['planarRuntime'];
     final injuries = runtime is Map ? runtime['damagedWings'] : null;
     if (injuries is List && injuries.toSet().length >= 2) return false;
-    return _wingFlightNaturalAt(index) ||
-        _wingFlightPermanentAt(index) ||
-        state['manifested'] != false && _wingFlightHasWingsAt(index);
+    final innateFlight =
+        _wingFlightNaturalAt(index) || _wingFlightPermanentAt(index);
+    if (state['manifested'] == false) {
+      return innateFlight && !_wingFlightHasWingsAt(index);
+    }
+    return innateFlight || _wingFlightHasWingsAt(index);
   }
 
   bool wingFlightWingsVisibleAt(int index) =>
       index < 0 ||
       index >= schedePersonaggio.length ||
-      _wingFlightPermanentAt(index) ||
       _wingFlightStateAt(index)['manifested'] != false;
 
   bool wingFlightTargetHidden(String part) =>
@@ -304,17 +318,55 @@ extension _OculumWingDamage on _OculumHomePageState {
             controlsOnlineCombatSheet(sheetTagAt(schedaCorrente)));
   }
 
+  void bindTimedWingFlightCooldown(OculumAbilityCooldown? cooldown) {
+    if (cooldown == null ||
+        cooldown.amount <= 0 ||
+        oculumTurnUnit(cooldown.unit) != 'turni' ||
+        !_wingFlightHasWingsAt(schedaCorrente)) {
+      return;
+    }
+    // Pair a flight activation with its actual cooldown across sheet reloads.
+    final activationId =
+        '${DateTime.now().microsecondsSinceEpoch}-${Random.secure().nextInt(1 << 30)}';
+    cooldown.wingFlightActivationId = activationId;
+    planarState[_wingFlightCooldownActivationKey] = activationId;
+  }
+
+  void finishTimedWingFlight({bool voluntary = false}) {
+    final state = planarState;
+    final remaining = readIntValue(state.remove('flightTurns'));
+    final activationId = state.remove(_wingFlightCooldownActivationKey);
+    activeStructuredEffects.removeWhere(
+      (effect) => '${effect['effectId']}'.startsWith('planar_flight_'),
+    );
+    if (activationId is! String || activationId.isEmpty) return;
+    final candidates = namedStructuredCooldowns()
+        .map((entry) => entry.cooldown)
+        .where((cooldown) => cooldown.wingFlightActivationId == activationId)
+        .toSet();
+    if (candidates.length != 1) return;
+    final cooldown = candidates.single;
+    cooldown.wingFlightActivationId = '';
+    if (voluntary && remaining > 0 && oculumTurnUnit(cooldown.unit) == 'turni') {
+      cooldown.remaining = max(0, cooldown.remaining - remaining);
+    }
+  }
+
   void _changeWingManifestation(bool visible) {
     if (!_canControlWingFlight ||
         (!visible && currentLocalWingElevation() > 0) ||
-        _wingFlightPermanentAt(schedaCorrente) ||
         !_wingFlightHasWingsAt(schedaCorrente)) {
       return;
     }
     final state = _wingFlightStateAt(schedaCorrente);
     state['manifested'] = visible;
-    if (!visible) _landWingFlight(schedaCorrente, state);
-    updateOculumHomeUi(() => _storeWingFlightAt(schedaCorrente, state));
+    updateOculumHomeUi(() {
+      if (!visible) {
+        _landWingFlight(schedaCorrente, state);
+        finishTimedWingFlight(voluntary: true);
+      }
+      _storeWingFlightAt(schedaCorrente, state);
+    });
     _updateWingFlightProjection(schedaCorrente);
   }
 
@@ -358,7 +410,11 @@ extension _OculumWingDamage on _OculumHomePageState {
 
   void endWingFlightForEscapeFall() {
     final index = schedaCorrente;
-    if (index < 0 || index >= schedePersonaggio.length) return;
+    if (index < 0 ||
+        index >= schedePersonaggio.length ||
+        wingFlightLevitationAt(index)) {
+      return;
+    }
     final state = _wingFlightStateAt(index);
     if (state['airborne'] != true) return;
     _landWingFlight(index, state);
@@ -463,7 +519,7 @@ extension _OculumWingDamage on _OculumHomePageState {
           spacing: 8,
           runSpacing: 8,
           children: [
-            if (wings && !_wingFlightPermanentAt(index))
+            if (wings)
               OutlinedButton(
                 onPressed: _canControlWingFlight && (!visible || canLand)
                     ? () {
@@ -505,7 +561,8 @@ extension _OculumWingDamage on _OculumHomePageState {
     int? fallRoll,
   }) async {
     final part = '${request['targetBodyPart'] ?? ''}';
-    if (hpLost <= 0 ||
+    if (wingFlightLevitationAt(schedaCorrente) ||
+        hpLost <= 0 ||
         (!critical && !partDestroyed) ||
         (!partDestroyed && criticalShieldBlocksDebuffs(request)) ||
         wingFlightTargetHidden(part)) {
@@ -535,7 +592,7 @@ extension _OculumWingDamage on _OculumHomePageState {
       final bonus = reflex == null ? 0 : hiddenEyeTotal(reflex);
       final die = fallRoll ?? 1 + Random.secure().nextInt(60);
       final damage = oculumWingFallDamage(die, bonus);
-      planarState['flightTurns'] = 0;
+      finishTimedWingFlight();
       aggiungiLog(
         '[CADUTA] 1d60 ($die) − Riflessi $bonus = $damage Danni, poi normali protezioni.',
       );

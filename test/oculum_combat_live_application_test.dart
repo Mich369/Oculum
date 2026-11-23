@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,13 +10,30 @@ import 'package:oculum/services/oculum_realtime_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'oculum_corallwhirl_tides_test.dart'
+    show verifyCorallwhirlRejectsReplacement;
+
 const _runLive = bool.fromEnvironment('OculumLiveRealtimeTest');
+const _focusGrip = bool.fromEnvironment('OculumLiveGripTest');
 
 class _LiveNetwork extends HttpOverrides {}
 
+class _FixedCombatDice implements Random {
+  const _FixedCombatDice({required this.high});
+  final bool high;
+  @override
+  bool nextBool() => high;
+  @override
+  double nextDouble() => high ? 0.99 : 0;
+  @override
+  int nextInt(int max) => high ? max - 1 : 0;
+}
+
 void main() {
   testWidgets(
-    'four authenticated clients share combat and confirmed idempotent party rest',
+    _focusGrip
+        ? 'Octocruor targets an unopened sheet in a room with four authenticated clients'
+        : 'four authenticated clients share combat and confirmed idempotent party rest',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 1000);
       tester.view.devicePixelRatio = 1;
@@ -136,6 +154,7 @@ void main() {
       );
       expect(probe.currentHp(), 600);
       final playerTag = probe.ownerTag();
+      var alternateSheetTag = '';
       final masterSheet =
           jsonDecode(jsonEncode(probe.snapshot())) as Map<String, dynamic>;
       masterSheet.addAll(<String, dynamic>{
@@ -220,6 +239,7 @@ void main() {
       final attackerReceipts = <Map<String, dynamic>>[];
       Map<String, dynamic>? helperInitiative;
       final masterRestRequests = <Map<String, dynamic>>[];
+      final piovraReplies = <String>[];
       final playerRestSnapshots = <Map<String, dynamic>>[];
       final attackerRestSnapshots = <Map<String, dynamic>>[];
       final helperRestSnapshots = <Map<String, dynamic>>[];
@@ -285,6 +305,12 @@ void main() {
         onStatusChanged: (s) => debugPrint('Master: $s'),
         onEvent: (event, payload) {
           if (event == 'combat_defense') receipts.add(payload);
+          if (event == 'combat_scout' && payload['piovraGripReply'] is String) {
+            piovraReplies.add(
+              '${payload['piovraGripReply']}:${payload['hpLost'] ?? payload['roll']}',
+            );
+            masterProbe.receiveCombat(event, payload);
+          }
           if (event == 'initiative_control') {
             masterProbe.receiveEncounterControl(payload);
           }
@@ -302,8 +328,11 @@ void main() {
         playerName: 'Synthetic Player',
         presenceDataProvider: () => {
           'role': 'player',
-          'activeSheetTag': playerTag,
-          'localSheetTags': [playerTag],
+          'activeSheetTag': probe.ownerTag(),
+          'localSheetTags': [
+            playerTag,
+            if (alternateSheetTag.isNotEmpty) alternateSheetTag,
+          ],
           'campaignId': state.activeCampaignId,
         },
         onPresenceChanged: (users) => state.realtimeUsers = users,
@@ -401,6 +430,7 @@ void main() {
               (dynamic p) => p['activeSheetTag'] == masterTag,
             ),
           );
+          if (_focusGrip) return;
           final sharedFight = <String, dynamic>{
             'campaignId': state.activeCampaignId,
             'encounterId': 'live-fight',
@@ -781,13 +811,224 @@ void main() {
             'LIVE REST VERIFIED: pending without recovery; Master confirmed90min; '
             'four authenticated clients received grant; reload/replay gave no second recovery.',
           );
-          await player.dispose();
-          await helper.dispose();
-          await attacker.dispose();
-          await master.dispose();
-          await closeClients();
         }, _LiveNetwork()),
       );
+
+      masterState.masterInitiativeGroups.clear();
+      masterState.masterInitiativeTokens.clear();
+      masterState.selectedMasterInitiativeGroupId = 'encounter_1';
+      masterState.masterInitiativeRound = 5;
+      masterState.masterInitiativeActiveIndex = 0;
+      masterProbe.ensureEncounters();
+      final holder = <String, dynamic>{
+        'id': masterProbe.ownerTag(),
+        'sheetTag': masterProbe.ownerTag(),
+        'name': 'Octocruor',
+        'side': 'enemy',
+        'status': 'active',
+        'fightInstanceId': 'live-octocruor-instance',
+      };
+      final prey = <String, dynamic>{
+        'id': playerTag,
+        'sheetTag': playerTag,
+        'name': 'Preda remota',
+        'side': 'party',
+        'status': 'ready',
+        'fightInstanceId': 'live-prey-instance',
+      };
+      masterState.masterInitiativeTokens.addAll([holder, prey]);
+      masterProbe.recordCurrentEncounter();
+      masterState.masterInitiativeGroups.first['fightStarted'] = true;
+      state.activeConditions.clear();
+      final preySheet = probe.snapshot()
+        ..['resilienza'] = '10'
+        ..['currentResilienza'] = '10'
+        ..['currentHp'] = '40';
+      state.schedePersonaggio[state.schedaCorrente] = preySheet;
+      probe.load(preySheet);
+      state.incomingDamagePresets.clear();
+      state.dannoSubitoPercentPerTipo.clear();
+      state.dannoSubitoPercentController.clear();
+      state.schivataOculumRiduzionePronta = 0;
+      state.hpTempController.text = '0';
+      final octocruor = masterProbe.snapshot()
+        ..['monsterBookSourceId'] = 'piovra_succhiasangue'
+        ..['currentHp'] = '100'
+        ..['resilienza'] = '100'
+        ..['currentResilienza'] = '100';
+      masterState.schedePersonaggio[masterState.schedaCorrente] = octocruor;
+      masterProbe.load(octocruor);
+      masterState.modalitaMaster = true;
+      masterState.isMasterHost = true;
+      masterProbe.setSheetRollRandom(
+        natural: const _FixedCombatDice(high: true),
+      );
+      probe.setSheetRollRandom(natural: const _FixedCombatDice(high: false));
+      final beforeGrip = probe.currentHp();
+      final otherSheet = probe.snapshot()
+        ..['id'] = ''
+        ..['sheetTag'] = ''
+        ..['nome'] = 'Altra scheda'
+        ..['currentHp'] = '55';
+      probe.saveSheet();
+      final alternateIndex = (state.schedePersonaggio as List).length;
+      state.schedePersonaggio.add(otherSheet);
+      state.schedaCorrente = alternateIndex;
+      probe.load(otherSheet);
+      final otherTag = probe.ownerTag();
+      alternateSheetTag = otherTag;
+      final otherHp = probe.currentHp();
+      expect(otherTag, isNot(playerTag));
+      int preyHp() =>
+          int.parse('${state.schedePersonaggio.first['currentHp']}');
+      await tester.runAsync(() async {
+        await player.refreshPresence();
+        await waitFor(
+          () => (masterState.realtimeUsers as List).any(
+            (dynamic user) =>
+                oculumSameSheetIdentity(user['activeSheetTag'], otherTag) &&
+                (user['localSheetTags'] as List? ?? []).any(
+                  (tag) => oculumSameSheetIdentity(tag, playerTag),
+                ),
+          ),
+        );
+        masterProbe.publishTurnOrder();
+        await waitFor(
+          () =>
+              (state.realtimeEncounterSnapshots as List).any(
+                (dynamic snapshot) =>
+                    snapshot['encounterId'] == 'encounter_1' &&
+                    snapshot['fightStarted'] == true,
+              ) &&
+              helperInitiative?['snapshot']?['encounterId'] == 'encounter_1',
+        );
+      });
+
+      final grip = masterProbe.useConfiguredForTest(
+        CharacterSkillForm(
+          nome: 'Presa succhiasangue',
+          livello: '0',
+          effettiStrutturati: [
+            OculumStructuredEffect(
+              type: 'planar',
+              target: oculumPiovraGripEffect,
+              valueExpression: '8',
+              bypassDefense: true,
+              bypassShields: true,
+              elementType: 'acqua',
+              recipient: 'nemico',
+            ),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(
+        find.text('Preda remota'),
+        findsWidgets,
+        reason:
+            'Master role=${master.authenticatedRole}; owner=${masterProbe.ownerTag()}; '
+            'log=${(masterState.logEventi as List).take(12).toList()}',
+      );
+
+      await tester.tap(find.text('Preda remota').last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(await grip, isTrue);
+      expect(holder['actionUsed'], isTrue);
+      await tester.runAsync(() async {
+        masterProbe.publishTurnOrder();
+        try {
+          await waitFor(
+            () =>
+                holder['piovraGrip'] is Map &&
+                holder['piovraGrip']['awaitingReflex'] != true &&
+                preyHp() < beforeGrip &&
+                masterProbe.currentHp() > 100,
+          );
+        } on TimeoutException {
+          final remote = state.realtimeVisibleInitiativeSnapshot as Map;
+          debugPrint(
+            'PIOVRA LIVE: replies=$piovraReplies, holder=$holder, '
+            'target=$prey, remote scope=${probe.permissionScope}, '
+            'owner=${probe.ownerTag()}, '
+            'remote tokens=${(remote['tokens'] as List? ?? const []).map((dynamic token) => {'id': token['id'], 'status': token['status'], 'grip': token['piovraGrip'], 'tick': token['piovraGripTick'], 'fight': token['fightInstanceId']}).toList()}, '
+            'master hp=${masterProbe.currentHp()}, prey hp=${probe.currentHp()} '
+            'prey log=${(state.logEventi as List).take(20).toList()} '
+            'receipts=${(probe.snapshot()['planarRuntime'] as Map?)?['piovraRemoteReceipts']}',
+          );
+          rethrow;
+        }
+        expect(preyHp(), beforeGrip - 8);
+        expect(masterProbe.currentHp(), 104);
+        expect(
+          piovraReplies.any((reply) => reply.startsWith('reflex:')),
+          isTrue,
+        );
+        expect(piovraReplies, contains('tick:8'));
+        expect(probe.ownerTag(), otherTag);
+        expect(probe.currentHp(), otherHp);
+        expect(
+          (state.schedePersonaggio.first['conditions'] as List)
+              .whereType<Map>()
+              .any(
+                (condition) =>
+                    condition['conditionType'] == 'afferrato' &&
+                    (condition['metadata'] as Map?)?['piovraGripCondition'] ==
+                        true,
+              ),
+          isTrue,
+        );
+        expect(
+          (state.activeConditions as List).any(
+            (dynamic condition) => condition.conditionType == 'afferrato',
+          ),
+          isFalse,
+        );
+        masterProbe.publishTurnOrder();
+        await Future<void>.delayed(const Duration(seconds: 2));
+        expect(preyHp(), beforeGrip - 8);
+        expect(masterProbe.currentHp(), 104);
+        debugPrint(
+          'PIOVRA LIVE VERIFIED: Riflessi, -8 Vita alla scheda in secondo '
+          'piano, +4 Vita a Octocruor, scheda visibile invariata.',
+        );
+      });
+      if (!_focusGrip) {
+        state.schedaCorrente = 0;
+        probe.load(
+          Map<String, dynamic>.from(state.schedePersonaggio.first as Map),
+        );
+        masterState.masterInitiativeRound = 6;
+        masterState.masterInitiativeActiveIndex = 0;
+        masterState.currentHpController.text = '200';
+        holder
+          ..remove('piovraGrip')
+          ..['status'] = 'active';
+        prey
+          ..remove('piovraGripTick')
+          ..['status'] = 'ready';
+        await tester.runAsync(() async {
+          masterProbe.publishTurnOrder();
+          await waitFor(
+            () => (state.realtimeEncounterSnapshots as List).any(
+              (dynamic encounter) => encounter['round'] == 6,
+            ),
+          );
+        });
+        await verifyCorallwhirlRejectsReplacement(
+          tester,
+          masterState,
+          masterProbe,
+        );
+      }
+      await tester.runAsync(() async {
+        await player.dispose();
+        await helper.dispose();
+        await attacker.dispose();
+        await master.dispose();
+        await closeClients();
+      });
       state.realtimeService = null;
       masterState.realtimeService = null;
       state.realtimeAutoReconnectEnabled = false;

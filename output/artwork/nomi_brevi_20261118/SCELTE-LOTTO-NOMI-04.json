@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "votes": [
+    {
+      "id": "habitat_nuvole_rocciose_medusa_dei_fulmini_lenti",
+      "previousName": "Lapysurge",
+      "name": {
+        "kind": "custom",
+        "value": "Lapysrieth"
+      },
+      "pronunciationIt": "la-pis-rièt",
+      "roots": "lapis + finale fantasy",
+      "meaningIt": "Creatura di pietra",
+      "approvedArt": {
+        "path": "C:/Users/michy/.codex/worktrees/oculum-session-radar/oculum/assets/oculum/home_art_authored/theme_habitat_nuvole_rocciose_medusa_dei_fulmini_lenti_canon_20261117.webp",
+        "url": "file:///C:/Users/michy/.codex/worktrees/oculum-session-radar/oculum/assets/oculum/home_art_authored/theme_habitat_nuvole_rocciose_medusa_dei_fulmini_lenti_canon_20261117.webp",
+        "sha256": "f96e9515722b5636ce60793639775d848bcd960bb4319a336224b5dda0657988",
+        "slot": null,
+        "width": 1586,
+        "height": 992,
+        "decoded": true,
+        "archive": false
+      },
+      "questionCallId": "call_b668388ada8149d882f45dbb5a0b8547",
+      "questionIndex": 0,
+      "chosenAtUtc": "2026-11-18T18:05:39.790245+00:00",
+      "runtimeSourceApplied": true,
+      "newPackageBuilt": false,
+      "notes": [
+        "Correzione successiva esplicita: «Anzi Lapysrieth»; eccezione autoriale al limite delle proposte4–9 lettere."
+      ]
+    },
+    {
+      "id": "ragno_putrido_variante_corazzata",
+      "previousName": "Pustrysilk",
+      "name": {
+        "kind": "alternate",
+        "value": "Pustryth"
+      },
+      "pronunciationIt": "pùs-trit",
+      "roots": "pus/pustola + finale fantasy",
+      "meaningIt": "Creatura putrida",
+      "approvedArt": {
+        "path": "C:/Users/michy/.codex/worktrees/oculum-session-radar/oculum/assets/oculum/home_art_authored/theme_ragno_putrido_variante_corazzata_canon_20261117.webp",
+        "url": "file:///C:/Users/michy/.codex/worktrees/oculum-session-radar/oculum/assets/oculum/home_art_authored/theme_ragno_putrido_variante_corazzata_canon_20261117.webp",
+        "sha256": "e3cd7c39fde9cca3dbf358627924154e8ef7b402710d001025cebaecae16693a",
+        "slot": null,
+        "width": 1586,
+        "height": 992,
+        "decoded": true,
+        "archive": false
+      },
+      "questionCallId": "call_b668388ada8149d882f45dbb5a0b8547",
+      "questionIndex": 1,
+      "chosenAtUtc": "2026-11-18T18:05:39.790245+00:00",
+      "runtimeSourceApplied": true,
+      "newPackageBuilt": false,
+      "notes": []
+    },
+    {
+      "id": "base_foresta_05",
+      "previousName": "Florycoil",
+      "name": {
+        "kind": "alternate",
+        "value": "Florel"
+      },
+      "pronunciationIt": "flò-rel",
+      "roots": "flos, floris + finale fantasy",
+      "meaningIt": "Creatura dei fiori",
+      "approvedArt": {
+        "path": "C:/Users/michy/.codex/worktrees/oculum-session-radar/oculum/assets/oculum/home_art_authored/theme_base_foresta_05_canon_20261117.webp",
+        "url": "file:///C:/Users/michy/.codex/worktrees/oculum-session-radar/oculum/assets/oculum/home_art_authored/theme_base_foresta_05_canon_20261117.webp",
+        "sha256": "8f62dc98e3d8cff86734e597e31d94a44bd1a27dc625cbc33c5715dfd0b2824e",
+        "slot": null,
+        "width": 1586,
+        "height": 992,
+        "decoded": true,
+        "archive": false
+      },
+      "questionCallId": "call_b668388ada8149d882f45dbb5a0b8547",
+      "questionIndex": 2,
+      "chosenAtUtc": "2026-11-18T18:05:39.790245+00:00",
+      "runtimeSourceApplied": true,
+      "newPackageBuilt": false,
+      "notes": []
+    }
+  ],
+  "checksPending": false,
+  "verification": {
+    "localTestsPassed": 25,
+    "testLog": "build\\qa-20261118\\COUNTER-NAMES52-TEST.log",
+    "analysisLog": "build\\qa-20261118\\COUNTER-NAMES52-FINAL-ANALYZE.log",
+    "analysis": "No issues found",
+    "nativeNewPackage": "pending",
+    "onlineAuthenticated": "not_run",
+    "publicPublication": false
+  }
+}

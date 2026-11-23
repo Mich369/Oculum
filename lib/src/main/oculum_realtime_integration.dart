@@ -43,6 +43,8 @@ List<Map<String, dynamic>> oculumRealtimeMerchantRosterProjection(
       'id': id,
       'name': '${profile['name'] ?? 'Mercante di fiducia'}',
       'shopType': '${profile['shopType'] ?? 'tutti'}',
+      if (const {'outside', 'city', 'solar'}.contains(profile['location']))
+        'location': profile['location'],
       'pricePercent': readIntValue(
         profile['pricePercent'],
         fallback: 100,
@@ -132,6 +134,7 @@ const Set<String> oculumRealtimeMetadataKeys = <String>{
   'realtimeVisibleInitiativeSnapshot',
   'encounterPlayerIdentities',
   'diaryEntityRoles',
+  'eyeMemoryDeaths',
   'diaryKnowledgeSync',
   ...oculumRealtimePrivateMerchantFields,
 };
@@ -415,6 +418,7 @@ String oculumRealtimeStaffPresenceSignature(
             user['masterClaimId'] ??
             user['activeSheetTag'] ??
             '',
+        user['masterControlSession'],
       ]),
     );
   }
@@ -677,6 +681,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
     syncCurrentSheetEncounterTurn();
     scheduleWingEscapeFallDrain();
+    scheduleOculiathDamageDrain();
+    syncRemotePiovraGrip();
   }
 
   void shareOwnedEncounterSheetsToStaff() {
@@ -775,7 +781,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     }
     syncStorySessionNotesRealtime();
     syncRealtimeRecipes();
-    if (modalitaMaster) {
+    if (modalitaMaster && !realtimeUsesSameAccountMaster) {
       scheduleVttRealtimePublish(includeAsset: true);
     } else {
       requestRealtimeVttScene();
@@ -889,6 +895,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     service = OculumRealtimeService(
       roomId: room,
       playerName: realtimeDisplayName(),
+      displayNameProvider: realtimeDisplayName,
       roomPassword: realtimeRoomPasswordController.text,
       onIdleWarning: (visible) {
         if (!mounted || realtimeService != service) return;
@@ -958,6 +965,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         syncPawnPresence();
         startPermissionRetry();
         unawaited(replayOnlineCombatRequests());
+        unawaited(sendPersonalMarketState());
+        unawaited(replayPersonalMarketRequests());
         unawaited(syncSheetAssignments());
         unawaited(flushProgressionLogs());
         unawaited(flushWorldRestRequests());
@@ -978,6 +987,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
         'campaignId': activeCampaignId,
         'campaignName': activeCampaignName(),
         'masterClaimId': realtimeMasterClaimId,
+        'masterWriterCapable': !realtimeUsesSameAccountMaster,
+        ...realtimeMasterCommandRoute,
         'platform': oculumClientPlatformLabel(),
         'protocolVersion': 4,
         'opposedRollReview': true,
@@ -991,6 +1002,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       onPresenceChanged: (users) {
         if (!mounted || realtimeService != service) return;
         final blockMaster = realtimeShouldYieldMaster(users);
+        final previousMasterSession = realtimeSameAccountMasterSession;
         final presenceSignature = oculumRealtimePresenceTagSignature(users);
         final friendPresenceChanged =
             presenceSignature != realtimeFriendPresenceSignature;
@@ -1003,6 +1015,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           realtimeConnected = service.isConnected;
           realtimeFirstPresenceHandled = true;
           realtimeMasterBlockedByPresence = blockMaster;
+          reconcileRealtimeMasterControl(users);
           if (blockMaster) {
             realtimeStatus = t(
               'Master gia presente nella stanza: entri come giocatore.',
@@ -1021,13 +1034,16 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             }
           });
         }
-        if (blockMaster) {
+        if (blockMaster ||
+            previousMasterSession != realtimeSameAccountMasterSession) {
           unawaited(service.refreshPresence());
         }
         if (service.isConnected &&
             (friendPresenceChanged || staffPresenceChanged)) {
           unawaited(sendRealtimeMerchantRosterSnapshot(force: true));
           unawaited(sendPartyChestState());
+          unawaited(sendPersonalMarketState());
+          unawaited(replayPersonalMarketRequests());
         }
         if (service.isConnected &&
             !realtimeIsMasterRole &&
@@ -1070,8 +1086,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           if (realtimeIsMasterRole) {
             unawaited(sendMonsterBookPartyDiscoverySnapshot());
             sendRealtimeMasterVisiblePartyTokens();
-            sendRealtimeInitiativeSnapshotIfPublished();
           }
+        }
+        if (service.isConnected &&
+            realtimeIsMasterRole &&
+            (friendPresenceChanged || staffPresenceChanged)) {
+          sendRealtimeInitiativeSnapshotIfPublished();
         }
       },
       onStatusChanged: (status) {
@@ -1097,6 +1117,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeConnected = false;
       realtimeFirstPresenceHandled = false;
       realtimeMasterBlockedByPresence = false;
+      realtimeSameAccountMasterSession = null;
       realtimeUsers = [];
       realtimeSharedSheets.clear();
       realtimeInitiativeSession = '';
@@ -1143,6 +1164,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeConnected = false;
       realtimeFirstPresenceHandled = false;
       realtimeMasterBlockedByPresence = false;
+      realtimeSameAccountMasterSession = null;
       realtimeMasterClaimId = '';
       realtimeUsers = [];
       realtimeSharedSheets.clear();
@@ -1923,9 +1945,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   void sendRealtimePing() {
     final service = realtimeService;
-    if (service?.isConnected != true) return;
+    if (service == null || !service.isConnected) return;
 
-    unawaited(service!.sendPing());
+    unawaited(service.refreshPresence());
+    unawaited(service.sendPing());
     setState(() {
       realtimeEvents.insert(0, t('Ping inviato.', 'Ping sent.'));
     });
@@ -1962,16 +1985,93 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
 
   bool get realtimeWantsMasterRole => modalitaMaster || isMasterHost;
 
+  bool get realtimeAuthenticatedMaster =>
+      realtimeService?.isConnected == true &&
+      realtimeService?.authenticatedRole == 'master';
+
+  bool get realtimeUsesSameAccountMaster =>
+      realtimeAuthenticatedMaster && realtimeSameAccountMasterSession != null;
+
+  Map<String, dynamic>? get realtimeSameAccountMasterHost =>
+      realtimeUsesSameAccountMaster
+      ? realtimeUsers
+            .where(
+              (user) =>
+                  user['sessionId'] == realtimeSameAccountMasterSession &&
+                  user['role'] == 'master' &&
+                  user['masterWriterCapable'] != false &&
+                  user['userId'] == realtimeService?.authenticatedUserId,
+            )
+            .firstOrNull
+      : null;
+
+  bool get realtimeCanControlSameAccountFight =>
+      !realtimeUsesSameAccountMaster ||
+      (realtimeSameAccountMasterHost != null &&
+          realtimeInitiativeSession == realtimeSameAccountMasterSession);
+
+  Map<String, dynamic> get realtimeMasterCommandRoute => {
+    if (realtimeUsesSameAccountMaster)
+      'masterControlSession': realtimeSameAccountMasterSession,
+  };
+
+  bool validRealtimeStaffFightControl(Map<String, dynamic> payload) {
+    if (!realtimeIsMasterRole || !validPermissionSender(payload, staff: true)) {
+      return false;
+    }
+    final target = payload['masterControlSession'];
+    if (target == null) return true;
+    final service = realtimeService;
+    final uid = service?.authenticatedUserId;
+    return uid != null &&
+        uid.isNotEmpty &&
+        payload['authenticatedRole'] == 'master' &&
+        payload['authenticatedUserId'] == uid &&
+        target == service!.roomSessionId &&
+        payload['sessionId'] != target;
+  }
+
+  // The account keeps its authenticated Master role on both devices. The
+  // second device issues commands against the first device's encounter state.
+  void reconcileRealtimeMasterControl(List<Map<String, dynamic>> users) {
+    final service = realtimeService;
+    final uid = service?.authenticatedUserId;
+    if (!realtimeAuthenticatedMaster || uid == null || uid.isEmpty) return;
+    final primary = realtimeSameAccountMasterSession;
+    final candidates = users.where((user) {
+      final session = '${user['sessionId'] ?? ''}';
+      final claim = '${user['masterClaimId'] ?? ''}';
+      return user['role'] == 'master' &&
+          user['userId'] == uid &&
+          user['masterWriterCapable'] != false &&
+          session.isNotEmpty &&
+          session != service!.roomSessionId &&
+          claim.isNotEmpty &&
+          (primary != null || claim.compareTo(realtimeMasterClaimId) < 0);
+    }).toList();
+    if (primary != null &&
+        candidates.any((user) => user['sessionId'] == primary)) {
+      return;
+    }
+    candidates.sort(
+      (a, b) => '${a['masterClaimId']}'.compareTo('${b['masterClaimId']}'),
+    );
+    if (candidates.isNotEmpty) {
+      realtimeSameAccountMasterSession = '${candidates.first['sessionId']}';
+    }
+  }
+
   bool get realtimeIsMasterRole =>
       realtimeService?.isConnected == true &&
           realtimeService?.authenticatedRole != null
-      ? realtimeService!.authenticatedRole == 'master'
+      ? realtimeAuthenticatedMaster && !realtimeUsesSameAccountMaster
       : realtimeWantsMasterRole && !realtimeMasterBlockedByPresence;
 
   bool get realtimeIsCoMasterRole =>
       realtimeService?.isConnected == true &&
           realtimeService?.authenticatedRole != null
-      ? realtimeService!.authenticatedRole == 'coMaster'
+      ? realtimeService!.authenticatedRole == 'coMaster' ||
+            realtimeUsesSameAccountMaster
       : !realtimeIsMasterRole && sonoCoMaster;
 
   bool get realtimeCanBrowseOtherSheets =>
@@ -1982,7 +2082,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   String realtimeLocalRole() {
-    if (realtimeIsMasterRole) return 'master';
+    if (realtimeAuthenticatedMaster || realtimeIsMasterRole) return 'master';
     if (realtimeIsCoMasterRole) return 'coMaster';
     return 'player';
   }
@@ -2297,6 +2397,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'connectedMasterIp',
       'oculumFriends',
       'campaigns',
+      'monsterBookCustomEntries',
+      'monsterBookRemovedEntryIds',
       'amiciOculum',
       'oculumFriendRequests',
       'oculumSentFriendRequests',
@@ -2309,7 +2411,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'realtimeOwnerEditFieldSequences',
       'claimedEncounterRewardIds',
       'diaryEntityRoles',
+      'eyeMemoryDeaths',
       'diaryKnowledgeSync',
+      _oculumMasterOnlyDraft,
     ]) {
       safe.remove(key);
     }
@@ -2727,8 +2831,16 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     updated['inMasterParty'] = readBoolValue(existing['inMasterParty']);
 
     schedePersonaggio[localIndex] = updated;
+    final projectedEyeStats =
+        appliedKeys.any(_fallenEyeStatFields.containsKey) &&
+        syncFallenEyeFromSheet(
+          updated,
+          previous: existing,
+          updateControllers: false,
+        );
     if (schedaCorrente == localIndex) {
-      if (!applyRealtimePatchToVisibleControllers(updated, appliedKeys)) {
+      if (projectedEyeStats ||
+          !applyRealtimePatchToVisibleControllers(updated, appliedKeys)) {
         caricaStatoDaJson(updated);
       }
     }
@@ -2848,7 +2960,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   bool realtimeShouldYieldMaster(List<Map<String, dynamic>> users) {
-    if (!realtimeWantsMasterRole) return false;
+    if (!realtimeWantsMasterRole || realtimeAuthenticatedMaster) return false;
     if (realtimeMasterClaimId.isEmpty) return false;
 
     final otherClaims = users
@@ -2866,7 +2978,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     normalizeMasterInitiativeTokens();
     captureActiveMasterInitiativeGroup();
     final published = masterInitiativeGroups
-        .where((group) => readBoolValue(group['published']))
+        .where(
+          (group) =>
+              readBoolValue(group['published']) && !isMasterOnlyDraft(group),
+        )
         .map((group) => publicEncounterSnapshot(group))
         .toList();
     final root = published.firstWhere(
@@ -2887,7 +3002,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'encounters': published,
       'completedEncounterRewards': [
         for (final g in masterInitiativeGroups)
-          ...(g['rewards'] as List? ?? []),
+          if (!isMasterOnlyDraft(g)) ...(g['rewards'] as List? ?? []),
       ],
       'sentAt': DateTime.now().toIso8601String(),
     };
@@ -2938,6 +3053,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       'combatEnded': group['combatEnded'] == true,
       if (group.containsKey('fightStarted'))
         'fightStarted': group['fightStarted'] == true,
+      if (group['trainingMode'] == true) 'trainingMode': true,
       'mergedEncounterIds': group['mergedEncounterIds'] ?? const <String>[],
       if (group['fightTeams'] is List) 'fightTeams': group['fightTeams'],
       if (group['chainedFate'] is Map) 'chainedFate': group['chainedFate'],
@@ -2963,9 +3079,28 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             'side': '${tokens[i]['side'] ?? 'ally'}',
             ...fightTeamTokenFields(group, tokens[i]),
             ...fightTokenAffiliations(tokens[i]),
+            if (fightProfileForToken(tokens[i]) case final String profile)
+              'campaignDifficulty': profile,
             if (readIntValue(tokens[i]['colorArgb']) != 0)
               'colorArgb': readIntValue(tokens[i]['colorArgb']),
             'status': '${tokens[i]['status'] ?? 'ready'}',
+            if (_isGoblinRoyalGuard(tokens[i])) ...{
+              'isSummon': true,
+              'summonKind': oculumGoblinGuardianKind,
+              'summonerTag': '${tokens[i]['summonerTag'] ?? ''}',
+            },
+            if (_isMutantRatPup(tokens[i])) ...{
+              'isSummon': true,
+              'summonKind': oculumMutantRatPup,
+              'summonInstanceId': '${tokens[i]['summonInstanceId'] ?? ''}',
+              if (tokens[i]['mutantRatBiteTarget'] != null)
+                'mutantRatBiteTarget': tokens[i]['mutantRatBiteTarget'],
+            },
+            if (publicPiovraGrip(tokens[i])
+                case final Map<String, dynamic> grip)
+              _piovraGripKey: grip,
+            if (tokens[i][_piovraTickKey] is Map)
+              _piovraTickKey: tokens[i][_piovraTickKey],
             'corruptedByTag': corruptionOwnerForToken(tokens[i]),
             'downed': masterInitiativeTokenIsDowned(tokens[i]),
             if (tokens[i]['friendlyFireDowned'] == true)
@@ -2999,6 +3134,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               'bottledCloudInterruptedGroups',
               'bottledCloudFastReactionTurn',
               'opposingChaosStats',
+              _necthrallBindingKey,
+              _cynervailPhaseKey,
             ])
               if (tokens[i].containsKey(key)) key: tokens[i][key],
             for (final key in [
@@ -3027,7 +3164,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               readIntValue(tokens[i]['reactionMax'], fallback: 1),
             ),
             'reactionFastMax': max(
-              tokens[i]['senkaClone'] == true ? 0 : 1,
+              tokens[i]['senkaClone'] == true || _isGoblinRoyalGuard(tokens[i])
+                  ? 0
+                  : 1,
               readIntValue(tokens[i]['reactionFastMax'], fallback: 1),
             ),
             'extraFastReactionCurrent': readIntValue(
@@ -3108,12 +3247,21 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                 ? '${tokens[i]['imageBase64'] ?? ''}'
                 : '',
             ...referencePublicCopyMask(tokens[i]),
+            if (tokens[i]['forgottenByBalena'] == true ||
+                campaignHasForgottenCharacter(
+                  publicInitiativeSourceTag(tokens[i]),
+                )) ...{
+              'forgottenByBalena': true,
+              'name': oculumForgottenCharacterName,
+              'imageBase64': '',
+            },
           },
       ],
     };
   }
 
   String realtimeEncounterPortrait(Map<String, dynamic> token) {
+    if (token['forgottenByBalena'] == true) return '';
     final embedded = '${token['imageBase64'] ?? ''}';
     if (embedded.isNotEmpty) return embedded;
     final tag = normalizeOculumFriendTag(
@@ -3143,6 +3291,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final senderRole = '${payload['senderRole'] ?? ''}';
     if (realtimeIsMasterRole || senderRole != 'master') return;
     final session = '${payload['sessionId'] ?? ''}';
+    if (realtimeUsesSameAccountMaster &&
+        (payload['authenticatedRole'] != 'master' ||
+            payload['authenticatedUserId'] !=
+                realtimeService!.authenticatedUserId ||
+            session != realtimeSameAccountMasterSession)) {
+      return;
+    }
     final revision = readIntValue(payload['revision']);
     final serverSequence = readIntValue(payload['serverSequence']);
     if (serverSequence > 0 &&
@@ -3217,6 +3372,8 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       final previousCampaignName =
           realtimeVisibleInitiativeSnapshot['campaignName'];
       expireSummoningEmblems(onlineCombatEncounterId);
+      expireGoblinRoyalGuards(closingEncounter);
+      expireMutantRatPups(closingEncounter);
       realtimeOutgoingEncounterJoins.clear();
       realtimeEncounterJoinRetryTimer?.cancel();
       realtimeEncounterJoinRetryTimer = null;
@@ -3287,6 +3444,10 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final incoming = selectedSnapshot['tokens'];
     if (incoming is List) {
       for (final token in incoming.whereType<Map>()) {
+        receiveMutantRatPupExpiry(
+          token,
+          '${selectedSnapshot['encounterId'] ?? ''}',
+        );
         if (token['status'] == 'dead' &&
             !deadBefore.contains('${token['id']}')) {
           aggiungiLog(
@@ -3305,6 +3466,35 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
               }),
             )
             as Map<String, dynamic>;
+    if (realtimeVisibleInitiativeSnapshot['fightStarted'] == true &&
+        realtimeVisibleInitiativeSnapshot['combatEnded'] != true) {
+      synchronizeStoneguardFightStart(_writableOnlineCombatTokens());
+    }
+    if (payload['campaignId'] == permissionCampaignId) {
+      final sharedFights = encountersRaw is List
+          ? realtimeEncounterSnapshots
+          : [selectedSnapshot];
+      for (final fight in sharedFights) {
+        if (fight['fightStarted'] != true ||
+            fight['combatEnded'] == true ||
+            isMasterOnlyDraft(fight) ||
+            (fight['campaignId'] != null &&
+                fight['campaignId'] != payload['campaignId'])) {
+          continue;
+        }
+        final rawTokens = fight['tokens'];
+        if (rawTokens is! List) continue;
+        final tokens = rawTokens
+            .whereType<Map>()
+            .map((token) => Map<String, dynamic>.from(token))
+            .toList();
+        if (tokens.any(
+          (token) => controlsOnlineCombatSheet(onlineCombatTokenTag(token)),
+        )) {
+          rememberEncounterCreatureArtwork(tokens);
+        }
+      }
+    }
     if (snapshotRaw['worldClock'] is Map) {
       final clock = newestWorldClockSnapshot(
         snapshotRaw['worldClock'] as Map,
@@ -3317,6 +3507,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       final endingEncounter =
           '${realtimeVisibleInitiativeSnapshot['encounterId'] ?? ''}';
       expireBoneGoatAphoniaAtFightEnd(endingEncounter);
+      expireMutantRatPups(endingEncounter);
       clearTemporaryCombatResistanceEffects(
         endedWingTokens: [
           if (previousEncounter == endingEncounter && previous is List)
@@ -3340,6 +3531,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             '${active['id'] ?? activeTag}';
         if (turnKey != realtimeLoggedInitiativeTurnKey) {
           realtimeLoggedInitiativeTurnKey = turnKey;
+          if (realtimeVisibleInitiativeSnapshot['combatEnded'] != true) {
+            advanceLamaOrbitaForActiveToken(Map<String, dynamic>.from(active));
+          }
           if (activeTag == sheetTagAt(schedaCorrente)) {
             aggiungiLog(
               '[TURNISTICA] È il tuo turno: ${oculumReferenceEncounterTokenName(active)}. Azione disponibile.',
@@ -3351,6 +3545,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       realtimeLoggedInitiativeTurnKey = '';
     }
     invalidateDerivedDataCaches(notifyHiddenEyeCards: false);
+    syncRemotePiovraGrip();
     applyChainedFateCompletion(selectedSnapshot);
     receiveMasterRollRequests(selectedSnapshot);
     final aliases = (selectedSnapshot['mergedEncounterIds'] as List? ?? [])
@@ -3371,6 +3566,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     syncCurrentSheetEncounterTurn();
     syncOwnedEncounterTurns();
     scheduleWingEscapeFallDrain();
+    scheduleOculiathDamageDrain();
     shareOwnedEncounterSheetsToStaff();
     unawaited(retryPendingEncounterJoins());
     unawaited(replayOnlineCombatRequests());
@@ -3392,12 +3588,13 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (snapshotTokens is List) {
       for (final raw in snapshotTokens.whereType<Map>()) {
         final token = Map<String, dynamic>.from(raw);
-        if ('${token['sheetTag'] ?? token['id'] ?? ''}' != currentTag) {
-          continue;
-        }
+        final tag = '${token['sheetTag'] ?? token['id'] ?? ''}';
         final reported = max(0, readIntValue(token['reportedTurn']));
-        setPlayerReportedTurn(reported, broadcast: false);
-        break;
+        if (tag == currentTag) {
+          setPlayerReportedTurn(reported, broadcast: false);
+        } else {
+          unawaited(advanceWeldSpiderBeamTurn(tag, reported));
+        }
       }
     }
   }
@@ -3405,6 +3602,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   Future<void> requestVisibleEncounterStep(int delta) async {
     if (!realtimeIsCoMasterRole ||
         realtimeService?.isConnected != true ||
+        !realtimeCanControlSameAccountFight ||
         !const {-1, 1}.contains(delta)) {
       return;
     }
@@ -3417,6 +3615,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final delivered = await realtimeService!.sendCombatEvent(
       'initiative_control',
       permissionEnvelope({
+        ...realtimeMasterCommandRoute,
         'id':
             'initiative:${DateTime.now().microsecondsSinceEpoch}:${sheetTagAt(schedaCorrente)}',
         'encounterId': snapshot['encounterId'],
@@ -3444,7 +3643,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       unawaited(receiveMasterParticipantControl(payload));
       return;
     }
-    if (!realtimeIsMasterRole || !validPermissionSender(payload, staff: true)) {
+    if (!validRealtimeStaffFightControl(payload)) {
       return;
     }
     final id = '${payload['id'] ?? ''}';
@@ -3675,7 +3874,20 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return;
     }
 
+    final wasPrivate = activeMasterOnlyDraft;
     setState(() {
+      if (wasPrivate) {
+        final group = masterParticipantGroup(selectedMasterInitiativeGroupId)!;
+        group.remove(_oculumMasterOnlyDraft);
+        for (final token in masterInitiativeTokens) {
+          final index = localSheetIndexForOculumTag(
+            '${token['sheetTag'] ?? token['id']}',
+          );
+          if (index >= 0) {
+            schedePersonaggio[index].remove(_oculumMasterOnlyDraft);
+          }
+        }
+      }
       realtimeHiddenEncounterIds.remove(selectedMasterInitiativeGroupId);
       masterInitiativePublished = true;
       risultato = t(
@@ -3684,6 +3896,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       );
       aggiungiLog(risultato);
     });
+    if (wasPrivate) {
+      for (final token in masterInitiativeTokens) {
+        final index = localSheetIndexForOculumTag(
+          '${token['sheetTag'] ?? token['id']}',
+        );
+        if (index >= 0) sendRealtimeMasterVisibleTokenAt(index);
+      }
+    }
     sendRealtimeInitiativeSnapshot();
     programmaSalvataggio();
   }
@@ -3691,6 +3911,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   void closeRealtimeInitiativeSnapshot() {
     realtimeHiddenEncounterIds.add(selectedMasterInitiativeGroupId);
     expireBoneGoatAphoniaAtFightEnd(selectedMasterInitiativeGroupId);
+    expireMutantRatPups(selectedMasterInitiativeGroupId);
     if (realtimeService?.isConnected != true || !realtimeIsMasterRole) {
       setState(() {
         masterInitiativePublished = false;
@@ -3717,6 +3938,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
   }
 
   void sendRealtimeInitiativeSnapshotIfPublished() {
+    if (realtimeUsesSameAccountMaster) return;
+    if (activeMasterOnlyDraft) {
+      masterInitiativePublished = false;
+      captureActiveMasterInitiativeGroup();
+      return;
+    }
     if (realtimeService?.isConnected == true &&
         realtimeIsMasterRole &&
         masterInitiativeTokens.isNotEmpty &&
@@ -3951,12 +4178,14 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (!realtimeUsers.any((user) => user['role'] == 'coMaster')) return;
 
     final participantTags = <String>{
-      for (final token in masterInitiativeTokens)
-        publicInitiativeSourceTag(token),
+      if (!activeMasterOnlyDraft)
+        for (final token in masterInitiativeTokens)
+          publicInitiativeSourceTag(token),
       for (final group in masterInitiativeGroups)
-        for (final token
-            in (group['tokens'] as List? ?? const []).whereType<Map>())
-          publicInitiativeSourceTag(Map<String, dynamic>.from(token)),
+        if (!isMasterOnlyDraft(group))
+          for (final token
+              in (group['tokens'] as List? ?? const []).whereType<Map>())
+            publicInitiativeSourceTag(Map<String, dynamic>.from(token)),
     };
     final records = <String, Map<String, dynamic>>{};
     for (final record in realtimeSharedSheets) {
@@ -4144,6 +4373,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return false;
     }
     if (index < 0 || index >= schedePersonaggio.length) return false;
+    if (masterOnlyDraftSheetAt(index)) return false;
     if (readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
       setState(() {
         risultato = t(
@@ -4283,6 +4513,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     if (service?.isConnected != true) return false;
     if (realtimeIsMasterRole) return false;
     if (sheetIndex < 0 || sheetIndex >= schedePersonaggio.length) return false;
+    if (masterOnlyDraftSheetAt(sheetIndex)) return false;
     if (amiciOculum.isEmpty && targetTagsOverride == null) return false;
     if (readBoolValue(schedePersonaggio[sheetIndex]['realtimeSharedSheet'])) {
       return false;
@@ -4450,6 +4681,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
       return false;
     }
     if (index < 0 || index >= schedePersonaggio.length) return false;
+    if (masterOnlyDraftSheetAt(index)) return false;
     if (readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
       return false;
     }
@@ -4920,6 +5152,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
     final service = realtimeService;
     if (service?.isConnected != true || !haPermessiMaster) return;
     if (index < 0 || index >= schedePersonaggio.length) return;
+    if (masterOnlyDraftSheetAt(index)) return;
     if (!sheetInMasterPartyAt(index)) return;
 
     final sheet = masterEnemyFullSheetVisibility
@@ -5093,7 +5326,9 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
           DropdownMenuItem<String>(
             value: 'remote:$i',
             child: Text(
-              'Online - ${realtimeSharedSheets[i]['ownerName'] ?? '???'} - ${realtimeSharedSheets[i]['sheetName'] ?? '???'}',
+              campaignHasForgottenCharacter(realtimeSharedSheets[i]['sheetId'])
+                  ? 'Online - $oculumForgottenCharacterName'
+                  : 'Online - ${realtimeSharedSheets[i]['ownerName'] ?? '???'} - ${realtimeSharedSheets[i]['sheetName'] ?? '???'}',
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -5184,6 +5419,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
             final sheetId = normalizeOculumFriendTag(
               '${record['sheetId'] ?? ''}',
             );
+            final forgotten = campaignHasForgottenCharacter(sheetId);
             final coMasterMarked =
                 realtimeCoMasterTags.contains(sheetId.toUpperCase()) ||
                 '${record['senderRole'] ?? ''}' == 'coMaster' ||
@@ -5219,10 +5455,12 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    oculumNameWithVisibleTitle(
-                      '${record['sheetName'] ?? '???'}',
-                      publicTitleName,
-                    ),
+                    forgotten
+                        ? oculumForgottenCharacterName
+                        : oculumNameWithVisibleTitle(
+                            '${record['sheetName'] ?? '???'}',
+                            publicTitleName,
+                          ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -5235,7 +5473,7 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                     '${dirty ? ' - copia modificata localmente' : ''}',
                     color: dirty ? tertiaryColor : Colors.grey.shade300,
                   ),
-                  if (publicTitleName.isNotEmpty) ...[
+                  if (!forgotten && publicTitleName.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     smallInfoText(
                       publicTitleLegend.isEmpty
@@ -5435,12 +5673,19 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        SizedBox(
-                          width: 38,
-                          height: 38,
-                          child: FittedBox(
-                            fit: BoxFit.cover,
-                            child: initiativeTokenAvatar(tokens[i]),
+                        Tooltip(
+                          message:
+                              'Apri immagine di ${oculumReferenceEncounterTokenName(tokens[i])}',
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () => showInitiativeTokenPortrait(
+                              Map<String, dynamic>.from(tokens[i]),
+                            ),
+                            child: SizedBox(
+                              width: 42,
+                              height: 42,
+                              child: initiativeTokenAvatar(tokens[i]),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -5577,17 +5822,27 @@ extension _OculumRealtimeIntegration on _OculumHomePageState {
                       'Master gia presente: ruolo attuale Giocatore.',
                       'Master already present: current role Player.',
                     )
+                  : realtimeUsesSameAccountMaster
+                  ? realtimeSameAccountMasterHost == null
+                        ? t(
+                            'Master · in attesa del dispositivo principale.',
+                            'Master · waiting for the main device.',
+                          )
+                        : t(
+                            'Master · comandi condivisi con il dispositivo principale.',
+                            'Master · controls shared with the main device.',
+                          )
                   : t(
                       '${realtimeConnected ? 'Ruolo online' : 'Ruolo richiesto'}: ${realtimeLocalRole() == 'master'
                           ? 'Master'
                           : realtimeLocalRole() == 'coMaster'
                           ? 'Co-Master'
-                          : 'Giocatore'}. Solo il primo Master resta Master.',
+                          : 'Giocatore'}.',
                       'Current role: ${realtimeLocalRole() == 'master'
                           ? 'Master'
                           : realtimeLocalRole() == 'coMaster'
                           ? 'Co-Master'
-                          : 'Player'}. Only the first Master stays Master.',
+                          : 'Player'}.',
                     ),
               style: TextStyle(color: Colors.white.withValues(alpha: 0.72)),
             ),

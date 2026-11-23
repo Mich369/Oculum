@@ -8,9 +8,34 @@ class OculumPerformanceProbe {
     _state.sheetRollNaturalRandom = natural;
     _state.sheetRollRescueRandom = rescue;
   }
+
+  int get rebirthPartyRollBonusPercent =>
+      _state.rebirthPartyRollExperienceBonusPercent;
+  int addRebirthPartyRollExperience(int base, String barId) =>
+      _state.applyRebirthPartyRollExperience(base, barId: barId);
+
   OculumPerformanceProbe(State state) : _state = state as _OculumHomePageState;
   final _OculumHomePageState _state;
   Widget settings() => _state.settingsPage();
+  bool get fightCreatorAllowed => _state.canUseFightCreator;
+  Widget fightCreatorPanel() => _state.fightCreatorPanel();
+  Future<void> showFightCreator() => _state.showFightCreator();
+  int fightCreatorPowerAt(int index) => _state.scoutTotalPowerAt(index);
+  bool prepareFightCreator({
+    required Map<String, String> assignments,
+    List<({String id, String name, Color color})> extraTeams = const [],
+    Set<String> guardianIds = const {},
+    bool trainingMode = false,
+    String? scope,
+  }) => _state.prepareFightCreatorEncounter(
+    scope: scope ?? _state.permissionScope,
+    name: 'Test creator',
+    assignments: assignments,
+    teams: [..._state._fightTeamsFrom(null), ...extraTeams],
+    guardianIds: guardianIds,
+    trainingMode: trainingMode,
+  );
+  Widget colorThemePicker() => _state.colorPresetDropdownPanel();
   void ensurePowerScanners() => _state.ensurePowerScannerOffers();
   InventoryItem scannerFromOffer(Map<String, dynamic> offer) =>
       _state.merchantItemFromOffer(offer);
@@ -487,6 +512,54 @@ class OculumPerformanceProbe {
   Future<void> flushTurnResourceSpends() =>
       _state.flushPendingCombatTurnResources();
   Future<bool> spendCombatRoll() => _state.spendCombatRollResource();
+  bool applyElementalSphereFreeze(
+    Map<String, dynamic> request, {
+    required int durationTurns,
+    required String difficulty,
+  }) => _state.applyElementalSphereFreeze(
+    request,
+    durationTurns: durationTurns,
+    difficulty: difficulty,
+  );
+
+  Future<void> releaseElementalSphereIce({
+    bool withHeat = false,
+    int? natural,
+  }) async {
+    final ice = _state.elementalSphereIce;
+    if (ice == null) return;
+    await _state._attemptElementalSphereIceRelease(
+      ice,
+      withHeat: withHeat,
+      natural: natural,
+    );
+  }
+
+  bool shatterElementalSphereIce() => _state.shatterElementalSphereIce();
+  Future<void> selectElementalSphereIceAlly() =>
+      _state.selectElementalSphereIceAlly();
+  bool applyElementalSphereSoulSeparation(
+    Map<String, dynamic> request, {
+    required int durationTurns,
+    required String difficulty,
+  }) => _state.applyElementalSphereSoulSeparation(
+    request,
+    durationTurns: durationTurns,
+    difficulty: difficulty,
+  );
+
+  String? elementalSphereOpportunity(String target, String source) =>
+      _state.elementalSphereOpportunityFor(target, source)?.conditionId;
+  bool claimElementalSphereOpportunity(
+    String target,
+    String source,
+    String condition,
+  ) => _state.claimElementalSphereOpportunity(
+    targetTag: target,
+    sourceTag: source,
+    conditionId: condition,
+  );
+
   Future<void> showAssignSheets() => _state.showAssignSheetsDialog();
   Future<void> initialSheetLoad() => _state.initialSheetLoad;
   Map<String, dynamic> assignmentBody(int index) =>
@@ -579,7 +652,9 @@ class OculumPerformanceProbe {
   int get dustPrice => _state.merchantDustPrice;
   int shopCost(Map<String, dynamic> offer) => _state.merchantOfferCost(offer);
   List<Map<String, dynamic>> shopOffers() => _state.recommendedMerchantStock();
-  List<OculumColorPreset> get themes => List.unmodifiable(_state.colorPresets);
+  List<OculumColorPreset> get themes => List.unmodifiable(
+    _state.colorPresets.where((preset) => oculumIsThemeSelectable(preset.id)),
+  );
   void applyTheme(String id) => _state.applicaColorPreset(id);
   Future<void> useCharacterSkill(CharacterSkill skill) =>
       _state.usaFormaSkill(skill, _state.skills.indexOf(skill), 0);
@@ -600,13 +675,16 @@ class OculumPerformanceProbe {
   List<String> applyEffects(
     Iterable<OculumStructuredEffect> effects, {
     String source = 'Test effetto',
+    OculumAbilityCooldown? sourceCooldown,
     Map<String, num> spentResources = const {},
   }) => _state.applyStructuredEffectsOnActivation(
     effects,
     source: source,
+    sourceCooldown: sourceCooldown,
     spentResources: spentResources,
   );
   int movement() => _state.movimento();
+  int sheetMovement(int index) => _state.sheetMovementAt(index);
   int maximumHp() => _state.maxHp();
   int maximumTemporaryHp() => _state.thresholdTemporaryHpLimit();
   String difficulty() => _state.normalizedCampaignDifficulty();
@@ -635,12 +713,16 @@ class OculumPerformanceProbe {
     Map<String, int>? stats,
     String sideOverride = '',
     Random? loadoutRandom,
+    bool forFightCreator = false,
+    Random? woundRandom,
   }) => _state.creaSchedaRapidaMaster(
     forcedType: forcedType,
     fallbackName: source.nameIt,
     livelloForzato: level,
     statsMostroForzate: stats,
     monsterLoadoutRandom: loadoutRandom,
+    fightCreatorScope: forFightCreator ? _state.permissionScope : null,
+    fightCreatorWoundRandom: woundRandom,
     sideOverride: sideOverride,
     monsterBookSource: source,
   );
@@ -654,6 +736,11 @@ class OculumPerformanceProbe {
     'Sessione Dadi',
     'sheet_dice',
     _state.sheetDiceRollPanel,
+  );
+  void openDodgeResources() => _state.openReferenceDetail(
+    'Schivata Oculum',
+    'sheet_dodges',
+    _state.schivataOculumResourcePanel,
   );
   void openResistances() => _state.openResistanceDetails();
   Future<void> showCreateFallenEye({Map<String, dynamic>? editingEye}) =>
@@ -775,6 +862,7 @@ class OculumPerformanceProbe {
     required int sourceLevel,
     required int sourceTotal,
     String requestId = 'test-corruption',
+    String corruptionKind = 'viola',
   }) => _state.queueCorruptionApplication(
     targetTag: targetTag,
     scrollGrade: 12,
@@ -783,6 +871,7 @@ class OculumPerformanceProbe {
     sourceTotal: sourceTotal,
     sourceLevel: sourceLevel,
     requestId: requestId,
+    corruptionKind: corruptionKind,
   );
   Widget corruptionRequests() => _state.onlineCombatRequestsPanel();
   Future<void> resistCorruption(Map<String, dynamic> request, String choice) =>
@@ -810,6 +899,10 @@ class OculumPerformanceProbe {
       _state.itemDefenseBonus(item) +
       (_state.itemQuickBonuses(item)['difesa'] ?? 0);
   String get planeId => _state.selectedPlaneId;
+  bool enterPartyWormhole(int natural) =>
+      _state.enterPartyWormhole(natural: natural);
+  Map<String, dynamic>? get partyWormhole => _state.activePartyWormhole;
+  void finishPartyWormhole() => _state.finishPartyWormhole();
   Future<void> useNecromancy(InventoryItem item) =>
       _state.useNecromancyEquipment(item);
   void skullHit() => _state.advanceSkullFormHit();
@@ -824,6 +917,7 @@ class OculumPerformanceProbe {
   void damage(int amount) => _state.applicaDannoSubito(dannoEsplicito: amount);
   Future<void> damageResolved(
     int amount, {
+    bool confirmedAttack = false,
     bool critical = false,
     bool doubleCritical = false,
     bool criticalShieldAlreadyBroken = false,
@@ -840,6 +934,7 @@ class OculumPerformanceProbe {
     int resistanceBypassDamage = 0,
   }) => _state.applicaDannoSubito(
     dannoEsplicito: amount,
+    confirmedAttack: confirmedAttack,
     critico: critical,
     doubleCritical: doubleCritical,
     criticalShieldAlreadyBroken: criticalShieldAlreadyBroken,
@@ -870,6 +965,20 @@ class OculumPerformanceProbe {
   }
 
   void publishTurnOrder() => _state.publishRealtimeInitiativeSnapshot();
+  void autoPublishTurnOrder() =>
+      _state.sendRealtimeInitiativeSnapshotIfPublished();
+  void sendMasterPartyForTest() =>
+      _state.sendRealtimeMasterVisiblePartyTokens();
+  void resendTurnOrderForTest() => _state.sendRealtimeInitiativeSnapshot();
+  void addOrdinaryEncounterForTest() => _state.addMasterInitiativeGroup();
+  void addInitiativeSheetForTest(int index) =>
+      _state.addSheetToMasterInitiative(index, rollInitiative: false);
+  Future<void> createPrivateSheetForTest() => _state.creaNuovaSchedaPersonaggio(
+    nome: 'Private generated creature',
+    tipo: 'Mostro',
+    aggiungiAlMasterParty: true,
+    masterOnlyDraft: true,
+  );
   void syncMasterTurnOrder() =>
       _state.sendRealtimeInitiativeSnapshotIfPublished();
   void shareMasterParty() => _state.sendRealtimeMasterVisiblePartyTokens();
@@ -943,9 +1052,53 @@ class OculumPerformanceProbe {
     total,
     defenseNatural: natural,
   );
+  Future<void> resolveCounterReplyForTest(Map<String, dynamic> request) =>
+      _state.applyCounterAttackReplyDamage(request);
   void confirmPosteaSwordHit(Map request) =>
       _state.confirmPosteaSwordHit(request);
+  Future<void> launchLamaOrbitaForTest(InventoryItem item) =>
+      _state.launchLamaOrbita(item);
+  Future<void> recoverLamaOrbitaForTest(InventoryItem item) =>
+      _state.recoverLamaOrbita(item);
+  void advanceLamaOrbitaForTest(int turn) =>
+      _state.advanceLamaOrbitaFlight(turn);
+  void startWeldSpiderBeamForTest(Map<String, dynamic> opening) =>
+      _state.sustainWeldSpiderBeam(opening);
+  void focusWeldSpiderBeamForTest(int turn) => _state.focusWeldSpiderBeam(turn);
+  Future<void> advanceWeldSpiderBeamForTest(String owner, int turn) =>
+      _state.advanceWeldSpiderBeamTurn(owner, turn);
+  void advanceLamaOrbitaOwnerTurnForTest(Map<String, dynamic> token) =>
+      _state.advanceLamaOrbitaForActiveToken(token);
+  void claimLamaOrbitaForTest(Map<String, dynamic> request) =>
+      _state.claimLamaOrbitaAttack(request);
+  void counterLamaOrbitaForTest(Map<String, dynamic> request) =>
+      _state.triggerLamaOrbitaCounter(request);
   String get activeCombatEncounterId => _state.onlineCombatEncounterId;
+  Future<void> resolveAnatomicalHit(
+    Map<String, dynamic> request, {
+    required int hpLost,
+  }) => _state.resolveAnatomicalTargetHit(
+    request,
+    hpLost: hpLost,
+    critical: false,
+  );
+  int spendNecthrallDefense(Map<String, dynamic> request) =>
+      _state.spendNecthrallDefense(request);
+  Future<void> pickOculiathTarget() => _state.selectOculiathGrab();
+  bool moveOculiathPassenger(Map<String, dynamic> carrier) =>
+      _state.syncOculiathPassenger(carrier);
+  bool isOculiathPassenger(Map<String, dynamic> token) =>
+      _state.isOculiathHeldMapToken(token);
+  Future<void> releaseOculiathForTest(
+    Map<String, dynamic> carrier, {
+    required bool safeLanding,
+  }) => _state.releaseOculiathHold(
+    carrier,
+    reason: 'Rilascio',
+    safeLanding: safeLanding,
+  );
+  void recordMutantRatAttempt(Map<String, dynamic> request) =>
+      _state.recordMutantRatAttackAttempt(request);
   List<OculumStructuredEffect> prepareBottledCloud(
     List<OculumStructuredEffect> effects, {
     Random? random,
@@ -1030,12 +1183,16 @@ class OculumPerformanceProbe {
     int? total,
     int? natural,
     String? escapeReactionOf,
+    String? targetId,
+    String? sphereSoulOpportunityId,
   }) => _state.planOnlineAttack(
     minimumTargets: minimum,
     maximumTargets: maximum,
+    targetId: targetId,
     preparedAttackTotal: total,
     preparedAttackNatural: natural,
     escapeReactionOf: escapeReactionOf,
+    sphereSoulOpportunityId: sphereSoulOpportunityId,
     resourceAlreadySpent: escapeReactionOf != null,
   );
   bool prepareSandTail(String mode, {int? percent, int? cooldown}) => _state
@@ -1065,11 +1222,15 @@ class OculumPerformanceProbe {
   bool triggerPackLeaderPhase() => _state.applicaFaseCapobrancoSeServe();
   Map<String, dynamic> fallenEyeBodyFromSource(Map<String, dynamic> source) =>
       _state._fallenEyeBodyFromSource(source);
+  Widget creatureSelectionPreview(MonsterBookEntry entry) =>
+      _state.creatureRecognitionPreview(entry);
   Future<void> activateFallenEye(Map<String, dynamic> eye) =>
       _state.activateFallenEye(eye);
   Future<void> deactivateFallenEye(Map<String, dynamic> eye) =>
       _state.deactivateFallenEye(eye);
   int repairFallenEyeSheets() => _state.repairMissingFallenEyeSheets();
+  void recordFallenEyeDeathAt(int index) =>
+      _state.segnaFallenEyeMortoDaScheda(_state.schedePersonaggio[index]);
   Future<OculumHumanoidChoice?> humanoidCreationDialog() =>
       _state.askHumanoidRole(
         4,
@@ -1266,6 +1427,13 @@ class OculumPerformanceProbe {
       _state.receiveRealtimeInitiativeSnapshot(payload);
   void receiveEncounterControl(Map<String, dynamic> payload) =>
       _state.receiveEncounterControl(payload);
+  void reconcileRealtimeMasterControl() =>
+      _state.reconcileRealtimeMasterControl(_state.realtimeUsers);
+  bool get realtimeUsesSameAccountMaster =>
+      _state.realtimeUsesSameAccountMaster;
+  Future<void> requestVisibleEncounterStep(int delta) =>
+      _state.requestVisibleEncounterStep(delta);
+  String get realtimeLocalRole => _state.realtimeLocalRole();
   int attackBonus() => _state.bonusAttaccoRapido();
   void selectArt(int index) => _state.selectIncorporatedArt(_state.arti[index]);
   void advanceArtTurn() => _state.advanceArtSwitchTurn();
@@ -1303,6 +1471,7 @@ class OculumPerformanceProbe {
   int defenseCm() => _state.cm();
   int hpMultiplier() => _state.moltiplicatoreHp();
   int outgoingDamage() => _state.dannoTotale();
+  int volenterosiAttackWillBonus() => _state.volenterosiAttackWillBonus();
   Map<String, int> coreBonusAudit(String key) => {
     'raw': readIntValue(_state.currentStatController(key).text),
     'total': _state.currentStatValue(key),
@@ -1458,6 +1627,8 @@ class OculumPerformanceProbe {
       _state.titleQuickBonuses(title);
   Future<Uint8List> oculusFilledPdf() => _state.buildOculusFilledSheetPdf();
   MonsterBookEntry? lookup(String id) => monsterBookEntryById(id);
+  Future<void> editMonsterBookEntry(MonsterBookEntry entry) =>
+      _state.showMonsterBookEditor(entry);
   void undo() => _state.annullaUltimaModifica();
   void redo() => _state.ripristinaModificaAnnullata();
   Widget hpConditionTile() => _state.quickStatTile(

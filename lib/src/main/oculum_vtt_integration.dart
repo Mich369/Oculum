@@ -3,6 +3,9 @@ part of '../../main.dart';
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 extension _OculumVttStateIntegration on _OculumHomePageState {
+  bool get vttUsesLocalMasterRoomState =>
+      modalitaMaster && !realtimeUsesSameAccountMaster;
+
   String vttLocalRoleKey() {
     if (modalitaMaster) return 'master';
     if (sonoCoMaster) return 'co_master';
@@ -365,7 +368,9 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
   }
 
   void scheduleVttRealtimePublish({bool includeAsset = false}) {
-    if (!modalitaMaster || realtimeService?.isConnected != true) return;
+    if (!vttUsesLocalMasterRoomState || realtimeService?.isConnected != true) {
+      return;
+    }
     vttRealtimeAssetPending = vttRealtimeAssetPending || includeAsset;
     vttRealtimeDebounceTimer?.cancel();
     vttRealtimeDebounceTimer = Timer(const Duration(milliseconds: 420), () {
@@ -497,7 +502,7 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     String targetTag = '',
   }) async {
     final service = realtimeService;
-    if (service?.isConnected != true || !modalitaMaster) return;
+    if (service?.isConnected != true || !vttUsesLocalMasterRoomState) return;
     if (vttPublishing) {
       if (targetTag.isNotEmpty) vttPendingSceneRequesters.add(targetTag);
       vttRealtimeAssetPending = vttRealtimeAssetPending || includeAsset;
@@ -597,20 +602,25 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
 
   void requestRealtimeVttScene() {
     final service = realtimeService;
-    if (service?.isConnected != true || modalitaMaster) return;
+    if (service?.isConnected != true || vttUsesLocalMasterRoomState) return;
     unawaited(
       service!.requestVttScene(requesterTag: currentLocalMapOwnerTag()),
     );
   }
 
   void receiveRealtimeVttSceneRequest(Map<String, dynamic> payload) {
-    if (!modalitaMaster || realtimeService?.isConnected != true) return;
+    if (!vttUsesLocalMasterRoomState || realtimeService?.isConnected != true) {
+      return;
+    }
     final requester = '${payload['requesterTag'] ?? ''}'.trim();
     unawaited(publishActiveVttScene(includeAsset: true, targetTag: requester));
   }
 
   void receiveRealtimeVttSceneSnapshot(Map<String, dynamic> payload) {
-    if (modalitaMaster || '${payload['senderRole'] ?? ''}' != 'master') return;
+    if (vttUsesLocalMasterRoomState ||
+        '${payload['senderRole'] ?? ''}' != 'master') {
+      return;
+    }
     if (!_vttPayloadTargetsLocalPlayer(payload)) return;
     final snapshotRaw = payload['snapshot'];
     if (snapshotRaw is! Map) return;
@@ -673,7 +683,11 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
 
   bool _vttRealtimeCampaignMatches(Map<String, dynamic> payload) {
     final campaignId = '${payload['campaignId'] ?? ''}'.trim();
-    return campaignId.isEmpty || campaignId == activeCampaignId;
+    return campaignId.isEmpty ||
+        campaignId ==
+            (realtimeUsesSameAccountMaster
+                ? permissionCampaignId
+                : activeCampaignId);
   }
 
   Future<void> sendRealtimeVttTokenPosition(Map<String, dynamic> token) async {
@@ -710,7 +724,7 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     Map<String, dynamic> token,
   ) async {
     final service = realtimeService;
-    if (service?.isConnected != true || !modalitaMaster) return;
+    if (service?.isConnected != true || !vttUsesLocalMasterRoomState) return;
     final tokenId = '${token['id'] ?? ''}'.trim();
     if (tokenId.isEmpty) return;
     await service!.sendVttTokenPatch(
@@ -732,7 +746,7 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     final tokenId = '${payload['tokenId'] ?? ''}';
     if (sceneId.isEmpty || tokenId.isEmpty) return;
 
-    if (!modalitaMaster) {
+    if (!vttUsesLocalMasterRoomState) {
       if (senderRole != 'master') return;
       final scene = realtimeVisibleVttScene;
       if (scene == null || scene.id != sceneId) return;
@@ -800,7 +814,8 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     );
     token['x'] = (start.dx + allowed.dx / mapWidth).clamp(0.0, 1.0);
     token['y'] = (start.dy + allowed.dy / mapHeight).clamp(0.0, 1.0);
-    notifyVttCanvasChanged(save: true);
+    final carried = syncOculiathPassenger(token);
+    notifyVttCanvasChanged(save: true, publish: carried);
     evaluateVttTriggersForToken(token);
     unawaited(sendAuthoritativeVttTokenPosition(token));
   }
@@ -837,7 +852,7 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     final doorId = '${payload['doorId'] ?? ''}';
     if (sceneId.isEmpty || doorId.isEmpty) return;
 
-    if (!modalitaMaster) {
+    if (!vttUsesLocalMasterRoomState) {
       if (senderRole != 'master') return;
       final scene = realtimeVisibleVttScene;
       if (scene == null || scene.id != sceneId) return;
@@ -879,7 +894,10 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     required bool authoritative,
   }) async {
     final service = realtimeService;
-    if (service?.isConnected != true) return;
+    if (service?.isConnected != true ||
+        (authoritative && !vttUsesLocalMasterRoomState)) {
+      return;
+    }
     final points = drawing['points'];
     if (points is! List || points.isEmpty) return;
     final point = OculumVttPoint.fromJson(points.first);
@@ -904,7 +922,7 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     final pingId = '${payload['pingId'] ?? ''}';
     if (sceneId.isEmpty || pingId.isEmpty) return;
 
-    if (modalitaMaster) {
+    if (vttUsesLocalMasterRoomState) {
       if (senderRole == 'master' || activeVttScene.id != sceneId) return;
       final senderTag = normalizeOculumFriendTag(
         '${payload['senderTag'] ?? ''}',
@@ -933,7 +951,10 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
   }
 
   void receiveRealtimeVttAssetChunk(Map<String, dynamic> payload) {
-    if (modalitaMaster || '${payload['senderRole'] ?? ''}' != 'master') return;
+    if (vttUsesLocalMasterRoomState ||
+        '${payload['senderRole'] ?? ''}' != 'master') {
+      return;
+    }
     if (!_vttPayloadTargetsLocalPlayer(payload)) return;
     final assetId = '${payload['assetId'] ?? ''}';
     final chunkCount = _oculumVttInt(payload['chunkCount']);

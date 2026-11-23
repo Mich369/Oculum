@@ -117,6 +117,7 @@ class DiaryRoleLedger {
 
   Map<String, dynamic>? _record(DiaryEntity entity) {
     if (_records.containsKey(entity.id)) return _records[entity.id];
+    if (entity.id.startsWith('combat-dead:')) return null;
     final sameName = _records.values
         .where((r) => diaryKey('${r['name']}') == diaryKey(entity.name))
         .toList();

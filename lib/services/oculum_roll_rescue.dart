@@ -1,4 +1,4 @@
-enum OculumRollRescue { base, superInspiration, oculum, fortune, pact }
+enum OculumRollRescue { base, superInspiration, oculum, fortune, pact, rebirth }
 
 int oculumBaseInspirationCost({required bool chainedFate}) =>
     chainedFate ? 2 : 1;
@@ -16,13 +16,15 @@ Set<OculumRollRescue> oculumRollRescueOptions({
   bool pactAvailable = false,
   bool inspirationUsed = false,
   bool chainedFate = false,
+  bool rebirthAvailable = false,
 }) {
-  if (!failed) return const {};
+  if (!failed) return {if (negativeCritical && rebirthAvailable) OculumRollRescue.rebirth};
   final ordinary = !negativeCritical && !positiveCritical;
   final baseEligible = natural == null
       ? ordinary
       : natural >= 2 && natural <= 19;
   return {
+    if (negativeCritical && rebirthAvailable) OculumRollRescue.rebirth,
     if (!inspirationUsed) ...{
       if (baseEligible &&
           base >= oculumBaseInspirationCost(chainedFate: chainedFate))

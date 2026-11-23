@@ -80,6 +80,10 @@ String _combatEffectPreview(
     low = (base + fixedBonus) * extraDice.minimum;
     high = (base + fixedBonus) * extraDice.maximum;
   }
+  if (effect.scaleMonsterWeakOpen) {
+    low = _oculumScaleMonsterWeakOpenValue(low, grade);
+    high = _oculumScaleMonsterWeakOpenValue(high, grade);
+  }
   final amount = low == high ? '$low' : '$low–$high';
   final duration = _combatFormulaDiceBounds(
     oculumEffectFormulaExpression(effect.duration, subtraits),
@@ -143,6 +147,13 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
   final active = effects.where((effect) => effect.enabled).toList();
   if (active.any(
     (e) =>
+        e.target == oculumGoblinVanishEffect ||
+        e.target == oculumGoblinRegalStrikeEffect,
+  )) {
+    return {OculumCombatAbilityRole.attack};
+  }
+  if (active.any(
+    (e) =>
         e.type == 'planar' &&
         const {
           'mask_serious_punch',
@@ -152,6 +163,8 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
           'cycle_bear_spines',
           'cycle_lunar_stomp',
           'cycle_lunar_bite',
+          oculumBiterBiteEffect,
+          oculumFrutibushLeafSkill,
           'skeleton_giant_throw',
           'total_power_burst',
           'total_power_accuracy',
@@ -196,6 +209,7 @@ Set<OculumCombatAbilityRole> oculumCombatAbilityRoles(
           'costrutto',
           'elemental_resistance',
         }.contains(effect.type) ||
+        oculumIsPredoneOrbitTarget(effect.target) ||
         const {
           'cm',
           'difesa',
@@ -351,6 +365,55 @@ Set<OculumCombatAbilityRole> oculumInventoryItemCombatRoles(
 }
 
 extension _OculumCombatAbilityBar on _OculumHomePageState {
+  bool singleAttackSkillForm(
+    CharacterSkillForm form,
+    Iterable<OculumStructuredEffect> effects,
+  ) {
+    if (!oculumCombatAbilityRoles(
+      effects,
+      explicitType: form.tipo,
+    ).contains(OculumCombatAbilityRole.attack)) {
+      return false;
+    }
+    if (effects.any(
+      (e) =>
+          e.enabled &&
+          e.mode != 'prossima_azione' &&
+          (oculumStructuredEffectFrequency(e.frequency) > 0 ||
+              (e.duration.trim().isNotEmpty && e.duration.trim() != '0') ||
+              e.diceDestination == 'durata' &&
+                  e.diceExpression.trim().isNotEmpty),
+    )) {
+      return false;
+    }
+    final text = oculumNormalizeText(
+      '${form.descrizione}\n${form.effetto}\n${form.buff}\n${form.danni}\n${form.note}',
+    );
+    return !RegExp(
+      r'\b(?:fino\s+a\w*|finche|until|permanent\w*)\b'
+      r'|\b(?:durata|dura|duration|lasts|per|for)[\s:]+'
+      r'(?:\d+(?:d\d+(?:\s*\+\s*\d+)?)?|un[ao]?|due|tre|one|two|three)\s+'
+      r'(?:turn\w*|round\w*|azion\w*|action\w*|ripos\w*|rest|fight|combattiment\w*|combat)\b',
+    ).hasMatch(text);
+  }
+
+  bool deactivateUsedSingleAttackSkill(
+    CharacterSkill skill,
+    CharacterSkillForm form,
+    List<OculumStructuredEffect> effects,
+  ) {
+    if (!mounted ||
+        !skills.contains(skill) ||
+        !skill.equipaggiata ||
+        skill.passiva ||
+        skill.thresholdData.isNotEmpty ||
+        !singleAttackSkillForm(form, effects)) {
+      return false;
+    }
+    setState(() => skill.equipaggiata = false);
+    return true;
+  }
+
   Future<void> finishParsedAbilityTargets(
     String text, {
     int? attackTotal,
@@ -601,7 +664,12 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                 (form.costoStrutturato!.variable
                     ? form.costoStrutturato!.minimum
                     : readIntValue(form.costoStrutturato!.amountExpression))
-          : combatAbilityCostAvailable(form.costoStrutturato, form.costo)) &&
+          : combatAbilityCostAvailable(
+              oculumIsElementalSphereForm(form)
+                  ? effectiveElementalSphereCost(form)
+                  : form.costoStrutturato,
+              form.costo,
+            )) &&
       (!form.usaOculumConfigurabile ||
           currentOculum() >= form.oculumMinimoUtilizzabile);
 
@@ -634,6 +702,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     CharacterSkill? natural,
     CharacterArt? art,
     ArtSkill? artSkill,
+    bool Function(CharacterSkillForm)? naturalFormFilter,
   }) async {
     final origin = currentSheetScrollId();
     final count = natural?.forme.length ?? (art == null ? 0 : artMaxLevel(art));
@@ -646,6 +715,11 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
             Builder(
               builder: (_) {
                 final effectForm = natural?.forme[form];
+                if (effectForm != null &&
+                    naturalFormFilter != null &&
+                    !naturalFormFilter(effectForm)) {
+                  return const SizedBox.shrink();
+                }
                 final available = natural != null
                     ? combatNaturalFormAvailable(effectForm!)
                     : combatArtFormAvailable(art!, artSkill!, form + 1);
@@ -726,6 +800,12 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       ),
     );
     if (!mounted || chosen == null || currentSheetScrollId() != origin) return;
+    if (natural != null &&
+        (!skills.contains(natural) ||
+            chosen >= natural.forme.length ||
+            naturalFormFilter?.call(natural.forme[chosen]) == false)) {
+      return;
+    }
     final description =
         natural?.forme[chosen].descrizione ??
         artSkill!.testoEvoluzione(chosen + 1);
@@ -734,6 +814,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     final beforeMasked = jsonEncode(pendingMaskedAttack);
     final beforeSandTail = jsonEncode(pendingSandTailAttack);
     final beforeCycleAttack = cyclePreparedAttackSignature;
+    final beforeGoblinAttack = (pendingGoblinVanish, pendingGoblinRegalStrike);
     final declaredEffects =
         natural?.forme[chosen].effettiStrutturati ??
         artSkill!.effettiEvoluzione(chosen + 1);
@@ -766,6 +847,14 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
     }
     final spentOculum = max(0, oculumBefore - currentOculum());
     final oculumPowered = spentOculum > 0;
+
+    if (mounted &&
+        currentSheetScrollId() == origin &&
+        beforeGoblinAttack != (pendingGoblinVanish, pendingGoblinRegalStrike) &&
+        onlineAttackTokens().isNotEmpty) {
+      await planOnlineAttack(oculumPowered: oculumPowered);
+      return;
+    }
 
     if (mounted &&
         currentSheetScrollId() == origin &&
@@ -1259,6 +1348,14 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                   role,
                   select: (action) => Navigator.pop(dialog, action),
                 ),
+                if (role != OculumCombatAbilityRole.defense)
+                  ...elementalSphereOpportunityActions(
+                    (action) => Navigator.pop(dialog, action),
+                  ),
+                if (role == OculumCombatAbilityRole.attack)
+                  ...imbrytoadSpitActions(
+                    (action) => Navigator.pop(dialog, action),
+                  ),
                 if (isLunarGuardianCoreCreature &&
                     role != OculumCombatAbilityRole.attack)
                   lunarGuardianCorePanel(),
@@ -1266,7 +1363,40 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                   totalPowerBurstStatus(),
                   provokerShieldStatus(),
                   guardianGoldificationControls(),
+                  if (hasCondition(oculumSolarGoldCondition))
+                    solarObserverGoldificationControls(
+                      refresh: () {
+                        if (context.mounted) refresh(() {});
+                      },
+                    ),
+                  if (elementalSphereFrozen)
+                    elementalSphereIceControls(
+                      refresh: () {
+                        if (context.mounted) refresh(() {});
+                      },
+                    ),
+                  if (canShatterElementalSphereIceForAlly)
+                    ListTile(
+                      leading: const Icon(Icons.ac_unit),
+                      title: Text(t('Colpisci il ghiaccio', 'Shatter the ice')),
+                      subtitle: Text(
+                        t('Fuoco o Lava · 1 Azione', 'Fire or Lava · 1 Action'),
+                      ),
+                      onTap: () => Navigator.pop(
+                        dialog,
+                        () => unawaited(selectElementalSphereIceAlly()),
+                      ),
+                    ),
                   wingFlightUtilityControls(),
+                  ...oculiathHoldControls(
+                    (action) => Navigator.pop(dialog, action),
+                  ),
+                  ...piovraGripControls(
+                    (action) => Navigator.pop(dialog, action),
+                  ),
+                  ...necthrallFightControls(
+                    (action) => Navigator.pop(dialog, action),
+                  ),
                   escapeUtilityControls(),
                   escapeRequestsPanel(),
                   if (canSharpenWeapons && inventario.any(_isSharpenableWeapon))
@@ -2043,7 +2173,8 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
                         art.inUso &&
                         art.switchPhase.isEmpty &&
                         cooldown == null &&
-                        (oculumRecognizedArtKind(art) == 'emblem' ||
+                        (oculumIsMonsterWeakOpen(art) ||
+                            oculumRecognizedArtKind(art) == 'emblem' ||
                             oculumArtCanActivate(
                               art.integritaCorrente,
                               cost: artUseCost(oculumArtActivationCost),
@@ -2122,6 +2253,7 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
           !onlyOpens && item.quantita > 0 && item.craftData['scroll'] is Map,
     )) {
       final scroll = Map<String, dynamic>.from(item.craftData['scroll'] as Map);
+      if (scroll['kind'] == oculumRhinoStoneguardPassiveId) continue;
       final effects = oculumScrollCombatEffects(scroll);
       final sfera = scroll['kind'] == oculumOculumTheftKind;
       final willCost = sfera

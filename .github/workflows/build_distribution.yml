@@ -48,7 +48,7 @@ jobs:
         shell: pwsh
         run: ./scripts/tests/test_publish_oculum_github.ps1
       # Keep image-heavy widget suites within the Windows runner's memory budget.
-      - run: flutter test --no-pub --concurrency=2
+      - run: flutter test --no-pub --concurrency=1
       - name: Verify authenticated online transport and combat
         if: github.event_name != 'pull_request'
         timeout-minutes: 10

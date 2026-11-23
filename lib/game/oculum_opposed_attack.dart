@@ -16,6 +16,67 @@ import 'dart:math';
 int oculumCounterAttackDamage(int damage, int percent) =>
     max(0, damage) * percent.clamp(0, 1000) ~/ 100;
 
+/// This threshold unlocks only the returned hit, never the opposed roll itself.
+int oculumCounterReflectionNaturalMinimum(int grade) =>
+    max(2, 20 - max(0, grade) ~/ 2);
+
+bool oculumCounterReturnsDamage({
+  required int incomingAttack,
+  required int counterAttack,
+  required int natural,
+  required int grade,
+  bool wouldRegenerateLife = false,
+}) =>
+    !wouldRegenerateLife &&
+    counterAttack > incomingAttack &&
+    natural >= oculumCounterReflectionNaturalMinimum(grade) &&
+    natural <= 20;
+
+/// A separate, plain hit. Do not inherit bypasses, debuffs, critical flags or
+/// anatomy targets from either attack. Protections belong to its recipient.
+Map<String, dynamic>? oculumCounterReflectionPacket(
+  Map<String, dynamic> original,
+  Map<String, dynamic> response,
+) {
+  int number(Object? value) => int.tryParse('$value') ?? 0;
+  if ('${original['id'] ?? ''}'.isEmpty ||
+      response['id'] != 'counter:${original['id']}' ||
+      response['sourceTag'] != original['targetTag'] ||
+      response['targetTag'] != original['sourceTag'] ||
+      response['scope'] != original['scope'] ||
+      response['encounterId'] != original['encounterId'] ||
+      number(original['damage']) <= 0 ||
+      number(original['damage']) > 100000000 ||
+      !oculumCounterReturnsDamage(
+        incomingAttack: number(original['attack']),
+        counterAttack: number(response['attack']),
+        natural: number(response['natural']),
+        grade: number(response['grade']),
+      )) {
+    return null;
+  }
+  return {
+    'id': 'counter-reflect:${original['id']}',
+    'counterReflectionOf': original['id'],
+    'counterAttackDamageOf': original['id'],
+    'sourceTag': response['sourceTag'],
+    'sourceName': response['sourceName'],
+    'targetTag': original['sourceTag'],
+    'targetName': original['sourceName'],
+    'scope': original['scope'],
+    'encounterId': original['encounterId'],
+    'attack': number(response['attack']),
+    'natural': 0,
+    'damage': number(original['damage']),
+    'element': original['element'] ?? 'fisico',
+    'choice': 'counter_reflection',
+    'level': number(response['level']),
+    'grade': number(response['grade']),
+    'difficulty': response['difficulty'] ?? 'normale',
+    'effects': const <Map<String, dynamic>>[],
+  };
+}
+
 int oculumFastReactionRollBonus({
   required int initiativeIndex,
   required int round,
@@ -260,6 +321,28 @@ bool oculumDefenseGrantsFreeReaction(int attack, int defense) =>
 
 bool oculumAttackIsCritical(int attack, int defense) =>
     attack > 0 && attack > defense && attack >= (defense > 0 ? defense * 2 : 2);
+
+({int defense, int damage}) oculumHighRollWear({
+  required int natural,
+  required int faces,
+  required bool hit,
+  required bool critical,
+  required bool shieldActive,
+  required String difficulty,
+  required int percentile,
+}) {
+  if (!hit || faces != 20 || natural < 18 || natural > 20) {
+    return (defense: 0, damage: 0);
+  }
+  final chance = switch (difficulty) {
+    'facile' => 10,
+    'difficile' => 35,
+    'oculum' => 50,
+    _ => 20,
+  };
+  if (shieldActive && percentile >= chance) return (defense: 0, damage: 0);
+  return (defense: natural - 17, damage: critical ? 1 : 0);
+}
 
 bool oculumManifestationConsumesOculum(int rollOutOf100) {
   if (rollOutOf100 < 0 || rollOutOf100 >= 100) {

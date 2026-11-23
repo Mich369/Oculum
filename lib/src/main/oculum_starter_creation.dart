@@ -127,6 +127,7 @@ String oculumMonsterBookSkillBaseId(String id) =>
 
 bool oculumMonsterBookSkillIsPassive(String id) {
   final base = oculumMonsterBookSkillBaseId(id);
+  if (base == oculumBunnysDeathHealSkill) return true;
   return base == 'nuvi_flight' ||
       const {
         'doppione_illness_passive',
@@ -176,6 +177,8 @@ MonsterConcreteTechnique? _activeConcreteMonsterTechnique(String id) {
 /// Natural techniques belong to Skills, including on creatures that also
 /// possess an Art. The original catalogue Art remains available for exports.
 final _naturalMonsterTechniqueIds = <String>{
+  oculumBunnysHealSkill,
+  oculumBunnysDeathHealSkill,
   'common_wolf_bite',
   'common_wolf_flank',
   'kobold_quarry_pick',
@@ -251,7 +254,12 @@ final _naturalMonsterTechniqueIds = <String>{
 };
 
 bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
-    id.startsWith(oculumMonsterProgressionPrefix)
+    monster.encounterRules[oculumEivaFamilyIdRule] ==
+        oculumPiovraSucchiasangueId
+    ? oculumPiovraNaturalSkillIds(monster).contains(id)
+    : id.startsWith(oculumMonsterProgressionPrefix) ||
+          monster.id == oculumFrutibushId ||
+          (monster.id == 'durafur' && id == 'durafur_fur_fury')
     ? true
     : id.startsWith('masked_')
     ? monsterBookConcreteTechnique(id)?.costResource != 'oculum'
@@ -284,7 +292,13 @@ bool oculumMonsterTechniqueIsNatural(MonsterBookEntry monster, String id) =>
                 oculumMonsterBookSkillBaseId(id),
               ));
 
-List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) {
+List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) =>
+    _monsterBookSkills(monster);
+
+List<CharacterSkill> _monsterBookSkills(
+  MonsterBookEntry monster, {
+  CharacterArt? catalogueArt,
+}) {
   if (oculumWitheredLarvaMonster(monster)) {
     return [
       ...oculumWitheredLarvaSkills(monster),
@@ -310,7 +324,7 @@ List<CharacterSkill> oculumMonsterBookSkills(MonsterBookEntry monster) {
         ),
     ];
   }
-  final art = oculumMonsterBookArt(monster);
+  final art = catalogueArt ?? oculumMonsterBookArt(monster);
   final ids = monsterBookUsableSkillIds(monster);
   return [
     for (var index = 0; index < min(ids.length, art.skills.length); index++)
@@ -395,7 +409,9 @@ CharacterSkillForm _naturalMonsterSkillForm({
           'rock_slime_harden' => const [0, 3, 10][form],
           _ => (monsterBookConcreteTechnique(id)?.requiredLevel ?? 0) + form * 3,
         }}',
-    costo: passive || sacrificial || noResource
+    costo: oculumMonsterBookSkillBaseId(id) == oculumBunnysHealSkill
+        ? 'Oculum pari al livello del bersaglio'
+        : passive || sacrificial || noResource
         ? 'Nessun costo'
         : '$minimum/$maximum $resourceLabel',
     costoStrutturato: OculumSkillCost(
@@ -452,9 +468,16 @@ CharacterSkillForm _naturalMonsterSkillForm({
   );
 }
 
-CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) {
+CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) =>
+    _monsterBookImportArt(monster);
+
+CharacterArt? _monsterBookImportArt(
+  MonsterBookEntry monster, {
+  CharacterArt? catalogueArt,
+}) {
   if (oculumWitheredLarvaMonster(monster)) return null;
-  final art = oculumMonsterBookArt(monster);
+  final art = catalogueArt ?? oculumMonsterBookArt(monster);
+  if (oculumIsSoulFighter(monster.id)) return art;
   if (monster.id.startsWith('pawn_guardiano')) return art;
   final ids = monsterBookUsableSkillIds(monster);
   art.skills = [
@@ -471,13 +494,20 @@ CharacterArt? oculumMonsterBookImportArt(MonsterBookEntry monster) {
 
 // Personal catalogue entries and deliberately scripted encounter kits are not
 // rerolled. In particular, Nuvì has only its natural flight.
-final _builtinMonsterLoadoutEntries = defaultMonsterBookEntries.toSet();
+final _builtinMonsterLoadoutEntries = {
+  for (final entry in defaultMonsterBookEntries) entry.id: entry,
+};
 
 bool _hasFixedMonsterLoadout(MonsterBookEntry monster) {
   final id = monster.id.split('_variante_').first;
-  return !_builtinMonsterLoadoutEntries.contains(monster) ||
+  final builtin = _builtinMonsterLoadoutEntries[monster.id];
+  return builtin == null ||
+      !listEquals(builtin.skillIds, monster.skillIds) ||
+      builtin.encounterRules['loadoutPolicy'] !=
+          monster.encounterRules['loadoutPolicy'] ||
       (monster.isNpc &&
-          monster.encounterRules['loadoutPolicy'] != 'sample_three') ||
+          (!identical(monster, builtin) ||
+              monster.encounterRules['loadoutPolicy'] != 'sample_three')) ||
       oculumMonsterHasFixedProgressionSkills(monster) ||
       id.startsWith('pawn_guardiano') ||
       id.startsWith('uomo_maschera') ||
@@ -491,18 +521,105 @@ bool _hasFixedMonsterLoadout(MonsterBookEntry monster) {
       }.contains(id);
 }
 
+bool _isGeneratedMonsterOpen(CharacterArt art) => const [
+  'Difesa totale · ',
+  'Istinto vigile · ',
+  'Assalto finale · ',
+  'Open — ',
+].any(art.openName.startsWith);
+
+Iterable<String> _authoredMonsterUltimateIds(MonsterBookEntry monster) {
+  final ids = monster.encounterRules['authoredUltimateIds'];
+  return ids is List ? ids.whereType<String>().toSet() : const [];
+}
+
+CharacterArt? _configureAuthoredMonsterOpen(CharacterArt art, String id) {
+  final technique = monsterBookConcreteTechnique(id);
+  final effects = _monsterBookGenericEffects(id)?.firstOrNull;
+  if (technique == null || effects == null || effects.isEmpty) return null;
+  final cost = technique.costResource == 'nessuna'
+      ? ''
+      : '\nCosto: ${technique.minimums.first}/${technique.maximums.first} '
+            '${oculumArtSkillCostResourceLabel(technique.costResource)}.';
+  art
+    ..openName = technique.name
+    ..openDescription =
+        'Richiede livello ${technique.requiredLevel}. Abilita ${technique.name}.'
+    ..openDescriptionEffects = [
+      OculumStructuredEffect(
+        id: 'monster_open_ultimate_$id',
+        type: 'modifica_statistica',
+        target: 'monster_open_marker',
+        valueExpression: '0',
+        mode: 'finche_attivo',
+      ),
+    ]
+    ..openSkill = '${technique.action}$cost'
+    ..openSkillType = technique.kind
+    ..openSkillEffects = effects
+    ..openSkillCooldown = OculumAbilityCooldown(
+      amount: technique.cooldowns.first,
+      startsReady: technique.startsReady,
+    )
+    ..monsterOpenSkill = true;
+  return art;
+}
+
 /// The dossier lists real alternative Opens. Each new sheet persists just
 /// the chosen Open and its separate buff, skill and cooldowns.
 List<CharacterArt> oculumMonsterBookOpenPool(
   MonsterBookEntry monster, {
   CharacterArt? primary,
+  int? level,
+  int? grade,
 }) {
   final art = primary ?? oculumMonsterBookArt(monster);
+  final authored = [
+    for (final id in _authoredMonsterUltimateIds(monster))
+      if (_configureAuthoredMonsterOpen(
+            CharacterArt(
+              nome: art.nome,
+              tipo: art.tipo,
+              descrizione: art.descrizione,
+              skills: const [],
+            ),
+            id,
+          )
+          case final CharacterArt open)
+        open,
+  ];
+  if (authored.isNotEmpty) return authored;
   if (art.openName.trim().isEmpty) return [];
   if (_hasFixedMonsterLoadout(monster)) return [art];
 
+  final baseLevel = max(0, monster.stats['level'] ?? 0);
+  final effectiveGrade = (grade ?? oculumGradeForLevel(level ?? baseLevel))
+      .clamp(0, _monsterOpenGradeEntryLevels.length - 1)
+      .toInt();
+  final effectiveLevel = max(
+    0,
+    level ?? max(baseLevel, _monsterOpenGradeEntryLevels[effectiveGrade]),
+  );
+  final requiredLevel = min(
+    effectiveLevel,
+    max(baseLevel, _monsterOpenGradeEntryLevels[effectiveGrade]),
+  );
+  final generatedOpen = _isGeneratedMonsterOpen(art);
+  final primaryOpen = generatedOpen
+      ? oculumCompleteMonsterOpen(
+          CharacterArt(
+            nome: art.nome,
+            tipo: art.tipo,
+            descrizione: art.descrizione,
+            skills: art.skills,
+          ),
+          name: monster.nameIt,
+          level: requiredLevel,
+          grade: effectiveGrade,
+        )
+      : art;
   final element = oculumNormalizeElementId(monster.elementId);
-  final guard = art.openSkillEffects.any(
+  final guard = primaryOpen.openSkillEffects.any(
     (effect) =>
         effect.enabled && const {'difesa', 'scudo'}.contains(effect.type),
   );
@@ -516,7 +633,6 @@ List<CharacterArt> oculumMonsterBookOpenPool(
               oculumNormalizeElementId(effect.elementType) == element,
         ),
   );
-  final level = monster.stats['level'] ?? 0;
   final (name, skill, effect) = switch ((guard, canAttack)) {
     (true, true) => (
       'Impeto trattenuto',
@@ -549,7 +665,7 @@ List<CharacterArt> oculumMonsterBookOpenPool(
     ),
   };
   return [
-    art,
+    primaryOpen,
     oculumCompleteMonsterOpen(
       CharacterArt(
         nome: art.nome,
@@ -558,7 +674,16 @@ List<CharacterArt> oculumMonsterBookOpenPool(
         skills: const [],
         openName: '$name · ${monster.nameIt}',
         openDescription:
-            'Richiede livello $level. ${monster.nameIt} concentra le proprie capacità.',
+            'Richiede livello $requiredLevel. ${monster.nameIt} concentra le proprie capacità.',
+        openDescriptionEffects: [
+          OculumStructuredEffect(
+            id: 'monster_open_ultimate_alt_${monster.id}',
+            type: 'modifica_statistica',
+            target: 'monster_open_marker',
+            valueExpression: '0',
+            mode: 'finche_attivo',
+          ),
+        ],
         openBuff: '+1 Volontà. Il Buff potenzia anche la Skill Open.',
         openBuffEffects: [
           OculumStructuredEffect(
@@ -572,52 +697,160 @@ List<CharacterArt> oculumMonsterBookOpenPool(
         openSkillEffects: [effect],
       ),
       name: monster.nameIt,
-      level: level,
-      grade: oculumGradeForLevel(level),
+      level: requiredLevel,
+      grade: effectiveGrade,
     ),
   ];
 }
 
-({List<CharacterSkill> skills, CharacterArt? art}) oculumMonsterBookLoadout(
+CharacterArt? oculumMonsterBookWeakOpen(
+  MonsterBookEntry monster,
+  CharacterArt primary,
+) =>
+    _hasFixedMonsterLoadout(monster) ||
+        _authoredMonsterUltimateIds(monster).isNotEmpty ||
+        monster.isBoss ||
+        monster.isMiniBoss
+    ? null
+    : oculumMonsterWeakOpen(primary);
+
+final _monsterLoadoutEffectSourcePattern = RegExp(r'^(.+)_forma_\d+_\d+$');
+
+String _monsterLoadoutSourceId(
+  Iterable<OculumStructuredEffect> effects,
+  List<String> knownIds,
+  String catalogueId,
+) {
+  final origins = <String>{
+    for (final effect in effects)
+      if (_monsterLoadoutEffectSourcePattern.firstMatch(effect.id)?.group(1)
+          case final String origin)
+        origin,
+  };
+  final matches = knownIds
+      .where((id) => origins.contains(oculumMonsterBookSkillBaseId(id)))
+      .take(2)
+      .toList();
+  // Authored/composite effects need not use generated effect IDs. The explicit
+  // catalogue ID-to-slot pairing used by the importer remains authoritative.
+  return matches.length == 1 ? matches.single : catalogueId;
+}
+
+String? _monsterLoadoutConfiguredSourceId(
+  String configuredId,
+  Iterable<String> candidateIds,
+) {
+  final ids = candidateIds.toList(growable: false);
+  if (ids.contains(configuredId)) return configuredId;
+  final canonical = oculumMonsterBookSkillBaseId(configuredId);
+  final matches = ids
+      .where((id) => oculumMonsterBookSkillBaseId(id) == canonical)
+      .take(2)
+      .toList();
+  return matches.length == 1 ? matches.single : null;
+}
+
+({List<CharacterSkill> skills, CharacterArt? art, CharacterArt? weakOpen})
+oculumMonsterBookLoadout(
   MonsterBookEntry monster, {
   required Random random,
   int? level,
+  int? grade,
 }) {
-  final natural = oculumMonsterBookSkills(monster);
-  final art = oculumMonsterBookImportArt(monster);
-  if (_hasFixedMonsterLoadout(monster)) return (skills: natural, art: art);
+  final catalogueArt = oculumWitheredLarvaMonster(monster)
+      ? null
+      : oculumMonsterBookArt(monster);
+  final natural = _monsterBookSkills(monster, catalogueArt: catalogueArt);
+  if (_hasFixedMonsterLoadout(monster)) {
+    return (
+      skills: natural,
+      art: _monsterBookImportArt(monster, catalogueArt: catalogueArt),
+      weakOpen: null,
+    );
+  }
+  final sourceIds = monsterBookUsableSkillIds(monster);
+  final sourceByArt = Map<ArtSkill, String>.identity();
+  final catalogueSkills = catalogueArt?.skills ?? const <ArtSkill>[];
+  for (
+    var index = 0;
+    index < min(sourceIds.length, catalogueSkills.length);
+    index++
+  ) {
+    final skill = catalogueSkills[index];
+    sourceByArt[skill] = _monsterLoadoutSourceId(
+      skill.effettiPerLivello.expand((effects) => effects),
+      sourceIds,
+      sourceIds[index],
+    );
+  }
+  final naturalIds = sourceIds
+      .where((id) => oculumMonsterTechniqueIsNatural(monster, id))
+      .toList();
+  final sourceByNatural = Map<CharacterSkill, String>.identity();
+  for (var index = 0; index < min(naturalIds.length, natural.length); index++) {
+    final skill = natural[index];
+    sourceByNatural[skill] = _monsterLoadoutSourceId(
+      skill.forme.expand((form) => form.effettiStrutturati),
+      sourceIds,
+      naturalIds[index],
+    );
+  }
+  final openPool = oculumMonsterBookOpenPool(
+    monster,
+    primary: catalogueArt,
+    level: level,
+    grade: grade,
+  );
+  final art = _monsterBookImportArt(monster, catalogueArt: catalogueArt);
 
+  // Internal selection keys are source IDs. Display/custom names are untouched.
   final candidates = <String, int>{};
   final multiTarget = <String>{};
+  final rolesBySkill = <String, Set<OculumCombatAbilityRole>>{};
+  final innateIds = oculumPiovraNaturalSkillIds(monster).toSet();
   bool hasMultipleTargets(Iterable<OculumStructuredEffect> effects) =>
       effects.any(
         (effect) =>
             effect.enabled &&
             (effect.maximumTargets > 1 || effect.allOpponents),
       );
-  for (final skill in natural.where((skill) => !skill.passiva)) {
+  for (final skill in natural.where(
+    (skill) => !skill.passiva && !innateIds.contains(sourceByNatural[skill]),
+  )) {
+    final sourceId = sourceByNatural[skill]!;
     final form = skill.forme.firstOrNull;
     if (form?.unlockRequirements['open'] == true) continue;
-    candidates[skill.nome] = readIntValue(form?.livello);
+    candidates[sourceId] = readIntValue(form?.livello);
+    if (form != null) {
+      rolesBySkill[sourceId] = oculumCombatAbilityRoles(
+        form.effettiStrutturati,
+        explicitType: skill.tipo,
+      );
+    }
     if (form != null && hasMultipleTargets(form.effettiStrutturati)) {
-      multiTarget.add(skill.nome);
+      multiTarget.add(sourceId);
     }
   }
   for (final skill in art?.skills ?? const <ArtSkill>[]) {
+    final sourceId = sourceByArt[skill]!;
     final requirements = skill.unlockRequirementsPerLevel.first;
     if (skill.tipoPerLivello(1).toLowerCase().contains('passiv') ||
         requirements['open'] == true) {
       continue;
     }
-    candidates[skill.nome] = readIntValue(
+    candidates[sourceId] = readIntValue(
       requirements['level'] ??
           RegExp(
             r'Richiede livello\s+(\d+)',
             caseSensitive: false,
           ).firstMatch(skill.testoEvoluzione(1))?[1],
     );
+    rolesBySkill[sourceId] = oculumCombatAbilityRoles(
+      skill.effettiEvoluzione(1),
+      explicitType: skill.tipoPerLivello(1),
+    );
     if (hasMultipleTargets(skill.effettiEvoluzione(1))) {
-      multiTarget.add(skill.nome);
+      multiTarget.add(sourceId);
     }
   }
   final atLevel = level ?? monster.stats['level'] ?? 0;
@@ -628,51 +861,92 @@ List<CharacterArt> oculumMonsterBookOpenPool(
       candidates.keys.where((name) => candidates[name]! > atLevel).toList()
         ..shuffle(random);
   final signatureId = '${monster.encounterRules['signatureSkillId'] ?? ''}';
-  final signature = monsterBookConcreteTechnique(signatureId)?.name;
-  final areaMove = eligible
-      .where((name) => name != signature && multiTarget.contains(name))
-      .firstOrNull;
+  final signature = _monsterLoadoutConfiguredSourceId(
+    signatureId,
+    candidates.keys,
+  );
+  final fixedIds = monster.encounterRules['fixedSkillIds'];
   final chosen = <String>{
     if (signature != null && candidates.containsKey(signature)) signature,
-    ?areaMove,
-    ...eligible,
-    ...future,
-  }.take(3).toSet();
+    if (fixedIds is List)
+      for (final id in fixedIds.whereType<String>().take(3))
+        if (_monsterLoadoutConfiguredSourceId(id, candidates.keys)
+            case final String sourceId)
+          sourceId,
+  };
+  final areaMove = eligible
+      .where((name) => !chosen.contains(name) && multiTarget.contains(name))
+      .firstOrNull;
+  if (areaMove != null &&
+      chosen.length < 3 &&
+      !chosen.any(
+        (name) => multiTarget.contains(name) && eligible.contains(name),
+      )) {
+    chosen.add(areaMove);
+  }
+  final availableRoles = {for (final name in eligible) ...?rolesBySkill[name]};
+  if (fixedIds is! List &&
+      availableRoles.length == OculumCombatAbilityRole.values.length &&
+      random.nextInt(4) != 0) {
+    for (final role in OculumCombatAbilityRole.values) {
+      if (chosen.any((name) => rolesBySkill[name]?.contains(role) == true)) {
+        continue;
+      }
+      final pick = eligible
+          .where(
+            (name) =>
+                !chosen.contains(name) &&
+                rolesBySkill[name]?.contains(role) == true,
+          )
+          .firstOrNull;
+      if (pick != null && chosen.length < 3) chosen.add(pick);
+    }
+  }
+  for (final name in [...eligible, ...future]) {
+    if (chosen.length == 3) break;
+    chosen.add(name);
+  }
 
   final selectedNatural = [
     for (final skill in natural)
-      if (skill.passiva || chosen.remove(skill.nome)) skill,
+      if (skill.passiva ||
+          innateIds.contains(sourceByNatural[skill]) ||
+          chosen.remove(sourceByNatural[skill]))
+        skill,
   ];
   if (art != null) {
-    // Keep authored signature Opens for encounters that rely on them. Only
-    // generic Opens are eligible for the alternative at spawn.
-    final genericOpen = const [
-      'Difesa totale · ',
-      'Istinto vigile · ',
-      'Assalto finale · ',
-    ].any(art.openName.startsWith);
-    if (genericOpen && random.nextBool()) {
-      final alternative = oculumMonsterBookOpenPool(monster).last;
+    if (openPool.isNotEmpty) {
+      final selected = _isGeneratedMonsterOpen(art)
+          ? openPool[random.nextInt(openPool.length)]
+          : openPool.first;
       art
-        ..openName = alternative.openName
-        ..openDescription = alternative.openDescription
-        ..openBuff = alternative.openBuff
-        ..openBuffEffects = alternative.openBuffEffects
-        ..openDescriptionEffects = alternative.openDescriptionEffects
-        ..openSkill = alternative.openSkill
-        ..openSkillEffects = alternative.openSkillEffects
-        ..openDescriptionCooldown = alternative.openDescriptionCooldown
-        ..openBuffCooldown = alternative.openBuffCooldown
-        ..openSkillCooldown = alternative.openSkillCooldown;
+        ..openName = selected.openName
+        ..openDescription = selected.openDescription
+        ..openDescriptionType = selected.openDescriptionType
+        ..openBuff = selected.openBuff
+        ..openBuffType = selected.openBuffType
+        ..openBuffEffects = selected.openBuffEffects
+        ..openDescriptionEffects = selected.openDescriptionEffects
+        ..openSkill = selected.openSkill
+        ..openSkillType = selected.openSkillType
+        ..openSkillEffects = selected.openSkillEffects
+        ..openDescriptionCooldown = selected.openDescriptionCooldown
+        ..openBuffCooldown = selected.openBuffCooldown
+        ..openSkillCooldown = selected.openSkillCooldown
+        ..monsterOpenSkill = selected.monsterOpenSkill;
     }
     art.skills = [
       for (final skill in art.skills)
         if (skill.tipoPerLivello(1).toLowerCase().contains('passiv') ||
-            chosen.remove(skill.nome))
+            chosen.remove(sourceByArt[skill]))
           skill,
     ];
   }
-  return (skills: selectedNatural, art: art);
+  return (
+    skills: selectedNatural,
+    art: art,
+    weakOpen: art == null ? null : oculumMonsterBookWeakOpen(monster, art),
+  );
 }
 
 /// An assortment, not three simultaneous bonuses. Existing/custom titles are
@@ -803,6 +1077,50 @@ List<OculumTitle> oculumMonsterBookTitles(MonsterBookEntry monster) {
 }
 
 CharacterArt oculumMonsterBookArt(MonsterBookEntry monster) {
+  if (oculumIsSoulFighter(monster.id)) {
+    return oculumSoulFighterArt(monster.skillIds);
+  }
+  if (monster.id == 'durafur') {
+    const bonuses = [30, 40, 60];
+    return CharacterArt(
+      nome: 'Furia del Pelo Ferrigno',
+      tipo: 'Tecnica naturale',
+      descrizione: 'Una sola tecnica. La furia aumenta i Danni per tre turni.',
+      skills: [
+        ArtSkill(
+          nome: 'Furia del Pelo Ferrigno',
+          livello: 1,
+          evo1: '+30 Danni per 3 turni.',
+          evo2: '+40 Danni per 3 turni.',
+          evo3: '+60 Danni per 3 turni.',
+          risorseCostoPerLivello: const ['nessuna', 'nessuna', 'nessuna'],
+          tipiPerLivello: const ['Supporto', 'Supporto', 'Supporto'],
+          cooldownPerLivello: [
+            for (final _ in bonuses)
+              OculumAbilityCooldown(
+                amount: 5,
+                startsReady: false,
+                initialRemaining: 2,
+              ),
+          ],
+          effettiPerLivello: [
+            for (final bonus in bonuses)
+              [
+                OculumStructuredEffect(
+                  id: 'durafur_fur_fury_$bonus',
+                  type: 'modifica_statistica',
+                  target: 'danni',
+                  valueExpression: '$bonus',
+                  recipient: 'se_stesso',
+                  mode: 'temporaneo',
+                  duration: '3',
+                ),
+              ],
+          ],
+        ),
+      ],
+    );
+  }
   final extra = monster.skillIds
       .where((id) => id.startsWith(oculumMonsterProgressionPrefix))
       .toList();
@@ -1212,6 +1530,7 @@ CharacterArt _oculumAuthoredMonsterBookArt(
         );
         skill.cooldownPerLivello[form] = OculumAbilityCooldown(
           amount: authoredTechnique.cooldowns[form],
+          startsReady: authoredTechnique.startsReady,
         );
       }
     }
@@ -1255,6 +1574,9 @@ CharacterArt _oculumAuthoredMonsterBookArt(
         cd.unit = id == 'monk_ki' ? 'sessioni' : 'azioni';
       }
     }
+  }
+  for (final id in _authoredMonsterUltimateIds(monster)) {
+    if (_configureAuthoredMonsterOpen(art, id) != null) return art;
   }
   if (oculumMonsterHasFixedProgressionSkills(monster) ||
       (skillIds != null && skillIds.isEmpty)) {
@@ -1335,7 +1657,12 @@ CharacterArt _rawMonsterBookArt(MonsterBookEntry monster, List<String> ids) =>
                       for (final turns in _activeConcreteMonsterTechnique(
                         id,
                       )!.cooldowns)
-                        OculumAbilityCooldown(amount: turns),
+                        OculumAbilityCooldown(
+                          amount: turns,
+                          startsReady: _activeConcreteMonsterTechnique(
+                            id,
+                          )!.startsReady,
+                        ),
                     ]
                   : id.startsWith('weak_horror_')
                   ? [
@@ -1803,13 +2130,20 @@ List<List<OculumStructuredEffect>>? _monsterBookBaseEffects(String id) {
               diceExpression: concrete.forms[form][index].dice,
               target: concrete.forms[form][index].target,
               valueExpression: concrete.forms[form][index].formula,
-              elementType: concrete.forms[form][index].type == 'danno'
+              elementType:
+                  concrete.forms[form][index].type == 'danno' ||
+                      concrete.forms[form][index].target ==
+                          oculumPiovraGripEffect
                   ? concrete.element
                   : '',
               mode: concrete.forms[form][index].mode,
               duration: concrete.forms[form][index].duration,
+              durationUnit: concrete.forms[form][index].durationUnit,
               recipient: concrete.forms[form][index].recipient,
               maximumTargets: concrete.forms[form][index].maximumTargets,
+              criticalOnly: concrete.forms[form][index].criticalOnly,
+              shieldDamageBonusPercent:
+                  concrete.forms[form][index].shieldDamageBonusPercent,
               appliedState: concrete.forms[form][index].type == 'stato'
                   ? concrete.forms[form][index].target
                   : '',
@@ -2049,7 +2383,8 @@ CharacterArt oculumCompleteMonsterOpen(
   required int level,
   required int grade,
 }) {
-  if (oculumBottledCloudArt(art) ||
+  if (oculumIsMonsterWeakOpen(art) ||
+      oculumBottledCloudArt(art) ||
       name.startsWith('Nuvì') ||
       name == 'Thunder Bot' ||
       art.skills.any((s) => s.nome == 'Volo naturale')) {
@@ -2174,10 +2509,26 @@ CharacterArt oculumCompleteMonsterOpen(
   return art;
 }
 
+const _monsterOpenGradeEntryLevels = [
+  0,
+  10,
+  30,
+  40,
+  50,
+  60,
+  70,
+  80,
+  90,
+  100,
+  120,
+  150,
+  200,
+];
+
 int oculumGradeForLevel(int level, {bool rebirth = false}) {
   final thresholds = rebirth
       ? const [8, 20, 30, 40, 50, 60, 70, 80, 90, 110, 130, 190]
-      : const [10, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 200];
+      : _monsterOpenGradeEntryLevels.skip(1);
   return thresholds.where((threshold) => level >= threshold).length;
 }
 

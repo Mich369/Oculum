@@ -44,6 +44,38 @@ void main() {
     expect(parts(paired, 'eyes'), hasLength(2));
   });
 
+  test('Ombra Ignota has one default weak eye and keeps Master anatomy', () {
+    final shadow = entry('ombra_ignota');
+    final eye = parts(shadow, 'eyes').single;
+    expect(eye['id'], 'eyes');
+    expect(eye['label'], 'Occhio');
+    expect(eye['weak'], isTrue);
+    final shortened = shadow.copyWith(
+      descIt: 'Figura con un solo occhio viola.',
+    );
+    expect(parts(shortened, 'eyes').single['id'], 'eyes');
+    final legacyVariant = shortened.copyWith(id: 'ombra_ignota_variante_A');
+    expect(oculumHasDefaultOmbraIgnotaEye(legacyVariant), isFalse);
+    expect(parts(legacyVariant, 'eyes').map((part) => part['id']), [
+      'eyes_1',
+      'eyes_2',
+    ]);
+    final custom = shadow.copyWith(
+      encounterRules: {
+        ...shadow.encounterRules,
+        'precisionBodyParts': [
+          {'id': 'eyes_1', 'group': 'eyes', 'label': 'Primo occhio'},
+          {'id': 'eyes_2', 'group': 'eyes', 'label': 'Secondo occhio'},
+        ],
+      },
+    );
+    expect(oculumHasDefaultOmbraIgnotaEye(custom), isFalse);
+    expect(parts(custom, 'eyes').map((part) => part['id']), [
+      'eyes_1',
+      'eyes_2',
+    ]);
+  });
+
   test('roots in the habitat are not targetable organs of an animal', () {
     for (final id in ['rascalume', 'mirula']) {
       expect(parts(entry(id), 'root'), isEmpty, reason: id);
@@ -98,5 +130,91 @@ void main() {
     final variant = fire.copyWith(id: 'fire_shield_variante_corazzata');
     expect(parts(variant, 'arms'), hasLength(2));
     expect(parts(variant, 'legs'), hasLength(2));
+  });
+
+  test('Armored Snorlo has independently targetable head, eyes and legs', () {
+    final armored = entry('snorlo_variante_corazzata');
+    expect(parts(armored, 'head').single['id'], 'head');
+    expect(parts(armored, 'eyes').map((part) => part['id']), [
+      'eyes_1',
+      'eyes_2',
+    ]);
+    expect(parts(armored, 'legs').map((part) => part['id']), [
+      'legs_1',
+      'legs_2',
+    ]);
+    expect(parts(armored, 'arms'), hasLength(4));
+    expect(parts(armored, 'joint'), hasLength(1));
+    expect(parts(entry('snorlo'), 'eyes'), isEmpty);
+  });
+
+  test('Alaryft adds individual limbs and horns to the ventral targets', () {
+    final queen = entry('habitat_demoniaco_regina_delle_gole_vulcaniche');
+    expect(queen.nameIt, 'Alakrath');
+    expect(
+      oculumMonsterNameSearchAliases(queen),
+      contains('Regina delle gole vulcaniche'),
+    );
+    final anatomy = oculumMonsterPrecisionAnatomy(queen);
+    expect(
+      anatomy.map((part) => part['id']),
+      unorderedEquals([
+        'body',
+        'eyes_1',
+        'eyes_2',
+        'wings_1',
+        'wings_2',
+        'joint',
+        'rim',
+        'legs_1',
+        'legs_2',
+        'legs_3',
+        'legs_4',
+        'horns_1',
+        'horns_2',
+      ]),
+    );
+    expect(
+      anatomy.where((part) => part['weak'] == true).map((part) => part['id']),
+      unorderedEquals(['joint', 'rim']),
+    );
+    expect(queen.hasNaturalFlight, isFalse);
+  });
+
+  test('Tryjaw has three separate heads, four legs and one tail', () {
+    final hydra = entry('idra_base');
+    expect(parts(hydra, 'head').map((part) => part['id']), [
+      'head_1',
+      'head_2',
+      'head_3',
+    ]);
+    expect(parts(hydra, 'legs'), hasLength(4));
+    expect(parts(hydra, 'tail').single['id'], 'tail');
+    expect(parts(hydra, 'body').single['id'], 'body');
+    expect(
+      oculumMonsterPrecisionAnatomy(hydra).map((part) => part['label']),
+      contains('Piega del corpo'),
+    );
+  });
+
+  test('the acid-sap spider retains its sensory node and has eight legs', () {
+    final spider = entry('habitat_foresta_elementale_ragno_della_linfa_acida');
+    expect(parts(spider, 'legs').map((part) => part['id']), [
+      for (var index = 1; index <= 8; index++) 'legs_$index',
+    ]);
+    expect(
+      oculumMonsterPrecisionAnatomy(spider).map((part) => part['label']),
+      containsAll(['Corpo', 'Testa', 'Nodo sensoriale']),
+    );
+  });
+
+  test('Necthrall is a Spirit Boss with a separate spindle', () {
+    final boss = entry(oculumNecthrallId);
+    expect(boss.nameIt, 'Necthryx');
+    expect(boss.isBoss, isTrue);
+    expect(boss.elementId, 'spirituale');
+    expect(parts(boss, 'spindle').single['id'], oculumNecthrallSpindle);
+    expect(oculumPlanarTechnique(oculumNecthrallBind)?.name, 'Necthbind');
+    expect(oculumMonsterNameSearchAliases(boss), contains('Marionettista'));
   });
 }

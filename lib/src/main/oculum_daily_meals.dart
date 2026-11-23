@@ -9,7 +9,19 @@ extension _OculumDailyMeals on _OculumHomePageState {
     _ => window,
   };
 
-  bool recordCharacterMeal({bool manual = false, bool hydrate = false}) {
+  String mealSatietyLabel(int units) => switch (units) {
+    2 => '1/3',
+    3 => '1/2',
+    4 => '2/3',
+    6 => t('Pasto intero', 'Full meal'),
+    _ => '$units/$oculumMealSatietyFull',
+  };
+
+  bool recordCharacterMeal({
+    bool manual = false,
+    bool hydrate = false,
+    int satiety = oculumMealSatietyFull,
+  }) {
     if (!automaticWorldNeedsEnabled ||
         schedaCorrente < 0 ||
         schedaCorrente >= schedePersonaggio.length ||
@@ -24,6 +36,7 @@ extension _OculumDailyMeals on _OculumHomePageState {
       now,
       manual: manual,
       canRest: !currentCombatIsActive(),
+      satiety: satiety,
     );
     if (hydrate) progress.satisfy('water', now);
     setState(() {
@@ -66,6 +79,13 @@ extension _OculumDailyMeals on _OculumHomePageState {
       if (meal.shortRest) riposoBreve(advanceWorldClock: false);
     }
     final details = [
+      if (!meal.consumed &&
+          satiety < oculumMealSatietyFull &&
+          progress.mealSatietyAt(now) > 0)
+        t(
+          'Sazietà ${mealSatietyLabel(progress.mealSatietyAt(now))} di un pasto',
+          'Satiety ${mealSatietyLabel(progress.mealSatietyAt(now))} of a meal',
+        ),
       if (window != null)
         '${mealWindowName(window)}${meal.early ? ' di domani' : ''} · '
             '${meal.early ? 1 : progress.mealsToday(now)}/2 per il fabbisogno',

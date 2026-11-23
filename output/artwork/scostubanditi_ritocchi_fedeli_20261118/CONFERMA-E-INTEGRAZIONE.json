@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "source": "author_scostubanditi_B_choice_and_targeted_hat_ink_anger_requests_followed_by_perfetto",
+  "confirmedAtUtc": "2026-11-18T20:03:15.699857+00:00",
+  "baseChoiceCallId": "call_dc2e022e3b3d4c9082fa80c0533d0652",
+  "baseSelectedSlot": "B",
+  "baseHatDerivative": "B1",
+  "userFinalReply": "perfetto",
+  "namesUnchanged": true,
+  "originalAssetsPreserved": true,
+  "desktopOnlyNoImplicitMobileOrRelicApproval": true,
+  "noGameplayChanges": true,
+  "assets": [
+    {
+      "id": "scostubanditi",
+      "asset": "assets/oculum/home_art_authored/theme_scostubanditi_canon_20261118_ink_b1.webp",
+      "sha256": "a451ac43991d5cf3642d8126b47cf0d6657c292eebd9a438aea54ae54c242a7d",
+      "source": "output/artwork/scostubanditi_ritocchi_fedeli_20261118/scostubanditi_B1.webp"
+    },
+    {
+      "id": "scostubandito_errato",
+      "asset": "assets/oculum/home_art_authored/theme_scostubandito_errato_canon_20261118_ink_i1.webp",
+      "sha256": "0665d3134d808af1ce6663e2cc80edf648888438f58789f4ad7c7e1b5b2c5d0b",
+      "source": "output/artwork/scostubanditi_ritocchi_fedeli_20261118/scostubandito_errato_I1.webp"
+    },
+    {
+      "id": "scostubandito_veterano_errato",
+      "asset": "assets/oculum/home_art_authored/theme_scostubandito_veterano_errato_canon_20261118_ink_i1.webp",
+      "sha256": "6cebae5505b15111972498fdd56b373aa8f6bb07a7efa96f6ef8fcefe6b00f9d",
+      "source": "output/artwork/scostubanditi_ritocchi_fedeli_20261118/scostubandito_veterano_errato_I1.webp"
+    }
+  ],
+  "testsPending": false,
+  "newPackagesPending": true,
+  "verification": {
+    "themeAndLayoutTests": 20,
+    "testLog": "build/qa-20261118/SCOSTUBANDITI-INK-TEST.log",
+    "analysis": "No issues found",
+    "analysisLog": "build/qa-20261118/SCOSTUBANDITI-INK-ANALYZE.log",
+    "newPackages": "pending",
+    "native": "pending"
+  }
+}

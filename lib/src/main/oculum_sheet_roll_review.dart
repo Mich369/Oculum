@@ -100,6 +100,15 @@ extension _OculumSheetRollReview on _OculumHomePageState {
       chainedFate: chainedFateExperienceMultiplier() > 1,
       reservedFortune: reservedFortune,
     )..fortuneWasSpent = fortuneAlreadyUsed;
+    if (natural == 1 && faces > 1 && currentCombatIsActive() &&
+        rebirthCriticalAvailable && current()) {
+      if (consumeRebirthCritical()) {
+        _replaceSheetRoll(review, faces);
+        review.note = t('Rebirth: critico positivo (100%).', 'Rebirth: positive critical (100%).');
+        await forzaSalvataggioImmediato(soloLocale: true);
+        return current() ? review.result : null;
+      }
+    }
     if (_sheetRollOptions(review).isEmpty) return review.result;
     sheetRollReview = review;
     notifyDiceResultChanged();
@@ -116,8 +125,11 @@ extension _OculumSheetRollReview on _OculumHomePageState {
   }
 
   Set<OculumRollRescue> _sheetRollOptions(_SheetRollReview review) {
-    if (!review.isCurrent() || !canSpendMagicalLuckAt(schedaCorrente)) {
+    if (!review.isCurrent()) {
       return {};
+    }
+    if (!canSpendMagicalLuckAt(schedaCorrente)) {
+      return {if (review.natural == 1 && rebirthCriticalAvailable) OculumRollRescue.rebirth};
     }
     final availableFortune = _sheetRollFortune(review);
     return oculumRollRescueOptions(
@@ -133,6 +145,7 @@ extension _OculumSheetRollReview on _OculumHomePageState {
       pactAvailable: !identityIsChaos && !fatePactUsed,
       inspirationUsed: review.inspirationUsed,
       chainedFate: review.chainedFate,
+      rebirthAvailable: rebirthCriticalAvailable,
     );
   }
 
@@ -165,6 +178,7 @@ extension _OculumSheetRollReview on _OculumHomePageState {
     OculumRollRescue.oculum => inspirationLabelForType('oculum'),
     OculumRollRescue.fortune => t('Fortuna magica', 'Magical Luck'),
     OculumRollRescue.pact => t('Patto del Fato', 'Pact with Fate'),
+    OculumRollRescue.rebirth => t('Rebirth · positivo 100%', 'Rebirth · positive 100%'),
   };
 
   int _sheetRollReplacement(_SheetRollReview review, {bool critical = false}) {
@@ -198,6 +212,9 @@ extension _OculumSheetRollReview on _OculumHomePageState {
     var keepsRoll = false;
     try {
       switch (choice) {
+        case OculumRollRescue.rebirth:
+          if (review.natural != 1 || !consumeRebirthCritical()) return;
+          _replaceSheetRoll(review, review.faces);
         case OculumRollRescue.base:
         case OculumRollRescue.superInspiration:
         case OculumRollRescue.oculum:

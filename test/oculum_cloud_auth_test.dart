@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/services/oculum_auth_service.dart';
+import 'package:oculum/services/oculum_auth_ui.dart';
 import 'package:oculum/services/oculum_cloud_save_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FakeAuthBackend implements OculumAuthBackend {
   final _events = StreamController<OculumBackendAuthEvent>.broadcast();
@@ -35,6 +38,8 @@ class _FakeAuthBackend implements OculumAuthBackend {
     _events.add(event);
   }
 
+  void emitError(Object error) => _events.addError(error);
+
   @override
   Future<void> signOut() async {
     signOutCount++;
@@ -53,6 +58,8 @@ class _FakeEmailBackend extends _FakeAuthBackend
   String? email;
   String? password;
   String? resetEmail;
+  Completer<void>? passwordUpdate;
+  int passwordUpdates = 0;
   @override
   Future<void> signInAnonymously() async {
     user = const OculumBackendUser(
@@ -83,6 +90,8 @@ class _FakeEmailBackend extends _FakeAuthBackend
 
   @override
   Future<void> setPassword(String password) async {
+    passwordUpdates++;
+    await passwordUpdate?.future;
     this.password = password;
   }
 
@@ -102,6 +111,17 @@ class _FakeEmailBackend extends _FakeAuthBackend
       id: linkGuest ? 'protected-guest' : 'email-account',
       provider: 'email',
     );
+  }
+}
+
+class _FakeGoogleLinkBackend extends _FakeAuthBackend
+    implements OculumIdentityLinkBackend {
+  int linkCount = 0;
+
+  @override
+  Future<bool> linkGoogle({required String redirectTo}) async {
+    linkCount++;
+    return true;
   }
 }
 
@@ -187,11 +207,136 @@ void main() {
     await backend.close();
   });
 
+  test('recupero legato al profilo e completabile una sola volta', () async {
+    const account = OculumBackendUser(id: 'account', provider: 'email');
+    const other = OculumBackendUser(id: 'other', provider: 'email');
+    const recovery = OculumBackendAuthEventType.passwordRecovery;
+    final backend = _FakeEmailBackend()..user = account;
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    addTearDown(backend.close);
+    addTearDown(auth.dispose);
+    await auth.initialize();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('test-local-save', '{"level":7}');
+    expect(
+      await auth.completePasswordRecovery(account.id, 'password-1'),
+      false,
+    );
+    backend.emit(const OculumBackendAuthEvent(recovery, user: account));
+    await pumpEventQueue();
+    expect(auth.passwordRecovery.value, account.id);
+    expect(await auth.completePasswordRecovery(other.id, 'password-1'), false);
+    expect(await auth.completePasswordRecovery(account.id, 'short'), false);
+    expect(auth.passwordRecovery.value, account.id);
+    backend.passwordUpdate = Completer<void>();
+    final update = auth.completePasswordRecovery(account.id, 'password-1');
+    expect(
+      await auth.completePasswordRecovery(account.id, 'password-2'),
+      false,
+    );
+    auth.dismissPasswordRecovery();
+    expect(auth.passwordRecovery.value, account.id);
+    backend.passwordUpdate!.complete();
+    expect(await update, true);
+    expect(auth.passwordRecovery.value, isNull);
+    expect(backend.passwordUpdates, 1);
+    expect(backend.password, 'password-1');
+    expect(prefs.getString('test-local-save'), '{"level":7}');
+
+    backend.emit(const OculumBackendAuthEvent(recovery, user: account));
+    await pumpEventQueue();
+    backend.emit(
+      const OculumBackendAuthEvent(
+        OculumBackendAuthEventType.signedIn,
+        user: other,
+      ),
+    );
+    await pumpEventQueue();
+    expect(auth.passwordRecovery.value, isNull);
+    expect(
+      await auth.completePasswordRecovery(account.id, 'password-3'),
+      false,
+    );
+    expect(backend.passwordUpdates, 1);
+  });
+
+  testWidgets('il link di recupero apre il dialogo dalla pagina corrente', (
+    tester,
+  ) async {
+    const account = OculumBackendUser(id: 'account', provider: 'email');
+    final backend = _FakeEmailBackend();
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    addTearDown(backend.close);
+    addTearDown(auth.dispose);
+    await tester.runAsync(auth.initialize);
+    final navigatorKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navigatorKey,
+        theme: ThemeData(splashFactory: InkRipple.splashFactory),
+        builder: (context, child) => OculumPasswordRecoveryHost(
+          auth: auth,
+          navigatorKey: navigatorKey,
+          child: child!,
+        ),
+        home: const Scaffold(body: Text('Scheda locale')),
+      ),
+    );
+    expect(find.text('Reimposta password'), findsNothing);
+    backend.emitError(
+      const AuthException(
+        'Expired',
+        statusCode: 'otp_expired',
+        code: 'access_denied',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(OculumAuthService.invalidAuthLinkMessage), findsOneWidget);
+    expect(find.text('Reimposta password'), findsNothing);
+    ScaffoldMessenger.of(
+      tester.element(find.text('Scheda locale')),
+    ).removeCurrentSnackBar();
+    await tester.runAsync(() async {
+      backend.emit(
+        const OculumBackendAuthEvent(
+          OculumBackendAuthEventType.passwordRecovery,
+          user: account,
+        ),
+      );
+      await pumpEventQueue();
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('Reimposta password'), findsOneWidget);
+    final fields = find.byType(TextField);
+    final save = find.text('Aggiorna password');
+    await tester.enterText(fields.at(0), 'password-1');
+    await tester.enterText(fields.at(1), 'password-2');
+    await tester.tap(save);
+    await tester.pump();
+    expect(find.text('Le password devono coincidere.'), findsOneWidget);
+    expect(backend.passwordUpdates, 0);
+    await tester.enterText(fields.at(1), 'password-1');
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(find.text('Reimposta password'), findsNothing);
+    expect(find.text('Password aggiornata.'), findsOneWidget);
+    expect(find.text('Scheda locale'), findsOneWidget);
+    expect(backend.passwordUpdates, 1);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   test(
     'mantieni accesso falso non conserva sessioni né token aggiornati',
     () async {
       final storage = OculumSessionStorage(
         persistSessionKey: 'test-auth-token',
+        useBrowserStorage: true,
       );
       await storage.initialize();
       await storage.persistSession('synthetic-session');
@@ -273,6 +418,53 @@ void main() {
     expect(await auth.signInWithGoogle(), isFalse);
     expect(backend.launchCount, 0);
     expect(auth.state.errorMessage, contains('prossimamente'));
+    auth.dispose();
+    await backend.close();
+  });
+
+  test(
+    'callback web conserva il percorso esatto e scarta codice e fragment',
+    () {
+      final page = Uri.parse(
+        'https://mich369.github.io/Oculum/?code=old#ignored',
+      );
+      expect(oculumWebAuthRedirect(page), 'https://mich369.github.io/Oculum/');
+      expect(
+        oculumWebAuthRedirect(Uri.parse('http://localhost:8080/?code=old')),
+        'http://localhost:8080/',
+      );
+    },
+  );
+
+  test('Collega Google conserva UUID e salvataggio del profilo', () async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('oculum-local-fixture', 'existing sheets');
+    final backend = _FakeGoogleLinkBackend()
+      ..user = const OculumBackendUser(id: 'original-id', provider: 'email');
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    await auth.initialize();
+    expect(await auth.linkGoogle(), isTrue);
+    expect(backend.linkCount, 1);
+    expect(backend.launchCount, 0);
+    backend.emit(
+      const OculumBackendAuthEvent(
+        OculumBackendAuthEventType.userUpdated,
+        user: OculumBackendUser(
+          id: 'original-id',
+          provider: 'email',
+          identityProviders: {'email', 'google'},
+        ),
+      ),
+    );
+    await pumpEventQueue();
+    expect(auth.state.userId, 'original-id');
+    expect(auth.hasGoogleIdentity, isTrue);
+    expect(auth.canLinkGoogle, isFalse);
+    await auth.signOut();
+    expect(prefs.getString('oculum-local-fixture'), 'existing sheets');
     auth.dispose();
     await backend.close();
   });

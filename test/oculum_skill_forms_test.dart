@@ -149,6 +149,22 @@ void main() {
     expect(restored.forme[4].buff, '@Difesa+1 Cenere');
   });
 
+  test('L’attivazione gratuita della forma Skill sopravvive al JSON', () {
+    final skill = CharacterSkill.fromJson({
+      'nome': 'Passo d’ombra',
+      'tipo': 'Difesa',
+      'forme': [
+        {'nome': 'Passo', 'azioneGratuita': true, 'costo': '2 Materia'},
+      ],
+    });
+    expect(skill.forme.single.azioneGratuita, isTrue);
+    expect(skill.forme.single.costo, '2 Materia');
+
+    final restored = CharacterSkill.fromJson(skill.toJson());
+    expect(restored.forme.single.azioneGratuita, isTrue);
+    expect(restored.forme.single.costo, '2 Materia');
+  });
+
   test('Forma 1 non duplica i vecchi campi nei comandi @', () {
     final skill = CharacterSkill.fromJson({
       'nome': 'Focus',

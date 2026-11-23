@@ -23,18 +23,18 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
             );
           }
         }
+        final versionIdentity = oculumVersionLogIdentity(oculumSourceCommit);
         final prefs = await _prefs().timeout(const Duration(seconds: 3));
-        if (!mounted ||
-            !oculumShouldShowVersionLog(prefs, oculumSourceCommit)) {
+        if (!mounted || !oculumShouldShowVersionLog(prefs, versionIdentity)) {
           return;
         }
         final text = await rootBundle
             .loadString(oculumCumulativeLogAsset)
             .timeout(const Duration(seconds: 3));
         if (!mounted) return;
-        await oculumRememberVersionLog(prefs, oculumSourceCommit);
+        await oculumRememberVersionLog(prefs, versionIdentity);
         if (!mounted) return;
-        await oculumShowVersionLogDialog(context, text, oculumSourceCommit);
+        await oculumShowVersionLogDialog(context, text, versionIdentity);
       } catch (_) {
         // Offline local startup must remain usable even if preferences or an
         // optional notice asset cannot be read. Saves are never modified here.
@@ -85,6 +85,7 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       : 'Oculum-Android';
 
   Future<void> checkOculumUpdateAutomatically() async {
+    if (oculumSmokeStorageActive) return;
     if (!mounted ||
         oculumSourceCommit.isEmpty ||
         oculumUpdateBusy ||
@@ -137,6 +138,7 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
   }
 
   Future<void> checkAndInstallOculumUpdate() async {
+    if (oculumSmokeStorageActive) return;
     if (oculumUpdateBusy) return;
 
     setState(() => oculumUpdateBusy = true);

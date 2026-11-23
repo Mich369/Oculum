@@ -1,9 +1,243 @@
 # Registro cumulativo per i giocatori
 
+## Nemici feriti nel Fight Creator — 23 novembre 2026
+
+- Ogni nuovo nemico generato nel Creator ha il 20% di probabilità di nascere con il 25–75% della Vita massima, arrotondata per eccesso e almeno 1. Ogni creatura ha una sola estrazione, conservata nel salvataggio. Alleati e schede esistenti restano invariati; Scudi e statistiche non vengono ridotti. La Vita resta modificabile dalla scheda.
+- Corretto l’errore durante la chiusura dell’editor delle Schivate Oculum extra aperto con il tasto destro. Le cariche già consumate restano registrate.
+
+- La Mappa degli Occhi collega chi ha dato il colpo finale alla vittima con un occhio dei morti quando il Fight conferma la morte. I nodi della mappa crescono con la Potenza totale di chi la consulta.
+- La scheda EXP ora descrive l’Allenamento non letale del Fight Creator. La ricompensa arriva alla chiusura o alla fuga e usa la somma delle Potenze valide dei nemici morti o a terra. Il primo allenamento dopo un Riposo Lungo dà +150 EXP. Una Difesa nemica entro 6 punti dai propri Danni dà altri +100 EXP.
+- La protezione non letale segue la stanza di allenamento del bersaglio, anche per i colpi ricevuti online.
+
+- Una pagina acquistata nel Monster Book Party mostra anche la Potenza base della creatura al Livello 0, senza i punti di Livello e Grado.
+
+- Tutti i partecipanti alla turnistica hanno un ritratto esagonale con bordo del colore della squadra. Per i mostri senza ritratto dedicato, il ritaglio usa il loro sfondo e mette in evidenza il volto o un dettaglio riconoscibile; cliccandolo si apre l’immagine completa. Nome e immagine si scoprono incontrando la creatura in un Fight, e le informazioni del Monster Book si accumulano con le scoperte.
+- Nella scheda, un unico pulsante apre le tre Ispirazioni con spiegazioni, Fortuna magica sotto e Patto del Fato a fianco. L’editor delle Skill consente di impostare l’attivazione gratuita su forme di qualsiasi tipo, conservando costi, requisiti ed effetti. La pagina acquistabile della Corruzione è nel Mercato Nero.
+- Le forme Skill si possono impostare come Azione gratuita: non consumano Azione o Reazione, ma rispettano i costi e le condizioni che le bloccano.
+
+- Un colpo a d20 che infligge danno con naturale 18, 19 o 20 riduce la Difesa del bersaglio di 1, 2 o 3. Un critico aggiunge −1 Danni. Se c’è uno Scudo attivo, le probabilità sono 10% in Facile, 20% in Normale, 35% in Difficile e 50% in Oculum. Si recupera al Riposo Breve o Lungo.
+
+- Clic o tocco sulla miniatura per ingrandire l’immagine di un mostro. Il Player la sblocca al primo Fight in cui lo incontra o con l’acquisto della sua pagina. Il Mercato Nero propone fino a sei pagine per rifornimento.
+- Fai doppio tocco per ingrandire o ripristinare ritratti e immagini dei mostri. Puoi spostare l’immagine ingrandita, usare due dita oppure la rotellina del mouse.
+
+- Il Fight Creator genera da 1 a 10 creature per volta dalla proposta scelta. Ogni creatura ha una scheda e delle skill proprie e conta separatamente nella Potenza della squadra.
+
+- Le Skill d’attacco equipaggiate senza durata si disattivano dopo l’uso. I bonus preparati si applicano al prossimo singolo attacco. Le durate esplicite, le passive e i cooldown continuano a funzionare.
+
+- Il pulsante «Fight Creator · Prepara uno scontro» apre direttamente il menu dalla prima schermata Master. Il Monster Book del Master mostra le miniature degli sfondi disponibili. Se una variante usa lo sfondo della famiglia, la miniatura riporta «Forma base».
+
+- Iride cesellata usa lo sfondo C «Pennello secco selettivo». Conserva il cristallo viola, i pendenti e la sala originale nella resa a inchiostro.
+
+- Kingi usa lo sfondo F di Postea, con tecnologia runica incassata tra telaio e corazza e senza fate. Echynrel usa la tavola E1 con entrambe le zampe anteriori possenti.
+
+- Completate le scelte della galleria da 253 schede. Il nuovo export aggiorna 114 nomi del Bestiario e conserva 68 nomi scelti. Chronoreth resta il nome della scheda storica dell’Osservatore del Tempo nella galleria. Il Bestiario mantiene i nomi precedenti nella ricerca e rispetta i nomi personalizzati.
+
+- Dieci nomi del Bestiario scelti in galleria: Talparel, Gecuprkren, Cyrketh, Faldelryn, Toxyriel, Fulgeryx, Ruinyryx, Talpobreth, Lapyrith e Tegylryn. Tryasmorem e Umacenerys Errante mantengono il nome scelto. La ricerca riconosce anche i nomi precedenti e le schede personalizzate conservano i propri nomi.
+
+- Corretto il Fight Creator online: preparare una bozza non la pubblica automaticamente. Anche le nuove schede restano riservate dopo salvataggio e riconnessione; il Master le condivide con «Pubblica Fight». Gli altri scontri conservano la pubblicazione automatica.
+
+- Fight Creator riservato al Master: selezione di schede, confronto delle Potenze individuali e sommate, più squadre e suggerimenti nell’area scelta. Livello e statistiche dei mostri si impostano prima della creazione; il riepilogo usa poi i valori della scheda. La bozza resta privata e la conferma prepara un nuovo scontro senza avviarlo né sostituire quello precedente.
+
+- Scostubanditi: adottata la B scelta con cappello sagomato per le orecchie. I due Errati conservano posa, scena, armi e nomi degli originali nel nuovo tratto a inchiostro; il non Veterano è più arrabbiato. Nessuna modifica alle capacità o alle statistiche.
+
+- Altri tre nomi approvati: Lapysrieth (Medusa dei fulmini lenti), Pustryth (Ragno Putrido Corazzato) e Florel (Serpe dei Fiori Notturni). Restano immagini, ID, alias precedenti e nomi personali salvati.
+
+- Il Controattacco difensivo riuscito può rimandare anche il colpo nemico: naturale 20 ai Gradi 0–1, 19–20 ai Gradi 2–3, e così via ogni due Gradi. Il rimando conserva l'elemento originale e usa separatamente le normali protezioni nemiche; viene escluso se rigenererebbe Vita al nemico. La soglia non cambia la riuscita del confronto.
+
+- Nel Deserto Divoratore il wormhole porta tutto il party nella stessa dimensione segreta con un unico tiro Fortuna, conservato insieme alla destinazione nei dati della campagna. Il Master gestisce il passaggio condiviso.
+
+- La Foglia di Cuorverde è Non comune nello shop e cura la parte scelta; senza Vita separata della parte, recupera un quarto della Vita massima per eccesso più il livello del bersaglio. Non ricrea arti mancanti.
+- Il Deserto Divoratore ha terreno azzurro tagliente: il pannello del luogo prepara 1d12 Taglio per cadute o contatto diretto, con normali protezioni. Camminare non infligge Danni. I deserti ordinari restano nel Regno Mezzano; Orea Zalira include creature buffe di forme varie e sferiche.
+
+- Nove consumabili naturali: foglie curative, cristalli per condizioni e recupero, ali di Eiva costose. Il Frammento di Ala di Asher concede i bonus fino al Riposo Lungo e converte l’Oculum non posseduto in Volontà e Materia. Uso con Azione oppure Reazione.
+- Gli sfondi verticali centrano il soggetto conservando la copertura della pagina. Le righe di scelta della creatura negli Occhi dei Caduti mostrano un’immagine riconoscibile; il corpo dell’Occhio eredita tema e aspetto della creatura di origine.
+
+- Sfondo continuo su tutta la pagina, compresi nome e menu della scheda; cornici nei margini, senza incrociare testi e barre.
+- Lost Town bassa e alta restano nel Regno Mezzano anche nello shop; il cambio piano conserva le scorte cittadine.
+- GranScostumato Empatico D e Silvarkrath F con zampa posteriore destra corretta, senza rinomine o nuove capacità.
+
+## Rebirth, nomi fantasy e GranScostumato — 18 novembre 2026
+
+- Rebirth mostra un avviso di conferma e riporta il personaggio al livello 0. Il nuovo ciclo conserva il livello e l’EXP precedenti nella cronologia.
+- Ogni tiro che assegna EXP alle barre di crescita riceve +12% per il Rebirthato che tira e +15% per ogni altro membro effettivo Rebirthato del party. Cloni ed evocazioni temporanee sono esclusi; le frazioni restano nel salvataggio. Il bonus non altera l’EXP manuale né le ricompense di fine Fight.
+- I Rebirthati hanno una conversione giornaliera del critico negativo in positivo al 100%, secondo il giorno della campagna. Il primo critico negativo nel Fight usa la carica disponibile; può essere usata anche dopo un critico negativo fuori dal Fight.
+- Dopo Rebirth, EXP da mostri ×1,9 per le prime ceil(5 × livello precedente ÷ 10) uccisioni valide: al livello 25 sono 13. Conta solo un mostro con Potenza totale superiore alla propria, anche se lo uccide un alleato; gli altri non consumano il contatore.
+- Quarantanove nomi revisionati sono collegati agli ID originali. I nomi precedenti restano ricercabili e le etichette personali salvate si conservano.
+- GranScostumato usa la G approvata: roditore della famiglia Scostubanditi molto muscoloso, cannone retto con una sola mano e forte prospettiva verso chi guarda. La descrizione segue il nuovo aspetto; il nome resta invariato. La tavola resta intera anche sulle finestre alte.
+- Scostubanditi e Forest Demon Baby/adulto, con le rispettive varianti, sono esclusi dalle nuove rinomine. Per gli altri le nuove proposte fantasy hanno da 4 a 9 lettere.
+
+- Editor effetti: menu e nomi lunghi rispettano la larghezza disponibile anche sul telefono, senza modificare i dati.
+- Il caricamento dei temi evita cornici inutilizzate e copie duplicate delle immagini; qualità e funzioni restano le stesse.
+- Le abilità omonime vengono scelte tramite identità sorgente; il Monster Book descrive correttamente Furia del Pelo Ferrigno e le capacità del Combattente dell’Anima.
+- Corretto il tipo tecnico di Polline vigile di Frutibush nell’editor degli effetti: il bonus resta su Iniziativa, con valori, durata, costi e recupero invariati.
+## Quaranta sfondi approvati e dieci nomi — 18 novembre 2026
+
+- Trenta sfondi dei temi adottano le tavole scelte in Expressive Ink: ventotto pacchetti e due scene Home. Mantengono le rispettive identità, palette e impostazioni personalizzate; le immagini di accesso conservano le scene dedicate.
+- Dieci creature usano gli sfondi approvati: Dulcycrust B, Oblyravyn B, Vyridblade G, Quadrilame G, Vagafloss A, Ventyscute G, Runycrick G, Cynyscarn F, Senza Volto Errante H ed Ensypuppet C con l’occhio della spada corretto in viola. Gli ID e i nomi precedenti restano ricercabili; i nomi personalizzati già salvati si conservano.
+- Runycrick ha sei zampe e due ali mirabili singolarmente, oltre ai bersagli già presenti. Le anatomie personalizzate delle schede restano conservate.
+- Il Reliquiario dei sussurri è ritirato dal catalogo: non può essere assegnato o acquistato di nuovo, anche dal Master. Le schede che lo usavano continuano a essere leggibili senza riscriverne i dati.
+- Le scelte desktop non approvano implicitamente nuove tavole per telefono, reliquie o cornici. Sui temi senza scena per telefono dedicata resta il normale uso dello sfondo desktop. Palette, trasparenze, scelta tema e artwork personalizzati restano modificabili.
+
+
+
 ## Distribuzione pubblica e squadre — 17 novembre
 
 - Corretto un errore di tipo durante l’aggiornamento dei partecipanti alle squadre Fight, che interrompeva combattimenti e apertura di alcune schede.
 - I download pubblici e il menu web includono anche Android App Bundle, catture di verifica dell’interfaccia e rapporti dei mostri. Windows normale e Windows Test conservano pacchetti e cartelle runtime separati.
+
+## Dieci scelte illustrate — 17 novembre 2026, giro 1233
+
+- Nove sfondi del Bestiario: Abrasyweb B, Funeryshroud A, Scoryrex A, Mirusclaust A, Gabli delle Caverne G, Vibryclaw A, Nymboscyte B, Umbracrown F e Mirusfulgur A. Gli ID e i nomi precedenti restano compatibili e ricercabili.
+- La sola variante rituale Mirusclaust torna fra i mostri creabili dopo la scelta della tavola; la base e gli altri ritirati rimangono esclusi.
+- La Soglia della Sutura A è selezionabile fra le immagini Home. È un ambiente del Regno di Carne Viva, senza nuove creature, statistiche o palette.
+- Le scelte riguardano gli sfondi desktop mostrati. Salvataggi, nomi personalizzati del Master, anatomie e meccaniche restano conservati; telefono e reliquie non ricevono approvazioni implicite.
+
+- I ruoli narrativi restano presenti anche nelle voci aggiunte dopo la composizione del catalogo. I Forest Demon Errati conservano il comportamento solitario; le descrizioni private del Master restano intatte.
+
+- Anche una nuova build locale dello stesso commit mostra il registro una sola volta quando cambiano i sorgenti, senza condividere lo stato del messaggio fra Windows normale e Windows Test.
+
+## Movimento delle schede chiuse
+
+- Accelerato usa la difficoltà salvata sulla scheda interessata, con Normale per i salvataggi che ne sono privi. Afferrato blocca il Movimento anche sulle schede precedenti prive di un totale salvato. Azzeramento conserva la propria deroga.
+
+## Sei sfondi in Expressive Ink
+
+- I tre temi principali Classic Oculum, Classic RPG e Classic low detail usano la tavola B «Ombre d’inchiostro». Polaryscale, Imbrywing ed Echynspark usano la E «Dettagli localizzati». Le impostazioni personali dei temi restano modificabili.
+
+## Dieci tavole di Expressive Ink
+
+- Approvati dieci sfondi desktop. Visfunycord B, Vistynbell G, Foedryx A, Visporym F, Fimbraglow H, Clibanfang G, Voultyfist G, Vaguspike A, Toxyvitta F, Echynspark F. Le voci mantengono i propri ID e i nomi precedenti restano ricercabili.
+
+## Movimento ai primi livelli
+
+- Il Movimento base di PG, NPC e mostri parte al 55% al livello 0, sale al 70% al livello 1 e all’85% al livello 2, e raggiunge il 100% dal livello 3. Bonus, malus, condizioni e ferite si applicano dopo.
+
+## Nuove tavole e un ritiro dal Bestiario — 17 novembre
+
+- Il Rospo Marshmallow conserva il nome e usa la tavola G. Il Drago della notte polare Veterana si chiama Polaryscale e usa la H. La Volpe di gelatina Veterana si chiama Visgel e usa la F. Il Rospo della pioggia obliqua si chiama Imbrywing e usa la H. Il Gatto Ciotola Corazzata si chiama Bowlyward e usa la G.
+- Il Fabbro Senza Lingua e le sue varianti sono ritirati dal Bestiario per i nuovi incontri. Le schede già salvate possono ancora usare la voce e le sue personalizzazioni.
+
+## Quattro scelte del Bestiario — 17 novembre
+
+- Serracapo dei mosaici Denti di rame diventa Cuprosajur e usa la tavola F. La Medusa dei fulmini lenti diventa Lapysurge e usa la G. Il Granchio delle Cappelle di Gelo diventa Gelycarapace e usa la H. Il Ragno Putrido Corazzata diventa Pustrysilk e usa la F. I nomi precedenti restano ricercabili.
+
+## Sette sfondi del Bestiario — 17 novembre
+
+- Sette sfondi stock in Expressive Ink riprendono le pose già approvate con la resa del Re Goblin G. Lumin Gommoso Corazzata B, Forisplit B, Venemuk C, Tessyfin C, Cindercoil C, Navysnare C e Melysting C.
+
+## Riallineamento dei temi del Bestiario — 16 novembre
+
+- Otto temi stock adottano il nuovo inchiostro ispirato al Re Goblin. Faldavela A, Balena Dai Mille Occhi B, Octocruor C, Nyvowl C, Tryjaw C, Cloudtusk B, Lapyorbit B e Armadillo della Sabbia B. I nomi, le parti mirabili e le personalizzazioni delle schede conservano i valori esistenti.
+- Il Ragno Putrido diventa Venemuk, adotta la tavola F e ha otto occhi mirabili singolarmente. Il Diverso Spaccaporte Corazzata diventa Forisplit e usa la tavola G. I nomi precedenti restano ricercabili.
+- La Medusa di confettura usa il nuovo tema «Risalita sulla crosta» nel Regno Caramella.
+- Il Tassello delle cupole del Regno Sommerso si chiama Tessyfin e usa la tavola G «La rovesciata nella cupola». Il nome precedente resta ricercabile.
+- La Mantide della Vampa si chiama Ignytis e usa la tavola C «Ombra sul pavimento di scorie». Resta ricercabile con il nome precedente.
+- La Graga Rana Azzurra Corazzata si chiama Gragaloryx e usa la tavola G «Atterraggio sotto il tronco». Il nome precedente resta ricercabile.
+- La Lince di brina verde Corazzata si chiama Vyridfrost e usa la tavola G «In agguato dietro la lastra di brina». Il nome precedente resta ricercabile.
+- La Regina delle miniere mute Rituale si chiama Tacyantel, usa la tavola G «Riflesso nel pozzo cieco» e ha sei zampe mirabili singolarmente. Il nome precedente resta ricercabile.
+- Strana Presenza usa la nuova tavola F «Slancio nel cunicolo».
+- Lumin Gommoso Corazzata usa la H «La tana d’archivio». La Falena del sudario Veterana diventa Funerwing e usa la G «Dal pozzo funebre». Il Mostricciattolo di Carta Rituale diventa Mirusfold e usa la F «Giù dal gradino». I nomi precedenti restano ricercabili.
+- Lo Scarabeo dei contratti ardenti diventa Pactycarapace e adotta la C «Fra due crepe». Il Gigante di sabbia usa la F «Avanzata fra le gradinate».
+- I sette nuovi sfondi conservano l’inquadratura quando il desktop viene usato anche su un telefono. Il Gigante di sabbia usa sul telefono la sua tavola verticale.
+- Se il fuoco amico porta una scheda a 0 Vita, uno Stato di Forza automatico non la rialza nello stesso passaggio. Le cure seguono le regole esistenti.
+- In un Fight gestito dal Master sullo stesso dispositivo, Azzeramento delle vulnerabilità e Tenacia liberano anche dalla Presa di Octocruor quando rimuovono «Afferrato». Il danno già risolto e la cura che ne deriva si registrano normalmente.
+- Nelle stanze online la Presa di Octocruor usa i Riflessi della preda e applica danno e cura anche quando il giocatore remoto ha aperto un’altra scheda.
+
+## Anymareap e scelte del Bestiario — 15 novembre
+
+- Il tema di Senka usa la tavola C «Sotto le radici» con il passante dai capelli argentati, lo sfondo A su telefono e la nuova reliquia della maschera a due occhi. Equipaggiare la maschera con il tema Senka attivo mostra Ombra Mascherata A.
+- Le Guardie Solari comune ed Elité usano la tavola C. Il Guardiano usa C1, accovacciato con l’arco e le due frecce. Nel Bestiario si può mirare al fianco sotto lo scudo, alla giuntura interna del gomito dell’Elité e alla giuntura posteriore del ginocchio del Guardiano. Anche le visiere sono mirabili.
+- L’inchiostro dei nuovi temi si usa anche negli effetti. Gli Scudi che cedono si frantumano in schegge con bordi scuri e riflessi opachi. Un colpo alla Vita lascia tre tagli scuri, con quello centrale più lungo, e gocce che scendono ai lati. Il bordo bordeaux diventa più profondo tra il 60% e il 70% di Vita massima persa. Cure, risorse, potenziamenti e condizioni usano accenti a pennello differenziati.
+- Le animazioni di impatto e delle risorse occupano tutto lo schermo sopra la navigazione e le finestre. I pulsanti continuano a ricevere i tocchi.
+- Le sfere del Mercato aprono le botteghe degli altri giocatori e permettono di cambiare il proprio nome Online e colore RGB/HEX. Il Master autenticato ha una bottega privata e può ridurre il prezzo delle offerte o di una vendita conclusa. In quest’ultimo caso il gioco restituisce al compratore la sola differenza.
+- Il Mercante accetta più oggetti in baratto fuori dalle zone solari. Puoi prendere il resto in Obser o spendere parte del credito su un secondo articolo scontato del 15%. Se il credito non compra un secondo articolo, si aggiunge al resto lo sconto sul primo secondo difficoltà. In Oculum è 0–2% a sorte. Per un articolo già scontato dal Master il valore è fisso 0/3/6/9% da Oculum a Facile. Chi è del Fato ottiene un punto di Fortuna per ogni 9 Obser lasciati di mancia.
+- Nei selettori di Skill, oggetti e mostri si può cercare una parte del nome. Per esempio «demon» trova Forest Demon dopo i nomi che corrispondono esattamente o iniziano con Demon.
+- La ricerca riconosce termini affini per i nomi dei proiettili nelle Skill, nel catalogo oggetti e nel Monster Book. Per queste ricerche dà precedenza ai risultati degli elementi della scheda aperta.
+- Aggiornati i temi desktop di Ferryfur, Glayswuolf, Bunnys, Visbunnys, Fatomhol, Forest Demon Errato, Sensimoss, Dolyfern, Acuagoblin Predatore e Acuagoblin Curioso. Durafèr, Bunnys Veterana, Ciclope del Fato e Sciamano Malizioso restano ricercabili con le grafie precedenti.
+- Caro Ossis rituale si chiama Karnyrattle e usa la tavola F. Silvarkrath conserva il nome e usa la tavola A.
+- Lorica Gleaner usa la tavola E. L’Ammasso pustoloso diventa Ossyblayn e usa D. I nomi precedenti restano ricercabili.
+- Il Fustigatore rituale adotta il nome Miruslash e l’Arcangelo Errante Vagarwyngh. Entrambi usano la tavola E. Vagarwyngh ha due ali mirabili dopo l’esiliazione dell’Ala Nera. Flagellum Vow e Ordinwing Wingstray restano ricercabili.
+- La Bandita Veterana usa la tavola C, sul ponte sotto la pioggia. La grafia precedente Bandito Veterana resta ricercabile.
+- L’Arpia Veterana diventa Ventyclaw e usa la tavola D in volo di traverso. La Larva di Lava Corazzata diventa Syntermoltys e usa la tavola E fra due pareti. I nomi precedenti restano ricercabili.
+- Il Golem Runico Veterano diventa Viscuprum e usa la tavola F, che mostra il nucleo dietro le piastre infrante. In combattimento il nucleo diventa mirabile dopo la rottura delle piastre.
+- L’Armadillo di Cristallo usa la tavola C «Annusa la vena». L’Armadillo della Sabbia usa la C «Ventre tra le rocce». Il ventre di entrambi è mirabile nella forma aperta.
+- Nell’editor del Bestiario, cambiare elemento aggiorna le resistenze ereditate e conserva quelle personalizzate. Il campo «Resistenze personalizzate» consente di intervenire sui singoli elementi. Corretto anche un errore alla chiusura dell’editor.
+- Grofix usa la tavola F «Stretto nella faglia» in Expressive Ink su desktop. Su telefono resta la composizione approvata in precedenza.
+- L’Armadillo di Legno usa la tavola A «Sotto le radici». Snorlo Corazzata usa la tavola G «Cancello divelto», distinta dallo sfondo dello Snorlo base.
+- Divoramitù usa la tavola F «Scatto sul pendio», Distruttor Caramella la B «Spadone sollevato» e Baby Rock Rhino la E «Il sasso presso l’acqua».
+- In Snorlo Corazzata si possono colpire separatamente testa, ogni occhio e ciascuna delle due gambe, oltre alle quattro braccia, al corpo e alla giuntura.
+- Divoramitù Elité e l’Aberrazione Intermedia Angelica adottano la tavola F dei rispettivi lotti. Baby Rock Rhino Veterana diventa Visrhyno e adotta la tavola D «Guardia sulla terrazza». Anche il nome precedente rimane ricercabile.
+- Baby Rock Rhino, RockRhyno intermedio e Visrhyno hanno un corno e quattro zampe mirabili separatamente. A inizio Fight ottengono Scudo normale pari al 25% della Vita massima, arrotondato per eccesso. Quando quello Scudo si rompe, il nucleo diventa mirabile. La pergamena rara di Petryguard insegna la Passiva dello Scudo. Può uscire al tiro del bottino con il 6%, 9% e 12% rispettivamente.
+- RockRhyno usa lo sfondo desktop G1 «Carica frontale nel salto», con il corno puntato verso chi guarda.
+- La Regina delle gole vulcaniche diventa Alaryft e usa la tavola G «Discesa sulla fenditura». Si possono mirare separatamente le quattro zampe uncinate e ciascun corno. Restano mirabili gli occhi, le ali e la giuntura ventrale con il suo bordo.
+- La Troll Veterana adotta il nome Visbark e la tavola D2 con il volto rivisto. Il nome precedente resta ricercabile.
+- Ombra Ignota mantiene il nome e usa la tavola B «Mano sul mosaico». Il Gufo di Neve Blu diventa Nyvowl e usa la D «Decollo nella gola». Si trova anche con il nome precedente.
+- L’Ombra Ignota ha un solo occhio nel selettore di Precisione anche con descrizioni abbreviate. Se il salvataggio conteneva i due vecchi bersagli, l’occhio conserva la ferita più grave e gli indizi restano validi. Le anatomie personalizzate del Master conservano le loro parti.
+- Durante L’Ombra un colpo Fisico viene annullato prima di intaccare gli Scudi o la Vita dell’Ombra Ignota.
+- Durante L’Ombra puoi mirare direttamente all’occhio dell’Ombra Ignota con Precisione usando qualunque attacco non fisico già ammesso.
+- Il Costrutto Minore evocato non genera bottino. Il tiro Drop degli esemplari ordinari può ancora assegnare la pergamena.
+- L’Idra adotta il nome Tryjaw e la tavola G «La svolta nel fossato». Sono mirabili separatamente tre teste, quattro zampe e una coda. Cloudtusk usa la C «Virata sopra il burrone».
+- Il Cuore di Lava Corazzato diventa Ignyshell e usa la tavola E «Nucleo sul baratro». Il Ragno della linfa acida usa la E «Tra le foglie dall’alto». Si possono mirare tutte e otto le sue zampe singolarmente.
+- Il Meccanio Malconcio Errante diventa Vaghyuil e usa «Alla leva». Il Navigatore dell’Aria conserva il nome e usa la G «La fenditura dei venti».
+- Necthrall è una Marionettista di classe Boss e di elemento Spirituale. Con un’Azione tenta il controllo di un nemico, che può resistere con Volontà. Il controllo dura fino al turno successivo del Boss o alla rottura del fuso. In Difesa può spendere la Reazione della marionetta per ottenere +3 CM.
+- I vincitori ottengono il Legame di Necthrall. Con Aiuta compagno conta una sola volta il bonus più alto tra chi tira e chi ha contribuito, da +1 a +12 in base al livello. Il Master può anche assegnarlo dal catalogo Skill.
+- Dodici nuovi sfondi desktop in Expressive Ink. Necthrall G, Mammuth in decomposizione G, Ossyfling G, Mirusforge F, Gelyfang A e Aurybone F2. Pawn F, Pinepine D, Visvapyr C, Demone Glaciale Minore F, Umbraskulk G e Snorlo C.
+- I nomi precedenti di Ossyfling, Mirusforge, Gelyfang, Aurybone, Visvapyr e Umbraskulk sono ricercabili nel Bestiario. Aurybone ha due ali spiegate nella nuova illustrazione, con la destra ridimensionata in prospettiva.
+- Sygilscyel B, Sempre verde G e Imbrytoad H hanno i nuovi temi desktop. Scarabeo del Sigillo Ardente e Rospo delle Gronde Marce restano ricercabili con i nomi precedenti.
+- Cervydew F, Delyrmoth G e Lapyorbit G hanno i nuovi temi desktop e restano ricercabili con i nomi precedenti. Lapyorbit ha due braccia mirabili separatamente oltre a Corpo e Nucleo.
+- Pesce Mutato usa il tema desktop G. Medusa del Vetro Blu usa il tema desktop F. Entrambi conservano il nome.
+- Le statistiche base di un Occhio dei Caduti si aggiornano con quelle del proprietario. I margini massimi sono +3 Comune, +6 Non comune e +9 Raro, su ciascuna statistica. Un Occhio Oculum usa i valori reali. I bonus di rarità si applicano a parte.
+- Imbrytoad espone due sacche golari mirabili singolarmente fra la dichiarazione di Sputo delle gronde e il lancio. Gli avversari possono reagire prima che si sgonfino.
+- Nel Regno Sommerso si vive e si respira nell’Eiva. Dal pannello del regno puoi scegliere la Barriera del Corallo Cavo e la Selva delle Fronde d’Eiva, con scene in Expressive Ink. La scelta si salva nella scheda.
+- Pysciwarden e Constacuas sono due nuovi pesci umanoidi d’Acqua del Regno Sommerso. Pysciwarden usa Canalstryke con la lancia di canna e la tavola G. Constacuas stringe le placche con Valvaguard per aumentare la Difesa e usa la tavola H. Vedetta dei Canali e Custode della Chiusa restano ricercabili.
+- Il Bestiario del Regno Sommerso comprende 20 nuove famiglie ostili, ognuna con una forma base e due varianti elementali. Le 60 voci si possono cercare nel catalogo. Alcune hanno armi e parti mirabili proprie.
+- Nuovi temi desktop scelti per Balena Dai Mille Occhi D, Dentysnap G, Luxryf G, Undathread F e Faldavela A. I nomi precedenti restano ricercabili. La Balena ha 20 occhi mirabili separatamente e Dentysnap ha due branchie mirabili separatamente.
+- La Piovra succhiasangue adotta il nome Octocruor e la tavola D «A guardia della volta». Il Palmatore dei nastri adotta il nome Pynnasway e la tavola G «Occhi dal crepaccio». Anche i nomi precedenti restano ricercabili.
+- Nel catalogo il Predone delle Nasse diventa Predone del Boomerang. La sua Art Orbita del Boomerang riduce i Danni ricevuti di 12 in mischia e di 6 a distanza per le tre Azioni successive del Predone. I colpi subiti e le Reazioni non consumano queste Azioni.
+- Il nome definitivo del Predone è Falxfin. Usa la tavola G1 «Vedetta sopra la cupola», con spada corta, guanto d’arme e Lama Orbita. I nomi precedenti restano ricercabili.
+- Il Serracapo dei mosaici adotta il nome Malleysaw e la tavola G «Il tondo delle maree». Il Vortice delle Arcate diventa Corallwhirl e usa la tavola F «Agguato della chiusa». Anche i nomi precedenti restano ricercabili.
+- Corallwhirl ha Scatto delle Tre Maree. Usa fino al triplo del Movimento, attraversa gli avversari e aggiunge i metri percorsi alla quota di Danni base di ciascuno. Infligge +120% agli Scudi e sceglie per ogni bersaglio l’elemento meno resistito fra Acqua e Contundente.
+- Il bottino raro del Predone include Lama Orbita, spada corta da +3 Danni e guanto d’arme da +3 Danni, +4 Difesa e +10 Scudo. Spada e guanto possono portare una tecnica del Predone. Le sue tecniche si trovano anche come pergamene. In inventario, la Lama Orbita usa il campo Affinità.
+- La Lama Orbita si lancia con un’Azione o una Reazione e recupera in 5 turni personali. Riusa lo stesso tiro sui bersagli dell’area con difficoltà crescente e acquista +10 Affinità una volta per giro riuscito. Con 1 naturale fino a 60 Affinità, cade a terra dopo il primo giro. A contatto la raccogli con un’Azione in Fight o gratis fuori.
+- Octocruor ha Morso e Presa fissi, oltre a tre Skill Art da un pool di nove. Nella Presa il bonus applicato per agganciare vale anche nel tiro opposto a chi si libera. Il Master può usare la Presa con le schede che controlla dallo stesso dispositivo.
+- L’installer Windows controlla PowerShell prima del download. Se serve `pwsh`, lo segnala prima di creare le cartelle di preparazione.
+- Necthbind usa i costi e il recupero della forma salvata anche dal pulsante rapido del Fight. Annullare la scelta o confermare un bersaglio che nel frattempo è stato sostituito lascia intatte le risorse.
+- Nelle campagne locali, un alleato può usare la Pietra della Resurrezione per riportare in vita una creatura al 50% della Vita massima, arrotondato per eccesso. La finestra è di 18/18/9/3 ore di campagna da Facile a Oculum. Nel Fight costa un’Azione. Il Mercato Nero estrae il prezzo base da 120 a 160 Obser e l’Alchimista da 160 a 250, una volta per negozio.
+- I mostri senza scheda con una morte registrata possono essere resuscitati da un alleato anche dopo la fine del Fight, entro la finestra. Tornano nel gruppo d’origine fuori dal combattimento.
+- Tutti i tipi di ali si possono ritirare gratuitamente. Se una forma ha durata e CD, il ritiro volontario riduce il CD della durata rimasta. Le due ali dell’Aberrazione Intermedia Angelica sono mirabili mentre sono esposte.
+- Sunwalker diventa Aurystride e usa la tavola D «Arresto con mano a terra». Le due braccia e le due gambe sono mirabili. I punti deboli restano il torace e la giuntura.
+- I pulsanti lasciano intravedere un po’ di più lo sfondo a riposo. Le scritte e le icone restano piene e il menu della scheda si illumina gradualmente in 1,3 secondi.
+- Sanguifeng e Aculotide usano la tavola G. Il Custode della Campana Cieca si chiama Vesanybel e usa la tavola H. Il nome precedente resta ricercabile. Vesanybel e la Veterana hanno una campana di metallo al posto della testa e nessun occhio mirabile.
+- Il Master può usare PC e telefono nella stessa stanza online con lo stesso account Google. Da entrambi può cambiare il turno del Fight condiviso e usare i comandi rapidi disponibili sui partecipanti. Il secondo dispositivo sincronizza le modifiche con il principale.
+- La Fata Cacciatrice usa il nome Ventybleyd e la tavola F. Il Crostaceo corazzato usa il nome Karyklaw e la tavola B. Negli incontri di viaggio il generatore conserva l’inventario del catalogo e i valori base dei mostri anche quando il catalogo usa il formato statistico storico.
+- Aggiunti i Forest Demon Errati. La famiglia li rinnega e negli incontri di viaggio combattono da soli. A parità di livello, la potenza sale dal Baby comune al Baby Errato, poi all’adulto comune e all’Errato adulto. Il Forest Demon adulto usa il tema G «Ruggito sulle gradinate».
+- Aggiornati i temi del Baby Forest Demon, di Sonorays e di Cynerveil. Sonoreye, Cynervail e Cinervail restano ricercabili.
+- Le tavole G del lotto a inchiostro diventano i temi di Ferrumhol, Osycleiv, Rubrymhol, Dyurahyd, Umbracryp e Nuptayd. Nebulyveil usa la tavola H del Forest Demon Blu. La ricerca conserva anche i nomi precedenti.
+- La Combattente dell’Anima Elité eredita le Art della Normale e ottiene Anymareap. Con un’Azione il teschio ripartisce i Danni base spirituali tra uno, due o tre nemici distinti. Il costo iniziale è 4 Oculum e il recupero è di 4 turni personali. Le schede Elité precedenti ricevono l’Art senza perdere le personalizzazioni.
+- Confermate cinque tavole del lotto 04. Ratygrinh usa G, Acuagoblin Territoriale usa E, Oblyvuard e Lignoryt usano B, Lunavyr conserva H. I nomi precedenti restano ricercabili.
+- Nella creazione dei mostri del Master, una descrizione breve del Bestiario compare sotto ciascun nome. Il selettore carica le righe mentre scorri.
+
+## Sfere, mercanti e Monster Book — 14 novembre
+
+- L’Alchimista può offrire le pergamene elementali I–III e la Sfera Predatrice I–V. Ogni pergamena usa la forma riportata sull’oggetto e costa solo un’Azione. Le Sfere elementali apprese spendono 3/6/12 Oculum, o 3/5/9 Materia per chi non possiede Oculum, con recuperi di 3/4/5 turni personali.
+- Logorato Acido applica danno e usura dello Scudo nel tempo. Recuperare almeno un punto di Vita arresta l’effetto. Il congelamento di Gelo blocca il Movimento e le risorse del turno. Chi è congelato può liberarsi con Volontà o con il proprio Fuoco o Lava. Chi dispone di Fuoco o Lava può anche scegliere «Colpisci il ghiaccio» e spendere un’Azione per liberare un alleato congelato, senza tiro né danni.
+- Nel Fight sulle schede controllate localmente, la Sfera Spirituale rende inerme il corpo e concede al lanciatore un solo attacco gratuito contro quel bersaglio, utilizzabile finché dura l’effetto. Annullare la preparazione conserva l’opportunità.
+- A Vaitern si possono scambiare i frammenti del Simbolo della Luna per 60 Obser ciascuno oppure usarli per pagare un acquisto. Il rincaro del Mercante di Lost Town è del 25%.
+- Gli override del Monster Book si salvano nella campagna. Riaprire, importare o annullare modifiche a una scheda conserva il catalogo della campagna. I valori di Resistenza del catalogo si applicano finché la scheda non li personalizza.
+
+## Bestiario e porzioni dei pasti — 14 novembre
+
+- Il Master può completare il nome di un mostro in un ID con Tab o la lente. Con un refuso o più corrispondenze può scegliere dalle alternative. Il Monster Book Party ricerca i nomi già identificati.
+- Nel catalogo di assegnazione del Master, cerca le Skill per nome, alias in italiano o inglese e grafie simili. I dettagli delle forme dei mostri vengono preparati quando si apre la Skill. Il catalogo degli oggetti riusa i calcoli di materiali e ricette.
+- I mostri ordinari con Open generiche ne ricevono una tra le due candidate per Grado. La variante debole delle Open compatibili si sblocca al livello 3. Parte dal 25% degli effetti numerici e cresce del 10% di quel valore per Grado. I corredi speciali conservano i propri limiti.
+- Re Goblin, Oculiath, Oculiath Maggiore, Osservatore del Sole, Sanguifang, Combattente dell’Anima, Sonoreye e Topo Mutante hanno tecniche proprie. Il Topo Mutante può tenere in campo più richiami e ciascun topolino scompare dopo il primo morso. Bunnys vola con le orecchie e ha due cure distinte.
+- Aculotide può distribuire tre spine perforanti su avversari diversi o concentrarle su uno solo. Con Guizzo può alzarsi fino a 2 metri fino al proprio turno successivo. Alla morte confermata colpisce con uno scoppio d’Acqua chi lo ha colpito in mischia nel turno. L’Oculiath base ha un solo uncino colpibile.
+- L’Oculiath base può afferrare e trasportare un bersaglio con l’uncino in un Fight gestito dal Master con entrambe le schede disponibili localmente. Frutibush vola, cura gli alleati e può distribuire fino a 3, 6 o 12 Foglie Lama.
+- L’Oculiath minore ha il 60% della Vita derivata dalla Resilienza del base e aggiunge 2/6/20 Danni a 16/25/30 metri. Può trasportare un bersaglio con l’uncino. Il Maggiore perde il raggio del singolo occhio distrutto. Il Minore usa la tavola D dell’acquedotto e il Maggiore la G in avorio e vermiglione.
+- La Terramaul ha integrità propria. Frutibush continua a volare se perde la piega del corpo. La Combattente dell’Anima normale e l’Elité hanno temi distinti.
+- Aggiornato lo sfondo del Re Goblin, con la tavola in cui poggia un piede sul masso. Aggiunto lo sfondo del Frutibush volante.
+- Lo sfondo della scheda è visibile dietro la barra laterale. I pulsanti diventano gradualmente più opachi in 1,3 secondi al passaggio del mouse.
+- Si possono combinare porzioni di cibi diversi per completare un pasto. La sazietà si modifica nell’inventario. I buff dei singoli cibi si applicano al consumo e le regole del pasto scattano al completamento.
 
 ## Skill, prestazioni e spazio — 14 novembre
 

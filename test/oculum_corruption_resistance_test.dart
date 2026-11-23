@@ -4,6 +4,103 @@ import 'package:oculum/main.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  testWidgets('Memoria di Sé blocks Red Corruption from every ingress', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(1440, 900),
+    );
+    final probe = OculumPerformanceProbe(state);
+    state.datiCaricati = false;
+    final protectedSheet = probe.snapshot()
+      ..['id'] = 'ProtectedOcu:3690FD5G'
+      ..['sheetTag'] = 'ProtectedOcu:3690FD5G';
+    state.schedePersonaggio
+      ..clear()
+      ..add(protectedSheet);
+    state.schedaCorrente = 0;
+    probe.load(protectedSheet);
+    final protectedTag = probe.currentTag();
+    final redEffect = OculumStructuredEffect(
+      type: 'stato',
+      appliedState: 'corruzione',
+      valueExpression: '1',
+      resource: 'corruption_red',
+    );
+
+    probe.applyEffects([redEffect]);
+    final original = probe.conditions.singleWhere(
+      (condition) => condition.conditionType == 'corruzione',
+    );
+    expect(original.metadata['corruptionKind'], 'rossa');
+    expect(original.durationType, OculumConditionDurationType.permanent);
+    probe.addCondition('memoria_di_se');
+    expect(
+      probe.applyEffects([redEffect]).join(' '),
+      contains('Memoria di Sé'),
+    );
+    expect(probe.conditions, contains(original));
+
+    final saved = probe.snapshot();
+    final conditions = (saved['conditions'] as List)
+        .whereType<Map>()
+        .where((condition) => condition['conditionType'] != 'corruzione')
+        .toList();
+    saved['conditions'] = conditions;
+    probe.load(saved);
+    expect(
+      probe.conditions
+          .singleWhere(
+            (condition) => condition.conditionType == 'memoria_di_se',
+          )
+          .durationType,
+      OculumConditionDurationType.permanent,
+    );
+    final requests = state.onlineCombatRequests as Map;
+    for (final kind in ['red', 'rossa']) {
+      probe.queueCorruption(
+        targetTag: protectedTag,
+        sourceLevel: 0,
+        sourceTotal: 25,
+        requestId: 'blocked-$kind',
+        corruptionKind: kind,
+      );
+      expect(requests['blocked-$kind']['status'], 'resolved');
+      expect(requests['blocked-$kind']['infected'], isFalse);
+      expect(requests['blocked-$kind']['roll'], 0);
+    }
+    expect(probe.conditions.any((c) => c.conditionType == 'corruzione'), false);
+
+    final inactive = <String, dynamic>{
+      ...saved,
+      'id': 'InactiveOcu:3690FD5H',
+      'sheetTag': 'InactiveOcu:3690FD5H',
+    };
+    state.schedePersonaggio.add(inactive);
+    probe.queueCorruption(
+      targetTag: 'InactiveOcu:3690FD5H',
+      sourceLevel: 0,
+      sourceTotal: 25,
+      requestId: 'blocked-inactive',
+      corruptionKind: 'rossa',
+    );
+    expect(requests['blocked-inactive']['blockedByMemoryOfSelf'], isTrue);
+    expect(inactive['conditions'], same(conditions));
+
+    probe.applyEffects([
+      OculumStructuredEffect(
+        type: 'stato',
+        appliedState: 'corruzione',
+        valueExpression: '1',
+      ),
+    ]);
+    expect(probe.conditions.any((c) => c.conditionType == 'corruzione'), true);
+    probe.cancelPendingSave();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets(
     'Mastery counts only full hits per source, survives JSON and resets each attempt',
     (tester) async {

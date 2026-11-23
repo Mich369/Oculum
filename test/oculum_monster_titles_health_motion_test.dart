@@ -6,26 +6,44 @@ import 'package:oculum/widgets/oculum_resource_bar_fx.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
 
 void main() {
-  test('only authored no-Art exceptions may spawn without techniques', () {
-    for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
-      final count =
-          oculumMonsterBookSkills(monster).length +
-          (oculumMonsterBookImportArt(monster)?.skills.length ?? 0);
-      if (count == 0) {
-        expect(
-          monster.formTags.contains('Creatura Minore') ||
-              const {
-                'demonietto_bruciante',
-                'demonietto_del_gelo',
-                'coboldo_di_brina',
-              }.contains(monster.id.split('_variante_').first),
-          isTrue,
-          reason: monster.id,
-        );
-        expect(monster.skillIds, isEmpty, reason: monster.id);
+  test(
+    'only authored exceptions or documented deferred kits lack techniques',
+    () {
+      for (final monster in defaultMonsterBookEntries.where((m) => !m.isNpc)) {
+        final count =
+            oculumMonsterBookSkills(monster).length +
+            (oculumMonsterBookImportArt(monster)?.skills.length ?? 0);
+        if (monster.id == 'sensimoss') {
+          // The private team reading and map line of sight are still deferred:
+          // docs/DA_FARE_PATCH_E_SUCCESSIVI.md, Sensimoss entry of 14 November.
+          // Keep its authored Oculum/Art eligibility; do not invent a generic Art
+          // or classify the species as permanently without one to satisfy this
+          // catalogue-wide invariant. The isolated reading has its own tests.
+          expect(monster.encounterRules['authoredCanonical'], isTrue);
+          expect(monster.generationSide, 'neutral');
+          expect(oculumMonsterHasOculumArt(monster), isTrue);
+          expect(oculumMonsterHasFixedProgressionSkills(monster), isTrue);
+          expect(monster.skillIds, isEmpty);
+          expect(count, 0);
+          expect(oculumMonsterBookImportArt(monster), isNull);
+          continue;
+        }
+        if (count == 0) {
+          expect(
+            monster.formTags.contains('Creatura Minore') ||
+                const {
+                  'demonietto_bruciante',
+                  'demonietto_del_gelo',
+                  'coboldo_di_brina',
+                }.contains(monster.id.split('_variante_').first),
+            isTrue,
+            reason: monster.id,
+          );
+          expect(monster.skillIds, isEmpty, reason: monster.id);
+        }
       }
-    }
-  });
+    },
+  );
   test('Chaos wanderers receive editable titles with real trade-offs', () {
     final monster = monsterById('ghoul_errante')!;
     final pool = oculumMonsterBookTitles(monster);

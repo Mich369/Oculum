@@ -5,6 +5,63 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  testWidgets('the Sunken Realm areas show their art and restore per sheet', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(1440, 900),
+    );
+    final probe = OculumPerformanceProbe(state);
+    probe.saveSheet();
+    final original = Map<String, dynamic>.from(
+      state.schedePersonaggio[0] as Map,
+    )..['selectedPlaneId'] = 'affogato';
+    state.schedePersonaggio[0] = original;
+    probe.load(original);
+    await tester.pumpAndSettle();
+
+    Future<void> openAreas() async {
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('current_realm_indicator')),
+          matching: find.byType(IconButton),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Esplora il Regno Sommerso').last);
+      await tester.pumpAndSettle();
+    }
+
+    await openAreas();
+    expect(
+      find.textContaining('interamente immerso nell’Eiva'),
+      findsOneWidget,
+    );
+    final coral = find.widgetWithText(ChoiceChip, 'Barriera del Corallo Cavo');
+    final plants = find.widgetWithText(ChoiceChip, 'Selva delle Fronde d’Eiva');
+    expect(tester.widget<ChoiceChip>(coral).selected, isFalse);
+    await tester.tap(coral);
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Barriera del Corallo Cavo'), findsWidgets);
+    await tester.tap(plants);
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Selva delle Fronde d’Eiva'), findsWidgets);
+
+    Navigator.of(tester.element(find.byType(AlertDialog).last)).pop();
+    await tester.pumpAndSettle();
+    probe.saveSheet();
+    final saved = Map<String, dynamic>.from(state.schedePersonaggio[0] as Map);
+    expect(saved['selectedPlaneId'], 'affogato');
+    expect((saved['planarRuntime'] as Map)['affogatoAreaId'], 'fronde_eiva');
+    probe.load(saved);
+    await openAreas();
+    expect(tester.widget<ChoiceChip>(plants).selected, isTrue);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets(
     'defensive help rewards the owner once, including failed protection',
     (tester) async {

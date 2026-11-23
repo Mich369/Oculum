@@ -29,6 +29,24 @@ void main() {
   );
   tearDown(resetMonsterBookEntries);
 
+  test('the retired smith is hidden from new encounters and resolves saves', () {
+    const base = 'fabbro_senza_lingua';
+    final saved = [
+      oculumSavedMonsterBookEntryById(base)!,
+      oculumSavedMonsterBookEntryById('${base}_variante_veterana')!,
+    ];
+    configureMonsterBookEntries(
+      customEntries: [saved.first.copyWith(stats: {'resilienza': 41})],
+    );
+    for (final entry in saved) {
+      expect(defaultMonsterBookEntries.any((m) => m.id == entry.id), isFalse);
+      expect(monsterBookEntries.any((m) => m.id == entry.id), isFalse);
+      expect(monsterById(entry.id), isNull);
+      expect(oculumSavedMonsterBookEntryById(entry.id)?.id, entry.id);
+    }
+    expect(oculumSavedMonsterBookEntryById(base)!.stats['resilienza'], 41);
+  });
+
   test(
     'lot retirements preserve selected forms and saved encounter sources',
     () {

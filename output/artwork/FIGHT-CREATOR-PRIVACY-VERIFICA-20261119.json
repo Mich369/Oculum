@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "atUtc": "2026-11-19T01:50:38.783477+00:00",
+  "status": "source_verified_packages_pending",
+  "fix": "persistent Master-only Creator drafts and generated sheets; explicit Publish Fight releases them",
+  "priorAffectedCommit": "61f55552aa1f36c273361004f61768ee0f683308",
+  "reproducedBeforeFix": "build/qa-20261119/CREATOR-PRIVACY-RED.log",
+  "tests": 50,
+  "testLog": "build/qa-20261119/CREATOR-PRIVACY-FINAL-TEST.log",
+  "analysisLog": "build/qa-20261119/CREATOR-PRIVACY-ANALYZE.log",
+  "newRegressionCases": 4,
+  "connectedTestBoundary": "production app sender functions with a connected authoritative Master transport spy; no live room or database",
+  "existingPublicEncounterBothStatesTested": true,
+  "campaignSerializationAndReconnectResetTested": true,
+  "newSheetBeforeEncounterProtected": true,
+  "explicitPublicationTested": true,
+  "ordinaryAutoPublicationTested": true,
+  "newSignedApkProduced": false,
+  "publicPublication": false,
+  "customizationNotes": "output/artwork/FIGHT-CREATOR-COSA-PUOI-MODIFICARE.md"
+}

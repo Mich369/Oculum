@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/oculum_monster_theme.dart' show oculumMonsterArtworkAsset;
+import '../widgets/oculum_theme_availability.dart';
 import 'oculum_dungeon/monster_book.dart';
 import 'oculum_dungeon/run_evolution.dart';
 import 'oculum_dungeon/fallen_companion.dart';
@@ -25134,7 +25135,9 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
     for (final raw in widget.availableThemeUnlocks) {
       final id = '${raw['id'] ?? ''}'.trim();
-      if (id.isEmpty || !seen.add(id)) continue;
+      if (id.isEmpty || !oculumIsThemeSelectable(id) || !seen.add(id)) {
+        continue;
+      }
       final colorRaw = raw['color'];
       result.add(
         _DungeonThemeUnlockDef(
@@ -25147,7 +25150,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
 
     for (final theme in _themeUnlocks) {
-      if (!seen.add(theme.id)) continue;
+      if (!oculumIsThemeSelectable(theme.id) || !seen.add(theme.id)) continue;
       result.add(theme);
     }
 
@@ -25250,6 +25253,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
   }
 
   void unlockSpecificThemeWithSpent(_DungeonThemeUnlockDef theme) {
+    if (!oculumIsThemeSelectable(theme.id)) return;
     setState(() {
       if (isDungeonThemeUnlocked(theme.id)) {
         textIt = 'Tema gia sbloccato: ${theme.nameIt}.';
@@ -25542,7 +25546,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
 
   void notifyThemeUnlockForAchievement(String id) {
     final presetId = themePresetForAchievement(id);
-    if (presetId == null) return;
+    if (presetId == null || !oculumIsThemeSelectable(presetId)) return;
     widget.onThemeUnlocked?.call(presetId);
   }
 
@@ -25554,6 +25558,7 @@ class _OculumDungeonGameDialogState extends State<OculumDungeonGameDialog> {
     }
     presets.addAll(unlockedThemePresetIds);
     for (final presetId in presets) {
+      if (!oculumIsThemeSelectable(presetId)) continue;
       widget.onThemeUnlocked?.call(presetId);
     }
   }

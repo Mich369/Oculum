@@ -198,8 +198,8 @@ void main() {
       (tester) async {
         final (state, p, _) = await _mount(tester);
         final sheet = state.schedePersonaggio[state.schedaCorrente] as Map;
-        // Measure team resistance independently of the random half-Life
-        // awakening, which can restore Life after the incoming hit.
+        // The independent 50% Life awakening can restore Life after the hit.
+        // This test measures team resistance before verifying non-lethal KO.
         sheet['partialAwakeningHalfHpTriggered'] = true;
         final runtime = sheet['planarRuntime'] as Map;
         runtime['identityFateChaos'] = 'Fato';
@@ -254,6 +254,7 @@ void main() {
               'with damage ${first['damage']} and receipt $receipt. '
               'Recent log: ${(state.logEventi as List).take(12).toList()}',
         );
+        state.statoForzaPronto = true;
         final lethal = _receiveAttack(
           state,
           p,
@@ -268,6 +269,7 @@ void main() {
         expect(state.currentHpController.text, '0');
         expect(state.personaggioCaduto, true);
         expect(state.feriteMorte, 0);
+        expect(state.statoForzaPronto, true);
         expect(
           state.schedePersonaggio[state.schedaCorrente]['friendlyFireDowned'],
           true,

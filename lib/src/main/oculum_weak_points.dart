@@ -118,7 +118,11 @@ extension _OculumWeakPoints on _OculumHomePageState {
     }
     // Knowing a purchased page does not open the Guardian's intact chest.
     return !(oculumLunarGuardianCoreMonsterIds.contains(id) ||
-            const {'costrutto_minore', 'nuvola_in_bottiglia'}.contains(id)) ||
+            const {
+              'costrutto_minore',
+              'nuvola_in_bottiglia',
+              oculumImbrytoadId,
+            }.contains(id)) ||
         precisionPartsForToken(token).any((part) => part['weak'] == true);
   }
 
@@ -183,7 +187,9 @@ extension _OculumWeakPoints on _OculumHomePageState {
       monsterId: faunaCurrentMonsterId,
       minorConstructCoreExposed: minorConstructCoreExposed,
       runicGolemCoreExposed: runicGolemCoreExposed,
+      babyRockRhinoCoreExposed: babyRockRhinoCorePublic?['exposed'] == true,
       bottledCloudPhase: bottledCloudPhaseNumber,
+      imbrytoadSacsSwollen: imbrytoadSpitWindow != null,
       explicitMasterAnatomy: currentHasExplicitMasterAnatomy,
     ),
     closed: armadilloClosed,
@@ -200,6 +206,17 @@ extension _OculumWeakPoints on _OculumHomePageState {
           if (p['sideIndex'] != null) 'sideIndex': p['sideIndex'],
         },
   ];
+  Map<String, dynamic>? currentPrecisionBodyPartForId(Object? id) {
+    if (id is! String) return null;
+    final monster = monsterBookEntryById(faunaCurrentMonsterId);
+    final partId = oculumHasDefaultOmbraIgnotaEye(monster)
+        ? oculumOmbraIgnotaEyePartId(id)
+        : id;
+    return currentPrecisionBodyParts
+        .where((p) => p['id'] == partId)
+        .firstOrNull;
+  }
+
   List<Map<String, dynamic>> precisionPartsForToken(
     Map<String, dynamic> token,
   ) {
@@ -278,7 +295,15 @@ extension _OculumWeakPoints on _OculumHomePageState {
           monsterId: monster.id,
           minorConstructCoreExposed: minorExposed,
           runicGolemCoreExposed: runicExposed,
+          babyRockRhinoCoreExposed:
+              oculumRhinoStoneguardMonsterIds.contains(monster.id) &&
+              babyRockRhinoCoreExposedForToken(
+                token,
+                index: index,
+                local: local,
+              ),
           bottledCloudPhase: cloudPhase,
+          imbrytoadSacsSwollen: imbrytoadSpitWindowForToken(token) != null,
           explicitMasterAnatomy: custom is List && custom.isNotEmpty,
         ),
         closed: targetArmadilloClosed,
@@ -304,16 +329,20 @@ extension _OculumWeakPoints on _OculumHomePageState {
       return null;
     }
     final known = combatTokenWeakPointKnown(token);
+    final monster = monsterBookEntryById(monsterBookIdForCombatToken(token));
     final parts = oculumMonsterPrecisionChoices(
       precisionPartsForToken(token),
-      monster: monsterBookEntryById(monsterBookIdForCombatToken(token)),
+      monster: monster,
       weakPointDiscovered: known,
     );
+    final defaultOmbraEye = oculumHasDefaultOmbraIgnotaEye(monster);
     final knownIds =
         (discoveredCombatTarget(onlineCombatTokenTag(token))?['knownBodyParts']
                     as List? ??
                 [])
-            .map((p) => '$p')
+            .map(
+              (p) => defaultOmbraEye ? oculumOmbraIgnotaEyePartId('$p') : '$p',
+            )
             .toSet();
     final available = weakOnly && monsterBookIdForCombatToken(token).isNotEmpty
         ? parts.where((p) => p['weak'] == true).toList()
@@ -328,6 +357,7 @@ extension _OculumWeakPoints on _OculumHomePageState {
       (groups['${point['group'] ?? point['id']}'] ??= []).add(point);
     }
     const names = {
+      'throat_sacs': 'Sacche della gola',
       'arms': 'Braccia',
       'legs': 'Gambe / zampe',
       'wings': 'Ali',
@@ -411,9 +441,7 @@ extension _OculumWeakPoints on _OculumHomePageState {
   }
 
   void resolvePrecisionBodyHit(Map<String, dynamic> request) {
-    final part = currentPrecisionBodyParts
-        .where((p) => p['id'] == request['targetBodyPart'])
-        .firstOrNull;
+    final part = currentPrecisionBodyPartForId(request['targetBodyPart']);
     if (part == null || part['weak'] != true) return;
     request['targetWeakPointPrecision'] = true;
     request['bodyPointDiscovery'] = {'id': part['id'], 'label': part['label']};

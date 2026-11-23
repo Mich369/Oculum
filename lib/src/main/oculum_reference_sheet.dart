@@ -1,5 +1,52 @@
 part of '../../main.dart';
 
+class _OculumZoomableImage extends StatefulWidget {
+  const _OculumZoomableImage({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_OculumZoomableImage> createState() => _OculumZoomableImageState();
+}
+
+class _OculumZoomableImageState extends State<_OculumZoomableImage> {
+  final _transform = TransformationController();
+  Offset _doubleTapPosition = Offset.zero;
+
+  @override
+  void dispose() {
+    _transform.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onDoubleTapDown: (details) => _doubleTapPosition = details.localPosition,
+      onDoubleTap: () {
+        if (_transform.value.getMaxScaleOnAxis() > 1.01) {
+          _transform.value = Matrix4.identity();
+        } else {
+          _transform.value = Matrix4.diagonal3Values(2, 2, 1)
+            ..setTranslationRaw(
+              -_doubleTapPosition.dx,
+              -_doubleTapPosition.dy,
+              0,
+            );
+        }
+      },
+      child: InteractiveViewer(
+        transformationController: _transform,
+        minScale: 1,
+        maxScale: 5,
+        trackpadScrollCausesScale: true,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 String oculumReferenceEncounterInitiativeText(Map token) {
   final rollRaw = token['initiativeRoll'];
   final baseRaw = token['initiativeBase'];
@@ -15,6 +62,7 @@ String oculumReferenceEncounterInitiativeText(Map token) {
 }
 
 String oculumReferenceEncounterTokenName(Map token) {
+  if (token['forgottenByBalena'] == true) return oculumForgottenCharacterName;
   for (final key in const ['name', 'visibleTitleName', 'sheetTag', 'id']) {
     final value = '${token[key] ?? ''}'.trim();
     if (value.isNotEmpty && value != '???') return value;
@@ -296,6 +344,9 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     final label = hasFight
         ? referenceTurnStatusText()
         : t('Turno $playerReportedTurn', 'Turn $playerReportedTurn');
+    final cynervailPhase = hasFight
+        ? cynervailFightPhaseLabel(encounter)
+        : null;
     final canStep = !remote || realtimeIsCoMasterRole;
     void step(int delta) {
       if (hasFight) {
@@ -341,6 +392,11 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           fontSize: 11,
                           color: primaryColor.withValues(alpha: .7),
                         ),
+                      ),
+                    if (cynervailPhase != null)
+                      Text(
+                        cynervailPhase,
+                        style: const TextStyle(fontSize: 11),
                       ),
                   ],
                 ),
@@ -616,9 +672,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
             dimension: side,
             child: GestureDetector(
               onTap: bytes == null ? null : mostraAzioniImmaginePersonaggio,
-              child: InteractiveViewer(
-                minScale: 1,
-                maxScale: 5,
+              child: _OculumZoomableImage(
                 child: bytes == null
                     ? Image.asset(asset, fit: BoxFit.contain)
                     : Image.memory(
@@ -1049,6 +1103,8 @@ extension _OculumReferenceSheet on _OculumHomePageState {
     );
     return OculumThemeSheetBackdrop(
       sheetId: currentSheetScrollId(),
+      // The shell paints one continuous background behind this page and menu.
+      paintScene: false,
       child: SingleChildScrollView(
         key: sheetScrollKey('sheet'),
         padding: responsivePagePadding(),
@@ -2103,10 +2159,15 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                         },
                       ),
                     if (tokens.isNotEmpty)
-                      SizedBox(
-                        height: min(220.0, tokens.length * 56.0),
-                        child: ListView.builder(
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: 420.0),
+                        child: ListView.separated(
+                          shrinkWrap: true,
                           itemCount: tokens.length,
+                          separatorBuilder: (context, row) => Divider(
+                            height: 1,
+                            color: primaryColor.withValues(alpha: 0.18),
+                          ),
                           itemBuilder: (context, row) {
                             final token = tokens[row];
                             final wound = oculumCombatTokenHealthLabel(token);
@@ -2121,11 +2182,33 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                               token: Map<String, dynamic>.from(token),
                               includeFightTeam: true,
                               child: ListTile(
-                                dense: true,
-                                leading: Icon(
-                                  Icons.circle,
-                                  size: 12,
-                                  color: combatParticipantSideColor(token),
+                                dense: false,
+                                minVerticalPadding: 8,
+                                visualDensity: VisualDensity.standard,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                leading: Tooltip(
+                                  message:
+                                      'Apri immagine di ${oculumReferenceEncounterTokenName(token)}',
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () => showInitiativeTokenPortrait(
+                                      Map<String, dynamic>.from(token),
+                                    ),
+                                    child: SizedBox(
+                                      width: 62,
+                                      height: 62,
+                                      child: Center(
+                                        child: initiativeTokenAvatar(
+                                          Map<String, dynamic>.from(token),
+                                          sizeOverride: 58,
+                                          hexOverride: true,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                                 title: Text(
                                   '${oculumReferenceEncounterTokenName(token)}'
@@ -2147,7 +2230,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                     : null,
                                 subtitle: Wrap(
                                   spacing: 6,
-                                  runSpacing: 3,
+                                  runSpacing: 5,
                                   crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     knownPowerBadge(
@@ -2165,6 +2248,7 @@ extension _OculumReferenceEncounters on _OculumHomePageState {
                                           "${token['status'] ?? 'ready'}",
                                         ),
                                       ].where((value) => value.isNotEmpty).join(' · '),
+                                      softWrap: true,
                                     ),
                                     for (final badge
                                         in oculumReferenceEncounterResourceUsageBadges(
@@ -2330,10 +2414,45 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
         : incomingDamageElement,
   );
 
+  MonsterBookEntry? get _incomingResistanceMonster =>
+      faunaCurrentMonsterId.isEmpty
+      ? null
+      : oculumSavedMonsterBookEntryById(faunaCurrentMonsterId);
+
+  String? _catalogueIncomingDamagePreset(String elementId) {
+    final monster = _incomingResistanceMonster;
+    if (monster == null) return null;
+
+    String? presetForElement(Map<String, String> presets) {
+      final exact = presets[elementId];
+      if (exact != null) return exact;
+      for (final entry in presets.entries) {
+        if (oculumNormalizeElementId(entry.key) == elementId) {
+          return entry.value;
+        }
+      }
+      return null;
+    }
+
+    return presetForElement(monster.damageResistancePresets) ??
+        presetForElement(monster.incomingDamageResistancePresets);
+  }
+
   String configuredIncomingDamagePreset([String? element]) {
-    final elementId = element ?? selectedIncomingDamageElement();
+    final elementId = element == null
+        ? selectedIncomingDamageElement()
+        : oculumNormalizeElementId(element);
+    final explicit = oculumIncomingResistanceIsExplicit(
+      elementId: elementId,
+      savedPresets: incomingDamagePresets,
+      savedPercentages: dannoSubitoPercentPerTipo,
+      legacyPercentage: dannoSubitoPercentController.text,
+    );
     final saved = canonicalDamageModifierName(
-      incomingDamagePresets[elementId] ?? 'Normale',
+      (explicit
+              ? incomingDamagePresets[elementId]
+              : _catalogueIncomingDamagePreset(elementId)) ??
+          'Normale',
     );
     final temporary = activeStructuredEffects
         .where(
@@ -2408,6 +2527,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
     final selected = selectedIncomingDamageElement();
     final ids = {
       ...allDamageElementIds(),
+      ..._catalogueResistanceElementIds(),
       if (selected.isNotEmpty) selected,
     }.toList();
     return DropdownButtonFormField<String>(
@@ -2475,11 +2595,18 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
     ),
   );
 
+  Iterable<String> _catalogueResistanceElementIds() =>
+      (_incomingResistanceMonster?.incomingDamageResistancePresets.keys ??
+              const <String>[])
+          .map(oculumNormalizeElementId)
+          .where((id) => id.isNotEmpty);
+
   Widget _filteredResistanceCards(String search) {
     final needle = search.trim().toLowerCase();
     final ids =
         {
               ...allDamageElementIds(),
+              ..._catalogueResistanceElementIds(),
               ...incomingDamagePresets.keys,
               ...dannoSubitoPercentPerTipo.keys,
             }
@@ -2766,6 +2893,7 @@ extension _OculumReferenceResistanceDetails on _OculumHomePageState {
           .trim();
     }
     final next = max(0, readIntValue(token['reportedTurn'])) + 1;
+    finishCynervailPersonalTurn(token);
     if (token['pawnId'] != null) {
       advancePawnTurn('${token['pawnId']}', next);
       token['reportedTurn'] = next;

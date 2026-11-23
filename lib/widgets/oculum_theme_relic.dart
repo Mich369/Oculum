@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'oculum_goth_ornaments.dart';
 import 'oculum_theme_asset_packs.dart';
+import 'oculum_theme_availability.dart';
 import 'oculum_theme_presentation.dart';
 import 'oculum_element_theme_registry.dart';
 import 'oculum_monster_theme.dart';
@@ -12,6 +13,7 @@ bool oculumCanSelectRelic(
   bool master = false,
   Set<String> assigned = const {},
 }) {
+  if (!oculumIsThemeSelectable(artPackId)) return false;
   if (artPackId.isEmpty) return true;
   final creature = oculumMonsterThemeById(artPackId);
   if (creature == null) return oculumThemeAssetPacks.containsKey(artPackId);
@@ -246,6 +248,7 @@ Future<void> showOculumRelicPicker(
     builder: (dialog) => StatefulBuilder(
       builder: (context, update) {
         final matches = oculumThemeAssetPacks.values.where((pack) {
+          if (!oculumIsThemeSelectable(pack.id)) return false;
           final text = '${pack.id} ${pack.name} ${pack.motif}'.toLowerCase();
           final search = query.toLowerCase().trim();
           return text.contains(search) ||

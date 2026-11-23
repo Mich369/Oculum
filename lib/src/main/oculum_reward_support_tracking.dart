@@ -228,6 +228,23 @@ extension _OculumRewardSupportTracking on _OculumHomePageState {
         .firstOrNull;
     if (attacker == null || defender == null) return;
     final receipt = request['damageReceipt'] as Map;
+    if (group['combatEnded'] != true &&
+        readIntValue(receipt['hpLost']) > 0 &&
+        receipt['targetDownedByHit'] == true) {
+      final fight =
+          '${defender['fightInstanceId'] ?? group['rewardFightInstanceId'] ?? ''}';
+      if (fight.isNotEmpty) {
+        defender['eyeMemoryFinalHit'] = {
+          'attackId': id,
+          'killerTag': publicInitiativeSourceTag(attacker),
+          'fightInstanceId': fight,
+        };
+        if ('${group['id']}' != selectedMasterInitiativeGroupId) {
+          group['tokens'] = tokens;
+        }
+        programmaSalvataggio(invalidateCaches: false);
+      }
+    }
     final damage = const [
       'hpLost',
       'temporaryHpLost',

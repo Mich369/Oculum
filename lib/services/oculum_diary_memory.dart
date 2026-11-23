@@ -78,6 +78,19 @@ class DiaryRelation {
   final DiaryEvidence evidence;
 }
 
+class DiaryCombatDeath {
+  const DiaryCombatDeath({
+    required this.id,
+    required this.killerName,
+    required this.victimTag,
+    required this.victimName,
+    this.day = 0,
+  });
+
+  final String id, killerName, victimTag, victimName;
+  final int day;
+}
+
 /// String IDs deliberately allow future states without an enum/save migration.
 const diaryStateLabels = <String, String>{
   'seen': 'Avvistato',
@@ -114,10 +127,52 @@ class DiaryMemory {
   DiaryMemory(this.entities, this.relations);
   final Map<String, DiaryEntity> entities;
   final List<DiaryRelation> relations;
+  final Set<String> _combatDeaths = {};
   int _indexedLength = -1;
   final Map<String, List<DiaryRelation>> _backlinks = {};
   final Map<String, Set<String>> _connections = {};
   void invalidateRelationIndex() => _indexedLength = -1;
+
+  void addCombatDeaths(Iterable<DiaryCombatDeath> deaths) {
+    for (final death in deaths) {
+      if (death.id.isEmpty ||
+          death.victimTag.isEmpty ||
+          death.killerName.trim().isEmpty ||
+          death.victimName.trim().isEmpty ||
+          !_combatDeaths.add(death.id)) {
+        continue;
+      }
+      final killerId = 'character:${diaryKey(death.killerName)}';
+      final victimId = 'combat-dead:${diaryKey(death.victimTag)}';
+      entities.putIfAbsent(
+        killerId,
+        () => DiaryEntity(killerId, death.killerName, 'character'),
+      );
+      entities.putIfAbsent(
+        victimId,
+        () => DiaryEntity(victimId, death.victimName, 'dead'),
+      );
+      final text =
+          '${death.killerName} ha dato il colpo finale a ${death.victimName}.';
+      final source = DiaryDocument(
+        id: 'combat-death:${death.id}',
+        author: death.killerName,
+        diary: 'Memorie del Fight',
+        title: 'Colpo finale',
+        text: text,
+        day: death.day,
+      );
+      relations.add(
+        DiaryRelation(
+          killerId,
+          victimId,
+          'killed',
+          DiaryEvidence(source, 0, text.length),
+        ),
+      );
+    }
+  }
+
   void _ensureRelationIndex() {
     if (_indexedLength == relations.length) return;
     _backlinks.clear();

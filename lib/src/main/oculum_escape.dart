@@ -785,7 +785,10 @@ extension _OculumEscape on _OculumHomePageState {
                       0,
                       readIntValue(
                         token['movement'] ?? token['movimento'],
-                        fallback: 30 + readIntValue(token['materia']) ~/ 6,
+                        fallback: oculumBaseMovement(
+                          level: masterInitiativeTokenLevel(token),
+                          materia: readIntValue(token['materia']),
+                        ),
                       ),
                     ))
               .toInt();
@@ -1067,7 +1070,10 @@ extension _OculumEscape on _OculumHomePageState {
                       0,
                       readIntValue(
                         actor['movement'] ?? actor['movimento'],
-                        fallback: 30 + readIntValue(actor['materia']) ~/ 6,
+                        fallback: oculumBaseMovement(
+                          level: masterInitiativeTokenLevel(actor),
+                          materia: readIntValue(actor['materia']),
+                        ),
                       ),
                     ))
               .toInt();
@@ -1584,8 +1590,9 @@ extension _OculumEscape on _OculumHomePageState {
         planarState['wingEscapeFallReceipts'] = receipts;
         final reflex = escapeSubtraitAt(index, 'riflessi');
         final alreadyFell =
-            tag == carrier &&
-            planarState['lastWingFallInterceptionId'] == interceptionId;
+            wingFlightLevitationAt(index) ||
+            (tag == carrier &&
+                planarState['lastWingFallInterceptionId'] == interceptionId);
         endWingFlightForEscapeFall();
         final damage = oculumWingFallDamage(roll, reflex);
         if (!alreadyFell) {

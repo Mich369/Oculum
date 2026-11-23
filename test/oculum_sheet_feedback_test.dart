@@ -25,9 +25,20 @@ void main() {
     oculumThemePresentation.value = const OculumThemePresentation();
     final state = await mountSheet(tester, const Size(1440, 1000));
     final probe = OculumPerformanceProbe(state);
+    var loaded = false;
+    probe.initialSheetLoad().then((_) => loaded = true);
+    for (var attempt = 0; attempt < 80 && !loaded; attempt++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 25)),
+      );
+    }
+    expect(loaded, isTrue);
+    probe.cancelPendingSave();
     final sheet = probe.snapshot()
       ..['id'] = 'FEEDBACK'
       ..['sheetTag'] = 'FEEDBACK'
+      ..['statThresholdReward'] = 'resilienza:già ottenuta'
       ..['partialAwakeningHalfHpTriggered'] = true;
     state.updateOculumHomeUi(() {
       state.schedePersonaggio
@@ -44,6 +55,7 @@ void main() {
       state.fortuna = 0;
       state.livelloController.text = '0';
       state.gradoController.text = '0';
+      state.statThresholdReward = sheet['statThresholdReward'];
       for (final HiddenEyeStat stat in state.hiddenEyeStats) {
         if (stat.id == 'resistenza') {
           // Offset derived Resilience instead of locking a required subtrait.
@@ -52,7 +64,7 @@ void main() {
       }
       state.resilienzaController.text = '10';
       state.currentResilienzaController.text = '10';
-      state.currentHpController.text = '40';
+      state.statoForzaAttivo = '';
       state.currentOculumController.text = '0';
       state.scudoCriticoController.text = '0';
       state.scudoController.text = '9';
@@ -61,6 +73,8 @@ void main() {
       state.hpTempController.text = '0';
     });
     probe.invalidateDerivedCaches();
+    state.currentHpController.text = '${probe.maximumHp()}';
+    await tester.pump();
     await tester.pump();
     final events = state.sheetFeedback as ValueNotifier<OculumSheetFeedback?>;
     final kinds = <OculumFeedbackKind>[];
@@ -81,14 +95,14 @@ void main() {
       '3',
       reason: '${state.risultato} · effetto ${events.value?.amount}',
     );
-    expect(probe.currentHp(), lifeBefore);
+    expect(probe.currentHp(), lifeBefore, reason: '${state.risultato}');
     await hit(6);
     expect(kinds, [
       OculumFeedbackKind.oculumShield,
       OculumFeedbackKind.oculumShieldBroken,
       OculumFeedbackKind.shield,
     ], reason: '${state.risultato}');
-    expect(probe.currentHp(), lifeBefore);
+    expect(probe.currentHp(), lifeBefore, reason: '${state.risultato}');
     await hit(8);
     expect(kinds.skip(3), [
       OculumFeedbackKind.shieldBroken,
@@ -103,8 +117,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 160));
     expect(
-      find.descendant(of: layer, matching: find.byType(Image)),
-      findsOneWidget,
+      find.descendant(
+        of: layer,
+        matching: find.byType(TweenAnimationBuilder<double>),
+      ),
+      findsWidgets,
     );
     probe.applyHealing(2);
     expect(kinds.last, OculumFeedbackKind.heal);
@@ -122,7 +139,10 @@ void main() {
     await tester.pump();
     expect(layer, findsOneWidget);
     expect(
-      find.descendant(of: layer, matching: find.byType(Image)),
+      find.descendant(
+        of: layer,
+        matching: find.byType(TweenAnimationBuilder<double>),
+      ),
       findsNothing,
     );
     probe.load(probe.snapshot());
@@ -176,6 +196,64 @@ void main() {
       ),
     ]);
     expect(events.value, same(lastGain));
+    final eventsBeforeCritical = kinds.length;
+    state.scudoCriticoController.text = '1';
+    await probe.damageResolved(4, critical: true, bypassDefense: true);
+    expect(state.scudoCriticoController.text, '0');
+    expect(
+      kinds.skip(eventsBeforeCritical),
+      contains(OculumFeedbackKind.criticalShieldBroken),
+    );
+
+    var dialogTaps = 0;
+    final dialog = showDialog<void>(
+      context: state.context as BuildContext,
+      builder: (context) => AlertDialog(
+        title: const Text('Conferma azione'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              dialogTaps++;
+              Navigator.pop(context);
+            },
+            child: const Text('Esegui'),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    events.value = OculumSheetFeedback(
+      OculumFeedbackKind.lifeDamage,
+      tester.widget<OculumSheetFeedbackLayer>(layer).target,
+      amount: 70,
+      lifeCapacity: 100,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(
+      find.ancestor(of: layer, matching: find.byType(Navigator)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: layer,
+        matching: find.byType(TweenAnimationBuilder<double>),
+      ),
+      findsWidgets,
+    );
+    expect(tester.getSize(layer), const Size(1440, 1000));
+    await tester.tap(find.widgetWithText(TextButton, 'Esegui'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await dialog;
+    expect(dialogTaps, 1);
+
+    state.updateOculumHomeUi(() => state.paginaCorrente = 6);
+    await tester.pump();
+    await tester.pump();
+    probe.applyHealing(1);
+    expect(kinds.last, OculumFeedbackKind.heal);
     await closeFixture(tester, probe);
   });
 
@@ -288,6 +366,13 @@ void main() {
     expect(effects, findsNothing);
     await tester.pumpWidget(view(hero));
     expect(effects, findsNothing);
+    events.value = const OculumSheetFeedback(OculumFeedbackKind.heal, other);
+    await tester.pump();
+    expect(effects, findsNothing);
+    await tester.pumpWidget(view(other));
+    expect(effects, findsOneWidget);
+    await tester.pumpWidget(view(hero));
+    expect(effects, findsNothing);
     events.value = const OculumSheetFeedback(OculumFeedbackKind.heal, hero);
     await tester.pump();
     expect(effects, findsOneWidget);
@@ -308,6 +393,25 @@ void main() {
     final againstRed = await damageRed(const Color(0xFFDC2842));
     final againstGreen = await damageRed(const Color(0xFF23814B));
     expect(againstGreen, greaterThan(againstRed));
+
+    Future<int> damageEdgeOpacity(int amount) async {
+      events.value = OculumSheetFeedback(
+        OculumFeedbackKind.lifeDamage,
+        hero,
+        amount: amount,
+        lifeCapacity: 100,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      return (await readFrame(const Size(360, 800))).first.alpha;
+    }
+
+    final lightDamage = await damageEdgeOpacity(8);
+    final heavyDamage = await damageEdgeOpacity(65);
+    expect(heavyDamage, greaterThan(lightDamage + 20));
+    final severeDamage = await damageEdgeOpacity(70);
+    final sixtyPercentDamage = await damageEdgeOpacity(60);
+    expect(severeDamage, greaterThan(sixtyPercentDamage + 8));
     await tester.pumpWidget(const SizedBox.shrink());
     events.dispose();
   });

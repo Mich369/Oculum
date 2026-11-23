@@ -798,6 +798,7 @@ extension _OculumHomeForceState on _OculumHomePageState {
   }
 
   void controllaStatoForzaDopoHp() {
+    if (friendlyFireDowned) return;
     if (applicaFaseCapobrancoSeServe()) return;
     final hp = hpCorrenti();
     final soglia = sogliaStatoForzaHp();

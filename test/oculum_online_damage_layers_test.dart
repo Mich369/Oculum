@@ -286,11 +286,17 @@ void main() {
       expect(state.hpTempController.text, '${20 - spentTemp}');
       final expectedHp = fixtureMaximumHp - remaining;
       expect(state.currentHpController.text, '$expectedHp');
+      expect(
+        expectedHp,
+        greaterThan(0),
+        reason: 'These layer cases do not knock out the defender',
+      );
       expect(request['damageReceipt'], {
         'oculumShieldLost': spentOculumShield,
         'shieldLost': spentShield,
         'temporaryHpLost': spentTemp,
         'hpLost': remaining,
+        'targetDownedByHit': false,
         'pawnPending': false,
       });
       final summary = [

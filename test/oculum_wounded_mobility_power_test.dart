@@ -7,6 +7,115 @@ import 'oculum_escape_provoker_test.dart' as fixtures;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 
 void main() {
+  test('base movement reaches full speed at level three', () {
+    expect(
+      [
+        for (var level = 0; level <= 4; level++)
+          oculumBaseMovement(level: level, materia: 0),
+      ],
+      [17, 21, 26, 30, 30],
+    );
+    expect(oculumBaseMovement(level: 0, materia: 18), 18);
+    expect(oculumBaseMovement(level: 3, materia: 18), 33);
+  });
+
+  testWidgets('saved movement preserves modifiers across the level update', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    state.schedePersonaggio.add(<String, dynamic>{
+      ...p.snapshot(),
+      'livello': '0',
+      'materia': '0',
+      'currentMateria': '0',
+      'derivedMateriaTotal': 0,
+      'currentHp': '100',
+      'derivedMaxHp': 100,
+      'derivedUnwoundedMovimento': 34,
+    }
+      ..remove('derivedMovementLevelAdjusted')
+      ..remove('derivedMovementBase')
+      ..remove('derivedMovementBeforeConditions'));
+    final dynamic saved = state.schedePersonaggio[1];
+    expect(p.sheetMovement(1), 21);
+    saved['conditions'] = [
+      {'conditionType': 'rallentato'},
+    ];
+    saved['derivedUnwoundedMovimento'] = 26;
+    expect(p.sheetMovement(1), 16);
+    saved['derivedMovementLevelAdjusted'] = true;
+    saved['derivedUnwoundedMovimento'] = 16;
+    expect(p.sheetMovement(1), 16);
+    saved['derivedUnwoundedMovimento'] = 15;
+    saved['derivedMovementBase'] = 17;
+    saved['derivedMovementBeforeConditions'] = 19;
+    saved['derivedMovementConditionFlat'] = 0;
+    saved['livello'] = '1';
+    expect(p.sheetMovement(1), 18);
+    saved['livello'] = '3';
+    expect(p.sheetMovement(1), 24);
+    await closeFixture(tester, p);
+  });
+
+  testWidgets('closed sheets recalculate Accelerato with their own difficulty', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    state.campaignDifficulty = 'oculum';
+    final saved = <String, dynamic>{
+      ...p.snapshot(),
+      'campaignDifficulty': 'facile',
+      'livello': '3',
+      'materia': '0',
+      'derivedMateriaTotal': 0,
+      'currentHp': '100',
+      'derivedMaxHp': 100,
+      'derivedUnwoundedMovimento': 24,
+      'derivedMovementLevelAdjusted': true,
+      'derivedMovementBase': 17,
+      'derivedMovementBeforeConditions': 19,
+      'derivedMovementConditionFlat': 0,
+      'conditions': [{'conditionType': 'accelerato'}],
+    };
+    state.schedePersonaggio.add(saved);
+    expect(p.sheetMovement(1), 41);
+    saved.remove('campaignDifficulty');
+    expect(p.sheetMovement(1), 40);
+    await closeFixture(tester, p);
+  });
+
+  testWidgets('closed legacy sheets apply movement blocking before fallback', (
+    tester,
+  ) async {
+    final (state, p) = await fixtures.mountFight(tester);
+    final saved = <String, dynamic>{
+      ...p.snapshot(),
+      'livello': '3',
+      'materia': '0',
+      'derivedMateriaTotal': 0,
+      'currentHp': '100',
+      'derivedMaxHp': 100,
+      'activeConditions': [{'type': 'afferrato'}],
+    }
+      ..remove('conditions')
+      ..remove('derivedUnwoundedMovimento')
+      ..remove('derivedMovimento')
+      ..remove('derivedMovementBase')
+      ..remove('derivedMovementBeforeConditions')
+      ..remove('derivedMovementLevelAdjusted');
+    state.schedePersonaggio.add(saved);
+    expect(p.sheetMovement(1), 0);
+    saved['statoForzaAttivo'] = 'azzeramento_vulnerabilita';
+    expect(p.sheetMovement(1), 30);
+    saved.remove('statoForzaAttivo');
+    saved['derivedUnwoundedMovimento'] = 32;
+    saved['derivedMovementLevelAdjusted'] = true;
+    expect(p.sheetMovement(1), 0);
+    saved.remove('activeConditions');
+    expect(p.sheetMovement(1), 32);
+    await closeFixture(tester, p);
+  });
+
   testWidgets(
     'unknown manual NPC power is never recorded as a zero peak before stats are supplied',
     (tester) async {

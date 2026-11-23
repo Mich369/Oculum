@@ -1056,6 +1056,7 @@ extension _OculumP2PNetwork on _OculumHomePageState {
   }
 
   void sendSheetToMaster() {
+    if (masterOnlyDraftSheetAt(schedaCorrente)) return;
     if (!isConnectedToMaster || _myClientSocket == null) return;
 
     if (schedePersonaggio.isNotEmpty) {
@@ -1075,6 +1076,7 @@ extension _OculumP2PNetwork on _OculumHomePageState {
   }
 
   void sendSheetToRelay() {
+    if (masterOnlyDraftSheetAt(schedaCorrente)) return;
     if (!relayConnected || _relaySocket == null) return;
     if (!isConnectedToMaster && !isMasterHost) return;
     if (isMasterHost || modalitaMaster) return;

@@ -1,7 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/widgets/oculum_goth_ornaments.dart';
+import 'package:oculum/widgets/oculum_narrative_background.dart';
+import 'package:oculum/widgets/oculum_theme_asset_packs.dart';
+import 'package:oculum/widgets/oculum_theme_presentation.dart';
 
 void main() {
   test(
@@ -80,6 +86,8 @@ void main() {
       expect(oculumCharacterSkillFormCost(attack.forme.single)!.minimum, 1);
       expect(attack.costo, '1 Materia');
       expect(sheet['relicArtPackId'], 'senka_kamaria');
+      expect(sheet['notePersonaggio'], contains('Sotto le radici'));
+      expect(sheet['notePersonaggio'], contains('Fra le travi'));
       expect(sheet['currentHp'], '63');
       expect(sheet['background'], contains('piani più bassi di Lost Town'));
       final clone = abilities.firstWhere(
@@ -101,4 +109,81 @@ void main() {
       expect(clone.descrizione, contains('0 Azioni e 1 Reazione normale'));
     },
   );
+
+  testWidgets('Senka uses approved art and keeps a custom selection', (
+    tester,
+  ) async {
+    const sheetId = 'senka-art-preview';
+    const artPackId = 'senka_kamaria';
+    final pack = oculumThemeAssetPacks[artPackId]!;
+    final otherPack = oculumThemeAssetPacks['moon_iron']!;
+    final previous = oculumSheetRelicSelections.value;
+    addTearDown(() => oculumSheetRelicSelections.value = previous);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.view.devicePixelRatio = 1;
+    oculumSheetRelicSelections.value = {sheetId: artPackId};
+
+    Widget background({bool masked = false}) => MaterialApp(
+      theme: ThemeData.dark().copyWith(
+        extensions: const [
+          OculumGothOrnaments(
+            family: OculumGothFamily.crystal,
+            ink: Colors.white,
+            accent: Colors.blueGrey,
+            opacity: .3,
+            themeId: 'classic_reliquary',
+          ),
+        ],
+      ),
+      home: OculumNarrativeBackground(
+        sheetId: sheetId,
+        senkaMaskActive: masked,
+      ),
+    );
+    Image scenery() => tester.widget<Image>(find.byType(Image).first);
+    String assetName() {
+      final provider = scenery().image;
+      return ((provider is ResizeImage ? provider.imageProvider : provider)
+              as AssetImage)
+          .assetName;
+    }
+
+    expect(
+      pack.storyScene,
+      endsWith('theme_senka_kamaria_canon_20261115.webp'),
+    );
+    expect(pack.relic, endsWith('relic_senka_kamaria_canon_20261115.webp'));
+    final bundled = await tester.runAsync(
+      () => AssetManifest.loadFromAssetBundle(rootBundle),
+    );
+    expect(
+      bundled!.listAssets(),
+      containsAll([
+        pack.storyScene,
+        pack.storySceneMobileAsset,
+        pack.maskedStorySceneAsset,
+        pack.relic,
+      ]),
+    );
+
+    tester.view.physicalSize = const Size(1440, 900);
+    await tester.pumpWidget(background());
+    expect(assetName(), pack.storyScene);
+    await tester.pumpWidget(background(masked: true));
+    expect(assetName(), pack.maskedStorySceneAsset);
+    expect(scenery().fit, BoxFit.contain);
+
+    tester.view.physicalSize = const Size(392, 850);
+    await tester.pumpWidget(background());
+    expect(assetName(), pack.storySceneMobileAsset);
+    await tester.pumpWidget(background(masked: true));
+    expect(assetName(), pack.maskedStorySceneAsset);
+    expect(scenery().fit, BoxFit.contain);
+
+    oculumSheetRelicSelections.value = {sheetId: otherPack.id};
+    await tester.pump();
+    expect(assetName(), otherPack.storyScene);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -1,0 +1,52 @@
+{
+  "approvedOn": "2026-11-17",
+  "selectionOrder": [
+    "B",
+    "B",
+    "C",
+    "C"
+  ],
+  "scope": "stock desktop art",
+  "entries": [
+    {
+      "name": "Lumin Gommoso Corazzata",
+      "monsterId": "lumin_gommoso_variante_corazzata",
+      "approvedVariant": "B",
+      "asset": "assets/oculum/home_art_authored/theme_lumin_gommoso_variante_corazzata_canon_20261117_ink_b.webp",
+      "sha256": "86cb741bcc9421edf3cc2d8986026d97776693c4844d5928174fed44bd259a0e",
+      "previousVariant": "H",
+      "previousAsset": "assets/oculum/home_art_authored/theme_lumin_gommoso_variante_corazzata_canon_20261116.webp",
+      "previousSha256": "b09c8fcc098dad012eee659c74019f88f03daaac986460577665cf42fcc27cd9"
+    },
+    {
+      "name": "Forisplit",
+      "monsterId": "hero_path_diverso_ascia_variante_corazzata",
+      "approvedVariant": "B",
+      "asset": "assets/oculum/home_art_authored/theme_hero_path_diverso_ascia_variante_corazzata_canon_20261117_ink_b.webp",
+      "sha256": "0ac2fa5da9e28af42719dc74fb41681d7f586e5b3ba3972621f172bcd27bf7be",
+      "previousVariant": "G",
+      "previousAsset": "assets/oculum/home_art_authored/theme_hero_path_diverso_ascia_variante_corazzata_canon_20261116.webp",
+      "previousSha256": "b67f3e05b5533869ef192f34a80f20484891d157a18ad787cf45a035571fe720"
+    },
+    {
+      "name": "Venemuk",
+      "monsterId": "ragno_putrido",
+      "approvedVariant": "C",
+      "asset": "assets/oculum/home_art_authored/theme_ragno_putrido_canon_20261117_ink_c.webp",
+      "sha256": "9bbfee3e23a6625c0696b8c6a774f9ef2b0b34f6b2dcc26bd510aee5501e1615",
+      "previousVariant": "F",
+      "previousAsset": "assets/oculum/home_art_authored/theme_ragno_putrido_canon_20261116.webp",
+      "previousSha256": "b3931171653aa459875ae2d04435851baf500b6566fda8b5b2c660b87a58a1f1"
+    },
+    {
+      "name": "Tessyfin",
+      "monsterId": "eiva_tassello_cupole",
+      "approvedVariant": "C",
+      "asset": "assets/oculum/home_art_authored/theme_eiva_tassello_cupole_canon_20261117_ink_c.webp",
+      "sha256": "d3c43b6a3657b51d89a22a3e8d362f266b4a25707e7c6c1e7a91a284faf768df",
+      "previousVariant": "G",
+      "previousAsset": "assets/oculum/home_art_authored/theme_eiva_tassello_cupole_canon_20261116.webp",
+      "previousSha256": "48f0c4b154aaa4bea8a2005c18db525c2092c0daed576349c215d1791b40177b"
+    }
+  ]
+}

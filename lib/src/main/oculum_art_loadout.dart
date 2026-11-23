@@ -148,9 +148,10 @@ extension _OculumArtLoadout on _OculumHomePageState {
   }
 
   void selectIncorporatedArt(CharacterArt target) {
-    if (!target.sbloccata) return;
+    if (!target.sbloccata || oculumIsMonsterWeakOpen(target)) return;
     setState(() {
       for (final art in arti) {
+        if (oculumIsMonsterWeakOpen(art)) continue;
         if (!identical(art, target)) {
           changeArtAvailability(art, () {
             art.incorporata = true;
@@ -211,7 +212,9 @@ extension _OculumArtLoadout on _OculumHomePageState {
         Text(
           'Azioni disponibili: ${1 - artSwitchActionDebt} · Reazioni disponibili: ${leggiNumero(reazioniController) - artSwitchReactionDebt}',
         ),
-        for (final art in arti.where((art) => art.sbloccata))
+        for (final art in arti.where(
+          (art) => art.sbloccata && !oculumIsMonsterWeakOpen(art),
+        ))
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(

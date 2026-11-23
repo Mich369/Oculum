@@ -1,5 +1,203 @@
 import 'package:flutter/material.dart';
+import 'package:oculum/services/oculum_account_profile.dart';
 import 'package:oculum/services/oculum_auth_service.dart';
+
+class OculumPasswordRecoveryHost extends StatefulWidget {
+  const OculumPasswordRecoveryHost({
+    super.key,
+    required this.auth,
+    required this.navigatorKey,
+    required this.child,
+  });
+
+  final OculumAuthService auth;
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Widget child;
+
+  @override
+  State<OculumPasswordRecoveryHost> createState() =>
+      _OculumPasswordRecoveryHostState();
+}
+
+class _OculumPasswordRecoveryHostState
+    extends State<OculumPasswordRecoveryHost> {
+  DialogRoute<bool>? _route;
+  String? _accountId;
+  int _lastInvalidLink = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.auth.passwordRecovery.addListener(_scheduleRecovery);
+    widget.auth.invalidAuthLink.addListener(_scheduleRecovery);
+    _scheduleRecovery();
+  }
+
+  void _scheduleRecovery() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showRecovery();
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  void _showRecovery() {
+    final invalidLink = widget.auth.invalidAuthLink.value;
+    if (invalidLink != _lastInvalidLink) {
+      _lastInvalidLink = invalidLink;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text(OculumAuthService.invalidAuthLinkMessage)),
+      );
+    }
+    final accountId = widget.auth.passwordRecovery.value;
+    if (_accountId == accountId) return;
+    final navigator = widget.navigatorKey.currentState;
+    if (navigator == null) return;
+    final previous = _route;
+    if (previous != null && previous.isActive) navigator.removeRoute(previous);
+    _route = null;
+    _accountId = accountId;
+    if (accountId == null) return;
+    final route = DialogRoute<bool>(
+      context: navigator.context,
+      barrierDismissible: false,
+      builder: (_) => _OculumPasswordRecoveryDialog(
+        auth: widget.auth,
+        accountId: accountId,
+      ),
+    );
+    _route = route;
+    navigator.push(route).then((updated) {
+      if (!mounted) return;
+      if (_route == route) {
+        _route = null;
+        _accountId = null;
+        widget.auth.dismissPasswordRecovery();
+      }
+      if (updated == true) {
+        ScaffoldMessenger.maybeOf(
+          context,
+        )?.showSnackBar(const SnackBar(content: Text('Password aggiornata.')));
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.auth.passwordRecovery.removeListener(_scheduleRecovery);
+    widget.auth.invalidAuthLink.removeListener(_scheduleRecovery);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+class _OculumPasswordRecoveryDialog extends StatefulWidget {
+  const _OculumPasswordRecoveryDialog({
+    required this.auth,
+    required this.accountId,
+  });
+
+  final OculumAuthService auth;
+  final String accountId;
+
+  @override
+  State<_OculumPasswordRecoveryDialog> createState() =>
+      _OculumPasswordRecoveryDialogState();
+}
+
+class _OculumPasswordRecoveryDialogState
+    extends State<_OculumPasswordRecoveryDialog> {
+  final _password = TextEditingController();
+  final _confirmation = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _save() async {
+    if (_busy) return;
+    if (_password.text != _confirmation.text) {
+      setState(() => _error = 'Le password devono coincidere.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final updated = await widget.auth.completePasswordRecovery(
+      widget.accountId,
+      _password.text,
+    );
+    if (!mounted) return;
+    if (updated) {
+      Navigator.of(context).pop(true);
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _error =
+          widget.auth.state.errorMessage ??
+          'Impossibile aggiornare la password. Riprova.';
+    });
+  }
+
+  @override
+  void dispose() {
+    _password.dispose();
+    _confirmation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_busy,
+    child: AlertDialog(
+      scrollable: true,
+      title: const Text('Reimposta password'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _password,
+            enabled: !_busy,
+            obscureText: true,
+            autofillHints: const [AutofillHints.newPassword],
+            textInputAction: TextInputAction.next,
+            decoration: const InputDecoration(
+              labelText: 'Nuova password',
+              helperText: 'Almeno 8 caratteri',
+            ),
+          ),
+          TextField(
+            controller: _confirmation,
+            enabled: !_busy,
+            obscureText: true,
+            onSubmitted: (_) => _save(),
+            decoration: const InputDecoration(labelText: 'Conferma password'),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: const Text('Annulla'),
+        ),
+        FilledButton(
+          onPressed: _busy ? null : _save,
+          child: const Text('Aggiorna password'),
+        ),
+      ],
+    ),
+  );
+}
 
 class OculumAuthPanel extends StatelessWidget {
   const OculumAuthPanel({super.key});
@@ -85,6 +283,24 @@ class OculumAuthPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                 ],
+                if (state.isAuthenticated &&
+                    auth.isProviderSupported(OculumAuthProvider.google)) ...[
+                  if (auth.hasGoogleIdentity)
+                    const Text('Account Google collegato')
+                  else if (auth.canLinkGoogle)
+                    OutlinedButton.icon(
+                      onPressed: state.isLoading ? null : auth.linkGoogle,
+                      icon: const Icon(Icons.link),
+                      label: const Text('Collega account Google'),
+                    ),
+                  const SizedBox(height: 8),
+                ],
+                if (state.canSyncToCloud && state.userId != null)
+                  OculumAccountProfilePanel.supabase(
+                    key: ValueKey(state.userId),
+                    accountId: state.userId!,
+                    canClaimPublicCode: auth.hasVerifiedEmail,
+                  ),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -151,11 +367,16 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
     Future<bool> Function() operation, {
     String? successMessage,
   }) async {
+    if (_busy) return;
     setState(() => _busy = true);
     final success = await operation();
     if (!mounted) return;
     setState(() => _busy = false);
-    if (success && OculumAuthService.instance.pendingEmail != null) {
+    if (success && successMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(successMessage)));
+    } else if (success && OculumAuthService.instance.pendingEmail != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -163,10 +384,6 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
           ),
         ),
       );
-    } else if (success && successMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(successMessage)));
     }
   }
 
@@ -186,7 +403,7 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Mantieni l’accesso su questo dispositivo'),
               value: auth.rememberAccess,
-              onChanged: _busy
+              onChanged: _busy || state.isLoading
                   ? null
                   : (value) => auth.setRememberAccess(value ?? false),
               controlAffinity: ListTileControlAffinity.leading,
@@ -286,10 +503,10 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
                     : () => _run(
                         () => auth.requestPasswordReset(_email.text),
                         successMessage:
-                            'Se l’account esiste, riceverai un link per reimpostare la password.',
+                            'Se l’account esiste, riceverai un link. Apri l’ultimo link ricevuto nello stesso browser o nella stessa app.',
                       ),
                 icon: const Icon(Icons.lock_reset),
-                label: const Text('Password dimenticata?'),
+                label: const Text('Hai dimenticato la password?'),
               ),
               TextButton.icon(
                 onPressed: _busy || !auth.isSupabaseReady

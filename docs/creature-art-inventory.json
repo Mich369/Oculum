@@ -23768,7 +23768,7 @@
     },
     {
       "id": "pellegrino_senza_volto_variante_errante",
-      "name": "Pellegrino Senza Volto Errante",
+      "name": "Senza Volto Errante",
       "planes": [],
       "element": "spazio",
       "classification": [],
@@ -23849,20 +23849,22 @@
           "growth__pellegrino_senza_volto_variante_errante__9",
           "growth__pellegrino_senza_volto_variante_errante__10",
           "growth__pellegrino_senza_volto_variante_errante__11"
-        ]
+        ],
+        "speciesNameIt": "Pellegrino Senza Volto Errante",
+        "speciesNameEn": "Faceless Pilgrim Errante"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:2564",
       "isGeneratedVariant": true,
       "baseId": "pellegrino_senza_volto",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_pellegrino_senza_volto_variante_errante_canon_20261118.webp",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -23873,10 +23875,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_pellegrino_senza_volto_variante_errante_canon_20261118.webp",
+          "exists": true,
+          "sha256": "f55eb4c59a32831650839fd2ec953fd9bb2f682bc683b7ab6fb048f4aae1aa88",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "f55eb4c59a32831650839fd2ec953fd9bb2f682bc683b7ab6fb048f4aae1aa88",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -23895,12 +23899,13 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Pellegrino Senza Volto Errante",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "bambola_vapium",
@@ -31418,7 +31423,7 @@
     },
     {
       "id": "weak_horror_mastino",
-      "name": "Mastino della Cripta",
+      "name": "Cynyscarn",
       "planes": [],
       "element": "fisico",
       "classification": [
@@ -31533,20 +31538,22 @@
           "growth__weak_horror_mastino__9",
           "growth__weak_horror_mastino__10",
           "growth__weak_horror_mastino__11"
-        ]
+        ],
+        "speciesNameIt": "Mastino della Cripta",
+        "speciesNameEn": "Mastino della Cripta"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/weak_horror_monsters.dart:73",
       "isGeneratedVariant": false,
       "baseId": "weak_horror_mastino",
-      "themeAsset": "assets/oculum/home_art/theme_mastino_cripta_v1.png",
+      "themeAsset": "assets/oculum/home_art_authored/theme_weak_horror_mastino_canon_20261118.webp",
       "themeAssetExists": true,
-      "themeStatus": "asset dedicato collegato, presente",
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": "assets/oculum/home_art/theme_mastino_cripta_mobile_v1.png",
       "mobileThemeAssetExists": true,
       "relicAsset": "assets/oculum/home_art/relic_mastino_cripta_v1.png",
       "relicStatus": "asset dedicato collegato e presente; conferme visive e test nel manifest specifico, pubblicazione separata",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -31561,10 +31568,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": "assets/oculum/home_art/theme_mastino_cripta_v1.png",
+          "path": "assets/oculum/home_art_authored/theme_weak_horror_mastino_canon_20261118.webp",
           "exists": true,
-          "sha256": "d9960cd6a2503c315ebeddf9c6f37b3dd51de687da70e6ed9d7c562d1b07b07d",
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "sha256": "dbd3f92f059e1ee282e99ae568cb829149c81d0441ab8316221d87bf0ba75424",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "dbd3f92f059e1ee282e99ae568cb829149c81d0441ab8316221d87bf0ba75424",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -31584,7 +31593,9 @@
       },
       "missingDedicatedArtwork": [],
       "completeDedicatedArtworkSetMapped": true,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Mastino della Cripta",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "weak_horror_affamato",
@@ -54618,7 +54629,7 @@
     },
     {
       "id": "teschio_quattro_lame",
-      "name": "Teschio Quattro Lame",
+      "name": "Quadrilame",
       "planes": [
         "morti",
         "sotterraneo"
@@ -54746,20 +54757,22 @@
           "growth__teschio_quattro_lame__9",
           "growth__teschio_quattro_lame__10",
           "growth__teschio_quattro_lame__11"
-        ]
+        ],
+        "speciesNameIt": "Teschio Quattro Lame",
+        "speciesNameEn": "Teschio Quattro Lame"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/bone_and_rune_creatures.dart:52",
       "isGeneratedVariant": false,
       "baseId": "teschio_quattro_lame",
-      "themeAsset": "assets/oculum/home_art/theme_teschio_quattro_lame_canon_20261031.png",
+      "themeAsset": "assets/oculum/home_art_authored/theme_teschio_quattro_lame_canon_20261118.webp",
       "themeAssetExists": true,
-      "themeStatus": "asset dedicato collegato, presente",
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -54774,10 +54787,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": "assets/oculum/home_art/theme_teschio_quattro_lame_canon_20261031.png",
+          "path": "assets/oculum/home_art_authored/theme_teschio_quattro_lame_canon_20261118.webp",
           "exists": true,
-          "sha256": "d0958c9dbefcff74315fe377b0a6ea48ba5fc9fc70b50f9f833f4453416fe9f6",
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "sha256": "c4008d06fe6da4c06d99fa1621a075992742d088640f1023eeeb308136f4a23f",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "c4008d06fe6da4c06d99fa1621a075992742d088640f1023eeeb308136f4a23f",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -54800,7 +54815,9 @@
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Teschio Quattro Lame",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "teschio_mostruoso",
@@ -55355,7 +55372,7 @@
     },
     {
       "id": "manichino_spada",
-      "name": "Manichino della Spada",
+      "name": "Ensypuppet",
       "planes": [
         "morti",
         "mezzano"
@@ -55465,20 +55482,22 @@
           "growth__manichino_spada__9",
           "growth__manichino_spada__10",
           "growth__manichino_spada__11"
-        ]
+        ],
+        "speciesNameIt": "Manichino della Spada",
+        "speciesNameEn": "Manichino della Spada"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/laer_turret.dart:3",
       "isGeneratedVariant": false,
       "baseId": "manichino_spada",
-      "themeAsset": "assets/oculum/home_art/theme_manichino_spada_canon_20261031.png",
+      "themeAsset": "assets/oculum/home_art_authored/theme_manichino_spada_canon_20261118_v2.webp",
       "themeAssetExists": true,
-      "themeStatus": "asset dedicato collegato, presente",
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -55492,10 +55511,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": "assets/oculum/home_art/theme_manichino_spada_canon_20261031.png",
+          "path": "assets/oculum/home_art_authored/theme_manichino_spada_canon_20261118_v2.webp",
           "exists": true,
-          "sha256": "f3f1bcd719669c227bea2684eddcd916a59c8fabafbb811a4efb423ab9847be6",
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "sha256": "710886acfde3584d91c58f76acb00c8654ba1b6c52d54fbb5a32da039b3bc115",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "4882c529f208f7d7312879bdb8a2479438c8e00301902a6e9bf14c8fb9a5260d",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -55518,7 +55539,9 @@
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Manichino della Spada",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "manichino_baghest",
@@ -59487,7 +59510,7 @@
     },
     {
       "id": "mantide_sanguescatto",
-      "name": "Mantide Sanguescatto",
+      "name": "Vyridblade",
       "planes": [
         "foresta_elementale"
       ],
@@ -59600,20 +59623,22 @@
           "growth__mantide_sanguescatto__9",
           "growth__mantide_sanguescatto__10",
           "growth__mantide_sanguescatto__11"
-        ]
+        ],
+        "speciesNameIt": "Mantide Sanguescatto",
+        "speciesNameEn": "Mantide Sanguescatto"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/canonical_monster_variants.dart:210",
       "isGeneratedVariant": false,
       "baseId": "mantide_sanguescatto",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_mantide_sanguescatto_canon_20261118.webp",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Zampa destra · coppia 1",
@@ -59627,10 +59652,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_mantide_sanguescatto_canon_20261118.webp",
+          "exists": true,
+          "sha256": "129c32a1f4ca3add0efef52423ca0f5eddf881dca1f23b02ba081a5270ee9f62",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "129c32a1f4ca3add0efef52423ca0f5eddf881dca1f23b02ba081a5270ee9f62",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -59649,12 +59676,13 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Mantide Sanguescatto",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "lupo_delle_nevi",
@@ -68778,7 +68806,7 @@
     },
     {
       "id": "base_postea_02",
-      "name": "Grillo a Molla",
+      "name": "Runycrick",
       "planes": [
         "postea"
       ],
@@ -68796,6 +68824,85 @@
           "label": "Corpo",
           "group": "body",
           "weak": false,
+          "penalty": 0
+        },
+        {
+          "id": "legs_1",
+          "label": "Zampa destra · coppia 1",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_2",
+          "label": "Zampa sinistra · coppia 1",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "legs_3",
+          "label": "Zampa destra · coppia 2",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 2
+        },
+        {
+          "id": "legs_4",
+          "label": "Zampa sinistra · coppia 2",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 2
+        },
+        {
+          "id": "legs_5",
+          "label": "Zampa destra · coppia 3",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 3
+        },
+        {
+          "id": "legs_6",
+          "label": "Zampa sinistra · coppia 3",
+          "group": "legs",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 3
+        },
+        {
+          "id": "wings_1",
+          "label": "Ala destra",
+          "group": "wings",
+          "weak": false,
+          "penalty": 0,
+          "side": "right",
+          "sideIndex": 1
+        },
+        {
+          "id": "wings_2",
+          "label": "Ala sinistra",
+          "group": "wings",
+          "weak": false,
+          "penalty": 0,
+          "side": "left",
+          "sideIndex": 1
+        },
+        {
+          "id": "joint",
+          "label": "Giuntura",
+          "group": "joint",
+          "weak": true,
           "penalty": 0
         }
       ],
@@ -68824,29 +68931,42 @@
           "growth__base_postea_02__9",
           "growth__base_postea_02__10",
           "growth__base_postea_02__11"
-        ]
+        ],
+        "speciesNameIt": "Grillo a Molla",
+        "speciesNameEn": "Grillo a Molla"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": false,
       "baseId": "base_postea_02",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_base_postea_02_canon_20261118.webp",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
-        "Corpo"
+        "Corpo",
+        "Zampa destra · coppia 1",
+        "Zampa sinistra · coppia 1",
+        "Zampa destra · coppia 2",
+        "Zampa sinistra · coppia 2",
+        "Zampa destra · coppia 3",
+        "Zampa sinistra · coppia 3",
+        "Ala destra",
+        "Ala sinistra",
+        "Giuntura"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_base_postea_02_canon_20261118.webp",
+          "exists": true,
+          "sha256": "c66fe7cef9d8d70242123121ba09ff86fa03735b61bd863b37d59804f0b6ec9d",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "c66fe7cef9d8d70242123121ba09ff86fa03735b61bd863b37d59804f0b6ec9d",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -68865,12 +68985,13 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Grillo a Molla",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "base_postea_03",
@@ -77637,7 +77758,7 @@
     },
     {
       "id": "habitat_caramella_falena_di_zucchero_filato_variante_errante",
-      "name": "Falena di zucchero filato Errante",
+      "name": "Vagafloss",
       "planes": [
         "caramella"
       ],
@@ -77787,20 +77908,22 @@
           "growth__habitat_caramella_falena_di_zucchero_filato_variante_errante__9",
           "growth__habitat_caramella_falena_di_zucchero_filato_variante_errante__10",
           "growth__habitat_caramella_falena_di_zucchero_filato_variante_errante__11"
-        ]
+        ],
+        "speciesNameIt": "Falena di zucchero filato Errante",
+        "speciesNameEn": "Falena di zucchero filato Errante"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_caramella_falena_di_zucchero_filato",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_caramella_falena_di_zucchero_filato_variante_errante_canon_20261118.webp",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -77818,10 +77941,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_caramella_falena_di_zucchero_filato_variante_errante_canon_20261118.webp",
+          "exists": true,
+          "sha256": "ab84c937c7d093f718738c7e5dd91643f1ab93a15dc0195817b4297130e4a410",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "ab84c937c7d093f718738c7e5dd91643f1ab93a15dc0195817b4297130e4a410",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -77840,12 +77965,13 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Falena di zucchero filato Errante",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "habitat_caramella_cinghiale_di_croccante",
@@ -79499,7 +79625,7 @@
     },
     {
       "id": "habitat_caramella_rospo_di_crema_variante_veterana",
-      "name": "Rospo di crema Veterana",
+      "name": "Dulcycrust",
       "planes": [
         "caramella"
       ],
@@ -79588,20 +79714,22 @@
           "growth__habitat_caramella_rospo_di_crema_variante_veterana__9",
           "growth__habitat_caramella_rospo_di_crema_variante_veterana__10",
           "growth__habitat_caramella_rospo_di_crema_variante_veterana__11"
-        ]
+        ],
+        "speciesNameIt": "Rospo di crema Veterana",
+        "speciesNameEn": "Rospo di crema Veterana"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_caramella_rospo_di_crema",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_caramella_rospo_di_crema_variante_veterana_canon_20261118.webp",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Ala destra superiore",
@@ -79612,10 +79740,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_caramella_rospo_di_crema_variante_veterana_canon_20261118.webp",
+          "exists": true,
+          "sha256": "cae32ed87f422877cd38435dc1746f9d6f9bf240abc630b2cdd32bc3cf8cb5d5",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "cae32ed87f422877cd38435dc1746f9d6f9bf240abc630b2cdd32bc3cf8cb5d5",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -79634,12 +79764,13 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Rospo di crema Veterana",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "habitat_caramella_riccio_di_praline",
@@ -92670,7 +92801,7 @@
     },
     {
       "id": "habitat_morti_regina_delle_cripte_sommerse_variante_corazzata",
-      "name": "Regina delle cripte sommerse Corazzata",
+      "name": "Funeryshroud",
       "planes": [
         "morti"
       ],
@@ -92746,15 +92877,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_morti_regina_delle_cripte_sommerse",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_morti_regina_delle_cripte_sommerse_variante_corazzata_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_morti_regina_delle_cripte_sommerse_variante_corazzata/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Zampa destra",
@@ -92763,10 +92894,10 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_morti_regina_delle_cripte_sommerse_variante_corazzata_canon_20261117.webp",
+          "exists": true,
+          "sha256": "bfdee7c71b465d33cf39698732ec63d52ce79213db287945c1bf45d02428684b",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_morti_regina_delle_cripte_sommerse_variante_corazzata/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -92785,12 +92916,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Regina delle cripte sommerse Corazzata"
+      ]
     },
     {
       "id": "habitat_morti_re_del_corteo_senza_fine",
@@ -99538,7 +99671,7 @@
     },
     {
       "id": "habitat_nuvole_rocciose_serpente_del_cumulonembo_variante_corazzata",
-      "name": "Serpente del cumulonembo Corazzata",
+      "name": "Nymboscyte",
       "planes": [
         "nuvole_rocciose"
       ],
@@ -99639,15 +99772,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_nuvole_rocciose_serpente_del_cumulonembo",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_nuvole_rocciose_serpente_del_cumulonembo_variante_corazzata_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_nuvole_rocciose_serpente_del_cumulonembo_variante_corazzata/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -99659,10 +99792,10 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_nuvole_rocciose_serpente_del_cumulonembo_variante_corazzata_canon_20261117.webp",
+          "exists": true,
+          "sha256": "55004a92b2a8c924ddb334f107c89709b3d8d58d3717834834d662f3ae96c403",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_nuvole_rocciose_serpente_del_cumulonembo_variante_corazzata/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -99681,12 +99814,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Serpente del cumulonembo Corazzata"
+      ]
     },
     {
       "id": "habitat_nuvole_rocciose_falena_del_tuono_sordo",
@@ -112446,7 +112581,7 @@
     },
     {
       "id": "habitat_oblio_ragno_delle_ombre_cancellate_variante_veterana",
-      "name": "Ragno delle ombre cancellate Veterana",
+      "name": "Abrasyweb",
       "planes": [
         "oblio"
       ],
@@ -112619,15 +112754,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_oblio_ragno_delle_ombre_cancellate",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_oblio_ragno_delle_ombre_cancellate_variante_veterana_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_oblio_ragno_delle_ombre_cancellate_variante_veterana/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -112647,10 +112782,10 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_oblio_ragno_delle_ombre_cancellate_variante_veterana_canon_20261117.webp",
+          "exists": true,
+          "sha256": "815a604243c3d702bc00cc7034a6f08b647a665d6b9a05e67c1bdfe12e0dde19",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_oblio_ragno_delle_ombre_cancellate_variante_veterana/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -112669,12 +112804,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Ragno delle ombre cancellate Veterana"
+      ]
     },
     {
       "id": "habitat_oblio_serpente_dei_nomi_rubati",
@@ -113921,7 +114058,7 @@
     },
     {
       "id": "habitat_oblio_divoratore_degli_ultimi_nomi_variante_errante",
-      "name": "Divoratore degli ultimi nomi Errante",
+      "name": "Oblyravyn",
       "planes": [
         "oblio"
       ],
@@ -114017,20 +114154,22 @@
           "growth__habitat_oblio_divoratore_degli_ultimi_nomi_variante_errante__9",
           "growth__habitat_oblio_divoratore_degli_ultimi_nomi_variante_errante__10",
           "growth__habitat_oblio_divoratore_degli_ultimi_nomi_variante_errante__11"
-        ]
+        ],
+        "speciesNameIt": "Divoratore degli ultimi nomi Errante",
+        "speciesNameEn": "Divoratore degli ultimi nomi Errante"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_oblio_divoratore_degli_ultimi_nomi",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_oblio_divoratore_degli_ultimi_nomi_variante_errante_canon_20261118.webp",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Occhio destro",
@@ -114042,10 +114181,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_oblio_divoratore_degli_ultimi_nomi_variante_errante_canon_20261118.webp",
+          "exists": true,
+          "sha256": "4bac10f469fa6550301556bde6d845f35a4cb320d4917242ab09da8a806d2488",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "4bac10f469fa6550301556bde6d845f35a4cb320d4917242ab09da8a806d2488",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -114064,12 +114205,13 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Divoratore degli ultimi nomi Errante",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "habitat_isole_airone_delle_correnti_inverse",
@@ -114471,7 +114613,7 @@
     },
     {
       "id": "habitat_isole_vipera_dei_parafulmini_variante_rituale",
-      "name": "Vipera dei parafulmini Rituale",
+      "name": "Mirusfulgur",
       "planes": [
         "isole"
       ],
@@ -114572,15 +114714,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_isole_vipera_dei_parafulmini",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_isole_vipera_dei_parafulmini_variante_rituale_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_isole_vipera_dei_parafulmini_variante_rituale/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Occhio destro",
@@ -114592,10 +114734,10 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_isole_vipera_dei_parafulmini_variante_rituale_canon_20261117.webp",
+          "exists": true,
+          "sha256": "5be3c673eff9225a89f769c720ecb7b82dc9011077b7aed6ddb595919cf7c841",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_isole_vipera_dei_parafulmini_variante_rituale/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -114614,12 +114756,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Vipera dei parafulmini Rituale"
+      ]
     },
     {
       "id": "habitat_isole_razza_del_cielo_basso",
@@ -114774,7 +114918,7 @@
     },
     {
       "id": "habitat_isole_razza_del_cielo_basso_variante_corazzata",
-      "name": "Razza del cielo basso Corazzata",
+      "name": "Ventyscute",
       "planes": [
         "isole"
       ],
@@ -114870,20 +115014,22 @@
           "growth__habitat_isole_razza_del_cielo_basso_variante_corazzata__9",
           "growth__habitat_isole_razza_del_cielo_basso_variante_corazzata__10",
           "growth__habitat_isole_razza_del_cielo_basso_variante_corazzata__11"
-        ]
+        ],
+        "speciesNameIt": "Razza del cielo basso Corazzata",
+        "speciesNameEn": "Razza del cielo basso Corazzata"
       },
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_isole_razza_del_cielo_basso",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_isole_razza_del_cielo_basso_variante_corazzata_canon_20261118.webp",
+      "themeAssetExists": true,
+      "themeStatus": "asset dedicato scelto e collegato; verifica build e UI separata",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "scelta esplicita utente verificata per ID, tavola e SHA; derivato autorizzato per Ensypuppet",
       "anatomyLabels": [
         "Corpo",
         "Testa",
@@ -114895,10 +115041,12 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_isole_razza_del_cielo_basso_variante_corazzata_canon_20261118.webp",
+          "exists": true,
+          "sha256": "45f5bb509b83b02f4df0710ade2f26cbec4d7a20493622d96139f1ea4b0fb0bb",
+          "approvalEvidence": "VERIFIED_HUMAN_APPROVAL_AND_CANONICAL_HASH",
+          "sourceReceipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+          "sourceSelectedSha256": "45f5bb509b83b02f4df0710ade2f26cbec4d7a20493622d96139f1ea4b0fb0bb",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -114917,12 +115065,13 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "previousCatalogueName": "Razza del cielo basso Corazzata",
+      "artworkUpdatedAtUtc": "2026-11-18T05:24:30.051143+00:00"
     },
     {
       "id": "habitat_isole_falena_dei_cristalli_di_pioggia",
@@ -118721,7 +118870,7 @@
     },
     {
       "id": "habitat_sotterraneo_talpa_dei_cristalli_ciechi",
-      "name": "Talpa dei cristalli ciechi",
+      "name": "Vibryclaw",
       "planes": [
         "sotterraneo"
       ],
@@ -118810,15 +118959,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": false,
       "baseId": "habitat_sotterraneo_talpa_dei_cristalli_ciechi",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_sotterraneo_talpa_dei_cristalli_ciechi_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_sotterraneo_talpa_dei_cristalli_ciechi/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Zampa destra",
@@ -118829,10 +118978,10 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_sotterraneo_talpa_dei_cristalli_ciechi_canon_20261117.webp",
+          "exists": true,
+          "sha256": "fe2ba9247bc3876b3bca0717c4d543044623fafad790efe037095b5edeb03097",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_sotterraneo_talpa_dei_cristalli_ciechi/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -118851,12 +119000,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Talpa dei cristalli ciechi"
+      ]
     },
     {
       "id": "habitat_sotterraneo_talpa_dei_cristalli_ciechi_variante_rituale",
@@ -128641,7 +128792,7 @@
     },
     {
       "id": "habitat_shadow_hell_regina_dello_specchio_dell_oblio_variante_veterana",
-      "name": "Regina dello specchio dell’Oblio Veterana",
+      "name": "Umbracrown",
       "planes": [
         "shadow_hell"
       ],
@@ -128742,15 +128893,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_shadow_hell_regina_dello_specchio_dell_oblio",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_shadow_hell_regina_dello_specchio_dell_oblio_variante_veterana_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_shadow_hell_regina_dello_specchio_dell_oblio_variante_veterana/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Occhio destro",
@@ -128762,10 +128913,10 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_shadow_hell_regina_dello_specchio_dell_oblio_variante_veterana_canon_20261117.webp",
+          "exists": true,
+          "sha256": "33b014a218cdc722323ccadb6d1c6358a9f30fe811575deab69bdc3dc189265e",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_shadow_hell_regina_dello_specchio_dell_oblio_variante_veterana/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -128784,12 +128935,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Regina dello specchio dell’Oblio Veterana"
+      ]
     },
     {
       "id": "habitat_diabolico_segugio_del_patto_di_ferro",
@@ -130858,7 +131011,7 @@
     },
     {
       "id": "habitat_diabolico_re_dei_patti_consumati",
-      "name": "Re dei patti consumati",
+      "name": "Scoryrex",
       "planes": [
         "diabolico"
       ],
@@ -130958,15 +131111,15 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": false,
       "baseId": "habitat_diabolico_re_dei_patti_consumati",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_diabolico_re_dei_patti_consumati_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_diabolico_re_dei_patti_consumati/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Occhio destro",
@@ -130978,10 +131131,10 @@
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_diabolico_re_dei_patti_consumati_canon_20261117.webp",
+          "exists": true,
+          "sha256": "3e89c88baf4b31cb935a73ed951eef415ba5bb3209472ce754ca11ad9a60e278",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_diabolico_re_dei_patti_consumati/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -131000,12 +131153,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Re dei patti consumati"
+      ]
     },
     {
       "id": "habitat_diabolico_re_dei_patti_consumati_variante_errante",
@@ -132875,7 +133030,7 @@
     },
     {
       "id": "habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale",
-      "name": "Custode del cancello senza ritorno Rituale",
+      "name": "Mirusclaust",
       "planes": [
         "vero_inferno"
       ],
@@ -132933,25 +133088,25 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:_generatedMonsterEntry / funzione generatrice della famiglia",
       "isGeneratedVariant": true,
       "baseId": "habitat_vero_inferno_custode_del_cancello_senza_ritorno",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Nucleo"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale_canon_20261117.webp",
+          "exists": true,
+          "sha256": "25001c27cfe0f8ce760d7be3999bed4245714acbc8dcc64f95d84143dab9178f",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -132970,12 +133125,14 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": [
+        "Custode del cancello senza ritorno Rituale"
+      ]
     },
     {
       "id": "habitat_vero_inferno_araldo_della_cenere_eterna",
@@ -150130,25 +150287,25 @@
       "sourceLocation": "lib/pages/oculum_dungeon/monster_book.dart:3850",
       "isGeneratedVariant": false,
       "baseId": "gabli_caverne",
-      "themeAsset": null,
-      "themeAssetExists": false,
-      "themeStatus": "scena dedicata mancante; fallback procedurale",
+      "themeAsset": "assets/oculum/home_art_authored/theme_gabli_caverne_canon_20261117.webp",
+      "themeAssetExists": true,
+      "themeStatus": "desktop approvato Expressive Ink; telefono e reliquia separati",
       "mobileThemeAsset": null,
       "mobileThemeAssetExists": false,
       "relicAsset": null,
       "relicStatus": "reliquia dedicata mancante; OculumMonsterRelicPainter generico",
       "unlinkedArtworkCandidates": [],
-      "approval": "non attestata automaticamente: verificare canone, manifest e conferma utente",
+      "approval": "output/artwork/expressive_ink_giro_20261117_1233/gabli_caverne/CONFERMA-SCELTA.json",
       "anatomyLabels": [
         "Corpo",
         "Piega del corpo"
       ],
       "artworkEvidence": {
         "desktop": {
-          "path": null,
-          "exists": false,
-          "sha256": null,
-          "approvalEvidence": "NOT_VERIFIED_BY_THIS_AUDIT",
+          "path": "assets/oculum/home_art_authored/theme_gabli_caverne_canon_20261117.webp",
+          "exists": true,
+          "sha256": "0b7c77a3607d83afc468dae481b7e2aac5cd4316e7a3d4baf515577ac2f31590",
+          "approvalEvidence": "output/artwork/expressive_ink_giro_20261117_1233/gabli_caverne/CONFERMA-SCELTA.json",
           "uiVerifiedByThisAudit": false
         },
         "phone": {
@@ -150167,12 +150324,12 @@
         }
       },
       "missingDedicatedArtwork": [
-        "desktop",
         "phone",
         "relic"
       ],
       "completeDedicatedArtworkSetMapped": false,
-      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+      "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork.",
+      "searchNameAliases": []
     },
     {
       "id": "gabli_caverne_variante_rituale",
@@ -162839,6 +162996,24 @@
       ],
       "completeDedicatedArtworkSetMapped": false,
       "anatomyEvidenceBoundary": "Exported combat targets can include hidden/internal parts; they do not automatically define visible artwork."
+    }
+  ],
+  "partialArtworkUpdates": [
+    {
+      "batch": "oculum-10-lotti-20261117-1233",
+      "scope": "solo i nove desktop scelti; i conteggi globali del precedente audit non vengono attestati nuovamente",
+      "receipt": "output/artwork/expressive_ink_giro_20261117_1233/CONFERME-CHAT.json"
+    },
+    {
+      "batch": "oculum-10-lotti-20261117-1205",
+      "recordedAtUtc": "2026-11-18T05:24:30.051143+00:00",
+      "scope": "Dieci nomi, descrizioni e anatomie esportati dal catalogo Dart corrente; dieci desktop scelti verificati. I conteggi globali del precedente audit non sono attestati nuovamente.",
+      "receipt": "output/artwork/expressive_ink_giro_20261117_1205/INTEGRAZIONE-SORGENTI-20261118.json",
+      "catalogueExport": "output/artwork/EXPORT-CATALOGO-20261118.json",
+      "exportEntriesIncludingVariants": 1270,
+      "runycrickIndividualLegs": 6,
+      "runycrickIndividualWings": 2,
+      "runtimeUiVerifiedByThisAudit": false
     }
   ]
 }

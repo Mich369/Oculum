@@ -1,5 +1,11 @@
 part of 'monster_book.dart';
 
+const oculumRhinoStoneguardMonsterIds = {
+  oculumBabyRockRhinoId,
+  'baby_rock_rhino_variante_intermedia',
+  'baby_rock_rhino_variante_veterana',
+};
+
 /// Read anatomy from the physical description, never from a spell it can cast.
 String oculumMonsterPhysicalDescription(MonsterBookEntry entry) => entry.descIt
     .split(
@@ -37,12 +43,13 @@ List<Map<String, dynamic>> oculumMonsterPrecisionChoices(
 /// Explicit Master rules can still define a different, saved custom anatomy.
 bool oculumMonsterHasAnatomicalWeakPoint(MonsterBookEntry? entry) {
   if (entry == null) return true;
-  final explicit = entry.encounterRules['hasAnatomicalWeakPoint'];
-  if (explicit is bool) return explicit;
-  if (entry.id.split('_variante_').first != 'gigante_sabbia') return true;
   final custom = entry.encounterRules['precisionBodyParts'];
-  return custom is List &&
-      custom.whereType<Map>().any((p) => p['weak'] == true);
+  final hasExplicitWeakPart =
+      custom is List && custom.whereType<Map>().any((p) => p['weak'] == true);
+  final explicit = entry.encounterRules['hasAnatomicalWeakPoint'];
+  if (explicit is bool) return explicit || hasExplicitWeakPart;
+  if (entry.id.split('_variante_').first != 'gigante_sabbia') return true;
+  return hasExplicitWeakPart;
 }
 
 String oculumLogicalMonsterWeakPoint(
@@ -172,6 +179,22 @@ String oculumLogicalMonsterWeakPoint(
   );
 }
 
+const oculumOmbraIgnotaLegacyEyeIds = {'eyes_1', 'eyes_2'};
+const oculumImbrytoadId = 'ciclo_rospo_gronde_marce';
+const oculumImbrytoadThroatSacs = {'throat_sac_left', 'throat_sac_right'};
+
+bool oculumIsImbrytoadSpitEffect(Object? id) =>
+    '$id'.split('/').last.startsWith('${oculumImbrytoadId}_prima_forma_');
+
+bool oculumHasDefaultOmbraIgnotaEye(MonsterBookEntry? entry) {
+  if (entry == null || entry.id != 'ombra_ignota') return false;
+  final custom = entry.encounterRules['precisionBodyParts'];
+  return custom is! List || custom.isEmpty;
+}
+
+String oculumOmbraIgnotaEyePartId(String id) =>
+    oculumOmbraIgnotaLegacyEyeIds.contains(id) ? 'eyes' : id;
+
 /// Stable, separate hit locations. Saved Master anatomy overrides win.
 List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   MonsterBookEntry entry, {
@@ -188,8 +211,16 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   final fireShield = entry.id.split('_variante_').first == 'fire_shield';
   final rockShield = entry.id.split('_variante_').first == 'rock_shield';
   final runicGolem = entry.id.split('_variante_').first == 'golem_runico';
+  final acidSapSpider =
+      entry.id == 'habitat_foresta_elementale_ragno_della_linfa_acida';
   final canonicalBase = entry.id.split('_variante_').first;
-  final reviewedPhysical = const {
+  // Runycrick G: only this chosen base has confirmed individual limbs.
+  // Saved precisionBodyParts above still wins; variants are not inferred.
+  final reviewedPhysical = entry.id == 'base_postea_02'
+      ? 'sei zampe meccaniche e due ali a membrana'
+      : const {
+    'custode_campana_cieca':
+        'umanoide, due braccia, due gambe, testa a campana, senza occhi',
     'deadly_sins':
         'umanoide, testa con elmo chiuso senza occhi visibili, torace, due braccia, due gambe e due corna di ferro',
     'rascalume':
@@ -198,17 +229,27 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
         'salamandra quadrupede, testa, torace, quattro zampe, due occhi, una coda e branchie esterne',
     'colosso_prismarite':
         'colosso umanoide di pietra, testa senza occhi, torace, due braccia sulle nocche e due gambe',
+    'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti':
+        'due braccia di pietra con dita lunghe, parte inferiore di vapore senza gambe',
+    'ragno_putrido': 'ragno con otto occhi e otto zampe',
     'brumilio':
         'uccello, testa, becco, torace, due occhi, due ali, due zampe e una coda',
     'vendulo': 'quadrupede, testa, torace, quattro zampe e due occhi',
     'obliterated_devil':
         'umanoide, testa, torace, due braccia, due gambe, due occhi neri e due corna',
   }[canonicalBase];
-  final reviewedCounts = const <String, Map<String, int>>{
+  final reviewedCounts = entry.id == 'base_postea_02'
+      ? const <String, int>{'legs': 6, 'wings': 2}
+      : const <String, Map<String, int>>{
+    'custode_campana_cieca': {'arms': 2, 'legs': 2, 'eyes': 0},
+    'ciclope_del_fato': {'arms': 2, 'legs': 2, 'eyes': 1, 'wings': 2},
+    'bunnys': {'legs': 4, 'eyes': 2, 'wings': 0, 'tail': 1},
     'deadly_sins': {'arms': 2, 'legs': 2, 'eyes': 0, 'horns': 2},
     'rascalume': {'legs': 4, 'eyes': 2, 'tail': 1},
     'mirula': {'legs': 4, 'eyes': 2, 'tail': 1},
     'colosso_prismarite': {'arms': 2, 'legs': 2, 'eyes': 0},
+    'habitat_nuvole_rocciose_golem_delle_ghiaie_orbitanti': {'arms': 2},
+    'ragno_putrido': {'eyes': 8, 'legs': 8},
     'brumilio': {'legs': 2, 'wings': 2, 'eyes': 2, 'tail': 1},
     'vendulo': {'legs': 4, 'eyes': 2},
     // The third, weak eye is a separately labelled forehead target below.
@@ -227,6 +268,17 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
           : runicGolem
           ? 'costrutto umanoide, due braccia, due gambe, testa a calotta senza occhi'
           : switch (entry.id) {
+              'aberrazione_oro_marmo_intermedia_solare' =>
+                'bipede umanoide, due braccia, due gambe, testa a lamelle senza occhi visibili',
+              'idra_base' => 'tre teste, quattro zampe e una coda',
+              'snorlo_variante_corazzata' =>
+                'umanoide, testa, quattro braccia, due gambe e due occhi',
+              'habitat_demoniaco_regina_delle_gole_vulcaniche' =>
+                'quattro zampe uncinate, due corna, due ali membranose',
+              'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale' =>
+                'sei zampe uncinate',
+              final id when oculumRhinoStoneguardMonsterIds.contains(id) =>
+                'quadrupede, quattro zampe, testa e un corno',
               'ciclope_non_morto' =>
                 'umanoide, testa con un occhio centrale, torace, due braccia e due gambe',
               'inspired_sentinella_spirale' =>
@@ -245,8 +297,6 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
                 'bipede umanoide, due braccia, due gambe, testa, due occhi, due orecchie e coda',
               'sharp' => 'quattro zampe, due occhi',
               'mosca_campana' => 'sei zampe, quattro ali, due occhi',
-              'custode_campana_cieca' =>
-                'umanoide, due braccia, due gambe, testa a campana, senza occhi',
               'sciamano_malizioso' =>
                 'umanoide ligneo, due braccia, due gambe, testa mascherata, senza occhi biologici',
               'mammuth_in_decomposizione' =>
@@ -254,7 +304,10 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
               'shadow_devil' => 'due corna, senza occhi',
               'mezzo_demone_cosciente' || 'mezzo_demone_massiccio' =>
                 'umanoide, due braccia, due gambe, due corna e due occhi',
-              'forest_demon' =>
+              'forest_demon' ||
+              'baby_forest_demon' ||
+              'forest_demon_errato' ||
+              'baby_forest_demon_errato' =>
                 'rettile quadrupede, quattro zampe, due occhi, tre corna e coda',
               'ciclo_forest_demon_blu' =>
                 'rettile quadrupede, quattro zampe, due occhi, due corna e coda, senza ali',
@@ -293,8 +346,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   final approvedQuadruped = const {
     'mostro_sabbia',
     'forest_demon',
+    'baby_forest_demon',
+    'forest_demon_errato',
+    'baby_forest_demon_errato',
     'ciclo_forest_demon_blu',
     'famelico_oblio',
+    ...oculumRhinoStoneguardMonsterIds,
   }.contains(entry.id);
   final humanoid =
       !spherical &&
@@ -337,6 +394,21 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
             : runicGolem
             ? {'arms': 2, 'legs': 2, 'eyes': 0}
             : switch (entry.id) {
+                'snorlo_variante_corazzata' => {
+                  'arms': 4,
+                  'legs': 2,
+                  'eyes': 2,
+                },
+                'habitat_foresta_elementale_ragno_della_linfa_acida' => {
+                  'legs': 8,
+                },
+                'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale' =>
+                  {'legs': 6},
+                final id when oculumRhinoStoneguardMonsterIds.contains(id) => {
+                  'arms': 0,
+                  'legs': 4,
+                  'horns': 1,
+                },
                 'ciclope_non_morto' => {'arms': 2, 'legs': 2, 'eyes': 1},
                 'inspired_sentinella_spirale' => {'eyes': 1},
                 'manichino_spada' ||
@@ -353,7 +425,6 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
                 'topino_avventuroso' => {'arms': 2, 'legs': 2, 'eyes': 2},
                 'sharp' => {'legs': 4, 'eyes': 2},
                 'mosca_campana' => {'legs': 6, 'wings': 4, 'eyes': 2},
-                'custode_campana_cieca' ||
                 'sciamano_malizioso' => {'arms': 2, 'legs': 2},
                 'mammuth_in_decomposizione' => {'legs': 4, 'eyes': 2},
                 'shadow_devil' => {'horns': 2},
@@ -364,7 +435,15 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
                   'horns': 2,
                 },
                 'nuvola_in_bottiglia' => {'eyes': 1},
-                'forest_demon' => {'legs': 4, 'eyes': 2, 'horns': 3},
+                'forest_demon' ||
+                'baby_forest_demon' ||
+                'forest_demon_errato' ||
+                'baby_forest_demon_errato' => {
+                  'legs': 4,
+                  'eyes': 2,
+                  'horns': 3,
+                  'tail': 1,
+                },
                 'ciclo_forest_demon_blu' => {'legs': 4, 'eyes': 2, 'horns': 2},
                 'famelico_oblio' => {
                   'legs': 4,
@@ -451,6 +530,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       final side = i.isEven ? 'destro' : 'sinistro';
       final feminine =
           id == 'wings' ||
+          id == 'gills' ||
           id == 'legs' ||
           id == 'tail' ||
           id == 'head' ||
@@ -484,7 +564,11 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       r'piega|fianco|pelle|corpo|contorno|condensazione|parte centrale',
     ).hasMatch(weak),
   );
-  if (entry.id != 'mosca_campana' &&
+  if (entry.id == 'idra_base') {
+    add('head_1', 'Testa destra', 'head', false);
+    add('head_2', 'Testa sinistra', 'head', false);
+    add('head_3', 'Testa centrale', 'head', false);
+  } else if (entry.id != 'mosca_campana' &&
       !spherical &&
       !has(r'headless|decapitat|senza testa|nessuna testa') &&
       (humanoid ||
@@ -500,7 +584,9 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
       r'testa|cranio|gola|mascella|collo',
     );
   }
-  if (!has(
+  if (entry.id == 'ombra_ignota') {
+    group('eyes', 'Occhio', 'Occhi', 1, r'occhi|occhio|lente|pupilla');
+  } else if (!has(
         r'\b(?:senza occhi|nessun occhio|non (?:ha|hanno|possiede|possiedono|presenta|presentano) (?:gli |alcun[io]? )?occhi(?:o)?|priv[oaie] di occhi)\b',
       ) &&
       has(r'occhi|occhio|lenti|lente|pupilla')) {
@@ -533,7 +619,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     );
   }
   if (!spherical &&
-      !incorporeal &&
+      (!incorporeal || acidSapSpider) &&
       !has(r'senza gambe|senza zampe|una sola ruota') &&
       (humanoid ||
           quadruped ||
@@ -584,7 +670,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
         'cloud_beast',
         'lupo_infernale_del_ghiaccio',
       }.contains(entry.id) ||
-      canonicalBase == 'rascalume') {
+      const {
+        'bunnys',
+        'ciclope_del_fato',
+        'rascalume',
+        oculumMutantRatId,
+      }.contains(canonicalBase)) {
     group('ears', 'Orecchio', 'Orecchie', 2, r'orecchio|orecchie');
   }
   if (entry.id == 'funghetto_cappuccio_rosso') {
@@ -599,7 +690,7 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     add('trunk', 'Proboscide', 'trunk', weak.contains('proboscide'));
     parts.last['material'] = 'flesh';
   }
-  if (entry.id == 'custode_campana_cieca') {
+  if (canonicalBase == 'custode_campana_cieca') {
     for (final part in parts) {
       part['material'] = 'metal';
       if (part['group'] == 'head') part['label'] = 'Campana-testa';
@@ -638,6 +729,12 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     add('lower_vortex', 'Vortice inferiore', 'vortex', false);
     parts.last['material'] = 'spectral';
   }
+  if (entry.id == 'aberrazione_oro_marmo_intermedia_solare') {
+    // The shoulder joint is the vulnerability, rather than the whole arm.
+    for (final part in parts.where((part) => part['group'] == 'arms')) {
+      part['weak'] = false;
+    }
+  }
   if (entry.id.startsWith('aberrazione_metallica_')) {
     for (final part in parts.where((p) => p['group'] == 'head')) {
       part['weak'] = false;
@@ -674,6 +771,10 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
   ];
   for (final d in details) {
     final detail = RegExp('\\b(?:${d.$3})\\b');
+    if (entry.id == 'piranha_mortale' && d.$1 == 'gills') {
+      group('gills', 'Branchia', 'Branchie', 2, r'branchie');
+      continue;
+    }
     // Living among roots does not give an animal roots of its own. Keep
     // bodily roots and authored root weak points, and preserve saved anatomy
     // through the explicit override at the beginning of this function.
@@ -798,6 +899,17 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     } else {
       add('helmet_visor', 'Visiera dell’elmo solare', 'sensor', false);
       parts.last['material'] = 'metal';
+      for (final part in parts) {
+        part['weak'] = false;
+      }
+      switch (entry.id) {
+        case 'guardia_solare':
+          add('shield_side_flank', 'Fianco sotto lo scudo', 'flank', true);
+        case 'guardia_solare_elite':
+          add('inner_elbow', 'Giuntura interna del gomito', 'joint', true);
+        case 'guardiano_solare':
+          add('rear_knee', 'Giuntura posteriore del ginocchio', 'joint', true);
+      }
     }
   }
   if (entry.id == 'gigante_sabbia') {
@@ -813,6 +925,24 @@ List<Map<String, dynamic>> oculumMonsterPrecisionAnatomy(
     parts.removeWhere((p) => p['group'] == 'core');
     add('fairy_core', 'Nucleo con fata', 'core', false);
     parts.last['reflectAttack'] = true;
+  }
+  if (entry.id == oculumImbrytoadId) {
+    for (final part in parts) {
+      part['weak'] = false;
+    }
+    parts.addAll([
+      for (final (id, label) in const [
+        ('throat_sac_left', 'Sacca sinistra della gola'),
+        ('throat_sac_right', 'Sacca destra della gola'),
+      ])
+        {
+          'id': id,
+          'label': label,
+          'group': 'throat_sacs',
+          'penalty': 0,
+          'weak': true,
+        },
+    ]);
   }
   return parts;
 }

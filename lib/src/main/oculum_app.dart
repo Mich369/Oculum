@@ -73,6 +73,88 @@ final ThemeData oculumBaseTheme = ThemeData(
 );
 final ValueNotifier<ThemeData?> oculumActiveTheme = ValueNotifier(null);
 
+typedef _OculumAppFeedbackPresentation = ({
+  ValueNotifier<OculumSheetFeedback?> events,
+  OculumFeedbackTarget target,
+  ThemeData theme,
+  bool visible,
+});
+
+class _OculumAppFeedbackScope extends InheritedWidget {
+  const _OculumAppFeedbackScope({required this.host, required super.child});
+
+  final _OculumAppFeedbackHostState host;
+
+  @override
+  bool updateShouldNotify(_OculumAppFeedbackScope oldWidget) =>
+      !identical(host, oldWidget.host);
+}
+
+class _OculumAppFeedbackHost extends StatefulWidget {
+  const _OculumAppFeedbackHost({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_OculumAppFeedbackHost> createState() => _OculumAppFeedbackHostState();
+}
+
+class _OculumAppFeedbackHostState extends State<_OculumAppFeedbackHost> {
+  _OculumAppFeedbackPresentation? _current;
+  _OculumAppFeedbackPresentation? _next;
+  bool _pending = false;
+
+  void present(_OculumAppFeedbackPresentation? next) {
+    if (!mounted || _next == next) return;
+    _next = next;
+    if (_pending) return;
+    _pending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pending = false;
+      if (mounted && _current != _next) setState(() => _current = _next);
+    });
+  }
+
+  void detach(ValueNotifier<OculumSheetFeedback?> owner) {
+    if (identical(_next?.events, owner)) present(null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final feedback = _current;
+    return _OculumAppFeedbackScope(
+      host: this,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          widget.child,
+          if (feedback != null && feedback.visible)
+            Positioned.fill(
+              child: ValueListenableBuilder<bool>(
+                valueListenable: oculumGraphicsEnabled,
+                builder: (context, graphics, _) {
+                  if (!graphics ||
+                      oculumThemePresentation.value.motion !=
+                          OculumThemeMotion.complete ||
+                      MediaQuery.maybeOf(context)?.disableAnimations == true) {
+                    return const SizedBox.shrink();
+                  }
+                  return Theme(
+                    data: feedback.theme,
+                    child: OculumSheetFeedbackLayer(
+                      events: feedback.events,
+                      target: feedback.target,
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class OculumThemeScope extends StatelessWidget {
   const OculumThemeScope({super.key, required this.child});
   final Widget child;
@@ -115,39 +197,43 @@ class OculumThemeScope extends StatelessWidget {
                         accent: Colors.transparent,
                         opacity: 0,
                       );
-                  return Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      OculumGothAmbience(
-                        spec: spec,
-                        child: Theme(
-                          data: theme.copyWith(
-                            extensions: [
-                              for (final extension in theme.extensions.values)
-                                if (extension is! OculumGothOrnaments)
-                                  extension,
-                              ?selectedOrnaments,
-                            ],
+                  return _OculumAppFeedbackHost(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        OculumGothAmbience(
+                          spec: spec,
+                          child: Theme(
+                            data: theme.copyWith(
+                              extensions: [
+                                for (final extension in theme.extensions.values)
+                                  if (extension is! OculumGothOrnaments)
+                                    extension,
+                                ?selectedOrnaments,
+                              ],
+                            ),
+                            child: child!,
                           ),
-                          child: child!,
                         ),
-                      ),
-                      const Positioned.fill(child: OculumCustomArtworkLayer()),
-                      Positioned.fill(
-                        child: OculumCombatReactionHost(
-                          state: combat,
-                          transitionDuration: switch (presentation.motion) {
-                            OculumThemeMotion.complete => const Duration(
-                              milliseconds: 120,
-                            ),
-                            OculumThemeMotion.reduced => const Duration(
-                              milliseconds: 80,
-                            ),
-                            OculumThemeMotion.disabled => Duration.zero,
-                          },
+                        const Positioned.fill(
+                          child: OculumCustomArtworkLayer(),
                         ),
-                      ),
-                    ],
+                        Positioned.fill(
+                          child: OculumCombatReactionHost(
+                            state: combat,
+                            transitionDuration: switch (presentation.motion) {
+                              OculumThemeMotion.complete => const Duration(
+                                milliseconds: 120,
+                              ),
+                              OculumThemeMotion.reduced => const Duration(
+                                milliseconds: 80,
+                              ),
+                              OculumThemeMotion.disabled => Duration.zero,
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
@@ -177,12 +263,15 @@ Future<void> setOculumGraphicsPreference(bool enabled) async {
 class OculumApp extends StatelessWidget {
   const OculumApp({super.key});
 
+  static final _navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: oculumGraphicsEnabled,
       builder: (context, graphics, _) => MaterialApp(
         title: 'Oculum',
+        navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
         scrollBehavior: const _OculumAdaptiveScrollBehavior(),
         builder: (context, child) {
@@ -209,7 +298,13 @@ class OculumApp extends StatelessWidget {
           final content = kIsWeb
               ? OculumWebLayout(child: Builder(builder: typographyContent))
               : typographyContent(context);
-          return OculumThemeScope(child: content);
+          return OculumThemeScope(
+            child: OculumPasswordRecoveryHost(
+              auth: OculumAuthService.instance,
+              navigatorKey: _navigatorKey,
+              child: content,
+            ),
+          );
         },
         theme: oculumWithArtButtons(oculumBaseTheme),
         home: const OculumStartupPreloader(),

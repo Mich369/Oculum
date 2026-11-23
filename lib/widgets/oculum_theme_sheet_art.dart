@@ -48,8 +48,11 @@ class OculumThemeSheetFrame extends StatelessWidget {
                 ? 'mobile'
                 : 'panel';
             const slice = Rect.fromLTRB(128, 64, 896, 448);
+            // The fixed corners must fit in the panel's existing gutter.
+            // At scale 4 the 128px side occupied 32 logical pixels and
+            // crossed labels/bars whose padding is only 14 logical pixels.
             final scale = math.max(
-              compact ? 8.0 : 4.0,
+              compact ? 128 / 5 : 128 / 10,
               math.max(
                 256 / math.max(1, constraints.maxWidth),
                 128 / math.max(1, constraints.maxHeight),
@@ -107,24 +110,31 @@ class OculumThemeSheetBackdrop extends StatelessWidget {
     super.key,
     required this.child,
     this.sheetId = '',
+    this.paintScene = true,
   });
   final Widget child;
   final String sheetId;
+  final bool paintScene;
   @override
-  Widget build(BuildContext context) => Stack(
-    fit: StackFit.passthrough,
-    children: [
-      Positioned.fill(
-        child: IgnorePointer(
-          child: Opacity(
-            opacity: .30,
-            child: OculumThemeSheetScene(fillArea: true, sheetId: sheetId),
-          ),
-        ),
-      ),
-      child,
-    ],
-  );
+  Widget build(BuildContext context) => !paintScene
+      ? child
+      : Stack(
+          fit: StackFit.passthrough,
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: .30,
+                  child: OculumThemeSheetScene(
+                    fillArea: true,
+                    sheetId: sheetId,
+                  ),
+                ),
+              ),
+            ),
+            child,
+          ],
+        );
 }
 
 /// A backdrop scene adds no layout space. The loop spends most of its time
@@ -150,7 +160,6 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
   bool foreground = true;
   bool visible = true;
   ScrollPosition? scrollPosition;
-  String preloadedPack = '';
 
   @override
   void initState() {
@@ -170,26 +179,8 @@ class _OculumThemeSheetSceneState extends State<OculumThemeSheetScene>
       scrollPosition = nextPosition;
       scrollPosition?.addListener(_checkVisibility);
     }
-    final spec = Theme.of(context).extension<OculumGothOrnaments>();
-    if (spec != null && spec.themeId.isNotEmpty && spec.opacity > 0) {
-      final presentation = oculumThemePresentationForSheet(widget.sheetId);
-      final pack = oculumResolveThemeArt(spec, presentation);
-      final variant = presentation.variant.name;
-      final preloadKey = '${pack.id}:$variant';
-      if (preloadKey != preloadedPack) {
-        preloadedPack = preloadKey;
-        final mobile = MediaQuery.sizeOf(context).width < 600;
-        for (final asset in [
-          pack.frame(mobile ? 'mobile' : 'panel', variant: variant),
-          pack.frame('portrait', variant: variant),
-          pack.frame('statistics', variant: variant),
-          if (!oculumThemeStoryIds.contains(pack.id))
-            pack.scene(mobile: mobile, variant: variant),
-        ]) {
-          precacheImage(AssetImage(oculumMonsterArtworkAsset(asset)!), context);
-        }
-      }
-    }
+    // Visible image widgets resolve their own correctly sized providers.
+    // Legacy warmups retained unused frames and full-resolution scene copies.
     _updateMotion();
   }
 

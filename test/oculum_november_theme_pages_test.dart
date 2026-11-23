@@ -88,9 +88,7 @@ void main() {
             ),
           );
           final image = tester.widget<Image>(find.byType(Image).first);
-          if (theme.preserveIllustrationFraming) {
-            expect(image.fit, BoxFit.contain);
-          }
+          expect(image.fit, BoxFit.cover);
           final provider = image.image is ResizeImage
               ? (image.image as ResizeImage).imageProvider
               : image.image;

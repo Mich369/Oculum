@@ -1,5 +1,63 @@
 part of '../../main.dart';
 
+const _vaiternMerchantId = 'merchant_vaitern';
+const _lostTownMerchantId = 'merchant_lost_town';
+const _lostTownUpperMerchantId = 'merchant_lost_town_upper';
+String? oculumCityMerchantPlaneId(String id) => switch (id) {
+  _vaiternMerchantId ||
+  _lostTownMerchantId ||
+  _lostTownUpperMerchantId => 'mezzano',
+  _ => null,
+};
+const _vaiternPieceValue = 60;
+const _resurrectionStoneOfferKind = 'resurrection_stone';
+const _resurrectionStoneName = 'Pietra della Resurrezione';
+const _resurrectionStoneNote =
+    'Riporta in vita una scheda morta al 50% della Vita massima, '
+    'arrotondato per eccesso. In Fight richiede un’Azione. '
+    'Usabile entro 18 ore di campagna in Facile e Normale, '
+    '9 in Difficile e 3 in Oculum. Uso disponibile in campagna locale.';
+final _vaiternDialogOpen = Expando<bool>();
+
+bool oculumMerchantOffersCorruptionPage(
+  String shopType, {
+  required bool alreadyOwned,
+}) => shopType == 'mercato_nero' && !alreadyOwned;
+
+InventoryItem oculumResurrectionStone() => InventoryItem(
+  nome: _resurrectionStoneName,
+  peso: .1,
+  quantita: 1,
+  note: _resurrectionStoneNote,
+  craftData: {'resurrectionStone': true, 'rarity': 'raro'},
+);
+
+({int minimum, int maximum})? _resurrectionStonePriceRange(String shopType) =>
+    switch (shopType) {
+      'mercato_nero' => (minimum: 120, maximum: 160),
+      'alchimista' => (minimum: 160, maximum: 250),
+      _ => null,
+    };
+
+String _resurrectionStoneOfferId(String shopType) =>
+    '${_resurrectionStoneOfferKind}_$shopType';
+
+int oculumLostTownMerchantPrice(int price) => (max(0, price) * 125 + 50) ~/ 100;
+
+({int minimum, int maximum})? oculumVaiternPaymentRange({
+  required int cost,
+  required int obser,
+  required int pieces,
+}) {
+  final maximum = min(pieces, cost ~/ _vaiternPieceValue);
+  final shortfall = max(0, cost - max(0, obser));
+  final minimum = max(
+    1,
+    (shortfall + _vaiternPieceValue - 1) ~/ _vaiternPieceValue,
+  );
+  return maximum < minimum ? null : (minimum: minimum, maximum: maximum);
+}
+
 int oculumNurseHpRecoveryCost(int missingHp) => (max(0, missingHp) + 9) ~/ 10;
 
 int oculumNurseOculumShieldRecoveryCost(int missingShield) =>
@@ -1350,7 +1408,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
   }
 
-  int get merchantDustPrice => min(
+  int get merchantDustPrice =>
+      _merchantPriceWithCity(_merchantDustPriceBeforeCity);
+
+  int get _merchantDustPriceBeforeCity => min(
     69,
     oculumMerchantApplyPricePercent(
       oculumBlackMarketDustPrice(
@@ -1370,8 +1431,29 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     return '${profile?['shopType'] ?? 'tutti'}';
   }
 
-  int merchantOfferCost(Map<String, dynamic> offer) {
+  int _merchantPriceWithCity(int price) =>
+      const {
+        _lostTownMerchantId,
+        _lostTownUpperMerchantId,
+      }.contains(merchantActiveProfileId)
+      ? oculumLostTownMerchantPrice(price)
+      : price;
+
+  int merchantOfferCost(Map<String, dynamic> offer) => _merchantPriceWithCity(
+    _merchantOfferMasterPrice(offer) ?? _merchantOfferPriceBeforeCity(offer),
+  );
+
+  int _merchantOfferPriceBeforeCity(Map<String, dynamic> offer) {
     final kind = '${offer['kind'] ?? ''}';
+    if (kind == _resurrectionStoneOfferKind) {
+      return max(0, readIntValue(offer['cost']));
+    }
+    if (kind == 'technique_scroll' &&
+        (offer['scrollProfileId'] == oculumElementalSphereEffect ||
+            (offer['scrollProfileId'] == oculumOculumTheftKind &&
+                offer.containsKey('scrollMaxForm')))) {
+      return max(0, readIntValue(offer['cost']));
+    }
     if (const {
       'fabbro_monster_weapon',
       'fabbro_special_weapon',
@@ -1396,7 +1478,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (kind == 'postea_cyber_armor') return 36 + (maxHp() / 2).ceil();
     if (kind == 'black_market_ascension_dust') {
-      return min(69, merchantDustPrice);
+      return min(69, _merchantDustPriceBeforeCity);
     }
     if (kind == 'black_market_fallen_eye') {
       final source = offer['sourceSheet'];
@@ -1504,7 +1586,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   bool merchantOfferMatchesShop(Map<String, dynamic> offer) {
     if (!merchantOfferMatchesPlane(offer)) return false;
     final kind = '${offer['kind']}';
-    if (offer['scrollProfileId'] == oculumOculumTheftKind &&
+    if (kind == 'rpg_consumable') {
+      return const {'tutti', 'alchimista'}.contains(merchantShopType);
+    }
+    if (kind == _resurrectionStoneOfferKind) {
+      return _resurrectionStonePriceRange(merchantShopType) != null &&
+          offer['id'] == _resurrectionStoneOfferId(merchantShopType);
+    }
+    if (const {
+          oculumOculumTheftKind,
+          oculumElementalSphereEffect,
+        }.contains(offer['scrollProfileId']) &&
         merchantShopType != 'alchimista') {
       return false;
     }
@@ -1551,6 +1643,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             offer['defence'] != null,
       'mercato_nero' =>
         kind.startsWith('black_market_') ||
+            kind == 'corruption_page' ||
             kind == 'monster_book_page' ||
             (kind == 'technique_scroll' &&
                 offer['blackMarketSelected'] == true),
@@ -1559,7 +1652,6 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       'alchimista' =>
         const {
               'anti_corruption',
-              'corruption_page',
               'power_scanner',
               'fallen_eye',
               'smoking_herbs',
@@ -1625,6 +1717,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
 
     final reserved = <Map<String, dynamic>>[];
+    final resurrectionStone = firstWhere(
+      (offer) => offer['kind'] == _resurrectionStoneOfferKind,
+    );
+    if (resurrectionStone != null) reserved.add(resurrectionStone);
     switch (merchantShopType) {
       case 'mercato_nero':
         final dust = firstWhere(
@@ -1926,7 +2022,219 @@ extension _OculumHomeMerchant on _OculumHomePageState {
 
   String get activeMerchantName => '${_activeMerchantProfile()['name']}';
 
+  bool get _atVaitern =>
+      selectedPlaneId == 'mezzano' &&
+      merchantActiveProfileId == _vaiternMerchantId;
+
+  Iterable<InventoryItem> get _availableVaiternPieces => inventario.where(
+    (item) =>
+        oculumIsLunarSymbolPiece(item) &&
+        item.quantita > 0 &&
+        !item.equipaggiata,
+  );
+
+  bool _offerAcceptsVaiternPieces(Map<String, dynamic> offer) {
+    final kind = '${offer['kind'] ?? ''}';
+    return _atVaitern &&
+        merchantStock.contains(offer) &&
+        !kind.startsWith('black_market_') &&
+        offer['blackMarketSelected'] != true &&
+        !const {
+          'monster_book_page',
+          'corruption_page',
+          'nurse_service',
+          'fallen_eye',
+        }.contains(kind);
+  }
+
+  ({int minimum, int maximum})? _vaiternPaymentRangeFor(
+    Map<String, dynamic> offer,
+    int cost,
+  ) => _offerAcceptsVaiternPieces(offer)
+      ? oculumVaiternPaymentRange(
+          cost: cost,
+          obser: leggiNumero(obserController),
+          pieces: _availableVaiternPieces.fold<int>(
+            0,
+            (total, item) => total + item.quantita,
+          ),
+        )
+      : null;
+
+  Map<InventoryItem, int> _vaiternPiecePayment(int pieces) {
+    final payment = <InventoryItem, int>{};
+    for (final item in _availableVaiternPieces) {
+      if (pieces == 0) break;
+      final quantity = min(pieces, item.quantita);
+      payment[item] = quantity;
+      pieces -= quantity;
+    }
+    return pieces == 0 ? payment : {};
+  }
+
+  void _removeVaiternPieces(Map<InventoryItem, int> payment) {
+    for (final entry in payment.entries) {
+      entry.key.quantita -= entry.value;
+      if (entry.key.quantita == 0) inventario.remove(entry.key);
+    }
+  }
+
+  Future<void> _showVaiternExchange() async {
+    if (!_atVaitern || !merchantIsOpen || _vaiternDialogOpen[this] == true) {
+      return;
+    }
+    final origin = currentSheetScrollId();
+    final pieces = _availableVaiternPieces.toList();
+    var selected = false;
+    _vaiternDialogOpen[this] = true;
+    final InventoryItem? piece;
+    try {
+      piece = await showDialog<InventoryItem>(
+        context: context,
+        builder: (dialogContext) => SimpleDialog(
+          title: const Text('Cambia un pezzo per 60 Obser'),
+          children: [
+            for (final item in pieces)
+              SimpleDialogOption(
+                onPressed: () {
+                  if (selected) return;
+                  selected = true;
+                  Navigator.pop(dialogContext, item);
+                },
+                child: Text('${item.nome} · ${item.quantita} disponibili'),
+              ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Annulla'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _vaiternDialogOpen[this] = false;
+    }
+    final chosenPiece = piece;
+    if (!mounted ||
+        chosenPiece == null ||
+        currentSheetScrollId() != origin ||
+        !_atVaitern ||
+        !merchantIsOpen ||
+        !_availableVaiternPieces.contains(chosenPiece)) {
+      return;
+    }
+    // ignore: invalid_use_of_protected_member
+    setState(() {
+      _removeVaiternPieces({chosenPiece: 1});
+      obserController.text =
+          '${leggiNumero(obserController) + _vaiternPieceValue}';
+      risultato = 'Vaitern: hai scambiato ${chosenPiece.nome} per 60 Obser.';
+      aggiungiLog(risultato);
+    });
+    programmaSalvataggio();
+    if (mounted) unawaited(sendRealtimeActiveSheetToStaff());
+  }
+
+  Future<Map<InventoryItem, int>?> _chooseVaiternPayment(
+    int cost,
+    ({int minimum, int maximum}) range,
+  ) {
+    final canPayObser = leggiNumero(obserController) >= cost;
+    var quantity = range.minimum;
+    var confirmed = false;
+    return showDialog<Map<InventoryItem, int>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, refresh) {
+          void close(Map<InventoryItem, int> payment) {
+            if (confirmed) return;
+            confirmed = true;
+            Navigator.pop(dialogContext, payment);
+          }
+
+          final payment = _vaiternPiecePayment(quantity);
+          final balance = cost - quantity * _vaiternPieceValue;
+          return AlertDialog(
+            title: const Text('Pagamento a Vaitern'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Prezzo: $cost Obser · 60 Obser per pezzo'),
+                  Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Usa un pezzo in meno',
+                        onPressed: quantity > range.minimum
+                            ? () => refresh(() => quantity--)
+                            : null,
+                        icon: const Icon(Icons.remove),
+                      ),
+                      Expanded(child: Text('Pezzi: $quantity')),
+                      IconButton(
+                        tooltip: 'Usa un pezzo in più',
+                        onPressed: quantity < range.maximum
+                            ? () => refresh(() => quantity++)
+                            : null,
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                  for (final entry in payment.entries)
+                    Text('${entry.value} × ${entry.key.nome}'),
+                  Text('Saldo in Obser: $balance'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Annulla'),
+              ),
+              if (canPayObser)
+                TextButton(
+                  onPressed: () => close({}),
+                  child: const Text('Solo Obser'),
+                ),
+              FilledButton(
+                onPressed: payment.isEmpty ? null : () => close(payment),
+                child: const Text('Usa i pezzi'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _visitVaitern() {
+    if (selectedPlaneId != 'mezzano') return;
+    _visitCityMerchant(
+      _vaiternMerchantId,
+      'Vaitern · Mercante del Regno Mezzano',
+    );
+  }
+
+  void _visitCityMerchant(String id, String name, {String location = 'city'}) {
+    final plane = oculumCityMerchantPlaneId(id);
+    if (plane != null && plane != selectedPlaneId) return;
+    if (!merchantProfiles.any((profile) => profile['id'] == id)) {
+      merchantProfiles.add(<String, dynamic>{
+        'id': id,
+        'name': name,
+        'location': location,
+        'planeId': ?plane,
+        'stock': <Map<String, dynamic>>[],
+      });
+    }
+    switchMerchantProfile(id);
+  }
+
   void switchMerchantProfile(String profileId) {
+    final plane = oculumCityMerchantPlaneId(profileId);
+    if (plane != null && selectedPlaneId != plane) {
+      return;
+    }
     if (profileId == merchantActiveProfileId) return;
     _saveActiveMerchantProfileStock();
     Map<String, dynamic>? target;
@@ -1937,6 +2245,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       }
     }
     if (target == null) return;
+    if (plane != null) target['planeId'] = plane;
     merchantActiveProfileId = profileId;
     final stock = target['stock'];
     merchantStock = stock is List
@@ -1976,6 +2285,24 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (merchantIsOpen) notifyWorldMerchantVisit();
   }
 
+  void _leaveCityMerchantOutsidePlane() {
+    final plane = oculumCityMerchantPlaneId(merchantActiveProfileId);
+    if (plane == null || plane == selectedPlaneId) return;
+    // Retain the city stock as-is before opening the ordinary local shop.
+    _saveActiveMerchantProfileStock();
+    merchantActiveProfileId = 'merchant_default';
+    final stock = _activeMerchantProfile()['stock'];
+    merchantStock = stock is List
+        ? stock
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+        : <Map<String, dynamic>>[];
+    merchantStockSessionId = merchantStock.isEmpty
+        ? ''
+        : merchantRuntimeSessionId;
+  }
+
   Widget merchantProfileControls() => Wrap(
     spacing: 8,
     runSpacing: 6,
@@ -1985,16 +2312,63 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         icon: const Icon(Icons.public),
         label: Text('Piano: ${selectedPlane.name}'),
       ),
-      if (oculumMicroRealmLore.containsKey(selectedPlaneId))
+      if (selectedPlaneId == 'mezzano')
+        OutlinedButton.icon(
+          onPressed: _atVaitern ? null : _visitVaitern,
+          icon: const Icon(Icons.location_city_outlined),
+          label: Text(_atVaitern ? 'Città: Vaitern' : 'Visita Vaitern'),
+        ),
+      if (selectedPlaneId == 'mezzano')
+        OutlinedButton.icon(
+          onPressed: merchantActiveProfileId == _lostTownMerchantId
+              ? null
+              : () => _visitCityMerchant(_lostTownMerchantId, 'Lost Town'),
+          icon: const Icon(Icons.location_city_outlined),
+          label: Text(
+            merchantActiveProfileId == _lostTownMerchantId
+                ? 'Città: Lost Town bassa · prezzi +25%'
+                : 'Visita Lost Town bassa',
+          ),
+        ),
+      if (selectedPlaneId == 'mezzano')
+        OutlinedButton.icon(
+          onPressed: merchantActiveProfileId == _lostTownUpperMerchantId
+              ? null
+              : () => _visitCityMerchant(
+                  _lostTownUpperMerchantId,
+                  'Lost Town alta',
+                  location: 'solar',
+                ),
+          icon: const Icon(Icons.location_city_outlined),
+          label: Text(
+            merchantActiveProfileId == _lostTownUpperMerchantId
+                ? 'Città: Lost Town alta · prezzi +25%'
+                : 'Visita Lost Town alta',
+          ),
+        ),
+      if (selectedPlaneId == 'affogato' ||
+          oculumMicroRealmLore.containsKey(selectedPlaneId))
         OutlinedButton.icon(
           onPressed: showCurrentMicroRealm,
           icon: const Icon(Icons.explore_outlined),
-          label: const Text('Esplora questa realtà'),
+          label: Text(
+            selectedPlaneId == 'affogato'
+                ? 'Esplora il Regno Sommerso'
+                : 'Esplora questa realtà',
+          ),
         ),
       if (planeNeedsAdaptation)
         OutlinedButton(
           onPressed: rollPlaneAdaptation,
           child: Text('Adattamento · pressione −$planePressurePenalty stats'),
+        ),
+      if (realtimeIsMasterRole)
+        OutlinedButton.icon(
+          onPressed: _showMerchantBarterSettings,
+          icon: const Icon(Icons.tune),
+          label: Text(
+            t('Luogo e prezzi del mercante', 'Merchant location and prices'),
+          ),
         ),
       DropdownButton<String>(
         value: merchantShopType,
@@ -2039,10 +2413,12 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         onSelected: switchMerchantProfile,
         itemBuilder: (context) => [
           for (final profile in merchantProfiles)
-            PopupMenuItem<String>(
-              value: '${profile['id']}',
-              child: Text('${profile['name'] ?? 'Mercante'}'),
-            ),
+            if (profile['id'] != _vaiternMerchantId ||
+                selectedPlaneId == 'mezzano')
+              PopupMenuItem<String>(
+                value: '${profile['id']}',
+                child: Text('${profile['name'] ?? 'Mercante'}'),
+              ),
         ],
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
@@ -2065,6 +2441,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   );
 
   List<Map<String, dynamic>> ensureMerchantStock() {
+    _leaveCityMerchantOutsidePlane();
     if (merchantStock.isNotEmpty) ensureSmokingHerbsOffer();
     if (merchantStock.isNotEmpty) {
       merchantStockSessionId = merchantRuntimeSessionId;
@@ -2502,6 +2879,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   void ensureMerchantSpecialOffers() {
+    ensureRpgConsumableOffers();
     ensureRecipeBookOffers();
     ensurePowerScannerOffers();
     ensurePosteaOffers();
@@ -2564,6 +2942,23 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       }
     }
 
+    final stoneRange = _resurrectionStonePriceRange(merchantShopType);
+    final stoneOfferId = _resurrectionStoneOfferId(merchantShopType);
+    if (stoneRange != null && !ids.contains(stoneOfferId)) {
+      add({
+        'id': stoneOfferId,
+        'kind': _resurrectionStoneOfferKind,
+        'name': _resurrectionStoneName,
+        'desc': _resurrectionStoneNote,
+        'rarity': 'raro',
+        'cost':
+            stoneRange.minimum +
+            Random.secure().nextInt(
+              stoneRange.maximum - stoneRange.minimum + 1,
+            ),
+      });
+    }
+
     final level = max(0, leggiNumero(livelloController));
     addMany(oculumPosteaReactiveEquipmentOffers(level));
     if (!ids.contains(_posteaTransformArmorKind)) {
@@ -2579,14 +2974,16 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     add(
       Map<String, dynamic>.from(_OculumCorruptionChronicle.antiCorruptionOffer),
     );
-    if (!ownsCorruptionPage) {
+    if (oculumMerchantOffersCorruptionPage(
+      merchantShopType,
+      alreadyOwned: ownsCorruptionPage,
+    )) {
       add(
         Map<String, dynamic>.from(
           _OculumCorruptionChronicle.corruptionPageOffer,
         ),
       );
     }
-
     if (merchantShopType == 'mercato_nero') {
       final ownerStats = <String, int>{
         'resilienza': currentStatNaturalControllerMax('resilienza'),
@@ -2604,7 +3001,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         playerLevel: max(0, leggiNumero(livelloController)),
         playerStats: ownerStats,
         alreadyKnownWeakPoints: alreadyKnown,
-        limit: 3,
+        limit: 6,
       );
       for (final entry in candidates) {
         add(<String, dynamic>{
@@ -3159,6 +3556,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         'id': 'food_patalpa',
         'name': 'Patalpa Dolce',
         'cost': 10,
+        'mealSatietyUnits': 2,
         'resilienza': 1,
         'volonta': 1,
         'materia': 1,
@@ -3261,16 +3659,46 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     if (merchantShopType == 'alchimista') {
       final scrollGrade = max(grade, selectedPlane.minimumGrade).clamp(0, 12);
+      final sphereId = 'alchemist_scroll_elemental_sphere_$scrollGrade';
+      if (!merchantStock.any((offer) => offer['id'] == sphereId)) {
+        final elements = oculumElementalSphereElements;
+        final random = Random(
+          monsterSpriteStableSeed('$merchantActiveProfileId:$sphereId'),
+        );
+        final element = elements[random.nextInt(elements.length)];
+        final form = random.nextInt(3) + 1;
+        final formLabel = oculumElementalSphereFormLabel(form);
+        merchantStock.add({
+          'id': sphereId,
+          'kind': 'technique_scroll',
+          'name':
+              'Pergamena ${oculumElementalSphereName(element)} · Forma $formLabel · Grado $scrollGrade',
+          'cost': oculumElementalSphereScrollPrice(form, random),
+          'remaining': 1,
+          'scrollProfileId': oculumElementalSphereEffect,
+          'scrollGrade': scrollGrade,
+          'scrollElement': element,
+          'scrollMaxForm': form,
+          'desc': oculumElementalSphereDescription(element),
+        });
+      }
       final id = 'alchemist_scroll_${oculumOculumTheftKind}_$scrollGrade';
       if (!merchantStock.any((offer) => offer['id'] == id)) {
+        final random = Random(
+          monsterSpriteStableSeed('$merchantActiveProfileId:$id'),
+        );
+        final form = random.nextInt(5) + 1;
+        final formLabel = _oculumTheftFormLabel(form);
         merchantStock.add({
           'id': id,
           'kind': 'technique_scroll',
-          'name': 'Pergamena Sfera Predatrice · Grado $scrollGrade',
-          'cost': oculumScrollValue(scrollGrade),
+          'name':
+              'Pergamena Sfera Predatrice · Forma $formLabel · Grado $scrollGrade',
+          'cost': _oculumSkillScrollFormPrice(form, random),
           'remaining': 1,
           'scrollProfileId': oculumOculumTheftKind,
           'scrollGrade': scrollGrade,
+          'scrollMaxForm': form,
           'desc': oculumOculumTheftScrollDescription,
         });
       }
@@ -3441,6 +3869,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'id': 'meal_sunroot',
           'name': 'Radici Dorate al Miele',
           'cost': 34,
+          'mealSatietyUnits': 3,
           'resilienza': 3,
           'materia': 1,
         },
@@ -3469,6 +3898,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'id': 'meal_red_fungus',
           'name': 'Fungo Rosso alla Brace',
           'cost': 28,
+          'mealSatietyUnits': 2,
           'volonta': 2,
           'materia': 1,
         },
@@ -3476,6 +3906,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'id': 'meal_cloudbread',
           'name': 'Pane di Nuvola Salata',
           'cost': 26,
+          'mealSatietyUnits': 3,
           'resilienza': 2,
           'volonta': 1,
         },
@@ -3648,6 +4079,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   String merchantOfferDescription(Map<String, dynamic> offer) {
+    if (offer['kind'] == 'rpg_consumable' && offer['rarity'] == 'non_comune') {
+      return '${t('Non comune', 'Uncommon')} · ${offer['desc'] ?? ''}';
+    }
+    final satiety = oculumFoodMealSatiety(offer);
+    if (offer['kind'] == 'food' && satiety > 0) {
+      return '${offer['desc'] ?? ''}\n'
+          '${t('Sazietà per unità', 'Satiety per serving')} · ${mealSatietyLabel(satiety)}';
+    }
     if ('${offer['kind'] ?? ''}'.startsWith('black_market_') &&
         offer['kind'] != 'black_market_ascension_dust') {
       final requiredLevel = max(0, readIntValue(offer['requiredLevel']));
@@ -3928,7 +4367,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),
           children: [
+            personalMarketSpheresHeader(),
             merchantProfileControls(),
+            if (_merchantBarterAtLocation) merchantBarterButton(),
+            if (_atVaitern)
+              OutlinedButton.icon(
+                onPressed: _availableVaiternPieces.isEmpty
+                    ? null
+                    : _showVaiternExchange,
+                icon: const Icon(Icons.currency_exchange),
+                label: const Text('Cambia pezzi del Simbolo · 60 Obser'),
+              ),
             if (merchantShopType == 'fabbro') ...[
               OutlinedButton.icon(
                 onPressed: showBlacksmithCombine,
@@ -3992,8 +4441,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                               offer,
                               characterGrade: leggiNumero(gradoController),
                             ) ||
-                            leggiNumero(obserController) <
-                                merchantOfferCost(offer)
+                            !merchantCanAffordOffer(offer)
                         ? null
                         : () => buyMerchantOffer(offer),
                     child: Text(
@@ -4018,6 +4466,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     notifyWorldMerchantVisit();
     final stock = recommendedMerchantStock();
     final showEquipmentServices = merchantShopType == 'fabbro';
+    final showBarter = _merchantBarterAtLocation;
+    final firstOfferIndex =
+        1 + (showBarter ? 1 : 0) + (showEquipmentServices ? 1 : 0);
     _rollNurseRefillBuffForShopOpen();
     await showDialog<void>(
       context: context,
@@ -4029,14 +4480,22 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             width: min(620, MediaQuery.sizeOf(context).width * .94),
             height: min(560, MediaQuery.sizeOf(context).height * .68),
             child: ListView.builder(
-              itemCount: stock.length + (showEquipmentServices ? 1 : 0),
+              itemCount: stock.length + firstOfferIndex,
               itemBuilder: (context, index) {
-                if (showEquipmentServices && index == 0) {
+                if (index == 0) return personalMarketSpheresHeader();
+                if (showBarter && index == 1) {
+                  return merchantBarterButton(
+                    refresh: () {
+                      if (dialogContext.mounted) refresh(() {});
+                    },
+                  );
+                }
+                if (showEquipmentServices && index == firstOfferIndex - 1) {
                   return blacksmithEquipmentServiceButtons(
                     merchantDialog: dialogContext,
                   );
                 }
-                final offer = stock[index - (showEquipmentServices ? 1 : 0)];
+                final offer = stock[index - firstOfferIndex];
                 final cost = merchantOfferCost(offer);
                 return ListTile(
                   title: Tooltip(
@@ -4057,7 +4516,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                               offer,
                               characterGrade: leggiNumero(gradoController),
                             ) ||
-                            leggiNumero(obserController) < cost
+                            !merchantCanAffordOffer(offer)
                         ? null
                         : () async {
                             await buyMerchantOffer(offer);
@@ -4087,7 +4546,17 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
   }
 
+  bool merchantCanAffordOffer(Map<String, dynamic> offer) {
+    final cost = merchantOfferCost(offer);
+    return leggiNumero(obserController) >= cost ||
+        _vaiternPaymentRangeFor(offer, cost) != null;
+  }
+
   Future<void> buyMerchantOffer(Map<String, dynamic> offer) async {
+    if (offer['kind'] == _resurrectionStoneOfferKind &&
+        !merchantOfferMatchesShop(offer)) {
+      return;
+    }
     if (!oculumMerchantCanPurchaseOffer(
       offer,
       characterGrade: leggiNumero(gradoController),
@@ -4106,7 +4575,36 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     }
     final cost = merchantOfferCost(offer);
     if (cost <= 0) return;
-    if (leggiNumero(obserController) < cost) return;
+    final origin = currentSheetScrollId();
+    final originMerchant = merchantActiveProfileId;
+    final range = _vaiternPaymentRangeFor(offer, cost);
+    var pieceCount = 0;
+    var requestedPieces = <InventoryItem, int>{};
+    if (range != null) {
+      if (_vaiternDialogOpen[this] == true) return;
+      _vaiternDialogOpen[this] = true;
+      try {
+        final selected = await _chooseVaiternPayment(cost, range);
+        if (selected == null || !mounted) return;
+        requestedPieces = selected;
+        pieceCount = selected.values.fold<int>(0, (sum, value) => sum + value);
+      } finally {
+        _vaiternDialogOpen[this] = false;
+      }
+      if (currentSheetScrollId() != origin ||
+          merchantActiveProfileId != originMerchant ||
+          !_offerAcceptsVaiternPieces(offer) ||
+          merchantOfferUnavailable(offer) ||
+          merchantOfferCost(offer) != cost ||
+          !oculumMerchantCanPurchaseOffer(
+            offer,
+            characterGrade: leggiNumero(gradoController),
+          )) {
+        return;
+      }
+    }
+    final cash = cost - pieceCount * _vaiternPieceValue;
+    if (cash < 0 || leggiNumero(obserController) < cash) return;
     final kind = '${offer['kind'] ?? ''}';
     if (kind == 'monster_book_page') {
       final monsterId = '${offer['monsterBookId'] ?? ''}'.trim();
@@ -4191,7 +4689,6 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return;
     }
     String titleType = '';
-    InventoryItem? purchasedPawn;
     if (kind == 'title_item') {
       titleType =
           await showDialog<String>(
@@ -4219,66 +4716,96 @@ extension _OculumHomeMerchant on _OculumHomePageState {
             ),
           ) ??
           '';
-      if (titleType.isEmpty) return;
+      if (titleType.isEmpty ||
+          !mounted ||
+          currentSheetScrollId() != origin ||
+          merchantActiveProfileId != originMerchant ||
+          merchantOfferUnavailable(offer) ||
+          merchantOfferCost(offer) != cost ||
+          leggiNumero(obserController) < cash) {
+        return;
+      }
     }
-    // ignore: invalid_use_of_protected_member
+    if (pieceCount > 0 &&
+        (!_offerAcceptsVaiternPieces(offer) ||
+            requestedPieces.entries.any(
+              (entry) =>
+                  !_availableVaiternPieces.contains(entry.key) ||
+                  entry.key.quantita < entry.value,
+            ))) {
+      return;
+    }
+    final item = merchantItemFromOffer(
+      offer,
+      titleType: titleType,
+      paidObser: cost,
+    );
     // ignore: invalid_use_of_protected_member
     setState(() {
-      obserController.text = (leggiNumero(obserController) - cost).toString();
-      final item = merchantItemFromOffer(
-        const {'fate_sign', 'chaos_sign'}.contains(kind)
-            ? {...offer, 'cost': cost}
-            : offer,
-        titleType: titleType,
-      );
-      if (kind == 'pawn' || kind == 'pawn_v2' || kind == 'postea_companion') {
-        purchasedPawn = item;
-      }
-      inventario.add(item);
-      if (kind.startsWith('postea_') &&
-          planarState['posteaFirstGiftClaimed'] != true) {
-        planarState['posteaFirstGiftClaimed'] = true;
-        inventario.add(
-          posteaItem({
-            'kind': 'postea_antimalus',
-            'name': 'Anti malus · omaggio di Rusty',
-            'desc':
-                'Rimuove un malus e lo blocca fino alla fine del fight corrente o prossimo.',
-          }),
-        );
-      }
-      if (const {
-        'stat_gem',
-        'fate_sign',
-        'chaos_sign',
-        'fallen_eye',
-        'gathering_collector',
-        'fabbro_monster_weapon',
-      }.contains(kind)) {
-        offer['remaining'] = 0;
-      }
-      if (kind == 'technique_scroll' &&
-          (offer['blackMarketSelected'] == true ||
-              offer['scrollProfileId'] == oculumOculumTheftKind)) {
-        offer['remaining'] = 0;
-      }
-      if (item.arma &&
-          item.ability == null &&
-          kind != 'fabbro_monster_weapon' &&
-          kind != 'fabbro_special_weapon' &&
-          !_isPosteaPlasmaWeapon(kind)) {
-        final weaponSkill = merchantWeaponSkill(item);
-        if (!skills.any((skill) => skill.nome == weaponSkill.nome)) {
-          skills.add(weaponSkill);
-        }
-      }
-      risultato = 'Negoziante: hai speso $cost Obser per ${item.nome}.';
+      _removeVaiternPieces(requestedPieces);
+      obserController.text = (leggiNumero(obserController) - cash).toString();
+      _receiveMerchantInventoryItem(offer, item);
+      risultato = pieceCount == 0
+          ? 'Negoziante: hai speso $cost Obser per ${item.nome}.'
+          : 'Vaitern: hai pagato ${item.nome} con $pieceCount '
+                '${pieceCount == 1 ? 'pezzo' : 'pezzi'} e $cash Obser.';
       aggiungiLog(risultato);
     });
     _saveActiveMerchantProfileStock();
     programmaSalvataggio();
-    if (purchasedPawn != null) await activatePawnItem(purchasedPawn!);
+    if (_merchantOfferSummonsPawn(offer)) await activatePawnItem(item);
     if (mounted) unawaited(sendRealtimeActiveSheetToStaff());
+  }
+
+  bool _merchantOfferSummonsPawn(Map<String, dynamic> offer) =>
+      const {'pawn', 'pawn_v2', 'postea_companion'}.contains(offer['kind']);
+
+  void _receiveMerchantInventoryItem(
+    Map<String, dynamic> offer,
+    InventoryItem item,
+  ) {
+    final kind = '${offer['kind'] ?? ''}';
+    inventario.add(item);
+    if (kind.startsWith('postea_') &&
+        planarState['posteaFirstGiftClaimed'] != true) {
+      planarState['posteaFirstGiftClaimed'] = true;
+      inventario.add(
+        posteaItem({
+          'kind': 'postea_antimalus',
+          'name': 'Anti malus · omaggio di Rusty',
+          'desc':
+              'Rimuove un malus e lo blocca fino alla fine del fight corrente o prossimo.',
+        }),
+      );
+    }
+    if (const {
+      'stat_gem',
+      'fate_sign',
+      'chaos_sign',
+      'fallen_eye',
+      'gathering_collector',
+      'fabbro_monster_weapon',
+    }.contains(kind)) {
+      offer['remaining'] = 0;
+    }
+    if (kind == 'technique_scroll' &&
+        (offer['blackMarketSelected'] == true ||
+            const {
+              oculumOculumTheftKind,
+              oculumElementalSphereEffect,
+            }.contains(offer['scrollProfileId']))) {
+      offer['remaining'] = 0;
+    }
+    if (item.arma &&
+        item.ability == null &&
+        kind != 'fabbro_monster_weapon' &&
+        kind != 'fabbro_special_weapon' &&
+        !_isPosteaPlasmaWeapon(kind)) {
+      final weaponSkill = merchantWeaponSkill(item);
+      if (!skills.any((skill) => skill.nome == weaponSkill.nome)) {
+        skills.add(weaponSkill);
+      }
+    }
   }
 
   void _buyNurseService(Map<String, dynamic> offer, int cost) {
@@ -4670,25 +5197,25 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   /// Il mercante paga circa un sesto del valore stimato: utile, ma spilorcio.
-  int merchantSaleValue(InventoryItem item) {
+  int merchantSaleValue(InventoryItem item) =>
+      merchantSaleUnitValue(item) * max(1, item.quantita);
+
+  int merchantSaleUnitValue(InventoryItem item) {
     if (item.craftData['explosiveCards'] == true) {
       return readIntValue(
-            item.craftData['marketValue'],
-            fallback: 215,
-          ).clamp(180, 250) *
-          max(1, item.quantita);
+        item.craftData['marketValue'],
+        fallback: 215,
+      ).clamp(180, 250).toInt();
     }
     if (item.craftData['monsterRelic'] == true &&
         readIntValue(item.craftData['monsterRelicMarketPrice']) > 0) {
       return oculumMonsterRelicSaleValueForMarketPrice(
         readIntValue(item.craftData['monsterRelicMarketPrice']),
-        quantity: item.quantita,
       );
     }
     if (item.craftData['scroll'] is Map) {
       final data = item.craftData['scroll'] as Map;
-      return max(1, oculumScrollValue(readIntValue(data['grade'])) ~/ 6) *
-          max(1, item.quantita);
+      return max(1, oculumScrollValue(readIntValue(data['grade'])) ~/ 6);
     }
     final grade = max(item.gradoOggetto, item.gradoRichiesto);
     final rawValue =
@@ -4699,13 +5226,14 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         item.bonusScudoOculum * 12 +
         grade * grade * 90 +
         max(0, item.livelloOggetto) * 25;
-    return max(1, rawValue ~/ 6) * max(1, item.quantita);
+    return max(1, rawValue ~/ 6);
   }
 
   void sellInventoryItemToMerchant(InventoryItem item) {
     if (!merchantIsOpen || !inventario.contains(item) || item.quantita <= 0) {
       return;
     }
+    if (oculumIsLunarSymbolPiece(item)) return;
     if (item.craftData['explosiveCards'] == true &&
         merchantShopType != 'mercato_nero') {
       aggiungiLog(
@@ -4754,7 +5282,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   InventoryItem merchantItemFromOffer(
     Map<String, dynamic> offer, {
     String titleType = '',
+    int? paidObser,
   }) {
+    if (offer['kind'] == 'rpg_consumable') {
+      return oculumRpgConsumableFromOffer(offer);
+    }
     if (offer['kind'] == 'fabbro_special_weapon') {
       return oculumBlacksmithSpecialEquipmentFromOffer(offer);
     }
@@ -4769,6 +5301,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     );
     if (reactivePostea != null) return reactivePostea;
     if (offer['kind'] == 'explosive_cards') return oculumExplosiveCards();
+    if (offer['kind'] == _resurrectionStoneOfferKind) {
+      return oculumResurrectionStone();
+    }
     if (offer['kind'] == 'anti_corruption') {
       return InventoryItem(
         nome: 'Anti-corruzione',
@@ -4928,7 +5463,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         peso: .01,
         note: '${offer['desc']}',
         craftData: {
-          'chaosSign': {'cost': readIntValue(offer['cost'], fallback: 60)},
+          'chaosSign': {
+            'cost': paidObser ?? readIntValue(offer['cost'], fallback: 60),
+          },
         },
       );
     }
@@ -4939,7 +5476,9 @@ extension _OculumHomeMerchant on _OculumHomePageState {
         peso: .01,
         note: '${offer['desc']}',
         craftData: {
-          'fateSign': {'cost': readIntValue(offer['cost'], fallback: 50)},
+          'fateSign': {
+            'cost': paidObser ?? readIntValue(offer['cost'], fallback: 50),
+          },
         },
       );
     }
@@ -4981,8 +5520,20 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       return oculumCorruptionScrollItem(readIntValue(offer['scrollGrade']));
     }
     if (offer['kind'] == 'technique_scroll') {
+      if (offer['scrollProfileId'] == oculumElementalSphereEffect) {
+        return oculumElementalSphereScrollItem(
+          '${offer['scrollElement']}',
+          readIntValue(offer['scrollGrade']),
+          maxForm: readIntValue(offer['scrollMaxForm'], fallback: 3),
+          paidObser: paidObser ?? merchantOfferCost(offer),
+        );
+      }
       if (offer['scrollProfileId'] == oculumOculumTheftKind) {
-        return oculumOculumTheftScrollItem(readIntValue(offer['scrollGrade']));
+        return oculumOculumTheftScrollItem(
+          readIntValue(offer['scrollGrade']),
+          maxForm: readIntValue(offer['scrollMaxForm'], fallback: 5),
+          paidObser: paidObser ?? merchantOfferCost(offer),
+        );
       }
       if (offer['scrollProfileId'] == 'provi_gratitudine') {
         return oculumGratitudineScrollItem(readIntValue(offer['scrollGrade']));
@@ -5033,6 +5584,7 @@ extension _OculumHomeMerchant on _OculumHomePageState {
           'defensePercent',
           'learnMonsterId',
           'satisfiesNeeds',
+          'mealSatietyUnits',
         ])
           if (offer.containsKey(key)) key: offer[key],
       };
@@ -5288,6 +5840,8 @@ extension _OculumHomeMerchant on _OculumHomePageState {
   }
 
   bool isMerchantConsumable(InventoryItem item) =>
+      item.craftData['rpgConsumable'] is Map ||
+      item.craftData['resurrectionStone'] == true ||
       item.craftData['antiCorruption'] == true ||
       item.craftData['redcapBody'] == true ||
       item.craftData['powerScanner'] == true ||
@@ -5314,6 +5868,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
       }.contains(item.nome.trim());
 
   Future<void> useMerchantConsumable(InventoryItem item) async {
+    if (item.craftData['resurrectionStone'] == true) {
+      await _useLocalResurrectionStone(item);
+      return;
+    }
     if (!canEquipInventoryItem(item)) {
       aggiungiLog('Grado insufficiente per usare ${item.nome}.');
       return;
@@ -5321,6 +5879,10 @@ extension _OculumHomeMerchant on _OculumHomePageState {
     if (!inventario.contains(item) ||
         !isMerchantConsumable(item) ||
         item.quantita <= 0) {
+      return;
+    }
+    if (item.craftData['rpgConsumable'] is Map) {
+      await useRpgConsumable(item);
       return;
     }
     if (item.craftData['powerScanner'] == true) {

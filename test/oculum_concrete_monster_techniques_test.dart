@@ -1,9 +1,390 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
+Set<String> _effectTechniqueOrigins(Iterable<OculumStructuredEffect> effects) {
+  final pattern = RegExp(r'^(.+)_forma_\d+_\d+$');
+  return <String>{
+    for (final effect in effects)
+      if (pattern.firstMatch(effect.id)?.group(1) case final String source)
+        source,
+  };
+}
+
+ArtSkill _catalogueTechniqueForSource(
+  MonsterBookEntry monster,
+  CharacterArt art,
+  String sourceId,
+) {
+  final ids = monsterBookUsableSkillIds(monster);
+  expect(ids.where((id) => id == sourceId), hasLength(1), reason: sourceId);
+  expect(art.skills, hasLength(ids.length), reason: monster.id);
+  final skill = art.skills[ids.indexOf(sourceId)];
+  final origins = _effectTechniqueOrigins(
+    skill.effettiPerLivello.expand((effects) => effects),
+  );
+  if (origins.isNotEmpty) {
+    expect(
+      origins,
+      contains(oculumMonsterBookSkillBaseId(sourceId)),
+      reason: '${monster.id}/$sourceId effect provenance',
+    );
+  }
+  return skill;
+}
+
+void _expectAuthoredSoulFighterCatalogue(MonsterBookEntry monster) {
+  final arts = <CharacterArt>[
+    ?oculumMonsterBookImportArt(monster),
+    ...oculumMonsterBookAdditionalArts(monster),
+  ];
+  final ids = <String>[
+    ...monsterBookUsableSkillIds(monster),
+    if (monster.id == oculumSoulFighterEliteId) oculumAnymareapEffect,
+  ];
+  expect(
+    arts,
+    hasLength(monster.id == oculumSoulFighterEliteId ? 3 : 2),
+    reason: monster.id,
+  );
+  final skills = arts.expand((art) => art.skills).toList();
+  expect(skills, hasLength(ids.length), reason: monster.id);
+  expect(ids.toSet(), hasLength(ids.length), reason: monster.id);
+  for (final id in ids) {
+    final expected = switch (id) {
+      'soul_fighter_cut' => (
+        name: 'Taglio dell’Ultimo Respiro',
+        effectId: oculumSoulFighterCutEffect,
+        type: 'danno_percentuale',
+        value: '20',
+        cost: 3,
+        cooldown: 4,
+        minimumTargets: 1,
+        maximumTargets: 1,
+        recipient: 'nemico',
+        element: 'spirituale',
+      ),
+      'soul_fighter_guard' => (
+        name: 'Mano della Veglia',
+        effectId: 'soul_fighter_guard',
+        type: 'scudo',
+        value: '12',
+        cost: 2,
+        cooldown: 3,
+        minimumTargets: 1,
+        maximumTargets: 1,
+        recipient: 'alleato',
+        element: '',
+      ),
+      'soul_fighter_skull' => (
+        name: 'Marchio dei Senza Nome',
+        effectId: 'soul_fighter_skull',
+        type: 'difesa',
+        value: '-3',
+        cost: 2,
+        cooldown: 3,
+        minimumTargets: 1,
+        maximumTargets: 1,
+        recipient: 'nemico',
+        element: 'spirituale',
+      ),
+      oculumAnymareapEffect => (
+        name: 'Anymareap',
+        effectId: oculumAnymareapEffect,
+        type: 'danno',
+        value: '0',
+        cost: 4,
+        cooldown: 4,
+        minimumTargets: 1,
+        maximumTargets: 3,
+        recipient: 'nemico',
+        element: 'spirituale',
+      ),
+      _ => throw StateError('Unknown authored Soulfighter technique: $id'),
+    };
+    final matches = skills
+        .where((skill) => skill.nome == expected.name)
+        .toList();
+    expect(matches, hasLength(1), reason: '${monster.id}/$id');
+    final skill = ArtSkill.fromJson(matches.single.toJson());
+    if (id != oculumAnymareapEffect) {
+      final prose = monsterBookSkillText(id);
+      expect(prose, startsWith('${expected.name} — I/'), reason: id);
+      expect(prose, contains(skill.evo1), reason: id);
+      expect(prose, contains('Costo: ${expected.cost} Oculum.'), reason: id);
+      expect(prose, contains('CD ${expected.cooldown} turni.'), reason: id);
+      expect(prose, contains('Una sola forma.'), reason: id);
+      expect(monsterBookSkillText('${id}_variante_elite'), prose);
+    }
+    expect(skill.evo1, isNot(contains('attacco tematico')), reason: id);
+    expect(skill.evo1, isNot(contains('canalizzi il tema')), reason: id);
+    expect(skill.evo2, '???', reason: id);
+    expect(skill.evo3, '???', reason: id);
+    expect(skill.risorsaCostoPerLivello(1), 'oculum', reason: id);
+    expect(skill.oculumMinimoPerLivello(1), expected.cost, reason: id);
+    expect(skill.oculumMassimoPerLivello(1), expected.cost, reason: id);
+    expect(
+      skill.cooldownPerLivello.first.amount,
+      expected.cooldown,
+      reason: id,
+    );
+    expect(skill.effettiEvoluzione(1), hasLength(1), reason: id);
+    expect(skill.effettiEvoluzione(2), isEmpty, reason: id);
+    expect(skill.effettiEvoluzione(3), isEmpty, reason: id);
+    final effect = skill.effettiEvoluzione(1).single;
+    expect(oculumStructuredEffectTypes, contains(effect.type), reason: id);
+    expect(effect.id, expected.effectId, reason: id);
+    expect(effect.type, expected.type, reason: id);
+    expect(effect.valueExpression, expected.value, reason: id);
+    expect(effect.minimumTargets, expected.minimumTargets, reason: id);
+    expect(effect.maximumTargets, expected.maximumTargets, reason: id);
+    expect(effect.recipient, expected.recipient, reason: id);
+    expect(effect.elementType, expected.element, reason: id);
+  }
+}
+
+// Only these two paths replace the raw catalogue factory before generic
+// technique construction. The other fixed progression kits still use the
+// generic contracts below; fixed progression alone is not an exemption.
+bool _expectExplicitAuthoredFactoryCatalogue(MonsterBookEntry monster) {
+  if (oculumIsSoulFighter(monster.id)) {
+    _expectAuthoredSoulFighterCatalogue(monster);
+    return true;
+  }
+  if (monster.id != 'durafur') return false;
+  expect(oculumMonsterHasFixedProgressionSkills(monster), isTrue);
+  expect(monster.skillIds, ['durafur_fur_fury']);
+  final source = oculumMonsterBookArt(monster);
+  final sourceSnapshot = jsonEncode(source.toJson());
+  final art = CharacterArt.fromJson(
+    jsonDecode(sourceSnapshot) as Map<String, dynamic>,
+  );
+  expect(art.toJson(), source.toJson());
+  expect(art.skills, hasLength(1));
+  final skill = art.skills.single;
+  expect(skill.nome, 'Furia del Pelo Ferrigno');
+  expect(skill.livello, 1);
+  expect(skill.unlockRequirementsPerLevel.every((r) => r.isEmpty), isTrue);
+  expect(oculumMonsterBookImportArt(monster), isNull);
+  final natural = oculumMonsterBookSkills(monster);
+  expect(natural, hasLength(1));
+  final restoredNatural = CharacterSkill.fromJson(natural.single.toJson());
+  expect(restoredNatural.toJson(), natural.single.toJson());
+  expect(restoredNatural.nome, skill.nome);
+  expect(restoredNatural.forme, hasLength(3));
+  final prose = monsterBookSkillText('durafur_fur_fury');
+  expect(prose, startsWith('Furia del Pelo Ferrigno — I/'));
+  expect(prose, contains('Nessun costo.'));
+  expect(
+    prose,
+    contains('CD 5 turni; a inizio Fight deve recuperare 2 turni.'),
+  );
+  expect(monsterBookSkillText('durafur_fur_fury_variante_veterana'), prose);
+  const bonuses = [30, 40, 60];
+  for (var index = 0; index < bonuses.length; index++) {
+    final form = index + 1;
+    final bonus = bonuses[index];
+    expect(skill.testoEvoluzione(form), '+$bonus Danni per 3 turni.');
+    expect(prose, contains('+$bonus Danni per 3 turni'));
+    expect(skill.tipoPerLivello(form), 'Supporto');
+    expect(skill.risorsaCostoPerLivello(form), 'nessuna');
+    expect(skill.oculumMinimoPerLivello(form), 0);
+    expect(skill.oculumMassimoPerLivello(form), 0);
+    final effect = skill.effettiEvoluzione(form).single;
+    expect(effect.id, 'durafur_fur_fury_$bonus');
+    expect(effect.type, 'modifica_statistica');
+    expect(effect.target, 'danni');
+    expect(effect.valueExpression, '$bonus');
+    expect(effect.mode, 'temporaneo');
+    expect(effect.duration, '3');
+    expect(effect.recipient, 'se_stesso');
+    final cooldown = skill.cooldownPerLivello[index];
+    expect(cooldown.amount, 5);
+    expect(cooldown.startsReady, isFalse);
+    expect(cooldown.initialRemaining, 2);
+    expect(cooldown.enterCombat('durafur-concrete-fixture'), isTrue);
+    expect(cooldown.remaining, 2);
+    final inherited = restoredNatural.forme[index];
+    expect(inherited.costoStrutturato!.resource, 'nessuna');
+    expect(inherited.costoStrutturato!.minimum, 0);
+    expect(inherited.costoStrutturato!.maximum, 0);
+    expect(inherited.descrizione, '+$bonus Danni per 3 turni.');
+    expect(inherited.effettiStrutturati.single.toJson(), effect.toJson());
+    expect(inherited.cooldownStrutturato!.amount, 5);
+    expect(inherited.cooldownStrutturato!.startsReady, isFalse);
+    expect(inherited.cooldownStrutturato!.initialRemaining, 2);
+  }
+  expect(jsonEncode(source.toJson()), sourceSnapshot);
+  return true;
+}
+
 void main() {
+  test(
+    'Crostaceo omonime remain distinct source choices without changing data',
+    () {
+      final monster = monsterBookEntryById('crostaceo_corazzato')!;
+      const pair = <String>{
+        'crostaceo_corazzato_acqua_strike',
+        'crostaceo_corazzato_acqua_guard',
+      };
+      final catalogue = oculumMonsterBookArt(monster);
+      final sourceById = <String, ArtSkill>{
+        for (final id in pair)
+          id: _catalogueTechniqueForSource(monster, catalogue, id),
+      };
+      // Keep the existing display labels and effects, including this collision.
+      // Independent selection comes from the two source IDs, not a rename.
+      expect(
+        sourceById.values.map((skill) => skill.nome).toSet(),
+        hasLength(1),
+      );
+      final restored = CharacterArt.fromJson(catalogue.toJson());
+      for (final id in pair) {
+        expect(
+          _catalogueTechniqueForSource(monster, restored, id).toJson(),
+          sourceById[id]!.toJson(),
+          reason: id,
+        );
+      }
+      final seen = <String>{};
+      for (var seed = 0; seed < 256; seed++) {
+        final kit = oculumMonsterBookLoadout(
+          monster,
+          random: Random(seed),
+          level: 12,
+        );
+        final selected = <Set<String>>[
+          for (final skill in kit.skills.where((skill) => !skill.passiva))
+            _effectTechniqueOrigins(
+              skill.forme.expand((form) => form.effettiStrutturati),
+            ),
+          for (final skill in kit.art?.skills ?? const <ArtSkill>[])
+            if (!skill.tipoPerLivello(1).toLowerCase().contains('passiv'))
+              _effectTechniqueOrigins(
+                skill.effettiPerLivello.expand((effects) => effects),
+              ),
+        ];
+        expect(selected, hasLength(3), reason: 'seed $seed');
+        expect(
+          selected.every((ids) => ids.length == 1),
+          isTrue,
+          reason: 'seed $seed',
+        );
+        expect(
+          selected.expand((ids) => ids).toSet(),
+          hasLength(3),
+          reason: 'seed $seed',
+        );
+        seen.addAll(selected.expand((ids) => ids).where(pair.contains));
+        for (final skill in kit.art?.skills ?? const <ArtSkill>[]) {
+          final origins = _effectTechniqueOrigins(
+            skill.effettiPerLivello.expand((effects) => effects),
+          );
+          for (final id in origins.where(pair.contains)) {
+            expect(skill.nome, sourceById[id]!.nome);
+            expect(
+              skill.oculumMinimiPerLivello,
+              sourceById[id]!.oculumMinimiPerLivello,
+            );
+            expect(
+              skill.oculumMassimiPerLivello,
+              sourceById[id]!.oculumMassimiPerLivello,
+            );
+            expect(
+              skill.cooldownPerLivello.map((timer) => timer.toJson()),
+              sourceById[id]!.cooldownPerLivello.map((timer) => timer.toJson()),
+            );
+            expect(
+              skill.effettiPerLivello.map(
+                (effects) => effects.map((e) => e.toJson()).toList(),
+              ),
+              sourceById[id]!.effettiPerLivello.map(
+                (effects) => effects.map((e) => e.toJson()).toList(),
+              ),
+            );
+          }
+        }
+      }
+      expect(
+        seen,
+        pair,
+        reason: 'Both source IDs must be independently selectable',
+      );
+    },
+  );
+
+  test(
+    'legacy custom kits and edited names costs survive source-ID selection',
+    () {
+      final builtin = monsterBookEntryById('crostaceo_corazzato')!;
+      const strike = 'crostaceo_corazzato_acqua_strike';
+      const guard = 'crostaceo_corazzato_acqua_guard';
+      final art = oculumMonsterBookArt(builtin);
+      final edited = _catalogueTechniqueForSource(builtin, art, guard);
+      final legacyName = edited.nome;
+      edited.nome = 'La mia guardia della conchiglia';
+      edited.oculumMinimiPerLivello[0] = 17;
+      edited.oculumMassimiPerLivello[0] = 19;
+      edited.oculumMassimiInizialiPerLivello[0] = 19;
+      edited.oculumLimitiManualiPerLivello[0] = true;
+      edited.cooldownPerLivello.first.amount = 11;
+      final customRaw = builtin.toJson()
+        ..['nameIt'] = 'Karyklaw personale'
+        ..['skillIds'] = <String>[guard, strike]
+        ..['encounterRules'] = <String, dynamic>{
+          ...builtin.encounterRules,
+          'loadoutPolicy': 'legacy_saved_custom',
+          'signatureSkillId': legacyName,
+          'fixedSkillIds': <String>[legacyName],
+        };
+      final snapshot =
+          jsonDecode(
+                jsonEncode(<String, dynamic>{
+                  'monster': customRaw,
+                  'art': art.toJson(),
+                }),
+              )
+              as Map<String, dynamic>;
+      final custom = MonsterBookEntry.fromJson(
+        Map<String, dynamic>.from(snapshot['monster'] as Map),
+      );
+      final savedArt = CharacterArt.fromJson(
+        Map<String, dynamic>.from(snapshot['art'] as Map),
+      );
+      final beforeMonster = jsonEncode(custom.toJson());
+      final beforeArt = jsonEncode(savedArt.toJson());
+      for (var seed = 0; seed < 8; seed++) {
+        final kit = oculumMonsterBookLoadout(
+          custom,
+          random: Random(seed),
+          level: 12,
+        );
+        final sources = <String>{
+          for (final skill in kit.skills)
+            ..._effectTechniqueOrigins(
+              skill.forme.expand((form) => form.effettiStrutturati),
+            ),
+          for (final skill in kit.art?.skills ?? const <ArtSkill>[])
+            ..._effectTechniqueOrigins(
+              skill.effettiPerLivello.expand((effects) => effects),
+            ),
+        };
+        expect(sources, {strike, guard});
+        expect(kit.skills.length + (kit.art?.skills.length ?? 0), 2);
+      }
+      expect(jsonEncode(custom.toJson()), beforeMonster);
+      expect(jsonEncode(savedArt.toJson()), beforeArt);
+      expect(custom.encounterRules['signatureSkillId'], legacyName);
+      final restored = _catalogueTechniqueForSource(builtin, savedArt, guard);
+      expect(restored.nome, 'La mia guardia della conchiglia');
+      expect(restored.oculumMinimoPerLivello(1), 17);
+      expect(restored.oculumMassimoPerLivello(1), 19);
+      expect(restored.cooldownPerLivello.first.amount, 11);
+    },
+  );
+
   test('monster relic affixes can buff a subtrait or a core stat', () {
     final subtrait = oculumRollMonsterRelicFoundBuff(_SequenceRandom([20, 4]))!;
     expect(subtrait['kind'], 'subtrait');
@@ -230,11 +611,49 @@ void main() {
       if (monster.id.startsWith('pawn_guardiano')) continue;
       final skills = oculumMonsterBookSkills(monster);
       final art = oculumMonsterBookImportArt(monster);
-      expect(
-        skills.length + (art?.skills.length ?? 0),
-        monsterBookUsableSkillIds(monster).length,
-        reason: monster.id,
-      );
+      final additionalArts = oculumIsSoulFighter(monster.id)
+          ? oculumMonsterBookAdditionalArts(monster)
+          : const <CharacterArt>[];
+      if (oculumIsSoulFighter(monster.id)) {
+        const canonicalNames = <String, String>{
+          'soul_fighter_cut': 'Taglio dell’Ultimo Respiro',
+          'soul_fighter_guard': 'Mano della Veglia',
+          'soul_fighter_skull': 'Marchio dei Senza Nome',
+        };
+        final authoritativeArts = <CharacterArt>[?art, ...additionalArts];
+        final expectedNames = <String>[
+          for (final id in monsterBookUsableSkillIds(monster))
+            canonicalNames[id]!,
+          if (monster.id == oculumSoulFighterEliteId) 'Anymareap',
+        ];
+        expect(skills, isEmpty, reason: monster.id);
+        expect(
+          authoritativeArts,
+          hasLength(monster.id == oculumSoulFighterEliteId ? 3 : 2),
+        );
+        expect(
+          authoritativeArts
+              .expand((entry) => entry.skills)
+              .map((skill) => skill.nome),
+          unorderedEquals(expectedNames),
+          reason: monster.id,
+        );
+        for (final entry in authoritativeArts) {
+          expect(
+            CharacterArt.fromJson(
+              entry.toJson(),
+            ).skills.map((skill) => skill.nome),
+            entry.skills.map((skill) => skill.nome),
+            reason: monster.id,
+          );
+        }
+      } else {
+        expect(
+          skills.length + (art?.skills.length ?? 0),
+          monsterBookUsableSkillIds(monster).length,
+          reason: monster.id,
+        );
+      }
       if (!oculumMonsterHasOculumArt(monster)) {
         expect(art?.skills ?? <ArtSkill>[], isEmpty, reason: monster.id);
         if (art != null) expect(art.openName, isNotEmpty, reason: monster.id);
@@ -244,13 +663,43 @@ void main() {
         for (final form in restored.forme) {
           final resource = form.costoStrutturato!.resource;
           final usesOculum = resource == 'oculum';
-          expect(
-            form.usaOculumConfigurabile,
-            usesOculum,
-            reason:
-                '${monster.id} resource $resource; '
-                '${form.descrizione}',
+          final targetLevelHeal = form.effettiStrutturati.any(
+            (effect) =>
+                effect.type == 'planar' &&
+                effect.target == oculumBunnysHealSkill,
           );
+          if (targetLevelHeal) {
+            // The target's level imposes this cost after target selection;
+            // a numeric picker must not turn it into a manually chosen amount.
+            expect(
+              skill.nome,
+              monsterBookConcreteTechnique(oculumBunnysHealSkill)!.name,
+            );
+            expect(resource, 'oculum', reason: monster.id);
+            expect(form.costo, 'Oculum pari al livello del bersaglio');
+            expect(
+              form.descrizione,
+              contains('Costo Oculum pari al livello del bersaglio.'),
+            );
+            expect(form.costoStrutturato!.minimum, 0);
+            expect(form.costoStrutturato!.maximum, 0);
+            expect(form.costoStrutturato!.variable, isFalse);
+            expect(form.usaOculumConfigurabile, isFalse);
+            final healing = form.effettiStrutturati.singleWhere(
+              (effect) => effect.target == oculumBunnysHealSkill,
+            );
+            expect(healing.valueExpression, '25');
+            expect(healing.maximumTargets, 1);
+            expect(healing.recipient, 'nemico');
+          } else {
+            expect(
+              form.usaOculumConfigurabile,
+              usesOculum,
+              reason:
+                  '${monster.id} resource $resource; '
+                  '${form.descrizione}',
+            );
+          }
           expect(resource, isNotEmpty);
           if (resource != 'oculum' && monster.id != 'observers_tear') {
             expect(
@@ -297,6 +746,7 @@ void main() {
   });
   test('catalogue never exposes a thematic attack placeholder', () {
     for (final monster in defaultMonsterBookEntries) {
+      if (_expectExplicitAuthoredFactoryCatalogue(monster)) continue;
       for (final id in monsterBookUsableSkillIds(monster)) {
         final text = monsterBookSkillText(id);
         expect(
@@ -312,15 +762,8 @@ void main() {
         final concrete = monsterBookConcreteTechnique(id);
         if (concrete == null || concrete.text() != text) continue;
         final art = oculumMonsterBookArt(monster);
-        final matches = art.skills
-            .where((skill) => skill.nome == concrete.name)
-            .toList();
-        expect(
-          matches,
-          hasLength(1),
-          reason: '${monster.id}: $id duplicates ${concrete.name}',
-        );
-        final skill = matches.single;
+        final skill = _catalogueTechniqueForSource(monster, art, id);
+        expect(skill.nome, concrete.name, reason: '${monster.id}/$id');
         final passive = oculumMonsterBookSkillIsPassive(id);
         if (passive) {
           expect(skill.risorsaCostoPerLivello(1), 'nessuna');
@@ -370,7 +813,46 @@ void main() {
             );
             continue;
           }
-          expect(timer.activate(), isTrue);
+          final timerReason = '${monster.id}/$id form ${form + 1}';
+          expect(timer.startsReady, concrete.startsReady, reason: timerReason);
+          // ConcreteTechnique has no partial opening-delay field. Explicit
+          // factory exceptions such as Durafur are checked above instead.
+          expect(timer.initialRemaining, isNull, reason: timerReason);
+          final openingDelay = concrete.startsReady
+              ? 0
+              : concrete.cooldowns[form];
+          expect(timer.openingDelay, openingDelay, reason: timerReason);
+          expect(timer.remaining, openingDelay, reason: timerReason);
+          if (timer.amount > 0) {
+            expect(
+              timer.enterCombat('concrete:$id:$form'),
+              isTrue,
+              reason: timerReason,
+            );
+            expect(timer.remaining, openingDelay, reason: timerReason);
+          }
+          if (openingDelay > 0) {
+            expect(
+              timer.activate(),
+              isFalse,
+              reason: '$timerReason starts charging',
+            );
+            for (var turn = 0; turn < openingDelay; turn++) {
+              expect(
+                timer.ready,
+                isFalse,
+                reason: '$timerReason opening turn $turn',
+              );
+              expect(timer.tick(timer.unit), isTrue, reason: timerReason);
+              expect(
+                timer.remaining,
+                openingDelay - turn - 1,
+                reason: timerReason,
+              );
+            }
+          }
+          expect(timer.ready, isTrue, reason: '$timerReason opening complete');
+          expect(timer.activate(), isTrue, reason: timerReason);
           if (timer.amount == 0) {
             expect(timer.activate(), isTrue, reason: '$id has no cooldown');
             continue;

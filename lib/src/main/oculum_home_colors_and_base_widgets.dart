@@ -1923,24 +1923,22 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
           ),
           surfaceOpacity,
         ),
-        child: OculumThemePanelArtwork(
-          child: CustomPaint(
-            foregroundPainter: modalitaLeggera || reference
-                ? null
-                : OculumPanelEngraving(accent: accent),
-            child: Material(
-              type: MaterialType.transparency,
-              child: DefaultTextStyle.merge(
-                style: TextStyle(
-                  color: readableOnTheme(
-                    primaryColor,
-                    background: surface,
-                    minRatio: 4.5,
-                  ),
-                  height: 1.3,
+        child: CustomPaint(
+          foregroundPainter: modalitaLeggera || reference
+              ? null
+              : OculumPanelEngraving(accent: accent),
+          child: Material(
+            type: MaterialType.transparency,
+            child: DefaultTextStyle.merge(
+              style: TextStyle(
+                color: readableOnTheme(
+                  primaryColor,
+                  background: surface,
+                  minRatio: 4.5,
                 ),
-                child: child,
+                height: 1.3,
               ),
+              child: child,
             ),
           ),
         ),
@@ -1948,7 +1946,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       return RepaintBoundary(
         child: reference && !modalitaLeggera
             ? OculumReferenceFrame(child: panel)
-            : panel,
+            : OculumThemePanelArtwork(child: panel),
       );
     }
     final panelSurface = Color.lerp(

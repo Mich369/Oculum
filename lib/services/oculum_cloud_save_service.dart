@@ -6,6 +6,8 @@ import 'package:pointycastle/digests/sha256.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'oculum_smoke_storage.dart';
+
 const String _pendingCloudPayloadKey = 'oculum.cloud_save.pending_payload';
 const String _pendingCloudUserKey = 'oculum.cloud_save.pending_user';
 const String _pendingCloudDeviceKey = 'oculum.cloud_save.pending_device';
@@ -60,10 +62,15 @@ class OculumCloudSaveService extends ChangeNotifier {
   String get status => statusNotifier.value;
 
   Future<void> initialize() async {
+    if (oculumSmokeStorageActive) {
+      statusNotifier.value = 'Offline';
+      return;
+    }
     statusNotifier.value = 'Ready';
   }
 
   Future<Map<String, dynamic>?> fetchLatestSnapshot(String userId) async {
+    if (oculumSmokeStorageActive) return null;
     try {
       _requireCurrentUser(userId);
       final response = await Supabase.instance.client
@@ -85,6 +92,7 @@ class OculumCloudSaveService extends ChangeNotifier {
     required Map<String, dynamic> payload,
     String? encodedPayload,
   }) async {
+    if (oculumSmokeStorageActive) return false;
     try {
       if (userId.trim().isEmpty) return false;
       _validateCloudPayload(payload);
@@ -149,6 +157,7 @@ class OculumCloudSaveService extends ChangeNotifier {
     String userId,
     Map<String, dynamic> payload,
   ) async {
+    if (oculumSmokeStorageActive) return false;
     try {
       _requireCurrentUser(userId);
       final snapshot = buildSnapshotRecord(
@@ -174,6 +183,7 @@ class OculumCloudSaveService extends ChangeNotifier {
     String userId,
     Map<String, dynamic> payload,
   ) async {
+    if (oculumSmokeStorageActive) return false;
     final remote = await fetchLatestSnapshot(userId);
     if (remote == null) return false;
     final prefs = await SharedPreferences.getInstance();
@@ -186,6 +196,7 @@ class OculumCloudSaveService extends ChangeNotifier {
   }
 
   Future<void> clearCloudData(String userId) async {
+    if (oculumSmokeStorageActive) return;
     try {
       _requireCurrentUser(userId);
       await Supabase.instance.client
@@ -258,6 +269,9 @@ class OculumCloudSaveService extends ChangeNotifier {
   }
 
   void _requireCurrentUser(String userId) {
+    if (oculumSmokeStorageActive) {
+      throw const OculumSmokeStorageException('network_disabled');
+    }
     final auth = Supabase.instance.client.auth;
     if (userId.isEmpty ||
         auth.currentSession == null ||

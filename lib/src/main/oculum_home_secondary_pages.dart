@@ -2,6 +2,32 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+const _monsterBookCoreStatKeys = [
+  'level',
+  'resilienza',
+  'volonta',
+  'materia',
+  'oculum',
+];
+
+Map<String, int> oculumMonsterBookEditedStats(
+  Map<String, int> saved,
+  Map<String, String> edited,
+) {
+  final result = Map<String, int>.of(saved);
+  for (final entry in edited.entries) {
+    final text = entry.value.trim();
+    if (text.isEmpty) {
+      result.remove(entry.key);
+    } else if (int.tryParse(text) case final value?) {
+      result[entry.key] = _monsterBookCoreStatKeys.contains(entry.key)
+          ? max(0, value)
+          : value;
+    }
+  }
+  return result;
+}
+
 class _MasterHexTokenClipper extends CustomClipper<Path> {
   const _MasterHexTokenClipper();
 
@@ -2201,6 +2227,115 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
+  Widget inspirationAndFateAccessPanel() => gothicPanel(
+    borderColor: Colors.amber,
+    child: ListTile(
+      leading: const Icon(Icons.lightbulb_outline, color: Colors.amber),
+      title: const Text('Ispirazioni, Fortuna e Patto del Fato'),
+      subtitle: Text(
+        'Base ${leggiNumero(ispirazioniController)} · Super ${leggiNumero(superIspirazioniController)} · Oculum ${leggiNumero(ispirazioniOculumController)} · Fortuna $fortuna',
+      ),
+      trailing: const Icon(Icons.open_in_new),
+      onTap: showInspirationAndFatePage,
+    ),
+  );
+
+  Future<void> showInspirationAndFatePage() => showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      scrollable: true,
+      title: const Text('Ispirazioni, Fortuna e Patto del Fato'),
+      content: SizedBox(
+        width: min(880, MediaQuery.sizeOf(dialogContext).width - 48),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: ispirazioniController,
+              builder: (context, value, child) => resourceCounter(
+                title: 'Ispirazioni',
+                subtitle:
+                    'Ritira un tiro non critico; si ottengono tramite roleplay, diario e scelte coerenti.',
+                controller: ispirazioniController,
+                icon: Icons.lightbulb,
+                color: Colors.amber,
+                cap: inspirationCap('base'),
+              ),
+            ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: superIspirazioniController,
+              builder: (context, value, child) => resourceCounter(
+                title: 'Super Ispirazioni',
+                subtitle:
+                    'Ritira anche un tiro critico. Sono riservate ai momenti narrativi importanti.',
+                controller: superIspirazioniController,
+                icon: Icons.flash_on,
+                color: Colors.orangeAccent,
+                cap: inspirationCap('super'),
+              ),
+            ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: ispirazioniOculumController,
+              builder: (context, value, child) => resourceCounter(
+                title: 'Ispirazioni Oculum',
+                subtitle:
+                    'Su un critico negativo: 50% di convertirlo in positivo; oppure convertine una in 2 base.',
+                controller: ispirazioniOculumController,
+                icon: Icons.visibility,
+                color: primaryColor,
+                cap: inspirationCap('oculum'),
+                onAltUse: convertiIspirazioneOculum,
+                altUseLabel: 'Converti in 2 base',
+              ),
+            ),
+            inspirationLimitsPanel(),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final fate = gothicPanel(
+                  child: ListTile(
+                    leading: Icon(Icons.auto_awesome, color: primaryColor),
+                    title: Text(
+                      identityIsChaos
+                          ? 'Ispirazione del Chaos'
+                          : 'Patto del Fato',
+                    ),
+                    subtitle: Text(
+                      identityIsChaos
+                          ? 'Ogni 9 ore: 20% nessuna, 50% base, 20% Super, 10% Oculum.'
+                          : fatePactUsed
+                          ? 'Già usato. Vale una volta per personaggio.'
+                          : 'Disponibile nel risultato di un tiro fallito.',
+                    ),
+                  ),
+                );
+                if (constraints.maxWidth < 600) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [fortunaResourcePanel(), fate],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: fortunaResourcePanel()),
+                    const SizedBox(width: 8),
+                    Expanded(child: fate),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Chiudi'),
+        ),
+      ],
+    ),
+  );
+
   Widget schivataOculumResourcePanel() {
     final available = schivateOculumDisponibili();
     final total = schivateOculumTotali();
@@ -2223,12 +2358,21 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   ),
                 ),
               ),
-              Text(
-                '$available/$total',
-                style: const TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
+              GestureDetector(
+                onSecondaryTap: modificaSchivateOculumDaTastiera,
+                child: Tooltip(
+                  message: t(
+                    'Tasto destro per impostare le Schivate extra',
+                    'Right-click to set extra dodges',
+                  ),
+                  child: Text(
+                    '$available/$total',
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -2291,6 +2435,62 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ],
       ),
     );
+  }
+
+  Future<void> modificaSchivateOculumDaTastiera() async {
+    final controller = TextEditingController(
+      text: schivateOculumBonus.toString(),
+    );
+    final value = await oculumShowDialogUntilClosed<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('Schivate Oculum extra', 'Extra Oculum Dodges')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          inputFormatters: oculumNonNegativeIntegerFormatters,
+          decoration: InputDecoration(
+            labelText: t('Quantità extra', 'Extra amount'),
+            helperText: t(
+              'Le cariche già consumate restano registrate.',
+              'Dodges already spent remain recorded.',
+            ),
+          ),
+          onSubmitted: (text) =>
+              Navigator.pop(dialogContext, int.tryParse(text.trim())),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              dialogContext,
+              int.tryParse(controller.text.trim()),
+            ),
+            child: Text(t('Salva', 'Save')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null || !mounted) return;
+    final baseWithoutManualBonus = max(
+      0,
+      schivataOculumBase() +
+          runtimeQuickBonus('schivata_oculum') +
+          difficultyIncreaseOculumDodgeBonus(),
+    );
+    final minimumBonusForSpentDodges = max(
+      0,
+      schivateOculumConsumate - baseWithoutManualBonus,
+    );
+    setState(() {
+      schivateOculumBonus = max(minimumBonusForSpentDodges, value);
+    });
+    programmaSalvataggio();
   }
 
   Widget oculumRollSpendPanel() {
@@ -2747,69 +2947,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             ),
           ],
         ),
-        resourceCounter(
-          title: t('Ispirazioni', 'Inspirations'),
-          subtitle: t(
-            'Permettono di ritirare un tiro che non sia critico. Sono ricompense per roleplay, diario, scelte coerenti e momenti narrativi forti.',
-            'Allow you to reroll a non-critical roll. They are rewards for roleplay, diary writing, coherent choices and strong narrative moments.',
-          ),
-          controller: ispirazioniController,
-          icon: Icons.lightbulb,
-          color: Colors.amber,
-          cap: inspirationCap('base'),
-        ),
-        resourceCounter(
-          title: t('Super Ispirazioni', 'Super Inspirations'),
-          subtitle: t(
-            'Permettono di ritirare anche un critico. Sono più rare e vanno date per momenti veramente importanti.',
-            'Allow you to reroll even a critical roll. They are rarer and should be granted for truly important moments.',
-          ),
-          controller: superIspirazioniController,
-          icon: Icons.flash_on,
-          color: Colors.orangeAccent,
-          cap: inspirationCap('super'),
-        ),
-        resourceCounter(
-          title: t('Ispirazioni Oculum', 'Oculum Inspirations'),
-          subtitle: t(
-            'Nel risultato puoi spendere un’Ispirazione Oculum su un critico negativo. Hai il 50% di ottenere un critico positivo. Puoi anche convertirla in 2 Ispirazioni base.',
-            'Spend an Oculum Inspiration on a negative critical in the roll result. It has a 50% chance to become a positive critical. You can also convert it into 2 base Inspirations.',
-          ),
-          controller: ispirazioniOculumController,
-          icon: Icons.visibility,
-          color: primaryColor,
-          cap: inspirationCap('oculum'),
-          onAltUse: convertiIspirazioneOculum,
-          altUseLabel: t('Converti in 2 base', 'Convert into 2 base'),
-        ),
-        gothicPanel(
-          child: ListTile(
-            leading: Icon(Icons.auto_awesome, color: primaryColor),
-            title: Text(
-              identityIsChaos
-                  ? t('Ispirazione del Chaos', 'Chaos Inspiration')
-                  : t('Patto del Fato', 'Pact with Fate'),
-            ),
-            subtitle: Text(
-              identityIsChaos
-                  ? t(
-                      'Ogni 9 ore di gioco · 20% nessuna, 50% base, 20% Super, 10% Oculum.',
-                      'Every 9 in-game hours · 20% none, 50% base, 20% Super, 10% Oculum.',
-                    )
-                  : fatePactUsed
-                  ? t(
-                      'Già usato. Il Patto vale una sola volta per personaggio.',
-                      'Already used. The Pact works once per character.',
-                    )
-                  : t(
-                      'Disponibile nel risultato di un tiro fallito.',
-                      'Available in the result of a failed roll.',
-                    ),
-            ),
-          ),
-        ),
-        inspirationLimitsPanel(),
-        fortunaResourcePanel(),
+        inspirationAndFateAccessPanel(),
         schivataOculumResourcePanel(),
         oculumRollSpendPanel(),
         folliaResourcePanel(),
@@ -3209,12 +3347,20 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
-  Widget initiativeTokenAvatar(Map<String, dynamic> token) {
+  Widget initiativeTokenAvatar(
+    Map<String, dynamic> token, {
+    double? sizeOverride,
+    bool? hexOverride,
+  }) {
     final imageRaw = realtimeEncounterPortrait(token);
+    final backgroundAsset = masterInitiativeTokenBackgroundAsset(token);
     final spriteAssetPath = masterInitiativeTokenSpriteAsset(token);
-    final size = masterInitiativeTokenSize(token).toDouble();
+    final size = sizeOverride ?? masterInitiativeTokenSize(token).toDouble();
     final cacheSide = oculumImageCacheDimension(context, size, max: 320);
-    final hexToken = masterInitiativeTokenUsesHex(token);
+    // Keep a single token silhouette for every participant in turn order.
+    // The monster-only predicate remains in use for sprite discovery, but it
+    // must not change the shape of allied/player portraits.
+    final hexToken = hexOverride ?? true;
 
     final side = '${token['side'] ?? 'ally'}';
     final color = combatParticipantSideColor(token);
@@ -3232,7 +3378,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ? Center(child: fallbackIcon)
               : Image.asset(
                   oculumMonsterArtworkAsset(spriteAssetPath)!,
-                  fit: BoxFit.cover,
+                  fit: spriteAssetPath == backgroundAsset
+                      ? BoxFit.cover
+                      : hexToken
+                      ? BoxFit.contain
+                      : BoxFit.cover,
+                  alignment: spriteAssetPath == backgroundAsset
+                      ? const Alignment(0, -0.28)
+                      : Alignment.center,
                   cacheWidth: cacheSide,
                   cacheHeight: cacheSide,
                   filterQuality: FilterQuality.medium,
@@ -3245,6 +3398,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             cache: decodedImageBase64Cache,
             fallback: Center(child: fallbackIcon),
             cacheSide: cacheSide,
+            fit: hexToken ? BoxFit.contain : BoxFit.cover,
           );
 
     if (hexToken) {
@@ -3274,6 +3428,69 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       ),
       clipBehavior: Clip.antiAlias,
       child: content,
+    );
+  }
+
+  Future<void> showInitiativeTokenPortrait(Map<String, dynamic> token) async {
+    final imageRaw = realtimeEncounterPortrait(token);
+    final spriteAssetPath = masterInitiativeTokenSpriteAsset(token);
+    final name = oculumReferenceEncounterTokenName(token);
+    final side = MediaQuery.sizeOf(context);
+    final dimension = min(720.0, min(side.width - 48, side.height - 160));
+    if (dimension <= 0) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: Theme.of(dialogContext).textTheme.titleLarge,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: t('Chiudi', 'Close'),
+                    onPressed: () => Navigator.pop(dialogContext),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              SizedBox.square(
+                dimension: dimension,
+                child: imageRaw.isNotEmpty
+                    ? OculumAsyncPortrait(
+                        key: ValueKey('initiative_portrait_zoom_$imageRaw'),
+                        raw: imageRaw,
+                        cache: decodedImageBase64Cache,
+                        fallback: const Icon(
+                          Icons.image_not_supported_outlined,
+                        ),
+                        cacheSide: oculumImageCacheDimension(
+                          dialogContext,
+                          dimension,
+                          max: 1024,
+                        ),
+                        fit: BoxFit.contain,
+                      )
+                    : spriteAssetPath.isNotEmpty
+                    ? Image.asset(
+                        oculumMonsterArtworkAsset(spriteAssetPath)!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) =>
+                            const Icon(Icons.image_not_supported_outlined),
+                      )
+                    : const Icon(Icons.image_not_supported_outlined),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -4865,9 +5082,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         ? Icons.bug_report_outlined
         : Icons.pest_control_outlined;
 
-    // The Monster Book deliberately uses a readable dossier/sigil instead of
-    // portraits. Existing image fields remain preserved in legacy saves and
-    // dungeon data, but this Master surface no longer decodes or caches them.
+    // Sigil for entries without artwork and for text-only dossiers.
     return RepaintBoundary(
       child: Container(
         width: size,
@@ -4907,6 +5122,109 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
+  /// Small approved artwork for creature selectors and the Master catalogue.
+  Widget creatureRecognitionPreview(
+    MonsterBookEntry entry, {
+    double size = 48,
+    bool canEnlarge = false,
+    bool revealName = true,
+  }) {
+    final theme = oculumCreatureRecognitionTheme(entry);
+    final asset = theme.illustration;
+    if (asset == null) return monsterBookEntryPreview(entry, size: size);
+    final label = revealName
+        ? entry.nameIt
+        : t('Creatura non identificata', 'Unidentified creature');
+    final preview = ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: size * 1.5,
+        height: size,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              asset,
+              key: ValueKey('creature-recognition-${entry.id}'),
+              fit: BoxFit.contain,
+              cacheWidth: 192,
+              semanticLabel: label,
+              errorBuilder: (_, _, _) =>
+                  monsterBookEntryPreview(entry, size: size),
+            ),
+            if (theme.monster.id != entry.id)
+              const Align(
+                alignment: Alignment.bottomCenter,
+                child: ColoredBox(
+                  color: Color(0xdd090b11),
+                  child: Text(
+                    'Forma base',
+                    style: TextStyle(fontSize: 9, color: Colors.white),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!canEnlarge) return preview;
+    final enlarge = t('Ingrandisci immagine', 'Enlarge image');
+    return Tooltip(
+      message: '$enlarge · $label',
+      child: InkWell(
+        key: ValueKey('enlarge-creature-${entry.id}'),
+        borderRadius: BorderRadius.circular(6),
+        onTap: () => showCreatureArtwork(
+          asset: asset,
+          label: label,
+          base: theme.monster.id != entry.id,
+        ),
+        child: preview,
+      ),
+    );
+  }
+
+  Future<void> showCreatureArtwork({
+    required String asset,
+    required String label,
+    required bool base,
+  }) async {
+    await oculumShowDialogUntilClosed<void>(
+      context: context,
+      builder: (dialogContext) {
+        final size = MediaQuery.sizeOf(dialogContext);
+        return AlertDialog(
+          key: const ValueKey('enlarged-creature-artwork'),
+          title: Text(
+            base ? '$label · ${t('Forma base', 'Base form')}' : label,
+          ),
+          content: SizedBox(
+            width: min(1024.0, max(80.0, size.width - 72)),
+            height: min(660.0, size.height * .65),
+            child: _OculumZoomableImage(
+              child: Image.asset(
+                asset,
+                fit: BoxFit.contain,
+                semanticLabel: label,
+                errorBuilder: (_, _, _) => Center(
+                  child: Text(
+                    t('Immagine non disponibile', 'Image unavailable'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('Chiudi', 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   List<String> parseMonsterBookList(String raw) {
     return raw
         .split(RegExp(r'[\n,;]+'))
@@ -4923,14 +5241,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       ).convert(existing?.encounterRules ?? {}),
     );
     final coreStatControllers = <String, TextEditingController>{
-      for (final key in const [
-        'level',
-        'resilienza',
-        'volonta',
-        'materia',
-        'oculum',
-      ])
-        key: TextEditingController(text: '${existing?.stats[key] ?? 0}'),
+      for (final key in _monsterBookCoreStatKeys)
+        key: TextEditingController(text: existing?.stats[key]?.toString()),
     };
     final editedHabitats = <String>{...?existing?.planeIds};
     final nameItController = TextEditingController(text: existing?.nameIt);
@@ -4950,7 +5262,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
     final damageResistanceController = TextEditingController(
       text:
-          existing?.incomingDamageResistancePresets.entries
+          existing?.damageResistancePresets.entries
               .map((entry) => '${entry.key}=${entry.value}')
               .join('\n') ??
           '',
@@ -4971,16 +5283,16 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       text: existing?.armorTags.join(', '),
     );
     final hpController = TextEditingController(
-      text: '${existing?.stats['hp'] ?? 0}',
+      text: existing?.stats['hp']?.toString(),
     );
     final attackController = TextEditingController(
-      text: '${existing?.stats['atk'] ?? 0}',
+      text: existing?.stats['atk']?.toString(),
     );
     final defenseController = TextEditingController(
-      text: '${existing?.stats['def'] ?? 0}',
+      text: existing?.stats['def']?.toString(),
     );
     final speedController = TextEditingController(
-      text: '${existing?.stats['spd'] ?? 0}',
+      text: existing?.stats['spd']?.toString(),
     );
     var previewImageBase64 = existing?.imageBase64 ?? '';
     var presetType = existing?.presetType ?? 'Mostro';
@@ -5002,7 +5314,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       );
     }
 
-    final result = await showDialog<MonsterBookEntry>(
+    final result = await oculumShowDialogUntilClosed<MonsterBookEntry>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
@@ -5219,9 +5531,20 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     TextField(
                       controller: damageResistanceController,
                       maxLines: 4,
-                      decoration: decoration(
-                        'Resistenze per tipo, una per riga: taglio=Resistenza Leggera',
-                      ),
+                      decoration:
+                          decoration(
+                            t(
+                              'Resistenze personalizzate',
+                              'Custom resistances',
+                            ),
+                          ).copyWith(
+                            hintText: 'taglio=Resistenza Leggera',
+                            helperText: t(
+                              'Una per riga. Gli altri tipi seguono l’anatomia e l’elemento del mostro.',
+                              'One per line. Other types follow the creature’s anatomy and element.',
+                            ),
+                            helperMaxLines: 2,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -5404,15 +5727,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           }..removeWhere(
                             (key, value) => key.isEmpty || value.isEmpty,
                           ),
-                      stats: <String, int>{
-                        ...?existing?.stats,
-                        for (final entry in coreStatControllers.entries)
-                          entry.key: max(0, readIntValue(entry.value.text)),
-                        'hp': readIntValue(hpController.text),
-                        'atk': readIntValue(attackController.text),
-                        'def': readIntValue(defenseController.text),
-                        'spd': readIntValue(speedController.text),
-                      },
+                      stats: oculumMonsterBookEditedStats(
+                        existing?.stats ?? const {},
+                        {
+                          for (final entry in coreStatControllers.entries)
+                            entry.key: entry.value.text,
+                          'hp': hpController.text,
+                          'atk': attackController.text,
+                          'def': defenseController.text,
+                          'spd': speedController.text,
+                        },
+                      ),
                       skillIds: parseMonsterBookList(skillsController.text),
                       dropIds: parseMonsterBookList(dropsController.text),
                       dropChances: existing?.dropChances ?? const {},
@@ -5458,7 +5783,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     ]) {
       controller.dispose();
     }
-    if (result != null) {
+    if (mounted && result != null) {
       await upsertMonsterBookEntry(result);
     }
   }
@@ -5474,8 +5799,17 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     return 'HP ${stats['hp'] ?? 0} • ATK ${stats['atk'] ?? 0} • DIF ${stats['def'] ?? 0}';
   }
 
-  Future<void> showMonsterBookQuickSpawnDialog(MonsterBookEntry entry) async {
-    final level = TextEditingController(text: '${entry.stats['level'] ?? 1}');
+  Future<void> showMonsterBookQuickSpawnDialog(
+    MonsterBookEntry entry, {
+    bool forFightCreator = false,
+    int? initialLevel,
+  }) async {
+    if (forFightCreator && !canUseFightCreator) return;
+    final creatorScope = forFightCreator ? permissionScope : null;
+    final level = TextEditingController(
+      text: '${initialLevel ?? entry.stats['level'] ?? 1}',
+    );
+    final quantity = forFightCreator ? TextEditingController(text: '1') : null;
     final initial = oculumMonsterCreationStats(
       entry,
       max(0, int.tryParse(level.text) ?? 0),
@@ -5485,6 +5819,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         key: TextEditingController(text: '${initial[key]}'),
     };
     var variant = 'base';
+    var generating = false;
     void distribute() {
       final allocated = oculumMonsterCreationStats(
         entry,
@@ -5524,7 +5859,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   '${systemMonsterGeneratorDescription(entry)} ${entry.nameIt}',
                 ) &&
                 !folliaGeneratoreSbloccato();
+            final count = quantity == null ? 1 : int.tryParse(quantity.text);
+            final validCount = count != null && count >= 1 && count <= 10;
             final valid = validNumbers && assigned == expected && validOculum;
+            if (forFightCreator && !canUseFightCreator) {
+              return const SizedBox.shrink();
+            }
             return AlertDialog(
               backgroundColor: backgroundMidColor,
               title: Text('Genera ${entry.nameIt}'),
@@ -5535,6 +5875,27 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (quantity != null)
+                        TextField(
+                          key: const ValueKey('fight-creator-creature-count'),
+                          controller: quantity,
+                          enabled: !generating,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: t(
+                              'Numero di creature',
+                              'Number of creatures',
+                            ),
+                            helperText: t(
+                              'Una scheda per creatura (1–10)',
+                              'One sheet per creature (1–10)',
+                            ),
+                            errorText: validCount
+                                ? null
+                                : t('Inserisci da 1 a 10', 'Enter 1 to 10'),
+                          ),
+                          onChanged: (_) => refresh(() {}),
+                        ),
                       TextField(
                         controller: level,
                         keyboardType: TextInputType.number,
@@ -5545,6 +5906,18 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       Text(
                         'Grado $selectedGrade · +${oculumMonsterStatPointsPerGrade(entry.creationStatType)} punti per Grado',
                       ),
+                      if (forFightCreator)
+                        Text(
+                          'Potenza base: ${oculumScoutPower(selectedLevel, controllers.values.map((c) => max(0, int.tryParse(c.text) ?? 0)), grade: selectedGrade)} · il riepilogo leggerà i totali effettivi della scheda creata.',
+                          key: const ValueKey('fight-creator-spawn-power'),
+                        ),
+                      if (forFightCreator)
+                        smallInfoText(
+                          t(
+                            'Ogni nuovo nemico ha il 20% di probabilità di nascere ferito, con il 25–75% della Vita massima. Un solo sorteggio per creatura; la Vita resta modificabile dalla scheda.',
+                            'Each new enemy has a 20% chance to start wounded, with 25–75% of maximum Life. Rolled once per creature; Life remains editable on its sheet.',
+                          ),
+                        ),
                       const SizedBox(height: 8),
                       smallInfoText(
                         hasOculumArt
@@ -5624,17 +5997,27 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
+                  onPressed: generating
+                      ? null
+                      : () => Navigator.pop(dialogContext),
                   child: const Text('Annulla'),
                 ),
                 FilledButton(
-                  onPressed: !valid || madnessBlocked
+                  onPressed:
+                      generating || !valid || !validCount || madnessBlocked
                       ? null
                       : () async {
+                          if (generating) return;
+                          if (forFightCreator &&
+                              (!canUseFightCreator ||
+                                  creatorScope != permissionScope)) {
+                            return;
+                          }
                           quickSheetNameController.text = entry.nameIt;
                           quickSheetDescriptionController.text =
                               systemMonsterGeneratorDescription(entry);
-                          quickSheetCountController.text = '1';
+                          refresh(() => generating = true);
+                          quickSheetCountController.text = '$count';
                           await creaSchedaRapidaMaster(
                             forcedType: entry.presetType,
                             fallbackName: entry.nameIt,
@@ -5647,12 +6030,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                             },
                             monsterVariant: variant,
                             monsterBookSource: entry,
+                            fightCreatorScope: creatorScope,
                           );
                           if (dialogContext.mounted) {
                             Navigator.pop(dialogContext);
                           }
                         },
-                  child: const Text('Genera nella mia scheda'),
+                  child: Text(
+                    forFightCreator
+                        ? count == null || count <= 1
+                              ? 'Crea scheda'
+                              : 'Crea $count schede'
+                        : 'Genera nella mia scheda',
+                  ),
                 ),
               ],
             );
@@ -5661,40 +6051,79 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       );
     } finally {
       level.dispose();
+      quantity?.dispose();
       for (final controller in controllers.values) {
         controller.dispose();
       }
     }
   }
 
-  Widget monsterHabitatFilter(
-    String value,
-    ValueChanged<String> changed,
-  ) => DropdownButtonFormField<String>(
-    key: ValueKey('monster-habitat-$value'),
-    initialValue: value,
-    isExpanded: true,
-    decoration: const InputDecoration(
-      labelText: 'Piano / microrealtà',
-      prefixIcon: Icon(Icons.public),
-    ),
-    items: [
-      const DropdownMenuItem(
-        value: '',
-        child: Text('Tutti i piani e le microrealtà'),
-      ),
-      for (final habitat in oculumMonsterHabitats.entries)
-        DropdownMenuItem(
-          value: habitat.key,
-          child: Text(
-            '${oculumMicroRealityIds.contains(habitat.key) ? 'Micro realtà' : 'Piani naturali'} · ${habitat.value}',
+  Widget monsterHabitatFilter(String value, ValueChanged<String> changed) {
+    final family = value == 'kind:realms'
+        ? 'realms'
+        : value == 'kind:microrealities' ||
+              oculumMicroRealityIds.contains(value)
+        ? 'microrealities'
+        : value.isNotEmpty
+        ? 'realms'
+        : '';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DropdownButtonFormField<String>(
+          key: ValueKey('monster-location-family-$family'),
+          initialValue: family,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Ambientazione',
+            prefixIcon: Icon(Icons.public),
           ),
+          items: const [
+            DropdownMenuItem(value: '', child: Text('Regni e microrealtà')),
+            DropdownMenuItem(value: 'realms', child: Text('Solo regni')),
+            DropdownMenuItem(
+              value: 'microrealities',
+              child: Text('Solo microrealtà'),
+            ),
+          ],
+          onChanged: (next) {
+            if (next != null) changed(next.isEmpty ? '' : 'kind:$next');
+          },
         ),
-    ],
-    onChanged: (v) {
-      if (v != null) changed(v);
-    },
-  );
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          key: ValueKey('monster-habitat-$value'),
+          initialValue: oculumMonsterHabitats.containsKey(value) ? value : '',
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Luogo',
+            prefixIcon: Icon(Icons.place_outlined),
+          ),
+          items: [
+            const DropdownMenuItem(
+              value: '',
+              child: Text('Tutti i luoghi del gruppo'),
+            ),
+            for (final habitat in oculumMonsterHabitats.entries)
+              if (family.isEmpty ||
+                  (family == 'microrealities') ==
+                      oculumMicroRealityIds.contains(habitat.key))
+                DropdownMenuItem(
+                  value: habitat.key,
+                  child: Text(habitat.value),
+                ),
+          ],
+          onChanged: (next) {
+            if (next != null) {
+              changed(
+                next.isEmpty && family.isNotEmpty ? 'kind:$family' : next,
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
 
   Widget masterDashboardMonsterBookPanel() {
     if (!haPermessiMaster) return const SizedBox.shrink();
@@ -5725,8 +6154,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
     // Il Book può contenere centinaia di mostri e varianti: la scansione è
     // riusata finché non cambiano query, filtro o la lista configurata.
+    final nameQuery = OculumNameQuery(query);
+    final preferredElements = sheetElementsForNameSearch(query);
+    final elementOrderKey = (preferredElements.toList()..sort()).join(',');
+    final nameRanks = <String, int>{};
     final filterCacheKey =
-        'power-asc|${identityHashCode(monsterBookEntries)}|$query|$monsterBookTierFilter|$monsterBookHabitatFilter|$monsterBookKnowledgeFilter|$monsterBookFinishedOnly|${combatKnowledgeRevision.value}';
+        'power-asc|${identityHashCode(monsterBookEntries)}|$query|$elementOrderKey|$monsterBookTierFilter|$monsterBookHabitatFilter|$monsterBookKnowledgeFilter|$monsterBookFinishedOnly|${combatKnowledgeRevision.value}';
     final filtered = monsterBookFilterCacheKey == filterCacheKey
         ? monsterBookFilterCache
         : manualEntries
@@ -5747,18 +6180,39 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     entry.formTags.contains(monsterBookTierFilter) ||
                     tierFor(entry) == monsterBookTierFilter;
                 if (!categoryMatches ||
-                    (monsterBookHabitatFilter.isNotEmpty &&
-                        !entry.planeIds.contains(monsterBookHabitatFilter))) {
+                    !oculumMonsterMatchesHabitatFilter(
+                      entry,
+                      monsterBookHabitatFilter,
+                    )) {
                   return false;
                 }
                 if (query.isEmpty) return true;
+                final nameScore = oculumMonsterNameMatchScore(
+                  entry,
+                  nameQuery,
+                  normalize: oculumNormalizeText,
+                );
+                if (nameScore > 0) {
+                  nameRanks[entry.id] = nameQuery.rank(
+                    nameScore,
+                    preferredElement: preferredElements.contains(
+                      oculumNormalizeElementId(entry.elementId),
+                    ),
+                  );
+                  return true;
+                }
                 return oculumNormalizeText(
                   '${entry.nameIt} ${entry.nameEn} ${entry.speciesNameIt} ${entry.speciesNameEn} ${entry.formTags.join(' ')} ${entry.id} ${entry.elementId} ${entry.presetType} ${entry.descIt} ${monsterBookUsableSkillIds(entry).join(' ')} ${entry.dropIds.join(' ')} ${entry.weaponTags.join(' ')} ${entry.armorTags.join(' ')}',
                 ).contains(query);
               })
               .toList(growable: false);
     if (monsterBookFilterCacheKey != filterCacheKey) {
-      filtered.sort(oculumCompareMonsterBookPower);
+      filtered.sort((a, b) {
+        final relevance = (nameRanks[b.id] ?? 0).compareTo(
+          nameRanks[a.id] ?? 0,
+        );
+        return relevance != 0 ? relevance : oculumCompareMonsterBookPower(a, b);
+      });
       monsterBookFilterCacheKey = filterCacheKey;
       monsterBookFilterCache = filtered;
     }
@@ -5799,8 +6253,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 6),
           smallInfoText(
             t(
-              'Un registro testuale per il Master: tieni premuto un mostro (o clic destro su desktop) per impostare livello e statistiche, poi generarlo tra le tue schede.',
-              'Master dossier: long-press a monster (or right-click on desktop) to set level and stats, then generate it among your sheets.',
+              'Tocca un mostro per consultarlo. Tieni premuto (o fai clic destro) per impostare livello e statistiche e generare la scheda.',
+              'Tap a monster to inspect it. Long-press (or right-click) to set its level and stats and generate its sheet.',
             ),
           ),
           const SizedBox(height: 10),
@@ -6002,7 +6456,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         type: MaterialType.transparency,
                         child: ListTile(
                           dense: true,
-                          leading: monsterBookEntryPreview(entry),
+                          leading: creatureRecognitionPreview(
+                            entry,
+                            canEnlarge: true,
+                          ),
                           onTap: () => showMonsterBookMechanics(entry),
                           title: Text(
                             entry.nameIt,
@@ -6085,32 +6542,50 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Widget monsterBookPartyPage() {
-    final entries =
-        monsterBookEntries
-            .where(
-              (e) =>
-                  e.visibleInMonsterBook &&
-                  (haPermessiMaster || monsterBookPartyKnowsAny(e.id)) &&
-                  (partyBookHabitatFilter.isEmpty ||
-                      e.planeIds.contains(partyBookHabitatFilter)),
-            )
-            .toList()
-          ..sort((a, b) {
-            bool known(String id) {
-              final k = monsterBookPartyKnowledge(id);
-              return k != null &&
-                      const [
-                        'seen',
-                        'nameKnown',
-                        'weakPoint',
-                        'pagePurchased',
-                      ].any((key) => k[key] == true) ||
-                  partyHuntsForMonster(id).isNotEmpty;
-            }
+    final query = oculumNormalizeText(partyBookNameSearch);
+    final nameQuery = OculumNameQuery(query);
+    final preferredElements = sheetElementsForNameSearch(query);
+    final nameRanks = <String, int>{};
+    final entries = monsterBookEntries.where((entry) {
+      if (!entry.visibleInMonsterBook ||
+          (!haPermessiMaster && !monsterBookPartyKnowsAny(entry.id)) ||
+          !oculumMonsterMatchesHabitatFilter(entry, partyBookHabitatFilter)) {
+        return false;
+      }
+      if (query.isEmpty) return true;
+      if (!monsterBookPartyKnowsName(entry.id)) return false;
+      final score = oculumMonsterNameMatchScore(
+        entry,
+        nameQuery,
+        normalize: oculumNormalizeText,
+      );
+      if (score == 0) return false;
+      nameRanks[entry.id] = nameQuery.rank(
+        score,
+        preferredElement: preferredElements.contains(
+          oculumNormalizeElementId(entry.elementId),
+        ),
+      );
+      return true;
+    }).toList();
+    entries.sort((a, b) {
+      final relevance = (nameRanks[b.id] ?? 0).compareTo(nameRanks[a.id] ?? 0);
+      if (relevance != 0) return relevance;
+      bool known(String id) {
+        final k = monsterBookPartyKnowledge(id);
+        return k != null &&
+                const [
+                  'seen',
+                  'nameKnown',
+                  'weakPoint',
+                  'pagePurchased',
+                ].any((key) => k[key] == true) ||
+            partyHuntsForMonster(id).isNotEmpty;
+      }
 
-            final order = (known(b.id) ? 1 : 0).compareTo(known(a.id) ? 1 : 0);
-            return order != 0 ? order : a.nameIt.compareTo(b.nameIt);
-          });
+      final order = (known(b.id) ? 1 : 0).compareTo(known(a.id) ? 1 : 0);
+      return order != 0 ? order : a.nameIt.compareTo(b.nameIt);
+    });
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -6150,6 +6625,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             partyBookHabitatFilter,
             (v) => setState(() => partyBookHabitatFilter = v),
           ),
+          TextFormField(
+            key: const ValueKey('party_monster_book_name_search'),
+            initialValue: partyBookNameSearch,
+            onChanged: (value) => setState(() => partyBookNameSearch = value),
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search),
+              labelText: 'Cerca un nome scoperto',
+            ),
+          ),
           corruptionBookLink(),
           const SizedBox(height: 8),
           Expanded(
@@ -6169,7 +6653,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ListTile(
-                    leading: monsterBookEntryPreview(entry),
+                    leading: partyMonsterBookPreview(entry, identified),
                     title: Text(
                       identified ? entry.nameIt : '???',
                       style: TextStyle(
@@ -6204,6 +6688,25 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
+  Widget partyMonsterBookPreview(
+    MonsterBookEntry entry,
+    bool identified, {
+    double size = 48,
+  }) {
+    final knowledge = monsterBookPartyKnowledge(entry.id);
+    if (!haPermessiMaster &&
+        knowledge?['seen'] != true &&
+        knowledge?['pagePurchased'] != true) {
+      return monsterBookEntryPreview(entry, size: size);
+    }
+    return creatureRecognitionPreview(
+      entry,
+      size: size,
+      revealName: identified,
+      canEnlarge: true,
+    );
+  }
+
   Future<void> showMonsterBookPartyEntry(MonsterBookEntry entry) async {
     final resistances = entry.incomingDamageResistancePresets;
     String resistanceLabel(String type, String preset) =>
@@ -6234,7 +6737,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          monsterBookEntryPreview(entry, size: 72),
+                          partyMonsterBookPreview(entry, identified, size: 72),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -6245,6 +6748,20 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                           ),
                         ],
                       ),
+                      if (knowledge?['pagePurchased'] == true) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'Potenza base · Livello 0: ${oculumMonsterBookBasePowerAtLevelZero(entry)}',
+                          style: TextStyle(
+                            color: tertiaryColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Calcolata sulle statistiche base della voce, senza i punti di Livello e Grado.',
+                        ),
+                      ],
                       if (identified)
                         monsterReadingOverview(
                           entry,
@@ -6962,6 +7479,35 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final folliaTotal = folliaPartyTotale();
     final folliaChance = folliaIncontroPercentuale();
 
+    Future<void> createQuickSheet({bool randomStats = false}) async {
+      final input = quickSheetMonsterIdController.text.trim();
+      if (!haPermessiMaster || input.isEmpty) {
+        await creaSchedaRapidaMaster(randomizzaPuntiMostro: randomStats);
+        return;
+      }
+      final source = oculumLookupMonsterId(input).exact;
+      if (source == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              t(
+                'Scegli un mostro con TAB o con la lente accanto al campo.',
+                'Choose a monster with TAB or the search button by the field.',
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+      quickSheetMonsterIdController.text = source.id;
+      await creaSchedaRapidaMaster(
+        forcedType: source.presetType,
+        fallbackName: source.nameIt,
+        monsterBookSource: source,
+        randomizzaPuntiMostro: randomStats,
+      );
+    }
+
     return gothicPanel(
       borderColor: tertiaryColor,
       padding: const EdgeInsets.all(12),
@@ -6989,6 +7535,18 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
             controller: quickSheetNameController,
             numero: false,
           ),
+          if (haPermessiMaster) ...[
+            const SizedBox(height: 10),
+            OculumMonsterIdField(
+              key: const ValueKey('quick_sheet_monster_id'),
+              controller: quickSheetMonsterIdController,
+              lookup: (query) => oculumLookupMonsterId(
+                query,
+                preferredElements: sheetElementsForNameSearch(query),
+              ),
+              english: linguaInglese,
+            ),
+          ],
           const SizedBox(height: 10),
           quickNpcSkillPanel(),
           const SizedBox(height: 10),
@@ -7215,7 +7773,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 8),
           Builder(
             builder: (context) {
-              final presets = systemMonsterGeneratorPresets()
+              final presets = monsterBookEntries
                   .where((preset) => !systemMonsterPresetIsVariantId(preset.id))
                   .toList(growable: false);
               final selected =
@@ -7246,10 +7804,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: selected,
-                          isExpanded: true,
-                          dropdownColor: backgroundMidColor,
+                        child: InputDecorator(
                           decoration: InputDecoration(
                             labelText: t(
                               'Preset Monster Book',
@@ -7257,24 +7812,21 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                             ),
                             border: const OutlineInputBorder(),
                           ),
-                          items: [
-                            for (final preset in presets)
-                              DropdownMenuItem(
-                                value: preset.id,
-                                child: Text(
-                                  '${preset.name} - ${preset.type}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setState(() {
-                              selectedSystemMonsterPresetId = value;
-                              selectedSystemMonsterVariantId = '';
-                            });
-                          },
+                          child: OculumMonsterPicker(
+                            key: const ValueKey('master_monster_preset'),
+                            entries: presets,
+                            selectedId: selected ?? '',
+                            preferredElements: usableSheetSearchElements,
+                            showDescriptions: true,
+                            allowClear: false,
+                            english: linguaInglese,
+                            onSelected: (value) {
+                              setState(() {
+                                selectedSystemMonsterPresetId = value;
+                                selectedSystemMonsterVariantId = '';
+                              });
+                            },
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -7295,6 +7847,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                     DropdownButtonFormField<String>(
                       initialValue: selectedVariant,
                       isExpanded: true,
+                      itemHeight: null,
                       dropdownColor: backgroundMidColor,
                       decoration: InputDecoration(
                         labelText: t(
@@ -7311,12 +7864,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         for (final form in forms)
                           DropdownMenuItem(
                             value: form.id,
-                            child: Text(
-                              form.id == forms.first.id
-                                  ? '${form.nameIt} — ${t('base', 'base')}'
-                                  : form.nameIt,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: OculumMonsterChoiceLabel(
+                                entry: form,
+                                english: linguaInglese,
+                                title: form.id == forms.first.id
+                                    ? '${t(form.nameIt, form.nameEn)} — base'
+                                    : null,
+                              ),
                             ),
                           ),
                       ],
@@ -7453,7 +8009,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                       ),
                     ),
                   ElevatedButton.icon(
-                    onPressed: () => creaSchedaRapidaMaster(),
+                    onPressed: createQuickSheet,
                     icon: const Icon(Icons.add_circle),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: tertiaryColor,
@@ -7467,8 +8023,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                   if (typeIsMonster) ...[
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
-                      onPressed: () =>
-                          creaSchedaRapidaMaster(randomizzaPuntiMostro: true),
+                      onPressed: () => createQuickSheet(randomStats: true),
                       icon: const Icon(Icons.casino),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: secondaryColor,
@@ -7999,6 +8554,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         .toList();
     final builders = <Widget Function()>[
       () => functionAnchor('master_root', sectionTitle('Master')),
+      if (canUseFightCreator) fightCreatorPanel,
       () => gothicPanel(
         borderColor: tertiaryColor,
         child: OculumSettingsNavigation(
@@ -8214,6 +8770,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       fullWidthIndexes: const <int>{0},
       children: [
         functionAnchor('master_root', sectionTitle('Master')),
+        if (canUseFightCreator) fightCreatorPanel(),
         if (haPermessiMaster) masterItemGiftPanel(),
         pawnGuardiansPanel(),
         onlineStatusPanel(),
@@ -9199,6 +9756,11 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 .contains('passiv'));
     if (livelloNuovo == livelloPrecedente && !activating) return;
     if (activating) {
+      if (!allowImbrytoadSpitDeclaration(
+        skill.effettiEvoluzione(livelloNuovo),
+      )) {
+        return;
+      }
       if (!progressionRequirementsMet(
         skill.unlockRequirementsPerLevel[livelloNuovo - 1],
       )) {
@@ -9276,38 +9838,45 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         skill
             .effettiEvoluzione(livelloNuovo)
             .any(
-              (e) => const {
-                'rabbit_hat',
-                'plasma_matter_recharge',
-                'mask_serious_punch',
-                'mask_blue_volley',
-                'mask_angelic_arrows',
-                'mask_solar_arrows',
-                'mask_shadow_form',
-                'mask_shadow_teleport',
-                'guardian_golden_mace',
-                'sand_tail_attack',
-                'sand_tail_parry',
-                'armadillo_roll_up',
-                'armadillo_uncurl',
-                'armadillo_closed_required',
-                'feralis_fury',
-                'monk_ki',
-                'monk_seal',
-                'bone_four_slash',
-                'ogor_restore',
-                'deadly_empowered',
-                'deadly_regen',
-                'deadly_weapon',
-                'evergreen_leaves',
-                'evergreen_dodge',
-                'gran_leave',
-                'gran_cannon',
-                'gran_unstun',
-                'laer_sword',
-                'laer_twist',
-                'puppet_attack_bonus',
-              }.contains(e.target),
+              (e) =>
+                  (e.enabled && oculumIsSonoreyeBellEffect(e.id)) ||
+                  const {
+                    'rabbit_hat',
+                    'plasma_matter_recharge',
+                    'mask_serious_punch',
+                    'mask_blue_volley',
+                    'mask_angelic_arrows',
+                    'mask_solar_arrows',
+                    'mask_shadow_form',
+                    'mask_shadow_teleport',
+                    oculumGoblinGuardianKind,
+                    oculumMutantRatSummon,
+                    oculumGoblinVanishEffect,
+                    oculumGoblinRegalStrikeEffect,
+                    oculumBunnysHealSkill,
+                    'guardian_golden_mace',
+                    'sand_tail_attack',
+                    'sand_tail_parry',
+                    'armadillo_roll_up',
+                    'armadillo_uncurl',
+                    'armadillo_closed_required',
+                    'feralis_fury',
+                    'monk_ki',
+                    'monk_seal',
+                    'bone_four_slash',
+                    'ogor_restore',
+                    'deadly_empowered',
+                    'deadly_regen',
+                    'deadly_weapon',
+                    'evergreen_leaves',
+                    'evergreen_dodge',
+                    'gran_leave',
+                    'gran_cannon',
+                    'gran_unstun',
+                    'laer_sword',
+                    'laer_twist',
+                    'puppet_attack_bonus',
+                  }.contains(e.target),
             )) {
       final used = await useConfiguredAbility(
         source: '${art.nome} / ${skill.nome}',
@@ -9323,6 +9892,19 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           additionalCosts: skill.additionalCostsPerLevel[livelloNuovo - 1],
         ),
         cooldown: structuredCooldown,
+        turnResourceOverride:
+            skill
+                .effettiEvoluzione(livelloNuovo)
+                .any(
+                  (effect) =>
+                      effect.enabled &&
+                      const {
+                        oculumGoblinGuardianKind,
+                        oculumMutantRatSummon,
+                      }.contains(effect.target),
+                )
+            ? 'azione'
+            : null,
         valid: () =>
             arti.contains(art) &&
             art.inUso &&
@@ -9554,6 +10136,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       );
     }
 
+    if (activating &&
+        !allowImbrytoadSpitDeclaration(skill.effettiEvoluzione(livelloNuovo))) {
+      return;
+    }
     final availableBefore = artSkillCostResourceAvailable(costResource);
     final requestedResourceSpend = resourceUse?.selected ?? 0;
     var resourceSpent = tearPayment?.values.fold<int>(0, (a, b) => a + b) ?? 0;
@@ -9749,6 +10335,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 legacyQuickCommands: true,
               ),
         source: '${art.nome} / ${skill.nome} ${artLevelRoman(livelloNuovo)}',
+        sourceCooldown: structuredCooldown,
         level: livelloNuovo,
         spentResources: <String, num>{
           ...?tearPayment,
@@ -10481,7 +11068,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         return;
       }
     }
-    final activationCost = oculumRecognizedArtKind(targetArt) == 'emblem'
+    final weakOpen = oculumIsMonsterWeakOpen(targetArt);
+    final activationCost =
+        weakOpen || oculumRecognizedArtKind(targetArt) == 'emblem'
         ? 0
         : artUseCost(oculumArtActivationCost);
     if (artOpenSbloccata(targetArt) && !targetArt.openAttiva) {
@@ -10509,7 +11098,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
         return;
       }
     }
-    var consumedIntegrity = false;
+    var activated = false;
     var dtDebuff = 0;
 
     setState(() {
@@ -10552,7 +11141,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           activationCost,
           skillLevel: 3,
         );
-        consumedIntegrity = true;
+        activated = true;
         rimarginaHpDaAumentoResilienza(artOpenQuickResilienzaBonus(art));
       }
       risultato = art.openAttiva
@@ -10573,7 +11162,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
-    if (consumedIntegrity) {
+    if (activated) {
       final art = arti[artIndex];
       final structuredMessages =
           applyStructuredEffectsOnActivation(<OculumStructuredEffect>[
@@ -10602,13 +11191,15 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           aggiungiLog(risultato);
         });
       }
-      notifyArtIntegrityChanged(artIndex);
-      scheduleArtIntegritySave(<int>[artIndex], immediate: true);
+      if (!weakOpen) {
+        notifyArtIntegrityChanged(artIndex);
+        scheduleArtIntegritySave(<int>[artIndex], immediate: true);
+      }
     }
 
     scheduleRealtimeOculumChanged();
-    if (!consumedIntegrity) programmaSalvataggio();
-    if (consumedIntegrity && mounted) {
+    if (!activated || weakOpen) programmaSalvataggio();
+    if (activated && mounted) {
       await finishParsedAbilityTargets(targetArt.openDescription);
     }
   }
@@ -10770,6 +11361,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
       final messages = applyStructuredEffectsOnActivation(
         art.openSkillEffects,
         source: '${artOpenDisplayName(art, artIndex)} · Skill Open',
+        sourceCooldown: cooldown,
       );
       risultato =
           '${art.openSkill}\nSkill Open: 1d$faces = $roll + Attacco $attack = $damage danni.\n${messages.join('\n')}';
@@ -11157,7 +11749,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     final requiredLevel = artMaxLevel(art);
     final requiredRoman = artLevelRoman(requiredLevel);
     final activeBonuses = artQuickBonuses(art);
-    final activationCost = artUseCost(oculumArtActivationCost);
+    final weakOpen = oculumIsMonsterWeakOpen(art);
+    final activationCost = weakOpen ? 0 : artUseCost(oculumArtActivationCost);
 
     return functionAnchor(
       'art_${artIndex}_open',
@@ -11203,6 +11796,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                         'Open sbloccata: puoi attivarla. I tag rapidi scritti nella Open valgono finche resta attiva.',
                         'Open unlocked: you can activate it. Quick tags written in the Open count while it stays active.',
                       )
+                    : weakOpen
+                    ? t('Richiede livello 3.', 'Requires level 3.')
                     : t(
                         'Open bloccata: porta tutte le Skill di questa Art al livello $requiredRoman. Livello comune attuale: ${artLevelRoman(level)}/$requiredRoman.',
                         'Open locked: bring every Skill in this Art to level $requiredRoman. Current shared level: ${artLevelRoman(level)}/$requiredRoman.',
@@ -12612,6 +13207,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget _artDashboardPanelContent(int artIndex) {
     if (!arti[artIndex].sbloccata) return artLockedPanel(artIndex);
+    if (oculumIsMonsterWeakOpen(arti[artIndex])) return artOpenPanel(artIndex);
 
     return LayoutBuilder(
       builder: (context, constraints) {

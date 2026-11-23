@@ -2,6 +2,56 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/game/oculum_opposed_attack.dart';
 
 void main() {
+  test('high-roll wear follows damage, natural d20 and shield thresholds', () {
+    ({int defense, int damage}) wear(
+      int natural, {
+      bool hit = true,
+      bool critical = false,
+      bool shield = false,
+      String difficulty = 'normale',
+      int percentile = 99,
+      int faces = 20,
+    }) => oculumHighRollWear(
+      natural: natural,
+      faces: faces,
+      hit: hit,
+      critical: critical,
+      shieldActive: shield,
+      difficulty: difficulty,
+      percentile: percentile,
+    );
+    expect(wear(17), (defense: 0, damage: 0));
+    expect(wear(18), (defense: 1, damage: 0));
+    expect(wear(19), (defense: 2, damage: 0));
+    expect(wear(20, critical: true), (defense: 3, damage: 1));
+    expect(wear(20, hit: false, critical: true), (defense: 0, damage: 0));
+    expect(wear(20, faces: 16), (defense: 0, damage: 0));
+    for (final (difficulty, chance) in [
+      ('facile', 10),
+      ('normale', 20),
+      ('difficile', 35),
+      ('oculum', 50),
+    ]) {
+      expect(
+        wear(
+          18,
+          shield: true,
+          difficulty: difficulty,
+          percentile: chance - 1,
+        ).defense,
+        1,
+      );
+      expect(
+        wear(
+          18,
+          shield: true,
+          difficulty: difficulty,
+          percentile: chance,
+        ).defense,
+        0,
+      );
+    }
+  });
   test('area attack damage divides across every hit rounding up', () {
     expect(oculumDamagePerTarget(10, 3), 4);
     expect(oculumDamagePerTarget(10, 2), 5);

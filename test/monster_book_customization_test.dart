@@ -517,6 +517,7 @@ void main() {
           'demonietto_bruciante',
           'demonietto_del_gelo',
           'coboldo_di_brina',
+          'sensimoss',
         }.contains(entry.id.split('_variante_').first);
         if (explicitlyWithoutSkills ||
             (entry.formTags.contains('Creatura Minore') &&
@@ -626,14 +627,48 @@ void main() {
     },
   );
 
+  test(
+    'solitary stock roles remain idempotent and custom descriptions win',
+    () {
+      for (final id in ['baby_forest_demon_errato', 'forest_demon_errato']) {
+        final stock = defaultMonsterBookEntries.singleWhere(
+          (entry) => entry.id == id,
+        );
+        expect(stock.fightsAlone, isTrue);
+        expect(stock.descIt, contains('Ruolo in scena: combatte da solo.'));
+        expect(stock.descEn, contains('Scene role: fights alone.'));
+        expect('Ruolo in scena:'.allMatches(stock.descIt).length, 1);
+        expect(stock.descIt, isNot(contains('copre un alleato')));
+        final customized = stock.copyWith(
+          descIt: 'Descrizione privata del Master.',
+          descEn: 'Private description from the Master.',
+        );
+        configureMonsterBookEntries(customEntries: [customized]);
+        expect(monsterById(id)!.toJson(), customized.toJson());
+      }
+    },
+  );
+
   test('every default monster has a scene role and explained techniques', () {
     for (final monster in defaultMonsterBookEntries) {
       expect(monster.descIt, contains('Ruolo in scena:'), reason: monster.id);
       for (final skillId in monster.skillIds) {
         final text = monsterBookSkillText(skillId);
         expect(text, contains('I/'), reason: '$skillId I');
-        expect(text, contains('II/'), reason: '$skillId II');
-        expect(text, contains('III/'), reason: '$skillId III');
+        const singleFormNames = <String, String>{
+          'soul_fighter_cut': 'Taglio dell’Ultimo Respiro',
+          'soul_fighter_guard': 'Mano della Veglia',
+          'soul_fighter_skull': 'Marchio dei Senza Nome',
+        };
+        if (singleFormNames.containsKey(skillId)) {
+          expect(text, startsWith(singleFormNames[skillId]!), reason: skillId);
+          expect(text, contains('Una sola forma.'), reason: skillId);
+          expect(text, isNot(contains('II/')), reason: skillId);
+          expect(text, isNot(contains('III/')), reason: skillId);
+        } else {
+          expect(text, contains('II/'), reason: '$skillId II');
+          expect(text, contains('III/'), reason: '$skillId III');
+        }
         expect(text, isNot(contains('usi la tecnica contro')), reason: skillId);
       }
     }

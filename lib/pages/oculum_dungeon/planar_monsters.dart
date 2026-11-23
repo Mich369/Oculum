@@ -38,6 +38,21 @@ const oculumMicroRealityIds = <String>{
   'carne_viva',
 };
 
+bool oculumMonsterMatchesHabitatFilter(MonsterBookEntry entry, String filter) {
+  if (filter.isEmpty) return true;
+  if (filter == 'kind:realms') {
+    return entry.planeIds.any(
+      (id) =>
+          oculumMonsterHabitats.containsKey(id) &&
+          !oculumMicroRealityIds.contains(id),
+    );
+  }
+  if (filter == 'kind:microrealities') {
+    return entry.planeIds.any(oculumMicroRealityIds.contains);
+  }
+  return entry.planeIds.contains(filter);
+}
+
 const _planarSpeciesNames = <String, List<String>>{
   'postea': [
     'Segugio dei circuiti runici',
@@ -485,6 +500,8 @@ final List<MonsterBookEntry> oculumPlanarMonsterEntries = [
   ),
   ..._shieldCloudMonsterEntries,
   ..._canonicalPlanarVariants,
+  ..._sunkenRealmEntries,
+  ..._balenaMilleOcchiEntries,
   for (final habitat in _planarSpeciesNames.entries)
     for (var i = 0; i < habitat.value.length; i++)
       _buildPlanarMonster(
@@ -626,13 +643,58 @@ final Map<String, MonsterConcreteTechnique> _planarTechniques = {
     for (var slot = 0; slot < 2; slot++)
       monster.skillIds[slot]: _buildPlanarTechnique(monster, slot),
 };
+const oculumWeldSpiderId = 'habitat_postea_ragno_saldatore';
+const oculumWeldSpiderBeamSkill = '${oculumWeldSpiderId}_raggio_plasma';
+const oculumWeldSpiderTailPart = 'tail';
+const oculumWeldSpiderAttackPerTurn = 'plasma_tiro_per_turno';
+const oculumWeldSpiderPrimaryPercent = 'plasma_percentuale_aggancio_principale';
+const oculumWeldSpiderSecondaryPercent = 'plasma_percentuale_secondario';
+const oculumWeldSpiderLocksPerTurn = 'plasma_agganci_per_turno';
+const oculumWeldSpiderSustainNames = {
+  oculumWeldSpiderAttackPerTurn: 'Bonus al tiro per turno completo',
+  oculumWeldSpiderPrimaryPercent:
+      'Danni aggiunti al principale per aggancio (%)',
+  oculumWeldSpiderSecondaryPercent: 'Danni base del bersaglio secondario (%)',
+  oculumWeldSpiderLocksPerTurn: 'Nuovi agganci per turno completo',
+};
+Iterable<String> get oculumWeldSpiderSustainTargets =>
+    oculumWeldSpiderSustainNames.keys;
+
+bool oculumIsWeldSpiderBeamEffect(Object? id) =>
+    '$id'.split('/').last.startsWith('${oculumWeldSpiderBeamSkill}_forma_');
+
+bool oculumWeldSpiderTailIsBroken(Map anatomy) {
+  final parts = anatomy['parts'];
+  final tail = parts is Map ? parts[oculumWeldSpiderTailPart] : null;
+  if (tail is! Map) return false;
+  final maximum = tail['maximumHp'];
+  final damage = tail['damageTaken'];
+  return maximum is num && maximum > 0 && damage is num && damage >= maximum;
+}
+
 MonsterConcreteTechnique? oculumPlanarTechnique(String rawId) =>
+    _mutantRatTechniques[rawId] ??
+    _acuagoblinTechniques[rawId] ??
+    _goblinKingTechniques[rawId] ??
+    _oculiathTechniques[rawId] ??
+    _solarObserverAndBiterTechniques[rawId] ??
+    _bunnysTechniques[rawId] ??
+    _cynervailTechniques[rawId] ??
+    _necthrallTechniques[rawId] ??
+    _oblyvuardTechniques[rawId] ??
+    _frutibushTechniques[rawId] ??
+    _sonoreyeTechniques[rawId] ??
+    _aculotideTechniques[rawId] ??
     _lunarGuardTechniques[rawId.replaceFirst(
       RegExp(r'_variante_[a-z]+$'),
       '',
     )] ??
     _cycleMonsterTechniques[rawId] ??
     _canonicalVariantTechniques[rawId] ??
+    _sunkenRealmTechniques[rawId] ??
+    _balenaMilleOcchiTechniques[rawId] ??
+    _volenterosiTechniques[rawId] ??
+    _lineageTechniques[rawId] ??
     _extraPlanarTechniques[rawId.replaceFirst(
       RegExp(r'_variante_[a-z]+$'),
       '',
@@ -1068,6 +1130,46 @@ List<List<MonsterTechniqueEffect>> _planarDamageForms(
     ],
 ];
 final _authoredPlanarTechniques = <String, MonsterConcreteTechnique>{
+  oculumWeldSpiderBeamSkill: MonsterConcreteTechnique(
+    name: 'Raggio al plasma',
+    action:
+        'Scaglia un raggio al Plasma contro un bersaglio. Il Ragno '
+        'saldatore lo emette dalla coda e lo perde quando la coda si rompe',
+    element: 'plasma',
+    kind: 'danno',
+    requiredLevel: 6,
+    costResource: 'materia',
+    minimums: [1, 2, 3],
+    maximums: [1, 2, 3],
+    cooldownValues: [2, 3, 3],
+    startsReady: false,
+    forms: [
+      for (final damage in ['6', '11', '16'])
+        [
+          MonsterTechniqueEffect(
+            'danno',
+            damage,
+            mode: 'prossima_azione',
+            recipient: 'nemico',
+            maximumTargets: 1,
+          ),
+          for (final setting in const {
+            oculumWeldSpiderAttackPerTurn: '3',
+            oculumWeldSpiderPrimaryPercent: '50',
+            oculumWeldSpiderSecondaryPercent: '60',
+            oculumWeldSpiderLocksPerTurn: '1',
+          }.entries)
+            MonsterTechniqueEffect(
+              'planar',
+              setting.value,
+              target: setting.key,
+              mode: 'prossima_azione',
+              duration: '0',
+              recipient: 'nemico',
+            ),
+        ],
+    ],
+  ),
   'fire_shield_ray': _planarMove(
     'Raggio di fuoco rosso',
     'Apre le placche del collo e concentra un raggio rosso su un bersaglio. Il recupero lungo lascia il boss esposto alla manovra del party.',

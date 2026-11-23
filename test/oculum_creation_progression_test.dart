@@ -9,29 +9,51 @@ void main() {
     'ordinary catalogue variants gain twelve choices and explicit fixed kits stay intact',
     () {
       final rows = <Map<String, dynamic>>[];
-      // These authored exceptions predate the ordinary pool rule. Check them
-      // explicitly rather than giving a no-Art creature twelve new abilities.
-      const fixedKits = {
+      for (final id in [
         'nuvi',
-        'thunder_bot',
-        'collezionista_di_elementi',
-        'demonietto_bruciante',
-        'demonietto_del_gelo',
-        'coboldo_di_brina',
-        'koboldo_delle_braci',
-        'fuoco_fatuo_affamato',
-        'strige_del_fienile',
-        'larva_del_grimorio',
-      };
+        'topo_mutante',
+        oculumSoulFighterId,
+        oculumSoulFighterEliteId,
+      ]) {
+        expect(
+          oculumMonsterHasFixedProgressionSkills(monsterBookEntryById(id)!),
+          isTrue,
+          reason: id,
+        );
+      }
       for (final monster in defaultMonsterBookEntries) {
         final ids = monster.skillIds
             .where((id) => id.startsWith(oculumMonsterProgressionPrefix))
             .toList();
         final fixed =
-            fixedKits.contains(monster.id.split('_variante_').first) ||
-            (monster.formTags.contains('Creatura Minore') &&
-                monster.skillIds.isEmpty);
-        expect(ids.length, fixed ? 0 : 12, reason: monster.id);
+            oculumMonsterHasFixedProgressionSkills(monster) ||
+            monster.encounterRules['authoredSkillPool'] == true;
+        final octopus =
+            monster.encounterRules[oculumEivaFamilyIdRule] ==
+            oculumPiovraSucchiasangueId;
+        if (octopus) {
+          // These seven IDs are authored members of the nine-choice Art pool,
+          // rather than the twelve additions used by ordinary catalogue kits.
+          final natural = oculumPiovraNaturalSkillIds(monster);
+          expect(monster.encounterRules['authoredSkillPool'], isTrue);
+          expect(natural, hasLength(2), reason: monster.id);
+          expect(monster.skillIds, containsAll(natural), reason: monster.id);
+          expect(ids, <String>[
+            for (var index = 0; index < 7; index++)
+              '$oculumMonsterProgressionPrefix${monster.id}__$index',
+          ], reason: monster.id);
+          final artCandidates = monster.skillIds
+              .where((id) => !natural.contains(id))
+              .toList();
+          expect(artCandidates, hasLength(9), reason: monster.id);
+          expect(
+            artCandidates.where((id) => !ids.contains(id)),
+            hasLength(2),
+            reason: monster.id,
+          );
+        } else {
+          expect(ids.length, fixed ? 0 : 12, reason: monster.id);
+        }
         expect(ids.toSet().length, ids.length, reason: monster.id);
         if (fixed) {
           // A historical saved technique still resolves without being added

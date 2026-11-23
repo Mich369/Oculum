@@ -73,6 +73,26 @@ int oculumCorruptionRandomAttackChance(Map metadata) {
 }
 
 extension _OculumCorruptionChronicle on _OculumHomePageState {
+  bool memoryOfSelfBlocksCorruption(Map metadata, {int? sheetIndex}) {
+    if (oculumCorruptionKind(metadata) != 'rossa') return false;
+    final index = sheetIndex ?? schedaCorrente;
+    if (index == schedaCorrente) return hasCondition('memoria_di_se');
+    if (index < 0 || index >= schedePersonaggio.length) return false;
+    final sheet = schedePersonaggio[index];
+    final conditions = sheet['conditions'] ?? sheet['activeConditions'];
+    return conditions is List &&
+        conditions.whereType<Map>().any(
+          (condition) =>
+              (condition['conditionType'] ?? condition['type']) ==
+              'memoria_di_se',
+        );
+  }
+
+  String get memoryOfSelfRedCorruptionMessage => t(
+    'Memoria di Sé impedisce la Corruzione Rossa.',
+    'Memory of Self prevents Red Corruption.',
+  );
+
   bool get ownsCorruptionPage => planarState['corruptionPagePurchased'] == true;
   Map<String, dynamic> get currentCorruptionMetadata =>
       getCondition('corruzione')?.metadata ?? {};

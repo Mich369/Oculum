@@ -10,6 +10,47 @@ import 'oculum_protection_wear_test.dart' show prepareProtectionFixture;
 
 void main() {
   testWidgets(
+    'a damaging critical d20 causes immediate wear until Short Rest',
+    (tester) async {
+      final (state, probe) = await mountFight(tester);
+      final initialDefense = probe.defense();
+      final initialDamage = probe.outgoingDamage();
+      final encounter = probe.combatTurnEncounter()['encounterId'];
+      state.scudoController.text = '0';
+      state.scudoOculumController.text = '0';
+      state.scudoCriticoController.text = '0';
+      Future<void> resolve(String id, int defense) async {
+        final packet = <String, dynamic>{
+          'id': id,
+          'sourceTag': 'ENEMY',
+          'targetTag': probe.ownerTag(),
+          'scope': probe.permissionScope,
+          'encounterId': encounter,
+          'attack': 50,
+          'damage': initialDefense + 2,
+          'natural': 20,
+          'element': 'fisico',
+          'status': 'pending',
+        };
+        state.onlineCombatRequests[id] = packet;
+        await probe.resolveCombatDefense(packet, 'cm', defense);
+      }
+
+      await resolve('wear-avoided', 60);
+      expect(probe.snapshot()['planarRuntime']['highRollDefenseWear'], isNull);
+      await resolve('wear-landed', 10);
+      final runtime = probe.snapshot()['planarRuntime'] as Map;
+      expect(runtime['highRollDefenseWear'], 3);
+      expect(runtime['highRollDamageWear'], 1);
+      expect(probe.defense(), (initialDefense - 3).clamp(0, initialDefense));
+      expect(probe.outgoingDamage(), initialDamage - 1);
+      probe.shortRest();
+      expect(probe.snapshot()['planarRuntime']['highRollDamageWear'], isNull);
+      expect(probe.snapshot()['planarRuntime']['highRollDefenseWear'], isNull);
+      await closeFixture(tester, probe);
+    },
+  );
+  testWidgets(
     'Gun Shield fires once at the parried attacker without a turn spend',
     (tester) async {
       final (state, probe) = await mountFight(tester);

@@ -37,6 +37,22 @@ void main() {
       isTrue,
     );
   });
+  test('Blind Bell Keeper family has a metal bell in place of eyes', () {
+    for (final id in [
+      'custode_campana_cieca',
+      'custode_campana_cieca_variante_veterana',
+    ]) {
+      final parts = oculumMonsterPrecisionAnatomy(monsterBookEntryById(id)!);
+      expect(parts.where((part) => part['group'] == 'eyes'), isEmpty);
+      expect(parts.where((part) => part['group'] == 'arms'), hasLength(2));
+      expect(parts.where((part) => part['group'] == 'legs'), hasLength(2));
+      expect(
+        parts.singleWhere((part) => part['group'] == 'head')['label'],
+        'Campana-testa',
+      );
+      expect(parts.map((part) => part['material']), everyElement('metal'));
+    }
+  });
   test(
     'approved Forest Demon anatomy is reptilian with four legs and three horns',
     () {

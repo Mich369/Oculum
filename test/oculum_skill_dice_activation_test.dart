@@ -5,8 +5,56 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  for (final description in ['', 'Il potenziamento dura per 2 turni.']) {
+    testWidgets('Attack skill activation respects its duration: $description', (
+      tester,
+    ) async {
+      final state = await fixtures.mountSheet(tester, const Size(1440, 900));
+      final skill = CharacterSkill(
+        nome: 'Affondo di prova',
+        tipo: 'Attacco',
+        costo: '',
+        cooldown: '3 turni',
+        descrizione: description,
+        equipaggiata: true,
+        forme: [
+          CharacterSkillForm(
+            tipo: 'Attacco',
+            descrizione: description,
+            effettiStrutturati: [
+              OculumStructuredEffect(
+                type: 'danno',
+                valueExpression: '5',
+                mode: 'prossima_azione',
+              ),
+            ],
+          ),
+        ],
+      );
+      state.skills.add(skill);
+      final probe = OculumPerformanceProbe(state);
+      final use = probe.useCharacterSkill(skill);
+      await tester.pumpAndSettle();
+      expect(skill.equipaggiata, isTrue);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Conferma'));
+      await tester.pumpAndSettle();
+      await use;
+      expect(skill.equipaggiata, description.isNotEmpty);
+      expect(
+        CharacterSkill.fromJson(skill.toJson()).equipaggiata,
+        description.isNotEmpty,
+      );
+      expect(probe.consumeNextAttackEffects(), isTrue);
+      expect(probe.consumeNextAttackEffects(), isFalse);
+      probe.cancelPendingSave();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
+  }
+
   testWidgets(
     'A skill with dice effects activates, spends once and keeps its rolls across turns',
     (tester) async {

@@ -10,6 +10,7 @@ class OculumEyeMemoryPage extends StatefulWidget {
     super.key,
     required this.memory,
     required this.author,
+    this.ownerTotalPower = 0,
     this.onRoleChanged,
     this.onRoleChangedWithNote,
     this.roleHistory,
@@ -25,6 +26,7 @@ class OculumEyeMemoryPage extends StatefulWidget {
   });
   final DiaryMemory memory;
   final String author;
+  final int ownerTotalPower;
   final String Function(DiaryEntity entity)? statusOf;
   final List<Map<String, dynamic>> Function(DiaryEntity entity)? statusHistory;
   final Future<void> Function(DiaryEntity entity, String status)?
@@ -290,6 +292,10 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
   @override
   Widget build(BuildContext context) {
     final memory = widget.memory;
+    final powerSize = min(
+      22.0,
+      8 * log(1 + max(0, widget.ownerTotalPower) / 40),
+    );
     final matches =
         _matchingEntities != null &&
             _matchingQuery == query &&
@@ -750,6 +756,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                               left:
                                   entry.value.dx -
                                   (58 +
+                                      powerSize / 2 +
                                       min(
                                         30.0,
                                         memory.importance(entry.key) * 2,
@@ -757,9 +764,11 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                               top:
                                   entry.value.dy -
                                   (entry.key == selected ? 42 : 32) -
-                                  min(15.0, memory.importance(entry.key)),
+                                  min(15.0, memory.importance(entry.key)) -
+                                  powerSize / 2,
                               width:
                                   116 +
+                                  powerSize +
                                   min(60.0, memory.importance(entry.key) * 4),
                               child: Semantics(
                                 button: true,
@@ -788,6 +797,7 @@ class _OculumEyeMemoryPageState extends State<OculumEyeMemoryPage> {
                                             (entry.key == selected
                                                 ? 84.0
                                                 : 64.0) +
+                                            powerSize +
                                             min(
                                               30.0,
                                               memory.importance(entry.key) * 2,

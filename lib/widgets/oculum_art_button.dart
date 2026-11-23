@@ -69,10 +69,11 @@ class OculumArtButtonLayer extends StatelessWidget {
               final surfaceOpacity =
                   hover || focus || pressed || scope?.highlightAll == true
                   ? 1.0
-                  : 1 -
-                        (scope?.secondaryControls == true
-                            ? presentation.controlTransparency
-                            : presentation.surfaceTransparency);
+                  : oculumIdleButtonOpacity(
+                      presentation,
+                      secondaryControls: scope?.secondaryControls == true,
+                      states: states,
+                    );
               return Stack(
                 fit: StackFit.passthrough,
                 children: [
@@ -168,10 +169,11 @@ class _OculumButtonSurfaceColor implements WidgetStateProperty<Color?> {
       color,
       active
           ? 1
-          : 1 -
-                (secondaryControls
-                    ? oculumThemePresentation.value.controlTransparency
-                    : oculumThemePresentation.value.surfaceTransparency),
+          : oculumIdleButtonOpacity(
+              oculumThemePresentation.value,
+              secondaryControls: secondaryControls,
+              states: states,
+            ),
     );
   }
 }

@@ -27,9 +27,9 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       if (realtimeVisibleInitiativeSnapshot.containsKey('campaignId')) {
         return sharedCampaign;
       }
-      final master = realtimeUsers
-          .where((user) => user['role'] == 'master')
-          .firstOrNull;
+      final master =
+          realtimeSameAccountMasterHost ??
+          realtimeUsers.where((user) => user['role'] == 'master').firstOrNull;
       final campaign = '${master?['campaignId'] ?? ''}';
       if (campaign.isNotEmpty) return campaign;
       // A restored, database-verified Master snapshot remains authoritative
@@ -290,6 +290,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
   }
 
   void receivePermissionEvent(String event, Map<String, dynamic> payload) {
+    if (payload['action'] == 'personal_market') {
+      unawaited(receivePersonalMarketEvent(event, payload));
+      return;
+    }
     if (payload['action'] == 'world_clock') {
       if (event == 'permission_request' &&
           !payload.containsKey('worldClockSnapshot') &&
@@ -448,7 +452,10 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     String resource, {
     bool preferFreeReaction = true,
     bool grantFastRollBonus = true,
+    OculumConditionInstance? elementalSphereIceRelease,
+    bool deferMasterTurn = false,
   }) async {
+    if (mutantRatPupActiveSheet) return false;
     if (stat20OculumChargeActive) {
       aggiungiLog(
         '[RICARICA DELL’OCULUM] Devi restare fermo fino al prossimo turno personale.',
@@ -459,7 +466,19 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       aggiungiLog('Paralisi dal Fato: Azioni e Reazioni bloccate.');
       return false;
     }
-    final commanded = executingCorruptionCommand;
+    if (elementalSphereSoulSeparated) {
+      aggiungiLog('Spirito separato: Azioni e Reazioni bloccate.');
+      return false;
+    }
+    if (elementalSphereFrozen &&
+        (resource != 'azione' ||
+            elementalSphereIceRelease == null ||
+            !identical(elementalSphereIceRelease, elementalSphereIce))) {
+      aggiungiLog('Congelato dalla Sfera: Azioni e Reazioni bloccate.');
+      return false;
+    }
+    if (resource == 'azione_gratuita') return true;
+    final commanded = executingCombatCommand;
     if (commanded != null) {
       if (commanded['executionResourceClaimed'] == true) return false;
       commanded['executionResourceClaimed'] = true;
@@ -489,6 +508,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     if (!_consumeLocalCombatTurnResource(
       tag,
       selectedResource,
+      advanceMasterTurn: elementalSphereIceRelease == null && !deferMasterTurn,
       grantFastRollBonus: grantFastRollBonus,
     )) {
       return false;
@@ -548,6 +568,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       // roll, pay its stat/item cost or start its cooldown. Publish the lost
       // activity even though there will be no attack packet to carry it.
       await flushPendingCombatTurnResources();
+      if (deferMasterTurn) advanceMasterInitiativeAfterAction(tag);
       return false;
     }
     return true;
@@ -593,7 +614,22 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     String? requestId,
     int amount = 0,
     bool grantFastRollBonus = true,
+    bool necthrallAuthorized = false,
+    bool Function()? payForAction,
   }) {
+    assert(payForAction == null || resource == 'azione');
+    if (!necthrallAuthorized && _necthrallControlsResources(tag, resource)) {
+      return false;
+    }
+    final controlledIndex = localSheetIndexForOculumTag(tag);
+    if ((controlledIndex >= 0 &&
+            _isGoblinRoyalGuard(schedePersonaggio[controlledIndex])) ||
+        _writableOnlineCombatTokens().any(
+          (token) =>
+              _isGoblinRoyalGuard(token) && combatTokenMatchesSheet(token, tag),
+        )) {
+      return false;
+    }
     if (totalPowerExhaustedForTag(tag) &&
         (const {
               'reazione',
@@ -701,6 +737,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
         programmaSalvataggio();
         return false;
       }
+      if (payForAction?.call() == false) return false;
       if (readBoolValue(token['actionUsed'])) {
         token['kiExtraActions'] = max(
           0,
@@ -796,6 +833,12 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
       aggiungiLog(
         '[CONTROATTACCO] $tokenName anticipa la propria prossima Azione; al suo turno risulterà già consumata.',
       );
+      faunaForOwnedSheet(tag, () {
+        tickActiveStructuredEffects(
+          'azioni',
+          include: (effect) => oculumIsPredoneOrbitTarget(effect['target']),
+        );
+      });
     } else if (resource == 'azione') {
       aggiungiLog('[TURNISTICA] Azione usata da $tokenName.');
       faunaForOwnedSheet(tag, () {
@@ -1166,6 +1209,7 @@ extension _OculumOnlinePermissions on _OculumHomePageState {
     bool forceReaction = false,
     bool grantFastRollBonus = true,
   }) async {
+    if (elementalSphereFrozen || elementalSphereSoulSeparated) return false;
     if (!currentTurnTrackerIsActive()) return true;
     if (realtimeService?.isConnected != true && !_usesLocalMasterInitiative) {
       return true;

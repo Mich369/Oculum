@@ -23,6 +23,7 @@ extension _OculumBaghestPuppet on _OculumHomePageState {
   void initializeBaghestPuppet() {
     if (faunaCurrentMonsterId != 'manichino_baghest' ||
         getCondition('corruzione') != null ||
+        memoryOfSelfBlocksCorruption(const {'corruptionKind': 'rossa'}) ||
         schedePersonaggio[schedaCorrente]['baghestPurified'] == true) {
       return;
     }

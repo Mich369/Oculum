@@ -9,13 +9,32 @@ List<Map<String, dynamic>> oculumReferenceCreaturePrecisionParts(
   required String monsterId,
   bool minorConstructCoreExposed = false,
   bool runicGolemCoreExposed = false,
+  bool babyRockRhinoCoreExposed = false,
+  bool imbrytoadSacsSwollen = false,
   int bottledCloudPhase = 1,
   bool explicitMasterAnatomy = false,
 }) {
   final parts = original.map((p) => Map<String, dynamic>.from(p)).toList();
   if (explicitMasterAnatomy) return parts;
+  if (monsterId == oculumImbrytoadId && !imbrytoadSacsSwollen) {
+    parts.removeWhere((p) => oculumImbrytoadThroatSacs.contains(p['id']));
+  }
   if (monsterId == 'nuvola_in_bottiglia' && bottledCloudPhase >= 2) {
     parts.removeWhere((p) => p['id'] == 'bottle' || p['group'] == 'bottle');
+  }
+  if (oculumRhinoStoneguardMonsterIds.contains(monsterId)) {
+    parts.removeWhere((p) => p['id'] == 'core' || p['group'] == 'core');
+    if (babyRockRhinoCoreExposed) {
+      parts.add({
+        'id': 'core',
+        'label': 'Nucleo interno esposto',
+        'group': 'core',
+        'material': 'stone',
+        'penalty': 0,
+        'weak': true,
+      });
+    }
+    return parts;
   }
   final runic = oculumHasRunicGolemPlateCore(monsterId);
   if (monsterId != 'costrutto_minore' && !runic) return parts;
@@ -89,8 +108,12 @@ extension _OculumMinorConstruct on _OculumHomePageState {
     if (part == null || part.isEmpty) return true;
     if (wingFlightTargetHidden(part)) return false;
     final guarded =
+        faunaCurrentMonsterId == oculumImbrytoadId &&
+            oculumImbrytoadThroatSacs.contains(part) ||
         faunaCurrentMonsterId == 'costrutto_minore' && part == 'core' ||
         isRunicGolemCoreCreature && part == 'core' ||
+        oculumRhinoStoneguardMonsterIds.contains(faunaCurrentMonsterId) &&
+            part == 'core' ||
         faunaCurrentMonsterId == 'nuvola_in_bottiglia' && part == 'bottle' ||
         isArmadilloCreature && armadilloClosed;
     if (!guarded) return true;
@@ -101,8 +124,10 @@ extension _OculumMinorConstruct on _OculumHomePageState {
     if (!const {
           'costrutto_minore',
           'nuvola_in_bottiglia',
+          oculumImbrytoadId,
         }.contains(faunaCurrentMonsterId) &&
-        !isRunicGolemCoreCreature) {
+        !isRunicGolemCoreCreature &&
+        !oculumRhinoStoneguardMonsterIds.contains(faunaCurrentMonsterId)) {
       return;
     }
     for (final token in _writableOnlineCombatTokens().where(
@@ -114,8 +139,12 @@ extension _OculumMinorConstruct on _OculumHomePageState {
           'minorConstructCoreExposed': minorConstructCoreExposed,
         if (isRunicGolemCoreCreature)
           'runicGolemCoreExposed': runicGolemCoreExposed,
+        if (oculumRhinoStoneguardMonsterIds.contains(faunaCurrentMonsterId))
+          _rhinoCorePublicKey: babyRockRhinoCorePublic,
         if (faunaCurrentMonsterId == 'nuvola_in_bottiglia')
           'bottledCloudPhase': bottledCloudPhaseNumber,
+        if (faunaCurrentMonsterId == oculumImbrytoadId)
+          _imbrytoadSpitKey: imbrytoadSpitWindow,
       };
       token['precisionBodyParts'] = publicPrecisionBodyParts;
     }

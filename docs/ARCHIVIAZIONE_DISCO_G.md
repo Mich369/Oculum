@@ -63,3 +63,13 @@ Le indicazioni seguenti sono una procedura da preparare e verificare; **nessun r
 5. Controllare lettura, gallerie e helper interessati dal percorso ripristinato. Conservare i dati G fino alla conclusione delle prove e a un'eventuale autorizzazione distinta per eliminare duplicati.
 
 Le verifiche locali di **STORAGE06 sono complete per questo perimetro**: migrazioni, compatibilità dei quattro helper attivi e controlli dei metadati. La chiusura al 100% è stata approvata dall’utente con «Sì, STORAGE06 conclusa», il 6 novembre. [Ricevuta delle conferme](CONFERME_UTENTE_2026-11-06.json).
+
+## Pulizia verificata del 14 novembre
+
+Rimossi nove ZIP temporanei di trasporto della run 42022970211 dalla cartella fisica download. Prima della rimozione, ogni ZIP è stato verificato contro la ricevuta di download e ciascun file interno contro la ricevuta e i byte della distribuzione 272 conservata in `archivio-distribuzioni/distribution-backup-42206168903-20261106-133736127`. I due ZIP delle cartelle Windows contenevano 5.554 file ciascuno. La ricevuta originale, la junction, i pacchetti installabili e i tre ZIP con evidenze o altri contenuti unici restano disponibili.
+
+G è passato da 2.400.518.144 a 11.920.842.752 byte liberi. L’elenco dei nove file e le prove di integrità sono nella ricevuta locale `build/g-oculum-cleanup-result.json` del worktree usato per la verifica.
+
+Nella revisione successiva, lo ZIP di Flutter 3.41.9 è stato rimosso dopo aver verificato i 17.782 file del SDK estratto per percorso, dimensione e CRC. Sono stati rimossi anche gli otto pacchetti duplicati alla radice di `distribution-ready-b917217d` su G. Le copie su C coincidono per SHA-256 e con il manifest della distribuzione. La cartella di archivio su G resta disponibile con i restanti file e le ricevute.
+
+Lo spazio libero effettivo è passato da 5.946.781.696 a 12.287.328.256 byte. Recuperati 6.340.546.560 byte (6,34 GB, 5,91 GiB). L’elenco degli otto pacchetti e i loro hash sono nella ricevuta locale `build/g-oculum-cleanup-b917-20261114.json`.

@@ -458,6 +458,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   String visibleSheetDisplayName(int index) {
+    if (sheetIdentityForgotten(index)) return oculumForgottenCharacterName;
     if (index >= 0 &&
         index < schedePersonaggio.length &&
         readBoolValue(schedePersonaggio[index]['realtimeSharedSheet'])) {
@@ -1459,7 +1460,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         posteaParryBonus +
         directSkillNumericBonus('danni');
     final baseHp = max(1, baseRes) * moltiplicatoreHp();
-    final baseMovimento = 30 + (mat ~/ 6);
+    final baseMovimento = oculumBaseMovement(
+      level: leggiNumero(livelloController),
+      materia: mat,
+    );
     final grado = max(0, leggiNumero(gradoController));
     final baseSchivataOculum = grado ~/ 3;
     final baseReazioni = max(0, leggiNumero(reazioniController)) + (grado ~/ 6);
@@ -2296,6 +2300,10 @@ extension _OculumHomeCalculations on _OculumHomePageState {
   }
 
   bool artOpenSbloccata(CharacterArt art) {
+    if (oculumIsMonsterWeakOpen(art)) {
+      return art.sbloccata &&
+          leggiNumero(livelloController) >= _monsterWeakOpenLevel;
+    }
     if (art.openName == 'Portali del nucleo') {
       return art.sbloccata && leggiNumero(livelloController) >= 6;
     }
@@ -4585,14 +4593,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
     return max(
       1,
-      max(
-                1,
-                resilienzaTotale(
-                  includeOpposingChaos: false,
-                  rawCurrent: currentResilienza() - temporaryResilience,
-                ),
-              ) *
-              moltiplicatoreHp() +
+      oculumOculiathHealthFromResilience(
+            faunaCurrentMonsterId,
+            max(
+                  1,
+                  resilienzaTotale(
+                    includeOpposingChaos: false,
+                    rawCurrent: currentResilienza() - temporaryResilience,
+                  ),
+                ) *
+                moltiplicatoreHp(),
+          ) +
           runtimeQuickBonus('hp') +
           manualHpMaximumAdjustment,
     );
@@ -5251,7 +5262,9 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     final bonus = runtimeQuickBonus('scudo') + scudoAutomaticoTipoScheda();
     final spent = scudoBonusConsumati.clamp(0, max(0, bonus)).toInt();
     return max(0, leggiNumero(scudoController) + bonus - spent) +
-        posteaTransformShieldRemaining;
+        posteaTransformShieldRemaining +
+        volenterosiShieldRemaining +
+        stoneguardShieldRemaining;
   }
 
   int scudoRefullTarget() {
@@ -5302,8 +5315,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     }
   }
 
-  void impostaScudoTotale(int value) {
-    final target = normalShieldTargetAfterPosteaTransform(max(0, value));
+  void impostaScudoTotale(int value, {int? stoneguardDamageSpent}) {
+    final stoneguardBefore = stoneguardShieldRemaining;
+    var target = normalShieldTargetAfterPosteaTransform(max(0, value));
+    target = normalShieldTargetAfterVolenterosi(target);
+    if (stoneguardBefore > 0) {
+      target = normalShieldTargetAfterStoneguard(
+        target,
+        scudo() - posteaTransformShieldRemaining - volenterosiShieldRemaining,
+        damageSpent: stoneguardDamageSpent,
+      );
+    }
     final manual = max(0, leggiNumero(scudoController));
     final bonus = max(
       0,
@@ -5321,6 +5343,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       scudoBonusConsumati = bonus;
     }
     clearNormalShieldBreakPenaltyIfProtected();
+    if (stoneguardBefore > 0 &&
+        stoneguardShieldRemaining == 0 &&
+        oculumRhinoStoneguardMonsterIds.contains(faunaCurrentMonsterId)) {
+      publishReferenceCreatureAnatomyState();
+    }
   }
 
   int scudoCritico() {
@@ -5488,7 +5515,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       OculumConditionTarget.difesa,
       beforeConditions + feralisFuryDefense,
     );
-    return applyFleshGolemLifeLossBonus(
+    final defense = applyFleshGolemLifeLossBonus(
       applyWillKingdomBonus(
         oculumDamageWithPercentage(
           conditioned,
@@ -5497,6 +5524,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
         ),
       ),
     );
+    return max(0, defense - highRollDefenseWear);
   }
 
   String formulaDifesaDettagliata() {
@@ -5549,9 +5577,17 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return armi.take(oculumWeaponLimit(leggiNumero(gradoController))).toList();
   }
 
-  int bonusDannoArmi() {
-    final armi = armiEquipaggiate();
-    return oculumWeaponStackDamage(armi);
+  int bonusDannoArmi({InventoryItem? armaSpecificata}) {
+    final armi = armaSpecificata == null
+        ? armiEquipaggiate()
+        : [armaSpecificata];
+    final guanti = protezioniEquipaggiate().where(
+      (item) =>
+          !item.arma &&
+          item.craftData['eivaWeaponId'] == oculumLamaOrbitaGauntletId,
+    );
+    return oculumWeaponStackDamage(armi) +
+        guanti.fold<int>(0, (total, item) => total + itemAttackBonus(item));
   }
 
   InventoryItem? armaPiuForteEquipaggiata() {
@@ -5808,22 +5844,25 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return arma.nome;
   }
 
-  int dannoTotaleBaseSenzaComandi() {
+  int dannoTotaleBaseSenzaComandi({InventoryItem? armaSpecificata}) {
     return volontaTotale() +
-        bonusDannoArmi() +
+        bonusDannoArmi(armaSpecificata: armaSpecificata) +
         bonusLivelloGrado() +
         bonusAttaccoRapido() +
         vc() +
         fallenEyeRareAttributeBonusFor('danno');
   }
 
-  int dannoTotale() {
+  int dannoTotale({InventoryItem? armaSpecificata}) {
     if (planarState['doppioneCopy'] == true) {
-      return max(0, readIntValue(planarState['doppioneDamage']));
+      return max(
+        0,
+        readIntValue(planarState['doppioneDamage']) - highRollDamageWear,
+      );
     }
     activateHeroicNurseBuffForCurrentBattle();
     final beforeConditions =
-        dannoTotaleBaseSenzaComandi() +
+        dannoTotaleBaseSenzaComandi(armaSpecificata: armaSpecificata) +
         posteaParryBonus +
         natureThornWhipDamage +
         titleQuickBonus('danni') +
@@ -5853,7 +5892,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       readIntValue(planarState['feralisFuryPaidTurns']),
       feralisFuryActive,
     );
-    return applyFleshGolemLifeLossBonus(damage);
+    return max(0, applyFleshGolemLifeLossBonus(damage) - highRollDamageWear);
   }
 
   /// Flat Danni modifiers are kept outside an area's shared base packet so
@@ -5873,7 +5912,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           beforeConditions,
         ) -
         beforeConditions;
-    return flatBonus + conditionDelta;
+    return flatBonus + conditionDelta - highRollDamageWear;
   }
 
   String formulaDannoDettagliata() {
@@ -6238,21 +6277,22 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
-  int movimentoNonFerito() {
-    final beforeConditions = max(
-      0,
-      30 +
-          cycleNaturalFlightBonus +
-          (materiaTotale() ~/ 6) +
-          runtimeQuickBonus('movimento') +
-          activeStructuredEffectBonus('movimento') -
-          (planeColdUnprotected ? 1 : 0),
-    );
-    return applyConditionDerivedValue(
-      OculumConditionTarget.movimento,
-      beforeConditions,
-    );
-  }
+  int movimentoBase() => oculumBaseMovement(
+    level: leggiNumero(livelloController),
+    materia: materiaTotale(),
+  );
+
+  int movimentoPrimaCondizioni() =>
+      movimentoBase() +
+      cycleNaturalFlightBonus +
+      runtimeQuickBonus('movimento') +
+      activeStructuredEffectBonus('movimento') -
+      (planeColdUnprotected ? 1 : 0);
+
+  int movimentoNonFerito() => applyConditionDerivedValue(
+    OculumConditionTarget.movimento,
+    movimentoPrimaCondizioni(),
+  );
 
   int vc() {
     if (planarState['doppioneCopy'] == true) {

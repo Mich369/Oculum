@@ -226,6 +226,10 @@ def build():
     sheet['background'] += '\n\nINCUBO RICORRENTE — IL GIORNO DELLA PIAZZA\n' + (ROOT / 'docs/personaggi/SENKA_INCUBO.txt').read_text(encoding='utf-8').strip()
     sheet['background'] += '\n\nSenka e Sky abitano nei piani più bassi di Lost Town, in una modesta stanza doppia della taverna pagata da Haniel, sotto i circoli solari di Erik e Lusier.'
     sheet['relicArtPackId'] = 'senka_kamaria'
+    sheet['notePersonaggio'] += ('\nTema Senka ad inchiostro sporco: Sotto le radici su desktop, '
+                                'Gironi e locanda su telefono, Maschera lunare come reliquia. '
+                                'Con la maschera equipaggiata, il tema Senka mostra Fra le travi. '
+                                'Il tema della scheda resta personalizzabile.')
     sheet['inventario'].append(dict(
         nome='Vitalium Ridefinito', peso=.2, quantita=1, equipaggiata=False,
         note='Consumabile: ripristina HP, Resilienza, Volontà, Materia e Oculum attuali fino ai massimali e l’integrità delle Art. Non crea Oculum se il massimale è zero.',

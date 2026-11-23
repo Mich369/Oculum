@@ -106,7 +106,12 @@ void main() {
             'relic' => theme.relicIllustration,
             _ => null,
           };
-          expect(binding, oculumMonsterArtworkAsset(f['asset'] as String));
+          expect(
+            binding,
+            id == 'scheletro_bombarolo' && f['kind'] == 'desktop'
+                ? 'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp'
+                : oculumMonsterArtworkAsset(f['asset'] as String),
+          );
         }
       }
     },

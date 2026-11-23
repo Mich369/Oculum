@@ -1,5 +1,44 @@
 part of '../../main.dart';
 
+int oculumBaseMovement({required int level, required int materia}) {
+  final percent = switch (level) {
+    <= 0 => 55,
+    1 => 70,
+    2 => 85,
+    _ => 100,
+  };
+  return (max(0, 30 + materia ~/ 6) * percent + 50) ~/ 100;
+}
+
+double oculumMovementConditionPercent(
+  Iterable<String> conditions, {
+  required double positiveMultiplier,
+  required bool suppressPenalties,
+}) =>
+    (conditions.contains('accelerato') ? 20.0 * positiveMultiplier : 0.0) -
+    (conditions.contains('ancorato') ? 25 : 0) -
+    (!suppressPenalties && conditions.contains('rallentato') ? 25 : 0);
+
+bool oculumMovementBlockedByConditions(
+  Iterable<String> conditions, {
+  required bool suppressPenalties,
+}) =>
+    !suppressPenalties &&
+    conditions.any(
+      const {
+        'immobilizzato',
+        oculumSolarGoldCondition,
+        'afferrato',
+        'paralisi_fato',
+      }.contains,
+    );
+
+int oculumDerivedConditionPercentDelta(int value, double percent) {
+  if (value <= 0 || percent == 0) return 0;
+  final delta = max(1, (value * percent.abs() / 100).floor());
+  return percent < 0 ? -delta : delta;
+}
+
 int oculumWoundedMovementPercent({required int hp, required int maxHp}) {
   if (maxHp <= 0) return 100;
   if (hp * 10 < maxHp) return 50;

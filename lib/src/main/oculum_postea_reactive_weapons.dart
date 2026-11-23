@@ -3,6 +3,7 @@ part of '../../main.dart';
 bool oculumIsFreeProtectiveImpact(Map request) =>
     request['oculumShieldBreakImpact'] == true ||
     request['posteaArmorShock'] == true ||
+    request['aculotideDeathBurst'] == true ||
     request['gunFollowup'] == true;
 
 extension _OculumPosteaReactiveWeapons on _OculumHomePageState {

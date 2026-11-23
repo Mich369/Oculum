@@ -1243,6 +1243,12 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
       values.addAll({
         ..._planarSelfRules.values,
         ..._planarTargetRules.values,
+        oculumOculiathRayRule,
+        oculumGreaterOculiathRayRule,
+        ...oculumWeldSpiderSustainTargets,
+        oculumAcuagoblinDodgeEffect,
+        oculumBunnysHealSkill,
+        oculumBunnysDeathHealSkill,
         'annihilation',
       });
     } else if (type == 'modifica_statistica') {
@@ -1291,16 +1297,27 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
   }) {
     final value = cooldown ?? OculumAbilityCooldown();
 
-    void update({int? amount, String? unit, bool? startsReady}) {
+    void update({
+      int? amount,
+      String? unit,
+      bool? startsReady,
+      int? initialRemaining,
+    }) {
       final nextAmount = max(0, amount ?? value.amount);
       final nextStartsReady = startsReady ?? value.startsReady;
+      final initial = nextStartsReady
+          ? null
+          : initialRemaining ?? value.initialRemaining;
       onChanged(
         OculumAbilityCooldown(
           amount: nextAmount,
           unit: unit ?? value.unit,
           startsReady: nextStartsReady,
-          remaining: startsReady != null
-              ? (nextStartsReady ? 0 : nextAmount)
+          initialRemaining: initial?.clamp(0, nextAmount).toInt(),
+          remaining: startsReady != null || initialRemaining != null
+              ? (nextStartsReady
+                    ? 0
+                    : (initial ?? nextAmount).clamp(0, nextAmount).toInt())
               : cooldown == null
               ? (nextStartsReady ? 0 : nextAmount)
               : value.remaining.clamp(0, nextAmount).toInt(),
@@ -1368,12 +1385,25 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
           ),
           subtitle: Text(
             t(
-              'Se disattivato, parte con tutto il cooldown rimanente.',
-              'When disabled, it starts with the full cooldown remaining.',
+              'Se disattivato, puoi scegliere quanto recupero resta all’inizio.',
+              'When disabled, you can choose the remaining cooldown at the start.',
             ),
           ),
           onChanged: (next) => update(startsReady: next),
         ),
+        if (!value.startsReady && value.amount > 0)
+          campoModello(
+            fieldKey: ValueKey('cooldown_initial_$storageId'),
+            label: t(
+              'Recupero rimanente all’inizio',
+              'Cooldown remaining at start',
+            ),
+            initialValue: '${value.openingDelay}',
+            keyboardType: TextInputType.number,
+            inputFormatters: oculumNonNegativeIntegerFormatters,
+            enableCommandAutocomplete: false,
+            onChanged: (raw) => update(initialRemaining: readIntValue(raw)),
+          ),
       ],
     );
   }
@@ -1942,6 +1972,15 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                 targetController.text,
               );
               final isShadowClone = isSummon && summonTarget == 'clone_ombra';
+              final isOculiathRay =
+                  type == 'planar' &&
+                  const {
+                    oculumOculiathRayRule,
+                    oculumGreaterOculiathRayRule,
+                  }.contains(targetController.text);
+              final isGreaterOculiathRay =
+                  isOculiathRay &&
+                  targetController.text == oculumGreaterOculiathRayRule;
               final hasUnknownSavedSummon =
                   isSummon &&
                   seed.type == 'evocazione' &&
@@ -1955,6 +1994,8 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
               final hasFrequency =
                   oculumStructuredEffectFrequency(frequencyController.text) > 0;
               final supportsDuration =
+                  isGreaterOculiathRay ||
+                  targetController.text == oculumWeldSpiderLocksPerTurn ||
                   isShadowClone ||
                   !isSummon &&
                       (mode == 'finche_attivo' ||
@@ -2108,6 +2149,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                         ),
                         const Divider(height: 18),
                         DropdownButtonFormField<String>(
+                          isExpanded: true,
                           initialValue: type,
                           dropdownColor: const Color(0xFF10121A),
                           decoration: fieldDecoration(
@@ -2117,7 +2159,11 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             for (final value in oculumStructuredEffectTypes)
                               DropdownMenuItem<String>(
                                 value: value,
-                                child: Text(structuredEffectTypeLabel(value)),
+                                child: Text(
+                                  structuredEffectTypeLabel(value),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                           ],
                           onChanged: (value) {
@@ -2139,6 +2185,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                         const SizedBox(height: 10),
                         if (modes.length > 1)
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue: mode,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(t('Modalità', 'Mode')),
@@ -2268,6 +2315,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                         const SizedBox(height: 10),
                         if (isState) ...[
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue: appliedState,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(
@@ -2366,6 +2414,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                           const SizedBox(height: 10),
                         ] else if (needsTarget) ...[
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue:
                                 targetOptions.contains(targetController.text)
                                 ? targetController.text
@@ -2383,14 +2432,23 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                               for (final value in targetOptions)
                                 DropdownMenuItem<String>(
                                   value: value,
-                                  child: Text(switch (value) {
-                                    oculumOculumTheftKind => 'Sfera Predatrice',
-                                    'tutte' => t(
-                                      'Tutte le statistiche',
-                                      'All stats',
-                                    ),
-                                    _ => value,
-                                  }),
+                                  child: Text(
+                                    switch (value) {
+                                      _
+                                          when oculumWeldSpiderSustainNames
+                                              .containsKey(value) =>
+                                        oculumWeldSpiderSustainNames[value]!,
+                                      oculumOculumTheftKind =>
+                                        'Sfera Predatrice',
+                                      'tutte' => t(
+                                        'Tutte le statistiche',
+                                        'All stats',
+                                      ),
+                                      _ => value,
+                                    },
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                             ],
                             onChanged: (value) => setDialogState(() {
@@ -2401,6 +2459,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                         ],
                         if (isHealing || isCost || isConversion) ...[
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue: resource,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(
@@ -2444,7 +2503,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             controller: valueController,
                             decoration:
                                 fieldDecoration(
-                                  isState
+                                  isOculiathRay
+                                      ? t('Gittata in metri', 'Range in metres')
+                                      : isState
                                       ? t(
                                           'Stadio o formula',
                                           'Stage or formula',
@@ -2489,10 +2550,21 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             controller: durationController,
                             decoration:
                                 fieldDecoration(
-                                  isShadowClone
+                                  isGreaterOculiathRay
+                                      ? t(
+                                          'Riduzione raggi secondari (%)',
+                                          'Secondary ray reduction (%)',
+                                        )
+                                      : isShadowClone
                                       ? t(
                                           'Durata del clone in turni',
                                           'Clone duration in turns',
+                                        )
+                                      : targetController.text ==
+                                            oculumWeldSpiderLocksPerTurn
+                                      ? t(
+                                          'Turni completi massimi (0 = finché concentrato)',
+                                          'Maximum full turns (0 = while focused)',
                                         )
                                       : t('Durata', 'Duration'),
                                 ).copyWith(
@@ -2507,8 +2579,9 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                 scheduleDialogRefresh(setDialogState),
                           ),
                           const SizedBox(height: 8),
-                          if (!isShadowClone)
+                          if (!isShadowClone && !isGreaterOculiathRay)
                             DropdownButtonFormField<String>(
+                              isExpanded: true,
                               initialValue:
                                   <String>[
                                     'turni',
@@ -2538,6 +2611,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                         const SizedBox(height: 10),
                         if (!isSummon || unknownSavedSummon)
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue: recipient,
                             dropdownColor: const Color(0xFF10121A),
                             decoration: fieldDecoration(
@@ -2625,6 +2699,7 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
+                              isExpanded: true,
                               initialValue: diceDestination,
                               dropdownColor: const Color(0xFF10121A),
                               decoration: fieldDecoration(
@@ -2805,11 +2880,13 @@ extension _OculumSkillEffectsUi on _OculumHomePageState {
                                     color: tertiaryColor,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    t('Anteprima completa', 'Full preview'),
-                                    style: TextStyle(
-                                      color: tertiaryColor,
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Text(
+                                      t('Anteprima completa', 'Full preview'),
+                                      style: TextStyle(
+                                        color: tertiaryColor,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],

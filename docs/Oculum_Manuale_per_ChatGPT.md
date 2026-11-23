@@ -73,7 +73,9 @@ Quando risolvi un’azione, questi valori ti dicono cosa tirare e quale soglia s
 DT, CM, VC, Danno, Difesa, Iniziativa e tiri di statistica contano anche Livello + Grado ×6.
 
 Iniziativa: 1d20 + Materia / 5 + Livello + Grado ×6.
-Movimento: 30 + Materia / 6 metri, più gli eventuali bonus @Movimento.
+Il Movimento base di PG, NPC e mostri parte da 30 + Materia / 6, con la divisione per difetto. Si usa il 55% al livello 0, il 70% al livello 1, l’85% al livello 2 e il 100% dal livello 3. Il risultato si arrotonda al metro più vicino, con mezzo metro per eccesso. Poi si applicano bonus, malus, condizioni e ferite.
+
+Una scheda chiusa usa la propria difficoltà per ricalcolare Accelerato. Nei vecchi salvataggi privi del campo vale Normale. Le condizioni che bloccano il Movimento valgono anche se il totale manca dal salvataggio, con le deroghe previste da Azzeramento.
 
 Per il Danno totale somma danno base, bonus dell’arma equipaggiata e Livello + Grado ×6. Se impugni più armi, conta soltanto il bonus della più forte.
 
@@ -479,7 +481,7 @@ Nel Centro partita trovi le azioni più frequenti:
 - Scudo: porta al campo Scudo.
 - VC: porta ai valori legati a Volontà e attacco.
 - CM: porta ai valori legati a Materia e soglia per colpirti.
-- Movimento: indica quanti metri puoi muovere, pari a 30 + Materia / 6.
+- Movimento: indica quanti metri puoi muovere. Il Movimento base cresce dal 55% del valore ordinario al livello 0 al 100% dal livello 3.
 - Danno: apre la zona Danno/Cura.
 - Difesa: porta al bonus difesa o ai valori difensivi.
 - Tira VC e Tira CM: tirano subito senza cercare la statistica.

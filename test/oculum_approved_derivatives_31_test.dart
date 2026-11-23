@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/widgets/oculum_monster_theme.dart';
 
+import 'support/oculum_approved_desktop_successors.dart';
+
 String digest(Uint8List bytes) => SHA256Digest()
     .process(bytes)
     .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
@@ -25,7 +27,7 @@ void main() {
   final files = (receipt['files'] as List).cast<Map>();
   test(
     'nineteen approved desktops are byte-identical and select their own theme',
-    () {
+    () async {
       final desktops =
           (jsonDecode(
                     File(
@@ -37,17 +39,21 @@ void main() {
       expect(desktops, hasLength(19));
       expect(desktops.map((f) => f['id']).toSet(), hasLength(19));
       for (final f in desktops) {
+        final id = f['id'] as String;
         final bytes = File(f['asset'] as String).readAsBytesSync();
         expect(digest(bytes), f['sha256']);
-        final monster = monsterBookEntryById(f['id'] as String)!;
+        final monster = monsterBookEntryById(id)!;
         final theme = OculumMonsterTheme(
           monster,
           oculumMonsterColors(monster).first,
         );
+        final successor = approvedDesktopSuccessors[id];
         expect(
           theme.illustration,
-          oculumMonsterArtworkAsset(f['asset'] as String),
+          successor?.asset ?? oculumMonsterArtworkAsset(f['asset'] as String),
+          reason: id,
         );
+        if (successor != null) await expectApprovedDesktopSuccessor(id);
       }
     },
   );

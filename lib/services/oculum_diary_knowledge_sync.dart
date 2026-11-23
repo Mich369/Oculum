@@ -11,6 +11,7 @@ final _knowledgeDomain = ECDomainParameters('secp256r1');
 Map<String, dynamic> diaryPublicSheet(Map<String, dynamic> sheet) =>
     Map<String, dynamic>.from(sheet)
       ..remove('diaryEntityRoles')
+      ..remove('eyeMemoryDeaths')
       ..remove('diaryKnowledgeSync');
 Uint8List _knowledgeRandom(int count) {
   final random = Random.secure();

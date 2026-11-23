@@ -288,6 +288,7 @@ OculumStructuredEffect oculumStatPaidEffect(
       !effect.valueExpression.trimLeft().startsWith('-');
   if (const {'volonta', 'materia'}.contains(resource) &&
       positive &&
+      !oculumIsWeldSpiderBeamEffect(effect.id) &&
       effect.valueExpression.trim() != 'hp') {
     effect.valueExpression = 'ceil((${effect.valueExpression})*1.2)';
   }
@@ -789,14 +790,116 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     OculumAbilityCooldown? cooldown,
     bool Function()? valid,
     bool paymentOnly = false,
+    bool freeActivation = false,
     String? turnResourceOverride,
     void Function(Map<String, int>)? onPaid,
+    bool Function(Map<String, int>)? commitPayment,
   }) async {
+    assert(commitPayment == null || paymentOnly);
     if (skillOculumUseDialogOpen || !mounted || (valid != null && !valid())) {
+      return false;
+    }
+    if (effects.any(
+      (effect) =>
+          effect.enabled &&
+          const {
+            oculumCynervailVeil,
+            oculumCynervailSeal,
+            oculumOblyvuardSilentThreshold,
+            oculumOblyvuardOblivionSlash,
+          }.contains(effect.target),
+    )) {
+      aggiungiLog('$source · Risoluzione manuale del Master.');
+      notifyDiceResultChanged();
       return false;
     }
     if (!meccanioSkillAllowed(effects)) return false;
     if (!armadilloCanUseAbility(effects)) return false;
+    if (mutantRatPupActiveSheet) return false;
+    if (!allowImbrytoadSpitDeclaration(effects)) return false;
+    final corallwhirlDash = effects.where((effect) {
+      return effect.enabled && effect.target == oculumCorallwhirlDashEffect;
+    }).firstOrNull;
+    if (!paymentOnly && corallwhirlDash != null) {
+      return selectCorallwhirlDash(
+        label: source,
+        effect: corallwhirlDash,
+        cost: cost,
+        cooldown: cooldown,
+        valid: valid,
+      );
+    }
+    final piovraGrip = effects.where((effect) {
+      return effect.enabled &&
+          effect.type == 'planar' &&
+          effect.target == oculumPiovraGripEffect;
+    }).firstOrNull;
+    if (!paymentOnly && piovraGrip != null) {
+      return selectPiovraGrip(
+        label: source,
+        effect: piovraGrip,
+        drainEffect: effects.where((effect) {
+          return effect.type == 'planar' &&
+              effect.target == oculumPiovraGripDrain;
+        }).firstOrNull,
+        cost: cost,
+        cooldown: cooldown,
+        valid: valid,
+      );
+    }
+    final usesFrutibushLeaves = effects.any(
+      (effect) => effect.enabled && effect.target == oculumFrutibushLeafSkill,
+    );
+    if (usesFrutibushLeaves &&
+        (!currentCombatIsActive() ||
+            outsideFight ||
+            pendingOculiathRay != null)) {
+      aggiungiLog(
+        '[FOGLIE LAMA] Serve un Fight e nessuna raffica già preparata.',
+      );
+      return false;
+    }
+    final usesSonoreyeBell =
+        faunaCurrentMonsterId == oculumSonoreyeId &&
+        effects.any(
+          (effect) => effect.enabled && oculumIsSonoreyeBellEffect(effect.id),
+        );
+    bool bellAvailable() {
+      if (!usesSonoreyeBell ||
+          !oculumSonoreyeBellIsBroken(anatomicalPartState)) {
+        return true;
+      }
+      aggiungiLog(
+        '[SONOREYE] La campana è rotta: Rintocco d’arresto indisponibile.',
+      );
+      return false;
+    }
+
+    if (!bellAvailable()) return false;
+    final usesWeldSpiderBeam = effects.any(
+      (effect) => effect.enabled && oculumIsWeldSpiderBeamEffect(effect.id),
+    );
+    if (usesWeldSpiderBeam && !weldSpiderBeamAvailable()) return false;
+    final invokesMutantRatPups = effects.any(
+      (effect) => effect.enabled && effect.target == oculumMutantRatSummon,
+    );
+    if (invokesMutantRatPups && (!currentCombatIsActive() || outsideFight)) {
+      aggiungiLog('[TOPO MUTANTE] Il richiamo si usa durante il Fight.');
+      return false;
+    }
+    if (effects.any(
+          (effect) =>
+              effect.enabled &&
+              const {
+                oculumGoblinGuardianKind,
+                oculumGoblinVanishEffect,
+                oculumGoblinRegalStrikeEffect,
+              }.contains(effect.target),
+        ) &&
+        (!currentCombatIsActive() || outsideFight)) {
+      aggiungiLog('[RE GOBLIN] Questa tecnica si usa durante il Fight.');
+      return false;
+    }
     final sandTailMode = effects.any((e) => e.target == 'sand_tail_attack')
         ? 'attack'
         : effects.any((e) => e.target == 'sand_tail_parry')
@@ -964,6 +1067,33 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       return false;
     }
     if (!mounted) return false;
+    final bunnysCure = effects
+        .where(
+          (effect) =>
+              effect.enabled &&
+              effect.type == 'planar' &&
+              effect.target == oculumBunnysHealSkill,
+        )
+        .firstOrNull;
+    if (bunnysCure != null && !paymentOnly) {
+      return _useBunnysCure(
+        label: source,
+        effect: bunnysCure,
+        activate: (level, targetIsValid) => useConfiguredAbility(
+          source: source,
+          effects: effects.where((effect) => effect != bunnysCure).toList(),
+          cost: OculumSkillCost(
+            resource: 'oculum',
+            amountExpression: '$level',
+            additionalCosts: cost?.additionalCosts,
+          ),
+          cooldown: cooldown,
+          turnResourceOverride: turnResourceOverride,
+          onPaid: onPaid,
+          valid: () => (valid == null || valid()) && targetIsValid(),
+        ),
+      );
+    }
     final options = effects
         .where(
           (e) =>
@@ -1333,6 +1463,15 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     // Validate the complete payment before consuming a turn resource. A
     // composite primary cost and an additional cost may name the same stat.
     if (!canPayArtSkillPayments(selectedPayments)) return false;
+    if (commitPayment != null) return commitPayment(selectedPayments);
+    if (!bellAvailable()) return false;
+    if (usesWeldSpiderBeam && !weldSpiderBeamAvailable()) return false;
+    if (usesFrutibushLeaves &&
+        (!currentCombatIsActive() ||
+            outsideFight ||
+            pendingOculiathRay != null)) {
+      return false;
+    }
     if (!summonIsAvailable()) return false;
     if (!armadilloCanUseAbility(effects)) return false;
     if (sandTailMode != null && !canPrepareSandTail(sandTailMode)) return false;
@@ -1340,6 +1479,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         .where((e) => e.type == 'meccanio')
         .firstOrNull;
     final preparesAttack =
+        effects.any((e) => e.enabled && oculumIsSonoreyeBellEffect(e.id)) ||
         effects.any((e) => e.id.startsWith('senka_grapple_')) ||
         effects.any(
           (e) =>
@@ -1369,6 +1509,9 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
                 'senka_moon_cuts',
                 'senka_shadow_step',
                 'sand_tail_attack',
+                oculumFrutibushLeafSkill,
+                oculumGoblinVanishEffect,
+                oculumGoblinRegalStrikeEffect,
               }.contains(e.target),
         ) ||
         robotTechnique != null &&
@@ -1392,6 +1535,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
             'monk_ki',
             'sand_tail_attack',
             'sand_tail_parry',
+            oculumAculotideDodgeEffect,
           }.contains(effect.target),
     );
     if (!paymentOnly &&
@@ -1413,6 +1557,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
       if (effects.any(
             (e) =>
                 e.type == 'preparazione' ||
+                e.target == oculumMutantRatSummon ||
                 const {
                   'rabbit_hat',
                   'deadly_regen',
@@ -1424,14 +1569,22 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
         return false;
       }
       if (!await requestUtilitySpend(
-        turnResourceOverride ??
+        (freeActivation
+                ? 'azione_gratuita'
+                : invokesMutantRatPups
+                ? 'azione'
+                : turnResourceOverride) ??
             (isMeccanio
                 ? 'reazione'
                 : ownTurn
                 ? 'azione'
                 : 'reazione'),
         preferFreeReaction: !effects.any(
-          (e) => e.target == 'rabbit_hat' || e.target.startsWith('armadillo_'),
+          (e) =>
+              e.target == 'rabbit_hat' ||
+              e.target == oculumGoblinGuardianKind ||
+              e.target == oculumMutantRatSummon ||
+              e.target.startsWith('armadillo_'),
         ),
       )) {
         return false;
@@ -1452,6 +1605,7 @@ extension _OculumEquipmentAbilities on _OculumHomePageState {
     final messages = applyStructuredEffectsOnActivation(
       effects,
       source: source,
+      sourceCooldown: cooldown,
       spentResources: {
         ...selectedPayments,
         if (useMortalKi) 'oculum': selectedPayments['ki_mortale'] ?? 0,

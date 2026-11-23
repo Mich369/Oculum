@@ -1,3 +1,5 @@
+import 'oculum_approved_theme_art.dart';
+
 part 'oculum_generated_element_packs.dart';
 part 'oculum_story_theme_packs.dart';
 
@@ -12,6 +14,7 @@ class OculumThemeAssetPack {
     this.identityPrefix = 'identity',
     this.storySceneAsset,
     this.storySceneMobileAsset,
+    this.maskedStorySceneAsset,
     this.relicAsset,
     this.preserveStoryFraming = false,
   });
@@ -19,6 +22,7 @@ class OculumThemeAssetPack {
   final String? framePackId;
   final String identityPrefix;
   final String? storySceneAsset, storySceneMobileAsset, relicAsset;
+  final String? maskedStorySceneAsset;
   final bool preserveStoryFraming;
   String get _frameId => framePackId ?? id;
   String buttonFrame(String state) =>
@@ -29,7 +33,9 @@ class OculumThemeAssetPack {
   String get relic =>
       relicAsset ?? "assets/themes/$_frameId/overlays/relic.png";
   String get storyScene =>
-      storySceneAsset ?? 'assets/oculum/theme_stories/webp/$id.webp';
+      storySceneAsset ??
+      oculumApprovedThemeStoryAsset(id) ??
+      'assets/oculum/theme_stories/webp/$id.webp';
   String frame(String role, {String variant = ""}) =>
       "assets/themes/$_frameId/frames/$role${variant.isEmpty ? "" : "-$variant"}.png";
   String scene({required bool mobile, String variant = ""}) =>
@@ -45,10 +51,14 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     'Filamenti d’ombra e riflesso lunare protettivo',
     framePackId: 'moon_iron',
     identityPrefix: 'senka-identity',
-    storySceneAsset: 'assets/oculum/home_art/theme_senka_kamaria_v3.png',
+    storySceneAsset:
+        'assets/oculum/home_art_authored/theme_senka_kamaria_canon_20261115.webp',
     storySceneMobileAsset:
-        'assets/oculum/home_art/theme_senka_kamaria_mobile_v2.png',
-    relicAsset: 'assets/oculum/home_art/relic_senka_kamaria_v1.png',
+        'assets/oculum/home_art_authored/theme_senka_kamaria_mobile_canon_20261115.webp',
+    maskedStorySceneAsset:
+        'assets/oculum/home_art_authored/theme_senka_ombra_mascherata_canon_20261115.webp',
+    relicAsset:
+        'assets/oculum/home_art_authored/relic_senka_kamaria_canon_20261115.webp',
     preserveStoryFraming: true,
   ),
   ...oculumStoryThemePacks,
@@ -76,18 +86,24 @@ const oculumThemeAssetPacks = <String, OculumThemeAssetPack>{
     "Classic Oculum",
     "sigillo inciso in rame, montatura d osso",
     "riflesso lento sulle incisioni",
+    storySceneAsset:
+        'assets/oculum/theme_stories/webp/classic_reliquary_ink_20261117.webp',
   ),
   "classic_rpg": OculumThemeAssetPack(
     "classic_rpg",
     "Classic RPG",
     "scudo araldico e fibbie di cuoio inciso",
     "luce sulle incisioni",
+    storySceneAsset:
+        'assets/oculum/theme_stories/webp/classic_rpg_ink_20261117.webp',
   ),
   "classic_low_detail": OculumThemeAssetPack(
     "classic_low_detail",
     "Classic low detail",
     "sigillo inciso compatto",
     "nessun movimento",
+    storySceneAsset:
+        'assets/oculum/theme_stories/webp/classic_low_detail_ink_20261117.webp',
   ),
   "blood_court": OculumThemeAssetPack(
     "blood_court",

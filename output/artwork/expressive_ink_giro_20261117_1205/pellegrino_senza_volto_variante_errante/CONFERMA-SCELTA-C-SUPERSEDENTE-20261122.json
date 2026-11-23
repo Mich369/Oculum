@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "pellegrino_senza_volto_variante_errante",
+  "selectedSlot": "C",
+  "meaning": "Il Pellegrino si aggrappa al bordo",
+  "source": "output\\artwork\\expressive_ink_giro_20261117_1205\\pellegrino_senza_volto_variante_errante\\C.webp",
+  "sourceSha256": "db8f1496e4eac6d7c25ebdb60125613c2520aa296c76b809e5bddd67c2fb3a0f",
+  "runtime": "assets\\oculum\\home_art_authored\\theme_pellegrino_senza_volto_variante_errante_canon_20261118.webp",
+  "runtimeSha256": "db8f1496e4eac6d7c25ebdb60125613c2520aa296c76b809e5bddd67c2fb3a0f",
+  "supersedes": "output/artwork/expressive_ink_giro_20261117_1205/pellegrino_senza_volto_variante_errante/CONFERMA-SCELTA.json",
+  "preserves": "Ricevuta storica H conservata; C e la scelta attiva piu recente.",
+  "confirmedAt": "2026-11-22",
+  "status": "integrated-for-build"
+}

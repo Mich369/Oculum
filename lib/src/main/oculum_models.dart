@@ -1876,6 +1876,7 @@ class CharacterSkillForm {
     this.cura = '',
     this.difesa = '',
     this.note = '',
+    this.azioneGratuita = false,
     this.oculumMinimoUtilizzabile = 0,
     this.oculumMassimoUtilizzabile = 0,
     int? oculumMassimoMaestriaIniziale,
@@ -1945,6 +1946,7 @@ class CharacterSkillForm {
   String cura;
   String difesa;
   String note;
+  bool azioneGratuita;
   int oculumMinimoUtilizzabile;
   int oculumMassimoUtilizzabile;
   int oculumMassimoMaestriaIniziale;
@@ -2025,6 +2027,7 @@ class CharacterSkillForm {
       'cura': cura,
       'difesa': difesa,
       'note': note,
+      'azioneGratuita': azioneGratuita,
       'oculumMinimoUtilizzabile': oculumMinimoUtilizzabile,
       'oculumMassimoUtilizzabile': oculumMassimoUtilizzabile,
       'oculumMassimoMaestriaIniziale': oculumMassimoMaestriaIniziale,
@@ -2134,6 +2137,9 @@ class CharacterSkillForm {
       cura: '${json['cura'] ?? json['heal'] ?? ''}',
       difesa: '${json['difesa'] ?? json['defense'] ?? ''}',
       note: '${json['note'] ?? json['notes'] ?? ''}',
+      azioneGratuita: readBoolValue(
+        json['azioneGratuita'] ?? json['freeAction'],
+      ),
       oculumMinimoUtilizzabile: minimum,
       oculumMassimoUtilizzabile: maximum,
       oculumMassimoMaestriaIniziale: max(

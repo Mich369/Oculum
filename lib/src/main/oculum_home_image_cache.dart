@@ -149,11 +149,13 @@ class OculumAsyncPortrait extends StatefulWidget {
     required this.cache,
     required this.fallback,
     required this.cacheSide,
+    this.fit = BoxFit.cover,
   });
   final String raw;
   final OculumDecodedImageCache cache;
   final Widget fallback;
   final int cacheSide;
+  final BoxFit fit;
   @override
   State<OculumAsyncPortrait> createState() => _OculumAsyncPortraitState();
 }
@@ -182,7 +184,7 @@ class _OculumAsyncPortraitState extends State<OculumAsyncPortrait> {
             snapshot.data != null
         ? Image.memory(
             snapshot.data!,
-            fit: BoxFit.cover,
+            fit: widget.fit,
             cacheWidth: widget.cacheSide,
             cacheHeight: widget.cacheSide,
             gaplessPlayback: true,

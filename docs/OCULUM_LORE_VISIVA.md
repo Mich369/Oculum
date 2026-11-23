@@ -1,5 +1,201 @@
 # Oculum — canone visivo confermato
 
+## Temi e nomi confermati — 18 novembre 2026
+
+### Trenta scelte desktop dei temi: confermate e collegate nei sorgenti
+
+L’utente conferma le trenta tavole elencate sotto. Sono ventotto pack e due immagini Home dedicate; le note su Kingi e sul Reliquiario dei sussurri sono richieste separate e non aggiungono due tavole approvate. La ricevuta [SCELTE-TEMI-PLAYER-20261118.json](../output/artwork/SCELTE-TEMI-PLAYER-20261118.json) conserva ID, lettere e SHA del voto.
+
+**Implementato nei sorgenti, non ancora verificato in una build:** la ricevuta [INTEGRAZIONE-TEMI-PLAYER-20261118.json](../output/artwork/INTEGRAZIONE-TEMI-PLAYER-20261118.json) registra i trenta canoni WebP e i collegamenti del resolver. Riporta corrispondenza degli SHA fra voto, fonte scelta e copia canonica, con gli originali stock conservati. Test Flutter, interazioni reali, avvio nativo e build non sono stati eseguiti durante il fermo coordinato della pulizia; questa registrazione non attesta una distribuzione o una prova online.
+
+Le selezioni mantengono ID, nomi stock, palette, posa e scena. Re Goblin G resta il riferimento primario di segno, campiture e ombre; V5 aggiunge soltanto profondità leggera. Un eventuale override esplicito della scena mantiene la precedenza. Gli alias Home `cathedral_eye`, `canva_spirit_duelist` e `benedict` restano invariati. Senka e i suoi derivati approvati non vengono sostituiti.
+
+| Tema | ID stabile | Tavola desktop |
+| --- | --- | --- |
+| Marea abissale | `abyssal_tide` | [D](../assets/oculum/theme_stories/webp/abyssal_tide_canon_20261118_d_dc86d375.webp) |
+| Benedict · Il sole non crea solo mostri | `benedict` | [A](../assets/oculum/theme_stories/webp/benedict_canon_20261118_a_8007de51.webp) |
+| Corte di sangue | `blood_court` | [A](../assets/oculum/theme_stories/webp/blood_court_canon_20261118_a_e614e427.webp) |
+| Metallo nero bullonato | `bolted_black_iron` | [D](../assets/oculum/theme_stories/webp/bolted_black_iron_canon_20261118_d_d59878f7.webp) |
+| Santo d’osso | `bone_saint` | [A](../assets/oculum/theme_stories/webp/bone_saint_canon_20261118_a_45867a79.webp) |
+| Cella cremisi | `cell_crimson_run` | [F](../assets/oculum/theme_stories/webp/cell_crimson_run_canon_20261118_f_b398b69c.webp) |
+| Vetro che cola | `element_pack_acido` | [B](../assets/oculum/theme_stories/webp/element_pack_acido_canon_20261118_b_ac4df5ae.webp) |
+| Angelico · Ali del santuario | `element_pack_angelico` | [D](../assets/oculum/theme_stories/webp/element_pack_angelico_canon_20261118_d_db1a1e09.webp) |
+| Raggi dello scoppio | `element_pack_esplosivo` | [D](../assets/oculum/theme_stories/webp/element_pack_esplosivo_canon_20261118_d_8ccf2c04.webp) |
+| Circuiti del ritorno | `element_pack_postea` | [B](../assets/oculum/theme_stories/webp/element_pack_postea_canon_20261118_b_2ebd66f1.webp) |
+| Bossoli del baluardo | `element_pack_proiettile` | [A](../assets/oculum/theme_stories/webp/element_pack_proiettile_canon_20261118_a_4e398923.webp) |
+| Fissione del vetro | `element_pack_radiazione` | [D](../assets/oculum/theme_stories/webp/element_pack_radiazione_canon_20261118_d_21ace57d.webp) |
+| Radice · Radici del sepolcro | `element_pack_radice` | [D](../assets/oculum/theme_stories/webp/element_pack_radice_canon_20261118_d_2a24b130.webp) |
+| Portali del firmamento | `element_pack_spazio` | [D](../assets/oculum/theme_stories/webp/element_pack_spazio_canon_20261118_d_a7620466.webp) |
+| Clessidra del lutto | `element_pack_tempo` | [B](../assets/oculum/theme_stories/webp/element_pack_tempo_canon_20261118_b_62c9fe85.webp) |
+| Veleno del serpente | `element_pack_veleno` | [B](../assets/oculum/theme_stories/webp/element_pack_veleno_canon_20261118_b_a5cef015.webp) |
+| Duellante spirituale | `home_canva_spirit_duelist` | [B](../assets/oculum/theme_stories/webp/home_canva_spirit_duelist_canon_20261118_b_89d19026.webp) |
+| Occhio della cattedrale | `home_cathedral_eye` | [E](../assets/oculum/theme_stories/webp/home_cathedral_eye_canon_20261118_e_41839ab5.webp) |
+| Hoshy gatto cosmico | `hoshy_cosmic_cat` | [D](../assets/oculum/theme_stories/webp/hoshy_cosmic_cat_canon_20261118_d_9802ff9d.webp) |
+| Bilancia del karma | `karma_duality` | [B](../assets/oculum/theme_stories/webp/karma_duality_canon_20261118_b_b7cd5b14.webp) |
+| Eclissi lunare | `lunar_eclipse` | [F](../assets/oculum/theme_stories/webp/lunar_eclipse_canon_20261118_f_89c62655.webp) |
+| Folletto di prato | `meadow_sprite` | [B](../assets/oculum/theme_stories/webp/meadow_sprite_canon_20261118_b_20ad125a.webp) |
+| Ferro lunare | `moon_iron` | [E](../assets/oculum/theme_stories/webp/moon_iron_canon_20261118_e_4ab89f48.webp) |
+| Sigillo ossidiana | `obsidian_sigil` | [E](../assets/oculum/theme_stories/webp/obsidian_sigil_canon_20261118_e_91693ee8.webp) |
+| Phobia | `phobia_dark` | [D](../assets/oculum/theme_stories/webp/phobia_dark_canon_20261118_d_9fc04a9f.webp) |
+| Lume | `restyle_lume` | [B](../assets/oculum/theme_stories/webp/restyle_lume_canon_20261118_b_5200a706.webp) |
+| Sogno | `restyle_sogno` | [A](../assets/oculum/theme_stories/webp/restyle_sogno_canon_20261118_a_f2f4d724.webp) |
+| Reliquiario solare | `solar_reliquary` | [B](../assets/oculum/theme_stories/webp/solar_reliquary_canon_20261118_b_81f72337.webp) |
+| Vervain | `vervain_gothic` | [B](../assets/oculum/theme_stories/webp/vervain_gothic_canon_20261118_b_97839b7a.webp) |
+| Liturgia del vuoto | `void_liturgy` | [B](../assets/oculum/theme_stories/webp/void_liturgy_canon_20261118_b_65550dd8.webp) |
+
+Questi voti approvano gli sfondi desktop. Telefono, reliquie, cornici e prefissi di identità sono superfici distinte: non ricevono una nuova approvazione implicita. Resta il comportamento mobile precedente, con l’eventuale scena mobile esplicita prima del fallback desktop. Gli ID delle schede e delle reliquie salvate e i JSON custom non vengono migrati.
+
+### Reliquiario dei sussurri: ritiro esplicito, legacy conservato
+
+Alla nota «cancella» per `whispering_reliquary`, l’utente precisa «Rimuovi anche il tema dall’app». Il ritiro dalle nuove selezioni e acquisizioni è confermato. I filtri nei sorgenti impediscono nuove applicazioni, assegnazioni e sblocchi anche al Master; gli acquisti rifiutati non devono addebitare risorse. Definizioni, ID e asset restano disponibili per leggere e rappresentare i vecchi salvataggi e le personalizzazioni già esistenti, senza riscriverli. Un tema legacy già attivo non viene automaticamente sostituito. Il [filtro di disponibilità](../lib/widgets/oculum_theme_availability.dart) e i [test dedicati](../test/oculum_retired_themes_test.dart) sono scritti; le prove non sono ancora eseguite. Nessuna tavola nuova di questo tema è approvata dalle due note.
+
+### Kingi: revisione Postea senza fate
+
+Indicazioni confermate dell’utente: «più futuristico kingi viene da postea» e «deve apparire futuristico le rune spesso sono tra il metallo interno e quello esterno». La revisione deve rendere leggibile il futuro di Postea con le rune tra il metallo del chassis interno e la corazza esterna, non soltanto come decorazioni sulla superficie. Rimane la resa a inchiostro del Re Goblin G con profondità leggera V5.
+
+Il 19 novembre l’utente ha specificato «niente fate» e «fallo più futuristico runico» per Kingi. Lo sfondo di Postea mantiene la strada, le rotaie, la bottega e la posizione del veicolo rovesciato, ora una capsula di trasporto runica. La luce ciano viene dalle rune incassate nei dispositivi. L’utente ha scelto la F «Motore inciso sotto la corazza» per lo sfondo. Sfondo, robot e reliquia restano superfici distinte. [Ricevuta delle scelte](../output/artwork/SCELTE-KINGI-ECHYNREL-20261119.json).
+
+Per Echynrel l’utente ha scelto E1 «Entrambe le braccia possenti». Il ritocco amplia la zampa anteriore lontana conservando lo scorcio, le quattro zampe e la scena della E. [Confronto](../output/artwork/echynrel-braccia-20261119/CONFRONTO.webp).
+
+Per Iride cesellata l’utente ha scelto C «Pennello secco selettivo». Il cristallo, i pendenti, la coppa e la sala conservano disposizione e colori. [Ricevuta](../output/artwork/SCELTA-IRIDE-CESELLATA-20261119.json).
+
+### Giro 1205: dieci tavole e dieci nomi confermati, integrazione in attesa
+
+La ricevuta [SCELTE-GIRO1205-20261118.json](../output/artwork/SCELTE-GIRO1205-20261118.json) raccoglie tutte le conferme artistiche e nominative seguenti, senza nomi ancora da scegliere. Il suo stato è `scelte_e_nomi_verificati_da_integrare`, con `appModified: false`: al momento di questa annotazione i dieci nuovi abbinamenti non sono ancora integrati nei sorgenti.
+
+| Nome confermato | ID stabile | Tavola desktop |
+| --- | --- | --- |
+| Dulcycrust | `habitat_caramella_rospo_di_crema_variante_veterana` | B |
+| Oblyravyn | `habitat_oblio_divoratore_degli_ultimi_nomi_variante_errante` | B |
+| Vyridblade | `mantide_sanguescatto` | G |
+| Quadrilame | `teschio_quattro_lame` | G |
+| Vagafloss | `habitat_caramella_falena_di_zucchero_filato_variante_errante` | A |
+| Ventyscute | `habitat_isole_razza_del_cielo_basso_variante_corazzata` | G |
+| Runycrick | `base_postea_02` | G |
+| Cynyscarn | `weak_horror_mastino` | F |
+| Senza Volto Errante | `pellegrino_senza_volto_variante_errante` | H |
+| Ensypuppet | `manichino_spada` | C |
+
+Sono conferme della tavola desktop e del nome, non una prova di funzionamento nel gioco. Non assegnano nuove anatomie, parti mirabili, statistiche, abilità o regole. Le approvazioni di telefono e reliquia e le verifiche di integrazione restano separate. Tutto lo storico delle scelte precedenti rimane conservato.
+
+## Riallineamento Expressive Ink — 17 novembre 2026
+
+Scelte desktop confermate dall’utente. Le revisioni conservano le composizioni approvate il 16 novembre e applicano l’inchiostro del Re Goblin G.
+
+- **Lumin Gommoso Corazzata, revisione B.** Composizione H del 16 novembre. [WebP](../assets/oculum/home_art_authored/theme_lumin_gommoso_variante_corazzata_canon_20261117_ink_b.webp).
+- **Forisplit, revisione B.** Composizione G del 16 novembre. [WebP](../assets/oculum/home_art_authored/theme_hero_path_diverso_ascia_variante_corazzata_canon_20261117_ink_b.webp).
+- **Venemuk, revisione C.** Composizione F del 16 novembre. [WebP](../assets/oculum/home_art_authored/theme_ragno_putrido_canon_20261117_ink_c.webp).
+- **Tessyfin, revisione C.** Composizione G del 16 novembre. [WebP](../assets/oculum/home_art_authored/theme_eiva_tassello_cupole_canon_20261117_ink_c.webp).
+
+[Ricevuta delle scelte](../output/artwork/expressive_ink_riallineamento_20261117/CONFERME-RIALLINEAMENTO.json).
+
+Secondo confronto del 17 novembre. L’utente conferma la C per tutte e tre le tavole.
+
+- **Cindercoil, revisione C.** Composizione già approvata A. [WebP](../assets/oculum/home_art_authored/theme_habitat_foresta_elementale_salamandra_delle_felci_ardenti_canon_20261117_ink_c.webp).
+- **Navysnare, revisione C.** Composizione già approvata D. [WebP](../assets/oculum/home_art_authored/theme_habitat_isole_granchio_delle_navi_aeree_variante_corazzata_canon_20261117_ink_c.webp).
+- **Melysting, revisione C.** Composizione già approvata H. [WebP](../assets/oculum/home_art_authored/theme_habitat_caramella_vespa_di_miele_scuro_canon_20261117_ink_c.webp).
+
+## Nuova direzione per i mostri — 14 novembre 2026
+
+**Expressive Ink** è la dicitura da usare per le nuove immagini e i rifacimenti. Ogni nome fantasy nuovo è una parola sola, costruita con radici inglesi, latine o entrambe e legata a un tratto, un materiale o un’abilità della creatura. I nomi già scelti restano validi.
+
+Il **Re Goblin** è il riferimento stilistico prioritario per i nuovi lotti. Riprendere i contorni a inchiostro, le ombre spigolose e le campiture opache. Composizione, anatomia e palette seguono la singola creatura. Il Frutibush usa verdi luminosi e accenti dorati su un fondo cupo. [Re Goblin canonico](../assets/oculum/home_art_authored/theme_goblin_king_canon_20261114_v2.webp) · [Frutibush approvato](../design/next_patch_art/frutibush-20261114.webp)
+
+Contorni a inchiostro, ombre nette e silhouette leggibili, con una palette dark fantasy contenuta. I riferimenti orientano tecnica e atmosfera. Ogni creatura ha posa, forme, abiti, dettagli e ambientazione originali. Questa direzione si applica alle nuove illustrazioni. Per i mostri esistenti, quando il lavoro prioritario lo consente, presentare l’originale accanto a sei nuove scelte distinte. La scelta canonica precedente resta disponibile fino alla nuova approvazione.
+
+Scelte desktop del 16 novembre. Quindici nuovi sfondi desktop in Expressive Ink. Necthrall G, Mammuth in decomposizione G, Ossyfling G, Mirusforge F, Gelyfang A e Aurybone F2. Pawn F, Pinepine D, Visvapyr C, Demone Glaciale Minore F, Umbraskulk G e Snorlo C. Sygilscyel B «Di fronte alla soglia», Sempre verde G «Discesa dalla volta» e Imbrytoad H «Xilografia nella pioggia». Aurybone è l’Aberrazione Superiore Angelica. La F2 riprende la posa della F «Ossa alla soglia», con due ali articolate di oro vivo e marmo e l’ala a destra nell’immagine proporzionata alla prospettiva. [WebP canonico](../assets/oculum/home_art_authored/theme_aberrazione_oro_marmo_superiore_angelica_canon_20261115.webp)
+
+Scelte desktop successive. Cervydew F «Guardia sul pendio», Delyrmoth G «Volo sopra lo strapiombo», Lapyorbit G «L’orbita dall’alto» e Pesce Mutato G «Nel pozzo di raccolta». Il Pesce Mutato conserva il nome. Lapyorbit ha due braccia di pietra con dita lunghe e una parte inferiore di vapore.
+
+La Medusa del Vetro Blu conserva il nome e adotta la tavola F. È una creatura distinta da Medusa di Vetro.
+
+Riallineamento Expressive Ink del 16 novembre. I temi stock usano Faldavela A, Balena Dai Mille Occhi B, Octocruor C, Nyvowl C, Tryjaw C, Cloudtusk B, Lapyorbit B e Armadillo della Sabbia B. Le lettere si riferiscono al confronto a quattro tavole del riallineamento. Gli originali restano disponibili. I nuovi WebP sono nel catalogo asset con suffisso `_canon_20261116_riallineamento.webp`. Le scelte conservano identità, inquadratura e anatomia di gioco. [Galleria](../output/artwork/expressive_ink_riallineamento_20261116/GALLERIA-RIALLINEAMENTO.html) · [Manifest](../output/artwork/expressive_ink_riallineamento_20261116/MANIFEST-RIALLINEAMENTO.json).
+
+Il Ragno Putrido diventa **Venemuk** e usa la F «La svolta nella fanghiglia». Otto occhi confermati e mirabili separatamente. Il Diverso Spaccaporte Corazzata diventa **Forisplit**, da *foris* e *split*, «spaccaporte», e usa G «Oltre la testa dell’ascia». Entrambi i nomi precedenti restano ricercabili.
+
+La **Medusa di confettura** usa la tavola B «Risalita sulla crosta», con due zampe anteriori e la coda ad anelli. [WebP canonico](../assets/oculum/home_art_authored/theme_habitat_caramella_medusa_di_confettura_canon_20261116.webp).
+
+Il Tassello delle cupole si chiama **Tessyfin**, da *tessera* e *fin*, «tassello pinnato». La forma base usa la G «La rovesciata nella cupola». Restano il ventre a scacchi, tre pinne, un occhio per lato e la gola anteriore vulnerabile. [WebP canonico](../assets/oculum/home_art_authored/theme_eiva_tassello_cupole_canon_20261116.webp).
+
+La Mantide della Vampa si chiama **Ignytis** e usa la C «Ombra sul pavimento di scorie». [WebP canonico](../assets/oculum/home_art_authored/theme_ciclo_mantide_vampa_canon_20261116.webp).
+
+La Graga Rana Azzurra Corazzata si chiama **Gragaloryx**, da *Graga* e *lorica*, «Graga corazzata». Per questa variante l’utente sceglie la G «Atterraggio sotto il tronco». [WebP canonico](../assets/oculum/home_art_authored/theme_graga_rana_azzurra_variante_corazzata_canon_20261116.webp).
+
+La Lince di brina verde Corazzata si chiama **Vyridfrost** (vì-rid-frost), da *viridis* e *frost*, «brina verde». La G «In agguato dietro la lastra di brina» mostra quattro zampe e una coda lunga. Il nodo sensoriale è dietro la cresta. [WebP canonico](../assets/oculum/home_art_authored/theme_habitat_foresta_elementale_lince_di_brina_verde_variante_corazzata_canon_20261116.webp).
+
+La Regina delle miniere mute Rituale si chiama **Tacyantel** e usa la G «Riflesso nel pozzo cieco». Le sei zampe uncinate visibili nella tavola sono mirabili singolarmente. Il punto debole resta la cerniera ventrale sotto il bordo delle piastre. [WebP canonico](../assets/oculum/home_art_authored/theme_habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale_canon_20261116.webp) · [Ricevuta](../output/artwork/expressive_ink_regina_delle_miniere_mute_rituale_20261116/CONFERMA-TACYANTEL.json).
+
+La **Lumin Gommoso Corazzata** conserva il nome e adotta la H «La tana d’archivio». La Falena del sudario Veterana diventa **Funerwing**, da *funus* e *wing*, «ala funebre», e usa la G «Dal pozzo funebre». Il Mostricciattolo di Carta Rituale diventa **Mirusfold**, da *mirus* e *fold*, «piega prodigiosa», e usa la F «Giù dal gradino». [Lumin H](../assets/oculum/home_art_authored/theme_lumin_gommoso_variante_corazzata_canon_20261116.webp) · [Funerwing G](../assets/oculum/home_art_authored/theme_habitat_morti_falena_del_sudario_variante_veterana_canon_20261116.webp) · [Mirusfold F](../assets/oculum/home_art_authored/theme_mostricciattolo_di_carta_variante_rituale_canon_20261116.webp).
+
+Lo Scarabeo dei contratti ardenti diventa **Pactycarapace**, da *pactum* e *carapace*, «carapace del patto», e usa la C «Fra due crepe». Il **Gigante di sabbia** conserva il nome e usa la F «Avanzata fra le gradinate» come nuovo desktop. La V6 è la G del confronto. [Pactycarapace C](../assets/oculum/home_art_authored/theme_habitat_diabolico_scarabeo_dei_contratti_ardenti_canon_20261116.webp) · [Gigante F](../assets/oculum/home_art_authored/theme_gigante_sabbia_canon_20261116.webp).
+
+Scelte desktop del 17 novembre. Vaghound D, Nyhlward E, Mammuth di Ferro Runico A, Rubrytoad E, Turrysilk A, Larvascrybus E, Clavytrail C, Sutywidow C, Ossylight G, Mirusrime G, Fulgurskull F, Orcryst A, Squamyscute G, Sacrycrab H. Il nome visibile è legato alla voce esatta e il nome precedente resta ricercabile. [Conferme delle tavole e dei nomi](../output/artwork/CONFERME-CHAT-20261117-0524.json).
+
+La galleria cumulativa del 17 novembre conferma 37 sfondi desktop dei mostri, sei tavole per telefono e reliquia di Distruttor Caramella, Divoramitù e Divoramitù Elité, e la G del Simbolo della Luna di Vaitern. Miruscyrus, la Mantide a pistoni Rituale, usa E. Le altre sei scelte finali sono Florycoil G, Talpabor E, Tryasmorem E, Melysting H, Gecko di Rame F e Umacenerys Errante E. La C di Aurumjud resta la tavola del Giudice attuale. Sono richieste anche due versioni del Giudice con nove e tre aureole e una nuova Skill del Ragno Saldatore per emettere un raggio al plasma dalla coda. [Voti, tavole e indicazioni originali](../output/artwork/CONFERME-CHAT-20261117-GALLERIA.json).
+
+Le due varianti visive di Aurumjud sono state mostrate nella galleria cumulativa. Il conteggio è di quattro anelli per lato più quello centrale nella prima tavola e uno per lato più quello centrale nella seconda. [Manifest e WebP delle due proposte](../output/artwork/aurumjud_aureole_20261117/MANIFEST.json).
+
+Nel giro successivo sono approvate dieci tavole Expressive Ink. Visfunycord B, Vistynbell G, Foedryx A, Visporym F, Fimbraglow H, Clibanfang G, Voultyfist G, Vaguspike A, Toxyvitta F, Echynspark F. [Ricevuta delle scelte](../output/artwork/expressive_ink_giro_20261117_1134/CONFERME-CHAT.json).
+
+Nel confronto degli sfondi, Classic Oculum, Classic RPG e Classic low detail usano la B «Ombre d’inchiostro». Polaryscale, Imbrywing ed Echynspark usano la E «Dettagli localizzati», confermata per il gioco nelle due chat. I nuovi sfondi mantengono le composizioni di riferimento. [Prime scelte](../output/artwork/expressive_ink_temi_20261117/CONFERME-CHAT.json) · [Scelte definitive dei mostri](../output/artwork/expressive_ink_temi_20261117/CONFERME-CHAT-COORDINATE.json).
+
+Nel lotto Expressive Ink successivo sono confermati Cuprosajur F, Lapysurge G, Gelycarapace H, Pustrysilk F, Rospo Marshmallow G, Polaryscale H, Visgel F, Imbrywing H e Bowlyward G. Il Fabbro Senza Lingua è ritirato. [Ricevuta delle prime quattro scelte](../output/artwork/expressive_ink_giro_20261117_0634/CONFERME-CHAT.json) · [Ricevuta conclusiva](../output/artwork/expressive_ink_giro_20261117_0634/CONFERME-CHAT-COMPLETAMENTO.json).
+
+**Regno Sommerso (Regno Affogato).** Il regno intero è immerso nell’Eiva, un’acqua magica molto potente in cui gli abitanti vivono e respirano. Anche le strade, le case e le rovine restano immerse. Mostrare zone coralline e flora acquatica magica. Le scene usano lo stesso inchiostro del Re Goblin, con vegetazione, sedimento e luce filtrata nell’Eiva fino al fondo dell’inquadratura.
+
+Pysciwarden, già Vedetta dei Canali, usa la tavola G «Dal fondo sotto il ponte». Constacuas, già Custode della Chiusa, usa la tavola H «Le catene d’ardesia». Entrambi hanno due branchie, due braccia e due gambe. I nomi di ruolo restano ricercabili.
+
+I riferimenti aggiuntivi dell’utente mostrano tratteggio fitto sulle corna, neri compatti, riflessi localizzati sul metallo, boschi scuri e rovine stagliate contro un cielo rame. La serra illustrata orienta ferro battuto, vetro e vegetazione per gli ambienti botanici. Ogni scena mantiene una composizione originale e uno spazio leggibile per i controlli. Per ogni mostro verificare la corrispondenza fra illustrazione, descrizione e parti mirabili. Annotare i dubbi sulle parti coperte o stilizzate e chiarirli prima di assegnare bersagli o effetti.
+
+Il riferimento monocromatico con il cavaliere e l’albero guida le venature bianche su corteccia nera, il pennello secco e la nebbia a inchiostro. Per il Guardiano dell’Oblio usare una composizione originale con il cavaliere in piedi di guardia. Nei nomi fantasy usare spesso **y** con suono **i** quando sta bene, mantenendo le grafie alternative come alias. Esempio proposto: **Oblyvuard**, ricercabile anche come **Oblivuard** e **Oblivward**.
+
+- **Re Goblin**. La scelta G è la tavola approvata con il piede sul masso, il mantello verde scuro e le arcate viola. [WebP canonico](../assets/oculum/home_art_authored/theme_goblin_king_canon_20261114_v2.webp). SHA-256 `cca7aba6df4b9339aa590cf609c276a22c7d674d064e3d1873d1499c4195b7bb`. La [versione precedente H](../design/next_patch_art/re-goblin-20261114.webp) conserva lo SHA-256 `765d51a4097a4d2d8c91db8807537b28d930321775a6fa1d1f84be0f02bb5f98`.
+- **Combattente dell’Anima**. Il nuovo tema della normale mostra la spadaccina accovacciata con la mano a terra e la lama distesa. La seconda tavola, sotto l’arco con la spada abbassata, è dell’Elité. [Normale](../design/next_patch_art/soul_fighter-scelta-20261114.webp) · [Elité](../design/next_patch_art/soul_fighter_variante_elite-scelta-20261114.webp) · [Precedente](../design/next_patch_art/soul-fighter-precedente-20261114.webp).
+- **Oculiath base**. La scelta G mostra un occhio chiaro nel guscio indaco, due ali membranose brune e un unico uncino ventrale nella grotta fossile. L’allegato dell’utente ha gli stessi pixel del WebP approvato. [Tema canonico](../assets/oculum/home_art_authored/theme_oculiath_canon_20261114.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_01/OCULIATH_SCELTA_G.json).
+- **Oculiath minore**. La tavola D mostra l’iride rossa e le membrane verde cupo nell’acquedotto. La variante ha lo stesso uncino del base. [Tema canonico](../assets/oculum/home_art_authored/theme_oculiath_minore_canon_20261114.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_01/OCULIATH_MINORE_SCELTA_D.json).
+- **Oculiath Maggiore**. La G canonica mostra il carapace avorio con accenti vermiglione, cinque occhi visibili e levitazione senza arti. [Tema canonico](../assets/oculum/home_art_authored/theme_oculiath_maggiore_canon_20261114.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_01/OCULIATH_MAGGIORE_SCELTA_G.json).
+- **Frutibush**. Confermata soltanto la tavola G come canone. [Tema canonico](../assets/oculum/home_art_authored/theme_frutibush_canon_20261114.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_01/FRUTIBUSH_CONFERMA_G.json).
+- **Terramaund**. Scelta la G con tratto d’incisione e Terramaul leggibile. [Tavola scelta](../output/artwork/expressive_ink_lotto_01/terramound-g.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_01/TERRAMAUND_SCELTA_G.json).
+- **Ratygrinh**. Il Topo Mutante si chiama Ratygrinh. La tavola G mostra il mutante e i topolini dagli occhi verdi. I nomi Topo Mutante, Mutant Rat e Ratygreen rimangono ricercabili. [Tavola G](../output/artwork/expressive_ink_lotto_04/topo_mutante-g.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_04/TOPO_MUTANTE_SCELTA_G.json).
+- **Acuagoblin Territoriale**. Confermati la tavola E e il nome attuale della variante territoriale. [Tavola E](../output/artwork/expressive_ink_lotto_04/acuagoblin_variante_territoriale-e.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_04/ACUAGOBLIN_TERRITORIALE_SCELTA_E.json).
+- **Acuagoblin Predatore e Curioso**. I nomi restano quelli delle due indoli. Il Predatore usa E «Balzo alla chiusa» e il Curioso C «Sull’anello della cisterna». [Predatore E](../output/artwork/expressive_ink_lotto_04/ACUAGOBLIN_PREDATORE_SCELTA_E.json) · [Curioso C](../output/artwork/expressive_ink_lotto_04/ACUAGOBLIN_CURIOSO_SCELTA_C.json).
+- **Oblyvuard**. Il Guardiano dell’Oblio mantiene il nome. La tavola B lo mostra di guardia sotto l’albero nero. [Tavola B](../output/artwork/expressive_ink_lotto_04/oblyvuard-b.webp).
+- **Lignoryt**. Il golem di legno usa la tavola B e il nuovo nome. Lignobarc e Lignobark restano ricercabili. [Tavola B](../output/artwork/expressive_ink_lotto_04/lignobark-b.webp).
+- **Lunavyr**. Il Corvo della Morte evoluto conserva la tavola H, con il collo indaco violaceo e accenti azzurri. Corvo della Morte evoluto ed Evolved Death Raven restano ricercabili. [Tavola H](../output/artwork/expressive_ink_lotto_04/corvo_della_morte_evoluto-h.webp).
+- **Sonorays e Cynerveil**. Scelte C per la creatura dagli occhi nei cerchi e G per lo spettro con la lanterna. [Sonorays](../output/artwork/expressive_ink_lotto_01/SONOREYE_SCELTA_C.json) · [Cynerveil](../output/artwork/expressive_ink_lotto_01/CYNERVAIL_SCELTA_G.json).
+- **Sanguifeng, Aculotide e Vesanybel**. Le scelte confermate del 15 novembre sono rispettivamente G, G e H. Sanguifeng avanza frontalmente in volo con membrane viola e occhio rosso. Aculotide mostra il guscio stratificato e i fori ventrali, fra verdi oliva, avorio e bordeaux. Vesanybel ha una postura eretta e una campana in bronzo su armatura scura, sotto arcate indaco e viola. Il nome Vesanybel (*ve-sà-ni-bel*) unisce *vesanus* e *bell*. Custode della Campana Cieca e Vesanybell restano ricercabili. [Sanguifeng G](../output/artwork/expressive_ink_lotto_01/sanguifang-g.webp) · [Aculotide G](../output/artwork/expressive_ink_lotto_01/aculotide-g.webp) · [Vesanybel H](../output/artwork/expressive_ink_lotto_01/custode_campana_cieca-h.webp).
+- **Baby Forest Demon**. La tavola a inchiostro con la creatura accovacciata è stata scelta per il Baby. È la G del lotto 01. La precedente tavola del Baby è archiviata in H. [Scelta G](../output/artwork/expressive_ink_lotto_01/BABY_FOREST_DEMON_SCELTA_G.json).
+- **Forest Demon adulto**. Per tutte le nuove opzioni l’utente vuole un adulto più maestoso e furioso. Corporatura ampia e pesante, muso maturo, espressione aggressiva, rovina e alberi come riferimenti di scala. L’illustrazione rimane a inchiostro nello stile del Re Goblin. Conservare le quattro zampe, la coda spessa, i due occhi, i due corni laterali e il corno frontale. [Lotto 02](../output/artwork/expressive_ink_lotto_02/GALLERIA.html).
+- **Ferryfur e Glayswuolf**. Ferryfur (*fè-ri-fer*, *ferrum* e *fur*, «pelo di ferro») è il nome scelto per Durafèr con la tavola G, vello ocra sopra il crepaccio. Glayswuolf mantiene il nome e usa C, in posa bassa sulle tracce. Durafèr, Durafur e Glacewolf sono le grafie storiche da mantenere come alias di ricerca. [Ferryfur G](../output/artwork/expressive_ink_lotto_01/DURAFUR_SCELTA_G.json) · [Glayswuolf C](../output/artwork/expressive_ink_lotto_01/GLAYSWUOLF_SCELTA_C.json).
+- **Forest Demon Errato adulto**. Mantiene il nome. Scelta G «Ruggito sotto la pioggia», con il rettile in estensione sulle quattro zampe e placche rame ossidato. [Ricevuta](../output/artwork/expressive_ink_lotto_02/FOREST_DEMON_ERRATO_SCELTA_G.json).
+- **Bunnys e Fatomhol**. Bunnys mantiene il nome e usa H, con le orecchie piumate sopra un sentiero di neve. Il Ciclope del Fato si chiama **Fatomhol** (*fa-to-mòl*, da *fatum* e *maul*, «maglio del destino») e usa A, accovacciato sulle scale. [Bunnys H](../output/artwork/expressive_ink_lotto_01/BUNNYS_SCELTA_H.json) · [Fatomhol A](../output/artwork/expressive_ink_lotto_01/CICLOPE_DEL_FATO_SCELTA_A.json).
+- **Visbunnys**. La Bunnys Veterana usa la tavola E «Atterraggio sul mosaico». Il nome scelto unisce il latino *vis* («forza») e Bunnys. Bunnys Veterana e Bunnysveteranus restano ricercabili. [Tavola E](../output/artwork/expressive_ink_lotto_01/bunnys_variante_veterana-e.webp) · [Ricevuta](../output/artwork/expressive_ink_lotto_01/BUNNYS_VETERANA_SCELTA_E.json).
+- **Karnyrattle e Silvarkrath**. Caro Ossis rituale diventa Karnyrattle (*carnis* e *rattle*) con la tavola F. Il Baby Forest Demon rituale conserva il nome Silvarkrath e usa A. [Karnyrattle F](../output/artwork/expressive_ink_lotto_01/KARNYRATTLE_SCELTA_F.json) · [Silvarkrath A](../output/artwork/expressive_ink_lotto_01/SILVARKRATH_SCELTA_A.json).
+- **Lorica Gleaner** mantiene il nome e usa la tavola E con la corazza oliva e ocra sul masso sopra il torrente. [Tema desktop](../assets/oculum/home_art_authored/theme_agla_variante_corazzata_canon_20261115.webp) · [Ricevuta E](../output/artwork/expressive_ink_lotto_01/LORICA_GLEANER_SCELTA_E.json).
+- **Ossyblayn** usa la tavola D nella galleria bordeaux con le braccia portanti distese. Il nome unisce il latino *ossis* e l’inglese *blain*, in riferimento a corazza d’osso e vesciche. Caro Blisterhide resta ricercabile. [Tema desktop](../assets/oculum/home_art_authored/theme_ammasso_pustoloso_canon_20261115.webp) · [Ricevuta D](../output/artwork/expressive_ink_lotto_01/OSSYBLAYN_SCELTA_D.json).
+- **Miruslash**. L’Angelo Fustigatore rituale usa la tavola E con il flagello sotto l’arcata e le penne malva. Il nome unisce *mirus* e *lash*. Flagellum Vow resta ricercabile. [Tema desktop](../assets/oculum/home_art_authored/theme_angelo_fustigatore_variante_rituale_canon_20261115.webp) · [Ricevuta E](../output/artwork/expressive_ink_lotto_01/MIRUSLASH_SCELTA_E.json).
+- **Vagarwyngh**. L’Arcangelo Errante usa la tavola E fra le rovine. Gli restano due ali mirabili, una d’oro e una scura. Le altre gli sono state strappate durante l’esiliazione dell’Ala Nera. Il nome richiama *vagari* e *wing*. Ordinwing Wingstray, Vagawyng e Vagarwingh restano ricercabili. [Tema desktop](../assets/oculum/home_art_authored/theme_arcangelo_variante_errante_canon_20261115.webp) · [Ricevuta E](../output/artwork/expressive_ink_lotto_01/VAGARWYNGH_SCELTA_E.json).
+- **Bandita Veterana** usa la tavola C «Ponte sotto la pioggia». Bandito Veterana resta ricercabile. [Tema desktop](../assets/oculum/home_art_authored/theme_bandito_base_variante_veterana_canon_20261115.webp) · [Ricevuta C](../output/artwork/expressive_ink_lotto_01/BANDITA_VETERANA_SCELTA_C.json).
+- **Ventyclaw**. L’Arpia Veterana usa D «Volo di traverso». Le due ali si attaccano dietro le spalle, distinte dalle due braccia. Fra i battiti si scoprono le attaccature già indicate come punti deboli. Arpia Veterana, Veteran Harpy e Venticlaw restano ricercabili. [Tema desktop](../assets/oculum/home_art_authored/theme_arpia_base_variante_veterana_canon_20261115.webp) · [Ricevuta D](../output/artwork/expressive_ink_lotto_05_esistenti/arpia_base_variante_veterana/VENTYCLAW_SCELTA_D.json).
+- **Syntermoltys**. La Larva di Lava Corazzata usa E «Fra due pareti». Il magma si vede attraverso le piastre e la giuntura laterale già mirabile resta quella che si espone durante la svolta. Larva di Lava Corazzata, Armored Lava Larva, Syntermoltis e Sintermoltys restano ricercabili. [Tema desktop](../assets/oculum/home_art_authored/theme_larva_lava_variante_corazzata_canon_20261115.webp) · [Ricevuta E](../output/artwork/expressive_ink_lotto_05_esistenti/larva_lava_variante_corazzata/SYNTERMOLTYS_SCELTA_E.json).
+- **Viscuprum**. Il Golem Runico Veterano usa F «Piastre infrante», che mostra il nucleo già scoperto. In gioco si può mirare il nucleo soltanto dopo che le piastre frontali si rompono. Golem Runico Veterano, Golem Runico Veterana, Veteran Runic Golem e Vis Cuprum restano ricercabili. [Tema desktop](../assets/oculum/home_art_authored/theme_golem_runico_variante_veterana_canon_20261115.webp) · [Ricevuta F](../output/artwork/expressive_ink_lotto_05_esistenti/golem_runico_variante_veterana/VISCUPRUM_SCELTA_F.json).
+- **Armadillo di Cristallo e Armadillo della Sabbia**. Confermate la C «Annusa la vena» per Cristallo e la C «Ventre tra le rocce» per Sabbia, mantenendo i nomi. Il ventre resta un bersaglio della forma aperta. [Cristallo C](../output/artwork/expressive_ink_lotto_05_esistenti/armadillo_cristallo/ARMADILLO_CRISTALLO_SCELTA_C.json) · [Sabbia C](../output/artwork/expressive_ink_lotto_05_esistenti/armadillo_sabbia/ARMADILLO_SABBIA_SCELTA_C.json).
+- **Aurystride**. Sunwalker adotta la tavola D «Arresto con mano a terra». Il nome unisce il latino *aurum* e l’inglese *stride*, «falcata d’oro». Ha due braccia, due gambe, costole di marmo e un collo d’oro sotto la calotta. Torace e giuntura restano i punti deboli. Sunwalker e Auristride restano ricercabili. [Tema desktop](../assets/oculum/home_art_authored/theme_aberrazione_oro_marmo_intermedia_solare_canon_20261115.webp) · [Ricevuta D](../output/artwork/expressive_ink_lotto_05_esistenti/aberrazione_oro_marmo_intermedia_solare/AURYSTRIDE_SCELTA_D.json).
+- **Sensimoss e Dolyfern**. Sensimoss mantiene il nome e usa H, fra le felci color terra rossa. Lo Sciamano Malizioso si chiama **Dolyfern** (*do-li-fern*, da *dolus* e *fern*, «felce dell’inganno») e usa D, accovacciato sotto l’arco di roccia. [Sensimoss H](../output/artwork/expressive_ink_lotto_04/SENSIMOSS_SCELTA_H.json) · [Dolyfern D](../output/artwork/expressive_ink_lotto_04/SCIAMANO_MALIZIOSO_SCELTA_D.json).
+
+Le tavole approvate sono verificate pixel per pixel e destinate alla prossima patch.
+
+### Solgheiz e Santuario Allagato
+
+- **Solgheiz, Osservatore del Sole**. È canonico il disegno originale a inchiostro, con l’occhio d’ambra fra piastre di bronzo e il disco solare fra le ali. [Tavola canonica](../assets/oculum/home_art_authored/theme_solgaze_canon_20261114.webp). SHA-256 `510c8341b36cd536cee5fba8e8beac536a131d8321e82b51be0b97633617511d`.
+- **Solgheiz del Santuario Allagato**. È registrata la variante dalle ali verdi, con muschio sul guscio di bronzo e il riflesso del disco solare nell’acqua del santuario. [Tavola canonica](../assets/oculum/home_art_authored/theme_solgaze_variante_muschiosa_canon_20261114.webp). SHA-256 `918bfdacd9877fca9cc021a9ac0918ef5d06e90271354ebf31e27662fc387abc`.
+
+Queste due tavole chiudono la scelta delle immagini di Solgheiz e della variante verde.
+
+### Bushilva
+
+**Bushilva** è la versione potenziata del Frutibush, ricoperta di erba magica molto resistente. Il manto tende al blu con indaco e violetto pastello. L’utente ha mantenuto il nome e scelto G «Incisione dall’alto», con la creatura volante sopra il mosaico di una terrazza invasa dalle piante. [Ricevuta G](../output/artwork/expressive_ink_lotto_01/BUSHILVA_SCELTA_G.json) · [Tavola precedente H](../design/next_patch_art/bushilva-20261114.webp).
+
 ## Divoramitù e Distruttor Caramella
 
 - **Divoramitù**. Scelta A, allegato dell’utente copiato senza modifiche in `assets/oculum/home_art/theme_divoramitu_canon_20261108.png`. Savoiardi al caffè, mascarpone e cacao, serpente senza arti. SHA-256 `eb9da9d389f65ca91d260199a1be5821e31b779593b1b9cb480eb0cf9affcc54`.
@@ -180,6 +376,8 @@ Canonico **D — Curvo, legno cenere**, file `output/artwork/proposte_cinque_202
 
 **Strana Presenza:** scelto **E — Passo obliquo**, file `output/artwork/proposte_cinque_2026-10-30/strana_presenza/strana_presenza_E_v1.png`, come base canonica. Le altre quattro restano alternative non approvate.
 
+Il 16 novembre l’utente sceglie **F · Slancio nel cunicolo** come nuovo sfondo desktop Expressive Ink e conserva il nome **Strana Presenza**. La precedente «Passo obliquo» è la G del confronto. [WebP canonico](../assets/oculum/home_art_authored/theme_strana_presenza_canon_20261116.webp) · [Ricevuta](../output/artwork/expressive_ink_strana_presenza_20261116/CONFERMA-STRANA-PRESENZA.json).
+
 **Sciamano Malizioso Minore:** scelto **A — Guscio di noce**, file `output/artwork/proposte_cinque_2026-10-30/sciamano_minore/sciamano_malizioso_minore_A_v1.png`. Resta distinto dallo Sciamano Malizioso B già approvato.
 
 **Ogor:** scelto **C — Spalle ad arco**, file `output/artwork/proposte_cinque_2026-10-30/ogor/ogor_C_v1.png`. Riferimento canonico della sagoma, senza nuove proprietà di combattimento dedotte dall'immagine.
@@ -301,7 +499,7 @@ Portamento composto e autoritario, una mano vicino al collo della veste, sguardo
 - Angeli due ali, Arcangeli quattro, Serafini sei. I nuovi Serafini Solari e Angelici hanno volti belli e inquietanti e occhi sulle ali. Solare: oro e aggressività. Angelico: metallo angelico bianco e oro, protezione e giudizio. Il Serafino Boss già presente resta specie separata.
 - Grofix: muschio e radici che assorbono giacimenti trascurati, poi cristalli variegati lunghi e appuntiti secondo i materiali/Grado sottratti. Non trasformarlo in un generico umanoide di pietra. Nei sotterranei: tetto di roccia e luce locale, nessun cielo o corpo celeste.
 - Le figure sono per temi/sfondi delle schede, non ritratti imposti nel Monster Book. Composizioni entro margini, elementi importanti interi, spazio di lettura e inquadrature adattate.
-- Orea Zalira è l'eccezione esplicita con DUE soli SENZA occhi. Il Regno di Carne Viva è nel vuoto assoluto senza mondi o corpi celesti lontani. Nella Notte di Cubi Luminosi la luce proviene dai cubi.
+- Orea Zalira è l'eccezione esplicita con DUE soli SENZA occhi. Ospita mostri buffi di forme varie, comprese sfere. Il Deserto Divoratore ha terreno azzurro e tagliente, distinto dai deserti ordinari del Regno Mezzano. Il Regno di Carne Viva è nel vuoto assoluto senza mondi o corpi celesti lontani. Nella Notte di Cubi Luminosi la luce proviene dai cubi.
 
 ## Riferimenti definitivi
 
@@ -343,9 +541,47 @@ Gli sfondi riempiono la pagina. Testi, barre e comandi sono widget reali sopra l
 
 L’utente approva lo sfondo completo Grofix e la composizione separata per telefono: grotta senza cielo, muschio e radici che assorbono il deposito, cristalli irregolari, nucleo fibroso visibile e centro libero per la scheda. Asset `theme_grofix_v1.png` e `theme_grofix_mobile_v1.png`; non è un ritratto nel Monster Book né una revisione automatica di tutte le reliquie.
 
+Il 15 novembre l’utente sceglie **F · Stretto nella faglia** come nuovo sfondo desktop di Grofix in Expressive Ink. Il nome e lo sfondo per telefono già scelto restano validi. La tavola F mostra il nodo fibroso, il muschio, le radici aderenti e la corona di cristalli nel sotterraneo. L’illustrazione desktop del 28 ottobre resta in archivio come G. [Tavola F](../assets/oculum/home_art_authored/theme_grofix_canon_20261115.webp) · [Ricevuta del voto](../output/artwork/expressive_ink_lotto_04_esistenti/grofix/GROFIX_SCELTA_F.json).
+
+Il 15 novembre l’utente sceglie **A · Sotto le radici** per l’Armadillo di Legno e **G · Cancello divelto** per Snorlo Corazzata, entrambi con il nome attuale. L’Armadillo ha un carapace di corteccia a placche e quattro zampe. Snorlo Corazzata mostra due gambe e quattro braccia. Le parti addizionali mirabili dipendono dalla scelta separata sul combattimento. [Armadillo di Legno](../output/artwork/expressive_ink_lotto_01_esistenti/armadillo_legno/ARMADILLO_LEGNO_SCELTA_A.json) · [Snorlo Corazzata](../output/artwork/expressive_ink_lotto_01_inediti/snorlo_variante_corazzata/SNORLO_VARIANTE_CORAZZATA_SCELTA_G.json).
+
+Nello stesso lotto passano a **F · Scatto sul pendio** Divoramitù base, **B · Spadone sollevato** Distruttor Caramella e **E · Il sasso presso l’acqua** Baby Rock Rhino. I tre nomi restano quelli già in uso. La B di Distruttor Caramella è identica pixel per pixel all’ultimo allegato e sostituisce la E, che resta nello storico. I canoni precedenti sono archiviati in G. Per Baby Rock Rhino, H conserva anche la proposta distinta del 6 novembre. [Divoramitù](../output/artwork/expressive_ink_lotto_01_esistenti/divoramitu/DIVORAMITU_SCELTA_F.json) · [Distruttor Caramella](../output/artwork/expressive_ink_lotto_01_esistenti/distruttor_caramella/DISTRUTTOR_CARAMELLA_SCELTA_B.json) · [Baby Rock Rhino](../output/artwork/expressive_ink_lotto_01_esistenti/baby_rock_rhino/BABY_ROCK_RHINO_SCELTA_E.json).
+
+Scelte successive. **Divoramitù Elité F · Affondo in uscita**, **Visrhyno D · Guardia sulla terrazza** e **Aberrazione Intermedia Angelica F · Discesa sulla scalinata**. Visrhyno conserva il nome precedente Baby Rock Rhino Veterana come alias. La F dell’Angelica mostra due ali, mirabili in combattimento mentre sono esposte. [Divoramitù Elité](../output/artwork/expressive_ink_lotto_01_esistenti/divoramitu_elite/DIVORAMITU_ELITE_SCELTA_F.json) · [Visrhyno](../output/artwork/expressive_ink_lotto_01_esistenti/baby_rock_rhino_variante_veterana/BABY_ROCK_RHINO_VARIANTE_VETERANA_SCELTA_D.json) · [Intermedia Angelica](../output/artwork/expressive_ink_lotto_01_esistenti/aberrazione_oro_marmo_intermedia_angelica/ABERRAZIONE_ORO_MARMO_INTERMEDIA_ANGELICA_SCELTA_F.json).
+
+**RockRhyno G1 · Carica frontale nel salto.** Il 15 novembre l’utente conferma la revisione di G con la testa abbassata e ruotata verso chi guarda. La tavola è lo sfondo desktop della forma intermedia. Il corno resta singolo e le piastre coprono il nucleo. Il nome RockRhyno è già confermato. [Tavola G1](../assets/oculum/home_art_authored/theme_baby_rock_rhino_variante_intermedia_canon_20261115.webp) · [Ricevuta della scelta](../output/artwork/expressive_ink_lotto_01_inediti/baby_rock_rhino_variante_intermedia/ROCKRHYNO_SCELTA_G1.json).
+
+**Alaryft G · Discesa sulla fenditura.** La Regina delle gole vulcaniche adotta il nome Alaryft, da *ala* e *rift*, «ala delle gole». La tavola approvata mostra piastre di basalto, due ali membranose, quattro zampe uncinate e due corna. Ogni zampa e ogni corno sono mirabili singolarmente. [Tavola G](../assets/oculum/home_art_authored/theme_habitat_demoniaco_regina_delle_gole_vulcaniche_canon_20261115.webp) · [Ricevuta della scelta](../output/artwork/expressive_ink_lotto_01_inediti/habitat_demoniaco_regina_delle_gole_vulcaniche/ALARYFT_SCELTA_G.json).
+
+La Troll Veterana prende il nome **Visbark**, da *vis* e *bark*, «forza di corteccia». L’utente approva **D2**, con il viso rivisto della troll adulta, la muscolatura marcata, i vestiti strappati e la mazza di legno ferro. [Tavola D2](../assets/oculum/home_art_authored/theme_troll_base_variante_veterana_canon_20261115.webp).
+
+**Ombra Ignota B · Mano sul mosaico** mantiene il nome e mostra la figura con la maschera a spirale e un solo occhio viola. La maschera a due aperture di Ombra Mascherata appartiene a Senka. [Tavola B](../assets/oculum/home_art_authored/theme_ombra_ignota_canon_20261115.webp).
+
+Il Gufo di Neve Blu adotta **Nyvowl**, da *nivis* e *owl*, «gufo delle nevi», e la **D · Decollo nella gola**, con la sacca luminosa sul fianco. [Tavola D](../assets/oculum/home_art_authored/theme_base_ghiaccio_05_canon_20261115.webp).
+
+L’Idra sceglie il nome **Tryjaw**, da *tria* e *jaw*, «tre fauci», e la **G · La svolta nel fossato**. Ha tre teste, quattro zampe e una coda, ciascuna mirabile separatamente. [Tavola G](../assets/oculum/home_art_authored/theme_idra_base_canon_20261115.webp).
+
+**Cloudtusk C · Virata sopra il burrone.** Confermato il nome. Lo sfondo dell’8 novembre resta nell’archivio della variante Errante. [Tavola C](../assets/oculum/home_art_authored/theme_habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante_canon_20261115.webp).
+
+**Ignyshell E · Nucleo sul baratro.** Il nome del Cuore di Lava Corazzato unisce *ignis* e *shell*, «guscio di fuoco». La G resta in archivio. [Tavola E](../assets/oculum/home_art_authored/theme_cuore_lava_variante_corazzata_canon_20261115.webp).
+
+**Ragno della linfa acida E · Tra le foglie dall’alto.** Nome confermato e otto zampe mirabili singolarmente. [Tavola E](../assets/oculum/home_art_authored/theme_habitat_foresta_elementale_ragno_della_linfa_acida_canon_20261115.webp).
+
+**Vaghyuil · Alla leva.** L’utente sceglie questa revisione come tema desktop del Meccanio Malconcio Errante. La variante ha una ruota, due pinze, due lenti di cui una incrinata e la giuntura visibile sopra la ruota. [Tavola definitiva](../assets/oculum/home_art_authored/theme_meccanio_ammaccato_variante_errante_canon_20261115.webp).
+
+**Navigatore dell’Aria G · La fenditura dei venti.** Il nome resta quello scelto in precedenza. Il Navigatore ha due braccia e il vortice sotto il torace. La H resta nell’archivio di ottobre. [Tavola G](../assets/oculum/home_art_authored/theme_air_navigator_canon_20261115.webp).
+
+**Necthrall** è una Marionettista di classe Boss, da *nectere* e *enthrall*, «colei che lega e soggioga». Le mani articolate tendono fili Spirituali dal fuso alla cintura. La maschera e il laboratorio della prima tavola sono una bozza di illustrazione. [Bozza di Necthrall](../output/artwork/expressive_ink_marionettista_boss_20261115/marionettista-boss-studio.webp).
+
 ### Guardiano Solare — aggiornamento dopo la sessione
 
 L’utente approva la direzione del nuovo sfondo del Guardiano e precisa «attenzione filo arco»: colosso massiccio d’oro con elmo chiuso a occhio solare, arco e due frecce, centro libero. Rifiutate le pose v2/v3 per la corda incoerente. **V4 approvata esplicitamente**: arco a riposo con una sola corda dritta collegata alle due estremità; le due frecce sono nell’altra mano, separate dall’arco. La versione telefono riprende questa struttura. Reliquia visiva dedicata con gli stessi materiali. Il nuovo tema non cambia statistiche, equipaggiamenti o drop; Mazza d’oro è una Skill richiesta separatamente. Prompt, fonti e stato dei controlli nel manifest `ART_GUARDIANO_SOLARE_2026-10-28.json`.
+
+Nel lotto Expressive Ink del 15 novembre, il Guardiano mantiene lo stesso equipaggiamento e un solo occhio inciso sull’elmo. La tavola C accovacciata ha una revisione con la corda verticale e i due attacchi dell’arco allineati. La tavola C1 conserva la correzione con la corda diagonale allegata in chat. [Manifest del Guardiano](../output/artwork/expressive_ink_guardiano_solare/MANIFEST.json).
+
+Scelte confermate del lotto a inchiostro sporco: Guardia Solare **C**, Guardia Solare Elité **C** e Guardiano Solare **C1**. Senka conferma **C con il passante rivisto** su desktop e **A** su telefono, la reliquia a due occhi e **Ombra Mascherata A**. Per il passante si usa il riferimento dell’utente con capelli argentati, cappotto nero, spallaccio metallico e guanto chiaro. Gli effetti ambientali usano filamenti d’ombra e frammenti opachi in base al tema. [Scelte di Senka](../output/artwork/expressive_ink_senka_staging_next/MANIFEST-SCELTE-SENKA.json).
+
+Nei nuovi sfondi solari, segnalare ogni differenza di anatomia o protezione che possa cambiare le parti mirabili. Il punto debole della Guardia comune è il fianco sotto lo scudo. Quello dell’Elité è la giuntura interna del gomito sotto la placca. Nel Guardiano è la giuntura posteriore del ginocchio che si espone durante un passo. La visiera delle tre voci è mirabile e metallica. Gli elmi completi coprono gli occhi biologici, con le eccezioni personali di Lusier ed Erik.
 
 
 **FireShield — derivati approvati il1novembre:** «Sì, entrambi canonici»: telefono v1 e reliquia sola testa v2, insieme al desktop C2 già scelto. Tre file copiati identici e collegati localmente, ricevuta design/approved-fire-shield-pack-2026-11-01.json. La reliquia conserva i pixel originali: margine visibile16,9%, non margine grezzo13%; residui alpha1 diagnosticati. CI/pacchetti distinti e nessuna chiusura100%.
@@ -355,3 +591,56 @@ L’utente approva la direzione del nuovo sfondo del Guardiano e precisa «atten
 # 6 novembre — terza proposta pittorica soltanto per le scelte ancora aperte
 
 L'utente richiede una proposta C con piccole variazioni del design e una diversa resa pittorica, a discrezione artistica, poi precisa **«per tutte le scelte già fatte no»**. La nuova C riguarda soltanto creature senza una scelta precedente: escludere i desktop canonici, le scelte già registrate e gli artwork esistenti prudentemente conservati. A/B e tutte le conferme restano intatti; nessuna nuova domanda per sostituire un canone già scelto. Anatomia, elemento, materiale e descrizione specifica della creatura rimangono vincoli; il disegno non assegna statistiche, poteri o punti deboli nuovi. La resa può accentuare guazzo/tempera opaca, contorni anime a inchiostro secco e pennellate visibili restando nel dark fantasy Rame fatato. Originali e revisioni vengono conservati su G con prompt, SHA e note QA; una C non diventa canonica senza il voto dell'utente. I tentativi con appendici in eccesso o margini insufficienti restano bozze e vengono corretti prima della proposta finale.
+
+
+## Conferme del giro 1233 — 17 novembre 2026
+
+Dieci sfondi desktop approvati, con otto nomi nuovi e Gabli delle Caverne invariato. Gli identificativi rimangono stabili e i nomi precedenti sono alias di ricerca. Nessuna nuova anatomia o regola viene dedotta dalle tavole. Telefono e reliquia non sono approvati da questa scelta; l’adattamento dello sfondo desktop resta distinto.
+
+- **Abrasyweb**, tavola **B**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_oblio_ragno_delle_ombre_cancellate_variante_veterana/CONFERMA-SCELTA.json).
+- **La Soglia della Sutura**, tavola **A**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/carne_viva_soglia_della_sutura/CONFERMA-SCELTA.json).
+- **Funeryshroud**, tavola **A**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_morti_regina_delle_cripte_sommerse_variante_corazzata/CONFERMA-SCELTA.json).
+- **Scoryrex**, tavola **A**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_diabolico_re_dei_patti_consumati/CONFERMA-SCELTA.json).
+- **Mirusclaust**, tavola **A**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale/CONFERMA-SCELTA.json).
+- **Gabli delle Caverne**, tavola **G**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/gabli_caverne/CONFERMA-SCELTA.json).
+- **Vibryclaw**, tavola **A**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_sotterraneo_talpa_dei_cristalli_ciechi/CONFERMA-SCELTA.json).
+- **Nymboscyte**, tavola **B**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_nuvole_rocciose_serpente_del_cumulonembo_variante_corazzata/CONFERMA-SCELTA.json).
+- **Umbracrown**, tavola **F**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_shadow_hell_regina_dello_specchio_dell_oblio_variante_veterana/CONFERMA-SCELTA.json).
+- **Mirusfulgur**, tavola **A**. [Ricevuta](../output/artwork/expressive_ink_giro_20261117_1233/habitat_isole_vipera_dei_parafulmini_variante_rituale/CONFERMA-SCELTA.json).
+
+La Soglia della Sutura è un luogo del Regno di Carne Viva, selezionabile fra le immagini Home; non è una voce del Bestiario e non introduce statistiche o palette. [Export originale](../output/artwork/expressive_ink_giro_20261117_1233/VOTI-UTENTE-20261117.json).
+
+Mirusclaust torna nel catalogo soltanto come variante rituale `habitat_vero_inferno_custode_del_cancello_senza_ritorno_variante_rituale`: la scelta A del 17 novembre rientra nell’eccezione per le tavole approvate prevista dal ritiro collettivo dell’8 novembre. La base rimane ritirata e tutte le definizioni storiche di statistiche, Grado, Skill e parti restano invariate.
+
+
+## GranScostumato e nomi protetti — 18 novembre 2026
+
+L’autrice sceglie G «Il cannone verso di te»: GranScostumato è un roditore della stessa famiglia degli Scostubanditi, molto muscoloso, con orecchie tonde, muso corto e baffi. Il cannone è impugnato da una mano e può essere portato anche sulla spalla; l’altra mano resta libera. La forte prospettiva della G è confermata. Il nome rimane GranScostumato. [Tavola G](../assets/oculum/home_art_authored/theme_granscostumato_canon_20261118_v3.webp).
+
+Scostubanditi, GranScostumato, forme Errate ed Empatiche e Forest Demon Baby/adulto mantengono i nomi attuali già scelti; la revisione fantasy da 4 a 9 lettere riguarda gli altri. GranScostumato Empatico riprende il nuovo corpo muscoloso, conserva benda salvia e indole; il suo nuovo lotto è ancora in produzione. Le altre forme Scostubanditi cambiano soltanto tratto, senza nuove armi o caratteristiche. Restano Re Goblin G primario, profondità leggera V5 e ambiente fino ai bordi.
+
+
+### GranScostumato Empatico · scelta D del 18 novembre 2026
+
+Confermata **D · Di spalle lungo il ponte**: nuovo corpo muscoloso della stessa specie degli Scostubanditi, un cannone sostenuto a una mano, mano libera con benda salvia e indole empatica conservata. Nome, anatomia numerica, regole e valori di combattimento restano invariati. Re Goblin G primario, profondità leggera V5, ponte con volte interamente sotterraneo fino ai bordi. Il vecchio sfondo resta nello storico. [Nuovo sfondo](../assets/oculum/home_art_authored/theme_granscostumato_empatico_canon_20261118_v3.webp) · [Ricevuta](../output/artwork/scostubanditi_nuovo_ink_20261118/granscostumato_empatico/CONFERMA-SCELTA.json).
+
+
+### Silvarkrath · scelta F del 18 novembre 2026
+
+La nuova scelta **F · Inchiostro spezzato profondo** sostituisce la precedente A solo come sfondo corrente, conservata nello storico. Sei riproposte di segno Re Goblin G con profondità leggera V5, ambiente fino ai bordi e zampa posteriore destra meglio articolata. Nome Silvarkrath, posa, conteggi anatomici e regole rimangono invariati. La correzione locale riguarda attacco della coscia, ginocchio e garretto della zampa destra. [Sfondo approvato](../assets/oculum/home_art_authored/theme_baby_forest_demon_variante_rituale_canon_20261118_ink_f.webp) · [Ricevuta](../output/artwork/audit_coerenza_ink_20261118/correzioni_zampa_destra/baby_forest_demon_variante_rituale/CONFERMA-SCELTA.json).
+
+
+### Zone e copertura dello sfondo — 18 novembre 2026
+
+Lost Town è sempre nel Regno Mezzano, anche per i negozi; parte bassa e sommità solare sono zone dello stesso regno. Estendere il nuovo segno Re Goblin G/V5 ai temi delle varie zone, conservandone il canone ambientale. Lo sfondo della pagina deve coprire tutta l’area, anche dietro nome e menu laterali, in orizzontale 1920×1080 e verticale 1080×1920. Questa conferma successiva prevale sul precedente mantenimento della cornice intera quando causava bande vuote nel fondale della pagina. Le tavole originali e le anteprime conservano i propri file e proporzioni.
+
+Deserto Divoratore, riferimenti aggiunti il 18 novembre: predominano distese e dune azzurre chiare, ammassi scuri di tentacoli e vegetazione mobile intorno a nuclei, voragini circolari verso grandi occhi nel terreno. Le rocce azzurre taglienti dei primi bozzetti sono ammesse in alcune zone, senza trasformare tutto il deserto in una caverna di cristalli. I due allegati guidano l’ambiente; il segno resta Re Goblin G, con la sola profondità leggera V5. Occhi nel terreno, non nuove lune o soli. Riferimenti conservati in `output/artwork/nuovi_mostri_aree_povere_20261118/riferimenti_deserto/`.
+
+**Centraggio verticale e Occhi dei Caduti.** In verticale il ritaglio segue un punto del soggetto nella sorgente, senza imporre il margine destro. Le composizioni telefono esplicite hanno precedenza. Le righe di scelta della creatura per un Occhio mostrano l’illustrazione canonica; il dossier Monster Book conserva il proprio sigillo. Un Occhio di Scostumato deve partire dall’aspetto e dallo sfondo dello Scostumato d’origine, conservando eventuali personalizzazioni della fonte. Colori della rarità ed effetti di gioco restano separati.
+
+**Orea Zalira, riferimento del 18 novembre.** L’aspetto del luogo segue l’allegato conservato in `output/artwork/nuovi_mostri_aree_povere_20261118/riferimenti_orea/orea-zalira-ambiente-utente.png`: colline morbide rosa/magenta/lilla, vegetazione rigogliosa, piante a ombrello, steli ricurvi, sfere vegetali, accenti ciano/verde acqua e ocra; due soli chiari senza occhi o volti. Tradurre questa ricchezza nel segno del Re Goblin G e nella profondità leggera V5, senza copiarne automaticamente la composizione o la resa tridimensionale. Orbryx conserva nome e posa G scelti. L’utente ha fermato il rifacimento delle altre sette pose: il riferimento resta vincolante per le future immagini del luogo.
+
+
+**Scostubanditi Errati, correzione del18novembre.** Per Scostubandito errato e Scostubandito veterano dell’errato conserva identici aspetto, posa, inquadratura, scena ed equipaggiamento degli originali: cambia soltanto la resa a inchiostro. Questa correzione specifica prevale sulle nuove pose previste prima per queste due forme. I nomi restano invariati.
+
+Correzioni successive esplicite: il non Veterano ha espressione più arrabbiata; i cappelli sono sagomati per le orecchie, con aperture e bordi rinforzati. Per la base è scelta B «Passo oltre il parapetto», con il solo ritocco del cappello nella derivata B1. I due Errati conservano spada, bastone e protezioni viola originali; non ricevono fucili o cannoni. «Perfetto» conferma il risultato mostrato. Non è un'approvazione implicita di nuove composizioni per telefono o reliquia.

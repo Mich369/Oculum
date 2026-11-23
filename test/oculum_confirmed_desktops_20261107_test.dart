@@ -37,7 +37,10 @@ OculumMonsterTheme _themeFor(String id) {
   return OculumMonsterTheme(entry, oculumMonsterColors(entry).first);
 }
 
-Future<void> _expectExactDesktop(Map<String, dynamic> file) async {
+Future<void> _expectExactDesktop(
+  Map<String, dynamic> file, {
+  String? replacement,
+}) async {
   final id = file['id'] as String;
   final asset = file['asset'] as String;
   final sha = file['nativeSha256'] as String;
@@ -47,8 +50,10 @@ Future<void> _expectExactDesktop(Map<String, dynamic> file) async {
   expect(_sha256(bytes), sha, reason: id);
   await expectBundledMonsterArt(asset);
   final theme = _themeFor(id);
-  expect(OculumMonsterTheme.desktopIllustrationForId(id), asset, reason: id);
-  expect(theme.illustration, oculumMonsterArtworkAsset(asset), reason: id);
+  final current = replacement ?? asset;
+  if (replacement != null) await expectBundledMonsterArt(replacement);
+  expect(OculumMonsterTheme.desktopIllustrationForId(id), current, reason: id);
+  expect(theme.illustration, oculumMonsterArtworkAsset(current), reason: id);
   expect(theme.preserveIllustrationFraming, isTrue, reason: id);
   expect(theme.illustrationMobile, isNull, reason: id);
   expect(theme.relicIllustration, isNull, reason: id);
@@ -131,7 +136,9 @@ void main() {
       for (final (filename, runtime) in [
         (
           'theme_baby_forest_demon_variante_rituale_canon_20261109_votes7.png',
-          _themeFor('baby_forest_demon_variante_rituale').illustration,
+          oculumMonsterArtworkAsset(
+            'assets/oculum/home_art/theme_baby_forest_demon_variante_rituale_canon_20261109_votes7.png',
+          ),
         ),
         (
           'theme_goblin_kamikaze_mobile_canon_20261101.png',
@@ -195,12 +202,23 @@ void main() {
       expect(File(asset).lengthSync(), (revision ?? file)['bytes'], reason: id);
       await expectBundledMonsterArt(asset);
       final theme = _themeFor(id);
+      final current = switch (id) {
+        'habitat_nuvole_rocciose_cinghiale_delle_creste_volanti_variante_errante' =>
+          'assets/oculum/home_art_authored/theme_${id}_canon_20261116_riallineamento.webp',
+        'cuore_lava_variante_corazzata' =>
+          'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp',
+        _ => asset,
+      };
       expect(
         OculumMonsterTheme.desktopIllustrationForId(id),
-        asset,
+        current,
         reason: id,
       );
-      expect(theme.illustration, oculumMonsterArtworkAsset(asset), reason: id);
+      expect(
+        theme.illustration,
+        oculumMonsterArtworkAsset(current),
+        reason: id,
+      );
       expect(theme.preserveIllustrationFraming, isTrue, reason: id);
     }
   });
@@ -267,7 +285,12 @@ void main() {
         ('hero_path_capo_cervelli_variante_corazzata', 'C'),
       });
       for (final file in files) {
-        await _expectExactDesktop(file);
+        await _expectExactDesktop(
+          file,
+          replacement: file['id'] == 'bunnys_variante_veterana'
+              ? 'assets/oculum/home_art_authored/theme_bunnys_variante_veterana_canon_20261115.webp'
+              : null,
+        );
       }
       expect(
         OculumMonsterTheme.desktopIllustrationForId('bunnys'),
@@ -321,6 +344,17 @@ void main() {
     (834.0, 'inspired_sentinella_spirale', 'votes3'),
     (1440.0, 'inspired_sentinella_spirale', 'votes3'),
     (320.0, '${_campanaro}_variante_errante', 'votes4'),
+    for (final width in [320.0, 1440.0])
+      for (final id in [
+        'gigante_sabbia',
+        'habitat_diabolico_scarabeo_dei_contratti_ardenti',
+        'habitat_morti_falena_del_sudario_variante_veterana',
+        'habitat_sotterraneo_regina_delle_miniere_mute_variante_rituale',
+        'lumin_gommoso_variante_corazzata',
+        'mostricciattolo_di_carta_variante_rituale',
+        'strana_presenza',
+      ])
+        (width, id, null),
   ]) {
     testWidgets('reference sheet preserves $monsterId at $width px', (
       tester,
@@ -331,8 +365,12 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       const sheetId = 'chosen-desktop-art';
-      final asset =
-          'assets/oculum/home_art/theme_${monsterId}_canon_20261107_$vote.png';
+      final version = monsterId == 'lumin_gommoso_variante_corazzata'
+          ? '20261117_ink_b'
+          : '20261116';
+      final asset = vote == null
+          ? 'assets/oculum/home_art_authored/theme_${monsterId}_canon_$version.webp'
+          : 'assets/oculum/home_art/theme_${monsterId}_canon_20261107_$vote.png';
       final theme = _themeFor(monsterId);
       final previous = oculumSheetMonsterThemes.value;
       oculumSheetMonsterThemes.value = {sheetId: theme.id};
@@ -379,7 +417,17 @@ void main() {
         of: find.byKey(ValueKey('monster-scene-${theme.id}')),
         matching: find.byType(Image),
       );
-      for (final layer in [narrative, backdrop]) {
+      final giantPhone = monsterId == 'gigante_sabbia' && width < 600;
+      for (final (layer, expectedAsset, expectedFit) in [
+        (
+          narrative,
+          giantPhone
+              ? 'assets/oculum/home_art/theme_gigante_sabbia_mobile_v1.png'
+              : asset,
+          giantPhone ? BoxFit.cover : BoxFit.contain,
+        ),
+        (backdrop, asset, BoxFit.contain),
+      ]) {
         final image = tester.widget<Image>(layer);
         final provider = image.image;
         final source = provider is ResizeImage
@@ -387,9 +435,9 @@ void main() {
             : provider;
         expect(
           (source as AssetImage).assetName,
-          oculumMonsterArtworkAsset(asset),
+          oculumMonsterArtworkAsset(expectedAsset),
         );
-        expect(image.fit, BoxFit.contain);
+        expect(image.fit, expectedFit);
         expect(image.alignment, Alignment.centerRight);
       }
       await tester.tap(find.text('Usa'));

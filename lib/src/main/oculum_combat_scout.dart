@@ -77,6 +77,21 @@ extension _OculumCombatScout on _OculumHomePageState {
 
   bool monsterBookPartyKnowsWeakPoint(String monsterId) =>
       monsterBookPartyKnowledge(monsterId)?['weakPoint'] == true;
+
+  void rememberEncounterCreatureArtwork(Iterable<Map> tokens) {
+    final ids = <String>{};
+    for (final token in tokens) {
+      if (const {'dead', 'fled', 'expired'}.contains(token['status'])) continue;
+      final id = monsterBookIdForCombatToken(Map<String, dynamic>.from(token));
+      if (id.isNotEmpty) ids.add(id);
+    }
+    for (final id in ids) {
+      if (monsterBookPartyKnowledge(id)?['seen'] != true) {
+        rememberMonsterBookPartyDiscovery(id, seen: true);
+      }
+    }
+  }
+
   bool monsterBookPartyKnowsAny(String monsterId) {
     final knowledge = monsterBookPartyKnowledge(monsterId);
     return const [

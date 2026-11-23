@@ -74,6 +74,77 @@ final _sandAndHalfDemonEntries = <MonsterBookEntry>[
     dropChances: {'sabbia_compatta_bestia': 50},
     classificationTags: ['Gigante', 'Miniboss', 'Sabbia'],
   ),
+  MonsterBookEntry(
+    id: 'corrotti_di_sabbia',
+    planeIds: const ['mezzano'],
+    nameIt: 'Corrotti di Sabbia',
+    nameEn: 'Sand Corrupted',
+    descIt:
+        'Umanoide eretto di sabbia ocra, con tre paia di braccia, due gambe '
+        'e una crosta di sabbia pressata sul dorso. Tre volti quasi '
+        'irriconoscibili emergono come impronte erose dalle spalle e dal petto. '
+        'Si aggira fra le rovine insabbiate. La sabbia assorbe gli urti, '
+        'mentre l’acqua sfalda la crosta e il vento disperde i granelli.',
+    descEn:
+        'An upright humanoid of ochre sand with six arms, two legs and a '
+        'crust of compressed sand across its back. Three barely recognisable '
+        'faces rise from its shoulders and chest like eroded impressions. It '
+        'roams buried ruins. Sand absorbs impacts, while water breaks down '
+        'its crust and wind scatters the grains.',
+    elementId: 'terra',
+    spriteAssetPath: '',
+    isMiniBoss: false,
+    isBoss: false,
+    isNullFateless: false,
+    stats: const {'level': 5, 'resilienza': 9, 'volonta': 4, 'materia': 7},
+    weakPointIt: 'La fessura dello sterno, dove la sabbia è meno compatta.',
+    weakPointEn: 'The crack along its sternum, where the sand is less dense.',
+    damageResistancePresets: const {
+      'contundente': 'Resistenza Semi Perfetta',
+      'perforante': 'Alta Resistenza',
+      'taglio': 'Resistenza',
+      'terra': 'Resistenza',
+      'acqua': 'Alta Fragilità',
+      'vento': 'Fragilità',
+    },
+    skillIds: const ['sand_beast_claw', 'sand_beast_armor'],
+    classificationTags: const ['Umanoide', 'Sabbia', 'Corrotto'],
+    encounterRules: {
+      'authoredCanonical': true,
+      'dispositions': const ['ostile', 'territoriale'],
+      'habitats': const ['dune', 'rovine insabbiate'],
+      'precisionBodyParts': [
+        {'id': 'body', 'label': 'Corpo', 'group': 'body'},
+        {
+          'id': 'sternum',
+          'label': 'Fessura dello sterno',
+          'group': 'torso',
+          'weak': true,
+        },
+        for (var pair = 1; pair <= 3; pair++) ...[
+          {
+            'id': 'arms_${2 * pair - 1}',
+            'label': 'Braccio destro · coppia $pair',
+            'group': 'arms',
+          },
+          {
+            'id': 'arms_${2 * pair}',
+            'label': 'Braccio sinistro · coppia $pair',
+            'group': 'arms',
+          },
+        ],
+        {'id': 'legs_1', 'label': 'Gamba destra', 'group': 'legs'},
+        {'id': 'legs_2', 'label': 'Gamba sinistra', 'group': 'legs'},
+        {'id': 'face_1', 'label': 'Volto sul petto', 'group': 'head'},
+        {'id': 'face_2', 'label': 'Volto sulla spalla destra', 'group': 'head'},
+        {
+          'id': 'face_3',
+          'label': 'Volto sulla spalla sinistra',
+          'group': 'head',
+        },
+      ],
+    },
+  ),
   _authoredPlanar(
     'mezzo_demone_cosciente',
     'Mezzo demone cosciente',

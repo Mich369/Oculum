@@ -2831,8 +2831,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           const SizedBox(height: 8),
           smallInfoText(
             t(
-              'Allenamento: se perdi ottieni EXP pari ai danni subiti meno le stats; se vinci pari ai danni fatti. Questa EXP si può ricevere una volta ogni 3 ore.',
-              'Training: if you lose, gain $expName equal to damage taken minus stats; if you win, gain $expName equal to damage dealt. This $expName can be received once every 3 hours.',
+              'Allenamento non letale: alla chiusura del Fight o alla fuga si somma la Potenza dei nemici morti o a terra. Il primo allenamento dopo un Riposo Lungo dà +150 $expName. Se la Difesa di un nemico è entro 6 punti dai tuoi Danni ottieni altri +100 $expName.',
+              'Non-lethal training: the Total Power of dead or downed enemies is added up when the Fight closes or you flee. The first session after a Long Rest grants +150 $expName. If an enemy’s Defense is within 6 points of your Damage, gain another +100 $expName.',
             ),
             color: Colors.grey.shade300,
           ),
@@ -2923,6 +2923,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ),
           const SizedBox(height: 18),
           SwitchListTile(
+            key: const ValueKey('sheet_rebirth_toggle'),
             value: rebirthato,
             activeThumbColor: tertiaryColor,
             title: Text(
@@ -2934,8 +2935,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
             ),
             subtitle: Text(
               t(
-                'Riduce le soglie dei Gradi e permette crescita più rapida.',
-                'Reduces Grade thresholds and allows faster growth.',
+                'Dopo conferma torna al Livello 0 e riduce le soglie dei Gradi.',
+                'After confirmation, returns to Level 0 and reduces Grade thresholds.',
               ),
             ),
             onChanged: toggleRebirth,
@@ -3557,7 +3558,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     setState(() {
       final before = hpCorrenti();
       final next = (before + delta).clamp(0, maxHp()).toInt();
-      currentHpController.text = next.toString();
+      writeHealedLife(next);
       risultato =
           'HP attuali: ${next - before >= 0 ? '+' : ''}${next - before} ($next/${maxHp()}).';
       aggiungiLog(risultato);
@@ -8426,6 +8427,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           ),
           SizedBox(height: dense ? 2 : 6),
           SwitchListTile(
+            key: const ValueKey('sheet_rebirth_toggle'),
             dense: dense,
             contentPadding: EdgeInsets.zero,
             value: rebirthato,
@@ -8435,8 +8437,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
                 ? null
                 : Text(
                     t(
-                      'Attivalo se la scheda è rebirthata.',
-                      'Turn on if this sheet is rebirthed.',
+                      'Conferma il Rebirth per tornare al Livello 0.',
+                      'Confirm Rebirth to return to Level 0.',
                     ),
                   ),
             onChanged: toggleRebirth,

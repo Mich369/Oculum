@@ -715,6 +715,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
         'Oculum disadvantage (−12) to Oculum rolls for one action; permanent stats are unchanged.',
   ),
   OculumConditionDefinition(
+    id: oculumElementalSphereSoulCondition,
+    nameIt: 'Spirito separato',
+    nameEn: 'Separated Spirit',
+    icon: Icons.blur_on,
+    category: OculumConditionCategory.oculum,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Il corpo non può muoversi, usare Azioni o Reazioni, né difendersi attivamente. Chi ha lanciato la Sfera può effettuare un solo attacco gratuito di opportunità mentre lo spirito è separato.',
+    descriptionEn:
+        'The body cannot move, use Actions or Reactions, or defend actively. The Sphere caster can make one free opportunity attack while the spirit is separated.',
+    affectedTargets: {
+      OculumConditionTarget.movimento,
+      OculumConditionTarget.reazioni,
+      OculumConditionTarget.combattimento,
+    },
+    removable: false,
+    control: true,
+  ),
+  OculumConditionDefinition(
     id: 'ricordo_vitale',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.resilienza,
@@ -949,6 +968,30 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     difficultyScaling: OculumConditionDifficultyScaling.none,
   ),
   OculumConditionDefinition(
+    id: 'logorato_acido',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.hp,
+      OculumConditionTarget.scudo,
+      OculumConditionTarget.scudoOculum,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Logorato Acido',
+    nameEn: 'Acid Erosion',
+    icon: Icons.science,
+    category: OculumConditionCategory.elemental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'A fine turno personale tira 1d30 × differenza di Grado (minimo ×1). '
+        'Una metà consuma gli Scudi, l’altra si risolve come danno da Acido. '
+        'Termina prima se recuperi Vita effettiva.',
+    descriptionEn:
+        'At the end of each personal turn, roll 1d30 × Grade difference (minimum ×1). '
+        'One half drains Shields and the other resolves as Acid damage. '
+        'It ends early when you restore actual Life.',
+    defaultDuration: oculumElementalSphereAcidDefaultTurns,
+    tickTrigger: OculumConditionTickTrigger.endTurn,
+  ),
+  OculumConditionDefinition(
     id: 'bruciatura',
     affectedTargets: <OculumConditionTarget>{
       OculumConditionTarget.hp,
@@ -1009,6 +1052,25 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     maxStage: 4,
     stackMode: OculumConditionStackMode.increaseStage,
     difficultyScaling: OculumConditionDifficultyScaling.recovery,
+    control: true,
+  ),
+  OculumConditionDefinition(
+    id: oculumElementalSphereIceCondition,
+    nameIt: 'Congelato dalla Sfera',
+    nameEn: 'Frozen by the Sphere',
+    icon: Icons.ac_unit,
+    category: OculumConditionCategory.elemental,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Movimento, Azioni e Reazioni bloccati. Spendi un’Azione per una prova di Volontà o usa Fuoco o Lava se li possiedi. Un colpo di Fuoco o Lava può rompere il ghiaccio.',
+    descriptionEn:
+        'Movement, Actions and Reactions are blocked. Spend an Action on a Will check or use Fire or Lava if available. A Fire or Lava hit can shatter the ice.',
+    affectedTargets: {
+      OculumConditionTarget.movimento,
+      OculumConditionTarget.reazioni,
+      OculumConditionTarget.combattimento,
+    },
+    removable: false,
     control: true,
   ),
   OculumConditionDefinition(
@@ -1355,6 +1417,24 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     descriptionEn:
         'Movement 0; does not block other logically possible actions.',
     control: true,
+  ),
+  OculumConditionDefinition(
+    id: oculumSolarGoldCondition,
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.movimento,
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Trasformato in oro',
+    nameEn: 'Turned to gold',
+    icon: Icons.diamond,
+    category: OculumConditionCategory.physical,
+    polarity: OculumConditionPolarity.negative,
+    descriptionIt:
+        'Movimento 0 per 3 turni. Puoi tentare di liberarti in Supporto e utilità.',
+    descriptionEn:
+        'Movement 0 for 3 turns. You may attempt to break free in Help and utility.',
+    defaultDuration: oculumSolarGoldTurns,
+    removable: false,
   ),
   OculumConditionDefinition(
     id: 'esaurimento',
@@ -1889,6 +1969,23 @@ oculumConditionCatalog = <OculumConditionDefinition>[
     stackMode: OculumConditionStackMode.refreshDuration,
   ),
   OculumConditionDefinition(
+    id: 'memoria_di_se',
+    affectedTargets: <OculumConditionTarget>{
+      OculumConditionTarget.combattimento,
+    },
+    nameIt: 'Memoria di Sé',
+    nameEn: 'Memory of Self',
+    icon: Icons.shield_outlined,
+    category: OculumConditionCategory.special,
+    polarity: OculumConditionPolarity.positive,
+    descriptionIt: 'Impedisce nuove applicazioni di Corruzione Rossa.',
+    descriptionEn: 'Prevents new applications of Red Corruption.',
+    defaultDuration: 0,
+    durationType: OculumConditionDurationType.permanent,
+    tickTrigger: OculumConditionTickTrigger.none,
+    stackMode: OculumConditionStackMode.refreshDuration,
+  ),
+  OculumConditionDefinition(
     id: 'vita_afona',
     affectedTargets: <OculumConditionTarget>{OculumConditionTarget.hp},
     nameIt: 'Vita Afona',
@@ -2060,10 +2157,15 @@ int oculumVitalMemoryIncomingDamage(int damage) {
   return damage + max(1, (damage * .25).ceil());
 }
 
-({int total, int perTick}) oculumVitalMemoryRecoveryForDamage(int hpDamage) {
+({int total, int perTick}) oculumVitalMemoryRecoveryForDamage(
+  int hpDamage, {
+  bool includedMemoryPenalty = true,
+}) {
   if (hpDamage <= 0) return (total: 0, perTick: 0);
   // Ricordo Vitale never recovers the condition's 25% incoming-damage cost.
-  final recoverableBaseDamage = (hpDamage / 1.25).floor();
+  final recoverableBaseDamage = includedMemoryPenalty
+      ? (hpDamage / 1.25).floor()
+      : hpDamage;
   return (
     total: max(0, (recoverableBaseDamage * .5).ceil()),
     perTick: max(0, (recoverableBaseDamage * .25).ceil()),

@@ -10,7 +10,7 @@ const oculumStatThresholdSkills = <String, List<Map<String, dynamic>>>{
       'cd': 6,
       'kind': 'strike',
       'description':
-          'Ti lanci contro il nemico: @Danni+20 danni. Questo attacco ignora le resistenze, mantenendo difesa e scudi.',
+          'Ti lanci contro il nemico e infliggi i tuoi Danni attuali più 20. Questo attacco ignora le resistenze, mantenendo Difesa e Scudi.',
     },
     {
       'name': 'Voto del baluardo',

@@ -1,5 +1,10 @@
 part of '../../main.dart';
 
+final _rebirthConfirmationOpen = Expando<bool>('rebirth-confirmation');
+
+int oculumPredoneOrbitReducedDamage(int damage, int reduction) =>
+    max(0, damage - max(0, reduction));
+
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
 double oculumAddIncomingDamagePercent(
@@ -98,6 +103,92 @@ bool oculumReflexCriticalAwardsDodge({
     percentileRoll < 25;
 
 extension _OculumHomeCombatProgression on _OculumHomePageState {
+  int get rebirthPartyRollExperienceBonusPercent {
+    final currentTag = sheetTagAt(schedaCorrente);
+    var otherRebirths = 0;
+    for (final index in masterPartyIndexes()) {
+      if (index < 0 ||
+          index >= schedePersonaggio.length ||
+          isEnemySheetAt(index)) {
+        continue;
+      }
+      final sheet = schedePersonaggio[index];
+      final tag = '${sheet['sheetTag'] ?? ''}';
+      if (tag.isNotEmpty && oculumSameSheetIdentity(tag, currentTag)) continue;
+      final runtime = sheet['planarRuntime'] as Map? ?? const {};
+      final temporarySummon =
+          readBoolValue(sheet['isSummon']) ||
+          readBoolValue(sheet['temporarySummon']) ||
+          readBoolValue(sheet['summoned']) ||
+          '${sheet['summonInstanceId'] ?? ''}'.isNotEmpty ||
+          '${sheet['summonKind'] ?? ''}'.isNotEmpty;
+      final clone =
+          readBoolValue(sheet['isClone']) ||
+          readBoolValue(sheet['clone']) ||
+          readBoolValue(runtime['doppioneCopy']);
+      if (temporarySummon || clone) continue;
+      if (readBoolValue(sheet['rebirthato'])) otherRebirths++;
+    }
+    return oculumRebirthPartyRollExperiencePercent(
+      rebirthed: rebirthato,
+      otherRebirthedMembers: otherRebirths,
+    );
+  }
+
+  int applyRebirthPartyRollExperience(int baseGain, {required String barId}) {
+    if (baseGain <= 0 || barId.isEmpty) return max(0, baseGain);
+    final percent = rebirthPartyRollExperienceBonusPercent;
+    if (percent <= 0) return baseGain;
+    final remainders = Map<String, dynamic>.from(
+      planarState['rebirthPartyRollExperienceRemainders'] as Map? ?? const {},
+    );
+    final result = oculumRebirthPartyRollExperienceGain(
+      baseGain: baseGain,
+      bonusPercent: percent,
+      previousRemainder: readIntValue(remainders[barId]),
+    );
+    remainders[barId] = result.remainder;
+    planarState['rebirthPartyRollExperienceRemainders'] = remainders;
+    return result.gain;
+  }
+
+  int get highRollDefenseWear =>
+      max(0, readIntValue(planarState['highRollDefenseWear']));
+
+  int get highRollDamageWear =>
+      max(0, readIntValue(planarState['highRollDamageWear']));
+
+  void applyHighRollWear({
+    required int natural,
+    required int faces,
+    required bool critical,
+    required bool shieldActive,
+  }) {
+    if (faces != 20 || natural < 18 || natural > 20) return;
+    final wear = oculumHighRollWear(
+      natural: natural,
+      faces: faces,
+      hit: true,
+      critical: critical,
+      shieldActive: shieldActive,
+      difficulty: normalizedCampaignDifficulty(),
+      percentile: shieldActive ? Random.secure().nextInt(100) : 0,
+    );
+    if (wear.defense == 0) return;
+    planarState['highRollDefenseWear'] = highRollDefenseWear + wear.defense;
+    planarState['highRollDamageWear'] = highRollDamageWear + wear.damage;
+    final loss = wear.damage == 0 ? '' : ' · Danni −${wear.damage}';
+    aggiungiLog(
+      '[DADO $natural] Difesa −${wear.defense}$loss fino al Riposo Breve.',
+    );
+    programmaSalvataggio();
+  }
+
+  void recoverHighRollWear() {
+    planarState.remove('highRollDefenseWear');
+    planarState.remove('highRollDamageWear');
+  }
+
   int get oculumShieldBreakDefensePenalty =>
       planarState['oculumShieldBreakDefensePending'] == true ? 3 : 0;
 
@@ -143,19 +234,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         !datiCaricati ||
         appOculumInBackground ||
         appOculumFocusTransition ||
-        paginaVisibileSicura(paginaCorrente) != 0 ||
         !sheetFeedbackEnabled) {
       return;
     }
     final target = sheetFeedbackTarget;
     if (origin != null && origin != target) return;
+    final lifeCapacity = kind == OculumFeedbackKind.lifeDamage ? maxHp() : null;
     sheetFeedback.value = OculumSheetFeedback(
       kind,
       target,
       amount: amount,
       tint: tint,
-      showSkulls:
-          kind == OculumFeedbackKind.lifeDamage && hpCorrenti() * 4 < maxHp(),
+      showSkulls: lifeCapacity != null && hpCorrenti() * 4 < lifeCapacity,
+      lifeCapacity: lifeCapacity,
     );
   }
 
@@ -233,7 +324,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       ..['round'] = masterInitiativeRound
       ..['activeIndex'] = masterInitiativeActiveIndex
       ..['manualOrder'] = masterInitiativeManualOrder
-      ..['published'] = masterInitiativePublished
+      ..['published'] = masterInitiativePublished && !isMasterOnlyDraft(group)
       ..['manualCounter'] = masterInitiativeManualCounter;
   }
 
@@ -254,7 +345,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     masterInitiativeRound = max(0, readIntValue(group['round'], fallback: 1));
     masterInitiativeActiveIndex = max(0, readIntValue(group['activeIndex']));
     masterInitiativeManualOrder = readBoolValue(group['manualOrder']);
-    masterInitiativePublished = readBoolValue(group['published']);
+    masterInitiativePublished =
+        !isMasterOnlyDraft(group) && readBoolValue(group['published']);
     masterInitiativeManualCounter = max(
       0,
       readIntValue(group['manualCounter']),
@@ -428,7 +520,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                   if (!running)
                     for (final token in tokens)
                       CheckboxListTile(
-                        title: Text('${token['name'] ?? '???'}'),
+                        title: Text(oculumReferenceEncounterTokenName(token)),
                         value: selected.contains(
                           '${token['sheetTag'] ?? token['id']}',
                         ),
@@ -620,11 +712,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  void addMasterInitiativeGroup() {
+  void addMasterInitiativeGroup({bool masterOnlyDraft = false}) {
     captureActiveMasterInitiativeGroup();
     final id = 'encounter_${DateTime.now().microsecondsSinceEpoch}';
     masterInitiativeGroups.add(<String, dynamic>{
       'id': id,
+      if (masterOnlyDraft) _oculumMasterOnlyDraft: true,
       'name':
           '${t('Scontro', 'Encounter')} ${masterInitiativeGroups.length + 1}',
       'tokens': <Map<String, dynamic>>[],
@@ -741,6 +834,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
     final fightInstanceId = DateTime.now().microsecondsSinceEpoch.toString();
     group['combatEnded'] = false;
+    snapshotCombatFightPlane();
     for (final token in masterInitiativeTokens) {
       token.remove('cycleGoblinGiftClaimed');
       token.remove('opposingChaosStats');
@@ -760,6 +854,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token.remove(key);
       }
       token['fightInstanceId'] = fightInstanceId;
+      resetCynervailPhaseForToken(token);
       for (final key in const [
         'rewardPowerTurnMaxima',
         'rewardPowerTurnSerial',
@@ -779,6 +874,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token[key] = 0;
       }
     }
+    synchronizeStoneguardFightStart(masterInitiativeTokens);
+    if (!activeMasterOnlyDraft || realtimeService?.isConnected != true) {
+      rememberEncounterCreatureArtwork(masterInitiativeTokens);
+    }
     rollMasterInitiativeTokens();
     for (final token in masterInitiativeTokens) {
       sampleFightRewardPowerToken(token);
@@ -789,6 +888,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
     }
     captureActiveMasterInitiativeGroup();
+    if (masterInitiativeTokens.isNotEmpty) {
+      advanceLamaOrbitaForActiveToken(
+        masterInitiativeTokens[masterInitiativeActiveIndex],
+      );
+    }
     for (final token in masterInitiativeTokens) {
       if (monsterBookIdForCombatToken(token) == 'golem_carne') {
         faunaForOwnedSheet(onlineCombatTokenTag(token), beginFleshGolemFight);
@@ -1252,14 +1356,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     required int totale,
     int faces = 20,
   }) {
-    final gain = esperienzaCriticaCore(
-      dado: dado,
-      totale: totale,
-      faces: faces,
+    final gain = applyRebirthPartyRollExperience(
+      esperienzaCriticaCore(dado: dado, totale: totale, faces: faces),
+      barId: 'critical-stat:$key',
     );
     if (gain <= 0) return '';
     esperienzaCriticaStatistiche[key] =
         max(0, esperienzaCriticaStatistiche[key] ?? 0) + gain;
+    programmaSalvataggio();
     var earned = 0;
     if (const {'vc', 'cm', 'iniziativa', 'aiuta_compagno'}.contains(key)) {
       while ((esperienzaCriticaStatistiche[key] ?? 0) >=
@@ -1401,6 +1505,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (safe > previous) {
       advanceCorruptionPersonalTurn(safe);
       advanceNecromancySummons(safe);
+      final owner = sheetTagAt(schedaCorrente);
+      unawaited(
+        Future<void>.microtask(() => advanceWeldSpiderBeamTurn(owner, safe)),
+      );
     }
     notifyActiveSheetSummaryChanged();
     programmaSalvataggio(invalidateCaches: false);
@@ -1890,12 +1998,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     );
     final testoDado = magicalLuckRollFormula(formula, magicalLuck, totale);
     slotMachineLastSucceeded = resolveSlotMachineSuccess(naturalRoll: dado);
-    final expGuadagnata = oculumRollExperienceGain(
+    final baseRollExperience = oculumRollExperienceGain(
       naturalRoll: dado,
       faces: 20,
       rollSucceeded: slotMachineRollsEnabled
           ? slotMachineLastSucceeded
           : totale > 0,
+    );
+    final expGuadagnata = applyRebirthPartyRollExperience(
+      baseRollExperience,
+      barId: 'character-roll-exp',
     );
 
     final statConsumata = consumoElevatoStatKey(nome);
@@ -1953,6 +2065,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool resourceAlreadySpent = false,
     bool defenseRoll = false,
     bool attackRoll = false,
+    bool consumePreparedAttackEffects = true,
     bool oculumPowered = false,
     String? actionLabel,
     void Function(int damageBonus)? onOculumDamageBonus,
@@ -2126,12 +2239,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       naturalRoll: dado,
       naturalMaximum: faces,
     );
-    final expGuadagnata = oculumRollExperienceGain(
+    final baseRollExperience = oculumRollExperienceGain(
       naturalRoll: dado,
       faces: faces,
       rollSucceeded: slotMachineRollsEnabled
           ? slotMachineLastSucceeded
           : totale > 0,
+    );
+    final expGuadagnata = applyRebirthPartyRollExperience(
+      baseRollExperience,
+      barId: 'character-roll-exp',
     );
 
     final statoForzaLog = registraTiroStatoForza();
@@ -2148,7 +2265,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           )
         : '';
     final preparedDamageText =
-        preparedDamage != null && consumeNextAttackStructuredEffects()
+        consumePreparedAttackEffects &&
+            preparedDamage != null &&
+            consumeNextAttackStructuredEffects()
         ? t(
             '\nDanno inflitto nell’azione precedente: $preparedDamage. Bonus consumato con questo attacco.',
             '\nDamage from the previous action: $preparedDamage. Bonus consumed by this attack.',
@@ -2349,7 +2468,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         dado > 10) {
       final sheet = schedePersonaggio[schedaCorrente];
       if (stat.id == 'concentrazione') {
+        if (sheet['combatConcentrationPending'] != true) {
+          balenaRayPreparation?['balenaFocusTurn'] = playerReportedTurn;
+        }
         sheet['combatConcentrationPending'] = true;
+        focusWeldSpiderBeam(playerReportedTurn);
         aggiungiLog(
           '[CONCENTRAZIONE] Tiro $dado: attivata per la prossima azione di combattimento (+10% Danni se attacchi, +12% Difesa se ti difendi).',
         );
@@ -2393,9 +2516,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             ' No Fortune point available.',
           )
         : '';
-    final masteryGain = oculusSubtraitMasteryGainForDieAndGrade(
+    final baseMasteryGain = oculusSubtraitMasteryGainForDieAndGrade(
       dado,
       leggiNumero(gradoController),
+    );
+    final masteryGain = applyRebirthPartyRollExperience(
+      baseMasteryGain,
+      barId: 'subtrait:${stat.id}',
     );
     slotMachineLastSucceeded = resolveSlotMachineSuccess(
       naturalRoll: dado,
@@ -2428,6 +2555,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         );
       }
       notifyHiddenEyeStatChanged(stat);
+      programmaSalvataggio();
     }
     final masteryText = masteryGain <= 0
         ? ''
@@ -3057,10 +3185,34 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         type.contains('enemy');
   }
 
+  String masterInitiativeTokenBackgroundAsset(Map<String, dynamic> token) {
+    if (!masterInitiativeTokenUsesHex(token)) return '';
+    final sourceId = monsterBookIdForCombatToken(token);
+    MonsterBookEntry? entry = sourceId.isEmpty
+        ? null
+        : monsterBookEntryById(sourceId);
+    if (entry == null) {
+      final name = oculumNormalizeText('${token['name'] ?? ''}');
+      if (name.isNotEmpty) {
+        entry = monsterBookEntries.where((candidate) {
+          return oculumMonsterNameSearchAliases(
+            candidate,
+          ).any((alias) => oculumNormalizeText(alias) == name);
+        }).firstOrNull;
+      }
+    }
+    if (entry == null) return '';
+    final theme = oculumCreatureRecognitionTheme(entry);
+    return theme.illustration ?? theme.illustrationMobile ?? '';
+  }
+
   String masterInitiativeTokenSpriteAsset(Map<String, dynamic> token) {
     final existing = '${token['spriteAssetPath'] ?? ''}'.trim();
     if (existing.isNotEmpty) return existing;
     if (!masterInitiativeTokenUsesHex(token)) return '';
+
+    final background = masterInitiativeTokenBackgroundAsset(token);
+    if (background.isNotEmpty) return background;
 
     final matched = monsterBookSpriteAssetForText(
       '${token['name'] ?? ''} ${token['type'] ?? ''} ${token['notes'] ?? ''}',
@@ -3100,12 +3252,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token['oblivionMemoryReactionLost'] == true) {
       return 0;
     }
+    if (_isGoblinRoyalGuard(token) || _isMutantRatPup(token)) return 1;
     return max(1, readIntValue(token['reactionMax'], fallback: 1)) +
         max(0, readIntValue(token['extraNormalReactionCurrent']));
   }
 
   int masterInitiativeFastReactionMax(Map<String, dynamic> token) {
-    if (totalPowerTokenExhausted(token)) return 0;
+    if (totalPowerTokenExhausted(token) ||
+        _isGoblinRoyalGuard(token) ||
+        _isMutantRatPup(token)) {
+      return 0;
+    }
     if (token['senkaClone'] == true) {
       return token['senkaCloneFirstTurn'] == true ? 1 : 0;
     }
@@ -3280,6 +3437,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void convertUnusedNormalReactionForToken(Map<String, dynamic> token) {
+    if (_isGoblinRoyalGuard(token) || _isMutantRatPup(token)) return;
     if (!readBoolValue(token['reactionPoolInitialized'])) return;
     final poolRound = readIntValue(token['reactionPoolRound']);
     if (poolRound == 0 &&
@@ -3312,7 +3470,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     token['reactionUsedRound'] = 0;
     token['reactionPoolInitialized'] = true;
     token['reactionPoolRound'] = masterInitiativeRound;
-    token['reactionNormalFirstRoundLocked'] = masterInitiativeRound == 0;
+    token['reactionNormalFirstRoundLocked'] =
+        masterInitiativeRound == 0 &&
+        !_isGoblinRoyalGuard(token) &&
+        !_isMutantRatPup(token);
     token.remove('reactionAt');
     token['updatedAt'] = DateTime.now().toIso8601String();
   }
@@ -3335,6 +3496,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
               masterInitiativeRound ||
           (token['posteaFirstRoundReactionOnly'] == true &&
               masterInitiativeRound == 0) ||
+          _isGoblinRoyalGuard(token) ||
+          _isMutantRatPup(token) ||
           token['meccanioReactionsOnly'] == true;
       if (token['mechaPilotExtra'] == true) {
         final field = token['mechaPilotCritical'] == true
@@ -3374,6 +3537,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
     }
     referenceCreatureTurn(token);
+    startMutantRatPupTurn(token);
     resetLocalMapMovementForInitiativeToken(token);
   }
 
@@ -3445,6 +3609,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (index < 0 || index >= masterInitiativeTokens.length) return false;
     final token = masterInitiativeTokens[index];
     if (masterInitiativeTokenIsDead(token) ||
+        _isMutantRatPup(token) ||
         masterInitiativeTokenIsTemporary(token)) {
       return false;
     }
@@ -3582,12 +3747,22 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final reactionFastManual = readBoolValue(token['reactionFastManual']);
       token['reactionManual'] = reactionManual;
       token['reactionFastManual'] = reactionFastManual;
-      token['reactionMax'] = reactionManual || sheetIndex < 0
+      final reactionsOnly =
+          _isGoblinRoyalGuard(token) || _isMutantRatPup(token);
+      token['reactionMax'] = reactionsOnly
+          ? 1
+          : reactionManual || sheetIndex < 0
           ? max(1, readIntValue(token['reactionMax'], fallback: 1))
           : max(1, sheetReazioniAt(sheetIndex));
-      token['reactionFastMax'] = reactionFastManual || sheetIndex < 0
+      token['reactionFastMax'] = reactionsOnly
+          ? 0
+          : reactionFastManual || sheetIndex < 0
           ? max(1, readIntValue(token['reactionFastMax'], fallback: 1))
           : max(1, sheetReazioniVelociAt(sheetIndex));
+      if (reactionsOnly) {
+        token['actionUsed'] = true;
+        token['kiExtraActions'] = 0;
+      }
       final legacyUsedRound = readIntValue(token['reactionUsedRound']);
       final legacyUsed =
           !token.containsKey('reactionUsed') &&
@@ -3616,7 +3791,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         // explicitly and follow the first-round fast-reaction rule.
         token['reactionPoolInitialized'] = true;
         token['reactionPoolRound'] = masterInitiativeRound;
-        token['reactionNormalFirstRoundLocked'] = masterInitiativeRound == 0;
+        token['reactionNormalFirstRoundLocked'] =
+            masterInitiativeRound == 0 && !reactionsOnly;
       } else {
         token['reactionPoolInitialized'] = readBoolValue(
           token['reactionPoolInitialized'],
@@ -3882,6 +4058,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'ash': sheetIntValueAt(index, 'cenere'),
       'level': sheetCriticalLevelAt(index),
       'grade': max(0, sheetIntValueAt(index, 'grado')),
+      'derivedDanno': index == schedaCorrente
+          ? dannoTotale()
+          : readIntValue(schedePersonaggio[index]['derivedDanno']),
+      'derivedDifesa': index == schedaCorrente
+          ? difesa()
+          : readIntValue(schedePersonaggio[index]['derivedDifesa']),
       'rollDifficulty': sheetDifficoltaTiroAt(index),
       'initiativeRoll': roll,
       'initiativeBase': base,
@@ -3924,6 +4106,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       'reactionFastUsed': 0,
       'reactionFastTurnKey': '',
       'actionUsed': false,
+      if (_isGoblinRoyalGuard(schedePersonaggio[index]) ||
+          _isMutantRatPup(schedePersonaggio[index])) ...{
+        'actionUsed': true,
+        'reactionMax': 1,
+        'reactionFastMax': 0,
+        'reactionPoolInitialized': true,
+        'reactionPoolRound': masterInitiativeRound,
+        'reactionNormalFirstRoundLocked': false,
+      },
       if ((schedePersonaggio[index]['planarRuntime'] as Map? ??
               {})['senkaClone'] ==
           true) ...{
@@ -4080,7 +4271,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     sendRealtimeInitiativeSnapshotIfPublished();
   }
 
-  void addSheetToMasterInitiative(int index, {bool rollInitiative = true}) {
+  void addSheetToMasterInitiative(
+    int index, {
+    bool rollInitiative = true,
+    bool includeGuardians = true,
+    bool shareToRealtime = true,
+  }) {
     if (index < 0 || index >= schedePersonaggio.length) return;
     if (!sheetCanBeAddedToMasterInitiative(index)) {
       setState(() {
@@ -4142,9 +4338,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
     programmaSalvataggio();
     notifyActiveSheetSummaryChanged();
-    sendRealtimeMasterVisibleTokenAt(index);
+    if (shareToRealtime) sendRealtimeMasterVisibleTokenAt(index);
     for (final pawn in pawnGuardians.where(
       (pawn) =>
+          includeGuardians &&
           pawn.ownerTag == sheetTagAt(index) &&
           pawn.alive &&
           !pawn.pendingRegistration,
@@ -4323,9 +4520,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         token['reactionFastBonusConvertedTurnKey'] = '';
         token['reactionPoolInitialized'] = true;
         token['reactionPoolRound'] = 0;
-        token['reactionNormalFirstRoundLocked'] = true;
+        token['reactionNormalFirstRoundLocked'] =
+            !_isGoblinRoyalGuard(token) && !_isMutantRatPup(token);
         token['actionTurnRound'] = -1;
-        token['actionUsed'] = false;
+        token['actionUsed'] =
+            _isGoblinRoyalGuard(token) || _isMutantRatPup(token);
         token['tieBreaker'] = token['tieBreaker'] ?? Random().nextInt(1 << 31);
         token['updatedAt'] = DateTime.now().toIso8601String();
         rolled++;
@@ -4645,6 +4844,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void nextMasterInitiativeTurn({int delta = 1}) {
+    if (realtimeUsesSameAccountMaster) {
+      unawaited(requestVisibleEncounterStep(delta));
+      return;
+    }
     if (masterInitiativeTokens.isEmpty) return;
     final oldRound = masterInitiativeRound;
     final oldToken =
@@ -4744,6 +4947,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       if (delta > 0) advanceArtSwitchForToken(masterInitiativeTokens[next]);
       restoreMasterInitiativeTurnResources(masterInitiativeTokens[next]);
       if (delta > 0) {
+        clearNecthrallControl(masterInitiativeTokens[next]);
         beginFightRewardPowerTurn(masterInitiativeTokens[next]);
         advanced = true;
       }
@@ -4761,12 +4965,29 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         advanced &&
         group?['fightStarted'] == true &&
         fightInstanceId.isNotEmpty) {
+      unawaited(
+        advanceWeldSpiderBeamTurn(
+          oldActiveTag,
+          readIntValue(oldToken['reportedTurn']),
+        ),
+      );
       final newTag = publicInitiativeSourceTag(
         masterInitiativeTokens[masterInitiativeActiveIndex],
       );
       advanceWorldClockTurn(
         selectedMasterInitiativeGroupId,
         '$fightInstanceId:$oldRound:$oldActiveTag:$newTag',
+      );
+      startOculiathScratchTurn(
+        masterInitiativeTokens[masterInitiativeActiveIndex],
+        masterInitiativeRound,
+      );
+      startPiovraGripTurn(
+        masterInitiativeTokens[masterInitiativeActiveIndex],
+        masterInitiativeRound,
+      );
+      advanceLamaOrbitaForActiveToken(
+        masterInitiativeTokens[masterInitiativeActiveIndex],
       );
     }
     programmaSalvataggio();
@@ -4802,8 +5023,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           token['pendingFastReactionConsequenceBonus'] = 0;
           token['reactionPoolInitialized'] = true;
           token['reactionPoolRound'] = 0;
-          token['reactionNormalFirstRoundLocked'] = true;
-          token['actionUsed'] = false;
+          token['reactionNormalFirstRoundLocked'] =
+              !_isGoblinRoyalGuard(token) && !_isMutantRatPup(token);
+          token['actionUsed'] =
+              _isGoblinRoyalGuard(token) || _isMutantRatPup(token);
           token['actionTurnRound'] = -1;
         }
         playerReportedTurn = 0;
@@ -5084,6 +5307,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
     setState(() {
       expireBoneGoatAphoniaAtFightEnd(selectedMasterInitiativeGroupId);
+      expireOculiathHolds(selectedMasterInitiativeGroupId);
+      expirePiovraGrips(selectedMasterInitiativeGroupId);
       final endingTokens = masterInitiativeTokens.toList();
       masterInitiativeTokens.clear();
       clearTemporaryCombatResistanceEffects(
@@ -5159,9 +5384,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       0,
       readIntValue(schedePersonaggio[index]['companionAidPending']),
     );
-    final directedHelp = readIntValue(
-      schedePersonaggio[index]['combatHelpPending'],
-    ).clamp(-1000000, 1000000);
+    final directedHelp = _pendingCombatHelpAt(index);
     final bonus = baseBonus + aid + directedHelp;
     final level = sheetCriticalLevelAt(index);
     final grade = max(0, sheetIntValueAt(index, 'grado'));
@@ -5195,12 +5418,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (magicalLuck == null) return;
     final totale = baseTotal + magicalLuck;
     final testoDado = magicalLuckRollFormula(formula, magicalLuck, totale);
-    if (directedHelp != 0) {
-      aggiungiLog(
-        '[AIUTO CONSUMATO] $nome ${directedHelp >= 0 ? '+' : ''}$directedHelp nel tiro.',
-      );
-    }
-    schedePersonaggio[index]['combatHelpPending'] = 0;
+    consumeCombatHelp(sheetIndex: index);
     schedePersonaggio[index]['companionAidPending'] = 0;
     final tipo = tipoSchedaPersonaggio(index).toLowerCase();
     final eliteProgress = oculumEliteMonsterRollProgress(
@@ -6301,6 +6519,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   Future<void> applicaDannoSubito({
     bool critico = false,
     bool doubleCritical = false,
+    bool suppressRegenerativeHit = false,
     int? sandLavaPercentile,
     int criticalBonusMultiplier = 1,
     double defenseMultiplier = 1,
@@ -6315,18 +6534,25 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool bypassDefense = false,
     bool bypassPhysicalArmor = false,
     bool bypassShields = false,
+    bool suppressDifficultyShieldBypass = false,
     int shieldDamageBonusPercent = 0,
     bool resolvedResistance = false,
     String? resistancePresetOverride,
     int incomingDamagePercentAdjustment = 0,
+    int minimumDamageBeforeProtections = 0,
+    bool? meleeAttack,
     int? dannoEsplicito,
+    bool confirmedAttack = false,
     String? enemyDifficulty,
     int? enemyLevel,
     int? enemyGrade,
     String attackKind = '',
     String? hitBodyPart,
     String? damagePacketId,
+    String? damageEncounterId,
     bool magicalAttack = false,
+    bool canHitIntangible = false,
+    bool allowPawnProtection = true,
     bool nonLethal = false,
     bool friendlyFire = false,
     bool friendlyFireResisted = false,
@@ -6335,6 +6561,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     bool criticalShieldAlreadyBroken = false,
     ValueChanged<_CombatLogImpact>? onImpact,
   }) async {
+    final trainingDamage = isNonLethalTrainingForSheet(
+      encounterId: damageEncounterId,
+    );
     if (parasiteHiddenInHost) {
       aggiungiLog(
         '[PARASSITA] Dentro l’ospite non può essere colpito separatamente.',
@@ -6350,8 +6579,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     var dannoInserito = dannoEsplicito ?? leggiValoreDannoCura();
 
     if (dannoInserito == null || dannoInserito <= 0) return;
+    final originalDamage = dannoInserito;
     if (!referenceAnatomicalTargetAvailable(hitBodyPart)) {
       aggiungiLog('[ANATOMIA] La parte mirata è nascosta o non più presente.');
+      return;
+    }
+    final incomingElement = selectedIncomingDamageElement();
+    if (maskedShadowAvoidsPhysicalDamage(incomingElement)) {
+      aggiungiLog('[L’OMBRA] Il colpo fisico attraversa la sagoma.');
+      reportIncomingCombatImpact(const _CombatLogImpact(), onImpact);
       return;
     }
     if (sandLavaPacketAlreadyResolved(damagePacketId)) return;
@@ -6361,9 +6597,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       constructCore['lastAttackCore'] = hitBodyPart == 'core';
     }
     if (isMeccanio) {
-      final element = oculumNormalizeElementId(selectedIncomingDamageElement());
       final percent = meccanioElementPercent(activeCriticalLevel());
-      if (element == 'fulmine') {
+      if (incomingElement == 'fulmine') {
+        if (suppressRegenerativeHit) return;
         final hpBefore = hpCorrenti();
         regenerateMeccanio(
           (dannoInserito * percent / 100).ceil(),
@@ -6376,7 +6612,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         );
         return;
       }
-      if (element == 'taglio') {
+      if (incomingElement == 'taglio') {
         dannoInserito = (dannoInserito * (100 - percent) / 100).floor();
         if (dannoInserito <= 0) {
           aggiungiLog('[MECCANIO] Immunità al Taglio.');
@@ -6403,23 +6639,32 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final isBoss =
         (sourceMonster?.isBoss ?? false) ||
         (sheetKind.contains('boss') && !isMiniBoss);
-    final incomingElement = selectedIncomingDamageElement();
     dannoInserito = applyStat35ResImmunity(
       dannoInserito,
       attackerGrade: enemyGrade,
     );
     if (dannoInserito > 0) {
-      final percent = consumeMateria35ImmaterialeHit(
-        element: incomingElement,
-        magicalAttack: magicalAttack,
-        attackKind: attackKind,
-      );
+      final percent =
+          cynervailIncomingDamagePercent(
+            element: incomingElement,
+            magicalAttack: magicalAttack,
+            attackKind: attackKind,
+            hitBodyPart: hitBodyPart,
+            canHitIntangible: canHitIntangible,
+          ) ??
+          consumeMateria35ImmaterialeHit(
+            element: incomingElement,
+            magicalAttack: magicalAttack,
+            attackKind: attackKind,
+          );
       dannoInserito = dannoInserito * percent ~/ 100;
     }
     if (dannoInserito <= 0) {
       reportIncomingCombatImpact(const _CombatLogImpact(), onImpact);
       return;
     }
+    var remainingMinimum =
+        minimumDamageBeforeProtections * dannoInserito ~/ originalDamage;
     final previousElementalAdaptation = sheet['combatElementalAdaptation'];
     final elementalAdaptation =
         (isMiniBoss || isBoss) &&
@@ -6441,6 +6686,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     if (adaptationReduction > 0) {
       final reduced = min(dannoInserito, adaptationReduction);
       dannoInserito -= reduced;
+      remainingMinimum = max(0, remainingMinimum - reduced);
       sheet['combatAdaptationReductionPending'] = 0;
       programmaSalvataggio();
       if (dannoInserito <= 0) {
@@ -6494,19 +6740,24 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       setState(() {
         fortuna += fortunaOttenuta;
         dannoSubitoController.clear();
-        reportIncomingCombatImpact(
-          const _CombatLogImpact(),
-          onImpact,
-          empty: dodgeText,
-        );
-        if (withShield && onImpact != null) aggiungiLog(dodgeText);
+        if (remainingMinimum > 0) {
+          aggiungiLog('$dodgeText · resta il danno minimo dell’Eco.');
+        } else {
+          reportIncomingCombatImpact(
+            const _CombatLogImpact(),
+            onImpact,
+            empty: dodgeText,
+          );
+          if (withShield && onImpact != null) aggiungiLog(dodgeText);
+        }
       });
       programmaSalvataggio();
       oculumCombatTheme.react(
         'dodge',
         elementId: oculumCombatElementId(selectedIncomingDamageElement()),
       );
-      return;
+      if (remainingMinimum <= 0) return;
+      dannoInserito = remainingMinimum;
     }
 
     final skullFormHit =
@@ -6639,15 +6890,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                 criticalEnemyLevel,
               ) *
               criticalBonusMultiplier.clamp(1, 2);
+      final incomingReductionPercent =
+          100 -
+          activeStructuredEffectBonus(
+            'incoming_reduction_percent',
+          ).clamp(0, 100).toInt();
       final dannoPrimaParataLordo = oculumCounterAttackDamage(
         oculumCounterAttackDamage(
           dannoInserito + (critico ? bonusCritico : 0),
           incomingPacketPercent,
         ),
-        100 -
-            activeStructuredEffectBonus(
-              'incoming_reduction_percent',
-            ).clamp(0, 100),
+        incomingReductionPercent,
       );
       final runicBeforeDefense = min(
         max(0, resistanceBypassDamage),
@@ -6680,7 +6933,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final ignoraScudi =
           bypassShields ||
           (!resolvedResistance &&
-              (dannoOltreScudi || difficultyBypasses.beyondShield));
+              (dannoOltreScudi ||
+                  !suppressDifficultyShieldBypass &&
+                      difficultyBypasses.beyondShield));
       final bonusScudiManuale =
           bonusDannoScudiPercentuale() +
           shieldDamageBonusPercent.clamp(0, 1000);
@@ -6717,6 +6972,16 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                           defenseMultiplier.clamp(1, 1.5))
                       .ceil(),
             );
+      if (remainingMinimum > 0) {
+        final reducedMinimum = oculumCounterAttackDamage(
+          oculumCounterAttackDamage(remainingMinimum, incomingPacketPercent),
+          incomingReductionPercent,
+        );
+        dannoDopoDifesa = max(
+          dannoDopoDifesa,
+          oculumReduceIncomingDamage(reducedMinimum, incomingDamageMultiplier),
+        );
+      }
       // Split once after Defense, then apply resistances only to ordinary damage.
       final protectedRunicDamage = resolvedResistance
           ? 0
@@ -6814,6 +7079,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           : applyConditionIncomingDamage(afterAbilityResistance);
 
       if (dannoModificato < 0) {
+        // A returned counter hit is omitted rather than healing its recipient.
+        // Check again here in case protections changed during an awaited reply.
+        if (suppressRegenerativeHit) return;
         final curaDaRigenerazione = dannoModificato.abs();
         final hpPrimaCura = hpCorrenti();
         final hpTempPrimaCura = hpTemp();
@@ -6839,7 +7107,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           schivataOculumRiduzionePronta = 0;
           schivataOculumEtichettaPronta = '';
 
-          currentHpController.text = healed.current.toString();
+          writeHealedLife(healed.current);
           impostaHpTempTotali(healed.temporary);
 
           dannoSubitoController.clear();
@@ -6930,6 +7198,20 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         dannoFinale = max(1, (dannoFinale / 2).ceil());
       }
       if (friendlyFireResisted) dannoFinale = dannoFinale * 3 ~/ 4;
+      if (meleeAttack != null) {
+        final reduction = activeStructuredEffectBonus(
+          meleeAttack
+              ? oculumPredoneCloseReduction
+              : oculumPredoneRangedReduction,
+        );
+        final reduced = oculumPredoneOrbitReducedDamage(dannoFinale, reduction);
+        if (reduced < dannoFinale) {
+          aggiungiLog(
+            '[ORBITA DEL BOOMERANG] −${dannoFinale - reduced} Danni.',
+          );
+          dannoFinale = reduced;
+        }
+      }
 
       int rimanente = dannoFinale;
       rimanente = absorbProvokerShield(rimanente, bypassShields: ignoraScudi);
@@ -6941,6 +7223,9 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       beginFleshGolemFight();
       final oculumShieldBeforeDamage = oculumShield;
       final shieldBeforeDamage = shield;
+      final transformShieldBeforeDamage =
+          posteaTransformShieldRemaining + volenterosiShieldRemaining;
+      final stoneguardShieldBeforeDamage = stoneguardShieldRemaining;
       final safeHpPronto = hasSafeHpParserCommand();
       final saveShieldValue = saveShieldParserValue();
       final scudoSalvataggioPronto =
@@ -7059,9 +7344,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         shield = shieldResult.layer;
         rimanente = shieldResult.remaining;
         var shieldPointsSpent = shieldBefore - shield;
-        final transformShield = posteaTransformShieldRemaining;
-        shieldPointsSpent = max(0, shieldPointsSpent - transformShield);
-        final ordinaryShieldBefore = max(0, shieldBefore - transformShield);
+        final specialShield =
+            transformShieldBeforeDamage + stoneguardShieldBeforeDamage;
+        shieldPointsSpent = max(0, shieldPointsSpent - specialShield);
+        final ordinaryShieldBefore = max(0, shieldBefore - specialShield);
         final reactive = posteaReactiveShieldPoints(ordinaryShieldBefore);
         final ordinaryShield = max(
           0,
@@ -7082,6 +7368,12 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final oculumShieldBroken =
           oculumShieldBeforeDamage > 0 && oculumShieldAfterAbsorption == 0;
       final shieldAfterAbsorption = shield;
+      final stoneguardDamageSpent = max(
+        0,
+        shieldBeforeDamage -
+            shieldAfterAbsorption -
+            transformShieldBeforeDamage,
+      );
       final normalShieldBroken =
           shieldBeforeDamage > 0 && shieldAfterAbsorption == 0;
       final normalShieldBlocked = rimanente == 0;
@@ -7142,14 +7434,19 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
       rimanente = absorbLarvalBroodDamage(rimanente);
       var shieldImpactsShown = false;
-      if (rimanente > 0 && pawnProtects(sheetTagAt(schedaCorrente))) {
+      if (allowPawnProtection &&
+          rimanente > 0 &&
+          pawnProtects(sheetTagAt(schedaCorrente))) {
         if (pawnRemoteAuthority) {
           // Commit the target's own shields before requesting only the HP
           // overflow. Retries reuse one persisted ID at the Master.
           setState(() {
             scudoOculumController.text = '$oculumShield';
             if (oculumShieldBroken) commitOculumShieldBreak();
-            impostaScudoTotale(shield);
+            impostaScudoTotale(
+              shield,
+              stoneguardDamageSpent: stoneguardDamageSpent,
+            );
             if (normalShieldBroken) setNormalShieldBreakPenalty(2);
             impostaHpTempTotali(temp);
           });
@@ -7280,7 +7577,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           );
         }
       }
-      if (!friendlyFire &&
+      if (!trainingDamage &&
+          !friendlyFire &&
           nonLethal &&
           !lunarGuardianCoreDestroyed &&
           hp <= 0 &&
@@ -7294,7 +7592,11 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       recordStructuralHpDamage(damagePacketId, hpPrima, hp);
       if (lunarGuardianCoreDestroyed && hpPrima > 0) {
         recordFaunaFallenTurn();
-      } else if (hp <= 0 && hpPrima > 0 && !nonLethal && !friendlyFire) {
+      } else if (hp <= 0 &&
+          hpPrima > 0 &&
+          !trainingDamage &&
+          !nonLethal &&
+          !friendlyFire) {
         final revived = tryFuocherelliSecondLife(
           hp,
           incomingElement,
@@ -7352,7 +7654,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         if (oculumShieldBroken && !shieldImpactsShown) {
           commitOculumShieldBreak();
         }
-        impostaScudoTotale(shield);
+        impostaScudoTotale(
+          shield,
+          stoneguardDamageSpent: shieldImpactsShown ? 0 : stoneguardDamageSpent,
+        );
         if (normalShieldBroken && !shieldImpactsShown) {
           setNormalShieldBreakPenalty(2);
         }
@@ -7372,7 +7677,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           hpLost: max(0, hpPrima - hp),
           packetId: damagePacketId,
         );
-        registerVitalMemoryDamage(hpPrima - hp);
+        final activatedMemoryFromHit =
+            (confirmedAttack || dannoEsplicito == null) &&
+            activateResiliumVitalMemory(hpPrima - hp);
+        registerVitalMemoryDamage(
+          hpPrima - hp,
+          includedMemoryPenalty: !activatedMemoryFromHit,
+        );
         if (armorBroken && hp < hpPrima) recordOblivionArmorPain();
         final partialAwakeningLog = applicaRisveglioParzialeMetaHpSeServe(
           hpBefore: hpPrima,
@@ -7519,6 +7830,14 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       });
 
       if (!shieldImpactsShown) showShieldImpacts();
+      final criticalShieldBroken =
+          scudoCriticoSpezzato && scudoCritico() < scudoCriticoPrima;
+      if (criticalShieldBroken) {
+        showSheetFeedback(
+          OculumFeedbackKind.criticalShieldBroken,
+          origin: feedbackOrigin,
+        );
+      }
       showSheetFeedback(
         OculumFeedbackKind.lifeDamage,
         origin: feedbackOrigin,
@@ -7529,7 +7848,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       final elementalAdjustment = incomingElementRules.isEmpty
           ? 0
           : dannoDopoRegoleElementali.compareTo(dannoModificatoBase);
-      if (oculumShieldBeforeDamage > 0 && oculumShield <= 0 ||
+      if (criticalShieldBroken ||
+          oculumShieldBeforeDamage > 0 && oculumShield <= 0 ||
           shieldBeforeDamage > 0 && shield <= 0) {
         oculumCombatTheme.react(
           'shieldBreak',
@@ -7593,6 +7913,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       }
       if (friendlyFire && hpCorrenti() <= 0) {
         resolveFriendlyFireKnockout();
+      } else if (trainingDamage && hpCorrenti() <= 0) {
+        resolveFriendlyFireKnockout(training: true);
       } else {
         planarAfterHpDamage();
         controllaCadutaDopoDanno();
@@ -7634,7 +7956,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
 
     setState(() {
-      currentHpController.text = healed.current.toString();
+      writeHealedLife(healed.current);
       impostaHpTempTotali(healed.temporary);
 
       risultato = combatImpactLog(
@@ -7659,7 +7981,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   void refullVita() {
     setState(() {
       refullaStatsAttuali(forceMaximum: true);
-      currentHpController.text = maxHp().toString();
+      writeHealedLife(maxHp());
       statoForzaAttivo = '';
       statoForzaPronto = true;
       statoForzaTiriRimanenti = 0;
@@ -7698,7 +8020,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       statoForzaTiriRimanenti = 0;
       hpTempBonusConsumati = 0;
       refullaStatsAttuali(forceMaximum: true);
-      currentHpController.text = maxHp().toString();
+      writeHealedLife(maxHp());
       if (scudoOculumMax() > 0) ricaricaScudoOculum();
     });
     final after = <String, int>{
@@ -7738,9 +8060,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
       return;
     }
+    final before = scudoCritico();
     setState(() {
-      if (scudoCritico() > 0) {
-        scudoCriticoController.text = max(0, scudoCritico() - 1).toString();
+      if (before > 0) {
+        scudoCriticoController.text = (before - 1).toString();
 
         risultato = t(
           'Scudo Critico spezzato da un critico in fight. -1 Scudo Critico.',
@@ -7756,6 +8079,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       aggiungiLog(risultato);
     });
 
+    if (before > 0) showSheetFeedback(OculumFeedbackKind.criticalShieldBroken);
     invalidateHiddenEyeDerivedCaches();
     programmaSalvataggio();
   }
@@ -7800,25 +8124,107 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     }
   }
 
-  void toggleRebirth(bool value) {
+  Future<void> toggleRebirth(bool value) async {
+    if (!mounted ||
+        value == rebirthato ||
+        _rebirthConfirmationOpen[this] == true) {
+      return;
+    }
+    final origin = currentSheetScrollId();
+    final scope = permissionScope;
+    final previousLevel = leggiNumero(livelloController);
+    final previousExp = expCorrente();
+    final bonusKills = oculumRebirthKillQuota(previousLevel);
+    final previousRebirth = rebirthato;
+    _rebirthConfirmationOpen[this] = true;
+    bool? confirmed;
+    try {
+      confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: Text(t('Conferma Rebirth', 'Confirm Rebirth')),
+          content: SingleChildScrollView(
+            child: Text(
+              value
+                  ? t(
+                      'Il Livello passa da $previousLevel a 0. Inizi un nuovo ciclo EXP da 0: i $previousExp EXP precedenti restano nello storico Rebirth. Grado, statistiche e personalizzazioni sono conservati.\n\nEXP mostri ×1,9 per le prossime $bonusKills uccisioni di mostri con Potenza totale superiore alla tua, anche se li uccide un alleato. Gli altri non consumano la quota.\n\nOgni giorno della campagna puoi convertire un critico negativo in positivo al 100%: automaticamente sul primo nel Fight, oppure su un tiro già uscito fuori Fight.\n\nConfermi il Rebirth?',
+                      'Level changes from $previousLevel to 0. A new EXP cycle starts at 0; the previous $previousExp EXP remain in Rebirth history. Grade, statistics and customizations are preserved.\n\nMonster EXP ×1.9 for the next $bonusKills kills of monsters with higher total power, including ally kills. Other monsters do not consume the quota.\n\nOnce per campaign day, turn a negative critical into a positive critical with 100% chance: automatically on the first in Fight, or after rolling outside Fight.\n\nConfirm Rebirth?',
+                    )
+                  : t(
+                      'Disattivi i benefici Rebirth della scheda. Il Livello resta $previousLevel. Vuoi continuare?',
+                      'You disable this sheet’s Rebirth benefits. Level stays $previousLevel. Continue?',
+                    ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              key: const ValueKey('rebirth_cancel'),
+              onPressed: () => Navigator.pop(dialog, false),
+              child: Text(t('Annulla', 'Cancel')),
+            ),
+            FilledButton(
+              key: const ValueKey('rebirth_confirm'),
+              onPressed: () => Navigator.pop(dialog, true),
+              child: Text(t('Conferma', 'Confirm')),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _rebirthConfirmationOpen[this] = false;
+    }
+    if (!mounted ||
+        confirmed != true ||
+        origin != currentSheetScrollId() ||
+        scope != permissionScope ||
+        previousRebirth != rebirthato ||
+        previousLevel != leggiNumero(livelloController) ||
+        previousExp != expCorrente()) {
+      return;
+    }
     setState(() {
       rebirthato = value;
+      if (value) {
+        final history = (planarState['rebirthHistory'] as List? ?? const [])
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList();
+        history.add({
+          'at': DateTime.now().toIso8601String(),
+          'campaignDay': rebirthCampaignDay,
+          'previousLevel': max(0, previousLevel),
+          'previousExp': previousExp,
+          'gradePreserved': max(0, leggiNumero(gradoController)),
+          'bonusKillQuota': bonusKills,
+        });
+        planarState['rebirthHistory'] = history;
+        planarState['rebirthPreviousLevel'] = max(0, previousLevel);
+        planarState['rebirthExperience'] = {
+          'initialQuota': bonusKills,
+          'remaining': bonusKills,
+          'claimedKills': <String>[],
+        };
+        livelloController.text = '0';
+        expController.text = '0';
+        expMilestoneRegenClaimed = 0;
+      }
       aggiornaGradoAutomatico();
       invalidateHiddenEyeDerivedCaches();
-
       risultato = rebirthato
           ? t(
-              'Rebirth attivato. Le soglie Grado ora sono ridotte.',
-              'Rebirth enabled. Grade thresholds are now reduced.',
+              'Rebirth attivato: Livello $previousLevel → 0. Nuovo ciclo EXP; $bonusKills uccisioni valide a EXP ×1,9.',
+              'Rebirth enabled: Level $previousLevel → 0. New EXP cycle; $bonusKills eligible kills at EXP ×1.9.',
             )
           : t(
               'Rebirth disattivato. Le soglie Grado tornano normali.',
               'Rebirth disabled. Grade thresholds are back to normal.',
             );
-
-      aggiungiLog(rebirthato ? 'Rebirth attivato.' : 'Rebirth disattivato.');
+      aggiungiLog(
+        rebirthato
+            ? 'Rebirth attivato: Livello $previousLevel → 0.'
+            : 'Rebirth disattivato.',
+      );
     });
-
     programmaSalvataggio();
   }
 

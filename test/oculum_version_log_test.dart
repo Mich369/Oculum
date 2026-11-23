@@ -39,6 +39,67 @@ void main() {
   });
 
   test(
+    'content fingerprints distinguish local builds of the same commit',
+    () async {
+      const commit = '968866652a53bd367a6220ab32124b186aaec880';
+      final first = oculumVersionLogIdentity(commit, buildId: 'a' * 64);
+      final second = oculumVersionLogIdentity(commit, buildId: 'b' * 64);
+      expect(first, isNot(second));
+      expect(oculumVersionLogIdentity(commit, buildId: 'A' * 64), first);
+      SharedPreferences.setMockInitialValues({
+        oculumUpdateLogSeenKey: commit,
+        'saved_sheet_sentinel': 'Preserved character data',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      expect(oculumShouldShowVersionLog(prefs, first), isTrue);
+      await oculumRememberVersionLog(prefs, first);
+      expect(oculumShouldShowVersionLog(prefs, first), isFalse);
+      expect(oculumShouldShowVersionLog(prefs, second), isTrue);
+      await oculumRememberVersionLog(prefs, second);
+      expect(oculumShouldShowVersionLog(prefs, second), isFalse);
+      expect(
+        oculumShouldShowVersionLog(
+          prefs,
+          second,
+          storageKey: '${oculumUpdateLogSeenKey}__test',
+        ),
+        isTrue,
+      );
+      expect(
+        prefs.getString('saved_sheet_sentinel'),
+        'Preserved character data',
+      );
+    },
+  );
+
+  test(
+    'official fallback keeps the previous commit-based notice state',
+    () async {
+      const commit = '968866652a53bd367a6220ab32124b186aaec880';
+      expect(oculumVersionLogIdentity(commit, buildId: ''), commit);
+      expect(
+        oculumVersionLogIdentity(commit, buildId: 'not-a-fingerprint'),
+        commit,
+      );
+      expect(oculumVersionLogIdentity('', buildId: ''), isEmpty);
+      SharedPreferences.setMockInitialValues({oculumUpdateLogSeenKey: commit});
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        oculumShouldShowVersionLog(
+          prefs,
+          oculumVersionLogIdentity(commit, buildId: ''),
+        ),
+        isFalse,
+      );
+      final localVersion = oculumVersionLogIdentity(commit, buildId: 'c' * 64);
+      expect(oculumShouldShowVersionLog(prefs, localVersion), isTrue);
+      await oculumRememberVersionLog(prefs, localVersion);
+      expect(oculumShouldShowVersionLog(prefs, localVersion), isFalse);
+      expect(prefs.getString(oculumUpdateLogSeenKey), localVersion);
+    },
+  );
+
+  test(
     'offline notice is the entire current cumulative log from the fixed baseline',
     () {
       final source = File('docs/REGISTRO_AGGIORNAMENTI.md').readAsStringSync();

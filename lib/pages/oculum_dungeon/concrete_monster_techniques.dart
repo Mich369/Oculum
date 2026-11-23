@@ -9,12 +9,18 @@ class MonsterTechniqueEffect {
     this.target = '',
     this.mode = 'finche_attivo',
     this.duration = '1',
+    this.durationUnit = 'turni',
     this.recipient = 'se_stesso',
     this.dice = '',
     this.maximumTargets = 0,
+    this.criticalOnly = false,
+    this.shieldDamageBonusPercent = 0,
   });
   final String type, formula, target, mode, duration, recipient, dice;
+  final String durationUnit;
   final int maximumTargets;
+  final bool criticalOnly;
+  final int shieldDamageBonusPercent;
 }
 
 class MonsterConcreteTechnique {
@@ -29,11 +35,15 @@ class MonsterConcreteTechnique {
     this.minimums = const [1, 5, 11],
     this.maximums = const [4, 10, 30],
     this.cooldownValues,
+    this.costDescription,
+    this.startsReady = true,
   });
   final String name, action, element, kind, costResource;
   final int requiredLevel;
   final List<int> minimums, maximums;
   final List<int>? cooldownValues;
+  final String? costDescription;
+  final bool startsReady;
   final List<List<MonsterTechniqueEffect>> forms;
 
   /// Recovery is expressed in personal turns, using the existing Art timer.
@@ -49,10 +59,13 @@ class MonsterConcreteTechnique {
       };
   String text() =>
       '$name — ${List.generate(3, (i) {
+        final hasVowForm = forms[i].any((effect) => effect.target == oculumVolenterosiTransformation);
         final mechanics = forms[i].map((e) {
           final value = '${e.dice.isEmpty ? '' : '${e.dice} + '}${e.formula.replaceAll('oculum_spent', 'Oculum immesso')}';
           return switch (e.type) {
+            'planar' when e.target == oculumVolenterosiTransformation => '+$value Scudo per ${e.duration} turni',
             'planar' || 'meccanio' || 'preparazione' => '',
+            'danno' when e.target == oculumCorallwhirlDashEffect => '',
             'danno' => '+$value Danni al prossimo attacco; si consuma una sola volta',
             'danno_percentuale' => e.mode == 'prossima_azione' ? '+$value% Danni al prossimo attacco; si consuma una sola volta' : '+$value% Danni per ${e.duration} turni',
             'difesa' => '${e.mode == 'diminuzione' ? '-' : '+'}$value Difesa per ${e.duration} turno',
@@ -60,8 +73,11 @@ class MonsterConcreteTechnique {
             'cura' => 'recuperi $value Vita, entro il massimo',
             'costrutto' => 'crei ${e.target} con $value Vita per ${e.duration} turni; la sua Vita si gestisce nella scheda effetti',
             'aggiungi_reazioni' => '+$value Reazione per ${e.duration} turno',
+            'modifica_statistica' when e.target == oculumPredoneCloseReduction => '−$value Danni ravvicinati ricevuti per ${e.duration} ${e.durationUnit}',
+            'modifica_statistica' when e.target == oculumPredoneRangedReduction => '−$value Danni a distanza ricevuti per ${e.duration} ${e.durationUnit}',
+            'modifica_statistica' when hasVowForm => '+$value ${e.target == 'volonta' ? 'Volontà' : 'Materia'} per la stessa durata',
             'modifica_statistica' => '${e.target} ${e.mode == 'diminuzione' ? '-' : '+'}$value per ${e.duration} turno',
-            'stato' => '${e.target} grado $value per ${e.duration} turni sul bersaglio; una difesa riuscita evita lo stato',
+            'stato' => '${e.target} grado $value per ${e.duration} turni sul bersaglio${e.criticalOnly ? ' soltanto su critico riuscito' : '; una difesa riuscita evita lo stato'}',
             _ => '$value ${e.target}',
           };
         }).where((line) => line.trim().isNotEmpty).join('; ');
@@ -84,7 +100,7 @@ class MonsterConcreteTechnique {
           'material' => 'materiale',
           _ => 'Oculum',
         };
-        final costText = costResource == 'nessuna' ? 'Nessun costo statistico.' : '($cost $resourceLabel${minimums[i] == maximums[i] ? ', costo fisso' : ''}).';
+        final costText = costDescription ?? (costResource == 'nessuna' ? 'Nessun costo statistico.' : '($cost $resourceLabel${minimums[i] == maximums[i] ? ', costo fisso' : ''}).');
         return '${const ['I', 'II', 'III'][i]}/$actionText.${mechanics.isEmpty ? '' : ' $mechanics.'} Richiede livello ${requiredLevel + i * 3}. $costText CD ${cooldowns[i]} turni personali.';
       }).join(' ')} I bonus della stessa tecnica non si cumulano; Difesa e Scudi del bersaglio restano validi.';
 }
@@ -2127,16 +2143,6 @@ const _bespokeMonsterMoves = <String, (String, String, String)>{
     'Mantello di foglie runiche',
     'Il Mistificatore sovrappone le foglie incise sul proprio torace',
     'scudo',
-  ),
-  'bunny_death_heal': (
-    'Pelo sulla ferita',
-    'Bunnys tende il pelo attorno al taglio e ricompone i lembi',
-    'cura',
-  ),
-  'bunny_heal': (
-    'Leccata dei Bunnys',
-    'Bunnys raccoglie il pelo strappato e lo preme contro la ferita',
-    'cura',
   ),
   'knife_flurry_d4': (
     'Coltello dalla pinna',

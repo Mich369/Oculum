@@ -20,8 +20,13 @@ dependencies:
   connectivity_plus: 6.1.5
   desktop_drop: ^0.6.0
   path_provider: ^2.1.5
+  path_provider_platform_interface: 2.1.3
+  path_provider_windows: 2.3.0
+  shared_preferences_platform_interface: 2.4.2
+  shared_preferences_windows: 2.4.1
   pdf: ^3.11.3
   supabase_flutter: ^2.12.4
+  flutter_secure_storage: 11.2.0
   pointycastle: 4.0.0
   google_sign_in: ^6.2.2
   sign_in_with_apple: ^6.0.0
@@ -52,6 +57,7 @@ flutter:
     - assets/oculum/kingi_robot.png
     - assets/oculum/sprites/
     - assets/oculum/icons/
+    - assets/oculum/home_art_authored/
     # BEGIN generated monster artwork assets
     - assets/oculum/home_art_webp/
     - assets/oculum/home_art/amber_shore.png

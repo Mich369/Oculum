@@ -16,7 +16,8 @@ void main() {
   String fixtureTag(int i) =>
       'BenchmarkOcu:${i < 3 ? 3690 : 410 + (i % 470)}X${i.toString().padLeft(3, '0')}';
   TestWidgetsFlutterBinding.ensureInitialized();
-  testWidgets('large campaign reproducible performance', (tester) async {
+
+  Future<void> runBenchmark(WidgetTester tester, Directory directory) async {
     SharedPreferences.setMockInitialValues({});
     final regular = await rootBundle.load('assets/fonts/Poppins-Regular.ttf');
     for (final family in [
@@ -38,9 +39,6 @@ void main() {
           ))
           .load();
     }
-    final directory = Directory(
-      'build/performance-fixture-${DateTime.now().microsecondsSinceEpoch}',
-    )..createSync(recursive: true);
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       (_) async => directory.absolute.path,
@@ -70,6 +68,58 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     final dynamic state = tester.state(find.byType(OculumHomePage));
     final probe = OculumPerformanceProbe(state);
+
+    Future<void> driveStorageWork(String phase, Future<void> operation) async {
+      var completed = false;
+      Object? failure;
+      StackTrace? failureStack;
+      operation.then<void>(
+        (_) => completed = true,
+        onError: (Object error, StackTrace stack) {
+          failure = error;
+          failureStack = stack;
+          completed = true;
+        },
+      );
+      final watch = Stopwatch()..start();
+      var nextDiagnostic = const Duration(seconds: 10);
+      while (!completed) {
+        // Journal timers/compute continuations may have started during a
+        // measured UI pump, before the explicit save enters runAsync. Awaiting
+        // the entire save in runAsync alone freezes that fake-clock work and
+        // can deadlock _clearProgressJournalIfCurrent. Let both zones advance.
+        probe.cancelPendingSave();
+        await tester.pump(const Duration(milliseconds: 20));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        if (watch.elapsed >= nextDiagnostic) {
+          debugPrint(
+            'Benchmark storage $phase: ${watch.elapsed.inSeconds}s; '
+            'save queue running=${state.saveRequestQueue.isRunning}; '
+            'journal timer active=${state.progressJournalSaveTimer?.isActive == true}; '
+            'save revision=${state.salvataggioRevisione}',
+          );
+          nextDiagnostic += const Duration(seconds: 10);
+        }
+        if (watch.elapsed > const Duration(minutes: 1)) {
+          fail(
+            'Benchmark $phase did not finish while driving fake frames and '
+            'real IO; save queue running=${state.saveRequestQueue.isRunning}, '
+            'journal timer active=${state.progressJournalSaveTimer?.isActive == true}',
+          );
+        }
+      }
+      if (failure != null) {
+        Error.throwWithStackTrace(failure!, failureStack!);
+      }
+    }
+
+    // Finish the original fake-clock startup before replacing its campaign;
+    // a fixed sleep cannot certify that real file IO has completed.
+    await driveStorageWork('startup', probe.initialSheetLoad());
+    probe.cancelPendingSave();
+    expect(state.datiCaricati, isTrue);
     final fixture = probe.snapshot();
     // Valid image bytes, repeated in retained attachments to model large saves.
     final bytes = (await rootBundle.load(
@@ -285,12 +335,16 @@ void main() {
     // RSS is process-wide, including the test runner and compiler allocations.
     report['rss_bytes'] = ProcessInfo.currentRss;
     await measure('autosave_ms', () async {
+      late Future<void> save;
       await tester.runAsync(() async {
         state.sharedPreferencesFuture = SharedPreferences.getInstance();
         state.saveBlobDirectoryFuture = Future<Directory>.value(directory);
-        state.progressJournalWriteChain = Future<void>.value();
-        await probe.save();
+        save = probe.save();
+        // Preserve the original result for driveStorageWork, while attaching
+        // an immediate handler if storage fails before runAsync returns.
+        save.ignore();
       });
+      await driveStorageWork('autosave', save);
     });
     final prefs = await SharedPreferences.getInstance();
     String? savedRaw;
@@ -304,6 +358,17 @@ void main() {
       reason: 'Large image saves must not be mirrored in preferences',
     );
     expect((stored['schedePersonaggio'] as List).length, sheetCount);
+    expect((stored['occhiCaduti'] as List).length, 300);
+    for (var i = 0; i < sheetCount; i++) {
+      expect(
+        stored['schedePersonaggio'][i]['immaginePersonaggioBase64'],
+        portraits[i],
+        reason: 'Every retained portrait must survive the large save ($i).',
+      );
+      if (i > 0) {
+        expect(stored['schedePersonaggio'][i]['nome'], 'Creature $i');
+      }
+    }
     expect(
       stored['schedePersonaggio'][sheetCount - 1]['nome'],
       'Creature ${sheetCount - 1}',
@@ -325,8 +390,50 @@ void main() {
         const JsonEncoder.withIndent('  ').convert(report),
       );
     });
-    probe.cancelPendingSave();
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 2));
+  }
+
+  testWidgets('large campaign reproducible performance', (tester) async {
+    final buildDirectory = Directory('build')..createSync(recursive: true);
+    final directory = buildDirectory.createTempSync('performance-fixture-');
+    var safeToDelete = true;
+    addTearDown(() {
+      if (safeToDelete && directory.existsSync()) {
+        directory.deleteSync(recursive: true);
+      }
+    });
+    final previousRebuildCallback = debugOnRebuildDirtyWidget;
+    try {
+      await runBenchmark(tester, directory);
+    } finally {
+      debugOnRebuildDirtyWidget = previousRebuildCallback;
+      final sheet = find.byType(OculumHomePage);
+      if (sheet.evaluate().isNotEmpty) {
+        safeToDelete = false;
+        final dynamic state = tester.state(sheet);
+        OculumPerformanceProbe(state).cancelPendingSave();
+        // The measured save is explicit. Skip the extra save started by dispose.
+        state.datiCaricati = false;
+        await tester.pumpWidget(const SizedBox.shrink());
+        var workersDone = false;
+        Future.wait<void>([
+          state.initialSheetLoad as Future<void>,
+          state.progressJournalWriteChain as Future<void>,
+        ]).then<void>(
+          (_) => workersDone = true,
+          onError: (Object _, StackTrace _) => workersDone = true,
+        );
+        final drainDeadline = Stopwatch()..start();
+        while (!workersDone || state.saveRequestQueue.isRunning == true) {
+          if (drainDeadline.elapsed > const Duration(minutes: 1)) {
+            fail('Benchmark workers still own ${directory.path}');
+          }
+          await tester.pump();
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
+          );
+        }
+        safeToDelete = true;
+      }
+    }
   }, timeout: const Timeout(Duration(minutes: 5)));
 }
