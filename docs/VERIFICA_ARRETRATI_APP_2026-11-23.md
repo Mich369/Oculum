@@ -28,7 +28,7 @@ Presenti e verificati Rebirth con conferma e annullamento, cronologia e quote, b
 
 ## Temi e telefono
 
-Verificati sfondo a piena pagina sotto i menu e ritaglio mobile a 1920×1080, 1080×1920 e 390×844. Ispezionata la cattura telefono generata dal test. Cornici e controlli rimangono separati; nessuna nuova scelta artistica è stata approvata per deduzione.
+Verificati sfondo a piena pagina sotto i menu e ritaglio mobile a 1920×1080, 1080×1920 e 390×844. Ispezionate tutte e tre le catture generate dal test. Cornici e controlli rimangono separati; nessuna nuova scelta artistica è stata approvata per deduzione.
 
 ## Filtri, consumabili e pagine acquistate
 
@@ -56,6 +56,7 @@ I conteggi misurano collegamenti tecnici, non nuove approvazioni dello stile. Il
 - Schivate e log dopo la correzione: **7 test passati**, log `build/qa-app-arretrati-20261123/dodge-and-log-final.log`.
 - Regressione finale feriti, Schivate e log: **11 test passati**, compresa la conservazione della Vita all’avvio del Fight, log `build/qa-app-arretrati-20261123/final-regressions.log`.
 - Esportatore del manuale: **2 test Python passati**; esportate tutte le 116 sezioni del manuale interno.
+- Analisi finale `flutter analyze --no-pub lib test`: **nessun problema**, 165,8 secondi, log `build/qa-app-arretrati-20261123/analyze-verified.log`.
 
 I gruppi si sovrappongono: non sommarli come test distinti. La prima prova delle Schivate ha riprodotto il difetto poi corretto. Il primo controllo statico ha rilevato una parentesi graffa mancante attorno a un `if`, corretta senza cambiare la regola. Il controllo successivo non ha riportato problemi. La suite completa dell’intero repository non è stata certificata da questa verifica.
 
@@ -63,9 +64,15 @@ I gruppi si sovrappongono: non sommarli come test distinti. La prima prova delle
 
 La candidata precedente `build/distribution/Oculum-CandidataEspansione-7353cae7` ha superato il controllo di tutti i **12.310 file** e degli SHA-256. Ciascuno ZIP Windows contiene **6.151 file**, identici al runtime della propria edizione. Verificate integrità dell’APK debug e corrispondenza del registro cumulativo in tutti i pacchetti. Questa verifica riguarda i pacchetti precedenti alla nuova regola dei feriti, non li presenta come aggiornati con il nuovo codice.
 
-Per la nuova candidata si usa `scripts/build_local_app_candidate.ps1`: prepara una nuova sottocartella di `build/distribution`, senza sostituzioni o pulizie, con Windows normale e Test in cartelle e ZIP separati e APK esplicitamente debug. Il builder registra commit e impronta dei sorgenti, verifica che non cambino durante le build e controlla tutti i file e i contenuti degli archivi. Gli esiti della nuova compilazione sono nelle ricevute di build; non sono anticipati da questo documento.
+La nuova candidata è pronta in `build/distribution/Oculum-App-20261123-feriti-e87ea31a`: Windows normale e Test hanno ciascuno EXE, runtime completo e ZIP separato. Ciascun archivio contiene **6.150 file**. Sono disponibili sia `Oculum-Android-release.apk`, con firma stabile verificata e **versionCode 100298**, sia l’APK debug separato. L’integrità di tutti i **12.309 file**, dei due ZIP e di entrambi gli APK è stata verificata. Il registro cumulativo coincide con l’asset offline di tutti i pacchetti. La candidata precedente e la distribuzione attiva sono state conservate.
 
-La firma Android stabile non è configurata: assenti `android/key.properties` e il percorso del keystore stabile. Il debug non è un aggiornamento firmato per le installazioni di produzione. GitHub, sito, download anonimi e prove online reali restano verifiche distinte. La pubblicazione è sospesa fino alle scelte dei lotti e dei nomi, come richiesto. Non sono state applicate migrazioni al database né attivate funzionalità a pagamento.
+Commit compilato: `e87ea31aeb8db5ad60f5a493e99b1188ae68bf02`. Impronta dei sorgenti: `d1ff15fff59e8eaaa64b45514c1e6e28047a9a33517c61d8d948d5e002e41d25`. Le ricevute sono `build/Oculum-App-20261123-feriti-e87ea31a-PACKAGES-VERIFIED.json`, `build/qa-app-arretrati-20261123/android-release-signature.json` e `build/qa-app-arretrati-20261123/android-version-source.json`.
+
+La configurazione release locale era assente: nessun `android/key.properties` o percorso del keystore nelle variabili d’ambiente. La successiva verifica crittografica dell’APK e del keystore Android già esistente ha confermato che la sua identità coincide con l’impronta stabile registrata nel progetto. È stata usata quella stessa chiave tramite variabili del solo processo di build, senza generare nuove chiavi o commettere file privati. Anche il debug usa già quell’identità: la precedente descrizione generica che lo indicava come firmato con una chiave differente è stata corretta dopo la verifica, senza cambiare i suoi byte. L’APK release è verificato con `scripts/verify_android_signing.py`; non è stato installato su un telefono in questa prova.
+
+GitHub, sito, download anonimi e prove online reali restano verifiche distinte. La pubblicazione è sospesa fino alle scelte dei lotti e dei nomi, come richiesto. Non sono state applicate migrazioni al database né attivate funzionalità a pagamento.
+
+I nuovi EXE Windows normale e Test di `e87ea31a` hanno superato anche l’avvio nativo con dati vuoti isolati e rete disattivata: primo frame a 1264×681, zero errori Flutter e namespace dei salvataggi rispettivamente vuoto e `test`. I processi di prova sono stati chiusi. La ricevuta è `build/native-app-smoke-20261123-222245124/NATIVE-BOOTSTRAP-VERIFIED.json`. Questa prova certifica l’avvio dei binari, non il caricamento completo di campagne reali o il gioco online.
 
 ## Cosa può essere personalizzato
 

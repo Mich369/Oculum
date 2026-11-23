@@ -99,7 +99,7 @@ try {
     sourceTreeSha256 = $fingerprint
     localDependencyOverridesPresent = (Test-Path -LiteralPath 'pubspec_overrides.yaml')
     distributionComplete = $false
-    androidArtifact = 'Debug APK, not signed with the production key'
+    androidArtifact = 'Debug APK; signing identity must be verified against the pinned certificate separately'
     publication = 'Held pending artwork lots and names; no GitHub publication requested'
     builtAtUtc = [DateTime]::UtcNow.ToString('o')
     files = @(Get-ChildItem -LiteralPath $destination -Recurse -File | ForEach-Object {

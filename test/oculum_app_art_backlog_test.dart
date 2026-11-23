@@ -24,8 +24,9 @@ void main() {
           'relic': theme.relicIllustration,
         };
         for (final asset in assets.values.whereType<String>()) {
-          if (!File(asset).existsSync())
+          if (!File(asset).existsSync()) {
             missingAssets.add('${entry.id}: $asset');
+          }
         }
         rows.add({
           'id': entry.id,

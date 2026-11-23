@@ -1,5 +1,11 @@
 # Oculum — attività, conferme e consegne
 
+## App principale — verifica locale del 23 novembre 2026
+
+- Recuperati i sorgenti della candidata già compilata, poi completata la regola confermata dei nuovi nemici feriti nel Fight Creator: 20%, Vita 25–75%, un solo sorteggio salvato per creatura. Corretto anche il controller dell’editor Schivate aperto con il clic destro. Le altre priorità verificate erano già presenti, con le prove e i limiti distinti nel [rapporto](VERIFICA_ARRETRATI_APP_2026-11-23.md).
+- Candidata `build/distribution/Oculum-App-20261123-feriti-e87ea31a`, commit app `e87ea31a`: Windows e Test separati con runtime e ZIP, APK release firmato con l’identità stabile verificata e codice 100298, più debug conservato. Avvio Windows su dati isolati e controlli degli archivi passati. La chiave locale già esistente corrisponde all’impronta del progetto: non occorre generarne un’altra. Nessuna pubblicazione, nuova CI o prova online reale dichiarata.
+- [Inventario attuale di nomi e artwork VTT](ARRETRATO_VISIVO_APP_2026-11-23.md): 1.262 voci attive di creature, varianti incluse e NPC esclusi. Collegamenti dedicati mancanti: 702 desktop, 1.194 telefono e 1.191 reliquie. Questi conteggi non attestano nuove approvazioni. Lotti e nomi ancora aperti mantengono il rinvio della pubblicazione. `oculum_rl/` e le modifiche locali preesistenti sono stati preservati.
+
 ## Nomi del bestiario, ricerca e anatomia
 
 - Scelte del 17 novembre. Collegate 14 tavole desktop confermate e i rispettivi nomi agli ID esatti, con verifica delle impronte nel bundle. I nomi precedenti restano ricercabili e i temi personalizzati persistono. Superati 10 test del tema mostri. Il giro successivo è stato presentato per intero, con 80 WebP verificati. La galleria delle risposte aperte raggruppa le tavole, le opzioni di nome e le due scelte indipendenti di telefono e reliquia. La ricompensa richiesta per Mammuth di Ferro Runico è registrata nella ricevuta e la tipologia di runa è in attesa di scelta.
