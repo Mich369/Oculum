@@ -2225,6 +2225,14 @@ class LiteRun {
       _distance(position, portalPosition) < 2;
   bool get coopPortalOpen =>
       !finished && stageClear && stage < finalStage && !shopOpen;
+  bool get usesSubArena => restHub || inActTwo || inSolarDungeon || goblinCamp;
+  String get inputArena => [
+    stage,
+    if (restHub) 'rest',
+    if (solarPhase != null) solarPhase!.name,
+    if (realm != null) ...[realm!.name, actRoom],
+    if (goblinCamp) 'goblin',
+  ].join(':');
   Point<double> get portalPosition => const Point(30, 11);
   Point<double> get shopPosition => const Point(5, 5);
   Point<double> get restPosition => const Point(5, 16);

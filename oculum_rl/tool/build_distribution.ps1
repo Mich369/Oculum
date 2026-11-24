@@ -2,7 +2,7 @@ param(
   [ValidateSet('Windows', 'Android', 'Web', 'All')]
   [string]$Target = 'All',
   [string]$FlutterRoot = 'C:\Users\michy\flutter',
-  [string]$Distribution = 'C:\Oculum App\oculum\build\distribution\Oculum RL',
+  [string]$Distribution = (Join-Path (Split-Path -Parent $PSScriptRoot) 'build/distribution'),
   [string]$Stage
 )
 $ErrorActionPreference = 'Stop'

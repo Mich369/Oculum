@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oculum_rl/game/oculum_lite_coop.dart';
 import 'package:oculum_rl/game/oculum_lite_run.dart';
 
 const _right = Point<double>(12, 11);
@@ -33,6 +34,72 @@ void _clear(LiteRun run) {
 }
 
 void main() {
+  test('late cooperative actions cannot cross rooms on the same floor', () {
+    final run = LiteRun(
+      seed: 246,
+      hero: LiteHero.evasore,
+      weapon: LiteWeapon.arco,
+      playerCount: 2,
+    );
+    expect(
+      run.addCoopFighter('guest', 'Ospite', LiteHero.evasore, LiteWeapon.arco),
+      isTrue,
+    );
+    run
+      ..stage = 11
+      ..realm = LiteRealm.inferno
+      ..actRoom = 1;
+    final session = OculumLiteCoop(
+      runId: 'test',
+      localAccount: 'master',
+      send: (_) async => true,
+      authority: run,
+    );
+    addTearDown(session.dispose);
+    final previousArena = run.inputArena;
+    run.actRoom = 2;
+    void press(String arena) {
+      session.receive(
+        {
+          'kind': 'playInput',
+          'runId': 'test',
+          'stage': 11,
+          'arena': arena,
+          'input': 1,
+          'move': [0, 0],
+          'aim': [12, 11],
+          'attack': true,
+        },
+        account: 'guest',
+        sessionId: 'device',
+        verifiedMaster: false,
+      );
+    }
+
+    press(previousArena);
+    expect(run.coopFighter('guest')!.firing, isFalse);
+    press(run.inputArena);
+    expect(run.coopFighter('guest')!.firing, isTrue);
+  });
+
+  test('a wounded peaceful animal resumes moving without a stuck pose', () {
+    final run = _run();
+    final at = const Point<double>(8, 11);
+    final animal = LiteEnemy(20555, LiteEnemyKind.pollo, at, 150);
+    run.fauna
+      ..clear()
+      ..add(animal);
+    run.enemies.clear();
+    run.obstacles.clear();
+    run.position = const Point(7.2, 11);
+    expect(run.attack(at), isTrue);
+    _tick(run, .8);
+    expect(animal.hp, lessThan(150));
+    expect(animal.hitFlash, 0);
+    expect(animal.position.x, greaterThan(at.x));
+    expect(run.provokedFaunaRooms, 1);
+  });
+
   test(
     'weapon techniques respect blocking and survive a save with cooldown',
     () {

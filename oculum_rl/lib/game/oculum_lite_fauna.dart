@@ -66,6 +66,7 @@ extension LiteFauna on LiteRun {
         _enemyTick(animal, elapsed);
         if (winding && !animal.attacking) animal._strikePose = .24;
       } else {
+        animal.hitFlash = max(0, animal.hitFlash - elapsed);
         final source = animal.shockSource;
         final phase = time * .58 + animal.id * 1.47;
         final direction = source == null

@@ -295,6 +295,7 @@ class OculumLiteCoop extends ChangeNotifier {
         _transmit({
           'kind': 'playVote',
           'stage': run!.stage,
+          'arena': run!.inputArena,
           'destination': destination?.name,
         }),
       );
@@ -380,9 +381,11 @@ class OculumLiteCoop extends ChangeNotifier {
       final fighter = state?.coopFighter(localAccount);
       if (state != null && fighter != null && !state.finished) {
         final at = aim ?? fighter.position + const Point<double>(1, 0);
+        final arena = state.inputArena;
         final packet = {
           'kind': 'playInput',
           'stage': state.stage,
+          'arena': arena,
           'input': ++_counter,
           'move': [move.x, move.y],
           'aim': [at.x, at.y],
@@ -416,13 +419,13 @@ class OculumLiteCoop extends ChangeNotifier {
         unawaited(
           _transmit(packet)
               .then((sent) {
-                if (sent) {
+                if (sent && run?.inputArena == arena) {
                   _blockSent = wasBlocking;
                   _rescueSent = wasRescuing;
                   if (identical(_restAction, pendingRest)) _restAction = null;
                 }
-                if (!sent && wasFiring) _fire = true;
-                if (!sent && run?.stage == state.stage && active) {
+                if (!sent && run?.inputArena == arena && active) {
+                  _fire = _fire || wasFiring;
                   _open = _open || wasOpening;
                   _rifleSkill = _rifleSkill || wasRifle;
                   _weaponArt = _weaponArt || wasWeaponArt;
@@ -477,7 +480,13 @@ class OculumLiteCoop extends ChangeNotifier {
             restored.coopFighters.length >= restored.playerCount) {
           return;
         }
-        if (run?.stage != restored.stage ||
+        if (run?.inputArena != restored.inputArena) {
+          _fire = _dodge = _dash = _reload = _open = _rifleSkill = _weaponArt =
+              _bomb = false;
+          _restAction = null;
+          aim = null;
+        }
+        if (run?.inputArena != restored.inputArena ||
             (restored.coopFighter(localAccount)?.hp ?? 0) <= 0) {
           _rescuing = false;
           _rest = false;
@@ -503,6 +512,10 @@ class OculumLiteCoop extends ChangeNotifier {
     }
     final fighter = world.coopFighter(account);
     if (fighter == null || packet['stage'] != world.stage) return;
+    final arena = packet['arena'];
+    if (arena != world.inputArena && !(arena == null && !world.usesSubArena)) {
+      return;
+    }
     final prior = _satSession[account];
     if (prior != sessionId) {
       if (prior != null &&
