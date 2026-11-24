@@ -1309,12 +1309,13 @@ void main() {
     Point<double> direction, {
     bool enemy = true,
     bool own = true,
+    double damage = 10,
   }) => LiteProjectile(
     position: position,
     direction: direction,
     speed: 25,
     remaining: 6,
-    damage: 10,
+    damage: damage,
     fromEnemy: enemy,
     ownerCanHeal: own,
   );
@@ -1645,6 +1646,220 @@ void main() {
     expect(run.intangible, isFalse);
     expect(enemy.clashRemaining, 0);
   });
+
+  test(
+    'reach upgrades extend real melee hits and arrow travel across saves',
+    () {
+      final plain = _run(weapon: LiteWeapon.spadaScudo)
+        ..obstacles.clear()
+        ..enemies.clear();
+      plain.enemies.add(_stationaryEnemy(95, const Point(8, 11)));
+      final boosted = LiteRun.fromJson({
+        ...plain.toJson(),
+        'upgrades': {'portata': 2},
+        'powerOffers': ['occhioLungo'],
+        'powers': {'occhioLungo': 2},
+      });
+      expect(boosted.choosePowerUp(LitePowerUp.occhioLungo), isTrue);
+      expect(
+        boosted.weaponReach(LiteWeapon.spadaScudo),
+        closeTo(2.9 * 1.45, 1e-9),
+      );
+      expect(plain.attack(plain.enemies.single.position), isTrue);
+      expect(boosted.attack(boosted.enemies.single.position), isTrue);
+      expect(plain.enemies.single.hp, 60);
+      expect(boosted.enemies.single.hp, lessThan(60));
+      final bow = LiteRun.fromJson({...boosted.toJson(), 'weapon': 'arco'});
+      final check = _restore(bow);
+      _wait(check, 1);
+      expect(check.powerRank(LitePowerUp.occhioLungo), 3);
+      expect(check.attack(const Point(20, 11)), isTrue);
+      expect(check.projectiles.single.remaining, closeTo(14.5, 1e-9));
+    },
+  );
+
+  test('Obser move toward the eligible guest and credit the team once after restore', () {
+    final host =
+        LiteRun(
+            seed: 43,
+            hero: LiteHero.evasore,
+            weapon: LiteWeapon.arco,
+            playerCount: 2,
+          )
+          ..obstacles.clear()
+          ..enemies.clear();
+    host.enemies.add(_stationaryEnemy(95, const Point(26, 19)));
+    final run = LiteRun.fromJson({
+      ...host.toJson(),
+      'powers': {'irideVorace': 2, 'occhioLungo': 2},
+    });
+    expect(
+      run.addCoopFighter(
+        'guest',
+        'Ospite',
+        LiteHero.evasore,
+        LiteWeapon.arco,
+        upgrades: {
+          LitePermanentUpgrade.richiamo: 2,
+          LitePermanentUpgrade.portata: 1,
+        },
+      ),
+      isTrue,
+    );
+    final guest = run.coopFighter('guest')!..position = const Point(13, 11);
+    run.setCoopControls(
+      'guest',
+      const Point(0, 0),
+      guest.position,
+      attack: false,
+    );
+    expect(run.weaponReach(LiteWeapon.arco, guest), closeTo(12.3, 1e-9));
+    expect(run.obserPullRadius(guest), closeTo(5.85, 1e-9));
+    final at = const Point<double>(18, 11);
+    run.loot.addAll([
+      LiteLoot(at, LiteLootKind.obser, 7),
+      LiteLoot(at, LiteLootKind.greenStone, 1),
+    ]);
+    final wall = LiteObstacle(15.5, 9.5, .8, 3);
+    run.obstacles.add(wall);
+    _wait(run, .09);
+    expect(run.loot.first.position, at);
+    expect(run.obser, 0);
+    run.obstacles.remove(wall);
+    _wait(run, .12);
+    expect(run.loot.first.position.x, lessThan(at.x));
+    expect(run.loot.first.position.x, greaterThan(guest.position.x + .85));
+    expect(run.obser, 0);
+    final saved = _restore(run);
+    final savedGuest = saved.coopFighter('guest')!;
+    expect(saved.loot.first.position, run.loot.first.position);
+    _wait(saved, .40);
+    expect(saved.loot.single.kind, LiteLootKind.greenStone);
+    expect(saved.loot.single.position, at);
+    expect(saved.obser, 7);
+    expect(savedGuest.obser, 7);
+    expect(saved.quests[1].current, 1);
+    _wait(saved, .40);
+    expect(saved.obser, 7);
+    expect(savedGuest.obser, 7);
+    expect(saved.quests[1].current, 1);
+    saved.setCoopControls(
+      'guest',
+      const Point(0, 0),
+      const Point(31, 11),
+      attack: true,
+    );
+    saved.step(1 / 120);
+    expect(saved.projectiles.single.remaining, greaterThan(12));
+  });
+
+  test(
+    'companion support upgrades accelerate following and attack recovery',
+    () {
+      final plain = _run()
+        ..stageClear = true
+        ..obstacles.clear()
+        ..enemies.clear()
+        ..clones.clear();
+      final start = const Point<double>(12, 11);
+      plain.clones.add(
+        LiteClone(
+          start,
+          45,
+          LiteWeapon.spadaScudo,
+          id: 103,
+          companion: LiteCompanion.sentinella,
+        )..cooldown = 1.5,
+      );
+      final boosted = LiteRun.fromJson({
+        ...plain.toJson(),
+        'upgrades': {'passoCompagno': 2},
+        'powers': {'legameVigile': 3},
+      });
+      _wait(plain, .125);
+      _wait(boosted, .125);
+      expect(
+        boosted.clones.single.position.distanceTo(start),
+        closeTo(plain.clones.single.position.distanceTo(start) * 1.5, .001),
+      );
+      expect(plain.clones.single.cooldown, closeTo(1.375, .001));
+      expect(boosted.clones.single.cooldown, closeTo(1.3125, .001));
+    },
+  );
+
+  test(
+    'shield and block upgrades apply independently and preserve shared wear',
+    () {
+      final original = LiteRun(
+        seed: 43,
+        hero: LiteHero.evasore,
+        weapon: LiteWeapon.spadaScudo,
+        playerCount: 2,
+        upgrades: {
+          LitePermanentUpgrade.scudo: 2,
+          LitePermanentUpgrade.resistenza: 2,
+        },
+      );
+      expect(original.shield, 14);
+      expect(original.maxBlockResistance, 180);
+      final party = LiteRun.fromJson({
+        ...original.toJson(),
+        'powers': {'ferroVivo': 2},
+        'powerOffers': ['pelleRunica'],
+      });
+      expect(
+        party.addCoopFighter(
+          'guest',
+          'Ospite',
+          LiteHero.evasore,
+          LiteWeapon.arco,
+          upgrades: {
+            LitePermanentUpgrade.scudo: 1,
+            LitePermanentUpgrade.resistenza: 1,
+          },
+        ),
+        isTrue,
+      );
+      expect(party.choosePowerUp(LitePowerUp.pelleRunica), isTrue);
+      expect(party.shield, 19);
+      expect(party.coopFighter('guest')!.shield, 9);
+
+      final guard = LiteRun.fromJson({
+        ...party.toJson(),
+        'powerOffers': ['ferroVivo'],
+      });
+      expect(guard.choosePowerUp(LitePowerUp.ferroVivo), isTrue);
+      final guest = guard.coopFighter('guest')!..position = const Point(10, 11);
+      guard.setCoopControls(
+        'guest',
+        const Point(0, 0),
+        guest.position,
+        attack: false,
+        block: true,
+      );
+      guard.setBlocking(true);
+      expect(guard.maxBlockResistance, 245);
+      expect(guest.maxBlockResistance, 175);
+      guard.projectiles.addAll([
+        shot(guard.position, const Point(1, 0), damage: 131),
+        shot(guest.position, const Point(1, 0), damage: 135),
+      ]);
+      guard.step(1 / 120);
+      expect(guard.blockResistance, 115);
+      expect(guest.blockResistance, 40);
+      final resumed = _restore(guard);
+      expect(resumed.blockResistance, 115);
+      expect(resumed.coopFighter('guest')!.blockResistance, 40);
+      expect(resumed.shield, 19);
+      expect(resumed.coopFighter('guest')!.shield, 9);
+      resumed.stageClear = true;
+      resumed.position = resumed.portalPosition;
+      expect(resumed.advanceCoop(LiteBiome.foresta), isTrue);
+      expect(resumed.shield, 19);
+      expect(resumed.coopFighter('guest')!.shield, 9);
+      expect(resumed.blockResistance, 115);
+    },
+  );
 
   test('power offers are saved in order, grant one rank and cap at three', () {
     var run = _reachFloor(0);

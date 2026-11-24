@@ -414,7 +414,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                   contentPadding: EdgeInsets.zero,
                   title: Text(upgrade.label),
                   subtitle: Text(
-                    'Grado ${_progress.upgrades[upgrade] ?? 0}/2 · +${upgrade.points} per grado nelle nuove run',
+                    'Grado ${_progress.upgrades[upgrade] ?? 0}/${LitePermanentUpgrade.maxRank} · ${upgrade.bonusPerRank} per grado nelle nuove run',
                   ),
                   trailing: TextButton(
                     onPressed: buying || _progress.buy(upgrade) == null
@@ -2128,7 +2128,10 @@ class _OculumLitePageState extends State<OculumLitePage>
                                   title: Text(
                                     'In uso: ${liteWeaponLabels[run.weapon]}',
                                   ),
-                                  subtitle: Text(_weaponDetails[run.weapon]!),
+                                  subtitle: Text(
+                                    '${_weaponDetails[run.weapon]!}\n'
+                                    'Portata con i bonus · ${run.weaponReach(run.weapon).toStringAsFixed(1).replaceFirst('.', ',')} m',
+                                  ),
                                 ),
                                 for (
                                   var i = 0;
