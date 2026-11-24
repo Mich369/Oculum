@@ -4547,15 +4547,18 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return max(0, leggiNumero(gradoController)) ~/ 3;
   }
 
+  BigInt _schivateOculumConferite() =>
+      BigInt.from(schivataOculumBase()) +
+      BigInt.from(schivateOculumBonus) +
+      BigInt.from(runtimeQuickBonus('schivata_oculum')) +
+      BigInt.from(difficultyIncreaseOculumDodgeBonus()) -
+      BigInt.from(schivateOculumRimosseManualmente);
+
   int schivateOculumTotali() {
-    return max(
-      0,
-      schivataOculumBase() +
-          schivateOculumBonus +
-          runtimeQuickBonus('schivata_oculum') +
-          difficultyIncreaseOculumDodgeBonus() -
-          schivateOculumRimosseManualmente,
-    );
+    final granted = _schivateOculumConferite();
+    if (granted.isNegative) return 0;
+    return (granted > _oculumMaxDodgeInt ? _oculumMaxDodgeInt : granted)
+        .toInt();
   }
 
   int schivateOculumDisponibili() {

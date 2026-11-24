@@ -2338,6 +2338,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget schivataOculumResourcePanel() {
     final available = schivateOculumDisponibili();
+    final canEdit = puoModificareSchivateOculum;
     return gothicPanel(
       borderColor: eyePupilGlowColor,
       child: Column(
@@ -2358,9 +2359,12 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ),
               ),
               GestureDetector(
-                onSecondaryTap: modificaSchivateOculumDaTastiera,
-                onLongPress: modificaSchivateOculumDaTastiera,
+                onSecondaryTap: canEdit
+                    ? modificaSchivateOculumDaTastiera
+                    : null,
+                onLongPress: canEdit ? modificaSchivateOculumDaTastiera : null,
                 child: Tooltip(
+                  triggerMode: TooltipTriggerMode.manual,
                   message: t(
                     'Tieni premuto o usa il tasto destro per modificare le Schivate',
                     'Hold or right-click to edit dodges',
@@ -2380,8 +2384,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           const SizedBox(height: 8),
           smallInfoText(
             t(
-              'Difesa consumabile: si prepara dal menu e viene consumata al prossimo danno. Non si ricarica con riposo, refull o turni.',
-              'Consumable defense: prepare it from the menu and it is spent on the next damage. It does not recharge with rest, refill or turns.',
+              'Spendi una carica quando prepari la Schivata. La riduzione si applica al prossimo danno.',
+              'You spend one charge when you prepare the dodge. The reduction applies to the next damage.',
             ),
           ),
           const SizedBox(height: 10),
@@ -2395,7 +2399,7 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
               IconButton.filledTonal(
                 tooltip: t('Rimuovi una schivata', 'Remove one dodge'),
-                onPressed: available > 0
+                onPressed: canEdit && available > 0
                     ? () => modificaSchivateOculumRapide(-1)
                     : null,
                 icon: const Icon(Icons.remove),
@@ -2403,14 +2407,23 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               const SizedBox(width: 8),
               IconButton.filledTonal(
                 tooltip: t('Aggiungi una schivata', 'Add one dodge'),
-                onPressed: () => modificaSchivateOculumRapide(1),
+                onPressed: canEdit
+                    ? () => modificaSchivateOculumRapide(1)
+                    : null,
                 icon: const Icon(Icons.add),
+              ),
+              IconButton.filledTonal(
+                tooltip: t('Imposta Schivate', 'Set dodges'),
+                onPressed: canEdit ? modificaSchivateOculumDaTastiera : null,
+                icon: const Icon(Icons.edit_outlined),
               ),
             ],
           ),
           const SizedBox(height: 10),
           ElevatedButton.icon(
-            onPressed: available > 0 ? mostraMenuSchivataOculum : null,
+            onPressed: canEdit && available > 0
+                ? mostraMenuSchivataOculum
+                : null,
             icon: const Icon(Icons.visibility),
             style: ElevatedButton.styleFrom(
               backgroundColor: eyePupilGlowColor,
@@ -2426,105 +2439,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     );
   }
 
-  Future<void> modificaSchivateOculumDaTastiera() async {
-    if (!puoModificareSchivateOculum) return;
-    final origin = currentSheetScrollId();
-    final campaign = activeCampaignId;
-    final scope = permissionScope;
-    final sheetName = nomeController.text.trim();
-    final controller = TextEditingController(
-      text: schivateOculumDisponibili().toString(),
-    );
-    final value = await oculumShowDialogUntilClosed<int>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, refresh) {
-          final amount = int.tryParse(controller.text.trim());
-          void adjust(int delta) {
-            final current = int.tryParse(controller.text.trim()) ?? 0;
-            controller.text = '${max(0, current + delta)}';
-            refresh(() {});
-          }
-
-          return AlertDialog(
-            title: Text(t('Schivate Oculum', 'Oculum Dodges')),
-            scrollable: true,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (sheetName.isNotEmpty) Text(sheetName),
-                TextField(
-                  key: const ValueKey('dodge-available-amount'),
-                  controller: controller,
-                  autofocus: true,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: oculumNonNegativeIntegerFormatters,
-                  decoration: InputDecoration(
-                    labelText: t('Quantità disponibile', 'Available amount'),
-                  ),
-                  onChanged: (_) => refresh(() {}),
-                  onSubmitted: (text) {
-                    final number = int.tryParse(text.trim());
-                    if (number != null) Navigator.pop(dialogContext, number);
-                  },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        key: const ValueKey('dodge-minus-one'),
-                        onPressed: (amount ?? 0) > 0 ? () => adjust(-1) : null,
-                        child: const Text('-1'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        key: const ValueKey('dodge-plus-one'),
-                        onPressed: () => adjust(1),
-                        child: const Text('+1'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(t('Annulla', 'Cancel')),
-              ),
-              FilledButton(
-                onPressed: amount != null
-                    ? () => Navigator.pop(
-                        dialogContext,
-                        int.tryParse(controller.text.trim()),
-                      )
-                    : null,
-                child: Text(t('Salva', 'Save')),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-    controller.dispose();
-    if (value == null ||
-        !mounted ||
-        currentSheetScrollId() != origin ||
-        activeCampaignId != campaign ||
-        permissionScope != scope) {
-      return;
-    }
-    impostaSchivateOculumDisponibili(value);
-  }
-
   Widget schivataOculumActionButton() => GestureDetector(
     key: const ValueKey('mobile-dodge'),
-    onSecondaryTap: modificaSchivateOculumDaTastiera,
-    onLongPress: modificaSchivateOculumDaTastiera,
+    onSecondaryTap: puoModificareSchivateOculum
+        ? modificaSchivateOculumDaTastiera
+        : null,
+    onLongPress: puoModificareSchivateOculum
+        ? modificaSchivateOculumDaTastiera
+        : null,
     child: OculumSurfaceButton(
       child: OutlinedButton.icon(
         style: OutlinedButton.styleFrom(
@@ -2533,7 +2455,9 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
           side: BorderSide(color: eyePupilGlowColor.withValues(alpha: .72)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         ),
-        onPressed: mostraMenuSchivataOculum,
+        onPressed: puoModificareSchivateOculum
+            ? mostraMenuSchivataOculum
+            : null,
         icon: const Icon(Icons.visibility_outlined),
         label: Text('${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}'),
       ),
@@ -2547,8 +2471,10 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
     icon: Icons.visibility,
     color: eyePupilGlowColor,
     conditionTarget: OculumConditionTarget.combattimento,
-    onTap: mostraMenuSchivataOculum,
-    onContextMenu: modificaSchivateOculumDaTastiera,
+    onTap: puoModificareSchivateOculum ? mostraMenuSchivataOculum : null,
+    onContextMenu: puoModificareSchivateOculum
+        ? modificaSchivateOculumDaTastiera
+        : null,
   );
 
   Widget oculumRollSpendPanel() {

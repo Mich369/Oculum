@@ -1,5 +1,15 @@
 # Schivate Oculum — verifica del 24 novembre 2026
 
+## Revisione Expressive Ink
+
+L’editor e la preparazione condividono il sigillo dell’occhio in rame, le campiture opache color prugna e il tratteggio ispirato al Re Goblin G. Il campo numerico è tra i pulsanti −1 e +1. Il menu di preparazione scorre e mette in evidenza le quattro riduzioni. Nelle Risorse, **Imposta Schivate** apre l’editor anche con un tocco o con la tastiera. Su telefono il campo prende il focus quando lo tocchi.
+
+L’editor intercetta quantità fuori dall’intervallo esatto condiviso da Windows, Android e web. Se il conteggio o le cariche consumate cambiano mentre il menu è aperto, mostra un avviso e blocca il salvataggio del valore precedente. La preparazione verifica identità della scheda, campagna, stanza e permessi prima di consumare la carica. Entrambi i menu impediscono aperture sovrapposte.
+
+Verifica con **34 regressioni e una prova di cattura grafica superate**. La preparazione è stata provata anche a 320×360. Le schermate dell’editor sono state controllate a 390×844 e 1440×1000. L’analisi statica di `lib` e `test` non segnala problemi. I log sono `build/qa-dodges-ink-verified-tests.log` e `build/qa-dodges-ink-analyze.log`.
+
+La candidata locale di questa revisione ha destinazione `build/distribution/Oculum-App-20261124-Schivate-Ink` e APK release con `versionCode 100300`. Le ricevute dei runtime, degli archivi, del log offline e della firma sono `build/Oculum-App-20261124-Schivate-Ink-PACKAGES-VERIFIED.json` e `build/Oculum-App-20261124-Schivate-Ink-ANDROID-SIGNATURE.json`. I risultati e i percorsi nelle sezioni successive documentano la candidata precedente, prima della revisione Ink.
+
 ## Correzione richiesta
 
 La scheda mostra il solo numero disponibile, senza rapporto tra disponibili e totali. Il comando Schivata nella scheda, l’indicatore rapido e il contatore della pagina risorse aprono lo stesso editor con pressione prolungata o tasto destro. Nell’editor sono presenti `+1`, `-1` e quantità disponibile scrivibile; `Salva` conferma e `Annulla` scarta. Il tocco normale sul comando della scheda apre ancora la preparazione della Schivata.

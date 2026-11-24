@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Menu Schivate in stile Expressive Ink — 24 novembre 2026
+
+- Il menu per impostare le cariche e quello per preparare una Schivata hanno una nuova cornice in stile Expressive Ink, con occhio inciso nel rame, fondo opaco e accenti prugna.
+- Il campo numero è affiancato da **−1** e **+1**. Su telefono la tastiera si apre toccando il campo. Nelle Risorse c’è anche il pulsante **Imposta Schivate**. Le opzioni di preparazione mostrano le riduzioni del danno e scorrono sugli schermi più bassi.
+- Se il conteggio cambia mentre stai modificando le Schivate, riapri il menu con il valore aggiornato. Anche la preparazione verifica la scheda e i suoi permessi prima di spendere una carica.
+
 ## Schivate Oculum dalla scheda — 24 novembre 2026
 
 - Le Schivate Oculum mostrano soltanto il numero disponibile, per esempio **1**, al posto di **1/1**.

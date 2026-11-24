@@ -4798,10 +4798,17 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   void modificaSchivateOculumRapide(int delta) {
-    if (delta == 0) return;
-    impostaSchivateOculumDisponibili(
-      max(0, schivateOculumDisponibili() + delta),
-    );
+    if (!puoModificareSchivateOculum || delta == 0) return;
+    final next = BigInt.from(schivateOculumDisponibili()) + BigInt.from(delta);
+    if (next > _oculumMaxDodgeInt ||
+        !impostaSchivateOculumDisponibili(max(0, next.toInt()))) {
+      _dodgeNotice(
+        t(
+          'Quantità di Schivate fuori intervallo.',
+          'Dodge amount out of range.',
+        ),
+      );
+    }
   }
 
   bool get puoModificareSchivateOculum {
@@ -4813,29 +4820,33 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         !readBoolValue(sheet['realtimeRestrictedByMaster']);
   }
 
-  void impostaSchivateOculumDisponibili(int value) {
-    if (!mounted || !puoModificareSchivateOculum) return;
+  bool impostaSchivateOculumDisponibili(int value) {
+    if (!mounted || !puoModificareSchivateOculum) return false;
     final target = max(0, value);
-    if (target == schivateOculumDisponibili()) return;
+    if (target == schivateOculumDisponibili()) return true;
     // Work from the unclamped grant balance, including old saves whose spent
     // charges exceed their current grants. Manual edits never refund usage.
-    final granted =
-        schivataOculumBase() +
-        schivateOculumBonus +
-        runtimeQuickBonus('schivata_oculum') +
-        difficultyIncreaseOculumDodgeBonus() -
-        schivateOculumRimosseManualmente;
-    final delta = schivateOculumConsumate + target - granted;
+    final desired = BigInt.from(schivateOculumConsumate) + BigInt.from(target);
+    if (desired > _oculumMaxDodgeInt) return false;
+    final delta = desired - _schivateOculumConferite();
+    final oldBonus = BigInt.from(schivateOculumBonus);
+    final adjustedBonus = oldBonus + delta;
+    final removed = BigInt.from(schivateOculumRimosseManualmente);
+    final nextRemoved = adjustedBonus.isNegative
+        ? removed - adjustedBonus
+        : removed;
+    if (adjustedBonus > _oculumMaxDodgeInt ||
+        nextRemoved > _oculumMaxDodgeInt) {
+      return false;
+    }
     setState(() {
-      if (delta > 0) {
-        schivateOculumBonus += delta;
-      } else {
-        final bonusRemoved = min(schivateOculumBonus, -delta);
-        schivateOculumBonus -= bonusRemoved;
-        schivateOculumRimosseManualmente += -delta - bonusRemoved;
-      }
+      schivateOculumBonus = adjustedBonus.isNegative
+          ? 0
+          : adjustedBonus.toInt();
+      schivateOculumRimosseManualmente = nextRemoved.toInt();
     });
     programmaSalvataggio();
+    return true;
   }
 
   bool advanceMasterInitiativeAfterAction(String sheetTag) {
@@ -6263,6 +6274,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
   }
 
   Future<void> mostraMenuSchivataOculum() async {
+    if (!puoModificareSchivateOculum || _oculumDodgeDialogOpen) return;
     if (schivataOculumPronta()) {
       setState(() {
         risultato = t(
@@ -6285,100 +6297,85 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       return;
     }
 
-    final choice = await showModalBottomSheet<(String, int)>(
-      context: context,
-      backgroundColor: const Color(0xFF10121A),
-      builder: (sheetContext) {
-        Widget tile({
-          required String label,
-          required String description,
-          required int reduction,
-          required IconData icon,
-        }) {
-          return ListTile(
-            leading: Icon(icon, color: eyePupilGlowColor),
+    final origin = _dodgeSheet;
+    final available = schivateOculumDisponibili();
+    final choice = await _openDodgeDialog<(String, int)>((dialogContext) {
+      Widget option(String label, String description, int reduction) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Material(
+          color: const Color(0xFF302331),
+          shape: const BeveledRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+            side: BorderSide(color: _dodgeBorder),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             title: Text(
               label,
               style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
+                color: _dodgePaper,
+                fontWeight: FontWeight.w700,
               ),
             ),
             subtitle: Text(
               description,
-              style: TextStyle(color: Colors.grey.shade300),
+              style: const TextStyle(color: _dodgePaper),
             ),
-            onTap: () => Navigator.pop(sheetContext, (label, reduction)),
-          );
-        }
-
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.visibility, color: eyePupilGlowColor),
-                  title: Text(
-                    t('Schivata Oculum', 'Oculum Dodge'),
-                    style: TextStyle(
-                      color: eyePupilGlowColor,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  subtitle: Text(
-                    t(
-                      'Disponibili ${schivateOculumDisponibili()}. Sono consumabili e non si rigenerano.',
-                      'Available ${schivateOculumDisponibili()}. They are consumables and do not regenerate.',
-                    ),
-                    style: TextStyle(color: Colors.grey.shade300),
-                  ),
-                ),
-                tile(
-                  label: 'Inferiore',
-                  description: t(
-                    'Immunita ai danni contro un grado inferiore.',
-                    'Damage immunity against a lower grade.',
-                  ),
-                  reduction: 100,
-                  icon: Icons.keyboard_double_arrow_down,
-                ),
-                tile(
-                  label: 'Al tuo pari',
-                  description: t(
-                    'Riduci del 90% i danni contro un grado pari al tuo.',
-                    'Reduce damage by 90% against your own grade.',
-                  ),
-                  reduction: 90,
-                  icon: Icons.drag_handle,
-                ),
-                tile(
-                  label: 'Forte',
-                  description: t(
-                    'Riduci del 75% i danni contro nemici fino a tre gradi maggiori.',
-                    'Reduce damage by 75% against enemies up to three grades higher.',
-                  ),
-                  reduction: 75,
-                  icon: Icons.trending_up,
-                ),
-                tile(
-                  label: 'Impossibile',
-                  description: t(
-                    'Riduci del 50% i danni contro minacce oltre quel limite.',
-                    'Reduce damage by 50% against threats beyond that limit.',
-                  ),
-                  reduction: 50,
-                  icon: Icons.warning_amber,
-                ),
-              ],
+            trailing: Text(
+              '$reduction%',
+              style: const TextStyle(
+                color: _dodgeCopper,
+                fontWeight: FontWeight.w800,
+              ),
             ),
+            onTap: () {
+              if (ModalRoute.of(dialogContext)?.isCurrent == true) {
+                Navigator.pop(dialogContext, (label, reduction));
+              }
+            },
           ),
-        );
-      },
-    );
+        ),
+      );
 
-    if (choice == null) return;
+      return _OculumDodgeDialog(
+        title: t('Schivata Oculum', 'Oculum Dodge'),
+        subtitle: t('Disponibili: $available', 'Available: $available'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            option(
+              'Inferiore',
+              t('Grado inferiore al tuo', 'Lower grade'),
+              100,
+            ),
+            option('Al tuo pari', t('Grado pari al tuo', 'Equal grade'), 90),
+            option(
+              'Forte',
+              t('Fino a tre Gradi sopra di te', 'Up to three Grades higher'),
+              75,
+            ),
+            option(
+              'Impossibile',
+              t('Oltre tre Gradi sopra di te', 'More than three Grades higher'),
+              50,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: _dodgePaper),
+            onPressed: () {
+              if (ModalRoute.of(dialogContext)?.isCurrent == true) {
+                Navigator.pop(dialogContext);
+              }
+            },
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+        ],
+      );
+    });
+    if (choice == null || !_dodgeSheetStillCurrent(origin)) return;
     usaSchivataOculum(label: choice.$1, reductionPercent: choice.$2);
   }
 

@@ -45,6 +45,77 @@ Future<void> _showControl(
 }
 
 void main() {
+  testWidgets(
+    'quantity editor rejects a stale balance and an oversized input',
+    (tester) async {
+      final (state, probe) = await mountFight(tester);
+      state.schivateOculumBonus = 3;
+      await _showControl(tester, state, probe);
+      await tester.longPress(find.byKey(const ValueKey('mobile-dodge')).last);
+      await _dialogFrame(tester);
+      await tester.enterText(_amount, '9999999999999999999999999');
+      await tester.pump();
+      expect(find.text('Quantità fuori intervallo.'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Salva'))
+            .onPressed,
+        isNull,
+      );
+      await tester.enterText(_amount, '4');
+      await tester.pump();
+      state.schivateOculumConsumate = 1;
+      await _save(tester);
+      expect(probe.dodgeAvailable(), 2);
+      expect(state.schivateOculumConsumate, 1);
+      expect(find.textContaining('Le Schivate sono cambiate'), findsOneWidget);
+      expect(_amount, findsOneWidget);
+      await closeFixture(tester, probe);
+    },
+  );
+
+  testWidgets('preparation cannot spend a charge on another sheet', (
+    tester,
+  ) async {
+    final (state, probe) = await mountFight(tester);
+    state.schivateOculumBonus = 2;
+    await _showControl(tester, state, probe);
+    await tester.tap(find.byKey(const ValueKey('mobile-dodge')).last);
+    await _dialogFrame(tester);
+    final other = {...probe.snapshot(), 'id': 'OTHER', 'sheetTag': 'OTHER'};
+    state.schedePersonaggio.add(other);
+    state.schedaCorrente = 1;
+    probe.load(other);
+    await tester.tap(find.text('Inferiore'));
+    await _dialogFrame(tester);
+    expect(probe.dodgeAvailable(), 2);
+    expect(state.schivataOculumRiduzionePronta, 0);
+    expect(state.schivateOculumConsumate, 0);
+    expect(tester.takeException(), isNull);
+    await closeFixture(tester, probe);
+  });
+
+  testWidgets('preparation scrolls and spends once on a short screen', (
+    tester,
+  ) async {
+    final (state, probe) = await mountFight(tester);
+    tester.view.physicalSize = const Size(320, 360);
+    state.schivateOculumBonus = 2;
+    await _showControl(tester, state, probe);
+    await tester.tap(find.byKey(const ValueKey('mobile-dodge')).last);
+    await _dialogFrame(tester);
+    final lastOption = find.text('Impossibile');
+    await tester.ensureVisible(lastOption);
+    await _dialogFrame(tester);
+    await tester.tap(lastOption);
+    await _dialogFrame(tester);
+    expect(probe.dodgeAvailable(), 1);
+    expect(state.schivataOculumRiduzionePronta, 50);
+    expect(state.schivateOculumConsumate, 1);
+    expect(tester.takeException(), isNull);
+    await closeFixture(tester, probe);
+  });
+
   testWidgets('a missing or restricted sheet cannot open the editor', (
     tester,
   ) async {
@@ -59,7 +130,7 @@ void main() {
     probe.quickEditDodge(1);
     expect(probe.snapshot()['schivateOculumBonus'], before);
     state.schedePersonaggio.clear();
-      state.schedaCorrente = 0;
+    state.schedaCorrente = 0;
     probe.quickEditDodge(1);
     expect(probe.snapshot()['schivateOculumBonus'], before);
     await closeFixture(tester, probe);
@@ -257,6 +328,10 @@ void main() {
       }
       final before = probe.snapshot();
       await _save(tester);
+      expect(
+        find.text('La scheda attiva o i suoi permessi sono cambiati.'),
+        findsOneWidget,
+      );
       expect(
         probe.snapshot()['schivateOculumBonus'],
         before['schivateOculumBonus'],
