@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
 import 'package:oculum/widgets/oculum_approved_theme_art.dart';
 import 'package:oculum/widgets/oculum_custom_theme.dart';
+import 'package:oculum/widgets/oculum_goth_ornaments.dart';
+import 'package:oculum/widgets/oculum_narrative_background.dart';
 import 'package:oculum/widgets/oculum_theme_asset_packs.dart';
 import 'package:oculum/widgets/oculum_theme_presentation.dart';
 import 'package:pointycastle/digests/sha256.dart';
@@ -19,6 +21,9 @@ typedef _Vote = ({
   String sha256,
   String originalSha256,
 });
+
+const _angelicoPhone =
+    'assets/oculum/theme_stories/webp/element_pack_angelico_mobile_canon_20261124_f_b17b8d78.webp';
 
 // Frozen user choices received on 18 November, independent of local gallery
 // files, Downloads or generated manifests. Each prior source stays intact.
@@ -327,19 +332,72 @@ void main() {
         expect(pack, isNotNull, reason: vote.id);
         expect(pack!.id, vote.id);
         expect(pack.storyScene, _votedPath(vote), reason: vote.id);
-        // The pre-existing mobile fallback uses storyScene. No separate phone
-        // image or relic is authored/approved by a desktop-only vote.
-        expect(pack.storySceneMobileAsset, isNull, reason: vote.id);
+        // Angelico has a separate user vote for phone.
+        expect(
+          pack.storySceneMobileAsset,
+          vote.id == 'element_pack_angelico' ? _angelicoPhone : null,
+          reason: vote.id,
+        );
         expect(pack.relic, 'assets/themes/${vote.id}/overlays/relic.png');
       }
     },
   );
 
+  testWidgets('Angelico switches from desktop D to phone F in portrait', (
+    tester,
+  ) async {
+    const sheetId = 'angelico-portrait-vote';
+    const id = 'element_pack_angelico';
+    final pack = oculumThemeAssetPacks[id]!;
+    final previous = oculumSheetRelicSelections.value;
+    addTearDown(() => oculumSheetRelicSelections.value = previous);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    oculumSheetRelicSelections.value = {sheetId: id};
+    tester.view.devicePixelRatio = 1;
+
+    await _expectDigest(
+      _angelicoPhone,
+      'b17b8d788dcdcb445b6e0ef454345d088ea65c14cfa45909ae5f850352f810fc',
+    );
+    final app = MaterialApp(
+      theme: ThemeData.dark().copyWith(
+        extensions: const [
+          OculumGothOrnaments(
+            family: OculumGothFamily.crystal,
+            ink: Colors.white,
+            accent: Colors.blueGrey,
+            opacity: .3,
+            themeId: 'classic_reliquary',
+          ),
+        ],
+      ),
+      home: const OculumNarrativeBackground(sheetId: sheetId),
+    );
+    String scenePath() {
+      final provider = tester.widget<Image>(find.byType(Image).first).image;
+      final asset = provider is ResizeImage ? provider.imageProvider : provider;
+      return (asset as AssetImage).assetName;
+    }
+
+    tester.view.physicalSize = const Size(1440, 1000);
+    await tester.pumpWidget(app);
+    expect(scenePath(), pack.storyScene);
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pump();
+    expect(scenePath(), _angelicoPhone);
+    expect(
+      pack.relic,
+      'assets/themes/element_pack_angelico/overlays/relic.png',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   test(
     'Explicit story, phone and relic overrides take precedence over stock art',
     () {
       const pack = OculumThemeAssetPack(
-        'blood_court',
+        'element_pack_angelico',
         'Custom title',
         'Custom motif',
         'Custom motion',

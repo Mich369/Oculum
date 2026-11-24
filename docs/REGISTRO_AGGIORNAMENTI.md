@@ -1,5 +1,9 @@
 # Registro cumulativo per i giocatori
 
+## Angelico su telefono — 24 novembre 2026
+
+- Il tema Angelico usa su telefono la WebP verticale **F · Campiture spezzate** scelta dall’utente. Le ali, l’altare e la navata si leggono nella vista verticale. Su desktop il tema mantiene la scelta D e la reliquia conserva la propria selezione separata.
+
 ## Menu Schivate in stile Expressive Ink — 24 novembre 2026
 
 - Il menu per impostare le cariche e quello per preparare una Schivata hanno una nuova cornice in stile Expressive Ink, con occhio inciso nel rame, fondo opaco e accenti prugna.

@@ -1,0 +1,20 @@
+{
+  "lotId": "ANGELICO-TELEFONO-01",
+  "catalogueId": "element_pack_angelico",
+  "surface": "phone",
+  "confirmationDate": "2026-11-24",
+  "slot": "F",
+  "label": "Campiture spezzate",
+  "file": "F.webp",
+  "sha256": "b17b8d788dcdcb445b6e0ef454345d088ea65c14cfa45909ae5f850352f810fc",
+  "size": [852, 1846],
+  "desktop": {
+    "slot": "D",
+    "sha256": "db1a1e098a6b971db919664abeeb5972a9e0a8a346b2824eae5fa08f9da82f25"
+  },
+  "reference": {
+    "name": "Re Goblin G",
+    "sha256": "cca7aba6df4b9339aa590cf609c276a22c7d674d064e3d1873d1499c4195b7bb"
+  },
+  "requestedRuntimePath": "assets/oculum/theme_stories/webp/element_pack_angelico_mobile_canon_20261124_f_b17b8d78.webp"
+}

@@ -1,5 +1,11 @@
 # Oculum — canone visivo confermato
 
+## Angelico su telefono — 24 novembre 2026
+
+Nel lotto **ANGELICO-TELEFONO-01** l’utente conferma **F · Campiture spezzate** solo per la scena verticale. Il soggetto riprende la navata, l’altare, le ali in avorio, i bracieri blu e l’oro spento della D desktop. La vista verticale dà più spazio alle ali della volta e al percorso sul pavimento. Si usa il medesimo ID esistente `element_pack_angelico`. La scelta della reliquia è indipendente.
+
+[WebP canonica per telefono](../assets/oculum/theme_stories/webp/element_pack_angelico_mobile_canon_20261124_f_b17b8d78.webp) · [Ricevuta della conferma](../output/temi-ink-20261124/ANGELICO-TELEFONO-01/CONFERMA-SCELTA-F.json)
+
 ## Temi e nomi confermati — 18 novembre 2026
 
 ### Trenta scelte desktop dei temi: confermate e collegate nei sorgenti

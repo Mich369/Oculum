@@ -13,15 +13,15 @@ class OculumThemeAssetPack {
     this.framePackId,
     this.identityPrefix = 'identity',
     this.storySceneAsset,
-    this.storySceneMobileAsset,
+    String? storySceneMobileAsset,
     this.maskedStorySceneAsset,
     this.relicAsset,
     this.preserveStoryFraming = false,
-  });
+  }) : _authoredStorySceneMobileAsset = storySceneMobileAsset;
   final String id, name, motif, motion;
   final String? framePackId;
   final String identityPrefix;
-  final String? storySceneAsset, storySceneMobileAsset, relicAsset;
+  final String? storySceneAsset, _authoredStorySceneMobileAsset, relicAsset;
   final String? maskedStorySceneAsset;
   final bool preserveStoryFraming;
   String get _frameId => framePackId ?? id;
@@ -36,6 +36,8 @@ class OculumThemeAssetPack {
       storySceneAsset ??
       oculumApprovedThemeStoryAsset(id) ??
       'assets/oculum/theme_stories/webp/$id.webp';
+  String? get storySceneMobileAsset =>
+      _authoredStorySceneMobileAsset ?? oculumApprovedThemePhoneStoryAssets[id];
   String frame(String role, {String variant = ""}) =>
       "assets/themes/$_frameId/frames/$role${variant.isEmpty ? "" : "-$variant"}.png";
   String scene({required bool mobile, String variant = ""}) =>

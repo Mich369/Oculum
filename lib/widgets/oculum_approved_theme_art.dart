@@ -1,8 +1,7 @@
 // Approved desktop choices from SCELTE-TEMI-PLAYER-20261118.json and
 // the Kingi and Iride cesellata receipts of 19 November. Stable saved IDs stay unchanged.
 // Explicit theme artwork and custom layers retain their existing precedence.
-// Desktop remains the existing fallback where no mobile scene is authored;
-// these choices do not approve a separate mobile crop, relic or frame.
+// Desktop remains the existing fallback where no mobile scene is approved.
 const oculumApprovedThemeStoryAssets = <String, String>{
   'abyssal_tide':
       'assets/oculum/theme_stories/webp/abyssal_tide_canon_20261118_d_dc86d375.webp',
@@ -72,6 +71,12 @@ const oculumApprovedThemeStoryAssets = <String, String>{
 
 String? oculumApprovedThemeStoryAsset(String id) =>
     oculumApprovedThemeStoryAssets[id];
+
+/// Independent votes for portrait scenes, keyed by the same saved theme ID.
+const oculumApprovedThemePhoneStoryAssets = <String, String>{
+  'element_pack_angelico':
+      'assets/oculum/theme_stories/webp/element_pack_angelico_mobile_canon_20261124_f_b17b8d78.webp',
+};
 
 /// Only the three already selectable Home scenes included in this vote.
 const oculumApprovedManualHomeStoryIds = <String>{

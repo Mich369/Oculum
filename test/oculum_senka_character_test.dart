@@ -172,14 +172,14 @@ void main() {
     expect(assetName(), pack.storyScene);
     await tester.pumpWidget(background(masked: true));
     expect(assetName(), pack.maskedStorySceneAsset);
-    expect(scenery().fit, BoxFit.contain);
+    expect(scenery().fit, BoxFit.cover);
 
     tester.view.physicalSize = const Size(392, 850);
     await tester.pumpWidget(background());
     expect(assetName(), pack.storySceneMobileAsset);
     await tester.pumpWidget(background(masked: true));
     expect(assetName(), pack.maskedStorySceneAsset);
-    expect(scenery().fit, BoxFit.contain);
+    expect(scenery().fit, BoxFit.cover);
 
     oculumSheetRelicSelections.value = {sheetId: otherPack.id};
     await tester.pump();
