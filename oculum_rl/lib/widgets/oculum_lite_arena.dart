@@ -185,7 +185,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
   ImageInfo? _ashley;
   ImageStream? _headStream;
   ImageInfo? _heads;
-  final _extraStreams = <(ImageStream, ImageStreamListener)>[];
+  final _extraStreams = <AssetImage, (ImageStream, ImageStreamListener)>{};
   final _extraImages = <AssetImage, ImageInfo>{};
   final _weaponStreams = <LiteWeapon, (ImageStream, ImageStreamListener)>{};
   final _weapons = <LiteWeapon, ui.Image>{};
@@ -308,11 +308,6 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.hubArt,
         OculumLiteArena.restGround,
         OculumLiteArena.faunaArt,
-        if (widget.run.hero == LiteHero.polloMeccanico ||
-            widget.run.coopFighters.any(
-              (fighter) => fighter.hero == LiteHero.polloMeccanico,
-            ))
-          ...OculumLiteArena.mechanicalChickenArts.values,
         OculumLiteArena.solarArt,
         OculumLiteArena.solarGround,
         OculumLiteArena.infernalArt,
@@ -321,24 +316,10 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.desertoGround,
         OculumLiteArena.oreaGround,
       ]) {
-        final stream = art.resolve(config);
-        final listener = ImageStreamListener((frame, synchronous) {
-          _applyImage(frame, synchronous, () {
-            _extraImages[art]?.dispose();
-            _extraImages[art] = frame;
-            if (art == OculumLiteArena.desertoGround ||
-                art == OculumLiteArena.infernoGround ||
-                art == OculumLiteArena.caramellaGround ||
-                art == OculumLiteArena.solarGround ||
-                art == OculumLiteArena.restGround ||
-                art == OculumLiteArena.oreaGround)
-              _floorKey = null;
-          });
-        });
-        _extraStreams.add((stream, listener));
-        stream.addListener(listener);
+        _resolveExtraImage(art, config);
       }
     }
+    _resolveCoopHeroArt(config);
     if (_weaponStreams.isEmpty) {
       for (final weapon in LiteWeapon.values) {
         final art = OculumLiteArena.weaponArt(weapon);
@@ -361,8 +342,46 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
   void didUpdateWidget(OculumLiteArena oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.run.hero != widget.run.hero) _resolveHero();
-    _resolveFeminineArt(createLocalImageConfiguration(context));
-    _resolveAshleys(createLocalImageConfiguration(context));
+    final config = createLocalImageConfiguration(context);
+    _resolveFeminineArt(config);
+    _resolveAshleys(config);
+    _resolveCoopHeroArt(config);
+  }
+
+  void _resolveExtraImage(AssetImage art, ImageConfiguration config) {
+    if (_extraStreams.containsKey(art)) return;
+    final stream = art.resolve(config);
+    final listener = ImageStreamListener((frame, synchronous) {
+      _applyImage(frame, synchronous, () {
+        _extraImages[art]?.dispose();
+        _extraImages[art] = frame;
+        if (art == OculumLiteArena.desertoGround ||
+            art == OculumLiteArena.infernoGround ||
+            art == OculumLiteArena.caramellaGround ||
+            art == OculumLiteArena.solarGround ||
+            art == OculumLiteArena.restGround ||
+            art == OculumLiteArena.oreaGround) {
+          _floorKey = null;
+        }
+      });
+    });
+    _extraStreams[art] = (stream, listener);
+    stream.addListener(listener);
+  }
+
+  void _resolveCoopHeroArt(ImageConfiguration config) {
+    bool includes(LiteHero hero) =>
+        widget.run.hero == hero ||
+        widget.run.coopFighters.any((fighter) => fighter.hero == hero);
+
+    if (includes(LiteHero.evasore)) {
+      _resolveExtraImage(OculumLiteArena.evasorFrames, config);
+    }
+    if (includes(LiteHero.polloMeccanico)) {
+      for (final art in OculumLiteArena.mechanicalChickenArts.values) {
+        _resolveExtraImage(art, config);
+      }
+    }
   }
 
   void _resolveAshleys(ImageConfiguration config) {
@@ -497,7 +516,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
     _props?.dispose();
     _headStream?.removeListener(_headListener);
     _heads?.dispose();
-    for (final (stream, listener) in _extraStreams) {
+    for (final (stream, listener) in _extraStreams.values) {
       stream.removeListener(listener);
     }
     for (final info in _extraImages.values) {
@@ -554,6 +573,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
               cover: _cover?.image,
               heroFrames: _frames?.image,
               ashleyFrames: _ashley?.image,
+              evasoreFrames: _extraImages[OculumLiteArena.evasorFrames]?.image,
               props: _props?.image,
               monsters: _monsters?.image,
               posteaMonsters: _posteaMonsters?.image,
@@ -1302,6 +1322,34 @@ void _edgeMarks(Canvas canvas, Offset o, _Palette tone, double lift) {
   );
 }
 
+class _HeroSprites {
+  const _HeroSprites({
+    this.monsters,
+    this.postea,
+    this.newActors,
+    this.boss,
+    this.nightActors,
+    this.fauna,
+    this.mechanical = const {},
+    this.solar,
+    this.infernal,
+    this.ashley,
+    this.evasore,
+  });
+
+  final ui.Image? monsters;
+  final ui.Image? postea;
+  final ui.Image? newActors;
+  final ui.Image? boss;
+  final ui.Image? nightActors;
+  final ui.Image? fauna;
+  final Map<LiteInkFinish, ui.Image?> mechanical;
+  final ui.Image? solar;
+  final ui.Image? infernal;
+  final ui.Image? ashley;
+  final ui.Image? evasore;
+}
+
 class _ArenaPaint extends CustomPainter {
   _ArenaPaint(
     this.run,
@@ -1310,6 +1358,7 @@ class _ArenaPaint extends CustomPainter {
     this.cover,
     this.heroFrames,
     this.ashleyFrames,
+    this.evasoreFrames,
     this.props,
     this.monsters,
     this.posteaMonsters,
@@ -1340,6 +1389,7 @@ class _ArenaPaint extends CustomPainter {
   final ui.Image? cover;
   final ui.Image? heroFrames;
   final ui.Image? ashleyFrames;
+  final ui.Image? evasoreFrames;
   final ui.Image? props;
   final ui.Image? monsters;
   final ui.Image? posteaMonsters;
@@ -1362,6 +1412,20 @@ class _ArenaPaint extends CustomPainter {
   final int? followedFighterId;
   final double animationLead;
   final _jobs = <(double, VoidCallback)>[];
+
+  late final _heroSprites = _HeroSprites(
+    monsters: monsters,
+    postea: posteaMonsters,
+    newActors: newActors,
+    boss: bossArt,
+    nightActors: nightActors,
+    fauna: faunaArt,
+    mechanical: mechanicalChickenArt,
+    solar: solarArt,
+    infernal: infernalArt,
+    ashley: run.hero == LiteHero.ashley ? heroFrames : ashleyFrames,
+    evasore: evasoreFrames,
+  );
 
   ui.Image? _poses(OculumLiteAppearance look) =>
       look.usesFeminineAtlas ? femininePoses : duplicatorPoses;
@@ -1746,16 +1810,25 @@ class _ArenaPaint extends CustomPainter {
                   hair: Color(0xff393240),
                 ),
               };
-              final mirrorAppearance = mirror.hero == LiteHero.duplicatore
-                  ? appearance.copyWith(cloth: tone.cloth, accent: tone.accent)
-                  : tone;
+              final mirrorAppearance = appearance.copyWith(
+                cloth: tone.cloth,
+                accent: tone.accent,
+                hair: mirror.hero == LiteHero.duplicatore
+                    ? appearance.hair
+                    : tone.hair,
+              );
               _hero(
                 canvas,
                 mirrorAppearance,
                 mirror.weapon,
                 time,
                 hero: mirror.hero,
-                banditArt: monsters,
+                sprites: _heroSprites,
+                figureArt:
+                    mirror.hero == LiteHero.evasore &&
+                        _hasDefaultAppearance(appearance, mirror.hero)
+                    ? _heroSprites.evasore
+                    : null,
                 poseArt: _poses(mirrorAppearance),
                 heads: _heads(mirrorAppearance),
                 gearArt: weapons[mirror.weapon],
@@ -1766,6 +1839,10 @@ class _ArenaPaint extends CustomPainter {
                 stride: enemy.stride,
                 animationLead: animationLead,
                 moving: enemy.stride.strength > .05,
+                aiming: Offset(
+                  (facingTarget - at.dx).abs(),
+                  (target?.y ?? player.dy) - at.dy,
+                ),
                 attackElapsed: enemy.attacking
                     ? .11
                     : enemy.strikePose > 0
@@ -1949,7 +2026,7 @@ class _ArenaPaint extends CustomPainter {
               clone.weapon,
               time + at.dx * .3,
               hero: cloneHero,
-              banditArt: monsters,
+              sprites: _heroSprites,
               poseArt: _poses(cloneLook),
               heads: _heads(cloneLook),
               gearArt: weapons[clone.weapon],
@@ -2040,27 +2117,6 @@ class _ArenaPaint extends CustomPainter {
               fighter.blockResistance / fighter.maxBlockResistance,
             );
           _actor(canvas, at, side, 1, () {
-            final ashley = ashleyFrames;
-            if (fighter.hero == LiteHero.ashley && ashley != null) {
-              _paintAshley(
-                canvas,
-                ashley,
-                fighter.hp <= 0
-                    ? 2
-                    : fighter.springPunchActive
-                    ? 3
-                    : fighter.isMoving
-                    ? 1
-                    : 0,
-                weapons[fighter.weapon],
-                fighter.weapon,
-                direction * side,
-                stride: fighter.stride,
-                animationLead: animationLead,
-                springRemaining: fighter.springPoseRemaining,
-              );
-              return;
-            }
             final standard =
                 guestAppearances[fighter.account] ??
                 oculumLiteDefaultAppearance(fighter.hero);
@@ -2070,20 +2126,17 @@ class _ArenaPaint extends CustomPainter {
               fighter.weapon,
               time,
               hero: fighter.hero,
-              banditArt: fighter.hero == LiteHero.dronePostea
-                  ? posteaMonsters
-                  : monsters,
+              sprites: _heroSprites,
+              figureArt:
+                  fighter.hero == LiteHero.evasore &&
+                      _hasDefaultAppearance(standard, fighter.hero)
+                  ? _heroSprites.evasore
+                  : null,
               giant: fighter.plagueForm,
-              newActors: newActors,
-              bossArt: bossArt,
               mimic: fighter.mimic,
-              nightActors: nightActors,
-              faunaActors: faunaArt,
-              mechanicalChicken: mechanicalChickenArt[standard.inkFinish],
-              solarActors: solarArt,
-              infernalActors: infernalArt,
               night: fighter.night,
               preparingTalent: fighter.springPunchActive,
+              springRemaining: fighter.springPoseRemaining,
               punchPose: fighter.banditPunchPose,
               poseArt: _poses(standard),
               heads: _heads(standard),
@@ -2133,26 +2186,6 @@ class _ArenaPaint extends CustomPainter {
       () {
         _actor(canvas, player, facing, 1, () {
           final strip = heroFrames;
-          if (run.hero == LiteHero.ashley && strip != null) {
-            _paintAshley(
-              canvas,
-              strip,
-              run.hostDown || run.dead
-                  ? 2
-                  : run.springPunchActive
-                  ? 3
-                  : run.isMoving
-                  ? 1
-                  : 0,
-              weapons[run.weapon],
-              run.weapon,
-              weaponAim * facing,
-              stride: run.stride,
-              animationLead: animationLead,
-              springRemaining: run.springPoseRemaining,
-            );
-            return;
-          }
           final spriteFrame =
               strip != null && _hasDefaultAppearance(appearance, run.hero)
               ? _motionFrame(run, animationLead)
@@ -2175,20 +2208,12 @@ class _ArenaPaint extends CustomPainter {
             run.weapon,
             time,
             hero: run.hero,
-            banditArt: run.hero == LiteHero.dronePostea
-                ? posteaMonsters
-                : monsters,
+            sprites: _heroSprites,
             giant: run.plagueForm,
-            newActors: newActors,
-            bossArt: bossArt,
             mimic: run.mimic,
-            nightActors: nightActors,
-            faunaActors: faunaArt,
-            mechanicalChicken: mechanicalChickenArt[appearance.inkFinish],
-            solarActors: solarArt,
-            infernalActors: infernalArt,
             night: run.night,
             preparingTalent: run.springPunchActive,
+            springRemaining: run.springPoseRemaining,
             punchPose: run.banditPunchPose,
             poseArt: _poses(appearance),
             heads: _heads(appearance),
@@ -2954,7 +2979,7 @@ bool _hasDefaultAppearance(OculumLiteAppearance look, LiteHero hero) =>
     look.sameAs(oculumLiteDefaultAppearance(hero), includeInkFinish: false);
 
 int? _motionFrame(LiteRun run, double animationLead) {
-  if (run.hero.specialTalent) return null;
+  if (run.hero.specialTalent || run.hero == LiteHero.ashley) return null;
   if (run.dead || !run.isMoving || run.rescuing) return null;
   if (run.hero == LiteHero.evasore && run.intangible) return 3;
   if (run.intangible || run.preparingAttack || run.attackCooldown > 0) {
@@ -4392,17 +4417,11 @@ void _hero(
   LiteWeapon weapon,
   double time, {
   required LiteHero hero,
-  ui.Image? banditArt,
-  ui.Image? newActors,
-  ui.Image? bossArt,
+  _HeroSprites sprites = const _HeroSprites(),
   LiteMimicForm? mimic,
-  ui.Image? nightActors,
-  ui.Image? faunaActors,
-  ui.Image? mechanicalChicken,
-  ui.Image? solarActors,
-  ui.Image? infernalActors,
   LiteNightVisual? night,
   bool preparingTalent = false,
+  double springRemaining = 0,
   double punchPose = 0,
   ui.Image? gearArt,
   ui.Image? figureArt,
@@ -4420,6 +4439,40 @@ void _hero(
   double? attackElapsed,
   Offset aiming = const Offset(.9, .08),
 }) {
+  final ashley = sprites.ashley;
+  if (hero == LiteHero.ashley && ashley != null) {
+    _paintAshley(
+      canvas,
+      ashley,
+      fallen
+          ? 2
+          : preparingTalent
+          ? 3
+          : moving
+          ? 1
+          : 0,
+      gearArt,
+      weapon,
+      aiming,
+      stride: stride,
+      animationLead: animationLead,
+      springRemaining: springRemaining,
+    );
+    return;
+  }
+  final postea =
+      hero == LiteHero.dronePostea ||
+      mimic?.kind == LiteEnemyKind.dronePostea ||
+      mimic?.kind == LiteEnemyKind.ragnoSaldatore ||
+      mimic?.kind == LiteEnemyKind.costrutto;
+  final banditArt = postea ? sprites.postea : sprites.monsters;
+  final newActors = sprites.newActors;
+  final bossArt = sprites.boss;
+  final nightActors = sprites.nightActors;
+  final faunaActors = sprites.fauna;
+  final mechanicalChicken = sprites.mechanical[appearance.inkFinish];
+  final solarActors = sprites.solar;
+  final infernalActors = sprites.infernal;
   if ((night?.veil ?? 0) > 0 && hero == LiteHero.slimeBlu) return;
   if ((night?.bat ?? 0) > 0 && hero == LiteHero.vampiro && !fallen) {
     _paintBat(canvas, time);
@@ -8325,14 +8378,19 @@ class _HeroPreviewPaint extends CustomPainter {
       weapon,
       0,
       hero: hero,
-      banditArt: hero.sprite != null ? figure : null,
-      newActors: _newHeroRow(hero, false) != null ? figure : null,
-      nightActors: _nightHeroRow(hero, false) != null ? figure : null,
-      faunaActors: LiteAnimal.forHero(hero) != null ? figure : null,
-      mechanicalChicken: hero == LiteHero.polloMeccanico ? figure : null,
-      solarActors: hero.solar ? figure : null,
-      infernalActors: hero.infernal ? figure : null,
-      bossArt: hero == LiteHero.veyrth ? figure : null,
+      sprites: _HeroSprites(
+        monsters: hero.sprite != null ? figure : null,
+        postea: hero == LiteHero.dronePostea ? figure : null,
+        newActors: _newHeroRow(hero, false) != null ? figure : null,
+        nightActors: _nightHeroRow(hero, false) != null ? figure : null,
+        fauna: LiteAnimal.forHero(hero) != null ? figure : null,
+        mechanical: hero == LiteHero.polloMeccanico
+            ? {appearance.inkFinish: figure}
+            : const {},
+        solar: hero.solar ? figure : null,
+        infernal: hero.infernal ? figure : null,
+        boss: hero == LiteHero.veyrth ? figure : null,
+      ),
       gearArt: gear,
       figureArt: body,
       poseArt: poses,

@@ -2,6 +2,7 @@
 
 ## Oculum RL · Anteprima autonoma
 
+- **Rivali illustrati (0.4.8)**. Luce, Ombra ed Eco Speculare usano le tavole da combattimento dei personaggi che copiano, incluso il Curatore della Peste e l’Evasore. Gli sprite delle copie e quelli online vengono risolti dallo stesso catalogo del combattente originale. Verificato con due test del renderer.
 - **Movimenti Oculum RL (0.4.7)**. I passi seguono la distanza percorsa. I piedi si alternano fra appoggio e sollevamento con un trasferimento di peso visibile. La cadenza si assesta all’arresto, conserva le pose di attacco e vale anche per personaggi già presenti, mostri, fauna ed evocazioni.
 - **Pollo Meccanico e finiture**. Sblocca prima il Pollo di Brace. In una run pacifica resta al centro del suo gruppo per dieci secondi. Il Pollo Meccanico lancia tre raggi a inseguimento e tre uova di Postea più forti e a più lunga gittata. Colpisci un tuo uovo atterrato con un raggio per farlo esplodere subito. Ognuno può scegliere Canonica, Ferro Cremisi o Patina di Eiva, anche per un salvataggio esistente. Il Pollo Meccanico ha quattro pose Expressive Ink per livrea.
 - **Aggiornamenti Windows**. Oculum RL controlla le release pubbliche e verifica la dimensione, lo SHA-256 e il runtime. Windows e Windows Test si aggiornano sul loro canale. Il riavvio aspetta il menu e la nuova finestra deve confermare l’avvio prima che si chiuda la precedente. Il menu Aggiornamenti permette anche il controllo manuale.

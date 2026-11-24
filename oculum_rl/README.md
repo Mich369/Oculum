@@ -55,6 +55,8 @@ Gioco autonomo con campagna roguelite 2D. Usa salvataggi e impostazioni propri. 
 
 ## Combattimento e progressione
 
+Luce, Ombra e gli Echi Speculari usano la stessa illustrazione da combattimento del personaggio copiato. Il Curatore della Peste conserva maschera, mantello e scettro.
+
 I passi seguono la distanza percorsa nell’arena, con appoggi più leggibili e peso del corpo sulla gamba in carico. Le pose di attacco conservano le loro finestre di combattimento. La cadenza segue anche il cambio di velocità dei piani e si ferma quando un ostacolo blocca il movimento.
 
 - Dopo aver ripulito il piano, premi **R** al portale. La scelta indica prima ondata, disposizione dei ripari, eventuale élite o boss e possibile pergamena a Postea. In solo mostra anche il potenziamento di zona, il Ristoro dopo la vittoria e gli eventuali potenziamenti non riscossi che scadrebbero partendo. In cooperativa il Master propone il percorso e il gruppo lo conferma.
