@@ -1,5 +1,57 @@
 # Registro cumulativo per i giocatori
 
+## Oculum RL · Anteprima autonoma
+
+- **Cavaliere Elité Lunare** sbloccabile completando la campagna in Facile o superiore. Spada e scudo raddoppiati, blocco a 300, due Guardie Lunari con la skill e un Guardiano Lunare che respinge fino a 12 m con l’Open.
+- **Slime Blu** si sblocca abbattendo dieci Slime sommati fra run. Q attiva lo scatto invisibile. L’assorbimento si mantiene con clic ripetuti e restituisce Vita e Oculum. Gli organici vicini cercano di circondarlo; i nemici meccanici continuano ad attaccare.
+- **Vampiro** respinge i nemici di 3 m, poi 6 m dal livello 3. Contro un riparo infligge 5 Danni aggiuntivi e rompe quelli frangibili. Può volare da pipistrello per 3 secondi intangibili o raddoppiare la propria forza, velocità e Vita con l’Open. La forma di sangue toglie il 5% della Vita massima ai nemici molto vicini a ogni pulsazione.
+- **Campo goblin segreto** con sei ondate, Re Goblin giocabile, fango che oscura la gran parte dello schermo per 0,9 s e Spara-colla raro. Il Re usa la stessa combo stordente anche come avversario. Q rialza gli alleati entro 10 m al 50% Vita. L’Open evoca due goblin col coltello e un fangoso; dopo il primo Spara-colla abbattuto lo aggiunge come quarto alleato. Il Re nemico ha il 6% di averlo prima della scoperta e il 100% dopo. Lo sparo fa pochi Danni. La colla a terra rallenta soltanto mentre la attraversi.
+- Mostri, NPC, pet ed evocazioni cercano percorsi attorno ai ripari. I tiratori arretrano e si spostano di lato per mantenere la distanza. Gli alleati reagiscono ai nemici che minacciano il loro proprietario. Lupo Lunare, Gablyn e la fanteria goblin hanno pose dedicate. Le Guardie e il Guardiano rispettano le tavole canoniche.
+
+- Sconfiggi La tua Luce, La tua Ombra e Veyrth per sbloccarli come personaggi giocabili. Pyrel usa fuoco rimbalzante, Lithra spezza il terreno e il Doppelganger copia le creature a portata, con Vita e attacchi propri della forma. Quando perde la forma torna al 65% della Vita che aveva prima.
+- Ogni nuova run e ogni portale offrono tre luoghi fra sei, incluse le arene dipinte di Deserto Divoratore e Orea Zalira. Pareti crepate nascondono sale segrete con Obser, cure e pergamene.
+- Piccola Marea, Orbietto e Lumin d’eco si uniscono al gruppo quando completi i loro obiettivi. Il menu Compagni ne conserva la scoperta. Sono disponibili le pergamene Brace errante, Spaccaterra e Linfa verde.
+- Curatore della Peste, forma corvina e due scheletri hanno sprite distinti con pose di movimento e attacco. Il menu mostra l’anteprima del personaggio scelto. Il creatore del Duplicatore aggiunge due tenute, due dettagli del volto e due emblemi.
+- Clic destro o V attiva la skill, Spazio l’Open. Lo Scostubandito può lanciare una bomba con B per 2 Oculum, con recupero di 5,5 secondi.
+
+- Completa la run con lo Scostubandito per sbloccare il Gran Scostumato. La sua Open richiama due Scostubanditi; col clic destro usa il cannone. Il Drone di Postea, la nuova Sentinella di Pietra e il Baby Forest Demon diventano giocabili con le rispettive missioni di scorta.
+- Il Curatore della Peste evoca uno scheletro con la falce e un arciere. Le uccisioni recuperano Vita e Resistenza. Con Spazio diventa gigante in forma corvina, raddoppia la Vita massima e respinge i nemici colpiti.
+- Le Open crescono ai livelli 1, 3 e 6 con effetti più forti e recupero di 8, 7 e 6 secondi. In cooperativa anche gli ospiti usano il Ristoro personale, recuperano Vita e Oculum quando salgono di livello e possono soccorrere con R, anche mentre ricaricano l’arco.
+
+- Tieni premuto F per bloccare. Il blocco ha 100 Resistenza o 160 con Spada e scudo. Un oggetto curativo raccolto ne restituisce 10. Fucile schivata passa su G.
+
+- Lo Scostubandito giocabile usa lo sprite della Vedetta, parte con il suo fucile e ha colpo col calcio dell’arma, pugno, Fucile schivata e due tecniche di Scudo. Spazio attiva un’Open distinta per ogni eroe, in solo e in cooperativa.
+- I portali mostrano tre tipi di sfide facoltative e la rispettiva ricompensa. Braci d’impatto, Riflusso d’Oculum e Risonanza d’ombra crescono fino al Grado III e si possono scegliere anche per la squadra.
+
+- I numeri dei colpi ravvicinati nel tempo si dispongono su righe distinte. I Clash vicini mostrano una sola scritta, con gli effetti di ogni impatto ancora visibili.
+
+- I vecchi slot si aprono anche se manca l’aspetto del personaggio o se un’impostazione audio è illeggibile. Se il profilo dei Sigilli non si può aggiornare, la run resta salvata e il gioco lo segnala separatamente.
+- In cooperativa, quando il Master cade smette di raccogliere oggetti e di soccorrere. Un ospite che cade perde l’attacco in carica, che altrimenti poteva partire al piano successivo. Il mercante vende soltanto le armi del proprio catalogo.
+
+- Dopo una morte, «Nuovo tentativo» riapre la scelta del personaggio anche nei salvataggi precedenti. Il Duplicatore ha cinque nuove pettinature dipinte e quattro nuove tinte per i capelli.
+
+- Lo Scostubandito si sblocca portando la Vedetta viva oltre il Forest Demon adulto. Con Spazio evoca il Gran Scostumato e il suo cannone. Tra le run puoi spendere i Sigilli in gradi permanenti di Vita, Danni e Oculum. Le orbite dello Scettro magico danneggiano e rallentano i nemici vicini.
+
+- I nemici prendono di mira anche duplicati, compagni ed evocazioni vive. In solo puoi salvare dal menu di pausa. Le edizioni native tengono la copia di sicurezza in un file separato e mostrano quando una run viene recuperata. L’inventario si apre anche con Picca o Balestra equipaggiata.
+
+- Veyrth evoca dodici sfere visibili prima del lancio a cerchio. Le sfere hanno una forma, un colore e una scia distinti dal raggio e dagli altri proiettili.
+- Il ritmo dell’arena aumenta ogni tre piani a partire dal 3, anche in cooperativa. Il portale mostra l’aumento prima di entrare.
+
+- La Vedetta Scostubandita e il Drone di Postea si uniscono alla run dopo le rispettive vittorie. Seguono il gruppo, attaccano, possono essere soccorsi con R e restano nel salvataggio della run.
+- La tua Luce lascia la Picca d’ossidiana e La tua Ombra la Balestra runica. A terra le sagome delle armi, il colore e i segnali luminosi distinguono il bottino. Ashley può cambiare arma mantenendo il guanto a molla visibile e utilizzabile.
+
+- Gambe, zampe e appendici degli sprite seguono la cadenza dello spostamento. I nemici hanno pose di preparazione, rilascio e reazione. Veyrth muove le braccia, i droni i rotori e Ashley richiude il braccio dopo il pugno. Dal piano 3 i nemici guadagnano +15% Vita e +12% Danni, con aumento progressivo e rinforzi separati per élite, boss e Veyrth.
+- Il combattimento distingue carica, rilascio e rinculo. Lame, guanti, carabina, pugno a molla e schivate hanno scie diverse. I colpi alla Vita lasciano tre tagli e gli impatti sullo Scudo producono schegge. Gli effetti degli impatti sono visibili anche agli ospiti.
+- Il portale mostra la prima ondata, la disposizione dei ripari e l’incontro speciale del prossimo piano. In solo indica anche il potenziamento legato alla zona, il Ristoro disponibile dopo la vittoria e le offerte che scadono lasciando il piano.
+- Il creatore del Clonatore può ricaricare nome e aspetto da un salvataggio in solo, anche nella stanza cooperativa. Puoi modificare la copia e ingrandire l’anteprima.
+- Il creatore del Clonatore combina cinque modelli del corpo, sei lineamenti, sei tenute, sei copricapi, dettagli del viso, emblemi e palette estese. Si può generare un aspetto casuale e modificarne ogni parte. L'aspetto resta nello slot in solo e viene mostrato anche agli altri giocatori quando il Clonatore è preparato nella stanza cooperativa.
+- Oculum RL ha un eseguibile proprio e salvataggi separati. Comprende la campagna 0–13, potenziamenti fino al grado III, ritocchi al combattimento e il Clonatore con fisionomie umana e goblin.
+- Il creatore del Duplicatore combina modelli maschili e femminili, lineamenti, pettinature, tenute e palette. Si possono provare le otto pose delle armi per il personaggio e il suo clone.
+- Ashley combatte col braccio a molla. In cooperativa il Duplicatore ospite crea copie con la propria arma e paga il costo con la propria Vita.
+- Campo Scostubanditi, Foresta Elementale, Regno Sotterraneo e Postea usano arene dipinte. Anche negozio, Ristoro, portale, gemme e armi a terra hanno sprite dedicati.
+- Esc apre le impostazioni audio in solo. Otto brani originali al pianoforte accompagnano le zone e gli scontri speciali. Danni, Scudo e clash hanno effetti distinti.
+- La stanza online ospita fino a sei combattenti. Le regole applicate e i comandi del gioco autonomo sono nel [manuale di Oculum RL](../oculum_rl/README.md).
+
 ## Distribuzione pubblica e squadre — 17 novembre
 
 - Corretto un errore di tipo durante l’aggiornamento dei partecipanti alle squadre Fight, che interrompeva combattimenti e apertura di alcune schede.

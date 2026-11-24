@@ -1,0 +1,73 @@
+name: Oculum RL standalone
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'oculum_rl/**'
+      - 'supabase/migrations/*oculum_lite*'
+      - '.github/workflows/oculum_rl.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oculum-rl-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  standalone:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: oculum_rl
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.1'
+          cache: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Flutter dependencies
+        run: flutter pub get
+      - name: Check code
+        run: flutter analyze --no-pub --no-fatal-infos
+      - name: Test game rules and saves
+        run: flutter test --no-pub --reporter expanded
+      - name: Play two complete seeded campaigns
+        run: dart tool/verify_campaign.dart
+      - name: Build all editions and verify Windows package integrity
+        run: |
+          $distribution = Join-Path $env:RUNNER_TEMP 'Oculum RL'
+          ./tool/build_distribution.ps1 -FlutterRoot $env:FLUTTER_ROOT `
+            -Distribution $distribution -Stage (Join-Path $distribution 'candidate')
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-RL-Windows
+          path: |
+            ${{ runner.temp }}/Oculum RL/candidate/Windows/
+            ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-RL-Windows-Test
+          path: |
+            ${{ runner.temp }}/Oculum RL/candidate/Windows Test/
+            ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows-Test.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-RL-Android-debug
+          path: ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Android-debug.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Oculum-RL-Web
+          path: ${{ runner.temp }}/Oculum RL/candidate/Web/
+          if-no-files-found: error
