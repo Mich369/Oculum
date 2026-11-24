@@ -254,6 +254,7 @@ extension LiteRestHub on LiteRun {
     groundShots.clear();
     projectiles.clear();
     _combatImpacts.clear();
+    _burstTraces.clear();
     position = LiteRun._spawn;
     restUsed = false;
     supply._receipts.clear();

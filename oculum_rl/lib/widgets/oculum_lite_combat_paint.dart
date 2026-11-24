@@ -300,28 +300,173 @@ void _inkSlash(
   ], pigment);
 }
 
-void _paintDodgeInk(
+void _paintBurstTrace(
   Canvas canvas,
-  Offset feet,
-  Offset direction,
-  double remaining,
+  LiteBurstTrace trace,
+  double time,
+  Rect visible,
 ) {
-  if (remaining <= 0 || direction.distanceSquared < .001) return;
-  final axis = direction / direction.distance;
+  final fade = (1 - (time - trace.fadeStart) / LiteBurstTrace.fadeDuration)
+      .clamp(0.0, 1.0);
+  if (fade <= 0 || trace.direction.magnitude < .01) return;
+  final start = _offset(trace.origin);
+  final end = _offset(trace.end);
+  if (!visible.overlaps(Rect.fromPoints(start, end).inflate(2.0))) return;
+
+  final axis = _offset(trace.direction);
   final normal = Offset(-axis.dy, axis.dx);
-  final intensity = (remaining / .21).clamp(0.0, 1.0);
-  for (var i = 0; i < 6; i++) {
+  final (pigment, light, width) = switch (trace.kind) {
+    LiteBurstKind.dash => (
+      const Color(0xffba895f),
+      const Color(0xfff7dcb2),
+      .12,
+    ),
+    LiteBurstKind.phase => (
+      const Color(0xff8569aa),
+      const Color(0xffe0c2fc),
+      .18,
+    ),
+    LiteBurstKind.open => (
+      const Color(0xff9355bf),
+      const Color(0xffffda87),
+      .25,
+    ),
+    LiteBurstKind.veil => (
+      const Color(0xff3b8b90),
+      const Color(0xffa0e5dc),
+      .15,
+    ),
+    LiteBurstKind.clash => (
+      const Color(0xffa95846),
+      const Color(0xffffac85),
+      .13,
+    ),
+  };
+
+  // Build a tapered brush edge from the movement samples. Each side keeps
+  // small irregularities rather than following a constant-width pen stroke.
+  if (trace.pointCount > 1) {
+    for (var lane = -1; lane <= 1; lane++) {
+      final centers = <Offset>[];
+      final edges = <Offset>[];
+      for (var i = 0; i < trace.pointCount; i++) {
+        final at = _offset(trace.pointAt(i));
+        final along = i / (trace.pointCount - 1);
+        final grain = (i * 7 + lane + 6) % 5 / 5 - .4;
+        final spread = (.20 + along * .15) * lane;
+        centers.add(
+          at +
+              normal * (spread + grain * .09) -
+              Offset(0, .14 + (lane + 1) * (.14 + along * .07)),
+        );
+        final taper = math.sin(math.pi * along).abs();
+        edges.add(
+          normal * (width * (.05 + taper * .75) * (lane == 0 ? 1.4 : .74)) -
+              Offset(0, width * taper * (.24 + grain * .35)),
+        );
+      }
+      final body = Path()
+        ..addPolygon([
+          for (var i = 0; i < centers.length; i++) centers[i] + edges[i],
+          for (var i = centers.length - 1; i >= 0; i--) centers[i] - edges[i],
+        ], true);
+      canvas.drawPath(
+        body,
+        Paint()..color = _ink.withValues(alpha: fade * .76),
+      );
+      final inner = Path()
+        ..addPolygon([
+          for (var i = 0; i < centers.length; i++) centers[i] + edges[i] * .58,
+          for (var i = centers.length - 1; i >= 0; i--)
+            centers[i] - edges[i] * .58,
+        ], true);
+      canvas.drawPath(
+        inner,
+        Paint()
+          ..color = (lane == 0 ? pigment : light).withValues(alpha: fade * .83),
+      );
+    }
+  }
+
+  if (trace.kind == LiteBurstKind.phase || trace.kind == LiteBurstKind.open) {
+    // Torn, translucent marks suggest the previous pose without reading as actors.
+    for (var i = trace.pointCount - 4; i > 0; i -= 4) {
+      final at = _offset(trace.pointAt(i)) - const Offset(0, .43);
+      final ghost = Path()
+        ..moveTo(at.dx - axis.dx * .37, at.dy - axis.dy * .37)
+        ..lineTo(at.dx - .10, at.dy - .63)
+        ..lineTo(at.dx + .13, at.dy - .73)
+        ..lineTo(at.dx + axis.dx * .28, at.dy + axis.dy * .28 - .30)
+        ..lineTo(at.dx + .10, at.dy + .14)
+        ..close();
+      canvas.drawPath(
+        ghost,
+        Paint()..color = pigment.withValues(alpha: .22 * fade),
+      );
+    }
+  }
+
+  // Short dry-brush cuts leave gaps around the moving figure and its weapon.
+  for (var i = 1; i < trace.pointCount; i += 2) {
+    final step = _offset(trace.pointAt(i) - trace.pointAt(i - 1));
+    if (step.distanceSquared < .002) continue;
+    final tangent = step / step.distance;
+    final cross = Offset(-tangent.dy, tangent.dx);
+    final side = i % 4 == 1 ? 1.0 : -1.0;
     final at =
-        feet + normal * ((i - 2.5) * .11) - Offset(0, .15 + (i % 3) * .20);
-    final length = .59 + ((i * 3) % 5) * .16;
+        _offset(trace.pointAt(i)) - const Offset(0, .51) + cross * (.24 * side);
+    final intensity = fade * (.34 + .52 * i / trace.pointCount);
     _inkSlash(
       canvas,
-      at - axis * (length * (1.55 - intensity)),
+      at - tangent * (.16 + (i % 3) * .06),
+      at + cross * (.08 * side),
+      light.withValues(alpha: intensity),
+      width * .50,
+    );
+  }
+
+  _paintBurstFlare(canvas, start, axis, time - trace.startedAt, pigment, light);
+  if (trace.finished && (end - start).distanceSquared >= .06) {
+    _paintBurstFlare(
+      canvas,
+      end,
+      -axis,
+      time - trace.fadeStart,
+      pigment,
+      light,
+    );
+  }
+}
+
+void _paintBurstFlare(
+  Canvas canvas,
+  Offset feet,
+  Offset axis,
+  double age,
+  Color pigment,
+  Color light,
+) {
+  if (age < 0 || age >= .18) return;
+  final phase = age / .18;
+  final fade = 1 - phase;
+  final normal = Offset(-axis.dy, axis.dx);
+  for (var i = -2; i <= 2; i++) {
+    final root = feet - const Offset(0, .16) + normal * (i * .12);
+    final outward = -axis * (.30 + (2 - i.abs()) * .10) + normal * (i * .22);
+    final at = root + outward * (phase * .70);
+    _inkSlash(
+      canvas,
       at,
-      (i.isEven ? const Color(0xffbeb0df) : _ink).withValues(
-        alpha: .64 * intensity,
-      ),
-      .035 + intensity * .039,
+      at + outward * (.52 + fade * .62),
+      pigment.withValues(alpha: fade * .88),
+      .092 * fade,
+    );
+    _inkSlash(
+      canvas,
+      at,
+      at + outward * .62,
+      light.withValues(alpha: fade * .88),
+      .039 * fade,
     );
   }
 }

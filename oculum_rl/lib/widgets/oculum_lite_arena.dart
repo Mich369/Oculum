@@ -1617,6 +1617,10 @@ class _ArenaPaint extends CustomPainter {
       }
     }
 
+    for (final trace in run.burstTraces) {
+      _paintBurstTrace(canvas, trace, time, visible);
+    }
+
     final player = _offset(run.position);
     final aiming = _offset(run.aim);
     final weaponAim = _offset(run.weaponAim);
@@ -1902,9 +1906,6 @@ class _ArenaPaint extends CustomPainter {
           if (enemy.hitFlash > 0) {
             _hit(canvas, at - Offset(0, size * .58), size);
           }
-          if (enemy.clashRemaining > 0) {
-            _clashTrace(canvas, at, _offset(enemy.clashDirection));
-          }
         },
       ));
     }
@@ -2090,12 +2091,6 @@ class _ArenaPaint extends CustomPainter {
         at.dy,
         () {
           _shadow(canvas, at, .54, .23, alpha: fighter.connected ? .58 : .33);
-          _paintDodgeInk(
-            canvas,
-            at,
-            _offset(fighter.burstDirection),
-            fighter.burstRemaining,
-          );
           _paintOpenPulse(
             canvas,
             at,
@@ -2163,15 +2158,6 @@ class _ArenaPaint extends CustomPainter {
       ));
     }
     _shadow(canvas, player, .56, .23, alpha: run.intangible ? .24 : .65);
-    if (run.clashDashing) _clashTrace(canvas, player, -weaponAim);
-    if (!run.clashDashing) {
-      _paintDodgeInk(
-        canvas,
-        player,
-        _offset(run.burstDirection),
-        run.burstRemaining,
-      );
-    }
     _paintProtection(canvas, player, run.hitProtectionRemaining);
     _paintOpenPulse(canvas, player, run.hero, run.openCooldown, run.openGrade);
     _paintInkFinish(canvas, player, appearance.inkFinish, run.stride.strength);
@@ -2370,18 +2356,6 @@ class _ArenaPaint extends CustomPainter {
 
   @override
   bool shouldRepaint(_ArenaPaint oldDelegate) => true;
-}
-
-void _clashTrace(Canvas canvas, Offset at, Offset direction) {
-  _dryBrush(
-    canvas,
-    at - direction * .17 - const Offset(0, .08),
-    const Offset(.005, -.10),
-    -direction * .86,
-    const Color(0xaabd9bd5),
-    4,
-    width: .071,
-  );
 }
 
 void _collisionBurst(

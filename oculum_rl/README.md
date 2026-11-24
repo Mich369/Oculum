@@ -8,6 +8,10 @@ Le edizioni Windows normale e Windows Test cercano automaticamente una release O
 
 Da **Aggiornamenti** puoi disattivare i controlli automatici, cercare una nuova versione e riavviare quando vuoi. Per avviare un eseguibile precedente senza passare all’ultimo, aggiungi `--no-update` al suo collegamento. Web e APK restano scaricabili dalla pagina release.
 
+## Scatto e schivata
+
+Shift apre una scia d’inchiostro ocra lungo il movimento. La schivata intangibile dell’Evasore lascia impronte viola, il suo Open aggiunge luce dorata e il Velo dello Slime lascia una traccia verde azzurra. Nel clash le due scie ramate separano i combattenti. Questi effetti usano il volume **Effetti**. Shift da solo non concede intangibilità.
+
 ## Atto II e deviazioni
 
 - **Pollo Meccanico**. Dopo aver sbloccato il Pollo di Brace, in una run senza aver ferito la fauna cerca un gruppo di tre polli. Resta fermo al centro per dieci secondi. Il profilo salva subito lo sblocco. Clic sinistro lancia tre raggi runici a inseguimento. Clic destro o V spara all’indietro tre uova di Postea, che percorrono fino a 6,8 m ed esplodono in un raggio di 2,25 m. Spazio potenzia le uova. Mira con un raggio a un tuo uovo atterrato per anticiparne l’esplosione.

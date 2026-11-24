@@ -1,6 +1,7 @@
 import 'dart:math';
 
 part 'oculum_lite_night.dart';
+part 'oculum_lite_burst.dart';
 part 'oculum_lite_goblin.dart';
 part 'oculum_lite_rest_hub.dart';
 part 'oculum_lite_fauna.dart';
@@ -1788,6 +1789,9 @@ class LiteRun {
   final List<LiteObstacle> obstacles = [];
   final List<LiteLoot> loot = [];
   final List<LiteCombatImpact> _combatImpacts = [];
+  final _burstTraces = <int, LiteBurstTrace>{};
+  Iterable<LiteBurstTrace> get burstTraces => _burstTraces.values;
+  LiteBurstTrace? burstTraceFor(int fighterId) => _burstTraces[fighterId];
   final Map<LitePowerUp, int> _powerRanks = {};
   final List<LitePowerUp> _powerOffers = [];
   final List<LiteQuest> quests = [];
@@ -2351,6 +2355,7 @@ class LiteRun {
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
+    _burstTraces.clear();
     _powerOffers.clear();
     _hitProtectionRemaining = 0;
     _clashRemaining = 0;
@@ -2844,6 +2849,7 @@ class LiteRun {
         .._dashDirection = direction
         .._dodgeCooldown = 3.2
         .._protection = max(fighter._protection, .21);
+      _beginBurstTrace(LiteBurstKind.phase, .21, fighter: fighter);
     }
     if (reload &&
         fighter._rescue == null &&
@@ -2860,6 +2866,11 @@ class LiteRun {
             ? fighter.movement
             : fighter.aim
         .._dashCooldown = 1.1;
+      _beginBurstTrace(
+        fighter._bandit.dodgeReady ? LiteBurstKind.phase : LiteBurstKind.dash,
+        fighter._dashRemaining,
+        fighter: fighter,
+      );
       if (fighter._bandit.dodgeReady) {
         fighter._bandit.dodgeReady = false;
         fighter._protection = max(fighter._protection, fighter._dashRemaining);
@@ -2913,6 +2924,7 @@ class LiteRun {
           fighter._dashDirection * (fighter._dashSpeed * slice * groundSpeed),
           _playerRadius,
         );
+        _recordBurstTrace(fighter.id, fighter.position, fighter._dashRemaining);
       } else if (fighter.connected &&
           fighter._night.stun <= 0 &&
           fighter.movement.magnitude > .01) {
@@ -3158,6 +3170,11 @@ class LiteRun {
 
   void _tick(double elapsed, Point<double> movement, bool walk) {
     time += elapsed;
+    if (_burstTraces.isNotEmpty) {
+      _burstTraces.removeWhere(
+        (_, trace) => time >= trace.fadeStart + LiteBurstTrace.fadeDuration,
+      );
+    }
     if (groundShots.isNotEmpty) {
       for (final floor in groundShots) {
         floor.remaining -= elapsed;
@@ -3224,6 +3241,7 @@ class LiteRun {
         _playerRadius,
       );
       _burstTime = max(0, _burstTime - elapsed);
+      _recordBurstTrace(0, position, _burstTime);
     } else if (!hostDown &&
         _night.stun <= 0 &&
         (movement.x != 0 || movement.y != 0)) {
@@ -3781,6 +3799,15 @@ class LiteRun {
     enemy.cooldown = max(enemy.cooldown, .52);
     enemy.clashRemaining = clashDashDuration;
     enemy.clashDirection = towards;
+    _beginBurstTrace(LiteBurstKind.clash, clashDashDuration);
+    _burstTraces[-enemy.id] = LiteBurstTrace._(
+      LiteBurstKind.clash,
+      time,
+      clashDashDuration,
+      towards,
+      enemy.position,
+      [enemy.position],
+    );
   }
 
   bool _lineBlocked(
@@ -3830,6 +3857,10 @@ class LiteRun {
     _burstSpeed = 14;
     _burstTime = .19;
     _dashCooldown = 1.1;
+    _beginBurstTrace(
+      _bandit.dodgeReady ? LiteBurstKind.phase : LiteBurstKind.dash,
+      _burstTime,
+    );
     if (_bandit.dodgeReady) {
       _bandit.dodgeReady = false;
       _invulnerability = max(_invulnerability, _burstTime);
@@ -3938,6 +3969,7 @@ class LiteRun {
             .._dashRemaining = duration
             .._protection = max(fighter._protection, duration);
         }
+        _beginBurstTrace(LiteBurstKind.open, duration, fighter: fighter);
       case LiteHero.duplicatore:
         final occupied = clones
             .where((ally) => ally.ownerId == ownerId && ally.companion == null)
@@ -4279,6 +4311,7 @@ class LiteRun {
           (16 + min(dodgeLevel, 3) * 1.5) * (1 + _power(LitePowerUp.passo));
       _burstTime = .21 + min(dodgeLevel, 3) * .025;
       _invulnerability = max(_invulnerability, _burstTime);
+      _beginBurstTrace(LiteBurstKind.phase, _burstTime);
       return true;
     }
     final cost = _duplicate(position, aim, weapon, hp, maxHp);
@@ -5035,6 +5068,7 @@ class LiteRun {
         enemy.radius,
       );
       enemy.clashRemaining = max(0, enemy.clashRemaining - elapsed);
+      _recordBurstTrace(-enemy.id, enemy.position, enemy.clashRemaining);
       return;
     }
     enemy.hitFlash = max(0, enemy.hitFlash - elapsed);
@@ -7467,6 +7501,10 @@ class LiteRun {
         .map((enemy) => enemy._json(includeEffects: includeEffects))
         .toList(),
     if (includeEffects) 'stride': stride._frame(),
+    if (includeEffects && _burstTraces.isNotEmpty)
+      'burstTraces': _burstTraces.entries
+          .map((entry) => entry.value._frame(entry.key))
+          .toList(),
     if (includeEffects && _combatImpacts.isNotEmpty)
       'impacts': _combatImpacts
           .skip(max(0, _combatImpacts.length - 16))
@@ -7723,6 +7761,7 @@ class LiteRun {
         .firstOrNull;
     run._trialStart = _num(json['trialStart'], run.time).clamp(0.0, run.time);
     run.stride._restore(json['stride']);
+    run._restoreBurstTraces(json['burstTraces']);
     for (final value in _list(json['impacts']).take(16)) {
       if (LiteCombatImpact._fromFrame(value, run.time) case final impact?) {
         run._combatImpacts.add(impact);

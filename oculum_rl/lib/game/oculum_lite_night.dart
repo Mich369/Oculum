@@ -107,6 +107,7 @@ extension _NightCombat on LiteRun {
         .._dashDirection = heading
         .._shadowProtection = max(fighter._shadowProtection, .55);
     }
+    _beginBurstTrace(LiteBurstKind.veil, .55, fighter: fighter);
     message = 'Scia invisibile.';
     return true;
   }

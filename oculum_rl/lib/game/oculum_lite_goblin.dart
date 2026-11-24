@@ -43,6 +43,7 @@ extension LiteGoblinCombat on LiteRun {
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
+    _burstTraces.clear();
     obstacles
       ..clear()
       ..addAll([

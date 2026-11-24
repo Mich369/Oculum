@@ -70,6 +70,13 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       run,
       playing: run != null && !run.finished && !_session.pausedByHost,
     );
+    final fighterId = _session.host ? 0 : _session.localFighter?.id;
+    if (run != null &&
+        !run.finished &&
+        !_session.pausedByHost &&
+        fighterId != null) {
+      _audio.burstSound(run, fighterId);
+    }
   }
 
   void _setMove() {

@@ -644,6 +644,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       ),
     );
     _audio.combatSounds(run);
+    _audio.burstSound(run, 0);
     _arenaFrame.value++;
     _saveTime += dt;
     if (run.finished || _saveTime >= 5) {

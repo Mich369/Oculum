@@ -188,6 +188,26 @@ def render_effects():
         write(name, signal, .8)
 
 
+def render_burst_effects():
+    for name, duration, pitch, ring in (
+        ("scatto-inchiostro", .16, 182, .06),
+        ("scatto-arcano", .23, 313, .19),
+    ):
+        rng = Random(name)
+        signal = []
+        smoothed = 0.0
+        for i in range(round(duration * RATE)):
+            t = i / RATE
+            phase = t / duration
+            white = rng.uniform(-1, 1)
+            smoothed += (white - smoothed) * (.06 + .34 * (1 - phase))
+            envelope = min(1, t * 220) * (1 - phase) ** 2.5
+            sweep = pitch * (1.7 * t - .80 * t * phase)
+            chime = sin(TAU * sweep) + .36 * sin(TAU * sweep * 2.35)
+            signal.append((smoothed * .56 + chime * ring) * envelope)
+        write(name, signal, .77)
+
+
 # Pitch in Hz, vowel, syllable length. Each voice has its own rhythm and timbre.
 MERCHANTS = {
     "goblin": (.24, -.24, ((102, "o", .13), (182, "e", .09), (143, "a", .11), (82, "u", .18))),
@@ -258,6 +278,7 @@ if __name__ == "__main__":
         for title, score in SCORES.items():
             render_score(title, *score)
         render_effects()
+        render_burst_effects()
     for merchant, voice in MERCHANTS.items():
         for take in (1, 2, 3):
             render_greeting(merchant, take, *voice)

@@ -26,6 +26,7 @@ class OculumLiteAudio {
   LiteRun? _run;
   LiteCombatImpact? _lastImpact;
   double _lastEffectTime = -1;
+  (int, int, double, LiteBurstKind)? _lastBurst;
 
   static String preferenceKey(String name) =>
       oculumProfiledStorageKey('oculum_lite_audio_$name');
@@ -148,6 +149,22 @@ class OculumLiteAudio {
     if (sound != null && (highest >= 4 || run.time - _lastEffectTime >= .075)) {
       _lastEffectTime = run.time;
       playEffect(sound);
+    }
+  }
+
+  void burstSound(LiteRun run, int fighterId) {
+    final trace = run.burstTraceFor(fighterId);
+    if (trace == null || run.time - trace.startedAt > .24) return;
+    final key = (run.seed, fighterId, trace.startedAt, trace.kind);
+    if (_lastBurst == key) return;
+    _lastBurst = key;
+    switch (trace.kind) {
+      case LiteBurstKind.dash:
+        playEffect('scatto-inchiostro');
+      case LiteBurstKind.phase || LiteBurstKind.open || LiteBurstKind.veil:
+        playEffect('scatto-arcano');
+      case LiteBurstKind.clash:
+        break;
     }
   }
 

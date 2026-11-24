@@ -2,6 +2,7 @@
 
 ## Oculum RL · Anteprima autonoma
 
+- **Scatti inchiostrati (0.4.9)**. Partenza, scia e arrivo seguono il tragitto reale anche accanto ai ripari. Shift, schivata dell’Evasore, Open, Velo dello Slime e clash hanno una resa distinta. I due suoni originali seguono il volume Effetti. La prova locale ha verificato percorso, dissolvenza e trasmissione degli effetti agli ospiti.
 - **Rivali illustrati (0.4.8)**. Luce, Ombra ed Eco Speculare usano le tavole da combattimento dei personaggi che copiano, incluso il Curatore della Peste e l’Evasore. Gli sprite delle copie e quelli online vengono risolti dallo stesso catalogo del combattente originale. Verificato con due test del renderer.
 - **Movimenti Oculum RL (0.4.7)**. I passi seguono la distanza percorsa. I piedi si alternano fra appoggio e sollevamento con un trasferimento di peso visibile. La cadenza si assesta all’arresto, conserva le pose di attacco e vale anche per personaggi già presenti, mostri, fauna ed evocazioni.
 - **Pollo Meccanico e finiture**. Sblocca prima il Pollo di Brace. In una run pacifica resta al centro del suo gruppo per dieci secondi. Il Pollo Meccanico lancia tre raggi a inseguimento e tre uova di Postea più forti e a più lunga gittata. Colpisci un tuo uovo atterrato con un raggio per farlo esplodere subito. Ognuno può scegliere Canonica, Ferro Cremisi o Patina di Eiva, anche per un salvataggio esistente. Il Pollo Meccanico ha quattro pose Expressive Ink per livrea.

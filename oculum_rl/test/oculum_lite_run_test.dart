@@ -1617,6 +1617,14 @@ void main() {
     _wait(run, .13);
     expect(run.position.x, lessThan(16));
     expect(enemy.position.x, greaterThan(17));
+    final frame = LiteRun.fromJson(run.toJson(includeEffects: true));
+    final trails = frame.burstTraces.toList();
+    expect(trails.map((trail) => trail.kind), [
+      LiteBurstKind.clash,
+      LiteBurstKind.clash,
+    ]);
+    expect(trails.first.end.x, lessThan(16));
+    expect(trails.last.end.x, greaterThan(17));
     expect(run.intangible, isTrue);
     expect(_restore(run).clashDashing, isTrue);
     _wait(run, .14);
