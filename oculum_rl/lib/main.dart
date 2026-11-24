@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'pages/oculum_lite_page.dart';
 import 'pages/oculum_rl_room_page.dart';
+import 'services/oculum_rl_updates.dart';
 
-void main() {
+void main(List<String> arguments) {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const OculumRlApp());
+  runApp(OculumRlApp(suspendUpdates: arguments.contains('--no-update')));
+  WidgetsBinding.instance.addPostFrameCallback(
+    (_) => acknowledgeOculumRlUpdate(),
+  );
 }
 
 class OculumRlApp extends StatelessWidget {
-  const OculumRlApp({super.key});
+  const OculumRlApp({super.key, this.suspendUpdates = false});
+  final bool suspendUpdates;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -20,15 +25,17 @@ class OculumRlApp extends StatelessWidget {
       colorSchemeSeed: const Color(0xffa07954),
       fontFamily: 'Poppins',
     ),
-    home: const _Launch(),
+    home: _Launch(suspendUpdates: suspendUpdates),
   );
 }
 
 class _Launch extends StatelessWidget {
-  const _Launch();
+  const _Launch({required this.suspendUpdates});
+  final bool suspendUpdates;
 
   @override
   Widget build(BuildContext context) => OculumLitePage(
+    suspendUpdates: suspendUpdates,
     openRoom: () async {
       await Navigator.of(
         context,

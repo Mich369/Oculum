@@ -8,6 +8,9 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$versionLine = Select-String -LiteralPath (Join-Path $project 'pubspec.yaml') -Pattern '^version:\s+(\d+\.\d+\.\d+)\+\d+$'
+if (!$versionLine) { throw 'Missing release version in pubspec.yaml.' }
+$version = $versionLine.Matches[0].Groups[1].Value
 $dart = Join-Path $FlutterRoot 'bin/cache/dart-sdk/bin/dart.exe'
 $tool = Join-Path $FlutterRoot 'bin/cache/flutter_tools.snapshot'
 $packages = Join-Path $FlutterRoot 'packages/flutter_tools/.dart_tool/package_config.json'
@@ -35,7 +38,8 @@ if ((Get-Item -LiteralPath $stagePath -Force).Attributes -band [IO.FileAttribute
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 function Build([string]$Label, [string[]]$Options) {
-  $argsForTool = @("--packages=$packages", $tool, '--no-version-check', '--suppress-analytics') + $Options
+  $argsForTool = @("--packages=$packages", $tool, '--no-version-check', '--suppress-analytics') +
+    $Options + @("--dart-define=OculumRlVersion=$version")
   $environment = @{FLUTTER_ROOT=$FlutterRoot; FLUTTER_ALREADY_LOCKED='true'}
   Invoke-OculumBuildProcess -FilePath $dart -Arguments $argsForTool -WorkingDirectory $project -LogPath (Join-Path $stagePath "build-$Label.log") -Description $Label -TimeoutSeconds 2700 -Environment $environment
 }

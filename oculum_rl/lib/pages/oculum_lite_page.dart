@@ -13,6 +13,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../game/oculum_lite_audio.dart';
 import '../game/oculum_lite_run.dart';
 import '../services/oculum_lite_saves.dart';
+import '../services/oculum_rl_release.dart';
+import '../services/oculum_rl_updates.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_creator.dart';
 import '../widgets/oculum_lite_merchant_greeting.dart';
@@ -101,7 +103,9 @@ const _difficultyLabels = {
 };
 
 class OculumLitePage extends StatefulWidget {
-  const OculumLitePage({super.key, this.openRoom});
+  const OculumLitePage({super.key, this.openRoom, this.suspendUpdates = false});
+
+  final bool suspendUpdates;
 
   final Future<void> Function()? openRoom;
 
@@ -136,6 +140,9 @@ class _OculumLitePageState extends State<OculumLitePage>
   bool _showSettings = false;
   bool _busy = false;
   bool _openingRoom = false;
+  final _updates = OculumRlUpdates();
+  bool _restartingForUpdate = false;
+  String? _attemptedUpdate;
   int? _activeSlot;
   int? _setupSlot;
   LiteHero _hero = LiteHero.evasore;
@@ -186,6 +193,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _ticker = createTicker(_step);
+    _updates.addListener(_maybeRestartForUpdate);
     unawaited(_load());
   }
 
@@ -216,6 +224,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     WidgetsBinding.instance.removeObserver(this);
     _ticker.dispose();
     _audio.dispose();
+    _updates.dispose();
     _arenaFrame.dispose();
     _gameFocus.dispose();
     _seed.dispose();
@@ -246,6 +255,7 @@ class _OculumLitePageState extends State<OculumLitePage>
         _audio.restorePreferences(preferences);
         _storageMessage = null;
       });
+      if (!widget.suspendUpdates) _updates.start(preferences);
     } on Object {
       if (!mounted) return;
       setState(
@@ -569,6 +579,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       _busy = false;
       _activeSlot = null;
     });
+    _maybeRestartForUpdate();
   }
 
   Future<void> _retry() async {
@@ -1048,6 +1059,14 @@ class _OculumLitePageState extends State<OculumLitePage>
                           icon: const Icon(Icons.arrow_back),
                         ),
                   actions: [
+                    if (_setupSlot == null &&
+                        _updates.supported &&
+                        !widget.suspendUpdates)
+                      IconButton(
+                        tooltip: 'Aggiornamenti',
+                        onPressed: _showUpdates,
+                        icon: const Icon(Icons.system_update_alt_outlined),
+                      ),
                     IconButton(
                       tooltip: 'Impostazioni audio',
                       onPressed: () => showDialog<void>(
@@ -1087,6 +1106,109 @@ class _OculumLitePageState extends State<OculumLitePage>
         ),
       ),
     );
+  }
+
+  bool get _safeToRestart =>
+      _activeSlot == null &&
+      _setupSlot == null &&
+      !_openingRoom &&
+      !_busy &&
+      (ModalRoute.of(context)?.isCurrent ?? false);
+
+  void _maybeRestartForUpdate() {
+    final ready = _updates.ready;
+    if (!mounted ||
+        widget.suspendUpdates ||
+        !_updates.automatic ||
+        ready == null ||
+        _attemptedUpdate == '$ready' ||
+        !_safeToRestart) {
+      return;
+    }
+    unawaited(_restartForUpdate());
+  }
+
+  Future<void> _restartForUpdate() async {
+    if (_restartingForUpdate || !_safeToRestart) return;
+    _restartingForUpdate = true;
+    _attemptedUpdate = '${_updates.ready}';
+    final navigator = Navigator.of(context);
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: Text('Riavvio Oculum RL'),
+            content: Text('Sto verificando l’avvio della nuova versione.'),
+          ),
+        ),
+      ),
+    );
+    await _writes;
+    final started = await _updates.launch();
+    if (started) {
+      exitForOculumRlUpdate();
+      return;
+    }
+    if (!mounted) return;
+    navigator.pop();
+    _restartingForUpdate = false;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'La nuova versione non si è avviata. Puoi continuare a giocare.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showUpdates() async {
+    final restart = await showDialog<bool>(
+      context: context,
+      builder: (context) => ListenableBuilder(
+        listenable: _updates,
+        builder: (context, _) => AlertDialog(
+          title: const Text('Aggiornamenti'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${_updates.edition.label} · $oculumRlVersion'),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Aggiornamenti automatici'),
+                value: _updates.automatic,
+                onChanged: _updates.setAutomatic,
+              ),
+              if (_updates.message case final message?) Text(message),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: _updates.checking ? null : _updates.check,
+              child: const Text('Controlla ora'),
+            ),
+            if (_updates.ready != null)
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Riavvia ora'),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (restart == true) {
+      await _restartForUpdate();
+    } else {
+      _maybeRestartForUpdate();
+    }
   }
 
   Widget _lobby() {
@@ -1178,7 +1300,10 @@ class _OculumLitePageState extends State<OculumLitePage>
                             try {
                               await widget.openRoom!();
                             } finally {
-                              if (mounted) setState(() => _openingRoom = false);
+                              if (mounted) {
+                                setState(() => _openingRoom = false);
+                                _maybeRestartForUpdate();
+                              }
                             }
                           },
                     icon: const Icon(Icons.groups),

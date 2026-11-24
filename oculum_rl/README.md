@@ -2,6 +2,12 @@
 
 La versione Windows autonoma si avvia da `Gioca/Oculum RL.exe` nella cartella della versione attiva. Su questa installazione, `C:/Oculum App/Oculum RL/VERSIONE-ATTIVA.json` indica il percorso. Mantieni `data` e le DLL accanto all’eseguibile. Windows Test ha una cartella, uno ZIP e un profilo di salvataggio propri.
 
+## Aggiornamenti Windows
+
+Le edizioni Windows normale e Windows Test cercano automaticamente una release Oculum RL pubblica più recente. Il gioco verifica la dimensione, lo SHA-256 e i file del runtime, poi prepara la nuova versione in una cartella separata per edizione. La versione corrente si chiude soltanto dopo che quella nuova ha aperto la sua prima schermata. Durante una run o una stanza online il riavvio aspetta il ritorno al menu.
+
+Da **Aggiornamenti** puoi disattivare i controlli automatici, cercare una nuova versione e riavviare quando vuoi. Per avviare un eseguibile precedente senza passare all’ultimo, aggiungi `--no-update` al suo collegamento. Web e APK restano scaricabili dalla pagina release.
+
 ## Atto II e deviazioni
 
 - **Voci delle botteghe**. Goblin, Armaiola, Taverniera, Fabbro e Veggente salutano con un verso specifico e una battuta sottotitolata. Usa l’icona accanto al testo per sentirne un’altra. I valori predefiniti sono 35% musica e 50% effetti. Le voci usano il cursore effetti. In impostazioni puoi ripristinare questi due volumi.
@@ -96,7 +102,7 @@ Gioco autonomo con campagna roguelite 2D. Usa salvataggi e impostazioni propri. 
 - `dart tool/verify_campaign.dart` gioca due percorsi completi, dal piano 0 al boss finale, con input di movimento, attacco e ricarica.
 - `tool/build_distribution.ps1` prepara eseguibili con runtime, ZIP distinti, APK e versione Web.
 - Nel creatore puoi usare **Carica aspetto salvato** per ripartire da nome e aspetto di un Duplicatore salvato in solo, anche dalla stanza online. Le modifiche si applicano solo alla copia. L’arma si sceglie separatamente e resta visibile nell’anteprima, che puoi ingrandire.
-- La specifica completa è [OCULUM_MEGA_PROMPT.md](../docs/OCULUM_MEGA_PROMPT.md). Restano in lavorazione altre ambientazioni e Micro Realtà, i personaggi avanzati descritti nella specifica, il grimorio condiviso, la ripresa dopo la chiusura del Master e la chiamata audiovisiva.
+- La specifica completa è [OCULUM_MEGA_PROMPT.md](docs/OCULUM_MEGA_PROMPT.md). Restano in lavorazione altre ambientazioni e Micro Realtà, i personaggi avanzati descritti nella specifica, il grimorio condiviso, la ripresa dopo la chiusura del Master e la chiamata audiovisiva.
 
 ## Impostazioni e personalizzazione
 

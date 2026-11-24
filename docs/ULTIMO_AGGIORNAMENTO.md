@@ -1,5 +1,6 @@
 # Oculum RL e aggiornamenti alla campagna
 
+- **Aggiornamenti Windows**. Oculum RL controlla le release pubbliche e verifica la dimensione, lo SHA-256 e il runtime. Windows e Windows Test si aggiornano sul loro canale. Il riavvio aspetta il menu e la nuova finestra deve confermare l’avvio prima che si chiuda la precedente. Il menu Aggiornamenti permette anche il controllo manuale.
 - **Audio e botteghe**. Musica predefinita al 35% ed effetti al 50%. Cinque mercanti hanno ciascuno sei saluti sottotitolati e tre versi distinti. L’icona accanto al testo fa partire un altro saluto. I volumi già salvati si possono riportare ai predefiniti dalle impostazioni.
 - **Tecniche su G**. Ogni arma ha una mossa, con costo ordinario di 3 Oculum e recupero di 4,2 s. F continua a bloccare, lo Scostubandito conserva Fucile schivata e l’arco consuma tre frecce per il ventaglio. Divoramitù Elité e boss hanno una sagoma e una zona di contatto più grandi. Il boss è largo circa cinque volte il Pollo di Brace. L’hitbox allungata è segnata sul terreno e segue il balzo insieme alla barra Vita. L’Atto II mantiene lo speed-up del +40%.
 - **Stabilità**. I comandi online sono associati alla sala in cui partono. La fauna ferita riprende la posa di movimento dopo l’impatto.

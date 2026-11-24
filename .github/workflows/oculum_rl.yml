@@ -18,7 +18,12 @@ concurrency:
 jobs:
   standalone:
     runs-on: windows-latest
+    name: Standalone ${{ matrix.target }}
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [Windows, Android, Web]
     defaults:
       run:
         shell: pwsh
@@ -35,23 +40,28 @@ jobs:
           flutter-version: '3.47.1'
           cache: true
       - uses: actions/setup-java@v4
+        if: matrix.target == 'Android'
         with:
           distribution: temurin
           java-version: '17'
       - name: Install Flutter dependencies
         run: flutter pub get
       - name: Check code
+        if: matrix.target == 'Windows'
         run: flutter analyze --no-pub --no-fatal-infos
       - name: Test game rules and saves
+        if: matrix.target == 'Windows'
         run: flutter test --no-pub --reporter expanded
       - name: Play two complete seeded campaigns
+        if: matrix.target == 'Windows'
         run: dart tool/verify_campaign.dart
-      - name: Build all editions and verify Windows package integrity
+      - name: Build and verify the selected target
         run: |
           $distribution = Join-Path $env:RUNNER_TEMP 'Oculum RL'
-          ./tool/build_distribution.ps1 -FlutterRoot $env:FLUTTER_ROOT `
+          ./tool/build_distribution.ps1 -Target "${{ matrix.target }}" -FlutterRoot $env:FLUTTER_ROOT `
             -Distribution $distribution -Stage (Join-Path $distribution 'candidate')
       - uses: actions/upload-artifact@v6
+        if: matrix.target == 'Windows'
         with:
           name: Oculum-RL-Windows
           path: |
@@ -59,6 +69,7 @@ jobs:
             ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v6
+        if: matrix.target == 'Windows'
         with:
           name: Oculum-RL-Windows-Test
           path: |
@@ -66,11 +77,13 @@ jobs:
             ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows-Test.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v6
+        if: matrix.target == 'Android'
         with:
           name: Oculum-RL-Android-debug
           path: ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Android-debug.apk
           if-no-files-found: error
       - uses: actions/upload-artifact@v6
+        if: matrix.target == 'Web'
         with:
           name: Oculum-RL-Web
           path: ${{ runner.temp }}/Oculum RL/candidate/Web/
