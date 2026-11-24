@@ -1,5 +1,6 @@
 # Oculum RL e aggiornamenti alla campagna
 
+- **Atto III (0.4.17)**. Dodici nuove sale dopo l’Arconte, tre aree, tre boss, tre personaggi giocabili e nuovi sprite. Pozzi con anteprima e scelta, Lupi Lunari alleati in presenza di una Guardia Elité e nuove formazioni per i primi due atti.
 - **Co-op con ripresa (0.4.16)**. Il Master può riaprire la stessa stanza Supabase e riprendere il checkpoint con gli stessi combattenti. I comandi singoli attendono la conferma del Master. La run online assegna i Sigilli dei piani completati.
 - **Potenziamenti della run (0.4.15)**. Portata delle armi, attrazione animata degli Obser, velocità dei compagni, Scudo a ogni piano e capacità del blocco ora si potenziano sia durante la run sia con i Sigilli. Obser e progressi sono condivisi in cooperativa.
 - **Finale delle Fratture (0.4.14)**. Dalla quattordicesima stanza, i nemici ottengono più Vita e Danni. Veyrth si affronta al piano 23 e il nuovo Arconte delle Fratture chiude il piano 24 in tre fasi. I salvataggi già al vecchio finale conservano Veyrth e la vittoria registrata.

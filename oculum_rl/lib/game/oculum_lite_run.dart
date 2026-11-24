@@ -7,6 +7,7 @@ part 'oculum_lite_rest_hub.dart';
 part 'oculum_lite_fauna.dart';
 part 'oculum_lite_solar.dart';
 part 'oculum_lite_second_act.dart';
+part 'oculum_lite_third_act.dart';
 part 'oculum_lite_weapon_art.dart';
 
 enum LiteHero {
@@ -97,6 +98,15 @@ enum LiteHero {
   polloMeccanico(
     'Uova di Postea',
     'Lancia tre uova runiche più lontano, con esplosioni più forti e ampie.',
+  ),
+  vesanybel(
+    'Rintocco cieco',
+    'Un rintocco ad area travolge e allontana i nemici.',
+  ),
+  aerovyr('Ventaglio del Cumulonembo', 'Cinque sfere di tempesta divergenti.'),
+  vedettaEiva(
+    'Passo tra le maree',
+    'Scatta e apre un varco con un ampio colpo di picca.',
   );
 
   const LiteHero(this.openName, this.openDescription);
@@ -122,7 +132,9 @@ enum LiteHero {
     aberrazioneSolare || demoneMinore => LiteWeapon.guanti,
     demoneIntermedio => LiteWeapon.falceRunica,
     demoneMaggiore => LiteWeapon.doppieLame,
-    diavolo => LiteWeapon.scettro,
+    diavolo || aerovyr => LiteWeapon.scettro,
+    vesanybel => LiteWeapon.falceRunica,
+    vedettaEiva => LiteWeapon.piccaOssidiana,
     slimeBlu ||
     vampiro ||
     pollo ||
@@ -163,6 +175,9 @@ enum LiteHero {
     demoneIntermedio => 'Faglia di magma',
     demoneMaggiore => 'Sigillo rapido',
     diavolo => 'Fuoco del patto',
+    vesanybel => 'Rintocco protetto',
+    aerovyr => 'Sfere gemelle',
+    vedettaEiva => 'Stoccata di marea',
   };
   LiteEnemyKind? get sprite => switch (this) {
     scostubandito => LiteEnemyKind.scostubandito,
@@ -170,6 +185,8 @@ enum LiteHero {
     dronePostea => LiteEnemyKind.dronePostea,
     sentinella => LiteEnemyKind.costrutto,
     babyForestDemon => LiteEnemyKind.babyForestDemon,
+    vesanybel => LiteEnemyKind.vesanybel,
+    aerovyr => LiteEnemyKind.aerovyr,
     _ => null,
   };
   String? get unlockHint => switch (this) {
@@ -198,6 +215,9 @@ enum LiteHero {
     demoneIntermedio => 'Supera la seconda sala di Inferno nell’Atto II.',
     demoneMaggiore => 'Supera la terza sala di Inferno nell’Atto II.',
     diavolo => 'Spezza il patto nell’ultima sala di Inferno.',
+    vesanybel => 'Sconfiggi Vesanybel nella Cripta della Campana Cieca.',
+    aerovyr => 'Sconfiggi Aerovyr e completa l’Atto III.',
+    vedettaEiva => 'Libera gli Altari di bassa marea nell’Atto III.',
     _ => null,
   };
 
@@ -537,7 +557,16 @@ enum LiteEnemyKind {
   diavolo('Diavolo del Patto', 146, .94, 2.38, 19),
   divoramitu('Divoramitù Elité', 78, 1.13, 2.3, 18),
   divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.85, 2.5, 23),
-  arconte('Arconte delle Fratture', 312, 1.52, 1.7, 27);
+  arconte('Arconte delle Fratture', 312, 1.52, 1.7, 27),
+  funerys('Funerys', 57, .62, 3.3, 15),
+  vegliante('Vegliante di Bronzo', 104, .83, 2.1, 19),
+  vesanybel('Vesanybel', 204, .91, 2.15, 22),
+  sacrycrab('Sacrycrab', 68, .78, 3.25, 15),
+  gelycryn('Gelycryn', 118, .95, 2.45, 20),
+  thalvyr('Thalvyr', 219, 1.32, 2.25, 23),
+  lapysrieth('Lapysrieth', 54, .64, 3.4, 16),
+  nymboryth('Nymboryth', 127, 1.07, 3.0, 21),
+  aerovyr('Aerovyr', 261, 1.30, 2.63, 26);
 
   const LiteEnemyKind(
     this.label,
@@ -559,13 +588,17 @@ enum LiteEnemyKind {
       this == miruscyrus ||
       this == eliteSolare ||
       this == eliteLunare ||
-      this == divoramitu;
+      this == divoramitu ||
+      this == vegliante ||
+      this == gelycryn ||
+      this == nymboryth;
 
   LiteHero? get playableBoss => switch (this) {
     luce => LiteHero.luce,
     ombra => LiteHero.ombra,
     veyrth => LiteHero.veyrth,
     reGoblin => LiteHero.reGoblin,
+    vesanybel => LiteHero.vesanybel,
     _ => null,
   };
 
@@ -575,7 +608,10 @@ enum LiteEnemyKind {
       this == custodeLunare ||
       this == divoramituBoss ||
       this == diavolo ||
-      this == arconte;
+      this == arconte ||
+      this == vesanybel ||
+      this == thalvyr ||
+      this == aerovyr;
   bool get echo => this == minionVeyrth || this == ecoSpeculare;
 }
 
@@ -685,6 +721,14 @@ enum LiteCompanion {
     LiteWeapon.arco,
     30,
     3,
+  ),
+  lupoAlleato(
+    'Lupo Lunare alleato',
+    null,
+    LiteEnemyKind.lupoLunare,
+    LiteWeapon.guanti,
+    42,
+    15,
   );
 
   const LiteCompanion(
@@ -719,7 +763,8 @@ enum LiteCompanion {
     guardianoLunare ||
     goblinColtello ||
     goblinFango ||
-    goblinColla => null,
+    goblinColla ||
+    lupoAlleato => null,
   };
   String? get discovery => switch (this) {
     piccolaMarea => 'Spaccascheletri · abbatti tre Rasvyr durante la run',
@@ -1817,6 +1862,8 @@ class LiteRun {
   bool get solarCampaign => hero.solar;
   LiteRealm? realm;
   int actRoom = 0;
+  int thirdRoom = 0;
+  String? _claimedWell;
   final actRelics = <LiteActRelic>[];
   int _actRelicClaims = 0;
   double weaponArtCooldown = 0;
@@ -2061,9 +2108,11 @@ class LiteRun {
   static int enemyDamageBonusAt(int floor, {bool late = true}) =>
       floor < 3 ? 0 : 12 + (floor - 3) + (late && floor >= lateStage ? 14 : 0);
   static int arenaSpeedBonusAt(int floor) => max(0, floor ~/ 3) * 10;
-  int get arenaSpeedBonus => arenaSpeedBonusAt(
-    inActTwo ? min(secondActEntranceFloor + 1, stage + actRoom) : stage,
-  );
+  int get arenaSpeedBonus =>
+      arenaSpeedBonusAt(
+        inActTwo ? min(secondActEntranceFloor + 1, stage + actRoom) : stage,
+      ) +
+      (inThirdAct ? thirdRoom ~/ 3 * 5 : 0);
 
   double get arenaSpeed => 1 + arenaSpeedBonus / 100;
 
@@ -2139,6 +2188,13 @@ class LiteRun {
         rank >= LitePowerUp.maxRank) {
       return false;
     }
+    _powerOffers.clear();
+    _grantPower(power);
+    return true;
+  }
+
+  void _grantPower(LitePowerUp power) {
+    final rank = powerRank(power);
     final previousMax = maxHp;
     _powerRanks[power] = rank + 1;
     if (power == LitePowerUp.pelleRunica) {
@@ -2153,10 +2209,8 @@ class LiteRun {
         fighter._teamBlockBonus = _power(power).round();
       }
     }
-    _powerOffers.clear();
-    hp += maxHp - previousMax;
+    if (!hostDown) hp += maxHp - previousMax;
     message = '${power.label} · Grado ${rank + 1}/${LitePowerUp.maxRank}';
-    return true;
   }
 
   void _offerPowers() {
@@ -2168,7 +2222,9 @@ class LiteRun {
     ];
     final themed = _featuredPower(biome, _trialEarned ? arenaTrial : null);
     // Loot and enemy behavior keep their own random sequence.
-    final offerRng = _LiteRandom(seed ^ (stage + 1) * 8191);
+    final offerRng = _LiteRandom(
+      seed ^ (stage + 1) * 8191 ^ thirdRoom * 283 ^ actRoom * 67,
+    );
     _powerOffers.clear();
     if (eligible.remove(themed)) _powerOffers.add(themed);
     while (eligible.isNotEmpty && _powerOffers.length < 3) {
@@ -2394,23 +2450,33 @@ class LiteRun {
       !finished &&
       !hostDown &&
       !inActTwo &&
+      !inThirdAct &&
       !inSolarDungeon &&
       !restHub &&
       stageClear &&
       _distance(position, shopPosition) < 2;
   bool get hasPortalNearby =>
       !finished &&
-      stage < lastStage &&
+      (inThirdAct
+          ? thirdRoom < LiteThirdAct.rooms.length
+          : stage < lastStage) &&
       stageClear &&
       _distance(position, portalPosition) < 2;
   bool get coopPortalOpen =>
-      !finished && stageClear && stage < lastStage && !shopOpen;
-  bool get usesSubArena => restHub || inActTwo || inSolarDungeon || goblinCamp;
+      !finished &&
+      stageClear &&
+      (inThirdAct
+          ? thirdRoom < LiteThirdAct.rooms.length
+          : stage < lastStage) &&
+      !shopOpen;
+  bool get usesSubArena =>
+      restHub || inActTwo || inThirdAct || inSolarDungeon || goblinCamp;
   String get inputArena => [
     stage,
     if (restHub) 'rest',
     if (solarPhase != null) solarPhase!.name,
     if (realm != null) ...[realm!.name, actRoom],
+    if (inThirdAct) ...['atto-iii', thirdRoom],
     if (goblinCamp) 'goblin',
   ].join(':');
   Point<double> get portalPosition => const Point(30, 11);
@@ -2418,7 +2484,10 @@ class LiteRun {
   Point<double> get restPosition => const Point(5, 16);
   bool _hasRestAt(int floor) => floor < lastStage && floor % 3 == 0;
   bool get hasRest =>
-      restHub || (!inActTwo && !inSolarDungeon && _hasRestAt(stage));
+      restHub ||
+      (inThirdAct
+          ? thirdRoom < LiteThirdAct.rooms.length && thirdRoom % 3 == 0
+          : !inActTwo && !inSolarDungeon && _hasRestAt(stage));
   bool get canRest => canUseRest();
 
   bool canUseRest([LiteCoopFighter? fighter]) =>
@@ -2516,7 +2585,11 @@ class LiteRun {
     _activeBeam = null;
     _finalBossDefeated = false;
     aim = const Point(1, 0);
-    clones.removeWhere((clone) => clone.expiresAfter != null);
+    clones.removeWhere(
+      (clone) =>
+          clone.expiresAfter != null ||
+          clone.companion == LiteCompanion.lupoAlleato,
+    );
     for (final clone in clones) {
       clone.position = _spawn + const Point<double>(0, 1.15);
       clone.stride._reset();
@@ -2622,11 +2695,18 @@ class LiteRun {
       ]);
     }
     final count = _openingEnemyCount(stage, arenaTrial);
+    final formation = stage >= 3 ? floorLayout.index % 3 : 0;
     for (var i = 0; i < count; i++) {
       final lane = 4.5 + 12.5 * (i / max(1, count - 1));
       final y = stage == 0 ? lane : lane + (_rng.nextDouble() - .5) * 2.1;
       final kind = _openingEnemyKind(biome, i, stage);
-      final candidate = Point(19 + _rng.nextDouble() * 7, y);
+      final column = switch (formation) {
+        1 => i.isEven ? 19.0 : 25.5,
+        2 => 21.0 + (1 - (y - 11).abs() / 7) * 4,
+        _ => 19.0,
+      };
+      final spread = formation == 0 ? 7.0 : 1.5;
+      final candidate = Point(column + _rng.nextDouble() * spread, y);
       _spawnEnemy(kind, candidate);
     }
     quests.addAll([
@@ -3477,6 +3557,7 @@ class LiteRun {
     }
     _tickFinalBeam(elapsed);
     if (dead) return;
+    _befriendWolves();
     // New summons enter combat on the next substep.
     final enemiesAtStart = enemies.length;
     for (var i = 0; i < enemiesAtStart; i++) {
@@ -3549,7 +3630,8 @@ class LiteRun {
       message = 'Il gruppo è caduto al piano $stage.';
     }
     if (dead || enemies.isNotEmpty || stageClear) return;
-    if (_advanceSolarEncounter() || _completeActRoom()) return;
+    if (_advanceSolarEncounter() || _completeActRoom() || _completeThirdRoom())
+      return;
     if (this.goblinCamp) {
       this._nextGoblinWave();
       return;
@@ -4095,6 +4177,15 @@ class LiteRun {
     final aimed = _unit(target - source);
     final direction = aimed.magnitude > 0 ? aimed : fighter?.aim ?? aim;
     switch (character) {
+      case LiteHero.vesanybel || LiteHero.aerovyr || LiteHero.vedettaEiva:
+        _thirdHeroMove(
+          character,
+          source,
+          direction,
+          fighter,
+          grade,
+          open: true,
+        );
       case LiteHero.demoneMinore ||
           LiteHero.demoneIntermedio ||
           LiteHero.demoneMaggiore ||
@@ -4563,6 +4654,15 @@ class LiteRun {
     }
     final owner = fighter?.id;
     switch (character) {
+      case LiteHero.vesanybel || LiteHero.aerovyr || LiteHero.vedettaEiva:
+        _thirdHeroMove(
+          character,
+          source,
+          direction,
+          fighter,
+          openGradeFor(characterLevel),
+          open: false,
+        );
       case LiteHero.demoneMinore ||
           LiteHero.demoneIntermedio ||
           LiteHero.demoneMaggiore ||
@@ -5288,6 +5388,7 @@ class LiteRun {
       _tickArchon(enemy, elapsed);
       return;
     }
+    if (_tickThirdEnemy(enemy, elapsed)) return;
     if (enemy.mirror != null) {
       _tickMirror(enemy, elapsed);
       return;
@@ -6335,7 +6436,8 @@ class LiteRun {
         paceScale *
         this.terrainSpeedAt(clone.position, enemy: false);
     if (enemy == null ||
-        _distanceSquared(clone.position, ownerPosition) > 150) {
+        (clone.companion != LiteCompanion.lupoAlleato &&
+            _distanceSquared(clone.position, ownerPosition) > 150)) {
       final angle = (clone.id % 8) * pi / 4;
       final goal = ownerPosition + Point(cos(angle), sin(angle)) * 1.48;
       if (_distanceSquared(clone.position, goal) > .40) {
@@ -6553,7 +6655,7 @@ class LiteRun {
 
   void _projectileTick(LiteProjectile projectile, double elapsed) {
     if (projectile.remaining <= 0) return;
-    if (_finalBossDefeated && projectile.fromEnemy) {
+    if (_finalBossDefeated && !inThirdAct && projectile.fromEnemy) {
       projectile.remaining = 0;
       return;
     }
@@ -7254,7 +7356,7 @@ class LiteRun {
       _progressQuest(2);
     } else {
       spentOculum++;
-      if (quests[0].current == 0 ||
+      if (quests.firstOrNull?.current == 0 ||
           _rng.nextDouble() < (hero == LiteHero.evasore ? .60 : .30)) {
         final type = switch (kind) {
           LiteEnemyKind.rasvyr => LiteScroll.spaccaterra,
@@ -7790,6 +7892,7 @@ class LiteRun {
     if (solarBossWaiting) return enterSolarBoss();
     if (canChooseActTwo) return false;
     if (nextActTwoRoom) return advanceActTwo();
+    if (inThirdAct) return advanceThirdAct();
     return _nextFloor(destination);
   }
 
@@ -7801,6 +7904,8 @@ class LiteRun {
           ? enterSolarBoss()
           : nextActTwoRoom
           ? advanceActTwo()
+          : inThirdAct
+          ? advanceThirdAct(remote: true)
           : _nextFloor(destination));
 
   bool _nextFloor(LiteBiome? destination) {
@@ -7841,6 +7946,8 @@ class LiteRun {
     if (weaponArtCooldown > 0) 'weaponArtCooldown': weaponArtCooldown,
     if (restHub) 'restHub': true,
     if (realm case final area?) ...{'realm': area.name, 'actRoom': actRoom},
+    if (inThirdAct) 'thirdRoom': thirdRoom,
+    if (_claimedWell != null) 'claimedWell': _claimedWell,
     if (solarPhase case final phase?) 'solarPhase': phase.name,
     if (solarStairs case final stairs?) 'solarStairs': _savePoint(stairs),
     if (fauna.isNotEmpty)
@@ -8178,11 +8285,19 @@ class LiteRun {
         run._combatImpacts.add(impact);
       }
     }
+    run.thirdRoom = _int(json['thirdRoom']).clamp(0, LiteThirdAct.rooms.length);
+    if (run.stage != run.lastStage || run.realm != null) run.thirdRoom = 0;
+    run._claimedWell = json['claimedWell'] is String
+        ? json['claimedWell'] as String
+        : null;
     run.stageClear = json['stageClear'] == true;
     run.eliteDefeated = json['eliteDefeated'] == true;
     run.dead = json['dead'] == true;
     run.victorious =
-        json['victorious'] == true && run.isFinalFloor && !run.dead;
+        json['victorious'] == true &&
+        run.isFinalFloor &&
+        !run.dead &&
+        (!run.inThirdAct || run.thirdRoom == LiteThirdAct.rooms.length);
     run._finalBossDefeated =
         json['finalBossDefeated'] == true || run.victorious;
     run.shopOpen = json['shopOpen'] == true && run.canOpenShop;

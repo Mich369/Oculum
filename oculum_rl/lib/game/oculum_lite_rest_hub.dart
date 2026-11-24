@@ -248,6 +248,7 @@ extension LiteRestHub on LiteRun {
   }
 
   void _openSupplyRoom() {
+    _dismissRoomWolves();
     restHub = true;
     fauna.clear();
     obstacles.clear();

@@ -45,6 +45,9 @@ const liteHeroLabels = {
   LiteHero.reGoblin: 'Re Goblin',
   LiteHero.pollo: 'Pollo di Brace',
   LiteHero.polloMeccanico: 'Pollo Meccanico',
+  LiteHero.vesanybel: 'Vesanybel',
+  LiteHero.aerovyr: 'Aerovyr',
+  LiteHero.vedettaEiva: 'Vedetta Eiva',
   LiteHero.raganella: 'Raganella del Muschio',
   LiteHero.pipistrello: 'Pipistrello di Pece',
   LiteHero.guardiaSolare: 'Guardia Solare',
@@ -132,6 +135,7 @@ class _OculumLitePageState extends State<OculumLitePage>
   OculumLiteSaveStore? _saveStore;
   late final Ticker _ticker;
   final _arenaFrame = ValueNotifier<int>(0);
+  bool _wellPreviewOpen = false;
   final _audio = OculumLiteAudio();
   Duration? _lastFrame;
   Duration _lastHudCheck = Duration.zero;
@@ -677,6 +681,8 @@ class _OculumLitePageState extends State<OculumLitePage>
     run.solarStairs,
     run.realm,
     run.actRoom,
+    run.thirdRoom,
+    run.powerWellClaimed,
     run.provokedFaunaRooms,
     run.stage,
     run.stageClear,
@@ -898,6 +904,11 @@ class _OculumLitePageState extends State<OculumLitePage>
       _gameFocus.requestFocus();
       return;
     }
+    if (run.inThirdAct && run.hasPortalNearby) {
+      _saveInventoryChange(run.advanceThirdAct);
+      _aim = null;
+      return;
+    }
     if (run.nextActTwoRoom && run.hasPortalNearby) {
       _saveInventoryChange(run.advanceActTwo);
       _aim = null;
@@ -1004,6 +1015,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       label = 'R · Sfida il Guardiano Solare';
     } else if (run.canChooseActTwo) {
       label = 'R · Scegli il percorso dell’Atto II';
+    } else if (run.inThirdAct && run.hasPortalNearby) {
+      label = 'R · Prossima sala dell’Atto III';
     } else if (run.nextActTwoRoom && run.hasPortalNearby) {
       label = 'R · Prosegui nell’Atto II';
     } else if (run.hasPortalNearby) {
@@ -1709,7 +1722,11 @@ class _OculumLitePageState extends State<OculumLitePage>
                     ? null
                     : (target) {
                         _gameFocus.requestFocus();
-                        run.attack(target);
+                        if (run.powerWellAt(target)) {
+                          unawaited(_showWell(run));
+                        } else {
+                          run.attack(target);
+                        }
                       },
                 onTalent: blocked
                     ? null
@@ -1742,7 +1759,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              'Piano ${run.stage}/${run.lastStage}$encounter$bossPhase'
+                              '${run.arenaLabel}$encounter$bossPhase'
                               '${run.arenaSpeed > 1 ? ' · Ritmo +${run.arenaSpeedBonus}%' : ''}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1816,6 +1833,12 @@ class _OculumLitePageState extends State<OculumLitePage>
                         onPressed: () => _showPowerOffers(run),
                         icon: const Icon(Icons.auto_awesome),
                         label: const Text('Scegli un potenziamento'),
+                      ),
+                    if (run.hasPowerWell && !run.powerWellClaimed)
+                      TextButton.icon(
+                        onPressed: () => _showWell(run),
+                        icon: const Icon(Icons.water_drop_outlined),
+                        label: const Text('Offerte del pozzo'),
                       ),
                     OculumLiteCompanionStatus(run: run),
                     OculumLiteTrialStatus(run: run),
@@ -2004,6 +2027,19 @@ class _OculumLitePageState extends State<OculumLitePage>
                               ),
                               if (run.finished) ...[
                                 Text(run.message),
+                                if (run.canEnterThirdAct)
+                                  FilledButton(
+                                    onPressed: _busy
+                                        ? null
+                                        : () => _saveInventoryChange(() {
+                                            if (!run.enterThirdAct())
+                                              return false;
+                                            _aim = null;
+                                            _syncTicker();
+                                            return true;
+                                          }),
+                                    child: const Text('Entra nell’Atto III'),
+                                  ),
                                 FilledButton(
                                   onPressed: _busy ? null : _retry,
                                   child: Text(
@@ -2191,6 +2227,20 @@ class _OculumLitePageState extends State<OculumLitePage>
         );
       },
     );
+  }
+
+  Future<void> _showWell(LiteRun run) async {
+    if (_wellPreviewOpen || !run.hasPowerWell) return;
+    _wellPreviewOpen = true;
+    _clearMovement();
+    final arena = run.inputArena;
+    final chosen = await showOculumLiteWell(context, run, canChoose: true);
+    _wellPreviewOpen = false;
+    if (!mounted || !identical(_active?.run, run)) return;
+    if (chosen != null) {
+      _saveInventoryChange(() => run.claimPowerWell(chosen, arena: arena));
+    }
+    _gameFocus.requestFocus();
   }
 
   Future<void> _showPowerOffers(LiteRun run) async {

@@ -157,6 +157,25 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     return KeyEventResult.handled;
   }
 
+  bool _wellPreviewOpen = false;
+
+  Future<void> _showWell(LiteRun run) async {
+    if (_wellPreviewOpen || !run.hasPowerWell) return;
+    _wellPreviewOpen = true;
+    _clear();
+    final arena = run.inputArena;
+    final choice = await showOculumLiteWell(
+      context,
+      run,
+      canChoose: _session.host,
+    );
+    _wellPreviewOpen = false;
+    if (!mounted) return;
+    if (choice != null)
+      _session.authority?.claimPowerWell(choice, arena: arena);
+    _focus.requestFocus();
+  }
+
   Future<void> _interact() async {
     if (_session.solarInteraction() || _session.advanceActTwo()) return;
     if (_session.host && (_session.run?.canChooseActTwo ?? false)) {
@@ -180,6 +199,10 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     }
     final run = _session.run;
     if (run == null) return;
+    if (run.inThirdAct) {
+      _session.confirmPortal(run.biome);
+      return;
+    }
     if (run.awaitsRestHub) {
       _session.enterRestHub();
       return;
@@ -237,11 +260,11 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   }
 
   Future<void> _choosePower(LiteRun run) async {
-    final floor = run.stage;
+    final arena = run.inputArena;
     _clear();
     final choice = await chooseOculumLitePower(context, run);
     if (!mounted) return;
-    if (choice != null && run.stage == floor) run.choosePowerUp(choice);
+    if (choice != null && run.inputArena == arena) run.choosePowerUp(choice);
     _focus.requestFocus();
   }
 
@@ -324,9 +347,13 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                   focusAccount: mine?.account,
                   onAim: (at) => _session.aim = at,
                   onAttack: playing
-                      ? (_) {
+                      ? (at) {
                           _focus.requestFocus();
-                          _session.fire();
+                          if (run.powerWellAt(at)) {
+                            unawaited(_showWell(run));
+                          } else {
+                            _session.fire();
+                          }
                         }
                       : null,
                   onTalent: playing
@@ -349,7 +376,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                         runSpacing: 3,
                         children: [
                           Text(
-                            'Piano ${run.stage}/${run.lastStage} · ${run.biome.label}${run.bossStatus}'
+                            '${run.arenaLabel}${run.bossStatus}'
                             '${run.arenaSpeed > 1 ? ' · Ritmo +${run.arenaSpeedBonus}%' : ''}',
                           ),
                           Text(
@@ -514,6 +541,11 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                 active: mine?.blocking ?? run.blocking,
                                 onHeld: _session.setBlocking,
                               ),
+                              if (run.hasPowerWell && !run.powerWellClaimed)
+                                FilledButton.tonal(
+                                  onPressed: () => _showWell(run),
+                                  child: const Text('Offerte del pozzo'),
+                                ),
                               if (_session.host && run.powerOffers.isNotEmpty)
                                 FilledButton.tonal(
                                   onPressed: () => _choosePower(run),
@@ -568,9 +600,15 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                           _session.useRestScroll(entry.key),
                                       child: Text(entry.key.label),
                                     ),
-                              if (_session.canRescue || rescueStatus != null)
+                              if (_session.host && run.canEnterThirdAct)
+                                FilledButton(
+                                  onPressed: _session.enterThirdAct,
+                                  child: const Text('Entra nell’Atto III'),
+                                ),
+                              if (!run.finished &&
+                                  (_session.canRescue || rescueStatus != null))
                                 _rescueControl(rescueStatus)
-                              else
+                              else if (!run.finished)
                                 FilledButton(
                                   onPressed: _interact,
                                   child: Text(

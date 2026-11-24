@@ -23,7 +23,7 @@ bool sight(LiteRun run, Point<double> start, Point<double> end) {
   return true;
 }
 
-final _routes = <LiteRun, (int, Point<double>, List<Point<double>>)>{};
+final _routes = <LiteRun, (String, Point<double>, List<Point<double>>)>{};
 
 bool walkable(LiteRun run, Point<double> start, Point<double> finish) {
   final delta = finish - start;
@@ -56,7 +56,7 @@ Point<double> follow(
   }
   final previous = _routes[run];
   if (previous != null &&
-      previous.$1 == run.stage &&
+      previous.$1 == run.inputArena &&
       previous.$2.distanceTo(target) <= .75) {
     final path = previous.$3;
     while (path.isNotEmpty && at.distanceTo(path.first) < .19) {
@@ -124,7 +124,7 @@ Point<double> follow(
     forward.removeAt(0);
   }
   if (forward.isEmpty) return origin;
-  _routes[run] = (run.stage, target, forward);
+  _routes[run] = (run.inputArena, target, forward);
   return unit(forward.first - at);
 }
 
@@ -155,13 +155,32 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
     difficulty: difficulty,
   );
   final completed = <int>[];
+  final thirdCompleted = <int>[];
   final hubs = <int>[];
   final phases = <int>{};
   final finalAttacks = <LiteArchonAttack>{};
   var shopping = false;
-  for (var frame = 0; frame < 80 * 60 * 60 && !run.finished; frame++) {
+  for (var frame = 0; frame < 80 * 60 * 60; frame++) {
+    if (run.canEnterThirdAct) {
+      completed.add(run.stage);
+      if (!run.enterThirdAct())
+        throw StateError('Ingresso Atto III non riuscito');
+    }
+    if (run.finished) break;
     if (run.stageClear) {
-      if (completed.isEmpty || completed.last != run.stage) {
+      if (run.inThirdAct && !thirdCompleted.contains(run.thirdRoom)) {
+        thirdCompleted.add(run.thirdRoom);
+        if (run.powerOffers.isNotEmpty)
+          run.choosePowerUp(run.powerOffers.first);
+        final offers = run.powerWellOffers;
+        if (offers.isNotEmpty)
+          run.claimPowerWell(offers.first, arena: run.inputArena);
+        print(
+          'seed=$seed attoIII=${run.thirdRoom} hp=${run.hp.ceil()} livello=${run.level}',
+        );
+      }
+      if (!run.inThirdAct &&
+          (completed.isEmpty || completed.last != run.stage)) {
         completed.add(run.stage);
         if (run.powerOffers.isNotEmpty) {
           run.choosePowerUp(run.powerOffers.first);
@@ -192,7 +211,10 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
         }
       }
       if (run.hasPortalNearby) {
-        if (run.awaitsRestHub) {
+        if (run.inThirdAct) {
+          if (!run.advanceThirdAct())
+            throw StateError('Portale Atto III non accessibile');
+        } else if (run.awaitsRestHub) {
           if (!run.enterRestHub())
             throw StateError('Ristoro non accessibile al piano ${run.stage}');
           hubs.add(run.stage);
@@ -264,13 +286,16 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
     }
     run.advanceFrame(tick, move: move);
   }
-  if (run.victorious) completed.add(run.stage);
+  if (run.victorious && run.inThirdAct) thirdCompleted.add(run.thirdRoom);
   final summary =
       'seed=$seed ${difficulty.name}: won=${run.victorious} '
       'stage=${run.stage} act2=${realm.name} completed=${completed.join(",")} hubs=${hubs.join(",")} '
-      'archonPhases=${phases.join(",")} attacks=${finalAttacks.map((a) => a.name).join(",")}';
+      'archonPhases=${phases.join(",")} attacks=${finalAttacks.map((a) => a.name).join(",")} '
+      'attoIII=${thirdCompleted.join(",")}';
   if (!run.victorious ||
       completed.length != LiteRun.campaignRooms ||
+      thirdCompleted.length != LiteThirdAct.rooms.length ||
+      !run.achievements.contains('atto-iii-completato') ||
       phases.length != 3 ||
       finalAttacks.length != LiteArchonAttack.values.length ||
       hubs.join(',') != '5,11,17,23' ||

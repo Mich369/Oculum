@@ -92,6 +92,9 @@ void _paintOpenPulse(
     LiteHero.raganella => _active,
     LiteHero.pipistrello => _violet,
     LiteHero.ombra || LiteHero.veyrth || LiteHero.doppelganger => _violet,
+    LiteHero.vesanybel => const Color(0xffdca66c),
+    LiteHero.aerovyr => const Color(0xffa6d8ff),
+    LiteHero.vedettaEiva => const Color(0xff90d8c6),
   };
   _oval(
     canvas,

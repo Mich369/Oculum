@@ -267,6 +267,14 @@ class OculumLiteCoop extends ChangeNotifier {
     notifyListeners();
   }
 
+  void enterThirdAct() {
+    if (authority?.enterThirdAct() != true) return;
+    destination = null;
+    _confirmed.clear();
+    _timeOfSend = -1;
+    notifyListeners();
+  }
+
   bool advanceActTwo() {
     if (authority?.advanceActTwo() != true) return false;
     destination = null;
@@ -344,6 +352,9 @@ class OculumLiteCoop extends ChangeNotifier {
     if (!nearPortal(localAccount) || !canAct) return;
     if (host) {
       if (choice != null) _setDestination(choice);
+      if (authority?.inThirdAct == true && destination == null) {
+        _setDestination(authority!.biome);
+      }
       _confirmed.add(localAccount);
       _advanceIfReady();
     } else {

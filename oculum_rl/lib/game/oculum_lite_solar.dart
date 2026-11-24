@@ -73,6 +73,7 @@ extension LiteSolarDungeon on LiteRun {
     for (var i = 0; i < coopFighters.length; i++) {
       coopFighters[i].position = _coopSpawn(i);
     }
+    _dismissRoomWolves();
     for (final clone in clones) {
       clone.position = position + const Point(0, 1.6);
     }

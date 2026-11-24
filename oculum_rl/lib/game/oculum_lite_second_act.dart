@@ -145,6 +145,8 @@ extension LiteSecondAct on LiteRun {
 
   void _openActRoom() {
     _consumeMealForVisit();
+    _dismissRoomWolves();
+    _powerOffers.clear();
     stageClear = restHub = false;
     arenaTrial = null;
     loot.clear();
@@ -162,11 +164,24 @@ extension LiteSecondAct on LiteRun {
     final shift = actRoom.isOdd ? 0.0 : 3.25;
     obstacles
       ..clear()
-      ..addAll([
-        LiteObstacle(10.5 + shift, 5.5, 2.45, 1.8, breakable: true),
-        LiteObstacle(13.8 - shift, 14.6, 1.4, 2.0),
-        LiteObstacle(20.0 + shift, 9, 1.75, 2.1, breakable: true),
-      ]);
+      ..addAll(switch (realm!) {
+        LiteRealm.inferno => [
+          LiteObstacle(9, 3.0 + shift, 2.5, 2.3, breakable: true),
+          LiteObstacle(13.3, 14.2 - shift, 2.0, 3.5),
+          LiteObstacle(21.0 + shift, 7.4, 2.3, 2.1, breakable: true),
+        ],
+        LiteRealm.caramella => [
+          LiteObstacle(11.5, 6.5 + shift, 2.45, 1.8, breakable: true),
+          LiteObstacle(14.4 + shift, 14.8, 3.6, 1.9),
+          LiteObstacle(23.5, 4.2 + shift, 1.65, 3.2, breakable: true),
+        ],
+        LiteRealm.postea => [
+          LiteObstacle(10.0, 3.4, 3.1, 3.8),
+          LiteObstacle(10.0, 15.7, 3.1, 3.8),
+          LiteObstacle(16.0 + shift, 7.4, 1.9, 1.85, breakable: true),
+          LiteObstacle(22.0, 13.2 - shift, 2.45, 1.8, breakable: true),
+        ],
+      });
     final enemies = switch (realm!) {
       LiteRealm.inferno => switch (actRoom) {
         1 => [
@@ -236,8 +251,33 @@ extension LiteSecondAct on LiteRun {
         ],
       },
     };
+    quests
+      ..clear()
+      ..addAll([
+        LiteQuest(
+          'ii:${realm!.name}:$actRoom:ondata',
+          'Supera la visitazione',
+          enemies.length,
+          4,
+        ),
+        LiteQuest(
+          'ii:${realm!.name}:$actRoom:bottino',
+          'Raccogli il bottino',
+          2,
+          6,
+        ),
+        LiteQuest(
+          'ii:${realm!.name}:$actRoom:conquista',
+          'Conquista la sala',
+          1,
+          0,
+        ),
+      ]);
     for (var i = 0; i < enemies.length; i++) {
-      _spawnEnemy(enemies[i], Point(23.0 + (i % 2) * 4.1, 5.5 + i * 3.6));
+      final kind = enemies[i];
+      final x = kind.boss || kind.elite ? 25.5 : 17.7 + (i.isEven ? 0 : 3.4);
+      final y = kind.boss ? 11.0 : 4.6 + i * 4.2;
+      _spawnEnemy(kind, Point(x, y)).cooldown += i * .14;
     }
     message = 'Atto II · ${realm!.label} · Visitazione $actRoom/$actTwoRooms';
   }
@@ -245,6 +285,8 @@ extension LiteSecondAct on LiteRun {
   bool _completeActRoom() {
     if (!inActTwo || stageClear) return false;
     final finalRoom = actRoom == actTwoRooms;
+    _progressQuest(2);
+    _offerPowers();
     _awardPartyObser(finalRoom ? 62 : 24);
     for (final (kind, unlockedAt) in [
       (LiteHero.demoneMinore, 1),

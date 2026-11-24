@@ -96,6 +96,55 @@ Future<LitePowerUp?> chooseOculumLitePower(BuildContext context, LiteRun run) =>
       ),
     );
 
+Future<LitePowerUp?> showOculumLiteWell(
+  BuildContext context,
+  LiteRun run, {
+  required bool canChoose,
+}) {
+  final offers = run.powerWellOffers;
+  final ready = canChoose && run.canClaimPowerWell;
+  return showDialog<LitePowerUp>(
+    context: context,
+    builder: (dialog) => SimpleDialog(
+      title: const Text('Pozzo delle Iride'),
+      children: [
+        if (offers.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Il pozzo è esaurito.'),
+          )
+        else ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            child: Text(
+              !run.stageClear
+                  ? 'Conquista la sala per attingere a una delle offerte.'
+                  : !canChoose
+                  ? 'Il Master sceglie un potenziamento per la squadra.'
+                  : 'Conferma una delle offerte prima di proseguire.',
+            ),
+          ),
+          for (final power in offers)
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+              leading: const Icon(Icons.diamond_outlined),
+              title: Text(
+                '${power.label} · Grado ${run.powerRank(power) + 1}/3',
+              ),
+              subtitle: Text(power.descriptionAt(run.powerRank(power) + 1)),
+              trailing: ready
+                  ? TextButton(
+                      onPressed: () => Navigator.pop(dialog, power),
+                      child: const Text('Scegli'),
+                    )
+                  : null,
+            ),
+        ],
+      ],
+    ),
+  );
+}
+
 class _RouteCard extends StatelessWidget {
   const _RouteCard({
     required this.route,

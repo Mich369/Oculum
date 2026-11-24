@@ -9,7 +9,14 @@ LiteRun _run({
   LiteHero hero = LiteHero.evasore,
   LiteWeapon weapon = LiteWeapon.arco,
   LiteBiome biome = LiteBiome.campo,
-}) => LiteRun(seed: 241, hero: hero, weapon: weapon, biome: biome);
+  int playerCount = 1,
+}) => LiteRun(
+  seed: 241,
+  hero: hero,
+  weapon: weapon,
+  biome: biome,
+  playerCount: playerCount,
+);
 
 void _expectRouteMatchesFloor({
   required int before,
@@ -624,6 +631,13 @@ void main() {
             expect(run.position.x, greaterThan(6.5));
           case LiteHero.veyrth:
             expect(run.projectiles, hasLength(7));
+          case LiteHero.aerovyr:
+            expect(run.projectiles, hasLength(5));
+          case LiteHero.vesanybel:
+            expect(target.hp, lessThan(target.maxHp));
+          case LiteHero.vedettaEiva:
+            expect(run.intangible, isTrue);
+            expect(run.position.x, greaterThan(6.5));
           case LiteHero.doppelganger:
             expect(run.mimic?.kind, target.kind);
             expect(run.maxHp, target.maxHp);
@@ -2646,6 +2660,138 @@ void main() {
       expect(finished.stageClear, false);
     });
   }
+
+  test('Act III plays twelve distinct rooms and reloads with victory', () {
+    var run = _reachFloor(LiteRun.finalStage);
+    while (!run.stageClear) {
+      _strikeCampaignEnemy(run, run.enemies.first);
+    }
+    expect(run.canEnterThirdAct, isTrue);
+    final startWeapon = run.weapon;
+    expect(run.enterThirdAct(), isTrue);
+    expect(run.victorious, isFalse);
+    final arenas = <String>{};
+    final regions = <LiteThirdRegion>{};
+    final bosses = <LiteEnemyKind>[];
+    for (var room = 1; room <= 12; room++) {
+      run = _restore(run);
+      expect(arenas.add(run.inputArena), isTrue);
+      expect(run.thirdRoom, room);
+      regions.add(run.thirdEncounter!.region);
+      bosses.addAll(
+        run.enemies.where((item) => item.kind.boss).map((item) => item.kind),
+      );
+      expect(run.weapon, startWeapon);
+      expect(run.advanceThirdAct(), isFalse);
+      var attempts = 0;
+      while (!run.stageClear && attempts++ < 30) {
+        _strikeCampaignEnemy(run, run.enemies.first);
+      }
+      expect(run.stageClear, isTrue, reason: 'sala $room');
+      if (room < 12) {
+        expect(run.victorious, isFalse);
+        run.position = run.portalPosition;
+        expect(run.advance(), isTrue);
+      }
+    }
+    expect(regions, LiteThirdRegion.values.toSet());
+    expect(bosses, [
+      LiteEnemyKind.vesanybel,
+      LiteEnemyKind.thalvyr,
+      LiteEnemyKind.aerovyr,
+    ]);
+    expect(
+      run.achievements,
+      containsAll([
+        'atto-iii-completato',
+        for (final hero in [
+          LiteHero.vesanybel,
+          LiteHero.aerovyr,
+          LiteHero.vedettaEiva,
+        ])
+          LiteRun.heroUnlockKey(hero),
+      ]),
+    );
+    run = _restore(run);
+    expect(run.victorious, isTrue);
+    expect(run.enterThirdAct(), isFalse);
+  });
+
+  test('a well previews three families and persists a single claim', () {
+    var run = _reachFloor(2);
+    final arena = run.inputArena;
+    final offers = run.powerWellOffers;
+    expect(offers, hasLength(3));
+    expect(run.powerWellAt(run.powerWellPosition), isTrue);
+    expect(run.powerRank(offers.first), 0);
+    expect(run.claimPowerWell(offers.first, arena: arena), isFalse);
+    while (!run.stageClear) {
+      _strikeCampaignEnemy(run, run.enemies.first);
+    }
+    expect(run.claimPowerWell(offers.first, arena: 'old arena'), isFalse);
+    expect(run.claimPowerWell(offers.first, arena: arena), isTrue);
+    run = _restore(run);
+    expect(run.powerRank(offers.first), 1);
+    expect(run.powerWellClaimed, isTrue);
+    expect(run.claimPowerWell(offers.last, arena: arena), isFalse);
+  });
+
+  test('wolves join a hero or connected guard and leave on room change', () {
+    for (final guest in [false, true]) {
+      var run = _run(
+        hero: guest ? LiteHero.evasore : LiteHero.cavaliereLunare,
+        weapon: LiteWeapon.spadaScudo,
+        playerCount: guest ? 2 : 1,
+      )..level = 300;
+      run.hp = run.maxHp;
+      if (guest) {
+        expect(
+          run.addCoopFighter(
+            'elite',
+            'Elite',
+            LiteHero.eliteSolare,
+            LiteWeapon.spadaScudo,
+          ),
+          isTrue,
+        );
+      }
+      if (guest) {
+        expect(
+          run.setCoopControls(
+            'elite',
+            const Point(0, 0),
+            const Point(5, 11),
+            attack: false,
+          ),
+          isTrue,
+        );
+      }
+      final wolf = LiteEnemy(
+        100,
+        LiteEnemyKind.lupoLunare,
+        const Point(5.7, 11),
+        42,
+      );
+      run.enemies.add(wolf);
+      final previousExperience = run.exp;
+      final previousLoot = run.loot.length;
+      run.step(1 / 120);
+      expect(run.enemies.contains(wolf), isFalse);
+      expect(run.exp, previousExperience);
+      expect(run.loot.length, previousLoot);
+      run = _restore(run);
+      expect(run.clones.single.companion, LiteCompanion.lupoAlleato);
+      while (!run.stageClear) {
+        _strikeCampaignEnemy(run, run.enemies.first);
+      }
+      run.position = run.portalPosition;
+      expect(run.advance(), isTrue);
+      expect(
+        run.clones.where((item) => item.companion == LiteCompanion.lupoAlleato),
+        isEmpty,
+      );
+    }
+  });
 
   test('campaign traverses 25 rooms with ten specials and saved victory', () {
     final route = <int, LiteEnemyKind>{};
