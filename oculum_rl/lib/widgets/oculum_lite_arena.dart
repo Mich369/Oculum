@@ -154,6 +154,9 @@ class OculumLiteArena extends StatefulWidget {
       : AssetImage('assets/oculum/lite/arma-${weapon.name}.png');
   static const lootArt = AssetImage('assets/oculum/lite/bottino-ink.png');
   static const infernalArt = AssetImage('assets/oculum/lite/infernali-ink.png');
+  static const thirdGround = AssetImage(
+    'assets/oculum/lite/arene-nuove-ink.webp',
+  );
   static const thirdArt = AssetImage('assets/oculum/lite/act-three-ink.webp');
   static const thirdEncounters = AssetImage(
     'assets/oculum/lite/act-three-encounters.webp',
@@ -357,6 +360,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.solarGround,
         OculumLiteArena.infernalArt,
         OculumLiteArena.thirdArt,
+        OculumLiteArena.thirdGround,
         OculumLiteArena.thirdEncounters,
         OculumLiteArena.infernoGround,
         OculumLiteArena.caramellaGround,
@@ -403,7 +407,8 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
       _applyImage(frame, synchronous, () {
         _extraImages[art]?.dispose();
         _extraImages[art] = frame;
-        if (art == OculumLiteArena.desertoGround ||
+        if (art == OculumLiteArena.thirdGround ||
+            art == OculumLiteArena.desertoGround ||
             art == OculumLiteArena.infernoGround ||
             art == OculumLiteArena.caramellaGround ||
             art == OculumLiteArena.solarGround ||
@@ -510,30 +515,39 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
       _floor?.dispose();
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
-      _paintFloor(
-        canvas,
-        run.width.toDouble(),
-        run.height.toDouble(),
-        (key.$1, key.$2, key.$3),
-        _ground?.image,
-        key.$4
-            ? _extraImages[OculumLiteArena.restGround]?.image
-            : key.$5
-            ? _extraImages[OculumLiteArena.solarGround]?.image
-            : key.$6 == LiteRealm.inferno
-            ? _extraImages[OculumLiteArena.infernoGround]?.image
-            : key.$6 == LiteRealm.caramella
-            ? _extraImages[OculumLiteArena.caramellaGround]?.image
-            : switch (key.$3) {
-                LiteBiome.deserto =>
-                  _extraImages[OculumLiteArena.desertoGround]?.image,
-                LiteBiome.orea =>
-                  _extraImages[OculumLiteArena.oreaGround]?.image,
-                _ => null,
-              },
-      );
-      if (run.thirdEncounter case final room?) {
-        _thirdFloor(canvas, run, room.region);
+      final chapterPanel =
+          run.thirdEncounter?.region.index ??
+          (run.realm == LiteRealm.postea ? 3 : null);
+      if (chapterPanel != null) {
+        _paintChapterGround(
+          canvas,
+          run,
+          chapterPanel,
+          _extraImages[OculumLiteArena.thirdGround]?.image,
+        );
+      } else {
+        _paintFloor(
+          canvas,
+          run.width.toDouble(),
+          run.height.toDouble(),
+          (key.$1, key.$2, key.$3),
+          _ground?.image,
+          key.$4
+              ? _extraImages[OculumLiteArena.restGround]?.image
+              : key.$5
+              ? _extraImages[OculumLiteArena.solarGround]?.image
+              : key.$6 == LiteRealm.inferno
+              ? _extraImages[OculumLiteArena.infernoGround]?.image
+              : key.$6 == LiteRealm.caramella
+              ? _extraImages[OculumLiteArena.caramellaGround]?.image
+              : switch (key.$3) {
+                  LiteBiome.deserto =>
+                    _extraImages[OculumLiteArena.desertoGround]?.image,
+                  LiteBiome.orea =>
+                    _extraImages[OculumLiteArena.oreaGround]?.image,
+                  _ => null,
+                },
+        );
       }
       _floor = recorder.endRecording();
       _floorKey = key;
@@ -1449,65 +1463,32 @@ void _paintThirdActor(
   canvas.restore();
 }
 
-void _thirdFloor(Canvas canvas, LiteRun run, LiteThirdRegion area) {
-  final bounds = Rect.fromLTWH(
-    0,
-    0,
-    run.width.toDouble(),
-    run.height.toDouble(),
-  );
-  final pigment = switch (area) {
-    LiteThirdRegion.oblio => const Color(0xff63497c),
-    LiteThirdRegion.sommerso => const Color(0xff2c686c),
-    LiteThirdRegion.nuvole => const Color(0xff537399),
+void _paintChapterGround(Canvas canvas, LiteRun run, int panel, ui.Image? art) {
+  final room = Rect.fromLTWH(0, 0, run.width, run.height);
+  final tone = switch (panel) {
+    0 => const Color(0xff322c3d),
+    1 => const Color(0xff22353a),
+    2 => const Color(0xff303749),
+    _ => const Color(0xff332c2b),
   };
-  canvas.drawRect(bounds, Paint()..color = pigment.withValues(alpha: .45));
-  final trace = pigment.withValues(alpha: .56);
-  switch (area) {
-    case LiteThirdRegion.oblio:
-      for (var x = 3.0; x < bounds.width; x += 5.2) {
-        final arch = Path()
-          ..moveTo(x - 2, 21)
-          ..lineTo(x - 2, 6)
-          ..quadraticBezierTo(x, 1, x + 2, 6)
-          ..lineTo(x + 2, 21);
-        canvas.drawPath(
-          arch,
-          Paint()
-            ..color = trace
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = .16,
-        );
-      }
-    case LiteThirdRegion.sommerso:
-      for (var y = 1.0; y < bounds.height; y += 2.0) {
-        final current = Path()
-          ..moveTo(0, y)
-          ..cubicTo(7, y + 2.1, 17, y - 2.8, bounds.width, y + .3);
-        canvas.drawPath(
-          current,
-          Paint()
-            ..color = trace
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = .11,
-        );
-      }
-    case LiteThirdRegion.nuvole:
-      for (var y = 3.0; y < bounds.height; y += 4.0) {
-        canvas.drawRect(
-          Rect.fromLTWH(0, y, bounds.width, 1.8),
-          Paint()..color = trace,
-        );
-        for (var x = 0.0; x < bounds.width; x += 2.4) {
-          _lines(
-            canvas,
-            [Offset(x, y), Offset(x, y + 1.8)],
-            _ink.withValues(alpha: .37),
-            .085,
-          );
-        }
-      }
-  }
+  canvas.drawRect(room.inflate(.5), Paint()..color = _ink);
+  canvas.drawRect(room, Paint()..color = tone);
+  if (art == null) return;
+  final w = art.width / 2;
+  final h = art.height / 2;
+  final source = Rect.fromLTWH(
+    (panel % 2) * w,
+    (panel ~/ 2) * h,
+    w,
+    h,
+  ).deflate(1);
+  canvas.drawImageRect(
+    art,
+    source,
+    room,
+    Paint()..filterQuality = FilterQuality.medium,
+  );
+  canvas.drawRect(room, Paint()..color = const Color(0x15140e18));
 }
 
 void _powerWellPaint(
@@ -1753,7 +1734,12 @@ class _ArenaPaint extends CustomPainter {
     final camera = _ArenaCamera(size, run, follow: follow);
     final visible = camera.visible.inflate(2.95);
     canvas.drawRect(Offset.zero & size, Paint()..color = _ink);
-    final surface = run.goblinCamp ? LiteBiome.campo : run.biome;
+    final surface = switch (run.thirdEncounter?.region) {
+      LiteThirdRegion.oblio || LiteThirdRegion.sommerso => LiteBiome.dungeon,
+      LiteThirdRegion.nuvole => LiteBiome.postea,
+      null when run.realm == LiteRealm.postea => LiteBiome.postea,
+      _ => run.goblinCamp ? LiteBiome.campo : run.biome,
+    };
     final palette = _palette(surface);
     canvas.save();
     canvas.clipRect(Offset.zero & size);
