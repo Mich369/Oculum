@@ -1458,7 +1458,10 @@ class _ArenaPaint extends CustomPainter {
         _portal(canvas, portal, active: run.stageClear, time: time);
       }
     }
-    if (!run.restHub && visible.contains(merchant)) {
+    if (!run.restHub &&
+        !run.inSolarDungeon &&
+        !run.inActTwo &&
+        visible.contains(merchant)) {
       if (objects != null) {
         _arenaProp(canvas, objects, 0, merchant, 2.85, run.stageClear);
       } else {
@@ -1525,6 +1528,13 @@ class _ArenaPaint extends CustomPainter {
     final player = _offset(run.position);
     final aiming = _offset(run.aim);
     final weaponAim = _offset(run.weaponAim);
+    _paintWeaponArtPulse(
+      canvas,
+      player,
+      weaponAim,
+      run.techniqueWeapon(),
+      run.weaponArtCooldown,
+    );
     final facing = weaponAim.dx >= 0 ? 1.0 : -1.0;
     final bossIsTangible = run.finalBossTangible;
     final beam = run.activeBeam;
@@ -1760,7 +1770,12 @@ class _ArenaPaint extends CustomPainter {
             }
           });
           if (enemy.hp > 0) {
-            final barAt = at - Offset(0, _enemyHeight(enemy.kind) * size + .13);
+            final leapHeight = enemy.burrow == null
+                ? 0.0
+                : math.sin(enemy.burrow!.progress * math.pi) * 1.42 * size;
+            final barAt =
+                at -
+                Offset(0, _enemyHeight(enemy.kind) * size + .13 + leapHeight);
             if (enemy.kind == LiteEnemyKind.veyrth && !bossIsTangible) {
               _oval(
                 canvas,
@@ -6023,9 +6038,9 @@ double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.guardianoSolare || LiteEnemyKind.custodeLunare => 1.34,
   LiteEnemyKind.demoneMinore => .81,
   LiteEnemyKind.demoneIntermedio || LiteEnemyKind.demoneMaggiore => 1.12,
-  LiteEnemyKind.diavolo ||
-  LiteEnemyKind.divoramitu ||
-  LiteEnemyKind.divoramituBoss => 1.40,
+  LiteEnemyKind.diavolo => 1.40,
+  LiteEnemyKind.divoramitu => 1.85,
+  LiteEnemyKind.divoramituBoss => 2.18,
 };
 
 double _enemyHeight(LiteEnemyKind kind) => switch (kind) {

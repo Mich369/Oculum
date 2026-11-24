@@ -704,6 +704,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       run.arrows,
       run.reloading,
       run.openCooldown.ceil(),
+      run.weaponArtCooldown.ceil(),
       run.banditRounds,
       run.banditDodgeReady,
       run.trialSecondsLeft,
@@ -813,9 +814,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       run.dash(point);
     } else if (key == LogicalKeyboardKey.space) {
       _saveInventoryChange(() => run.useOpen(point));
-    } else if (key == LogicalKeyboardKey.keyG &&
-        run.hero == LiteHero.scostubandito) {
-      _saveInventoryChange(run.banditRifleSkill);
+    } else if (key == LogicalKeyboardKey.keyG) {
+      _saveInventoryChange(() => run.useWeaponArt(_targetFor(run)));
     } else if (key == LogicalKeyboardKey.keyQ &&
         run.hero == LiteHero.reGoblin) {
       _saveInventoryChange(run.royalCall);
@@ -1783,6 +1783,25 @@ class _OculumLitePageState extends State<OculumLitePage>
                                   i++
                                 )
                                   _scrollAction(run, i),
+                              if (run.hasWeaponArt() &&
+                                  run.hero != LiteHero.scostubandito)
+                                Tooltip(
+                                  message: '3 Oculum · recupero 4,2 s',
+                                  child: FilledButton.tonal(
+                                    onPressed: run.weaponArtCooldown > 0
+                                        ? null
+                                        : () => _saveInventoryChange(
+                                            () => run.useWeaponArt(
+                                              _targetFor(run),
+                                            ),
+                                          ),
+                                    child: Text(
+                                      run.weaponArtCooldown > 0
+                                          ? 'G · ${run.weaponArtCooldown.ceil()} s'
+                                          : 'G · ${run.weaponArtLabel()}',
+                                    ),
+                                  ),
+                                ),
                               if (run.restHub)
                                 _action('Botteghe', () => _openRestHub(run)),
                               if (run.canClaimActRelic ||
@@ -1802,7 +1821,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                     if (!compact)
                       Text(
                         '${liteWeaponLabels[run.weapon]} · WASD movimento · clic attacco · '
-                        'destro/V talento · Spazio Open · F blocco · Shift scatto · E inventario'
+                        'destro/V talento · Spazio Open · F blocco · G arma · Shift scatto · E inventario'
                         '${run.banditDodgeReady ? ' · Prossimo scatto intangibile' : ''}'
                         '${run.hero == LiteHero.evasore ? ' · Schivate ${run.dodgeCharges}' : ''}',
                         textAlign: TextAlign.center,

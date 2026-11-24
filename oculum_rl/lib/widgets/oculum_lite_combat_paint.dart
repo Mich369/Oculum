@@ -541,12 +541,8 @@ int? _infernalRow(LiteEnemyKind kind) => switch (kind) {
 };
 
 void _burrowWarning(Canvas canvas, LiteEnemy enemy, LiteBurrow track) {
-  final at = _offset(enemy.position);
   const pigment = Color(0xffe7b582);
-  if (track.warning <= 0) {
-    if (track.exposed) _shadow(canvas, at, 1.30, .43);
-    return;
-  }
+  if (track.warning <= 0) return;
   final start = _offset(track.start);
   final end = _offset(track.end);
   final line = end - start;
@@ -555,7 +551,7 @@ void _burrowWarning(Canvas canvas, LiteEnemy enemy, LiteBurrow track) {
   final side = Offset(-f.dy, f.dx);
   final heat = (1 - track.warning / .82).clamp(0.0, 1.0);
   for (var sign in [-1.0, 1.0]) {
-    final edge = side * (1.07 * sign);
+    final edge = side * ((enemy.radius + .26) * sign);
     _inkSlash(
       canvas,
       start + edge,
@@ -584,4 +580,36 @@ void _burrowWarning(Canvas canvas, LiteEnemy enemy, LiteBurrow track) {
     stroke: pigment,
     strokeWidth: .064,
   );
+}
+
+void _paintWeaponArtPulse(
+  Canvas canvas,
+  Offset at,
+  Offset direction,
+  LiteWeapon weapon,
+  double cooldown,
+) {
+  final time = LiteWeaponArt.weaponArtRecovery - cooldown;
+  if (time < 0 || time >= .27 || direction.distance < .01) return;
+  final phase = time / .27;
+  final pigment = _weaponInk(weapon);
+  final heading = math.atan2(direction.dy, direction.dx);
+  final radius = .63 + phase * 1.15;
+  final fan = Rect.fromCircle(
+    center: at - const Offset(0, .12),
+    radius: radius,
+  );
+  for (var i = -1; i <= 1; i++) {
+    final start = heading + i * .57 - .28;
+    canvas.drawArc(
+      fan,
+      start,
+      .49,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = .09 - phase * .055
+        ..color = pigment.withValues(alpha: (1 - phase) * .9),
+    );
+  }
 }

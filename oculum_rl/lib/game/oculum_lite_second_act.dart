@@ -298,21 +298,23 @@ extension LiteSecondAct on LiteRun {
           (beast.kind.boss ? 1.15 : 1.0);
       if (!invulnerable &&
           !hostDown &&
-          position.distanceTo(beast.position) < 1.1 &&
+          position.distanceTo(beast.position) < beast.radius + .26 &&
           state._hit.add(0)) {
         _damagePlayer(damage);
       }
       for (final ally in _damageableAllies) {
         if (ally.hp <= 0 ||
             ally is LiteCoopFighter && ally.protected ||
-            ally.position.distanceTo(beast.position) >= 1.12 ||
+            ally.position.distanceTo(beast.position) >= beast.radius + .28 ||
             !state._hit.add(ally.id))
           continue;
         _hitAlly(ally, damage);
       }
       if (state.leap >= .76) {
         state.leap = 0;
-        state.delay = beast.kind.boss ? 1.35 : 1.9;
+        state.delay = beast.kind.boss
+            ? (beast.hp < beast.maxHp * .5 ? .83 : 1.35)
+            : 1.9;
         _recordImpact(LiteImpactTarget.explosion, _nextId++, beast.position);
       }
       return;

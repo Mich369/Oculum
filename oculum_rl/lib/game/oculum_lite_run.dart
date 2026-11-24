@@ -6,6 +6,7 @@ part 'oculum_lite_rest_hub.dart';
 part 'oculum_lite_fauna.dart';
 part 'oculum_lite_solar.dart';
 part 'oculum_lite_second_act.dart';
+part 'oculum_lite_weapon_art.dart';
 
 enum LiteHero {
   evasore('Passo fantasma', 'Scatto intangibile più lungo.'),
@@ -474,8 +475,8 @@ enum LiteEnemyKind {
   demoneIntermedio('Demone Intermedio', 57, .70, 2.75, 12),
   demoneMaggiore('Demone Maggiore Prediletto', 72, .65, 3.68, 14),
   diavolo('Diavolo del Patto', 146, .94, 2.38, 19),
-  divoramitu('Divoramitù Elité', 78, .78, 2.3, 18),
-  divoramituBoss('Divoramitù · Bocca della Cripta', 132, .90, 2.5, 23);
+  divoramitu('Divoramitù Elité', 78, 1.13, 2.3, 18),
+  divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.50, 2.5, 23);
 
   const LiteEnemyKind(
     this.label,
@@ -1442,6 +1443,7 @@ class LiteCoopFighter extends LiteClone {
   final bool allowGlue;
   final supply = LiteRestLoadout();
   double _hubCastCooldown = 0;
+  double weaponArtCooldown = 0;
   final String account;
   final String name;
   LiteHero hero;
@@ -1530,6 +1532,7 @@ class LiteCoopFighter extends LiteClone {
     if (plagueForm) 'plagueForm': _plagueFormRemaining,
     if (_mimic case final form?) 'mimic': form.frame,
     if (_night.active) 'night': _night.frame,
+    if (weaponArtCooldown > 0) 'weaponArtCooldown': weaponArtCooldown,
     if (_block.worn) 'blockWear': _block.frame,
     if (includeEffects && blocking) 'blocking': true,
     if (hero == LiteHero.scostubandito) 'banditSkills': _bandit.frame,
@@ -1592,6 +1595,8 @@ class LiteCoopFighter extends LiteClone {
           ? LiteMimicForm.read(data['mimic'])
           : null
       .._bandit.restore(data['banditSkills'])
+      ..weaponArtCooldown = _num(data['weaponArtCooldown'])
+          .clamp(0, LiteWeaponArt.weaponArtRecovery)
       .._block.restore(data['blockWear'])
       .._block.held = data['blocking'] == true
       ..experience = _int(data['experience'])
@@ -1700,6 +1705,7 @@ class LiteRun {
   int actRoom = 0;
   final actRelics = <LiteActRelic>[];
   int _actRelicClaims = 0;
+  double weaponArtCooldown = 0;
   int _goblinWave = 0;
   String get slimeCreditId => progressId ?? 'legacy-$seed-${hero.name}';
   int slimeKills = 0;
@@ -2181,6 +2187,9 @@ class LiteRun {
   bool get canOpenShop =>
       !finished &&
       !hostDown &&
+      !inActTwo &&
+      !inSolarDungeon &&
+      !restHub &&
       stageClear &&
       _distance(position, shopPosition) < 2;
   bool get hasPortalNearby =>
@@ -2194,7 +2203,8 @@ class LiteRun {
   Point<double> get shopPosition => const Point(5, 5);
   Point<double> get restPosition => const Point(5, 16);
   static bool _hasRestAt(int floor) => floor < finalStage && floor % 3 == 0;
-  bool get hasRest => restHub || _hasRestAt(stage);
+  bool get hasRest =>
+      restHub || (!inActTwo && !inSolarDungeon && _hasRestAt(stage));
   bool get canRest => canUseRest();
 
   bool canUseRest([LiteCoopFighter? fighter]) =>
@@ -2668,6 +2678,7 @@ class LiteRun {
     bool block = false,
     bool rescue = false,
     bool rest = false,
+    bool weaponArt = false,
   }) {
     final fighter = coopFighter(account);
     if (fighter == null ||
@@ -2699,6 +2710,7 @@ class LiteRun {
     }
     final talent = dodge && !fighter.blocking && fighter._rescue == null;
     if (open) _useOpen(target, fighter);
+    if (weaponArt) useWeaponArt(target, fighter);
     if (rifleSkill) {
       if (fighter.hero == LiteHero.reGoblin) {
         this._raiseByRoyalCall(fighter);
@@ -2804,6 +2816,7 @@ class LiteRun {
       final beforeMove = fighter.position;
       final groundSpeed = this.terrainSpeedAt(fighter.position, enemy: false);
       fighter.cooldown = max(0, fighter.cooldown - elapsed);
+      fighter.weaponArtCooldown = max(0, fighter.weaponArtCooldown - elapsed);
       fighter._protection = max(0, fighter._protection - elapsed);
       fighter._shadowProtection = max(0, fighter._shadowProtection - elapsed);
       fighter._dodgeCooldown = max(0, fighter._dodgeCooldown - elapsed);
@@ -3133,6 +3146,7 @@ class LiteRun {
       _night.solarMace = max(0, _night.solarMace - elapsed);
       _night.solarMantle = max(0, _night.solarMantle - elapsed);
       this._tickSupply(elapsed);
+      weaponArtCooldown = max(0, weaponArtCooldown - elapsed);
       _tickRelicMana(elapsed);
     }
     final beforeMove = position;
@@ -7300,6 +7314,7 @@ class LiteRun {
     if (actRelics.isNotEmpty)
       'actRelics': actRelics.map((relic) => relic.name).toList(),
     if (_actRelicClaims > 0) 'actRelicClaims': _actRelicClaims,
+    if (weaponArtCooldown > 0) 'weaponArtCooldown': weaponArtCooldown,
     if (restHub) 'restHub': true,
     if (realm case final area?) ...{'realm': area.name, 'actRoom': actRoom},
     if (solarPhase case final phase?) 'solarPhase': phase.name,
@@ -7506,6 +7521,8 @@ class LiteRun {
     }
     run._actRelicClaims = _int(json['actRelicClaims']).clamp(0, 3);
     run.restHub = json['restHub'] == true;
+    run.weaponArtCooldown = _num(json['weaponArtCooldown'])
+        .clamp(0, LiteWeaponArt.weaponArtRecovery);
     run.realm = LiteRealm.values
         .where((area) => area.name == json['realm'])
         .firstOrNull;

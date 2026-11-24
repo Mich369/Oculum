@@ -1,5 +1,6 @@
 # Distribuzione pubblica — 17 novembre
 
+- **Tecniche su G**. Ogni arma ha una mossa, con costo ordinario di 3 Oculum e recupero di 4,2 s. F continua a bloccare, lo Scostubandito conserva Fucile schivata e l’arco consuma tre frecce per il ventaglio. Divoramitù Elité e boss hanno una sagoma e una zona di contatto più grandi. La barra Vita segue il salto.
 - **Atto II**. Dopo la dodicesima stanza, dal ristoro scegli Inferno, Regno Caramella o Postea. Ognuno ha quattro visitazioni e un premio conclusivo. Le prime tre permettono di scegliere una reliquia. L’ordine delle reliquie cambia le sinergie di Danni, recupero di Oculum e protezione.
 - **Divoramitù**. Le crepe a terra segnalano l’emersione ad arco. Shift di lato per evitare il contatto. È vulnerabile mentre è fuori dal terreno. Inferno sblocca Demone Minore, Intermedio, Maggiore Prediletto dall’aspetto umano e Diavolo del Patto.
 - **Dungeon solare**. Un riparo frangibile nasconde le scale d’oro. L’Elité Solare, due Guardie e un’Aberrazione difendono la penultima sala. Dopo lo scontro ricevi 72 Obser e accedi al ristoro. Il Guardiano Solare alterna due frecce d’oro, un raggio e il colpo di mazza. Sconfiggilo per altri 96 Obser e nuovi personaggi. Con un Solare alla guida, il percorso principale oppone i Lunari. La nona stanza schiera un Custode, due Elité e tre Guardie.

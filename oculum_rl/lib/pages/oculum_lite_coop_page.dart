@@ -113,9 +113,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     } else if (key == LogicalKeyboardKey.keyB &&
         _localHero == LiteHero.scostubandito) {
       _session.bomb();
-    } else if (key == LogicalKeyboardKey.keyG &&
-        _localHero == LiteHero.scostubandito) {
-      _session.rifleSkill();
+    } else if (key == LogicalKeyboardKey.keyG) {
+      _session.weaponTechnique();
     } else if (key == LogicalKeyboardKey.shiftLeft ||
         key == LogicalKeyboardKey.shiftRight) {
       _session.dash();
@@ -466,6 +465,22 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                 FilledButton.tonal(
                                   onPressed: () => _choosePower(run),
                                   child: const Text('Potenziamento squadra'),
+                                ),
+                              if (run.hasWeaponArt(mine) &&
+                                  hero != LiteHero.scostubandito)
+                                Tooltip(
+                                  message: '3 Oculum · recupero 4,2 s',
+                                  child: FilledButton.tonal(
+                                    onPressed:
+                                        (mine?.weaponArtCooldown ??
+                                                run.weaponArtCooldown) >
+                                            0
+                                        ? null
+                                        : _session.weaponTechnique,
+                                    child: Text(
+                                      'G · ${run.weaponArtLabel(mine)}',
+                                    ),
+                                  ),
                                 ),
                               if (_session.host &&
                                   (run.canClaimActRelic ||

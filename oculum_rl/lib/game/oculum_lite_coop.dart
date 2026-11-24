@@ -40,6 +40,7 @@ class OculumLiteCoop extends ChangeNotifier {
   bool _reload = false;
   bool _open = false;
   bool _rifleSkill = false;
+  bool _weaponArt = false;
   bool _bomb = false;
   bool _blocking = false;
   bool _blockSent = false;
@@ -84,6 +85,7 @@ class OculumLiteCoop extends ChangeNotifier {
     move = const Point(0, 0);
     _fire = _dodge = _dash = _reload = _open = _rifleSkill = _bomb = _rest =
         false;
+    _weaponArt = false;
     _restAction = null;
     setBlocking(false);
     setRescuing(false);
@@ -123,6 +125,16 @@ class OculumLiteCoop extends ChangeNotifier {
       world.throwBanditBomb(aim ?? world.position + world.aim * 5);
     } else if (canAct) {
       _bomb = true;
+    }
+  }
+
+  void weaponTechnique() {
+    final world = authority;
+    if (world != null) {
+      world.useWeaponArt(aim ?? world.position + world.aim);
+      notifyListeners();
+    } else if (canAct) {
+      _weaponArt = true;
     }
   }
 
@@ -354,6 +366,7 @@ class OculumLiteCoop extends ChangeNotifier {
         _reload ||
         _open ||
         _rifleSkill ||
+        _weaponArt ||
         _bomb ||
         _blocking ||
         _rescuing ||
@@ -379,6 +392,7 @@ class OculumLiteCoop extends ChangeNotifier {
           'reload': _reload,
           if (_open) 'open': true,
           if (_rifleSkill) 'rifleSkill': true,
+          if (_weaponArt) 'weaponArt': true,
           if (_bomb) 'bomb': true,
           'block': _blocking,
           if (_rescuing) 'rescue': true,
@@ -389,6 +403,8 @@ class OculumLiteCoop extends ChangeNotifier {
         final wasFiring = _fire;
         final wasOpening = _open;
         final wasRifle = _rifleSkill;
+        final wasWeaponArt = _weaponArt;
+        _weaponArt = false;
         final wasBomb = _bomb;
         final wasBlocking = _blocking;
         final wasRescuing = _rescuing;
@@ -409,6 +425,7 @@ class OculumLiteCoop extends ChangeNotifier {
                 if (!sent && run?.stage == state.stage && active) {
                   _open = _open || wasOpening;
                   _rifleSkill = _rifleSkill || wasRifle;
+                  _weaponArt = _weaponArt || wasWeaponArt;
                   _bomb = _bomb || wasBomb;
                   _rest = _rest || wasResting;
                 }
@@ -538,6 +555,7 @@ class OculumLiteCoop extends ChangeNotifier {
       slow: packet['slow'] == true,
       open: packet['open'] == true,
       rifleSkill: packet['rifleSkill'] == true,
+      weaponArt: packet['weaponArt'] == true,
       bomb: packet['bomb'] == true,
       block: packet['block'] == true,
       rescue: packet['rescue'] == true,

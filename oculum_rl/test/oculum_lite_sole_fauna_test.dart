@@ -34,6 +34,31 @@ void _clear(LiteRun run) {
 
 void main() {
   test(
+    'weapon techniques respect blocking and survive a save with cooldown',
+    () {
+      for (final weapon in LiteWeapon.values) {
+        final run = _run()..weapon = weapon;
+        run.obstacles.clear();
+        final target = run.position + const Point<double>(1.1, 0);
+        final oculum = run.oculum;
+        run.setBlocking(true);
+        expect(run.useWeaponArt(target), isFalse, reason: weapon.name);
+        expect(run.oculum, oculum);
+        run.setBlocking(false);
+        expect(run.useWeaponArt(target), isTrue, reason: weapon.name);
+        expect(run.oculum, oculum - LiteWeaponArt.weaponArtCost);
+        if (weapon == LiteWeapon.arco) {
+          expect(run.projectiles, hasLength(3));
+          expect(run.arrows, LiteRun.bowCapacity - 3);
+        }
+        final restored = LiteRun.fromJson(run.toJson());
+        expect(restored.weaponArtCooldown, LiteWeaponArt.weaponArtRecovery);
+        expect(restored.useWeaponArt(target), isFalse);
+      }
+    },
+  );
+
+  test(
     'a quiet sixth room enters the hub and keeps unique purchases in a save',
     () {
       final run = _run()..stage = 5;

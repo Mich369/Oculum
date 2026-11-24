@@ -4,6 +4,7 @@ La versione Windows autonoma si avvia da `C:/Oculum App/Oculum RL/Gioca/Oculum R
 
 ## Atto II e deviazioni
 
+- **Tecniche su G**. Ogni arma ha una mossa, con costo ordinario di 3 Oculum e recupero di 4,2 s. F continua a bloccare, lo Scostubandito conserva Fucile schivata e l’arco consuma tre frecce per il ventaglio. Divoramitù Elité e boss hanno una sagoma e una zona di contatto più grandi. La barra Vita segue il salto.
 - **Atto II**. Dopo la dodicesima stanza, dal ristoro scegli Inferno, Regno Caramella o Postea. Ognuno ha quattro visitazioni e un premio conclusivo. Le prime tre permettono di scegliere una reliquia. L’ordine delle reliquie cambia le sinergie di Danni, recupero di Oculum e protezione.
 - **Divoramitù**. Le crepe a terra segnalano l’emersione ad arco. Shift di lato per evitare il contatto. È vulnerabile mentre è fuori dal terreno. Inferno sblocca Demone Minore, Intermedio, Maggiore Prediletto dall’aspetto umano e Diavolo del Patto.
 - **Dungeon solare**. Un riparo frangibile nasconde le scale d’oro. L’Elité Solare, due Guardie e un’Aberrazione difendono la penultima sala. Dopo lo scontro ricevi 72 Obser e accedi al ristoro. Il Guardiano Solare alterna due frecce d’oro, un raggio e il colpo di mazza. Sconfiggilo per altri 96 Obser e nuovi personaggi. Con un Solare alla guida, il percorso principale oppone i Lunari. La nona stanza schiera un Custode, due Elité e tre Guardie.
@@ -94,3 +95,7 @@ Gioco autonomo con campagna roguelite 2D. Usa salvataggi e impostazioni propri. 
 - `tool/build_distribution.ps1` prepara eseguibili con runtime, ZIP distinti, APK e versione Web.
 - Nel creatore puoi usare **Carica aspetto salvato** per ripartire da nome e aspetto di un Duplicatore salvato in solo, anche dalla stanza online. Le modifiche si applicano solo alla copia. L’arma si sceglie separatamente e resta visibile nell’anteprima, che puoi ingrandire.
 - La specifica completa è [OCULUM_MEGA_PROMPT.md](../docs/OCULUM_MEGA_PROMPT.md). Restano in lavorazione altre ambientazioni e Micro Realtà, i personaggi avanzati descritti nella specifica, il grimorio condiviso, la ripresa dopo la chiusura del Master e la chiamata audiovisiva.
+
+## Impostazioni e personalizzazione
+
+Puoi cambiare seed, difficoltà, ambientazione, percorso dell’Atto II, equipaggiamento, tecniche e pergamene assegnate, ordine delle reliquie, aspetto 2D del Duplicatore, musica ed effetti. Nei sorgenti il catalogo delle Botteghe, le soglie di sblocco, i tempi di combattimento e i valori delle tecniche sono nei moduli sotto lib/game.
