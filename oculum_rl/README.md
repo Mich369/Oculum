@@ -8,6 +8,10 @@ Le edizioni Windows normale e Windows Test cercano automaticamente una release O
 
 Da **Aggiornamenti** puoi disattivare i controlli automatici, cercare una nuova versione e riavviare quando vuoi. Per avviare un eseguibile precedente senza passare all’ultimo, aggiungi `--no-update` al suo collegamento. Web e APK restano scaricabili dalla pagina release.
 
+## Barre Vita
+
+Le barre dei giocatori sono azzurre nell’HUD e sopra i personaggi in cooperativa. I compagni NPC, i pet e le evocazioni con barra Vita usano il verde. I nemici hanno la barra rossa.
+
 ## Scatto e schivata
 
 Shift apre una scia d’inchiostro ocra lungo il movimento. La schivata intangibile dell’Evasore lascia impronte viola, il suo Open aggiunge luce dorata e il Velo dello Slime lascia una traccia verde azzurra. Nel clash le due scie ramate separano i combattenti. Questi effetti usano il volume **Effetti**. Shift da solo non concede intangibilità.

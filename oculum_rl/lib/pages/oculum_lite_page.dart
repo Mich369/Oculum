@@ -1763,12 +1763,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 'Frecce ${run.arrows}/${LiteRun.bowCapacity}',
                                 style: const TextStyle(fontSize: 11),
                               ),
-                            LinearProgressIndicator(
-                              value: (run.hp / run.maxHp)
-                                  .clamp(0.0, 1.0)
-                                  .toDouble(),
-                              color: const Color(0xff9fc185),
-                            ),
+                            OculumLitePlayerLifeBar(value: run.hp / run.maxHp),
                           ],
                         ),
                       ),

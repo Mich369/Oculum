@@ -47,6 +47,30 @@ class OculumLiteBlockControl extends StatelessWidget {
   );
 }
 
+enum _LifeBarRole {
+  enemy(Color(0xffe27471), Color(0xff4a2536)),
+  ally(Color(0xff8bd78d), Color(0xff243d30)),
+  player(Color(0xff79caff), Color(0xff263b53));
+
+  const _LifeBarRole(this.fill, this.track);
+  final Color fill;
+  final Color track;
+}
+
+class OculumLitePlayerLifeBar extends StatelessWidget {
+  const OculumLitePlayerLifeBar({super.key, required this.value});
+
+  final double value;
+
+  @override
+  Widget build(BuildContext context) => LinearProgressIndicator(
+    value: value.clamp(0.0, 1.0),
+    color: _LifeBarRole.player.fill,
+    backgroundColor: _LifeBarRole.player.track,
+    semanticsLabel: 'Vita',
+  );
+}
+
 /// Live terrain and actors for Oculum RL. Its camera also converts pointer
 /// positions to the exact same world coordinates used by the combat engine.
 class OculumLiteArena extends StatefulWidget {
@@ -1900,7 +1924,13 @@ class _ArenaPaint extends CustomPainter {
                 strokeWidth: .036,
               );
             } else {
-              _health(canvas, barAt, enemy.hp / enemy.maxHp, size);
+              _health(
+                canvas,
+                barAt,
+                enemy.hp / enemy.maxHp,
+                size,
+                _LifeBarRole.enemy,
+              );
             }
           }
           if (enemy.hitFlash > 0) {
@@ -2060,6 +2090,7 @@ class _ArenaPaint extends CustomPainter {
               at - Offset(0, _enemyHeight(companion.sprite) * scale + .27),
               clone.hp / clone.maxHp,
               .78,
+              _LifeBarRole.ally,
             );
           }
           if (clone.down) {
@@ -2153,6 +2184,7 @@ class _ArenaPaint extends CustomPainter {
             at - const Offset(0, 2.45),
             fighter.hp / fighter.maxHp,
             1,
+            _LifeBarRole.player,
           );
         },
       ));
@@ -2220,6 +2252,15 @@ class _ArenaPaint extends CustomPainter {
                 : null,
           );
         });
+        if (run.playerCount > 1) {
+          _health(
+            canvas,
+            player - const Offset(0, 2.45),
+            run.hp / run.maxHp,
+            1,
+            _LifeBarRole.player,
+          );
+        }
       },
     ));
     jobs.sort((a, b) => a.$1.compareTo(b.$1));
@@ -7218,13 +7259,19 @@ void _construct(Canvas canvas, double step) {
   _lines(canvas, const [Offset(.05, -1.30), Offset(.20, -1.31)], _active, .040);
 }
 
-void _health(Canvas canvas, Offset at, double value, double size) {
+void _health(
+  Canvas canvas,
+  Offset at,
+  double value,
+  double size,
+  _LifeBarRole role,
+) {
   final r = Rect.fromCenter(center: at, width: .86 * size, height: .07);
   canvas.drawRect(r.inflate(.037), Paint()..color = _ink);
-  canvas.drawRect(r, Paint()..color = const Color(0xff4a2536));
+  canvas.drawRect(r, Paint()..color = role.track);
   canvas.drawRect(
     Rect.fromLTWH(r.left, r.top, r.width * value.clamp(0, 1), r.height),
-    Paint()..color = const Color(0xffe27471),
+    Paint()..color = role.fill,
   );
 }
 

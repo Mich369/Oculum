@@ -88,6 +88,75 @@ void main() {
     expect(run.combatImpacts, hasLength(5));
   });
 
+  testWidgets('the arena and HUD distinguish player, NPC and enemy life', (
+    tester,
+  ) async {
+    final run =
+        LiteRun(
+            seed: 49,
+            hero: LiteHero.evasore,
+            weapon: LiteWeapon.guanti,
+            playerCount: 2,
+          )
+          ..position = const Point(15, 11)
+          ..enemies.clear()
+          ..obstacles.clear()
+          ..enemies.add(
+            LiteEnemy(70, LiteEnemyKind.slime, const Point(17, 9), 30),
+          )
+          ..clones.add(
+            LiteClone(
+              const Point(12, 10),
+              10,
+              LiteWeapon.fucileScostubandito,
+              companion: LiteCompanion.sentinella,
+            ),
+          );
+    expect(
+      run.addCoopFighter('qa', 'Ospite', LiteHero.ashley, LiteWeapon.guanti),
+      isTrue,
+    );
+    run.coopFighter('qa')!.position = const Point(14, 12);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              const OculumLitePlayerLifeBar(value: .42),
+              Expanded(child: OculumLiteArena(run: run)),
+            ],
+          ),
+        ),
+      ),
+    );
+    final health = tester.widget<LinearProgressIndicator>(
+      find.byType(LinearProgressIndicator),
+    );
+    expect(health.value, .42);
+    expect(health.color, const Color(0xff79caff));
+    final paint = tester.widget<CustomPaint>(
+      find.descendant(
+        of: find.byType(OculumLiteArena),
+        matching: find.byType(CustomPaint),
+      ),
+    );
+    final canvas = TestRecordingCanvas();
+    paint.painter!.paint(canvas, const Size(800, 450));
+    final fills = <int, int>{};
+    for (final call in canvas.invocations) {
+      final invocation = call.invocation;
+      if (invocation.memberName != #drawRect) continue;
+      final rect = invocation.positionalArguments[0] as Rect;
+      if ((rect.height - .07).abs() > .0001) continue;
+      final color = (invocation.positionalArguments[1] as Paint).color
+          .toARGB32();
+      fills.update(color, (count) => count + 1, ifAbsent: () => 1);
+    }
+    expect(fills[health.color!.toARGB32()], 2, reason: "$fills");
+    expect(fills[0xff8bd78d], 1);
+    expect(fills[0xffe27471], 1);
+  });
+
   testWidgets('the permanent shop benefits a new Scostubandito using Space', (
     tester,
   ) async {

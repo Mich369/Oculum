@@ -355,8 +355,23 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                           Text(
                             '${run.playerCount} · Vita mostri ×${run.monsterLifeMultiplier.toStringAsFixed(2)}',
                           ),
-                          Text(
-                            '${mine?.weapon.label ?? run.weapon.label} · Vita ${(mine?.hp ?? run.hp).ceil()}',
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${mine?.weapon.label ?? run.weapon.label} · Vita ${(mine?.hp ?? run.hp).ceil()}/${(mine?.maxHp ?? run.maxHp).ceil()}',
+                              ),
+                              const SizedBox(height: 3),
+                              SizedBox(
+                                width: 116,
+                                child: OculumLitePlayerLifeBar(
+                                  value:
+                                      (mine?.hp ?? run.hp) /
+                                      (mine?.maxHp ?? run.maxHp),
+                                ),
+                              ),
+                            ],
                           ),
                           Text('Livello ${mine?.level ?? run.level}'),
                           Text(

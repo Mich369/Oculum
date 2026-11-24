@@ -1,5 +1,6 @@
 # Oculum RL e aggiornamenti alla campagna
 
+- **Barre Vita (0.4.10)**. I giocatori usano l’azzurro nell’HUD e sopra i personaggi in cooperativa. I compagni NPC, i pet e le evocazioni con barra Vita usano il verde. Le barre dei nemici sono rosse.
 - **Scatti inchiostrati (0.4.9)**. Partenza, scia e arrivo seguono il tragitto reale anche accanto ai ripari. Shift, schivata dell’Evasore, Open, Velo dello Slime e clash hanno una resa distinta. I due suoni originali seguono il volume Effetti. La prova locale ha verificato percorso, dissolvenza e trasmissione degli effetti agli ospiti.
 - **Rivali illustrati (0.4.8)**. Luce, Ombra ed Eco Speculare usano le tavole da combattimento dei personaggi che copiano, incluso il Curatore della Peste e l’Evasore. Gli sprite delle copie e quelli online vengono risolti dallo stesso catalogo del combattente originale. Verificato con due test del renderer.
 - **Movimenti Oculum RL (0.4.7)**. I passi seguono la distanza percorsa. I piedi si alternano fra appoggio e sollevamento con un trasferimento di peso visibile. La cadenza si assesta all’arresto, conserva le pose di attacco e vale anche per personaggi già presenti, mostri, fauna ed evocazioni.
