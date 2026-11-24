@@ -349,8 +349,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                         runSpacing: 3,
                         children: [
                           Text(
-                            'Piano ${run.stage} · ${run.biome.label}'
-                            '${run.arenaSpeed > 1 ? ' · Ritmo +${LiteRun.arenaSpeedBonusAt(run.stage)}%' : ''}',
+                            'Piano ${run.stage}/${run.lastStage} · ${run.biome.label}'
+                            '${run.arenaSpeed > 1 ? ' · Ritmo +${run.arenaSpeedBonus}%' : ''}',
                           ),
                           Text(
                             '${run.playerCount} · Vita mostri ×${run.monsterLifeMultiplier.toStringAsFixed(2)}',
@@ -585,6 +585,9 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                           )
                                         ? (run.awaitsRestHub
                                               ? 'Sala di ristoro · R'
+                                              : _session.host &&
+                                                    run.canChooseActTwo
+                                              ? 'Scegli il percorso dell’Atto II · R'
                                               : 'Conferma portale')
                                         : 'Ricarica · R',
                                   ),

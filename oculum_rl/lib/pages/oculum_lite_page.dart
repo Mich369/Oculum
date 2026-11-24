@@ -405,8 +405,8 @@ class _OculumLitePageState extends State<OculumLitePage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Sigilli disponibili · ${_progress.unspent}'),
-              const Text(
-                'Ottieni un Sigillo la prima volta che completi ciascuno dei piani 0, 3, 6, 9, 12 e 13.',
+              Text(
+                'Ottieni un Sigillo al primo completamento di ognuno di questi piani: ${LiteRun.sigilFloors.join(', ')}.',
               ),
               if (failure != null) Text(failure!),
               for (final upgrade in LitePermanentUpgrade.values)
@@ -1268,7 +1268,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 ?.copyWith(color: const Color(0xffffe3bb)),
                           ),
                           const Text(
-                            'Campagna · Piani 0–${LiteRun.finalStage}',
+                            'Campagna · ${LiteRun.campaignRooms} stanze',
                           ),
                         ],
                       ),
@@ -1748,8 +1748,8 @@ class _OculumLitePageState extends State<OculumLitePage>
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              'Piano ${run.stage}/${LiteRun.finalStage}$encounter$bossPhase'
-                              '${run.arenaSpeed > 1 ? ' · Ritmo +${LiteRun.arenaSpeedBonusAt(run.stage)}%' : ''}',
+                              'Piano ${run.stage}/${run.lastStage}$encounter$bossPhase'
+                              '${run.arenaSpeed > 1 ? ' · Ritmo +${run.arenaSpeedBonus}%' : ''}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),

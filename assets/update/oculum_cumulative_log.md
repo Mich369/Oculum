@@ -2,6 +2,7 @@
 
 ## Oculum RL · Anteprima autonoma
 
+- **Campagna da 25 stanze (0.4.13)**. I piani vanno da 0 a 24, con Veyrth al nuovo finale. Nuovi scontri speciali a 15, 18 e 21, quattro sale di ristoro e progressione allineata fra solo e co-op. I vecchi salvataggi già al finale 13 conservano lo scontro o la vittoria registrata.
 - **Chakram d’Iridio (0.4.12)**. Il Chakram usa una sola sagoma ad anello. Si vede il rilascio, la rotazione in volo e la salita verso la mano al rientro. Doppia orbita usa lo stesso disegno per ciascun disco.
 - **Colori della squadra (0.4.11)**. I sei posti in cooperativa hanno ciascuno un colore riconoscibile per la barra Vita. HUD e arena mostrano lo stesso colore, conservato dopo una riconnessione. Il verde indica i compagni AI e il rosso i nemici.
 - **Barre Vita (0.4.10)**. I giocatori usano l’azzurro nell’HUD e sopra i personaggi in cooperativa. I compagni NPC, i pet e le evocazioni con barra Vita usano il verde. Le barre dei nemici sono rosse.

@@ -180,7 +180,7 @@ enum LiteHero {
     babyForestDemon => 'Completa una missione di scorta del Baby Forest Demon.',
     luce => 'Sconfiggi La tua Luce al piano 3.',
     ombra => 'Sconfiggi La tua Ombra al piano 9.',
-    veyrth => 'Sconfiggi Veyrth al piano 13.',
+    veyrth => 'Sconfiggi Veyrth nel piano finale.',
     cavaliereLunare => 'Completa la campagna in Facile o superiore.',
     slimeBlu => 'Abbatti dieci Slime nelle tue run.',
     reGoblin => 'Sconfiggi il Re Goblin nel Campo goblin segreto.',
@@ -1873,8 +1873,15 @@ class LiteRun {
   static const _spawn = Point<double>(4, 11);
   static const _playerRadius = .42;
   static const schemaVersion = 1;
-  static const _campaignVersion = 1;
-  static const finalStage = 13;
+  static const _campaignVersion = 2;
+  static const _legacyFinalStage = 13;
+  static const campaignRooms = 25;
+  static const finalStage = campaignRooms - 1;
+  static const secondActEntranceFloor = 11;
+
+  int _lastStage = finalStage;
+  int get lastStage => _lastStage;
+  bool get isFinalFloor => stage == lastStage;
   static const maxCoopPlayers = 6;
   static const finalBeamDuration = 6.0;
   static const finalBeamCoverSeconds = 2.5;
@@ -1943,7 +1950,7 @@ class LiteRun {
     if (victorious && playedHero == LiteHero.scostubandito)
       LiteHero.granScostumato,
   };
-  static const sigilFloors = [0, 3, 6, 9, 12, 13];
+  static const sigilFloors = [0, 3, 6, 9, 12, 13, 15, 18, 21, finalStage];
   static const staffShockRadius = 2.6;
   static const staffShockInterval = .86;
   static const staffShockSlow = .50;
@@ -1966,10 +1973,11 @@ class LiteRun {
       floor < 3 ? 0 : 15 + (floor - 3) * 2;
   static int enemyDamageBonusAt(int floor) => floor < 3 ? 0 : 12 + (floor - 3);
   static int arenaSpeedBonusAt(int floor) => max(0, floor ~/ 3) * 10;
-  double get arenaSpeed {
-    final paceFloor = inActTwo ? min(finalStage, stage + actRoom) : stage;
-    return 1 + arenaSpeedBonusAt(paceFloor) / 100;
-  }
+  int get arenaSpeedBonus => arenaSpeedBonusAt(
+    inActTwo ? min(secondActEntranceFloor + 1, stage + actRoom) : stage,
+  );
+
+  double get arenaSpeed => 1 + arenaSpeedBonus / 100;
 
   double get _floorDamageScale => 1 + enemyDamageBonusAt(stage) / 100;
   static ({int life, int damage}) challengeBonus(
@@ -2046,7 +2054,7 @@ class LiteRun {
   double get hitProtectionRemaining => _hitProtectionRemaining;
   Iterable<LiteCombatImpact> get combatImpacts => _combatImpacts;
   bool get finished => dead || victorious;
-  LiteEncounter get encounter => encounterAt(stage);
+  LiteEncounter get encounter => _encounterFor(stage);
   LiteBeam? get activeBeam => _activeBeam;
 
   Point<double> finalBeamPreviewEnd(LiteEnemy boss) {
@@ -2065,19 +2073,22 @@ class LiteRun {
   }
 
   static LiteEncounter encounterAt(int floor) => switch (floor) {
-    0 || 6 || 12 => LiteEncounter.elite,
-    3 || 9 => LiteEncounter.boss,
+    0 || 6 || 12 || 18 => LiteEncounter.elite,
+    3 || 9 || 15 || 21 => LiteEncounter.boss,
     finalStage => LiteEncounter.finalBoss,
     _ => LiteEncounter.ordinary,
   };
+
+  LiteEncounter _encounterFor(int floor) =>
+      floor == lastStage ? LiteEncounter.finalBoss : encounterAt(floor);
 
   List<LiteBiome> get routeBiomes =>
       LiteBiome.offers(seed ^ ((stage + 1) * 29063), avoid: biome);
 
   LiteFloorPreview? previewNextFloor(LiteBiome destination) {
-    if (finished || stage >= finalStage) return null;
+    if (finished || stage >= lastStage) return null;
     final floor = stage + 1;
-    final encounter = encounterAt(floor);
+    final encounter = _encounterFor(floor);
     final finalArena = encounter == LiteEncounter.finalBoss;
     final trial = _trialFor(floor, destination);
     final count = finalArena ? 0 : _openingEnemyCount(floor, trial);
@@ -2119,7 +2130,8 @@ class LiteRun {
             });
 
   LiteArenaTrial? _trialFor(int floor, LiteBiome destination) {
-    if (floor < 2 || encounterAt(floor) != LiteEncounter.ordinary) return null;
+    if (floor < 2 || _encounterFor(floor) != LiteEncounter.ordinary)
+      return null;
     final roll = _LiteRandom(seed ^ (floor + 1) * 18751);
     if (roll.nextInt(LiteBiome.values.length) != destination.index) return null;
     return LiteArenaTrial.values[roll.nextInt(LiteArenaTrial.values.length)];
@@ -2130,7 +2142,7 @@ class LiteRun {
       (arenaTrial != LiteArenaTrial.caccia || time - _trialStart <= 40);
 
   LiteFloorLayout _layoutFor(int floor, LiteBiome location) =>
-      floor == finalStage
+      floor == lastStage
       ? LiteFloorLayout.standard
       : location == LiteBiome.postea
       ? LiteFloorLayout.montaggio
@@ -2183,7 +2195,7 @@ class LiteRun {
   LiteFinalBossPhase get finalBossPhase {
     if (victorious) return LiteFinalBossPhase.defeated;
     if (dead ||
-        stage != finalStage ||
+        !isFinalFloor ||
         !enemies.any(
           (enemy) => enemy.kind == LiteEnemyKind.veyrth && enemy.hp > 0,
         )) {
@@ -2252,11 +2264,11 @@ class LiteRun {
       _distance(position, shopPosition) < 2;
   bool get hasPortalNearby =>
       !finished &&
-      stage < finalStage &&
+      stage < lastStage &&
       stageClear &&
       _distance(position, portalPosition) < 2;
   bool get coopPortalOpen =>
-      !finished && stageClear && stage < finalStage && !shopOpen;
+      !finished && stageClear && stage < lastStage && !shopOpen;
   bool get usesSubArena => restHub || inActTwo || inSolarDungeon || goblinCamp;
   String get inputArena => [
     stage,
@@ -2268,7 +2280,7 @@ class LiteRun {
   Point<double> get portalPosition => const Point(30, 11);
   Point<double> get shopPosition => const Point(5, 5);
   Point<double> get restPosition => const Point(5, 16);
-  static bool _hasRestAt(int floor) => floor < finalStage && floor % 3 == 0;
+  bool _hasRestAt(int floor) => floor < lastStage && floor % 3 == 0;
   bool get hasRest =>
       restHub || (!inActTwo && !inSolarDungeon && _hasRestAt(stage));
   bool get canRest => canUseRest();
@@ -2322,13 +2334,13 @@ class LiteRun {
   bool get secretRoomRevealed => achievements.contains('sala-segreta:$stage');
 
   bool get hasSecretRoom {
-    if (stage < 2 || stage >= finalStage) return false;
+    if (stage < 2 || isFinalFloor) return false;
     final group = (stage - 2) ~/ 4;
     final first = 2 + group * 4;
     final roll = _LiteRandom(seed ^ (group + 1) * 41507)
       ..nextDouble()
       ..nextDouble();
-    return stage - first == roll.nextInt(min(4, finalStage - first));
+    return stage - first == roll.nextInt(min(4, lastStage - first));
   }
 
   void _startStage() {
@@ -2602,25 +2614,36 @@ class LiteRun {
       LiteObstacle(24.4, 15.4 + offset, 1.55, 2.4, breakable: true),
     ]);
     quests.addAll([
-      LiteQuest('p13:evocazioni', 'Disperdi due echi', 2, 4),
-      LiteQuest('p13:riparo', 'Abbatti un riparo', 1, 6),
-      LiteQuest('p13:veyrth', 'Sconfiggi Veyrth', 1, 20, major: true),
+      LiteQuest('p$stage:evocazioni', 'Disperdi due echi', 2, 4),
+      LiteQuest('p$stage:riparo', 'Abbatti un riparo', 1, 6),
+      LiteQuest('p$stage:veyrth', 'Sconfiggi Veyrth', 1, 20, major: true),
     ]);
     _eliteReleased = true;
     _spawnEnemy(LiteEnemyKind.veyrth, const Point(27.8, 11));
     message =
-        'Piano 13 · Veyrth. Elimina i suoi echi per renderlo vulnerabile.';
+        'Piano $stage · Veyrth. Elimina i suoi echi per renderlo vulnerabile.';
   }
 
   LiteEnemyKind _specialKind(int floor) {
-    if (solarCampaign && floor != finalStage) {
-      return floor == 6 || floor == 9 || floor == 12
-          ? LiteEnemyKind.custodeLunare
-          : LiteEnemyKind.eliteLunare;
+    if (floor == lastStage) return LiteEnemyKind.veyrth;
+    if (solarCampaign) {
+      return switch (floor) {
+        6 || 9 || 12 || 15 || 21 => LiteEnemyKind.custodeLunare,
+        _ => LiteEnemyKind.eliteLunare,
+      };
     }
-    if (floor == 3) return LiteEnemyKind.luce;
-    if (floor == 9) return LiteEnemyKind.ombra;
-    if (floor == finalStage) return LiteEnemyKind.veyrth;
+    switch (floor) {
+      case 3:
+        return LiteEnemyKind.luce;
+      case 9:
+        return LiteEnemyKind.ombra;
+      case 15:
+        return LiteEnemyKind.divoramituBoss;
+      case 18:
+        return LiteEnemyKind.eliteSolare;
+      case 21:
+        return LiteEnemyKind.diavolo;
+    }
     final rotation = LiteBiome.legacy.contains(_startingBiome)
         ? LiteBiome.legacy
         : LiteBiome.values;
@@ -3365,10 +3388,10 @@ class LiteRun {
       message = '${special.label} entra nello scontro.';
       return;
     }
-    if (stage == finalStage && !_finalBossDefeated) return;
+    if (isFinalFloor && !_finalBossDefeated) return;
     stageClear = true;
     _progressQuest(2);
-    if (stage == finalStage) {
+    if (isFinalFloor) {
       victorious = true;
       achievements.add('campagna-completata');
       message = 'Veyrth è caduto. Campagna completata.';
@@ -6448,7 +6471,7 @@ class LiteRun {
     obstacle.hp -= damage;
     if (obstacle.hp > 0) return;
     _destroyCover(obstacle);
-    if (biome == LiteBiome.dungeon && stage != finalStage) {
+    if (biome == LiteBiome.dungeon && !isFinalFloor) {
       final direction = _unit(source - obstacle.center);
       if (direction != const Point<double>(0, 0)) {
         projectiles.add(
@@ -6499,7 +6522,7 @@ class LiteRun {
       return;
     }
     loot.add(LiteLoot(obstacle.center, LiteLootKind.obser, 3));
-    if (stage == finalStage) _progressQuest(1);
+    if (isFinalFloor) _progressQuest(1);
   }
 
   bool _enemyIntangible(LiteEnemy enemy) =>
@@ -6822,7 +6845,7 @@ class LiteRun {
       }
     }
     if (kind.echo) {
-      if (kind == LiteEnemyKind.minionVeyrth && stage == finalStage) {
+      if (kind == LiteEnemyKind.minionVeyrth && isFinalFloor) {
         _progressQuest(0);
       }
       return;
@@ -7468,6 +7491,7 @@ class LiteRun {
     if (slimeKills > 0) 'slimeKills': slimeKills,
     'version': schemaVersion,
     'campaignVersion': _campaignVersion,
+    if (lastStage == _legacyFinalStage) 'legacyFinal': true,
     'seed': seed,
     if (upgrades.isNotEmpty) 'upgrades': LitePermanentUpgrade.encode(upgrades),
     'playerCount': playerCount,
@@ -7602,11 +7626,14 @@ class LiteRun {
     run._arrows = _int(json['arrows'], bowCapacity).clamp(0, bowCapacity);
     run._reloadRemaining = _num(json['reloadRemaining'])
         .clamp(0.0, reloadDuration);
-    final legacyCampaign = json['campaignVersion'] != _campaignVersion;
-    run.stage = _int(
-      json['stage'],
-      legacyCampaign ? 1 : 0,
-    ).clamp(0, finalStage);
+    final savedCampaign = _int(json['campaignVersion']);
+    final legacyCampaign = savedCampaign < 1;
+    final savedStage = _int(json['stage'], legacyCampaign ? 1 : 0);
+    if (savedStage == _legacyFinalStage &&
+        (savedCampaign < _campaignVersion || json['legacyFinal'] == true)) {
+      run._lastStage = _legacyFinalStage;
+    }
+    run.stage = savedStage.clamp(0, run.lastStage);
     run._startingBiome = _enum(
       LiteBiome.values,
       json['startingBiome'],
@@ -7776,14 +7803,14 @@ class LiteRun {
     run.eliteDefeated = json['eliteDefeated'] == true;
     run.dead = json['dead'] == true;
     run.victorious =
-        json['victorious'] == true && run.stage == finalStage && !run.dead;
+        json['victorious'] == true && run.isFinalFloor && !run.dead;
     run._finalBossDefeated =
         json['finalBossDefeated'] == true || run.victorious;
     run.shopOpen = json['shopOpen'] == true && run.canOpenShop;
     run.restUsed = json['restUsed'] == true;
     run._eliteReleased = json['eliteReleased'] == true;
     if (legacyCampaign && !run.dead) {
-      if (run.stage == finalStage) {
+      if (run.isFinalFloor) {
         run.stageClear = false;
         run.shopOpen = false;
       }

@@ -55,7 +55,7 @@ class LiteBurrow {
 extension LiteSecondAct on LiteRun {
   static const actTwoRooms = 4;
   bool get canChooseActTwo =>
-      stage == 11 &&
+      stage == LiteRun.secondActEntranceFloor &&
       restHub &&
       realm == null &&
       !inSolarDungeon &&
@@ -265,13 +265,7 @@ extension LiteSecondAct on LiteRun {
       void boost(LiteCoopFighter? fighter) {
         final kit = fighter?.supply ?? supply;
         final rank = boon.evolution ? min(3, kit.rank(boon) + 1) : 1;
-        _grantRestItem(
-          boon,
-          rank,
-          kit,
-          fighter,
-          min(LiteRun.finalStage, stage + 2),
-        );
+        _grantRestItem(boon, rank, kit, fighter, min(lastStage, stage + 2));
       }
 
       boost(null);

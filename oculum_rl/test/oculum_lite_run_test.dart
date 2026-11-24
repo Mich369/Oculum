@@ -80,6 +80,12 @@ void _strikeCampaignEnemy(LiteRun run, LiteEnemy enemy) {
   run.position = const Point(4, 11);
   enemy.position = const Point(5.5, 11);
   enemy.cooldown = 100;
+  if (enemy.burrow case final burrow?) {
+    burrow
+      ..leap = .05
+      ..start = enemy.position
+      ..end = enemy.position;
+  }
   expect(run.attack(enemy.position), isTrue);
   _wait(run, .45);
   run.position = const Point(5.5, 11);
@@ -1120,10 +1126,16 @@ void main() {
 
   test('route previews match generated floors without advancing the RNG', () {
     for (final destination in LiteBiome.values) {
-      for (final stage in [0, 2, 5, 8, 11, 12]) {
+      for (final stage in [0, 2, 5, 8, 11, 12, 14, 17, 20, 23]) {
         _expectRouteMatchesFloor(before: stage, destination: destination);
       }
-      _expectRouteMatchesFloor(before: 2, destination: destination, coop: true);
+      for (final stage in [2, 14, 17, 20, 23]) {
+        _expectRouteMatchesFloor(
+          before: stage,
+          destination: destination,
+          coop: true,
+        );
+      }
     }
   });
 
@@ -1209,35 +1221,32 @@ void main() {
     _wait(restored, 3.12);
     expect(restored.special(close.position), isTrue);
   });
-  test(
-    'Ristoro is available on floors 0/3/6/9/12 once after the encounter',
-    () {
-      final run = _run();
-      expect(run.hasRest, isTrue);
-      run.position = run.restPosition;
-      run.hp = 18;
-      run.oculum = 1;
-      expect(run.useRest(), isFalse);
-      run.stageClear = true;
-      expect(run.useRest(), isTrue);
-      expect(run.hp, 68);
-      expect(run.oculum, 3.5);
-      expect(run.useRest(), isFalse);
-      expect(_restore(run).restUsed, isTrue);
-      run.loot..add(LiteLoot(run.position, LiteLootKind.greenStone, 1));
-      run.enemies.clear();
-      run.step(1 / 120);
-      expect(run.hp, 88);
-      run.loot.add(LiteLoot(run.position, LiteLootKind.refinedGreenGem, 1));
-      run.step(1 / 120);
-      expect(run.hp, run.maxHp);
-      expect(run.oculum, run.maxOculum);
-      for (var floor = 0; floor <= LiteRun.finalStage; floor++) {
-        run.stage = floor;
-        expect(run.hasRest, [0, 3, 6, 9, 12].contains(floor));
-      }
-    },
-  );
+  test('Ristoro is available every third floor before the finale', () {
+    final run = _run();
+    expect(run.hasRest, isTrue);
+    run.position = run.restPosition;
+    run.hp = 18;
+    run.oculum = 1;
+    expect(run.useRest(), isFalse);
+    run.stageClear = true;
+    expect(run.useRest(), isTrue);
+    expect(run.hp, 68);
+    expect(run.oculum, 3.5);
+    expect(run.useRest(), isFalse);
+    expect(_restore(run).restUsed, isTrue);
+    run.loot..add(LiteLoot(run.position, LiteLootKind.greenStone, 1));
+    run.enemies.clear();
+    run.step(1 / 120);
+    expect(run.hp, 88);
+    run.loot.add(LiteLoot(run.position, LiteLootKind.refinedGreenGem, 1));
+    run.step(1 / 120);
+    expect(run.hp, run.maxHp);
+    expect(run.oculum, run.maxOculum);
+    for (var floor = 0; floor <= LiteRun.finalStage; floor++) {
+      run.stage = floor;
+      expect(run.hasRest, [0, 3, 6, 9, 12, 15, 18, 21].contains(floor));
+    }
+  });
 
   test(
     'six players scale monsters by difficulty and minions retain one HP',
@@ -2419,7 +2428,7 @@ void main() {
     });
   }
 
-  test('campaign traverses 0–13 with varied cover, exactly six specials and saved victory', () {
+  test('campaign traverses 25 rooms with nine specials and saved victory', () {
     final route = <int, LiteEnemyKind>{};
     final layouts = <String>{};
     final questIds = <String>{};
@@ -2455,16 +2464,20 @@ void main() {
       6: LiteEnemyKind.forestDemon,
       9: LiteEnemyKind.ombra,
       12: LiteEnemyKind.costrutto,
-      13: LiteEnemyKind.veyrth,
+      15: LiteEnemyKind.divoramituBoss,
+      18: LiteEnemyKind.eliteSolare,
+      21: LiteEnemyKind.diavolo,
+      24: LiteEnemyKind.veyrth,
     });
-    expect(layouts, hasLength(14));
-    expect(questIds, hasLength(42));
+    expect(layouts, hasLength(25));
+    expect(questIds, hasLength(75));
     expect(run.dead, isFalse);
     expect(run.finished, isTrue);
     expect(run.victorious, isTrue);
-    expect(run.ascensionDust, 3);
-    expect(run.bossCrystalGrades, hasLength(3));
-    expect(run.spentOculum, ordinaryTotal + 3 * 3 + 3 * 5);
+    expect(run.ascensionDust, 4);
+    expect(run.bossCrystalGrades, hasLength(5));
+    expect(run.spentOculum, ordinaryTotal + 4 * 3 + 5 * 5);
+    expect(run.arenaSpeedBonus, 80);
     expect(
       run.unlockedHeroesFor(run.hero),
       containsAll([LiteHero.luce, LiteHero.ombra, LiteHero.veyrth]),
@@ -2477,6 +2490,147 @@ void main() {
     final settled = restored.toJson();
     _wait(restored, 2);
     expect(restored.toJson(), settled);
+  });
+
+  test('all four supply stops remain accessible in solo and co-op', () {
+    for (final players in [1, 2]) {
+      final run = LiteRun(
+        seed: 241,
+        hero: LiteHero.evasore,
+        weapon: LiteWeapon.arco,
+        playerCount: players,
+      );
+      for (final floor in [5, 11, 17, 23]) {
+        run
+          ..stage = floor
+          ..stageClear = true
+          ..restHub = false
+          ..position = run.portalPosition;
+        expect(run.awaitsRestHub, isTrue);
+        expect(run.enterRestHub(), isTrue);
+        expect(run.hasRest, isTrue);
+        expect(run.awaitsRestHub, isFalse);
+        final frame = LiteRun.fromJson(run.toJson(includeEffects: true));
+        expect(frame.restHub, isTrue);
+        expect(frame.lastStage, 24);
+        expect(frame.awaitsRestHub, isFalse);
+      }
+      run.position = run.portalPosition;
+      if (players == 1) {
+        expect(run.advance(LiteBiome.foresta), isTrue);
+      } else {
+        expect(run.advanceCoop(LiteBiome.foresta), isTrue);
+      }
+      expect(run.isFinalFloor, isTrue);
+      expect(run.enemies.single.kind, LiteEnemyKind.veyrth);
+    }
+  });
+
+  test('the six-player world can publish every floor through Veyrth', () {
+    final host = LiteRun(
+      seed: 241,
+      hero: LiteHero.evasore,
+      weapon: LiteWeapon.spadaScudo,
+      playerCount: 6,
+    )..level = 300;
+    host.hp = host.maxHp;
+    for (var slot = 1; slot < LiteRun.maxCoopPlayers; slot++) {
+      expect(
+        host.addCoopFighter(
+          'guest-$slot',
+          'Ospite $slot',
+          LiteHero.ashley,
+          LiteWeapon.arco,
+        ),
+        isTrue,
+      );
+    }
+    final visited = <int>[];
+    final restStops = <int>[];
+
+    void clearOpenings() {
+      while (!host.stageClear) {
+        host.enemies.clear();
+        host.step(.01);
+      }
+    }
+
+    for (var floor = 0; floor <= LiteRun.finalStage; floor++) {
+      expect(host.stage, floor);
+      final guest = LiteRun.fromJson(host.toJson(includeEffects: true));
+      visited.add(guest.stage);
+      expect(guest.lastStage, LiteRun.finalStage);
+      expect(guest.coopFighters, hasLength(5));
+      expect(guest.isFinalFloor, floor == LiteRun.finalStage);
+      expect(guest.victorious, isFalse);
+      if (host.isFinalFloor) {
+        expect(guest.enemies.single.kind, LiteEnemyKind.veyrth);
+        while (!host.stageClear) {
+          _strikeCampaignEnemy(host, host.enemies.first);
+        }
+        break;
+      }
+      clearOpenings();
+      host.position = host.portalPosition;
+      if (host.awaitsRestHub) {
+        expect(host.enterRestHub(), isTrue);
+        restStops.add(floor);
+        host.position = host.portalPosition;
+        if (host.canChooseActTwo) {
+          expect(host.enterSecondAct(LiteRealm.postea), isTrue);
+          for (var visit = 1; visit <= LiteSecondAct.actTwoRooms; visit++) {
+            clearOpenings();
+            host.position = host.portalPosition;
+            expect(host.awaitsRestHub, isFalse);
+            if (visit < LiteSecondAct.actTwoRooms) {
+              expect(host.advanceActTwo(), isTrue);
+            }
+          }
+        }
+      }
+      expect(host.advanceCoop(LiteBiome.foresta), isTrue);
+    }
+    expect(visited, List.generate(25, (i) => i));
+    expect(restStops, [5, 11, 17, 23]);
+    final end = LiteRun.fromJson(host.toJson(includeEffects: true));
+    expect(end.victorious, isTrue);
+    expect(end.coopPortalOpen, isFalse);
+  });
+
+  test('old Veyrth saves preserve their fight and victory on floor 13', () {
+    final source = _reachFloor(LiteRun.finalStage);
+    final old = source.toJson()
+      ..['campaignVersion'] = 1
+      ..['stage'] = 13;
+    final ongoing = LiteRun.fromJson(old);
+    expect(ongoing.lastStage, 13);
+    expect(ongoing.encounter, LiteEncounter.finalBoss);
+    expect(ongoing.enemies.single.kind, LiteEnemyKind.veyrth);
+    expect(ongoing.finalBossPhase, LiteFinalBossPhase.tangible);
+    expect(_restore(ongoing).lastStage, 13);
+    while (!ongoing.stageClear) {
+      _strikeCampaignEnemy(ongoing, ongoing.enemies.first);
+    }
+    expect(ongoing.victorious, isTrue);
+    expect(_restore(ongoing).victorious, isTrue);
+    final completed = LiteRun.fromJson(
+      ongoing.toJson()..['campaignVersion'] = 1,
+    );
+    expect(completed.victorious, isTrue);
+    expect(completed.lastStage, 13);
+    expect(OculumLiteProgress().recordRun(completed).earned, 6);
+    final oldEarlierFloor = LiteRun.fromJson(
+      _reachFloor(12).toJson()..['campaignVersion'] = 1,
+    );
+    expect(oldEarlierFloor.lastStage, 24);
+    while (!oldEarlierFloor.stageClear) {
+      _strikeCampaignEnemy(oldEarlierFloor, oldEarlierFloor.enemies.first);
+    }
+    oldEarlierFloor.position = oldEarlierFloor.portalPosition;
+    expect(oldEarlierFloor.advance(), isTrue);
+    expect(oldEarlierFloor.stage, 13);
+    expect(oldEarlierFloor.encounter, LiteEncounter.ordinary);
+    expect(oldEarlierFloor.victorious, isFalse);
   });
 
   test('existing checkpoint keeps current actors and position, then follows new schedule', () {
@@ -2540,7 +2694,7 @@ void main() {
   );
 
   test('Veyrth summons 1-Life echoes every 3 seconds and cannot take damage while they live', () {
-    final run = _reachFloor(13);
+    final run = _reachFloor(LiteRun.finalStage);
     final boss = run.enemies.single..cooldown = 100;
     expect(run.finalBossPhase, LiteFinalBossPhase.tangible);
     _wait(run, 359 / 120);
@@ -2572,7 +2726,7 @@ void main() {
   });
 
   test('Veyrth beam only starts tangible, persists across summons and burns cover at 2.5s', () {
-    final run = _reachFloor(13)..clones.clear();
+    final run = _reachFloor(LiteRun.finalStage)..clones.clear();
     while (run.activeBeam == null) {
       run.step(1 / 120);
     }
@@ -2610,7 +2764,7 @@ void main() {
   test(
     'an intangible Veyrth uses radial spheres instead of starting a beam',
     () {
-      final run = _reachFloor(13);
+      final run = _reachFloor(LiteRun.finalStage);
       final boss = run.enemies.single
         ..summonIn = 0
         ..cooldown = 0;
@@ -2649,7 +2803,7 @@ void main() {
   test(
     'a beam interrupted by an echo gives the sphere attack its own warning',
     () {
-      final run = _reachFloor(13)..obstacles.clear();
+      final run = _reachFloor(LiteRun.finalStage)..obstacles.clear();
       final boss = run.enemies.single
         ..summonIn = 0
         ..windup = .02

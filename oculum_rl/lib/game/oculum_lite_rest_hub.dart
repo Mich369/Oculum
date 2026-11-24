@@ -236,7 +236,7 @@ class LiteRestLoadout {
 extension LiteRestHub on LiteRun {
   static const memoryPrice = 72;
   bool get awaitsRestHub =>
-      stageClear && !restHub && (stage == 5 || stage == 11);
+      stageClear && !usesSubArena && stage < lastStage && (stage + 1) % 6 == 0;
   bool get hubGoblin => (seed ^ stage * 7283).isOdd;
 
   bool enterRestHub() {

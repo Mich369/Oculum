@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:oculum_rl/game/oculum_lite_run.dart';
 
 const origin = Point<double>(0, 0);
-const tick = 1 / 30;
+const tick = 1 / 60;
 
 Point<double> unit(Point<double> value) =>
     value.magnitude < .001 ? origin : value * (1 / value.magnitude);
@@ -155,8 +155,9 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
     difficulty: difficulty,
   );
   final completed = <int>[];
+  final hubs = <int>[];
   var shopping = false;
-  for (var frame = 0; frame < 80 * 60 * 30 && !run.finished; frame++) {
+  for (var frame = 0; frame < 80 * 60 * 60 && !run.finished; frame++) {
     if (run.stageClear) {
       if (completed.isEmpty || completed.last != run.stage) {
         completed.add(run.stage);
@@ -169,7 +170,15 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
           'hp=${run.hp.ceil()} level=${run.level} time=${run.time.round()}',
         );
       }
-      if (shopping) {
+      if (run.hasRest && !run.restUsed && run.hp < run.maxHp * .90) {
+        if (run.canRest) {
+          run.useRest();
+        } else {
+          run.advanceFrame(tick, move: follow(run, run.restPosition));
+        }
+        continue;
+      }
+      if (shopping && !run.usesSubArena) {
         if (run.canOpenShop) {
           run.interact();
           while (run.buyPotion()) {}
@@ -182,7 +191,9 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
       }
       if (run.hasPortalNearby) {
         if (run.awaitsRestHub) {
-          run.enterRestHub();
+          if (!run.enterRestHub())
+            throw StateError('Ristoro non accessibile al piano ${run.stage}');
+          hubs.add(run.stage);
           run.buyRestItem(LiteRestItem.token);
           run.buyRestItem(LiteRestItem.crosta);
           run.buyRestItem(LiteRestItem.spirale);
@@ -247,12 +258,13 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
     }
     run.advanceFrame(tick, move: move);
   }
-  if (run.victorious) completed.add(LiteRun.finalStage);
+  if (run.victorious) completed.add(run.stage);
   final summary =
       'seed=$seed ${difficulty.name}: won=${run.victorious} '
-      'stage=${run.stage} act2=${realm.name} completed=${completed.join(",")}';
+      'stage=${run.stage} act2=${realm.name} completed=${completed.join(",")} hubs=${hubs.join(",")}';
   if (!run.victorious ||
-      completed.length != LiteRun.finalStage + 1 ||
+      completed.length != LiteRun.campaignRooms ||
+      hubs.join(',') != '5,11,17,23' ||
       !run.achievements.contains('atto-ii-${realm.name}')) {
     for (final enemy in run.enemies.where((enemy) => enemy.hp > 0)) {
       print(
