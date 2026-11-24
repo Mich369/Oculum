@@ -180,7 +180,7 @@ enum LiteHero {
     babyForestDemon => 'Completa una missione di scorta del Baby Forest Demon.',
     luce => 'Sconfiggi La tua Luce al piano 3.',
     ombra => 'Sconfiggi La tua Ombra al piano 9.',
-    veyrth => 'Sconfiggi Veyrth nel piano finale.',
+    veyrth => 'Sconfiggi Veyrth al piano 23.',
     cavaliereLunare => 'Completa la campagna in Facile o superiore.',
     slimeBlu => 'Abbatti dieci Slime nelle tue run.',
     reGoblin => 'Sconfiggi il Re Goblin nel Campo goblin segreto.',
@@ -337,6 +337,18 @@ enum LiteBiome {
 
 enum LiteEncounter { ordinary, elite, boss, finalBoss }
 
+enum LiteArchonAttack {
+  impact('Frattura', 1.35, 2.85, 30),
+  fault('Spaccatura', 1.12, .9, 34),
+  crown('Corona spezzata', 1.20, .43, 26);
+
+  const LiteArchonAttack(this.label, this.windup, this.radius, this.damage);
+  final String label;
+  final double windup;
+  final double radius;
+  final double damage;
+}
+
 enum LitePowerUp {
   lama('Lama vorace', 'Danni delle armi', [.12, .28, .65]),
   prisma('Prisma spezzato', 'Danni di Art e pergamene', [.18, .42, .90]),
@@ -487,7 +499,8 @@ enum LiteEnemyKind {
   demoneMaggiore('Demone Maggiore Prediletto', 72, .65, 3.68, 14),
   diavolo('Diavolo del Patto', 146, .94, 2.38, 19),
   divoramitu('Divoramitù Elité', 78, 1.13, 2.3, 18),
-  divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.85, 2.5, 23);
+  divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.85, 2.5, 23),
+  arconte('Arconte delle Fratture', 312, 1.52, 1.7, 27);
 
   const LiteEnemyKind(
     this.label,
@@ -524,7 +537,8 @@ enum LiteEnemyKind {
       this == guardianoSolare ||
       this == custodeLunare ||
       this == divoramituBoss ||
-      this == diavolo;
+      this == diavolo ||
+      this == arconte;
   bool get echo => this == minionVeyrth || this == ecoSpeculare;
 }
 
@@ -925,6 +939,8 @@ class LiteEnemy {
   double muddied = 0;
   bool glueRetinue = false;
   int combatCycle = 0;
+  LiteArchonAttack? archonAttack;
+  int get archonPhase => hp > maxHp * .70 ? 1 : (hp > maxHp * .35 ? 2 : 3);
   double _strikePose = 0;
   double get strikePose => _strikePose;
 
@@ -980,6 +996,8 @@ class LiteEnemy {
     'cooldown': cooldown,
     'windup': windup,
     if (combatCycle != 0) 'combatCycle': combatCycle,
+    if (archonAttack case final attack? when attacking)
+      'archonAttack': attack.name,
     if (burrow case final track?) 'burrow': track.frame,
     if (includeEffects) ...{
       'stride': stride._frame(),
@@ -1020,6 +1038,9 @@ class LiteEnemy {
         ..cooldown = _num(json['cooldown'])
         ..windup = _num(json['windup'])
         ..combatCycle = _int(json['combatCycle'])
+        ..archonAttack = LiteArchonAttack.values
+            .where((attack) => attack.name == json['archonAttack'])
+            .firstOrNull
         ..stride._restore(json['stride'])
         .._strikePose = _num(json['strikePose']).clamp(0.0, .24)
         ..clashRemaining = _num(json['clashRemaining'])
@@ -1873,13 +1894,18 @@ class LiteRun {
   static const _spawn = Point<double>(4, 11);
   static const _playerRadius = .42;
   static const schemaVersion = 1;
-  static const _campaignVersion = 2;
+  static const _campaignVersion = 3;
+  static const lateStage = 13;
+  static const veyrthStage = 23;
   static const _legacyFinalStage = 13;
   static const campaignRooms = 25;
   static const finalStage = campaignRooms - 1;
   static const secondActEntranceFloor = 11;
 
   int _lastStage = finalStage;
+  bool _legacyVeyrthFinal = false;
+  bool get isVeyrthArena =>
+      stage == veyrthStage || isFinalFloor && _legacyVeyrthFinal;
   int get lastStage => _lastStage;
   bool get isFinalFloor => stage == lastStage;
   static const maxCoopPlayers = 6;
@@ -1969,9 +1995,13 @@ class LiteRun {
   double get width => 34;
   double get monsterLifeMultiplier =>
       1 + (playerCount - 1) * difficulty.partyLifeStep;
-  static int enemyLifeBonusAt(int floor) =>
-      floor < 3 ? 0 : 15 + (floor - 3) * 2;
-  static int enemyDamageBonusAt(int floor) => floor < 3 ? 0 : 12 + (floor - 3);
+  static int enemyLifeBonusAt(int floor, {bool late = true}) => floor < 3
+      ? 0
+      : 15 +
+            (floor - 3) * 2 +
+            (late && floor >= lateStage ? 24 + floor - lateStage : 0);
+  static int enemyDamageBonusAt(int floor, {bool late = true}) =>
+      floor < 3 ? 0 : 12 + (floor - 3) + (late && floor >= lateStage ? 14 : 0);
   static int arenaSpeedBonusAt(int floor) => max(0, floor ~/ 3) * 10;
   int get arenaSpeedBonus => arenaSpeedBonusAt(
     inActTwo ? min(secondActEntranceFloor + 1, stage + actRoom) : stage,
@@ -1979,13 +2009,15 @@ class LiteRun {
 
   double get arenaSpeed => 1 + arenaSpeedBonus / 100;
 
-  double get _floorDamageScale => 1 + enemyDamageBonusAt(stage) / 100;
+  double get _floorDamageScale =>
+      1 + enemyDamageBonusAt(stage, late: !_legacyVeyrthFinal) / 100;
   static ({int life, int damage}) challengeBonus(
     int floor,
     LiteEnemyKind kind,
   ) {
     if (floor < 3) return (life: 0, damage: 0);
     if (kind == LiteEnemyKind.veyrth) return (life: 30, damage: 18);
+    if (kind == LiteEnemyKind.arconte) return (life: 38, damage: 24);
     if (kind.boss) return (life: 25, damage: 15);
     if (kind.elite) return (life: 20, damage: 10);
     return (life: 0, damage: 0);
@@ -2074,7 +2106,7 @@ class LiteRun {
 
   static LiteEncounter encounterAt(int floor) => switch (floor) {
     0 || 6 || 12 || 18 => LiteEncounter.elite,
-    3 || 9 || 15 || 21 => LiteEncounter.boss,
+    3 || 9 || 15 || 21 || veyrthStage => LiteEncounter.boss,
     finalStage => LiteEncounter.finalBoss,
     _ => LiteEncounter.ordinary,
   };
@@ -2089,9 +2121,10 @@ class LiteRun {
     if (finished || stage >= lastStage) return null;
     final floor = stage + 1;
     final encounter = _encounterFor(floor);
-    final finalArena = encounter == LiteEncounter.finalBoss;
+    final bossArena =
+        encounter == LiteEncounter.finalBoss || floor == veyrthStage;
     final trial = _trialFor(floor, destination);
-    final count = finalArena ? 0 : _openingEnemyCount(floor, trial);
+    final count = bossArena ? 0 : _openingEnemyCount(floor, trial);
     final power = _featuredPower(destination, trial);
     return LiteFloorPreview(
       floor: floor,
@@ -2105,7 +2138,9 @@ class LiteRun {
       }),
       special: encounter == LiteEncounter.ordinary ? null : _specialKind(floor),
       rest: _hasRestAt(floor),
-      featuredPower: !finalArena && powerRank(power) < LitePowerUp.maxRank
+      featuredPower:
+          encounter != LiteEncounter.finalBoss &&
+              powerRank(power) < LitePowerUp.maxRank
           ? power
           : null,
       trial: trial,
@@ -2142,7 +2177,7 @@ class LiteRun {
       (arenaTrial != LiteArenaTrial.caccia || time - _trialStart <= 40);
 
   LiteFloorLayout _layoutFor(int floor, LiteBiome location) =>
-      floor == lastStage
+      floor == lastStage || floor == veyrthStage
       ? LiteFloorLayout.standard
       : location == LiteBiome.postea
       ? LiteFloorLayout.montaggio
@@ -2195,7 +2230,7 @@ class LiteRun {
   LiteFinalBossPhase get finalBossPhase {
     if (victorious) return LiteFinalBossPhase.defeated;
     if (dead ||
-        !isFinalFloor ||
+        !isVeyrthArena ||
         !enemies.any(
           (enemy) => enemy.kind == LiteEnemyKind.veyrth && enemy.hp > 0,
         )) {
@@ -2413,8 +2448,8 @@ class LiteRun {
     floorLayout = _layoutFor(stage, biome);
     arenaTrial = _trialFor(stage, biome);
     _trialStart = time;
-    if (encounter == LiteEncounter.finalBoss) {
-      _startFinalArena();
+    if (isVeyrthArena || isFinalFloor) {
+      _startBossArena(_specialKind(stage));
       return;
     }
     if (biome == LiteBiome.campo) {
@@ -2604,7 +2639,7 @@ class LiteRun {
     );
   }
 
-  void _startFinalArena() {
+  void _startBossArena(LiteEnemyKind boss) {
     final offset = (_rng.nextDouble() - .5) * 1.2;
     obstacles.addAll([
       LiteObstacle(9, 5.5 + offset, 1.6, 2.6, breakable: true),
@@ -2613,19 +2648,33 @@ class LiteRun {
       LiteObstacle(23, 4.5 - offset, 2.1, 2.4, breakable: true),
       LiteObstacle(24.4, 15.4 + offset, 1.55, 2.4, breakable: true),
     ]);
+    final archon = boss == LiteEnemyKind.arconte;
     quests.addAll([
-      LiteQuest('p$stage:evocazioni', 'Disperdi due echi', 2, 4),
+      if (archon)
+        LiteQuest('p$stage:breccia', 'Porta l’Arconte alla terza fase', 1, 12)
+      else
+        LiteQuest('p$stage:evocazioni', 'Disperdi due echi', 2, 4),
       LiteQuest('p$stage:riparo', 'Abbatti un riparo', 1, 6),
-      LiteQuest('p$stage:veyrth', 'Sconfiggi Veyrth', 1, 20, major: true),
+      LiteQuest(
+        'p$stage:${boss.name}',
+        'Sconfiggi ${boss.label}',
+        1,
+        archon ? 35 : 20,
+        major: true,
+      ),
     ]);
     _eliteReleased = true;
-    _spawnEnemy(LiteEnemyKind.veyrth, const Point(27.8, 11));
-    message =
-        'Piano $stage · Veyrth. Elimina i suoi echi per renderlo vulnerabile.';
+    _spawnEnemy(boss, const Point(27.8, 11)).cooldown = .75;
+    message = archon
+        ? 'L’Arconte delle Fratture si risveglia. Evita i segni a terra.'
+        : 'Piano $stage · Veyrth. Elimina i suoi echi per renderlo vulnerabile.';
   }
 
   LiteEnemyKind _specialKind(int floor) {
-    if (floor == lastStage) return LiteEnemyKind.veyrth;
+    if (floor == lastStage) {
+      return _legacyVeyrthFinal ? LiteEnemyKind.veyrth : LiteEnemyKind.arconte;
+    }
+    if (floor == veyrthStage) return LiteEnemyKind.veyrth;
     if (solarCampaign) {
       return switch (floor) {
         6 || 9 || 12 || 15 || 21 => LiteEnemyKind.custodeLunare,
@@ -2672,7 +2721,12 @@ class LiteRun {
             : (kind.health *
                           difficulty.enemyStrength *
                           (1 + .10 * stage) *
-                          (1 + enemyLifeBonusAt(stage) / 100) *
+                          (1 +
+                              enemyLifeBonusAt(
+                                    stage,
+                                    late: !_legacyVeyrthFinal,
+                                  ) /
+                                  100) *
                           (1 + challengeBonus(stage, kind).life / 100) *
                           (arenaTrial == LiteArenaTrial.muraglia ? 1.25 : 1) *
                           monsterLifeMultiplier)
@@ -3394,7 +3448,7 @@ class LiteRun {
     if (isFinalFloor) {
       victorious = true;
       achievements.add('campagna-completata');
-      message = 'Veyrth è caduto. Campagna completata.';
+      message = '${_specialKind(stage).label} sconfitto. Campagna completata.';
       return;
     }
     if (biome == LiteBiome.campo) achievements.add('scostubandito-sblocco');
@@ -5105,6 +5159,10 @@ class LiteRun {
       _tickVeyrth(enemy, elapsed);
       return;
     }
+    if (enemy.kind == LiteEnemyKind.arconte) {
+      _tickArchon(enemy, elapsed);
+      return;
+    }
     if (enemy.mirror != null) {
       _tickMirror(enemy, elapsed);
       return;
@@ -5196,6 +5254,143 @@ class LiteRun {
         enemy.radius,
         rightFirst: enemy.id.isEven,
       );
+    }
+  }
+
+  String get bossStatus {
+    final boss = enemies
+        .where((enemy) => enemy.kind == LiteEnemyKind.arconte)
+        .firstOrNull;
+    if (boss != null) {
+      final attack = boss.attacking ? boss.archonAttack : null;
+      return ' · Arconte ${boss.archonPhase}/3'
+          '${attack == null ? '' : ' · ${attack.label}'}';
+    }
+    return switch (finalBossPhase) {
+      LiteFinalBossPhase.inactive || LiteFinalBossPhase.defeated => '',
+      LiteFinalBossPhase.tangible => ' · Veyrth vulnerabile',
+      LiteFinalBossPhase.intangible => ' · Distruggi gli echi',
+      LiteFinalBossPhase.beamTangible => ' · Raggio attivo',
+      LiteFinalBossPhase.beamIntangible => ' · Raggio ed echi attivi',
+    };
+  }
+
+  (Point<double>, Point<double>)? archonFault(LiteEnemy boss) {
+    final mark = boss.attackTarget;
+    if (mark == null) return null;
+    final heading = _unit(mark - boss.position);
+    if (heading.magnitude <= 1e-9) return null;
+    var distance = _boundBeam(boss.position, heading);
+    for (final wall in obstacles) {
+      distance = min(
+        distance,
+        _beamCoverDistance(boss.position, heading, wall, distance),
+      );
+    }
+    return (boss.position, boss.position + heading * distance);
+  }
+
+  Iterable<Point<double>> archonCrownDirections(LiteEnemy boss) sync* {
+    final to = (boss.attackTarget ?? position) - boss.position;
+    final angle = atan2(to.y, to.x);
+    // Leave a gap in the direction of the marked target.
+    for (var i = 1; i < 12; i++) {
+      final heading = angle + i * pi / 6;
+      yield Point(cos(heading), sin(heading));
+    }
+  }
+
+  void _tickArchon(LiteEnemy boss, double elapsed) {
+    const patterns = [
+      [LiteArchonAttack.impact, LiteArchonAttack.fault],
+      [LiteArchonAttack.fault, LiteArchonAttack.crown, LiteArchonAttack.impact],
+      [
+        LiteArchonAttack.crown,
+        LiteArchonAttack.impact,
+        LiteArchonAttack.fault,
+        LiteArchonAttack.impact,
+      ],
+    ];
+    final phase = boss.archonPhase;
+    if (phase == 3 && quests.firstOrNull?.current == 0) _progressQuest(0);
+    if (boss.windup > 0) {
+      boss.windup = max(0, boss.windup - elapsed);
+      if (boss.windup > 0) return;
+      if (boss.archonAttack case final attack?) {
+        _resolveArchonAttack(boss, attack);
+      }
+      boss.archonAttack = null;
+      boss.cooldown = [1.65, 1.38, 1.14][phase - 1];
+      return;
+    }
+    boss.cooldown = max(0, boss.cooldown - elapsed);
+    if (boss.cooldown > 0) return;
+    final pattern = patterns[phase - 1];
+    final attack = pattern[boss.combatCycle++ % pattern.length];
+    final target = _enemyAimFrom(boss.position);
+    boss.attackTarget = target == boss.position
+        ? target + const Point<double>(-1, 0)
+        : target;
+    boss.archonAttack = attack;
+    boss.windup = attack.windup;
+  }
+
+  void _resolveArchonAttack(LiteEnemy boss, LiteArchonAttack attack) {
+    boss._strikePose = .24;
+    final damage =
+        attack.damage *
+        difficulty.enemyStrength *
+        _challengeDamageScale(boss.kind);
+    if (attack == LiteArchonAttack.crown) {
+      for (final heading in archonCrownDirections(boss)) {
+        projectiles.add(
+          LiteProjectile(
+            position: boss.position,
+            direction: heading,
+            speed: 8.4,
+            remaining: 28,
+            damage: damage,
+            fromEnemy: true,
+            magic: true,
+            kind: LiteProjectileKind.veyrthSphere,
+          ),
+        );
+      }
+      return;
+    }
+    final mark = boss.attackTarget;
+    if (mark == null) return;
+    final lane = attack == LiteArchonAttack.fault ? archonFault(boss) : null;
+    if (attack == LiteArchonAttack.fault && lane == null) return;
+    if (lane == null) {
+      _recordImpact(LiteImpactTarget.verdict, boss.id, mark);
+    } else {
+      if (_combatImpacts.length >= 32) _combatImpacts.removeAt(0);
+      _combatImpacts.add(
+        LiteCombatImpact(
+          LiteImpactTarget.fissure,
+          _nextId++,
+          lane.$1,
+          time,
+          end: lane.$2,
+        ),
+      );
+    }
+    bool hits(Point<double> at, double radius) {
+      if (lane == null) return _distance(at, mark) <= attack.radius + radius;
+      final axis = _unit(lane.$2 - lane.$1);
+      final offset = at - lane.$1;
+      final along = offset.x * axis.x + offset.y * axis.y;
+      final across = (offset.x * axis.y - offset.y * axis.x).abs();
+      return along >= 0 &&
+          along <= _distance(lane.$1, lane.$2) &&
+          across <= attack.radius + radius &&
+          !_lineBlocked(lane.$1, at);
+    }
+
+    if (!hostDown && hits(position, _playerRadius)) _damagePlayer(damage);
+    for (final ally in _damageableAllies) {
+      if (ally.hp > 0 && hits(ally.position, .42)) _hitAlly(ally, damage);
     }
   }
 
@@ -6522,7 +6717,7 @@ class LiteRun {
       return;
     }
     loot.add(LiteLoot(obstacle.center, LiteLootKind.obser, 3));
-    if (isFinalFloor) _progressQuest(1);
+    if (isVeyrthArena || isFinalFloor) _progressQuest(1);
   }
 
   bool _enemyIntangible(LiteEnemy enemy) =>
@@ -6845,7 +7040,7 @@ class LiteRun {
       }
     }
     if (kind.echo) {
-      if (kind == LiteEnemyKind.minionVeyrth && isFinalFloor) {
+      if (kind == LiteEnemyKind.minionVeyrth && isVeyrthArena) {
         _progressQuest(0);
       }
       return;
@@ -6908,9 +7103,13 @@ class LiteRun {
       spentOculum += 5;
       crystals++;
       bossCrystalGrades.add(1 + _rng.nextInt(3));
-      if (kind == LiteEnemyKind.veyrth) {
+      if (kind == LiteEnemyKind.veyrth) _activeBeam = null;
+      if (kind == LiteEnemyKind.arconte && quests.firstOrNull?.current == 0) {
+        _progressQuest(0);
+      }
+      if (kind == LiteEnemyKind.arconte ||
+          kind == LiteEnemyKind.veyrth && isFinalFloor) {
         _finalBossDefeated = true;
-        _activeBeam = null;
       }
       _progressQuest(2);
     } else if (kind.elite) {
@@ -7492,6 +7691,7 @@ class LiteRun {
     'version': schemaVersion,
     'campaignVersion': _campaignVersion,
     if (lastStage == _legacyFinalStage) 'legacyFinal': true,
+    if (_legacyVeyrthFinal) 'legacyVeyrthFinal': true,
     'seed': seed,
     if (upgrades.isNotEmpty) 'upgrades': LitePermanentUpgrade.encode(upgrades),
     'playerCount': playerCount,
@@ -7630,9 +7830,13 @@ class LiteRun {
     final legacyCampaign = savedCampaign < 1;
     final savedStage = _int(json['stage'], legacyCampaign ? 1 : 0);
     if (savedStage == _legacyFinalStage &&
-        (savedCampaign < _campaignVersion || json['legacyFinal'] == true)) {
+        (savedCampaign < 2 || json['legacyFinal'] == true)) {
       run._lastStage = _legacyFinalStage;
     }
+    run._legacyVeyrthFinal =
+        run.lastStage == _legacyFinalStage ||
+        savedStage == finalStage && savedCampaign < 3 ||
+        json['legacyVeyrthFinal'] == true;
     run.stage = savedStage.clamp(0, run.lastStage);
     run._startingBiome = _enum(
       LiteBiome.values,

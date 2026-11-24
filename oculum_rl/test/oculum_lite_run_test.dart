@@ -43,7 +43,7 @@ void _expectRouteMatchesFloor({
     expect(preview.openingEnemies, 0);
     expect(preview.featuredPower, isNull);
     expect(run.previewNextFloor(destination), isNull);
-  } else {
+  } else if (preview.floor != LiteRun.veyrthStage) {
     expect(run.enemies.length, preview.openingEnemies);
     expect(
       run.enemies.map((enemy) => enemy.kind).toSet(),
@@ -1119,8 +1119,12 @@ void main() {
       ));
       expect(LiteRun.enemyLifeBonusAt(2), 0);
       expect(LiteRun.enemyDamageBonusAt(2), 0);
-      expect(LiteRun.enemyLifeBonusAt(13), 35);
-      expect(LiteRun.enemyDamageBonusAt(13), 22);
+      expect(LiteRun.enemyLifeBonusAt(12), 33);
+      expect(LiteRun.enemyDamageBonusAt(12), 21);
+      expect(LiteRun.enemyLifeBonusAt(13), 59);
+      expect(LiteRun.enemyDamageBonusAt(13), 36);
+      expect(LiteRun.enemyLifeBonusAt(24), 92);
+      expect(LiteRun.enemyDamageBonusAt(24), 47);
     },
   );
 
@@ -2428,7 +2432,7 @@ void main() {
     });
   }
 
-  test('campaign traverses 25 rooms with nine specials and saved victory', () {
+  test('campaign traverses 25 rooms with ten specials and saved victory', () {
     final route = <int, LiteEnemyKind>{};
     final layouts = <String>{};
     final questIds = <String>{};
@@ -2467,7 +2471,8 @@ void main() {
       15: LiteEnemyKind.divoramituBoss,
       18: LiteEnemyKind.eliteSolare,
       21: LiteEnemyKind.diavolo,
-      24: LiteEnemyKind.veyrth,
+      23: LiteEnemyKind.veyrth,
+      24: LiteEnemyKind.arconte,
     });
     expect(layouts, hasLength(25));
     expect(questIds, hasLength(75));
@@ -2475,8 +2480,8 @@ void main() {
     expect(run.finished, isTrue);
     expect(run.victorious, isTrue);
     expect(run.ascensionDust, 4);
-    expect(run.bossCrystalGrades, hasLength(5));
-    expect(run.spentOculum, ordinaryTotal + 4 * 3 + 5 * 5);
+    expect(run.bossCrystalGrades, hasLength(6));
+    expect(run.spentOculum, ordinaryTotal + 4 * 3 + 6 * 5);
     expect(run.arenaSpeedBonus, 80);
     expect(
       run.unlockedHeroesFor(run.hero),
@@ -2522,11 +2527,11 @@ void main() {
         expect(run.advanceCoop(LiteBiome.foresta), isTrue);
       }
       expect(run.isFinalFloor, isTrue);
-      expect(run.enemies.single.kind, LiteEnemyKind.veyrth);
+      expect(run.enemies.single.kind, LiteEnemyKind.arconte);
     }
   });
 
-  test('the six-player world can publish every floor through Veyrth', () {
+  test('the six-player world can publish every floor through the Archon', () {
     final host = LiteRun(
       seed: 241,
       hero: LiteHero.evasore,
@@ -2564,13 +2569,20 @@ void main() {
       expect(guest.isFinalFloor, floor == LiteRun.finalStage);
       expect(guest.victorious, isFalse);
       if (host.isFinalFloor) {
-        expect(guest.enemies.single.kind, LiteEnemyKind.veyrth);
+        expect(guest.enemies.single.kind, LiteEnemyKind.arconte);
         while (!host.stageClear) {
           _strikeCampaignEnemy(host, host.enemies.first);
         }
         break;
       }
-      clearOpenings();
+      if (floor == LiteRun.veyrthStage) {
+        expect(guest.enemies.single.kind, LiteEnemyKind.veyrth);
+        while (!host.stageClear) {
+          _strikeCampaignEnemy(host, host.enemies.first);
+        }
+      } else {
+        clearOpenings();
+      }
       host.position = host.portalPosition;
       if (host.awaitsRestHub) {
         expect(host.enterRestHub(), isTrue);
@@ -2598,7 +2610,7 @@ void main() {
   });
 
   test('old Veyrth saves preserve their fight and victory on floor 13', () {
-    final source = _reachFloor(LiteRun.finalStage);
+    final source = _reachFloor(LiteRun.veyrthStage);
     final old = source.toJson()
       ..['campaignVersion'] = 1
       ..['stage'] = 13;
@@ -2631,6 +2643,89 @@ void main() {
     expect(oldEarlierFloor.stage, 13);
     expect(oldEarlierFloor.encounter, LiteEncounter.ordinary);
     expect(oldEarlierFloor.victorious, isFalse);
+  });
+
+  test('version 2 keeps Veyrth on an active or completed old finale', () {
+    final ongoing = LiteRun.fromJson(
+      _reachFloor(LiteRun.veyrthStage).toJson()
+        ..['campaignVersion'] = 2
+        ..['stage'] = LiteRun.finalStage,
+    );
+    expect(ongoing.isFinalFloor && ongoing.isVeyrthArena, isTrue);
+    expect(_restore(ongoing).enemies.single.kind, LiteEnemyKind.veyrth);
+    while (!ongoing.stageClear) {
+      _strikeCampaignEnemy(ongoing, ongoing.enemies.first);
+    }
+    expect(_restore(ongoing).victorious, isTrue);
+    final earlier = LiteRun.fromJson(
+      _reachFloor(LiteRun.lateStage).toJson()..['campaignVersion'] = 2,
+    );
+    expect(earlier.stage, 13);
+    expect(earlier.isFinalFloor, isFalse);
+  });
+
+  test('the Archon locks a warning across saves and co-op frames', () {
+    final run = _reachFloor(LiteRun.finalStage)..obstacles.clear();
+    final boss = run.enemies.single;
+    final veyrth = _reachFloor(LiteRun.veyrthStage).enemies.single;
+    expect(boss.kind, LiteEnemyKind.arconte);
+    expect(boss.maxHp, greaterThan(veyrth.maxHp * 1.7));
+    expect(boss.archonPhase, 1);
+    boss.cooldown = 0;
+    run.step(.01);
+    expect(boss.archonAttack, LiteArchonAttack.impact);
+    final locked = boss.attackTarget!;
+    final replay = _restore(run);
+    expect(replay.enemies.single.archonAttack, LiteArchonAttack.impact);
+    expect(replay.enemies.single.attackTarget, locked);
+    expect(replay.bossStatus, contains('Frattura'));
+
+    final initialHp = run.hp;
+    run.shield = 0;
+    run.position = locked + const Point(0, 5);
+    _wait(run, 1.4);
+    expect(run.hp, initialHp);
+    replay.shield = 0;
+    _wait(replay, 1.4);
+    expect(replay.hp, lessThan(initialHp));
+
+    boss.hp = boss.maxHp * .69;
+    expect(boss.archonPhase, 2);
+    boss.combatCycle = 0;
+    boss.cooldown = 0;
+    run.step(.01);
+    expect(boss.archonAttack, LiteArchonAttack.fault);
+    final end = run.archonFault(boss)!.$2;
+    final direction = (end - boss.position);
+    final mid = boss.position + direction * .28;
+    run.obstacles.add(LiteObstacle(mid.x - 1, mid.y - 1, 2, 2));
+    expect(
+      run.archonFault(boss)!.$2.distanceTo(boss.position),
+      lessThan(end.distanceTo(boss.position)),
+    );
+
+    boss.hp = boss.maxHp * .34;
+    expect(boss.archonPhase, 3);
+    boss.windup = boss.cooldown = 0;
+    boss.combatCycle = 0;
+    run.obstacles.clear();
+    run.step(.01);
+    expect(boss.archonAttack, LiteArchonAttack.crown);
+    final frame = LiteRun.fromJson(run.toJson(includeEffects: true));
+    expect(frame.bossStatus, contains('Corona spezzata'));
+    final restored = frame.enemies.single;
+    expect(frame.archonCrownDirections(restored), hasLength(11));
+    final gap = restored.attackTarget! - restored.position;
+    expect(
+      frame
+          .archonCrownDirections(restored)
+          .any(
+            (shot) => (shot.x * gap.x + shot.y * gap.y) / gap.magnitude > .99,
+          ),
+      isFalse,
+    );
+    _wait(frame, 1.22);
+    expect(frame.projectiles.where((shot) => shot.fromEnemy), hasLength(11));
   });
 
   test('existing checkpoint keeps current actors and position, then follows new schedule', () {
@@ -2694,7 +2789,7 @@ void main() {
   );
 
   test('Veyrth summons 1-Life echoes every 3 seconds and cannot take damage while they live', () {
-    final run = _reachFloor(LiteRun.finalStage);
+    final run = _reachFloor(LiteRun.veyrthStage);
     final boss = run.enemies.single..cooldown = 100;
     expect(run.finalBossPhase, LiteFinalBossPhase.tangible);
     _wait(run, 359 / 120);
@@ -2726,7 +2821,7 @@ void main() {
   });
 
   test('Veyrth beam only starts tangible, persists across summons and burns cover at 2.5s', () {
-    final run = _reachFloor(LiteRun.finalStage)..clones.clear();
+    final run = _reachFloor(LiteRun.veyrthStage)..clones.clear();
     while (run.activeBeam == null) {
       run.step(1 / 120);
     }
@@ -2764,7 +2859,7 @@ void main() {
   test(
     'an intangible Veyrth uses radial spheres instead of starting a beam',
     () {
-      final run = _reachFloor(LiteRun.finalStage);
+      final run = _reachFloor(LiteRun.veyrthStage);
       final boss = run.enemies.single
         ..summonIn = 0
         ..cooldown = 0;
@@ -2803,7 +2898,7 @@ void main() {
   test(
     'a beam interrupted by an echo gives the sphere attack its own warning',
     () {
-      final run = _reachFloor(LiteRun.finalStage)..obstacles.clear();
+      final run = _reachFloor(LiteRun.veyrthStage)..obstacles.clear();
       final boss = run.enemies.single
         ..summonIn = 0
         ..windup = .02

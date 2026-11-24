@@ -187,6 +187,10 @@ class OculumLiteArena extends StatefulWidget {
   );
   static const oreaGround = AssetImage('assets/oculum/lite/arena-orea.jpg');
 
+  static const archonArt = AssetImage(
+    'assets/oculum/lite/arconte-delle-fratture.webp',
+  );
+
   static const finalBossArt = AssetImage(
     'assets/oculum/lite/veyrth-inchiostro.png',
   );
@@ -352,6 +356,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.caramellaGround,
         OculumLiteArena.desertoGround,
         OculumLiteArena.oreaGround,
+        OculumLiteArena.archonArt,
       ]) {
         _resolveExtraImage(art, config);
       }
@@ -615,6 +620,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
               monsters: _monsters?.image,
               posteaMonsters: _posteaMonsters?.image,
               bossArt: _boss?.image,
+              archonArt: _extraImages[OculumLiteArena.archonArt]?.image,
               newActors: _extraImages[OculumLiteArena.newActors]?.image,
               nightActors: _extraImages[OculumLiteArena.nightActors]?.image,
               lootArt: _extraImages[OculumLiteArena.lootArt]?.image,
@@ -1400,6 +1406,7 @@ class _ArenaPaint extends CustomPainter {
     this.monsters,
     this.posteaMonsters,
     this.bossArt,
+    this.archonArt,
     this.newActors,
     this.nightActors,
     this.lootArt,
@@ -1431,6 +1438,7 @@ class _ArenaPaint extends CustomPainter {
   final ui.Image? monsters;
   final ui.Image? posteaMonsters;
   final ui.Image? bossArt;
+  final ui.Image? archonArt;
   final ui.Image? newActors;
   final ui.Image? nightActors;
   final ui.Image? lootArt;
@@ -1717,7 +1725,12 @@ class _ArenaPaint extends CustomPainter {
         _burrowWarning(canvas, enemy, track);
         if (!track.exposed) continue;
       }
-      if (enemy.attacking && target != null) _astralWarning(canvas, enemy);
+      final archon = enemy.kind == LiteEnemyKind.arconte;
+      if (archon && enemy.attacking) {
+        _paintArchonWarning(canvas, run, enemy);
+      } else if (enemy.attacking && target != null) {
+        _astralWarning(canvas, enemy);
+      }
 
       if (enemy.kind == LiteEnemyKind.veyrth &&
           enemy.preparingBeam &&
@@ -1735,6 +1748,7 @@ class _ArenaPaint extends CustomPainter {
       }
       if (enemy.hp > 0 &&
           enemy.attacking &&
+          !archon &&
           !enemy.preparingBeam &&
           !verdict &&
           (onCamera || (target != null && visible.contains(_offset(target))))) {
@@ -1748,6 +1762,10 @@ class _ArenaPaint extends CustomPainter {
         () {
           final facingTarget = target == null ? player.dx : target.x;
           _actor(canvas, at, size * (facingTarget >= at.dx ? 1 : -1), size, () {
+            if (archon && archonArt != null) {
+              _paintArchon(canvas, archonArt!, enemy, time);
+              return;
+            }
             final phaseBoss =
                 enemy.kind == LiteEnemyKind.veyrth ||
                 enemy.kind == LiteEnemyKind.minionVeyrth;
@@ -6283,6 +6301,95 @@ void _weapon(Canvas canvas, LiteWeapon weapon, Color accent, Color ink) {
   }
 }
 
+void _paintArchonWarning(Canvas canvas, LiteRun run, LiteEnemy boss) {
+  final attack = boss.archonAttack;
+  final target = boss.attackTarget;
+  if (attack == null || target == null) return;
+  final progress = (1 - boss.windup / attack.windup).clamp(0.0, 1.0);
+  final earth = Color.lerp(
+    const Color(0xffc96255),
+    const Color(0xffffd188),
+    progress,
+  )!;
+  final fill = Paint()..color = earth.withValues(alpha: .13 + progress * .17);
+  final rim = Paint()
+    ..color = earth
+    ..strokeWidth = .055 + progress * .045
+    ..style = PaintingStyle.stroke;
+  final origin = _offset(boss.position);
+  switch (attack) {
+    case LiteArchonAttack.impact:
+      final center = _offset(target);
+      canvas.drawCircle(center, attack.radius, fill);
+      canvas.drawCircle(center, attack.radius, rim);
+      final split = Path()
+        ..moveTo(center.dx - attack.radius * .9, center.dy + .4)
+        ..relativeLineTo(attack.radius * .65, -.62)
+        ..relativeLineTo(.7, .42)
+        ..relativeLineTo(attack.radius * .85, -.5);
+      canvas.drawPath(split, rim);
+    case LiteArchonAttack.fault:
+      if (run.archonFault(boss) case (final start, final end)) {
+        final from = _offset(start);
+        final to = _offset(end);
+        final direction = to - from;
+        if (direction.distance <= .001) return;
+        final wing =
+            Offset(-direction.dy, direction.dx) *
+            (attack.radius / direction.distance);
+        final strip = Path()
+          ..addPolygon([from + wing, to + wing, to - wing, from - wing], true);
+        canvas.drawPath(strip, fill);
+        canvas.drawPath(strip, rim);
+        canvas.drawLine(from, to, rim);
+      }
+    case LiteArchonAttack.crown:
+      for (final direction in run.archonCrownDirections(boss)) {
+        final ray = _offset(direction);
+        final shard = origin + ray * (1.80 + progress * .45);
+        final wing = Offset(-ray.dy, ray.dx) * .17;
+        final chip = Path()
+          ..addPolygon([
+            shard + ray * .28,
+            shard + wing,
+            shard - ray * .14,
+            shard - wing,
+          ], true);
+        canvas.drawPath(chip, fill);
+        canvas.drawPath(chip, rim);
+        canvas.drawLine(origin + ray * 2.4, origin + ray * 4.7, rim);
+      }
+  }
+}
+
+void _paintArchon(Canvas canvas, ui.Image art, LiteEnemy boss, double time) {
+  final windup = boss.archonAttack?.windup ?? 1;
+  final charge = boss.attacking
+      ? (1 - boss.windup / windup).clamp(0.0, 1.0)
+      : 0.0;
+  final strike = (boss.strikePose / .24).clamp(0.0, 1.0);
+  final flash = (boss.hitFlash * 2).clamp(0.0, .22);
+  final h =
+      3.05 * (1 + .028 * math.sin(time * 2.5) + charge * .06 - strike * .10);
+  final w = h * art.width / art.height;
+  canvas.scale(-1, 1);
+  canvas.translate(strike * -.14, 0);
+  final spritePaint = Paint()..filterQuality = FilterQuality.low;
+  if (flash > 0 || boss.archonPhase > 1) {
+    spritePaint.colorFilter = ColorFilter.mode(
+      const Color(0xffed9862)
+          .withValues(alpha: flash + (boss.archonPhase - 1) * .055),
+      BlendMode.srcATop,
+    );
+  }
+  canvas.drawImageRect(
+    art,
+    Rect.fromLTWH(0, 0, art.width.toDouble(), art.height.toDouble()),
+    Rect.fromLTWH(-w / 2, -h, w, h),
+    spritePaint,
+  );
+}
+
 double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.scostubandito => .83,
   LiteEnemyKind.granScostumato => 1.54,
@@ -6295,6 +6402,7 @@ double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.dronePostea => .86,
   LiteEnemyKind.luce || LiteEnemyKind.ombra => 1.23,
   LiteEnemyKind.veyrth => 1.48,
+  LiteEnemyKind.arconte => 1.50,
   LiteEnemyKind.minionVeyrth || LiteEnemyKind.ecoSpeculare => .76,
   LiteEnemyKind.rasvyr => 1.12,
   LiteEnemyKind.orbryx => .95,
@@ -6331,6 +6439,7 @@ double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.ombra ||
   LiteEnemyKind.ecoSpeculare => 2.23,
   LiteEnemyKind.veyrth => 2.44,
+  LiteEnemyKind.arconte => 3.05,
   LiteEnemyKind.minionVeyrth => 1.49,
   LiteEnemyKind.rasvyr => 1.94,
   LiteEnemyKind.orbryx => 1.67,
@@ -6401,6 +6510,7 @@ void _enemy(
     case LiteEnemyKind.slime:
       _slime(canvas, step);
     case LiteEnemyKind.costrutto ||
+        LiteEnemyKind.arconte ||
         LiteEnemyKind.guardiaSolare ||
         LiteEnemyKind.eliteSolare ||
         LiteEnemyKind.guardianoSolare ||

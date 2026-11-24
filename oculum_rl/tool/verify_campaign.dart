@@ -156,6 +156,8 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
   );
   final completed = <int>[];
   final hubs = <int>[];
+  final phases = <int>{};
+  final finalAttacks = <LiteArchonAttack>{};
   var shopping = false;
   for (var frame = 0; frame < 80 * 60 * 60 && !run.finished; frame++) {
     if (run.stageClear) {
@@ -218,6 +220,10 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
       run.advanceFrame(tick);
       continue;
     }
+    if (target.kind == LiteEnemyKind.arconte) {
+      phases.add(target.archonPhase);
+      if (target.archonAttack case final attack?) finalAttacks.add(attack);
+    }
     final offset = target.position - run.position;
     final distance = offset.magnitude;
     final heading = unit(offset);
@@ -261,9 +267,12 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
   if (run.victorious) completed.add(run.stage);
   final summary =
       'seed=$seed ${difficulty.name}: won=${run.victorious} '
-      'stage=${run.stage} act2=${realm.name} completed=${completed.join(",")} hubs=${hubs.join(",")}';
+      'stage=${run.stage} act2=${realm.name} completed=${completed.join(",")} hubs=${hubs.join(",")} '
+      'archonPhases=${phases.join(",")} attacks=${finalAttacks.map((a) => a.name).join(",")}';
   if (!run.victorious ||
       completed.length != LiteRun.campaignRooms ||
+      phases.length != 3 ||
+      finalAttacks.length != LiteArchonAttack.values.length ||
       hubs.join(',') != '5,11,17,23' ||
       !run.achievements.contains('atto-ii-${realm.name}')) {
     for (final enemy in run.enemies.where((enemy) => enemy.hp > 0)) {

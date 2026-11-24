@@ -349,7 +349,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                         runSpacing: 3,
                         children: [
                           Text(
-                            'Piano ${run.stage}/${run.lastStage} · ${run.biome.label}'
+                            'Piano ${run.stage}/${run.lastStage} · ${run.biome.label}${run.bossStatus}'
                             '${run.arenaSpeed > 1 ? ' · Ritmo +${run.arenaSpeedBonus}%' : ''}',
                           ),
                           Text(

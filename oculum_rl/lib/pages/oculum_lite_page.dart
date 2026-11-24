@@ -1674,13 +1674,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       LiteEncounter.boss => ' · Boss',
       LiteEncounter.finalBoss => ' · Finale',
     };
-    final bossPhase = switch (run.finalBossPhase) {
-      LiteFinalBossPhase.inactive || LiteFinalBossPhase.defeated => '',
-      LiteFinalBossPhase.tangible => ' · Veyrth vulnerabile',
-      LiteFinalBossPhase.intangible => ' · Distruggi i minion',
-      LiteFinalBossPhase.beamTangible => ' · Raggio attivo',
-      LiteFinalBossPhase.beamIntangible => ' · Raggio e minion attivi',
-    };
+    final bossPhase = run.bossStatus;
     return LayoutBuilder(
       builder: (context, size) {
         final compact =
