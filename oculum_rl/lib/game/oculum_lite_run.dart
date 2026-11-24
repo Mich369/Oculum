@@ -6218,7 +6218,7 @@ class LiteRun {
     }
     if (projectile.boomerang) {
       if (projectile.returning) {
-        final returnTo = _projectileOwnerPosition(projectile);
+        final returnTo = projectileReturnTarget(projectile);
         if (_distanceSquared(projectile.position, returnTo) < .58 * .58) {
           projectile.remaining = 0;
           return;
@@ -6365,7 +6365,7 @@ class LiteRun {
           projectile.kind == LiteProjectileKind.scythe &&
           enemy.hp > 0) {
         final direction = _unit(
-          _projectileOwnerPosition(projectile) - enemy.position,
+          projectileReturnTarget(projectile) - enemy.position,
         );
         enemy.position = _move(enemy.position, direction * .90, enemy.radius);
       }
@@ -6393,7 +6393,7 @@ class LiteRun {
     if (projectile.remaining <= 1e-9) _stopProjectile(projectile);
   }
 
-  Point<double> _projectileOwnerPosition(LiteProjectile projectile) {
+  Point<double> projectileReturnTarget(LiteProjectile projectile) {
     if (projectile.ownerCanHeal) return position;
     final id = projectile.sourceCloneId;
     if (id != null) {

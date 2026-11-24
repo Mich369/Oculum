@@ -147,7 +147,9 @@ class OculumLiteArena extends StatefulWidget {
     'assets/oculum/lite/oggetti-inchiostro.png',
   );
   static AssetImage? weaponArt(LiteWeapon weapon) =>
-      weapon.isBossLoot || weapon == LiteWeapon.fucileScostubandito
+      weapon.isBossLoot ||
+          weapon == LiteWeapon.fucileScostubandito ||
+          weapon == LiteWeapon.chakram
       ? null
       : AssetImage('assets/oculum/lite/arma-${weapon.name}.png');
   static const lootArt = AssetImage('assets/oculum/lite/bottino-ink.png');
@@ -2375,7 +2377,17 @@ class _ArenaPaint extends CustomPainter {
                 LiteInkFinish.canonica;
           }
         }
-        _projectile(canvas, projectile, finish: finish);
+        _projectile(
+          canvas,
+          projectile,
+          finish: finish,
+          animationLead: animationLead,
+          returnTarget:
+              projectile.kind == LiteProjectileKind.chakram &&
+                  projectile.returning
+              ? _offset(run.projectileReturnTarget(projectile))
+              : null,
+        );
       }
     }
     if (!run.dead &&
@@ -3909,6 +3921,7 @@ void _paintAshley(
   LiteStride? stride,
   double animationLead = 0,
   double springRemaining = 0,
+  bool releasingChakram = false,
 }) {
   const left = [.086, .52, .039, .441];
   const top = [.015, .020, .56, .515];
@@ -3938,9 +3951,13 @@ void _paintAshley(
     compress: frame <= 1
         ? _stepCompression(phase) * (stride?.strength ?? 0)
         : 0,
-    recoilArm: spring ? (1 - springRemaining / .28).clamp(0.0, 1.0) : 0,
+    recoilArm: spring
+        ? (1 - springRemaining / .28).clamp(0.0, 1.0)
+        : releasingChakram
+        ? .58
+        : 0,
   );
-  if (frame <= 1 && weapon != LiteWeapon.guanti) {
+  if (frame <= 1 && weapon != LiteWeapon.guanti && !releasingChakram) {
     final hand = frame == 0
         ? Offset(-width * .20, -1.15)
         : Offset(-width * .23, -1.60);
@@ -4466,6 +4483,8 @@ void _hero(
   Offset aiming = const Offset(.9, .08),
 }) {
   final ashley = sprites.ashley;
+  final releasingChakram =
+      weapon == LiteWeapon.chakram && (attackElapsed ?? 1) < .18;
   if (hero == LiteHero.ashley && ashley != null) {
     _paintAshley(
       canvas,
@@ -4483,6 +4502,7 @@ void _hero(
       stride: stride,
       animationLead: animationLead,
       springRemaining: springRemaining,
+      releasingChakram: releasingChakram,
     );
     return;
   }
@@ -4721,7 +4741,11 @@ void _hero(
         hero == LiteHero.curatorePeste ||
         hero == LiteHero.pyrel ||
         (hero != LiteHero.doppelganger && weapon != hero.fixedWeapon);
-    if (kitWeapon && !giant && !fallen && !preparingTalent) {
+    if (kitWeapon &&
+        !giant &&
+        !fallen &&
+        !preparingTalent &&
+        !releasingChakram) {
       canvas.save();
       canvas.translate(frame == 3 ? .52 : .31, -.94);
       canvas.rotate(-.21 + aiming.dy.clamp(-1.0, 1.0) * .31);
@@ -4792,6 +4816,7 @@ void _hero(
     }
     if (!fallen &&
         !swinging &&
+        !releasingChakram &&
         (isBandit
             ? weapon != LiteWeapon.fucileScostubandito
             : weapon != hero.fixedWeapon || hero != LiteHero.granScostumato)) {
@@ -4832,7 +4857,9 @@ void _hero(
       canvas.rotate(.075 * impulse);
     }
   }
-  if (poseArt != null && hero == LiteHero.duplicatore) {
+  if (poseArt != null &&
+      hero == LiteHero.duplicatore &&
+      weapon != LiteWeapon.chakram) {
     _paintClonatorePose(
       canvas,
       poseArt,
@@ -4960,7 +4987,13 @@ void _hero(
       -1.19 + swing * 1.24 + heading * .62,
       0.0,
     ),
-    LiteWeapon.boomerang || LiteWeapon.chakram => (
+    LiteWeapon.chakram => (
+      Offset(.36 + swing * .62, -1.32 + swing * .19 + breath),
+      Offset(-.42 - swing * .16, -.95 + breath),
+      heading * .75 - .49 + swing * 1.28,
+      0.0,
+    ),
+    LiteWeapon.boomerang => (
       Offset(.37 + swing * .52, -1.40 + swing * .28 + breath),
       Offset(-.42, -.90 + breath),
       heading * .64 - .64 + swing * .88,
@@ -5822,14 +5855,7 @@ void _weapon(Canvas canvas, LiteWeapon weapon, Color accent, Color ink) {
   final steelShadow = Color.lerp(steel, const Color(0xff403744), .62)!;
   switch (weapon) {
     case LiteWeapon.chakram:
-      canvas.drawCircle(
-        Offset.zero,
-        .24,
-        Paint()
-          ..color = const Color(0xffaadacc)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = .085,
-      );
+      _paintChakramRing(canvas, tilt: .8, spin: -.15);
     case LiteWeapon.boomerang:
       _poly(
         canvas,
@@ -7916,20 +7942,21 @@ void _projectile(
   Canvas canvas,
   LiteProjectile projectile, {
   LiteInkFinish finish = LiteInkFinish.canonica,
+  double animationLead = 0,
+  Offset? returnTarget,
 }) {
   final p = _offset(projectile.position);
   final heading = _offset(projectile.direction);
   switch (projectile.kind) {
     case LiteProjectileKind.chakram:
-      final turn = projectile.age * 27;
-      final ring = Rect.fromCenter(center: p, width: .50, height: .31);
-      final blade = Paint()
-        ..color = const Color(0xffb8e3d6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = .058;
-      canvas.drawArc(ring, turn, 2.45, false, blade);
-      canvas.drawArc(ring, turn + math.pi, 2.45, false, blade);
-      _inkSlash(canvas, p - heading * .50, p, const Color(0x7890ddd0), .057);
+      _paintChakramFlight(
+        canvas,
+        p,
+        heading,
+        projectile.age + animationLead,
+        returnTarget,
+      );
+      return;
     case LiteProjectileKind.solarBolt || LiteProjectileKind.solarRay:
       final ray = projectile.kind == LiteProjectileKind.solarRay;
       final tail = p - heading * (ray ? 1.9 : .55);

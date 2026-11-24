@@ -12,6 +12,10 @@ Da **Aggiornamenti** puoi disattivare i controlli automatici, cercare una nuova 
 
 In cooperativa, il colore della barra Vita è assegnato al posto nella squadra. L’host usa l’azzurro e fino a cinque ospiti usano oro, viola, avorio, cobalto e rame. L’HUD usa il colore del giocatore locale. In solo la barra è azzurra. Il verde identifica NPC alleati, pet ed evocazioni con barra Vita. Il rosso identifica i nemici.
 
+## Chakram d’Iridio
+
+Il disco ha un anello d’acciaio e la stessa sagoma nella mano e in volo. Ruota durante il lancio, lascia una scia breve e risale verso la mano quando rientra. Doppia orbita su G usa gli stessi effetti.
+
 ## Scatto e schivata
 
 Shift apre una scia d’inchiostro ocra lungo il movimento. La schivata intangibile dell’Evasore lascia impronte viola, il suo Open aggiunge luce dorata e il Velo dello Slime lascia una traccia verde azzurra. Nel clash le due scie ramate separano i combattenti. Questi effetti usano il volume **Effetti**. Shift da solo non concede intangibilità.

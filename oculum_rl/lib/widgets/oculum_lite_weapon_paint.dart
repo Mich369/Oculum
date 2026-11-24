@@ -290,3 +290,90 @@ void _paintDropSignal(
     }
   }
 }
+
+void _paintChakramRing(
+  Canvas canvas, {
+  required double tilt,
+  required double spin,
+}) {
+  const steel = Color(0xff7cadad);
+  const bevel = Color(0xffcbe9e2);
+  const dark = Color(0xff334d55);
+  const outer = Rect.fromLTRB(-.34, -.34, .34, .34);
+  const inner = Rect.fromLTRB(-.20, -.20, .20, .20);
+  canvas.save();
+  canvas.scale(1, tilt);
+  canvas.rotate(spin);
+  final ring = Path()
+    ..fillType = PathFillType.evenOdd
+    ..addOval(outer)
+    ..addOval(inner);
+  canvas.drawPath(ring, Paint()..color = steel);
+  canvas.drawPath(
+    ring,
+    Paint()
+      ..color = _ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .048,
+  );
+  final shadow = Paint()
+    ..color = dark
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = .065;
+  final rim = Paint()
+    ..color = bevel
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = .048;
+  for (var i = 0; i < 3; i++) {
+    final angle = i * math.pi * 2 / 3;
+    canvas.drawArc(outer.deflate(.045), angle + .15, .95, false, rim);
+    canvas.drawArc(inner.inflate(.038), angle + .54, 1.11, false, shadow);
+    final rune = Offset(math.cos(angle), math.sin(angle));
+    _inkSlash(canvas, rune * .229, rune * .302, const Color(0xffe9f3c6), .029);
+  }
+  canvas.restore();
+}
+
+void _paintChakramFlight(
+  Canvas canvas,
+  Offset feet,
+  Offset direction,
+  double age,
+  Offset? returnTarget,
+) {
+  final launch = (1 - age / .11).clamp(0.0, 1.0);
+  final catchEase = returnTarget == null
+      ? 0.0
+      : (1 - ((returnTarget - feet).distance - .58) / 1.35).clamp(0.0, 1.0);
+  final grip = math.max(launch, catchEase);
+  final at =
+      feet +
+      direction * (.37 * launch) -
+      Offset(0, .72 + grip * .49 + math.sin(age * 12) * .055);
+  final fadeTail = (age / .07).clamp(0.0, 1.0) * (1 - catchEase * .62);
+  final normal = Offset(-direction.dy, direction.dx);
+  final wake = at - direction * (1.05 * fadeTail);
+  _shadow(canvas, feet, .25, .10, alpha: .30);
+  _inkSlash(
+    canvas,
+    wake + normal * .16,
+    at - direction * .12,
+    const Color(0x885d918e),
+    .125 * fadeTail,
+  );
+  _inkSlash(
+    canvas,
+    wake + direction * .25 - normal * .11,
+    at - direction * .21,
+    const Color(0xb6b7eadf),
+    .058 * fadeTail,
+  );
+  _actor(canvas, at, 1 - catchEase * .28, 1 - catchEase * .28, () {
+    canvas.rotate(direction.direction * .64 + math.sin(age * 15) * .11);
+    _paintChakramRing(
+      canvas,
+      tilt: .60 + math.sin(age * 14) * .17,
+      spin: age * 29 + math.sin(age * 14) * .1,
+    );
+  });
+}

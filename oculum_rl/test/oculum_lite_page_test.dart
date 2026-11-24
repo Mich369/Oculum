@@ -207,6 +207,75 @@ void main() {
     }
   });
 
+  testWidgets('chakram paints just one steel ring on launch and return', (
+    tester,
+  ) async {
+    final run =
+        LiteRun(seed: 49, hero: LiteHero.evasore, weapon: LiteWeapon.boomerang)
+          ..position = const Point(14, 11)
+          ..enemies.clear()
+          ..obstacles.clear();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: OculumLiteArena(run: run)),
+      ),
+    );
+    final paint = tester.widget<CustomPaint>(
+      find.descendant(
+        of: find.byType(OculumLiteArena),
+        matching: find.byType(CustomPaint),
+      ),
+    );
+    (int, int) countWeaponPaints() {
+      final canvas = _ArenaRecordingCanvas();
+      paint.painter!.paint(canvas, const Size(800, 450));
+      var steel = 0;
+      var wood = 0;
+      for (final call in canvas.invocations) {
+        final invocation = call.invocation;
+        if (invocation.memberName != #drawPath) continue;
+        final color = (invocation.positionalArguments[1] as Paint).color
+            .toARGB32();
+        if (color == 0xff7cadad) steel++;
+        if (color == 0xffe6b976) wood++;
+      }
+      return (steel, wood);
+    }
+
+    expect(OculumLiteArena.weaponArt(LiteWeapon.chakram), isNull);
+    final (steel, wood) = countWeaponPaints();
+    for (final returning in [false, true]) {
+      run.projectiles
+        ..clear()
+        ..add(
+          LiteProjectile(
+            position: const Point(15.4, 11),
+            direction: Point<double>(returning ? -1 : 1, 0),
+            speed: 21,
+            remaining: 7,
+            damage: 9,
+            boomerang: true,
+            returning: returning,
+            kind: LiteProjectileKind.chakram,
+          )..age = returning ? .6 : .15,
+        );
+      expect(countWeaponPaints(), (steel + 1, wood));
+    }
+    run.projectiles
+      ..clear()
+      ..add(
+        LiteProjectile(
+          position: const Point(15.4, 11),
+          direction: const Point(1, 0),
+          speed: 15,
+          remaining: 7,
+          damage: 5,
+          boomerang: true,
+        ),
+      );
+    expect(countWeaponPaints(), (steel, wood + 1));
+  });
+
   testWidgets('the permanent shop benefits a new Scostubandito using Space', (
     tester,
   ) async {
