@@ -43,6 +43,19 @@ void wait(LiteRun world, int tenths) {
 
 void main() {
   test(
+    'the mechanical rooster uses its own sprite family, outside the infernals',
+    () {
+      expect(chicken.infernal, isFalse);
+      expect(chicken.solar, isFalse);
+      expect(LiteHero.values.where((hero) => hero.infernal), [
+        LiteHero.demoneMinore,
+        LiteHero.demoneIntermedio,
+        LiteHero.demoneMaggiore,
+        LiteHero.diavolo,
+      ]);
+    },
+  );
+  test(
     'a previous playable hero can equip a finish without replacing the run',
     () {
       final world = run(hero: LiteHero.ashley);

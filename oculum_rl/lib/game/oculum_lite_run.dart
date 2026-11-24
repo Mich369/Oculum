@@ -202,7 +202,10 @@ enum LiteHero {
 
   bool get solar =>
       index >= guardiaSolare.index && index <= aberrazioneSolare.index;
-  bool get infernal => index >= demoneMinore.index;
+  bool get infernal => switch (this) {
+    demoneMinore || demoneIntermedio || demoneMaggiore || diavolo => true,
+    _ => false,
+  };
 
   bool get specialTalent =>
       sprite != null || this == curatorePeste || index >= pyrel.index;
