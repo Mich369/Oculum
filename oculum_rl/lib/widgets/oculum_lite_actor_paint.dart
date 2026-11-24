@@ -189,8 +189,30 @@ final _inkEnemyRigs = {
   ),
 };
 
-double _stridePhase(LiteStride stride, _InkRig rig, double lead) =>
-    (stride.distance + stride.speed * lead) * math.pi * 2 / rig.strideMetres;
+double _stridePhase(LiteStride? stride, double strideMetres, double lead) =>
+    stride == null
+    ? 0
+    : (stride.distance + stride.speed * lead) * math.pi * 2 / strideMetres;
+
+// Weight drops on contact and rises during the passing pose. Scale around
+// the ground anchor, so the whole drawing never bobs away from its shadow.
+double _stepCompression(double phase) =>
+    .024 * (1 + math.cos(phase * 2 - .36)) / 2;
+
+void _groundedMotion(
+  Canvas canvas,
+  LiteStride? stride,
+  double animationLead, {
+  double strideMetres = 1.65,
+}) {
+  final pace = stride?.strength ?? 0;
+  if (pace <= .005) return;
+  final phase = _stridePhase(stride, strideMetres, animationLead);
+  canvas.scale(
+    1 + _stepCompression(phase) * pace * .32,
+    1 - _stepCompression(phase) * pace,
+  );
+}
 
 void _inkActorSprite(
   Canvas canvas,
@@ -206,6 +228,7 @@ void _inkActorSprite(
   double compress = 0,
   double recoilArm = 0,
   double clothFlow = 0,
+  bool grounded = true,
 }) {
   if (strength <= .005 &&
       anticipation == 0 &&
@@ -226,13 +249,17 @@ void _inkActorSprite(
       : _farInkGrid;
   final positions = Float32List(grid.rowLength * grid.rowLength * 2);
   final weights = rig.weightsFor(grid);
-  final wave = [
+  final steps = [
     for (var i = 0; i < rig.tips.length; i++)
-      math.sin(phase + (i.isOdd ? math.pi : 0) + (i ~/ 2) * .58) * strength,
+      phase + (i.isOdd ? math.pi : 0) + (i ~/ 2) * .58,
   ];
-  final drag = [
-    for (var i = 0; i < rig.tips.length; i++)
-      math.cos(phase + (i.isOdd ? math.pi : 0) + (i ~/ 2) * .58) * strength,
+  final reach = [for (final step in steps) math.sin(step) * strength];
+  final lift = [
+    for (final step in steps)
+      // A short swing, followed by a longer planted phase.
+      math.pow(math.max(0, math.cos(step) - (grounded ? .18 : 0)), 2) *
+          strength *
+          (grounded ? .096 : .111),
   ];
   final clothWave = math.sin(phase * .7) * clothFlow;
   for (var row = 0, vertex = 0; row < grid.rowLength; row++) {
@@ -255,10 +282,10 @@ void _inkActorSprite(
         dx -= recoilArm * .26 * extended;
         dy += recoilArm * .018 * extended;
       }
-      for (var joint = 0; joint < wave.length; joint++) {
-        final w = weights[vertex * wave.length + joint];
-        dx += wave[joint] * w * .105;
-        dy -= math.max(0, drag[joint]) * w * .111;
+      for (var joint = 0; joint < steps.length; joint++) {
+        final w = weights[vertex * steps.length + joint];
+        dx += reach[joint] * w * .094;
+        dy -= lift[joint] * w;
       }
       final i = vertex * 2;
       positions[i] = destination.left + (x + dx) * destination.width;

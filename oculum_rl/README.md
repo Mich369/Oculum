@@ -55,6 +55,8 @@ Gioco autonomo con campagna roguelite 2D. Usa salvataggi e impostazioni propri. 
 
 ## Combattimento e progressione
 
+I passi seguono la distanza percorsa nell’arena, con appoggi più leggibili e peso del corpo sulla gamba in carico. Le pose di attacco conservano le loro finestre di combattimento. La cadenza segue anche il cambio di velocità dei piani e si ferma quando un ostacolo blocca il movimento.
+
 - Dopo aver ripulito il piano, premi **R** al portale. La scelta indica prima ondata, disposizione dei ripari, eventuale élite o boss e possibile pergamena a Postea. In solo mostra anche il potenziamento di zona, il Ristoro dopo la vittoria e gli eventuali potenziamenti non riscossi che scadrebbero partendo. In cooperativa il Master propone il percorso e il gruppo lo conferma.
 - La campagna contiene i piani 0–13. Élite ai piani 0, 6 e 12, La tua Luce al 3, La tua Ombra al 9 e Veyrth al 13.
 - Veyrth evoca dodici sfere color prugna. Le vedi formarsi in cerchio per 0,47 secondi prima che partano in tutte le direzioni. Anche intangibile, Veyrth può usare le sfere.

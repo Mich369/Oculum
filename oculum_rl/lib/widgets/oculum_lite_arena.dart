@@ -1595,7 +1595,7 @@ class _ArenaPaint extends CustomPainter {
                 art,
                 species,
                 animal.stride,
-                time,
+                animationLead,
                 animal.attacking || animal.strikePose > 0,
                 animal.hitFlash > 0,
               );
@@ -1656,7 +1656,7 @@ class _ArenaPaint extends CustomPainter {
                 canvas,
                 infernalArt!,
                 infernal,
-                time,
+                animationLead,
                 enemy.stride,
                 enemy.windup,
                 enemy.strikePose,
@@ -1671,7 +1671,7 @@ class _ArenaPaint extends CustomPainter {
                 canvas,
                 solarArt!,
                 solarRow,
-                time,
+                animationLead,
                 enemy.stride,
                 enemy.windup,
                 enemy.strikePose,
@@ -1698,11 +1698,13 @@ class _ArenaPaint extends CustomPainter {
                 nightRow,
                 _newFrame(
                   enemy.stride,
-                  time,
+                  animationLead,
                   preparing: enemy.attacking,
                   hitting: enemy.strikePose > 0,
                 ),
                 height: _enemyHeight(enemy.kind),
+                stride: enemy.stride,
+                animationLead: animationLead,
                 fallen: enemy.hp <= 0,
               );
               return;
@@ -1715,11 +1717,13 @@ class _ArenaPaint extends CustomPainter {
                 creature,
                 _newFrame(
                   enemy.stride,
-                  time,
+                  animationLead,
                   preparing: enemy.attacking,
                   hitting: enemy.strikePose > 0 || enemy.hitFlash > 0,
                 ),
                 height: _enemyHeight(enemy.kind),
+                stride: enemy.stride,
+                animationLead: animationLead,
                 fallen: enemy.hp <= 0,
               );
               return;
@@ -1860,8 +1864,14 @@ class _ArenaPaint extends CustomPainter {
                     canvas,
                     art,
                     companion == LiteCompanion.scheletroFalce ? 2 : 3,
-                    _newFrame(clone.stride, time, hitting: clone.swing > 0),
+                    _newFrame(
+                      clone.stride,
+                      animationLead,
+                      hitting: clone.swing > 0,
+                    ),
                     height: 2.12,
+                    stride: clone.stride,
+                    animationLead: animationLead,
                     fallen: clone.down,
                   );
                 }
@@ -1873,8 +1883,14 @@ class _ArenaPaint extends CustomPainter {
                   canvas,
                   nightActors!,
                   nightRow,
-                  _newFrame(clone.stride, time, hitting: clone.swing > 0),
+                  _newFrame(
+                    clone.stride,
+                    animationLead,
+                    hitting: clone.swing > 0,
+                  ),
                   height: _enemyHeight(companion.sprite),
+                  stride: clone.stride,
+                  animationLead: animationLead,
                   fallen: clone.down,
                 );
                 return;
@@ -1885,8 +1901,14 @@ class _ArenaPaint extends CustomPainter {
                   canvas,
                   newActors!,
                   row,
-                  _newFrame(clone.stride, time, hitting: clone.swing > 0),
+                  _newFrame(
+                    clone.stride,
+                    animationLead,
+                    hitting: clone.swing > 0,
+                  ),
                   height: _enemyHeight(companion.sprite) * .78,
+                  stride: clone.stride,
+                  animationLead: animationLead,
                   fallen: clone.down,
                 );
                 return;
@@ -2673,7 +2695,10 @@ void _paintVeyrth(
       Rect.fromLTWH(-width * .50, -height + hover, width, height),
       draw,
       rig,
-      phase: time * 5.1 + _stridePhase(enemy.stride, rig, animationLead),
+      grounded: false,
+      phase:
+          time * 5.1 +
+          _stridePhase(enemy.stride, rig.strideMetres, animationLead),
       strength: minion ? .70 : .56,
       anticipation: enemy.attacking ? .7 : 0,
       strike: enemy.strikePose / .24,
@@ -2894,7 +2919,7 @@ bool _paintMonster(
     canvas.drawImageRect(atlas, original, pose, _monsterSampler);
   } else {
     final strength = clashing ? 0.0 : stride.strength;
-    final phase = _stridePhase(stride, rig, animationLead);
+    final phase = _stridePhase(stride, rig.strideMetres, animationLead);
     final strain = windup != null
         ? (.24 + (1 - windup / .46).clamp(0.0, 1.0) * .76)
         : 0.0;
@@ -2915,7 +2940,8 @@ bool _paintMonster(
       strength: flyer ? .40 : strength,
       anticipation: strain,
       strike: ((strike - animationLead) / .24).clamp(0.0, 1.0),
-      compress: compress,
+      compress: compress + (flyer ? 0 : _stepCompression(phase) * strength),
+      grounded: !flyer && kind != LiteEnemyKind.slime,
     );
     if (flyer) _paintDroneRotor(canvas, pose, time);
   }
@@ -3540,10 +3566,8 @@ void _paintClonatorePose(
   ui.Image atlas,
   ui.Image? heads,
   LiteWeapon weapon,
-  OculumLiteAppearance appearance,
-  double time, {
+  OculumLiteAppearance appearance, {
   required bool spectral,
-  required bool moving,
   LiteStride? stride,
   double animationLead = 0,
   double? attackElapsed,
@@ -3577,21 +3601,21 @@ void _paintClonatorePose(
   final width = height * _isometricY * breadth * (.87 + appearance.frame * .26);
   final source = Rect.fromLTWH(frame % 4 * cell, frame ~/ 4 * cell, cell, cell);
   final landed = (attackElapsed ?? .25).clamp(0.0, .25);
-  final motion = attackElapsed == null
-      ? math.sin(time * (moving ? 15 : 3)) * (moving ? .055 : .013)
-      : (1 - landed / .25) * .11;
-  final destination = Rect.fromLTWH(
-    -width * (183 / cell) + (attackElapsed == null ? 0 : motion),
-    -spriteHeight * ((feminine ? 372 : 350) / cell) -
-        (moving ? motion.abs() : 0),
-    width,
-    spriteHeight,
-  );
-  final ink = Paint()..filterQuality = FilterQuality.medium;
+  final recoil = attackElapsed == null ? 0.0 : (1 - landed / .25) * .11;
   final rig = _inkHeroFeet[feminine]![frame];
-  final phase = stride == null ? 0.0 : _stridePhase(stride, rig, animationLead);
+  final phase = _stridePhase(stride, rig.strideMetres, animationLead);
   final strength =
       (stride?.strength ?? 0.0) * (attackElapsed == null ? 1 : .65);
+  final contact = (feminine ? 372 : 350) / cell;
+  final heightWithWeight =
+      spriteHeight * (1 - _stepCompression(phase) * strength);
+  final destination = Rect.fromLTWH(
+    -width * (183 / cell) + recoil,
+    -heightWithWeight * contact,
+    width,
+    heightWithWeight,
+  );
+  final ink = Paint()..filterQuality = FilterQuality.medium;
   if (spectral) {
     _oval(
       canvas,
@@ -3822,7 +3846,9 @@ void _paintAshley(
   final width = 2.48 * _isometricY * source.width / source.height;
   final spring = frame == 3;
   final rig = spring ? _inkAshleySpring : _inkAshley;
-  final phase = stride == null ? 0.0 : _stridePhase(stride, rig, animationLead);
+  final phase = stride == null
+      ? 0.0
+      : _stridePhase(stride, rig.strideMetres, animationLead);
   _inkActorSprite(
     canvas,
     atlas,
@@ -3831,7 +3857,10 @@ void _paintAshley(
     Paint()..filterQuality = FilterQuality.medium,
     rig,
     phase: phase,
-    strength: frame == 1 ? stride?.strength ?? 0 : 0,
+    strength: frame <= 1 ? stride?.strength ?? 0 : 0,
+    compress: frame <= 1
+        ? _stepCompression(phase) * (stride?.strength ?? 0)
+        : 0,
     recoilArm: spring ? (1 - springRemaining / .28).clamp(0.0, 1.0) : 0,
   );
   if (frame <= 1 && weapon != LiteWeapon.guanti) {
@@ -4136,16 +4165,25 @@ int? _newCreatureRow(LiteEnemyKind kind) => switch (kind) {
 
 int _newFrame(
   LiteStride? stride,
-  double time, {
+  double animationLead, {
   bool preparing = false,
   bool hitting = false,
 }) {
   if (hitting) return 3;
   if (preparing) return 2;
-  if ((stride?.strength ?? 0) > .08 &&
-      math.sin((stride?.distance ?? 0) * 7) > -.58)
-    return 1;
-  return 0;
+  return _strideFrame(stride, 1.55, animationLead);
+}
+
+int _strideFrame(
+  LiteStride? stride,
+  double strideMetres,
+  double animationLead,
+) {
+  if ((stride?.speed ?? 0) < .08 || (stride?.strength ?? 0) < .08) {
+    return 0;
+  }
+  final phase = _stridePhase(stride, strideMetres, animationLead);
+  return math.cos(phase * 2) < 0 ? 1 : 0;
 }
 
 void _newActor(
@@ -4154,6 +4192,8 @@ void _newActor(
   int row,
   int frame, {
   required double height,
+  LiteStride? stride,
+  double animationLead = 0,
   bool fallen = false,
   bool phantom = false,
 }) {
@@ -4161,6 +4201,8 @@ void _newActor(
   if (fallen) {
     canvas.rotate(1.24);
     canvas.scale(.73);
+  } else if (frame <= 1) {
+    _groundedMotion(canvas, stride, animationLead, strideMetres: 1.55);
   }
   final dest = Rect.fromLTWH(
     -height * .75,
@@ -4290,7 +4332,7 @@ void _animalSprite(
   ui.Image art,
   LiteAnimal animal,
   LiteStride? stride,
-  double time,
+  double animationLead,
   bool attacking,
   bool talent, {
   bool hero = false,
@@ -4301,10 +4343,14 @@ void _animalSprite(
       ? 3
       : attacking
       ? 2
-      : (((stride?.strength ?? 0) > .09) && (time * 11).floor().isEven ? 1 : 0);
+      : _strideFrame(stride, .92, animationLead);
   final size = hero ? 2.4 : 1.47;
   canvas.save();
-  if (fallen) canvas.rotate(-.68);
+  if (fallen) {
+    canvas.rotate(-.68);
+  } else if (!attacking && !talent) {
+    _groundedMotion(canvas, stride, animationLead, strideMetres: .92);
+  }
   canvas.drawImageRect(
     art,
     Rect.fromLTWH(frame * side, animal.index * side, side, side),
@@ -4359,7 +4405,7 @@ void _hero(
       canvas,
       infernalActors,
       row,
-      time,
+      animationLead,
       stride,
       preparingAttack || preparingTalent ? .50 : 0,
       attackElapsed == null ? 0 : (.24 - attackElapsed).clamp(0, .24),
@@ -4376,7 +4422,7 @@ void _hero(
       canvas,
       solarActors,
       solar,
-      time,
+      animationLead,
       stride,
       preparingAttack || preparingTalent ? .5 : 0,
       attackElapsed == null ? 0 : (.24 - attackElapsed).clamp(0, .24),
@@ -4411,9 +4457,7 @@ void _hero(
         ? 3
         : attackElapsed != null
         ? 2
-        : moving && (time * 11).floor().isEven
-        ? 1
-        : 0;
+        : _strideFrame(stride, 1.16, animationLead);
     final cellWidth = mechanicalChicken.width / 4;
     final cellHeight = mechanicalChicken.height * .72;
     final source = Rect.fromLTWH(
@@ -4425,7 +4469,11 @@ void _hero(
     const height = 2.28;
     final width = height * cellWidth / cellHeight;
     canvas.save();
-    if (fallen) canvas.rotate(-.68);
+    if (fallen) {
+      canvas.rotate(-.68);
+    } else if (frame <= 1) {
+      _groundedMotion(canvas, stride, animationLead, strideMetres: 1.16);
+    }
     canvas.drawImageRect(
       mechanicalChicken,
       source,
@@ -4443,7 +4491,7 @@ void _hero(
       faunaActors,
       body,
       stride,
-      time,
+      animationLead,
       attackElapsed != null,
       preparingTalent || punchPose > 0,
       hero: true,
@@ -4467,7 +4515,7 @@ void _hero(
     }
     final frame = _newFrame(
       stride,
-      time,
+      animationLead,
       preparing:
           hero == LiteHero.cavaliereLunare && preparingTalent ||
           preparingAttack,
@@ -4485,6 +4533,8 @@ void _hero(
           : hero == LiteHero.slimeBlu
           ? 1.45
           : 2.58,
+      stride: stride,
+      animationLead: animationLead,
       fallen: fallen,
       phantom: phantom,
     );
@@ -4497,8 +4547,10 @@ void _hero(
         canvas,
         nightActors,
         copied,
-        _newFrame(stride, time, hitting: attackElapsed != null),
+        _newFrame(stride, animationLead, hitting: attackElapsed != null),
         height: _enemyHeight(mimic.kind),
+        stride: stride,
+        animationLead: animationLead,
         fallen: fallen,
       );
       return;
@@ -4509,8 +4561,11 @@ void _hero(
         canvas,
         newActors,
         row,
-        _newFrame(stride, time, hitting: attackElapsed != null),
+        _newFrame(stride, animationLead, hitting: attackElapsed != null),
         height: _enemyHeight(mimic.kind),
+        stride: stride,
+        animationLead: animationLead,
+        fallen: fallen,
       );
     } else if (banditArt == null ||
         !_paintMonster(
@@ -4539,11 +4594,15 @@ void _hero(
     final striking = attackElapsed != null && attackElapsed < .24;
     final frame = _newFrame(
       stride,
-      time,
+      animationLead,
       preparing: preparingAttack,
       hitting: striking || preparingTalent,
     );
     final height = giant ? 3.67 : 2.46;
+    canvas.save();
+    if (!fallen && frame <= 1) {
+      _groundedMotion(canvas, stride, animationLead, strideMetres: 1.55);
+    }
     _newActor(
       canvas,
       newActors,
@@ -4565,6 +4624,7 @@ void _hero(
       _holdWeapon(canvas, weapon, gearArt, const Color(0xffa48d73), _ink);
       canvas.restore();
     }
+    canvas.restore();
     return;
   }
   if (hero == LiteHero.veyrth && bossArt != null) {
@@ -4578,6 +4638,7 @@ void _hero(
       _inkVeyrth,
       phase: time * 5,
       strength: moving ? .82 : .44,
+      grounded: false,
       anticipation: preparingAttack ? .8 : 0,
       strike: attackElapsed != null ? .65 : 0,
     );
@@ -4673,9 +4734,7 @@ void _hero(
       heads,
       weapon,
       appearance,
-      time,
       spectral: clone || phantom,
-      moving: moving,
       attackElapsed: attackElapsed,
       stride: stride,
       animationLead: animationLead,
@@ -4687,15 +4746,13 @@ void _hero(
   final outfit = appearance.outfit;
   final armored = outfit == OculumLiteOutfit.cuirass;
   final cloaked = outfit == OculumLiteOutfit.cloak;
-  final cadence = stride == null
-      ? time * 16
-      : (stride.distance + stride.speed * animationLead) * math.pi * 2 / 1.65;
-  final walkSwing = moving && !fallen
-      ? math.sin(cadence) * (stride?.strength ?? 1.0) * .22
-      : 0.0;
+  final cadence = _stridePhase(stride, 1.65, animationLead);
+  final pace = fallen ? 0.0 : stride?.strength ?? 0;
+  final walkSwing = math.sin(cadence) * pace * .22;
   final breath = fallen
       ? 0.0
-      : math.sin(time * (moving ? 16 : 4)) * (moving ? .026 : .014);
+      : math.sin(time * 3.4) * .014 * (1 - pace) +
+            _stepCompression(cadence) * pace * 1.6;
   final trim = ghost ? const Color(0xffd0b5ee) : appearance.accent;
   Color spirit(Color color) => ghost
       ? Color.lerp(
@@ -4912,8 +4969,12 @@ void _hero(
     }
     final stepBack = lean ? -.40 : -.29;
     final stepFront = lean ? .33 : .31;
-    final ankleBack = Offset(stepBack - walkSwing, lean ? -.10 : -.06);
-    final ankleFront = Offset(stepFront + walkSwing, 0);
+    final lift = math.cos(cadence) * pace;
+    final ankleBack = Offset(
+      stepBack - walkSwing,
+      (lean ? -.10 : -.06) - math.max(0, -lift) * .10,
+    );
+    final ankleFront = Offset(stepFront + walkSwing, -math.max(0, lift) * .10);
     _heroBoot(
       canvas,
       Offset(hip - .17, -.67),

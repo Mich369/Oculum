@@ -421,7 +421,7 @@ void _solarActor(
   Canvas canvas,
   ui.Image atlas,
   int row,
-  double time,
+  double animationLead,
   LiteStride? stride,
   double windup,
   double strike,
@@ -432,14 +432,16 @@ void _solarActor(
 }) {
   final cell = atlas.width / columns;
   final size = hero ? 3.05 : (row == 2 ? 3.33 : 2.80);
-  final pace = stride?.strength ?? 0;
   final anticipation = windup > 0 ? .17 + (1 - windup.clamp(0, 1)) * .05 : 0.0;
   final recoil = strike * .85;
-  final step = math.sin((stride?.distance ?? 0) * 6);
   canvas.save();
-  if (fallen) canvas.rotate(-1.18);
-  canvas.translate(recoil - anticipation, -step.abs() * pace * .095);
-  canvas.rotate((anticipation - recoil) * .28 + step * pace * .045);
+  if (fallen) {
+    canvas.rotate(-1.18);
+  } else if (windup <= 0 && strike <= 0) {
+    _groundedMotion(canvas, stride, animationLead, strideMetres: 1.72);
+  }
+  canvas.translate(recoil - anticipation, 0);
+  canvas.rotate((anticipation - recoil) * .28);
   final dest = Rect.fromLTWH(-size / 2, -size, size, size);
   final ink = Paint()..filterQuality = FilterQuality.medium;
   if (hit > 0) {
