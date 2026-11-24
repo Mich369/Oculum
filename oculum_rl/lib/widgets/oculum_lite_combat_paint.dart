@@ -542,16 +542,50 @@ int? _infernalRow(LiteEnemyKind kind) => switch (kind) {
 
 void _burrowWarning(Canvas canvas, LiteEnemy enemy, LiteBurrow track) {
   const pigment = Color(0xffe7b582);
+  if (track.exposed) {
+    final at = _offset(enemy.position);
+    final axis = _offset(enemy.hitboxAxis);
+    final half = enemy.hitboxHalfLength;
+    final radius = enemy.hitboxRadius;
+    final contact = RRect.fromRectAndRadius(
+      Rect.fromLTRB(-half - radius, -radius, half + radius, radius),
+      Radius.circular(radius),
+    );
+    canvas.save();
+    canvas.translate(at.dx, at.dy);
+    canvas.rotate(math.atan2(axis.dy, axis.dx));
+    canvas.drawRRect(contact, Paint()..color = const Color(0x39b85236));
+    canvas.drawRRect(
+      contact,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = .062
+        ..color = const Color(0xffc98155),
+    );
+    for (final side in [-1.0, 1.0]) {
+      _inkSlash(
+        canvas,
+        Offset(side * half - .17, -radius),
+        Offset(side * half + .17, radius),
+        const Color(0x92edbd86),
+        .065,
+      );
+    }
+    canvas.restore();
+    return;
+  }
   if (track.warning <= 0) return;
-  final start = _offset(track.start);
-  final end = _offset(track.end);
+  final axis = _offset(enemy.hitboxAxis);
+  final extent = enemy.hitboxHalfLength + enemy.hitboxRadius;
+  final start = _offset(track.start) - axis * extent;
+  final end = _offset(track.end) + axis * extent;
   final line = end - start;
   if (line.distance < .001) return;
   final f = line / line.distance;
   final side = Offset(-f.dy, f.dx);
   final heat = (1 - track.warning / .82).clamp(0.0, 1.0);
   for (var sign in [-1.0, 1.0]) {
-    final edge = side * ((enemy.radius + .26) * sign);
+    final edge = side * (enemy.hitboxRadius * sign);
     _inkSlash(
       canvas,
       start + edge,

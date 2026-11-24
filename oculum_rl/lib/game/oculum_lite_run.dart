@@ -476,7 +476,7 @@ enum LiteEnemyKind {
   demoneMaggiore('Demone Maggiore Prediletto', 72, .65, 3.68, 14),
   diavolo('Diavolo del Patto', 146, .94, 2.38, 19),
   divoramitu('Divoramitù Elité', 78, 1.13, 2.3, 18),
-  divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.50, 2.5, 23);
+  divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.85, 2.5, 23);
 
   const LiteEnemyKind(
     this.label,
@@ -917,6 +917,28 @@ class LiteEnemy {
 
   String get name => kind.label;
   double get radius => kind.radius;
+  double get hitboxRadius => burrow == null ? radius : radius * .73;
+  double get hitboxHalfLength => burrow == null ? 0 : radius * 1.22;
+  Point<double> get hitboxAxis {
+    final track = burrow;
+    return track == null
+        ? const Point(1, 0)
+        : LiteRun._unit(track.end - track.start);
+  }
+
+  Point<double> closestHitboxPoint(Point<double> at) {
+    if (burrow == null) return position;
+    final axis = hitboxAxis;
+    final delta = at - position;
+    final along = (delta.x * axis.x + delta.y * axis.y).clamp(
+      -hitboxHalfLength,
+      hitboxHalfLength,
+    );
+    return position + axis * along;
+  }
+
+  bool hitboxContains(Point<double> at, {double extra = 0}) =>
+      at.distanceTo(closestHitboxPoint(at)) <= hitboxRadius + extra;
   bool get attacking => windup > 0;
   bool get preparingSpheres =>
       kind == LiteEnemyKind.veyrth && hp > 0 && attacking && !preparingBeam;
@@ -1912,7 +1934,11 @@ class LiteRun {
       floor < 3 ? 0 : 15 + (floor - 3) * 2;
   static int enemyDamageBonusAt(int floor) => floor < 3 ? 0 : 12 + (floor - 3);
   static int arenaSpeedBonusAt(int floor) => max(0, floor ~/ 3) * 10;
-  double get arenaSpeed => 1 + arenaSpeedBonusAt(stage) / 100;
+  double get arenaSpeed {
+    final paceFloor = inActTwo ? min(finalStage, stage + actRoom) : stage;
+    return 1 + arenaSpeedBonusAt(paceFloor) / 100;
+  }
+
   double get _floorDamageScale => 1 + enemyDamageBonusAt(stage) / 100;
   static ({int life, int damage}) challengeBonus(
     int floor,
@@ -3617,17 +3643,19 @@ class LiteRun {
       return true;
     }
     for (final enemy in _attackableCreatures) {
+      final hitPoint = enemy.closestHitboxPoint(origin);
       if (enemy.hp <= 0 ||
-          !_inArc(
-            origin,
-            direction,
-            enemy.position,
-            range + enemy.radius,
-            minDot: minDot,
-          )) {
+          !(enemy.burrow != null && enemy.hitboxContains(origin)) &&
+              !_inArc(
+                origin,
+                direction,
+                hitPoint,
+                range + enemy.hitboxRadius,
+                minDot: minDot,
+              )) {
         continue;
       }
-      if (_lineBlocked(origin, enemy.position)) continue;
+      if (_lineBlocked(origin, hitPoint)) continue;
       if (_enemyIntangible(enemy)) {
         if (ownerCanHeal) _recordIntangible(enemy);
         continue;
@@ -4704,10 +4732,14 @@ class LiteRun {
     double push = 0,
   }) {
     for (final enemy in _attackableCreatures) {
+      final hitPoint = enemy.closestHitboxPoint(source);
+      final outside = enemy.burrow == null
+          ? _distanceSquared(source, hitPoint) > radius * radius
+          : !enemy.hitboxContains(source, extra: radius);
       if (_enemyIntangible(enemy) ||
           enemy.hp <= 0 ||
-          _distanceSquared(source, enemy.position) > radius * radius ||
-          _lineBlocked(source, enemy.position))
+          outside ||
+          _lineBlocked(source, hitPoint))
         continue;
       _hitEnemy(
         enemy,
@@ -6190,7 +6222,7 @@ class LiteRun {
     }
     for (final enemy in _attackableCreatures) {
       if (enemy.hp <= 0 ||
-          _distanceSquared(next, enemy.position) > _square(enemy.radius) ||
+          !enemy.hitboxContains(next) ||
           projectile.hit.contains(enemy.id)) {
         continue;
       }

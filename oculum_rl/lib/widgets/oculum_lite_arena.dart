@@ -6040,7 +6040,7 @@ double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.demoneIntermedio || LiteEnemyKind.demoneMaggiore => 1.12,
   LiteEnemyKind.diavolo => 1.40,
   LiteEnemyKind.divoramitu => 1.85,
-  LiteEnemyKind.divoramituBoss => 2.18,
+  LiteEnemyKind.divoramituBoss => 2.68,
 };
 
 double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
@@ -6075,9 +6075,8 @@ double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.guardianoSolare || LiteEnemyKind.custodeLunare => 2.94,
   LiteEnemyKind.demoneMinore => 1.78,
   LiteEnemyKind.demoneIntermedio || LiteEnemyKind.demoneMaggiore => 2.47,
-  LiteEnemyKind.diavolo ||
-  LiteEnemyKind.divoramitu ||
-  LiteEnemyKind.divoramituBoss => 2.95,
+  LiteEnemyKind.diavolo => 2.95,
+  LiteEnemyKind.divoramitu || LiteEnemyKind.divoramituBoss => 2.25,
 };
 
 void _enemy(

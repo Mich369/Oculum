@@ -290,6 +290,7 @@ void main() {
     run.position = run.portalPosition;
     expect(run.enterSecondAct(LiteRealm.inferno), isTrue);
     expect(run.enterSecondAct(LiteRealm.inferno), isFalse);
+    expect(run.arenaSpeed, closeTo(1.4, .000001));
     final start = run.obser;
     for (var visit = 1; visit <= LiteSecondAct.actTwoRooms; visit++) {
       _clear(run);
@@ -297,6 +298,7 @@ void main() {
       final cleared = run.obser;
       run = LiteRun.fromJson(run.toJson());
       expect(run.realm, LiteRealm.inferno);
+      expect(run.arenaSpeed, closeTo(1.4, .000001));
       _tick(run, .2);
       expect(run.obser, cleared);
       if (visit == LiteSecondAct.actTwoRooms) break;
@@ -368,6 +370,20 @@ void main() {
       _tick(run, 1 / 120);
     }
     expect(beast.burrow!.exposed, isTrue);
+    final axis = beast.hitboxAxis;
+    final transverse = Point<double>(-axis.y, axis.x);
+    expect(
+      beast.hitboxContains(
+        beast.position + axis * (beast.hitboxHalfLength + .5),
+      ),
+      isTrue,
+    );
+    expect(
+      beast.hitboxContains(
+        beast.position + transverse * (beast.hitboxRadius + .1),
+      ),
+      isFalse,
+    );
     shoot();
     _tick(run, .035);
     expect(beast.hp, lessThan(beast.maxHp));

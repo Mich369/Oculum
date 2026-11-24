@@ -298,14 +298,14 @@ extension LiteSecondAct on LiteRun {
           (beast.kind.boss ? 1.15 : 1.0);
       if (!invulnerable &&
           !hostDown &&
-          position.distanceTo(beast.position) < beast.radius + .26 &&
+          beast.hitboxContains(position, extra: .26) &&
           state._hit.add(0)) {
         _damagePlayer(damage);
       }
       for (final ally in _damageableAllies) {
         if (ally.hp <= 0 ||
             ally is LiteCoopFighter && ally.protected ||
-            ally.position.distanceTo(beast.position) >= beast.radius + .28 ||
+            !beast.hitboxContains(ally.position, extra: .28) ||
             !state._hit.add(ally.id))
           continue;
         _hitAlly(ally, damage);
