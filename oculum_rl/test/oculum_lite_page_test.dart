@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,12 @@ import 'package:oculum_rl/widgets/oculum_lite_creator.dart';
 import 'package:oculum_rl/widgets/oculum_lite_routes.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Sprite LOD queries the canvas transform once its atlas has finished loading.
+class _ArenaRecordingCanvas extends TestRecordingCanvas {
+  @override
+  Float64List getTransform() => Matrix4.identity().storage;
+}
 
 class _BrowserLikePaths extends PathProviderPlatform {
   @override
@@ -65,7 +72,7 @@ void main() {
     );
 
     for (final size in const [Size(800, 450), Size(390, 480)]) {
-      final canvas = TestRecordingCanvas();
+      final canvas = _ArenaRecordingCanvas();
       paint.painter!.paint(canvas, size);
       final labels = [
         for (final call in canvas.invocations)
@@ -140,7 +147,7 @@ void main() {
         matching: find.byType(CustomPaint),
       ),
     );
-    final canvas = TestRecordingCanvas();
+    final canvas = _ArenaRecordingCanvas();
     paint.painter!.paint(canvas, const Size(800, 450));
     final fills = <int, int>{};
     for (final call in canvas.invocations) {
