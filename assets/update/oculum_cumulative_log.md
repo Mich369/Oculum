@@ -2,7 +2,7 @@
 
 ## Vita nei riquadri Mappa — 24 novembre 2026
 
-- I riquadri della Mappa mostrano la Vita massima per le schede locali e condivise più vecchie prive della Vita corrente, oppure zero se la scheda è a terra o morta. Mostrano il valore registrato quando è presente, compreso zero, e leggono i dati senza riscrivere la scheda.
+- I riquadri della Mappa mostrano la Vita massima per le schede locali e condivise più vecchie prive della Vita corrente. Una scheda a terra, morta o condivisa con statistiche riservate resta a zero quando manca il valore. Se la Vita corrente è registrata, il riquadro mostra quel valore senza riscrivere la scheda.
 
 ## Angelico su telefono — 24 novembre 2026
 

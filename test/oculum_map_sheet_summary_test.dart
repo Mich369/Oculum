@@ -95,9 +95,11 @@ void main() {
         state.updateOculumHomeUi(() {
           downed.remove('personaggioCaduto');
           downed['feriteMorte'] = 3;
+          sharedLegacy['realtimeRestrictedByMaster'] = true;
         });
         await tester.pumpAndSettle();
         expect(find.text('HP 0 • RES 4 • VOL 5'), findsOneWidget);
+        expect(find.text('HP 0 • RES 4 • VOL 7'), findsOneWidget);
       } finally {
         await closeFixture(tester, probe);
       }

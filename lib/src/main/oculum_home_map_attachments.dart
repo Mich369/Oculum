@@ -5977,7 +5977,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     }
     final currentHp =
         sheet['currentHp'] ??
-        (readBoolValue(sheet['personaggioCaduto']) ||
+        (readBoolValue(sheet['realtimeRestrictedByMaster']) ||
+                readBoolValue(sheet['personaggioCaduto']) ||
                 readIntValue(sheet['feriteMorte']) >=
                     _OculumHomeDeathRules.deathWoundLimit
             ? 0
