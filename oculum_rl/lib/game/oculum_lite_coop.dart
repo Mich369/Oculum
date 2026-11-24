@@ -13,12 +13,23 @@ class OculumLiteCoop extends ChangeNotifier {
     required this.localAccount,
     required this.send,
     this.authority,
-  }) : run = authority;
+    int epoch = 0,
+    this.localSessionId,
+  }) : run = authority,
+       _epoch = epoch;
 
   final String runId;
   final String localAccount;
   final LiteRun? authority;
   final LiteCoopSend send;
+  final String? localSessionId;
+  int _epoch;
+  int _sendGeneration = 0;
+  bool _transportReady = true;
+  bool _usesInputAcks = false;
+  bool _waiting = false;
+  Map<String, dynamic>? _pendingInput;
+  int get epoch => _epoch;
   LiteRun? run;
   Timer? _timer;
   final _clock = Stopwatch();
@@ -53,18 +64,60 @@ class OculumLiteCoop extends ChangeNotifier {
   Point<double> move = const Point(0, 0);
   Point<double>? aim;
   LiteBiome? destination;
-  int get readyCount => _confirmed.length;
+  int _remoteReadyCount = 0;
+  int get readyCount => host ? _confirmed.length : _remoteReadyCount;
   bool get host => authority != null;
   bool get pausedByHost =>
-      !host &&
-      _clock.isRunning &&
-      _clock.elapsedMilliseconds / 1000 > _timeOfFrame + 3;
+      !_transportReady ||
+      (!host &&
+          _clock.isRunning &&
+          (_timeOfFrame < 0 ||
+              _clock.elapsedMilliseconds / 1000 > _timeOfFrame + 3));
   bool get active => _timer != null;
   double get animationLead => host || _timeOfFrame < 0 || pausedByHost
       ? 0
       : (_clock.elapsedMilliseconds / 1000 - _timeOfFrame).clamp(0.0, .16) *
             (run?.arenaSpeed ?? 1);
-  bool get canAct => host || run?.coopFighter(localAccount) != null;
+  bool get canAct =>
+      _transportReady &&
+      (host || (!pausedByHost && run?.coopFighter(localAccount) != null));
+
+  void setTransportReady(bool ready) {
+    if (_closed || ready == _transportReady) return;
+    _transportReady = ready;
+    _resetInputs();
+    if (!ready) authority?.suspendCoopControls();
+    if (!ready && !host) _timeOfFrame = -1;
+    if (active && !host && ready) unawaited(_announce());
+    notifyListeners();
+  }
+
+  void adoptAuthority(int epoch) {
+    if (_closed || host || epoch <= _epoch) return;
+    _epoch = epoch;
+    _remoteFrame = 0;
+    _timeOfFrame = -1;
+    _resetInputs();
+    if (active) unawaited(_announce());
+    notifyListeners();
+  }
+
+  void _resetInputs() {
+    _sendGeneration++;
+    _posting = false;
+    _pendingInput = null;
+    _timeOfSend = -1;
+    move = const Point(0, 0);
+    aim = null;
+    slowed = false;
+    _fire = _dodge = _dash = _reload = _open = _rifleSkill = _weaponArt =
+        _bomb = _rest = false;
+    _blockSent = _rescueSent = false;
+    _restAction = null;
+    setBlocking(false);
+    setRescuing(false);
+  }
+
   LiteCoopFighter? get localFighter => run?.coopFighter(localAccount);
   bool get canRescue => canAct && (run?.canRescueNearby(localFighter) ?? false);
   bool get canRest => canAct && (run?.canUseRest(localFighter) ?? false);
@@ -82,17 +135,12 @@ class OculumLiteCoop extends ChangeNotifier {
   void stop() {
     _timer?.cancel();
     _timer = null;
-    move = const Point(0, 0);
-    _fire = _dodge = _dash = _reload = _open = _rifleSkill = _bomb = _rest =
-        false;
-    _weaponArt = false;
-    _restAction = null;
-    setBlocking(false);
-    setRescuing(false);
+    _resetInputs();
     _clock.stop();
   }
 
   void fire() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       world.attack(aim ?? world.position + const Point<double>(1, 0));
@@ -102,6 +150,7 @@ class OculumLiteCoop extends ChangeNotifier {
   }
 
   void talent() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       world.special(aim ?? world.position + const Point<double>(1, 0));
@@ -111,6 +160,7 @@ class OculumLiteCoop extends ChangeNotifier {
   }
 
   void useOpen() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       world.useOpen(aim ?? world.position + const Point<double>(1, 0));
@@ -120,6 +170,7 @@ class OculumLiteCoop extends ChangeNotifier {
   }
 
   void bomb() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       world.throwBanditBomb(aim ?? world.position + world.aim * 5);
@@ -129,6 +180,7 @@ class OculumLiteCoop extends ChangeNotifier {
   }
 
   void weaponTechnique() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       world.useWeaponArt(aim ?? world.position + world.aim);
@@ -139,6 +191,7 @@ class OculumLiteCoop extends ChangeNotifier {
   }
 
   void rifleSkill() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       if (world.hero == LiteHero.reGoblin) {
@@ -180,6 +233,7 @@ class OculumLiteCoop extends ChangeNotifier {
   }
 
   void reload() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       world.beginReload();
@@ -189,6 +243,7 @@ class OculumLiteCoop extends ChangeNotifier {
   }
 
   void dash() {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       world.dash(aim ?? world.position + const Point<double>(1, 0));
@@ -249,6 +304,7 @@ class OculumLiteCoop extends ChangeNotifier {
   void useRestScroll(LiteScroll scroll) => _orderRest('scroll', scroll.name);
 
   void _orderRest(String kind, String item) {
+    if (!canAct) return;
     final world = authority;
     if (world != null) {
       _applyRest(world, kind, item, null, aim ?? world.aim);
@@ -330,7 +386,7 @@ class OculumLiteCoop extends ChangeNotifier {
   Future<bool> _transmit(Map<String, dynamic> packet) async {
     if (_closed) return false;
     try {
-      return await send({'runId': runId, ...packet});
+      return await send({'runId': runId, 'epoch': _epoch, ...packet});
     } on Exception {
       return false;
     }
@@ -340,6 +396,10 @@ class OculumLiteCoop extends ChangeNotifier {
 
   void _tick() {
     final now = _clock.elapsedMilliseconds / 1000;
+    if (!_transportReady) {
+      _timeOfStep = now;
+      return;
+    }
     final world = authority;
     if (world != null) {
       final target = aim;
@@ -359,7 +419,21 @@ class OculumLiteCoop extends ChangeNotifier {
       return;
     }
 
+    if (pausedByHost) {
+      if (!_waiting) {
+        _waiting = true;
+        _resetInputs();
+      }
+      if (now - _timeOfSend >= .85) {
+        _timeOfSend = now;
+        unawaited(_announce());
+      }
+      notifyListeners();
+      return;
+    }
+    _waiting = false;
     final hasInput =
+        _pendingInput != null ||
         move.magnitude > 0 ||
         _fire ||
         _dodge ||
@@ -380,9 +454,13 @@ class OculumLiteCoop extends ChangeNotifier {
       final state = run;
       final fighter = state?.coopFighter(localAccount);
       if (state != null && fighter != null && !state.finished) {
+        if (_pendingInput case final pending?) {
+          _postInput(pending);
+          return;
+        }
         final at = aim ?? fighter.position + const Point<double>(1, 0);
         final arena = state.inputArena;
-        final packet = {
+        final packet = <String, dynamic>{
           'kind': 'playInput',
           'stage': state.stage,
           'arena': arena,
@@ -403,38 +481,25 @@ class OculumLiteCoop extends ChangeNotifier {
           if (_restAction case final action?) 'restAction': action,
           'slow': slowed,
         };
-        final wasFiring = _fire;
-        final wasOpening = _open;
-        final wasRifle = _rifleSkill;
-        final wasWeaponArt = _weaponArt;
-        _weaponArt = false;
-        final wasBomb = _bomb;
-        final wasBlocking = _blocking;
-        final wasRescuing = _rescuing;
-        final wasResting = _rest;
-        final pendingRest = _restAction;
-        _fire = _dodge = _dash = _reload = _open = _rifleSkill = _bomb = _rest =
-            false;
-        _posting = true;
-        unawaited(
-          _transmit(packet)
-              .then((sent) {
-                if (sent && run?.inputArena == arena) {
-                  _blockSent = wasBlocking;
-                  _rescueSent = wasRescuing;
-                  if (identical(_restAction, pendingRest)) _restAction = null;
-                }
-                if (!sent && run?.inputArena == arena && active) {
-                  _fire = _fire || wasFiring;
-                  _open = _open || wasOpening;
-                  _rifleSkill = _rifleSkill || wasRifle;
-                  _weaponArt = _weaponArt || wasWeaponArt;
-                  _bomb = _bomb || wasBomb;
-                  _rest = _rest || wasResting;
-                }
-              })
-              .whenComplete(() => _posting = false),
-        );
+        if (_usesInputAcks &&
+            (_fire ||
+                _dodge ||
+                _dash ||
+                _reload ||
+                _open ||
+                _rifleSkill ||
+                _weaponArt ||
+                _bomb ||
+                _rest ||
+                _restAction != null)) {
+          _pendingInput = packet;
+        }
+        _blockSent = _blocking;
+        _rescueSent = _rescuing;
+        _restAction = null;
+        _fire = _dodge = _dash = _reload = _open = _rifleSkill = _weaponArt =
+            _bomb = _rest = false;
+        _postInput(packet);
       } else {
         unawaited(_announce());
       }
@@ -442,9 +507,20 @@ class OculumLiteCoop extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _publish(LiteRun world) {
-    if (_posting || _closed) return;
+  void _postInput(Map<String, dynamic> packet) {
+    final generation = _sendGeneration;
     _posting = true;
+    unawaited(
+      _transmit(packet).whenComplete(() {
+        if (_sendGeneration == generation) _posting = false;
+      }),
+    );
+  }
+
+  void _publish(LiteRun world) {
+    if (_posting || _closed || !_transportReady) return;
+    _posting = true;
+    final generation = _sendGeneration;
     unawaited(
       _transmit({
         'kind': 'playState',
@@ -452,7 +528,13 @@ class OculumLiteCoop extends ChangeNotifier {
         'world': world.toJson(includeEffects: true),
         'destination': destination?.name,
         'confirmed': _confirmed.length,
-      }).whenComplete(() => _posting = false),
+        'acks': {
+          for (final entry in _lastInput.entries)
+            entry.key: [_satSession[entry.key], entry.value],
+        },
+      }).whenComplete(() {
+        if (_sendGeneration == generation) _posting = false;
+      }),
     );
   }
 
@@ -462,7 +544,10 @@ class OculumLiteCoop extends ChangeNotifier {
     required String sessionId,
     required bool verifiedMaster,
   }) {
-    if (_closed || packet['runId'] != runId) return;
+    if (_closed || !_transportReady || packet['runId'] != runId) return;
+    if (packet['kind'] != 'playJoin' && (packet['epoch'] ?? 0) != _epoch) {
+      return;
+    }
     final world = authority;
     if (world == null) {
       final frame = packet['frame'];
@@ -480,19 +565,30 @@ class OculumLiteCoop extends ChangeNotifier {
             restored.coopFighters.length >= restored.playerCount) {
           return;
         }
-        if (run?.inputArena != restored.inputArena) {
-          _fire = _dodge = _dash = _reload = _open = _rifleSkill = _weaponArt =
-              _bomb = false;
-          _restAction = null;
-          aim = null;
-        }
+        final previousHp = run?.coopFighter(localAccount)?.hp ?? 0;
         if (run?.inputArena != restored.inputArena ||
-            (restored.coopFighter(localAccount)?.hp ?? 0) <= 0) {
-          _rescuing = false;
-          _rest = false;
+            previousHp > 0 &&
+                (restored.coopFighter(localAccount)?.hp ?? 0) <= 0) {
+          _resetInputs();
+        }
+        final acks = packet['acks'];
+        _usesInputAcks = acks is Map;
+        final localAck = acks is Map ? acks[localAccount] : null;
+        if (localAck case final List ack when ack.length == 2) {
+          final pending = _pendingInput?['input'];
+          if ((localSessionId == null || ack[0] == localSessionId) &&
+              pending is int &&
+              ack[1] is int &&
+              (ack[1] as int) >= pending) {
+            _pendingInput = null;
+          }
         }
         run = restored;
         _remoteFrame = frame;
+        final confirmed = packet['confirmed'];
+        _remoteReadyCount = confirmed is int
+            ? confirmed.clamp(0, restored.playerCount)
+            : 0;
         _timeOfFrame = _clock.elapsedMilliseconds / 1000;
         destination = _biome(packet['destination']);
         notifyListeners();

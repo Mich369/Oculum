@@ -78,6 +78,12 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   RealtimeChannel? _channel;
   Timer? _heartbeat;
   Timer? _admission;
+  Timer? _reconnect;
+  int _linkGeneration = 0;
+  int _epoch = 0;
+  bool _checkpointBusy = false;
+  (String, bool, bool)? _checkpointMilestone;
+  int _failedClearedFloor = -1;
   String? _room;
   String? _role;
   String? _masterSession;
@@ -175,7 +181,16 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       if (result is! Map || result['roomId'] is! String) {
         throw const FormatException('Risposta della stanza non valida.');
       }
-      _room = result['roomId'] as String;
+      final room = result['roomId'] as String;
+      if (_room != null && _room != room) {
+        _run?.dispose();
+        _run = null;
+        _runId = '';
+        _epoch = 0;
+        _masterSession = _hostAccount = null;
+        _seats.clear();
+      }
+      _room = room;
       if (result['status'] == 'approved') {
         await _subscribe('${result['role']}');
       } else if (result['status'] == 'pending') {
@@ -243,6 +258,21 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   Future<void> _subscribe(String role) async {
     if (!mounted) return;
     _role = role;
+    final generation = ++_linkGeneration;
+    _reconnect?.cancel();
+    _heartbeat?.cancel();
+    final previous = _channel;
+    _channel = null;
+    if (previous != null) {
+      try {
+        await _client!
+            .removeChannel(previous)
+            .timeout(const Duration(seconds: 4));
+      } on Exception {
+        // The previous channel's callbacks are already detached.
+      }
+    }
+    if (!mounted || generation != _linkGeneration) return;
     final channel = _client!.channel(
       'oculum_secure_$_room',
       opts: const RealtimeChannelConfig(private: true, ack: true),
@@ -261,31 +291,84 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     channel.subscribe((state, error) {
       if (!mounted || !identical(_channel, channel)) return;
       if (state == RealtimeSubscribeStatus.subscribed) {
-        unawaited(_register());
+        _reconnect?.cancel();
+        unawaited(_register(channel, ++_linkGeneration));
       } else if (state == RealtimeSubscribeStatus.closed ||
           state == RealtimeSubscribeStatus.channelError ||
           state == RealtimeSubscribeStatus.timedOut) {
-        setState(() {
-          _connected = false;
-          _status = 'Connessione alla stanza interrotta.';
-        });
+        _pauseLink(channel);
       }
     });
   }
 
-  Future<void> _register() async {
+  void _pauseLink(RealtimeChannel channel) {
+    final generation = ++_linkGeneration;
+    _heartbeat?.cancel();
+    _reconnect?.cancel();
+    _run?.setTransportReady(false);
+    setState(() {
+      _connected = false;
+      _status = 'Connessione interrotta. Riconnessione in corso…';
+    });
+    _reconnect = Timer(const Duration(seconds: 3), () {
+      if (mounted &&
+          generation == _linkGeneration &&
+          identical(_channel, channel) &&
+          !_connected) {
+        unawaited(_subscribe(_role!));
+      }
+    });
+  }
+
+  bool _currentLink(RealtimeChannel channel, int generation) =>
+      mounted && identical(_channel, channel) && generation == _linkGeneration;
+
+  Future<Object?> _checkpoint(String action, {Map<String, Object>? snapshot}) =>
+      _client!
+          .rpc(
+            'oculum_rl_checkpoint',
+            params: {
+              'p_room': _room,
+              'p_session': _sessionId,
+              'p_action': action,
+              if (action == 'save') 'p_epoch': _epoch,
+              if (snapshot != null) 'p_snapshot': snapshot,
+            },
+          )
+          .timeout(const Duration(seconds: 6));
+
+  Future<void> _register(RealtimeChannel channel, int generation) async {
     try {
       await _presence();
-      if (!mounted) return;
-      if (_master) _masterSession = _sessionId;
+      if (!_currentLink(channel, generation)) return;
+      if (_master) {
+        final first = _epoch == 0;
+        final saved = await _checkpoint(first ? 'claim' : 'read');
+        if (!_currentLink(channel, generation)) return;
+        if (saved is! Map ||
+            saved['epoch'] is! int ||
+            saved['hostSession'] != _sessionId) {
+          _showSuperseded();
+          return;
+        }
+        _epoch = saved['epoch'] as int;
+        _masterSession = _sessionId;
+        if (first) _restoreCheckpoint(saved['snapshot']);
+      }
+      if (!_currentLink(channel, generation)) return;
       setState(() {
         _connected = true;
         _status = 'Stanza ${_code.text.trim().toUpperCase()} aperta.';
       });
+      _run?.setTransportReady(true);
       _heartbeat?.cancel();
       var cycle = 0;
       _heartbeat = Timer.periodic(const Duration(seconds: 3), (_) {
-        if (_master) unawaited(_checkPending());
+        if (!_currentLink(channel, generation)) return;
+        if (_master && _runId.isEmpty) unawaited(_checkPending());
+        if (_master && cycle % 2 == 0 && _run?.active == true) {
+          unawaited(_saveCheckpoint());
+        }
         if (cycle++ % 6 == 0) unawaited(_refreshPresence());
       });
       if (_master) {
@@ -294,10 +377,79 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       } else {
         await _send({'kind': 'lobbyHello'});
       }
-    } on Exception {
-      if (mounted) {
-        setState(() => _status = 'Registrazione alla stanza non riuscita.');
+    } on Object {
+      if (_currentLink(channel, generation)) _pauseLink(channel);
+    }
+  }
+
+  void _restoreCheckpoint(Object? saved) {
+    if (saved is! Map || saved['world'] is! Map || saved['lobby'] is! Map)
+      return;
+    final lobby = saved['lobby'] as Map;
+    final id = lobby['runId'];
+    final seats = lobby['seats'];
+    final owner = _account;
+    if (id is! String || id.isEmpty || owner == null || seats is! Map) return;
+    final world = LiteRun.fromJson(
+      Map<String, dynamic>.from(saved['world'] as Map),
+    );
+    if (world.finished ||
+        world.playerCount < 2 ||
+        world.coopFighters.length != world.playerCount - 1) {
+      return;
+    }
+    _runId = id;
+    _seed = world.seed;
+    _difficulty = world.difficulty;
+    _biome = world.biome;
+    _setSeats(seats);
+    world.suspendCoopControls();
+    _run = OculumLiteCoop(
+      runId: id,
+      localAccount: owner,
+      localSessionId: _sessionId,
+      epoch: _epoch,
+      authority: world,
+      send: _send,
+    );
+  }
+
+  void _showSuperseded() {
+    _heartbeat?.cancel();
+    _reconnect?.cancel();
+    _run?.setTransportReady(false);
+    setState(() {
+      _connected = false;
+      _status = 'La stanza è aperta in un’altra sessione del Master.';
+    });
+  }
+
+  Future<bool> _saveCheckpoint() async {
+    final world = _run?.authority;
+    if (!_connected || !_master || world == null || _checkpointBusy)
+      return false;
+    _checkpointBusy = true;
+    final generation = _linkGeneration;
+    try {
+      await _checkpoint(
+        'save',
+        snapshot: {'lobby': _lobbyPacket(), 'world': world.toJson()},
+      );
+      return mounted && generation == _linkGeneration;
+    } on Exception catch (error) {
+      if (mounted && generation == _linkGeneration) {
+        if (error is PostgrestException &&
+            error.message == 'Oculum RL host session changed') {
+          _showSuperseded();
+        } else {
+          setState(
+            () => _status = 'Checkpoint online in attesa di salvataggio.',
+          );
+        }
       }
+      return false;
+    } finally {
+      _checkpointBusy = false;
     }
   }
 
@@ -361,12 +513,19 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                 params: {
                   'p_room': _room,
                   'p_session': _sessionId,
-                  'p_packet': fields,
+                  'p_packet': {'epoch': _epoch, ...fields},
                 },
               )
               .timeout(const Duration(seconds: 3)) ==
           true;
-    } on Exception {
+    } on Exception catch (error) {
+      if (mounted &&
+          _connected &&
+          _master &&
+          error is PostgrestException &&
+          error.message == 'Oculum RL host session changed') {
+        _showSuperseded();
+      }
       return false;
     }
   }
@@ -414,7 +573,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     );
   }
 
-  Future<bool> _announce() => _send({
+  Map<String, Object> _lobbyPacket() => {
     'kind': 'lobbySnapshot',
     'runId': _runId,
     'seed': _seed,
@@ -423,7 +582,18 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     'seats': {
       for (final entry in _seats.entries) entry.key: _seatData(entry.value),
     },
-  });
+  };
+
+  Future<bool> _announce() => _send(_lobbyPacket());
+
+  void _setSeats(Map seats) {
+    _seats.clear();
+    for (final entry in seats.entries) {
+      final seat = _parseSeat(entry.value);
+      if (entry.key is String && seat != null)
+        _seats[entry.key as String] = seat;
+    }
+  }
 
   void _receive(Map<String, dynamic> data) {
     final uid = data['account'], from = data['session'], role = data['role'];
@@ -431,6 +601,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     final kind = data['kind'];
     if (kind is! String) return;
     if (kind.startsWith('play')) {
+      if (_master && kind == 'playJoin') unawaited(_announce());
       _run?.receive(
         data,
         account: uid,
@@ -451,7 +622,14 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       }
       unawaited(_announce());
     } else if (!_master && role == 'master' && kind == 'lobbySnapshot') {
-      if (_masterSession != null && _masterSession != from) return;
+      final epoch = data['epoch'] is int ? data['epoch'] as int : 0;
+      if ((_hostAccount != null && _hostAccount != uid) ||
+          epoch < _epoch ||
+          (epoch == _epoch &&
+              _masterSession != null &&
+              _masterSession != from)) {
+        return;
+      }
       final seed = data['seed'];
       final runId = data['runId'];
       final seats = data['seats'];
@@ -465,6 +643,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       setState(() {
         _masterSession = from;
         _hostAccount = uid;
+        _epoch = epoch;
         _seed = seed;
         _difficulty =
             LiteDifficulty.values
@@ -481,14 +660,9 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
           _run = null;
         }
         _runId = runId;
-        _seats.clear();
-        for (final entry in seats.entries) {
-          final seat = _parseSeat(entry.value);
-          if (entry.key is String && seat != null) {
-            _seats[entry.key as String] = seat;
-          }
-        }
+        _setSeats(seats);
       });
+      _run?.adoptAuthority(epoch);
     }
   }
 
@@ -589,16 +763,19 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     _run = OculumLiteCoop(
       runId: _runId,
       localAccount: uid,
+      localSessionId: _sessionId,
+      epoch: _epoch,
       authority: world,
       send: _send,
     );
-    if (!await _announce() || !mounted) {
+    if (!await _saveCheckpoint() || !mounted) {
       _run?.dispose();
       _run = null;
       _runId = '';
       if (mounted) setState(() => _status = 'Avvio online fallito. Riprova.');
       return;
     }
+    unawaited(_announce());
     setState(() {});
     _enterRun();
   }
@@ -609,33 +786,48 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     final play = _run ??= OculumLiteCoop(
       runId: _runId,
       localAccount: uid,
+      localSessionId: _sessionId,
+      epoch: _epoch,
       send: _send,
     );
     play
       ..removeListener(_recordRunUnlocks)
       ..addListener(_recordRunUnlocks);
     _failedUnlocks.clear();
+    _failedClearedFloor = -1;
     final hostAccount = _master ? uid : _hostAccount;
     final appearances = {
       for (final entry in _seats.entries) entry.key: ?entry.value.appearance,
     };
     unawaited(
-      Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) => OculumLiteCoopPage(
-            session: play,
-            hostAppearance: appearances[hostAccount],
-            guestAppearances: appearances,
-          ),
-        ),
-      ),
+      Navigator.of(context)
+          .push<void>(
+            MaterialPageRoute(
+              builder: (_) => OculumLiteCoopPage(
+                session: play,
+                hostAppearance: appearances[hostAccount],
+                guestAppearances: appearances,
+              ),
+            ),
+          )
+          .then((_) {
+            if (mounted && _master) unawaited(_saveCheckpoint());
+          }),
     );
   }
 
   void _recordRunUnlocks() {
     final play = _run;
     final run = play?.run;
-    if (!mounted || _savingUnlocks || play == null || run == null) return;
+    if (!mounted || play == null || run == null) return;
+    if (play.host) {
+      final milestone = (run.inputArena, run.stageClear, run.finished);
+      if (_checkpointMilestone != milestone) {
+        _checkpointMilestone = milestone;
+        unawaited(_saveCheckpoint());
+      }
+    }
+    if (_savingUnlocks) return;
     final played = play.host ? run.hero : play.localFighter?.hero;
     if (played == null) return;
     final kit = play.host ? run.supply : play.localFighter!.supply;
@@ -656,7 +848,11 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         _progress.slimeKills < 10 &&
         run.slimeKills > (_progress.slimeCounters[run.slimeCreditId] ?? 0) &&
         run.slimeKills > _failedSlimeCredit;
-    if (heroes.every(
+    final cleared = run.stageClear || run.victorious
+        ? run.stage
+        : run.stage - 1;
+    if (cleared <= max(_progress.bestClearedFloor, _failedClearedFloor) &&
+        heroes.every(
           (hero) => _progress.canPlay(hero) || _failedUnlocks.contains(hero),
         ) &&
         !pendingSlime &&
@@ -667,7 +863,9 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         ))
       return;
     _savingUnlocks = true;
-    unawaited(_saveRunUnlocks(heroes, pets, run.slimeCreditId, run.slimeKills));
+    unawaited(
+      _saveRunUnlocks(cleared, heroes, pets, run.slimeCreditId, run.slimeKills),
+    );
   }
 
   Future<void> _recordRestMemory(String id, LiteRestMemory? memory) async {
@@ -685,6 +883,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   }
 
   Future<void> _saveRunUnlocks(
+    int cleared,
     Set<LiteHero> heroes,
     Set<LiteCompanion> pets,
     String slimeId,
@@ -694,7 +893,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       final store = await OculumLiteSaveStore.open();
       final current = await store.readProgressWithSlots();
       final progress = current.record(
-        current.bestClearedFloor,
+        cleared,
         heroes,
         pets: pets,
         slimeCounters: {slimeId: slimeKills},
@@ -702,6 +901,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       await store.writeProgress(progress);
       if (mounted) setState(() => _progress = progress);
     } on Object {
+      _failedClearedFloor = max(_failedClearedFloor, cleared);
       _failedUnlocks.addAll(heroes);
       _failedPets.addAll(pets);
       _failedSlimeCredit = slimeKills;
@@ -718,6 +918,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   void dispose() {
     _admission?.cancel();
     _heartbeat?.cancel();
+    _reconnect?.cancel();
     _run?.dispose();
     final channel = _channel;
     if (channel != null) unawaited(_client?.removeChannel(channel));

@@ -84,16 +84,52 @@ void main() {
           },
         );
       }
-      Future<bool> send(int i, Map<String, dynamic> packet) async =>
-          await clients[i].rpc(
+      Future<Map?> checkpoint(
+        SupabaseClient client,
+        String session,
+        String action, {
+        int? epoch,
+        Map<String, Object>? snapshot,
+      }) async => await client.rpc(
+        'oculum_rl_checkpoint',
+        params: {
+          'p_room': room['roomId'],
+          'p_session': session,
+          'p_action': action,
+          if (epoch != null) 'p_epoch': epoch,
+          if (snapshot != null) 'p_snapshot': snapshot,
+        },
+      ) as Map?;
+      final claim = (await checkpoint(master, 'rl-qa-role-0', 'claim'))!;
+      final epoch = claim['epoch'] as int;
+      await expectLater(
+        checkpoint(guest, 'rl-qa-role-${_partySize - 1}', 'claim'),
+        throwsA(isA<PostgrestException>()),
+      );
+      final openInputs = <int>[];
+
+      Future<bool> sendAs(
+        SupabaseClient client,
+        String session,
+        Map<String, dynamic> packet,
+      ) async =>
+          await client.rpc(
             'oculum_rl_live',
             params: {
               'p_room': room['roomId'],
-              'p_session': 'rl-qa-role-$i',
+              'p_session': session,
               'p_packet': packet,
             },
           ) ==
           true;
+      Future<bool> send(int i, Map<String, dynamic> packet) async {
+        if (i == _partySize - 1 && packet['open'] == true) {
+          openInputs.add(packet['input'] as int);
+          if (openInputs.length == 1) return false;
+        }
+        return sendAs(clients[i], 'rl-qa-role-$i', packet);
+      }
+
       final world = LiteRun(
         seed: 711,
         hero: LiteHero.evasore,
@@ -125,6 +161,8 @@ void main() {
         runId: code,
         localAccount: owner,
         authority: world,
+        epoch: epoch,
+        localSessionId: 'rl-qa-role-0',
         send: (packet) => send(0, packet),
       );
       final game = [
@@ -133,6 +171,8 @@ void main() {
           OculumLiteCoop(
             runId: code,
             localAccount: clients[i].auth.currentUser!.id,
+            epoch: epoch,
+            localSessionId: 'rl-qa-role-$i',
             send: (packet) => send(i, packet),
           ),
       ];
@@ -140,10 +180,9 @@ void main() {
       for (final session in game) {
         addTearDown(session.dispose);
       }
-      for (var i = 0; i < _partySize; i++) {
-        final session = game[i];
+      Future<void> subscribe(int i, SupabaseClient client) async {
         final ready = Completer<void>();
-        clients[i]
+        client
             .channel(
               'oculum_secure_${room['roomId']}',
               opts: const RealtimeChannelConfig(private: true),
@@ -156,7 +195,15 @@ void main() {
                     : wire;
                 if (data['account'] is! String || data['session'] is! String)
                   return;
-                session.receive(
+                if (i != 0 &&
+                    data['kind'] == 'lobbySnapshot' &&
+                    data['account'] == owner &&
+                    data['role'] == 'master' &&
+                    data['epoch'] is int) {
+                  game[i].adoptAuthority(data['epoch'] as int);
+                  return;
+                }
+                game[i].receive(
                   data,
                   account: data['account'] as String,
                   sessionId: data['session'] as String,
@@ -171,6 +218,10 @@ void main() {
                 ready.complete();
             });
         await ready.future.timeout(const Duration(seconds: 12));
+      }
+
+      for (var i = 0; i < _partySize; i++) {
+        await subscribe(i, clients[i]);
       }
       await expectLater(
         send(1, {'kind': 'playState', 'runId': code}),
@@ -210,6 +261,8 @@ void main() {
         'remote Open received and broadcast',
       );
       expect(world.coopFighter(user)!.oculum, 5);
+      expect(openInputs.length, greaterThanOrEqualTo(2));
+      expect(openInputs.toSet(), hasLength(1));
       expect(
         world.clones.where(
           (clone) => clone.ownerId == world.coopFighter(user)!.id,
@@ -278,8 +331,124 @@ void main() {
         game.every((session) => session.run!.playerCount == _partySize),
         isTrue,
       );
+
+      // The first transport closes; the same account creates an independent
+      // Supabase client and restores the stored authoritative world.
+      world.obser = 47;
+      guarding.obser = 47;
+      await checkpoint(
+        master,
+        'rl-qa-role-0',
+        'save',
+        epoch: epoch,
+        snapshot: {
+          'lobby': {'runId': code},
+          'world': world.toJson(),
+        },
+      );
+      final readAsGuest = await checkpoint(
+        guest,
+        'rl-qa-role-${_partySize - 1}',
+        'read',
+      );
+      expect(readAsGuest!['snapshot'], isNull);
+      hostSession.stop();
+      await master.removeAllChannels();
+      await _until(
+        () => guestSession.pausedByHost,
+        'guest pauses without Master',
+      );
+
+      final resumedClient = SupabaseClient(
+        oculumDefaultSupabaseUrl,
+        oculumDefaultSupabasePublishableKey,
+      );
+      addTearDown(() async {
+        await resumedClient.removeAllChannels();
+        await resumedClient.dispose();
+      });
+      await resumedClient.auth.setSession(
+        master.auth.currentSession!.refreshToken!,
+      );
+      expect(resumedClient.auth.currentUser!.id, owner);
+      final reopened = await join(resumedClient, true);
+      expect(reopened['roomId'], room['roomId']);
+      expect(reopened['role'], 'master');
+      const resumedId = 'rl-qa-recovered-master';
+      await resumedClient.rpc(
+        'oculum_touch_room_session',
+        params: {
+          'p_room': room['roomId'],
+          'p_session': resumedId,
+          'p_presence': {'playerName': 'RL QA Master'},
+        },
+      );
+      final taken = (await checkpoint(resumedClient, resumedId, 'claim'))!;
+      expect(taken['epoch'], epoch + 1);
+      final snapshot = taken['snapshot'] as Map;
+      final resumed = LiteRun.fromJson(
+        Map<String, dynamic>.from(snapshot['world'] as Map),
+      )..suspendCoopControls();
+      await expectLater(
+        sendAs(master, 'rl-qa-role-0', {
+          'kind': 'playState',
+          'runId': code,
+          'epoch': epoch,
+        }),
+        throwsA(isA<PostgrestException>()),
+      );
+      await expectLater(
+        checkpoint(
+          master,
+          'rl-qa-role-0',
+          'save',
+          epoch: epoch,
+          snapshot: {
+            'lobby': {'runId': code},
+            'world': world.toJson(),
+          },
+        ),
+        throwsA(isA<PostgrestException>()),
+      );
+      final replacement = OculumLiteCoop(
+        runId: code,
+        localAccount: owner,
+        authority: resumed,
+        localSessionId: resumedId,
+        epoch: epoch + 1,
+        send: (data) => sendAs(resumedClient, resumedId, data),
+      );
+      game[0] = replacement;
+      addTearDown(replacement.dispose);
+      await subscribe(0, resumedClient);
+      replacement.start();
+      await sendAs(resumedClient, resumedId, {
+        'kind': 'lobbySnapshot',
+        'runId': code,
+        'epoch': epoch + 1,
+      });
+      await _until(
+        () => game
+            .skip(1)
+            .every(
+              (session) => session.epoch == epoch + 1 && !session.pausedByHost,
+            ),
+        'same run resumes on every guest',
+      );
+      expect(resumed.stage, world.stage);
+      expect(guestSession.run!.obser, 47);
+      expect(guestSession.run!.coopFighter(user)!.obser, 47);
+      expect(guestSession.run!.coopFighter(user)!.restUsed, isTrue);
+      final before = resumed.coopFighter(user)!.position.x;
+      guestSession.move = const Point(-1, 0);
+      await _until(
+        () => resumed.coopFighter(user)!.position.x < before - .2,
+        'controls reach the new master',
+      );
+      guestSession.move = const Point(0, 0);
+      expect(resumed.obser, 47);
     },
     skip: !_live,
-    timeout: const Timeout(Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 3)),
   );
 }

@@ -411,7 +411,9 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                         padding: const EdgeInsets.all(16),
                         child: Text(
                           _session.pausedByHost
-                              ? 'Partita sospesa. In attesa del Master.'
+                              ? (_session.host
+                                    ? 'Partita sospesa. Riconnessione a Supabase…'
+                                    : 'Partita sospesa. In attesa del Master.')
                               : !_session.canAct
                               ? 'Osservatore · Guarda lo scontro del gruppo.'
                               : down && !run.finished

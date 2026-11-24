@@ -2923,6 +2923,17 @@ class LiteRun {
       ? _banditShield
       : 0;
 
+  void suspendCoopControls() {
+    for (final fighter in coopFighters) {
+      fighter
+        .._inputAge = 2
+        ..movement = const Point(0, 0)
+        ..firing = false
+        .._block.held = false;
+      endRescue(fighter);
+    }
+  }
+
   bool setCoopControls(
     String account,
     Point<double> move,
