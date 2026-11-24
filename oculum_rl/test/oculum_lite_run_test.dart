@@ -2662,6 +2662,22 @@ void main() {
     );
     expect(earlier.stage, 13);
     expect(earlier.isFinalFloor, isFalse);
+
+    // An ongoing floor 23 from version 2 was an ordinary room.
+    final oldRoom23 = LiteRun.fromJson(
+      _reachFloor(22).toJson()
+        ..['stage'] = LiteRun.veyrthStage
+        ..['campaignVersion'] = 2,
+    );
+    final resumedRoom23 = _restore(oldRoom23);
+    expect(resumedRoom23.encounter, LiteEncounter.ordinary);
+    expect(resumedRoom23.isVeyrthArena, isFalse);
+    while (!resumedRoom23.stageClear) {
+      _strikeCampaignEnemy(resumedRoom23, resumedRoom23.enemies.first);
+    }
+    resumedRoom23.position = resumedRoom23.portalPosition;
+    expect(resumedRoom23.advance(), isTrue);
+    expect(resumedRoom23.enemies.single.kind, LiteEnemyKind.arconte);
   });
 
   test('the Archon locks a warning across saves and co-op frames', () {

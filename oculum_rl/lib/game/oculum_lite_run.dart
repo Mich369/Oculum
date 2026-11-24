@@ -1904,8 +1904,10 @@ class LiteRun {
 
   int _lastStage = finalStage;
   bool _legacyVeyrthFinal = false;
+  bool _legacyOrdinary23 = false;
   bool get isVeyrthArena =>
-      stage == veyrthStage || isFinalFloor && _legacyVeyrthFinal;
+      stage == veyrthStage && !_legacyOrdinary23 ||
+      isFinalFloor && _legacyVeyrthFinal;
   int get lastStage => _lastStage;
   bool get isFinalFloor => stage == lastStage;
   static const maxCoopPlayers = 6;
@@ -2111,8 +2113,12 @@ class LiteRun {
     _ => LiteEncounter.ordinary,
   };
 
-  LiteEncounter _encounterFor(int floor) =>
-      floor == lastStage ? LiteEncounter.finalBoss : encounterAt(floor);
+  LiteEncounter _encounterFor(int floor) {
+    if (floor == lastStage) return LiteEncounter.finalBoss;
+    if (floor == veyrthStage && _legacyOrdinary23)
+      return LiteEncounter.ordinary;
+    return encounterAt(floor);
+  }
 
   List<LiteBiome> get routeBiomes =>
       LiteBiome.offers(seed ^ ((stage + 1) * 29063), avoid: biome);
@@ -7692,6 +7698,7 @@ class LiteRun {
     'campaignVersion': _campaignVersion,
     if (lastStage == _legacyFinalStage) 'legacyFinal': true,
     if (_legacyVeyrthFinal) 'legacyVeyrthFinal': true,
+    if (_legacyOrdinary23 && stage == veyrthStage) 'legacyOrdinary23': true,
     'seed': seed,
     if (upgrades.isNotEmpty) 'upgrades': LitePermanentUpgrade.encode(upgrades),
     'playerCount': playerCount,
@@ -7837,6 +7844,9 @@ class LiteRun {
         run.lastStage == _legacyFinalStage ||
         savedStage == finalStage && savedCampaign < 3 ||
         json['legacyVeyrthFinal'] == true;
+    run._legacyOrdinary23 =
+        savedStage == veyrthStage &&
+        (savedCampaign == 2 || json['legacyOrdinary23'] == true);
     run.stage = savedStage.clamp(0, run.lastStage);
     run._startingBiome = _enum(
       LiteBiome.values,
