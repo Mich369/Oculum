@@ -1,5 +1,6 @@
 param(
   [Parameter(Mandatory = $true)][string]$Name,
+  [Parameter(Mandatory = $true)][ValidateRange(100299, 2100000000)][int]$AndroidBuildNumber,
   [string]$FlutterRoot = 'C:\Users\michy\flutter'
 )
 
@@ -45,13 +46,15 @@ function Assert-UnchangedSource {
   }
 }
 
-function Build-Edition([string]$Edition, [string[]]$BuildArguments) {
+function Build-Edition([string]$Edition, [string[]]$BuildArguments, [hashtable]$ExtraEnvironment = @{}) {
   Assert-UnchangedSource
   $arguments = @("--packages=$packages", $tool, '--no-version-check', '--suppress-analytics') +
     $BuildArguments + @("--dart-define=OculumSourceCommit=$commit", "--dart-define=OculumBuildId=$($fingerprint.ToLowerInvariant())")
+  $environment = @{ FLUTTER_ROOT = $FlutterRoot; FLUTTER_ALREADY_LOCKED = 'true' }
+  foreach ($key in $ExtraEnvironment.Keys) { $environment[$key] = $ExtraEnvironment[$key] }
   Invoke-OculumBuildProcess -FilePath $dart -Arguments $arguments -WorkingDirectory $projectRoot `
     -LogPath (Join-Path $buildRoot "$Name-$Edition.log") -Description "Build $Edition" `
-    -TimeoutSeconds 2700 -Environment @{ FLUTTER_ROOT = $FlutterRoot; FLUTTER_ALREADY_LOCKED = 'true' }
+    -TimeoutSeconds 2700 -Environment $environment
   Assert-UnchangedSource
 }
 
@@ -77,17 +80,29 @@ try {
       (Get-FileHash -LiteralPath (Join-Path $destination 'windows-test/data/app.so')).Hash) {
     throw 'Normal and Test editions must use different save profiles'
   }
-  # Explicit local debug artifact: never substitute a new signing identity for
-  # the stable production key or label this as a production Android update.
-  Build-Edition 'android-debug' @('build', 'apk', '--debug', '--no-pub', '--dart-define=OculumSaveProfile=')
-  Copy-Item -LiteralPath (Join-Path $buildRoot 'app\outputs\flutter-apk\app-debug.apk') `
-    -Destination (Join-Path $destination 'Oculum-Android-debug.apk')
+  # Reuse the existing identity. Gradle and the independent verifier both
+  # enforce the pinned certificate; no key or credential file is generated.
+  $keyPath = if ($env:OCULUM_ANDROID_KEYSTORE_PATH) { $env:OCULUM_ANDROID_KEYSTORE_PATH }
+             else { Join-Path $env:USERPROFILE '.android\debug.keystore' }
+  if (!(Test-Path -LiteralPath $keyPath -PathType Leaf)) { throw 'Existing signing key is required' }
+  $signingEnvironment = @{
+    OCULUM_ANDROID_KEYSTORE_PATH = $keyPath
+    OCULUM_ANDROID_STORE_PASSWORD = $(if ($env:OCULUM_ANDROID_STORE_PASSWORD) { $env:OCULUM_ANDROID_STORE_PASSWORD } else { 'android' })
+    OCULUM_ANDROID_KEY_PASSWORD = $(if ($env:OCULUM_ANDROID_KEY_PASSWORD) { $env:OCULUM_ANDROID_KEY_PASSWORD } else { 'android' })
+    OCULUM_ANDROID_KEY_ALIAS = $(if ($env:OCULUM_ANDROID_KEY_ALIAS) { $env:OCULUM_ANDROID_KEY_ALIAS } else { 'androiddebugkey' })
+  }
+  Build-Edition 'android-release' @('build', 'apk', '--release', '--no-pub', "--build-number=$AndroidBuildNumber", '--dart-define=OculumSaveProfile=') $signingEnvironment
+  $apkSource = Join-Path $buildRoot 'app\outputs\flutter-apk\app-release.apk'
+  & python (Join-Path $PSScriptRoot 'verify_android_signing.py') --apk $apkSource --min-version-code $AndroidBuildNumber `
+    --java 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' --report (Join-Path $buildRoot "$Name-ANDROID-SIGNATURE.json")
+  if ($LASTEXITCODE -ne 0) { throw 'Release APK signing verification failed' }
+  Copy-Item -LiteralPath $apkSource -Destination (Join-Path $destination 'Oculum-Android-release.apk')
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   foreach ($edition in @(@('windows', 'Oculum-Windows.zip'), @('windows-test', 'Oculum-Test-Windows.zip'))) {
     [IO.Compression.ZipFile]::CreateFromDirectory((Join-Path $destination $edition[0]),
-      (Join-Path $destination $edition[1]), [IO.Compression.CompressionLevel]::Optimal, $false)
+      (Join-Path $destination $edition[1]), [IO.Compression.CompressionLevel]::Fastest, $false)
   }
-  foreach ($doc in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'REGISTRO_AGGIORNAMENTI.md', 'ULTIMO_AGGIORNAMENTO.md', 'VERIFICA_ARRETRATI_APP_2026-11-23.md')) {
+  foreach ($doc in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'REGISTRO_AGGIORNAMENTI.md', 'ULTIMO_AGGIORNAMENTO.md', 'VERIFICA_ARRETRATI_APP_2026-11-23.md', 'VERIFICA_SCHIVATE_2026-11-24.md')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot "docs\$doc") -Destination $destination
   }
   Assert-UnchangedSource
@@ -99,7 +114,10 @@ try {
     sourceTreeSha256 = $fingerprint
     localDependencyOverridesPresent = (Test-Path -LiteralPath 'pubspec_overrides.yaml')
     distributionComplete = $false
-    androidArtifact = 'Debug APK; signing identity must be verified against the pinned certificate separately'
+    androidArtifact = 'Release APK signed with the pinned stable certificate; signature verified independently'
+    androidReleaseVersionCode = $AndroidBuildNumber
+    androidReleaseSigningVerified = $true
+    localWindowsAndroidComplete = $true
     publication = 'Held pending artwork lots and names; no GitHub publication requested'
     builtAtUtc = [DateTime]::UtcNow.ToString('o')
     files = @(Get-ChildItem -LiteralPath $destination -Recurse -File | ForEach-Object {

@@ -1,5 +1,9 @@
 # Oculum — registro delle regole confermate
 
+## Schivate Oculum: contatore e modifica dalla scheda — 24 novembre 2026
+
+Conferma esplicita dell’utente: mostrare un solo numero disponibile, mai il rapporto `1/1`. Tenendo premuto il comando Schivata nella scheda in uso, oppure con il tasto destro, aprire il menu con `+1`, `-1` e quantità scrivibile. La quantità è quella disponibile, compresa la possibilità di togliere cariche ottenute dal Grado; il minimo è zero. Il salvataggio riguarda soltanto la scheda e la campagna da cui il menu è stato aperto, rispettando gli eventuali vincoli di sola lettura. Le cariche consumate restano registrate: la modifica manuale non riattiva una Schivata già usata e non cambia la regola sulla mancata rigenerazione.
+
 ## Mappa degli Occhi
 
 Chi dà il colpo finale a una creatura, NPC o altro partecipante vede nella propria Mappa degli Occhi il nome della vittima con l'occhio dei morti. La crescita con la Potenza totale riguarda la dimensione dei nodi nella mappa. La conferma successiva esclude la crescita delle statistiche degli Occhi dei Caduti evocabili.

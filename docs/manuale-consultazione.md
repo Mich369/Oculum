@@ -1514,6 +1514,8 @@ La Schivata Oculum è una difesa gratuita, limitata e consumabile. Ne ottieni un
 Puoi aggiungere cariche extra con il parser, per esempio @SchivataOculum+1.
 Le cariche non si rigenerano con il turno, con il riposo o con il Refull: quando ne spendi una resta consumata finché non ottieni una nuova carica.
 
+Nella scheda viene mostrato soltanto il numero disponibile, per esempio 1. Tieni premuto il comando Schivata Oculum oppure usa il tasto destro per aprire il menu: puoi aggiungere o togliere una carica con +1 e -1, oppure scrivere direttamente la quantità disponibile e salvare. Il menu riguarda la scheda da cui lo hai aperto; cambiando scheda, campagna o stanza prima di salvare, la modifica viene annullata. Le cariche consumate restano registrate separatamente. La correzione manuale vale anche per le cariche ottenute dal Grado e si conserva nel JSON della scheda.
+
 Quando la usi, scegli dal menu rapido:
 - Inferiore: immunità ai danni dell'azione.
 - Al tuo pari: riduzione del 90%.

@@ -2338,7 +2338,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
 
   Widget schivataOculumResourcePanel() {
     final available = schivateOculumDisponibili();
-    final total = schivateOculumTotali();
     return gothicPanel(
       borderColor: eyePupilGlowColor,
       child: Column(
@@ -2360,13 +2359,14 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
               GestureDetector(
                 onSecondaryTap: modificaSchivateOculumDaTastiera,
+                onLongPress: modificaSchivateOculumDaTastiera,
                 child: Tooltip(
                   message: t(
-                    'Tasto destro per impostare le Schivate extra',
-                    'Right-click to set extra dodges',
+                    'Tieni premuto o usa il tasto destro per modificare le Schivate',
+                    'Hold or right-click to edit dodges',
                   ),
                   child: Text(
-                    '$available/$total',
+                    '$available',
                     style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w900,
@@ -2394,11 +2394,8 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
                 ),
               ),
               IconButton.filledTonal(
-                tooltip: t(
-                  'Rimuovi una schivata extra',
-                  'Remove one extra dodge',
-                ),
-                onPressed: schivateOculumBonus > 0
+                tooltip: t('Rimuovi una schivata', 'Remove one dodge'),
+                onPressed: available > 0
                     ? () => modificaSchivateOculumRapide(-1)
                     : null,
                 icon: const Icon(Icons.remove),
@@ -2411,14 +2408,6 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
               ),
             ],
           ),
-          if (schivateOculumBonus > 0)
-            smallInfoText(
-              t(
-                'Schivate extra: $schivateOculumBonus',
-                'Extra dodges: $schivateOculumBonus',
-              ),
-              color: eyePupilGlowColor,
-            ),
           const SizedBox(height: 10),
           ElevatedButton.icon(
             onPressed: available > 0 ? mostraMenuSchivataOculum : null,
@@ -2438,60 +2427,129 @@ extension _OculumHomeSecondaryPages on _OculumHomePageState {
   }
 
   Future<void> modificaSchivateOculumDaTastiera() async {
+    if (!puoModificareSchivateOculum) return;
+    final origin = currentSheetScrollId();
+    final campaign = activeCampaignId;
+    final scope = permissionScope;
+    final sheetName = nomeController.text.trim();
     final controller = TextEditingController(
-      text: schivateOculumBonus.toString(),
+      text: schivateOculumDisponibili().toString(),
     );
     final value = await oculumShowDialogUntilClosed<int>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(t('Schivate Oculum extra', 'Extra Oculum Dodges')),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: oculumNonNegativeIntegerFormatters,
-          decoration: InputDecoration(
-            labelText: t('Quantità extra', 'Extra amount'),
-            helperText: t(
-              'Le cariche già consumate restano registrate.',
-              'Dodges already spent remain recorded.',
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, refresh) {
+          final amount = int.tryParse(controller.text.trim());
+          void adjust(int delta) {
+            final current = int.tryParse(controller.text.trim()) ?? 0;
+            controller.text = '${max(0, current + delta)}';
+            refresh(() {});
+          }
+
+          return AlertDialog(
+            title: Text(t('Schivate Oculum', 'Oculum Dodges')),
+            scrollable: true,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (sheetName.isNotEmpty) Text(sheetName),
+                TextField(
+                  key: const ValueKey('dodge-available-amount'),
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: oculumNonNegativeIntegerFormatters,
+                  decoration: InputDecoration(
+                    labelText: t('Quantità disponibile', 'Available amount'),
+                  ),
+                  onChanged: (_) => refresh(() {}),
+                  onSubmitted: (text) {
+                    final number = int.tryParse(text.trim());
+                    if (number != null) Navigator.pop(dialogContext, number);
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const ValueKey('dodge-minus-one'),
+                        onPressed: (amount ?? 0) > 0 ? () => adjust(-1) : null,
+                        child: const Text('-1'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const ValueKey('dodge-plus-one'),
+                        onPressed: () => adjust(1),
+                        child: const Text('+1'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          onSubmitted: (text) =>
-              Navigator.pop(dialogContext, int.tryParse(text.trim())),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(t('Annulla', 'Cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(
-              dialogContext,
-              int.tryParse(controller.text.trim()),
-            ),
-            child: Text(t('Salva', 'Save')),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(t('Annulla', 'Cancel')),
+              ),
+              FilledButton(
+                onPressed: amount != null
+                    ? () => Navigator.pop(
+                        dialogContext,
+                        int.tryParse(controller.text.trim()),
+                      )
+                    : null,
+                child: Text(t('Salva', 'Save')),
+              ),
+            ],
+          );
+        },
       ),
     );
     controller.dispose();
-    if (value == null || !mounted) return;
-    final baseWithoutManualBonus = max(
-      0,
-      schivataOculumBase() +
-          runtimeQuickBonus('schivata_oculum') +
-          difficultyIncreaseOculumDodgeBonus(),
-    );
-    final minimumBonusForSpentDodges = max(
-      0,
-      schivateOculumConsumate - baseWithoutManualBonus,
-    );
-    setState(() {
-      schivateOculumBonus = max(minimumBonusForSpentDodges, value);
-    });
-    programmaSalvataggio();
+    if (value == null ||
+        !mounted ||
+        currentSheetScrollId() != origin ||
+        activeCampaignId != campaign ||
+        permissionScope != scope) {
+      return;
+    }
+    impostaSchivateOculumDisponibili(value);
   }
+
+  Widget schivataOculumActionButton() => GestureDetector(
+    key: const ValueKey('mobile-dodge'),
+    onSecondaryTap: modificaSchivateOculumDaTastiera,
+    onLongPress: modificaSchivateOculumDaTastiera,
+    child: OculumSurfaceButton(
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: eyePupilGlowColor.withValues(alpha: .12),
+          foregroundColor: eyePupilGlowColor,
+          side: BorderSide(color: eyePupilGlowColor.withValues(alpha: .72)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+        ),
+        onPressed: mostraMenuSchivataOculum,
+        icon: const Icon(Icons.visibility_outlined),
+        label: Text('${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}'),
+      ),
+    ),
+  );
+
+  Widget schivataOculumQuickStatTile() => quickStatTile(
+    label: t('Schivata Oculum', 'Oculum Dodge'),
+    value: '${schivateOculumDisponibili()}',
+    valueBuilder: () => '${schivateOculumDisponibili()}',
+    icon: Icons.visibility,
+    color: eyePupilGlowColor,
+    conditionTarget: OculumConditionTarget.combattimento,
+    onTap: mostraMenuSchivataOculum,
+    onContextMenu: modificaSchivateOculumDaTastiera,
+  );
 
   Widget oculumRollSpendPanel() {
     final cap = oculumTiroSpendCap();

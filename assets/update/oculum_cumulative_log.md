@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Schivate Oculum dalla scheda — 24 novembre 2026
+
+- Le Schivate Oculum mostrano soltanto il numero disponibile, per esempio **1**, al posto di **1/1**.
+- Tieni premuto il comando Schivata nella scheda, oppure usa il tasto destro: il menu permette **+1**, **−1** e una quantità scritta direttamente, da confermare con **Salva**. Vale anche per le cariche ottenute dal Grado, con minimo zero.
+- Il menu resta legato alla scheda, campagna e stanza da cui lo hai aperto. Le cariche consumate e le personalizzazioni restano salvate separatamente; cambiare scheda prima di salvare annulla la modifica.
+
 ## Nemici feriti nel Fight Creator — 23 novembre 2026
 
 - Ogni nuovo nemico generato nel Creator ha il 20% di probabilità di nascere con il 25–75% della Vita massima, arrotondata per eccesso e almeno 1. Ogni creatura ha una sola estrazione, conservata nel salvataggio. Alleati e schede esistenti restano invariati; Scudi e statistiche non vengono ridotti. La Vita resta modificabile dalla scheda.

@@ -1391,6 +1391,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'activeStructuredEffects': <Map<String, dynamic>>[],
       'schivateOculumConsumate': 0,
       'schivateOculumBonus': 0,
+      'schivateOculumRimosseManualmente': 0,
       'schivataOculumRiduzionePronta': 0,
       'schivataOculumEtichettaPronta': '',
       'scudoSalvataggioAttivo': false,
@@ -1790,6 +1791,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
         ),
       'schivateOculumConsumate': schivateOculumConsumate,
       'schivateOculumBonus': schivateOculumBonus,
+      'schivateOculumRimosseManualmente': schivateOculumRimosseManualmente,
       'schivataOculumRiduzionePronta': schivataOculumRiduzionePronta,
       'schivataOculumEtichettaPronta': schivataOculumEtichettaPronta,
       'scudoSalvataggioAttivo': scudoSalvataggioAttivo,
@@ -2512,6 +2514,10 @@ extension _OculumHomePersistence on _OculumHomePageState {
       readIntValue(json['schivateOculumConsumate']),
     );
     schivateOculumBonus = max(0, readIntValue(json['schivateOculumBonus']));
+    schivateOculumRimosseManualmente = max(
+      0,
+      readIntValue(json['schivateOculumRimosseManualmente']),
+    );
     schivataOculumRiduzionePronta = readIntValue(
       json['schivataOculumRiduzionePronta'],
     );

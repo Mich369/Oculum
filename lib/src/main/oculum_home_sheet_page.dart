@@ -3689,6 +3689,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required IconData icon,
     required Color color,
     VoidCallback? onTap,
+    VoidCallback? onContextMenu,
     VoidCallback? onRoll,
     VoidCallback? onDecrease,
     VoidCallback? onIncrease,
@@ -3712,6 +3713,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           icon: icon,
           color: color,
           onTap: onTap,
+          onContextMenu: onContextMenu,
           onRoll: onRoll,
           onDecrease: onDecrease,
           onIncrease: onIncrease,
@@ -3966,6 +3968,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
       label: label,
       child: tile,
       onActivate: onTap,
+      onContextMenu: onContextMenu,
       onEdit: onTap,
       onRoll: onRoll,
       onDecrease: onDecrease,
@@ -3982,6 +3985,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     required String label,
     required Widget child,
     VoidCallback? onActivate,
+    VoidCallback? onContextMenu,
     VoidCallback? onEdit,
     VoidCallback? onRoll,
     VoidCallback? onDecrease,
@@ -3990,6 +3994,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
     OculumConditionTarget? conditionTarget,
   }) {
     if (onActivate == null &&
+        onContextMenu == null &&
         onEdit == null &&
         onRoll == null &&
         onDecrease == null &&
@@ -3999,6 +4004,10 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
     void openAt(Offset position) {
       if (!mounted) return;
+      if (onContextMenu != null) {
+        onContextMenu();
+        return;
+      }
       showQuickContextMenu(
         label: label,
         position: position,
@@ -8479,16 +8488,7 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           logTitle: t('Movimento', 'Movement'),
         ),
       ),
-      quickStatTile(
-        label: t('Schivata Oculum', 'Oculum Dodge'),
-        value: '${schivateOculumDisponibili()}/${schivateOculumTotali()}',
-        valueBuilder: () =>
-            '${schivateOculumDisponibili()}/${schivateOculumTotali()}',
-        icon: Icons.visibility,
-        color: eyePupilGlowColor,
-        conditionTarget: OculumConditionTarget.combattimento,
-        onTap: mostraMenuSchivataOculum,
-      ),
+      schivataOculumQuickStatTile(),
       if (!dense || !modalitaVeloce)
         quickStatTile(
           label: t('Bonus livello/grado', 'Level/grade bonus'),

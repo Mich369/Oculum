@@ -4799,21 +4799,41 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
 
   void modificaSchivateOculumRapide(int delta) {
     if (delta == 0) return;
-    setState(() {
-      final baseWithoutManualBonus = max(
-        0,
+    impostaSchivateOculumDisponibili(
+      max(0, schivateOculumDisponibili() + delta),
+    );
+  }
+
+  bool get puoModificareSchivateOculum {
+    if (schedaCorrente < 0 || schedaCorrente >= schedePersonaggio.length) {
+      return false;
+    }
+    final sheet = schedePersonaggio[schedaCorrente];
+    return !readBoolValue(sheet['realtimeReadOnlyByMaster']) &&
+        !readBoolValue(sheet['realtimeRestrictedByMaster']);
+  }
+
+  void impostaSchivateOculumDisponibili(int value) {
+    if (!mounted || !puoModificareSchivateOculum) return;
+    final target = max(0, value);
+    if (target == schivateOculumDisponibili()) return;
+    // Work from the unclamped grant balance, including old saves whose spent
+    // charges exceed their current grants. Manual edits never refund usage.
+    final granted =
         schivataOculumBase() +
-            runtimeQuickBonus('schivata_oculum') +
-            difficultyIncreaseOculumDodgeBonus(),
-      );
-      final minimumBonusForSpentDodges = max(
-        0,
-        schivateOculumConsumate - baseWithoutManualBonus,
-      );
-      schivateOculumBonus = max(
-        minimumBonusForSpentDodges,
-        schivateOculumBonus + delta,
-      );
+        schivateOculumBonus +
+        runtimeQuickBonus('schivata_oculum') +
+        difficultyIncreaseOculumDodgeBonus() -
+        schivateOculumRimosseManualmente;
+    final delta = schivateOculumConsumate + target - granted;
+    setState(() {
+      if (delta > 0) {
+        schivateOculumBonus += delta;
+      } else {
+        final bonusRemoved = min(schivateOculumBonus, -delta);
+        schivateOculumBonus -= bonusRemoved;
+        schivateOculumRimosseManualmente += -delta - bonusRemoved;
+      }
     });
     programmaSalvataggio();
   }
@@ -6309,8 +6329,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
                   ),
                   subtitle: Text(
                     t(
-                      'Disponibili ${schivateOculumDisponibili()}/${schivateOculumTotali()}. Sono consumabili e non si rigenerano.',
-                      'Available ${schivateOculumDisponibili()}/${schivateOculumTotali()}. They are consumables and do not regenerate.',
+                      'Disponibili ${schivateOculumDisponibili()}. Sono consumabili e non si rigenerano.',
+                      'Available ${schivateOculumDisponibili()}. They are consumables and do not regenerate.',
                     ),
                     style: TextStyle(color: Colors.grey.shade300),
                   ),

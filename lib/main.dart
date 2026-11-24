@@ -407,12 +407,14 @@ Future<void> main([List<String> arguments = const []]) async {
       var frameworkErrorCount = 0;
       FlutterError.onError = (details) {
         frameworkErrorCount++;
-        unawaited(recordOculumSmokeStatus('framework_error', <String, Object?>{
-          'frameworkErrorCount': frameworkErrorCount,
-          'lastFrameworkErrorType': details.exception.runtimeType.toString(),
-        }).catchError((Object error) {
-          stderr.writeln('OCULUM_SMOKE_STATUS_ERROR ${error.runtimeType}');
-        }));
+        unawaited(
+          recordOculumSmokeStatus('framework_error', <String, Object?>{
+            'frameworkErrorCount': frameworkErrorCount,
+            'lastFrameworkErrorType': details.exception.runtimeType.toString(),
+          }).catchError((Object error) {
+            stderr.writeln('OCULUM_SMOKE_STATUS_ERROR ${error.runtimeType}');
+          }),
+        );
         if (previousFlutterError != null) {
           previousFlutterError(details);
         } else {
@@ -461,15 +463,17 @@ Future<void> main([List<String> arguments = const []]) async {
     if (oculumSmokeStorageActive) {
       final views = WidgetsBinding.instance.platformDispatcher.views;
       final view = views.isEmpty ? null : views.first;
-      unawaited(recordOculumSmokeStatus('first_frame', <String, Object?>{
-        'firstFrameSeen': true,
-        'viewCount': views.length,
-        'physicalWidth': view?.physicalSize.width,
-        'physicalHeight': view?.physicalSize.height,
-        'devicePixelRatio': view?.devicePixelRatio,
-        // A frame alone does not certify that every copied sheet was loaded.
-        'localSaveLoadVerified': false,
-      }));
+      unawaited(
+        recordOculumSmokeStatus('first_frame', <String, Object?>{
+          'firstFrameSeen': true,
+          'viewCount': views.length,
+          'physicalWidth': view?.physicalSize.width,
+          'physicalHeight': view?.physicalSize.height,
+          'devicePixelRatio': view?.devicePixelRatio,
+          // A frame alone does not certify that every copied sheet was loaded.
+          'localSaveLoadVerified': false,
+        }),
+      );
       return;
     }
     if (!kIsWeb && Platform.isWindows) {
@@ -697,7 +701,8 @@ Future<void> _preloadOculumStartupServices({
 Future<bool> ensureOculumSupabaseInitialized() {
   if (oculumSmokeStorageActive) {
     OculumRealtimeService.supabaseAvailable = false;
-    OculumRealtimeService.startupStatus = 'Modalità smoke locale: online disattivato.';
+    OculumRealtimeService.startupStatus =
+        'Modalità smoke locale: online disattivato.';
     return Future<bool>.value(false);
   }
   if (OculumRealtimeService.supabaseAvailable) {
@@ -2288,6 +2293,7 @@ class _OculumHomePageState extends State<OculumHomePage>
   final Map<String, int> ascensionDustSottotrattiTemporanei = <String, int>{};
   int schivateOculumConsumate = 0;
   int schivateOculumBonus = 0;
+  int schivateOculumRimosseManualmente = 0;
   int schivataOculumRiduzionePronta = 0;
   String schivataOculumEtichettaPronta = '';
   bool scudoSalvataggioAttivo = false;

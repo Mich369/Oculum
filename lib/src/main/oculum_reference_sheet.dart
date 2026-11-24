@@ -1253,26 +1253,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           icon: Icon(Icons.shield_outlined),
                           label: Text(t('Difesa', 'Defense')),
                         ),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: eyePupilGlowColor.withValues(
-                              alpha: .12,
-                            ),
-                            foregroundColor: eyePupilGlowColor,
-                            side: BorderSide(
-                              color: eyePupilGlowColor.withValues(alpha: .72),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                          ),
-                          key: const ValueKey('mobile-dodge'),
-                          onPressed: mostraMenuSchivataOculum,
-                          icon: Icon(Icons.visibility_outlined),
-                          label: Text(
-                            '${t('Schivata', 'Dodge')} ${schivateOculumDisponibili()}/${schivateOculumTotali()}',
-                          ),
-                        ),
+                        schivataOculumActionButton(),
                         ...dustFusionButtons(),
                         if (oculumTiroLimiteRegola() > 0)
                           rollEmpowermentButton(),

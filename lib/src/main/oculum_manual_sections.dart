@@ -2906,6 +2906,8 @@ La Schivata Oculum è una difesa gratuita, limitata e consumabile. Ne ottieni un
 Puoi aggiungere cariche extra con il parser, per esempio @SchivataOculum+1.
 Le cariche non si rigenerano con il turno, con il riposo o con il Refull: quando ne spendi una resta consumata finché non ottieni una nuova carica.
 
+Nella scheda viene mostrato soltanto il numero disponibile, per esempio 1. Tieni premuto il comando Schivata Oculum oppure usa il tasto destro per aprire il menu: puoi aggiungere o togliere una carica con +1 e -1, oppure scrivere direttamente la quantità disponibile e salvare. Il menu riguarda la scheda da cui lo hai aperto; cambiando scheda, campagna o stanza prima di salvare, la modifica viene annullata. Le cariche consumate restano registrate separatamente. La correzione manuale vale anche per le cariche ottenute dal Grado e si conserva nel JSON della scheda.
+
 Quando la usi, scegli dal menu rapido:
 - Inferiore: immunità ai danni dell'azione.
 - Al tuo pari: riduzione del 90%.
@@ -3152,6 +3154,8 @@ Oculum Dodge is a free, limited and consumable defense. You gain one charge ever
 
 Extra charges can be added through the parser, for example @SchivataOculum+1.
 Charges do not regenerate with the turn, rest or Refill: once spent, a charge stays consumed until you gain a new one.
+
+The sheet shows only the available count, for example 1. Hold the Oculum Dodge control or right-click it to open the menu: use +1 and -1 or enter the available amount directly, then save. The menu belongs to the sheet from which you opened it; changing sheet, campaign or room before saving cancels the edit. Spent charges remain recorded separately. Manual corrections also apply to Grade charges and persist in the sheet JSON.
 
 When you use it, choose from the quick menu:
 - Inferiore: immunity to that action's damage.

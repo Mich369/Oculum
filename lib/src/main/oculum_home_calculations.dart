@@ -4553,7 +4553,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
       schivataOculumBase() +
           schivateOculumBonus +
           runtimeQuickBonus('schivata_oculum') +
-          difficultyIncreaseOculumDodgeBonus(),
+          difficultyIncreaseOculumDodgeBonus() -
+          schivateOculumRimosseManualmente,
     );
   }
 

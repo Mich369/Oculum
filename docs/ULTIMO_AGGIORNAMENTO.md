@@ -1,10 +1,10 @@
-# Fight Creator e arretrati dell’app — 23 novembre
+# Schivate Oculum dalla scheda — 24 novembre
 
-- Nuovi nemici del Fight Creator: 20% di probabilità di nascere con il 25–75% della Vita massima. Una sola estrazione per creatura, salvata e modificabile dalla scheda.
-- Corretto l’errore chiudendo l’editor delle Schivate Oculum extra aperto con il tasto destro; cariche consumate conservate.
-- Presenti Fight Creator nella prima pagina Master, quantità multiple, squadre, confronto delle Potenze e suggerimenti per area. Le bozze restano private fino alla pubblicazione esplicita del Fight.
-- EXP comune da nemici morti o a terra; Drop da morte confermata. Allenamento non letale con bonus +150 e +100 secondo le regole confermate.
-- Conservati Rebirth, Occhi dei Caduti, azioni gratuite, token esagonali, scoperte del Monster Book e temi a piena pagina.
-- Abilità, costi, durate, bersagli, effetti, Vita, squadre e aspetto restano modificabili e salvabili nel JSON.
+- Il contatore delle Schivate mostra un solo numero disponibile, per esempio **1**.
+- Tieni premuto il comando Schivata nella scheda, oppure usa il tasto destro, per aprire **+1**, **−1** e il campo della quantità. Conferma con **Salva**.
+- Puoi modificare anche le cariche ottenute dal Grado, fino a zero. Le cariche consumate restano registrate e la modifica viene conservata nel JSON.
+- Il menu agisce soltanto sulla scheda, campagna e stanza da cui lo hai aperto e rispetta la sola lettura.
+- Conservati gli aggiornamenti precedenti, compresa la generazione dei nemici feriti nel Fight Creator. Il registro completo resta cumulativo.
+- Verifica locale: 31 test mirati passati e analisi statica senza problemi.
 
-[Log cumulativo](REGISTRO_AGGIORNAMENTI.md) · [Verifiche e attività aperte](VERIFICA_ARRETRATI_APP_2026-11-23.md)
+[Log cumulativo](REGISTRO_AGGIORNAMENTI.md) · [Verifiche Schivate](VERIFICA_SCHIVATE_2026-11-24.md) · [Arretrati dell’app](VERIFICA_ARRETRATI_APP_2026-11-23.md)

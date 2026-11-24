@@ -229,6 +229,8 @@ void main() {
       });
       final base = {
         ...probe.snapshot(),
+        'id': 'HOSHY_INTEGRITY',
+        'sheetTag': 'HOSHY_INTEGRITY',
         'nome': 'Hoshy',
         'resilienza': '20',
         'volonta': '30',
@@ -265,6 +267,11 @@ void main() {
           'medicina': 3,
         },
       };
+      // Resource edits require a selected sheet, as in the application.
+      state.schedePersonaggio
+        ..clear()
+        ..add(base);
+      state.schedaCorrente = 0;
       probe.load(base);
       probe.load({...base, 'grado': '6', 'schivateOculumConsumate': -5});
       final normalizedDodges =

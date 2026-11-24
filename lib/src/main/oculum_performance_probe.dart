@@ -742,6 +742,9 @@ class OculumPerformanceProbe {
     'sheet_dodges',
     _state.schivataOculumResourcePanel,
   );
+  Widget dodgeActionButton() => _state.schivataOculumActionButton();
+  Widget dodgeQuickStatTile() => _state.schivataOculumQuickStatTile();
+  int dodgeAvailable() => _state.schivateOculumDisponibili();
   void openResistances() => _state.openResistanceDetails();
   Future<void> showCreateFallenEye({Map<String, dynamic>? editingEye}) =>
       _state._showCreateFallenEyeDialog(editingEye: editingEye);
