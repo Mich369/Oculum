@@ -2,23 +2,47 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/oculum_save_profile.dart';
 import 'oculum_lite_run.dart';
 
 class OculumLiteAudio {
   static const _prefix = 'oculum/lite/audio/';
+  static const defaultMusicVolume = .35;
+  static const defaultEffectsVolume = .50;
   AudioPlayer? _music;
+  AudioPlayer? _merchantVoice;
   final _effects = <String, AudioPlayer>{};
   Future<void> _transition = Future.value();
+  Future<void> _voiceTransition = Future.value();
+  int _voiceRequest = 0;
   String? _wantedTrack;
   String? _loadedTrack;
   bool _closed = false;
   bool muted = false;
-  double musicVolume = .55;
-  double effectsVolume = .72;
+  double musicVolume = defaultMusicVolume;
+  double effectsVolume = defaultEffectsVolume;
   LiteRun? _run;
   LiteCombatImpact? _lastImpact;
   double _lastEffectTime = -1;
+
+  static String preferenceKey(String name) =>
+      oculumProfiledStorageKey('oculum_lite_audio_$name');
+
+  void restorePreferences(SharedPreferences? preferences) {
+    double read(String name, double fallback) {
+      final value = preferences?.get(preferenceKey(name));
+      return value is num && value.isFinite
+          ? value.toDouble().clamp(0.0, 1.0)
+          : fallback;
+    }
+
+    musicVolume = read('musica', defaultMusicVolume);
+    effectsVolume = read('effetti', defaultEffectsVolume);
+    muted = preferences?.get(preferenceKey('muto')) == true;
+    applyVolumes();
+  }
 
   void update(LiteRun? run, {required bool playing}) {
     if (!identical(run, _run)) {
@@ -87,6 +111,10 @@ class OculumLiteAudio {
     for (final effect in _effects.values) {
       unawaited(_try(() => effect.setVolume(muted ? 0 : effectsVolume)));
     }
+    final voice = _merchantVoice;
+    if (voice != null) {
+      unawaited(_try(() => voice.setVolume(muted ? 0 : effectsVolume)));
+    }
   }
 
   void combatSounds(LiteRun run) {
@@ -138,8 +166,44 @@ class OculumLiteAudio {
     );
   }
 
+  void playMerchantGreeting(String name) {
+    final request = ++_voiceRequest;
+    if (_closed || muted || effectsVolume == 0) return;
+    _voiceTransition = _voiceTransition.then(
+      (_) => _try(() async {
+        if (_closed || request != _voiceRequest) return;
+        final voice = _merchantVoice ??= AudioPlayer();
+        await voice.stop();
+        if (_closed ||
+            request != _voiceRequest ||
+            muted ||
+            effectsVolume == 0) {
+          return;
+        }
+        await voice.play(
+          AssetSource('$_prefix$name.wav'),
+          volume: effectsVolume,
+        );
+      }),
+    );
+  }
+
+  void stopMerchantGreeting() {
+    _voiceRequest++;
+    _voiceTransition = _voiceTransition.then(
+      (_) => _try(() async => _merchantVoice?.stop()),
+    );
+  }
+
   void dispose() {
     _closed = true;
+    unawaited(
+      _voiceTransition.then(
+        (_) => _try(() async {
+          await _merchantVoice?.dispose();
+        }),
+      ),
+    );
     unawaited(
       _transition.then(
         (_) => _try(() async {

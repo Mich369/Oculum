@@ -1,5 +1,6 @@
-"""Render the original Oculum Lite piano score and combat sounds as PCM WAV."""
+"""Render the original Oculum RL music, combat cues and merchant voices."""
 
+from argparse import ArgumentParser
 from array import array
 from functools import lru_cache
 from math import exp, pi, sin, tanh
@@ -187,7 +188,76 @@ def render_effects():
         write(name, signal, .8)
 
 
+# Pitch in Hz, vowel, syllable length. Each voice has its own rhythm and timbre.
+MERCHANTS = {
+    "goblin": (.24, -.24, ((102, "o", .13), (182, "e", .09), (143, "a", .11), (82, "u", .18))),
+    "armaiola": (.05, .07, ((240, "a", .14), (267, "i", .12), (221, "e", .22))),
+    "taverniera": (.12, -.10, ((174, "a", .12), (152, "o", .20), (210, "e", .10), (164, "a", .17))),
+    "fabbro": (.20, -.13, ((104, "m", .21), (133, "a", .14), (91, "o", .16))),
+    "veggente": (.18, .28, ((235, "u", .20), (287, "i", .20), (251, "e", .19))),
+}
+FORMANTS = {
+    "a": (740, 1250, 2460), "e": (475, 1860, 2510), "i": (300, 2240, 3010),
+    "o": (510, 900, 2530), "u": (365, 750, 2040), "m": (260, 1020, 1980),
+}
+
+
+def render_greeting(name, variation, breath, tone, syllables):
+    rng = Random(f"{name}-{variation}")
+    signal = array("f", [0.0]) * round(.02 * RATE)
+    # Variation changes emphasis, cadence and inflection together.
+    syllables = syllables if variation < 3 else syllables[1:] + syllables[:1]
+    for index, (pitch, vowel, duration) in enumerate(syllables):
+        duration *= (.96, 1.12, .87)[variation - 1] * rng.uniform(.89, 1.1)
+        length = round(duration * RATE)
+        phase = 0.0
+        formants = FORMANTS[vowel]
+        partials = []
+        pitch *= rng.uniform(.91, 1.09) * (1 + .045 * (variation - 2))
+        for harmonic in range(1, 24):
+            frequency = harmonic * pitch
+            weight = sum(
+                strength * exp(-((frequency - formant) / bandwidth) ** 2)
+                for strength, formant, bandwidth in zip(
+                    (.72, .42, .18), formants, (185, 330, 450)
+                )
+            )
+            partials.append((weight + .16 / harmonic) / harmonic ** (.52 - tone))
+        previous_noise = 0.0
+        for i in range(length):
+            progress = i / length
+            t = i / RATE
+            # One glottal pulse train, reshaped by the vowel's formants.
+            pitch_bend = .16 * sin(progress * pi) - (.08 + .04 * index) * progress
+            phase += TAU * pitch * (1 + pitch_bend + .025 * sin(TAU * t * 13)) / RATE
+            voice = sum(weight * sin(phase * harmonic)
+                        for harmonic, weight in enumerate(partials, 1))
+            noise = rng.uniform(-1, 1)
+            rasp = (noise - previous_noise) * breath * (.17 + exp(-t * 37))
+            previous_noise = noise
+            envelope = min(1.0, progress * 14) * (1.0 - progress) ** .68
+            signal.append((voice + rasp) * envelope)
+        gap = .030 if name == "goblin" and index == 1 else .017
+        signal.extend([0.0] * round(gap * RATE))
+    if name == "veggente":
+        dry = signal[:]
+        delay = round(.070 * RATE)
+        signal.extend([0.0] * delay)
+        for i, sample in enumerate(dry):
+            signal[i + delay] += sample * .16
+    # Normalize peaks consistently before the user-controlled effects mixer.
+    peak = max(abs(sample) for sample in signal)
+    write(f"voce-{name}-{variation}", signal, .67 / peak)
+
+
 if __name__ == "__main__":
-    for title, score in SCORES.items():
-        render_score(title, *score)
-    render_effects()
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("--merchant-voices", action="store_true", help="Only render merchant greetings")
+    options = parser.parse_args()
+    if not options.merchant_voices:
+        for title, score in SCORES.items():
+            render_score(title, *score)
+        render_effects()
+    for merchant, voice in MERCHANTS.items():
+        for take in (1, 2, 3):
+            render_greeting(merchant, take, *voice)

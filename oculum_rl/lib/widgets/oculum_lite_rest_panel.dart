@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../game/oculum_lite_run.dart';
+import 'oculum_lite_merchant_greeting.dart';
 import 'oculum_rl_merchant.dart';
 
 Future<void> showLiteRestHub(
   BuildContext context, {
   required LiteRun? Function() world,
+  required ValueChanged<String> playVoice,
   required ValueChanged<LiteRestItem> buy,
   required ValueChanged<LiteRestItem> remember,
   required VoidCallback exchange,
@@ -28,6 +30,13 @@ Future<void> showLiteRestHub(
           final stock = station == LiteRestStation.seer
               ? supplies.receipts
               : LiteRestItem.values.where((item) => item.station == station);
+          final shopkeeper = switch (station) {
+            LiteRestStation.tavern => LiteShopkeeper.taverniera,
+            LiteRestStation.forge => LiteShopkeeper.fabbro,
+            LiteRestStation.merchant =>
+              run.hubGoblin ? LiteShopkeeper.goblin : LiteShopkeeper.armaiola,
+            LiteRestStation.seer => LiteShopkeeper.veggente,
+          };
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -49,8 +58,14 @@ Future<void> showLiteRestHub(
                     ),
                 ],
               ),
-              if (station == LiteRestStation.merchant) ...[
+              if (station == LiteRestStation.merchant)
                 OculumRlMerchant(goblin: run.hubGoblin),
+              LiteMerchantGreeting(
+                key: ValueKey(shopkeeper),
+                shopkeeper: shopkeeper,
+                playVoice: playVoice,
+              ),
+              if (station == LiteRestStation.merchant) ...[
                 if (supplies.lunarPieces > 0)
                   ListTile(
                     contentPadding: EdgeInsets.zero,

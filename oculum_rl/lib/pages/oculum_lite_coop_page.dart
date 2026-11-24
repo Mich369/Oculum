@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../game/oculum_lite_audio.dart';
 import '../game/oculum_lite_coop.dart';
 import '../game/oculum_lite_run.dart';
 import '../widgets/oculum_lite_arena.dart';
@@ -26,6 +29,7 @@ class OculumLiteCoopPage extends StatefulWidget {
 
 class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   final _focus = FocusNode(debugLabel: 'Oculum RL cooperativa');
+  final _audio = OculumLiteAudio();
   final _held = <LogicalKeyboardKey>{};
   Point<double> _touch = const Point(0, 0);
   OculumLiteCoop get _session => widget.session;
@@ -33,6 +37,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(_loadAudio());
+    _session.addListener(_updateMusic);
     _session.start();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focus.requestFocus();
@@ -41,9 +47,29 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
 
   @override
   void dispose() {
+    _session.removeListener(_updateMusic);
     _session.stop();
+    _audio.dispose();
     _focus.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAudio() async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      if (mounted) _audio.restorePreferences(preferences);
+    } on Exception {
+      // The mixer already has audible defaults when storage is unavailable.
+    }
+    if (mounted) _updateMusic();
+  }
+
+  void _updateMusic() {
+    final run = _session.run;
+    _audio.update(
+      run,
+      playing: run != null && !run.finished && !_session.pausedByHost,
+    );
   }
 
   void _setMove() {
@@ -173,12 +199,14 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     await showLiteRestHub(
       context,
       world: () => _session.run,
+      playVoice: _audio.playMerchantGreeting,
       fighter: () => _session.localFighter,
       refresh: _session,
       buy: _session.buyRestItem,
       remember: _session.rememberRestItem,
       exchange: _session.exchangeLunarPiece,
     );
+    _audio.stopMerchantGreeting();
     if (mounted) _focus.requestFocus();
   }
 

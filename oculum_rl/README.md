@@ -4,6 +4,7 @@ La versione Windows autonoma si avvia da `Gioca/Oculum RL.exe` nella cartella de
 
 ## Atto II e deviazioni
 
+- **Voci delle botteghe**. Goblin, Armaiola, Taverniera, Fabbro e Veggente salutano con un verso specifico e una battuta sottotitolata. Usa l’icona accanto al testo per sentirne un’altra. I valori predefiniti sono 35% musica e 50% effetti. Le voci usano il cursore effetti. In impostazioni puoi ripristinare questi due volumi.
 - **Tecniche su G**. Ogni arma ha una mossa, con costo ordinario di 3 Oculum e recupero di 4,2 s. F continua a bloccare, lo Scostubandito conserva Fucile schivata e l’arco consuma tre frecce per il ventaglio. Divoramitù Elité e boss hanno una sagoma e una zona di contatto più grandi. Il boss è largo circa cinque volte il Pollo di Brace. L’hitbox allungata è segnata sul terreno e segue il balzo insieme alla barra Vita. L’Atto II mantiene lo speed-up del +40%.
 - **Stabilità**. I comandi online sono associati alla sala in cui partono. La fauna ferita riprende la posa di movimento dopo l’impatto.
 - **Atto II**. Dopo la dodicesima stanza, dal ristoro scegli Inferno, Regno Caramella o Postea. Ognuno ha quattro visitazioni e un premio conclusivo. Le prime tre permettono di scegliere una reliquia. L’ordine delle reliquie cambia le sinergie di Danni, recupero di Oculum e protezione.

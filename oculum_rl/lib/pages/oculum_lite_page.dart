@@ -13,9 +13,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../game/oculum_lite_audio.dart';
 import '../game/oculum_lite_run.dart';
 import '../services/oculum_lite_saves.dart';
-import '../services/oculum_save_profile.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_creator.dart';
+import '../widgets/oculum_lite_merchant_greeting.dart';
 import '../widgets/oculum_lite_routes.dart';
 import '../widgets/oculum_lite_rest_panel.dart';
 import '../widgets/oculum_rl_merchant.dart';
@@ -181,20 +181,6 @@ class _OculumLitePageState extends State<OculumLitePage>
     return index == null ? null : _slots[index];
   }
 
-  String _audioKey(String setting) =>
-      oculumProfiledStorageKey('oculum_lite_audio_$setting');
-
-  double _readVolume(
-    SharedPreferences? preferences,
-    String key,
-    double fallback,
-  ) {
-    final value = preferences?.get(_audioKey(key));
-    return value is num && value.isFinite
-        ? value.toDouble().clamp(0.0, 1.0)
-        : fallback;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -257,9 +243,7 @@ class _OculumLitePageState extends State<OculumLitePage>
         _preferences = preferences;
         _saveStore = store;
         _progress = progress;
-        _audio.musicVolume = _readVolume(preferences, 'musica', .55);
-        _audio.effectsVolume = _readVolume(preferences, 'effetti', .72);
-        _audio.muted = preferences?.get(_audioKey('muto')) == true;
+        _audio.restorePreferences(preferences);
         _storageMessage = null;
       });
     } on Object {
@@ -758,6 +742,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       _aim ?? run.position + const Point<double>(1, 0);
 
   void _closeShop(LiteRun run) {
+    _audio.stopMerchantGreeting();
     setState(run.closeShop);
     _syncTicker();
     _gameFocus.requestFocus();
@@ -866,9 +851,21 @@ class _OculumLitePageState extends State<OculumLitePage>
   void _saveAudio() {
     final settings = _preferences;
     if (settings == null) return;
-    unawaited(settings.setDouble(_audioKey('musica'), _audio.musicVolume));
-    unawaited(settings.setDouble(_audioKey('effetti'), _audio.effectsVolume));
-    unawaited(settings.setBool(_audioKey('muto'), _audio.muted));
+    unawaited(
+      settings.setDouble(
+        OculumLiteAudio.preferenceKey('musica'),
+        _audio.musicVolume,
+      ),
+    );
+    unawaited(
+      settings.setDouble(
+        OculumLiteAudio.preferenceKey('effetti'),
+        _audio.effectsVolume,
+      ),
+    );
+    unawaited(
+      settings.setBool(OculumLiteAudio.preferenceKey('muto'), _audio.muted),
+    );
   }
 
   Future<void> _interact(LiteRun run) async {
@@ -946,11 +943,13 @@ class _OculumLitePageState extends State<OculumLitePage>
     await showLiteRestHub(
       context,
       world: () => run,
+      playVoice: _audio.playMerchantGreeting,
       buy: (item) => _saveInventoryChange(() => run.buyRestItem(item)),
       remember: (item) =>
           _saveInventoryChange(() => run.rememberRestItem(item)),
       exchange: () => _saveInventoryChange(run.exchangeLunarPiece),
     );
+    _audio.stopMerchantGreeting();
     if (!mounted) return;
     _togglePause();
     _gameFocus.requestFocus();
@@ -1880,13 +1879,12 @@ class _OculumLitePageState extends State<OculumLitePage>
                                   key: ValueKey(run.stage),
                                   goblin: (run.seed + run.stage).isOdd,
                                 ),
-                                Text(
-                                  (run.seed + run.stage).isOdd
-                                      ? 'Il goblin del ferro vecchio'
-                                      : 'L’armaiola itinerante',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
+                                LiteMerchantGreeting(
+                                  key: ValueKey((run.seed, run.stage)),
+                                  shopkeeper: (run.seed + run.stage).isOdd
+                                      ? LiteShopkeeper.goblin
+                                      : LiteShopkeeper.armaiola,
+                                  playVoice: _audio.playMerchantGreeting,
                                 ),
                                 Text(run.message),
                                 OutlinedButton(
@@ -2111,6 +2109,16 @@ class _OculumLitePageState extends State<OculumLitePage>
               : () => _audio.playEffect('clash'),
           icon: const Icon(Icons.volume_up_outlined),
           label: const Text('Prova effetti'),
+        ),
+        TextButton(
+          onPressed: () {
+            update(() {
+              _audio.musicVolume = OculumLiteAudio.defaultMusicVolume;
+              _audio.effectsVolume = OculumLiteAudio.defaultEffectsVolume;
+            });
+            _saveAudio();
+          },
+          child: const Text('Ripristina volumi predefiniti'),
         ),
       ],
     );
