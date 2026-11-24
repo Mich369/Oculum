@@ -5975,6 +5975,13 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     if (sheet == null) {
       return const Center(child: Text('Nessuna scheda selezionata'));
     }
+    final currentHp =
+        sheet['currentHp'] ??
+        (readBoolValue(sheet['personaggioCaduto']) ||
+                readIntValue(sheet['feriteMorte']) >=
+                    _OculumHomeDeathRules.deathWoundLimit
+            ? 0
+            : oculumSheetHpMaximum(sheet));
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -5988,7 +5995,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             '${sheet['tipoScheda'] ?? 'Scheda'} • Lv ${sheet['livello'] ?? 0}',
           ),
           Text(
-            'HP ${sheet['currentHp'] ?? 0} • RES ${sheet['resilienza'] ?? 0} • VOL ${sheet['volonta'] ?? 0}',
+            'HP $currentHp • RES ${sheet['resilienza'] ?? 0} • VOL ${sheet['volonta'] ?? 0}',
           ),
         ],
       ),

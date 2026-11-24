@@ -1,5 +1,9 @@
 # Registro cumulativo per i giocatori
 
+## Vita nei riquadri Mappa — 24 novembre 2026
+
+- I riquadri della Mappa mostrano la Vita massima per le schede locali e condivise più vecchie prive della Vita corrente, oppure zero se la scheda è a terra o morta. Mostrano il valore registrato quando è presente, compreso zero, e leggono i dati senza riscrivere la scheda.
+
 ## Angelico su telefono — 24 novembre 2026
 
 - Il tema Angelico usa su telefono la WebP verticale **F · Campiture spezzate** scelta dall’utente. Le ali, l’altare e la navata si leggono nella vista verticale. Su desktop il tema mantiene la scelta D e la reliquia conserva la propria selezione separata.

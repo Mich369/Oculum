@@ -1,4 +1,6 @@
-# Schivate Expressive Ink e Angelico su telefono — 24 novembre
+# Vita sulla Mappa, Schivate Expressive Ink e Angelico — 24 novembre
+
+- Quando manca la Vita corrente, i riquadri Mappa mostrano la Vita massima della scheda o zero se è a terra o morta. Se la Vita corrente è salvata, mostrano il valore registrato.
 
 - Angelico usa su telefono la WebP verticale F scelta nel lotto ANGELICO-TELEFONO-01. La scena D è lo sfondo desktop, con reliquia e personalizzazioni selezionabili separatamente.
 
