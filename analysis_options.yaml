@@ -12,6 +12,7 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - oculum_battle/**
+    - oculum_rl/**
     - build/**
     - android/**
     - ios/**

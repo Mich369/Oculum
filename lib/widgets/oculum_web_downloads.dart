@@ -130,6 +130,13 @@ class _OculumWebDownloadsState extends State<OculumWebDownloads> {
         ),
         MenuItemButton(
           onPressed: () => _open(
+            Uri.parse('https://github.com/Mich369/Oculum/releases?q=oculum-rl'),
+          ),
+          leadingIcon: const Icon(Icons.sports_esports_outlined),
+          child: const Text('Scarica Oculum RL'),
+        ),
+        MenuItemButton(
+          onPressed: () => _open(
             Uri.parse(
               'https://github.com/Mich369/Oculum/blob/main/docs/AGGIORNARE_OCULUM.md',
             ),
