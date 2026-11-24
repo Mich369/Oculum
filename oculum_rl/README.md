@@ -10,7 +10,7 @@ Da **Aggiornamenti** puoi disattivare i controlli automatici, cercare una nuova 
 
 ## Barre Vita
 
-Le barre dei giocatori sono azzurre nell’HUD e sopra i personaggi in cooperativa. I compagni NPC, i pet e le evocazioni con barra Vita usano il verde. I nemici hanno la barra rossa.
+In cooperativa, il colore della barra Vita è assegnato al posto nella squadra. L’host usa l’azzurro e fino a cinque ospiti usano oro, viola, avorio, cobalto e rame. L’HUD usa il colore del giocatore locale. In solo la barra è azzurra. Il verde identifica NPC alleati, pet ed evocazioni con barra Vita. Il rosso identifica i nemici.
 
 ## Scatto e schivata
 

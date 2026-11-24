@@ -50,7 +50,14 @@ class OculumLiteBlockControl extends StatelessWidget {
 enum _LifeBarRole {
   enemy(Color(0xffe27471), Color(0xff4a2536)),
   ally(Color(0xff8bd78d), Color(0xff243d30)),
-  player(Color(0xff79caff), Color(0xff263b53));
+  sky(Color(0xff79caff), Color(0xff263b53)),
+  gold(Color(0xfff3df5e), Color(0xff4c3b20)),
+  violet(Color(0xffd18cf2), Color(0xff432c58)),
+  ivory(Color(0xfff3eee3), Color(0xff453f3b)),
+  cobalt(Color(0xff7084ff), Color(0xff2c325a)),
+  copper(Color(0xfff9a061), Color(0xff512e20));
+
+  static const playerSeats = [sky, gold, violet, ivory, cobalt, copper];
 
   const _LifeBarRole(this.fill, this.track);
   final Color fill;
@@ -58,17 +65,21 @@ enum _LifeBarRole {
 }
 
 class OculumLitePlayerLifeBar extends StatelessWidget {
-  const OculumLitePlayerLifeBar({super.key, required this.value});
+  const OculumLitePlayerLifeBar({super.key, required this.value, this.seat});
 
   final double value;
+  final int? seat;
 
   @override
-  Widget build(BuildContext context) => LinearProgressIndicator(
-    value: value.clamp(0.0, 1.0),
-    color: _LifeBarRole.player.fill,
-    backgroundColor: _LifeBarRole.player.track,
-    semanticsLabel: 'Vita',
-  );
+  Widget build(BuildContext context) {
+    final role = _LifeBarRole.playerSeats[seat ?? 0];
+    return LinearProgressIndicator(
+      value: value.clamp(0.0, 1.0),
+      color: role.fill,
+      backgroundColor: role.track,
+      semanticsLabel: seat == null ? 'Vita' : 'Vita · Giocatore ${seat! + 1}',
+    );
+  }
 }
 
 /// Live terrain and actors for Oculum RL. Its camera also converts pointer
@@ -2184,7 +2195,7 @@ class _ArenaPaint extends CustomPainter {
             at - const Offset(0, 2.45),
             fighter.hp / fighter.maxHp,
             1,
-            _LifeBarRole.player,
+            _LifeBarRole.playerSeats[run.coopPlayerSeat(fighter)],
           );
         },
       ));
@@ -2258,7 +2269,7 @@ class _ArenaPaint extends CustomPainter {
             player - const Offset(0, 2.45),
             run.hp / run.maxHp,
             1,
-            _LifeBarRole.player,
+            _LifeBarRole.playerSeats[0],
           );
         }
       },

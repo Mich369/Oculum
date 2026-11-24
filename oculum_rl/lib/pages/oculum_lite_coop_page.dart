@@ -366,6 +366,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                               SizedBox(
                                 width: 116,
                                 child: OculumLitePlayerLifeBar(
+                                  seat: run.coopPlayerSeat(mine),
                                   value:
                                       (mine?.hp ?? run.hp) /
                                       (mine?.maxHp ?? run.maxHp),

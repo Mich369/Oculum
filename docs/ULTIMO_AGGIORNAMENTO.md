@@ -1,5 +1,6 @@
 # Oculum RL e aggiornamenti alla campagna
 
+- **Colori della squadra (0.4.11)**. I sei posti in cooperativa hanno ciascuno un colore riconoscibile per la barra Vita. HUD e arena mostrano lo stesso colore, conservato dopo una riconnessione. Il verde indica i compagni AI e il rosso i nemici.
 - **Barre Vita (0.4.10)**. I giocatori usano l’azzurro nell’HUD e sopra i personaggi in cooperativa. I compagni NPC, i pet e le evocazioni con barra Vita usano il verde. Le barre dei nemici sono rosse.
 - **Scatti inchiostrati (0.4.9)**. Partenza, scia e arrivo seguono il tragitto reale anche accanto ai ripari. Shift, schivata dell’Evasore, Open, Velo dello Slime e clash hanno una resa distinta. I due suoni originali seguono il volume Effetti. La prova locale ha verificato percorso, dissolvenza e trasmissione degli effetti agli ospiti.
 - **Rivali illustrati (0.4.8)**. Luce, Ombra ed Eco Speculare usano le tavole da combattimento dei personaggi che copiano, incluso il Curatore della Peste e l’Evasore. Gli sprite delle copie e quelli online vengono risolti dallo stesso catalogo del combattente originale. Verificato con due test del renderer.

@@ -2690,6 +2690,11 @@ class LiteRun {
     return null;
   }
 
+  /// The host is first. Guest order is preserved in saves and network frames,
+  /// including when a guest disconnects and reconnects.
+  int coopPlayerSeat(LiteCoopFighter? guest) =>
+      guest == null ? 0 : coopFighters.indexOf(guest) + 1;
+
   bool addCoopFighter(
     String account,
     String name,

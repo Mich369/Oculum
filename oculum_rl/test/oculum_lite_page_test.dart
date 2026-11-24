@@ -95,7 +95,7 @@ void main() {
     expect(run.combatImpacts, hasLength(5));
   });
 
-  testWidgets('the arena and HUD distinguish player, NPC and enemy life', (
+  testWidgets('co-op gives six players different life bars across frames', (
     tester,
   ) async {
     final run =
@@ -103,7 +103,7 @@ void main() {
             seed: 49,
             hero: LiteHero.evasore,
             weapon: LiteWeapon.guanti,
-            playerCount: 2,
+            playerCount: 6,
           )
           ..position = const Point(15, 11)
           ..enemies.clear()
@@ -119,49 +119,92 @@ void main() {
               companion: LiteCompanion.sentinella,
             ),
           );
-    expect(
-      run.addCoopFighter('qa', 'Ospite', LiteHero.ashley, LiteWeapon.guanti),
-      isTrue,
-    );
-    run.coopFighter('qa')!.position = const Point(14, 12);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Column(
-            children: [
-              const OculumLitePlayerLifeBar(value: .42),
-              Expanded(child: OculumLiteArena(run: run)),
-            ],
+    const expected = [
+      0xff79caff,
+      0xfff3df5e,
+      0xffd18cf2,
+      0xfff3eee3,
+      0xff7084ff,
+      0xfff9a061,
+    ];
+    for (var seat = 1; seat < expected.length; seat++) {
+      expect(
+        run.addCoopFighter(
+          'qa-$seat',
+          'Ospite $seat',
+          LiteHero.ashley,
+          LiteWeapon.guanti,
+        ),
+        isTrue,
+      );
+      run.coopFighter('qa-$seat')!.position = Point<double>(
+        12 + seat * 1.5,
+        13,
+      );
+    }
+    final savedFrame = run.toJson(includeEffects: true);
+    final guests = (savedFrame['fighters'] as List)
+        .cast<Map<String, dynamic>>();
+    guests[2]['connected'] = false;
+    final snapshot = LiteRun.fromJson(savedFrame);
+    expect(snapshot.coopFighter('qa-3')!.connected, isFalse);
+
+    for (final view in [run, snapshot]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                const OculumLitePlayerLifeBar(value: .42),
+                OculumLitePlayerLifeBar(
+                  value: .42,
+                  seat: view.coopPlayerSeat(null),
+                ),
+                for (final guest in view.coopFighters)
+                  OculumLitePlayerLifeBar(
+                    value: .42,
+                    seat: view.coopPlayerSeat(guest),
+                  ),
+                Expanded(child: OculumLiteArena(run: view)),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-    final health = tester.widget<LinearProgressIndicator>(
-      find.byType(LinearProgressIndicator),
-    );
-    expect(health.value, .42);
-    expect(health.color, const Color(0xff79caff));
-    final paint = tester.widget<CustomPaint>(
-      find.descendant(
-        of: find.byType(OculumLiteArena),
-        matching: find.byType(CustomPaint),
-      ),
-    );
-    final canvas = _ArenaRecordingCanvas();
-    paint.painter!.paint(canvas, const Size(800, 450));
-    final fills = <int, int>{};
-    for (final call in canvas.invocations) {
-      final invocation = call.invocation;
-      if (invocation.memberName != #drawRect) continue;
-      final rect = invocation.positionalArguments[0] as Rect;
-      if ((rect.height - .07).abs() > .0001) continue;
-      final color = (invocation.positionalArguments[1] as Paint).color
-          .toARGB32();
-      fills.update(color, (count) => count + 1, ifAbsent: () => 1);
+      );
+      final bars = tester.widgetList<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bars.first.color!.toARGB32(), expected.first);
+      expect(bars.skip(1).map((bar) => bar.color!.toARGB32()), expected);
+
+      final paint = tester.widget<CustomPaint>(
+        find.descendant(
+          of: find.byType(OculumLiteArena),
+          matching: find.byType(CustomPaint),
+        ),
+      );
+      final canvas = _ArenaRecordingCanvas();
+      paint.painter!.paint(canvas, const Size(800, 450));
+      final centers = <int, List<double>>{};
+      for (final call in canvas.invocations) {
+        final invocation = call.invocation;
+        if (invocation.memberName != #drawRect) continue;
+        final rect = invocation.positionalArguments[0] as Rect;
+        if ((rect.height - .07).abs() > .0001) continue;
+        final color = (invocation.positionalArguments[1] as Paint).color
+            .toARGB32();
+        centers.putIfAbsent(color, () => []).add(rect.center.dx);
+      }
+      expect(centers[expected.first]!.single, closeTo(view.position.x, .001));
+      for (final (index, guest) in view.coopFighters.indexed) {
+        expect(
+          centers[expected[index + 1]]!.single,
+          closeTo(guest.position.x, .001),
+        );
+      }
+      expect(centers[0xff8bd78d], hasLength(1));
+      expect(centers[0xffe27471], hasLength(1));
     }
-    expect(fills[health.color!.toARGB32()], 2, reason: "$fills");
-    expect(fills[0xff8bd78d], 1);
-    expect(fills[0xffe27471], 1);
   });
 
   testWidgets('the permanent shop benefits a new Scostubandito using Space', (
