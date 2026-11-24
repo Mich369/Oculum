@@ -7,6 +7,7 @@ import '../game/oculum_lite_coop.dart';
 import '../game/oculum_lite_run.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_routes.dart';
+import '../widgets/oculum_lite_rest_panel.dart';
 
 class OculumLiteCoopPage extends StatefulWidget {
   const OculumLiteCoopPage({
@@ -125,6 +126,14 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   }
 
   Future<void> _interact() async {
+    if (_session.solarInteraction() || _session.advanceActTwo()) return;
+    if (_session.host && (_session.run?.canChooseActTwo ?? false)) {
+      _clear();
+      final realm = await chooseLiteSecondAct(context);
+      if (mounted && realm != null) _session.enterSecondAct(realm);
+      if (mounted) _focus.requestFocus();
+      return;
+    }
     if (_session.canRest) {
       _session.rest();
       return;
@@ -139,10 +148,39 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     }
     final run = _session.run;
     if (run == null) return;
+    if (run.awaitsRestHub) {
+      _session.enterRestHub();
+      return;
+    }
     final next = await chooseOculumLiteRoute(context, run);
     if (!mounted || next == null) return;
     _session.confirmPortal(next);
     _focus.requestFocus();
+  }
+
+  Future<void> _openRelics(LiteRun run) async {
+    _clear();
+    await showLiteActRelics(
+      context,
+      run,
+      take: run.takeActRelic,
+      move: run.moveActRelic,
+    );
+    if (mounted) _focus.requestFocus();
+  }
+
+  Future<void> _openBotteghe() async {
+    _clear();
+    await showLiteRestHub(
+      context,
+      world: () => _session.run,
+      fighter: () => _session.localFighter,
+      refresh: _session,
+      buy: _session.buyRestItem,
+      remember: _session.rememberRestItem,
+      exchange: _session.exchangeLunarPiece,
+    );
+    if (mounted) _focus.requestFocus();
   }
 
   Widget _rescueControl(LiteRescueStatus? status) {
@@ -302,7 +340,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                           ],
                           if (_session.destination case final next?)
                             Text('Portale · ${next.label}'),
-                          for (final quest in run.quests)
+                          for (final quest in run.missions)
                             Text(
                               '${quest.name} ${quest.current}/${quest.target}',
                             ),
@@ -429,18 +467,59 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                   onPressed: () => _choosePower(run),
                                   child: const Text('Potenziamento squadra'),
                                 ),
+                              if (_session.host &&
+                                  (run.canClaimActRelic ||
+                                      run.actRelics.isNotEmpty))
+                                FilledButton.tonal(
+                                  onPressed: () => _openRelics(run),
+                                  child: const Text('Reliquie'),
+                                ),
+                              if (run.restHub && _session.canAct)
+                                FilledButton.tonal(
+                                  onPressed: _openBotteghe,
+                                  child: const Text('Botteghe'),
+                                ),
+                              if (_session.host)
+                                for (final slot in [0, 1, 2, 3])
+                                  if (run.scrolls[run
+                                          .equippedScrolls[slot]
+                                          .index] >
+                                      0)
+                                    FilledButton.tonal(
+                                      onPressed: () =>
+                                          _session.castHostScroll(slot),
+                                      child: Text(
+                                        run.equippedScrolls[slot].label,
+                                      ),
+                                    ),
+                              if (mine != null)
+                                for (final entry in mine.supply.scrolls.entries)
+                                  if (entry.value > 0)
+                                    FilledButton.tonal(
+                                      onPressed: () =>
+                                          _session.useRestScroll(entry.key),
+                                      child: Text(entry.key.label),
+                                    ),
                               if (_session.canRescue || rescueStatus != null)
                                 _rescueControl(rescueStatus)
                               else
                                 FilledButton(
                                   onPressed: _interact,
                                   child: Text(
-                                    _session.canRest
+                                    _session.host && run.canEnterSolarDungeon
+                                        ? 'Scendi le scale d’oro · R'
+                                        : _session.host &&
+                                              run.solarBossWaiting &&
+                                              run.hasPortalNearby
+                                        ? 'Sfida il Guardiano Solare · R'
+                                        : _session.canRest
                                         ? 'Ristoro · R'
                                         : _session.nearPortal(
                                             _session.localAccount,
                                           )
-                                        ? 'Conferma portale'
+                                        ? (run.awaitsRestHub
+                                              ? 'Sala di ristoro · R'
+                                              : 'Conferma portale')
                                         : 'Ricarica · R',
                                   ),
                                 ),

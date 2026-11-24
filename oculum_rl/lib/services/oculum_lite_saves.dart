@@ -276,6 +276,68 @@ class OculumLiteSaveStore {
     await _replace(key, value);
   }
 
+  String get _memoryKey => oculumProfiledStorageKey('oculum_rl_oracle_v1');
+
+  Future<Map<String, Object?>> _readOracle() async {
+    final raw = await _read(_memoryKey);
+    if (raw is! String || raw.isEmpty) return {};
+    try {
+      final value = jsonDecode(raw);
+      return value is Map ? Map<String, Object?>.from(value) : {};
+    } on FormatException {
+      return {};
+    }
+  }
+
+  Future<LiteRestMemory?> readRestMemory() async {
+    final state = await _readOracle();
+    final memory = LiteRestMemory.read(state['memory']);
+    if (memory == null) return null;
+    final slots = await Future.wait(
+      List.generate(oculumLiteSaveSlotCount, read),
+    );
+    if (slots.any((slot) => slot.save?.run.supply.carriedId == memory.id)) {
+      await spendRestMemory(memory.id);
+      return null;
+    }
+    return memory;
+  }
+
+  Future<void> saveRestMemory(LiteRestMemory memory) async {
+    final state = await _readOracle();
+    final used = (state['used'] is List ? state['used'] as List : const [])
+        .whereType<String>()
+        .toList();
+    if (used.contains(memory.id) ||
+        LiteRestMemory.read(state['memory'])?.id == memory.id)
+      return;
+    final previous = LiteRestMemory.read(state['memory']);
+    if (previous != null) used.add(previous.id);
+    await _replace(
+      _memoryKey,
+      jsonEncode({
+        'memory': memory.frame,
+        'used': used.reversed.take(48).toList().reversed.toList(),
+      }),
+    );
+  }
+
+  Future<void> spendRestMemory(String id) async {
+    final state = await _readOracle();
+    if (LiteRestMemory.read(state['memory'])?.id != id) return;
+    final used = {
+      ...(state['used'] is List ? state['used'] as List : const [])
+          .whereType<String>(),
+      id,
+    };
+    await _replace(
+      _memoryKey,
+      jsonEncode({
+        'used': used.toList().reversed.take(48).toList().reversed.toList(),
+      }),
+    );
+  }
+
   /// Commit the new snapshot only after keeping the previous readable copy.
   /// Legacy preferences remain a read-only migration source on native builds.
   Future<void> write(int index, String value) async {

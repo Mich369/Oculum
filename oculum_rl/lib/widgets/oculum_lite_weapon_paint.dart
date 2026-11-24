@@ -252,6 +252,7 @@ void _paintDropSignal(
     LiteLootKind.greenStone ||
     LiteLootKind.healing => const Color(0xff8ddb9e),
     LiteLootKind.obser => const Color(0xffd1a66d),
+    LiteLootKind.lunarSymbol => const Color(0xffbacaff),
   };
   if (loot.kind == LiteLootKind.obser) {
     final flicker = (math.sin(time * 6 + at.dx) + 1) / 2;

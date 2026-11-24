@@ -7,6 +7,8 @@ abstract interface class LiteNightVisual {
   double get absorb;
   double get mud;
   double get stun;
+  double get solarMace;
+  double get solarMantle;
   int? get targetId;
 }
 
@@ -18,6 +20,8 @@ class _NightKit implements LiteNightVisual {
   double mud = 0, stun = 0;
   @override
   int? targetId;
+  @override
+  double solarMace = 0, solarMantle = 0;
 
   bool get active =>
       bat > 0 ||
@@ -26,7 +30,9 @@ class _NightKit implements LiteNightVisual {
       absorb > 0 ||
       utility > 0 ||
       mud > 0 ||
-      stun > 0;
+      stun > 0 ||
+      solarMace > 0 ||
+      solarMantle > 0;
   List<num> get frame => [
     bat,
     sanguine,
@@ -39,11 +45,14 @@ class _NightKit implements LiteNightVisual {
     targetId ?? -1,
     mud,
     stun,
+    solarMace,
+    solarMantle,
   ];
 
   void reset() {
     bat = sanguine = veil = absorb = utility = pulse = buildup = aura = mud =
         stun = 0;
+    solarMace = solarMantle = 0;
     targetId = null;
   }
 
@@ -61,6 +70,8 @@ class _NightKit implements LiteNightVisual {
     targetId = id >= 0 ? id : null;
     mud = data.length > 9 ? _num(data[9]).clamp(0.0, .9) : 0;
     stun = data.length > 10 ? _num(data[10]).clamp(0.0, .9) : 0;
+    solarMace = data.length > 11 ? _num(data[11]).clamp(0, 8) : 0;
+    solarMantle = data.length > 12 ? _num(data[12]).clamp(0, 5) : 0;
   }
 }
 

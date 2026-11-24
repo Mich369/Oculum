@@ -41,7 +41,18 @@ void _paintOpenPulse(
     LiteHero.pyrel || LiteHero.vampiro || LiteHero.reGoblin => _ember,
     LiteHero.cavaliereLunare => const Color(0xffc0b5f0),
     LiteHero.slimeBlu => const Color(0xff8dd4fb),
-    LiteHero.luce => const Color(0xffffdda6),
+    LiteHero.luce ||
+    LiteHero.guardiaSolare ||
+    LiteHero.eliteSolare ||
+    LiteHero.guardianoSolare ||
+    LiteHero.aberrazioneSolare => const Color(0xffffdda6),
+    LiteHero.pollo ||
+    LiteHero.demoneMinore ||
+    LiteHero.demoneIntermedio ||
+    LiteHero.demoneMaggiore ||
+    LiteHero.diavolo => _ember,
+    LiteHero.raganella => _active,
+    LiteHero.pipistrello => _violet,
     LiteHero.ombra || LiteHero.veyrth || LiteHero.doppelganger => _violet,
   };
   _oval(
@@ -61,6 +72,7 @@ Color _weaponInk(LiteWeapon weapon) => switch (weapon) {
   LiteWeapon.guanti => const Color(0xfff2a364),
   LiteWeapon.scettro => const Color(0xffc49aff),
   LiteWeapon.boomerang => const Color(0xffd3ae7a),
+  LiteWeapon.chakram => const Color(0xffa0e7d3),
   LiteWeapon.falceRunica => const Color(0xff76dec5),
   LiteWeapon.doppieLame => const Color(0xffa9e3c8),
   LiteWeapon.carabinaImpulsi => const Color(0xff87deff),
@@ -357,4 +369,219 @@ void _paintHitInk(
       width: .049,
     );
   }
+}
+
+int? _solarRow(LiteEnemyKind kind) => switch (kind) {
+  LiteEnemyKind.guardiaSolare => 0,
+  LiteEnemyKind.eliteSolare => 1,
+  LiteEnemyKind.guardianoSolare => 2,
+  LiteEnemyKind.aberrazioneSolare => 3,
+  _ => null,
+};
+
+void _solarActor(
+  Canvas canvas,
+  ui.Image atlas,
+  int row,
+  double time,
+  LiteStride? stride,
+  double windup,
+  double strike,
+  double hit, {
+  bool hero = false,
+  bool fallen = false,
+  int columns = 4,
+}) {
+  final cell = atlas.width / columns;
+  final size = hero ? 3.05 : (row == 2 ? 3.33 : 2.80);
+  final pace = stride?.strength ?? 0;
+  final anticipation = windup > 0 ? .17 + (1 - windup.clamp(0, 1)) * .05 : 0.0;
+  final recoil = strike * .85;
+  final step = math.sin((stride?.distance ?? 0) * 6);
+  canvas.save();
+  if (fallen) canvas.rotate(-1.18);
+  canvas.translate(recoil - anticipation, -step.abs() * pace * .095);
+  canvas.rotate((anticipation - recoil) * .28 + step * pace * .045);
+  final dest = Rect.fromLTWH(-size / 2, -size, size, size);
+  final ink = Paint()..filterQuality = FilterQuality.medium;
+  if (hit > 0) {
+    ink.colorFilter = const ColorFilter.mode(
+      Color(0x47ffdc8d),
+      BlendMode.srcATop,
+    );
+  }
+  final attackRow = atlas.height >= cell * 2 && (windup > 0 || strike > 0);
+  canvas.drawImageRect(
+    atlas,
+    Rect.fromLTWH(row * cell, attackRow ? cell : 0, cell, cell),
+    dest,
+    ink,
+  );
+  canvas.restore();
+}
+
+void _solarStairPaint(Canvas canvas, Offset at, double time) {
+  final shaft = [
+    at + const Offset(-1.05, -.65),
+    at + const Offset(1.05, -.65),
+    at + const Offset(.70, .84),
+    at + const Offset(-.73, .84),
+  ];
+  _poly(
+    canvas,
+    shaft,
+    const Color(0xff21181a),
+    stroke: const Color(0xffa27742),
+    width: .07,
+  );
+  for (var i = 0; i < 5; i++) {
+    final width = 1.03 - i * .10;
+    final center = at + Offset(0, -.64 + i * .30);
+    _inkSlash(
+      canvas,
+      center - Offset(width, 0),
+      center + Offset(width, 0),
+      Color.lerp(const Color(0xfff0c16e), const Color(0xff785332), i / 5)!,
+      .09,
+    );
+  }
+  final glimmer = .38 + math.sin(time * 4.2) * .15;
+  _inkSlash(
+    canvas,
+    shaft.first,
+    shaft.last,
+    const Color(0xfff7c779).withValues(alpha: glimmer),
+    .07,
+  );
+}
+
+void _astralWarning(Canvas canvas, LiteEnemy enemy) {
+  final solar = _solarRow(enemy.kind) != null;
+  final lunar =
+      enemy.kind == LiteEnemyKind.custodeLunare ||
+      enemy.kind == LiteEnemyKind.eliteLunare;
+  if (!solar && !lunar) return;
+  final start = _offset(enemy.position);
+  final delta = _offset(enemy.attackTarget!) - start;
+  if (delta.distance < .01) return;
+  final direction = delta / delta.distance;
+  final side = Offset(-direction.dy, direction.dx);
+  final pigment = solar ? const Color(0xffefb45d) : const Color(0xffad95ed);
+  final phase = (1 - enemy.windup / (solar ? 1.10 : .86)).clamp(0.0, 1.0);
+  final slam =
+      enemy.kind == LiteEnemyKind.custodeLunare ||
+      enemy.kind == LiteEnemyKind.guardianoSolare && enemy.combatCycle % 3 == 2;
+  if (slam) {
+    final at = start + direction * (solar ? 1.1 : .9);
+    final r = solar ? 2.9 : 2.7;
+    _oval(
+      canvas,
+      at,
+      r * 2,
+      r * 2,
+      pigment.withValues(alpha: .07 + phase * .08),
+    );
+    final rect = Rect.fromCircle(center: at, radius: r);
+    for (var i = 0; i < 8; i++) {
+      canvas.drawArc(
+        rect,
+        i * math.pi / 4 + .03,
+        .48,
+        false,
+        Paint()
+          ..color = pigment.withValues(alpha: .39 + phase * .59)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = .08,
+      );
+    }
+    return;
+  }
+  final ranged =
+      enemy.kind == LiteEnemyKind.guardianoSolare ||
+      enemy.kind == LiteEnemyKind.eliteSolare;
+  final span = ranged
+      ? (enemy.kind == LiteEnemyKind.guardianoSolare &&
+                enemy.combatCycle % 3 == 0
+            ? 13.0
+            : 16.0)
+      : 2.3;
+  final both =
+      enemy.kind == LiteEnemyKind.guardianoSolare && enemy.combatCycle % 3 == 0;
+  final half = both ? span * .116 : (ranged ? .23 : .53);
+  final end = start + direction * span;
+  _poly(canvas, [
+    start - side * .09,
+    start + side * .09,
+    end + side * half,
+    end - side * half,
+  ], pigment.withValues(alpha: .055 + phase * .08));
+  for (final sign in [-1.0, 1.0]) {
+    final from = start + side * (sign * .09);
+    final to = end + side * (sign * half);
+    for (var i = 0; i < 7; i++) {
+      _inkSlash(
+        canvas,
+        Offset.lerp(from, to, i / 7)!,
+        Offset.lerp(from, to, (i + .68) / 7)!,
+        pigment.withValues(alpha: .36 + .52 * phase),
+        .045 + .032 * phase,
+      );
+    }
+  }
+}
+
+int? _infernalRow(LiteEnemyKind kind) => switch (kind) {
+  LiteEnemyKind.demoneMinore => 0,
+  LiteEnemyKind.demoneIntermedio => 1,
+  LiteEnemyKind.demoneMaggiore => 2,
+  LiteEnemyKind.diavolo => 3,
+  LiteEnemyKind.divoramitu => 4,
+  LiteEnemyKind.divoramituBoss => 5,
+  _ => null,
+};
+
+void _burrowWarning(Canvas canvas, LiteEnemy enemy, LiteBurrow track) {
+  final at = _offset(enemy.position);
+  const pigment = Color(0xffe7b582);
+  if (track.warning <= 0) {
+    if (track.exposed) _shadow(canvas, at, 1.30, .43);
+    return;
+  }
+  final start = _offset(track.start);
+  final end = _offset(track.end);
+  final line = end - start;
+  if (line.distance < .001) return;
+  final f = line / line.distance;
+  final side = Offset(-f.dy, f.dx);
+  final heat = (1 - track.warning / .82).clamp(0.0, 1.0);
+  for (var sign in [-1.0, 1.0]) {
+    final edge = side * (1.07 * sign);
+    _inkSlash(
+      canvas,
+      start + edge,
+      end + edge,
+      pigment.withValues(alpha: .23 + .45 * heat),
+      .055,
+    );
+  }
+  for (var i = 1; i < 10; i++) {
+    final center = start + line * (i / 10);
+    final jog = side * (i % 2 == 0 ? .31 : -.29);
+    _inkSlash(
+      canvas,
+      center - f * .28 + jog,
+      center + f * .27 - jog,
+      pigment.withValues(alpha: .31 + .46 * heat),
+      .092,
+    );
+  }
+  _oval(
+    canvas,
+    end,
+    .62 + heat * .31,
+    .38,
+    pigment.withValues(alpha: .15 + heat * .27),
+    stroke: pigment,
+    strokeWidth: .064,
+  );
 }

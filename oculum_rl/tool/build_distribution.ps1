@@ -64,6 +64,16 @@ function ExportEdition([string]$Folder, [string]$Executable, [string]$Archive) {
       'data/flutter_assets/assets/oculum/lite/curatore-e-combattenti.png',
       'data/flutter_assets/assets/oculum/lite/lunari-e-forme.png',
       'data/flutter_assets/assets/oculum/lite/arena-deserto.jpg',
+      'data/flutter_assets/assets/oculum/lite/bottino-ink.png',
+      'data/flutter_assets/assets/oculum/lite/sala-npc.png',
+      'data/flutter_assets/assets/oculum/lite/sala-riposo.jpg',
+      'data/flutter_assets/assets/oculum/lite/arma-chakram.png',
+      'data/flutter_assets/assets/oculum/lite/fauna-ink.png',
+      'data/flutter_assets/assets/oculum/lite/solari-ink.png',
+      'data/flutter_assets/assets/oculum/lite/dungeon-solare.jpg',
+      'data/flutter_assets/assets/oculum/lite/infernali-ink.png',
+      'data/flutter_assets/assets/oculum/lite/inferno.jpg',
+      'data/flutter_assets/assets/oculum/lite/realm-caramella.jpg',
       'data/flutter_assets/assets/oculum/lite/arena-orea.jpg')) {
     if (!(Test-Path -LiteralPath (Join-Path $runtime $file) -PathType Leaf)) {
       throw "Required runtime file is missing: $Folder/$file"

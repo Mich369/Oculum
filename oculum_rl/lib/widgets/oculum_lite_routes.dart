@@ -241,3 +241,105 @@ class OculumLiteCompanionStatus extends StatelessWidget {
     );
   }
 }
+
+Future<LiteRealm?> chooseLiteSecondAct(BuildContext context) =>
+    showDialog<LiteRealm>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Atto II · Il crocevia'),
+        scrollable: true,
+        content: SizedBox(
+          width: 480,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final realm in LiteRealm.values)
+                ListTile(
+                  leading: Icon(switch (realm) {
+                    LiteRealm.inferno => Icons.local_fire_department_outlined,
+                    LiteRealm.caramella => Icons.grain,
+                    LiteRealm.postea => Icons.precision_manufacturing_outlined,
+                  }),
+                  title: Text(realm.label),
+                  subtitle: Text(realm.description),
+                  onTap: () => Navigator.pop(context, realm),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Resta al ristoro'),
+          ),
+        ],
+      ),
+    );
+
+Future<void> showLiteActRelics(
+  BuildContext context,
+  LiteRun run, {
+  required ValueChanged<LiteActRelic> take,
+  required void Function(int, int) move,
+}) => showDialog<void>(
+  context: context,
+  builder: (context) => StatefulBuilder(
+    builder: (context, redraw) => AlertDialog(
+      title: const Text('Reliquie legate'),
+      scrollable: true,
+      content: SizedBox(
+        width: 440,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (run.actRelics.isEmpty && !run.canClaimActRelic)
+              const Text(
+                'Conquista una sala dell’Atto II per trovare una reliquia.',
+              ),
+            for (final (index, relic) in run.actRelics.indexed)
+              ListTile(
+                title: Text(relic.label),
+                subtitle: Text(relic.description),
+                trailing: Wrap(
+                  children: [
+                    IconButton(
+                      tooltip: 'Sposta a sinistra',
+                      onPressed: run.stageClear && index > 0
+                          ? () => redraw(() => move(index, -1))
+                          : null,
+                      icon: const Icon(Icons.chevron_left),
+                    ),
+                    IconButton(
+                      tooltip: 'Sposta a destra',
+                      onPressed:
+                          run.stageClear && index + 1 < run.actRelics.length
+                          ? () => redraw(() => move(index, 1))
+                          : null,
+                      icon: const Icon(Icons.chevron_right),
+                    ),
+                  ],
+                ),
+              ),
+            if (run.canClaimActRelic)
+              for (final relic in LiteActRelic.values)
+                ListTile(
+                  title: Text(relic.label),
+                  subtitle: Text(relic.description),
+                  trailing: FilledButton.tonal(
+                    onPressed: () => redraw(() => take(relic)),
+                    child: const Text('Prendi'),
+                  ),
+                ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Chiudi'),
+        ),
+      ],
+    ),
+  ),
+);

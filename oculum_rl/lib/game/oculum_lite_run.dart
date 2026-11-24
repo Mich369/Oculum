@@ -2,6 +2,10 @@ import 'dart:math';
 
 part 'oculum_lite_night.dart';
 part 'oculum_lite_goblin.dart';
+part 'oculum_lite_rest_hub.dart';
+part 'oculum_lite_fauna.dart';
+part 'oculum_lite_solar.dart';
+part 'oculum_lite_second_act.dart';
 
 enum LiteHero {
   evasore('Passo fantasma', 'Scatto intangibile più lungo.'),
@@ -49,7 +53,45 @@ enum LiteHero {
     'Sangue antico',
     'Raddoppia Vita massima, velocità e Danni e aumenta la respinta.',
   ),
-  reGoblin('Corte dei goblin', 'Evoca due coltelli e un goblin fangoso.');
+  reGoblin('Corte dei goblin', 'Evoca due coltelli e un goblin fangoso.'),
+  pollo(
+    'Uova a orologeria',
+    'Spara tre uova alle tue spalle. Esplodono all’impatto o 0,9 s dopo essersi fermate.',
+  ),
+  raganella(
+    'Re dello stagno',
+    'Rimbalza in avanti e spazza i nemici al punto di arrivo.',
+  ),
+  pipistrello(
+    'Uno stormo solo',
+    'Passa intangibile fra i nemici con un’onda di ultrasuoni.',
+  ),
+  guardiaSolare(
+    'Passo di presidio',
+    'Scatta sotto lo scudo e colpisce in avanti.',
+  ),
+  eliteSolare('Raggio del sigillo', 'Libera un lungo raggio dorato.'),
+  guardianoSolare(
+    'Mazza d’oro',
+    'Materializza la mazza d’oro e potenzia i Danni per 4–7 secondi.',
+  ),
+  aberrazioneSolare(
+    'Mantello d’oro',
+    'Stringe le placche. Ottieni Scudo e riduci del 45% i Danni subiti.',
+  ),
+  demoneMinore('Balzo di cenere', 'Scatta e artiglia a distanza ravvicinata.'),
+  demoneIntermedio(
+    'Forgia sotto pelle',
+    'Scatena uno sbalzo di magma e respinge i nemici.',
+  ),
+  demoneMaggiore(
+    'Sigillo del Prediletto',
+    'Attraversa la distanza e apre un sigillo al suolo.',
+  ),
+  diavolo(
+    'Patto dei cinque fuochi',
+    'Scaglia cinque fiamme rimbalzanti a ventaglio.',
+  );
 
   const LiteHero(this.openName, this.openDescription);
 
@@ -66,8 +108,20 @@ enum LiteHero {
     lithra || doppelganger => LiteWeapon.guanti,
     luce => LiteWeapon.piccaOssidiana,
     ombra => LiteWeapon.doppieLame,
-    cavaliereLunare || reGoblin => LiteWeapon.spadaScudo,
-    slimeBlu || vampiro => LiteWeapon.guanti,
+    cavaliereLunare ||
+    reGoblin ||
+    guardiaSolare ||
+    eliteSolare => LiteWeapon.spadaScudo,
+    guardianoSolare => LiteWeapon.arco,
+    aberrazioneSolare || demoneMinore => LiteWeapon.guanti,
+    demoneIntermedio => LiteWeapon.falceRunica,
+    demoneMaggiore => LiteWeapon.doppieLame,
+    diavolo => LiteWeapon.scettro,
+    slimeBlu ||
+    vampiro ||
+    pollo ||
+    raganella ||
+    pipistrello => LiteWeapon.guanti,
     _ => null,
   };
   String get talentName => switch (this) {
@@ -90,6 +144,17 @@ enum LiteHero {
     slimeBlu => 'Assorbimento',
     vampiro => 'Forma pipistrello',
     reGoblin => 'Colpo stordente',
+    pollo => 'Uova a orologeria',
+    raganella => 'Linguata lunga',
+    pipistrello => 'Ultrasuono',
+    guardiaSolare => 'Bagliore molesto',
+    eliteSolare => 'Guardia delle placche',
+    guardianoSolare => 'Due frecce d’oro',
+    aberrazioneSolare => 'Spalla di marmo',
+    demoneMinore => 'Graffio fulmineo',
+    demoneIntermedio => 'Faglia di magma',
+    demoneMaggiore => 'Sigillo rapido',
+    diavolo => 'Fuoco del patto',
   };
   LiteEnemyKind? get sprite => switch (this) {
     scostubandito => LiteEnemyKind.scostubandito,
@@ -111,8 +176,25 @@ enum LiteHero {
     cavaliereLunare => 'Completa la campagna in Facile o superiore.',
     slimeBlu => 'Abbatti dieci Slime nelle tue run.',
     reGoblin => 'Sconfiggi il Re Goblin nel Campo goblin segreto.',
+    pollo => 'Lascia tre stanze senza ferirne la fauna.',
+    raganella => 'Lascia quattro stanze senza ferirne la fauna, fra cui una con una raganella.',
+    pipistrello => 'Lascia cinque stanze senza ferirne la fauna, fra cui una con un pipistrello.',
+    doppelganger => 'Ottieni una Muta alla morte mentre giochi con un animale.',
+    guardiaSolare => 'Supera il primo cortile del dungeon solare.',
+    eliteSolare => 'Supera la penultima sala del dungeon solare.',
+    guardianoSolare => 'Sconfiggi il Guardiano Solare.',
+    aberrazioneSolare =>
+      'Supera il dungeon solare dopo aver abbattuto l’Aberrazione.',
+    demoneMinore => 'Supera la prima sala di Inferno nell’Atto II.',
+    demoneIntermedio => 'Supera la seconda sala di Inferno nell’Atto II.',
+    demoneMaggiore => 'Supera la terza sala di Inferno nell’Atto II.',
+    diavolo => 'Spezza il patto nell’ultima sala di Inferno.',
     _ => null,
   };
+
+  bool get solar =>
+      index >= guardiaSolare.index && index <= aberrazioneSolare.index;
+  bool get infernal => index >= demoneMinore.index;
 
   bool get specialTalent =>
       sprite != null || this == curatorePeste || index >= pyrel.index;
@@ -154,7 +236,8 @@ enum LiteWeapon {
   carabinaImpulsi('Carabina a impulsi', 8, 13, .94, isPostea: true),
   piccaOssidiana('Picca d’ossidiana', 9, 4.3, .73),
   balestraRunica('Balestra runica', 12, 11, 1.24),
-  fucileScostubandito('Fucile Scostubandito', 5, 12, .68);
+  fucileScostubandito('Fucile Scostubandito', 5, 12, .68),
+  chakram('Chakram d’Iridio', 9, 9, .32);
 
   const LiteWeapon(
     this.label,
@@ -171,6 +254,8 @@ enum LiteWeapon {
 
   static const starters = [boomerang, spadaScudo, guanti, arco, scettro];
   static const scytheReturnRange = 6.3;
+  bool get returns =>
+      this == boomerang || this == falceRunica || this == chakram;
   bool get isBossLoot => this == piccaOssidiana || this == balestraRunica;
   double get chargeSeconds => switch (this) {
     guanti => .32,
@@ -375,7 +460,22 @@ enum LiteEnemyKind {
   goblinColtello('Goblin col coltello', 17, .47, 4.25, 12),
   goblinFango('Goblin fangoso', 33, .52, 2.55, 4),
   goblinColla('Spara-colla', 30, .53, 2.65, 3),
-  reGoblin('Re Goblin', 174, .81, 3.85, 15);
+  reGoblin('Re Goblin', 174, .81, 3.85, 15),
+  pollo('Pollo di Brace', 15, .42, 4.0, 8),
+  raganella('Raganella del Muschio', 23, .44, 3.25, 10),
+  pipistrello('Pipistrello di Pece', 17, .39, 4.6, 7),
+  guardiaSolare('Guardia Solare', 30, .53, 3.25, 10),
+  eliteSolare('Guardia Elité Solare', 68, .64, 3.05, 14),
+  guardianoSolare('Guardiano Solare', 154, 1.14, 1.9, 22),
+  aberrazioneSolare('Aberrazione d’Oro e Marmo', 63, .80, 3.08, 14),
+  eliteLunare('Guardia Elité Lunare', 61, .65, 3.25, 15),
+  custodeLunare('Custode Lunare', 126, 1.06, 2.2, 21),
+  demoneMinore('Demone Minore', 31, .48, 4.35, 9),
+  demoneIntermedio('Demone Intermedio', 57, .70, 2.75, 12),
+  demoneMaggiore('Demone Maggiore Prediletto', 72, .65, 3.68, 14),
+  diavolo('Diavolo del Patto', 146, .94, 2.38, 19),
+  divoramitu('Divoramitù Elité', 78, .78, 2.3, 18),
+  divoramituBoss('Divoramitù · Bocca della Cripta', 132, .90, 2.5, 23);
 
   const LiteEnemyKind(
     this.label,
@@ -394,7 +494,10 @@ enum LiteEnemyKind {
       this == granScostumato ||
       this == forestDemon ||
       this == costrutto ||
-      this == miruscyrus;
+      this == miruscyrus ||
+      this == eliteSolare ||
+      this == eliteLunare ||
+      this == divoramitu;
 
   LiteHero? get playableBoss => switch (this) {
     luce => LiteHero.luce,
@@ -404,7 +507,12 @@ enum LiteEnemyKind {
     _ => null,
   };
 
-  bool get boss => playableBoss != null;
+  bool get boss =>
+      playableBoss != null ||
+      this == guardianoSolare ||
+      this == custodeLunare ||
+      this == divoramituBoss ||
+      this == diavolo;
   bool get echo => this == minionVeyrth || this == ecoSpeculare;
 }
 
@@ -572,7 +680,8 @@ enum LiteScroll {
   raggioAlPlasma('Raggio al plasma', 4),
   braceErrante('Brace errante', 4),
   spaccaterra('Spaccaterra', 5),
-  linfaVerde('Linfa verde', 4);
+  linfaVerde('Linfa verde', 4),
+  falciLunari('Falci di Vaitern', 5);
 
   const LiteScroll(this.label, this.cost);
   final String label;
@@ -588,6 +697,7 @@ enum LiteLootKind {
   weapon,
   greenStone,
   refinedGreenGem,
+  lunarSymbol,
 }
 
 enum LiteProjectileKind {
@@ -604,6 +714,12 @@ enum LiteProjectileKind {
   bomb,
   mud,
   glue,
+  chakram,
+  spiral,
+  lunarCrescent,
+  egg,
+  solarBolt,
+  solarRay,
 }
 
 enum LiteImpactTarget {
@@ -690,10 +806,11 @@ class LiteObstacle {
     this.height, {
     this.breakable = false,
     this.secretGate = false,
+    this.solarGate = false,
     this.hp = 20,
   });
   final double left, top, width, height;
-  final bool breakable, secretGate;
+  final bool breakable, secretGate, solarGate;
   double hp;
   Point<double> get center => Point(left + width / 2, top + height / 2);
 
@@ -713,6 +830,7 @@ class LiteObstacle {
     'height': height,
     'breakable': breakable,
     if (secretGate) 'secretGate': true,
+    if (solarGate) 'solarGate': true,
     'hp': hp,
   };
   static LiteObstacle _read(Map<String, dynamic> json) => LiteObstacle(
@@ -722,6 +840,7 @@ class LiteObstacle {
     _num(json['height']),
     breakable: json['breakable'] == true,
     secretGate: json['secretGate'] == true,
+    solarGate: json['solarGate'] == true,
     hp: _num(json['hp'], 20),
   );
 }
@@ -760,7 +879,14 @@ class LiteStride {
 }
 
 class LiteEnemy {
-  LiteEnemy(this.id, this.kind, this.position, this.maxHp) : hp = maxHp;
+  LiteEnemy(this.id, this.kind, this.position, this.maxHp)
+    : hp = maxHp,
+      burrow =
+          kind == LiteEnemyKind.divoramitu ||
+              kind == LiteEnemyKind.divoramituBoss
+          ? LiteBurrow()
+          : null;
+  final LiteBurrow? burrow;
 
   final int id;
   final LiteEnemyKind kind;
@@ -784,6 +910,7 @@ class LiteEnemy {
   double stunned = 0;
   double muddied = 0;
   bool glueRetinue = false;
+  int combatCycle = 0;
   double _strikePose = 0;
   double get strikePose => _strikePose;
 
@@ -816,6 +943,8 @@ class LiteEnemy {
     },
     'cooldown': cooldown,
     'windup': windup,
+    if (combatCycle != 0) 'combatCycle': combatCycle,
+    if (burrow case final track?) 'burrow': track.frame,
     if (includeEffects) ...{
       'stride': stride._frame(),
       if (_strikePose > 0) 'strikePose': _strikePose,
@@ -854,6 +983,7 @@ class LiteEnemy {
             : _point(json['shockSource'])
         ..cooldown = _num(json['cooldown'])
         ..windup = _num(json['windup'])
+        ..combatCycle = _int(json['combatCycle'])
         ..stride._restore(json['stride'])
         .._strikePose = _num(json['strikePose']).clamp(0.0, .24)
         ..clashRemaining = _num(json['clashRemaining'])
@@ -866,6 +996,7 @@ class LiteEnemy {
         ..mirror = json['mirror'] is Map<String, dynamic>
             ? LiteMirrorBuild._read(json['mirror'] as Map<String, dynamic>)
             : null
+        ..burrow?.restore(json['burrow'])
         ..attackTarget = json['attackTarget'] == null
             ? null
             : _point(json['attackTarget']);
@@ -1026,6 +1157,7 @@ class LiteProjectile {
   final double speed, damage;
   double remaining;
   int bounces;
+  double? eggFuse;
   double age = 0;
   final bool fromEnemy, magic, boomerang, ownerCanHeal, nonLethal;
   final LiteProjectileKind kind;
@@ -1042,6 +1174,7 @@ class LiteProjectile {
     'damage': damage,
     'age': age,
     if (bounces > 0) 'bounces': bounces,
+    if (eggFuse case final fuse?) 'eggFuse': fuse,
     'fromEnemy': fromEnemy,
     'magic': magic,
     'boomerang': boomerang,
@@ -1075,6 +1208,9 @@ class LiteProjectile {
           bounces: _int(json['bounces']).clamp(0, 6),
         )
         ..age = _num(json['age'])
+        ..eggFuse = json['eggFuse'] is num
+            ? _num(json['eggFuse']).clamp(0, .9)
+            : null
         ..hit.addAll(_list(json['hit']).whereType<int>());
 }
 
@@ -1096,7 +1232,7 @@ class LiteClone {
   double hp;
   final double _baseMaxHp;
   double get maxHp => _baseMaxHp;
-  final LiteWeapon weapon;
+  LiteWeapon weapon;
   final bool summoned;
   final LiteCompanion? companion;
   final int ownerId;
@@ -1219,11 +1355,11 @@ class _LiteBlock {
     return damage - blocked;
   }
 
-  void recover(LiteWeapon weapon) {
-    final base = min(_baseWear, 10);
+  void recover(LiteWeapon weapon, [double amount = 10]) {
+    final base = min(_baseWear, amount);
     _baseWear -= base;
     if (weapon == LiteWeapon.spadaScudo) {
-      _shieldWear = max(0, _shieldWear - (10 - base));
+      _shieldWear = max(0, _shieldWear - (amount - base));
     }
   }
 
@@ -1304,9 +1440,11 @@ class LiteCoopFighter extends LiteClone {
   });
 
   final bool allowGlue;
+  final supply = LiteRestLoadout();
+  double _hubCastCooldown = 0;
   final String account;
   final String name;
-  final LiteHero hero;
+  LiteHero hero;
   final _night = _NightKit();
   LiteNightVisual get night => _night;
   final Map<LitePermanentUpgrade, int> upgrades;
@@ -1379,6 +1517,7 @@ class LiteCoopFighter extends LiteClone {
   Map<String, dynamic> _wire({bool includeEffects = false}) => {
     ..._json(includeEffects: includeEffects),
     'account': account,
+    if (supply.active) 'supplies': supply.frame,
     if (allowGlue) 'allowGlue': true,
     'name': name,
     'hero': hero.name,
@@ -1461,6 +1600,7 @@ class LiteCoopFighter extends LiteClone {
       .._protection = _num(data['protection'])
       .._shadowProtection = _num(data['shadowProtection']).clamp(0.0, 3.0)
       .._night.restore(data['night'])
+      ..supply.restore(data['supplies'])
       .._springPose = _num(data['springPose'])
       .._inputAge = data['connected'] == true ? 0 : 2;
   }
@@ -1548,13 +1688,25 @@ class LiteRun {
   bool get hasGlue =>
       allowGlue || achievements.contains(LiteCompanion.goblinColla.unlockKey);
   final groundShots = <LiteGroundShot>[];
+  final supply = LiteRestLoadout();
+  final fauna = <LiteEnemy>[];
+  final _provokedRooms = <int>{};
+  final _sparedRooms = <int>{};
+  bool restHub = false;
+  LiteSolarPhase? solarPhase;
+  Point<double>? solarStairs;
+  bool get solarCampaign => hero.solar;
+  LiteRealm? realm;
+  int actRoom = 0;
+  final actRelics = <LiteActRelic>[];
+  int _actRelicClaims = 0;
   int _goblinWave = 0;
   String get slimeCreditId => progressId ?? 'legacy-$seed-${hero.name}';
   int slimeKills = 0;
   double get slimeDashCooldown => _night.utility;
   final _night = _NightKit();
   LiteNightVisual get night => _night;
-  final LiteHero hero;
+  LiteHero hero;
   final LiteDifficulty difficulty;
   final int playerCount;
   final Map<LitePermanentUpgrade, int> upgrades;
@@ -1592,6 +1744,8 @@ class LiteRun {
   final Map<LitePowerUp, int> _powerRanks = {};
   final List<LitePowerUp> _powerOffers = [];
   final List<LiteQuest> quests = [];
+  final _optionalMissions = <LiteQuest>[];
+  Iterable<LiteQuest> get missions => quests.followedBy(_optionalMissions);
   final List<LiteWeapon> ownedWeapons = [];
   final List<int> scrolls = List.filled(LiteScroll.values.length, 0);
   final List<LiteScroll> equippedScrolls = [...LiteScroll.ordinary];
@@ -1719,12 +1873,13 @@ class LiteRun {
           character.unlockHint != null &&
           achievements.contains(heroUnlockKey(character)))
         character,
-    if (stage > 3) LiteHero.luce,
-    if (stage > 9) LiteHero.ombra,
+    if (stage > 3 && !solarCampaign) LiteHero.luce,
+    if (stage > 9 && !solarCampaign) LiteHero.ombra,
     if (victorious) LiteHero.veyrth,
     if (victorious && difficulty.index >= LiteDifficulty.facile.index)
       LiteHero.cavaliereLunare,
     if (slimeKills >= 10) LiteHero.slimeBlu,
+    if (playedHero == LiteHero.doppelganger) LiteHero.doppelganger,
     if (victorious && playedHero == LiteHero.scostubandito)
       LiteHero.granScostumato,
   };
@@ -1917,26 +2072,39 @@ class LiteRun {
       ? LiteFloorLayout.montaggio
       : LiteFloorLayout.values[(seed.abs() + floor * 2 + location.index) % 3];
 
-  static int _openingEnemyCount(int floor, LiteArenaTrial? trial) =>
-      min(7, 3 + floor ~/ 2) + (trial == LiteArenaTrial.battuta ? 2 : 0);
+  int _openingEnemyCount(int floor, LiteArenaTrial? trial) =>
+      solarCampaign && floor == 8
+      ? 6
+      : min(7, 3 + floor ~/ 2) + (trial == LiteArenaTrial.battuta ? 2 : 0);
 
-  static LiteEnemyKind _openingEnemyKind(
-    LiteBiome location,
-    int order,
-    int floor,
-  ) => switch (location) {
-    LiteBiome.campo => LiteEnemyKind.scostubandito,
-    LiteBiome.foresta =>
-      floor > 0 && order % 3 == 1
+  LiteEnemyKind _openingEnemyKind(LiteBiome location, int order, int floor) {
+    if (solarCampaign) {
+      if (floor == 8) {
+        if (order == 0) return LiteEnemyKind.custodeLunare;
+        if (order <= 2) return LiteEnemyKind.eliteLunare;
+        return LiteEnemyKind.guardiaLunare;
+      }
+      if (floor > 4 && order % 4 == 2) return LiteEnemyKind.eliteLunare;
+      return order % 3 == 1
           ? LiteEnemyKind.lupoLunare
-          : LiteEnemyKind.babyForestDemon,
-    LiteBiome.dungeon =>
-      floor > 0 && order % 3 == 2 ? LiteEnemyKind.gablyn : LiteEnemyKind.slime,
-    LiteBiome.deserto => LiteEnemyKind.rasvyr,
-    LiteBiome.orea => LiteEnemyKind.orbryx,
-    LiteBiome.postea =>
-      order.isEven ? LiteEnemyKind.ragnoSaldatore : LiteEnemyKind.dronePostea,
-  };
+          : LiteEnemyKind.guardiaLunare;
+    }
+    return switch (location) {
+      LiteBiome.campo => LiteEnemyKind.scostubandito,
+      LiteBiome.foresta =>
+        floor > 0 && order % 3 == 1
+            ? LiteEnemyKind.lupoLunare
+            : LiteEnemyKind.babyForestDemon,
+      LiteBiome.dungeon =>
+        floor > 0 && order % 3 == 2
+            ? LiteEnemyKind.gablyn
+            : LiteEnemyKind.slime,
+      LiteBiome.deserto => LiteEnemyKind.rasvyr,
+      LiteBiome.orea => LiteEnemyKind.orbryx,
+      LiteBiome.postea =>
+        order.isEven ? LiteEnemyKind.ragnoSaldatore : LiteEnemyKind.dronePostea,
+    };
+  }
 
   bool get finalBossTangible {
     var bossAlive = false;
@@ -2026,7 +2194,7 @@ class LiteRun {
   Point<double> get shopPosition => const Point(5, 5);
   Point<double> get restPosition => const Point(5, 16);
   static bool _hasRestAt(int floor) => floor < finalStage && floor % 3 == 0;
-  bool get hasRest => _hasRestAt(stage);
+  bool get hasRest => restHub || _hasRestAt(stage);
   bool get canRest => canUseRest();
 
   bool canUseRest([LiteCoopFighter? fighter]) =>
@@ -2088,10 +2256,25 @@ class LiteRun {
   }
 
   void _startStage() {
+    if (stage > 0 && supply.fed(LiteRestItem.spiedino, stage)) {
+      _block.recover(weapon, 18);
+    }
+    for (final fighter in coopFighters) {
+      if (fighter.supply.fed(LiteRestItem.spiedino, stage)) {
+        fighter._block.recover(fighter.weapon, 18);
+      }
+    }
+    restHub = false;
+    solarPhase = null;
+    solarStairs = null;
+    realm = null;
+    actRoom = 0;
+    supply._foodUntil.removeWhere((_, until) => until < stage);
     _goblinWave = 0;
     endRescue();
     _block.held = false;
     enemies.clear();
+    fauna.clear();
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
@@ -2101,6 +2284,7 @@ class LiteRun {
     loot.clear();
     obstacles.clear();
     quests.clear();
+    _optionalMissions.clear();
     position = _spawn;
     stride._reset();
     _activeBeam = null;
@@ -2121,7 +2305,10 @@ class LiteRun {
       fighter._block.held = false;
       fighter._rescue = null;
       fighter.restUsed = false;
-      fighter.shield = _startingShield(fighter.hero, fighter.weapon);
+      fighter.supply._foodUntil.removeWhere((_, until) => until < stage);
+      fighter.shield =
+          _startingShield(fighter.hero, fighter.weapon) +
+          fighter.supply.rank(LiteRestItem.bastione) * 9;
     }
     if (hostDown) hp = maxHp * .3;
     _lastMove = const Point(0, 0);
@@ -2130,7 +2317,9 @@ class LiteRun {
     _burstTime = _attackCooldown = _windup = _springPose = 0;
     _bandit.shieldRecovered = false;
     shield =
-        _startingShield(hero, weapon) + (_power(LitePowerUp.cuore) / 3).ceil();
+        _startingShield(hero, weapon) +
+        (_power(LitePowerUp.cuore) / 3).ceil() +
+        supply.rank(LiteRestItem.bastione) * 9;
     floorLayout = _layoutFor(stage, biome);
     arenaTrial = _trialFor(stage, biome);
     _trialStart = time;
@@ -2232,10 +2421,40 @@ class LiteRun {
         major: true,
       ),
     ]);
+    _populateFauna();
+    _placeSolarGate();
+    _optionalMissions.add(
+      LiteQuest('fauna-$stage', 'Passa oltre lasciando intatta la fauna', 1, 8),
+    );
+    if (obstacles.any((wall) => wall.solarGate)) {
+      _optionalMissions.add(
+        LiteQuest(
+          'scale-$stage',
+          'Scopri il passaggio sotto il riparo frangibile',
+          1,
+          10,
+        ),
+      );
+    }
+    if (solarCampaign) {
+      _optionalMissions.add(
+        LiteQuest(
+          'lunare-$stage',
+          'Assorbi tre attacchi dietro al blocco',
+          3,
+          12,
+        ),
+      );
+    }
     final layout = floorLayout.label;
     message =
         'Piano $stage · ${biome.label}${layout.isEmpty ? '' : ' · $layout'}'
         '${arenaTrial == null ? '' : ' · ${arenaTrial!.label}'}';
+    if (solarCampaign) {
+      message = stage == 8
+          ? 'Assedio lunare · Custode, due Elité e tre Guardie.'
+          : 'Campagna del Sole · $message · Pattuglie lunari.';
+    }
   }
 
   void _placeLayoutCover() {
@@ -2316,6 +2535,11 @@ class LiteRun {
   }
 
   LiteEnemyKind _specialKind(int floor) {
+    if (solarCampaign && floor != finalStage) {
+      return floor == 6 || floor == 9 || floor == 12
+          ? LiteEnemyKind.custodeLunare
+          : LiteEnemyKind.eliteLunare;
+    }
     if (floor == 3) return LiteEnemyKind.luce;
     if (floor == 9) return LiteEnemyKind.ombra;
     if (floor == finalStage) return LiteEnemyKind.veyrth;
@@ -2573,6 +2797,10 @@ class LiteRun {
       if (!fighter.connected) endRescue(fighter);
       if (fighter.hp <= 0) continue;
       this._tickNight(fighter, elapsed);
+      fighter._night.solarMace = max(0, fighter._night.solarMace - elapsed);
+      fighter._night.solarMantle = max(0, fighter._night.solarMantle - elapsed);
+      this._tickSupply(elapsed, fighter: fighter);
+      _tickRelicMana(elapsed, fighter);
       final beforeMove = fighter.position;
       final groundSpeed = this.terrainSpeedAt(fighter.position, enemy: false);
       fighter.cooldown = max(0, fighter.cooldown - elapsed);
@@ -2642,6 +2870,7 @@ class LiteRun {
           fighter.firing &&
           fighter.cooldown <= 0 &&
           (item != LiteWeapon.arco ||
+              fighter._night.solarMace > 0 ||
               fighter.arrows > 0 && fighter._reload <= 0)) {
         fighter.firing = false;
         fighter.cooldown = _weaponRecovery(
@@ -2649,9 +2878,12 @@ class LiteRun {
           fighter.openCooldown,
           fighter.openGrade,
         );
-        if (item == LiteWeapon.arco) fighter.arrows--;
+        if (item == LiteWeapon.arco && fighter._night.solarMace <= 0)
+          fighter.arrows--;
         fighter._strike = fighter.aim;
-        fighter._windup = fighter.hero == LiteHero.doppelganger
+        fighter._windup =
+            fighter.hero == LiteHero.doppelganger ||
+                fighter._night.solarMace > 0
             ? 0
             : item.chargeSeconds;
         if (fighter.hero == LiteHero.doppelganger)
@@ -2662,6 +2894,28 @@ class LiteRun {
   }
 
   void _coopStrike(LiteCoopFighter fighter, Point<double> direction) {
+    if (fighter.hero == LiteHero.guardianoSolare &&
+        fighter._night.solarMace > 0) {
+      _melee(
+        fighter.position,
+        direction,
+        LiteWeapon.guanti,
+        23 + fighter.level * 1.9,
+        reach: 2.65,
+        minDot: .22,
+        ownerCanHeal: false,
+        sourceCloneId: fighter.id,
+      );
+      return;
+    }
+    if (_animalStrike(
+      fighter.hero,
+      fighter.position,
+      direction,
+      fighter.level,
+      fighter.id,
+    ))
+      return;
     if (fighter.hero == LiteHero.slimeBlu &&
         fighter.weapon == LiteWeapon.guanti) {
       _melee(
@@ -2874,7 +3128,13 @@ class LiteRun {
         _dodgeRecharge = max(1.75, 3.2 - dodgeLevel * .36);
       }
     }
-    if (!hostDown) this._tickNight(null, elapsed);
+    if (!hostDown) {
+      this._tickNight(null, elapsed);
+      _night.solarMace = max(0, _night.solarMace - elapsed);
+      _night.solarMantle = max(0, _night.solarMantle - elapsed);
+      this._tickSupply(elapsed);
+      _tickRelicMana(elapsed);
+    }
     final beforeMove = position;
     final groundSpeed = this.terrainSpeedAt(position, enemy: false);
     if (!hostDown && _night.stun <= 0 && _burstTime > 0) {
@@ -2936,6 +3196,8 @@ class LiteRun {
       }
       if (dead) return;
     }
+    _tickFauna(elapsed);
+    if (dead) return;
     final alliesAtStart = clones.length;
     for (var i = 0; i < alliesAtStart; i++) {
       final clone = clones[i];
@@ -2988,6 +3250,7 @@ class LiteRun {
       message = 'Il gruppo è caduto al piano $stage.';
     }
     if (dead || enemies.isNotEmpty || stageClear) return;
+    if (_advanceSolarEncounter() || _completeActRoom()) return;
     if (this.goblinCamp) {
       this._nextGoblinWave();
       return;
@@ -3081,7 +3344,8 @@ class LiteRun {
         clashDashing) {
       return false;
     }
-    if (weapon == LiteWeapon.arco) {
+    if (weapon == LiteWeapon.arco &&
+        !(hero == LiteHero.guardianoSolare && _night.solarMace > 0)) {
       if (reloading) return false;
       if (_arrows == 0) {
         message = 'Faretra vuota. R per ricaricare.';
@@ -3091,6 +3355,22 @@ class LiteRun {
     }
     lookAt(target);
     _strikeDirection = aim;
+    if (hero == LiteHero.guardianoSolare && _night.solarMace > 0) {
+      _attackCooldown = .72;
+      _melee(
+        position,
+        aim,
+        LiteWeapon.guanti,
+        23 + level * 1.9,
+        reach: 2.65,
+        minDot: .22,
+      );
+      return true;
+    }
+    if (_animalStrike(hero, position, aim, level, null)) {
+      _attackCooldown = .42;
+      return true;
+    }
     if (hero == LiteHero.slimeBlu && weapon == LiteWeapon.guanti) {
       _attackCooldown = .58;
       _melee(
@@ -3135,6 +3415,13 @@ class LiteRun {
     bool ownerCanHeal = true,
     int? sourceCloneId,
   }) {
+    final kit = ownerCanHeal
+        ? supply
+        : coopFighters
+              .where((fighter) => fighter.id == sourceCloneId)
+              .firstOrNull
+              ?.supply;
+    if (kit?.fed(LiteRestItem.stufato, stage) == true) damage *= 1.20;
     if (item == LiteWeapon.fucileScostubandito) {
       const buttRange = 2.0;
       if (enemies.any(
@@ -3236,6 +3523,7 @@ class LiteRun {
           LiteWeapon.carabinaImpulsi => 30,
           LiteWeapon.balestraRunica => 29,
           LiteWeapon.falceRunica => 12,
+          LiteWeapon.chakram => 21,
           _ => 15,
         },
         remaining: item == LiteWeapon.falceRunica
@@ -3247,11 +3535,11 @@ class LiteRun {
           _ => damage,
         },
         magic: item == LiteWeapon.scettro,
-        boomerang:
-            item == LiteWeapon.boomerang || item == LiteWeapon.falceRunica,
+        boomerang: item.returns,
         ownerCanHeal: ownerCanHeal,
         kind: switch (item) {
           LiteWeapon.falceRunica => LiteProjectileKind.scythe,
+          LiteWeapon.chakram => LiteProjectileKind.chakram,
           LiteWeapon.fucileScostubandito => LiteProjectileKind.rifleBullet,
           LiteWeapon.carabinaImpulsi => LiteProjectileKind.pulse,
           LiteWeapon.balestraRunica => LiteProjectileKind.frostBolt,
@@ -3314,7 +3602,7 @@ class LiteRun {
     if (_interceptWithMelee(origin, direction, range, minDot: minDot)) {
       return true;
     }
-    for (final enemy in enemies) {
+    for (final enemy in _attackableCreatures) {
       if (enemy.hp <= 0 ||
           !_inArc(
             origin,
@@ -3487,6 +3775,61 @@ class LiteRun {
     final aimed = _unit(target - source);
     final direction = aimed.magnitude > 0 ? aimed : fighter?.aim ?? aim;
     switch (character) {
+      case LiteHero.demoneMinore ||
+          LiteHero.demoneIntermedio ||
+          LiteHero.demoneMaggiore ||
+          LiteHero.diavolo:
+        _infernalMove(character, source, direction, fighter, grade, open: true);
+      case LiteHero.guardiaSolare || LiteHero.aberrazioneSolare:
+        _solarPlayerGuard(character, source, direction, fighter, grade);
+      case LiteHero.eliteSolare:
+        _fireSun(
+          source,
+          direction,
+          28 + grade * 7.0,
+          owner: fighter?.id,
+          ray: true,
+        );
+      case LiteHero.guardianoSolare:
+        (fighter?._night ?? _night).solarMace = 4 + grade.toDouble();
+      case LiteHero.pollo:
+        _throwEggs(
+          source,
+          direction,
+          fighter?.id,
+          damage: 16 + 5.0 * grade,
+          spread: .31,
+        );
+      case LiteHero.raganella:
+        _playableShadowStep(
+          source,
+          direction,
+          fighter,
+          distance: 3.9 + grade * .38,
+          protection: .4,
+        );
+        _openBurst(
+          fighter?.position ?? position,
+          2.65,
+          18 + grade * 6.0,
+          ownerId,
+          push: 1.2,
+        );
+      case LiteHero.pipistrello:
+        _playableShadowStep(
+          source,
+          direction,
+          fighter,
+          distance: 4.8 + grade * .4,
+          protection: .85,
+        );
+        _openBurst(
+          fighter?.position ?? position,
+          3.3,
+          13 + grade * 6.0,
+          ownerId,
+          push: 1.3,
+        );
       case LiteHero.evasore:
         final duration = .48 + .10 * (grade - 1);
         final speed = 20.0 + (grade - 1) * 2;
@@ -3889,6 +4232,56 @@ class LiteRun {
     }
     final owner = fighter?.id;
     switch (character) {
+      case LiteHero.demoneMinore ||
+          LiteHero.demoneIntermedio ||
+          LiteHero.demoneMaggiore ||
+          LiteHero.diavolo:
+        _infernalMove(
+          character,
+          source,
+          direction,
+          fighter,
+          openGradeFor(characterLevel),
+        );
+      case LiteHero.guardiaSolare:
+        _sunGlare(source, direction, owner);
+      case LiteHero.eliteSolare:
+        if (fighter == null) {
+          shield += 14 + characterLevel;
+        } else {
+          fighter.shield += 14 + characterLevel;
+        }
+      case LiteHero.guardianoSolare:
+        _fireSun(source, direction, 12 + characterLevel * 1.8, owner: owner);
+      case LiteHero.aberrazioneSolare:
+        _solarPlayerGuard(character, source, direction, fighter, 0);
+      case LiteHero.pollo:
+        _throwEggs(
+          source,
+          direction,
+          owner,
+          damage: 12 + characterLevel * 1.25,
+          spread: .24,
+        );
+      case LiteHero.raganella:
+        _melee(
+          source,
+          direction,
+          LiteWeapon.guanti,
+          14 + characterLevel * 1.2,
+          ownerCanHeal: owner == null,
+          sourceCloneId: owner,
+          reach: 4.1,
+          minDot: .82,
+        );
+      case LiteHero.pipistrello:
+        _openBurst(
+          source,
+          2.65,
+          10 + characterLevel * 1.25,
+          owner ?? 0,
+          push: .90,
+        );
       case LiteHero.curatorePeste || LiteHero.doppelganger:
         return true;
       case LiteHero.reGoblin:
@@ -4029,7 +4422,7 @@ class LiteRun {
     }
     LiteEnemy? target;
     var best = double.infinity;
-    for (final enemy in enemies) {
+    for (final enemy in _attackableCreatures) {
       if (enemy.hp <= 0 || enemy.kind.boss || enemy.kind.echo) continue;
       final delta = enemy.position - from;
       final along = delta.x * direction.x + delta.y * direction.y;
@@ -4296,7 +4689,7 @@ class LiteRun {
     double shock = 0,
     double push = 0,
   }) {
-    for (final enemy in enemies) {
+    for (final enemy in _attackableCreatures) {
       if (_enemyIntangible(enemy) ||
           enemy.hp <= 0 ||
           _distanceSquared(source, enemy.position) > radius * radius ||
@@ -4459,7 +4852,7 @@ class LiteRun {
           ),
         );
       case LiteScroll.onda:
-        for (final enemy in enemies) {
+        for (final enemy in _attackableCreatures) {
           if (enemy.hp > 0 &&
               _distanceSquared(position, enemy.position) <=
                   _square(4.3 + enemy.radius) &&
@@ -4487,6 +4880,8 @@ class LiteRun {
         _launchFireball(position, aim, 22 * modifier, 3, null);
       case LiteScroll.spaccaterra:
         _fissure(position, aim, 7.8, 29 * modifier, null);
+      case LiteScroll.falciLunari:
+        _lunarVolley(position, aim, 14 * modifier);
       case LiteScroll.linfaVerde:
         hp = min(maxHp, hp + maxHp * .20);
         _block.recover(weapon);
@@ -4507,6 +4902,10 @@ class LiteRun {
   }
 
   void _enemyTick(LiteEnemy enemy, double elapsed) {
+    if (enemy.burrow != null) {
+      _tickBurrow(enemy, elapsed);
+      return;
+    }
     if (enemy.stunned > 0) {
       enemy.stunned = max(0, enemy.stunned - elapsed);
       enemy.windup = 0;
@@ -4573,6 +4972,13 @@ class LiteRun {
       LiteEnemyKind.goblinFango || LiteEnemyKind.goblinColla => 7.2,
       LiteEnemyKind.goblinColtello => 4.2,
       LiteEnemyKind.reGoblin => 2.8,
+      LiteEnemyKind.guardianoSolare => enemy.combatCycle % 3 == 2 ? 3.4 : 12,
+      LiteEnemyKind.eliteSolare => 7.4,
+      LiteEnemyKind.custodeLunare => 3.35,
+      LiteEnemyKind.diavolo => 10.2,
+      LiteEnemyKind.demoneMinore => 3.5,
+      LiteEnemyKind.demoneIntermedio || LiteEnemyKind.demoneMaggiore => 3.1,
+
       _ => 1.15 + enemy.radius,
     };
     final canWindUp = enemy.cooldown <= 0 && distance < ideal;
@@ -4591,11 +4997,16 @@ class LiteRun {
         LiteEnemyKind.goblinFango || LiteEnemyKind.goblinColla => .78,
         LiteEnemyKind.goblinColtello => .27,
         LiteEnemyKind.reGoblin => .31,
+        LiteEnemyKind.guardianoSolare => 1.10,
+        LiteEnemyKind.custodeLunare => .86,
+        LiteEnemyKind.eliteSolare || LiteEnemyKind.eliteLunare => .66,
+
         _ => kind.elite ? .52 : .34,
       };
       return;
     }
-    final needsSpace = ranged && distance < 3.1;
+    final needsSpace =
+        ranged && kind != LiteEnemyKind.guardianoSolare && distance < 3.1;
     final strafe =
         ranged && !needsApproach && !needsSpace && enemy.cooldown > .35;
     if (needsApproach || lineBlocked || needsSpace || strafe) {
@@ -4892,6 +5303,9 @@ class LiteRun {
           if (distance > 10 || !_summonMirrorEcho(boss, summoned: true)) {
             continue;
           }
+        case LiteScroll.falciLunari:
+          if (distance > 10) continue;
+          _lunarVolley(boss.position, direction, 14 * modifier, enemy: true);
         case LiteScroll.linfaVerde:
           boss.hp = min(boss.maxHp, boss.hp + boss.maxHp * .12);
         case LiteScroll.braceErrante ||
@@ -4963,6 +5377,7 @@ class LiteRun {
           LiteWeapon.carabinaImpulsi => 30,
           LiteWeapon.balestraRunica => 29,
           LiteWeapon.falceRunica => 12,
+          LiteWeapon.chakram => 21,
           _ => 15,
         },
         remaining: item == LiteWeapon.falceRunica
@@ -4976,10 +5391,10 @@ class LiteRun {
         fromEnemy: true,
         ownerCanHeal: false,
         magic: item == LiteWeapon.scettro,
-        boomerang:
-            item == LiteWeapon.boomerang || item == LiteWeapon.falceRunica,
+        boomerang: item.returns,
         kind: switch (item) {
           LiteWeapon.falceRunica => LiteProjectileKind.scythe,
+          LiteWeapon.chakram => LiteProjectileKind.chakram,
           LiteWeapon.carabinaImpulsi => LiteProjectileKind.pulse,
           LiteWeapon.balestraRunica => LiteProjectileKind.frostBolt,
           _ => LiteProjectileKind.normal,
@@ -5170,6 +5585,9 @@ class LiteRun {
       kind == LiteEnemyKind.dronePostea ||
       kind == LiteEnemyKind.goblinFango ||
       kind == LiteEnemyKind.goblinColla ||
+      kind == LiteEnemyKind.guardianoSolare ||
+      kind == LiteEnemyKind.eliteSolare ||
+      kind == LiteEnemyKind.diavolo ||
       kind == LiteEnemyKind.veyrth;
 
   static bool _usesRangedWeapon(LiteEnemy enemy) =>
@@ -5203,6 +5621,35 @@ class LiteRun {
       LiteEnemyKind.goblinColtello => .92,
       _ => ranged ? 1.35 : 1.15,
     };
+    if (kind == LiteEnemyKind.guardianoSolare ||
+        kind == LiteEnemyKind.eliteSolare) {
+      _solarVolley(enemy, direction, damage);
+      return;
+    }
+    if (kind == LiteEnemyKind.diavolo) {
+      for (final spread in [-.28, 0.0, .28]) {
+        final bend = _rotate(direction, spread);
+        projectiles.add(
+          LiteProjectile(
+            position: enemy.position,
+            direction: bend,
+            speed: 12,
+            remaining: 14,
+            damage: damage * .73,
+            kind: LiteProjectileKind.fireball,
+            fromEnemy: true,
+            magic: true,
+            bounces: 1,
+          ),
+        );
+      }
+      return;
+    }
+    if (kind == LiteEnemyKind.demoneIntermedio ||
+        kind == LiteEnemyKind.custodeLunare) {
+      _astralImpact(enemy.position + direction * .9, 2.7, damage);
+      return;
+    }
     if (ranged) {
       _fireEnemyProjectile(enemy, direction, damage);
       return;
@@ -5211,7 +5658,9 @@ class LiteRun {
         kind == LiteEnemyKind.rasvyr ||
         kind == LiteEnemyKind.orbryx ||
         kind == LiteEnemyKind.lupoLunare ||
-        kind == LiteEnemyKind.goblinColtello) {
+        kind == LiteEnemyKind.goblinColtello ||
+        kind == LiteEnemyKind.demoneMinore ||
+        kind == LiteEnemyKind.demoneMaggiore) {
       final charge = min(
         3.25,
         max(0.0, _distance(enemy.position, target) - .62),
@@ -5511,7 +5960,7 @@ class LiteRun {
   LiteEnemy? _nearestEnemy(Point<double> from, {Set<int> skip = const {}}) {
     LiteEnemy? closest;
     var best = double.infinity;
-    for (final enemy in enemies) {
+    for (final enemy in faunaAggressive ? _attackableCreatures : enemies) {
       if (enemy.hp <= 0 || skip.contains(enemy.id) || _enemyIntangible(enemy))
         continue;
       final distance = _distanceSquared(from, enemy.position);
@@ -5557,7 +6006,10 @@ class LiteRun {
 
   void _clashProjectiles(double elapsed) {
     for (final playerShot in projectiles) {
-      if (playerShot.fromEnemy || playerShot.remaining <= 0) continue;
+      if (playerShot.fromEnemy ||
+          playerShot.remaining <= 0 ||
+          playerShot.eggFuse != null)
+        continue;
       final from = playerShot.position;
       final playerStep =
           playerShot.direction *
@@ -5615,6 +6067,13 @@ class LiteRun {
       return;
     }
     projectile.age += elapsed;
+    if (projectile.kind == LiteProjectileKind.egg) {
+      _tickEgg(projectile, elapsed);
+      return;
+    }
+    if (projectile.kind == LiteProjectileKind.spiral) {
+      projectile.direction = _rotate(projectile.direction, .91 * elapsed);
+    }
     if (projectile.boomerang) {
       if (projectile.returning) {
         final returnTo = _projectileOwnerPosition(projectile);
@@ -5715,7 +6174,7 @@ class LiteRun {
       }
       return;
     }
-    for (final enemy in enemies) {
+    for (final enemy in _attackableCreatures) {
       if (enemy.hp <= 0 ||
           _distanceSquared(next, enemy.position) > _square(enemy.radius) ||
           projectile.hit.contains(enemy.id)) {
@@ -5861,6 +6320,13 @@ class LiteRun {
 
   void _destroyCover(LiteObstacle obstacle) {
     if (!obstacles.remove(obstacle)) return;
+    if (obstacle.solarGate) {
+      solarStairs = obstacle.center;
+      achievements.add('scale-d-oro');
+      _progressOptionalQuest('scale');
+      message = 'Scale d’oro scoperte. Avvicinati e premi R a fine scontro.';
+      return;
+    }
     if (obstacle.secretGate) {
       achievements.add('sala-segreta-scoperta');
       achievements.add('sala-segreta:$stage');
@@ -5891,6 +6357,7 @@ class LiteRun {
 
   bool _enemyIntangible(LiteEnemy enemy) =>
       enemy.clashRemaining > 0 ||
+      enemy.burrow?.exposed == false ||
       enemy.kind == LiteEnemyKind.veyrth && !finalBossTangible ||
       (enemy.mirror?.intangible ?? 0) > 0 ||
       (enemy.mirror?.shadowVeilRemaining ?? 0) > 0;
@@ -5965,11 +6432,15 @@ class LiteRun {
     damage *= _floorDamageScale;
     if (clone is LiteCoopFighter) {
       if (clone.protected || clone.hp <= 0) return;
+      if (clone.supply.fed(LiteRestItem.crosta, stage)) damage *= .80;
+      if (clone._night.solarMantle > 0) damage *= .55;
+      damage *= 1 - relicProtection;
       if (clone.hero == LiteHero.cavaliereLunare &&
           clone.weapon == LiteWeapon.spadaScudo) {
         damage = max(1, damage - 2);
       }
       if (clone.blocking) {
+        if (solarCampaign) _progressOptionalQuest('lunare');
         damage = clone._block.absorb(clone.weapon, damage);
         if (damage <= 0) return;
       }
@@ -5984,6 +6455,13 @@ class LiteRun {
       if (clone._mimic case final form? when clone.hp <= 0) {
         _revertMimic(form, clone);
       }
+      if (clone.hp <= 0 && clone.supply.token) {
+        clone.supply.token = false;
+        clone.hp = clone.maxHp * .35;
+        clone._protection = 1.9;
+        message = 'Il Gettone di Rinascita salva ${clone.name}.';
+      }
+      if (clone.hp <= 0) _tryAnimalRebirth(clone);
       if (clone.hp <= 0) {
         clone._night.reset();
         clone._plagueFormRemaining = 0;
@@ -6081,7 +6559,18 @@ class LiteRun {
         : mirror?.weapon == LiteWeapon.spadaScudo
         ? 1
         : 0;
-    var damage = max(1.0, amount - defense);
+    var damage = max(1.0, amount * (1 + relicDamage) - defense);
+    if (enemy.kind == LiteEnemyKind.aberrazioneSolare && enemy.windup > .12) {
+      damage *= .55;
+    } else if ((enemy.kind == LiteEnemyKind.eliteLunare ||
+            enemy.kind == LiteEnemyKind.custodeLunare) &&
+        enemy.cooldown > .70 &&
+        !enemy.attacking) {
+      final facing = enemy.attackTarget ?? position;
+      final forward = _unit(facing - enemy.position);
+      final back = _unit(position - enemy.position);
+      if (forward.x * back.x + forward.y * back.y > .56) damage *= .60;
+    }
     var absorbed = 0.0;
     if (mirror != null && mirror.shield > 0) {
       absorbed = min(mirror.shield, damage);
@@ -6136,6 +6625,15 @@ class LiteRun {
       enemyKind: enemy.kind,
     );
     enemy.hitFlash = .14;
+    if (LiteAnimal.forCreature(enemy.kind) != null) {
+      if (lifeLost > 0 && (ownerCanHeal || attacker != null)) {
+        _noteFaunaHit(enemy, attacker?.position ?? position);
+      }
+      if (enemy.hp <= 0 && (ownerCanHeal || attacker != null)) {
+        achievements.add('fauna-abbattuta-${enemy.kind.name}');
+      }
+      return;
+    }
     if (enemy.hp > 0) return;
     if (!ownerCanHeal && attacker == null && sourceCloneId != null) {
       final skeleton = clones
@@ -6159,6 +6657,22 @@ class LiteRun {
       _plagueKill(attacker);
     }
     final kind = enemy.kind;
+    if (!kind.echo &&
+        (attacker?.hero == LiteHero.cavaliereLunare ||
+            ownerCanHeal && hero == LiteHero.cavaliereLunare ||
+            clones.any(
+              (clone) =>
+                  clone.id == sourceCloneId &&
+                  (clone.companion == LiteCompanion.guardiaLunare ||
+                      clone.companion == LiteCompanion.guardianoLunare),
+            ))) {
+      final roll = _LiteRandom(seed ^ enemy.id * 172479 ^ stage * 30179)
+        ..nextDouble()
+        ..nextDouble();
+      if (roll.nextInt(100) < lunarDropChance(kind)) {
+        loot.add(LiteLoot(enemy.position, LiteLootKind.lunarSymbol, 3));
+      }
+    }
     if (kind.echo) {
       if (kind == LiteEnemyKind.minionVeyrth && stage == finalStage) {
         _progressQuest(0);
@@ -6217,7 +6731,9 @@ class LiteRun {
       return;
     }
     if (kind.boss) {
-      achievements.add(heroUnlockKey(kind.playableBoss!));
+      if (kind.playableBoss case final unlocked?) {
+        achievements.add(heroUnlockKey(unlocked));
+      }
       spentOculum += 5;
       crystals++;
       bossCrystalGrades.add(1 + _rng.nextInt(3));
@@ -6342,6 +6858,14 @@ class LiteRun {
     message = '${companion.label} si unisce al gruppo.';
   }
 
+  static int lunarDropChance(LiteEnemyKind kind) => kind.boss
+      ? 12
+      : kind.elite
+      ? 6
+      : kind.echo
+      ? 0
+      : 1;
+
   static LiteWeapon? bossWeapon(LiteEnemyKind kind) => switch (kind) {
     LiteEnemyKind.luce => LiteWeapon.piccaOssidiana,
     LiteEnemyKind.ombra => LiteWeapon.balestraRunica,
@@ -6368,6 +6892,9 @@ class LiteRun {
 
   void _damagePlayer(double damage, {bool nonLethal = false}) {
     if (finished || hostDown || invulnerable) return;
+    if (supply.fed(LiteRestItem.crosta, stage)) damage *= .80;
+    if (_night.solarMantle > 0) damage *= .55;
+    damage *= 1 - relicProtection;
     var remaining = max(
       1.0,
       damage * _floorDamageScale -
@@ -6376,6 +6903,7 @@ class LiteRun {
               : 0),
     );
     if (blocking) {
+      if (solarCampaign) _progressOptionalQuest('lunare');
       remaining = _block.absorb(weapon, remaining);
       if (remaining <= 0) return;
     }
@@ -6418,6 +6946,16 @@ class LiteRun {
       final robbed = (obser * .75).round();
       obser -= robbed;
       message = 'Lo Scostubandito ti lascia in vita e sottrae $robbed Obser.';
+    } else if (supply.token) {
+      supply.token = false;
+      hp = maxHp * .35;
+      _invulnerability = 1.9;
+      endRescue();
+      _block.held = false;
+      message = 'Gettone di Rinascita · sei tornato al 35% della Vita.';
+      return;
+    } else if (_tryAnimalRebirth()) {
+      return;
     } else if (livesRemaining > 0) {
       livesRemaining--;
       _block.held = false;
@@ -6456,7 +6994,9 @@ class LiteRun {
           item.kind == LiteLootKind.healing ||
           item.kind == LiteLootKind.greenStone ||
           item.kind == LiteLootKind.refinedGreenGem;
-      if (healing) {
+      if (healing ||
+          item.kind == LiteLootKind.lunarSymbol ||
+          item.kind == LiteLootKind.obser) {
         LiteCoopFighter? guest;
         var nearest = myDistance;
         for (final fighter in coopFighters) {
@@ -6468,7 +7008,15 @@ class LiteRun {
           }
         }
         if (guest != null || myDistance <= radiusSquared) {
-          _collectHealing(item, guest);
+          if (healing) {
+            _collectHealing(item, guest);
+          } else if (item.kind == LiteLootKind.obser) {
+            _awardPartyObser(item.amount);
+            _progressQuest(1);
+          } else {
+            (guest?.supply ?? supply).lunarPieces += item.amount;
+            message = 'Simbolo della Luna · tre frammenti da 60 Obser.';
+          }
           continue;
         }
       }
@@ -6479,13 +7027,14 @@ class LiteRun {
       }
       switch (item.kind) {
         case LiteLootKind.obser:
-          obser += item.amount;
-          _progressQuest(1);
+          // Collection is resolved for the team above.
+          break;
         case LiteLootKind.scroll:
           scrolls[(item.scroll ?? LiteScroll.dardo).index] += item.amount;
         case LiteLootKind.healing ||
             LiteLootKind.greenStone ||
-            LiteLootKind.refinedGreenGem:
+            LiteLootKind.refinedGreenGem ||
+            LiteLootKind.lunarSymbol:
           break; // Healing is awarded to the nearest living fighter above.
         case LiteLootKind.weapon:
           final itemWeapon = item.weapon;
@@ -6524,12 +7073,24 @@ class LiteRun {
     }
   }
 
-  void _progressQuest(int index) {
-    final quest = quests[index];
+  void _progressOptionalQuest(String prefix) {
+    final quest = _optionalMissions
+        .where((item) => item.id.startsWith('$prefix-'))
+        .firstOrNull;
+    if (quest == null) return;
+    _advanceMission(quest);
+  }
+
+  void _progressQuest(int index) => _advanceMission(quests[index]);
+
+  void _advanceMission(LiteQuest quest) {
     if (quest.complete) return;
     quest.current++;
     if (quest.complete) {
       obser += quest.reward;
+      for (final fighter in coopFighters) {
+        fighter.obser += quest.reward;
+      }
       achievements.add(quest.id);
       if (quest.major) crystals++;
     }
@@ -6688,13 +7249,24 @@ class LiteRun {
 
   bool advance([LiteBiome? destination]) {
     if (!hasPortalNearby || shopOpen) return false;
+    if (solarBossWaiting) return enterSolarBoss();
+    if (canChooseActTwo) return false;
+    if (nextActTwoRoom) return advanceActTwo();
     return _nextFloor(destination);
   }
 
   bool advanceCoop(LiteBiome destination) =>
-      playerCount > 1 && coopPortalOpen && _nextFloor(destination);
+      playerCount > 1 &&
+      coopPortalOpen &&
+      !canChooseActTwo &&
+      (solarBossWaiting
+          ? enterSolarBoss()
+          : nextActTwoRoom
+          ? advanceActTwo()
+          : _nextFloor(destination));
 
   bool _nextFloor(LiteBiome? destination) {
+    _noteFaunaCleared();
     final unlocked =
         eliteDefeated &&
         _specialKind(stage) == LiteEnemyKind.forestDemon &&
@@ -6725,6 +7297,20 @@ class LiteRun {
 
   Map<String, dynamic> toJson({bool includeEffects = false}) => {
     if (progressId != null) 'progressId': progressId,
+    if (actRelics.isNotEmpty)
+      'actRelics': actRelics.map((relic) => relic.name).toList(),
+    if (_actRelicClaims > 0) 'actRelicClaims': _actRelicClaims,
+    if (restHub) 'restHub': true,
+    if (realm case final area?) ...{'realm': area.name, 'actRoom': actRoom},
+    if (solarPhase case final phase?) 'solarPhase': phase.name,
+    if (solarStairs case final stairs?) 'solarStairs': _savePoint(stairs),
+    if (fauna.isNotEmpty)
+      'fauna': fauna
+          .map((animal) => animal._json(includeEffects: includeEffects))
+          .toList(),
+    if (_provokedRooms.isNotEmpty) 'provokedRooms': _provokedRooms.toList(),
+    if (_sparedRooms.isNotEmpty) 'sparedRooms': _sparedRooms.toList(),
+    if (supply.active) 'supplies': supply.frame,
     if (_goblinWave > 0) 'goblinWave': _goblinWave,
     if (allowGlue) 'allowGlue': true,
     if (groundShots.isNotEmpty)
@@ -6786,6 +7372,10 @@ class LiteRun {
     'obstacles': obstacles.map((wall) => wall._json()).toList(),
     'loot': loot.map((item) => item._json()).toList(),
     'quests': quests.map((quest) => quest._json()).toList(),
+    if (_optionalMissions.isNotEmpty)
+      'optionalMissions': _optionalMissions
+          .map((mission) => mission._json())
+          .toList(),
     'ownedWeapons': ownedWeapons.map((item) => item.name).toList(),
     'scrolls': [...scrolls],
     'equippedScrolls': equippedScrolls.map((item) => item.name).toList(),
@@ -6908,6 +7498,26 @@ class LiteRun {
             .whereType<LiteGroundShot>(),
       );
     run._night.restore(json['night']);
+    for (final name in _list(json['actRelics']).take(3)) {
+      final relic = LiteActRelic.values
+          .where((item) => item.name == name)
+          .firstOrNull;
+      if (relic != null) run.actRelics.add(relic);
+    }
+    run._actRelicClaims = _int(json['actRelicClaims']).clamp(0, 3);
+    run.restHub = json['restHub'] == true;
+    run.realm = LiteRealm.values
+        .where((area) => area.name == json['realm'])
+        .firstOrNull;
+    run.actRoom = run.realm == null
+        ? 0
+        : _int(json['actRoom'], 1).clamp(1, LiteSecondAct.actTwoRooms);
+    run.solarPhase = LiteSolarPhase.values
+        .where((phase) => phase.name == json['solarPhase'])
+        .firstOrNull;
+    if (json['solarStairs'] is List)
+      run.solarStairs = _point(json['solarStairs']);
+    run.supply.restore(json['supplies']);
     if (run.hero == LiteHero.doppelganger)
       run._mimic = LiteMimicForm.read(json['mimic']);
     run.hp = _num(json['hp'], run.maxHp);
@@ -6938,9 +7548,24 @@ class LiteRun {
       _list(json['fighters']).take(maxCoopPlayers - 1).toList(),
       LiteCoopFighter._fromWire,
     );
+    load(run.fauna, json['fauna'], LiteEnemy._read);
+    run.fauna.removeWhere(
+      (animal) => LiteAnimal.forCreature(animal.kind) == null,
+    );
+    run._provokedRooms.addAll(
+      _list(json['provokedRooms'])
+          .whereType<int>()
+          .where((floor) => floor >= 0 && floor <= run.stage),
+    );
+    run._sparedRooms.addAll(
+      _list(json['sparedRooms'])
+          .whereType<int>()
+          .where((floor) => floor >= 0 && floor <= run.stage),
+    );
     load(run.obstacles, json['obstacles'], LiteObstacle._read);
     load(run.loot, json['loot'], LiteLoot._read);
     load(run.quests, json['quests'], LiteQuest._read);
+    load(run._optionalMissions, json['optionalMissions'], LiteQuest._read);
     if (run.quests.length != 3) {
       throw const FormatException('Missioni del piano mancanti.');
     }

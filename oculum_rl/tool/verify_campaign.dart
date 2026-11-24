@@ -147,7 +147,7 @@ LiteEnemy? priorityTarget(LiteRun run) {
   return preferred;
 }
 
-String play(LiteDifficulty difficulty, int seed) {
+String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
   final run = LiteRun(
     seed: seed,
     hero: LiteHero.evasore,
@@ -181,9 +181,21 @@ String play(LiteDifficulty difficulty, int seed) {
         }
       }
       if (run.hasPortalNearby) {
-        run.advance(
-          LiteBiome.values[(run.stage + 1) % LiteBiome.values.length],
-        );
+        if (run.awaitsRestHub) {
+          run.enterRestHub();
+          run.buyRestItem(LiteRestItem.token);
+          run.buyRestItem(LiteRestItem.crosta);
+          run.buyRestItem(LiteRestItem.spirale);
+        } else if (run.canChooseActTwo) {
+          run.enterSecondAct(realm);
+        } else if (run.nextActTwoRoom) {
+          run.takeActRelic(LiteActRelic.values[(run.actRoom - 1) % 3]);
+          run.advanceActTwo();
+        } else {
+          run.advance(
+            LiteBiome.values[(run.stage + 1) % LiteBiome.values.length],
+          );
+        }
       } else {
         run.advanceFrame(tick, move: follow(run, run.portalPosition));
       }
@@ -214,6 +226,12 @@ String play(LiteDifficulty difficulty, int seed) {
       final go = open(run, run.position + turn) ? turn : turn * -1;
       if (open(run, run.position + go)) move = go;
     }
+    if (target.burrow case final track? when track.warning > 0) {
+      final line = unit(track.end - track.start);
+      final side = Point(-line.y, line.x);
+      move = open(run, run.position + side) ? side : side * -1.0;
+      if (track.warning < .30) run.special(run.position + move);
+    }
     if (move == origin) move = follow(run, const Point(16, 11));
     if (run.projectiles.any(
           (item) =>
@@ -232,8 +250,10 @@ String play(LiteDifficulty difficulty, int seed) {
   if (run.victorious) completed.add(LiteRun.finalStage);
   final summary =
       'seed=$seed ${difficulty.name}: won=${run.victorious} '
-      'stage=${run.stage} completed=${completed.join(",")}';
-  if (!run.victorious || completed.length != LiteRun.finalStage + 1) {
+      'stage=${run.stage} act2=${realm.name} completed=${completed.join(",")}';
+  if (!run.victorious ||
+      completed.length != LiteRun.finalStage + 1 ||
+      !run.achievements.contains('atto-ii-${realm.name}')) {
     for (final enemy in run.enemies.where((enemy) => enemy.hp > 0)) {
       print(
         '${enemy.kind.name} at ${enemy.position}, '
@@ -249,6 +269,6 @@ String play(LiteDifficulty difficulty, int seed) {
 }
 
 void main() {
-  print(play(LiteDifficulty.moltoFacile, 20261123));
-  print(play(LiteDifficulty.medio, 20261124));
+  print(play(LiteDifficulty.moltoFacile, 20261123, LiteRealm.caramella));
+  print(play(LiteDifficulty.medio, 20261124, LiteRealm.inferno));
 }

@@ -49,6 +49,7 @@ typedef _Seat = ({
   Map<LitePermanentUpgrade, int> upgrades,
   bool ready,
   bool allowGlue,
+  LiteRestMemory? memory,
 });
 
 class OculumRlRoomPage extends StatefulWidget {
@@ -91,6 +92,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   bool _observer = false;
   int _seed = 0;
   OculumLiteCoop? _run;
+  final _handledMemoryIds = <String>{};
   OculumLiteProgress _progress = const OculumLiteProgress();
   bool _savingUnlocks = false;
   final _failedPets = <LiteCompanion>{};
@@ -366,6 +368,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     'weapon': seat.weapon.name,
     'ready': seat.ready,
     if (seat.allowGlue) 'allowGlue': true,
+    if (seat.memory case final memory?) 'restMemory': memory.frame,
     if (seat.upgrades.isNotEmpty)
       'upgrades': LitePermanentUpgrade.encode(seat.upgrades),
     if (seat.appearance case final look?) 'look': look.toJson(),
@@ -395,6 +398,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
           : null,
       ready: value['ready'] as bool,
       allowGlue: value['allowGlue'] == true,
+      memory: LiteRestMemory.read(value['restMemory']),
       upgrades: LitePermanentUpgrade.read(value['upgrades']),
     );
   }
@@ -480,6 +484,17 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   Future<void> _ready() async {
     final uid = _account;
     if (uid == null) return;
+    LiteRestMemory? memory;
+    try {
+      final store = await OculumLiteSaveStore.open();
+      memory = await store.readRestMemory();
+    } on Object {
+      if (mounted)
+        setState(
+          () => _status = 'Impossibile leggere il ricordo della Veggente.',
+        );
+    }
+    if (!mounted || _account != uid || _runId.isNotEmpty) return;
     final seat = (
       name: _displayName,
       hero: _hero,
@@ -487,6 +502,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       appearance: _hero == LiteHero.duplicatore ? _look : null,
       upgrades: _progress.upgrades,
       allowGlue: _progress.discoveredPets.contains(LiteCompanion.goblinColla),
+      memory: memory,
       ready: _seats[uid]?.ready != true,
     );
     if (_master) {
@@ -536,6 +552,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       allowGlue: mine.allowGlue,
       playerCount: _seats.length,
     );
+    if (mine.memory case final memory?) world.carryRestMemory(memory);
     for (final entry in _seats.entries) {
       if (entry.key == uid) continue;
       final seat = entry.value;
@@ -547,6 +564,10 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         upgrades: seat.upgrades,
         allowGlue: seat.allowGlue,
       );
+      if (seat.memory case final memory?) {
+        final fighter = world.coopFighter(entry.key);
+        if (fighter != null) world.carryRestMemory(memory, fighter: fighter);
+      }
     }
     _run = OculumLiteCoop(
       runId: _runId,
@@ -600,6 +621,15 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     if (!mounted || _savingUnlocks || play == null || run == null) return;
     final played = play.host ? run.hero : play.localFighter?.hero;
     if (played == null) return;
+    final kit = play.host ? run.supply : play.localFighter!.supply;
+    final memory = kit.promised;
+    final spent = kit.carriedId;
+    if (spent != null && _handledMemoryIds.add('spent-$spent')) {
+      unawaited(_recordRestMemory(spent, null));
+    }
+    if (memory != null && _handledMemoryIds.add(memory.id)) {
+      unawaited(_recordRestMemory(memory.id, memory));
+    }
     final heroes = run.unlockedHeroesFor(played);
     final pets = run.discoveredPets;
     final pendingSlime =
@@ -618,6 +648,20 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       return;
     _savingUnlocks = true;
     unawaited(_saveRunUnlocks(heroes, pets, run.slimeCreditId, run.slimeKills));
+  }
+
+  Future<void> _recordRestMemory(String id, LiteRestMemory? memory) async {
+    try {
+      final store = await OculumLiteSaveStore.open();
+      if (memory == null) {
+        await store.spendRestMemory(id);
+      } else {
+        await store.saveRestMemory(memory);
+      }
+    } on Object {
+      if (mounted)
+        setState(() => _status = 'Salvataggio del ricordo non riuscito.');
+    }
   }
 
   Future<void> _saveRunUnlocks(

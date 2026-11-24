@@ -2,6 +2,15 @@
 
 ## Oculum RL · Anteprima autonoma
 
+- **Atto II**. Dopo la dodicesima stanza, dal ristoro scegli Inferno, Regno Caramella o Postea. Ognuno ha quattro visitazioni e un premio conclusivo. Le prime tre permettono di scegliere una reliquia. L’ordine delle reliquie cambia le sinergie di Danni, recupero di Oculum e protezione.
+- **Divoramitù**. Le crepe a terra segnalano l’emersione ad arco. Shift di lato per evitare il contatto. È vulnerabile mentre è fuori dal terreno. Inferno sblocca Demone Minore, Intermedio, Maggiore Prediletto dall’aspetto umano e Diavolo del Patto.
+- **Dungeon solare**. Un riparo frangibile nasconde le scale d’oro. L’Elité Solare, due Guardie e un’Aberrazione difendono la penultima sala. Dopo lo scontro ricevi 72 Obser e accedi al ristoro. Il Guardiano Solare alterna due frecce d’oro, un raggio e il colpo di mazza. Sconfiggilo per altri 96 Obser e nuovi personaggi. Con un Solare alla guida, il percorso principale oppone i Lunari. La nona stanza schiera un Custode, due Elité e tre Guardie.
+- **Fauna**. Pollo, raganella e pipistrello popolano le arene e si sbloccano risparmiandoli. Nelle prime sei stanze in cui la attacchi, la fauna ferita scappa. Nelle successive ti attacca a vista. Il Pollo usa beccata e tre uova sparate all’indietro, esplosive all’impatto o dopo 0,9 secondi da ferme. Alla morte con un animale, il 12% innesca la Muta e sblocca il Doppelganger con il 65% Vita fino a Normale e il 30% da Difficile.
+- **Sale di ristoro** dopo ogni sei stanze. La Taverniera prepara pietanze per tre scontri. Il Fabbro vende anche lo Chakram d’Iridio. Il Mercante offre pergamene, evoluzioni a tre ranghi e Gettone di Rinascita. La Veggente può custodire un acquisto della visita per la prossima run.
+- **Simbolo della Luna di Vaitern**. Il Cavaliere Elité Lunare può trovarlo abbattendo nemici comuni, Elité e boss con probabilità 1%, 6% e 12%. Le due mezze lune e il disco centrale valgono 60 Obser ciascuno. I nuovi asset usano Expressive Ink e il drop di Obser mostra la pietra canonica con l’occhio.
+
+
+
 - **Cavaliere Elité Lunare** sbloccabile completando la campagna in Facile o superiore. Spada e scudo raddoppiati, blocco a 300, due Guardie Lunari con la skill e un Guardiano Lunare che respinge fino a 12 m con l’Open.
 - **Slime Blu** si sblocca abbattendo dieci Slime sommati fra run. Q attiva lo scatto invisibile. L’assorbimento si mantiene con clic ripetuti e restituisce Vita e Oculum. Gli organici vicini cercano di circondarlo; i nemici meccanici continuano ad attaccare.
 - **Vampiro** respinge i nemici di 3 m, poi 6 m dal livello 3. Contro un riparo infligge 5 Danni aggiuntivi e rompe quelli frangibili. Può volare da pipistrello per 3 secondi intangibili o raddoppiare la propria forza, velocità e Vita con l’Open. La forma di sangue toglie il 5% della Vita massima ai nemici molto vicini a ogni pulsazione.

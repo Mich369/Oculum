@@ -621,6 +621,39 @@ void main() {
           case LiteHero.doppelganger:
             expect(run.mimic?.kind, target.kind);
             expect(run.maxHp, target.maxHp);
+          case LiteHero.pollo:
+            expect(
+              run.projectiles
+                  .where((shot) => shot.kind == LiteProjectileKind.egg)
+                  .length,
+              3,
+            );
+          case LiteHero.raganella ||
+              LiteHero.pipistrello ||
+              LiteHero.guardiaSolare ||
+              LiteHero.demoneMinore ||
+              LiteHero.demoneMaggiore:
+            expect(run.intangible, isTrue);
+          case LiteHero.eliteSolare:
+            expect(
+              run.projectiles.any(
+                (shot) => shot.kind == LiteProjectileKind.solarRay,
+              ),
+              isTrue,
+            );
+          case LiteHero.guardianoSolare:
+            expect(run.night.solarMace, greaterThan(0));
+          case LiteHero.aberrazioneSolare:
+            expect(run.night.solarMantle, greaterThan(0));
+          case LiteHero.demoneIntermedio:
+            expect(run.openCooldown, greaterThan(0));
+          case LiteHero.diavolo:
+            expect(
+              run.projectiles
+                  .where((shot) => shot.kind == LiteProjectileKind.fireball)
+                  .length,
+              5,
+            );
           case LiteHero.cavaliereLunare:
             expect(run.clones.single.companion, LiteCompanion.guardianoLunare);
             expect(run.maxBlockResistance, 300);
@@ -734,9 +767,10 @@ void main() {
         }
         final resumed = _restore(run);
         expect(resumed.arenaTrial, trial);
+        final beforeReward = resumed.obser;
         resumed.enemies.clear();
         resumed.step(.01);
-        expect(resumed.obser, 20 + trial.obser);
+        expect(resumed.obser - beforeReward, 20 + trial.obser);
         expect(resumed.powerOffers.first, trial.power);
         final completed = _restore(resumed)..step(.1);
         expect(completed.obser, resumed.obser);
@@ -746,10 +780,11 @@ void main() {
             'time': run.time + 41,
           });
           expect(lateRun.trialSecondsLeft, 0);
+          final beforeLateReward = lateRun.obser;
           lateRun.enemies.clear();
           lateRun.step(.01);
           expect(lateRun.stageClear, isTrue);
-          expect(lateRun.obser, 20);
+          expect(lateRun.obser - beforeLateReward, 20);
         }
       }
     },

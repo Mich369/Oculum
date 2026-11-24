@@ -23,6 +23,7 @@ class OculumLiteCoop extends ChangeNotifier {
   Timer? _timer;
   final _clock = Stopwatch();
   final _lastInput = <String, int>{};
+  final _lastRestAction = <String, int>{};
   final _satSession = <String, String>{};
   final _watching = <String, double>{};
   final _confirmed = <String>{};
@@ -45,6 +46,8 @@ class OculumLiteCoop extends ChangeNotifier {
   bool _rescuing = false;
   bool _rescueSent = false;
   bool _rest = false;
+  int _restCounter = 0;
+  Map<String, Object>? _restAction;
   bool slowed = false;
   Point<double> move = const Point(0, 0);
   Point<double>? aim;
@@ -81,6 +84,7 @@ class OculumLiteCoop extends ChangeNotifier {
     move = const Point(0, 0);
     _fire = _dodge = _dash = _reload = _open = _rifleSkill = _bomb = _rest =
         false;
+    _restAction = null;
     setBlocking(false);
     setRescuing(false);
     _clock.stop();
@@ -189,6 +193,85 @@ class OculumLiteCoop extends ChangeNotifier {
     return world.portalPosition.distanceTo(at) < 2.2;
   }
 
+  void enterSecondAct(LiteRealm realm) {
+    if (authority?.enterSecondAct(realm) != true) return;
+    destination = null;
+    _confirmed.clear();
+    notifyListeners();
+  }
+
+  bool advanceActTwo() {
+    if (authority?.advanceActTwo() != true) return false;
+    destination = null;
+    _confirmed.clear();
+    notifyListeners();
+    return true;
+  }
+
+  bool solarInteraction() {
+    final world = authority;
+    if (world == null) return false;
+    if (!world.enterSolarDungeon() && !world.enterSolarBoss()) return false;
+    destination = null;
+    _confirmed.clear();
+    notifyListeners();
+    return true;
+  }
+
+  void enterRestHub() {
+    if (authority?.enterRestHub() != true) return;
+    destination = null;
+    _confirmed.clear();
+    notifyListeners();
+  }
+
+  void buyRestItem(LiteRestItem item) => _orderRest('buy', item.name);
+  void rememberRestItem(LiteRestItem item) => _orderRest('remember', item.name);
+  void exchangeLunarPiece() => _orderRest('exchange', '');
+  void castHostScroll(int slot) {
+    final world = authority;
+    if (world == null || world.restHub) return;
+    world.castScroll(slot, aim ?? world.position + world.aim);
+  }
+
+  void useRestScroll(LiteScroll scroll) => _orderRest('scroll', scroll.name);
+
+  void _orderRest(String kind, String item) {
+    final world = authority;
+    if (world != null) {
+      _applyRest(world, kind, item, null, aim ?? world.aim);
+      notifyListeners();
+    } else if (canAct && _restAction == null) {
+      _restAction = {'kind': kind, 'item': item, 'id': ++_restCounter};
+    }
+  }
+
+  void _applyRest(
+    LiteRun world,
+    Object? kind,
+    Object? id,
+    LiteCoopFighter? fighter,
+    Point<double> aim,
+  ) {
+    if (kind == 'exchange') {
+      world.exchangeLunarPiece(fighter: fighter);
+      return;
+    }
+    if (kind == 'scroll' && fighter != null) {
+      final scroll = LiteScroll.values
+          .where((value) => value.name == id)
+          .firstOrNull;
+      if (scroll != null) world.castRestScroll(scroll, aim, fighter);
+      return;
+    }
+    final item = LiteRestItem.values
+        .where((value) => value.name == id)
+        .firstOrNull;
+    if (item == null) return;
+    if (kind == 'buy') world.buyRestItem(item, fighter: fighter);
+    if (kind == 'remember') world.rememberRestItem(item, fighter: fighter);
+  }
+
   void confirmPortal([LiteBiome? choice]) {
     if (!nearPortal(localAccount) || !canAct) return;
     if (host) {
@@ -276,6 +359,7 @@ class OculumLiteCoop extends ChangeNotifier {
         _rescuing ||
         _rescuing != _rescueSent ||
         _rest ||
+        _restAction != null ||
         _blocking != _blockSent;
     if (!_posting && now - _timeOfSend >= (hasInput ? .11 : .41)) {
       _timeOfSend = now;
@@ -299,6 +383,7 @@ class OculumLiteCoop extends ChangeNotifier {
           'block': _blocking,
           if (_rescuing) 'rescue': true,
           if (_rest) 'rest': true,
+          if (_restAction case final action?) 'restAction': action,
           'slow': slowed,
         };
         final wasFiring = _fire;
@@ -308,6 +393,7 @@ class OculumLiteCoop extends ChangeNotifier {
         final wasBlocking = _blocking;
         final wasRescuing = _rescuing;
         final wasResting = _rest;
+        final pendingRest = _restAction;
         _fire = _dodge = _dash = _reload = _open = _rifleSkill = _bomb = _rest =
             false;
         _posting = true;
@@ -317,6 +403,7 @@ class OculumLiteCoop extends ChangeNotifier {
                 if (sent) {
                   _blockSent = wasBlocking;
                   _rescueSent = wasRescuing;
+                  if (identical(_restAction, pendingRest)) _restAction = null;
                 }
                 if (!sent && wasFiring) _fire = true;
                 if (!sent && run?.stage == state.stage && active) {
@@ -408,6 +495,7 @@ class OculumLiteCoop extends ChangeNotifier {
       }
       _satSession[account] = sessionId;
       _lastInput.remove(account);
+      _lastRestAction.remove(account);
     }
     if (packet['kind'] == 'playVote') {
       if (fighter.hp > 0 &&
@@ -432,6 +520,13 @@ class OculumLiteCoop extends ChangeNotifier {
     }
     _lastInput[account] = input;
     _watching[account] = now;
+    if (packet['restAction'] case final Map action) {
+      final id = action['id'];
+      if (id is int && id > (_lastRestAction[account] ?? 0)) {
+        _lastRestAction[account] = id;
+        _applyRest(world, action['kind'], action['item'], fighter, target);
+      }
+    }
     world.setCoopControls(
       account,
       direction,

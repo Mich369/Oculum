@@ -17,6 +17,7 @@ import '../services/oculum_save_profile.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_creator.dart';
 import '../widgets/oculum_lite_routes.dart';
+import '../widgets/oculum_lite_rest_panel.dart';
 import '../widgets/oculum_rl_merchant.dart';
 
 const liteHeroLabels = {
@@ -39,9 +40,21 @@ const liteHeroLabels = {
   LiteHero.slimeBlu: 'Slime Blu',
   LiteHero.vampiro: 'Vampiro',
   LiteHero.reGoblin: 'Re Goblin',
+  LiteHero.pollo: 'Pollo di Brace',
+  LiteHero.raganella: 'Raganella del Muschio',
+  LiteHero.pipistrello: 'Pipistrello di Pece',
+  LiteHero.guardiaSolare: 'Guardia Solare',
+  LiteHero.eliteSolare: 'Guardia Elité Solare',
+  LiteHero.guardianoSolare: 'Guardiano Solare',
+  LiteHero.aberrazioneSolare: 'Aberrazione d’Oro e Marmo',
+  LiteHero.demoneMinore: 'Demone Minore',
+  LiteHero.demoneIntermedio: 'Demone Intermedio',
+  LiteHero.demoneMaggiore: 'Demone Maggiore Prediletto',
+  LiteHero.diavolo: 'Diavolo del Patto',
 };
 const liteWeaponLabels = {
   LiteWeapon.boomerang: 'Boomerang in legno',
+  LiteWeapon.chakram: 'Chakram d’Iridio',
   LiteWeapon.spadaScudo: 'Spada e scudo',
   LiteWeapon.guanti: 'Guanti d’arme giganti',
   LiteWeapon.arco: 'Arco iniziale',
@@ -66,6 +79,7 @@ const _posteaArtwork =
 const _heroArtwork = 'assets/oculum/lite/personaggi-inchiostro.png';
 const _weaponDetails = {
   LiteWeapon.boomerang: '+5 Danni · andata e ritorno',
+  LiteWeapon.chakram: '+9 Danni · 9 m · andata e ritorno · 0,32 s',
   LiteWeapon.spadaScudo: '+6 Danni · +6 Scudo · +1 Difesa',
   LiteWeapon.guanti: '+10 Danni · mischia',
   LiteWeapon.arco: '+3 Danni · 10 m · 12 frecce',
@@ -262,6 +276,8 @@ class _OculumLitePageState extends State<OculumLitePage>
     if (slot == null || store == null || _slots[slot] == null) return true;
     try {
       final value = _slots[slot]!.encode();
+      final carried = _slots[slot]!.run.supply.carriedId;
+      final promised = _slots[slot]!.run.supply.promised;
       final observed = const OculumLiteProgress().recordRun(_slots[slot]!.run);
       final task = _writes.then((_) async {
         await store.write(slot, value);
@@ -273,6 +289,8 @@ class _OculumLitePageState extends State<OculumLitePage>
         );
         var progressSaveFailed = false;
         try {
+          if (carried != null) await store.spendRestMemory(carried);
+          if (promised != null) await store.saveRestMemory(promised);
           if (progress.earned > 0 ||
               progress.unlockedHeroes.isNotEmpty ||
               progress.discoveredPets.isNotEmpty ||
@@ -482,6 +500,18 @@ class _OculumLitePageState extends State<OculumLitePage>
       _busy = true;
       _storageMessage = null;
     });
+    LiteRestMemory? memory;
+    try {
+      memory = await _saveStore?.readRestMemory();
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _storageMessage = 'Impossibile leggere il ricordo della Veggente.';
+      });
+      return;
+    }
+    if (!mounted) return;
     _slots[index] = OculumLiteSaveSlot(
       run: LiteRun(
         seed: seed,
@@ -507,6 +537,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       startingWeapon: _startingWeapon,
       startingBiome: _biome,
     );
+    if (memory != null) _slots[index]!.run.carryRestMemory(memory);
     final saved = await _save(index);
     if (!mounted) return;
     setState(() => _busy = false);
@@ -639,6 +670,11 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   Object _checkpointValues(LiteRun run) => (
+    run.solarPhase,
+    run.solarStairs,
+    run.realm,
+    run.actRoom,
+    run.provokedFaunaRooms,
     run.stage,
     run.stageClear,
     run.level,
@@ -837,12 +873,41 @@ class _OculumLitePageState extends State<OculumLitePage>
 
   Future<void> _interact(LiteRun run) async {
     if (_paused || run.finished || run.shopOpen) return;
+    if (run.canChooseActTwo) {
+      _togglePause();
+      final realm = await chooseLiteSecondAct(context);
+      if (!mounted) return;
+      _togglePause();
+      if (realm != null) _saveInventoryChange(() => run.enterSecondAct(realm));
+      _gameFocus.requestFocus();
+      return;
+    }
+    if (run.nextActTwoRoom && run.hasPortalNearby) {
+      _saveInventoryChange(run.advanceActTwo);
+      _aim = null;
+      return;
+    }
+    if (run.canEnterSolarDungeon) {
+      _saveInventoryChange(run.enterSolarDungeon);
+      _aim = null;
+      return;
+    }
+    if (run.solarBossWaiting && run.hasPortalNearby) {
+      _saveInventoryChange(run.enterSolarBoss);
+      _aim = null;
+      return;
+    }
     if (!run.stageClear || !run.hasPortalNearby) {
       final hadRistoro = run.restUsed;
       setState(() => run.interact());
       if (!hadRistoro && run.restUsed) unawaited(_save());
       if (run.shopOpen) _clearMovement();
       _syncTicker();
+      return;
+    }
+    if (run.awaitsRestHub) {
+      _saveInventoryChange(run.enterRestHub);
+      _aim = null;
       return;
     }
     _togglePause();
@@ -860,6 +925,35 @@ class _OculumLitePageState extends State<OculumLitePage>
       _saveTime = 0;
       unawaited(_save());
     }
+  }
+
+  Future<void> _openRelics(LiteRun run) async {
+    _togglePause();
+    await showLiteActRelics(
+      context,
+      run,
+      take: (relic) => _saveInventoryChange(() => run.takeActRelic(relic)),
+      move: (index, direction) =>
+          _saveInventoryChange(() => run.moveActRelic(index, direction)),
+    );
+    if (!mounted) return;
+    _togglePause();
+    _gameFocus.requestFocus();
+  }
+
+  Future<void> _openRestHub(LiteRun run) async {
+    _togglePause();
+    await showLiteRestHub(
+      context,
+      world: () => run,
+      buy: (item) => _saveInventoryChange(() => run.buyRestItem(item)),
+      remember: (item) =>
+          _saveInventoryChange(() => run.rememberRestItem(item)),
+      exchange: () => _saveInventoryChange(run.exchangeLunarPiece),
+    );
+    if (!mounted) return;
+    _togglePause();
+    _gameFocus.requestFocus();
   }
 
   bool _tryRescue(LiteRun run) {
@@ -886,8 +980,18 @@ class _OculumLitePageState extends State<OculumLitePage>
           : 'Soccorso $progress%';
     } else if (run.fallenAllyNearby != null) {
       label = 'Tieni R · Soccorri';
+    } else if (run.canEnterSolarDungeon) {
+      label = 'R · Scendi le scale d’oro';
+    } else if (run.solarBossWaiting && run.hasPortalNearby) {
+      label = 'R · Sfida il Guardiano Solare';
+    } else if (run.canChooseActTwo) {
+      label = 'R · Scegli il percorso dell’Atto II';
+    } else if (run.nextActTwoRoom && run.hasPortalNearby) {
+      label = 'R · Prosegui nell’Atto II';
     } else if (run.hasPortalNearby) {
-      label = 'R · Attraversa';
+      label = run.awaitsRestHub
+          ? 'R · Entra nella Sala di ristoro'
+          : 'R · Attraversa';
     } else if (run.canRest) {
       label = 'R · Ristoro';
     } else if (run.canOpenShop) {
@@ -1235,6 +1339,12 @@ class _OculumLitePageState extends State<OculumLitePage>
                     LiteHero.veyrth => 'Destro · Sfera cava. Con Spazio lanci un anello di sfere.',
                     LiteHero.cavaliereLunare => 'Destro o V evoca due Guardie Lunari. Spada e scudo raddoppiati, Blocco a 300.',
                     LiteHero.slimeBlu => 'Q rende invisibile durante lo scatto. Mira da vicino e ripeti il clic destro per mantenere l’assorbimento e recuperare Vita e Oculum.',
+                    LiteHero.pollo =>
+                      'Click · Beccata. Destro o V · Tre uova alle spalle.',
+                    LiteHero.raganella =>
+                      'Click · Linguata. Destro o V · Colpo a 4,1 m.',
+                    LiteHero.pipistrello =>
+                      'Click · Artigli. Destro o V · Ultrasuono respingente.',
                     LiteHero.reGoblin => 'Destro o V · Stordisci con un colpo, recupero 1,8 s. Q · Rialza gli alleati entro 10 m al 50% Vita.',
                     LiteHero.vampiro => 'Ogni colpo respinge. Destro per diventare un pipistrello intangibile per 3 s. Spazio scatena la forma di sangue.',
                     LiteHero.doppelganger => 'A mani nude. Destro · Mira a un nemico a 7 m per copiarlo. Boss ed eco sono esclusi. Se perdi la forma torni con il 65% della Vita che avevi prima.',
@@ -1529,7 +1639,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                 ),
               ),
             ),
-            if (run.quests.isNotEmpty && !run.finished)
+            if (run.missions.isNotEmpty && !run.finished)
               Positioned(
                 top: run.weapon == LiteWeapon.arco ? 92 : 77,
                 right: 10,
@@ -1545,7 +1655,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            for (final quest in run.quests)
+                            for (final quest in run.missions)
                               Text(
                                 '${quest.complete ? '✓ ' : ''}${quest.name}  ${quest.current}/${quest.target}',
                                 style: const TextStyle(fontSize: 11),
@@ -1673,6 +1783,11 @@ class _OculumLitePageState extends State<OculumLitePage>
                                   i++
                                 )
                                   _scrollAction(run, i),
+                              if (run.restHub)
+                                _action('Botteghe', () => _openRestHub(run)),
+                              if (run.canClaimActRelic ||
+                                  run.actRelics.isNotEmpty)
+                                _action('Reliquie', () => _openRelics(run)),
                               ?contextualAction,
                               if (compact && run.hero != LiteHero.doppelganger)
                                 _action(
@@ -1791,6 +1906,15 @@ class _OculumLitePageState extends State<OculumLitePage>
                                       label: Text(
                                         '${liteWeaponLabels[weapon]} · ${run.priceForWeapon(weapon)} Obser',
                                       ),
+                                    ),
+                                  ),
+                                if (run.supply.lunarPieces > 0)
+                                  FilledButton.tonal(
+                                    onPressed: () => _saveInventoryChange(
+                                      run.exchangeLunarPiece,
+                                    ),
+                                    child: Text(
+                                      'Scambia frammento lunare · 60 Obser (${run.supply.lunarPieces})',
                                     ),
                                   ),
                                 FilledButton(
