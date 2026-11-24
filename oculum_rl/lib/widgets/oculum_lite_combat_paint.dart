@@ -1,5 +1,43 @@
 part of 'oculum_lite_arena.dart';
 
+void _paintInkFinish(
+  Canvas canvas,
+  Offset feet,
+  LiteInkFinish finish,
+  double motion,
+) {
+  if (finish == LiteInkFinish.canonica) return;
+  final tone = finish.color;
+  final center = feet + const Offset(0, .13);
+  final extension = motion.clamp(0.0, 1.0) * .39;
+  _inkSlash(
+    canvas,
+    center - Offset(.43 + extension, .04),
+    center - const Offset(.19, .01),
+    tone.withValues(alpha: .43),
+    .065,
+  );
+  _inkSlash(
+    canvas,
+    center + const Offset(.18, .015),
+    center + Offset(.43 + extension, -.01),
+    tone.withValues(alpha: .57),
+    .065,
+  );
+  _poly(
+    canvas,
+    [
+      center - const Offset(0, .095),
+      center + const Offset(.112, 0),
+      center + const Offset(0, .095),
+      center - const Offset(.112, 0),
+    ],
+    tone.withValues(alpha: .72),
+    stroke: _ink,
+    width: .030,
+  );
+}
+
 void _paintBlockGuard(Canvas canvas, Offset feet, double resistance) {
   final at = feet - const Offset(0, .68);
   final outline = Rect.fromCenter(center: at, width: 1.52, height: 1.82);
@@ -34,7 +72,7 @@ void _paintOpenPulse(
     LiteHero.ashley => _ember,
     LiteHero.scostubandito => _sand,
     LiteHero.granScostumato || LiteHero.sentinella => _sand,
-    LiteHero.dronePostea => const Color(0xff7dddf2),
+    LiteHero.dronePostea || LiteHero.polloMeccanico => const Color(0xff7dddf2),
     LiteHero.babyForestDemon ||
     LiteHero.curatorePeste ||
     LiteHero.lithra => _active,

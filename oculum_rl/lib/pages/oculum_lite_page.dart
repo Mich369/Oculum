@@ -17,6 +17,7 @@ import '../services/oculum_rl_release.dart';
 import '../services/oculum_rl_updates.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_creator.dart';
+import '../widgets/oculum_lite_ink_finishes.dart';
 import '../widgets/oculum_lite_merchant_greeting.dart';
 import '../widgets/oculum_lite_routes.dart';
 import '../widgets/oculum_lite_rest_panel.dart';
@@ -43,6 +44,7 @@ const liteHeroLabels = {
   LiteHero.vampiro: 'Vampiro',
   LiteHero.reGoblin: 'Re Goblin',
   LiteHero.pollo: 'Pollo di Brace',
+  LiteHero.polloMeccanico: 'Pollo Meccanico',
   LiteHero.raganella: 'Raganella del Muschio',
   LiteHero.pipistrello: 'Pipistrello di Pece',
   LiteHero.guardiaSolare: 'Guardia Solare',
@@ -152,6 +154,12 @@ class _OculumLitePageState extends State<OculumLitePage>
   LiteBiome _biome = LiteBiome.campo;
   List<LiteBiome> _startOptions = LiteBiome.offers(0);
   OculumLiteAppearance _look = const OculumLiteAppearance();
+  LiteInkFinish _inkFinish = LiteInkFinish.canonica;
+  OculumLiteAppearance get _selectedLook =>
+      (_hero == LiteHero.duplicatore
+              ? _look
+              : oculumLiteDefaultAppearance(_hero))
+          .copyWith(inkFinish: _inkFinish);
   Point<double> _touchDirection = const Point(0, 0);
   bool _pointerAiding = false;
   Point<double>? _aim;
@@ -465,6 +473,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       _difficulty = previous?.run.difficulty ?? LiteDifficulty.medio;
       final wasDuplicator = previous?.run.hero == LiteHero.duplicatore;
       _name.text = wasDuplicator ? previous!.name : 'Duplicatore';
+      _inkFinish = previous?.appearance.inkFinish ?? LiteInkFinish.canonica;
       _look = wasDuplicator
           ? previous!.appearance
           : const OculumLiteAppearance();
@@ -512,6 +521,7 @@ class _OculumLitePageState extends State<OculumLitePage>
         progressId: 'solo-' + DateTime.now().microsecondsSinceEpoch.toString(),
         hero: _hero,
         allowGlue: _progress.discoveredPets.contains(LiteCompanion.goblinColla),
+        allowMechanicalChicken: _progress.canPlay(LiteHero.pollo),
         weapon: _startingWeapon,
         difficulty: _difficulty,
         biome: _biome,
@@ -520,13 +530,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       name: _hero == LiteHero.duplicatore && _name.text.trim().isNotEmpty
           ? _name.text.trim()
           : liteHeroLabels[_hero]!,
-      appearance: switch (_hero) {
-        LiteHero.duplicatore => _look,
-        LiteHero.evasore => OculumLiteAppearance.evasore,
-        LiteHero.ashley => const OculumLiteAppearance(),
-        LiteHero.scostubandito => OculumLiteAppearance.scostubandito,
-        _ => const OculumLiteAppearance(),
-      },
+      appearance: _selectedLook,
       attempt: (previous?.attempt ?? 0) + 1,
       startingWeapon: _startingWeapon,
       startingBiome: _biome,
@@ -543,6 +547,9 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   void _enter(int index) {
+    if (_progress.canPlay(LiteHero.pollo)) {
+      _slots[index]!.run.allowMechanicalChicken = true;
+    }
     setState(() {
       _activeSlot = index;
       _setupSlot = null;
@@ -1431,9 +1438,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                             child: OculumLiteHeroPreview(
                               hero: _hero,
                               weapon: _startingWeapon,
-                              appearance: _hero == LiteHero.duplicatore
-                                  ? _look
-                                  : null,
+                              appearance: _selectedLook,
                               showClone: _hero == LiteHero.duplicatore,
                             ),
                           ),
@@ -1451,6 +1456,10 @@ class _OculumLitePageState extends State<OculumLitePage>
                       ),
                     ),
                   ),
+                  OculumLiteInkFinishPicker(
+                    selected: _inkFinish,
+                    onChanged: (finish) => setState(() => _inkFinish = finish),
+                  ),
                   Text(switch (_hero) {
                     LiteHero.evasore => 'Destro: schivata intangibile. A ogni uccisione, 50% di recuperare il 6% della Vita massima. Trova più pergamene.',
                     LiteHero.duplicatore => 'Destro: crea un clone. Costa il 2% della Vita massima e puoi tenere due cloni contemporaneamente.',
@@ -1463,6 +1472,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                     LiteHero.veyrth => 'Destro · Sfera cava. Con Spazio lanci un anello di sfere.',
                     LiteHero.cavaliereLunare => 'Destro o V evoca due Guardie Lunari. Spada e scudo raddoppiati, Blocco a 300.',
                     LiteHero.slimeBlu => 'Q rende invisibile durante lo scatto. Mira da vicino e ripeti il clic destro per mantenere l’assorbimento e recuperare Vita e Oculum.',
+                    LiteHero.polloMeccanico => 'Tre raggi inseguono i nemici. Clic destro/V spara tre uova meccaniche alle spalle. Spazio ne potenzia le esplosioni.',
                     LiteHero.pollo =>
                       'Click · Beccata. Destro o V · Tre uova alle spalle.',
                     LiteHero.raganella =>
@@ -1638,6 +1648,19 @@ class _OculumLitePageState extends State<OculumLitePage>
     if (!mounted || selected == null) return;
     _name.text = selected.name;
     setState(() => _look = selected.appearance);
+  }
+
+  void _setActiveInkFinish(LiteInkFinish finish) {
+    final slot = _activeSlot;
+    final active = _active;
+    if (slot == null || active == null || active.appearance.inkFinish == finish)
+      return;
+    setState(
+      () => _slots[slot] = active.withAppearance(
+        active.appearance.copyWith(inkFinish: finish),
+      ),
+    );
+    unawaited(_save(slot));
   }
 
   Widget _fight(OculumLiteSaveSlot active) {
@@ -2065,6 +2088,10 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 ),
                               ] else if (_showSettings) ...[
                                 _audioSettings(),
+                                OculumLiteInkFinishPicker(
+                                  selected: active.appearance.inkFinish,
+                                  onChanged: _setActiveInkFinish,
+                                ),
                                 TextButton(
                                   onPressed: () =>
                                       setState(() => _showSettings = false),

@@ -126,6 +126,17 @@ class OculumLiteArena extends StatefulWidget {
     'assets/oculum/lite/dungeon-solare.jpg',
   );
   static const faunaArt = AssetImage('assets/oculum/lite/fauna-ink.png');
+  static const mechanicalChickenArts = {
+    LiteInkFinish.canonica: AssetImage(
+      'assets/oculum/lite/pollo-meccanico-ink.png',
+    ),
+    LiteInkFinish.cremisi: AssetImage(
+      'assets/oculum/lite/pollo-meccanico-cremisi.png',
+    ),
+    LiteInkFinish.patina: AssetImage(
+      'assets/oculum/lite/pollo-meccanico-patina.png',
+    ),
+  };
   static const restGround = AssetImage('assets/oculum/lite/sala-riposo.jpg');
   static const hubArt = AssetImage('assets/oculum/lite/sala-npc.png');
   static const nightActors = AssetImage(
@@ -297,6 +308,11 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.hubArt,
         OculumLiteArena.restGround,
         OculumLiteArena.faunaArt,
+        if (widget.run.hero == LiteHero.polloMeccanico ||
+            widget.run.coopFighters.any(
+              (fighter) => fighter.hero == LiteHero.polloMeccanico,
+            ))
+          ...OculumLiteArena.mechanicalChickenArts.values,
         OculumLiteArena.solarArt,
         OculumLiteArena.solarGround,
         OculumLiteArena.infernalArt,
@@ -534,7 +550,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
             painter: _ArenaPaint(
               run,
               _terrain,
-              widget.appearance ?? _defaultAppearance(run.hero),
+              widget.appearance ?? oculumLiteDefaultAppearance(run.hero),
               cover: _cover?.image,
               heroFrames: _frames?.image,
               ashleyFrames: _ashley?.image,
@@ -547,6 +563,11 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
               lootArt: _extraImages[OculumLiteArena.lootArt]?.image,
               hubArt: _extraImages[OculumLiteArena.hubArt]?.image,
               faunaArt: _extraImages[OculumLiteArena.faunaArt]?.image,
+              mechanicalChickenArt: {
+                for (final entry
+                    in OculumLiteArena.mechanicalChickenArts.entries)
+                  entry.key: _extraImages[entry.value]?.image,
+              },
               solarArt: _extraImages[OculumLiteArena.solarArt]?.image,
               infernalArt: _extraImages[OculumLiteArena.infernalArt]?.image,
               duplicatorPoses: _dupPoses?.image,
@@ -633,6 +654,7 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.hero != widget.hero ||
         oldWidget.weapon != widget.weapon ||
+        oldWidget.appearance?.inkFinish != widget.appearance?.inkFinish ||
         oldWidget.appearance?.usesFeminineAtlas !=
             widget.appearance?.usesFeminineAtlas) {
       _subscribe();
@@ -678,6 +700,9 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
       LiteHero.pollo ||
       LiteHero.raganella ||
       LiteHero.pipistrello => OculumLiteArena.faunaArt,
+      LiteHero.polloMeccanico =>
+        OculumLiteArena.mechanicalChickenArts[widget.appearance?.inkFinish ??
+            LiteInkFinish.canonica]!,
       LiteHero.guardiaSolare ||
       LiteHero.eliteSolare ||
       LiteHero.guardianoSolare ||
@@ -743,7 +768,7 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
     aspectRatio: 1.45,
     child: CustomPaint(
       painter: _HeroPreviewPaint(
-        widget.appearance ?? _defaultAppearance(widget.hero),
+        widget.appearance ?? oculumLiteDefaultAppearance(widget.hero),
         widget.hero,
         widget.weapon,
         widget.showClone,
@@ -755,11 +780,12 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
   );
 }
 
-OculumLiteAppearance _defaultAppearance(LiteHero hero) => switch (hero) {
-  LiteHero.evasore => OculumLiteAppearance.evasore,
-  LiteHero.scostubandito => OculumLiteAppearance.scostubandito,
-  _ => const OculumLiteAppearance(),
-};
+OculumLiteAppearance oculumLiteDefaultAppearance(LiteHero hero) =>
+    switch (hero) {
+      LiteHero.evasore => OculumLiteAppearance.evasore,
+      LiteHero.scostubandito => OculumLiteAppearance.scostubandito,
+      _ => const OculumLiteAppearance(),
+    };
 
 const _ink = Color(0xff100d17);
 const _sand = Color(0xffe6b976);
@@ -1293,6 +1319,7 @@ class _ArenaPaint extends CustomPainter {
     this.lootArt,
     this.hubArt,
     this.faunaArt,
+    this.mechanicalChickenArt = const {},
     this.solarArt,
     this.infernalArt,
     this.duplicatorPoses,
@@ -1322,6 +1349,7 @@ class _ArenaPaint extends CustomPainter {
   final ui.Image? lootArt;
   final ui.Image? hubArt;
   final ui.Image? faunaArt;
+  final Map<LiteInkFinish, ui.Image?> mechanicalChickenArt;
   final ui.Image? solarArt;
   final ui.Image? infernalArt;
   final ui.Image? duplicatorPoses;
@@ -1812,7 +1840,7 @@ class _ArenaPaint extends CustomPainter {
                 ?.account
           : null;
       final cloneLook = guestOwned
-          ? guestAppearances[account] ?? _defaultAppearance(cloneHero)
+          ? guestAppearances[account] ?? oculumLiteDefaultAppearance(cloneHero)
           : appearance;
       jobs.add((
         at.dy,
@@ -1976,6 +2004,13 @@ class _ArenaPaint extends CustomPainter {
             fighter.openCooldown,
             fighter.openGrade,
           );
+          _paintInkFinish(
+            canvas,
+            at,
+            guestAppearances[fighter.account]?.inkFinish ??
+                LiteInkFinish.canonica,
+            fighter.stride.strength,
+          );
           if (fighter.blocking)
             _paintBlockGuard(
               canvas,
@@ -2006,7 +2041,7 @@ class _ArenaPaint extends CustomPainter {
             }
             final standard =
                 guestAppearances[fighter.account] ??
-                _defaultAppearance(fighter.hero);
+                oculumLiteDefaultAppearance(fighter.hero);
             _hero(
               canvas,
               standard,
@@ -2022,6 +2057,7 @@ class _ArenaPaint extends CustomPainter {
               mimic: fighter.mimic,
               nightActors: nightActors,
               faunaActors: faunaArt,
+              mechanicalChicken: mechanicalChickenArt[standard.inkFinish],
               solarActors: solarArt,
               infernalActors: infernalArt,
               night: fighter.night,
@@ -2063,6 +2099,7 @@ class _ArenaPaint extends CustomPainter {
     }
     _paintProtection(canvas, player, run.hitProtectionRemaining);
     _paintOpenPulse(canvas, player, run.hero, run.openCooldown, run.openGrade);
+    _paintInkFinish(canvas, player, appearance.inkFinish, run.stride.strength);
     if (run.blocking)
       _paintBlockGuard(
         canvas,
@@ -2124,6 +2161,7 @@ class _ArenaPaint extends CustomPainter {
             mimic: run.mimic,
             nightActors: nightActors,
             faunaActors: faunaArt,
+            mechanicalChicken: mechanicalChickenArt[appearance.inkFinish],
             solarActors: solarArt,
             infernalActors: infernalArt,
             night: run.night,
@@ -2236,7 +2274,22 @@ class _ArenaPaint extends CustomPainter {
     }
     for (final projectile in run.projectiles) {
       if (visible.contains(_offset(projectile.position))) {
-        _projectile(canvas, projectile);
+        var finish = LiteInkFinish.canonica;
+        if (projectile.kind == LiteProjectileKind.posteaRay ||
+            projectile.kind == LiteProjectileKind.posteaEgg) {
+          final owner = projectile.sourceCloneId;
+          if (owner == null) {
+            finish = appearance.inkFinish;
+          } else {
+            final fighter = run.coopFighters
+                .where((fighter) => fighter.id == owner)
+                .firstOrNull;
+            finish =
+                guestAppearances[fighter?.account]?.inkFinish ??
+                LiteInkFinish.canonica;
+          }
+        }
+        _projectile(canvas, projectile, finish: finish);
       }
     }
     if (!run.dead &&
@@ -2871,7 +2924,7 @@ bool _paintMonster(
 }
 
 bool _hasDefaultAppearance(OculumLiteAppearance look, LiteHero hero) =>
-    look.sameAs(_defaultAppearance(hero));
+    look.sameAs(oculumLiteDefaultAppearance(hero), includeInkFinish: false);
 
 int? _motionFrame(LiteRun run) {
   if (run.hero.specialTalent) return null;
@@ -4273,6 +4326,7 @@ void _hero(
   LiteMimicForm? mimic,
   ui.Image? nightActors,
   ui.Image? faunaActors,
+  ui.Image? mechanicalChicken,
   ui.Image? solarActors,
   ui.Image? infernalActors,
   LiteNightVisual? night,
@@ -4350,6 +4404,35 @@ void _hero(
         stroke: _ink,
       );
     }
+    return;
+  }
+  if (hero == LiteHero.polloMeccanico && mechanicalChicken != null) {
+    final frame = preparingTalent || punchPose > 0
+        ? 3
+        : attackElapsed != null
+        ? 2
+        : moving && (time * 11).floor().isEven
+        ? 1
+        : 0;
+    final cellWidth = mechanicalChicken.width / 4;
+    final cellHeight = mechanicalChicken.height * .72;
+    final source = Rect.fromLTWH(
+      cellWidth * frame,
+      mechanicalChicken.height * .15,
+      cellWidth,
+      cellHeight,
+    );
+    const height = 2.28;
+    final width = height * cellWidth / cellHeight;
+    canvas.save();
+    if (fallen) canvas.rotate(-.68);
+    canvas.drawImageRect(
+      mechanicalChicken,
+      source,
+      Rect.fromLTWH(-width / 2, -height, width, height),
+      Paint()..filterQuality = FilterQuality.medium,
+    );
+    canvas.restore();
     return;
   }
   final animal = LiteAnimal.forHero(hero);
@@ -7657,7 +7740,11 @@ void _paintMudOnScreen(Canvas canvas, Size size, double remaining) {
   canvas.restore();
 }
 
-void _projectile(Canvas canvas, LiteProjectile projectile) {
+void _projectile(
+  Canvas canvas,
+  LiteProjectile projectile, {
+  LiteInkFinish finish = LiteInkFinish.canonica,
+}) {
   final p = _offset(projectile.position);
   final heading = _offset(projectile.direction);
   switch (projectile.kind) {
@@ -7695,7 +7782,30 @@ void _projectile(Canvas canvas, LiteProjectile projectile) {
         const Color(0xffffe7a4),
         ray ? .09 : .034,
       );
-    case LiteProjectileKind.egg:
+    case LiteProjectileKind.posteaRay:
+      final (edge, light, core) = switch (finish) {
+        LiteInkFinish.canonica => (
+          const Color(0x9951b3bd),
+          const Color(0xff54d9df),
+          const Color(0xffdbfff4),
+        ),
+        LiteInkFinish.cremisi => (
+          const Color(0x99ad462a),
+          const Color(0xffff9b51),
+          const Color(0xffffe1aa),
+        ),
+        LiteInkFinish.patina => (
+          const Color(0x996cab98),
+          const Color(0xff86f0bd),
+          const Color(0xffdcffe6),
+        ),
+      };
+      final tail = p - heading * .94;
+      _inkSlash(canvas, tail, p + heading * .18, edge, .19);
+      _inkSlash(canvas, tail + heading * .13, p + heading * .16, light, .095);
+      _inkSlash(canvas, tail + heading * .30, p, core, .046);
+    case LiteProjectileKind.egg || LiteProjectileKind.posteaEgg:
+      final mechanical = projectile.kind == LiteProjectileKind.posteaEgg;
       final planted = projectile.eggFuse;
       final at =
           p -
@@ -7707,9 +7817,9 @@ void _projectile(Canvas canvas, LiteProjectile projectile) {
       _oval(
         canvas,
         at,
-        .29,
-        .36,
-        const Color(0xffdfbd8a),
+        mechanical ? .35 : .29,
+        mechanical ? .43 : .36,
+        mechanical ? const Color(0xff8e673b) : const Color(0xffdfbd8a),
         stroke: const Color(0xff2b1920),
         strokeWidth: .054,
       );
@@ -7719,8 +7829,10 @@ void _projectile(Canvas canvas, LiteProjectile projectile) {
         at + const Offset(.035, -.11),
         planted != null && (projectile.age * 14).floor().isEven
             ? const Color(0xffef8d63)
+            : mechanical
+            ? const Color(0xff5ce6d8)
             : const Color(0xfff8dda7),
-        .045,
+        mechanical ? .060 : .045,
       );
     case LiteProjectileKind.lunarCrescent:
       final sweep = Rect.fromCenter(center: p, width: .4, height: .4);
@@ -8119,6 +8231,7 @@ class _HeroPreviewPaint extends CustomPainter {
       });
     }
     _shadow(canvas, Offset.zero, .61, .24);
+    _paintInkFinish(canvas, Offset.zero, appearance.inkFinish, 0);
     _hero(
       canvas,
       appearance,
@@ -8129,6 +8242,7 @@ class _HeroPreviewPaint extends CustomPainter {
       newActors: _newHeroRow(hero, false) != null ? figure : null,
       nightActors: _nightHeroRow(hero, false) != null ? figure : null,
       faunaActors: LiteAnimal.forHero(hero) != null ? figure : null,
+      mechanicalChicken: hero == LiteHero.polloMeccanico ? figure : null,
       solarActors: hero.solar ? figure : null,
       infernalActors: hero.infernal ? figure : null,
       bossArt: hero == LiteHero.veyrth ? figure : null,

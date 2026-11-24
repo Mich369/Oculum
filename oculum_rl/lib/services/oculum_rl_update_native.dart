@@ -17,6 +17,22 @@ const _ready = '.oculum-rl-update.json';
 final _noncePattern = RegExp(r'^[0-9a-f]{24}$');
 
 Future<Directory> _updateRoot(OculumRlEdition edition) async {
+  var ancestor = File(Platform.resolvedExecutable).parent;
+  for (var depth = 0; depth < 7; depth++) {
+    if (File('${ancestor.path}/VERSIONE-ATTIVA.json').existsSync() &&
+        File('${ancestor.path}/pubspec.yaml').existsSync()) {
+      try {
+        final portable = await Directory(
+          '${ancestor.path}/build/updates-v1/${edition.name}',
+        ).create(recursive: true);
+        return Directory(await portable.resolveSymbolicLinks());
+      } on FileSystemException {
+        break;
+      }
+    }
+    if (ancestor.path == ancestor.parent.path) break;
+    ancestor = ancestor.parent;
+  }
   final support = await getApplicationSupportDirectory();
   final root = await Directory('${support.path}/updates-v1/${edition.name}')
       .create(recursive: true);

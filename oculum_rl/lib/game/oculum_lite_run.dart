@@ -92,6 +92,10 @@ enum LiteHero {
   diavolo(
     'Patto dei cinque fuochi',
     'Scaglia cinque fiamme rimbalzanti a ventaglio.',
+  ),
+  polloMeccanico(
+    'Uova di Postea',
+    'Lancia tre uova runiche più lontano, con esplosioni più forti e ampie.',
   );
 
   const LiteHero(this.openName, this.openDescription);
@@ -121,6 +125,7 @@ enum LiteHero {
     slimeBlu ||
     vampiro ||
     pollo ||
+    polloMeccanico ||
     raganella ||
     pipistrello => LiteWeapon.guanti,
     _ => null,
@@ -146,6 +151,7 @@ enum LiteHero {
     vampiro => 'Forma pipistrello',
     reGoblin => 'Colpo stordente',
     pollo => 'Uova a orologeria',
+    polloMeccanico => 'Uova esplosive di Postea',
     raganella => 'Linguata lunga',
     pipistrello => 'Ultrasuono',
     guardiaSolare => 'Bagliore molesto',
@@ -178,6 +184,7 @@ enum LiteHero {
     slimeBlu => 'Abbatti dieci Slime nelle tue run.',
     reGoblin => 'Sconfiggi il Re Goblin nel Campo goblin segreto.',
     pollo => 'Lascia tre stanze senza ferirne la fauna.',
+    polloMeccanico => 'Dopo aver sbloccato il Pollo di Brace, resta fermo dieci secondi in mezzo a tre polli senza aver mai ferito la fauna nella run.',
     raganella => 'Lascia quattro stanze senza ferirne la fauna, fra cui una con una raganella.',
     pipistrello => 'Lascia cinque stanze senza ferirne la fauna, fra cui una con un pipistrello.',
     doppelganger => 'Ottieni una Muta alla morte mentre giochi con un animale.',
@@ -721,6 +728,8 @@ enum LiteProjectileKind {
   egg,
   solarBolt,
   solarRay,
+  posteaRay,
+  posteaEgg,
 }
 
 enum LiteImpactTarget {
@@ -1460,9 +1469,11 @@ class LiteCoopFighter extends LiteClone {
     required super.id,
     this.upgrades = const {},
     this.allowGlue = false,
+    this.allowMechanicalChicken = false,
   });
 
   final bool allowGlue;
+  final bool allowMechanicalChicken;
   final supply = LiteRestLoadout();
   double _hubCastCooldown = 0;
   double weaponArtCooldown = 0;
@@ -1543,6 +1554,7 @@ class LiteCoopFighter extends LiteClone {
     'account': account,
     if (supply.active) 'supplies': supply.frame,
     if (allowGlue) 'allowGlue': true,
+    if (allowMechanicalChicken) 'allowMechanicalChicken': true,
     'name': name,
     'hero': hero.name,
     'baseHp': _baseMaxHp,
@@ -1590,6 +1602,7 @@ class LiteCoopFighter extends LiteClone {
       _enum(LiteWeapon.values, data['weapon'], LiteWeapon.arco),
       id: _int(data['id']),
       allowGlue: data['allowGlue'] == true,
+      allowMechanicalChicken: data['allowMechanicalChicken'] == true,
       upgrades: LitePermanentUpgrade.read(data['upgrades']),
     );
     return fighter
@@ -1691,6 +1704,7 @@ class LiteRun {
     required this.seed,
     this.progressId,
     this.allowGlue = false,
+    this.allowMechanicalChicken = false,
     required this.hero,
     required LiteWeapon weapon,
     this.difficulty = LiteDifficulty.medio,
@@ -1712,11 +1726,13 @@ class LiteRun {
   final int seed;
   final String? progressId;
   final bool allowGlue;
+  bool allowMechanicalChicken;
   bool get hasGlue =>
       allowGlue || achievements.contains(LiteCompanion.goblinColla.unlockKey);
   final groundShots = <LiteGroundShot>[];
   final supply = LiteRestLoadout();
   final fauna = <LiteEnemy>[];
+  final _chickenTrial = <int, double>{};
   final _provokedRooms = <int>{};
   final _sparedRooms = <int>{};
   bool restHub = false;
@@ -1895,9 +1911,18 @@ class LiteRun {
   static double openRecoveryFor(int grade) => openRecovery + 1 - grade;
   int get openGrade => openGradeFor(level);
 
-  Set<LiteHero> unlockedHeroesFor(LiteHero playedHero) => {
+  Set<LiteHero> unlockedHeroesFor(
+    LiteHero playedHero, {
+    String? guestAccount,
+  }) => {
+    if (guestAccount != null &&
+        achievements.contains(
+          LiteFauna._mechanicalChickenGuestKey(guestAccount),
+        ))
+      LiteHero.polloMeccanico,
     for (final character in LiteHero.values)
       if (character != LiteHero.granScostumato &&
+          (character != LiteHero.polloMeccanico || guestAccount == null) &&
           character.unlockHint != null &&
           achievements.contains(heroUnlockKey(character)))
         character,
@@ -2319,6 +2344,7 @@ class LiteRun {
     _block.held = false;
     enemies.clear();
     fauna.clear();
+    _chickenTrial.clear();
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
@@ -2663,6 +2689,7 @@ class LiteRun {
     LiteWeapon weapon, {
     Map<LitePermanentUpgrade, int> upgrades = const {},
     bool allowGlue = false,
+    bool allowMechanicalChicken = false,
   }) {
     if (coopFighters.length >= playerCount - 1 ||
         coopFighter(account) != null ||
@@ -2682,6 +2709,7 @@ class LiteRun {
           startingWeapon,
           id: _nextId++,
           allowGlue: allowGlue,
+          allowMechanicalChicken: allowMechanicalChicken,
           upgrades: Map.unmodifiable(upgrades),
         )
         ..shield = _startingShield(hero, startingWeapon)
@@ -3279,6 +3307,7 @@ class LiteRun {
       if (fighter._rescue != null) _tickRescue(elapsed, fighter);
     }
     projectiles.removeWhere((projectile) => projectile.remaining <= 0);
+    _tickMechanicalChickenTrial(elapsed / arenaSpeed, movement);
     final royalRescue =
         hero == LiteHero.reGoblin && hp > 0 ||
         coopFighters.any(
@@ -3842,14 +3871,23 @@ class LiteRun {
         );
       case LiteHero.guardianoSolare:
         (fighter?._night ?? _night).solarMace = 4 + grade.toDouble();
-      case LiteHero.pollo:
+      case LiteHero.pollo || LiteHero.polloMeccanico:
+        final mechanical = character == LiteHero.polloMeccanico;
         _throwEggs(
           source,
           direction,
           fighter?.id,
-          damage: 16 + 5.0 * grade,
+          damage: mechanical ? 24 + 6.0 * grade : 16 + 5.0 * grade,
           spread: .31,
+          mechanical: mechanical,
         );
+        if (mechanical) {
+          if (fighter == null) {
+            _springPose = .34;
+          } else {
+            fighter._springPose = .34;
+          }
+        }
       case LiteHero.raganella:
         _playableShadowStep(
           source,
@@ -4305,13 +4343,17 @@ class LiteRun {
         _fireSun(source, direction, 12 + characterLevel * 1.8, owner: owner);
       case LiteHero.aberrazioneSolare:
         _solarPlayerGuard(character, source, direction, fighter, 0);
-      case LiteHero.pollo:
+      case LiteHero.pollo || LiteHero.polloMeccanico:
+        final mechanical = character == LiteHero.polloMeccanico;
         _throwEggs(
           source,
           direction,
           owner,
-          damage: 12 + characterLevel * 1.25,
+          damage: mechanical
+              ? 18 + characterLevel * 1.50
+              : 12 + characterLevel * 1.25,
           spread: .24,
+          mechanical: mechanical,
         );
       case LiteHero.raganella:
         _melee(
@@ -6121,9 +6163,13 @@ class LiteRun {
       return;
     }
     projectile.age += elapsed;
-    if (projectile.kind == LiteProjectileKind.egg) {
+    if (projectile.kind == LiteProjectileKind.egg ||
+        projectile.kind == LiteProjectileKind.posteaEgg) {
       _tickEgg(projectile, elapsed);
       return;
+    }
+    if (projectile.kind == LiteProjectileKind.posteaRay) {
+      _steerPosteaRay(projectile, elapsed);
     }
     if (projectile.kind == LiteProjectileKind.spiral) {
       projectile.direction = _rotate(projectile.direction, .91 * elapsed);
@@ -6181,6 +6227,11 @@ class LiteRun {
         _stopProjectile(projectile);
         return;
       }
+    }
+    if (projectile.kind == LiteProjectileKind.posteaRay &&
+        _ignitePosteaEgg(projectile, next)) {
+      projectile.remaining = 0;
+      return;
     }
     projectile.position = next;
     projectile.remaining -= travelled;
@@ -6439,7 +6490,8 @@ class LiteRun {
         shield <= 0 &&
         !intangible &&
         target != LiteImpactTarget.verdict &&
-        target != LiteImpactTarget.clash) {
+        target != LiteImpactTarget.clash &&
+        target != LiteImpactTarget.explosion) {
       return;
     }
     final mergeWindow = target == LiteImpactTarget.clash
@@ -7368,6 +7420,7 @@ class LiteRun {
     if (supply.active) 'supplies': supply.frame,
     if (_goblinWave > 0) 'goblinWave': _goblinWave,
     if (allowGlue) 'allowGlue': true,
+    if (allowMechanicalChicken) 'allowMechanicalChicken': true,
     if (groundShots.isNotEmpty)
       'groundShots': groundShots.map((floor) => floor.frame).toList(),
     if (slimeKills > 0) 'slimeKills': slimeKills,
@@ -7486,6 +7539,7 @@ class LiteRun {
       seed: _int(json['seed']),
       progressId: json['progressId'] as String?,
       allowGlue: json['allowGlue'] == true,
+      allowMechanicalChicken: json['allowMechanicalChicken'] == true,
       upgrades: LitePermanentUpgrade.read(json['upgrades']),
       hero: _enum(LiteHero.values, json['hero'], LiteHero.evasore),
       weapon: _enum(LiteWeapon.values, json['weapon'], LiteWeapon.spadaScudo),

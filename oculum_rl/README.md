@@ -10,6 +10,9 @@ Da **Aggiornamenti** puoi disattivare i controlli automatici, cercare una nuova 
 
 ## Atto II e deviazioni
 
+- **Pollo Meccanico**. Dopo aver sbloccato il Pollo di Brace, in una run senza aver ferito la fauna cerca un gruppo di tre polli. Resta fermo al centro per dieci secondi. Il profilo salva subito lo sblocco. Clic sinistro lancia tre raggi runici a inseguimento. Clic destro o V spara all’indietro tre uova di Postea, che percorrono fino a 6,8 m ed esplodono in un raggio di 2,25 m. Spazio potenzia le uova. Mira con un raggio a un tuo uovo atterrato per anticiparne l’esplosione.
+- **Finiture per tutti i personaggi**. Scegli Canonica, Ferro Cremisi o Patina di Eiva dalla selezione, dal menu della run già salvata o dalla sala online. Le due finiture alternative aggiungono un sigillo e una scia d’inchiostro. Il Pollo Meccanico ha anche quattro sprite distinti per ciascuna finitura.
+
 - **Voci delle botteghe**. Goblin, Armaiola, Taverniera, Fabbro e Veggente salutano con un verso specifico e una battuta sottotitolata. Usa l’icona accanto al testo per sentirne un’altra. I valori predefiniti sono 35% musica e 50% effetti. Le voci usano il cursore effetti. In impostazioni puoi ripristinare questi due volumi.
 - **Tecniche su G**. Ogni arma ha una mossa, con costo ordinario di 3 Oculum e recupero di 4,2 s. F continua a bloccare, lo Scostubandito conserva Fucile schivata e l’arco consuma tre frecce per il ventaglio. Divoramitù Elité e boss hanno una sagoma e una zona di contatto più grandi. Il boss è largo circa cinque volte il Pollo di Brace. L’hitbox allungata è segnata sul terreno e segue il balzo insieme alla barra Vita. L’Atto II mantiene lo speed-up del +40%.
 - **Stabilità**. I comandi online sono associati alla sala in cui partono. La fauna ferita riprende la posa di movimento dopo l’impatto.

@@ -48,6 +48,16 @@ enum OculumLiteFaceDetail {
 
 enum OculumLiteEmblem { none, eye, moon, flame, rune, feather, crystal }
 
+enum LiteInkFinish {
+  canonica('Canonica', Color(0xffcda373)),
+  cremisi('Ferro Cremisi', Color(0xffe6906a)),
+  patina('Patina di Eiva', Color(0xff80d7c4));
+
+  const LiteInkFinish(this.label, this.color);
+  final String label;
+  final Color color;
+}
+
 @immutable
 class OculumLiteAppearance {
   const OculumLiteAppearance({
@@ -66,6 +76,7 @@ class OculumLiteAppearance {
     this.headgear = OculumLiteHeadgear.none,
     this.faceDetail = OculumLiteFaceDetail.none,
     this.emblem = OculumLiteEmblem.none,
+    this.inkFinish = LiteInkFinish.canonica,
   });
 
   final Color cloth, accent, hair, skin, eyes;
@@ -78,6 +89,7 @@ class OculumLiteAppearance {
   final OculumLiteHeadgear headgear;
   final OculumLiteFaceDetail faceDetail;
   final OculumLiteEmblem emblem;
+  final LiteInkFinish inkFinish;
 
   bool get usesFeminineAtlas =>
       body == OculumLiteBody.feminine || body == OculumLiteBody.androgynous;
@@ -186,6 +198,7 @@ class OculumLiteAppearance {
     OculumLiteHeadgear? headgear,
     OculumLiteFaceDetail? faceDetail,
     OculumLiteEmblem? emblem,
+    LiteInkFinish? inkFinish,
   }) => OculumLiteAppearance(
     cloth: cloth ?? this.cloth,
     accent: accent ?? this.accent,
@@ -202,6 +215,7 @@ class OculumLiteAppearance {
     headgear: headgear ?? this.headgear,
     faceDetail: faceDetail ?? this.faceDetail,
     emblem: emblem ?? this.emblem,
+    inkFinish: inkFinish ?? this.inkFinish,
   );
 
   factory OculumLiteAppearance.random(Random random) {
@@ -269,6 +283,7 @@ class OculumLiteAppearance {
         defaults.faceDetail,
       ),
       emblem: option(OculumLiteEmblem.values, 'emblem', defaults.emblem),
+      inkFinish: option(LiteInkFinish.values, 'inkFinish', defaults.inkFinish),
     );
   }
 
@@ -288,9 +303,10 @@ class OculumLiteAppearance {
     'headgear': headgear.name,
     'faceDetail': faceDetail.name,
     'emblem': emblem.name,
+    if (inkFinish != LiteInkFinish.canonica) 'inkFinish': inkFinish.name,
   };
 
-  bool sameAs(OculumLiteAppearance other) =>
+  bool sameAs(OculumLiteAppearance other, {bool includeInkFinish = true}) =>
       cloth == other.cloth &&
       accent == other.accent &&
       hair == other.hair &&
@@ -305,5 +321,6 @@ class OculumLiteAppearance {
       ears == other.ears &&
       headgear == other.headgear &&
       faceDetail == other.faceDetail &&
-      emblem == other.emblem;
+      emblem == other.emblem &&
+      (!includeInkFinish || inkFinish == other.inkFinish);
 }

@@ -10,7 +10,9 @@ import '../services/oculum_lite_saves.dart';
 import '../services/oculum_rl_cloud_config.dart';
 import '../services/oculum_save_profile.dart';
 import '../widgets/oculum_lite_appearance.dart';
+import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_creator.dart';
+import '../widgets/oculum_lite_ink_finishes.dart';
 import 'oculum_lite_coop_page.dart';
 import 'oculum_lite_page.dart' show liteHeroLabels;
 
@@ -49,6 +51,7 @@ typedef _Seat = ({
   Map<LitePermanentUpgrade, int> upgrades,
   bool ready,
   bool allowGlue,
+  bool allowMechanicalChicken,
   LiteRestMemory? memory,
 });
 
@@ -86,6 +89,12 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   bool _reading = false;
   LiteHero _hero = LiteHero.evasore;
   OculumLiteAppearance _look = const OculumLiteAppearance();
+  LiteInkFinish _inkFinish = LiteInkFinish.canonica;
+  OculumLiteAppearance get _selectedLook =>
+      (_hero == LiteHero.duplicatore
+              ? _look
+              : oculumLiteDefaultAppearance(_hero))
+          .copyWith(inkFinish: _inkFinish);
   LiteWeapon _weapon = LiteWeapon.arco;
   LiteDifficulty _difficulty = LiteDifficulty.medio;
   LiteBiome _biome = LiteBiome.campo;
@@ -368,6 +377,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     'weapon': seat.weapon.name,
     'ready': seat.ready,
     if (seat.allowGlue) 'allowGlue': true,
+    if (seat.allowMechanicalChicken) 'allowMechanicalChicken': true,
     if (seat.memory case final memory?) 'restMemory': memory.frame,
     if (seat.upgrades.isNotEmpty)
       'upgrades': LitePermanentUpgrade.encode(seat.upgrades),
@@ -393,11 +403,12 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       name: name,
       hero: hero,
       weapon: hero.startingWeapon(selectedWeapon ?? LiteWeapon.arco),
-      appearance: hero == LiteHero.duplicatore && value['look'] is Map
+      appearance: value['look'] is Map
           ? OculumLiteAppearance.fromJson(value['look'])
           : null,
       ready: value['ready'] as bool,
       allowGlue: value['allowGlue'] == true,
+      allowMechanicalChicken: value['allowMechanicalChicken'] == true,
       memory: LiteRestMemory.read(value['restMemory']),
       upgrades: LitePermanentUpgrade.read(value['upgrades']),
     );
@@ -499,9 +510,13 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       name: _displayName,
       hero: _hero,
       weapon: _hero.startingWeapon(_weapon),
-      appearance: _hero == LiteHero.duplicatore ? _look : null,
+      appearance:
+          _hero == LiteHero.duplicatore || _inkFinish != LiteInkFinish.canonica
+          ? _selectedLook
+          : null,
       upgrades: _progress.upgrades,
       allowGlue: _progress.discoveredPets.contains(LiteCompanion.goblinColla),
+      allowMechanicalChicken: _progress.canPlay(LiteHero.pollo),
       memory: memory,
       ready: _seats[uid]?.ready != true,
     );
@@ -550,6 +565,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       weapon: mine.weapon,
       upgrades: mine.upgrades,
       allowGlue: mine.allowGlue,
+      allowMechanicalChicken: mine.allowMechanicalChicken,
       playerCount: _seats.length,
     );
     if (mine.memory case final memory?) world.carryRestMemory(memory);
@@ -563,6 +579,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         seat.weapon,
         upgrades: seat.upgrades,
         allowGlue: seat.allowGlue,
+        allowMechanicalChicken: seat.allowMechanicalChicken,
       );
       if (seat.memory case final memory?) {
         final fighter = world.coopFighter(entry.key);
@@ -630,7 +647,10 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     if (memory != null && _handledMemoryIds.add(memory.id)) {
       unawaited(_recordRestMemory(memory.id, memory));
     }
-    final heroes = run.unlockedHeroesFor(played);
+    final heroes = run.unlockedHeroesFor(
+      played,
+      guestAccount: play.host ? null : play.localAccount,
+    );
     final pets = run.discoveredPets;
     final pendingSlime =
         _progress.slimeKills < 10 &&
@@ -905,6 +925,22 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                       icon: const Icon(Icons.brush_outlined),
                       label: const Text('Personalizza in 2D'),
                     ),
+                  if (!_observer) ...[
+                    OculumLiteInkFinishPicker(
+                      selected: _inkFinish,
+                      onChanged: _seats[_account]?.ready == true
+                          ? null
+                          : (finish) => setState(() => _inkFinish = finish),
+                    ),
+                    SizedBox(
+                      height: 112,
+                      child: OculumLiteHeroPreview(
+                        hero: _hero,
+                        weapon: _hero.startingWeapon(_weapon),
+                        appearance: _selectedLook,
+                      ),
+                    ),
+                  ],
                   OutlinedButton(
                     onPressed: _ready,
                     child: Text(

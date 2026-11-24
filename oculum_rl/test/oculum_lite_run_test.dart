@@ -621,6 +621,14 @@ void main() {
           case LiteHero.doppelganger:
             expect(run.mimic?.kind, target.kind);
             expect(run.maxHp, target.maxHp);
+          case LiteHero.polloMeccanico:
+            expect(run.projectiles, hasLength(3));
+            expect(
+              run.projectiles.every(
+                (shot) => shot.kind == LiteProjectileKind.posteaEgg,
+              ),
+              isTrue,
+            );
           case LiteHero.pollo:
             expect(
               run.projectiles

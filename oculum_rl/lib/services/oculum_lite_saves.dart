@@ -376,6 +376,16 @@ class OculumLiteSaveSlot {
   final LiteWeapon startingWeapon;
   final LiteBiome startingBiome;
 
+  OculumLiteSaveSlot withAppearance(OculumLiteAppearance look) =>
+      OculumLiteSaveSlot(
+        run: run,
+        name: name,
+        appearance: look,
+        attempt: attempt,
+        startingWeapon: startingWeapon,
+        startingBiome: startingBiome,
+      );
+
   static OculumLiteSaveSlot decode(String source) {
     final data = jsonDecode(source) as Map<String, dynamic>;
     if (data['schema'] != 1) throw const FormatException('Versione ignota');
