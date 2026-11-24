@@ -2155,7 +2155,7 @@ class _ArenaPaint extends CustomPainter {
           }
           final spriteFrame =
               strip != null && _hasDefaultAppearance(appearance, run.hero)
-              ? _motionFrame(run)
+              ? _motionFrame(run, animationLead)
               : null;
           if (strip != null && spriteFrame != null) {
             _heroFrame(
@@ -2165,6 +2165,7 @@ class _ArenaPaint extends CustomPainter {
               spriteFrame,
               appearance.accent,
               weapons[run.weapon],
+              animationLead,
             );
             return;
           }
@@ -2952,14 +2953,20 @@ bool _paintMonster(
 bool _hasDefaultAppearance(OculumLiteAppearance look, LiteHero hero) =>
     look.sameAs(oculumLiteDefaultAppearance(hero), includeInkFinish: false);
 
-int? _motionFrame(LiteRun run) {
+int? _motionFrame(LiteRun run, double animationLead) {
   if (run.hero.specialTalent) return null;
   if (run.dead || !run.isMoving || run.rescuing) return null;
   if (run.hero == LiteHero.evasore && run.intangible) return 3;
   if (run.intangible || run.preparingAttack || run.attackCooldown > 0) {
     return null;
   }
-  return 1 + (run.stride.distance / .72).floor().remainder(2);
+  if (run.stride.speed < 3.4) return null;
+  final phase = _stridePhase(
+    run.stride,
+    _inkRunningFeet.strideMetres,
+    animationLead,
+  );
+  return math.sin(phase) < 0 ? 2 : 1;
 }
 
 void _heroFrame(
@@ -2969,13 +2976,21 @@ void _heroFrame(
   int frame,
   Color trim,
   ui.Image? gear,
+  double animationLead,
 ) {
   const height = 2.28;
   const width = height * _isometricY;
   final size = strip.width / 2;
   final origin = Offset(size * (frame % 2), size * (frame ~/ 2));
   final contact = frame == 3 ? .59 : .54;
+  canvas.save();
   if (frame != 3) {
+    _groundedMotion(
+      canvas,
+      run.stride,
+      animationLead,
+      strideMetres: _inkRunningFeet.strideMetres,
+    );
     // The running drawings leave the hands free. The selected equipment
     // is visible stowed behind the leading shoulder until the next attack.
     _actor(canvas, const Offset(-.13, -1.18), .74, .74, () {
@@ -2993,12 +3008,23 @@ void _heroFrame(
       width: .039,
     );
   }
-  canvas.drawImageRect(
+  final phase = _stridePhase(
+    run.stride,
+    _inkRunningFeet.strideMetres,
+    animationLead,
+  );
+  _inkActorSprite(
+    canvas,
     strip,
     origin & Size.square(size),
-    Rect.fromLTWH(-width * contact, -height * .958, width, height),
+    Rect.fromLTWH(-width * contact, -height * .971, width, height),
     Paint()..filterQuality = FilterQuality.medium,
+    _inkRunningFeet,
+    phase: phase,
+    strength: frame == 3 ? 0 : run.stride.strength * .38,
+    clothFlow: frame == 3 ? 0 : run.stride.strength * .38,
   );
+  canvas.restore();
 }
 
 // Alpha trim per illustrated cell, measured on the original square atlas.

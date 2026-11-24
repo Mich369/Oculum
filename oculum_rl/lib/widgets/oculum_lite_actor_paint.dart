@@ -105,6 +105,12 @@ final _inkHeroFeet = {
   ],
 };
 
+final _inkRunningFeet = _InkRig(
+  [const Offset(.22, .90), const Offset(.79, .97)],
+  reach: .19,
+  strideMetres: 1.44,
+);
+
 final _inkAshley = _InkRig([
   const Offset(.07, .94),
   const Offset(.87, .91),
