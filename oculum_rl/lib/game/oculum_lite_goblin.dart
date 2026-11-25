@@ -28,9 +28,11 @@ extension LiteGoblinCombat on LiteRun {
   int get goblinWave => _goblinWave;
   bool get goblinCampEntrance =>
       !goblinCamp &&
+      !inActTwo &&
+      !inThirdAct &&
       secretRoomRevealed &&
       stage >= 6 &&
-      stage <= 9 &&
+      stage < 12 &&
       !achievements.contains('campo-goblin:$stage');
 
   void _checkGoblinEntrance() {
@@ -176,7 +178,7 @@ extension LiteGoblinCombat on LiteRun {
                 _glueRadius * _glueRadius,
       )
       ? .46
-      : 1;
+      : _arenaTerrainSpeedAt(point);
 
   void _leaveGroundShot(LiteProjectile shot) {
     if (groundShots.length >= 28) groundShots.removeAt(0);

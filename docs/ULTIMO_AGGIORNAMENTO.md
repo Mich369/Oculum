@@ -1,5 +1,6 @@
 # Oculum RL e aggiornamenti alla campagna
 
+- **Sale segrete e pericoli ambientali (0.4.18)**. Un livello a sorte in ciascun blocco di sei nasconde una sala segreta. La deviazione dell’Atto II ha un nascondiglio fra le quattro sale. I primi due atti hanno presse, sigilli, braci e sciroppo con avvisi prima di attivarsi.
 - **Atto III (0.4.17)**. Dodici nuove sale dopo l’Arconte, tre aree, tre boss, tre personaggi giocabili e nuovi sprite. Pozzi con anteprima e scelta, Lupi Lunari alleati in presenza di una Guardia Elité e nuove formazioni per i primi due atti.
 - **Co-op con ripresa (0.4.16)**. Il Master può riaprire la stessa stanza Supabase e riprendere il checkpoint con gli stessi combattenti. I comandi singoli attendono la conferma del Master. La run online assegna i Sigilli dei piani completati.
 - **Potenziamenti della run (0.4.15)**. Portata delle armi, attrazione animata degli Obser, velocità dei compagni, Scudo a ogni piano e capacità del blocco ora si potenziano sia durante la run sia con i Sigilli. Obser e progressi sono condivisi in cooperativa.

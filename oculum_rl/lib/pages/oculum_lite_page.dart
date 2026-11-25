@@ -707,6 +707,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       run.finished,
       run.stage,
       run.finalBossPhase,
+      run.arenaEvent?.notice,
       run.powerOffers.length,
       run.stageClear && run.hasPortalNearby,
       run.canOpenShop,
@@ -1769,6 +1770,16 @@ class _OculumLitePageState extends State<OculumLitePage>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            if (run.arenaEvent case final event?)
+                              Text(
+                                event.notice,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xfff1c58b),
+                                  fontSize: 11,
+                                ),
+                              ),
                             if (run.weapon == LiteWeapon.arco)
                               Text(
                                 'Frecce ${run.arrows}/${LiteRun.bowCapacity}',

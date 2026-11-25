@@ -379,6 +379,11 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                             '${run.arenaLabel}${run.bossStatus}'
                             '${run.arenaSpeed > 1 ? ' · Ritmo +${run.arenaSpeedBonus}%' : ''}',
                           ),
+                          if (run.arenaEvent case final event?)
+                            Text(
+                              event.notice,
+                              style: const TextStyle(color: Color(0xfff1c58b)),
+                            ),
                           Text(
                             '${run.playerCount} · Vita mostri ×${run.monsterLifeMultiplier.toStringAsFixed(2)}',
                           ),

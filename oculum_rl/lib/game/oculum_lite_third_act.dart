@@ -197,6 +197,7 @@ extension LiteThirdAct on LiteRun {
         LiteObstacle(26, 16.6, 2.2, 2.0),
       ],
     });
+    _placeSecretRoom();
     for (var i = 0; i < room.enemies.length; i++) {
       final kind = room.enemies[i];
       final x = kind.boss || kind.elite ? 24.8 : 17.3 + (i.isEven ? 0 : 3.3);

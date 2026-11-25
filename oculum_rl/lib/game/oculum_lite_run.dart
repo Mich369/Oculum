@@ -8,6 +8,7 @@ part 'oculum_lite_fauna.dart';
 part 'oculum_lite_solar.dart';
 part 'oculum_lite_second_act.dart';
 part 'oculum_lite_third_act.dart';
+part 'oculum_lite_arena_events.dart';
 part 'oculum_lite_weapon_art.dart';
 
 enum LiteHero {
@@ -1863,6 +1864,7 @@ class LiteRun {
   LiteRealm? realm;
   int actRoom = 0;
   int thirdRoom = 0;
+  double? _arenaEventStart;
   String? _claimedWell;
   final actRelics = <LiteActRelic>[];
   int _actRelicClaims = 0;
@@ -2536,19 +2538,53 @@ class LiteRun {
       !ownedWeapons.contains(item);
 
   static const secretCache = Point<double>(5.5, 1.8);
-  bool get secretRoomRevealed => achievements.contains('sala-segreta:$stage');
+  String get _secretRoomKey =>
+      'sala-segreta:${inActTwo || inThirdAct ? inputArena : stage}';
+  bool get secretRoomRevealed =>
+      !restHub && !inSolarDungeon && achievements.contains(_secretRoomKey);
 
   bool get hasSecretRoom {
-    if (stage < 2 || isFinalFloor) return false;
-    final group = (stage - 2) ~/ 4;
-    final first = 2 + group * 4;
-    final roll = _LiteRandom(seed ^ (group + 1) * 41507)
+    if (restHub || inSolarDungeon || goblinCamp) return false;
+    if (inThirdAct) {
+      final index = thirdRoom - 1;
+      return index % 6 == _secretSlot(57199, index ~/ 6, 6);
+    }
+    if (inActTwo) {
+      return actRoom - 1 ==
+          _secretSlot(12163, realm!.index, LiteSecondAct.actTwoRooms);
+    }
+    if (isFinalFloor) return false;
+    final group = stage ~/ 6;
+    final roomCount = min(6, lastStage - group * 6);
+    return stage % 6 == _secretSlot(41507, group, roomCount);
+  }
+
+  int _secretSlot(int salt, int group, int count) {
+    final roll = _LiteRandom(seed ^ ((group + 1) * salt))
       ..nextDouble()
       ..nextDouble();
-    return stage - first == roll.nextInt(min(4, lastStage - first));
+    return roll.nextInt(count);
+  }
+
+  void _placeSecretRoom() {
+    if (!hasSecretRoom || secretRoomRevealed) return;
+    obstacles.addAll([
+      LiteObstacle(3.0, 0, .6, 4.2),
+      LiteObstacle(7.4, 0, .6, 4.2),
+      LiteObstacle(
+        3.6,
+        3.6,
+        3.8,
+        .6,
+        breakable: true,
+        secretGate: true,
+        hp: 22,
+      ),
+    ]);
   }
 
   void _startStage() {
+    _arenaEventStart = time;
     if (stage > 0 && supply.fed(LiteRestItem.spiedino, stage)) {
       _block.recover(weapon, 18);
     }
@@ -2679,21 +2715,7 @@ class LiteRun {
     }
     if (stage > 0) _varyFloorCover();
     _placeLayoutCover();
-    if (hasSecretRoom) {
-      obstacles.addAll([
-        LiteObstacle(3.0, 0, .6, 4.2),
-        LiteObstacle(7.4, 0, .6, 4.2),
-        LiteObstacle(
-          3.6,
-          3.6,
-          3.8,
-          .6,
-          breakable: true,
-          secretGate: true,
-          hp: 22,
-        ),
-      ]);
-    }
+    _placeSecretRoom();
     final count = _openingEnemyCount(stage, arenaTrial);
     final formation = stage >= 3 ? floorLayout.index % 3 : 0;
     for (var i = 0; i < count; i++) {
@@ -2847,6 +2869,7 @@ class LiteRun {
       ),
     ]);
     _eliteReleased = true;
+    _placeSecretRoom();
     _spawnEnemy(boss, const Point(27.8, 11)).cooldown = .75;
     message = archon
         ? 'L’Arconte delle Fratture si risveglia. Evita i segni a terra.'
@@ -3623,6 +3646,7 @@ class LiteRun {
           !(royalRescue && clone.expiresAfter == null),
     );
     enemies.removeWhere((enemy) => enemy.hp <= 0);
+    _tickArenaEvent(elapsed);
     _collectLoot(elapsed / arenaSpeed);
     this._checkGoblinEntrance();
     if (hostDown && coopFighters.every((fighter) => fighter.hp <= 0)) {
@@ -6931,12 +6955,14 @@ class LiteRun {
     }
     if (obstacle.secretGate) {
       achievements.add('sala-segreta-scoperta');
-      achievements.add('sala-segreta:$stage');
-      message = stage >= 6 && stage <= 9
+      if (!achievements.add(_secretRoomKey)) return;
+      final mainRoom = !inActTwo && !inThirdAct;
+      message = mainRoom && stage >= 6 && stage < 12
           ? 'Ingresso del Campo goblin scoperto. Raggiungi il sigillo a fine scontro.'
           : 'Sala segreta scoperta.';
-      if (biome == LiteBiome.orea)
+      if (mainRoom && biome == LiteBiome.orea) {
         _discoverPet(LiteCompanion.orbietto, secretCache);
+      }
       loot.addAll([
         LiteLoot(secretCache, LiteLootKind.obser, 20),
         LiteLoot(secretCache + const Point(.62, 0), LiteLootKind.greenStone, 1),
@@ -7947,6 +7973,7 @@ class LiteRun {
     if (restHub) 'restHub': true,
     if (realm case final area?) ...{'realm': area.name, 'actRoom': actRoom},
     if (inThirdAct) 'thirdRoom': thirdRoom,
+    if (_arenaEventStart != null) 'arenaEventStart': _arenaEventStart,
     if (_claimedWell != null) 'claimedWell': _claimedWell,
     if (solarPhase case final phase?) 'solarPhase': phase.name,
     if (solarStairs case final stairs?) 'solarStairs': _savePoint(stairs),
@@ -8274,6 +8301,11 @@ class LiteRun {
     run.maxDodgeCharges = _int(json['maxDodgeCharges'], 1);
     run.dodgeLevel = _int(json['dodgeLevel']);
     run.time = _num(json['time']);
+    if (json['arenaEventStart'] is num) {
+      run._arenaEventStart = _num(json['arenaEventStart']).clamp(0, run.time);
+    } else {
+      run._arenaEventStart = null;
+    }
     run.arenaTrial = LiteArenaTrial.values
         .where((trial) => trial.name == json['arenaTrial'])
         .firstOrNull;

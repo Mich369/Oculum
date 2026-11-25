@@ -317,4 +317,5 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
 void main() {
   print(play(LiteDifficulty.moltoFacile, 20261123, LiteRealm.caramella));
   print(play(LiteDifficulty.medio, 20261124, LiteRealm.inferno));
+  print(play(LiteDifficulty.medio, 20261125, LiteRealm.postea));
 }

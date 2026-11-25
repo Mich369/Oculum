@@ -152,6 +152,172 @@ void _killAtRange(LiteRun run, LiteEnemy enemy) {
 }
 
 void main() {
+  test('one deterministic secret is drawn from all six room positions', () {
+    final slots = <(String, int), Set<int>>{};
+    for (var seed = 0; seed < 60; seed++) {
+      final run = LiteRun(
+        seed: seed,
+        hero: LiteHero.evasore,
+        weapon: LiteWeapon.arco,
+      );
+      void checkGroup(
+        String chapter,
+        int block,
+        int length,
+        void Function(int) move,
+      ) {
+        final secret = <int>[];
+        for (var index = 0; index < length; index++) {
+          move(index);
+          if (run.hasSecretRoom) secret.add(index);
+        }
+        expect(secret, hasLength(1), reason: '$chapter $block, seed $seed');
+        slots.putIfAbsent((chapter, block), () => {}).add(secret.single);
+      }
+
+      for (var block = 0; block < 4; block++) {
+        checkGroup('I', block, 6, (index) => run.stage = block * 6 + index);
+      }
+      run.stage = LiteRun.secondActEntranceFloor;
+      for (final region in LiteRealm.values) {
+        run.realm = region;
+        checkGroup('II', region.index, 4, (index) => run.actRoom = index + 1);
+      }
+      run
+        ..realm = null
+        ..actRoom = 0
+        ..stage = LiteRun.finalStage;
+      for (var block = 0; block < 2; block++) {
+        checkGroup(
+          'III',
+          block,
+          6,
+          (index) => run.thirdRoom = block * 6 + index + 1,
+        );
+      }
+    }
+    for (final entry in slots.entries) {
+      final length = entry.key.$1 == 'II' ? 4 : 6;
+      expect(entry.value, {
+        for (var index = 0; index < length; index++) index,
+      }, reason: '${entry.key}');
+    }
+  });
+
+  test('a third act secret keeps independent discovery and loot on reload', () {
+    var run = _run(weapon: LiteWeapon.spadaScudo)
+      ..stage = LiteRun.finalStage
+      ..stageClear = true
+      ..victorious = true
+      ..level = 50;
+    run.achievements.addAll(['campagna-completata', 'sala-segreta:24']);
+    expect(run.enterThirdAct(), isTrue);
+    while (!run.hasSecretRoom && run.thirdRoom <= 6) {
+      run
+        ..stageClear = true
+        ..position = run.portalPosition;
+      expect(run.advanceThirdAct(), isTrue);
+    }
+    expect(run.thirdRoom, lessThanOrEqualTo(6));
+    final gate = run.obstacles.singleWhere((obstacle) => obstacle.secretGate);
+    expect(run.secretRoomRevealed, isFalse);
+    run.position = gate.center + const Point(0, 1.1);
+    expect(run.attack(gate.center), isTrue);
+    expect(run.secretRoomRevealed, isTrue);
+    expect(
+      run.loot.where((loot) => loot.kind == LiteLootKind.scroll),
+      hasLength(1),
+    );
+    run = _restore(run);
+    expect(run.secretRoomRevealed, isTrue);
+    expect(run.obstacles.any((obstacle) => obstacle.secretGate), isFalse);
+    expect(
+      run.loot.where((loot) => loot.kind == LiteLootKind.scroll),
+      hasLength(1),
+    );
+  });
+  test('a Postea press telegraphs, resumes from a save and hits only once', () {
+    var run = LiteRun.fromJson(
+      _run(playerCount: 2).toJson()
+        ..['stage'] = 4
+        ..['biome'] = LiteBiome.postea.name,
+    );
+    run
+      ..time = 5.9
+      ..obstacles.clear();
+    final event = run.arenaEvent!;
+    expect(event.kind, LiteArenaEventKind.pressa);
+    expect(event.active, isFalse);
+    expect(event.contains(event.center + const Point(0, .87)), isFalse);
+    expect(event.contains(event.center + const Point(5, 0)), isTrue);
+    // Attach a known remote fighter using the normal save/frame representation.
+    final fixture = _run(playerCount: 2);
+    expect(
+      fixture.addCoopFighter(
+        'guest',
+        'Guest',
+        LiteHero.evasore,
+        LiteWeapon.arco,
+      ),
+      isTrue,
+    );
+    expect(
+      fixture.setCoopControls(
+        'guest',
+        const Point(0, 0),
+        const Point(2, 2),
+        attack: false,
+      ),
+      isTrue,
+    );
+    fixture.coopFighter('guest')!.position = event.center + const Point(0, 1.2);
+    run.position = event.center;
+    run = LiteRun.fromJson(
+      run.toJson()..['fighters'] = fixture.toJson()['fighters'],
+    );
+    run.enemies
+      ..clear()
+      ..add(_stationaryEnemy(1771, const Point(30, 19)));
+    expect(run.arenaEvent!.center, event.center);
+    expect(run.arenaEvent!.active, isFalse);
+    final before = run.hp + run.shield;
+    final guest = run.coopFighter('guest')!;
+    final guestBefore = guest.hp + guest.shield;
+    run.step(.24);
+    expect(run.arenaEvent!.active, isTrue);
+    expect(run.hp + run.shield, lessThan(before));
+    expect(guest.hp + guest.shield, guestBefore);
+    final hit = run.hp + run.shield;
+    run = _restore(run);
+    run.step(.11);
+    expect(run.hp + run.shield, hit);
+    run.stageClear = true;
+    expect(run.arenaEvent, isNull);
+  });
+
+  test('Caramella syrup slows moving characters only while active', () {
+    final run = LiteRun.fromJson(
+      _run().toJson()
+        ..['stage'] = 11
+        ..['realm'] = LiteRealm.caramella.name
+        ..['actRoom'] = 2,
+    );
+    run.time = 5.3;
+    final zone = run.arenaEvent!;
+    expect(zone.kind, LiteArenaEventKind.sciroppo);
+    expect(run.terrainSpeedAt(zone.center, enemy: false), 1.0);
+    run.time = 6.1;
+    expect(run.arenaEvent!.active, isTrue);
+    expect(run.terrainSpeedAt(zone.center, enemy: false), .68);
+    expect(run.terrainSpeedAt(zone.center, enemy: true), .68);
+    expect(
+      run.terrainSpeedAt(zone.center + const Point(9, 0), enemy: false),
+      1.0,
+    );
+    run.time = 8.7;
+    expect(run.terrainSpeedAt(zone.center, enemy: false), 1.0);
+    expect(run.hp, run.maxHp);
+  });
   test('royal combo stuns by rank and uses its 1.8 second timer', () {
     final run = _run(hero: LiteHero.reGoblin)..obstacles.clear();
     final host = run.position;

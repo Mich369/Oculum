@@ -144,6 +144,7 @@ extension LiteSecondAct on LiteRun {
   }
 
   void _openActRoom() {
+    _arenaEventStart = time;
     _consumeMealForVisit();
     _dismissRoomWolves();
     _powerOffers.clear();
@@ -182,6 +183,7 @@ extension LiteSecondAct on LiteRun {
           LiteObstacle(22.0, 13.2 - shift, 2.45, 1.8, breakable: true),
         ],
       });
+    _placeSecretRoom();
     final enemies = switch (realm!) {
       LiteRealm.inferno => switch (actRoom) {
         1 => [
@@ -279,7 +281,9 @@ extension LiteSecondAct on LiteRun {
       final y = kind.boss ? 11.0 : 4.6 + i * 4.2;
       _spawnEnemy(kind, Point(x, y)).cooldown += i * .14;
     }
-    message = 'Atto II · ${realm!.label} · Visitazione $actRoom/$actTwoRooms';
+    message =
+        'Atto II · ${realm!.label} · Visitazione $actRoom/$actTwoRooms'
+        ' · ${arenaEventKind!.label}';
   }
 
   bool _completeActRoom() {

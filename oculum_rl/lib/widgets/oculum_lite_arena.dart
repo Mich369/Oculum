@@ -1746,6 +1746,7 @@ class _ArenaPaint extends CustomPainter {
     camera.apply(canvas);
     final terrain = floor(run);
     canvas.drawPicture(terrain);
+    if (run.arenaEvent case final event?) _paintArenaEvent(canvas, event);
     for (final ground in run.groundShots) {
       final at = _offset(ground.position);
       if (visible.contains(at)) _paintGroundShot(canvas, at, ground);
@@ -8322,6 +8323,63 @@ void _reticle(Canvas canvas, Offset at, LiteWeapon weapon) {
   for (final line in lines) {
     _lines(canvas, line, _ink, .08);
     _lines(canvas, line, color, .036);
+  }
+}
+
+void _paintArenaEvent(Canvas canvas, LiteArenaEvent event) {
+  final center = _offset(event.center);
+  final color = switch (event.kind) {
+    LiteArenaEventKind.pressa => const Color(0xfff2bd76),
+    LiteArenaEventKind.braci => const Color(0xffff9069),
+    LiteArenaEventKind.sciroppo => const Color(0xffeab685),
+    LiteArenaEventKind.sigillo => const Color(0xffc8a3ec),
+  };
+  final box = Rect.fromCenter(
+    center: center,
+    width: event.xRadius * 2,
+    height: event.yRadius * 2,
+  );
+  final path = Path();
+  if (event.isLane) {
+    path.addRect(box);
+  } else {
+    path.addOval(box);
+  }
+  canvas.drawPath(
+    path,
+    Paint()
+      ..color = color.withValues(
+        alpha: event.active ? .31 * (1.0 - event.phase / 2) : .09,
+      ),
+  );
+  canvas.drawPath(
+    path,
+    Paint()
+      ..color = color.withValues(
+        alpha: event.active ? .86 : .56 + .31 * event.phase,
+      )
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .085,
+  );
+  canvas.save();
+  canvas.clipPath(path);
+  for (var x = box.left - box.height; x < box.right; x += .48) {
+    _lines(
+      canvas,
+      [Offset(x, box.bottom), Offset(x + box.height, box.top)],
+      color.withValues(alpha: event.active ? .32 : .15),
+      .049,
+    );
+  }
+  canvas.restore();
+  if (!event.active) {
+    _oval(
+      canvas,
+      center,
+      .39 + .38 * event.phase,
+      .29 + .22 * event.phase,
+      color.withValues(alpha: .72),
+    );
   }
 }
 
