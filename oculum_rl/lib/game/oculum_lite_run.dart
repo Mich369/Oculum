@@ -1924,7 +1924,10 @@ class LiteQuest {
   };
   static LiteQuest _read(Map<String, dynamic> json) => LiteQuest(
     json['id'] as String,
-    json['name'] as String,
+    switch (json['name'] as String) {
+      'Abbatti l\u00e2\u20ac\u2122\u00c3\u00a9lite' => 'Abbatti l’élite',
+      final name => name,
+    },
     _int(json['target']),
     _int(json['reward']),
     major: json['major'] == true,

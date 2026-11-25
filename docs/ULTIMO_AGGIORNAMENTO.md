@@ -2,7 +2,7 @@
 
 ## Oculum RL 0.4.23
 
-- **Oculum RL 0.4.23.** Ripristinati accenti e apostrofi nei testi del combattimento. La versione include la revisione della Forma corvina, dei due scheletri e del Passo fantasma.
+- **Oculum RL 0.4.23.** Ripristinati accenti e apostrofi nei testi del combattimento. La versione include la revisione della Forma corvina, dei due scheletri e del Passo fantasma. Sistemata anche la dicitura della missione nei salvataggi della 0.4.22.
 
 ## Oculum RL 0.4.22
 

@@ -19,5 +19,18 @@ void main() {
       run.quests.map((quest) => quest.name),
       contains('Abbatti l\u2019\u00e9lite'),
     );
+
+    final saved = run.toJson();
+    final quests = (saved['quests'] as List).cast<Map<String, dynamic>>();
+    final elite = quests.singleWhere(
+      (quest) => quest['name'] == 'Abbatti l\u2019\u00e9lite',
+    );
+    final id = elite['id'];
+    elite['name'] = 'Abbatti l\u00e2\u20ac\u2122\u00c3\u00a9lite';
+    elite['current'] = 1;
+    final restored = LiteRun.fromJson(saved).quests
+        .singleWhere((quest) => quest.id == id);
+    expect(restored.name, 'Abbatti l\u2019\u00e9lite');
+    expect(restored.current, 1);
   });
 }
