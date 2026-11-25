@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -27,7 +28,57 @@ class _BrowserLikePaths extends PathProviderPlatform {
       throw MissingPluginException();
 }
 
+class _DelayedArchonBundle extends CachingAssetBundle {
+  final ready = Completer<void>();
+
+  @override
+  Future<ByteData> load(String key) async {
+    if (key == OculumLiteArena.archonArt.assetName) await ready.future;
+    return rootBundle.load(key);
+  }
+}
+
 void main() {
+  testWidgets('an Archon cold load never paints a stand-in enemy', (
+    tester,
+  ) async {
+    final bundle = _DelayedArchonBundle();
+    final run =
+        LiteRun(seed: 291, hero: LiteHero.evasore, weapon: LiteWeapon.arco)
+          ..enemies.clear()
+          ..enemies.add(
+            LiteEnemy(56, LiteEnemyKind.arconte, const Point(7, 11), 250),
+          );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RepaintBoundary(
+            child: DefaultAssetBundle(
+              bundle: bundle,
+              child: OculumLiteArena(run: run),
+            ),
+          ),
+        ),
+      ),
+    );
+    final arena = find.byType(OculumLiteArena);
+    final loading = find.text('Caricamento dell’Arconte…');
+    final paint = find.descendant(
+      of: arena,
+      matching: find.byType(CustomPaint),
+    );
+    expect(loading, findsOneWidget);
+    expect(paint, findsNothing);
+    await tester.runAsync(() async {
+      final context = tester.element(arena);
+      bundle.ready.complete();
+      await precacheImage(OculumLiteArena.archonArt, context);
+    });
+    await tester.pumpAndSettle();
+    expect(loading, findsNothing);
+    expect(paint, findsOneWidget);
+  });
+
   setUp(() {
     final original = PathProviderPlatform.instance;
     PathProviderPlatform.instance = _BrowserLikePaths();

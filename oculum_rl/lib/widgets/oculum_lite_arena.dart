@@ -13,6 +13,7 @@ export 'oculum_lite_appearance.dart';
 
 part 'oculum_lite_creator_paint.dart';
 part 'oculum_lite_combat_paint.dart';
+part 'oculum_lite_art_paint.dart';
 part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_weapon_paint.dart';
 
@@ -266,6 +267,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
   ImageInfo? _heads;
   final _extraStreams = <AssetImage, (ImageStream, ImageStreamListener)>{};
   final _extraImages = <AssetImage, ImageInfo>{};
+  bool _archonArtFailed = false;
   final _weaponStreams = <LiteWeapon, (ImageStream, ImageStreamListener)>{};
   final _weapons = <LiteWeapon, ui.Image>{};
   final _weaponInfo = <LiteWeapon, ImageInfo>{};
@@ -440,21 +442,27 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
   void _resolveExtraImage(AssetImage art, ImageConfiguration config) {
     if (_extraStreams.containsKey(art)) return;
     final stream = art.resolve(config);
-    final listener = ImageStreamListener((frame, synchronous) {
-      _applyImage(frame, synchronous, () {
-        _extraImages[art]?.dispose();
-        _extraImages[art] = frame;
-        if (art == OculumLiteArena.thirdGround ||
-            art == OculumLiteArena.desertoGround ||
-            art == OculumLiteArena.infernoGround ||
-            art == OculumLiteArena.caramellaGround ||
-            art == OculumLiteArena.solarGround ||
-            art == OculumLiteArena.restGround ||
-            art == OculumLiteArena.oreaGround) {
-          _floorKey = null;
-        }
-      });
-    });
+    final listener = ImageStreamListener(
+      (frame, synchronous) {
+        _applyImage(frame, synchronous, () {
+          _extraImages[art]?.dispose();
+          _extraImages[art] = frame;
+          if (art == OculumLiteArena.thirdGround ||
+              art == OculumLiteArena.desertoGround ||
+              art == OculumLiteArena.infernoGround ||
+              art == OculumLiteArena.caramellaGround ||
+              art == OculumLiteArena.solarGround ||
+              art == OculumLiteArena.restGround ||
+              art == OculumLiteArena.oreaGround) {
+            _floorKey = null;
+          }
+        });
+      },
+      onError: (error, stack) {
+        if (!mounted || art != OculumLiteArena.archonArt) return;
+        setState(() => _archonArtFailed = true);
+      },
+    );
     _extraStreams[art] = (stream, listener);
     stream.addListener(listener);
   }
@@ -641,6 +649,22 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
     final size = limits.biggest;
     if (size.isEmpty) return const SizedBox.shrink();
     final run = widget.run;
+    final archon = _extraImages[OculumLiteArena.archonArt]?.image;
+    final needsArchon =
+        run.enemies.any((enemy) => enemy.kind == LiteEnemyKind.arconte) ||
+        run.defeats.any((impact) => impact.enemyKind == LiteEnemyKind.arconte);
+    if (needsArchon && archon == null) {
+      return ColoredBox(
+        color: const Color(0xff181219),
+        child: Center(
+          child: Text(
+            _archonArtFailed
+                ? 'Immagine dell’Arconte non disponibile.'
+                : 'Caricamento dell’Arconte…',
+          ),
+        ),
+      );
+    }
     final focus = widget.focusAccount;
     final fighter = focus == null ? null : run.coopFighter(focus);
     math.Point<double> point(Offset offset) => _ArenaCamera(
@@ -684,7 +708,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
               dropImages: _extraImages,
               posteaMonsters: _posteaMonsters?.image,
               bossArt: _boss?.image,
-              archonArt: _extraImages[OculumLiteArena.archonArt]?.image,
+              archonArt: archon,
               newActors: _extraImages[OculumLiteArena.newActors]?.image,
               nightActors: _extraImages[OculumLiteArena.nightActors]?.image,
               lootArt: _extraImages[OculumLiteArena.lootArt]?.image,
@@ -2192,6 +2216,9 @@ class _ArenaPaint extends CustomPainter {
         if (!track.exposed) continue;
       }
       final archon = enemy.kind == LiteEnemyKind.arconte;
+      // The live run can mutate between widget rebuilds. Never draw an
+      // unrelated character in the interval before a critical image arrives.
+      if (archon && archonArt == null) continue;
       final thirdWarning =
           enemy.attacking &&
           target != null &&
@@ -2285,7 +2312,7 @@ class _ArenaPaint extends CustomPainter {
                 );
                 return;
               }
-              if (archon && archonArt != null) {
+              if (archon) {
                 _paintArchon(canvas, archonArt!, enemy, time);
                 return;
               }
@@ -7053,22 +7080,52 @@ void _paintArchonWarning(Canvas canvas, LiteRun run, LiteEnemy boss) {
 }
 
 void _paintArchon(Canvas canvas, ui.Image art, LiteEnemy boss, double time) {
+  final warning = boss.chamberWarning;
   final windup = boss.archonAttack?.windup ?? 1;
-  final charge = boss.attacking
+  final charge = warning != null
+      ? (1 - warning.remaining / 1.11).clamp(0.0, 1.0)
+      : boss.attacking
       ? (1 - boss.windup / windup).clamp(0.0, 1.0)
       : 0.0;
   final strike = (boss.strikePose / .24).clamp(0.0, 1.0);
   final flash = (boss.hitFlash * 2).clamp(0.0, .22);
-  final h =
-      3.05 * (1 + .028 * math.sin(time * 2.5) + charge * .06 - strike * .10);
-  final w = h * art.width / art.height;
+  final (gather, pitch, step) = switch (boss.attacking
+      ? boss.archonAttack
+      : null) {
+    LiteArchonAttack.impact => (.105, .12, .20),
+    LiteArchonAttack.fault => (.035, .16, .31),
+    LiteArchonAttack.crown => (-.062, -.08, .08),
+    null => switch (warning?.pattern) {
+      LiteChamberPattern.ventaglio => (.028, .105, .16),
+      LiteChamberPattern.fenditura => (.082, .15, .18),
+      LiteChamberPattern.corona => (-.055, -.08, .08),
+      LiteChamberPattern.croce || LiteChamberPattern.morsa => (.058, .095, .11),
+      null => (.0, .06, .11),
+    },
+  };
+  final weight = charge * charge;
+  final idle = (.010 + boss.stride.strength * .018) * math.sin(time * 5.1);
+  final h = 3.05 * (1 + idle - weight * gather - strike * .047);
+  final w = 3.05 * art.width / art.height * (1 + weight * gather * .62);
+  if (boss.hp <= 0) {
+    canvas.rotate(1.16);
+  } else {
+    canvas.translate(-strike * step, -idle * .42);
+    canvas.rotate(pitch * (weight - strike * .42));
+  }
   canvas.scale(-1, 1);
-  canvas.translate(strike * -.14, 0);
   final spritePaint = Paint()..filterQuality = FilterQuality.low;
-  if (flash > 0 || boss.archonPhase > 1) {
+  if (flash > 0 || boss.archonPhase > 1 || boss.exalted) {
+    final tint = boss.exalted
+        ? const Color(0xfff09579)
+        : const Color(0xffed9862);
     spritePaint.colorFilter = ColorFilter.mode(
-      const Color(0xffed9862)
-          .withValues(alpha: flash + (boss.archonPhase - 1) * .055),
+      tint.withValues(
+        alpha:
+            flash +
+            (boss.archonPhase - 1) * .055 +
+            (boss.exalted ? .025 + weight * .07 : 0),
+      ),
       BlendMode.srcATop,
     );
   }

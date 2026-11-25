@@ -919,58 +919,6 @@ void _paintEmberRebirth(Canvas canvas, Offset from, Offset into, double age) {
   }
 }
 
-void _paintArtCast(Canvas canvas, LiteCombatImpact cast, double age) {
-  if (age < 0 || age > .36 || cast.end == null) return;
-  final index = cast.life.toInt();
-  if (index < 0 || index >= LiteLearnedArt.values.length) return;
-  final art = LiteLearnedArt.values[index];
-  final rank = cast.shield.toInt().clamp(1, art.maxRank);
-  final color = switch (art) {
-    LiteLearnedArt.plasma => const Color(0xff71c2d4),
-    LiteLearnedArt.falci || LiteLearnedArt.lame => const Color(0xffa9a8d9),
-    LiteLearnedArt.linfa => const Color(0xff84bf81),
-    LiteLearnedArt.pattuglia => const Color(0xffe1ba71),
-    LiteLearnedArt.corruzione => const Color(0xffd54c66),
-    LiteLearnedArt.brace => const Color(0xffed8e50),
-    LiteLearnedArt.basalto => const Color(0xffb8a389),
-  };
-  final progress = age / .36;
-  final opacity = (1 - progress) * (1 - progress);
-  final ink = Paint()
-    ..color = const Color(0xff161018).withValues(alpha: opacity);
-  final pigment = Paint()..color = color.withValues(alpha: opacity);
-  final from = _offset(cast.position);
-  final axis = _offset(cast.end!) - from;
-  final normal = Offset(-axis.dy, axis.dx);
-  final sweep = switch (art) {
-    LiteLearnedArt.linfa || LiteLearnedArt.corruzione => 2 * math.pi,
-    LiteLearnedArt.falci || LiteLearnedArt.brace || LiteLearnedArt.lame => 1.30,
-    _ => .43,
-  };
-  final heading = math.atan2(axis.dy, axis.dx);
-  final sparks = 3 + rank;
-  for (var i = 0; i < sparks; i++) {
-    final angle = heading + (i / (sparks - 1) - .5) * sweep;
-    final ray = Offset(math.cos(angle), math.sin(angle));
-    final side = Offset(-ray.dy, ray.dx);
-    final size = .28 + .065 * ((i + rank) % 3);
-    final spread = .44 + progress * 1.85 + .1 * rank;
-    final point = from + ray * (spread * (i.isEven ? 1 : .81));
-    final slash = Path()
-      ..moveTo((point + ray * size).dx, (point + ray * size).dy)
-      ..lineTo((point + side * size * .28).dx, (point + side * size * .28).dy)
-      ..lineTo((point - ray * size * 1.5).dx, (point - ray * size * 1.5).dy)
-      ..lineTo((point - side * size * .18).dx, (point - side * size * .18).dy)
-      ..close();
-    canvas.drawPath(slash, ink);
-    final accent = point + side * size * .12;
-    canvas.drawCircle(accent, .04 + size * .10, pigment);
-    final hatch = accent + normal * .08;
-    pigment.strokeWidth = .04;
-    canvas.drawLine(hatch, hatch - ray * size * .32, pigment);
-  }
-}
-
 void _paintChamberFloor(Canvas canvas, Offset at, bool won, bool major) {
   final paint = Paint()
     ..color = won ? const Color(0x20406961) : const Color(0x55351624);
@@ -1098,6 +1046,7 @@ void _paintChamberWarning(
   final trajectory = _offset(cue.target) - origin;
   final heading = math.atan2(trajectory.dy, trajectory.dx);
   const radius = LiteChamberWarning.hitRadius;
+  _paintChamberTrace(canvas, run, cue, tone, charge, brush);
   for (final (index, mark) in cue.marks.indexed) {
     if (!run.canChamberStrike(mark)) continue;
     final at = _offset(mark);
@@ -1150,19 +1099,82 @@ void _paintChamberWarning(
   }
 }
 
+// Link marks only when their actual damage circles overlap. Each pattern
+// retains its own direction, including the clear corridor in the Morsa.
+void _paintChamberTrace(
+  Canvas canvas,
+  LiteRun run,
+  LiteChamberWarning cue,
+  Color tint,
+  double charge,
+  Paint brush,
+) {
+  final marks = cue.marks;
+  if (marks.isEmpty) return;
+  final ink = const Color(0xff21141d).withValues(alpha: .73);
+  final light = tint.withValues(alpha: .25 + charge * .44);
+  void join(int a, int b, double width, {bool jagged = false}) {
+    if (!run.canChamberStrike(marks[a]) || !run.canChamberStrike(marks[b]))
+      return;
+    final from = _offset(marks[a]);
+    final to = _offset(marks[b]);
+    final delta = to - from;
+    if (delta.distance >= 2 * LiteChamberWarning.hitRadius) return;
+    final knot =
+        Offset.lerp(from, to, .54)! +
+        (jagged ? Offset(-delta.dy, delta.dx) * .16 : Offset.zero);
+    _sweptInk(canvas, from, knot, width, ink, brush);
+    _sweptInk(canvas, knot, to, width, ink, brush);
+    final head = Offset.lerp(from, knot, .38 + .62 * charge)!;
+    _sweptInk(canvas, head, to, width * .38, light, brush);
+  }
+
+  switch (cue.pattern) {
+    case LiteChamberPattern.ventaglio:
+      break;
+    case LiteChamberPattern.croce:
+      for (var arm = 1; arm < marks.length; arm++) {
+        join(0, arm, .19);
+      }
+    case LiteChamberPattern.fenditura:
+      for (var p = 0; p < marks.length - 1; p++) {
+        join(p, p + 1, .19 + charge * .09, jagged: true);
+      }
+    case LiteChamberPattern.corona:
+      for (var p = 0; p < marks.length; p++) {
+        join(p, (p + 1) % marks.length, .13);
+      }
+    case LiteChamberPattern.morsa:
+      for (var outer = 0; outer < 2; outer++) {
+        join(outer, outer + 2, .18);
+        join(outer + 2, outer + 4, .18);
+      }
+  }
+}
+
 void _paintChamberStrike(
   Canvas canvas,
   Offset at,
   LiteCombatImpact hit,
   double age,
 ) {
-  if (age > .57 || age < 0) return;
+  final index = hit.life.toInt();
+  if (index < 0 || index >= LiteChamberPattern.values.length) return;
+  final shape = LiteChamberPattern.values[index];
+  final (duration, scatter, vertical, count) = switch (shape) {
+    LiteChamberPattern.ventaglio => (.39, 1.24, .63, 5),
+    LiteChamberPattern.croce => (.48, .84, 1.22, 4),
+    LiteChamberPattern.fenditura => (.61, 1.30, .83, 6),
+    LiteChamberPattern.corona => (.69, .72, 1.36, 7),
+    LiteChamberPattern.morsa => (.55, 1.11, .76, 6),
+  };
+  if (age > duration || age < 0) return;
   final raised = hit.shield > 0;
   final tone = _chamberTone(hit.enemyKind, raised);
   final paint = Paint();
   final axis = hit.end == null ? const Offset(1, 0) : _offset(hit.end!) - at;
   final heading = math.atan2(axis.dy, axis.dx) + (hit.life.toInt() % 4) * .26;
-  final progress = (age / .57).clamp(0.0, 1.0);
+  final progress = (age / duration).clamp(0.0, 1.0);
   final opacity = 1 - progress;
   final flash = (1 - age / .16).clamp(0.0, 1.0);
   final bloom = 1 - opacity * opacity;
@@ -1174,12 +1186,17 @@ void _paintChamberStrike(
     radius,
     paint..color = ink.withValues(alpha: opacity * .26),
   );
-  for (var i = 0; i < (raised ? 8 : 6); i++) {
-    final theta = heading + i * 2 * math.pi / (raised ? 8 : 6);
+  final chips = count + (raised ? 2 : 0);
+  for (var i = 0; i < chips; i++) {
+    final phase = i * 2 * math.pi / chips;
+    final theta =
+        heading +
+        phase +
+        (shape == LiteChamberPattern.corona ? progress * .42 : 0);
     final direction = Offset(math.cos(theta), math.sin(theta));
     final skew = Offset(-direction.dy, direction.dx);
     final drift = ((hit.subjectId + i * 13) % 9) / 8;
-    final offset = (.36 + .24 * drift) + bloom * (.58 + .34 * drift);
+    final offset = (.36 + .24 * drift) + bloom * (.58 + .34 * drift) * scatter;
     final root = at + direction * (.12 + .16 * drift);
     final point = at + direction * offset;
     final elbow = Offset.lerp(root, point, .53)! + skew * (.15 + drift * .08);
@@ -1195,7 +1212,7 @@ void _paintChamberStrike(
         paint,
       );
     }
-    final lift = math.sin(progress * math.pi) * (.32 + drift * .63);
+    final lift = math.sin(progress * math.pi) * (.32 + drift * .63) * vertical;
     final chip = point - Offset(0, lift);
     _sweptInk(
       canvas,

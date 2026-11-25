@@ -258,6 +258,17 @@ class _OculumLitePageState extends State<OculumLitePage>
       );
       var progress = await store.readProgress();
       if (!mounted) return;
+      if (entries.any(
+        (entry) =>
+            entry.save?.run.enemies.any(
+              (enemy) => enemy.kind == LiteEnemyKind.arconte,
+            ) ==
+            true,
+      )) {
+        unawaited(
+          precacheImage(OculumLiteArena.archonArt, context, onError: (_, _) {}),
+        );
+      }
       for (var i = 0; i < _slots.length; i++) {
         final entry = entries[i];
         _slots[i] = entry.save;

@@ -48,3 +48,9 @@ Lavora nel progetto autonomo `C:\Oculum App\Oculum RL`. Leggi le istruzioni del 
 **Luce e Ombra.** Duplica capacità, equipaggiamento e Art del partecipante effettivo. Aggiungi alla Luce una croce di segni dorati sul terreno. Fai stringere all’Ombra due file di segni violetti lasciando un corridoio, oltre al suo passo intangibile. Mantieni le firme leggibili quando più copie attaccano insieme. Il proprietario deve riconoscere quale copia lo sta affrontando.
 
 **Skill e VFX del Grimorio.** Definisci una scheda con costo, tasto, portata, recupero, primi fotogrammi, hitbox e evoluzione leggibile. Incisione di brace apre un ventaglio arancio con braci a rimbalzo. Piega di basalto incide una linea con formazioni di polvere e schegge a pennello. Suono breve sul comando, accento sull’impatto. I fotogrammi mantengono presa dell’arma, appoggi e direzione stabili. In co-op il Master calcola colpi ed effetti; agli ospiti arriva la stessa anticipazione con lo stesso bersaglio.
+
+## Prova delle animazioni una per una
+
+- Controlla primo frame, massima estensione, contatto e dissolvenza con lo stesso seed e la stessa camera. Ritarda apposta l’atlante dell’Arconte per rilevare lampeggi di sagome generiche al ripristino.
+- Tratta a parte le forme di Raggio al plasma, Falci di Vaitern, Linfa verde, Affondo della pattuglia, Lame lunari, Corruzione Rossa, Incisione di brace e Piega di basalto. Conserva la posa di rilascio, la direzione del vero attacco e la separazione visiva fra cura e danno.
+- Confronta ciascun attacco di sala con la sua geometria. Ventaglio radente, croce che si incide dal centro, faglia irregolare, corona con centro sicuro, morsa con corridoio. Le crepe e i residui si spengono dopo l’impatto.
