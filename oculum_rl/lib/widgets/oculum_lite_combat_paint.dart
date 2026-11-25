@@ -853,3 +853,68 @@ void _paintWeaponArtPulse(
     );
   }
 }
+
+void _paintEmberSentinel(Canvas canvas, Offset at, double time) {
+  final tip = at - Offset(0, .83 + .085 * math.sin(time * 8));
+  final drift = .10 * math.sin(time * 11);
+  _oval(canvas, at, .54, .22, const Color(0x52ea621f));
+  _poly(
+    canvas,
+    [
+      tip + Offset(-.21, .12),
+      tip + Offset(-.14, -.13),
+      tip + Offset(drift, -.44),
+      tip + Offset(.22, -.08),
+      tip + Offset(.16, .19),
+      tip + Offset(-.045, .25),
+    ],
+    const Color(0xffd85a20),
+    stroke: const Color(0xff352128),
+  );
+  _poly(canvas, [
+    tip + Offset(-.08, .14),
+    tip + Offset(drift * .4, -.17),
+    tip + Offset(.11, .02),
+    tip + Offset(.07, .16),
+  ], const Color(0xffffdfa4));
+}
+
+void _paintEmberRebirth(Canvas canvas, Offset from, Offset into, double age) {
+  if (age < .19) {
+    final progress = (age / .19).clamp(0.0, 1.0);
+    final ember = Offset.lerp(from, into, progress)!;
+    _paintEmberSentinel(canvas, ember, age);
+    _inkSlash(
+      canvas,
+      ember - const Offset(0, .8),
+      from - const Offset(0, .8),
+      const Color(0xffefa56d),
+      .09,
+    );
+    return;
+  }
+  final progress = ((age - .19) / .60).clamp(0.0, 1.0);
+  final radius = .65 + 4.0 * progress;
+  final ring = Rect.fromCenter(
+    center: into,
+    width: radius * 2,
+    height: radius * 1.03,
+  );
+  for (var shard = 0; shard < 12; shard++) {
+    final angle = shard * math.pi / 6;
+    final paint = Paint()
+      ..color = const Color(0xfff78b48).withValues(alpha: 1 - progress)
+      ..strokeWidth = .26 * (1 - progress) + .035
+      ..style = PaintingStyle.stroke;
+    canvas.drawArc(ring, angle, .39, false, paint);
+    final spark =
+        into + Offset(math.cos(angle) * radius, math.sin(angle) * radius * .5);
+    _inkSlash(
+      canvas,
+      spark,
+      spark - Offset(math.sin(angle) * .20, .38 * (1 - progress)),
+      const Color(0xffffc887).withValues(alpha: 1 - progress),
+      .078,
+    );
+  }
+}

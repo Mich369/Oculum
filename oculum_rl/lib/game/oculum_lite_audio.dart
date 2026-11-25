@@ -136,6 +136,7 @@ class OculumLiteAudio {
           LiteImpactTarget.verdict => ('sentenza', 4),
           LiteImpactTarget.fissure => ('colpo', 2),
           LiteImpactTarget.explosion => ('clash', 4),
+          LiteImpactTarget.emberRebirth => ('sentenza', 4),
           LiteImpactTarget.player when impact.life > 0 => ('ferita', 3),
           _ when impact.shield > 0 => ('scudo', 2),
           _ when impact.life > 0 => ('colpo', 1),

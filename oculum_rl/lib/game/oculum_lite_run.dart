@@ -13,6 +13,8 @@ part 'oculum_lite_floor_map.dart';
 part 'oculum_lite_stealth.dart';
 part 'oculum_lite_baghest.dart';
 part 'oculum_lite_art_selection.dart';
+part 'oculum_lite_mirror_skills.dart';
+part 'oculum_lite_ember.dart';
 part 'oculum_lite_weapon_art.dart';
 
 enum LiteHero {
@@ -852,6 +854,7 @@ enum LiteImpactTarget {
   fissure,
   explosion,
   defeat,
+  emberRebirth,
 }
 
 class LiteCombatImpact {
@@ -1174,8 +1177,21 @@ class LiteMirrorBuild {
     required this.damage,
     required this.shield,
     this.powers = const {},
+    this.chosenArt,
+    this.sourceLevel = 1,
+    this.forgeRank = 0,
+    this.playerId = 0,
+    this.playerName,
   });
 
+  final LiteLearnedArt? chosenArt;
+  final int sourceLevel, forgeRank, playerId;
+  final String? playerName;
+  int learnedUses = 0;
+  double techniqueCooldown = 4.2;
+  double openCooldown = 6.5;
+  double formRemaining = 0;
+  int openUses = 0;
   final LiteHero hero;
   final LiteWeapon weapon;
   final List<LiteScroll> slots;
@@ -1207,6 +1223,16 @@ class LiteMirrorBuild {
     'powers': _savePowers(powers),
     'talentCooldown': talentCooldown,
     'artCooldown': artCooldown,
+    'techniqueCooldown': techniqueCooldown,
+    'mirrorOpen': openCooldown,
+    if (openUses > 0) 'openUses': openUses,
+    if (formRemaining > 0) 'mirrorForm': formRemaining,
+    if (chosenArt case final art?) 'chosenArt': art.name,
+    if (sourceLevel > 1) 'sourceLevel': sourceLevel,
+    if (forgeRank > 0) 'forgeRank': forgeRank,
+    if (playerId > 0) 'playerId': playerId,
+    if (playerName != null) 'playerName': playerName,
+    if (learnedUses > 0) 'learnedUses': learnedUses,
     'intangible': intangible,
     'signatureCooldown': signatureCooldown,
     'shadowVeilRemaining': shadowVeilRemaining,
@@ -1234,7 +1260,21 @@ class LiteMirrorBuild {
         damage: _num(json['damage']),
         shield: _num(json['shield']),
         powers: _readPowers(json['powers']),
+        chosenArt: LiteLearnedArt.values
+            .where((art) => art.name == json['chosenArt'])
+            .firstOrNull,
+        sourceLevel: max(1, _int(json['sourceLevel'])),
+        forgeRank: _int(json['forgeRank']).clamp(0, 12),
+        playerId: max(0, _int(json['playerId'])),
+        playerName: json['playerName'] is String
+            ? json['playerName'] as String
+            : null,
       )
+      ..openUses = max(0, _int(json['openUses']))
+      ..openCooldown = _num(json['mirrorOpen'], 6.5).clamp(0, 32.0)
+      ..formRemaining = _num(json['mirrorForm']).clamp(0, 10.0)
+      ..learnedUses = max(0, _int(json['learnedUses']))
+      ..techniqueCooldown = _num(json['techniqueCooldown'], 4.2).clamp(0, 12)
       ..talentCooldown = _num(json['talentCooldown'])
       ..artCooldown = _num(json['artCooldown'])
       ..intangible = _num(json['intangible'])
@@ -3008,6 +3048,7 @@ class LiteRun {
     LiteEnemyKind kind,
     Point<double> candidate, {
     double? maxHealth,
+    LiteCoopFighter? mirrorOf,
   }) {
     final p = _safePoint(candidate, kind.radius, const Point(27.4, 11));
     final maxHp =
@@ -3037,16 +3078,36 @@ class LiteRun {
     if (kind == LiteEnemyKind.ragnoSaldatore) enemy.cooldown = 1.45;
     if (kind == LiteEnemyKind.veyrth) enemy.cooldown = .75;
     if (kind == LiteEnemyKind.luce || kind == LiteEnemyKind.ombra) {
+      final source = mirrorOf;
+      final item = source?.weapon ?? weapon;
+      final kit = source?.supply ?? supply;
+      final sourceLevel = source?.level ?? level;
+      final damage = source == null
+          ? weaponDamage
+          : (8 +
+                    2 * (sourceLevel - 1) +
+                    item.damageBonus +
+                    source.permanentDamage) *
+                (1 + kit.forgeRank(item) * .04);
       enemy.mirror = LiteMirrorBuild(
-        hero: hero,
-        weapon: weapon,
-        slots: [...equippedScrolls],
-        quantities: [...scrolls],
-        learned: {...learnedScrolls},
-        oculum: maxOculum,
-        damage: weaponDamage * (kind == LiteEnemyKind.luce ? 1.12 : 1),
+        hero: source?.hero ?? hero,
+        weapon: item,
+        slots: source == null
+            ? [...equippedScrolls]
+            : kit.scrolls.keys.take(4).toList(),
+        quantities: source == null
+            ? [...scrolls]
+            : [for (final entry in LiteScroll.values) kit.scrolls[entry] ?? 0],
+        learned: source == null ? {...learnedScrolls} : {},
+        chosenArt: activeArt(source),
+        sourceLevel: sourceLevel,
+        forgeRank: kit.forgeRank(item),
+        playerId: source?.id ?? 0,
+        playerName: source?.name,
+        oculum: source?.maxOculum ?? maxOculum,
+        damage: damage * (kind == LiteEnemyKind.luce ? 1.12 : 1),
         shield:
-            (weapon == LiteWeapon.spadaScudo ? 6.0 : 0.0) +
+            (item == LiteWeapon.spadaScudo ? 6.0 : 0.0) +
             (_power(LitePowerUp.cuore) / 3).ceil(),
         powers: Map.unmodifiable(_powerRanks),
       );
@@ -3706,6 +3767,10 @@ class LiteRun {
       if (dead) return;
     }
     _tickFauna(elapsed);
+    _tickEmber(elapsed);
+    for (final fighter in coopFighters) {
+      _tickEmber(elapsed, fighter);
+    }
     if (dead) return;
     final alliesAtStart = clones.length;
     for (var i = 0; i < alliesAtStart; i++) {
@@ -3778,7 +3843,11 @@ class LiteRun {
     if (encounter != LiteEncounter.ordinary && !_eliteReleased) {
       _eliteReleased = true;
       final special = _specialKind(stage);
-      _spawnEnemy(special, const Point(28.3, 11));
+      if (special == LiteEnemyKind.luce || special == LiteEnemyKind.ombra) {
+        _spawnMirrorWave(special);
+      } else {
+        _spawnEnemy(special, const Point(28.3, 11));
+      }
       message = '${special.label} entra nello scontro.';
       return;
     }
@@ -5867,14 +5936,22 @@ class LiteRun {
 
   void _tickMirror(LiteEnemy boss, double elapsed) {
     final build = boss.mirror!;
-    build.signatureCooldown = max(0, build.signatureCooldown - elapsed);
+    final skillTime = elapsed * _mirrorSkillPace;
+    build.signatureCooldown = max(0, build.signatureCooldown - skillTime);
+    build.techniqueCooldown = max(0, build.techniqueCooldown - skillTime);
+    build.openCooldown = max(0, build.openCooldown - skillTime);
+    build.formRemaining = max(0, build.formRemaining - elapsed);
     build.shadowVeilRemaining = max(0, build.shadowVeilRemaining - elapsed);
     build.intangible = max(0, build.intangible - elapsed);
-    build.talentCooldown = max(0, build.talentCooldown - elapsed);
-    build.artCooldown = max(0, build.artCooldown - elapsed);
-    final recovery = build.power(LitePowerUp.condotto);
-    if (recovery > 0) {
-      build.oculum = min(maxOculum, build.oculum + recovery * elapsed);
+    build.talentCooldown = max(0, build.talentCooldown - skillTime);
+    build.artCooldown = max(0, build.artCooldown - skillTime);
+    final recovery =
+        build.power(LitePowerUp.condotto) +
+        (build.chosenArt == null ? 0 : .16 + .35 * difficulty.index);
+    final copied = _coopFighterById(build.playerId);
+    final capacity = copied?.maxOculum ?? maxOculum;
+    if (recovery > 0 && build.oculum < capacity) {
+      build.oculum = min(capacity, build.oculum + recovery * elapsed);
     }
     if (boss.windup > 0) {
       boss.windup = max(0, boss.windup - elapsed);
@@ -5893,7 +5970,9 @@ class LiteRun {
       return;
     }
     boss.cooldown = max(0, boss.cooldown - elapsed);
-    final target = _enemyAimFrom(boss.position);
+    final target = copied != null && copied.connected && copied.hp > 0
+        ? copied.position
+        : _enemyAimFrom(boss.position);
     boss.attackTarget = target;
     final delta = target - boss.position;
     final distance = delta.magnitude;
@@ -5929,11 +6008,27 @@ class LiteRun {
         build.talentCooldown = isLight ? 5.2 : 4.25;
         return;
       }
+      if (_mirrorExtraTalent(boss, direction, distance)) return;
     }
     if (!boss.kind.echo &&
         build.artCooldown <= 0 &&
         hasLine &&
-        _castMirrorScroll(boss, direction, distance)) {
+        (_castMirrorLearnedArt(boss, direction, distance) ||
+            _castMirrorScroll(boss, direction, distance))) {
+      return;
+    }
+    if (!boss.kind.echo &&
+        hasLine &&
+        boss.cooldown <= 0 &&
+        _copyOpen(boss, direction, distance)) {
+      boss.cooldown = .72;
+      return;
+    }
+    if (!boss.kind.echo &&
+        hasLine &&
+        boss.cooldown <= 0 &&
+        _tryMirrorTechnique(boss, direction, distance)) {
+      boss.cooldown = .45;
       return;
     }
     final reach = build.weapon.range * (isLight && ranged ? .88 : .76);
@@ -6017,34 +6112,49 @@ class LiteRun {
     return false;
   }
 
-  bool _summonMirrorEcho(LiteEnemy boss, {bool summoned = false}) {
+  bool _summonMirrorEcho(
+    LiteEnemy boss, {
+    bool summoned = false,
+    bool usingOpen = false,
+    LiteHero? echoHero,
+    LiteWeapon? echoWeapon,
+  }) {
+    final build = boss.mirror!;
     var duplicates = 0;
     var summons = 0;
     for (final other in enemies) {
-      if (other.kind != LiteEnemyKind.ecoSpeculare || other.hp <= 0) continue;
+      if (other.kind != LiteEnemyKind.ecoSpeculare ||
+          other.hp <= 0 ||
+          other.mirror?.playerId != build.playerId)
+        continue;
       if (other.mirrorSummon) {
         summons++;
       } else {
         duplicates++;
       }
     }
-    if (summoned ? summons >= 1 : duplicates >= 2) return false;
+    if (summoned ? summons >= (usingOpen ? 2 : 1) : duplicates >= 2)
+      return false;
     final cost = (boss.maxHp * cloneFraction).ceilToDouble();
-    if (!summoned && boss.hp - cost < 1) return false;
-    if (!summoned) boss.hp -= cost;
-    final build = boss.mirror!;
+    if (!usingOpen && !summoned && boss.hp - cost < 1) return false;
+    if (!usingOpen && !summoned) boss.hp -= cost;
     final direction = _unit(position - boss.position);
     final beside =
         Point(-direction.y, direction.x) * (duplicates.isEven ? 1.3 : -1.3);
     final echo = _spawnEnemy(
       LiteEnemyKind.ecoSpeculare,
       boss.position + beside,
-      maxHealth: summoned ? 9 : cost,
+      maxHealth: usingOpen
+          ? 22 + LiteRun.openGradeFor(build.sourceLevel) * 7.0
+          : summoned
+          ? 9
+          : cost,
     );
     echo.mirrorSummon = summoned;
     echo.mirror = LiteMirrorBuild(
-      hero: build.hero,
-      weapon: summoned ? LiteWeapon.spadaScudo : build.weapon,
+      hero: echoHero ?? build.hero,
+      weapon: echoWeapon ?? (summoned ? LiteWeapon.spadaScudo : build.weapon),
+      playerId: build.playerId,
       slots: [],
       quantities: [],
       learned: {},
@@ -6123,13 +6233,19 @@ class LiteRun {
     return false;
   }
 
-  void _fireMirrorWeapon(LiteEnemy boss, Point<double> direction) {
+  void _fireMirrorWeapon(
+    LiteEnemy boss,
+    Point<double> direction, [
+    double scale = 1,
+  ]) {
     final build = boss.mirror!;
     final item = build.weapon;
     final damage =
         build.damage *
         (.78 + stage * .012) *
         difficulty.enemyStrength *
+        scale *
+        (build.formRemaining > 0 ? 1.75 : 1) *
         _challengeDamageScale(boss.kind);
     switch (item) {
       case LiteWeapon.spadaScudo ||
@@ -7327,6 +7443,7 @@ class LiteRun {
       if (clone._mimic case final form? when clone.hp <= 0) {
         _revertMimic(form, clone);
       }
+      if (clone.hp <= 0) _emberRebirth(clone);
       if (clone.hp <= 0 && clone.supply.token) {
         clone.supply.token = false;
         clone.hp = clone.maxHp * .35;
@@ -7869,6 +7986,8 @@ class LiteRun {
       final robbed = (obser * .75).round();
       obser -= robbed;
       message = 'Lo Scostubandito ti lascia in vita e sottrae $robbed Obser.';
+    } else if (_emberRebirth()) {
+      return;
     } else if (supply.token) {
       supply.token = false;
       hp = maxHp * .35;

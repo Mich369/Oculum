@@ -2046,6 +2046,14 @@ class _ArenaPaint extends CustomPainter {
       _paintBurstTrace(canvas, trace, time, visible);
     }
 
+    if (run.hasEmberSentinel()) {
+      _paintEmberSentinel(canvas, _offset(run.emberPosition()), time);
+    }
+    for (final fighter in run.coopFighters) {
+      if (fighter.connected && run.hasEmberSentinel(fighter)) {
+        _paintEmberSentinel(canvas, _offset(run.emberPosition(fighter)), time);
+      }
+    }
     final player = _offset(run.position);
     final aiming = _offset(run.aim);
     final weaponAim = _offset(run.weaponAim);
@@ -2371,11 +2379,18 @@ class _ArenaPaint extends CustomPainter {
                     hair: Color(0xff393240),
                   ),
                 };
-                final mirrorAppearance = appearance.copyWith(
+                final copied = run.coopFighters
+                    .where((fighter) => fighter.id == mirror.playerId)
+                    .firstOrNull;
+                final sourceLook = copied == null
+                    ? appearance
+                    : guestAppearances[copied.account] ??
+                          oculumLiteDefaultAppearance(mirror.hero);
+                final mirrorAppearance = sourceLook.copyWith(
                   cloth: tone.cloth,
                   accent: tone.accent,
                   hair: mirror.hero == LiteHero.duplicatore
-                      ? appearance.hair
+                      ? sourceLook.hair
                       : tone.hair,
                 );
                 _hero(
@@ -2901,6 +2916,16 @@ class _ArenaPaint extends CustomPainter {
       final at = _offset(impact.position);
       if (!visible.contains(at)) continue;
       if (impact.target == LiteImpactTarget.fissure) continue;
+      if (impact.target == LiteImpactTarget.emberRebirth &&
+          impact.end != null) {
+        _paintEmberRebirth(
+          canvas,
+          _offset(impact.position),
+          _offset(impact.end!),
+          time - impact.time,
+        );
+        continue;
+      }
       if (impact.target == LiteImpactTarget.explosion) {
         _bombBurst(canvas, at, time - impact.time);
         continue;

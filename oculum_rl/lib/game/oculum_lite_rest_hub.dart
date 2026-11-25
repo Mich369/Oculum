@@ -207,6 +207,8 @@ class LiteRestLoadout {
   final _forgeRanks = <LiteWeapon, int>{};
   LiteLearnedArt? art;
   double artCooldown = 0;
+  bool emberSpent = false;
+  double emberCooldown = 0;
   int forgeRank(LiteWeapon item) => _forgeRanks[item] ?? 0;
   Iterable<LiteRestItem> get receipts => _receipts.keys;
   int rank(LiteRestItem item) => _evolutions[item] ?? 0;
@@ -225,12 +227,16 @@ class LiteRestLoadout {
       _receipts.isNotEmpty ||
       _forgeRanks.isNotEmpty ||
       art != null ||
+      emberSpent ||
+      emberCooldown > 0 ||
       scrolls.isNotEmpty ||
       promised != null ||
       carriedId != null;
 
   Map<String, Object> get frame => {
     if (token) 'token': true,
+    if (emberSpent) 'emberSpent': true,
+    if (emberCooldown > 0) 'emberCooldown': emberCooldown,
     if (art case final learned?) 'chosenArt': learned.name,
     if (artCooldown > 0) 'artCooldown': artCooldown,
     if (lunarPieces > 0) 'lunarPieces': lunarPieces,
@@ -252,6 +258,8 @@ class LiteRestLoadout {
   void restore(Object? data) {
     if (data is! Map) return;
     token = data['token'] == true;
+    emberSpent = data['emberSpent'] == true;
+    emberCooldown = _num(data['emberCooldown']).clamp(0, 1.45);
     art = LiteLearnedArt.values
         .where((entry) => entry.name == data['chosenArt'])
         .firstOrNull;
