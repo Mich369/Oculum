@@ -59,6 +59,7 @@ extension _OculumStat35Resilience on _OculumHomePageState {
         applyCondition(
           'ricordo_vitale',
           duration: turns,
+          durationType: OculumConditionDurationType.turns,
           source: 'Rigenerazione',
         );
       }

@@ -417,16 +417,17 @@ void main() {
         of: find.byKey(ValueKey('monster-scene-${theme.id}')),
         matching: find.byType(Image),
       );
-      final giantPhone = monsterId == 'gigante_sabbia' && width < 600;
-      for (final (layer, expectedAsset, expectedFit) in [
+      final giantPhone = monsterId == 'gigante_sabbia' && width < 900;
+      for (final (layer, expectedAsset, expectedFit, expectedAlignment) in [
         (
           narrative,
           giantPhone
               ? 'assets/oculum/home_art/theme_gigante_sabbia_mobile_v1.png'
               : asset,
-          giantPhone ? BoxFit.cover : BoxFit.contain,
+          BoxFit.cover,
+          width < 900 ? Alignment.center : Alignment.centerRight,
         ),
-        (backdrop, asset, BoxFit.contain),
+        (backdrop, asset, BoxFit.contain, Alignment.centerRight),
       ]) {
         final image = tester.widget<Image>(layer);
         final provider = image.image;
@@ -438,7 +439,7 @@ void main() {
           oculumMonsterArtworkAsset(expectedAsset),
         );
         expect(image.fit, expectedFit);
-        expect(image.alignment, Alignment.centerRight);
+        expect(image.alignment, expectedAlignment);
       }
       await tester.tap(find.text('Usa'));
       expect(taps, 1);

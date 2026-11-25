@@ -9,10 +9,10 @@ void main() {
   test('selected Eiva names retain their previous search names', () {
     final octocruor = monsterBookEntryById(oculumPiovraSucchiasangueId)!;
     final pynnasway = monsterBookEntryById('affogato_palmatore_dei_nastri')!;
-    expect(octocruor.nameIt, 'Octocruor');
+    expect(octocruor.nameIt, 'Cruoryn');
     expect(
       oculumMonsterNameSearchAliases(octocruor),
-      contains('Piovra succhiasangue'),
+      containsAll(['Piovra succhiasangue', 'Octocruor']),
     );
     expect(pynnasway.nameIt, 'Pynnaryth');
     expect(

@@ -94,7 +94,7 @@ void main() {
               : image.image;
           expect(
             (provider as AssetImage).assetName,
-            width < 600
+            width < 900
                 ? theme.illustrationMobile ?? theme.illustration
                 : theme.illustration,
           );

@@ -7,13 +7,17 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
   test('the three original Predone IDs equip the orbit Art and boomerang', () {
-    for (final (suffix, alias) in const [
-      ('', 'Predone delle Nasse'),
-      ('_variante_buio', 'Predone delle Nasse di Buio'),
-      ('_variante_veleno', 'Predone delle Nasse di Veleno'),
+    for (final (suffix, name, alias) in const [
+      ('', 'Falxyryn', 'Predone delle Nasse'),
+      ('_variante_buio', 'Falxfin di Buio', 'Predone delle Nasse di Buio'),
+      (
+        '_variante_veleno',
+        'Falxfin di Veleno',
+        'Predone delle Nasse di Veleno',
+      ),
     ]) {
       final entry = monsterBookEntryById('$oculumPredoneBoomerangId$suffix')!;
-      expect(entry.nameIt, startsWith('Falxyryn'));
+      expect(entry.nameIt, name);
       expect(oculumMonsterNameSearchAliases(entry), contains(alias));
       expect(entry.inventoryItems.map((item) => item['nome']), [
         'Lama Orbita',

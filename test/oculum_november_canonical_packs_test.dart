@@ -8,6 +8,11 @@ import 'package:pointycastle/digests/sha256.dart';
 import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'package:oculum/widgets/oculum_monster_theme.dart';
 
+String _sha256(String path) => SHA256Digest()
+    .process(File(path).readAsBytesSync())
+    .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+    .join();
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final files =
@@ -60,8 +65,14 @@ void main() {
       'angelo_fustigatore_variante_rituale',
       'arcangelo_variante_errante',
       'arpia_base_variante_veterana',
-      'baby_forest_demon_variante_rituale',
     };
+    const ritualDemon = 'baby_forest_demon_variante_rituale';
+    const ritualDemonAsset =
+        'assets/oculum/home_art_authored/theme_baby_forest_demon_variante_rituale_canon_20261118_ink_f.webp';
+    expect(
+      _sha256(ritualDemonAsset),
+      'c91eec83811cd863eba84f9a881404c0efa389172c84a85a47c2d0f4d01b02e6',
+    );
     final manifest =
         jsonDecode(
               File(
@@ -76,22 +87,27 @@ void main() {
       final id = file['id'] as String;
       final theme = themeFor(id);
       expect(theme.preserveIllustrationFraming, isTrue, reason: id);
+      expect(theme.illustration, switch (id) {
+        ritualDemon => ritualDemonAsset,
+        _ when revisedNovember15.contains(id) =>
+          'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp',
+        _ => oculumMonsterArtworkAsset(file['asset'] as String),
+      }, reason: id);
       expect(
-        theme.illustration,
-        revisedNovember15.contains(id)
-            ? 'assets/oculum/home_art_authored/theme_${id}_canon_20261115.webp'
-            : oculumMonsterArtworkAsset(file['asset'] as String),
+        _sha256(file['asset'] as String),
+        file['nativeSha256'],
         reason: id,
       );
-      final digest = SHA256Digest()
-          .process(File(file['asset'] as String).readAsBytesSync())
-          .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-          .join();
-      expect(digest, file['nativeSha256'], reason: id);
     }
   });
 
   test('23 approved packs bind all 69 exact PNG revisions', () {
+    const revisedGranScostumato =
+        'assets/oculum/home_art_authored/theme_granscostumato_empatico_canon_20261118_v3.webp';
+    expect(
+      _sha256(revisedGranScostumato),
+      'cdc530417d59a036097041eba0e8e548538145366ea55e24b09da81d26a19536',
+    );
     expect(files, hasLength(69));
     expect(files.map((f) => f['asset']).toSet(), hasLength(69));
     expect(files.map((f) => f['species']).toSet(), ids.toSet());
@@ -102,19 +118,20 @@ void main() {
       expect(pack.map((f) => f['kind']).toSet(), {'desktop', 'phone', 'relic'});
       for (final file in pack) {
         expect(file['user_approved'], isTrue);
-        final bytes = File(file['asset'] as String).readAsBytesSync();
-        final hash = SHA256Digest()
-            .process(bytes)
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join();
-        expect(hash, file['sha256']);
+        expect(_sha256(file['asset'] as String), file['sha256']);
         final binding = switch (file['kind']) {
           'desktop' => theme.illustration,
           'phone' => theme.illustrationMobile,
           'relic' => theme.relicIllustration,
           _ => null,
         };
-        expect(binding, oculumMonsterArtworkAsset(file['asset'] as String));
+        expect(
+          binding,
+          id == 'granscostumato_empatico' && file['kind'] == 'desktop'
+              ? revisedGranScostumato
+              : oculumMonsterArtworkAsset(file['asset'] as String),
+          reason: "$id · ${file['kind']}",
+        );
       }
     }
   });

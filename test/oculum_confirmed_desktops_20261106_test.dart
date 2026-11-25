@@ -239,7 +239,7 @@ void main() {
 
   for (final width in [320.0, 834.0, 1440.0]) {
     testWidgets(
-      'desktop fallback at $width keeps whole artwork and active controls',
+      'desktop fallback at $width fills the background and keeps active controls',
       (tester) async {
         tester.view.physicalSize = Size(width, 900);
         tester.view.devicePixelRatio = 1;
@@ -294,7 +294,7 @@ void main() {
             (provider as AssetImage).assetName,
             oculumMonsterArtworkAsset(_assetFor(id)),
           );
-          expect(image.fit, BoxFit.contain);
+          expect(image.fit, BoxFit.cover);
           await tester.runAsync(
             () => precacheImage(
               image.image,

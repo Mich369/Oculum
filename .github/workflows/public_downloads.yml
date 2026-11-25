@@ -3,6 +3,7 @@ on:
   workflow_run:
     workflows: [Build distribution]
     types: [completed]
+    branches-ignore: ['codex/oculum-preflight-*']
   workflow_dispatch:
     inputs:
       run_id:

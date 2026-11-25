@@ -42,7 +42,11 @@ void main() {
   );
 
   test('manuale attivo e PDF restano completi e senza testo corrotto', () async {
-    expect(activeManualSections.length, oculumManualSections.length + 1);
+    expect(activeManualSections, [
+      ...oculumManualSections,
+      oculumCycleCrisisDungeonManualSection,
+      oculumAttackSkillDurationManualSection,
+    ]);
     expect(
       activeManualSections.map((section) => section.titleIt),
       contains(

@@ -107,6 +107,10 @@ const _latestNameById = <String, String>{
 const _ensypuppetCorrectedSha256 =
     '710886acfde3584d91c58f76acb00c8654ba1b6c52d54fbb5a32da039b3bc115';
 
+// The November 22 receipt supersedes H with C for the Errant Pilgrim.
+const _errantPilgrimCorrectedSha256 =
+    'db8f1496e4eac6d7c25ebdb60125613c2520aa296c76b809e5bddd67c2fb3a0f';
+
 String _runtimeAsset(_GalleryVote vote) => vote.id == 'manichino_spada'
     ? 'assets/oculum/home_art_authored/theme_manichino_spada_canon_20261118_v2.webp'
     : 'assets/oculum/home_art_authored/theme_${vote.id}_canon_20261118.webp';
@@ -134,11 +138,12 @@ void main() {
         asset,
         reason: '${vote.id} · ${vote.slot}',
       );
-      expect(
-        await _assetDigest(asset),
-        vote.id == 'manichino_spada' ? _ensypuppetCorrectedSha256 : vote.sha256,
-        reason: '${vote.id} · ${vote.slot}',
-      );
+      expect(await _assetDigest(asset), switch (vote.id) {
+        'manichino_spada' => _ensypuppetCorrectedSha256,
+        'pellegrino_senza_volto_variante_errante' =>
+          _errantPilgrimCorrectedSha256,
+        _ => vote.sha256,
+      }, reason: '${vote.id} · ${vote.slot}');
       if (vote.id == 'manichino_spada') {
         expect(
           await _assetDigest(

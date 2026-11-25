@@ -64,7 +64,7 @@ void main() {
           ),
         );
         final image = tester.widget<Image>(find.byType(Image).first);
-        expect(image.fit, width < 600 ? BoxFit.cover : BoxFit.contain);
+        expect(image.fit, BoxFit.cover);
         final provider = image.image;
         final asset = provider is ResizeImage
             ? provider.imageProvider
@@ -72,7 +72,7 @@ void main() {
         expect(asset, isA<AssetImage>());
         expect(
           (asset as AssetImage).assetName,
-          width < 600 ? theme.illustrationMobile : theme.illustration,
+          width < 900 ? theme.illustrationMobile : theme.illustration,
         );
         await tester.runAsync(
           () => precacheImage(

@@ -1,10 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oculum/main.dart'
+    show OculumConditionDurationType, OculumConditionInstance;
 
 import 'oculum_escape_provoker_test.dart' show mountFight;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 import 'oculum_protection_wear_test.dart' show prepareProtectionFixture;
 
 void main() {
+  test(
+    'saved Rigenerazione fixes the duration unit and keeps custom durations',
+    () {
+      final saved = {
+        'id': 'legacy-regeneration',
+        'conditionType': 'ricordo_vitale',
+        'source': 'Rigenerazione',
+        'durationType': 'permanent',
+        'duration': 7,
+      };
+      final migrated = OculumConditionInstance.fromJson(saved);
+      expect(migrated.durationType, OculumConditionDurationType.turns);
+      expect(migrated.duration, 7);
+
+      final otherSource = OculumConditionInstance.fromJson({
+        ...saved,
+        'source': 'Condizione manuale',
+      });
+      expect(otherSource.durationType, OculumConditionDurationType.permanent);
+    },
+  );
+
   testWidgets(
     'Resilienza 35 counts only Life hits and triggers Ricordo Vitale once',
     (tester) async {
@@ -38,12 +62,16 @@ void main() {
         expect(probe.currentHp(), expected);
       }
       final threshold = probe.maximumHp() ~/ 5;
+      // Resolve this hit independently of the random low-Life Force State.
+      state.statoForzaPronto = false;
       state.currentHpController.text = '${threshold + 5}';
       await probe.damageResolved(5, bypassDefense: true, bypassShields: true);
       final memory = probe.conditions.singleWhere(
         (item) => item.conditionType == 'ricordo_vitale',
       );
       expect(memory.duration, 3);
+      expect(memory.durationType, OculumConditionDurationType.turns);
+      expect(memory.source, 'Rigenerazione');
       expect((runtime['stat35ResRegen'] as Map)['vitalMemoryUsed'], true);
       await closeFixture(tester, probe);
     },

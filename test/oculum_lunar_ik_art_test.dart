@@ -81,7 +81,7 @@ void main() {
               : provider;
           expect(
             (asset as AssetImage).assetName,
-            width < 600 ? theme.illustrationMobile : theme.illustration,
+            width < 900 ? theme.illustrationMobile : theme.illustration,
           );
           await tester.runAsync(
             () => precacheImage(

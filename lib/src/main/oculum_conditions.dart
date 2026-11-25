@@ -298,9 +298,24 @@ class OculumConditionInstance {
       );
     }
 
+    final conditionType =
+        '${json['conditionType'] ?? json['type'] ?? 'custom'}';
+    final source = '${json['source'] ?? ''}';
+    final duration = max(0, readIntValue(json['duration']));
+    final savedDurationType = enumValue(
+      OculumConditionDurationType.values,
+      json['durationType'],
+      OculumConditionDurationType.turns,
+    );
+    // Older Rigenerazione instances carried turns with the permanent default.
+    final legacyRegeneration =
+        conditionType == 'ricordo_vitale' &&
+        source == 'Rigenerazione' &&
+        duration > 0 &&
+        savedDurationType == OculumConditionDurationType.permanent;
     return OculumConditionInstance(
       id: '${json['id'] ?? 'condition_${DateTime.now().microsecondsSinceEpoch}'}',
-      conditionType: '${json['conditionType'] ?? json['type'] ?? 'custom'}',
+      conditionType: conditionType,
       category: enumValue(
         OculumConditionCategory.values,
         json['category'],
@@ -308,19 +323,17 @@ class OculumConditionInstance {
       ),
       stage: max(1, readIntValue(json['stage'], fallback: 1)),
       stacks: max(1, readIntValue(json['stacks'], fallback: 1)),
-      duration: max(0, readIntValue(json['duration'])),
-      durationType: enumValue(
-        OculumConditionDurationType.values,
-        json['durationType'],
-        OculumConditionDurationType.turns,
-      ),
+      duration: duration,
+      durationType: legacyRegeneration
+          ? OculumConditionDurationType.turns
+          : savedDurationType,
       tickTrigger: enumValue(
         OculumConditionTickTrigger.values,
         json['tickTrigger'],
         OculumConditionTickTrigger.none,
       ),
       removable: readBoolValue(json['removable'], fallback: true),
-      source: '${json['source'] ?? ''}',
+      source: source,
       createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}'),
       metadata: json['metadata'] is Map
           ? Map<String, dynamic>.from(json['metadata'] as Map)

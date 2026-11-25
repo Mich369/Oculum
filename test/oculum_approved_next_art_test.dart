@@ -101,18 +101,13 @@ void main() {
             ),
           );
           final image = tester.widget<Image>(find.byType(Image).first);
-          final preserveFraming = width < 600
-              ? theme.preserveMobileIllustrationFraming
-              : theme.preserveIllustrationFraming;
-          if (preserveFraming) {
-            expect(image.fit, BoxFit.contain);
-          }
+          expect(image.fit, BoxFit.cover);
           final provider = image.image is ResizeImage
               ? (image.image as ResizeImage).imageProvider
               : image.image;
           expect(
             (provider as AssetImage).assetName,
-            width < 600
+            width < 900
                 ? theme.illustrationMobile ?? theme.illustration
                 : theme.illustration,
           );

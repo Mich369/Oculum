@@ -47,8 +47,13 @@ jobs:
       - name: Verify manual build and publication command
         shell: pwsh
         run: ./scripts/tests/test_publish_oculum_github.ps1
-      # Keep image-heavy widget suites within the Windows runner's memory budget.
-      - run: flutter test --no-pub --concurrency=1
+      - name: Generate the reviewed monster and UI capture artifacts
+        run: >-
+          flutter test --no-pub --concurrency=1
+          test/oculum_added_monsters_completeness_test.dart
+          test/oculum_resistances_turns_integrity_test.dart
+          test/oculum_all_themes_test.dart
+          test/oculum_theme_identity_gallery_test.dart
       - name: Verify authenticated online transport and combat
         if: github.event_name != 'pull_request'
         timeout-minutes: 10
@@ -78,8 +83,27 @@ jobs:
           retention-days: 30
 
   # â”€â”€ Windows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  flutter-tests:
+    name: Flutter full suite (shard ${{ matrix.shard }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - run: flutter pub get
+      # Each runner executes one widget test process at a time.
+      - run: flutter test --no-pub --concurrency=1 --total-shards=4 --shard-index=${{ matrix.shard }}
+
   build-windows:
-    needs: validate
+    needs: [validate, flutter-tests]
+    if: ${{ !startsWith(github.ref_name, 'codex/oculum-preflight-') }}
     name: Build Windows ${{ matrix.edition }}
     runs-on: windows-latest
     timeout-minutes: 60
@@ -221,7 +245,8 @@ jobs:
           retention-days: 30
 
   build-macos:
-    needs: validate
+    needs: [validate, flutter-tests]
+    if: ${{ !startsWith(github.ref_name, 'codex/oculum-preflight-') }}
     name: Build macOS
     runs-on: macos-latest
 
@@ -288,7 +313,8 @@ jobs:
 
   # â”€â”€ iOS (unsigned) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   build-ios-unsigned:
-    needs: validate
+    needs: [validate, flutter-tests]
+    if: ${{ !startsWith(github.ref_name, 'codex/oculum-preflight-') }}
     name: Build iOS unsigned
     runs-on: macos-latest
 
@@ -344,7 +370,8 @@ jobs:
 
   # â”€â”€ Linux â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   build-linux:
-    needs: validate
+    needs: [validate, flutter-tests]
+    if: ${{ !startsWith(github.ref_name, 'codex/oculum-preflight-') }}
     name: Build Linux
     runs-on: ubuntu-latest
 
@@ -433,7 +460,8 @@ jobs:
 
   # â”€â”€ Android â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   build-android:
-    needs: validate
+    needs: [validate, flutter-tests]
+    if: ${{ !startsWith(github.ref_name, 'codex/oculum-preflight-') }}
     name: Build Android
     runs-on: ubuntu-latest
     env:
@@ -548,7 +576,8 @@ jobs:
           retention-days: 30
 
   build-web:
-    needs: validate
+    needs: [validate, flutter-tests]
+    if: ${{ !startsWith(github.ref_name, 'codex/oculum-preflight-') }}
     name: Build Web archive
     runs-on: ubuntu-latest
     steps:
