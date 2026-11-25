@@ -4,7 +4,8 @@ enum LiteRestStation {
   tavern('Taverniera'),
   forge('Fabbro'),
   merchant('Mercante'),
-  seer('Veggente');
+  seer('Veggente'),
+  art('Venditrice di Art');
 
   const LiteRestStation(this.label);
   final String label;
@@ -112,6 +113,36 @@ enum LiteRestItem {
     LiteRestStation.forge,
     45,
     'Inizia ogni piano con Scudo extra. Migliorabile fino al rango III.',
+  ),
+  tempra(
+    'Tempra dell’arma',
+    LiteRestStation.forge,
+    17,
+    '+4% Danni per rango. Crescono anche gli effetti della tecnica su G.',
+  ),
+  artPlasma(
+    'Raggio al plasma',
+    LiteRestStation.art,
+    72,
+    'Oculum Art · Raggio diritto a lunga portata.',
+  ),
+  artFalci(
+    'Falci di Vaitern',
+    LiteRestStation.art,
+    62,
+    'Oculum Art · Due falci divergenti.',
+  ),
+  artLinfa(
+    'Linfa verde',
+    LiteRestStation.art,
+    56,
+    'Oculum Art · Recupera Vita e resistenza del blocco.',
+  ),
+  artCorruzione(
+    'Presa della Corruzione Rossa',
+    LiteRestStation.art,
+    94,
+    'Defiled Art · Onda a cinque forme, stordisce i nemici comuni.',
   );
 
   const LiteRestItem(this.label, this.station, this.basePrice, this.effect);
@@ -119,6 +150,13 @@ enum LiteRestItem {
   final LiteRestStation station;
   final int basePrice;
 
+  LiteLearnedArt? get art => switch (this) {
+    artPlasma => LiteLearnedArt.plasma,
+    artFalci => LiteLearnedArt.falci,
+    artLinfa => LiteLearnedArt.linfa,
+    artCorruzione => LiteLearnedArt.corruzione,
+    _ => null,
+  };
   bool get meal => station == LiteRestStation.tavern;
   bool get evolution => this == spirale || this == bastione;
   LiteWeapon? get weapon => switch (this) {
@@ -166,6 +204,10 @@ class LiteRestLoadout {
   final _evolutions = <LiteRestItem, int>{};
   final _receipts = <LiteRestItem, int>{};
   final scrolls = <LiteScroll, int>{};
+  final _forgeRanks = <LiteWeapon, int>{};
+  LiteLearnedArt? art;
+  double artCooldown = 0;
+  int forgeRank(LiteWeapon item) => _forgeRanks[item] ?? 0;
   Iterable<LiteRestItem> get receipts => _receipts.keys;
   int rank(LiteRestItem item) => _evolutions[item] ?? 0;
   bool fed(LiteRestItem item, int stage) => stage <= (_foodUntil[item] ?? -1);
@@ -181,12 +223,16 @@ class LiteRestLoadout {
       _foodUntil.isNotEmpty ||
       _evolutions.isNotEmpty ||
       _receipts.isNotEmpty ||
+      _forgeRanks.isNotEmpty ||
+      art != null ||
       scrolls.isNotEmpty ||
       promised != null ||
       carriedId != null;
 
   Map<String, Object> get frame => {
     if (token) 'token': true,
+    if (art case final learned?) 'chosenArt': learned.name,
+    if (artCooldown > 0) 'artCooldown': artCooldown,
     if (lunarPieces > 0) 'lunarPieces': lunarPieces,
     if (_foodUntil.isNotEmpty)
       'meals': _foodUntil.map((key, value) => MapEntry(key.name, value)),
@@ -194,6 +240,8 @@ class LiteRestLoadout {
       'evolutions': _evolutions.map((key, value) => MapEntry(key.name, value)),
     if (_receipts.isNotEmpty)
       'receipts': _receipts.map((key, value) => MapEntry(key.name, value)),
+    if (_forgeRanks.isNotEmpty)
+      'forge': _forgeRanks.map((weapon, rank) => MapEntry(weapon.name, rank)),
     if (scrolls.isNotEmpty)
       'scrolls': scrolls.map((key, value) => MapEntry(key.name, value)),
     if (_spiralTime > 0) 'spiral': [_spiralTime, _spin],
@@ -204,6 +252,10 @@ class LiteRestLoadout {
   void restore(Object? data) {
     if (data is! Map) return;
     token = data['token'] == true;
+    art = LiteLearnedArt.values
+        .where((entry) => entry.name == data['chosenArt'])
+        .firstOrNull;
+    artCooldown = _num(data['artCooldown']).clamp(0, 8);
     lunarPieces = _int(data['lunarPieces']).clamp(0, 255);
     void read(String key, Map<LiteRestItem, int> map, int maximum) {
       final values = data[key];
@@ -218,6 +270,12 @@ class LiteRestLoadout {
     read('meals', _foodUntil, LiteRun.finalStage + 3);
     read('evolutions', _evolutions, 3);
     read('receipts', _receipts, 3);
+    if (data['forge'] case final Map ranks) {
+      for (final weapon in LiteWeapon.values) {
+        final rank = _int(ranks[weapon.name]).clamp(0, 12);
+        if (rank > 0) _forgeRanks[weapon] = rank;
+      }
+    }
     if (data['scrolls'] case final Map counts) {
       for (final type in LiteScroll.values) {
         final count = _int(counts[type.name]).clamp(0, 99);
@@ -272,7 +330,11 @@ extension LiteRestHub on LiteRun {
 
   int restPrice(LiteRestItem item, {LiteCoopFighter? fighter}) =>
       item.basePrice +
-      (item.evolution ? (fighter?.supply ?? supply).rank(item) * 28 : 0);
+      (item == LiteRestItem.tempra
+          ? (fighter?.supply ?? supply).forgeRank(fighter?.weapon ?? weapon) * 5
+          : item.evolution
+          ? (fighter?.supply ?? supply).rank(item) * 28
+          : 0);
 
   bool canBuyRestItem(LiteRestItem item, {LiteCoopFighter? fighter}) {
     if (!restHub ||
@@ -281,6 +343,17 @@ extension LiteRestHub on LiteRun {
         (fighter?.obser ?? obser) < restPrice(item, fighter: fighter))
       return false;
     final kit = fighter?.supply ?? supply;
+    if (item.art case final art?) {
+      return artDealerOpen &&
+          LiteLearnedArt.fixedFor(fighter?.hero ?? hero) == null &&
+          kit.art != art &&
+          (art != LiteLearnedArt.corruzione ||
+              achievements.contains('baghest-sconfitto'));
+    }
+    if (item == LiteRestItem.tempra) {
+      return hasWeaponArt(fighter) &&
+          kit.forgeRank(fighter?.weapon ?? weapon) < 12;
+    }
     if (item == LiteRestItem.token) return !kit.token;
     if (item.evolution) return kit.rank(item) < 3;
     if (item.meal) return !kit._receipts.containsKey(item);
@@ -311,15 +384,25 @@ extension LiteRestHub on LiteRun {
     if (!canBuyRestItem(item, fighter: fighter)) return false;
     final kit = fighter?.supply ?? supply;
     final price = restPrice(item, fighter: fighter);
-    final rank = item.evolution ? kit.rank(item) + 1 : 1;
-    _grantRestItem(item, rank, kit, fighter, stage + 3);
-    kit._receipts[item] = rank;
+    if (item.art case final art?) {
+      kit.art = art;
+    } else if (item == LiteRestItem.tempra) {
+      final blade = fighter?.weapon ?? weapon;
+      kit._forgeRanks[blade] = kit.forgeRank(blade) + 1;
+    } else {
+      final rank = item.evolution ? kit.rank(item) + 1 : 1;
+      _grantRestItem(item, rank, kit, fighter, stage + 3);
+      kit._receipts[item] = rank;
+    }
     if (fighter == null) {
       obser -= price;
     } else {
       fighter.obser -= price;
     }
-    message = '${item.label} acquistato.';
+    final blade = fighter?.weapon ?? weapon;
+    message = item == LiteRestItem.tempra
+        ? '${blade.label} · Tempra ${kit.forgeRank(blade)}/12.'
+        : '${item.label} acquistato.';
     return true;
   }
 

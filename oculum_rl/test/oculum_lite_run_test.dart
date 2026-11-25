@@ -1171,7 +1171,9 @@ void main() {
     expect(along.hp, lessThan(60));
     expect(beside.hp, 60);
 
-    final crossbow = _run(weapon: LiteWeapon.balestraRunica)..enemies.clear();
+    final crossbow = _run(weapon: LiteWeapon.balestraRunica)
+      ..enemies.clear()
+      ..obstacles.clear();
     final target = _stationaryEnemy(952, const Point(10, 11));
     crossbow.enemies.add(target);
     expect(crossbow.attack(target.position), isTrue);
@@ -1216,7 +1218,7 @@ void main() {
     }
   });
   test('stride follows displacement and survives a cooperative frame', () {
-    final run = _run();
+    final run = _run()..position = const Point(13.7, 13.15);
     final enemy = run.enemies.first;
     final original = enemy.position;
     final initial = run.position;
@@ -2590,7 +2592,8 @@ void main() {
   });
 
   test('duplicated wooden boomerang returns to the thrower after resuming', () {
-    final run = _run(hero: LiteHero.duplicatore, weapon: LiteWeapon.boomerang);
+    final run = _run(hero: LiteHero.duplicatore, weapon: LiteWeapon.boomerang)
+      ..obstacles.clear();
     run.enemies
       ..clear()
       ..add(_stationaryEnemy(100, const Point(8, 12.2)));
@@ -2609,7 +2612,8 @@ void main() {
   });
 
   test('runic scythe sweeps a wider arc and pulls on its return', () {
-    final run = _run(weapon: LiteWeapon.falceRunica, biome: LiteBiome.postea);
+    final run = _run(weapon: LiteWeapon.falceRunica, biome: LiteBiome.postea)
+      ..obstacles.clear();
     final flank = _stationaryEnemy(100, const Point(4.9, 14));
     final across = _stationaryEnemy(101, const Point(9.5, 11));
     run.enemies
@@ -2646,7 +2650,7 @@ void main() {
     final run = _run(
       weapon: LiteWeapon.carabinaImpulsi,
       biome: LiteBiome.postea,
-    );
+    )..obstacles.clear();
     run.enemies
       ..clear()
       ..addAll([

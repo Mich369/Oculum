@@ -303,6 +303,8 @@ class OculumLiteCoop extends ChangeNotifier {
   void buyRestItem(LiteRestItem item) => _orderRest('buy', item.name);
   void rememberRestItem(LiteRestItem item) => _orderRest('remember', item.name);
   void exchangeLunarPiece() => _orderRest('exchange', '');
+  void struggleRedGrip() => _orderRest('struggle', '');
+  void castLearnedArt() => _orderRest('art', '');
   void castHostScroll(int slot) {
     final world = authority;
     if (world == null || world.restHub) return;
@@ -329,6 +331,14 @@ class OculumLiteCoop extends ChangeNotifier {
     LiteCoopFighter? fighter,
     Point<double> aim,
   ) {
+    if (kind == 'art') {
+      world.useLearnedArt(aim, fighter);
+      return;
+    }
+    if (kind == 'struggle') {
+      world.shakeRedGrip(fighter);
+      return;
+    }
     if (kind == 'exchange') {
       world.exchangeLunarPiece(fighter: fighter);
       return;

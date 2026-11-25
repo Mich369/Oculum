@@ -197,6 +197,7 @@ extension LiteThirdAct on LiteRun {
         LiteObstacle(26, 16.6, 2.2, 2.0),
       ],
     });
+    _openFloorMap();
     _placeSecretRoom();
     for (var i = 0; i < room.enemies.length; i++) {
       final kind = room.enemies[i];

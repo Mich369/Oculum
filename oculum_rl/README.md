@@ -16,6 +16,19 @@ In cooperativa, il colore della barra Vita è assegnato al posto nella squadra. 
 
 Il disco ha un anello d’acciaio e la stessa sagoma nella mano e in volo. Ruota durante il lancio, lascia una scia breve e risale verso la mano quando rientra. Doppia orbita su G usa gli stessi effetti.
 
+## Prima prova delle mappe
+
+1. Apri **Gioca subito**, imposta il seed **251** e seleziona **Campo Scostubanditi** come primo piano. Per questa prova usa **Duplicatore**, **Guanti d’arme giganti** e **Molto facile**.
+2. Al bivio, vai verso l’alto per il mercante. **R** apre la compravendita: la prima visita anticipata dà 12 Obser per la Spada e scudo. Puoi tornare dopo lo scontro.
+3. Per il fianco, gira sotto la palizzata, poi risali verso la prima sentinella restando alle sue spalle. Tieni **Ctrl** per camminare. Ripeti correndo sullo stesso percorso per vedere la sentinella indagare. Con il **tasto destro** puoi distrarla mandando avanti un clone. Un colpo di Forza letale durante il passo lento può restare silenzioso. Una sentinella con visuale libera può comunque vederlo.
+4. Clicca la minimappa per i nomi dei settori e per segnare un punto. Una parte della mappa si rivela entrando nella relativa zona. Nel Regno Sotterraneo attacca la barriera della scorciatoia dall’interno per aprirla. Nelle Cappelle di Roccia del Regno Affogato l’acqua rallenta. Le scariche dello Scettro possono raggiungere un secondo bersaglio nella stessa pozza.
+
+Nella Sala di ristoro il Fabbro applica fino a **12 ranghi per arma**. Ogni rango aggiunge il 4% ai Danni dell’arma. La prima tempra costa 17 Obser e il prezzo sale di 5 Obser per rango. A rango 12, **G** con Spada e scudo descrive un semicerchio davanti al personaggio. La portata della Riposta passa da 3,1 m a 6,2 m e i bersagli colpiti possono essere sbalzati di 12 m se il terreno è libero.
+
+Dal secondo ristoro la **Venditrice di Art** propone Plasma, Falci di Vaitern e Linfa verde. La scelta si salva per la run. Con **E** usi l’Art, con **G** la tecnica dell’arma. Guardia Solare ed Elité hanno Affondo della pattuglia, il Cavaliere Lunare ha Affondo delle lame lunari. Il riepilogo prima del portale mostra equipaggiamento, progressi e potenziamenti ancora da scegliere.
+
+Nel Regno Sotterraneo dal piano 6, un nascondiglio svelato può aprire la sfida a **Baghest**, Eiva della Corruzione Rossa. Abbatti un compagno corrotto e tieni **R** per rialzarlo. Se la presa blocca un giocatore, premi **R** cinque volte per spezzarla. La vittoria sblocca la relativa Defiled Art alla Venditrice. I compagni vivi ricevono il 30% della guarigione effettiva del loro proprietario e crescono fino a +48% Danni. Ogni frammento del Simbolo della Luna vale **60 Obser**.
+
 ## Scatto e schivata
 
 Shift apre una scia d’inchiostro ocra lungo il movimento. La schivata intangibile dell’Evasore lascia impronte viola, il suo Open aggiunge luce dorata e il Velo dello Slime lascia una traccia verde azzurra. Nel clash le due scie ramate separano i combattenti. Questi effetti usano il volume **Effetti**. Shift da solo non concede intangibilità.

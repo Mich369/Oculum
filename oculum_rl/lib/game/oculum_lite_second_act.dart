@@ -183,6 +183,7 @@ extension LiteSecondAct on LiteRun {
           LiteObstacle(22.0, 13.2 - shift, 2.45, 1.8, breakable: true),
         ],
       });
+    _openFloorMap();
     _placeSecretRoom();
     final enemies = switch (realm!) {
       LiteRealm.inferno => switch (actRoom) {

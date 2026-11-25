@@ -9,16 +9,18 @@ Point<double> unit(Point<double> value) =>
     value.magnitude < .001 ? origin : value * (1 / value.magnitude);
 
 bool open(LiteRun run, Point<double> point, [double radius = .47]) =>
-    point.x > .7 &&
-    point.y > .7 &&
-    point.x < run.width - .7 &&
-    point.y < run.height - .7 &&
+    point.x > .42 &&
+    point.y > .42 &&
+    point.x < run.width - .42 &&
+    point.y < run.height - .42 &&
     run.obstacles.every((wall) => !wall.visibleAt(point, radius));
 
 bool sight(LiteRun run, Point<double> start, Point<double> end) {
-  for (var t = .08; t < 1; t += .07) {
-    final at = start + (end - start) * t;
-    if (run.obstacles.any((wall) => wall.visibleAt(at, .13))) return false;
+  final delta = end - start;
+  final slices = max(1, (delta.magnitude / .12).ceil());
+  for (var index = 1; index <= slices; index++) {
+    final at = start + delta * (index / slices);
+    if (run.obstacles.any((wall) => wall.visibleAt(at, .16))) return false;
   }
   return true;
 }
@@ -44,10 +46,10 @@ Point<double> follow(
     at.x.clamp(.9, run.width - .9),
     at.y.clamp(.9, run.height - .9),
   );
-  if (at.x <= .7 ||
-      at.y <= .7 ||
-      at.x >= run.width - .7 ||
-      at.y >= run.height - .7) {
+  if (at.x <= .42 ||
+      at.y <= .42 ||
+      at.x >= run.width - .42 ||
+      at.y >= run.height - .42) {
     return unit(inside - at);
   }
   if (!firingLane && walkable(run, at, target)) {
@@ -170,8 +172,16 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
     if (run.stageClear) {
       if (run.inThirdAct && !thirdCompleted.contains(run.thirdRoom)) {
         thirdCompleted.add(run.thirdRoom);
-        if (run.powerOffers.isNotEmpty)
-          run.choosePowerUp(run.powerOffers.first);
+        if (run.powerOffers.isNotEmpty) {
+          final defensive = run.powerOffers
+              .where(
+                (power) =>
+                    power == LitePowerUp.cuore ||
+                    power == LitePowerUp.pelleRunica,
+              )
+              .firstOrNull;
+          run.choosePowerUp(defensive ?? run.powerOffers.first);
+        }
         final offers = run.powerWellOffers;
         if (offers.isNotEmpty)
           run.claimPowerWell(offers.first, arena: run.inputArena);
@@ -255,7 +265,11 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
     if (!aimed || distance > 8.7) {
       move = follow(run, target.position, firingLane: true);
     } else {
-      move = distance < 4.5 ? heading * -1 : perpendicular;
+      // Strafe along the enemy rather than backing into the outer wall.
+      final keepDistance = target.kind.boss ? 6.3 : 4.5;
+      move = distance < keepDistance
+          ? unit(perpendicular + heading * -.8)
+          : perpendicular;
       if (!open(run, run.position + move * .7)) move = perpendicular * -1;
       if (!open(run, run.position + move * .7)) move = origin;
     }

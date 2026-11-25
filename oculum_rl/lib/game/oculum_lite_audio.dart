@@ -128,7 +128,9 @@ class OculumLiteAudio {
     for (final impact in impacts) {
       if (identical(impact, previous)) {
         afterPrevious = true;
-      } else if (afterPrevious && run.time - impact.time <= .1) {
+      } else if (afterPrevious &&
+          !impact.silent &&
+          run.time - impact.time <= .1) {
         final (name, priority) = switch (impact.target) {
           LiteImpactTarget.clash => ('clash', 5),
           LiteImpactTarget.verdict => ('sentenza', 4),

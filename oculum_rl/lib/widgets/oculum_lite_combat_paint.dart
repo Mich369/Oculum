@@ -809,14 +809,32 @@ void _paintWeaponArtPulse(
   Offset at,
   Offset direction,
   LiteWeapon weapon,
-  double cooldown,
-) {
+  double cooldown, {
+  int rank = 0,
+}) {
   final time = LiteWeaponArt.weaponArtRecovery - cooldown;
   if (time < 0 || time >= .27 || direction.distance < .01) return;
   final phase = time / .27;
   final pigment = _weaponInk(weapon);
   final heading = math.atan2(direction.dy, direction.dx);
-  final radius = .63 + phase * 1.15;
+  if (weapon == LiteWeapon.spadaScudo && rank == 12) {
+    final radius = 2.6 + phase * 3.6;
+    final circle = Rect.fromCircle(center: at, radius: radius);
+    final ink = Paint()
+      ..color = pigment.withValues(alpha: 1 - phase)
+      ..strokeWidth = .28 * (1 - phase) + .035
+      ..style = PaintingStyle.stroke;
+    canvas.drawArc(circle, heading - math.pi / 2, math.pi, false, ink);
+    canvas.drawArc(
+      circle.deflate(.25),
+      heading - 1.45,
+      2.90,
+      false,
+      ink..strokeWidth *= .24,
+    );
+    return;
+  }
+  final radius = (.63 + phase * 1.15) * (1 + rank * .036);
   final fan = Rect.fromCircle(
     center: at - const Offset(0, .12),
     radius: radius,

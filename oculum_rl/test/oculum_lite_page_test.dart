@@ -496,6 +496,54 @@ void main() {
     },
   );
 
+  testWidgets('Gioca subito starts the Campo proof with the floor map', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const MaterialApp(home: OculumLitePage()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Gioca subito'));
+    await tester.pumpAndSettle();
+    final scroll = find.byType(Scrollable).first;
+    final seed = find.widgetWithText(TextField, 'Seed');
+    await tester.scrollUntilVisible(seed, 120, scrollable: scroll);
+    await tester.ensureVisible(seed);
+    await tester.enterText(seed, '251');
+    await tester.pumpAndSettle();
+    final firstFloor = find.byWidgetPredicate(
+      (widget) => widget is DropdownButtonFormField<LiteBiome>,
+    );
+    await tester.ensureVisible(firstFloor);
+    await tester.pumpAndSettle();
+    await tester.tap(firstFloor);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Campo Scostubanditi').last);
+    await tester.pumpAndSettle();
+    final start = find.byKey(const ValueKey('oculum-lite-start-run'));
+    await tester.scrollUntilVisible(start, 130, scrollable: scroll);
+    await tester.ensureVisible(start);
+    await tester.pumpAndSettle();
+    await tester.tap(start);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final run = tester
+        .widget<OculumLiteArena>(find.byType(OculumLiteArena))
+        .run;
+    expect(run.seed, 251);
+    expect(run.stage, 0);
+    expect(run.biome, LiteBiome.campo);
+    expect(run.hasFloorMap, isTrue);
+    await tester.tap(find.byTooltip('Apri mappa del piano'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 320));
+    expect(find.text('Mappa del piano'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('the portal shows rival, reward and rest on a narrow screen', (
     tester,
   ) async {
@@ -533,11 +581,12 @@ void main() {
     final open = find.text('Test del portale');
     await tester.tap(open);
     await tester.pumpAndSettle();
-    expect(find.text('Portale · Piano 3'), findsOneWidget);
+    expect(find.text('Prima del portale · Piano 3'), findsOneWidget);
     expect(find.text('Nemici · +15% Vita, +12% Danni'), findsOneWidget);
     expect(find.text('Boss · La tua Luce'), findsNWidgets(3));
     expect(find.textContaining('Ristoro 50% Vita'), findsWidgets);
-    expect(find.textContaining('l’offerta scade'), findsOneWidget);
+    expect(find.text('Risultati del piano 2'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Scegli'), findsNWidgets(3));
     await tester.tap(find.text('Resta qui'));
     await tester.pumpAndSettle();
     expect(run.stage, 2);

@@ -16,6 +16,7 @@ import '../services/oculum_lite_saves.dart';
 import '../services/oculum_rl_release.dart';
 import '../services/oculum_rl_updates.dart';
 import '../widgets/oculum_lite_arena.dart';
+import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_creator.dart';
 import '../widgets/oculum_lite_ink_finishes.dart';
 import '../widgets/oculum_lite_merchant_greeting.dart';
@@ -144,6 +145,8 @@ class _OculumLitePageState extends State<OculumLitePage>
   Object? _checkpoint;
   bool _paused = false;
   bool _showSettings = false;
+  bool _mapOpen = false;
+  bool _touchWalk = false;
   bool _busy = false;
   bool _openingRoom = false;
   final _updates = OculumRlUpdates();
@@ -642,10 +645,9 @@ class _OculumLitePageState extends State<OculumLitePage>
     run.advanceFrame(
       dt,
       move: movement,
-      walk: held(
-        LogicalKeyboardKey.controlLeft,
-        LogicalKeyboardKey.controlRight,
-      ),
+      walk:
+          _touchWalk ||
+          held(LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.controlRight),
     );
     _audio.combatSounds(run);
     _audio.burstSound(run, 0);
@@ -708,6 +710,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       run.stage,
       run.finalBossPhase,
       run.arenaEvent?.notice,
+      run.campFork,
+      run.quietSteps,
       run.powerOffers.length,
       run.stageClear && run.hasPortalNearby,
       run.canOpenShop,
@@ -750,7 +754,12 @@ class _OculumLitePageState extends State<OculumLitePage>
   void _syncTicker() {
     final run = _active?.run;
     final playing =
-        run != null && !_paused && !_busy && !run.finished && !run.shopOpen;
+        run != null &&
+        !_paused &&
+        !_mapOpen &&
+        !_busy &&
+        !run.finished &&
+        !run.shopOpen;
     _audio.update(run, playing: playing);
     if (playing == _ticker.isActive) return;
     _lastFrame = null;
@@ -809,7 +818,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       return KeyEventResult.handled;
     }
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.keyE) {
+    if (key == LogicalKeyboardKey.escape) {
       if (run.shopOpen) {
         _closeShop(run);
         if (key == LogicalKeyboardKey.escape) _togglePause(showSettings: true);
@@ -825,6 +834,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       run.dash(point);
     } else if (key == LogicalKeyboardKey.space) {
       _saveInventoryChange(() => run.useOpen(point));
+    } else if (key == LogicalKeyboardKey.keyE) {
+      _saveInventoryChange(() => run.useLearnedArt(point));
     } else if (key == LogicalKeyboardKey.keyG) {
       _saveInventoryChange(() => run.useWeaponArt(_targetFor(run)));
     } else if (key == LogicalKeyboardKey.keyQ &&
@@ -896,6 +907,10 @@ class _OculumLitePageState extends State<OculumLitePage>
 
   Future<void> _interact(LiteRun run) async {
     if (_paused || run.finished || run.shopOpen) return;
+    if (run.gripRemaining() > 0 || run.canChallengeBaghest) {
+      _saveInventoryChange(run.interact);
+      return;
+    }
     if (run.canChooseActTwo) {
       _togglePause();
       final realm = await chooseLiteSecondAct(context);
@@ -990,6 +1005,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     if (_paused ||
         run.finished ||
         run.shopOpen ||
+        run.gripRemaining() > 0 ||
         run.fallenAllyNearby == null) {
       return false;
     }
@@ -1003,7 +1019,11 @@ class _OculumLitePageState extends State<OculumLitePage>
 
   Widget? _contextAction(LiteRun run) {
     final String label;
-    if (run.rescuing) {
+    if (run.gripRemaining() > 0) {
+      label = 'Premi R · Presa di Baghest: ${run.gripRemaining()}';
+    } else if (run.canChallengeBaghest) {
+      label = 'R · Sfida Baghest';
+    } else if (run.rescuing) {
       final progress = (run.rescueProgress * 100).floor();
       label = run.reloadingDuringRescue
           ? 'Soccorso e ricarica $progress%'
@@ -1737,6 +1757,24 @@ class _OculumLitePageState extends State<OculumLitePage>
                       },
               ),
             ),
+            if (!blocked && run.hasFloorMap)
+              Positioned(
+                left: 9,
+                top: 100,
+                child: OculumLiteFloorMap(
+                  key: ValueKey(run.inputArena),
+                  run: run,
+                  tiny: compact,
+                  view: _arenaFrame,
+                  onOpen: (open) {
+                    _mapOpen = open;
+                    _clearMovement();
+                    _syncTicker();
+                    if (!open) _gameFocus.requestFocus();
+                  },
+                  onMark: () => unawaited(_save()),
+                ),
+              ),
             Positioned(
               top: 0,
               left: 0,
@@ -1770,6 +1808,21 @@ class _OculumLitePageState extends State<OculumLitePage>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            if (run.campFork)
+                              const Text(
+                                'Nord · Mercante    Sud · Fianco della palizzata',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Color(0xfff2c58d),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            if (run.quietSteps)
+                              const Text(
+                                'Passo silenzioso',
+                                style: TextStyle(fontSize: 11),
+                              ),
                             if (run.arenaEvent case final event?)
                               Text(
                                 event.notice,
@@ -1890,6 +1943,12 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 ),
                               if (compact)
                                 _action(
+                                  _touchWalk ? 'Cammino ✓' : 'Cammina',
+                                  () =>
+                                      setState(() => _touchWalk = !_touchWalk),
+                                ),
+                              if (compact)
+                                _action(
                                   run.hero.talentName,
                                   () => run.special(_targetFor(run)),
                                 ),
@@ -1971,6 +2030,14 @@ class _OculumLitePageState extends State<OculumLitePage>
                                           ? 'G · ${run.weaponArtCooldown.ceil()} s'
                                           : 'G · ${run.weaponArtLabel()}',
                                     ),
+                                  ),
+                                ),
+                              if (run.activeArt() case final art?
+                                  when !run.restHub)
+                                _action(
+                                  'E · ${art.label}',
+                                  () => _saveInventoryChange(
+                                    () => run.useLearnedArt(_targetFor(run)),
                                   ),
                                 ),
                               if (run.restHub)
@@ -2356,7 +2423,14 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   Widget _weaponIcon(LiteWeapon weapon, {double size = 46}) =>
-      OculumLiteWeaponIcon(weapon: weapon, size: size);
+      OculumLiteArena.weaponIcons[weapon] != null
+      ? Image(
+          image: OculumLiteArena.weaponIcons[weapon]!,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+        )
+      : OculumLiteWeaponIcon(weapon: weapon, size: size);
 
   Widget _movementPad() => Semantics(
     label: 'Movimento',

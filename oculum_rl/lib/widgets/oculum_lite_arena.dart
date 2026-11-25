@@ -137,6 +137,37 @@ class OculumLiteArena extends StatefulWidget {
   static const monsterArt = AssetImage(
     'assets/oculum/lite/mostri-inchiostro.png',
   );
+  static const baghestArt = AssetImage('assets/oculum/lite/baghest.webp');
+  static const weaponIcons = <LiteWeapon, AssetImage>{
+    LiteWeapon.spadaScudo: AssetImage(
+      'assets/oculum/lite/arma-spada-scudo.webp',
+    ),
+    LiteWeapon.guanti: AssetImage('assets/oculum/lite/arma-guanti.webp'),
+    LiteWeapon.scettro: AssetImage('assets/oculum/lite/arma-scettro.webp'),
+    LiteWeapon.arco: AssetImage('assets/oculum/lite/arma-arco.webp'),
+  };
+  static const greenStoneArt = AssetImage(
+    'assets/oculum/lite/cura-pietra.webp',
+  );
+  static const refinedGemArt = AssetImage('assets/oculum/lite/cura-gemma.webp');
+  static const plasmaScrollArt = AssetImage(
+    'assets/oculum/lite/pergamena-plasma.webp',
+  );
+  static const redScrollArt = AssetImage(
+    'assets/oculum/lite/pergamena-rossa.webp',
+  );
+
+  static AssetImage? dropIcon(LiteLoot item) => switch (item.kind) {
+    LiteLootKind.healing || LiteLootKind.greenStone => greenStoneArt,
+    LiteLootKind.refinedGreenGem => refinedGemArt,
+    LiteLootKind.scroll when item.scroll == LiteScroll.raggioAlPlasma =>
+      plasmaScrollArt,
+    LiteLootKind.weapon => weaponIcons[item.weapon],
+    _ => null,
+  };
+  static const banditGaits = AssetImage(
+    'assets/oculum/lite/scostubandito-andature.webp',
+  );
   static const posteaMonsters = AssetImage(
     'assets/oculum/lite/mostri-postea.png',
   );
@@ -351,6 +382,12 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
     if (_extraStreams.isEmpty) {
       for (final art in [
         OculumLiteArena.newActors,
+        OculumLiteArena.banditGaits,
+        OculumLiteArena.baghestArt,
+        ...OculumLiteArena.weaponIcons.values,
+        OculumLiteArena.greenStoneArt,
+        OculumLiteArena.refinedGemArt,
+        OculumLiteArena.plasmaScrollArt,
         OculumLiteArena.nightActors,
         OculumLiteArena.lootArt,
         OculumLiteArena.hubArt,
@@ -642,6 +679,9 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
               evasoreFrames: _extraImages[OculumLiteArena.evasorFrames]?.image,
               props: _props?.image,
               monsters: _monsters?.image,
+              banditGaits: _extraImages[OculumLiteArena.banditGaits]?.image,
+              baghestArt: _extraImages[OculumLiteArena.baghestArt]?.image,
+              dropImages: _extraImages,
               posteaMonsters: _posteaMonsters?.image,
               bossArt: _boss?.image,
               archonArt: _extraImages[OculumLiteArena.archonArt]?.image,
@@ -1613,6 +1653,7 @@ void _thirdAttackWarning(Canvas canvas, LiteEnemy enemy) {
 class _HeroSprites {
   const _HeroSprites({
     this.monsters,
+    this.banditGaits,
     this.postea,
     this.newActors,
     this.boss,
@@ -1626,7 +1667,7 @@ class _HeroSprites {
     this.evasore,
   });
 
-  final ui.Image? monsters;
+  final ui.Image? monsters, banditGaits;
   final ui.Image? postea;
   final ui.Image? newActors;
   final ui.Image? boss;
@@ -1651,6 +1692,9 @@ class _ArenaPaint extends CustomPainter {
     this.evasoreFrames,
     this.props,
     this.monsters,
+    this.banditGaits,
+    this.baghestArt,
+    this.dropImages = const {},
     this.posteaMonsters,
     this.bossArt,
     this.archonArt,
@@ -1684,7 +1728,8 @@ class _ArenaPaint extends CustomPainter {
   final ui.Image? ashleyFrames;
   final ui.Image? evasoreFrames;
   final ui.Image? props;
-  final ui.Image? monsters;
+  final ui.Image? monsters, banditGaits, baghestArt;
+  final Map<AssetImage, ImageInfo> dropImages;
   final ui.Image? posteaMonsters;
   final ui.Image? bossArt;
   final ui.Image? archonArt;
@@ -1710,6 +1755,7 @@ class _ArenaPaint extends CustomPainter {
 
   late final _heroSprites = _HeroSprites(
     monsters: monsters,
+    banditGaits: banditGaits,
     postea: posteaMonsters,
     newActors: newActors,
     boss: bossArt,
@@ -1746,6 +1792,72 @@ class _ArenaPaint extends CustomPainter {
     camera.apply(canvas);
     final terrain = floor(run);
     canvas.drawPicture(terrain);
+    for (final (left, top, right, bottom) in run.drownedPools) {
+      final pool = Rect.fromLTRB(left, top, right, bottom);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(pool, const Radius.circular(.35)),
+        Paint()..color = const Color(0x45469da4),
+      );
+      canvas.save();
+      canvas.clipRect(pool);
+      for (var row = top + .55; row < bottom; row += .67) {
+        final tide = Path()
+          ..moveTo(left, row)
+          ..cubicTo(left + 2, row - .28, right - 2, row + .25, right, row);
+        canvas.drawPath(
+          tide,
+          Paint()
+            ..color = const Color(0x586aa7a9)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = .033,
+        );
+      }
+      canvas.restore();
+    }
+    if (run.mapWaypoint case final pin? when visible.contains(_offset(pin))) {
+      final at = _offset(pin);
+      _oval(
+        canvas,
+        at,
+        .70,
+        .36,
+        const Color(0x3269524b),
+        stroke: const Color(0xffddb17a),
+        strokeWidth: .046,
+      );
+    }
+    if (run.showsBaghestAltar) {
+      final altar = _offset(LiteRun.secretCache);
+      _oval(
+        canvas,
+        altar,
+        .96,
+        .55,
+        const Color(0x557c2439),
+        stroke: const Color(0xffc77078),
+        strokeWidth: .055,
+      );
+    }
+    if (run.campFork) {
+      const fork = Offset(6.3, 11);
+      const hintColor = Color(0xffa78966);
+      _lines(
+        canvas,
+        [
+          fork,
+          fork + const Offset(-.22, -.57),
+          fork + const Offset(-.52, -.45),
+        ],
+        hintColor,
+        .085,
+      );
+      _lines(
+        canvas,
+        [fork, fork + const Offset(.30, .59), fork + const Offset(.52, .40)],
+        hintColor,
+        .085,
+      );
+    }
     if (run.arenaEvent case final event?) _paintArenaEvent(canvas, event);
     for (final ground in run.groundShots) {
       final at = _offset(ground.position);
@@ -1925,6 +2037,7 @@ class _ArenaPaint extends CustomPainter {
           item.weapon == null ? null : weapons[item.weapon],
           objects,
           lootArt,
+          dropImages[OculumLiteArena.dropIcon(item)]?.image,
         );
       }
     }
@@ -1942,6 +2055,7 @@ class _ArenaPaint extends CustomPainter {
       weaponAim,
       run.techniqueWeapon(),
       run.weaponArtCooldown,
+      rank: run.supply.forgeRank(run.techniqueWeapon()),
     );
     final facing = weaponAim.dx >= 0 ? 1.0 : -1.0;
     final bossIsTangible = run.finalBossTangible;
@@ -1984,8 +2098,24 @@ class _ArenaPaint extends CustomPainter {
         ));
       }
     }
-    for (final enemy in run.enemies) {
-      final at = _offset(enemy.position);
+    final falling = <LiteEnemy, LiteCombatImpact>{
+      for (final impact in run.defeats)
+        if (impact.enemyKind != null && impact.end != null)
+          (LiteEnemy(impact.subjectId, impact.enemyKind!, impact.position, 1)
+                ..hp = 0):
+              impact,
+    };
+    for (final enemy in [...run.enemies, ...falling.keys]) {
+      final flight = falling[enemy];
+      final phase = flight == null
+          ? 0.0
+          : ((time - flight.time) / .53).clamp(0.0, 1.0);
+      final ground = flight == null
+          ? enemy.position
+          : flight.position +
+                (flight.end! - flight.position) *
+                    (1 - math.pow(1 - phase, 2).toDouble());
+      final at = _offset(ground);
       final onCamera = visible.contains(at);
       final target = enemy.attackTarget;
       if (enemy.burrow case final track?) {
@@ -2034,228 +2164,283 @@ class _ArenaPaint extends CustomPainter {
       jobs.add((
         at.dy,
         () {
-          final facingTarget = target == null ? player.dx : target.x;
-          _actor(canvas, at, size * (facingTarget >= at.dx ? 1 : -1), size, () {
-            if (archon && archonArt != null) {
-              _paintArchon(canvas, archonArt!, enemy, time);
-              return;
-            }
-            final phaseBoss =
-                enemy.kind == LiteEnemyKind.veyrth ||
-                enemy.kind == LiteEnemyKind.minionVeyrth;
-            final mirror = enemy.mirror;
-            final encounterSprite = switch (enemy.kind) {
-              LiteEnemyKind.funerys => 0,
-              LiteEnemyKind.vegliante => 1,
-              LiteEnemyKind.sacrycrab => 2,
-              LiteEnemyKind.gelycryn => 3,
-              LiteEnemyKind.lapysrieth => 4,
-              _ => null,
-            };
-            if (encounterSprite != null && thirdEncounters != null) {
-              _paintThirdActor(
-                canvas,
-                thirdEncounters!,
-                encounterSprite,
-                _enemyHeight(enemy.kind),
-                time,
-                enemy.stride.strength,
-                charging: enemy.attacking,
-                strike: enemy.strikePose,
-                fallen: enemy.hp <= 0,
-                encounterAtlas: true,
-              );
-              return;
-            }
-            final sprite = _thirdEnemySprite(enemy.kind);
-            if (sprite != null && thirdArt != null) {
-              _paintThirdActor(
-                canvas,
-                thirdArt!,
-                sprite,
-                _enemyHeight(enemy.kind),
-                time,
-                enemy.stride.strength,
-                charging: enemy.attacking,
-                strike: enemy.strikePose,
-                fallen: enemy.hp <= 0,
-                shade: switch (enemy.kind) {
-                  LiteEnemyKind.funerys => const Color(0xffa491c0),
-                  LiteEnemyKind.vegliante => const Color(0xffe6bc9a),
-                  LiteEnemyKind.gelycryn => const Color(0xffa6e6f1),
-                  LiteEnemyKind.lapysrieth => const Color(0xffc8def0),
-                  _ => null,
-                },
-              );
-              return;
-            }
-            final infernal = _infernalRow(enemy.kind);
-            if (infernal != null && infernalArt != null) {
-              if (enemy.burrow case final track?) {
-                canvas.translate(0, -math.sin(track.progress * math.pi) * 1.42);
+          final guard = enemy.guard;
+          final facingTarget = flight != null
+              ? at.dx + flight.position.x - flight.end!.x
+              : guard != null && target == null
+              ? at.dx + guard.facing.x
+              : target == null
+              ? player.dx
+              : target.x;
+          if (guard != null &&
+              enemy.hp > 0 &&
+              guard.mode != LiteGuardMode.ronda) {
+            final tint = guard.mode == LiteGuardMode.allerta
+                ? const Color(0xfff38867)
+                : const Color(0xffefc184);
+            final signal =
+                at - Offset(0, _enemyHeight(enemy.kind) * size + .44);
+            _lines(canvas, [signal - const Offset(0, .19), signal], tint, .05);
+            _oval(canvas, signal + const Offset(0, .09), .055, .055, tint);
+          }
+          final lift = flight == null
+              ? 0.0
+              : math.sin(phase * math.pi) * (flight.silent ? .18 : size * .94);
+          _actor(
+            canvas,
+            at - Offset(0, lift),
+            size * (facingTarget >= at.dx ? 1 : -1),
+            size,
+            () {
+              if (flight != null && phase < 1)
+                canvas.rotate(-.20 * math.sin(phase * math.pi));
+              if (baghestArt case final art?
+                  when enemy.kind == LiteEnemyKind.baghest) {
+                final h = _enemyHeight(enemy.kind);
+                if (enemy.hp <= 0) {
+                  canvas.rotate(1.24);
+                } else if (enemy.windup > 0) {
+                  canvas.rotate(-.09);
+                }
+                final wide = h * art.width / art.height;
+                canvas.drawImageRect(
+                  art,
+                  Rect.fromLTWH(
+                    0,
+                    0,
+                    art.width.toDouble(),
+                    art.height.toDouble(),
+                  ),
+                  Rect.fromLTWH(-wide * .5, -h, wide, h),
+                  _monsterSampler,
+                );
+                return;
               }
-              _solarActor(
-                canvas,
-                infernalArt!,
-                infernal,
-                animationLead,
-                enemy.stride,
-                enemy.windup,
-                enemy.strikePose,
-                enemy.hitFlash,
-                columns: 6,
-              );
-              return;
-            }
-            final solarRow = _solarRow(enemy.kind);
-            if (solarRow != null && solarArt != null) {
-              _solarActor(
-                canvas,
-                solarArt!,
-                solarRow,
-                animationLead,
-                enemy.stride,
-                enemy.windup,
-                enemy.strikePose,
-                enemy.hitFlash,
-              );
-              return;
-            }
-            if (phaseBoss) {
-              _paintVeyrth(
-                canvas,
-                bossArt,
-                enemy,
-                bossIsTangible,
-                time,
-                animationLead,
-              );
-              return;
-            }
-            final nightRow = _nightEnemyRow(enemy.kind);
-            if (nightActors != null && nightRow != null) {
-              _newActor(
-                canvas,
-                nightActors!,
-                nightRow,
-                _newFrame(
-                  enemy.stride,
-                  animationLead,
-                  preparing: enemy.attacking,
-                  hitting: enemy.strikePose > 0,
-                ),
-                height: _enemyHeight(enemy.kind),
-                stride: enemy.stride,
-                animationLead: animationLead,
-                fallen: enemy.hp <= 0,
-              );
-              return;
-            }
-            final creature = _newCreatureRow(enemy.kind);
-            if (newActors != null && creature != null) {
-              _newActor(
-                canvas,
-                newActors!,
-                creature,
-                _newFrame(
-                  enemy.stride,
-                  animationLead,
-                  preparing: enemy.attacking,
-                  hitting: enemy.strikePose > 0 || enemy.hitFlash > 0,
-                ),
-                height: _enemyHeight(enemy.kind),
-                stride: enemy.stride,
-                animationLead: animationLead,
-                fallen: enemy.hp <= 0,
-              );
-              return;
-            }
-            if (mirror != null) {
-              final tone = switch (enemy.kind) {
-                LiteEnemyKind.luce => const OculumLiteAppearance(
-                  cloth: Color(0xff96876e),
-                  accent: Color(0xffefcb7a),
-                  hair: Color(0xff875b4f),
-                ),
-                LiteEnemyKind.ombra => const OculumLiteAppearance(
-                  cloth: Color(0xff47304d),
-                  accent: Color(0xffbc7fb1),
-                  hair: Color(0xff28202a),
-                ),
-                _ => const OculumLiteAppearance(
-                  cloth: Color(0xff514060),
-                  accent: Color(0xffac8e7a),
-                  hair: Color(0xff393240),
-                ),
+              if (archon && archonArt != null) {
+                _paintArchon(canvas, archonArt!, enemy, time);
+                return;
+              }
+              final phaseBoss =
+                  enemy.kind == LiteEnemyKind.veyrth ||
+                  enemy.kind == LiteEnemyKind.minionVeyrth;
+              final mirror = enemy.mirror;
+              final encounterSprite = switch (enemy.kind) {
+                LiteEnemyKind.funerys => 0,
+                LiteEnemyKind.vegliante => 1,
+                LiteEnemyKind.sacrycrab => 2,
+                LiteEnemyKind.gelycryn => 3,
+                LiteEnemyKind.lapysrieth => 4,
+                _ => null,
               };
-              final mirrorAppearance = appearance.copyWith(
-                cloth: tone.cloth,
-                accent: tone.accent,
-                hair: mirror.hero == LiteHero.duplicatore
-                    ? appearance.hair
-                    : tone.hair,
-              );
-              _hero(
-                canvas,
-                mirrorAppearance,
-                mirror.weapon,
-                time,
-                hero: mirror.hero,
-                sprites: _heroSprites,
-                figureArt:
-                    mirror.hero == LiteHero.evasore &&
-                        _hasDefaultAppearance(appearance, mirror.hero)
-                    ? _heroSprites.evasore
-                    : null,
-                poseArt: _poses(mirrorAppearance),
-                heads: _heads(mirrorAppearance),
-                gearArt: weapons[mirror.weapon],
-                fallen: enemy.hp <= 0,
-                phantom:
-                    mirror.intangible > 0 || mirror.shadowVeilRemaining > 0,
-                preparingAttack: enemy.attacking,
-                stride: enemy.stride,
-                animationLead: animationLead,
-                moving: enemy.stride.strength > .05,
-                aiming: Offset(
-                  (facingTarget - at.dx).abs(),
-                  (target?.y ?? player.dy) - at.dy,
-                ),
-                attackElapsed: enemy.attacking
-                    ? .11
-                    : enemy.strikePose > 0
-                    ? .24 - enemy.strikePose
-                    : null,
-              );
-              return;
-            }
-            final atlas = run.biome == LiteBiome.postea
-                ? posteaMonsters
-                : monsters;
-            if (atlas == null ||
-                !_paintMonster(
+              if (encounterSprite != null && thirdEncounters != null) {
+                _paintThirdActor(
                   canvas,
-                  atlas,
-                  enemy.kind,
-                  enemy.id,
+                  thirdEncounters!,
+                  encounterSprite,
+                  _enemyHeight(enemy.kind),
+                  time,
+                  enemy.stride.strength,
+                  charging: enemy.attacking,
+                  strike: enemy.strikePose,
+                  fallen: enemy.hp <= 0,
+                  encounterAtlas: true,
+                );
+                return;
+              }
+              final sprite = _thirdEnemySprite(enemy.kind);
+              if (sprite != null && thirdArt != null) {
+                _paintThirdActor(
+                  canvas,
+                  thirdArt!,
+                  sprite,
+                  _enemyHeight(enemy.kind),
+                  time,
+                  enemy.stride.strength,
+                  charging: enemy.attacking,
+                  strike: enemy.strikePose,
+                  fallen: enemy.hp <= 0,
+                  shade: switch (enemy.kind) {
+                    LiteEnemyKind.funerys => const Color(0xffa491c0),
+                    LiteEnemyKind.vegliante => const Color(0xffe6bc9a),
+                    LiteEnemyKind.gelycryn => const Color(0xffa6e6f1),
+                    LiteEnemyKind.lapysrieth => const Color(0xffc8def0),
+                    _ => null,
+                  },
+                );
+                return;
+              }
+              final infernal = _infernalRow(enemy.kind);
+              if (infernal != null && infernalArt != null) {
+                if (enemy.burrow case final track?) {
+                  canvas.translate(
+                    0,
+                    -math.sin(track.progress * math.pi) * 1.42,
+                  );
+                }
+                _solarActor(
+                  canvas,
+                  infernalArt!,
+                  infernal,
+                  animationLead,
                   enemy.stride,
+                  enemy.windup,
+                  enemy.strikePose,
+                  enemy.hitFlash,
+                  columns: 6,
+                );
+                return;
+              }
+              final solarRow = _solarRow(enemy.kind);
+              if (solarRow != null && solarArt != null) {
+                _solarActor(
+                  canvas,
+                  solarArt!,
+                  solarRow,
+                  animationLead,
+                  enemy.stride,
+                  enemy.windup,
+                  enemy.strikePose,
+                  enemy.hitFlash,
+                );
+                return;
+              }
+              if (phaseBoss) {
+                _paintVeyrth(
+                  canvas,
+                  bossArt,
+                  enemy,
+                  bossIsTangible,
                   time,
                   animationLead,
+                );
+                return;
+              }
+              final nightRow = _nightEnemyRow(enemy.kind);
+              if (nightActors != null && nightRow != null) {
+                _newActor(
+                  canvas,
+                  nightActors!,
+                  nightRow,
+                  _newFrame(
+                    enemy.stride,
+                    animationLead,
+                    preparing: enemy.attacking,
+                    hitting: enemy.strikePose > 0,
+                  ),
+                  height: _enemyHeight(enemy.kind),
+                  stride: enemy.stride,
+                  animationLead: animationLead,
                   fallen: enemy.hp <= 0,
-                  windup: enemy.attacking ? enemy.windup : null,
-                  hitFlash: enemy.hitFlash,
-                  strike: enemy.strikePose,
-                  clashing: enemy.clashRemaining > 0,
-                )) {
-              _enemy(
-                canvas,
-                enemy.kind,
-                fallen: enemy.hp <= 0,
-                time: time + at.dx * .22,
-                cannonRaised: enemy.cannonRaised,
-              );
-            }
-          });
+                );
+                return;
+              }
+              final creature = _newCreatureRow(enemy.kind);
+              if (newActors != null && creature != null) {
+                _newActor(
+                  canvas,
+                  newActors!,
+                  creature,
+                  _newFrame(
+                    enemy.stride,
+                    animationLead,
+                    preparing: enemy.attacking,
+                    hitting: enemy.strikePose > 0 || enemy.hitFlash > 0,
+                  ),
+                  height: _enemyHeight(enemy.kind),
+                  stride: enemy.stride,
+                  animationLead: animationLead,
+                  fallen: enemy.hp <= 0,
+                );
+                return;
+              }
+              if (mirror != null) {
+                final tone = switch (enemy.kind) {
+                  LiteEnemyKind.luce => const OculumLiteAppearance(
+                    cloth: Color(0xff96876e),
+                    accent: Color(0xffefcb7a),
+                    hair: Color(0xff875b4f),
+                  ),
+                  LiteEnemyKind.ombra => const OculumLiteAppearance(
+                    cloth: Color(0xff47304d),
+                    accent: Color(0xffbc7fb1),
+                    hair: Color(0xff28202a),
+                  ),
+                  _ => const OculumLiteAppearance(
+                    cloth: Color(0xff514060),
+                    accent: Color(0xffac8e7a),
+                    hair: Color(0xff393240),
+                  ),
+                };
+                final mirrorAppearance = appearance.copyWith(
+                  cloth: tone.cloth,
+                  accent: tone.accent,
+                  hair: mirror.hero == LiteHero.duplicatore
+                      ? appearance.hair
+                      : tone.hair,
+                );
+                _hero(
+                  canvas,
+                  mirrorAppearance,
+                  mirror.weapon,
+                  time,
+                  hero: mirror.hero,
+                  sprites: _heroSprites,
+                  figureArt:
+                      mirror.hero == LiteHero.evasore &&
+                          _hasDefaultAppearance(appearance, mirror.hero)
+                      ? _heroSprites.evasore
+                      : null,
+                  poseArt: _poses(mirrorAppearance),
+                  heads: _heads(mirrorAppearance),
+                  gearArt: weapons[mirror.weapon],
+                  fallen: enemy.hp <= 0,
+                  phantom:
+                      mirror.intangible > 0 || mirror.shadowVeilRemaining > 0,
+                  preparingAttack: enemy.attacking,
+                  stride: enemy.stride,
+                  animationLead: animationLead,
+                  moving: enemy.stride.strength > .05,
+                  aiming: Offset(
+                    (facingTarget - at.dx).abs(),
+                    (target?.y ?? player.dy) - at.dy,
+                  ),
+                  attackElapsed: enemy.attacking
+                      ? .11
+                      : enemy.strikePose > 0
+                      ? .24 - enemy.strikePose
+                      : null,
+                );
+                return;
+              }
+              final atlas = run.biome == LiteBiome.postea
+                  ? posteaMonsters
+                  : monsters;
+              if (atlas == null ||
+                  !_paintMonster(
+                    canvas,
+                    atlas,
+                    enemy.kind,
+                    enemy.id,
+                    enemy.stride,
+                    time,
+                    animationLead,
+                    fallen: enemy.hp <= 0,
+                    windup: enemy.attacking ? enemy.windup : null,
+                    hitFlash: enemy.hitFlash,
+                    banditGaits: banditGaits,
+                    strike: enemy.strikePose,
+                    clashing: enemy.clashRemaining > 0,
+                  )) {
+                _enemy(
+                  canvas,
+                  enemy.kind,
+                  fallen: enemy.hp <= 0,
+                  time: time + at.dx * .22,
+                  cannonRaised: enemy.cannonRaised,
+                );
+              }
+            },
+          );
           if (enemy.hp > 0) {
             final leapHeight = enemy.burrow == null
                 ? 0.0
@@ -2293,6 +2478,17 @@ class _ArenaPaint extends CustomPainter {
       final at = _offset(clone.position);
       if (!visible.contains(at)) continue;
       final companion = clone.companion;
+      if (clone.corrupted) {
+        _oval(
+          canvas,
+          at,
+          .88,
+          .37,
+          const Color(0x44ac314c),
+          stroke: const Color(0xffdc5364),
+          strokeWidth: .034,
+        );
+      }
       final guestOwned = clone.ownerId > 0;
       final cloneHero = guestOwned ? LiteHero.duplicatore : run.hero;
       final account = guestOwned
@@ -2407,6 +2603,7 @@ class _ArenaPaint extends CustomPainter {
                     time,
                     animationLead,
                     fallen: clone.down,
+                    banditGaits: banditGaits,
                     strike: clone.swing,
                     windup:
                         companion == LiteCompanion.granScostumato &&
@@ -3282,7 +3479,36 @@ bool _paintMonster(
   double strike = 0,
   bool clashing = false,
   bool hideRifleBarrel = false,
+  ui.Image? banditGaits,
 }) {
+  if (kind == LiteEnemyKind.scostubandito &&
+      banditGaits != null &&
+      !fallen &&
+      windup == null &&
+      hitFlash <= 0 &&
+      strike <= 0 &&
+      !clashing &&
+      !hideRifleBarrel &&
+      stride.strength >= .15) {
+    final running = stride.speed >= 3.0;
+    final distance = stride.distance + stride.speed * animationLead;
+    final frame = (distance / (running ? .67 : .38)).floor() % 4;
+    final cell = banditGaits.width / 4;
+    final art = Rect.fromLTWH(frame * cell, running ? cell : 0, cell, cell);
+    final height = _enemyHeight(kind);
+    canvas.drawImageRect(
+      banditGaits,
+      art,
+      Rect.fromLTWH(
+        -height * .65,
+        -height * 1.14,
+        height * 1.18,
+        height * 1.18,
+      ),
+      _monsterSampler,
+    );
+    return true;
+  }
   final cell = atlas.width / 3;
   final rows = (atlas.height / cell).round();
   final index = rows == 1
@@ -3343,7 +3569,16 @@ bool _paintMonster(
     canvas.drawImageRect(atlas, original, pose, _monsterSampler);
   } else {
     final strength = clashing ? 0.0 : stride.strength;
-    final phase = _stridePhase(stride, rig.strideMetres, animationLead);
+    final running = !flyer && stride.speed >= 3.5;
+    final pace = running ? 1.22 : .84;
+    final phase = _stridePhase(stride, rig.strideMetres * pace, animationLead);
+    if (running) {
+      canvas.translate(
+        .055 * strength,
+        -.14 * math.pow(math.sin(phase), 2).toDouble() * strength,
+      );
+      canvas.rotate(-.035 * strength);
+    }
     final strain = windup != null
         ? (.24 + (1 - windup / .46).clamp(0.0, 1.0) * .76)
         : 0.0;
@@ -5183,6 +5418,7 @@ void _hero(
           windup: hero == LiteHero.granScostumato && preparingAttack
               ? .16
               : null,
+          banditGaits: sprites.banditGaits,
           hideRifleBarrel:
               isBandit &&
               !fallen &&
@@ -6791,6 +7027,8 @@ double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.vesanybel ||
   LiteEnemyKind.thalvyr ||
   LiteEnemyKind.aerovyr => 1.48,
+  LiteEnemyKind.baghest => 1.40,
+  LiteEnemyKind.corrottoRosso => .98,
 };
 
 double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
@@ -6833,6 +7071,8 @@ double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.lapysrieth || LiteEnemyKind.nymboryth => 1.74,
   LiteEnemyKind.vesanybel || LiteEnemyKind.aerovyr => 2.62,
   LiteEnemyKind.thalvyr => 2.14,
+  LiteEnemyKind.baghest => 3.15,
+  LiteEnemyKind.corrottoRosso => 1.92,
 };
 
 void _enemy(
@@ -6859,6 +7099,19 @@ void _enemy(
         step,
         cannonRaised: false,
       );
+    case LiteEnemyKind.baghest:
+      _forestDemon(canvas, false, step);
+    case LiteEnemyKind.corrottoRosso:
+      canvas.saveLayer(
+        null,
+        Paint()
+          ..colorFilter = const ColorFilter.mode(
+            Color(0xff712232),
+            BlendMode.modulate,
+          ),
+      );
+      _forestDemon(canvas, true, step);
+      canvas.restore();
     case LiteEnemyKind.scostubandito:
     case LiteEnemyKind.granScostumato:
       _bandit(
@@ -7846,17 +8099,32 @@ void _loot(
   ui.Image? gear,
   ui.Image? props,
   ui.Image? art,
+  ui.Image? detail,
 ) {
   final at = _offset(loot.position);
   final p = at - Offset(0, .22 + math.sin(time * 4 + at.dx) * .10);
   _shadow(canvas, at, .24, .13, alpha: .47);
   _paintDropSignal(canvas, at, p, loot, time);
+  if (detail != null) {
+    final size = loot.kind == LiteLootKind.refinedGreenGem ? 1.38 : 1.16;
+    canvas.drawImageRect(
+      detail,
+      Rect.fromLTWH(0, 0, detail.width.toDouble(), detail.height.toDouble()),
+      Rect.fromCenter(
+        center: p - Offset(0, size * .24),
+        width: size,
+        height: size,
+      ),
+      _monsterSampler,
+    );
+    return;
+  }
   if (art != null) {
     final (index, size) = switch (loot.kind) {
       LiteLootKind.obser => (0, .73),
-      LiteLootKind.scroll => (2, 1.04),
-      LiteLootKind.greenStone => (1, .78),
-      LiteLootKind.refinedGreenGem => (1, 1.17),
+      LiteLootKind.scroll => (2, 1.16),
+      LiteLootKind.greenStone => (1, .92),
+      LiteLootKind.refinedGreenGem => (1, 1.35),
       LiteLootKind.lunarSymbol => (4, 1.34),
       _ => (-1, .0),
     };

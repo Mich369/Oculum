@@ -294,7 +294,12 @@ extension _NightCombat on LiteRun {
     return true;
   }
 
-  bool _ram(LiteEnemy enemy, Point<double> source, double metres) {
+  bool _ram(
+    LiteEnemy enemy,
+    Point<double> source,
+    double metres, {
+    bool breakCover = true,
+  }) {
     final direction = LiteRun._unit(enemy.position - source);
     if (direction.magnitude <= 0) return false;
     for (var left = metres; left > 0; left -= .22) {
@@ -303,7 +308,7 @@ extension _NightCombat on LiteRun {
           .where((obstacle) => obstacle.visibleAt(candidate, enemy.radius))
           .firstOrNull;
       if (wall != null) {
-        if (wall.breakable) _destroyCover(wall);
+        if (wall.breakable && breakCover) _destroyCover(wall);
         return true;
       }
       final next = _move(

@@ -178,7 +178,7 @@ extension LiteGoblinCombat on LiteRun {
                 _glueRadius * _glueRadius,
       )
       ? .46
-      : _arenaTerrainSpeedAt(point);
+      : _arenaTerrainSpeedAt(point) * _explorationTerrainSpeedAt(point);
 
   void _leaveGroundShot(LiteProjectile shot) {
     if (groundShots.length >= 28) groundShots.removeAt(0);

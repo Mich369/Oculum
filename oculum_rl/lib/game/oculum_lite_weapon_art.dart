@@ -66,8 +66,11 @@ extension LiteWeaponArt on LiteRun {
       return false;
     }
     final owner = fighter?.id;
+    final rank = (fighter?.supply ?? supply).forgeRank(item);
+    final effectScale = 1 + rank / 12;
     final damage =
-        12 + item.damageBonus + ((fighter?.level ?? level) - 1) * 1.8;
+        (12 + item.damageBonus + ((fighter?.level ?? level) - 1) * 1.8) *
+        (1 + rank * .04);
     if (fighter == null) {
       aim = direction;
       oculum -= weaponArtCost;
@@ -91,7 +94,7 @@ extension LiteWeaponArt on LiteRun {
           position: origin,
           direction: _rotate(direction, angle),
           speed: speed,
-          remaining: range,
+          remaining: range * (1 + rank * .025),
           damage: power,
           magic: item == LiteWeapon.scettro,
           kind: type,
@@ -107,14 +110,16 @@ extension LiteWeaponArt on LiteRun {
       double power, {
       double arc = .32,
       Point<double>? at,
+      double push = 0,
     }) {
       _melee(
         at ?? origin,
         direction,
         item,
         power,
-        reach: reach,
+        reach: reach * effectScale,
         minDot: arc,
+        push: push,
         sourceCloneId: owner,
         ownerCanHeal: owner == null,
       );
@@ -129,13 +134,24 @@ extension LiteWeaponArt on LiteRun {
         shot(.24, 8, 14, damage * .7, type: type, returns: true);
       case LiteWeapon.spadaScudo:
         if (fighter == null) {
-          shield = max(shield, 8);
+          shield = max(shield, 8 + rank.toDouble());
         } else {
-          fighter.shield = max(fighter.shield, 8);
+          fighter.shield = max(fighter.shield, 8 + rank.toDouble());
         }
-        melee(3.1, damage, arc: -.2);
+        melee(
+          3.1,
+          damage,
+          arc: rank == 12 ? -1e-9 : -.2,
+          push: rank.toDouble(),
+        );
       case LiteWeapon.guanti:
-        _openBurst(origin, 3.15, damage, owner ?? 0, push: 2.1);
+        _openBurst(
+          origin,
+          3.15 * effectScale,
+          damage,
+          owner ?? 0,
+          push: 2.1 * effectScale,
+        );
       case LiteWeapon.arco:
         if (fighter == null) {
           _arrows -= 3;

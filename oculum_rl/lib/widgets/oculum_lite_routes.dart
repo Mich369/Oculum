@@ -8,60 +8,72 @@ Future<LiteBiome?> chooseOculumLiteRoute(BuildContext context, LiteRun run) {
   ];
   if (routes.isEmpty) return Future.value();
   final solo = run.playerCount == 1;
-  final pendingReward = run.powerOffers.isNotEmpty;
   return showDialog<LiteBiome>(
     context: context,
-    builder: (dialog) => AlertDialog(
-      scrollable: true,
-      title: Text('Portale · Piano ${routes.first.floor}'),
-      content: SizedBox(
-        width: 520,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (LiteRun.arenaSpeedBonusAt(routes.first.floor) > 0)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  'Ritmo dell’arena · +${LiteRun.arenaSpeedBonusAt(routes.first.floor)}%',
+    builder: (dialog) => StatefulBuilder(
+      builder: (dialog, redraw) => AlertDialog(
+        scrollable: true,
+        title: Text('Prima del portale · Piano ${routes.first.floor}'),
+        content: SizedBox(
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (LiteRun.arenaSpeedBonusAt(routes.first.floor) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    'Ritmo dell’arena · +${LiteRun.arenaSpeedBonusAt(routes.first.floor)}%',
+                  ),
+                ),
+              if (LiteRun.enemyLifeBonusAt(routes.first.floor) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    'Nemici · +${LiteRun.enemyLifeBonusAt(routes.first.floor)}% Vita, '
+                    '+${LiteRun.enemyDamageBonusAt(routes.first.floor)}% Danni',
+                    style: TextStyle(color: Theme.of(dialog).colorScheme.error),
+                  ),
+                ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Risultati del piano ${run.stage}'),
+                subtitle: Text(
+                  'Livello ${run.level} · ${run.obser} Obser · ${run.weapon.label}'
+                  '\nQuest: ${run.quests.where((quest) => quest.complete).length}/${run.quests.length}'
+                  '\n${run.activePowers.map((power) => '${power.label} ${run.powerRank(power)}/3').join(' · ')}',
                 ),
               ),
-            if (LiteRun.enemyLifeBonusAt(routes.first.floor) > 0)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Nemici · +${LiteRun.enemyLifeBonusAt(routes.first.floor)}% Vita, '
-                  '+${LiteRun.enemyDamageBonusAt(routes.first.floor)}% Danni',
-                  style: TextStyle(color: Theme.of(dialog).colorScheme.error),
+              for (final power in run.powerOffers)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.auto_awesome),
+                  title: Text(power.label),
+                  subtitle: Text(power.descriptionAt(run.powerRank(power) + 1)),
+                  trailing: OutlinedButton(
+                    onPressed: () => redraw(() => run.choosePowerUp(power)),
+                    child: const Text('Scegli'),
+                  ),
                 ),
-              ),
-            if (pendingReward)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Puoi ancora scegliere un potenziamento di questo piano. '
-                  'Se attraversi il portale, l’offerta scade.',
-                  style: TextStyle(color: Theme.of(dialog).colorScheme.primary),
+              for (final route in routes)
+                _RouteCard(
+                  route: route,
+                  solo: solo,
+                  rank: route.featuredPower == null
+                      ? null
+                      : run.powerRank(route.featuredPower!) + 1,
+                  onTap: () => Navigator.pop(dialog, route.biome),
                 ),
-              ),
-            for (final route in routes)
-              _RouteCard(
-                route: route,
-                solo: solo,
-                rank: route.featuredPower == null
-                    ? null
-                    : run.powerRank(route.featuredPower!) + 1,
-                onTap: () => Navigator.pop(dialog, route.biome),
-              ),
-          ],
+            ],
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Resta qui'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialog),
-          child: const Text('Resta qui'),
-        ),
-      ],
     ),
   );
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../game/oculum_lite_run.dart';
 import 'oculum_lite_merchant_greeting.dart';
+import 'oculum_lite_arena.dart';
 import 'oculum_rl_merchant.dart';
 
 Future<void> showLiteRestHub(
@@ -14,7 +15,11 @@ Future<void> showLiteRestHub(
   LiteCoopFighter? Function()? fighter,
   Listenable? refresh,
 }) async {
-  var station = LiteRestStation.tavern;
+  final start = world();
+  var station =
+      start?.artDealerOpen == true && start?.activeArt(fighter?.call()) == null
+      ? LiteRestStation.art
+      : LiteRestStation.tavern;
   await showDialog<void>(
     context: context,
     builder: (context) => StatefulBuilder(
@@ -35,7 +40,8 @@ Future<void> showLiteRestHub(
             LiteRestStation.forge => LiteShopkeeper.fabbro,
             LiteRestStation.merchant =>
               run.hubGoblin ? LiteShopkeeper.goblin : LiteShopkeeper.armaiola,
-            LiteRestStation.seer => LiteShopkeeper.veggente,
+            LiteRestStation.seer ||
+            LiteRestStation.art => LiteShopkeeper.veggente,
           };
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -51,11 +57,12 @@ Future<void> showLiteRestHub(
                 runSpacing: 4,
                 children: [
                   for (final booth in LiteRestStation.values)
-                    ChoiceChip(
-                      label: Text(booth.label),
-                      selected: station == booth,
-                      onSelected: (_) => redraw(() => station = booth),
-                    ),
+                    if (booth != LiteRestStation.art || run.artDealerOpen)
+                      ChoiceChip(
+                        label: Text(booth.label),
+                        selected: station == booth,
+                        onSelected: (_) => redraw(() => station = booth),
+                      ),
                 ],
               ),
               if (station == LiteRestStation.merchant)
@@ -79,6 +86,16 @@ Future<void> showLiteRestHub(
                     ),
                   ),
               ],
+              if (station == LiteRestStation.art)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Traguardo · Piano ${run.stage + 1}'),
+                  subtitle: Text(
+                    'Livello ${player?.level ?? run.level} · ${(player?.weapon ?? run.weapon).label}'
+                    '\n${run.activePowers.map((power) => power.label).join(' · ')}'
+                    '\nArt ${run.activeArt(player)?.label ?? 'da scegliere'} · Usa E in arena.',
+                  ),
+                ),
               if (station == LiteRestStation.seer)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -94,6 +111,18 @@ Future<void> showLiteRestHub(
                   padding: const EdgeInsets.symmetric(vertical: 7),
                   child: Row(
                     children: [
+                      if (item == LiteRestItem.artPlasma ||
+                          item == LiteRestItem.artCorruzione)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Image(
+                            image: item == LiteRestItem.artPlasma
+                                ? OculumLiteArena.plasmaScrollArt
+                                : OculumLiteArena.redScrollArt,
+                            width: 38,
+                            height: 38,
+                          ),
+                        ),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,6 +132,10 @@ Future<void> showLiteRestHub(
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
                             Text(item.effect),
+                            if (item == LiteRestItem.tempra)
+                              Text(
+                                '${(player?.weapon ?? run.weapon).label} · Rango ${supplies.forgeRank(player?.weapon ?? run.weapon)}/12',
+                              ),
                             if (item.evolution)
                               Text('Rango ${supplies.rank(item)}/3'),
                           ],

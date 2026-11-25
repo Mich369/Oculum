@@ -9,6 +9,7 @@ import '../game/oculum_lite_audio.dart';
 import '../game/oculum_lite_coop.dart';
 import '../game/oculum_lite_run.dart';
 import '../widgets/oculum_lite_arena.dart';
+import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_routes.dart';
 import '../widgets/oculum_lite_rest_panel.dart';
 
@@ -124,7 +125,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       if (event is KeyUpEvent) {
         _session.setRescuing(false);
       } else if (event is KeyDownEvent && !_session.pausedByHost) {
-        if (_session.canRescue) {
+        if (_session.canRescue && _redGrip == 0) {
           _session.setRescuing(true);
         } else {
           _interact();
@@ -146,6 +147,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     } else if (key == LogicalKeyboardKey.keyB &&
         _localHero == LiteHero.scostubandito) {
       _session.bomb();
+    } else if (key == LogicalKeyboardKey.keyE) {
+      _session.castLearnedArt();
     } else if (key == LogicalKeyboardKey.keyG) {
       _session.weaponTechnique();
     } else if (key == LogicalKeyboardKey.shiftLeft ||
@@ -176,7 +179,21 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     _focus.requestFocus();
   }
 
+  int get _redGrip {
+    final world = _session.run;
+    if (world == null) return 0;
+    final guest = _session.host
+        ? null
+        : world.coopFighter(_session.localAccount);
+    return _session.host || guest != null ? world.gripRemaining(guest) : 0;
+  }
+
   Future<void> _interact() async {
+    if (_redGrip > 0) {
+      _session.struggleRedGrip();
+      return;
+    }
+    if (_session.authority?.challengeBaghest() == true) return;
     if (_session.solarInteraction() || _session.advanceActTwo()) return;
     if (_session.host && (_session.run?.canChooseActTwo ?? false)) {
       _clear();
@@ -363,6 +380,21 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                         }
                       : null,
                 ),
+                if (run.hasFloorMap && !run.finished)
+                  Positioned(
+                    left: 9,
+                    top: 100,
+                    child: OculumLiteFloorMap(
+                      key: ValueKey(run.inputArena),
+                      run: run,
+                      tiny: limits.maxWidth < 680,
+                      followedAccount: mine?.account,
+                      onOpen: (open) {
+                        _clear();
+                        if (!open) _focus.requestFocus();
+                      },
+                    ),
+                  ),
                 Positioned(
                   top: 6,
                   left: 8,
@@ -605,19 +637,32 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                           _session.useRestScroll(entry.key),
                                       child: Text(entry.key.label),
                                     ),
+                              if (run.activeArt(mine) case final art?
+                                  when !run.restHub)
+                                FilledButton.tonal(
+                                  onPressed: _session.castLearnedArt,
+                                  child: Text('E · ${art.label}'),
+                                ),
                               if (_session.host && run.canEnterThirdAct)
                                 FilledButton(
                                   onPressed: _session.enterThirdAct,
                                   child: const Text('Entra nell’Atto III'),
                                 ),
                               if (!run.finished &&
+                                  _redGrip == 0 &&
                                   (_session.canRescue || rescueStatus != null))
                                 _rescueControl(rescueStatus)
                               else if (!run.finished)
                                 FilledButton(
                                   onPressed: _interact,
                                   child: Text(
-                                    _session.host && run.canEnterSolarDungeon
+                                    _redGrip > 0
+                                        ? 'Presa di Baghest · Premi R · $_redGrip'
+                                        : _session.host &&
+                                              run.canChallengeBaghest
+                                        ? 'Sfida Baghest · R'
+                                        : _session.host &&
+                                              run.canEnterSolarDungeon
                                         ? 'Scendi le scale d’oro · R'
                                         : _session.host &&
                                               run.solarBossWaiting &&
