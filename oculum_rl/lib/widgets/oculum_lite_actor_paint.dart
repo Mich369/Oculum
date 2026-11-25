@@ -115,7 +115,86 @@ final _inkAshley = _InkRig([
   const Offset(.07, .94),
   const Offset(.87, .91),
 ], strideMetres: 1.55);
-final _inkAshleySpring = _InkRig([const Offset(.98, .22)], reach: .35);
+final _inkAshleyRun = _InkRig(
+  [const Offset(.08, .94), const Offset(.66, .87)],
+  reach: .19,
+  strideMetres: 1.96,
+);
+final _inkAshleySpring = _InkRig([const Offset(.96, .23)], reach: .49);
+
+final _ashleyGrips = [
+  _InkGripRig(const Offset(.35, .52), .075, .038),
+  _InkGripRig(const Offset(.28, .36), .064, .043),
+];
+final _spiderTail = _InkGripRig(const Offset(.513, .333), .092, .008);
+
+bool _usesPosteaAtlas(LiteEnemyKind kind) => switch (kind) {
+  LiteEnemyKind.ragnoSaldatore ||
+  LiteEnemyKind.dronePostea ||
+  LiteEnemyKind.miruscyrus => true,
+  _ => false,
+};
+
+_InkAttackMotion? _spiderTailMotion(double? windup, double strike) {
+  if (windup != null) {
+    final charge = _inkEase(1 - windup / .46);
+    return _InkAttackMotion(
+      _spiderTail,
+      Offset(.044 * charge, -.083 * charge),
+      -.19 * charge,
+      charge,
+    );
+  }
+  if (strike <= 0) return null;
+  final recoil = (strike / .24).clamp(0.0, 1.0);
+  return _InkAttackMotion(
+    _spiderTail,
+    Offset(-.082 * recoil * recoil, -.043 * recoil),
+    -.26 * recoil,
+    recoil,
+  );
+}
+
+void _paintSpiderCharge(
+  Canvas canvas,
+  Rect pose,
+  _InkAttackMotion tail,
+  bool charging,
+  double time,
+) {
+  final anchor = tail.grip.pivot + tail.travel;
+  final muzzle = Offset(
+    pose.left + pose.width * anchor.dx,
+    pose.top + pose.height * anchor.dy,
+  );
+  final strength = tail.brace;
+  if (strength < .075) return;
+  final radius = charging ? .05 + strength * .15 : .08 + .17 * (1 - strength);
+  final cyan = const Color(0xff7bded4).withValues(alpha: strength);
+  _oval(
+    canvas,
+    muzzle,
+    radius * 1.24,
+    radius,
+    _ink,
+    stroke: cyan,
+    strokeWidth: .030,
+  );
+  _oval(
+    canvas,
+    muzzle,
+    radius * .43,
+    radius * .46,
+    const Color(0xffe5f8cb).withValues(alpha: strength),
+  );
+  for (var index = 0; index < 3; index++) {
+    final angle = time * (charging ? 8 : 3) + index * math.pi * 2 / 3;
+    final direction = Offset(math.cos(angle), math.sin(angle));
+    final root = muzzle + direction * radius;
+    _inkSlash(canvas, root, root + direction * (.10 * strength), cyan, .027);
+  }
+}
+
 final _inkVeyrth = _InkRig([
   const Offset(.12, .53),
   const Offset(.19, .84),
@@ -291,8 +370,7 @@ class _InkAttackMotion {
 
 _InkAttackMotion? _inkWeaponMotion(
   LiteWeapon weapon,
-  int frame,
-  bool feminine,
+  _InkGripRig grip,
   double? elapsed,
   bool preparing,
 ) {
@@ -311,7 +389,6 @@ _InkAttackMotion? _inkWeaponMotion(
     LiteWeapon.balestraRunica => (-.067, -.007, -.08, .32),
     LiteWeapon.fucileScostubandito => (-.076, -.010, -.139, .29),
   };
-  final grip = _inkGripRigs[feminine]![frame];
   final windup = weapon == LiteWeapon.doppieLame ? .11 : weapon.chargeSeconds;
   if (preparing) {
     final weight = _inkEase(elapsed / math.max(.095, windup));
@@ -491,4 +568,89 @@ void _paintDroneRotor(Canvas canvas, Rect pose, double time) {
     paint.color = (i == 1 ? const Color(0x9079c9c2) : const Color(0xa6c58145));
     canvas.drawArc(ellipse, time * 31 + i * math.pi * 2 / 3, .52, false, paint);
   }
+}
+
+final _rasvyrSupports = [
+  _InkRig(
+    [const Offset(.15, .88), const Offset(.32, .88), const Offset(.85, .87)],
+    reach: .18,
+    strideMetres: 1.85,
+  ),
+  _InkRig(
+    [const Offset(.19, .89), const Offset(.41, .83), const Offset(.81, .87)],
+    reach: .20,
+    strideMetres: 1.85,
+  ),
+];
+final _rasvyrClaw = _InkGripRig(const Offset(.78, .57), .24, .08);
+
+void _paintRasvyrMotion(
+  Canvas canvas,
+  ui.Image atlas,
+  Rect source,
+  Rect pose,
+  Paint paint,
+  int frame,
+  LiteStride? stride,
+  double lead,
+  double strike,
+) {
+  final rig = _rasvyrSupports[frame == 1 ? 1 : 0];
+  final phase = _stridePhase(stride, rig.strideMetres, lead);
+  final pace = frame < 2 ? stride?.strength ?? 0.0 : 0.0;
+  final follow = (strike / .24).clamp(0.0, 1.0);
+  final claw = frame == 3
+      ? _InkAttackMotion(
+          _rasvyrClaw,
+          Offset(.074 * follow, -.026 * follow),
+          -.12 * follow,
+          follow,
+        )
+      : null;
+  _inkActorSprite(
+    canvas,
+    atlas,
+    source,
+    pose,
+    paint,
+    rig,
+    phase: phase,
+    strength: pace,
+    compress: _stepCompression(phase) * pace + (frame == 2 ? .037 : 0),
+    handMotion: claw,
+    running: (stride?.speed ?? 0) >= 3.1,
+  );
+}
+
+void _paintOrbryxRoll(
+  Canvas canvas,
+  ui.Image atlas,
+  Rect source,
+  Rect pose,
+  Paint paint,
+  double strike,
+) {
+  final progress = (1.0 - strike / .24).clamp(0.0, 1.0);
+  final lift = math.sin(progress * math.pi) * pose.height * .12;
+  final at = Offset(pose.center.dx, pose.bottom - pose.height * .43 - lift);
+  final dust = const Color(0xff98616e).withValues(alpha: 1 - progress);
+  for (var i = 0; i < 3; i++) {
+    final root = Offset(
+      pose.left + pose.width * (.07 + .09 * i),
+      pose.bottom - (.04 + .06 * i),
+    );
+    _inkSlash(
+      canvas,
+      root,
+      root + Offset(-.25 - progress * .35, -.028),
+      dust,
+      .037,
+    );
+  }
+  canvas.save();
+  canvas.translate(at.dx, at.dy);
+  canvas.rotate(2 * math.pi * progress);
+  canvas.translate(-pose.center.dx, -(pose.bottom - pose.height * .43));
+  canvas.drawImageRect(atlas, source, pose, paint);
+  canvas.restore();
 }

@@ -2410,11 +2410,18 @@ class _ArenaPaint extends CustomPainter {
                     enemy.stride,
                     animationLead,
                     preparing: enemy.attacking,
-                    hitting: enemy.strikePose > 0 || enemy.hitFlash > 0,
+                    hitting:
+                        enemy.strikePose > 0 ||
+                        (enemy.kind != LiteEnemyKind.rasvyr &&
+                            enemy.kind != LiteEnemyKind.orbryx &&
+                            enemy.hitFlash > 0),
                   ),
                   height: _enemyHeight(enemy.kind),
                   stride: enemy.stride,
                   animationLead: animationLead,
+                  species: enemy.kind,
+                  strike: math.max(0, enemy.strikePose - animationLead),
+                  hurt: enemy.hitFlash,
                   fallen: enemy.hp <= 0,
                 );
                 return;
@@ -2485,7 +2492,7 @@ class _ArenaPaint extends CustomPainter {
                 );
                 return;
               }
-              final atlas = run.biome == LiteBiome.postea
+              final atlas = _usesPosteaAtlas(enemy.kind)
                   ? posteaMonsters
                   : monsters;
               if (atlas == null ||
@@ -3285,7 +3292,11 @@ bool _impactLabel(
   if (parts.isEmpty) return false;
   final painter = TextPainter(
     text: TextSpan(
-      style: TextStyle(fontSize: height, fontWeight: FontWeight.w900),
+      style: TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: height,
+        fontWeight: FontWeight.w900,
+      ),
       children: [
         for (var i = 0; i < parts.length; i++)
           TextSpan(
@@ -3675,7 +3686,11 @@ bool _paintMonster(
     final strain = windup != null
         ? (.24 + (1 - windup / .46).clamp(0.0, 1.0) * .76)
         : 0.0;
+    final isSpider = kind == LiteEnemyKind.ragnoSaldatore;
+    final hit = ((strike - animationLead) / .24).clamp(0.0, 1.0);
+    final tail = isSpider ? _spiderTailMotion(windup, hit * .24) : null;
     final compress = switch (kind) {
+      LiteEnemyKind.ragnoSaldatore => strain * .038,
       LiteEnemyKind.slime => .055 + math.sin(time * 6 + phase) * .048,
       LiteEnemyKind.babyForestDemon || LiteEnemyKind.forestDemon =>
         (.02 + .034 * math.cos(phase * 2)) * strength,
@@ -3690,12 +3705,16 @@ bool _paintMonster(
       rig,
       phase: flyer ? time * 12 : phase,
       strength: flyer ? .40 : strength,
-      anticipation: strain,
-      strike: ((strike - animationLead) / .24).clamp(0.0, 1.0),
+      anticipation: isSpider ? strain * .22 : strain,
+      strike: isSpider ? hit * .24 : hit,
       compress: compress + (flyer ? 0 : _stepCompression(phase) * strength),
       grounded: !flyer && kind != LiteEnemyKind.slime,
       running: running,
+      handMotion: tail,
     );
+    if (tail != null) {
+      _paintSpiderCharge(canvas, pose, tail, windup != null, time);
+    }
     if (flyer) _paintDroneRotor(canvas, pose, time);
   }
   canvas.restore();
@@ -4381,8 +4400,7 @@ void _paintClonatorePose(
   final source = Rect.fromLTWH(frame % 4 * cell, frame ~/ 4 * cell, cell, cell);
   final handMotion = _inkWeaponMotion(
     weapon,
-    frame,
-    feminine,
+    _inkGripRigs[feminine]![frame],
     attackElapsed,
     preparingAttack,
   );
@@ -4625,6 +4643,8 @@ void _paintAshley(
   LiteStride? stride,
   double animationLead = 0,
   double springRemaining = 0,
+  double? attackElapsed,
+  bool preparingAttack = false,
   bool releasingChakram = false,
 }) {
   const left = [.086, .52, .039, .441];
@@ -4639,35 +4659,50 @@ void _paintAshley(
   );
   final width = 2.48 * _isometricY * source.width / source.height;
   final spring = frame == 3;
-  final rig = spring ? _inkAshleySpring : _inkAshley;
-  final phase = stride == null
-      ? 0.0
-      : _stridePhase(stride, rig.strideMetres, animationLead);
+  final running = frame == 1;
+  final rig = spring
+      ? _inkAshleySpring
+      : running
+      ? _inkAshleyRun
+      : _inkAshley;
+  final phase = _stridePhase(stride, rig.strideMetres, animationLead);
+  final travel = frame <= 1 ? stride?.strength ?? 0.0 : 0.0;
+  final springRecoil = spring ? _inkEase(1 - springRemaining / .28) : 0.0;
+  final motion = frame > 1
+      ? null
+      : _inkWeaponMotion(
+          weapon,
+          _ashleyGrips[frame],
+          attackElapsed,
+          preparingAttack,
+        );
+  final pose = Rect.fromLTWH(-width * (spring ? .42 : .51), -2.48, width, 2.48);
   _inkActorSprite(
     canvas,
     atlas,
     source,
-    Rect.fromLTWH(-width * (frame == 3 ? .42 : .51), -2.48, width, 2.48),
+    pose,
     Paint()..filterQuality = FilterQuality.medium,
     rig,
     phase: phase,
-    strength: frame <= 1 ? stride?.strength ?? 0 : 0,
-    compress: frame <= 1
-        ? _stepCompression(phase) * (stride?.strength ?? 0)
-        : 0,
-    recoilArm: spring
-        ? (1 - springRemaining / .28).clamp(0.0, 1.0)
-        : releasingChakram
-        ? .58
-        : 0,
+    strength: travel * (motion?.strideWeight ?? 1),
+    compress: _stepCompression(phase) * travel + (motion?.brace ?? 0) * .018,
+    clothFlow: travel * (running ? .85 : .34),
+    recoilArm: springRecoil,
+    running: running,
+    handMotion: motion,
   );
-  if (frame <= 1 && weapon != LiteWeapon.guanti && !releasingChakram) {
-    final hand = frame == 0
-        ? Offset(-width * .20, -1.15)
-        : Offset(-width * .23, -1.60);
+  if ((frame <= 1 || spring) &&
+      weapon != LiteWeapon.guanti &&
+      !releasingChakram) {
+    final grip = spring ? const Offset(.316, .502) : _ashleyGrips[frame].pivot;
+    final hand = grip + (motion?.travel ?? Offset.zero);
     canvas.save();
-    canvas.translate(hand.dx, hand.dy);
-    canvas.rotate(aim.direction.clamp(-.34, .38));
+    canvas.translate(
+      pose.left + hand.dx * width,
+      pose.top + hand.dy * pose.height,
+    );
+    canvas.rotate(aim.direction.clamp(-.34, .38) + (motion?.turn ?? 0));
     canvas.scale(.63);
     _holdWeapon(canvas, weapon, gear, _sand, _ink);
     canvas.restore();
@@ -4994,11 +5029,19 @@ void _newActor(
   double animationLead = 0,
   bool fallen = false,
   bool phantom = false,
+  LiteEnemyKind? species,
+  double strike = 0,
+  double hurt = 0,
 }) {
   canvas.save();
   if (fallen) {
     canvas.rotate(1.24);
     canvas.scale(.73);
+  } else if (hurt > 0 &&
+      (species == LiteEnemyKind.rasvyr || species == LiteEnemyKind.orbryx)) {
+    final recoil = (hurt / .18).clamp(0.0, 1.0);
+    canvas.translate(-.16 * recoil, 0);
+    canvas.rotate(-.095 * recoil);
   } else if (frame <= 1) {
     _groundedMotion(canvas, stride, animationLead, strideMetres: 1.55);
   }
@@ -5008,14 +5051,30 @@ void _newActor(
     height * 1.5,
     height,
   );
-  canvas.drawImageRect(
-    art,
-    Rect.fromLTWH(360.0 * frame, 240.0 * row, 360, 240),
-    dest,
-    Paint()
-      ..filterQuality = FilterQuality.medium
-      ..color = Color(phantom ? 0xc0ffffff : 0xffffffff),
-  );
+  final source = Rect.fromLTWH(360.0 * frame, 240.0 * row, 360, 240);
+  final paint = Paint()
+    ..filterQuality = FilterQuality.medium
+    ..color = Color(phantom ? 0xc0ffffff : 0xffffffff);
+  if (!fallen && species == LiteEnemyKind.rasvyr) {
+    _paintRasvyrMotion(
+      canvas,
+      art,
+      source,
+      dest,
+      paint,
+      frame,
+      stride,
+      animationLead,
+      strike,
+    );
+  } else if (!fallen &&
+      species == LiteEnemyKind.orbryx &&
+      frame == 3 &&
+      strike > 0) {
+    _paintOrbryxRoll(canvas, art, source, dest, paint, strike);
+  } else {
+    canvas.drawImageRect(art, source, dest, paint);
+  }
   canvas.restore();
 }
 
@@ -5212,8 +5271,8 @@ void _hero(
       fallen
           ? 2
           : preparingTalent
-          ? 3
-          : moving
+          ? (springRemaining > .064 ? 3 : 2)
+          : moving && (stride?.speed ?? 0) > 3.55
           ? 1
           : 0,
       gearArt,
@@ -5222,15 +5281,15 @@ void _hero(
       stride: stride,
       animationLead: animationLead,
       springRemaining: springRemaining,
+      attackElapsed: attackElapsed,
+      preparingAttack: preparingAttack,
       releasingChakram: releasingChakram,
     );
     return;
   }
   final postea =
       hero == LiteHero.dronePostea ||
-      mimic?.kind == LiteEnemyKind.dronePostea ||
-      mimic?.kind == LiteEnemyKind.ragnoSaldatore ||
-      mimic?.kind == LiteEnemyKind.costrutto;
+      (mimic != null && _usesPosteaAtlas(mimic.kind));
   final banditArt = postea ? sprites.postea : sprites.monsters;
   final newActors = sprites.newActors;
   final bossArt = sprites.boss;
@@ -5410,6 +5469,8 @@ void _hero(
         height: _enemyHeight(mimic.kind),
         stride: stride,
         animationLead: animationLead,
+        species: mimic.kind,
+        strike: math.max(0, .24 - (attackElapsed ?? .24)),
         fallen: fallen,
       );
     } else if (banditArt == null ||
@@ -9155,23 +9216,23 @@ void _projectile(
       });
       return;
     case LiteProjectileKind.pulse:
-    case LiteProjectileKind.plasma:
-      final plasma = projectile.kind == LiteProjectileKind.plasma;
-      final length = plasma ? 1.45 : .92;
-      final tail = p - heading * length;
       _lines(
         canvas,
-        [tail, p],
+        [p - heading * .92, p],
         _plasma.withValues(alpha: .31),
-        plasma ? .29 : .14,
+        .14,
       );
-      _lines(
-        canvas,
-        [tail + heading * .19, p + heading * .13],
-        plasma ? const Color(0xffdef9d3) : _plasma,
-        plasma ? .11 : .07,
-      );
+      _lines(canvas, [p - heading * .73, p + heading * .13], _plasma, .07);
       _oval(canvas, p, .21, .18, const Color(0xffe9ffd9));
+      return;
+    case LiteProjectileKind.plasma:
+      _paintPlasmaBolt(
+        canvas,
+        p,
+        heading,
+        projectile.age,
+        projectile.fromEnemy,
+      );
       return;
     case LiteProjectileKind.cannon:
       _lines(

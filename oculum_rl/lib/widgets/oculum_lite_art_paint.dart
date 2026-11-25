@@ -106,31 +106,59 @@ class _ArtInk {
 const _artCoal = Color(0xff23131d);
 
 void _artPlasma(_ArtInk fx, int rank) {
-  const cyan = Color(0xff60c5d1);
-  const white = Color(0xffd4f4e9);
-  final recoil = fx.t * .47;
-  final fast = math.min(1.0, fx.t * 4);
-  final emitter = const Offset(.32, -.44) - Offset(recoil, 0);
-  final length = (.93 + .19 * rank) * fast;
-  fx.arc(emitter, .18 + .31 * fx.out, fx.t * 5 - 1.2, 3.5, .054, cyan);
+  const cyan = Color(0xff67c7cf);
+  const glint = Color(0xffe3f4d6);
+  final draw = _inkEase(fx.t * 4.5);
+  final emitter = Offset(.46 - .31 * fx.t, -.37);
+  final radius = .13 + .40 * fx.out;
+  fx.arc(emitter, radius, -1.52 + fx.t * 2.7, 2.55, .063, cyan);
+  fx.arc(emitter, radius * .83, 1.71 + fx.t * 2.7, 1.38, .037, glint);
   fx.stroke(
-    emitter - const Offset(.32, 0),
-    emitter + Offset(length, 0),
-    .25 - fx.t * .16,
+    emitter - const Offset(.27, .01),
+    emitter + Offset((.7 + rank * .11) * draw, -.028),
+    .21 * fx.clear,
     _artCoal,
   );
-  fx.stroke(emitter, emitter + Offset(length, -.043), .13, cyan);
-  fx.stroke(
-    emitter + const Offset(.12, -.016),
-    emitter + Offset(length * .79, 0),
-    .051,
-    white,
-    opacity: 1.2,
-  );
-  for (final sign in [-1.0, 1.0]) {
-    final hand = emitter + Offset(.40 + fx.t * .35, sign * (.15 + fx.t * .38));
-    fx.stroke(hand, hand - Offset(.24, sign * .08), .059, cyan, opacity: .75);
+  if (fx.t < .36) {
+    final flash = (1 - fx.t / .36).clamp(0.0, 1.0);
+    fx.stroke(
+      emitter - const Offset(.08, .01),
+      emitter + Offset(.29 + .70 * draw, -.024),
+      .091 * flash + .025,
+      glint,
+    );
   }
+  for (final side in [-1.0, 1.0]) {
+    final edge =
+        emitter + Offset(.24 + .28 * draw, side * (.09 + .28 * fx.out));
+    fx.stroke(edge, edge - Offset(.23, side * .13), .048, cyan);
+    final spark = edge + Offset(.18 * draw, side * .20 * fx.out);
+    fx.stroke(spark, spark - Offset(.09, side * .05), .031, glint);
+  }
+}
+
+void _paintPlasmaBolt(
+  Canvas canvas,
+  Offset at,
+  Offset direction,
+  double age,
+  bool hostile,
+) {
+  final flank = Offset(-direction.dy, direction.dx);
+  final core = hostile ? const Color(0xffd9f0ac) : const Color(0xffe4fcdb);
+  final edge = hostile ? const Color(0xff83bd9a) : const Color(0xff67c7cf);
+  // The painted point follows the simulated projectile. Only the wake trails.
+  final tail = at - direction * (.64 + .64 * _inkEase(age * 12));
+  final shake = math.sin(age * 34) * .06;
+  _inkSlash(canvas, tail, at + direction * .12, _artCoal, .23);
+  _inkSlash(canvas, tail + flank * shake, at + direction * .10, edge, .15);
+  _inkSlash(canvas, at - direction * .58, at + direction * .13, core, .061);
+  for (final side in [-1.0, 1.0]) {
+    final streak =
+        at - direction * (.48 + .18 * side) + flank * (side * .14 + shake);
+    _inkSlash(canvas, streak - direction * .25, streak, edge, .037);
+  }
+  _oval(canvas, at, .22, .16, core, stroke: edge, strokeWidth: .038);
 }
 
 void _artVaitern(_ArtInk fx) {

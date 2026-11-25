@@ -1,5 +1,9 @@
 # Oculum RL e aggiornamenti alla campagna
 
+## Oculum RL 0.4.21
+
+- **Oculum RL 0.4.21.** Ashley ha appoggi distinti per passo e corsa, rinculo coordinato tra mano e arma e una fase di rientro del guanto a molla. Il Ragno Saldatore prepara il colpo con la coda. Rasvyr articola gli appoggi e l’affondo della chela. Orbryx rotola e torna a terra. Su Rasvyr e Orbryx, la reazione al danno ha una posa diversa dall’attacco. Il plasma ha una scia dipinta legata alla posizione del proiettile.
+
 ## Oculum RL 0.4.20
 
 - **Oculum RL 0.4.20.** Terreno, ripari, varco e pedane con nuove finiture Ink Expressive. Il Duplicatore appoggia meglio i piedi; caricamento e recupero muovono armi e mani su traiettorie specifiche per entrambe le silhouette. Obser, simboli lunari, pergamene, cure, gemme, pietre e armi hanno movimenti distinti. Le pedane reagiscono al giocatore locale anche in co-op. Corrette tre regressioni co-op nei passaggi di arena e nella precedenza del Blocco per Art e Pergamene.
