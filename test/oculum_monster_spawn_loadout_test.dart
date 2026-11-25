@@ -66,6 +66,29 @@ void main() {
     },
   );
 
+  test('Dentyreth keeps its bite among three starting techniques', () {
+    final piranha = monsterBookEntryById('piranha_mortale')!;
+    final bite = monsterBookConcreteTechnique('piranha_morso')!.name;
+    for (final level in [0, piranha.stats['level']!]) {
+      for (var seed = 0; seed < 48; seed++) {
+        final loadout = oculumMonsterBookLoadout(
+          piranha,
+          random: Random(seed),
+          level: level,
+        );
+        final names = [
+          for (final skill in loadout.skills)
+            if (!skill.passiva) skill.nome,
+          for (final skill in loadout.art?.skills ?? const <ArtSkill>[])
+            if (!skill.tipoPerLivello(1).toLowerCase().contains('passiv'))
+              skill.nome,
+        ];
+        expect(names.toSet(), hasLength(3), reason: 'level $level, seed $seed');
+        expect(names, contains(bite), reason: 'level $level, seed $seed');
+      }
+    }
+  });
+
   test('ordinary Open pools use the actual grade and persist one draw', () {
     final monster = monsterById('mimic_base')!;
     List<CharacterArt> pool({int? grade, int? level}) =>

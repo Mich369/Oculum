@@ -4,6 +4,7 @@
 
 - Nei riquadri della Mappa, le schede riservate dal Master mostrano zero per Vita, livello, Resilienza e Volontà anche se la copia contiene valori salvati in precedenza. La vista conserva i dati della scheda.
 - Se il ruolo cambia mentre il Fight Creator si sta già chiudendo, eventuali finestre aperte subito dopo rimangono utilizzabili.
+- I nuovi Dentyreth (Piranha Mortale) ricevono il Morso sanguinante fra le tre tecniche iniziali.
 - Ricordo Vitale ottenuto da Rigenerazione a Resilienza 35 si esaurisce dopo i turni personali impostati, tre di base. Le schede precedenti conservano il numero salvato, ora contato in turni.
 - Il catalogo dei download ufficiali segue le build verificate del branch principale, come il gioco su GitHub Pages. Le build dei branch di lavoro conservano i loro download nelle rispettive release.
 

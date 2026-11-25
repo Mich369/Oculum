@@ -826,6 +826,7 @@ final _shieldCloudMonsterEntries = <MonsterBookEntry>[
     false,
     ['piranha_morso', 'piranha_sciame', 'piranha_richiamo'],
     {
+      'signatureSkillId': 'piranha_morso',
       'swarmAttackerCount': 2,
       'bleedOnNaturalCritical': true,
       'summon': {
