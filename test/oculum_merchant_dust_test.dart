@@ -595,7 +595,7 @@ void main() {
         0;
     final restocked = probe.shopOffers();
     expect(restocked, hasLength(7));
-    expect(restocked.first['id'], 'pawn');
+    expect(restocked.first['id'], fixedPawn['id']);
     expect(
       restocked.map((offer) => offer['id']),
       isNot(contains('legacy_slot_2')),

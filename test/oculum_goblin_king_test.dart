@@ -60,6 +60,8 @@ void main() {
     tester,
   ) async {
     final (state, probe) = await mountFight(tester);
+    state.livelloController.text = '0';
+    state.gradoController.text = '0';
     final tag = probe.ownerTag();
     final kingHp = int.parse(state.currentHpController.text as String);
     final king = monsterBookEntryById(oculumGoblinKingId)!;
@@ -69,6 +71,10 @@ void main() {
     await tester.pump();
     final guard = (state.schedePersonaggio as List).last as Map;
     expect(guard['summonerTag'], tag);
+    // The guard must take the hit here so the test can check damage replay.
+    guard['fortuna'] = 0;
+    guard['karma'] = '0';
+    guard['statoForzaPronto'] = false;
     final guardTag = guard['sheetTag'];
     final tokens = state.masterInitiativeTokens as List;
     final guardToken = tokens.whereType<Map>().singleWhere(
