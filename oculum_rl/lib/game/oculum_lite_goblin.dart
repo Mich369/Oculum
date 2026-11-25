@@ -42,10 +42,10 @@ extension LiteGoblinCombat on LiteRun {
         LiteRun._distanceSquared(position, LiteRun.secretCache) > 1.15 * 1.15)
       return;
     achievements.add('campo-goblin:$stage');
+    _clearArenaActions();
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
-    _burstTraces.clear();
     obstacles
       ..clear()
       ..addAll([

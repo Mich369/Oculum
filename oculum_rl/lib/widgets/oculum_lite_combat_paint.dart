@@ -1245,3 +1245,69 @@ void _paintChamberStrike(
     );
   }
 }
+
+(double, double, double) _lootMotion(LiteLoot loot, double time) {
+  final local = time + loot.position.x * .17 + loot.position.y * .13;
+  final (height, bob, pace, turn, pulse) = switch (loot.kind) {
+    LiteLootKind.obser => (.125, .035, 3.5, .048, .0),
+    LiteLootKind.lunarSymbol => (.24, .055, 2.65, .095, .0),
+    LiteLootKind.scroll => (.23, .055, 3.1, .135, .022),
+    LiteLootKind.healing => (.14, .042, 2.9, .047, .030),
+    LiteLootKind.greenStone => (.16, .042, 3.8, .060, .0),
+    LiteLootKind.refinedGreenGem => (.31, .066, 2.5, .095, .035),
+    LiteLootKind.weapon => (.21, .050, 2.2, .176, .0),
+  };
+  final wave = math.sin(local * pace);
+  return (
+    height + bob * wave,
+    turn * math.sin(local * pace + .58),
+    1 + pulse * wave,
+  );
+}
+
+void _paintDashSeal(
+  Canvas canvas,
+  Offset at,
+  double facing,
+  double active,
+  double time,
+) {
+  final brush = Paint();
+  final pale = Color.lerp(
+    const Color(0xff785b70),
+    const Color(0xffebce98),
+    active,
+  )!;
+  final chevron = at + Offset(.06 * facing, -.026);
+  _sweptInk(
+    canvas,
+    chevron + Offset(-.32 * facing, -.18),
+    chevron + Offset(.28 * facing, .018),
+    .063,
+    pale,
+    brush,
+  );
+  _sweptInk(
+    canvas,
+    chevron + Offset(-.32 * facing, .15),
+    chevron + Offset(.28 * facing, .018),
+    .063,
+    pale,
+    brush,
+  );
+  if (active <= 0) return;
+  for (var spark = 0; spark < 3; spark++) {
+    final phase = (time * 1.7 + spark / 3) % 1;
+    final side = spark.isEven ? 1 : -1;
+    final tip =
+        at + Offset((.12 + phase * .78) * facing, side * (.13 + phase * .08));
+    _sweptInk(
+      canvas,
+      tip - Offset(.27 * facing, -.03),
+      tip,
+      .044,
+      pale.withValues(alpha: active * math.sin(math.pi * phase)),
+      brush,
+    );
+  }
+}

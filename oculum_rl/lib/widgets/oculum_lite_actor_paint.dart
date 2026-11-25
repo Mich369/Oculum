@@ -2,7 +2,7 @@ part of 'oculum_lite_arena.dart';
 
 final _nearInkGrid = _InkGrid(10);
 final _farInkGrid = _InkGrid(6);
-final _inkShaders = Expando<ui.ImageShader>();
+final _inkShaders = Expando<Map<FilterQuality, ui.ImageShader>>();
 
 class _InkGrid {
   _InkGrid(this.divisions);
@@ -220,6 +220,137 @@ void _groundedMotion(
   );
 }
 
+// The weapon and its near hand articulate as one painted section. The
+// supports and the customized head stay on the established sprite anchors.
+final _inkGripRigs = {
+  false: [
+    _InkGripRig(const Offset(.74, .58), .25, .15),
+    _InkGripRig(const Offset(.73, .46), .25, .24),
+    _InkGripRig(const Offset(.73, .46), .18, .19),
+    _InkGripRig(const Offset(.52, .61), .32, .18),
+    _InkGripRig(const Offset(.73, .51), .24, .17),
+    _InkGripRig(const Offset(.53, .55), .30, .24),
+    _InkGripRig(const Offset(.74, .62), .20, .13),
+    _InkGripRig(const Offset(.66, .53), .16, .14),
+  ],
+  true: [
+    _InkGripRig(const Offset(.70, .52), .23, .17),
+    _InkGripRig(const Offset(.80, .35), .32, .25),
+    _InkGripRig(const Offset(.75, .32), .23, .23),
+    _InkGripRig(const Offset(.60, .56), .36, .19),
+    _InkGripRig(const Offset(.72, .49), .23, .17),
+    _InkGripRig(const Offset(.55, .51), .31, .24),
+    _InkGripRig(const Offset(.77, .56), .22, .16),
+    _InkGripRig(const Offset(.74, .49), .16, .15),
+  ],
+};
+
+double _inkEase(double value) {
+  final p = value.clamp(0.0, 1.0);
+  return p * p * (3 - 2 * p);
+}
+
+class _InkGripRig {
+  _InkGripRig(this.pivot, this.above, this.below);
+  final Offset pivot;
+  final double above, below;
+  final _weights = <_InkGrid, Float32List>{};
+
+  Float32List weightsFor(_InkGrid grid) => _weights.putIfAbsent(
+    grid,
+    () => Float32List.fromList([
+      for (var row = 0; row < grid.rowLength; row++)
+        for (var col = 0; col < grid.rowLength; col++)
+          _weight(col / grid.divisions, row / grid.divisions),
+    ]),
+  );
+
+  double _weight(double x, double y) {
+    final side = _inkEase((x - pivot.dx + .20) / .20);
+    final top = _inkEase((y - pivot.dy + above + .075) / .075);
+    final bottom = _inkEase((pivot.dy + below + .095 - y) / .095);
+    return side * top * bottom;
+  }
+}
+
+class _InkAttackMotion {
+  const _InkAttackMotion(this.grip, this.travel, this.turn, this.brace);
+  final _InkGripRig grip;
+  final Offset travel;
+  final double turn, brace;
+  double get strideWeight => 1 - .78 * brace;
+
+  void attach(Canvas canvas, double cell) {
+    final pivot = grip.pivot * cell;
+    final shift = travel * cell;
+    canvas.translate(pivot.dx + shift.dx, pivot.dy + shift.dy);
+    canvas.rotate(turn);
+    canvas.translate(-pivot.dx, -pivot.dy);
+  }
+}
+
+_InkAttackMotion? _inkWeaponMotion(
+  LiteWeapon weapon,
+  int frame,
+  bool feminine,
+  double? elapsed,
+  bool preparing,
+) {
+  if (elapsed == null || !elapsed.isFinite) return null;
+  final (forward, rise, pivot, settle) = switch (weapon) {
+    LiteWeapon.spadaScudo => (.083, -.008, .20, .22),
+    LiteWeapon.guanti => (.101, -.017, .055, .33),
+    LiteWeapon.arco => (-.045, -.013, -.048, .23),
+    LiteWeapon.scettro => (.040, -.037, -.107, .28),
+    LiteWeapon.boomerang => (.059, -.016, .174, .25),
+    LiteWeapon.chakram => (.062, -.014, .15, .18),
+    LiteWeapon.falceRunica => (.049, .025, .234, .35),
+    LiteWeapon.piccaOssidiana => (.107, -.009, .035, .31),
+    LiteWeapon.doppieLame => (.048, .022, .24, .19),
+    LiteWeapon.carabinaImpulsi => (-.083, -.009, -.127, .37),
+    LiteWeapon.balestraRunica => (-.067, -.007, -.08, .32),
+    LiteWeapon.fucileScostubandito => (-.076, -.010, -.139, .29),
+  };
+  final grip = _inkGripRigs[feminine]![frame];
+  final windup = weapon == LiteWeapon.doppieLame ? .11 : weapon.chargeSeconds;
+  if (preparing) {
+    final weight = _inkEase(elapsed / math.max(.095, windup));
+    return _InkAttackMotion(
+      grip,
+      Offset(-(.018 + forward.abs() * .41) * weight, (rise + .027) * weight),
+      -pivot * .51 * weight,
+      .25 + weight * .59,
+    );
+  }
+  final t = math.max(0.0, elapsed - windup);
+  final recovery = (1 - t / settle).clamp(0.0, 1.0);
+  if (recovery == 0) return null;
+  final impact = recovery * recovery;
+  final follow = _inkEase(t / settle) * recovery;
+  return _InkAttackMotion(
+    grip,
+    Offset(forward * impact, rise * impact + forward.abs() * .34 * follow),
+    pivot * (impact + follow * .54),
+    math.max(.36 * recovery, impact),
+  );
+}
+
+Offset _inkFootfall(double phase, bool running) {
+  final cycle = (phase / (2 * math.pi)) % 1;
+  final stance = running ? .53 : .67;
+  final travel = running ? .18 : .13;
+  if (cycle < stance) {
+    // A planted shoe tracks the body during movement. Lift occurs only
+    // during the return phase, which is shorter than the planted phase.
+    return Offset((.5 - cycle / stance) * travel, 0);
+  }
+  final recovery = (cycle - stance) / (1 - stance);
+  return Offset(
+    (_inkEase(recovery) - .5) * travel,
+    -math.sin(recovery * math.pi) * (running ? .109 : .073),
+  );
+}
+
 void _inkActorSprite(
   Canvas canvas,
   ui.Image atlas,
@@ -235,13 +366,16 @@ void _inkActorSprite(
   double recoilArm = 0,
   double clothFlow = 0,
   bool grounded = true,
+  bool running = false,
+  _InkAttackMotion? handMotion,
 }) {
   if (strength <= .005 &&
       anticipation == 0 &&
       strike == 0 &&
       compress == 0 &&
       recoilArm == 0 &&
-      clothFlow == 0) {
+      clothFlow == 0 &&
+      handMotion == null) {
     canvas.drawImageRect(atlas, source, destination, paint);
     return;
   }
@@ -255,18 +389,25 @@ void _inkActorSprite(
       : _farInkGrid;
   final positions = Float32List(grid.rowLength * grid.rowLength * 2);
   final weights = rig.weightsFor(grid);
-  final steps = [
-    for (var i = 0; i < rig.tips.length; i++)
-      phase + (i.isOdd ? math.pi : 0) + (i ~/ 2) * .58,
-  ];
-  final reach = [for (final step in steps) math.sin(step) * strength];
-  final lift = [
-    for (final step in steps)
-      // A short swing, followed by a longer planted phase.
-      math.pow(math.max(0, math.cos(step) - (grounded ? .18 : 0)), 2) *
-          strength *
-          (grounded ? .096 : .111),
-  ];
+  final feet =
+      [
+            for (var i = 0; i < rig.tips.length; i++)
+              phase + (i.isOdd ? math.pi : 0) + (i ~/ 2) * .58,
+          ]
+          .map(
+            (step) => grounded
+                ? _inkFootfall(step, running) * strength
+                : Offset(
+                        math.sin(step) * .094,
+                        -math.max(0, math.cos(step)) * .092,
+                      ) *
+                      strength,
+          )
+          .toList(growable: false);
+  final arm = handMotion?.grip.weightsFor(grid);
+  final turn = handMotion?.turn ?? 0;
+  final cosine = math.cos(turn);
+  final sine = math.sin(turn);
   final clothWave = math.sin(phase * .7) * clothFlow;
   for (var row = 0, vertex = 0; row < grid.rowLength; row++) {
     final y = row / grid.divisions;
@@ -284,14 +425,21 @@ void _inkActorSprite(
         dy += cloth * clothWave * .049;
       }
       if (recoilArm > 0) {
-        final extended = weights[vertex];
+        final extended = weights[vertex * rig.tips.length];
         dx -= recoilArm * .26 * extended;
         dy += recoilArm * .018 * extended;
       }
-      for (var joint = 0; joint < steps.length; joint++) {
-        final w = weights[vertex * steps.length + joint];
-        dx += reach[joint] * w * .094;
-        dy -= lift[joint] * w;
+      for (var joint = 0; joint < feet.length; joint++) {
+        final weight = weights[vertex * feet.length + joint];
+        dx += feet[joint].dx * weight;
+        dy += feet[joint].dy * weight;
+      }
+      if (handMotion != null) {
+        final weight = arm![vertex];
+        final qx = x - handMotion.grip.pivot.dx;
+        final qy = y - handMotion.grip.pivot.dy;
+        dx += (handMotion.travel.dx + qx * (cosine - 1) - qy * sine) * weight;
+        dy += (handMotion.travel.dy + qx * sine + qy * (cosine - 1)) * weight;
       }
       final i = vertex * 2;
       positions[i] = destination.left + (x + dx) * destination.width;
@@ -304,12 +452,18 @@ void _inkActorSprite(
     textureCoordinates: grid.textureCoordinates(source),
     indices: grid.indices,
   );
-  final shader = _inkShaders[atlas] ??= ui.ImageShader(
-    atlas,
-    TileMode.clamp,
-    TileMode.clamp,
-    _inkIdentity,
-    filterQuality: FilterQuality.low,
+  // Use the same texture sampling as the resting pose. A coarser shader
+  // turns folds and outlines into an apparent change of sprite on contact.
+  final shaders = _inkShaders[atlas] ??= {};
+  final shader = shaders.putIfAbsent(
+    paint.filterQuality,
+    () => ui.ImageShader(
+      atlas,
+      TileMode.clamp,
+      TileMode.clamp,
+      _inkIdentity,
+      filterQuality: paint.filterQuality,
+    ),
   );
   paint.shader = shader;
   try {

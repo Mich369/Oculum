@@ -49,7 +49,6 @@ extension LiteSolarDungeon on LiteRun {
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
-    _burstTraces.clear();
     solarStairs = null;
     achievements.add('dungeon-solare-scoperto');
     _solarWave(LiteSolarPhase.courtyard);
@@ -64,6 +63,7 @@ extension LiteSolarDungeon on LiteRun {
   }
 
   void _solarWave(LiteSolarPhase phase) {
+    _clearArenaActions();
     solarPhase = phase;
     restHub = false;
     stageClear = false;

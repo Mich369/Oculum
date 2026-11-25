@@ -144,6 +144,7 @@ extension LiteSecondAct on LiteRun {
   }
 
   void _openActRoom() {
+    _clearArenaActions();
     _arenaEventStart = time;
     _consumeMealForVisit();
     _dismissRoomWolves();
@@ -154,7 +155,6 @@ extension LiteSecondAct on LiteRun {
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
-    _burstTraces.clear();
     position = LiteRun._spawn;
     for (var i = 0; i < coopFighters.length; i++) {
       coopFighters[i].position = _coopSpawn(i);

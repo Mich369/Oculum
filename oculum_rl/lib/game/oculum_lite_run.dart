@@ -2746,7 +2746,27 @@ class LiteRun {
     ]);
   }
 
+  void _clearArenaActions() {
+    _dashLandings.clear();
+    _burstTraces.clear();
+    _burstTime = _clashRemaining = _windup = _springPose = 0;
+    _lastMove = const Point(0, 0);
+    _block.held = false;
+    endRescue();
+    for (final fighter in coopFighters) {
+      fighter
+        .._dashRemaining = 0
+        .._windup = 0
+        .._springPose = 0
+        ..movement = const Point(0, 0)
+        ..firing = false
+        .._block.held = false;
+      endRescue(fighter);
+    }
+  }
+
   void _startStage() {
+    _clearArenaActions();
     _baghestEncounter = null;
     _redGrips.clear();
     _arenaEventStart = time;
@@ -2765,18 +2785,14 @@ class LiteRun {
     actRoom = 0;
     supply._foodUntil.removeWhere((_, until) => until < stage);
     _goblinWave = 0;
-    endRescue();
-    _block.held = false;
     enemies.clear();
     fauna.clear();
     _chickenTrial.clear();
     projectiles.clear();
     groundShots.clear();
     _combatImpacts.clear();
-    _burstTraces.clear();
     _powerOffers.clear();
     _hitProtectionRemaining = 0;
-    _clashRemaining = 0;
     loot.clear();
     obstacles.clear();
     quests.clear();
@@ -2802,8 +2818,6 @@ class LiteRun {
       fighter.stride._reset();
       if (fighter.hp <= 0) fighter.hp = fighter.maxHp * .3;
       fighter._bandit.shieldRecovered = false;
-      fighter._block.held = false;
-      fighter._rescue = null;
       fighter.restUsed = false;
       fighter.supply._foodUntil.removeWhere((_, until) => until < stage);
       fighter.shield =
@@ -2812,10 +2826,9 @@ class LiteRun {
           fighter.supply.rank(LiteRestItem.bastione) * 9;
     }
     if (hostDown) hp = maxHp * .3;
-    _lastMove = const Point(0, 0);
     stageClear = eliteDefeated = _eliteReleased = shopOpen = false;
     restUsed = false;
-    _burstTime = _attackCooldown = _windup = _springPose = 0;
+    _attackCooldown = 0;
     _bandit.shieldRecovered = false;
     shield =
         _startingShield(hero, weapon) +

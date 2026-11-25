@@ -180,7 +180,6 @@ extension LiteFloorExploration on LiteRun {
     _mappedFloor = inputArena;
     _mappedSectors = 1;
     _mapWaypoint = null;
-    _dashLandings.clear();
     _placeCrossing();
     final camp = campPatrols;
     // External paths both reconnect to the battle room. The sideways gaps

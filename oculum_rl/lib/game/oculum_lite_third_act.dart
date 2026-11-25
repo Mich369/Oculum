@@ -127,7 +127,7 @@ extension LiteThirdAct on LiteRun {
   void _openThirdRoom() {
     final room = thirdEncounter!;
     _consumeMealForVisit();
-    endRescue();
+    _clearArenaActions();
     stageClear = shopOpen = restHub = restUsed = false;
     arenaTrial = null;
     enemies.clear();
@@ -152,10 +152,8 @@ extension LiteThirdAct on LiteRun {
     groundShots.clear();
     _activeBeam = null;
     _combatImpacts.clear();
-    _burstTraces.clear();
     _powerOffers.clear();
-    _block.held = false;
-    _hitProtectionRemaining = _clashRemaining = _windup = _attackCooldown = 0;
+    _hitProtectionRemaining = _attackCooldown = 0;
     position = LiteRun._spawn;
     stride._reset();
     if (hostDown) hp = maxHp * .30;
@@ -163,9 +161,6 @@ extension LiteThirdAct on LiteRun {
       final fighter = coopFighters[i];
       fighter.position = _coopSpawn(i);
       fighter.stride._reset();
-      fighter._block.held = false;
-      fighter._windup = 0;
-      fighter._rescue = null;
       fighter.restUsed = false;
       if (fighter.hp <= 0) fighter.hp = fighter.maxHp * .30;
     }

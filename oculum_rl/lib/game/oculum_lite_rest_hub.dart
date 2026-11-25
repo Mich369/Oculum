@@ -370,6 +370,7 @@ extension LiteRestHub on LiteRun {
   }
 
   void _openSupplyRoom() {
+    _clearArenaActions();
     _dismissRoomWolves();
     restHub = true;
     fauna.clear();
@@ -377,7 +378,6 @@ extension LiteRestHub on LiteRun {
     groundShots.clear();
     projectiles.clear();
     _combatImpacts.clear();
-    _burstTraces.clear();
     position = LiteRun._spawn;
     restUsed = false;
     supply._receipts.clear();

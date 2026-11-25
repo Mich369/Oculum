@@ -13,6 +13,7 @@ export 'oculum_lite_appearance.dart';
 
 part 'oculum_lite_creator_paint.dart';
 part 'oculum_lite_combat_paint.dart';
+part 'oculum_lite_world_ink_paint.dart';
 part 'oculum_lite_art_paint.dart';
 part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_weapon_paint.dart';
@@ -594,6 +595,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
                 },
         );
       }
+      _paintInkWorldGround(canvas, run);
       _floor = recorder.endRecording();
       _floorKey = key;
     }
@@ -1934,30 +1936,15 @@ class _ArenaPaint extends CustomPainter {
       );
     }
 
-    for (final pad in run.dashPads) {
+    final time = run.time + animationLead;
+    final pads = run.dashPads;
+    final local = follow ?? run.position;
+    for (final (index, pad) in pads.indexed) {
       final at = _offset(pad);
-      final active = run.position.distanceTo(pad) < 1.15;
-      final color = active ? const Color(0xffeacd97) : const Color(0xffa58399);
-      _oval(
-        canvas,
-        at,
-        1.11,
-        .63,
-        const Color(0xff382534),
-        stroke: color,
-        strokeWidth: .052,
-      );
-      final modifier = pad == run.dashPads.first ? 1.0 : -1.0;
-      _lines(
-        canvas,
-        [
-          at + Offset(-.23 * modifier, -.21),
-          at + Offset(.22 * modifier, 0),
-          at + Offset(-.23 * modifier, .18),
-        ],
-        color,
-        .078,
-      );
+      if (!visible.inflate(.55).contains(at)) continue;
+      final power = ((1.15 - local.distanceTo(pad)) / 1.15).clamp(0.0, 1.0);
+      _paintInkDashPadBase(canvas, at, surface);
+      _paintDashSeal(canvas, at, index == 0 ? 1 : -1, power, time);
     }
     final jobs = _jobs..clear();
     for (final obstacle in run.obstacles) {
@@ -1969,24 +1956,7 @@ class _ArenaPaint extends CustomPainter {
       );
       if (!visible.overlaps(rect)) continue;
       if (obstacle.dashGap) {
-        canvas.drawRect(
-          rect,
-          Paint()
-            ..shader = ui.Gradient.linear(
-              rect.topLeft,
-              rect.bottomRight,
-              const [Color(0xff100e20), Color(0xff33242f), Color(0xff0f131b)],
-              const [0, .56, 1],
-            ),
-        );
-        for (final edge in [rect.left, rect.right]) {
-          _lines(
-            canvas,
-            [Offset(edge, rect.top), Offset(edge, rect.bottom)],
-            const Color(0xff79536c),
-            .082,
-          );
-        }
+        _paintInkDashGap(canvas, rect, surface);
         continue;
       }
       _shadow(
@@ -1996,6 +1966,7 @@ class _ArenaPaint extends CustomPainter {
         rect.height * .66,
         alpha: .52,
       );
+      _paintInkCoverContact(canvas, rect, obstacle, surface);
       jobs.add((
         rect.bottom,
         () {
@@ -2034,7 +2005,6 @@ class _ArenaPaint extends CustomPainter {
       ));
     }
 
-    final time = run.time + animationLead;
     if (run.solarStairs case final stairs?) {
       final at = _offset(stairs);
       _solarStairPaint(canvas, at, time);
@@ -3724,6 +3694,7 @@ bool _paintMonster(
       strike: ((strike - animationLead) / .24).clamp(0.0, 1.0),
       compress: compress + (flyer ? 0 : _stepCompression(phase) * strength),
       grounded: !flyer && kind != LiteEnemyKind.slime,
+      running: running,
     );
     if (flyer) _paintDroneRotor(canvas, pose, time);
   }
@@ -4378,6 +4349,7 @@ void _paintClonatorePose(
   LiteStride? stride,
   double animationLead = 0,
   double? attackElapsed,
+  bool preparingAttack = false,
 }) {
   final frame = switch (weapon) {
     LiteWeapon.spadaScudo => 0,
@@ -4407,17 +4379,22 @@ void _paintClonatorePose(
   final spriteHeight = height * stature;
   final width = height * _isometricY * breadth * (.87 + appearance.frame * .26);
   final source = Rect.fromLTWH(frame % 4 * cell, frame ~/ 4 * cell, cell, cell);
-  final landed = (attackElapsed ?? .25).clamp(0.0, .25);
-  final recoil = attackElapsed == null ? 0.0 : (1 - landed / .25) * .11;
+  final handMotion = _inkWeaponMotion(
+    weapon,
+    frame,
+    feminine,
+    attackElapsed,
+    preparingAttack,
+  );
+  final running = (stride?.speed ?? 0) >= 3.5;
   final rig = _inkHeroFeet[feminine]![frame];
   final phase = _stridePhase(stride, rig.strideMetres, animationLead);
-  final strength =
-      (stride?.strength ?? 0.0) * (attackElapsed == null ? 1 : .65);
+  final strength = (stride?.strength ?? 0.0) * (handMotion?.strideWeight ?? 1);
   final contact = (feminine ? 372 : 350) / cell;
   final heightWithWeight =
       spriteHeight * (1 - _stepCompression(phase) * strength);
   final destination = Rect.fromLTWH(
-    -width * (183 / cell) + recoil,
+    -width * (183 / cell),
     -heightWithWeight * contact,
     width,
     heightWithWeight,
@@ -4450,6 +4427,8 @@ void _paintClonatorePose(
       phase: phase,
       strength: strength,
       clothFlow: strength,
+      running: running,
+      handMotion: handMotion,
     );
     return;
   }
@@ -4477,7 +4456,7 @@ void _paintClonatorePose(
   final neck = necks[frame];
   canvas.save();
   canvas.translate(destination.left, destination.top);
-  canvas.scale(width / cell, spriteHeight / cell);
+  canvas.scale(width / cell, heightWithWeight / cell);
   final originalHead = Path()
     ..addPolygon([
       neck + const Offset(-72, -42),
@@ -4526,6 +4505,8 @@ void _paintClonatorePose(
     phase: phase,
     strength: strength,
     clothFlow: strength,
+    running: running,
+    handMotion: handMotion,
   );
   if (!spectral && appearance.cloth != const OculumLiteAppearance().cloth) {
     _paintCapeDye(
@@ -4541,7 +4522,12 @@ void _paintClonatorePose(
     );
   }
   canvas.restore();
-  if (weapon.isBossLoot) _paintBossWeaponAtGrip(canvas, weapon, feminine);
+  if (weapon.isBossLoot) {
+    canvas.save();
+    handMotion?.attach(canvas, cell);
+    _paintBossWeaponAtGrip(canvas, weapon, feminine);
+    canvas.restore();
+  }
   if (!customHead) {
     canvas.restore();
     return;
@@ -5568,7 +5554,11 @@ void _hero(
     canvas.translate(-.28, -.08);
     canvas.rotate(-1.30);
     canvas.scale(.86);
-  } else if (attackElapsed != null && aiming.distanceSquared > .001) {
+  } else if (attackElapsed != null &&
+      aiming.distanceSquared > .001 &&
+      !(poseArt != null &&
+          hero == LiteHero.duplicatore &&
+          weapon != LiteWeapon.chakram)) {
     final direction = aiming / aiming.distance;
     if (preparingAttack) {
       final hold = (attackElapsed / .42).clamp(0.0, 1.0);
@@ -5603,6 +5593,7 @@ void _hero(
       appearance,
       spectral: clone || phantom,
       attackElapsed: attackElapsed,
+      preparingAttack: preparingAttack,
       stride: stride,
       animationLead: animationLead,
     );
@@ -8255,9 +8246,29 @@ void _loot(
   ui.Image? detail,
 ) {
   final at = _offset(loot.position);
-  final p = at - Offset(0, .22 + math.sin(time * 4 + at.dx) * .10);
-  _shadow(canvas, at, .24, .13, alpha: .47);
+  final (altitude, roll, sizeScale) = _lootMotion(loot, time);
+  final p = at - Offset(0, altitude);
+  _shadow(canvas, at, .25 + altitude * .08, .13, alpha: .56 - altitude * .21);
   _paintDropSignal(canvas, at, p, loot, time);
+  canvas.save();
+  canvas.translate(p.dx, p.dy);
+  canvas.rotate(roll);
+  canvas.scale(sizeScale);
+  canvas.translate(-p.dx, -p.dy);
+  _drawLootBody(canvas, loot, p, time, gear, props, art, detail);
+  canvas.restore();
+}
+
+void _drawLootBody(
+  Canvas canvas,
+  LiteLoot loot,
+  Offset p,
+  double time,
+  ui.Image? gear,
+  ui.Image? props,
+  ui.Image? art,
+  ui.Image? detail,
+) {
   if (detail != null) {
     final size = loot.kind == LiteLootKind.refinedGreenGem ? 1.38 : 1.16;
     canvas.drawImageRect(
@@ -8417,7 +8428,7 @@ void _loot(
             loot.weapon!.isBossLoot ? .74 : .56,
             loot.weapon!.isBossLoot ? .74 : .56,
             () {
-              canvas.rotate(-.30 + math.sin(time * 2.4 + at.dx) * .18);
+              canvas.rotate(-.30);
               _holdWeapon(canvas, weapon, gear, _plasma, _ink);
             },
           );

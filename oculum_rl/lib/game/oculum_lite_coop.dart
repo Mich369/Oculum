@@ -670,13 +670,6 @@ class OculumLiteCoop extends ChangeNotifier {
     }
     _lastInput[account] = input;
     _watching[account] = now;
-    if (packet['restAction'] case final Map action) {
-      final id = action['id'];
-      if (id is int && id > (_lastRestAction[account] ?? 0)) {
-        _lastRestAction[account] = id;
-        _applyRest(world, action['kind'], action['item'], fighter, target);
-      }
-    }
     world.setCoopControls(
       account,
       direction,
@@ -694,6 +687,15 @@ class OculumLiteCoop extends ChangeNotifier {
       rescue: packet['rescue'] == true,
       rest: packet['rest'] == true,
     );
+    // An Art or scroll in this frame sees the block held or released by the
+    // same input. The action ID still protects consumables and costs on retry.
+    if (packet['restAction'] case final Map action) {
+      final id = action['id'];
+      if (id is int && id > (_lastRestAction[account] ?? 0)) {
+        _lastRestAction[account] = id;
+        _applyRest(world, action['kind'], action['item'], fighter, target);
+      }
+    }
   }
 
   static Point<double>? _vector(Object? data, {required double limit}) {
