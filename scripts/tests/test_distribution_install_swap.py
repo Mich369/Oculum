@@ -14,6 +14,10 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 BUILD = ROOT / "build"
 HELPER = ROOT / "scripts/oculum_distribution_swap.ps1"
+INSTALLERS = (
+    ROOT / "scripts/build_combat_distribution.ps1",
+    ROOT / "scripts/install_github_distribution.ps1",
+)
 
 
 def ps_quote(value):
@@ -127,6 +131,16 @@ class DistributionInstallSwapTests(unittest.TestCase):
         }))
 
     def seed_retention(self):
+        # The public installer also supports the base swap by itself. Run the
+        # retention cases when the helper provides it or an installer uses it.
+        retention_available = "function Set-OculumVerifiedRollbackReceipt" in HELPER.read_text(encoding="utf-8-sig")
+        retention_used = any(
+            "-RetainSingleVerifiedBackup" in installer.read_text(encoding="utf-8-sig")
+            for installer in INSTALLERS
+        )
+        if not (retention_available or retention_used):
+            self.skipTest("This checkout does not include optional rollback retention")
+
         self.target = self.root / "distribution"
         self.staging = self.root / "stage-3"
         self.backup = self.root / "distribution-backup-2"
