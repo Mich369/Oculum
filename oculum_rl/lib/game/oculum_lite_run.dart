@@ -861,6 +861,7 @@ enum LiteImpactTarget {
   defeat,
   emberRebirth,
   artCast,
+  chamberStrike,
 }
 
 class LiteCombatImpact {

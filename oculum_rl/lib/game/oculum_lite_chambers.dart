@@ -154,6 +154,7 @@ extension LiteChambers on LiteRun {
   bool get hasChamber =>
       hasFloorMap && !restHub && !goblinCamp && !inSolarDungeon;
   Point<double> get chamberCenter => const Point(27.65, 11);
+  bool canChamberStrike(Point<double> point) => !_blocked(point, .12);
 
   LiteEnemyKind _chamberKind(int floor) {
     if (solarCampaign && floor == 8) return LiteEnemyKind.custodeLunare;
@@ -234,10 +235,28 @@ extension LiteChambers on LiteRun {
           );
         }
       } else {
+        final axis = LiteRun._unit(cue.target - cue.origin);
         for (final point in cue.marks) {
-          if (!_blocked(point, .12)) {
-            _astralImpact(point, LiteChamberWarning.hitRadius, damage);
-          }
+          if (!canChamberStrike(point)) continue;
+          if (_combatImpacts.length >= 32) _combatImpacts.removeAt(0);
+          _combatImpacts.add(
+            LiteCombatImpact(
+              LiteImpactTarget.chamberStrike,
+              _nextId++,
+              point,
+              time,
+              life: cue.pattern.index.toDouble(),
+              shield: enemy.exalted ? 1 : 0,
+              end: point + axis,
+              enemyKind: enemy.kind,
+            ),
+          );
+          _astralImpact(
+            point,
+            LiteChamberWarning.hitRadius,
+            damage,
+            paint: false,
+          );
         }
       }
       final danger = _chamberDanger(seat);

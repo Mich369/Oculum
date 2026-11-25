@@ -189,8 +189,13 @@ extension LiteSolarDungeon on LiteRun {
     }
   }
 
-  void _astralImpact(Point<double> at, double radius, double damage) {
-    _recordImpact(LiteImpactTarget.explosion, _nextId++, at);
+  void _astralImpact(
+    Point<double> at,
+    double radius,
+    double damage, {
+    bool paint = true,
+  }) {
+    if (paint) _recordImpact(LiteImpactTarget.explosion, _nextId++, at);
     if (at.distanceTo(position) < radius && !_lineBlocked(at, position)) {
       _damagePlayer(damage);
     }

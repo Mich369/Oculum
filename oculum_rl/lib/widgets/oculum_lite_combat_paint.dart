@@ -1014,69 +1014,217 @@ void _paintChamberFloor(Canvas canvas, Offset at, bool won, bool major) {
   );
 }
 
+Color _chamberTone(LiteEnemyKind? kind, bool awakened) => switch (kind) {
+  LiteEnemyKind.luce => const Color(0xffedc780),
+  LiteEnemyKind.ombra => const Color(0xffa485cc),
+  _ when awakened => const Color(0xffe78067),
+  _ => const Color(0xffc89868),
+};
+
+void _sweptInk(
+  Canvas canvas,
+  Offset a,
+  Offset b,
+  double width,
+  Color tone,
+  Paint brush,
+) {
+  final travel = b - a;
+  if (travel.distanceSquared < .0001) return;
+  final side = Offset(-travel.dy, travel.dx) / travel.distance * width;
+  final ridge = a + travel * .53;
+  final shoulder = a + travel * .16;
+  final path = Path()
+    ..moveTo((a - side * .26).dx, (a - side * .26).dy)
+    ..quadraticBezierTo(
+      (shoulder + side).dx,
+      (shoulder + side).dy,
+      (ridge + side * .72).dx,
+      (ridge + side * .72).dy,
+    )
+    ..quadraticBezierTo(
+      (b - travel * .13 + side * .42).dx,
+      (b - travel * .13 + side * .42).dy,
+      b.dx,
+      b.dy,
+    )
+    ..quadraticBezierTo(
+      (ridge - side * .61).dx,
+      (ridge - side * .61).dy,
+      (shoulder - side * .76).dx,
+      (shoulder - side * .76).dy,
+    )
+    ..close();
+  canvas.drawPath(path, brush..color = tone);
+}
+
 void _paintChamberWarning(
   Canvas canvas,
+  LiteRun run,
   LiteEnemy enemy,
   LiteChamberWarning cue,
 ) {
-  final tone = switch (enemy.kind) {
-    LiteEnemyKind.luce => const Color(0xffefc575),
-    LiteEnemyKind.ombra => const Color(0xffac8bd6),
-    _ when enemy.exalted => const Color(0xffed8979),
-    _ => const Color(0xffd4a171),
-  };
-  final fade = (1 - cue.remaining / 1.12).clamp(.16, 1.0);
-  final fill = Paint()..color = tone.withValues(alpha: .18 + fade * .20);
-  final darkest = Paint()..color = const Color(0x88170e1a);
+  final tone = _chamberTone(enemy.kind, enemy.exalted);
+  final charge = (1 - cue.remaining / 1.10).clamp(0.0, 1.0);
+  final fill = charge * charge;
+  final brush = Paint();
   if (cue.pattern == LiteChamberPattern.ventaglio) {
     final at = _offset(cue.origin);
     for (final angle in cue.angles) {
-      final full = Offset(math.cos(angle), math.sin(angle)) * 9.4;
-      _inkSlash(canvas, at, at + full, const Color(0xaa240f20), .22);
-      _inkSlash(
+      final line = Offset(math.cos(angle), math.sin(angle)) * 10;
+      final normal = Offset(-line.dy, line.dx) / 10;
+      _sweptInk(canvas, at, at + line, .25, const Color(0xa21a1019), brush);
+      _sweptInk(
         canvas,
-        at,
-        at + full * (.8 + .2 * fade),
-        tone.withValues(alpha: .6),
-        .09,
+        at - normal * .08,
+        at + line * (.13 + .87 * charge),
+        .092,
+        tone,
+        brush,
+      );
+      _sweptInk(
+        canvas,
+        at + normal * .08 + line * .13,
+        at + line * .94 + normal * .08,
+        .035,
+        tone.withValues(alpha: .43),
+        brush,
       );
     }
     return;
   }
-  final points = cue.marks;
-  for (var i = 0; i < points.length; i++) {
-    final at = _offset(points[i]);
-    const r = LiteChamberWarning.hitRadius;
-    canvas.drawCircle(at, r, darkest);
-    canvas.drawCircle(at, r * (.33 + .67 * fade), fill);
-    _lines(
-      canvas,
-      [
-        at + const Offset(-r, 0),
-        at + const Offset(-.61, -.68),
-        at + const Offset(.24, -.91),
-        at + const Offset(.89, -.37),
-      ],
-      tone,
-      .055,
+
+  final origin = _offset(cue.origin);
+  final trajectory = _offset(cue.target) - origin;
+  final heading = math.atan2(trajectory.dy, trajectory.dx);
+  const radius = LiteChamberWarning.hitRadius;
+  for (final (index, mark) in cue.marks.indexed) {
+    if (!run.canChamberStrike(mark)) continue;
+    final at = _offset(mark);
+    final direction = Offset(math.cos(heading), math.sin(heading));
+    final normal = Offset(-direction.dy, direction.dx);
+    // A soft, continuous footprint preserves the real hit radius. The dry
+    // ink strokes and growing fissure above it supply charge and texture.
+    canvas.drawCircle(at, radius, brush..color = const Color(0x78220e18));
+    canvas.drawCircle(
+      at,
+      radius * (.54 + .46 * fill),
+      brush..color = tone.withValues(alpha: .11 + .16 * fill),
     );
-    _lines(
+    for (var stroke = 0; stroke < 4; stroke++) {
+      final drift = (stroke - 1.5) * .21;
+      final start = at - direction * (.81 - stroke * .04) + normal * drift;
+      final end =
+          at + direction * (.52 + .09 * stroke) + normal * (drift + .14);
+      _sweptInk(
+        canvas,
+        start,
+        end,
+        .08 + .013 * (stroke % 2),
+        (stroke == 1 ? tone : const Color(0xff1a1016)).withValues(
+          alpha: stroke == 1 ? .37 + .51 * fill : .54,
+        ),
+        brush,
+      );
+    }
+    final phase = heading + (index % 3) * .34;
+    final rim = Rect.fromCircle(center: at, radius: radius - .017);
+    final edges = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .025 + .022 * fill
+      ..strokeCap = StrokeCap.round
+      ..color = tone.withValues(alpha: .63 + .24 * fill);
+    canvas.drawArc(rim, phase + .15, 2.14, false, edges);
+    canvas.drawArc(rim, phase + 2.62, 2.67, false, edges);
+    if (fill > .36) {
+      final heat = at + normal * .10 + direction * (.24 + .5 * fill);
+      _sweptInk(
+        canvas,
+        at - direction * .5,
+        heat,
+        .055,
+        Color.lerp(tone, const Color(0xffffe0a8), fill)!,
+        brush,
+      );
+    }
+  }
+}
+
+void _paintChamberStrike(
+  Canvas canvas,
+  Offset at,
+  LiteCombatImpact hit,
+  double age,
+) {
+  if (age > .57 || age < 0) return;
+  final raised = hit.shield > 0;
+  final tone = _chamberTone(hit.enemyKind, raised);
+  final paint = Paint();
+  final axis = hit.end == null ? const Offset(1, 0) : _offset(hit.end!) - at;
+  final heading = math.atan2(axis.dy, axis.dx) + (hit.life.toInt() % 4) * .26;
+  final progress = (age / .57).clamp(0.0, 1.0);
+  final opacity = 1 - progress;
+  final flash = (1 - age / .16).clamp(0.0, 1.0);
+  final bloom = 1 - opacity * opacity;
+  final hue = Color.lerp(tone, const Color(0xfffce6bd), flash * .68)!;
+  final ink = const Color(0xff24101a).withValues(alpha: opacity * .86);
+  final radius = LiteChamberWarning.hitRadius;
+  canvas.drawCircle(
+    at,
+    radius,
+    paint..color = ink.withValues(alpha: opacity * .26),
+  );
+  for (var i = 0; i < (raised ? 8 : 6); i++) {
+    final theta = heading + i * 2 * math.pi / (raised ? 8 : 6);
+    final direction = Offset(math.cos(theta), math.sin(theta));
+    final skew = Offset(-direction.dy, direction.dx);
+    final drift = ((hit.subjectId + i * 13) % 9) / 8;
+    final offset = (.36 + .24 * drift) + bloom * (.58 + .34 * drift);
+    final root = at + direction * (.12 + .16 * drift);
+    final point = at + direction * offset;
+    final elbow = Offset.lerp(root, point, .53)! + skew * (.15 + drift * .08);
+    _sweptInk(canvas, root, elbow, .058, ink, paint);
+    _sweptInk(canvas, elbow, point, .045, ink, paint);
+    if (i.isEven) {
+      _sweptInk(
+        canvas,
+        elbow + skew * .024,
+        point + skew * .036,
+        .036,
+        tone.withValues(alpha: opacity * .75),
+        paint,
+      );
+    }
+    final lift = math.sin(progress * math.pi) * (.32 + drift * .63);
+    final chip = point - Offset(0, lift);
+    _sweptInk(
       canvas,
-      [
-        at + const Offset(-.90, .28),
-        at + const Offset(-.43, .82),
-        at + const Offset(.52, .76),
-        at + const Offset(r, 0),
-      ],
-      tone,
-      .055,
+      chip - direction * (.16 + drift * .10),
+      chip + direction * .075 - const Offset(0, .04),
+      .051 + drift * .033,
+      hue.withValues(alpha: opacity * .87),
+      paint,
     );
-    _inkSlash(
+  }
+  if (flash > 0) {
+    final top =
+        at +
+        Offset(math.cos(heading) * .34, -(.49 + flash * (raised ? 1.13 : .76)));
+    _sweptInk(
       canvas,
-      at + const Offset(-.42, .35),
-      at + const Offset(.42, -.35),
-      tone,
-      .075,
+      at + const Offset(-.28, .17),
+      top,
+      .32 * flash,
+      ink,
+      paint,
+    );
+    _sweptInk(
+      canvas,
+      at + const Offset(-.10, .04),
+      top + const Offset(.052, .09),
+      .12 * flash,
+      hue.withValues(alpha: flash),
+      paint,
     );
   }
 }

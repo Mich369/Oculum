@@ -93,7 +93,7 @@ void main() {
     expect(loaded.enemies.single.chamberCycle, 1);
     expect(
       loaded.combatImpacts.any(
-        (hit) => hit.target == LiteImpactTarget.explosion,
+        (hit) => hit.target == LiteImpactTarget.chamberStrike,
       ),
       isTrue,
     );

@@ -1826,7 +1826,7 @@ class _ArenaPaint extends CustomPainter {
     for (final enemy in run.enemies) {
       if (enemy.chamberWarning case final cue?
           when visible.inflate(10).contains(_offset(cue.origin))) {
-        _paintChamberWarning(canvas, enemy, cue);
+        _paintChamberWarning(canvas, run, enemy, cue);
       }
     }
     if (run.mapWaypoint case final pin? when visible.contains(_offset(pin))) {
@@ -2977,6 +2977,10 @@ class _ArenaPaint extends CustomPainter {
       final at = _offset(impact.position);
       if (!visible.contains(at)) continue;
       if (impact.target == LiteImpactTarget.fissure) continue;
+      if (impact.target == LiteImpactTarget.chamberStrike) {
+        _paintChamberStrike(canvas, at, impact, time - impact.time);
+        continue;
+      }
       if (impact.target == LiteImpactTarget.artCast) {
         _paintArtCast(canvas, impact, time - impact.time);
         continue;
@@ -3218,6 +3222,7 @@ void _paintCombatImpacts(
     if (opacity == 0 ||
         impact.target == LiteImpactTarget.verdict ||
         impact.target == LiteImpactTarget.artCast ||
+        impact.target == LiteImpactTarget.chamberStrike ||
         impact.target == LiteImpactTarget.fissure ||
         impact.target == LiteImpactTarget.explosion)
       continue;
