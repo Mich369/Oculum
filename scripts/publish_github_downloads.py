@@ -19,6 +19,7 @@ from urllib.request import Request, urlopen
 
 REPO = os.environ.get("GH_REPO", "Mich369/Oculum")
 CHANNEL = "oculum-downloads"
+PUBLIC_BRANCH = "main"
 MARKER = "<!-- OCULUM_DOWNLOADS:"
 WORKFLOWS = {"Build distribution"}
 WORKFLOW_PATHS = {".github/workflows/build_distribution.yml"}
@@ -234,11 +235,11 @@ def resolve_run_id(run_id):
         if not re.fullmatch(r"[1-9][0-9]*", candidate):
             raise ValueError("Invalid run id: enter a positive number or leave blank")
         return candidate
-    query = urlencode({"status": "success", "per_page": 20})
+    query = urlencode({"branch": PUBLIC_BRANCH, "status": "success", "per_page": 20})
     runs = api(f"actions/workflows/build_distribution.yml/runs?{query}").get("workflow_runs", [])
     for run in runs:
         if (run.get("status") == "completed" and run.get("conclusion") == "success"
-                and run.get("head_branch")
+                and run.get("head_branch") == PUBLIC_BRANCH
                 and run.get("event") not in {"pull_request", "pull_request_target"}
                 and run.get("head_repository", {}).get("full_name") == REPO
                 and type(run.get("id")) is int and run["id"] > 0):
@@ -302,6 +303,9 @@ def publish(run_id):
         asset_ids = {asset["name"]: asset.get("id") for asset in published["assets"]}
         for entry in entries:
             verify_anonymous_download(entry, asset_ids[entry["name"] + ".zip"])
+        if run["head_branch"] != PUBLIC_BRANCH:
+            print(f"Archived {len(entries)} verified artifacts for {run['head_branch']}; public channel unchanged")
+            return
         # The listing can lag the completion event. A missing or older listed
         # run cannot invalidate the requested run's verified release.
         branch_query = urlencode({"branch": run["head_branch"], "status": "success", "per_page": 1})

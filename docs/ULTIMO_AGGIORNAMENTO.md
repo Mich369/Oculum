@@ -1,6 +1,10 @@
-# Vita sulla Mappa, Schivate Expressive Ink e Angelico — 24 novembre
+# Correzioni generali — 25 novembre 2026
 
-- Quando manca la Vita corrente, i riquadri Mappa mostrano la Vita massima. Per le schede a terra, morte o con statistiche riservate mostrano zero. Se la Vita corrente è salvata, mostrano il valore registrato.
+- I riquadri Mappa coprono Vita, livello, Resilienza e Volontà delle schede riservate, anche quando la copia locale conserva le statistiche.
+- Un cambio di ruolo durante la chiusura del Fight Creator lascia aperta la finestra successiva.
+- Il catalogo dei download ufficiali segue le build del branch principale. Le build di lavoro conservano i propri archivi.
+
+- Per le schede visibili più vecchie, i riquadri Mappa usano la Vita massima quando manca quella corrente. Per le schede a terra o morte senza Vita corrente mostrano zero.
 
 - Angelico usa su telefono la WebP verticale F scelta nel lotto ANGELICO-TELEFONO-01. La scena D è lo sfondo desktop, con reliquia e personalizzazioni selezionabili separatamente.
 
@@ -10,7 +14,6 @@
 - I due menu hanno un sigillo inciso nel rame e una cornice ispirata all’inchiostro del Re Goblin G. In preparazione si scorrono le quattro riduzioni del danno anche sugli schermi bassi.
 - Nelle Risorse puoi aprire il menu anche con **Imposta Schivate**. Su telefono tocca il campo per mostrare la tastiera.
 - Premere **Salva** con un conteggio superato mostra un avviso. Modifica e preparazione verificano la scheda attiva e i permessi.
-- Verifica locale con 34 regressioni e una prova di cattura grafica superate. L’analisi statica di app e test non segnala problemi.
-- Dopo l’integrazione di Angelico, 36 test mirati superati. Tra le prove ci sono il cambio di scena fra desktop e telefono e la precedenza delle selezioni personalizzate.
+- Per le correzioni del 25 novembre sono passate 52 prove Flutter mirate, 22 verifiche del catalogo e 7 prove sulla firma Android. L’analisi dei file Dart modificati è pulita.
 
 [Log cumulativo](REGISTRO_AGGIORNAMENTI.md) · [Verifiche Schivate](VERIFICA_SCHIVATE_2026-11-24.md) · [Arretrati dell’app](VERIFICA_ARRETRATI_APP_2026-11-23.md)

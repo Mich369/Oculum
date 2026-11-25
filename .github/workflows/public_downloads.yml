@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: 'Optional: distribution run ID; blank uses latest successful trusted build'
+        description: 'Optional: distribution run ID; blank uses the latest successful main build'
         required: false
         default: ''
         type: string

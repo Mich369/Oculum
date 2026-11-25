@@ -88,9 +88,12 @@ class DownloadPublicationTests(unittest.TestCase):
         self.assert_publish_with_listed_runs([100], promotes=False)
         self.assert_publish_with_listed_runs([], promotes=False, channel_id=100)
 
-    def assert_publish_with_listed_runs(self, listed_ids, *, promotes, channel_id=None):
+    def test_working_branch_is_archived_without_promoting_official_downloads(self):
+        self.assert_publish_with_listed_runs([], promotes=False, branch="codex/oculum-rl-qa")
+
+    def assert_publish_with_listed_runs(self, listed_ids, *, promotes, channel_id=None, branch="main"):
         run = dict(id=42, workflow_id=7, name="Build distribution main @ " + "a" * 40,
-                   conclusion="success", status="completed", head_branch="main",
+                   conclusion="success", status="completed", head_branch=branch,
                    head_sha="a" * 40, html_url="https://github.com/Mich369/Oculum/actions/runs/42",
                    repository={"full_name": publisher.REPO},
                    head_repository={"full_name": publisher.REPO})
@@ -298,15 +301,18 @@ class DownloadPublicationTests(unittest.TestCase):
 
 
 class DownloadRecoveryTests(unittest.TestCase):
-    def test_resolve_latest_successful_trusted_distribution_from_any_branch(self):
+    def test_resolve_latest_successful_trusted_main_distribution(self):
         builds = {"workflow_runs": [
             {"id": 25, "status": "completed", "conclusion": "success",
              "head_branch": "main", "head_repository": {"full_name": "other/fork"}},
             {"id": 24, "status": "completed", "conclusion": "success",
              "head_branch": "codex/new-version", "head_repository": {"full_name": publisher.REPO}},
+            {"id": 23, "status": "completed", "conclusion": "success",
+             "head_branch": "main", "head_repository": {"full_name": publisher.REPO}},
         ]}
-        with patch.object(publisher, "api", return_value=builds):
-            self.assertEqual(publisher.resolve_run_id(""), "24")
+        with patch.object(publisher, "api", return_value=builds) as mocked:
+            self.assertEqual(publisher.resolve_run_id(""), "23")
+            self.assertIn("branch=main", mocked.call_args.args[0])
         with patch.object(publisher, "api") as mocked:
             self.assertEqual(publisher.resolve_run_id("123"), "123")
             mocked.assert_not_called()

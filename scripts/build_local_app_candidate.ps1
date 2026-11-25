@@ -118,7 +118,7 @@ try {
     androidReleaseVersionCode = $AndroidBuildNumber
     androidReleaseSigningVerified = $true
     localWindowsAndroidComplete = $true
-    publication = 'Held pending artwork lots and names; no GitHub publication requested'
+    publication = 'Local package verification; GitHub delivery has its own receipt'
     builtAtUtc = [DateTime]::UtcNow.ToString('o')
     files = @(Get-ChildItem -LiteralPath $destination -Recurse -File | ForEach-Object {
       @{ path = $_.FullName.Substring($destination.Length + 1); bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }

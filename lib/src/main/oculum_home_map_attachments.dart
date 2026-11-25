@@ -5975,14 +5975,17 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     if (sheet == null) {
       return const Center(child: Text('Nessuna scheda selezionata'));
     }
-    final currentHp =
-        sheet['currentHp'] ??
-        (readBoolValue(sheet['realtimeRestrictedByMaster']) ||
-                readBoolValue(sheet['personaggioCaduto']) ||
-                readIntValue(sheet['feriteMorte']) >=
-                    _OculumHomeDeathRules.deathWoundLimit
-            ? 0
-            : oculumSheetHpMaximum(sheet));
+    final restricted = readBoolValue(sheet['realtimeRestrictedByMaster']);
+    final downed =
+        readBoolValue(sheet['personaggioCaduto']) ||
+        readIntValue(sheet['feriteMorte']) >=
+            _OculumHomeDeathRules.deathWoundLimit;
+    final currentHp = restricted
+        ? 0
+        : sheet['currentHp'] ?? (downed ? 0 : oculumSheetHpMaximum(sheet));
+    final level = restricted ? 0 : sheet['livello'] ?? 0;
+    final resilience = restricted ? 0 : sheet['resilienza'] ?? 0;
+    final willpower = restricted ? 0 : sheet['volonta'] ?? 0;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -5992,12 +5995,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             '${sheet['nome'] ?? '???'}',
             style: const TextStyle(fontWeight: FontWeight.w900),
           ),
-          Text(
-            '${sheet['tipoScheda'] ?? 'Scheda'} • Lv ${sheet['livello'] ?? 0}',
-          ),
-          Text(
-            'HP $currentHp • RES ${sheet['resilienza'] ?? 0} • VOL ${sheet['volonta'] ?? 0}',
-          ),
+          Text('${sheet['tipoScheda'] ?? 'Scheda'} • Lv $level'),
+          Text('HP $currentHp • RES $resilience • VOL $willpower'),
         ],
       ),
     );
@@ -7503,8 +7502,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         suppressPenalties: suppressPenalties,
       );
       if (useRawSnapshot) {
-        final before = readIntValue(sheet['derivedMovementBeforeConditions']) +
-            base - savedBase;
+        final before =
+            readIntValue(sheet['derivedMovementBeforeConditions']) +
+            base -
+            savedBase;
         derived = before <= 0
             ? 0
             : max(
@@ -7518,7 +7519,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
         final oldBase = max(0, 30 + materia ~/ 6);
         derived = max(
           0,
-          derived + base - oldBase +
+          derived +
+              base -
+              oldBase +
               oculumDerivedConditionPercentDelta(base, percent) -
               oculumDerivedConditionPercentDelta(oldBase, percent),
         );

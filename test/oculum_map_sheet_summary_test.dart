@@ -96,10 +96,14 @@ void main() {
           downed.remove('personaggioCaduto');
           downed['feriteMorte'] = 3;
           sharedLegacy['realtimeRestrictedByMaster'] = true;
+          sharedLegacy['currentHp'] = '51';
+          sharedLegacy['livello'] = 82;
         });
         await tester.pumpAndSettle();
         expect(find.text('HP 0 • RES 4 • VOL 5'), findsOneWidget);
-        expect(find.text('HP 0 • RES 4 • VOL 7'), findsOneWidget);
+        expect(find.text('HP 0 • RES 0 • VOL 0'), findsOneWidget);
+        expect(find.text('NPC • Lv 82'), findsNothing);
+        expect(sharedLegacy['currentHp'], '51');
       } finally {
         await closeFixture(tester, probe);
       }

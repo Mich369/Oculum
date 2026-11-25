@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Correzioni generali — 25 novembre 2026
+
+- Nei riquadri della Mappa, le schede riservate dal Master mostrano zero per Vita, livello, Resilienza e Volontà anche se la copia contiene valori salvati in precedenza. La vista conserva i dati della scheda.
+- Se il ruolo cambia mentre il Fight Creator si sta già chiudendo, eventuali finestre aperte subito dopo rimangono utilizzabili.
+- Il catalogo dei download ufficiali segue le build verificate del branch principale, come il gioco su GitHub Pages. Le build dei branch di lavoro conservano i loro download nelle rispettive release.
+
 ## Vita nei riquadri Mappa — 24 novembre 2026
 
 - I riquadri della Mappa mostrano la Vita massima per le schede locali e condivise più vecchie prive della Vita corrente. Una scheda a terra, morta o condivisa con statistiche riservate resta a zero quando manca il valore. Se la Vita corrente è registrata, il riquadro mostra quel valore senza riscrivere la scheda.

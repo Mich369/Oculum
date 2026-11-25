@@ -291,6 +291,46 @@ void main() {
     await closeFixture(tester, probe);
   });
 
+  testWidgets('revocation during dismissal leaves the next dialog open', (
+    tester,
+  ) async {
+    final (state, probe) = await mountFight(tester);
+    final homeContext = tester.element(find.byType(Scaffold).first);
+    final creator = probe.showFightCreator();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(find.widgetWithText(TextButton, 'Chiudi'));
+    await tester.pump();
+
+    final nextDialog = showDialog<void>(
+      context: homeContext,
+      builder: (context) => AlertDialog(
+        title: const Text('Dialogo successivo'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fatto'),
+          ),
+        ],
+      ),
+    );
+    state.updateOculumHomeUi(() {
+      state.modalitaMaster = false;
+      state.isMasterHost = false;
+    });
+    await tester.pump(const Duration(milliseconds: 75));
+    await tester.pump(const Duration(milliseconds: 350));
+    await creator;
+
+    expect(find.text('Dialogo successivo'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Fatto'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await nextDialog;
+    await closeFixture(tester, probe);
+  });
+
   testWidgets('suggestions use the selected submerged habitat', (tester) async {
     final (state, probe) = await mountFight(tester);
     state.schedePersonaggio[state.schedaCorrente]['selectedPlaneId'] =

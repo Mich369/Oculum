@@ -17,15 +17,19 @@ extension _OculumFightCreator on _OculumHomePageState {
     String? encounterId,
     String? participantTag,
   }) {
-    final shared = realtimeService?.isConnected == true && !realtimeIsMasterRole;
+    final shared =
+        realtimeService?.isConnected == true && !realtimeIsMasterRole;
     final id =
         encounterId ??
         (shared ? onlineCombatEncounterId : selectedMasterInitiativeGroupId);
     final group = shared
-        ? [realtimeVisibleInitiativeSnapshot, ...realtimeEncounterSnapshots]
-              .where((fight) => fight['encounterId'] == id)
-              .firstOrNull
-        : masterInitiativeGroups.where((fight) => fight['id'] == id).firstOrNull;
+        ? [
+            realtimeVisibleInitiativeSnapshot,
+            ...realtimeEncounterSnapshots,
+          ].where((fight) => fight['encounterId'] == id).firstOrNull
+        : masterInitiativeGroups
+              .where((fight) => fight['id'] == id)
+              .firstOrNull;
     if (group == null ||
         group['trainingMode'] != true ||
         group['fightStarted'] != true ||
@@ -269,8 +273,11 @@ extension _OculumFightCreator on _OculumHomePageState {
     ) {
       final active = creatorContext;
       if (!permitted() && active != null && active.mounted && !closing) {
-        closing = true;
         final route = ModalRoute.of(active);
+        // A dismissed dialog still has a mounted context during its exit.
+        // Only unwind routes when the Creator is still in the navigator.
+        if (route == null || !route.isActive) return;
+        closing = true;
         Navigator.of(
           active,
         ).popUntil((candidate) => identical(candidate, route));
@@ -594,17 +601,19 @@ extension _OculumFightCreator on _OculumHomePageState {
                                                   status =
                                                       'Le schede create restano salvate anche se chiudi la bozza.';
                                                 } finally {
-                                                  quickSheetNameController
-                                                          .text =
-                                                      previous.$1;
-                                                  quickSheetDescriptionController
-                                                          .text =
-                                                      previous.$2;
-                                                  quickSheetCountController
-                                                          .text =
-                                                      previous.$3;
-                                                  quickSheetAddToInitiative =
-                                                      previous.$4;
+                                                  if (mounted) {
+                                                    quickSheetNameController
+                                                            .text =
+                                                        previous.$1;
+                                                    quickSheetDescriptionController
+                                                            .text =
+                                                        previous.$2;
+                                                    quickSheetCountController
+                                                            .text =
+                                                        previous.$3;
+                                                    quickSheetAddToInitiative =
+                                                        previous.$4;
+                                                  }
                                                   if (dialogContext.mounted &&
                                                       permitted()) {
                                                     refresh(() => busy = false);
