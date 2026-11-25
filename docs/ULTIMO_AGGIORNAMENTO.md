@@ -1,5 +1,9 @@
 # Oculum RL e aggiornamenti alla campagna
 
+## Oculum RL 0.4.23
+
+- **Oculum RL 0.4.23.** Ripristinati accenti e apostrofi nei testi del combattimento. La versione include la revisione della Forma corvina, dei due scheletri e del Passo fantasma.
+
 ## Oculum RL 0.4.22
 
 - **Oculum RL 0.4.22.** Il Curatore della Peste tiene lo scettro in presa durante il colpo e passa gradualmente alla Forma corvina fra piume d’inchiostro. I due scheletri hanno preparazione, rilascio e recupero distinti per arco e falce. Il Passo fantasma dell’Evasore ospite usa la stessa posa intangibile del giocatore che ospita. La barra Vita e l’ombra seguono la statura della Forma corvina.

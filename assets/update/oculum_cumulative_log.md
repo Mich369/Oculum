@@ -2,6 +2,7 @@
 
 ## Oculum RL · Anteprima autonoma
 
+- **Oculum RL 0.4.23.** Ripristinati accenti e apostrofi nei testi del combattimento. La versione include la revisione della Forma corvina, dei due scheletri e del Passo fantasma.
 - **Oculum RL 0.4.22.** Il Curatore della Peste tiene lo scettro in presa durante il colpo e passa gradualmente alla Forma corvina fra piume d’inchiostro. I due scheletri hanno preparazione, rilascio e recupero distinti per arco e falce. Il Passo fantasma dell’Evasore ospite usa la stessa posa intangibile del giocatore che ospita. La barra Vita e l’ombra seguono la statura della Forma corvina.
 - **Oculum RL 0.4.21.** Ashley ha appoggi distinti per passo e corsa, rinculo coordinato tra mano e arma e una fase di rientro del guanto a molla. Il Ragno Saldatore prepara il colpo con la coda. Rasvyr articola gli appoggi e l’affondo della chela. Orbryx rotola e torna a terra. Su Rasvyr e Orbryx, la reazione al danno ha una posa diversa dall’attacco. Il plasma ha una scia dipinta legata alla posizione del proiettile.
 - **Oculum RL 0.4.20.** Terreno, ripari, varco e pedane con nuove finiture Ink Expressive. Il Duplicatore appoggia meglio i piedi; caricamento e recupero muovono armi e mani su traiettorie specifiche per entrambe le silhouette. Obser, simboli lunari, pergamene, cure, gemme, pietre e armi hanno movimenti distinti. Le pedane reagiscono al giocatore locale anche in co-op. Corrette tre regressioni co-op nei passaggi di arena e nella precedenza del Blocco per Art e Pergamene.

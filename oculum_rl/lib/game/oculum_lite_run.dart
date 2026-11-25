@@ -20,10 +20,10 @@ part 'oculum_lite_dash_crossings.dart';
 part 'oculum_lite_weapon_art.dart';
 
 enum LiteHero {
-  evasore('Passo fantasma', 'Scatto intangibile piÃ¹ lungo.'),
+  evasore('Passo fantasma', 'Scatto intangibile più lungo.'),
   duplicatore(
     'Doppio richiamo',
-    'Evoca fino a due copie dâ€™inchiostro per 8 secondi.',
+    'Evoca fino a due copie d’inchiostro per 8 secondi.',
   ),
   ashley('Molla a fondo corsa', 'Pugno a molla potenziato fino a 5 metri.'),
   scostubandito(
@@ -47,7 +47,7 @@ enum LiteHero {
   ),
   lithra('Faglia tripla', 'Tre strisce di roccia spezzano il terreno.'),
   luce('Sentenza solare', 'Luce ad area, respinta e Scudo.'),
-  ombra('Velo dâ€™ombra', 'Scatto intangibile e 3 secondi di protezione.'),
+  ombra('Velo d’ombra', 'Scatto intangibile e 3 secondi di protezione.'),
   veyrth('Costellazione cava', 'Scaglia una corona di sfere.'),
   doppelganger(
     'Istinto della copia',
@@ -63,12 +63,12 @@ enum LiteHero {
   ),
   vampiro(
     'Sangue antico',
-    'Raddoppia Vita massima, velocitÃ  e Danni e aumenta la respinta.',
+    'Raddoppia Vita massima, velocità e Danni e aumenta la respinta.',
   ),
   reGoblin('Corte dei goblin', 'Evoca due coltelli e un goblin fangoso.'),
   pollo(
     'Uova a orologeria',
-    'Spara tre uova alle tue spalle. Esplodono allâ€™impatto o 0,9 s dopo essersi fermate.',
+    'Spara tre uova alle tue spalle. Esplodono all’impatto o 0,9 s dopo essersi fermate.',
   ),
   raganella(
     'Re dello stagno',
@@ -76,7 +76,7 @@ enum LiteHero {
   ),
   pipistrello(
     'Uno stormo solo',
-    'Passa intangibile fra i nemici con unâ€™onda di ultrasuoni.',
+    'Passa intangibile fra i nemici con un’onda di ultrasuoni.',
   ),
   guardiaSolare(
     'Passo di presidio',
@@ -84,11 +84,11 @@ enum LiteHero {
   ),
   eliteSolare('Raggio del sigillo', 'Libera un lungo raggio dorato.'),
   guardianoSolare(
-    'Mazza dâ€™oro',
-    'Materializza la mazza dâ€™oro e potenzia i Danni per 4â€“7 secondi.',
+    'Mazza d’oro',
+    'Materializza la mazza d’oro e potenzia i Danni per 4–7 secondi.',
   ),
   aberrazioneSolare(
-    'Mantello dâ€™oro',
+    'Mantello d’oro',
     'Stringe le placche. Ottieni Scudo e riduci del 45% i Danni subiti.',
   ),
   demoneMinore('Balzo di cenere', 'Scatta e artiglia a distanza ravvicinata.'),
@@ -106,7 +106,7 @@ enum LiteHero {
   ),
   polloMeccanico(
     'Uova di Postea',
-    'Lancia tre uova runiche piÃ¹ lontano, con esplosioni piÃ¹ forti e ampie.',
+    'Lancia tre uova runiche più lontano, con esplosioni più forti e ampie.',
   ),
   vesanybel(
     'Rintocco cieco',
@@ -165,7 +165,7 @@ enum LiteHero {
     pyrel => 'Palla di fuoco rimbalzante',
     lithra => 'Faglia di roccia',
     luce => 'Lancia solare',
-    ombra => 'Passo dâ€™ombra',
+    ombra => 'Passo d’ombra',
     veyrth => 'Sfera cava',
     doppelganger => 'Copia un nemico',
     cavaliereLunare => 'Chiama le due Guardie Lunari',
@@ -178,7 +178,7 @@ enum LiteHero {
     pipistrello => 'Ultrasuono',
     guardiaSolare => 'Bagliore molesto',
     eliteSolare => 'Guardia delle placche',
-    guardianoSolare => 'Due frecce dâ€™oro',
+    guardianoSolare => 'Due frecce d’oro',
     aberrazioneSolare => 'Spalla di marmo',
     demoneMinore => 'Graffio fulmineo',
     demoneIntermedio => 'Faglia di magma',
@@ -219,14 +219,14 @@ enum LiteHero {
     eliteSolare => 'Supera la penultima sala del dungeon solare.',
     guardianoSolare => 'Sconfiggi il Guardiano Solare.',
     aberrazioneSolare =>
-      'Supera il dungeon solare dopo aver abbattuto lâ€™Aberrazione.',
-    demoneMinore => 'Supera la prima sala di Inferno nellâ€™Atto II.',
-    demoneIntermedio => 'Supera la seconda sala di Inferno nellâ€™Atto II.',
-    demoneMaggiore => 'Supera la terza sala di Inferno nellâ€™Atto II.',
-    diavolo => 'Spezza il patto nellâ€™ultima sala di Inferno.',
+      'Supera il dungeon solare dopo aver abbattuto l’Aberrazione.',
+    demoneMinore => 'Supera la prima sala di Inferno nell’Atto II.',
+    demoneIntermedio => 'Supera la seconda sala di Inferno nell’Atto II.',
+    demoneMaggiore => 'Supera la terza sala di Inferno nell’Atto II.',
+    diavolo => 'Spezza il patto nell’ultima sala di Inferno.',
     vesanybel => 'Sconfiggi Vesanybel nella Cripta della Campana Cieca.',
-    aerovyr => 'Sconfiggi Aerovyr e completa lâ€™Atto III.',
-    vedettaEiva => 'Libera gli Altari di bassa marea nellâ€™Atto III.',
+    aerovyr => 'Sconfiggi Aerovyr e completa l’Atto III.',
+    vedettaEiva => 'Libera gli Altari di bassa marea nell’Atto III.',
     _ => null,
   };
 
@@ -249,7 +249,7 @@ enum LitePermanentUpgrade {
   oculum('Oculum', 1),
   portata('Portata delle armi', 5),
   richiamo('Attrazione Obser', 75),
-  passoCompagno('VelocitÃ  compagni', 5),
+  passoCompagno('Velocità compagni', 5),
   scudo('Scudo iniziale', 4),
   resistenza('Resistenza del blocco', 10);
 
@@ -266,7 +266,7 @@ enum LitePermanentUpgrade {
     richiamo => '+0,75 m di attrazione Obser',
     passoCompagno => '+$points% movimento e ritmo dei compagni',
     scudo => '+$points Scudo a ogni piano',
-    resistenza => '+$points capacitÃ  del blocco',
+    resistenza => '+$points capacità del blocco',
   };
 
   static Map<LitePermanentUpgrade, int> read(Object? value) {
@@ -285,16 +285,16 @@ enum LitePermanentUpgrade {
 enum LiteWeapon {
   boomerang('Boomerang in legno', 5, 8, .55),
   spadaScudo('Spada e scudo', 6, 2.9, .42),
-  guanti('Guanti dâ€™arme giganti', 10, 2.4, .82),
+  guanti('Guanti d’arme giganti', 10, 2.4, .82),
   arco('Arco', 3, 10, .46),
   scettro('Scettro magico', 0, 12, .5),
   falceRunica('Falce runica', 7, 3.4, .86, isPostea: true),
   doppieLame('Doppie lame', 4, 1.9, .45, isPostea: true),
   carabinaImpulsi('Carabina a impulsi', 8, 13, .94, isPostea: true),
-  piccaOssidiana('Picca dâ€™ossidiana', 9, 4.3, .73),
+  piccaOssidiana('Picca d’ossidiana', 9, 4.3, .73),
   balestraRunica('Balestra runica', 12, 11, 1.24),
   fucileScostubandito('Fucile Scostubandito', 5, 12, .68),
-  chakram('Chakram dâ€™Iridio', 9, 9, .32);
+  chakram('Chakram d’Iridio', 9, 9, .32);
 
   const LiteWeapon(
     this.label,
@@ -348,7 +348,7 @@ enum LiteBiome {
   campo('Campo Scostubanditi'),
   foresta('Foresta Elementale'),
   dungeon('Regno Sotterraneo'),
-  postea('Postea Â· Fonderie runiche'),
+  postea('Postea · Fonderie runiche'),
   deserto('Deserto Divoratore'),
   orea('Orea Zalira');
 
@@ -403,18 +403,14 @@ enum LitePowerUp {
     .19,
     .38,
   ]),
-  condotto('Condotto dellâ€™Iride', 'Oculum rigenerato al secondo', [
+  condotto('Condotto dell’Iride', 'Oculum rigenerato al secondo', [
     .30,
     .75,
     2.4,
   ]),
-  braci('Braci dâ€™impatto', 'Danni ad area nei Clash', [5, 10, 20]),
-  riflusso('Riflusso dâ€™Oculum', 'Scudo ottenuto usando lâ€™Open', [
-    5,
-    10,
-    22,
-  ]),
-  risonanza('Risonanza dâ€™ombra', 'Recupero degli attacchi dopo lâ€™Open', [
+  braci('Braci d’impatto', 'Danni ad area nei Clash', [5, 10, 20]),
+  riflusso('Riflusso d’Oculum', 'Scudo ottenuto usando l’Open', [5, 10, 22]),
+  risonanza('Risonanza d’ombra', 'Recupero degli attacchi dopo l’Open', [
     .18,
     .32,
     .50,
@@ -427,7 +423,7 @@ enum LitePowerUp {
     .40,
   ]),
   pelleRunica('Pelle runica', 'Scudo a ogni piano', [5, 12, 25]),
-  ferroVivo('Ferro vivo', 'CapacitÃ  del blocco', [12, 30, 65]),
+  ferroVivo('Ferro vivo', 'Capacità del blocco', [12, 30, 65]),
   schegge('Sigillo delle schegge', 'Onda runica dai ripari', [7, 15, 30]);
 
   const LitePowerUp(this.label, this.effect, this.valuesByRank);
@@ -461,13 +457,13 @@ enum LitePowerUp {
         '+${value.round()} Danni ai nemici entro 2 m da un Clash di proiettili',
       riflusso => '+${value.round()} Scudo quando attivi la tua Open',
       risonanza =>
-        'âˆ’${(value * 100).round()}% recupero degli attacchi per 4 s dopo lâ€™Open',
+        '−${(value * 100).round()}% recupero degli attacchi per 4 s dopo l’Open',
       irideVorace =>
         '+${value.toStringAsFixed(2).replaceFirst('.', ',')} m di attrazione Obser',
       pelleRunica => '+${value.round()} Scudo subito e a ogni nuovo piano',
-      ferroVivo => '+${value.round()} capacitÃ  del blocco con F',
+      ferroVivo => '+${value.round()} capacità del blocco con F',
       schegge => '${value.round()} Danni entro 2,6 m quando infrangi un riparo',
-      _ => '+${(value * 100).round()}% Â· $effect',
+      _ => '+${(value * 100).round()}% · $effect',
     };
   }
 }
@@ -483,11 +479,11 @@ enum LiteFloorLayout {
 }
 
 enum LiteArenaTrial {
-  battuta('Battuta dei predoni', 'Due nemici in piÃ¹', 22, LitePowerUp.braci),
+  battuta('Battuta dei predoni', 'Due nemici in più', 22, LitePowerUp.braci),
   muraglia('Patto di ferro', '+25% Vita dei nemici', 28, LitePowerUp.riflusso),
   caccia(
     'Caccia al varco',
-    'Nemici +15% velocitÃ . Completa entro 40 s di arena',
+    'Nemici +15% velocità. Completa entro 40 s di arena',
     35,
     LitePowerUp.risonanza,
   );
@@ -562,17 +558,17 @@ enum LiteEnemyKind {
   raganella('Raganella del Muschio', 23, .44, 3.25, 10),
   pipistrello('Pipistrello di Pece', 17, .39, 4.6, 7),
   guardiaSolare('Guardia Solare', 30, .53, 3.25, 10),
-  eliteSolare('Guardia ElitÃ© Solare', 68, .64, 3.05, 14),
+  eliteSolare('Guardia Elité Solare', 68, .64, 3.05, 14),
   guardianoSolare('Guardiano Solare', 154, 1.14, 1.9, 22),
-  aberrazioneSolare('Aberrazione dâ€™Oro e Marmo', 63, .80, 3.08, 14),
-  eliteLunare('Guardia ElitÃ© Lunare', 61, .65, 3.25, 15),
+  aberrazioneSolare('Aberrazione d’Oro e Marmo', 63, .80, 3.08, 14),
+  eliteLunare('Guardia Elité Lunare', 61, .65, 3.25, 15),
   custodeLunare('Custode Lunare', 126, 1.06, 2.2, 21),
   demoneMinore('Demone Minore', 31, .48, 4.35, 9),
   demoneIntermedio('Demone Intermedio', 57, .70, 2.75, 12),
   demoneMaggiore('Demone Maggiore Prediletto', 72, .65, 3.68, 14),
   diavolo('Diavolo del Patto', 146, .94, 2.38, 19),
-  divoramitu('DivoramitÃ¹ ElitÃ©', 78, 1.13, 2.3, 18),
-  divoramituBoss('DivoramitÃ¹ Â· Bocca della Cripta', 132, 1.85, 2.5, 23),
+  divoramitu('Divoramitù Elité', 78, 1.13, 2.3, 18),
+  divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.85, 2.5, 23),
   arconte('Arconte delle Fratture', 312, 1.52, 1.7, 27),
   funerys('Funerys', 57, .62, 3.3, 15),
   vegliante('Vegliante di Bronzo', 104, .83, 2.1, 19),
@@ -700,7 +696,7 @@ enum LiteCompanion {
     13,
   ),
   orbietto('Orbietto', null, LiteEnemyKind.orbryx, LiteWeapon.guanti, 30, 11),
-  lumin('Lumin dâ€™eco', null, LiteEnemyKind.slime, LiteWeapon.scettro, 24, 8),
+  lumin('Lumin d’eco', null, LiteEnemyKind.slime, LiteWeapon.scettro, 24, 8),
   guardiaLunare(
     'Guardia Lunare',
     null,
@@ -786,10 +782,10 @@ enum LiteCompanion {
     lupoAlleato => null,
   };
   String? get discovery => switch (this) {
-    piccolaMarea => 'Spaccascheletri Â· abbatti tre Rasvyr durante la run',
-    orbietto => 'Occhio per i segreti Â· trova una sala segreta a Orea Zalira',
-    lumin => 'Predatore speculare Â· un Doppelganger copia uno Slime',
-    goblinColla => 'Fanteria goblin Â· abbatti uno Spara-colla per arruolarlo nellâ€™Open del Re',
+    piccolaMarea => 'Spaccascheletri · abbatti tre Rasvyr durante la run',
+    orbietto => 'Occhio per i segreti · trova una sala segreta a Orea Zalira',
+    lumin => 'Predatore speculare · un Doppelganger copia uno Slime',
+    goblinColla => 'Fanteria goblin · abbatti uno Spara-colla per arruolarlo nell’Open del Re',
     _ => null,
   };
 
@@ -803,7 +799,7 @@ enum LiteScroll {
   dardo('Dardo arcano', 3),
   onda('Onda di Materia', 4),
   velo('Velo protettivo', 3),
-  richiamo('Richiamo dâ€™inchiostro', 4),
+  richiamo('Richiamo d’inchiostro', 4),
   raggioAlPlasma('Raggio al plasma', 4),
   braceErrante('Brace errante', 4),
   spaccaterra('Spaccaterra', 5),
@@ -1070,7 +1066,7 @@ class LiteEnemy {
   double _strikePose = 0;
   double get strikePose => _strikePose;
 
-  String get name => exalted ? '${kind.label} Â· Risvegliato' : kind.label;
+  String get name => exalted ? '${kind.label} · Risvegliato' : kind.label;
   double get radius => kind.radius;
   double get hitboxRadius => burrow == null ? radius : radius * .73;
   double get hitboxHalfLength => burrow == null ? 0 : radius * 1.22;
@@ -2336,7 +2332,7 @@ class LiteRun {
       }
     }
     if (!hostDown) hp += maxHp - previousMax;
-    message = '${power.label} Â· Grado ${rank + 1}/${LitePowerUp.maxRank}';
+    message = '${power.label} · Grado ${rank + 1}/${LitePowerUp.maxRank}';
   }
 
   void _offerPowers() {
@@ -2684,7 +2680,7 @@ class LiteRun {
     restUsed = true;
     _healFighter(maxHp * .50);
     oculum = min(maxOculum, oculum + maxOculum * .25);
-    message = 'Ristoro Â· Recuperi il 50% della Vita e il 25% di Oculum.';
+    message = 'Ristoro · Recuperi il 50% della Vita e il 25% di Oculum.';
     return true;
   }
 
@@ -2949,7 +2945,7 @@ class LiteRun {
       LiteQuest(
         'p$stage:${biome.name}:conquista',
         switch (encounter) {
-          LiteEncounter.elite => 'Abbatti lâ€™Ã©lite',
+          LiteEncounter.elite => 'Abbatti l’élite',
           LiteEncounter.boss => 'Sconfiggi il riflesso',
           _ => 'Conquista il piano',
         },
@@ -2985,12 +2981,12 @@ class LiteRun {
     }
     final layout = floorLayout.label;
     message =
-        'Piano $stage Â· ${biome.label}${layout.isEmpty ? '' : ' Â· $layout'}'
-        '${arenaTrial == null ? '' : ' Â· ${arenaTrial!.label}'}';
+        'Piano $stage · ${biome.label}${layout.isEmpty ? '' : ' · $layout'}'
+        '${arenaTrial == null ? '' : ' · ${arenaTrial!.label}'}';
     if (solarCampaign) {
       message = stage == 8
-          ? 'Assedio lunare Â· Custode, due ElitÃ© e tre Guardie.'
-          : 'Campagna del Sole Â· $message Â· Pattuglie lunari.';
+          ? 'Assedio lunare · Custode, due Elité e tre Guardie.'
+          : 'Campagna del Sole · $message · Pattuglie lunari.';
     }
   }
 
@@ -3067,7 +3063,7 @@ class LiteRun {
     final archon = boss == LiteEnemyKind.arconte;
     quests.addAll([
       if (archon)
-        LiteQuest('p$stage:breccia', 'Porta lâ€™Arconte alla terza fase', 1, 12)
+        LiteQuest('p$stage:breccia', 'Porta l’Arconte alla terza fase', 1, 12)
       else
         LiteQuest('p$stage:evocazioni', 'Disperdi due echi', 2, 4),
       LiteQuest('p$stage:riparo', 'Abbatti un riparo', 1, 6),
@@ -3084,8 +3080,8 @@ class LiteRun {
     final defender = _spawnEnemy(boss, const Point(27.8, 11))..cooldown = .75;
     _seatChampion(defender);
     message = archon
-        ? 'Lâ€™Arconte delle Fratture si risveglia. Evita i segni a terra.'
-        : 'Piano $stage Â· Veyrth. Elimina i suoi echi per renderlo vulnerabile.';
+        ? 'L’Arconte delle Fratture si risveglia. Evita i segni a terra.'
+        : 'Piano $stage · Veyrth. Elimina i suoi echi per renderlo vulnerabile.';
   }
 
   LiteEnemyKind _specialKind(int floor) {
@@ -3937,7 +3933,7 @@ class LiteRun {
     this._checkGoblinEntrance();
     if (hostDown && coopFighters.every((fighter) => fighter.hp <= 0)) {
       dead = true;
-      message = 'Il gruppo Ã¨ caduto al piano $stage.';
+      message = 'Il gruppo è caduto al piano $stage.';
     }
     if (dead || enemies.isNotEmpty || stageClear) return;
     if (baghestFight) {
@@ -3978,7 +3974,7 @@ class LiteRun {
         fighter.obser += trial.obser;
       }
       message =
-          '${trial.label} superata Â· +${trial.obser} Obser per combattente.';
+          '${trial.label} superata · +${trial.obser} Obser per combattente.';
     } else {
       message = trial == null
           ? 'Piano completato. R presso il mercante o il portale.'
@@ -4853,7 +4849,7 @@ class LiteRun {
       fighter.shield += _power(LitePowerUp.riflusso);
       fighter._openCooldown = openRecoveryFor(grade);
     }
-    message = 'Open Â· ${character.openName}.';
+    message = 'Open · ${character.openName}.';
     return true;
   }
 
@@ -4918,7 +4914,7 @@ class LiteRun {
       fighter.oculum -= banditRifleCost;
     }
     skills.rounds = banditRifleCost;
-    message = 'Fucile schivata Â· 4 colpi infusi.';
+    message = 'Fucile schivata · 4 colpi infusi.';
     return true;
   }
 
@@ -5122,7 +5118,7 @@ class LiteRun {
         } else {
           fighter._shadowProtection = max(fighter._shadowProtection, 3);
         }
-        message = 'Forma pipistrello Â· 3 s di intangibilitÃ .';
+        message = 'Forma pipistrello · 3 s di intangibilità.';
         return true;
       case LiteHero.pyrel:
         _launchFireball(source, direction, 18 + 2.0 * characterLevel, 3, owner);
@@ -5225,7 +5221,7 @@ class LiteRun {
     LiteCoopFighter? fighter,
   ) {
     if ((fighter == null ? _mimic : fighter._mimic) != null) {
-      message = 'La forma copiata dura finchÃ© viene abbattuta.';
+      message = 'La forma copiata dura finché viene abbattuta.';
       return false;
     }
     LiteEnemy? target;
@@ -5266,7 +5262,7 @@ class LiteRun {
       fighter.shield = 0;
     }
     achievements.add('predatore-speculare');
-    message = 'Forma copiata Â· ${target.kind.label}.';
+    message = 'Forma copiata · ${target.kind.label}.';
     if (target.kind == LiteEnemyKind.slime)
       _discoverPet(LiteCompanion.lumin, from);
     return true;
@@ -5282,7 +5278,7 @@ class LiteRun {
       fighter.hp = min(fighter.maxHp, form.originalHp * .65);
       fighter._windup = 0;
     }
-    message = 'Forma distrutta Â· ritorni con il 65% della Vita che avevi.';
+    message = 'Forma distrutta · ritorni con il 65% della Vita che avevi.';
   }
 
   void _mimicStrike(
@@ -5876,15 +5872,15 @@ class LiteRun {
         .firstOrNull;
     if (boss != null) {
       final attack = boss.attacking ? boss.archonAttack : null;
-      return ' Â· Arconte ${boss.archonPhase}/3'
-          '${attack == null ? '' : ' Â· ${attack.label}'}';
+      return ' · Arconte ${boss.archonPhase}/3'
+          '${attack == null ? '' : ' · ${attack.label}'}';
     }
     return switch (finalBossPhase) {
       LiteFinalBossPhase.inactive || LiteFinalBossPhase.defeated => '',
-      LiteFinalBossPhase.tangible => ' Â· Veyrth vulnerabile',
-      LiteFinalBossPhase.intangible => ' Â· Distruggi gli echi',
-      LiteFinalBossPhase.beamTangible => ' Â· Raggio attivo',
-      LiteFinalBossPhase.beamIntangible => ' Â· Raggio ed echi attivi',
+      LiteFinalBossPhase.tangible => ' · Veyrth vulnerabile',
+      LiteFinalBossPhase.intangible => ' · Distruggi gli echi',
+      LiteFinalBossPhase.beamTangible => ' · Raggio attivo',
+      LiteFinalBossPhase.beamIntangible => ' · Raggio ed echi attivi',
     };
   }
 
@@ -6202,7 +6198,7 @@ class LiteRun {
     build.signatureCooldown = 9.0;
     build.shadowVeilRemaining = shadowVeilDuration;
     boss.cooldown = .57;
-    message = 'La tua Ombra attraversa il Velo Â· Intangibile per 3 s.';
+    message = 'La tua Ombra attraversa il Velo · Intangibile per 3 s.';
   }
 
   void _resolveVerdict(LiteEnemy boss, Point<double> mark) {
@@ -7288,7 +7284,7 @@ class LiteRun {
             ? _bandit
             : _banditForFighter(projectile.sourceCloneId);
         if (skills != null) skills.dodgeReady = true;
-        message = 'Fucile schivata Â· prossimo scatto intangibile.';
+        message = 'Fucile schivata · prossimo scatto intangibile.';
       }
       if (projectile.kind == LiteProjectileKind.frostBolt &&
           enemy.hp > 0 &&
@@ -7437,7 +7433,7 @@ class LiteRun {
       solarStairs = obstacle.center;
       achievements.add('scale-d-oro');
       _progressOptionalQuest('scale');
-      message = 'Scale dâ€™oro scoperte. Avvicinati e premi R a fine scontro.';
+      message = 'Scale d’oro scoperte. Avvicinati e premi R a fine scontro.';
       return;
     }
     if (obstacle.secretGate) {
@@ -7634,7 +7630,7 @@ class LiteRun {
     if (remaining <= 0) {
       if (skills.shieldRecovered) return remaining;
       skills.shieldRecovered = true;
-      message = 'Oh merda, escono dalle fottute pareti! Â· Scudo recuperato.';
+      message = 'Oh merda, escono dalle fottute pareti! · Scudo recuperato.';
       return 16 + 2.0 * (level - 1);
     }
     for (final enemy in enemies) {
@@ -7976,7 +7972,7 @@ class LiteRun {
       level++;
       hp = maxHp;
       oculum = maxOculum;
-      message = 'Livello $level Â· Vita e Oculum ripristinati.';
+      message = 'Livello $level · Vita e Oculum ripristinati.';
     }
     if (kind == LiteEnemyKind.rasvyr) {
       final next = achievements.contains('rasvyr-2')
@@ -8125,7 +8121,7 @@ class LiteRun {
       _invulnerability = 1.9;
       endRescue();
       _block.held = false;
-      message = 'Gettone di Rinascita Â· sei tornato al 35% della Vita.';
+      message = 'Gettone di Rinascita · sei tornato al 35% della Vita.';
       return;
     } else if (_tryAnimalRebirth()) {
       return;
@@ -8149,7 +8145,7 @@ class LiteRun {
         message = 'Sei a terra. Gli altri giocatori possono continuare.';
         return;
       }
-      message = 'La run si Ã¨ conclusa al piano $stage.';
+      message = 'La run si è conclusa al piano $stage.';
     }
     dead = true;
     achievements.add('prima-run-conclusa');
@@ -8187,7 +8183,7 @@ class LiteRun {
             _collectHealing(item, guest);
           } else {
             (guest?.supply ?? supply).lunarPieces += item.amount;
-            message = 'Simbolo della Luna Â· tre frammenti da 60 Obser.';
+            message = 'Simbolo della Luna · tre frammenti da 60 Obser.';
           }
           continue;
         }
@@ -8210,7 +8206,7 @@ class LiteRun {
           final itemWeapon = item.weapon;
           if (itemWeapon != null && !ownedWeapons.contains(itemWeapon)) {
             ownedWeapons.add(itemWeapon);
-            message = '${itemWeapon.label} aggiunta allâ€™equipaggiamento.';
+            message = '${itemWeapon.label} aggiunta all’equipaggiamento.';
           }
       }
     }
@@ -8265,9 +8261,9 @@ class LiteRun {
     if (fighter == null) {
       if (full) oculum = maxOculum;
       _block.recover(weapon);
-      if (full) message = 'Gemma verde ridefinita Â· Vita e Oculum al massimo.';
+      if (full) message = 'Gemma verde ridefinita · Vita e Oculum al massimo.';
       if (item.kind == LiteLootKind.greenStone)
-        message = 'Pietra verde Â· +20% Vita massima.';
+        message = 'Pietra verde · +20% Vita massima.';
     } else {
       if (full)
         fighter.oculum =
@@ -8308,7 +8304,7 @@ class LiteRun {
           !stageClear &&
           achievements.add('borsa-della-palizzata')) {
         _awardPartyObser(12);
-        message = 'Borsa della palizzata Â· +12 Obser.';
+        message = 'Borsa della palizzata · +12 Obser.';
       }
       shopOpen = true;
       return true;
@@ -8330,7 +8326,7 @@ class LiteRun {
       return false;
     }
     _reloadRemaining = reloadDuration;
-    message = 'Ricarica in corsoâ€¦';
+    message = 'Ricarica in corso…';
     return true;
   }
 
@@ -8443,7 +8439,7 @@ class LiteRun {
     if (!canBuyWeapon(item)) return false;
     obser -= priceForWeapon(item);
     ownedWeapons.add(item);
-    message = '${item.label} aggiunto allâ€™equipaggiamento.';
+    message = '${item.label} aggiunto all’equipaggiamento.';
     return true;
   }
 
@@ -8959,7 +8955,7 @@ class LiteRun {
   }
 }
 
-// Parkâ€“Miller uses a product below 2^53, so JavaScript and native builds
+// Park–Miller uses a product below 2^53, so JavaScript and native builds
 // produce the same sequence without relying on platform Random internals.
 class _LiteRandom {
   _LiteRandom(int seed) : state = seed % 2147483646 + 1;
