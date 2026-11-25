@@ -66,6 +66,10 @@ void _paintOpenPulse(
   final age = LiteRun.openRecoveryFor(grade) - cooldown;
   if (age < 0 || age >= .62) return;
   final phase = age / .62;
+  if (hero == LiteHero.curatorePeste) {
+    _paintCorvineFeathers(canvas, feet, age);
+    return;
+  }
   final color = switch (hero) {
     LiteHero.evasore => const Color(0xff76dfc8),
     LiteHero.duplicatore => _violet,

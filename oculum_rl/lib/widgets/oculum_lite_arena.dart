@@ -16,6 +16,7 @@ part 'oculum_lite_combat_paint.dart';
 part 'oculum_lite_world_ink_paint.dart';
 part 'oculum_lite_art_paint.dart';
 part 'oculum_lite_actor_paint.dart';
+part 'oculum_lite_plague_paint.dart';
 part 'oculum_lite_weapon_paint.dart';
 
 class OculumLiteBlockControl extends StatelessWidget {
@@ -2594,20 +2595,7 @@ class _ArenaPaint extends CustomPainter {
                 if (art == null) {
                   _paintSkeleton(canvas, clone, weapons[clone.weapon], time);
                 } else {
-                  _newActor(
-                    canvas,
-                    art,
-                    companion == LiteCompanion.scheletroFalce ? 2 : 3,
-                    _newFrame(
-                      clone.stride,
-                      animationLead,
-                      hitting: clone.swing > 0,
-                    ),
-                    height: 2.12,
-                    stride: clone.stride,
-                    animationLead: animationLead,
-                    fallen: clone.down,
-                  );
+                  _paintPlagueSkeleton(canvas, art, clone, time, animationLead);
                 }
                 return;
               }
@@ -2767,11 +2755,35 @@ class _ArenaPaint extends CustomPainter {
       final at = _offset(fighter.position);
       if (!visible.contains(at)) continue;
       final direction = _offset(fighter.weaponAim);
+      final phase = fighter.hero == LiteHero.evasore
+          ? _activePhase(run.burstTraceFor(fighter.id), time)
+          : null;
+      final growth = fighter.plagueForm
+          ? _plagueGrowth(fighter.plagueSeconds, fighter.openGrade)
+          : 0.0;
       final side = direction.dx < 0 ? -1.0 : 1.0;
       jobs.add((
         at.dy,
         () {
-          _shadow(canvas, at, .54, .23, alpha: fighter.connected ? .58 : .33);
+          _shadow(
+            canvas,
+            at,
+            .54 + growth * .29,
+            .23 + growth * .08,
+            alpha: phase != null
+                ? .31
+                : fighter.connected
+                ? .58
+                : .33,
+          );
+          if (fighter.plagueForm && fighter.plagueSeconds < .26) {
+            _paintCorvineFeathers(
+              canvas,
+              at,
+              .26 - fighter.plagueSeconds,
+              closing: true,
+            );
+          }
           _paintOpenPulse(
             canvas,
             at,
@@ -2796,6 +2808,24 @@ class _ArenaPaint extends CustomPainter {
             final standard =
                 guestAppearances[fighter.account] ??
                 oculumLiteDefaultAppearance(fighter.hero);
+            final phaseArt = _heroSprites.evasore;
+            if (phase != null &&
+                phaseArt != null &&
+                fighter.hp > 0 &&
+                _hasDefaultAppearance(standard, fighter.hero)) {
+              _heroFrame(
+                canvas,
+                phaseArt,
+                fighter.weapon,
+                fighter.stride,
+                3,
+                standard.accent,
+                weapons[fighter.weapon],
+                animationLead,
+                phaseAge: time - phase.startedAt,
+              );
+              return;
+            }
             _hero(
               canvas,
               standard,
@@ -2809,6 +2839,8 @@ class _ArenaPaint extends CustomPainter {
                   ? _heroSprites.evasore
                   : null,
               giant: fighter.plagueForm,
+              plagueGrowth: growth,
+              phantom: phase != null,
               mimic: fighter.mimic,
               night: fighter.night,
               preparingTalent: fighter.springPunchActive,
@@ -2831,7 +2863,7 @@ class _ArenaPaint extends CustomPainter {
           });
           _health(
             canvas,
-            at - const Offset(0, 2.45),
+            at - Offset(0, 2.45 + growth * 1.08),
             fighter.hp / fighter.maxHp,
             1,
             _LifeBarRole.playerSeats[run.coopPlayerSeat(fighter)],
@@ -2839,7 +2871,27 @@ class _ArenaPaint extends CustomPainter {
         },
       ));
     }
-    _shadow(canvas, player, .56, .23, alpha: run.intangible ? .24 : .65);
+    final plagueGrowth = run.plagueForm
+        ? _plagueGrowth(run.plagueSeconds, run.openGrade)
+        : 0.0;
+    final phase = run.hero == LiteHero.evasore
+        ? _activePhase(run.burstTraceFor(0), time)
+        : null;
+    _shadow(
+      canvas,
+      player,
+      .56 + plagueGrowth * .29,
+      .23 + plagueGrowth * .08,
+      alpha: run.intangible ? .24 : .65,
+    );
+    if (run.plagueForm && run.plagueSeconds < .26) {
+      _paintCorvineFeathers(
+        canvas,
+        player,
+        .26 - run.plagueSeconds,
+        closing: true,
+      );
+    }
     _paintProtection(canvas, player, run.hitProtectionRemaining);
     _paintOpenPulse(canvas, player, run.hero, run.openCooldown, run.openGrade);
     _paintInkFinish(canvas, player, appearance.inkFinish, run.stride.strength);
@@ -2856,17 +2908,21 @@ class _ArenaPaint extends CustomPainter {
           final strip = heroFrames;
           final spriteFrame =
               strip != null && _hasDefaultAppearance(appearance, run.hero)
-              ? _motionFrame(run, animationLead)
+              ? (phase != null && !run.dead && !run.hostDown
+                    ? 3
+                    : _motionFrame(run, animationLead))
               : null;
           if (strip != null && spriteFrame != null) {
             _heroFrame(
               canvas,
               strip,
-              run,
+              run.weapon,
+              run.stride,
               spriteFrame,
               appearance.accent,
               weapons[run.weapon],
               animationLead,
+              phaseAge: phase == null ? 0 : time - phase.startedAt,
             );
             return;
           }
@@ -2878,6 +2934,7 @@ class _ArenaPaint extends CustomPainter {
             hero: run.hero,
             sprites: _heroSprites,
             giant: run.plagueForm,
+            plagueGrowth: plagueGrowth,
             mimic: run.mimic,
             night: run.night,
             preparingTalent: run.springPunchActive,
@@ -2905,7 +2962,7 @@ class _ArenaPaint extends CustomPainter {
         if (run.playerCount > 1) {
           _health(
             canvas,
-            player - const Offset(0, 2.45),
+            player - Offset(0, 2.45 + plagueGrowth * 1.08),
             run.hp / run.maxHp,
             1,
             _LifeBarRole.playerSeats[0],
@@ -3727,7 +3784,6 @@ bool _hasDefaultAppearance(OculumLiteAppearance look, LiteHero hero) =>
 int? _motionFrame(LiteRun run, double animationLead) {
   if (run.hero.specialTalent || run.hero == LiteHero.ashley) return null;
   if (run.dead || !run.isMoving || run.rescuing) return null;
-  if (run.hero == LiteHero.evasore && run.intangible) return 3;
   if (run.intangible || run.preparingAttack || run.attackCooldown > 0) {
     return null;
   }
@@ -3740,15 +3796,24 @@ int? _motionFrame(LiteRun run, double animationLead) {
   return math.sin(phase) < 0 ? 2 : 1;
 }
 
+LiteBurstTrace? _activePhase(LiteBurstTrace? trace, double time) {
+  if (trace == null || time >= trace.fadeStart) return null;
+  return trace.kind == LiteBurstKind.phase || trace.kind == LiteBurstKind.open
+      ? trace
+      : null;
+}
+
 void _heroFrame(
   Canvas canvas,
   ui.Image strip,
-  LiteRun run,
+  LiteWeapon weapon,
+  LiteStride stride,
   int frame,
   Color trim,
   ui.Image? gear,
-  double animationLead,
-) {
+  double animationLead, {
+  double phaseAge = 0,
+}) {
   const height = 2.28;
   const width = height * _isometricY;
   final size = strip.width / 2;
@@ -3758,7 +3823,7 @@ void _heroFrame(
   if (frame != 3) {
     _groundedMotion(
       canvas,
-      run.stride,
+      stride,
       animationLead,
       strideMetres: _inkRunningFeet.strideMetres,
     );
@@ -3766,21 +3831,30 @@ void _heroFrame(
     // is visible stowed behind the leading shoulder until the next attack.
     _actor(canvas, const Offset(-.13, -1.18), .74, .74, () {
       canvas.rotate(-2.23);
-      _holdWeapon(canvas, run.weapon, gear, trim, _actorInk);
+      _holdWeapon(canvas, weapon, gear, trim, _actorInk);
     });
   } else {
+    final crest = 1 - _inkEase(phaseAge / .42);
+    final veil = const Color(0xffb6e7d8);
     _dryBrush(
       canvas,
-      const Offset(-.91, -.43),
-      const Offset(-.024, -.088),
-      const Offset(-.43, .14),
-      _active.withValues(alpha: .62),
+      const Offset(-.93, -.43),
+      const Offset(-.04, -.088),
+      Offset(-.46 - crest * .29, .14),
+      veil.withValues(alpha: .62),
       7,
-      width: .039,
+      width: .044,
+    );
+    _inkSlash(
+      canvas,
+      const Offset(-1.37, -1.12),
+      Offset(.18 + crest * .31, -1.48),
+      const Color(0xff8b75a8).withValues(alpha: .70),
+      .083,
     );
   }
   final phase = _stridePhase(
-    run.stride,
+    stride,
     _inkRunningFeet.strideMetres,
     animationLead,
   );
@@ -3789,11 +3863,13 @@ void _heroFrame(
     strip,
     origin & Size.square(size),
     Rect.fromLTWH(-width * contact, -height * .971, width, height),
-    Paint()..filterQuality = FilterQuality.medium,
+    Paint()
+      ..color = Color(frame == 3 ? 0xbbffffff : 0xffffffff)
+      ..filterQuality = FilterQuality.medium,
     _inkRunningFeet,
     phase: phase,
-    strength: frame == 3 ? 0 : run.stride.strength * .38,
-    clothFlow: frame == 3 ? 0 : run.stride.strength * .38,
+    strength: frame == 3 ? 0 : stride.strength * .38,
+    clothFlow: frame == 3 ? 0 : stride.strength * .38,
   );
   canvas.restore();
 }
@@ -5237,6 +5313,7 @@ void _hero(
   bool phantom = false,
   bool fallen = false,
   bool giant = false,
+  double plagueGrowth = 0,
   bool front = true,
   bool moving = false,
   LiteStride? stride,
@@ -5495,6 +5572,25 @@ void _hero(
     }
     return;
   }
+  if (hero == LiteHero.curatorePeste && newActors != null) {
+    _paintPlagueCharacter(
+      canvas,
+      newActors,
+      weapon,
+      gearArt,
+      aiming,
+      stride,
+      time,
+      animationLead,
+      growth: plagueGrowth,
+      fallen: fallen,
+      phantom: phantom,
+      preparing: preparingAttack,
+      attackElapsed: attackElapsed,
+      releasingChakram: releasingChakram,
+    );
+    return;
+  }
   final row = _newHeroRow(hero, giant);
   if (row != null && newActors != null) {
     final striking = attackElapsed != null && attackElapsed < .24;
@@ -5519,7 +5615,6 @@ void _hero(
       phantom: phantom,
     );
     final kitWeapon =
-        hero == LiteHero.curatorePeste ||
         hero == LiteHero.pyrel ||
         (hero != LiteHero.doppelganger && weapon != hero.fixedWeapon);
     if (kitWeapon &&
