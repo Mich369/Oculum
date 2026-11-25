@@ -918,3 +918,165 @@ void _paintEmberRebirth(Canvas canvas, Offset from, Offset into, double age) {
     );
   }
 }
+
+void _paintArtCast(Canvas canvas, LiteCombatImpact cast, double age) {
+  if (age < 0 || age > .36 || cast.end == null) return;
+  final index = cast.life.toInt();
+  if (index < 0 || index >= LiteLearnedArt.values.length) return;
+  final art = LiteLearnedArt.values[index];
+  final rank = cast.shield.toInt().clamp(1, art.maxRank);
+  final color = switch (art) {
+    LiteLearnedArt.plasma => const Color(0xff71c2d4),
+    LiteLearnedArt.falci || LiteLearnedArt.lame => const Color(0xffa9a8d9),
+    LiteLearnedArt.linfa => const Color(0xff84bf81),
+    LiteLearnedArt.pattuglia => const Color(0xffe1ba71),
+    LiteLearnedArt.corruzione => const Color(0xffd54c66),
+    LiteLearnedArt.brace => const Color(0xffed8e50),
+    LiteLearnedArt.basalto => const Color(0xffb8a389),
+  };
+  final progress = age / .36;
+  final opacity = (1 - progress) * (1 - progress);
+  final ink = Paint()
+    ..color = const Color(0xff161018).withValues(alpha: opacity);
+  final pigment = Paint()..color = color.withValues(alpha: opacity);
+  final from = _offset(cast.position);
+  final axis = _offset(cast.end!) - from;
+  final normal = Offset(-axis.dy, axis.dx);
+  final sweep = switch (art) {
+    LiteLearnedArt.linfa || LiteLearnedArt.corruzione => 2 * math.pi,
+    LiteLearnedArt.falci || LiteLearnedArt.brace || LiteLearnedArt.lame => 1.30,
+    _ => .43,
+  };
+  final heading = math.atan2(axis.dy, axis.dx);
+  final sparks = 3 + rank;
+  for (var i = 0; i < sparks; i++) {
+    final angle = heading + (i / (sparks - 1) - .5) * sweep;
+    final ray = Offset(math.cos(angle), math.sin(angle));
+    final side = Offset(-ray.dy, ray.dx);
+    final size = .28 + .065 * ((i + rank) % 3);
+    final spread = .44 + progress * 1.85 + .1 * rank;
+    final point = from + ray * (spread * (i.isEven ? 1 : .81));
+    final slash = Path()
+      ..moveTo((point + ray * size).dx, (point + ray * size).dy)
+      ..lineTo((point + side * size * .28).dx, (point + side * size * .28).dy)
+      ..lineTo((point - ray * size * 1.5).dx, (point - ray * size * 1.5).dy)
+      ..lineTo((point - side * size * .18).dx, (point - side * size * .18).dy)
+      ..close();
+    canvas.drawPath(slash, ink);
+    final accent = point + side * size * .12;
+    canvas.drawCircle(accent, .04 + size * .10, pigment);
+    final hatch = accent + normal * .08;
+    pigment.strokeWidth = .04;
+    canvas.drawLine(hatch, hatch - ray * size * .32, pigment);
+  }
+}
+
+void _paintChamberFloor(Canvas canvas, Offset at, bool won, bool major) {
+  final paint = Paint()
+    ..color = won ? const Color(0x20406961) : const Color(0x55351624);
+  final shape = Path()
+    ..moveTo(at.dx - 3.6, at.dy - 2.6)
+    ..lineTo(at.dx + 2.7, at.dy - 2.55)
+    ..lineTo(at.dx + 3.3, at.dy - 1.4)
+    ..lineTo(at.dx + 3.3, at.dy + 2.1)
+    ..lineTo(at.dx + 2.45, at.dy + 2.65)
+    ..lineTo(at.dx - 2.6, at.dy + 2.65)
+    ..lineTo(at.dx - 3.65, at.dy + .95);
+  canvas.drawPath(shape, paint);
+  final color = won ? const Color(0xad628377) : const Color(0xbac18964);
+  for (final sign in [-1.0, 1.0]) {
+    final end = at + Offset(-1.6, 2.48 * sign);
+    _lines(
+      canvas,
+      [
+        end - Offset(2.0, .16 * sign),
+        end,
+        end + Offset(.58, .24 * sign),
+        end + Offset(4.75, .24 * sign),
+      ],
+      color,
+      major ? .082 : .06,
+    );
+  }
+  _inkSlash(
+    canvas,
+    at - const Offset(1.45, 0),
+    at - const Offset(.42, .46),
+    color,
+    .11,
+  );
+  _inkSlash(
+    canvas,
+    at - const Offset(1.45, 0),
+    at - const Offset(.42, -.46),
+    color,
+    .11,
+  );
+}
+
+void _paintChamberWarning(
+  Canvas canvas,
+  LiteEnemy enemy,
+  LiteChamberWarning cue,
+) {
+  final tone = switch (enemy.kind) {
+    LiteEnemyKind.luce => const Color(0xffefc575),
+    LiteEnemyKind.ombra => const Color(0xffac8bd6),
+    _ when enemy.exalted => const Color(0xffed8979),
+    _ => const Color(0xffd4a171),
+  };
+  final fade = (1 - cue.remaining / 1.12).clamp(.16, 1.0);
+  final fill = Paint()..color = tone.withValues(alpha: .18 + fade * .20);
+  final darkest = Paint()..color = const Color(0x88170e1a);
+  if (cue.pattern == LiteChamberPattern.ventaglio) {
+    final at = _offset(cue.origin);
+    for (final angle in cue.angles) {
+      final full = Offset(math.cos(angle), math.sin(angle)) * 9.4;
+      _inkSlash(canvas, at, at + full, const Color(0xaa240f20), .22);
+      _inkSlash(
+        canvas,
+        at,
+        at + full * (.8 + .2 * fade),
+        tone.withValues(alpha: .6),
+        .09,
+      );
+    }
+    return;
+  }
+  final points = cue.marks;
+  for (var i = 0; i < points.length; i++) {
+    final at = _offset(points[i]);
+    const r = LiteChamberWarning.hitRadius;
+    canvas.drawCircle(at, r, darkest);
+    canvas.drawCircle(at, r * (.33 + .67 * fade), fill);
+    _lines(
+      canvas,
+      [
+        at + const Offset(-r, 0),
+        at + const Offset(-.61, -.68),
+        at + const Offset(.24, -.91),
+        at + const Offset(.89, -.37),
+      ],
+      tone,
+      .055,
+    );
+    _lines(
+      canvas,
+      [
+        at + const Offset(-.90, .28),
+        at + const Offset(-.43, .82),
+        at + const Offset(.52, .76),
+        at + const Offset(r, 0),
+      ],
+      tone,
+      .055,
+    );
+    _inkSlash(
+      canvas,
+      at + const Offset(-.42, .35),
+      at + const Offset(.42, -.35),
+      tone,
+      .075,
+    );
+  }
+}

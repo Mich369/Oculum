@@ -273,6 +273,24 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
       if (!open(run, run.position + move * .7)) move = perpendicular * -1;
       if (!open(run, run.position + move * .7)) move = origin;
     }
+    if (target.chamberWarning case final cue? when cue.marks.isNotEmpty) {
+      final radius = LiteChamberWarning.hitRadius;
+      double separation(Point<double> candidate) =>
+          cue.marks.map((mark) => candidate.distanceTo(mark)).reduce(min);
+      if (separation(run.position + move) < radius + .56) {
+        var best = -double.infinity;
+        for (var option = 0; option < 12; option++) {
+          final angle = option * pi / 6;
+          final direction = Point(cos(angle), sin(angle));
+          final safe = run.position + direction * 1.32;
+          if (!walkable(run, run.position, safe)) continue;
+          final value = separation(safe);
+          if (value <= best) continue;
+          best = value;
+          move = direction;
+        }
+      }
+    }
     final beam = run.activeBeam;
     if (beam != null) {
       final turn = Point(-beam.direction.y, beam.direction.x);

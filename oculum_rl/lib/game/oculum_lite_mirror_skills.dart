@@ -20,7 +20,7 @@ extension LiteMirrorSkills on LiteRun {
     ];
     final seats = <LiteCoopFighter?>[null, ...coopFighters];
     for (final (index, copy) in seats.indexed) {
-      _spawnEnemy(kind, arrivals[index], mirrorOf: copy);
+      _seatChampion(_spawnEnemy(kind, arrivals[index], mirrorOf: copy));
     }
   }
 
@@ -69,10 +69,11 @@ extension LiteMirrorSkills on LiteRun {
   bool _castMirrorLearnedArt(
     LiteEnemy boss,
     Point<double> direction,
-    double distance,
-  ) {
+    double distance, {
+    bool secondary = false,
+  }) {
     final build = boss.mirror!;
-    final art = build.chosenArt;
+    final art = secondary ? build.secondaryArt : build.chosenArt;
     if (art == null || build.oculum < art.cost) return false;
     final rank = art.rankAt(build.sourceLevel);
     final modifier =
@@ -122,9 +123,33 @@ extension LiteMirrorSkills on LiteRun {
           (9 + rank * 5) * modifier,
           minDot: -.16,
         );
+      case LiteLearnedArt.brace:
+        if (distance > 10) return false;
+        _castInkBrace(
+          boss.position,
+          direction,
+          rank,
+          hostile: true,
+          damageScale: modifier,
+        );
+      case LiteLearnedArt.basalto:
+        final reach = 5.6 + .9 * rank;
+        if (distance > reach) return false;
+        _mirrorMelee(
+          boss,
+          direction,
+          reach,
+          (18 + 6 * rank) * modifier,
+          minDot: .97,
+        );
     }
+    _markArtCast(art, boss.position, direction, rank);
     build.oculum -= art.cost;
-    build.artCooldown = art.cooldown;
+    if (secondary) {
+      build.secondaryArtCooldown = art.cooldown;
+    } else {
+      build.artCooldown = art.cooldown;
+    }
     build.learnedUses++;
     boss._strikePose = .24;
     return true;

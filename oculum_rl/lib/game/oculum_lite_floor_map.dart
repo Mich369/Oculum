@@ -165,7 +165,14 @@ extension LiteFloorExploration on LiteRun {
         _mapExitX,
         height,
       ),
-      LiteFloorRoom(LiteMapSector.uscita, exit, _mapExitX, 0, width, height),
+      LiteFloorRoom(
+        LiteMapSector.uscita,
+        hasChamber ? '$chamberGrade · $chamberTitle' : exit,
+        _mapExitX,
+        0,
+        width,
+        height,
+      ),
     ];
   }
 
@@ -173,6 +180,8 @@ extension LiteFloorExploration on LiteRun {
     _mappedFloor = inputArena;
     _mappedSectors = 1;
     _mapWaypoint = null;
+    _dashLandings.clear();
+    _placeCrossing();
     final camp = campPatrols;
     // External paths both reconnect to the battle room. The sideways gaps
     // leave clearance for enemies and allies alike.
@@ -233,7 +242,10 @@ extension LiteFloorExploration on LiteRun {
           .50,
           fixedMap: true,
         ),
-        LiteObstacle(_mapExitX - .18, 1.7, .66, 2.2, fixedMap: true),
+        if (dashPads.isEmpty)
+          LiteObstacle(_mapExitX - .18, 1.7, .66, 2.2, fixedMap: true),
+        LiteObstacle(_mapExitX, 6.6, .46, 1.3, fixedMap: true),
+        LiteObstacle(_mapExitX, 14.55, .46, 1.3, fixedMap: true),
         LiteObstacle(_mapExitX - .18, height - 4, .66, 2.4, fixedMap: true),
       ]);
     }

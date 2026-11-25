@@ -3,7 +3,7 @@ import 'dart:math';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, TargetPlatform;
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -14,6 +14,8 @@ import '../game/oculum_lite_audio.dart';
 import '../game/oculum_lite_run.dart';
 import '../services/oculum_lite_saves.dart';
 import '../services/oculum_rl_release.dart';
+import '../services/oculum_rl_download_stub.dart'
+    if (dart.library.js_interop) '../services/oculum_rl_download_web.dart';
 import '../services/oculum_rl_updates.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_floor_map.dart';
@@ -836,6 +838,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       _saveInventoryChange(() => run.useOpen(point));
     } else if (key == LogicalKeyboardKey.keyE) {
       _saveInventoryChange(() => run.useLearnedArt(point));
+    } else if (key == LogicalKeyboardKey.keyZ && run.extraArt() != null) {
+      _saveInventoryChange(() => run.useLearnedArt(point, null, true));
     } else if (key == LogicalKeyboardKey.keyG) {
       _saveInventoryChange(() => run.useWeaponArt(_targetFor(run)));
     } else if (key == LogicalKeyboardKey.keyQ &&
@@ -991,6 +995,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       world: () => run,
       playVoice: _audio.playMerchantGreeting,
       buy: (item) => _saveInventoryChange(() => run.buyRestItem(item)),
+      equip: (item) => _saveInventoryChange(() => run.equipRestArt(item)),
       remember: (item) =>
           _saveInventoryChange(() => run.rememberRestItem(item)),
       exchange: () => _saveInventoryChange(run.exchangeLunarPiece),
@@ -1101,6 +1106,8 @@ class _OculumLitePageState extends State<OculumLitePage>
                           icon: const Icon(Icons.arrow_back),
                         ),
                   actions: [
+                    if (_setupSlot == null && kIsWeb)
+                      const _OculumRlDownloads(),
                     if (_setupSlot == null &&
                         _updates.supported &&
                         !widget.suspendUpdates)
@@ -2040,11 +2047,28 @@ class _OculumLitePageState extends State<OculumLitePage>
                                     () => run.useLearnedArt(_targetFor(run)),
                                   ),
                                 ),
+                              if (run.extraArt() case final art?
+                                  when !run.restHub)
+                                _action(
+                                  'Z · ${art.label}',
+                                  () => _saveInventoryChange(
+                                    () => run.useLearnedArt(
+                                      _targetFor(run),
+                                      null,
+                                      true,
+                                    ),
+                                  ),
+                                ),
                               if (run.restHub)
                                 _action('Botteghe', () => _openRestHub(run)),
                               if (run.canClaimActRelic ||
                                   run.actRelics.isNotEmpty)
                                 _action('Reliquie', () => _openRelics(run)),
+                              if (run.nearDashPad())
+                                _action(
+                                  'Shift · Aggancia la pedana',
+                                  () => run.dash(_targetFor(run)),
+                                ),
                               ?contextualAction,
                               if (compact && run.hero != LiteHero.doppelganger)
                                 _action(
@@ -2458,5 +2482,38 @@ class _OculumLitePageState extends State<OculumLitePage>
     _touchDirection = delta.distance < 7
         ? const Point(0, 0)
         : Point(delta.dx / delta.distance, delta.dy / delta.distance);
+  }
+}
+
+class _OculumRlDownloads extends StatelessWidget {
+  const _OculumRlDownloads();
+
+  @override
+  Widget build(BuildContext context) {
+    const base = 'https://github.com/$oculumRlRepository/releases';
+    final hasVersion = OculumRlVersion.parse(oculumRlVersion) != null;
+    const tag = 'oculum-rl-v$oculumRlVersion';
+    final page = hasVersion ? '$base/tag/$tag' : base;
+    const files = {
+      'Windows': 'Oculum-RL-Windows.zip',
+      'Windows Test': 'Oculum-RL-Windows-Test.zip',
+      'Android APK': 'Oculum-RL-Android-debug.apk',
+      'Web ZIP': 'Oculum-RL-Web.zip',
+      'Sorgenti': 'Oculum-RL-Sorgenti.zip',
+    };
+    return PopupMenuButton<String>(
+      tooltip: 'Download Oculum RL',
+      icon: const Icon(Icons.download_outlined),
+      onSelected: openOculumRlDownload,
+      itemBuilder: (_) => [
+        PopupMenuItem(value: page, child: const Text('Pagina download')),
+        if (hasVersion)
+          for (final entry in files.entries)
+            PopupMenuItem(
+              value: '$base/download/$tag/${entry.value}',
+              child: Text(entry.key),
+            ),
+      ],
+    );
   }
 }

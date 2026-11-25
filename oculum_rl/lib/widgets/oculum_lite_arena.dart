@@ -1814,6 +1814,21 @@ class _ArenaPaint extends CustomPainter {
       }
       canvas.restore();
     }
+    if (run.hasChamber &&
+        visible.inflate(4).contains(_offset(run.chamberCenter))) {
+      _paintChamberFloor(
+        canvas,
+        _offset(run.chamberCenter),
+        run.stageClear,
+        run.chamberGrade.startsWith('Boss'),
+      );
+    }
+    for (final enemy in run.enemies) {
+      if (enemy.chamberWarning case final cue?
+          when visible.inflate(10).contains(_offset(cue.origin))) {
+        _paintChamberWarning(canvas, enemy, cue);
+      }
+    }
     if (run.mapWaypoint case final pin? when visible.contains(_offset(pin))) {
       final at = _offset(pin);
       _oval(
@@ -1895,6 +1910,31 @@ class _ArenaPaint extends CustomPainter {
       );
     }
 
+    for (final pad in run.dashPads) {
+      final at = _offset(pad);
+      final active = run.position.distanceTo(pad) < 1.15;
+      final color = active ? const Color(0xffeacd97) : const Color(0xffa58399);
+      _oval(
+        canvas,
+        at,
+        1.11,
+        .63,
+        const Color(0xff382534),
+        stroke: color,
+        strokeWidth: .052,
+      );
+      final modifier = pad == run.dashPads.first ? 1.0 : -1.0;
+      _lines(
+        canvas,
+        [
+          at + Offset(-.23 * modifier, -.21),
+          at + Offset(.22 * modifier, 0),
+          at + Offset(-.23 * modifier, .18),
+        ],
+        color,
+        .078,
+      );
+    }
     final jobs = _jobs..clear();
     for (final obstacle in run.obstacles) {
       final rect = Rect.fromLTWH(
@@ -1904,6 +1944,27 @@ class _ArenaPaint extends CustomPainter {
         obstacle.height,
       );
       if (!visible.overlaps(rect)) continue;
+      if (obstacle.dashGap) {
+        canvas.drawRect(
+          rect,
+          Paint()
+            ..shader = ui.Gradient.linear(
+              rect.topLeft,
+              rect.bottomRight,
+              const [Color(0xff100e20), Color(0xff33242f), Color(0xff0f131b)],
+              const [0, .56, 1],
+            ),
+        );
+        for (final edge in [rect.left, rect.right]) {
+          _lines(
+            canvas,
+            [Offset(edge, rect.top), Offset(edge, rect.bottom)],
+            const Color(0xff79536c),
+            .082,
+          );
+        }
+        continue;
+      }
       _shadow(
         canvas,
         rect.center + const Offset(.24, .19),
@@ -2916,6 +2977,10 @@ class _ArenaPaint extends CustomPainter {
       final at = _offset(impact.position);
       if (!visible.contains(at)) continue;
       if (impact.target == LiteImpactTarget.fissure) continue;
+      if (impact.target == LiteImpactTarget.artCast) {
+        _paintArtCast(canvas, impact, time - impact.time);
+        continue;
+      }
       if (impact.target == LiteImpactTarget.emberRebirth &&
           impact.end != null) {
         _paintEmberRebirth(
@@ -3152,6 +3217,7 @@ void _paintCombatImpacts(
     final opacity = ((1 - progress) / .35).clamp(0.0, 1.0);
     if (opacity == 0 ||
         impact.target == LiteImpactTarget.verdict ||
+        impact.target == LiteImpactTarget.artCast ||
         impact.target == LiteImpactTarget.fissure ||
         impact.target == LiteImpactTarget.explosion)
       continue;
@@ -8897,6 +8963,50 @@ void _projectile(
         .076,
       );
       canvas.drawCircle(p, .105, Paint()..color = const Color(0xffe5d7ff));
+    case LiteProjectileKind.inkEmber:
+      final side = Offset(-heading.dy, heading.dx);
+      final flicker = .05 * math.sin(projectile.age * 22);
+      _poly(
+        canvas,
+        [
+          p + heading * .38,
+          p + side * .25,
+          p - heading * .37 + side * (.16 + flicker),
+          p - heading * .91 + side * .24,
+          p - heading * .62 - side * .08,
+          p - heading * 1.12 - side * (.14 + flicker),
+          p - heading * .26 - side * .29,
+        ],
+        const Color(0xffab3f31),
+        stroke: const Color(0xff23121a),
+        width: .076,
+      );
+      _poly(
+        canvas,
+        [
+          p + heading * .31,
+          p + side * .11,
+          p - heading * .63 + side * .17,
+          p - heading * .24 - side * .15,
+        ],
+        const Color(0xfff2a354),
+        stroke: const Color(0xff673327),
+        width: .032,
+      );
+      _inkSlash(
+        canvas,
+        p - heading * .17,
+        p + heading * .27,
+        const Color(0xfffbe09d),
+        .091,
+      );
+      _inkSlash(
+        canvas,
+        p - heading * 1.25 + side * .21,
+        p - heading * .96 + side * .16,
+        const Color(0xddc2573b),
+        .048,
+      );
     case LiteProjectileKind.fireball:
       final a = projectile.age * 17;
       final side = Offset(-heading.dy, heading.dx);

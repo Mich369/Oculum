@@ -199,12 +199,33 @@ extension LiteThirdAct on LiteRun {
     });
     _openFloorMap();
     _placeSecretRoom();
+    // Each region progresses from its local defender to the named final boss.
+    final principal = switch (thirdRoom) {
+      1 => LiteEnemyKind.funerys,
+      2 => LiteEnemyKind.vegliante,
+      3 => LiteEnemyKind.gablyn,
+      4 => LiteEnemyKind.vesanybel,
+      5 => LiteEnemyKind.sacrycrab,
+      6 => LiteEnemyKind.gelycryn,
+      7 => LiteEnemyKind.rasvyr,
+      8 => LiteEnemyKind.thalvyr,
+      9 => LiteEnemyKind.lapysrieth,
+      10 => LiteEnemyKind.nymboryth,
+      11 => LiteEnemyKind.dronePostea,
+      _ => LiteEnemyKind.aerovyr,
+    };
+    final selected = room.enemies.indexOf(principal);
+    final championIndex = selected >= 0 ? selected : room.enemies.length - 1;
     for (var i = 0; i < room.enemies.length; i++) {
-      final kind = room.enemies[i];
+      final kind = i == championIndex ? principal : room.enemies[i];
       final x = kind.boss || kind.elite ? 24.8 : 17.3 + (i.isEven ? 0 : 3.3);
       final y = kind.boss ? 11.0 : 4.4 + i * 4.25;
-      final enemy = _spawnEnemy(kind, Point(x, y));
+      final enemy = _spawnEnemy(
+        kind,
+        i == championIndex ? chamberCenter : Point(x, y),
+      );
       enemy.cooldown += i * .17;
+      if (i == championIndex) _seatChampion(enemy);
     }
     message = 'Atto III · ${room.label} · $thirdRoom/${rooms.length}';
   }

@@ -9,8 +9,17 @@ void wait(LiteRun run, double seconds) {
   }
 }
 
-LiteRun restHub({int stage = 5, LiteHero hero = LiteHero.duplicatore}) =>
-    LiteRun(seed: 251, hero: hero, weapon: LiteWeapon.spadaScudo)
+LiteRun restHub({
+  int stage = 5,
+  LiteHero hero = LiteHero.duplicatore,
+  int players = 1,
+}) =>
+    LiteRun(
+        seed: 251,
+        hero: hero,
+        weapon: LiteWeapon.spadaScudo,
+        playerCount: players,
+      )
       ..obstacles.clear()
       ..enemies.clear()
       ..stage = stage
@@ -75,9 +84,88 @@ void main() {
       final solar = restHub(stage: 11, hero: LiteHero.guardiaSolare);
       expect(solar.enterRestHub(), isTrue);
       expect(solar.activeArt(), LiteLearnedArt.pattuglia);
-      expect(solar.buyRestItem(LiteRestItem.artPlasma), isFalse);
+      expect(solar.buyRestItem(LiteRestItem.artPlasma), isTrue);
+      expect(solar.activeArt(), LiteLearnedArt.pattuglia);
+      expect(solar.extraArt(), LiteLearnedArt.plasma);
+      solar.restHub = false;
+      expect(solar.useLearnedArt(const Point(16, 11), null, true), isTrue);
+      expect(solar.useLearnedArt(const Point(16, 11)), isTrue);
     },
   );
+
+  test(
+    'the personal Grimorio gates purchases and retains old and new Arts',
+    () {
+      final run = restHub(stage: 11, players: 2);
+      expect(run.enterRestHub(), isTrue);
+      run.addCoopFighter(
+        'luna',
+        'Luna',
+        LiteHero.cavaliereLunare,
+        LiteWeapon.spadaScudo,
+      );
+      final lunar = run.coopFighter('luna')!..obser = 255;
+      expect(run.restPrice(LiteRestItem.artPlasma), 96);
+      expect(run.restPrice(LiteRestItem.artPlasma, fighter: lunar), 77);
+      expect(run.restPrice(LiteRestItem.linfa, fighter: lunar), 21);
+      expect(run.equipRestArt(LiteRestItem.artPlasma, fighter: lunar), isFalse);
+      expect(run.buyRestItem(LiteRestItem.artPlasma, fighter: lunar), isTrue);
+      expect(lunar.obser, 178);
+      expect(lunar.supply.hasGrimoire, isTrue);
+      expect(run.supply.hasGrimoire, isFalse);
+      expect(run.restPrice(LiteRestItem.artBrace, fighter: lunar), 54);
+      expect(run.buyRestItem(LiteRestItem.artBrace, fighter: lunar), isTrue);
+      expect(run.buyRestItem(LiteRestItem.artPlasma, fighter: lunar), isFalse);
+      expect(run.equipRestArt(LiteRestItem.artPlasma, fighter: lunar), isTrue);
+      final restored = LiteRun.fromJson(run.toJson(includeEffects: true));
+      final guest = restored.coopFighter('luna')!;
+      expect(restored.devilArtTutor, run.devilArtTutor);
+      expect(restored.activeArt(guest), LiteLearnedArt.lame);
+      expect(restored.extraArt(guest), LiteLearnedArt.plasma);
+      expect(
+        restored.equipRestArt(LiteRestItem.artBrace, fighter: guest),
+        isTrue,
+      );
+      expect(restored.extraArt(guest), LiteLearnedArt.brace);
+      expect(restored.supply.hasGrimoire, isFalse);
+
+      final old = LiteRestLoadout()..restore({'chosenArt': 'linfa'});
+      expect(old.hasGrimoire, isTrue);
+      expect(old.knowsArt(LiteLearnedArt.linfa), isTrue);
+    },
+  );
+
+  test('Incisione adds braci without extra presses and shares the Ink cue', () {
+    for (final (level, rank) in [(1, 1), (4, 2), (7, 3)]) {
+      final run = restHub(stage: 11)..level = level;
+      expect(run.enterRestHub(), isTrue);
+      expect(run.buyRestItem(LiteRestItem.artBrace), isTrue);
+      run.restHub = false;
+      final before = run.oculum;
+      expect(run.useLearnedArt(run.position + const Point(5, 0)), isTrue);
+      expect(run.oculum, before - LiteLearnedArt.brace.cost);
+      expect(run.projectiles, hasLength(rank + 1));
+      expect(run.projectiles.map((shot) => shot.damage).toSet(), {
+        8 + rank * 3,
+      });
+      expect(run.projectiles.map((shot) => shot.bounces).toSet(), {rank + 1});
+      final copy = LiteRun.fromJson(run.toJson(includeEffects: true));
+      final cue = copy.combatImpacts.singleWhere(
+        (event) => event.target == LiteImpactTarget.artCast,
+      );
+      expect(cue.shield, rank);
+      expect(copy.useLearnedArt(copy.position + const Point(5, 0)), isFalse);
+    }
+  });
+
+  test('the devil is a rare deterministic tutor across floor seeds', () {
+    final devilVisits = [
+      for (var seed = 100; seed < 300; seed++)
+        LiteRun(seed: seed, hero: LiteHero.duplicatore, weapon: LiteWeapon.arco)
+          ..stage = 11,
+    ].where((run) => run.devilArtTutor);
+    expect(devilVisits.length, inInclusiveRange(8, 43));
+  });
 
   test('a potion heals only companions of its living consumer', () {
     final run = restHub()

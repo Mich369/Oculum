@@ -225,6 +225,23 @@ class _FloorMapPaint extends CustomPainter {
       );
     }
     if (run.hasMapped(LiteMapSector.uscita)) {
+      if (run.hasChamber) {
+        final at = p(run.chamberCenter);
+        final r = labels ? 6.0 : 3.4;
+        final diamond = Path()
+          ..moveTo(at.dx, at.dy - r)
+          ..lineTo(at.dx + r, at.dy)
+          ..lineTo(at.dx, at.dy + r)
+          ..lineTo(at.dx - r, at.dy)
+          ..close();
+        canvas.drawPath(
+          diamond,
+          Paint()
+            ..color = run.stageClear
+                ? const Color(0xff94a99b)
+                : const Color(0xffdd886e),
+        );
+      }
       final q = p(run.portalPosition);
       canvas.drawCircle(
         q,

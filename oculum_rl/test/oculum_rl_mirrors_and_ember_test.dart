@@ -24,7 +24,8 @@ void main() {
       run.addCoopFighter('b', 'Ashley', LiteHero.ashley, LiteWeapon.guanti),
       isTrue,
     );
-    final knight = run.coopFighter('a')!;
+    final knight = run.coopFighter('a')!
+      ..supply.restore({'grimoire': true, 'chosenArt': 'brace'});
     final ashley = run.coopFighter('b')!..supply.art = LiteLearnedArt.plasma;
     run.supply.art = LiteLearnedArt.linfa;
     final seen = <LiteEnemyKind>{};
@@ -45,6 +46,7 @@ void main() {
       expect(builds.keys, containsAll([0, knight.id, ashley.id]));
       expect(builds[0]!.chosenArt, LiteLearnedArt.linfa);
       expect(builds[knight.id]!.chosenArt, LiteLearnedArt.lame);
+      expect(builds[knight.id]!.secondaryArt, LiteLearnedArt.brace);
       expect(builds[ashley.id]!.chosenArt, LiteLearnedArt.plasma);
       expect(builds[ashley.id]!.weapon, LiteWeapon.guanti);
     }

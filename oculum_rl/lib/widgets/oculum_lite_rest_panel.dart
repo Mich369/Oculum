@@ -10,14 +10,14 @@ Future<void> showLiteRestHub(
   required LiteRun? Function() world,
   required ValueChanged<String> playVoice,
   required ValueChanged<LiteRestItem> buy,
+  required ValueChanged<LiteRestItem> equip,
   required ValueChanged<LiteRestItem> remember,
   required VoidCallback exchange,
   LiteCoopFighter? Function()? fighter,
   Listenable? refresh,
 }) async {
   final start = world();
-  var station =
-      start?.artDealerOpen == true && start?.activeArt(fighter?.call()) == null
+  var station = start?.artDealerOpen == true
       ? LiteRestStation.art
       : LiteRestStation.tavern;
   await showDialog<void>(
@@ -32,6 +32,8 @@ Future<void> showLiteRestHub(
           final player = fighter?.call();
           final supplies = player?.supply ?? run.supply;
           final balance = player?.obser ?? run.obser;
+          final fixedArt = LiteLearnedArt.fixedFor(player?.hero ?? run.hero);
+          final level = player?.level ?? run.level;
           final stock = station == LiteRestStation.seer
               ? supplies.receipts
               : LiteRestItem.values.where((item) => item.station == station);
@@ -59,7 +61,11 @@ Future<void> showLiteRestHub(
                   for (final booth in LiteRestStation.values)
                     if (booth != LiteRestStation.art || run.artDealerOpen)
                       ChoiceChip(
-                        label: Text(booth.label),
+                        label: Text(
+                          booth == LiteRestStation.art && run.devilArtTutor
+                              ? 'Istruttore di Art'
+                              : booth.label,
+                        ),
                         selected: station == booth,
                         onSelected: (_) => redraw(() => station = booth),
                       ),
@@ -67,11 +73,12 @@ Future<void> showLiteRestHub(
               ),
               if (station == LiteRestStation.merchant)
                 OculumRlMerchant(goblin: run.hubGoblin),
-              LiteMerchantGreeting(
-                key: ValueKey(shopkeeper),
-                shopkeeper: shopkeeper,
-                playVoice: playVoice,
-              ),
+              if (station != LiteRestStation.art)
+                LiteMerchantGreeting(
+                  key: ValueKey(shopkeeper),
+                  shopkeeper: shopkeeper,
+                  playVoice: playVoice,
+                ),
               if (station == LiteRestStation.merchant) ...[
                 if (supplies.lunarPieces > 0)
                   ListTile(
@@ -87,14 +94,12 @@ Future<void> showLiteRestHub(
                   ),
               ],
               if (station == LiteRestStation.art)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('Traguardo · Piano ${run.stage + 1}'),
-                  subtitle: Text(
-                    'Livello ${player?.level ?? run.level} · ${(player?.weapon ?? run.weapon).label}'
-                    '\n${run.activePowers.map((power) => power.label).join(' · ')}'
-                    '\nArt ${run.activeArt(player)?.label ?? 'da scegliere'} · Usa E in arena.',
-                  ),
+                _ArtTutor(
+                  devil: run.devilArtTutor,
+                  discount: run.hasTutorDiscount(player),
+                  hasBook: supplies.hasGrimoire,
+                  fixed: fixedArt,
+                  prepared: supplies.art,
                 ),
               if (station == LiteRestStation.seer)
                 Padding(
@@ -131,7 +136,14 @@ Future<void> showLiteRestHub(
                               item.label,
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
-                            Text(item.effect),
+                            if (item.art case final art?)
+                              _ArtLesson(
+                                art: art,
+                                level: level,
+                                prepared: supplies.art == art,
+                              )
+                            else
+                              Text(item.effect),
                             if (item == LiteRestItem.tempra)
                               Text(
                                 '${(player?.weapon ?? run.weapon).label} · Rango ${supplies.forgeRank(player?.weapon ?? run.weapon)}/12',
@@ -150,6 +162,19 @@ Future<void> showLiteRestHub(
                                   ? null
                                   : () => redraw(() => remember(item)),
                               child: const Text('Custodisci'),
+                            )
+                          : item.art != null && supplies.knowsArt(item.art!)
+                          ? FilledButton.tonal(
+                              onPressed:
+                                  supplies.art == item.art ||
+                                      (player?.hp ?? run.hp) <= 0
+                                  ? null
+                                  : () => redraw(() => equip(item)),
+                              child: Text(
+                                supplies.art == item.art
+                                    ? 'Pronta'
+                                    : 'Equipaggia',
+                              ),
                             )
                           : FilledButton.tonal(
                               onPressed:
@@ -189,4 +214,92 @@ Future<void> showLiteRestHub(
       },
     ),
   );
+}
+
+class _ArtTutor extends StatelessWidget {
+  const _ArtTutor({
+    required this.devil,
+    required this.discount,
+    required this.hasBook,
+    required this.fixed,
+    required this.prepared,
+  });
+
+  final bool devil, discount, hasBook;
+  final LiteLearnedArt? fixed, prepared;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = devil ? 'L’Istruttore di Art' : 'L’Istruttrice di Art';
+    final portrait = devil ? 'istruttore-diavolo' : 'istruttrice-arte';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Image.asset(
+            'assets/oculum/lite/$portrait.webp',
+            width: 85,
+            height: 104,
+            fit: BoxFit.contain,
+            semanticLabel: title,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  devil
+                      ? '«Una firma e l’inchiostro è tuo.»'
+                      : '«Apri il Grimorio. Ti mostro da dove cominciare.»',
+                ),
+                if (discount) const Text('Affinità di stirpe · Sconto del 20%'),
+                Text(
+                  hasBook
+                      ? 'Grimorio aperto · Le skill imparate restano nella run.'
+                      : 'La prima lezione include il Grimorio (+${LiteRestHub.grimoirePrice} Obser prima dello sconto).',
+                ),
+                if (fixed != null) Text('E · ${fixed!.label} (innata)'),
+                Text(
+                  '${fixed == null ? 'E' : 'Z'} · ${prepared?.label ?? 'Skill da preparare'}',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArtLesson extends StatelessWidget {
+  const _ArtLesson({
+    required this.art,
+    required this.level,
+    required this.prepared,
+  });
+
+  final LiteLearnedArt art;
+  final int level;
+  final bool prepared;
+
+  @override
+  Widget build(BuildContext context) {
+    final rank = art.rankAt(level);
+    final recovery = art.cooldown.toString().replaceAll('.', ',');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${art.family} · ${art.cost.toInt()} Oculum · $recovery s'),
+        Text('Forma $rank/${art.maxRank} · ${art.formEffect(rank)}'),
+        if (rank < art.maxRank)
+          Text(
+            'Al livello ${art.levelForRank(rank + 1)} · ${art.formEffect(rank + 1)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        if (prepared) const Text('Equipaggiata'),
+      ],
+    );
+  }
 }

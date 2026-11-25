@@ -5,7 +5,7 @@ enum LiteRestStation {
   forge('Fabbro'),
   merchant('Mercante'),
   seer('Veggente'),
-  art('Venditrice di Art');
+  art('Istruttrice di Art');
 
   const LiteRestStation(this.label);
   final String label;
@@ -143,6 +143,18 @@ enum LiteRestItem {
     LiteRestStation.art,
     94,
     'Defiled Art · Onda a cinque forme, stordisce i nemici comuni.',
+  ),
+  artBrace(
+    'Incisione di brace',
+    LiteRestStation.art,
+    68,
+    'Un ventaglio di braci che rimbalzano sulle pareti.',
+  ),
+  artBasalto(
+    'Piega di basalto',
+    LiteRestStation.art,
+    74,
+    'Spacca il terreno in linea e può rompere i ripari.',
   );
 
   const LiteRestItem(this.label, this.station, this.basePrice, this.effect);
@@ -155,6 +167,8 @@ enum LiteRestItem {
     artFalci => LiteLearnedArt.falci,
     artLinfa => LiteLearnedArt.linfa,
     artCorruzione => LiteLearnedArt.corruzione,
+    artBrace => LiteLearnedArt.brace,
+    artBasalto => LiteLearnedArt.basalto,
     _ => null,
   };
   bool get meal => station == LiteRestStation.tavern;
@@ -206,7 +220,12 @@ class LiteRestLoadout {
   final scrolls = <LiteScroll, int>{};
   final _forgeRanks = <LiteWeapon, int>{};
   LiteLearnedArt? art;
+  final _learnedArts = <LiteLearnedArt>{};
+  bool hasGrimoire = false;
+  bool knowsArt(LiteLearnedArt entry) =>
+      _learnedArts.contains(entry) || art == entry;
   double artCooldown = 0;
+  double extraArtCooldown = 0;
   bool emberSpent = false;
   double emberCooldown = 0;
   int forgeRank(LiteWeapon item) => _forgeRanks[item] ?? 0;
@@ -226,6 +245,7 @@ class LiteRestLoadout {
       _evolutions.isNotEmpty ||
       _receipts.isNotEmpty ||
       _forgeRanks.isNotEmpty ||
+      hasGrimoire ||
       art != null ||
       emberSpent ||
       emberCooldown > 0 ||
@@ -237,8 +257,12 @@ class LiteRestLoadout {
     if (token) 'token': true,
     if (emberSpent) 'emberSpent': true,
     if (emberCooldown > 0) 'emberCooldown': emberCooldown,
+    if (hasGrimoire || art != null) 'grimoire': true,
+    if (_learnedArts.isNotEmpty)
+      'learnedArts': _learnedArts.map((entry) => entry.name).toList(),
     if (art case final learned?) 'chosenArt': learned.name,
     if (artCooldown > 0) 'artCooldown': artCooldown,
+    if (extraArtCooldown > 0) 'extraArtCooldown': extraArtCooldown,
     if (lunarPieces > 0) 'lunarPieces': lunarPieces,
     if (_foodUntil.isNotEmpty)
       'meals': _foodUntil.map((key, value) => MapEntry(key.name, value)),
@@ -263,7 +287,21 @@ class LiteRestLoadout {
     art = LiteLearnedArt.values
         .where((entry) => entry.name == data['chosenArt'])
         .firstOrNull;
+    hasGrimoire = data['grimoire'] == true || art != null;
+    _learnedArts.clear();
+    if (hasGrimoire) {
+      final names = _list(data['learnedArts']);
+      _learnedArts.addAll(
+        LiteLearnedArt.values.where(
+          (entry) =>
+              names.contains(entry.name) &&
+              LiteRestItem.values.any((item) => item.art == entry),
+        ),
+      );
+      if (art case final chosen?) _learnedArts.add(chosen);
+    }
     artCooldown = _num(data['artCooldown']).clamp(0, 8);
+    extraArtCooldown = _num(data['extraArtCooldown']).clamp(0, 8);
     lunarPieces = _int(data['lunarPieces']).clamp(0, 255);
     void read(String key, Map<LiteRestItem, int> map, int maximum) {
       final values = data[key];
@@ -301,6 +339,24 @@ class LiteRestLoadout {
 
 extension LiteRestHub on LiteRun {
   static const memoryPrice = 72;
+  static const grimoirePrice = 24;
+  static const tutorDiscountPercent = 20;
+
+  bool get devilArtTutor {
+    final random = _LiteRandom(seed ^ (stage * 10037) ^ 0x2f861);
+    random.nextDouble();
+    return random.nextInt(100) < 12;
+  }
+
+  bool hasTutorDiscount([LiteCoopFighter? fighter]) =>
+      switch (fighter?.hero ?? hero) {
+        LiteHero.cavaliereLunare ||
+        LiteHero.demoneMinore ||
+        LiteHero.demoneIntermedio ||
+        LiteHero.demoneMaggiore ||
+        LiteHero.diavolo => true,
+        _ => false,
+      };
   bool get awaitsRestHub =>
       stageClear && !usesSubArena && stage < lastStage && (stage + 1) % 6 == 0;
   bool get hubGoblin => (seed ^ stage * 7283).isOdd;
@@ -336,13 +392,19 @@ extension LiteRestHub on LiteRun {
     message = 'Sala di ristoro · Botteghe aperte.';
   }
 
-  int restPrice(LiteRestItem item, {LiteCoopFighter? fighter}) =>
-      item.basePrice +
-      (item == LiteRestItem.tempra
-          ? (fighter?.supply ?? supply).forgeRank(fighter?.weapon ?? weapon) * 5
-          : item.evolution
-          ? (fighter?.supply ?? supply).rank(item) * 28
-          : 0);
+  int restPrice(LiteRestItem item, {LiteCoopFighter? fighter}) {
+    final kit = fighter?.supply ?? supply;
+    if (item.art != null) {
+      final price = item.basePrice + (kit.hasGrimoire ? 0 : grimoirePrice);
+      return hasTutorDiscount(fighter)
+          ? (price * (100 - tutorDiscountPercent) / 100).round()
+          : price;
+    }
+    if (item == LiteRestItem.tempra) {
+      return item.basePrice + kit.forgeRank(fighter?.weapon ?? weapon) * 5;
+    }
+    return item.basePrice + (item.evolution ? kit.rank(item) * 28 : 0);
+  }
 
   bool canBuyRestItem(LiteRestItem item, {LiteCoopFighter? fighter}) {
     if (!restHub ||
@@ -353,8 +415,7 @@ extension LiteRestHub on LiteRun {
     final kit = fighter?.supply ?? supply;
     if (item.art case final art?) {
       return artDealerOpen &&
-          LiteLearnedArt.fixedFor(fighter?.hero ?? hero) == null &&
-          kit.art != art &&
+          !kit.knowsArt(art) &&
           (art != LiteLearnedArt.corruzione ||
               achievements.contains('baghest-sconfitto'));
     }
@@ -392,8 +453,12 @@ extension LiteRestHub on LiteRun {
     if (!canBuyRestItem(item, fighter: fighter)) return false;
     final kit = fighter?.supply ?? supply;
     final price = restPrice(item, fighter: fighter);
+    final firstLesson = item.art != null && !kit.hasGrimoire;
     if (item.art case final art?) {
-      kit.art = art;
+      kit
+        ..hasGrimoire = true
+        .._learnedArts.add(art)
+        ..art = art;
     } else if (item == LiteRestItem.tempra) {
       final blade = fighter?.weapon ?? weapon;
       kit._forgeRanks[blade] = kit.forgeRank(blade) + 1;
@@ -410,7 +475,26 @@ extension LiteRestHub on LiteRun {
     final blade = fighter?.weapon ?? weapon;
     message = item == LiteRestItem.tempra
         ? '${blade.label} · Tempra ${kit.forgeRank(blade)}/12.'
+        : firstLesson
+        ? 'Grimorio aperto · ${item.label} appresa.'
         : '${item.label} acquistato.';
+    return true;
+  }
+
+  bool equipRestArt(LiteRestItem item, {LiteCoopFighter? fighter}) {
+    final art = item.art;
+    final kit = fighter?.supply ?? supply;
+    if (art == null ||
+        !artDealerOpen ||
+        finished ||
+        (fighter?.hp ?? hp) <= 0 ||
+        !kit.hasGrimoire ||
+        !kit.knowsArt(art) ||
+        kit.art == art) {
+      return false;
+    }
+    kit.art = art;
+    message = '${art.label} equipaggiata.';
     return true;
   }
 

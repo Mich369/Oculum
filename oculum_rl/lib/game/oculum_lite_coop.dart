@@ -304,7 +304,9 @@ class OculumLiteCoop extends ChangeNotifier {
   void rememberRestItem(LiteRestItem item) => _orderRest('remember', item.name);
   void exchangeLunarPiece() => _orderRest('exchange', '');
   void struggleRedGrip() => _orderRest('struggle', '');
-  void castLearnedArt() => _orderRest('art', '');
+  void castLearnedArt({bool extra = false}) =>
+      _orderRest(extra ? 'extraArt' : 'art', '');
+  void equipRestArt(LiteRestItem item) => _orderRest('equipArt', item.name);
   void castHostScroll(int slot) {
     final world = authority;
     if (world == null || world.restHub) return;
@@ -317,7 +319,7 @@ class OculumLiteCoop extends ChangeNotifier {
     if (!canAct) return;
     final world = authority;
     if (world != null) {
-      _applyRest(world, kind, item, null, aim ?? world.aim);
+      _applyRest(world, kind, item, null, aim ?? (world.position + world.aim));
       notifyListeners();
     } else if (canAct && _restAction == null) {
       _restAction = {'kind': kind, 'item': item, 'id': ++_restCounter};
@@ -331,8 +333,8 @@ class OculumLiteCoop extends ChangeNotifier {
     LiteCoopFighter? fighter,
     Point<double> aim,
   ) {
-    if (kind == 'art') {
-      world.useLearnedArt(aim, fighter);
+    if (kind == 'art' || kind == 'extraArt') {
+      world.useLearnedArt(aim, fighter, kind == 'extraArt');
       return;
     }
     if (kind == 'struggle') {
@@ -355,6 +357,7 @@ class OculumLiteCoop extends ChangeNotifier {
         .firstOrNull;
     if (item == null) return;
     if (kind == 'buy') world.buyRestItem(item, fighter: fighter);
+    if (kind == 'equipArt') world.equipRestArt(item, fighter: fighter);
     if (kind == 'remember') world.rememberRestItem(item, fighter: fighter);
   }
 

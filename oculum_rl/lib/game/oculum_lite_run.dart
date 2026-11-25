@@ -12,9 +12,11 @@ part 'oculum_lite_arena_events.dart';
 part 'oculum_lite_floor_map.dart';
 part 'oculum_lite_stealth.dart';
 part 'oculum_lite_baghest.dart';
+part 'oculum_lite_chambers.dart';
 part 'oculum_lite_art_selection.dart';
 part 'oculum_lite_mirror_skills.dart';
 part 'oculum_lite_ember.dart';
+part 'oculum_lite_dash_crossings.dart';
 part 'oculum_lite_weapon_art.dart';
 
 enum LiteHero {
@@ -843,6 +845,9 @@ enum LiteProjectileKind {
   solarRay,
   posteaRay,
   posteaEgg,
+  inkEmber;
+
+  bool get ricochets => this == fireball || this == inkEmber;
 }
 
 enum LiteImpactTarget {
@@ -855,6 +860,7 @@ enum LiteImpactTarget {
   explosion,
   defeat,
   emberRebirth,
+  artCast,
 }
 
 class LiteCombatImpact {
@@ -936,11 +942,12 @@ class LiteObstacle {
     this.secretGate = false,
     this.mapShortcut = false,
     this.fixedMap = false,
+    this.dashGap = false,
     this.solarGate = false,
     this.hp = 20,
   });
   final double left, top, width, height;
-  final bool breakable, secretGate, solarGate, mapShortcut, fixedMap;
+  final bool breakable, secretGate, solarGate, mapShortcut, fixedMap, dashGap;
   double hp;
   Point<double> get center => Point(left + width / 2, top + height / 2);
 
@@ -961,6 +968,7 @@ class LiteObstacle {
     'breakable': breakable,
     if (secretGate) 'secretGate': true,
     if (mapShortcut) 'mapShortcut': true,
+    if (dashGap) 'dashGap': true,
     if (solarGate) 'solarGate': true,
     'hp': hp,
   };
@@ -972,6 +980,7 @@ class LiteObstacle {
     breakable: json['breakable'] == true,
     secretGate: json['secretGate'] == true,
     mapShortcut: json['mapShortcut'] == true,
+    dashGap: json['dashGap'] == true,
     solarGate: json['solarGate'] == true,
     hp: _num(json['hp'], 20),
   );
@@ -1011,8 +1020,9 @@ class LiteStride {
 }
 
 class LiteEnemy {
-  LiteEnemy(this.id, this.kind, this.position, this.maxHp)
-    : hp = maxHp,
+  LiteEnemy(this.id, this.kind, this.position, double maxHp)
+    : _maxHp = maxHp,
+      hp = maxHp,
       burrow =
           kind == LiteEnemyKind.divoramitu ||
               kind == LiteEnemyKind.divoramituBoss
@@ -1024,7 +1034,8 @@ class LiteEnemy {
   final int id;
   final LiteEnemyKind kind;
   Point<double> position;
-  final double maxHp;
+  double _maxHp;
+  double get maxHp => _maxHp;
   double hp;
   double hitFlash = 0;
   double shockRemaining = 0;
@@ -1045,11 +1056,16 @@ class LiteEnemy {
   bool glueRetinue = false;
   int combatCycle = 0;
   LiteArchonAttack? archonAttack;
+  int? chamberSeat;
+  int chamberCycle = 0;
+  double chamberWait = 0;
+  bool exalted = false;
+  LiteChamberWarning? chamberWarning;
   int get archonPhase => hp > maxHp * .70 ? 1 : (hp > maxHp * .35 ? 2 : 3);
   double _strikePose = 0;
   double get strikePose => _strikePose;
 
-  String get name => kind.label;
+  String get name => exalted ? '${kind.label} · Risvegliato' : kind.label;
   double get radius => kind.radius;
   double get hitboxRadius => burrow == null ? radius : radius * .73;
   double get hitboxHalfLength => burrow == null ? 0 : radius * 1.22;
@@ -1102,6 +1118,13 @@ class LiteEnemy {
     'cooldown': cooldown,
     'windup': windup,
     if (combatCycle != 0) 'combatCycle': combatCycle,
+    if (chamberSeat case final seat?) ...{
+      'chamberSeat': seat,
+      'chamberCycle': chamberCycle,
+      'chamberWait': chamberWait,
+      if (exalted) 'exalted': true,
+      if (chamberWarning case final cue?) 'chamberWarning': cue.frame,
+    },
     if (archonAttack case final attack? when attacking)
       'archonAttack': attack.name,
     if (burrow case final track?) 'burrow': track.frame,
@@ -1145,6 +1168,13 @@ class LiteEnemy {
         ..cooldown = _num(json['cooldown'])
         ..windup = _num(json['windup'])
         ..combatCycle = _int(json['combatCycle'])
+        ..chamberSeat = json['chamberSeat'] is int
+            ? _int(json['chamberSeat'])
+            : null
+        ..chamberCycle = _int(json['chamberCycle']).clamp(0, 1000000)
+        ..chamberWait = _num(json['chamberWait']).clamp(0, 12)
+        ..exalted = json['exalted'] == true
+        ..chamberWarning = LiteChamberWarning.read(json['chamberWarning'])
         ..archonAttack = LiteArchonAttack.values
             .where((attack) => attack.name == json['archonAttack'])
             .firstOrNull
@@ -1178,13 +1208,14 @@ class LiteMirrorBuild {
     required this.shield,
     this.powers = const {},
     this.chosenArt,
+    this.secondaryArt,
     this.sourceLevel = 1,
     this.forgeRank = 0,
     this.playerId = 0,
     this.playerName,
   });
 
-  final LiteLearnedArt? chosenArt;
+  final LiteLearnedArt? chosenArt, secondaryArt;
   final int sourceLevel, forgeRank, playerId;
   final String? playerName;
   int learnedUses = 0;
@@ -1203,6 +1234,7 @@ class LiteMirrorBuild {
   double shield;
   double talentCooldown = 2;
   double artCooldown = 2;
+  double secondaryArtCooldown = 2.4;
   double intangible = 0;
   double signatureCooldown = 2.5;
   double shadowVeilRemaining = 0;
@@ -1228,6 +1260,10 @@ class LiteMirrorBuild {
     if (openUses > 0) 'openUses': openUses,
     if (formRemaining > 0) 'mirrorForm': formRemaining,
     if (chosenArt case final art?) 'chosenArt': art.name,
+    if (secondaryArt case final art?) ...{
+      'secondaryArt': art.name,
+      'secondaryArtCooldown': secondaryArtCooldown,
+    },
     if (sourceLevel > 1) 'sourceLevel': sourceLevel,
     if (forgeRank > 0) 'forgeRank': forgeRank,
     if (playerId > 0) 'playerId': playerId,
@@ -1263,6 +1299,9 @@ class LiteMirrorBuild {
         chosenArt: LiteLearnedArt.values
             .where((art) => art.name == json['chosenArt'])
             .firstOrNull,
+        secondaryArt: LiteLearnedArt.values
+            .where((art) => art.name == json['secondaryArt'])
+            .firstOrNull,
         sourceLevel: max(1, _int(json['sourceLevel'])),
         forgeRank: _int(json['forgeRank']).clamp(0, 12),
         playerId: max(0, _int(json['playerId'])),
@@ -1277,6 +1316,10 @@ class LiteMirrorBuild {
       ..techniqueCooldown = _num(json['techniqueCooldown'], 4.2).clamp(0, 12)
       ..talentCooldown = _num(json['talentCooldown'])
       ..artCooldown = _num(json['artCooldown'])
+      ..secondaryArtCooldown = _num(
+        json['secondaryArtCooldown'],
+        2.4,
+      ).clamp(0, 8)
       ..intangible = _num(json['intangible'])
       ..signatureCooldown = _num(json['signatureCooldown'], 2.5)
       ..shadowVeilRemaining = _num(json['shadowVeilRemaining']).clamp(0.0, 3.0)
@@ -2003,6 +2046,7 @@ class LiteRun {
   bool shopOpen = false;
   String? _baghestEncounter;
   final _redGrips = <int, int>{};
+  final _dashLandings = <int, Point<double>>{};
   bool restUsed = false;
   bool _eliteReleased = false;
   bool _finalBossDefeated = false;
@@ -2229,7 +2273,7 @@ class LiteRun {
       item.range * _weaponRangeScale(fighter);
 
   static const _pickupRadius = .85;
-  static const _baseObserPull = 1.6;
+  static const _baseObserPull = 1.0;
   static const _obserPullSpeed = 14.0;
 
   double obserPullRadius([LiteCoopFighter? fighter]) =>
@@ -2379,9 +2423,11 @@ class LiteRun {
       openingEnemies: count,
       enemyKinds: List.unmodifiable({
         for (var i = 0; i < count; i++)
-          _openingEnemyKind(destination, i, floor),
+          i == _openingChampionSlot(floor, count)
+              ? _chamberKind(floor)
+              : _openingEnemyKind(destination, i, floor),
       }),
-      special: encounter == LiteEncounter.ordinary ? null : _specialKind(floor),
+      special: _chamberKind(floor),
       rest: _hasRestAt(floor),
       featuredPower:
           encounter != LiteEncounter.finalBoss &&
@@ -2432,6 +2478,11 @@ class LiteRun {
       solarCampaign && floor == 8
       ? 6
       : min(7, 3 + floor ~/ 2) + (trial == LiteArenaTrial.battuta ? 2 : 0);
+
+  int _openingChampionSlot(int floor, int count) {
+    if (_encounterFor(floor) != LiteEncounter.ordinary) return -1;
+    return solarCampaign && floor == 8 ? 0 : count - 1;
+  }
 
   LiteEnemyKind _openingEnemyKind(LiteBiome location, int order, int floor) {
     if (solarCampaign) {
@@ -2839,10 +2890,13 @@ class LiteRun {
     _placeSecretRoom();
     final count = _openingEnemyCount(stage, arenaTrial);
     final formation = stage >= 3 ? floorLayout.index % 3 : 0;
+    final chamberIndex = _openingChampionSlot(stage, count);
     for (var i = 0; i < count; i++) {
       final lane = 4.5 + 12.5 * (i / max(1, count - 1));
       final y = stage == 0 ? lane : lane + (_rng.nextDouble() - .5) * 2.1;
-      final kind = _openingEnemyKind(biome, i, stage);
+      final kind = i == chamberIndex
+          ? _chamberKind(stage)
+          : _openingEnemyKind(biome, i, stage);
       final column = switch (formation) {
         1 => i.isEven ? 19.0 : 25.5,
         2 => 21.0 + (1 - (y - 11).abs() / 7) * 4,
@@ -2850,12 +2904,15 @@ class LiteRun {
       };
       final spread = formation == 0 ? 7.0 : 1.5;
       final candidate = Point(column + _rng.nextDouble() * spread, y);
-      _spawnEnemy(
+      final enemy = _spawnEnemy(
         kind,
         campPatrols && stage == 0 && i == 0
             ? const Point(12.3, 13.15)
+            : i == chamberIndex
+            ? chamberCenter
             : candidate,
       );
+      if (i == chamberIndex) _seatChampion(enemy);
     }
     quests.addAll([
       LiteQuest(
@@ -3000,7 +3057,8 @@ class LiteRun {
     ]);
     _eliteReleased = true;
     _placeSecretRoom();
-    _spawnEnemy(boss, const Point(27.8, 11)).cooldown = .75;
+    final defender = _spawnEnemy(boss, const Point(27.8, 11))..cooldown = .75;
+    _seatChampion(defender);
     message = archon
         ? 'L’Arconte delle Fratture si risveglia. Evita i segni a terra.'
         : 'Piano $stage · Veyrth. Elimina i suoi echi per renderlo vulnerabile.';
@@ -3013,7 +3071,13 @@ class LiteRun {
     if (floor == veyrthStage) return LiteEnemyKind.veyrth;
     if (solarCampaign) {
       return switch (floor) {
-        6 || 9 || 12 || 15 || 21 => LiteEnemyKind.custodeLunare,
+        3 => LiteEnemyKind.guardianoLunare,
+        6 => LiteEnemyKind.guardiaLunare,
+        9 => LiteEnemyKind.ombra,
+        12 => LiteEnemyKind.divoramitu,
+        15 => LiteEnemyKind.divoramituBoss,
+        18 => LiteEnemyKind.aberrazioneSolare,
+        21 => LiteEnemyKind.diavolo,
         _ => LiteEnemyKind.eliteLunare,
       };
     }
@@ -3036,11 +3100,16 @@ class LiteRun {
         rotation[(_startingBiome.index + floor ~/ 6) % rotation.length];
     return switch (habitat) {
       LiteBiome.campo => LiteEnemyKind.granScostumato,
-      LiteBiome.foresta => LiteEnemyKind.forestDemon,
+      LiteBiome.foresta =>
+        _startingBiome == LiteBiome.orea && floor > 0
+            ? LiteEnemyKind.nymboryth
+            : LiteEnemyKind.forestDemon,
       LiteBiome.dungeon => LiteEnemyKind.costrutto,
       LiteBiome.postea => LiteEnemyKind.miruscyrus,
-      LiteBiome.deserto => LiteEnemyKind.costrutto,
-      LiteBiome.orea => LiteEnemyKind.forestDemon,
+      LiteBiome.deserto =>
+        floor == 0 ? LiteEnemyKind.costrutto : LiteEnemyKind.vegliante,
+      LiteBiome.orea =>
+        floor == 0 ? LiteEnemyKind.forestDemon : LiteEnemyKind.nymboryth,
     };
   }
 
@@ -3100,6 +3169,7 @@ class LiteRun {
             : [for (final entry in LiteScroll.values) kit.scrolls[entry] ?? 0],
         learned: source == null ? {...learnedScrolls} : {},
         chosenArt: activeArt(source),
+        secondaryArt: extraArt(source),
         sourceLevel: sourceLevel,
         forgeRank: kit.forgeRank(item),
         playerId: source?.id ?? 0,
@@ -3322,6 +3392,7 @@ class LiteRun {
       fighter._reload = reloadDuration;
     }
     if (dash && fighter._dashCooldown <= 0 && fighter._dashRemaining <= 0) {
+      if (_tryPadDash(target, fighter)) return true;
       fighter
         .._dashRemaining = .19
         .._dashSpeed = 15
@@ -3381,12 +3452,20 @@ class LiteRun {
       }
       if (fighter._dashRemaining > 0) {
         final slice = min(elapsed, fighter._dashRemaining);
+        fighter.position = _dashLandings.containsKey(fighter.id)
+            ? _advancePadDash(
+                fighter.position,
+                fighter._dashRemaining,
+                elapsed,
+                fighter.id,
+              )
+            : _move(
+                fighter.position,
+                fighter._dashDirection *
+                    (fighter._dashSpeed * slice * groundSpeed),
+                _playerRadius,
+              );
         fighter._dashRemaining = max(0, fighter._dashRemaining - elapsed);
-        fighter.position = _move(
-          fighter.position,
-          fighter._dashDirection * (fighter._dashSpeed * slice * groundSpeed),
-          _playerRadius,
-        );
         _recordBurstTrace(fighter.id, fighter.position, fighter._dashRemaining);
       } else if (fighter.connected &&
           fighter._night.stun <= 0 &&
@@ -3637,9 +3716,14 @@ class LiteRun {
     _walking = walk && _burstTime <= 0;
     time += elapsed;
     _gripTick(elapsed);
-    supply.artCooldown = max(0, supply.artCooldown - elapsed);
+    void tickArts(LiteRestLoadout kit) {
+      kit.artCooldown = max(0, kit.artCooldown - elapsed);
+      kit.extraArtCooldown = max(0, kit.extraArtCooldown - elapsed);
+    }
+
+    tickArts(supply);
     for (final fighter in coopFighters) {
-      fighter.supply.artCooldown = max(0, fighter.supply.artCooldown - elapsed);
+      tickArts(fighter.supply);
     }
     if (_burstTraces.isNotEmpty) {
       _burstTraces.removeWhere(
@@ -3705,12 +3789,14 @@ class LiteRun {
     final beforeMove = position;
     final groundSpeed = this.terrainSpeedAt(position, enemy: false);
     if (!hostDown && _night.stun <= 0 && _burstTime > 0) {
-      position = _move(
-        position,
-        _burstDirection *
-            (_burstSpeed * min(elapsed, _burstTime) * groundSpeed),
-        _playerRadius,
-      );
+      position = _dashLandings.containsKey(0)
+          ? _advancePadDash(position, _burstTime, elapsed, 0)
+          : _move(
+              position,
+              _burstDirection *
+                  (_burstSpeed * min(elapsed, _burstTime) * groundSpeed),
+              _playerRadius,
+            );
       _burstTime = max(0, _burstTime - elapsed);
       _recordBurstTrace(0, position, _burstTime);
     } else if (!hostDown &&
@@ -3846,7 +3932,7 @@ class LiteRun {
       if (special == LiteEnemyKind.luce || special == LiteEnemyKind.ombra) {
         _spawnMirrorWave(special);
       } else {
-        _spawnEnemy(special, const Point(28.3, 11));
+        _seatChampion(_spawnEnemy(special, chamberCenter));
       }
       message = '${special.label} entra nello scontro.';
       return;
@@ -4403,6 +4489,7 @@ class LiteRun {
         _burstTime > 0) {
       return false;
     }
+    if (_tryPadDash(target)) return true;
     lookAt(target);
     _burstDirection = _lastMove == const Point<double>(0, 0) ? aim : _lastMove;
     _burstSpeed = 14;
@@ -5612,6 +5699,7 @@ class LiteRun {
       return;
     }
     if (enemy.stunned > 0) {
+      enemy.chamberWarning = null;
       enemy.stunned = max(0, enemy.stunned - elapsed);
       enemy.windup = 0;
       return;
@@ -5629,6 +5717,9 @@ class LiteRun {
         enemy.radius,
       );
       enemy.windup = 0;
+      return;
+    }
+    if (_tickChamber(enemy, elapsed) && enemy.kind != LiteEnemyKind.veyrth) {
       return;
     }
     if (enemy.kind == LiteEnemyKind.reGoblin)
@@ -5945,6 +6036,7 @@ class LiteRun {
     build.intangible = max(0, build.intangible - elapsed);
     build.talentCooldown = max(0, build.talentCooldown - skillTime);
     build.artCooldown = max(0, build.artCooldown - skillTime);
+    build.secondaryArtCooldown = max(0, build.secondaryArtCooldown - skillTime);
     final recovery =
         build.power(LitePowerUp.condotto) +
         (build.chosenArt == null ? 0 : .16 + .35 * difficulty.index);
@@ -6010,12 +6102,19 @@ class LiteRun {
       }
       if (_mirrorExtraTalent(boss, direction, distance)) return;
     }
-    if (!boss.kind.echo &&
-        build.artCooldown <= 0 &&
-        hasLine &&
-        (_castMirrorLearnedArt(boss, direction, distance) ||
-            _castMirrorScroll(boss, direction, distance))) {
-      return;
+    if (!boss.kind.echo && hasLine) {
+      if (build.artCooldown <= 0 &&
+          _castMirrorLearnedArt(boss, direction, distance)) {
+        return;
+      }
+      if (build.secondaryArtCooldown <= 0 &&
+          _castMirrorLearnedArt(boss, direction, distance, secondary: true)) {
+        return;
+      }
+      if (build.artCooldown <= 0 &&
+          _castMirrorScroll(boss, direction, distance)) {
+        return;
+      }
     }
     if (!boss.kind.echo &&
         hasLine &&
@@ -7042,8 +7141,7 @@ class LiteRun {
         }
       }
       if (!cannon || _blocked(next, hitRadius)) {
-        if (projectile.kind == LiteProjectileKind.fireball &&
-            projectile.bounces > 0) {
+        if (projectile.kind.ricochets && projectile.bounces > 0) {
           final at = projectile.position;
           final xBlocked = _blocked(Point(next.x, at.y), hitRadius);
           final yBlocked = _blocked(Point(at.x, next.y), hitRadius);
@@ -7175,8 +7273,7 @@ class LiteRun {
       final canPierce =
           projectile.kind == LiteProjectileKind.pulse &&
           projectile.hit.length < 2;
-      if (projectile.kind == LiteProjectileKind.fireball &&
-          projectile.bounces > 0) {
+      if (projectile.kind.ricochets && projectile.bounces > 0) {
         final target = _nearestEnemy(next, skip: projectile.hit);
         if (target != null &&
             _distanceSquared(next, target.position) <= 49 &&
@@ -8394,6 +8491,7 @@ class LiteRun {
           (id, remaining) => MapEntry(id.toString(), remaining),
         ),
     },
+    if (_dashLandings.isNotEmpty) 'padDashes': _padFrames,
     if (hasFloorMap) ...{
       'mappedFloor': _mappedFloor,
       'mappedSectors': _mappedSectors,
@@ -8821,6 +8919,7 @@ class LiteRun {
     run._burstDirection = _point(json['burstDirection']);
     run._strikeDirection = _point(json['strikeDirection']);
     run._lastMove = _point(json['lastMove']);
+    run._restorePadFrames(json['padDashes']);
     run.message = json['message'] as String? ?? '';
     return run;
   }

@@ -185,7 +185,7 @@ extension LiteSecondAct on LiteRun {
       });
     _openFloorMap();
     _placeSecretRoom();
-    final enemies = switch (realm!) {
+    final formation = switch (realm!) {
       LiteRealm.inferno => switch (actRoom) {
         1 => [
           LiteEnemyKind.demoneMinore,
@@ -254,6 +254,29 @@ extension LiteSecondAct on LiteRun {
         ],
       },
     };
+    final champion = switch (realm!) {
+      LiteRealm.inferno => const [
+        LiteEnemyKind.demoneMinore,
+        LiteEnemyKind.demoneIntermedio,
+        LiteEnemyKind.demoneMaggiore,
+        LiteEnemyKind.diavolo,
+      ][actRoom - 1],
+      LiteRealm.caramella => const [
+        LiteEnemyKind.slime,
+        LiteEnemyKind.divoramitu,
+        LiteEnemyKind.orbryx,
+        LiteEnemyKind.divoramituBoss,
+      ][actRoom - 1],
+      LiteRealm.postea => const [
+        LiteEnemyKind.dronePostea,
+        LiteEnemyKind.ragnoSaldatore,
+        LiteEnemyKind.miruscyrus,
+        LiteEnemyKind.costrutto,
+      ][actRoom - 1],
+    };
+    final present = formation.indexOf(champion);
+    final chamberIndex = present >= 0 ? present : formation.length - 1;
+    final enemies = [...formation]..[chamberIndex] = champion;
     quests
       ..clear()
       ..addAll([
@@ -280,7 +303,12 @@ extension LiteSecondAct on LiteRun {
       final kind = enemies[i];
       final x = kind.boss || kind.elite ? 25.5 : 17.7 + (i.isEven ? 0 : 3.4);
       final y = kind.boss ? 11.0 : 4.6 + i * 4.2;
-      _spawnEnemy(kind, Point(x, y)).cooldown += i * .14;
+      final enemy = _spawnEnemy(
+        kind,
+        i == chamberIndex ? chamberCenter : Point(x, y),
+      );
+      enemy.cooldown += i * .14;
+      if (i == chamberIndex) _seatChampion(enemy);
     }
     message =
         'Atto II · ${realm!.label} · Visitazione $actRoom/$actTwoRooms'

@@ -149,6 +149,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       _session.bomb();
     } else if (key == LogicalKeyboardKey.keyE) {
       _session.castLearnedArt();
+    } else if (key == LogicalKeyboardKey.keyZ) {
+      _session.castLearnedArt(extra: true);
     } else if (key == LogicalKeyboardKey.keyG) {
       _session.weaponTechnique();
     } else if (key == LogicalKeyboardKey.shiftLeft ||
@@ -250,6 +252,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       fighter: () => _session.localFighter,
       refresh: _session,
       buy: _session.buyRestItem,
+      equip: _session.equipRestArt,
       remember: _session.rememberRestItem,
       exchange: _session.exchangeLunarPiece,
     );
@@ -642,6 +645,20 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                 FilledButton.tonal(
                                   onPressed: _session.castLearnedArt,
                                   child: Text('E · ${art.label}'),
+                                ),
+                              if (run.extraArt(mine) case final art?
+                                  when !run.restHub)
+                                FilledButton.tonal(
+                                  onPressed: () =>
+                                      _session.castLearnedArt(extra: true),
+                                  child: Text('Z · ${art.label}'),
+                                ),
+                              if (!run.restHub && run.nearDashPad(mine))
+                                FilledButton.tonal(
+                                  onPressed: _session.dash,
+                                  child: const Text(
+                                    'Shift · Aggancia la pedana',
+                                  ),
                                 ),
                               if (_session.host && run.canEnterThirdAct)
                                 FilledButton(

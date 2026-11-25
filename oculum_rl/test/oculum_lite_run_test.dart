@@ -56,10 +56,15 @@ void _expectRouteMatchesFloor({
       run.enemies.map((enemy) => enemy.kind).toSet(),
       preview.enemyKinds.toSet(),
     );
-    run.enemies.clear();
-    run.step(.01);
+    if (preview.encounter != LiteEncounter.ordinary) {
+      run.enemies.clear();
+      run.step(.01);
+    }
   }
-  expect(run.enemies.singleOrNull?.kind, preview.special);
+  expect(
+    run.enemies.singleWhere((enemy) => enemy.chamberSeat != null).kind,
+    preview.special,
+  );
   if (preview.featuredPower case final power?) {
     if (!run.stageClear) {
       run.enemies.clear();
@@ -1860,6 +1865,30 @@ void main() {
     },
   );
 
+  test('Obser can be attracted from one metre at the start', () {
+    final run = _run()
+      ..enemies.clear()
+      ..obstacles.clear();
+    expect(run.obserPullRadius(), 1);
+    expect(run.obser, 0);
+    final close = LiteLoot(
+      run.position + const Point(1, 0),
+      LiteLootKind.obser,
+      1,
+    );
+    final far = LiteLoot(
+      run.position + const Point(1.01, 0),
+      LiteLootKind.obser,
+      2,
+    );
+    final farPosition = far.position;
+    run.loot.addAll([close, far]);
+    _wait(run, .04);
+    expect(run.obser, 1);
+    expect(run.loot, [far]);
+    expect(far.position, farPosition);
+  });
+
   test('Obser move toward the eligible guest and credit the team once after restore', () {
     final host =
         LiteRun(
@@ -1896,7 +1925,8 @@ void main() {
       attack: false,
     );
     expect(run.weaponReach(LiteWeapon.arco, guest), closeTo(12.3, 1e-9));
-    expect(run.obserPullRadius(guest), closeTo(5.85, 1e-9));
+    expect(run.obserPullRadius(), closeTo(3.75, 1e-9));
+    expect(run.obserPullRadius(guest), closeTo(5.25, 1e-9));
     final at = const Point<double>(18, 11);
     run.loot.addAll([
       LiteLoot(at, LiteLootKind.obser, 7),
@@ -2963,70 +2993,89 @@ void main() {
     }
   });
 
-  test('campaign traverses 25 rooms with ten specials and saved victory', () {
-    final route = <int, LiteEnemyKind>{};
-    final layouts = <String>{};
-    final questIds = <String>{};
-    var ordinaryTotal = 0;
-    var run = _run(weapon: LiteWeapon.spadaScudo)..level = 300;
-    run.hp = run.maxHp;
-    for (var floor = 0; floor <= LiteRun.finalStage; floor++) {
-      expect(run.stage, floor);
-      expect(run.toJson(), _restore(run).toJson());
-      layouts.add(jsonEncode(run.toJson()['obstacles']));
-      questIds.addAll(run.quests.map((quest) => quest.id));
-      ordinaryTotal += run.enemies
-          .where(
-            (enemy) =>
-                !enemy.kind.boss && !enemy.kind.elite && !enemy.kind.echo,
-          )
+  test(
+    'campaign traverses 25 rooms with distinct defenders and saved victory',
+    () {
+      final route = <int, LiteEnemyKind>{};
+      final layouts = <String>{};
+      final questIds = <String>{};
+      final defeated = <int, LiteEnemyKind>{};
+      var run = _run(weapon: LiteWeapon.spadaScudo)..level = 300;
+      run.hp = run.maxHp;
+      for (var floor = 0; floor <= LiteRun.finalStage; floor++) {
+        expect(run.stage, floor);
+        expect(run.toJson(), _restore(run).toJson());
+        layouts.add(jsonEncode(run.toJson()['obstacles']));
+        questIds.addAll(run.quests.map((quest) => quest.id));
+        while (!run.stageClear) {
+          final enemy = run.enemies.first;
+          for (final remaining in run.enemies) {
+            defeated[remaining.id] = remaining.kind;
+            if (remaining.chamberSeat != null) route[floor] = remaining.kind;
+          }
+          _strikeCampaignEnemy(run, enemy);
+        }
+        if (floor < LiteRun.finalStage) {
+          expect(run.victorious, isFalse);
+          run.position = run.portalPosition;
+          expect(run.advance(), isTrue);
+          run = _restore(run);
+        }
+      }
+      expect(route.values.toSet(), hasLength(25));
+      expect(
+        route.entries
+            .where(
+              (entry) =>
+                  LiteRun.encounterAt(entry.key) != LiteEncounter.ordinary,
+            )
+            .fold(
+              <int, LiteEnemyKind>{},
+              (entries, entry) => entries..[entry.key] = entry.value,
+            ),
+        {
+          0: LiteEnemyKind.granScostumato,
+          3: LiteEnemyKind.luce,
+          6: LiteEnemyKind.forestDemon,
+          9: LiteEnemyKind.ombra,
+          12: LiteEnemyKind.costrutto,
+          15: LiteEnemyKind.divoramituBoss,
+          18: LiteEnemyKind.eliteSolare,
+          21: LiteEnemyKind.diavolo,
+          23: LiteEnemyKind.veyrth,
+          24: LiteEnemyKind.arconte,
+        },
+      );
+      expect(layouts, hasLength(25));
+      expect(questIds, hasLength(75));
+      expect(run.dead, isFalse);
+      expect(run.finished, isTrue);
+      expect(run.victorious, isTrue);
+      final ordinaryTotal = defeated.values
+          .where((kind) => !kind.boss && !kind.elite && !kind.echo)
           .length;
-      while (!run.stageClear) {
-        final enemy = run.enemies.first;
-        if (enemy.kind.elite || enemy.kind.boss) route[floor] = enemy.kind;
-        _strikeCampaignEnemy(run, enemy);
-      }
-      if (floor < LiteRun.finalStage) {
-        expect(run.victorious, isFalse);
-        run.position = run.portalPosition;
-        expect(run.advance(), isTrue);
-        run = _restore(run);
-      }
-    }
-    expect(route, {
-      0: LiteEnemyKind.granScostumato,
-      3: LiteEnemyKind.luce,
-      6: LiteEnemyKind.forestDemon,
-      9: LiteEnemyKind.ombra,
-      12: LiteEnemyKind.costrutto,
-      15: LiteEnemyKind.divoramituBoss,
-      18: LiteEnemyKind.eliteSolare,
-      21: LiteEnemyKind.diavolo,
-      23: LiteEnemyKind.veyrth,
-      24: LiteEnemyKind.arconte,
-    });
-    expect(layouts, hasLength(25));
-    expect(questIds, hasLength(75));
-    expect(run.dead, isFalse);
-    expect(run.finished, isTrue);
-    expect(run.victorious, isTrue);
-    expect(run.ascensionDust, 4);
-    expect(run.bossCrystalGrades, hasLength(6));
-    expect(run.spentOculum, ordinaryTotal + 4 * 3 + 6 * 5);
-    expect(run.arenaSpeedBonus, 80);
-    expect(
-      run.unlockedHeroesFor(run.hero),
-      containsAll([LiteHero.luce, LiteHero.ombra, LiteHero.veyrth]),
-    );
-    final restored = _restore(run);
-    expect(restored.finalBossPhase, LiteFinalBossPhase.defeated);
-    restored.position = restored.portalPosition;
-    expect(restored.advance(), isFalse);
-    expect(restored.attack(restored.position), isFalse);
-    final settled = restored.toJson();
-    _wait(restored, 2);
-    expect(restored.toJson(), settled);
-  });
+      final eliteTotal = defeated.values
+          .where((kind) => kind.elite && !kind.boss)
+          .length;
+      final bossTotal = defeated.values.where((kind) => kind.boss).length;
+      expect(run.ascensionDust, eliteTotal);
+      expect(run.bossCrystalGrades, hasLength(bossTotal));
+      expect(run.spentOculum, ordinaryTotal + eliteTotal * 3 + bossTotal * 5);
+      expect(run.arenaSpeedBonus, 80);
+      expect(
+        run.unlockedHeroesFor(run.hero),
+        containsAll([LiteHero.luce, LiteHero.ombra, LiteHero.veyrth]),
+      );
+      final restored = _restore(run);
+      expect(restored.finalBossPhase, LiteFinalBossPhase.defeated);
+      restored.position = restored.portalPosition;
+      expect(restored.advance(), isFalse);
+      expect(restored.attack(restored.position), isFalse);
+      final settled = restored.toJson();
+      _wait(restored, 2);
+      expect(restored.toJson(), settled);
+    },
+  );
 
   test('all four supply stops remain accessible in solo and co-op', () {
     for (final players in [1, 2]) {
