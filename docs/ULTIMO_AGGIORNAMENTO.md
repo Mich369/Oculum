@@ -1,5 +1,9 @@
 # Oculum RL e aggiornamenti alla campagna
 
+## Oculum RL 0.4.24
+
+- **Oculum RL 0.4.24.** Nuove animazioni di blocco, impatto, soccorso e rialzata per il roster giocabile. Attacchi caricati e doppio fendente seguono il momento reale del colpo. Riprese Open con gesti ed effetti Ink Expressive distinti. Gli indizi di posa passano anche in cooperativa.
+
 ## Oculum RL 0.4.23
 
 - **Oculum RL 0.4.23.** Ripristinati accenti e apostrofi nei testi del combattimento. La versione include la revisione della Forma corvina, dei due scheletri e del Passo fantasma. Sistemata anche la dicitura della missione nei salvataggi della 0.4.22.

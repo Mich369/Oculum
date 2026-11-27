@@ -17,6 +17,7 @@ part 'oculum_lite_world_ink_paint.dart';
 part 'oculum_lite_art_paint.dart';
 part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_plague_paint.dart';
+part 'oculum_lite_playable_motion.dart';
 part 'oculum_lite_weapon_paint.dart';
 
 class OculumLiteBlockControl extends StatelessWidget {
@@ -1938,6 +1939,15 @@ class _ArenaPaint extends CustomPainter {
     }
 
     final time = run.time + animationLead;
+    final playerImpacts = <int, LiteCombatImpact>{};
+    for (final impact in run.combatImpacts) {
+      if (_reactionAge(impact, time) == null) continue;
+      if (impact.target == LiteImpactTarget.player) {
+        playerImpacts[0] = impact;
+      } else if (impact.target == LiteImpactTarget.ally) {
+        playerImpacts[impact.subjectId] = impact;
+      }
+    }
     final pads = run.dashPads;
     final local = follow ?? run.position;
     for (final (index, pad) in pads.indexed) {
@@ -2805,6 +2815,26 @@ class _ArenaPaint extends CustomPainter {
               fighter.blockResistance / fighter.maxBlockResistance,
             );
           _actor(canvas, at, side, 1, () {
+            final releaseAge = fighter.weaponReleaseAge(time);
+            _applyPlayablePose(
+              canvas,
+              fighter.hero,
+              fighter.weapon,
+              time,
+              fighter.stride,
+              down: fighter.hp <= 0,
+              phasing: phase != null,
+              blocking: fighter.blocking,
+              impact: playerImpacts[fighter.id],
+              rescue: fighter.rescueStatus,
+              riseAge: fighter.rescuedAge(time),
+              openAge:
+                  LiteRun.openRecoveryFor(fighter.openGrade) -
+                  fighter.openCooldown,
+              releaseAge: releaseAge,
+              windup: fighter.weaponWindup,
+              compact: fighter.plagueForm || (fighter.night.bat > 0),
+            );
             final standard =
                 guestAppearances[fighter.account] ??
                 oculumLiteDefaultAppearance(fighter.hero);
@@ -2856,9 +2886,15 @@ class _ArenaPaint extends CustomPainter {
               stride: fighter.stride,
               animationLead: animationLead,
               preparingAttack: fighter.preparingAttack,
-              attackElapsed: fighter.attackCooldown > 0
-                  ? fighter.weapon.cooldown - fighter.attackCooldown
-                  : null,
+              releaseAge: releaseAge,
+              openAge:
+                  LiteRun.openRecoveryFor(fighter.openGrade) -
+                  fighter.openCooldown,
+              attackElapsed: _playedAttackElapsed(
+                fighter.weapon,
+                fighter.weaponWindup,
+                releaseAge,
+              ),
             );
           });
           _health(
@@ -2905,6 +2941,26 @@ class _ArenaPaint extends CustomPainter {
       player.dy,
       () {
         _actor(canvas, player, facing, 1, () {
+          final secondBladeAge = run.secondBladeReleaseAge(time);
+          final releaseAge = secondBladeAge ?? run.weaponReleaseAge(time);
+          _applyPlayablePose(
+            canvas,
+            run.hero,
+            run.weapon,
+            time,
+            run.stride,
+            down: run.dead || run.hostDown,
+            phasing: run.intangible,
+            blocking: run.blocking,
+            impact: playerImpacts[0],
+            rescue: run.rescueStatus,
+            riseAge: run.rescuedAge(time),
+            openAge: LiteRun.openRecoveryFor(run.openGrade) - run.openCooldown,
+            releaseAge: releaseAge,
+            windup: run.weaponWindup,
+            bladeReturn: secondBladeAge != null,
+            compact: run.plagueForm || run.night.bat > 0,
+          );
           final strip = heroFrames;
           final spriteFrame =
               strip != null && _hasDefaultAppearance(appearance, run.hero)
@@ -2954,9 +3010,13 @@ class _ArenaPaint extends CustomPainter {
             stride: run.stride,
             animationLead: animationLead,
             preparingAttack: run.preparingAttack,
-            attackElapsed: run.attackCooldown > 0
-                ? math.max(0.0, run.weapon.cooldown - run.attackCooldown)
-                : null,
+            releaseAge: releaseAge,
+            openAge: LiteRun.openRecoveryFor(run.openGrade) - run.openCooldown,
+            attackElapsed: _playedAttackElapsed(
+              run.weapon,
+              run.weaponWindup,
+              releaseAge,
+            ),
           );
         });
         if (run.playerCount > 1) {
@@ -3011,11 +3071,10 @@ class _ArenaPaint extends CustomPainter {
         player,
         weaponAim,
         run.weapon,
-        run.springPunchActive
-            ? .28 - run.springPoseRemaining
-            : run.attackCooldown,
-        preparing: run.preparingAttack,
-        spring: run.springPunchActive,
+        releaseAge: run.weaponReleaseAge(time),
+        secondBladeAge: run.secondBladeReleaseAge(time),
+        windup: run.weaponWindup,
+        springAge: run.springPunchActive ? .28 - run.springPoseRemaining : null,
       );
     }
     for (final fighter in run.coopFighters) {
@@ -3026,11 +3085,11 @@ class _ArenaPaint extends CustomPainter {
         at,
         _offset(fighter.weaponAim),
         fighter.weapon,
-        fighter.springPunchActive
+        releaseAge: fighter.weaponReleaseAge(time),
+        windup: fighter.weaponWindup,
+        springAge: fighter.springPunchActive
             ? .28 - fighter.springPoseRemaining
-            : fighter.attackCooldown,
-        preparing: fighter.preparingAttack,
-        spring: fighter.springPunchActive,
+            : null,
         guest: true,
       );
     }
@@ -5320,28 +5379,40 @@ void _hero(
   double animationLead = 0,
   bool preparingAttack = false,
   double? attackElapsed,
+  double? releaseAge,
+  double openAge = -1,
   Offset aiming = const Offset(.9, .08),
 }) {
+  final age = releaseAge ?? (preparingAttack ? null : attackElapsed);
+  final strike = math.max(0.0, .24 - (age ?? .24));
+  final openRelease = openAge >= 0 && openAge < .16;
+  final openRecovery = openAge >= .16 && openAge < .33;
   final third = sprites.third;
   final thirdIndex = _thirdHeroSprite(hero);
   if (third != null && thirdIndex != null) {
+    if (!fallen) {
+      _groundedMotion(canvas, stride, animationLead, strideMetres: 1.74);
+    }
     _paintThirdActor(
       canvas,
       third,
       thirdIndex,
       thirdIndex == 2 ? 1.95 : 2.23,
       time,
-      stride?.strength ?? (moving ? .7 : .0),
+      0,
       charging: preparingAttack || preparingTalent,
-      strike: attackElapsed == null ? 0.0 : .24 - attackElapsed,
+      strike: openRelease ? .20 : strike,
       fallen: fallen,
     );
     return;
   }
   final ashley = sprites.ashley;
-  final releasingChakram =
-      weapon == LiteWeapon.chakram && (attackElapsed ?? 1) < .18;
+  final releasingChakram = weapon == LiteWeapon.chakram && (age ?? 1) < .18;
   if (hero == LiteHero.ashley && ashley != null) {
+    if (fallen) {
+      canvas.rotate(1.24);
+      canvas.scale(.73);
+    }
     _paintAshley(
       canvas,
       ashley,
@@ -5389,7 +5460,7 @@ void _hero(
       animationLead,
       stride,
       preparingAttack || preparingTalent ? .50 : 0,
-      attackElapsed == null ? 0 : (.24 - attackElapsed).clamp(0, .24),
+      strike,
       0,
       hero: true,
       fallen: fallen,
@@ -5406,7 +5477,7 @@ void _hero(
       animationLead,
       stride,
       preparingAttack || preparingTalent ? .5 : 0,
-      attackElapsed == null ? 0 : (.24 - attackElapsed).clamp(0, .24),
+      strike,
       0,
       hero: true,
       fallen: fallen,
@@ -5436,7 +5507,7 @@ void _hero(
   if (hero == LiteHero.polloMeccanico && mechanicalChicken != null) {
     final frame = preparingTalent || punchPose > 0
         ? 3
-        : attackElapsed != null
+        : strike > 0
         ? 2
         : _strideFrame(stride, 1.16, animationLead);
     final cellWidth = mechanicalChicken.width / 4;
@@ -5473,7 +5544,7 @@ void _hero(
       body,
       stride,
       animationLead,
-      attackElapsed != null,
+      strike > 0,
       preparingTalent || punchPose > 0,
       hero: true,
       fallen: fallen,
@@ -5499,10 +5570,9 @@ void _hero(
       animationLead,
       preparing:
           hero == LiteHero.cavaliereLunare && preparingTalent ||
-          preparingAttack,
-      hitting:
-          (night?.absorb ?? 0) > 0 ||
-          attackElapsed != null && attackElapsed < .24,
+          preparingAttack ||
+          openRecovery,
+      hitting: (night?.absorb ?? 0) > 0 || strike > 0 || openRelease,
     );
     _newActor(
       canvas,
@@ -5528,7 +5598,7 @@ void _hero(
         canvas,
         nightActors,
         copied,
-        _newFrame(stride, animationLead, hitting: attackElapsed != null),
+        _newFrame(stride, animationLead, hitting: strike > 0),
         height: _enemyHeight(mimic.kind),
         stride: stride,
         animationLead: animationLead,
@@ -5542,12 +5612,12 @@ void _hero(
         canvas,
         newActors,
         row,
-        _newFrame(stride, animationLead, hitting: attackElapsed != null),
+        _newFrame(stride, animationLead, hitting: strike > 0),
         height: _enemyHeight(mimic.kind),
         stride: stride,
         animationLead: animationLead,
         species: mimic.kind,
-        strike: math.max(0, .24 - (attackElapsed ?? .24)),
+        strike: strike,
         fallen: fallen,
       );
     } else if (banditArt == null ||
@@ -5560,7 +5630,7 @@ void _hero(
           time,
           animationLead,
           fallen: fallen,
-          strike: attackElapsed == null ? 0 : .16,
+          strike: strike,
         )) {
       _enemy(
         canvas,
@@ -5593,12 +5663,12 @@ void _hero(
   }
   final row = _newHeroRow(hero, giant);
   if (row != null && newActors != null) {
-    final striking = attackElapsed != null && attackElapsed < .24;
+    final striking = strike > 0;
     final frame = _newFrame(
       stride,
       animationLead,
-      preparing: preparingAttack,
-      hitting: striking || preparingTalent,
+      preparing: preparingAttack || openRecovery,
+      hitting: striking || preparingTalent || openRelease,
     );
     final height = giant ? 3.67 : 2.46;
     canvas.save();
@@ -5645,7 +5715,7 @@ void _hero(
       strength: moving ? .82 : .44,
       grounded: false,
       anticipation: preparingAttack ? .8 : 0,
-      strike: attackElapsed != null ? .65 : 0,
+      strike: strike * 2.7,
     );
     return;
   }
@@ -5664,9 +5734,6 @@ void _hero(
   }
   if (hero.sprite case final kind?) {
     final isBandit = hero == LiteHero.scostubandito;
-    final strike = attackElapsed == null
-        ? 0.0
-        : math.max(0.0, .24 - attackElapsed);
     final swinging = !fallen && punchPose > 0;
     if (swinging) canvas.translate(.19 * (punchPose / .24), 0);
     if (banditArt == null ||
@@ -5721,11 +5788,7 @@ void _hero(
       canvas.translate(-direction.dx * .13 * hold, -direction.dy * .10 * hold);
       canvas.rotate(-.075 * hold);
     } else {
-      final release = weapon == LiteWeapon.guanti ? .32 : weapon.chargeSeconds;
-      final impulse = (1 - (attackElapsed - release).abs() / .19).clamp(
-        0.0,
-        1.0,
-      );
+      final impulse = (1 - (age ?? .19) / .19).clamp(0.0, 1.0);
       final thrust =
           weapon == LiteWeapon.carabinaImpulsi ||
               weapon == LiteWeapon.balestraRunica
@@ -5811,13 +5874,8 @@ void _hero(
       ? const Offset(-.30, -1.40)
       : const Offset(-.26, -1.37);
   final heading = math.atan2(aiming.dy, aiming.dx).clamp(-.57, .48).toDouble();
-  final swing = attackElapsed == null
-      ? 0.0
-      : (1 - attackElapsed / .24).clamp(0.0, 1.0);
-  final chargedImpact = attackElapsed == null || preparingAttack
-      ? 0.0
-      : (1 - (attackElapsed - (weapon == LiteWeapon.guanti ? .32 : .43)) / .20)
-            .clamp(0.0, 1.0);
+  final swing = (1 - (age ?? .24) / .24).clamp(0.0, 1.0);
+  final chargedImpact = (1 - (age ?? .20) / .20).clamp(0.0, 1.0);
   final bowRelease = weapon == LiteWeapon.arco && swing > .17;
   final bowDraw = Offset(-.55 + swing * .30, -.024 - swing * .05);
   final throwing = weapon.returns && swing > .22;

@@ -100,6 +100,7 @@ void _paintOpenPulse(
     LiteHero.aerovyr => const Color(0xffa6d8ff),
     LiteHero.vedettaEiva => const Color(0xff90d8c6),
   };
+  _paintOpenBrush(canvas, feet, hero, color, phase);
   _oval(
     canvas,
     feet,
@@ -109,6 +110,58 @@ void _paintOpenPulse(
     stroke: color.withValues(alpha: (1 - phase) * .88),
     strokeWidth: .067,
   );
+}
+
+// Open gestures stay close to the silhouette. Combat telegraphs and damage
+// areas belong to the actual abilities elsewhere in the arena.
+void _paintOpenBrush(
+  Canvas canvas,
+  Offset feet,
+  LiteHero hero,
+  Color color,
+  double phase,
+) {
+  final (count, spread, rise, turn) = switch (hero) {
+    LiteHero.pyrel => (5, .92, 1.21, .51),
+    LiteHero.luce || LiteHero.eliteSolare => (5, .84, 1.46, .08),
+    LiteHero.lithra || LiteHero.sentinella => (5, 1.01, .47, .20),
+    LiteHero.ombra || LiteHero.doppelganger => (3, .76, .92, -.66),
+    LiteHero.cavaliereLunare || LiteHero.guardiaSolare => (4, .92, 1.04, -.19),
+    LiteHero.reGoblin || LiteHero.granScostumato => (4, 1.14, .66, .34),
+    LiteHero.vesanybel ||
+    LiteHero.vedettaEiva ||
+    LiteHero.aerovyr => (5, .98, 1.05, .42),
+    _ => (0, 0.0, 0.0, 0.0),
+  };
+  final fade = (1 - phase) * (1 - phase);
+  final gain = _inkEase((phase * 1.5).clamp(0.0, 1.0));
+  for (var i = 0; i < count; i++) {
+    final side = (i / (count - 1) - .5) * 2;
+    final length = rise * (.55 + .45 * (1 - side.abs()));
+    final base = feet + Offset(side * spread * (.52 + gain * .47), -.13);
+    final tip = base + Offset(side * turn + .42 * turn, -length * (.44 + gain));
+    final elbow = Offset.lerp(base, tip, .46)! + Offset(turn * .28, .07);
+    _poly(
+      canvas,
+      [
+        base + const Offset(-.06, .05),
+        elbow + const Offset(-.08, .08),
+        tip,
+        elbow + const Offset(.053, -.035),
+        base + const Offset(.034, .12),
+      ],
+      color.withValues(alpha: .83 * fade),
+      stroke: _ink.withValues(alpha: .80 * fade),
+      width: .038,
+    );
+    _inkSlash(
+      canvas,
+      elbow,
+      tip + const Offset(-.08, .18),
+      color.withValues(alpha: .85 * fade),
+      .029,
+    );
+  }
 }
 
 Color _weaponInk(LiteWeapon weapon) => switch (weapon) {
@@ -130,22 +183,23 @@ void _paintAttackInk(
   Canvas canvas,
   Offset feet,
   Offset aim,
-  LiteWeapon weapon,
-  double cooldown, {
-  required bool preparing,
-  required bool spring,
+  LiteWeapon weapon, {
+  required double? releaseAge,
+  required double windup,
+  required double? springAge,
   bool guest = false,
+  double? secondBladeAge,
 }) {
-  if (cooldown <= 0 && !spring) return;
+  if (releaseAge == null && windup <= 0 && springAge == null) return;
+  final spring = springAge != null;
   if (aim.distanceSquared < .001) return;
   final forward = aim / aim.distance;
   final perpendicular = Offset(-forward.dy, forward.dx);
   final pigment = _weaponInk(spring ? LiteWeapon.guanti : weapon);
   final raised = feet - const Offset(0, .81);
-  final elapsed = (weapon.cooldown - cooldown).clamp(0.0, weapon.cooldown);
   final chargeTime = weapon.chargeSeconds;
-  if (preparing && chargeTime > 0 && !spring) {
-    final charged = (elapsed / chargeTime).clamp(0.0, 1.0);
+  if (windup > 0 && chargeTime > 0 && !spring) {
+    final charged = (1 - windup / chargeTime).clamp(0.0, 1.0);
     final at = raised + forward * (.48 + charged * .32);
     for (var i = -1; i <= 1; i++) {
       final side = perpendicular * (i * (.30 - charged * .16));
@@ -169,7 +223,8 @@ void _paintAttackInk(
     return;
   }
 
-  final age = spring ? cooldown : math.max(0.0, elapsed - chargeTime);
+  final age = springAge ?? releaseAge;
+  if (age == null) return;
   final sweep = switch (weapon) {
     LiteWeapon.spadaScudo ||
     LiteWeapon.doppieLame ||
@@ -179,13 +234,14 @@ void _paintAttackInk(
   if (sweep && !spring) {
     if (weapon == LiteWeapon.doppieLame) {
       _bladeRibbon(canvas, raised, forward, 1.35, age, pigment, -1);
-      if (guest || age >= .11) {
+      final returnAge = guest ? age : secondBladeAge;
+      if (returnAge != null) {
         _bladeRibbon(
           canvas,
           raised + forward * .20,
           forward,
           1.28,
-          guest ? age : age - .11,
+          returnAge,
           pigment,
           1,
         );

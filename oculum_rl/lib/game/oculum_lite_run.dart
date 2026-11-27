@@ -1750,6 +1750,15 @@ class LiteCoopFighter extends LiteClone {
   double _dashSpeed = 15;
   Point<double> _dashDirection = const Point(0, 0);
   double _windup = 0;
+  double? _weaponReleasedAt;
+  double? _rescuedAt;
+  double get weaponWindup => _windup;
+
+  double? weaponReleaseAge(double now) =>
+      _arenaPoseAge(_weaponReleasedAt, now, .32);
+
+  double? rescuedAge(double now) => _arenaPoseAge(_rescuedAt, now, .42);
+
   Point<double> _strike = const Point(0, 0);
   double get attackCooldown => _strike.magnitude > .001 ? cooldown : 0;
   Point<double> get weaponAim => attackCooldown > 0 ? _strike : aim;
@@ -1779,7 +1788,10 @@ class LiteCoopFighter extends LiteClone {
   bool get protected => _protection > 1e-9 || _shadowProtection > 1e-9;
   bool get connected => _inputAge <= 1;
 
-  Map<String, dynamic> _wire({bool includeEffects = false}) => {
+  Map<String, dynamic> _wire({
+    required double time,
+    required bool includeEffects,
+  }) => {
     ..._json(includeEffects: includeEffects),
     'account': account,
     if (supply.active) 'supplies': supply.frame,
@@ -1807,7 +1819,12 @@ class LiteCoopFighter extends LiteClone {
     'shield': shield,
     'protection': _protection,
     'springPose': _springPose,
-    if (attackCooldown > 0) 'strike': _savePoint(_strike),
+    if (includeEffects && weaponReleaseAge(time) != null)
+      'weaponReleasedAt': _weaponReleasedAt,
+    if (includeEffects && rescuedAge(time) != null) 'rescuedAt': _rescuedAt,
+    if (attackCooldown > 0 ||
+        (includeEffects && weaponReleaseAge(time) != null))
+      'strike': _savePoint(_strike),
     if (_windup > 0) 'windup': _windup,
     if (_dashRemaining > 0) ...{
       'dashRemaining': _dashRemaining,
@@ -1844,6 +1861,8 @@ class LiteCoopFighter extends LiteClone {
       ..cooldown = _num(data['cooldown'])
       ..stride._restore(data['stride'])
       .._windup = _num(data['windup'])
+      .._weaponReleasedAt = _readArenaPoseTime(data['weaponReleasedAt'])
+      .._rescuedAt = _readArenaPoseTime(data['rescuedAt'])
       .._strike = _point(data['strike'])
       .._dashRemaining = _num(data['dashRemaining'])
       .._dashSpeed = _num(data['dashSpeed'], 15)
@@ -2062,6 +2081,19 @@ class LiteRun {
   int _nextId = 1;
   double _attackCooldown = 0;
   double _windup = 0;
+  double? _weaponReleasedAt;
+  double? _secondBladeReleasedAt;
+  double? _rescuedAt;
+  double get weaponWindup => _windup;
+
+  double? weaponReleaseAge(double now) =>
+      _arenaPoseAge(_weaponReleasedAt, now, .32);
+
+  double? secondBladeReleaseAge(double now) =>
+      _arenaPoseAge(_secondBladeReleasedAt, now, .23);
+
+  double? rescuedAge(double now) => _arenaPoseAge(_rescuedAt, now, .42);
+
   double _invulnerability = 0;
   double _hitProtectionRemaining = 0;
   double _clashRemaining = 0;
@@ -2758,6 +2790,7 @@ class LiteRun {
     _dashLandings.clear();
     _burstTraces.clear();
     _burstTime = _clashRemaining = _windup = _springPose = 0;
+    _weaponReleasedAt = _secondBladeReleasedAt = _rescuedAt = null;
     _lastMove = const Point(0, 0);
     _block.held = false;
     endRescue();
@@ -2766,6 +2799,8 @@ class LiteRun {
         .._dashRemaining = 0
         .._windup = 0
         .._springPose = 0
+        .._weaponReleasedAt = null
+        .._rescuedAt = null
         ..movement = const Point(0, 0)
         ..firing = false
         .._block.held = false;
@@ -3518,7 +3553,10 @@ class LiteRun {
       }
       if (fighter._windup > 0) {
         fighter._windup = max(0, fighter._windup - elapsed);
-        if (fighter._windup <= 1e-9) _coopStrike(fighter, fighter._strike);
+        if (fighter._windup <= 1e-9) {
+          fighter._windup = 0;
+          _coopStrike(fighter, fighter._strike);
+        }
       } else if (fighter.connected &&
           !fighter.blocking &&
           fighter._rescue == null &&
@@ -3549,6 +3587,7 @@ class LiteRun {
   }
 
   void _coopStrike(LiteCoopFighter fighter, Point<double> direction) {
+    fighter._weaponReleasedAt = time;
     if (fighter.hero == LiteHero.guardianoSolare &&
         fighter._night.solarMace > 0) {
       _melee(
@@ -3839,10 +3878,13 @@ class LiteRun {
     stride._track(beforeMove, position, elapsed);
     if (_windup > 0) {
       _windup = max(0, _windup - elapsed);
-      if (_windup == 0) {
+      if (_windup <= 1e-9) {
+        _windup = 0;
         if (weapon == LiteWeapon.doppieLame) {
+          _secondBladeReleasedAt = time;
           _melee(position, _strikeDirection, weapon, _damageFor(weapon) * .56);
         } else {
+          _weaponReleasedAt = time;
           _weaponAction(position, _strikeDirection, weapon, _damageFor(weapon));
         }
       }
@@ -4079,6 +4121,7 @@ class LiteRun {
       _arrows--;
     }
     lookAt(target);
+    _secondBladeReleasedAt = null;
     _strikeDirection = aim;
     if (hero == LiteHero.guardianoSolare && _night.solarMace > 0) {
       _attackCooldown = .72;
@@ -4090,10 +4133,12 @@ class LiteRun {
         reach: 2.65,
         minDot: .22,
       );
+      _weaponReleasedAt = time;
       return true;
     }
     if (_animalStrike(hero, position, aim, level, null)) {
       _attackCooldown = .42;
+      _weaponReleasedAt = time;
       return true;
     }
     if (hero == LiteHero.slimeBlu && weapon == LiteWeapon.guanti) {
@@ -4106,13 +4151,16 @@ class LiteRun {
         reach: 2.15,
         minDot: .1,
       );
+      _weaponReleasedAt = time;
       return true;
     }
     if (hero == LiteHero.doppelganger) {
       _attackCooldown = _mimic == null ? .64 : .82;
       _mimicStrike(_mimic, position, aim, null);
+      _weaponReleasedAt = time;
       return true;
     }
+    _weaponReleasedAt = weapon.chargeSeconds == 0 ? time : null;
     _attackCooldown = _weaponRecovery(weapon, openCooldown, openGrade);
     switch (weapon) {
       case LiteWeapon.doppieLame:
@@ -8391,11 +8439,15 @@ class LiteRun {
     if (ally == null) {
       hp = restoredHp;
       _hitProtectionRemaining = shieldHitProtection;
+      _rescuedAt = time;
     } else {
       ally
         ..hp = restoredHp
         ..downRemaining = 0;
-      if (ally is LiteCoopFighter) ally._protection = shieldHitProtection;
+      if (ally is LiteCoopFighter) {
+        ally._protection = shieldHitProtection;
+        ally._rescuedAt = time;
+      }
     }
     if (rescue.reload) {
       if (fighter == null) {
@@ -8454,6 +8506,7 @@ class LiteRun {
     final index = ownedWeapons.indexOf(weapon);
     weapon =
         ownedWeapons[(index + (direction < 0 ? -1 : 1)) % ownedWeapons.length];
+    _weaponReleasedAt = _secondBladeReleasedAt = null;
     return true;
   }
 
@@ -8605,7 +8658,10 @@ class LiteRun {
         .toList(),
     if (coopFighters.isNotEmpty)
       'fighters': coopFighters
-          .map((fighter) => fighter._wire(includeEffects: includeEffects))
+          .map(
+            (fighter) =>
+                fighter._wire(time: time, includeEffects: includeEffects),
+          )
           .toList(),
     'obstacles': obstacles.map((wall) => wall._json()).toList(),
     'loot': loot.map((item) => item._json()).toList(),
@@ -8635,6 +8691,11 @@ class LiteRun {
     'nextId': _nextId,
     'attackCooldown': _attackCooldown,
     'windup': _windup,
+    if (includeEffects && weaponReleaseAge(time) != null)
+      'weaponReleasedAt': _weaponReleasedAt,
+    if (includeEffects && secondBladeReleaseAge(time) != null)
+      'secondBladeReleasedAt': _secondBladeReleasedAt,
+    if (includeEffects && rescuedAge(time) != null) 'rescuedAt': _rescuedAt,
     'invulnerability': _invulnerability,
     'hitProtectionRemaining': _hitProtectionRemaining,
     if (_clashRemaining > 0) 'clashRemaining': _clashRemaining,
@@ -8930,6 +8991,11 @@ class LiteRun {
     run._nextId = _int(json['nextId']);
     run._attackCooldown = _num(json['attackCooldown']);
     run._windup = _num(json['windup']);
+    run._weaponReleasedAt = _readArenaPoseTime(json['weaponReleasedAt']);
+    run._rescuedAt = _readArenaPoseTime(json['rescuedAt']);
+    run._secondBladeReleasedAt = _readArenaPoseTime(
+      json['secondBladeReleasedAt'],
+    );
     run._invulnerability = _num(json['invulnerability']);
     run._hitProtectionRemaining = _num(json['hitProtectionRemaining'])
         .clamp(0.0, lifeHitProtection);
@@ -8969,6 +9035,15 @@ class _LiteRandom {
   }
 
   int nextInt(int max) => (nextDouble() * max).floor();
+}
+
+double? _readArenaPoseTime(Object? raw) =>
+    raw is num && raw.isFinite && raw >= 0 ? raw.toDouble() : null;
+
+double? _arenaPoseAge(double? started, double now, double duration) {
+  if (started == null) return null;
+  final age = now - started;
+  return age >= 0 && age < duration ? age : null;
 }
 
 double _square(num value) => (value * value).toDouble();

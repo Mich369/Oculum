@@ -2,6 +2,7 @@
 
 ## Oculum RL · Anteprima autonoma
 
+- **Oculum RL 0.4.24.** Nuove animazioni di blocco, impatto, soccorso e rialzata per il roster giocabile. Attacchi caricati e doppio fendente seguono il momento reale del colpo. Riprese Open con gesti ed effetti Ink Expressive distinti. Gli indizi di posa passano anche in cooperativa.
 - **Oculum RL 0.4.23.** Ripristinati accenti e apostrofi nei testi del combattimento. La versione include la revisione della Forma corvina, dei due scheletri e del Passo fantasma. Sistemata anche la dicitura della missione nei salvataggi della 0.4.22.
 - **Oculum RL 0.4.22.** Il Curatore della Peste tiene lo scettro in presa durante il colpo e passa gradualmente alla Forma corvina fra piume d’inchiostro. I due scheletri hanno preparazione, rilascio e recupero distinti per arco e falce. Il Passo fantasma dell’Evasore ospite usa la stessa posa intangibile del giocatore che ospita. La barra Vita e l’ombra seguono la statura della Forma corvina.
 - **Oculum RL 0.4.21.** Ashley ha appoggi distinti per passo e corsa, rinculo coordinato tra mano e arma e una fase di rientro del guanto a molla. Il Ragno Saldatore prepara il colpo con la coda. Rasvyr articola gli appoggi e l’affondo della chela. Orbryx rotola e torna a terra. Su Rasvyr e Orbryx, la reazione al danno ha una posa diversa dall’attacco. Il plasma ha una scia dipinta legata alla posizione del proiettile.
