@@ -202,12 +202,46 @@ class _OculumPasswordRecoveryDialogState
 class OculumAuthPanel extends StatelessWidget {
   const OculumAuthPanel({super.key});
 
+  Future<void> _confirmSignOut(
+    BuildContext context,
+    OculumAuthService auth,
+  ) async {
+    if (auth.isBusy || ModalRoute.of(context)?.isCurrent == false) return;
+    final account = auth.state.userId;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Uscire da Oculum?'),
+        content: const Text(
+          'Chiudi la sessione online su questo dispositivo. I salvataggi locali restano accessibili.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: const Text('Esci'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true &&
+        context.mounted &&
+        auth.state.isAuthenticated &&
+        auth.state.userId == account) {
+      await auth.signOut();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = OculumAuthService.instance;
-    return ValueListenableBuilder<OculumAuthState>(
-      valueListenable: auth.stateNotifier,
-      builder: (context, state, _) {
+    return ListenableBuilder(
+      listenable: auth,
+      builder: (context, _) {
+        final state = auth.state;
         return Card(
           color: Colors.black.withValues(alpha: 0.18),
           child: Padding(
@@ -253,7 +287,10 @@ class OculumAuthPanel extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 10),
-                const _OculumEmailAccessForm(),
+                _OculumEmailAccessForm(
+                  key: ValueKey(('email-access', state.userId)),
+                  auth: auth,
+                ),
                 const SizedBox(height: 10),
                 if (!state.isAuthenticated) ...[
                   _ProviderButton(
@@ -263,7 +300,7 @@ class OculumAuthPanel extends StatelessWidget {
                       OculumAuthProvider.google,
                     ),
                     enabled:
-                        !state.isLoading &&
+                        !auth.isBusy &&
                         auth.isProviderSupported(OculumAuthProvider.google) &&
                         auth.isSupabaseReady,
                     onPressed: auth.signInWithGoogle,
@@ -276,7 +313,7 @@ class OculumAuthPanel extends StatelessWidget {
                       OculumAuthProvider.apple,
                     ),
                     enabled:
-                        !state.isLoading &&
+                        !auth.isBusy &&
                         auth.isProviderSupported(OculumAuthProvider.apple) &&
                         auth.isSupabaseReady,
                     onPressed: auth.signInWithApple,
@@ -289,13 +326,15 @@ class OculumAuthPanel extends StatelessWidget {
                     const Text('Account Google collegato')
                   else if (auth.canLinkGoogle)
                     OutlinedButton.icon(
-                      onPressed: state.isLoading ? null : auth.linkGoogle,
+                      onPressed: auth.isBusy ? null : auth.linkGoogle,
                       icon: const Icon(Icons.link),
                       label: const Text('Collega account Google'),
                     ),
                   const SizedBox(height: 8),
                 ],
-                if (state.canSyncToCloud && state.userId != null)
+                if (state.canSyncToCloud &&
+                    state.userId != null &&
+                    !auth.isSigningOut)
                   OculumAccountProfilePanel.supabase(
                     key: ValueKey(state.userId),
                     accountId: state.userId!,
@@ -307,19 +346,17 @@ class OculumAuthPanel extends StatelessWidget {
                   children: [
                     if (!state.isAuthenticated)
                       OutlinedButton.icon(
-                        onPressed: state.isLoading
-                            ? null
-                            : auth.continueAsGuest,
+                        onPressed: auth.isBusy ? null : auth.continueAsGuest,
                         icon: const Icon(Icons.device_unknown),
                         label: const Text('Continua senza account'),
                       ),
-                    if (state.isLoading)
+                    if (auth.canCancelSignIn)
                       TextButton.icon(
                         onPressed: auth.cancelPendingSignIn,
                         icon: const Icon(Icons.close),
                         label: const Text('Annulla'),
                       ),
-                    if (!state.isLoading && state.errorMessage != null)
+                    if (!auth.isBusy && state.errorMessage != null)
                       TextButton.icon(
                         onPressed: auth.retryLastSignIn,
                         icon: const Icon(Icons.refresh),
@@ -327,7 +364,9 @@ class OculumAuthPanel extends StatelessWidget {
                       ),
                     if (state.isAuthenticated)
                       OutlinedButton.icon(
-                        onPressed: state.isLoading ? null : auth.signOut,
+                        onPressed: auth.isBusy
+                            ? null
+                            : () => _confirmSignOut(context, auth),
                         icon: const Icon(Icons.logout),
                         label: const Text('Esci'),
                       ),
@@ -343,7 +382,9 @@ class OculumAuthPanel extends StatelessWidget {
 }
 
 class _OculumEmailAccessForm extends StatefulWidget {
-  const _OculumEmailAccessForm();
+  const _OculumEmailAccessForm({super.key, required this.auth});
+
+  final OculumAuthService auth;
   @override
   State<_OculumEmailAccessForm> createState() => _OculumEmailAccessFormState();
 }
@@ -367,16 +408,23 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
     Future<bool> Function() operation, {
     String? successMessage,
   }) async {
-    if (_busy) return;
-    setState(() => _busy = true);
+    if (_busy || widget.auth.isBusy) return;
+    setState(() {
+      _busy = true;
+      _hidePassword = true;
+    });
     final success = await operation();
     if (!mounted) return;
+    if (success) {
+      _password.clear();
+      _code.clear();
+    }
     setState(() => _busy = false);
     if (success && successMessage != null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(successMessage)));
-    } else if (success && OculumAuthService.instance.pendingEmail != null) {
+    } else if (success && widget.auth.pendingEmail != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -389,11 +437,12 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = OculumAuthService.instance;
+    final auth = widget.auth;
     return ListenableBuilder(
       listenable: auth,
       builder: (context, _) {
         final state = auth.state;
+        final busy = _busy || auth.isBusy;
         final hasAccount = state.isAuthenticated && !state.isGuest;
         final protectedGuest = state.isAuthenticated && state.isGuest;
         return Column(
@@ -403,14 +452,14 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Mantieni l’accesso su questo dispositivo'),
               value: auth.rememberAccess,
-              onChanged: _busy || state.isLoading
+              onChanged: busy
                   ? null
                   : (value) => auth.setRememberAccess(value ?? false),
               controlAffinity: ListTileControlAffinity.leading,
             ),
             if (!state.isAuthenticated)
               OutlinedButton.icon(
-                onPressed: _busy || !auth.isSupabaseReady
+                onPressed: busy || !auth.isSupabaseReady
                     ? null
                     : () => _run(auth.signInAsProtectedGuest),
                 icon: const Icon(Icons.shield_outlined),
@@ -420,7 +469,9 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
               const SizedBox(height: 8),
               TextField(
                 controller: _email,
-                enabled: !_busy && auth.isSupabaseReady,
+                enabled: !busy && auth.isSupabaseReady,
+                autocorrect: false,
+                enableSuggestions: false,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
                 decoration: const InputDecoration(
@@ -433,7 +484,9 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
             const SizedBox(height: 8),
             TextField(
               controller: _password,
-              enabled: !_busy && auth.isSupabaseReady,
+              enabled: !busy && auth.isSupabaseReady,
+              autocorrect: false,
+              enableSuggestions: false,
               obscureText: _hidePassword,
               autofillHints: hasAccount
                   ? const [AutofillHints.newPassword]
@@ -448,8 +501,9 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
                   tooltip: _hidePassword
                       ? 'Mostra password'
                       : 'Nascondi password',
-                  onPressed: () =>
-                      setState(() => _hidePassword = !_hidePassword),
+                  onPressed: busy
+                      ? null
+                      : () => setState(() => _hidePassword = !_hidePassword),
                   icon: Icon(
                     _hidePassword
                         ? Icons.visibility_outlined
@@ -461,7 +515,7 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
             const SizedBox(height: 8),
             if (hasAccount)
               OutlinedButton.icon(
-                onPressed: _busy || !auth.isSupabaseReady
+                onPressed: busy || !auth.isSupabaseReady
                     ? null
                     : () => _run(
                         () => auth.setAccountPassword(_password.text),
@@ -472,7 +526,7 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
               )
             else if (protectedGuest)
               OutlinedButton.icon(
-                onPressed: _busy || !auth.isSupabaseReady
+                onPressed: busy || !auth.isSupabaseReady
                     ? null
                     : () => _run(
                         () => auth.linkGuestEmailPassword(
@@ -485,7 +539,7 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
               )
             else
               OutlinedButton.icon(
-                onPressed: _busy || !auth.isSupabaseReady
+                onPressed: busy || !auth.isSupabaseReady
                     ? null
                     : () => _run(
                         () => auth.signInWithEmailPassword(
@@ -498,7 +552,7 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
               ),
             if (!hasAccount) ...[
               TextButton.icon(
-                onPressed: _busy || !auth.isSupabaseReady
+                onPressed: busy || !auth.isSupabaseReady
                     ? null
                     : () => _run(
                         () => auth.requestPasswordReset(_email.text),
@@ -509,7 +563,7 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
                 label: const Text('Hai dimenticato la password?'),
               ),
               TextButton.icon(
-                onPressed: _busy || !auth.isSupabaseReady
+                onPressed: busy || !auth.isSupabaseReady
                     ? null
                     : () => _run(() => auth.requestEmailAccess(_email.text)),
                 icon: const Icon(Icons.mail_outline),
@@ -524,14 +578,14 @@ class _OculumEmailAccessFormState extends State<_OculumEmailAccessForm> {
               const SizedBox(height: 8),
               TextField(
                 controller: _code,
-                enabled: !_busy,
+                enabled: !busy,
                 autofillHints: const [AutofillHints.oneTimeCode],
                 decoration: const InputDecoration(
                   labelText: 'Codice ricevuto via email',
                 ),
               ),
               TextButton(
-                onPressed: _busy
+                onPressed: busy
                     ? null
                     : () => _run(() => auth.verifyEmailAccess(_code.text)),
                 child: const Text('Conferma codice'),

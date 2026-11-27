@@ -665,6 +665,7 @@ extension _OculumNecromancyEquipment on _OculumHomePageState {
       aggiungiLog('Nessuna forma non morta disponibile nel Monster Book.');
       return;
     }
+    if (_blockTurnSpendWhileReconnecting()) return;
     if (currentCombatIsActive()) {
       final tokens = _writableOnlineCombatTokens();
       final active = _usesLocalMasterInitiative
@@ -724,6 +725,7 @@ extension _OculumNecromancyEquipment on _OculumHomePageState {
       );
       item.ability?.forme.firstOrNull?.cooldownStrutturato?.activate();
       programmaSalvataggio();
+      await flushPendingCombatTurnResources();
       return;
     }
     item.craftData = {...item.craftData, 'usedSinceLongRest': true};
@@ -770,6 +772,7 @@ extension _OculumNecromancyEquipment on _OculumHomePageState {
     );
     programmaSalvataggio();
     sendRealtimeHpChanged();
+    await flushPendingCombatTurnResources();
   }
 
   void advanceSkullFormHit() {

@@ -269,6 +269,7 @@ extension _OculumPreparedSkills on _OculumHomePageState {
     programmaSalvataggio();
     scheduleRealtimeOculumChanged();
     if (mounted) setState(() {});
+    await flushPendingCombatTurnResources();
   }
 
   Future<void> useLearnedPreparedSkill(Map<String, dynamic> data) async {

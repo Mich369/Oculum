@@ -1254,6 +1254,7 @@ extension _OculumReferenceSheet on _OculumHomePageState {
                           label: Text(t('Difesa', 'Defense')),
                         ),
                         schivataOculumActionButton(),
+                        advantageActionButton(),
                         ...dustFusionButtons(),
                         if (oculumTiroLimiteRegola() > 0)
                           rollEmpowermentButton(),

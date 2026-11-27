@@ -283,6 +283,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
         programmaSalvataggio();
       },
     );
+    await flushPendingCombatTurnResources();
   }
 
   void applyOblivionMemoryControl(int total) {
@@ -470,6 +471,7 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
         programmaSalvataggio();
       },
     );
+    await flushPendingCombatTurnResources();
   }
 
   bool hasPlanarTechnique(String id) {
@@ -987,7 +989,9 @@ extension _OculumPlanarRuntime on _OculumHomePageState {
     resetGuardianGoldFight();
     resetSolarObserverFight();
     shatterElementalSphereIce();
-    clearElementalSphereSoulSeparation(wingEncounterId ?? onlineCombatEncounterId);
+    clearElementalSphereSoulSeparation(
+      wingEncounterId ?? onlineCombatEncounterId,
+    );
     planarState.remove('provokerShield');
     planarState.remove('provokerTurns');
     planarState.remove('provokerPendingReflection');
@@ -1250,10 +1254,10 @@ InventoryItem oculumPlanarTechniqueScroll(
   final form = id == oculumWeldSpiderBeamSkill && technique != null
       ? ((level - technique.requiredLevel) ~/ 3).clamp(0, 2).toInt()
       : (level >= 6
-      ? 2
-      : level >= 3
-      ? 1
-      : 0);
+            ? 2
+            : level >= 3
+            ? 1
+            : 0);
   return InventoryItem(
     nome: 'Scroll · ${technique?.name ?? skill.nome}',
     peso: .05,

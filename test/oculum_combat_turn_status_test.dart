@@ -25,14 +25,17 @@ class _SharedFightTransport extends OculumRealtimeService {
 }
 
 class _RetryFightTransport extends _SharedFightTransport {
+  _RetryFightTransport([
+    this.outcomes = const [false, 'transport closed', true, false, false],
+  ]);
+
   final sent = <Map<String, dynamic>>[];
-  final outcomes = <Object>[
-    false,
-    StateError('transport closed'),
-    true,
-    false,
-    false,
-  ];
+  final List<Object> outcomes;
+  final dice = <String>[];
+  bool connected = true;
+
+  @override
+  bool get isConnected => connected;
 
   @override
   Future<bool> sendCombatEvent(
@@ -41,9 +44,19 @@ class _RetryFightTransport extends _SharedFightTransport {
   ) async {
     if (event != 'combat_help') return true;
     sent.add(Map.of(payload));
-    final outcome = outcomes.removeAt(0);
+    final outcome = outcomes[sent.length - 1];
     if (outcome is bool) return outcome;
-    throw outcome;
+    throw StateError('$outcome');
+  }
+
+  @override
+  Future<void> sendDiceRoll({
+    required String label,
+    required int roll,
+    required int bonus,
+    required int total,
+  }) async {
+    dice.add(label);
   }
 }
 
@@ -315,6 +328,94 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
   });
   testWidgets(
+    'ordinary dice and subtraits send their actual turn resource immediately',
+    (tester) async {
+      final (state, probe) = await fixtures.mountFight(tester);
+      final tag = probe.ownerTag();
+      final transport = _RetryFightTransport([true, true, true]);
+      state.modalitaMaster = false;
+      state.realtimeService = transport;
+      state.activeCampaignId = 'local-roll';
+      final actor = <String, dynamic>{
+        'id': tag,
+        'sheetTag': tag,
+        'name': 'Eroe',
+        'status': 'ready',
+        'actionUsed': false,
+        'reactionMax': 1,
+        'reactionUsed': 0,
+        'reactionUsedRound': 1,
+        'reactionPoolInitialized': true,
+        'reactionPoolRound': 1,
+      };
+      final tracker = <String, dynamic>{
+        'campaignId': 'shared-roll',
+        'encounterId': 'fight-roll',
+        'round': 1,
+        'activeIndex': 0,
+        'fightStarted': true,
+        'tokens': [
+          actor,
+          <String, dynamic>{'id': 'OTHER', 'status': 'ready'},
+        ],
+      };
+      state.realtimeVisibleInitiativeSnapshot = tracker;
+
+      await probe.rollSpecial('CM', 20);
+      expect(actor['actionUsed'], isTrue);
+      expect(transport.sent, hasLength(1));
+      expect(transport.sent.single['encounterId'], 'fight-roll');
+      expect(
+        (transport.sent.single['turnResourceSpends'] as List).single,
+        containsPair('resource', 'azione'),
+      );
+
+      tracker['activeIndex'] = 1;
+      state.realtimeAutoReconnectEnabled = true;
+      transport.connected = false;
+      expect(await probe.spendCombatRoll(), isFalse);
+      expect(actor['reactionUsed'], 0);
+      expect(transport.sent, hasLength(1));
+      transport.connected = true;
+      await probe.rollSubtrait('forza');
+      expect(actor['reactionUsed'], 1);
+      expect(transport.sent, hasLength(2));
+      expect(
+        (transport.sent.last['turnResourceSpends'] as List).single,
+        containsPair('resource', 'reazione'),
+      );
+      expect(state.pendingOnlineCombatTurnResourceSpends, isEmpty);
+      await probe.retryCombat();
+      expect(transport.sent, hasLength(2));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(transport.dice, hasLength(2));
+
+      tracker['activeIndex'] = 0;
+      tracker['round'] = 2;
+      actor['actionUsed'] = false;
+      expect(await probe.utilitySpend('azione'), isTrue);
+      final pending = state.pendingOnlineCombatTurnResourceSpends as List;
+      final spendId = pending.single['id'];
+      transport.connected = false;
+      await probe.flushTurnResourceSpends();
+      expect(transport.sent, hasLength(2));
+      expect(pending.single['retryTurnKey'], isA<String>());
+      transport.connected = true;
+      await probe.retryCombat();
+      expect(transport.sent, hasLength(3));
+      expect(
+        (transport.sent.last['turnResourceSpends'] as List).single,
+        containsPair('id', spendId),
+      );
+      expect(pending, isEmpty);
+      state.realtimeAutoReconnectEnabled = false;
+      state.realtimeService = null;
+      await transport.dispose();
+      await closeFixture(tester, probe);
+    },
+  );
+  testWidgets(
     'standalone spends retry once per receipt and only in their original turn',
     (tester) async {
       final (state, p) = await fixtures.mountFight(tester);
@@ -350,6 +451,14 @@ void main() {
       final pending = state.pendingOnlineCombatTurnResourceSpends as List;
       final id = pending.single['id'];
 
+      snapshot['encounterId'] = 'other-fight';
+      expect(
+        p.turnResourceTestPacket('other-fight')['turnResourceSpends'],
+        isNull,
+      );
+      expect(pending.single['id'], id);
+      snapshot['encounterId'] = 'fight-retry';
+
       await p.flushTurnResourceSpends();
       expect(
         pending.single['id'],
@@ -367,9 +476,9 @@ void main() {
       expect(transport.sent, hasLength(1));
       state.activeCampaignId = 'local-retry';
 
-      await p.flushTurnResourceSpends();
+      await p.retryCombat();
       expect(pending.single['id'], id, reason: 'Exception must retain spend');
-      await p.flushTurnResourceSpends();
+      await p.retryCombat();
       expect(pending, isEmpty);
       await p.flushTurnResourceSpends();
       expect(transport.sent, hasLength(3));

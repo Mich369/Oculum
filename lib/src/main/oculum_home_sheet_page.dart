@@ -8459,6 +8459,8 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
 
   Widget combatOverviewPanel({bool dense = false}) {
     final indicators = <Widget>[
+      schivataOculumQuickStatTile(),
+      advantageQuickStatTile(),
       quickStatTile(
         label: t('Iniziativa', 'Initiative'),
         value: '+${iniziativa()}',
@@ -8488,7 +8490,6 @@ extension _OculumHomeSheetPage on _OculumHomePageState {
           logTitle: t('Movimento', 'Movement'),
         ),
       ),
-      schivataOculumQuickStatTile(),
       if (!dense || !modalitaVeloce)
         quickStatTile(
           label: t('Bonus livello/grado', 'Level/grade bonus'),

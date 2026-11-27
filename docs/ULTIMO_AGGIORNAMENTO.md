@@ -1,22 +1,13 @@
-# Correzioni generali — 25 novembre 2026
+# Azioni online, Vantaggio e accesso — 27 novembre 2026
 
-- I riquadri Mappa coprono Vita, livello, Resilienza e Volontà delle schede riservate, anche quando la copia locale conserva le statistiche.
-- Un cambio di ruolo durante la chiusura del Fight Creator lascia aperta la finestra successiva.
-- I nuovi Dentyreth (Piranha Mortale) hanno il Morso sanguinante fra le tre tecniche iniziali. Puoi modificarlo dalla scheda della creatura.
-- Ricordo Vitale da Rigenerazione a Resilienza 35 termina dopo i turni impostati, tre di base.
-- Il catalogo dei download ufficiali segue le build del branch principale. Le build di lavoro conservano i propri archivi.
+- I tiri singoli, come CM e sottotratti, comunicano subito al Master l’Azione o la Reazione usata. Percezione con bersaglio e Rilevatore inviano il consumo insieme alla richiesta.
+- Anche Medicina, i tiri richiesti dal Master e diverse utility aggiornano la turnistica dopo l’uso, tra cui riparazione, addestramento, carica delle abilità, Fusione Dust e tentativi di liberazione.
+- Durante la riconnessione di uno scontro condiviso, attendi che la turnistica torni online. Un consumo già avviato può essere ritrasmesso nel suo turno originale senza addebitarlo due volte.
+- Tocca **Vantaggio** accanto a Schivate Oculum e scegli un valore da −12 a +12. **Normale** riporta il modificatore a 0. La scelta è modificabile sulla singola scheda e viene salvata nel JSON.
+- Le richieste di registrazione, accesso e uscita si eseguono una alla volta. Il codice email è legato all’account che lo ha richiesto. **Esci** chiede conferma per il dispositivo corrente.
+- Gli editor della scheda continuano a salvare nel JSON costi, requisiti, bersagli, durata, effetti e attivazione gratuita dove previsti.
+- Sono passate 94 prove Flutter mirate, incluse le regressioni sulla riconnessione, sul recupero del consumo e sul log cumulativo.
+- Sono passate 66 prove nel giro sul menu Vantaggio, Schivate, account, turnistica e log, con controlli della scheda a 390 e 1440 pixel.
+- Nella prova su Supabase con quattro client autenticati, un tiro CM ha consumato una sola Azione sul Master. Gli altri due client hanno ricevuto il turno successivo.
 
-- Per le schede visibili più vecchie, i riquadri Mappa usano la Vita massima quando manca quella corrente. Per le schede a terra o morte senza Vita corrente mostrano zero.
-
-- Angelico usa su telefono la WebP verticale F scelta nel lotto ANGELICO-TELEFONO-01. La scena D è lo sfondo desktop, con reliquia e personalizzazioni selezionabili separatamente.
-
-- Il contatore delle Schivate mostra un solo numero disponibile, per esempio **1**.
-- Tieni premuto il comando Schivata nella scheda, oppure usa il tasto destro, per aprire **+1**, **−1** e il campo della quantità. Conferma con **Salva**.
-- Puoi modificare anche le cariche ottenute dal Grado, fino a zero. Le cariche consumate restano registrate e la modifica viene conservata nel JSON.
-- I due menu hanno un sigillo inciso nel rame e una cornice ispirata all’inchiostro del Re Goblin G. In preparazione si scorrono le quattro riduzioni del danno anche sugli schermi bassi.
-- Nelle Risorse puoi aprire il menu anche con **Imposta Schivate**. Su telefono tocca il campo per mostrare la tastiera.
-- Premere **Salva** con un conteggio superato mostra un avviso. Modifica e preparazione verificano la scheda attiva e i permessi.
-- Per le correzioni del 25 novembre sono passate 601 prove Flutter mirate, 22 verifiche del catalogo e 7 prove sulla firma Android. L’analisi dei file Dart modificati è pulita.
-- Le 51 prove del giro finale su Fight Creator, tecniche, bestiario e log sono passate. Il controllo sul Morso ha coperto 96 sorteggi, tra livello 0 e livello iniziale.
-
-[Log cumulativo](REGISTRO_AGGIORNAMENTI.md) · [Verifiche Schivate](VERIFICA_SCHIVATE_2026-11-24.md) · [Arretrati dell’app](VERIFICA_ARRETRATI_APP_2026-11-23.md)
+[Log cumulativo](REGISTRO_AGGIORNAMENTI.md)

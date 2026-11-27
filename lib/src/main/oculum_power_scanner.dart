@@ -196,6 +196,7 @@ extension _OculumPowerScanner on _OculumHomePageState {
       'scannerLevel': item.livelloOggetto,
     };
     if (online) {
+      attachPendingCombatTurnResources(request);
       onlineCombatRequests['${request['id']}'] = request;
       await realtimeService!.sendCombatEvent(
         'combat_scout',

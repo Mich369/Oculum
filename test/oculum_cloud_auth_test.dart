@@ -16,6 +16,7 @@ class _FakeAuthBackend implements OculumAuthBackend {
   Object? launchError;
   int launchCount = 0;
   int signOutCount = 0;
+  Completer<void>? signOutConfirmation;
 
   @override
   OculumBackendUser? get currentUser => user;
@@ -47,6 +48,7 @@ class _FakeAuthBackend implements OculumAuthBackend {
     _events.add(
       const OculumBackendAuthEvent(OculumBackendAuthEventType.signedOut),
     );
+    await signOutConfirmation?.future;
   }
 
   Future<void> close() => _events.close();
@@ -59,6 +61,8 @@ class _FakeEmailBackend extends _FakeAuthBackend
   String? password;
   String? resetEmail;
   Completer<void>? passwordUpdate;
+  Completer<void>? emailResponse;
+  int emailVerifications = 0;
   int passwordUpdates = 0;
   @override
   Future<void> signInAnonymously() async {
@@ -72,6 +76,7 @@ class _FakeEmailBackend extends _FakeAuthBackend
   Future<void> requestEmail(String email, {required bool linkGuest}) async {
     this.email = email;
     linked = linkGuest;
+    await emailResponse?.future;
   }
 
   @override
@@ -106,6 +111,7 @@ class _FakeEmailBackend extends _FakeAuthBackend
     String token, {
     required bool linkGuest,
   }) async {
+    emailVerifications++;
     if (token != '123456') throw const FormatException('Codice non valido');
     user = OculumBackendUser(
       id: linkGuest ? 'protected-guest' : 'email-account',
@@ -500,7 +506,7 @@ void main() {
     await backend.close();
   });
 
-  test('logout globale ripulisce lo stato locale e torna Guest', () async {
+  test('l’uscita ripulisce lo stato locale e torna Guest', () async {
     final backend = _FakeAuthBackend()
       ..user = const OculumBackendUser(id: 'user-2', provider: 'google');
     final auth = OculumAuthService.forTesting(
@@ -513,6 +519,66 @@ void main() {
     expect(backend.signOutCount, 1);
     expect(auth.state.isGuest, isTrue);
     expect(auth.state.isAuthenticated, isFalse);
+    auth.dispose();
+    await backend.close();
+  });
+
+  test('l’uscita resta esclusiva anche dopo l’evento signedOut', () async {
+    final confirmation = Completer<void>();
+    final backend = _FakeEmailBackend()
+      ..user = const OculumBackendUser(id: 'signed-in', provider: 'google')
+      ..signOutConfirmation = confirmation;
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    await auth.initialize();
+    final signOut = auth.signOut();
+    await pumpEventQueue();
+    expect(auth.isBusy, isTrue);
+    expect(auth.state.canSyncToCloud, isFalse);
+    expect(auth.canCancelSignIn, isFalse);
+    auth.cancelPendingSignIn();
+    expect(await auth.signInWithApple(), isFalse);
+    expect(await auth.signInAsProtectedGuest(), isFalse);
+    expect(backend.launchCount, 0);
+    confirmation.complete();
+    expect(await signOut, isTrue);
+    expect(auth.isBusy, isFalse);
+    expect(auth.state.isAuthenticated, isFalse);
+    auth.dispose();
+    await backend.close();
+  });
+
+  test('registrazione in corso e codice restano legati all’ospite', () async {
+    final response = Completer<void>();
+    final backend = _FakeEmailBackend()..emailResponse = response;
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    await auth.initialize();
+    expect(await auth.signInAsProtectedGuest(), isTrue);
+    final registration = auth.requestEmailAccess('guest@example.com');
+    expect(
+      await auth.signInWithEmailPassword('other@example.com', 'password'),
+      isFalse,
+    );
+    expect(await auth.signOut(), isFalse);
+    response.complete();
+    expect(await registration, isTrue);
+    expect(auth.pendingEmail, 'guest@example.com');
+    backend.emit(
+      const OculumBackendAuthEvent(
+        OculumBackendAuthEventType.signedIn,
+        user: OculumBackendUser(id: 'new-guest', provider: 'anonymous'),
+      ),
+    );
+    await pumpEventQueue();
+    expect(await auth.verifyEmailAccess('123456'), isFalse);
+    expect(backend.emailVerifications, 0);
+    expect(auth.pendingEmail, isNull);
+    expect(auth.state.userId, 'new-guest');
     auth.dispose();
     await backend.close();
   });

@@ -1,5 +1,12 @@
 # Registro cumulativo per i giocatori
 
+## Azioni online, Vantaggio e accesso — 27 novembre 2026
+
+- I tiri singoli, i sottotratti e le utility corrette inviano al Master l’Azione o la Reazione effettivamente usata. Per Percezione e Rilevatore con bersaglio, il consumo viaggia con la richiesta.
+- Durante la riconnessione di uno scontro condiviso, i comandi attendono il ritorno del turno online. Un invio già iniziato può essere ripetuto con la stessa ricevuta soltanto nel turno originale.
+- Il comando **Vantaggio** è accanto a Schivate Oculum nella scheda. Mostra il valore attivo e apre vantaggi, svantaggi e Normale, da −12 a +12. La scelta viene salvata per scheda.
+- Registrazione, accesso e uscita vengono eseguiti una richiesta alla volta. Il codice email per collegare un ospite vale soltanto per l’account da cui è stato richiesto. L’uscita chiede conferma e chiude la sessione del dispositivo.
+
 ## Correzioni generali — 25 novembre 2026
 
 - Nei riquadri della Mappa, le schede riservate dal Master mostrano zero per Vita, livello, Resilienza e Volontà anche se la copia contiene valori salvati in precedenza. La vista conserva i dati della scheda.

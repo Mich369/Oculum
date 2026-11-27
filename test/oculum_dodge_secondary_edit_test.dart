@@ -161,6 +161,29 @@ void main() {
         find.descendant(of: control, matching: find.text('Schivata 1')),
         findsOneWidget,
       );
+      final advantage = find.byKey(const ValueKey('mobile-advantage'));
+      expect(advantage, findsOneWidget);
+      expect(
+        tester.getTopLeft(advantage).dy,
+        closeTo(tester.getTopLeft(control).dy, 1),
+      );
+      expect(
+        tester.getTopLeft(advantage).dx,
+        greaterThan(tester.getTopLeft(control).dx),
+      );
+      await tester.tap(advantage);
+      await _dialogFrame(tester);
+      expect(find.text('Vantaggio e svantaggio'), findsOneWidget);
+      final ultra = find.widgetWithText(ListTile, 'Ultra Svantaggio');
+      await tester.ensureVisible(ultra);
+      await tester.tap(ultra);
+      await _dialogFrame(tester);
+      expect(
+        find.descendant(of: advantage, matching: find.text('Vantaggio −9')),
+        findsOneWidget,
+      );
+      expect(probe.snapshot()['vantaggioTiroSelezionato'], 'Ultra Svantaggio');
+      expect(probe.dodgeAvailable(), 1);
       await tester.longPress(control);
       await _dialogFrame(tester);
       expect(_amount, findsOneWidget);

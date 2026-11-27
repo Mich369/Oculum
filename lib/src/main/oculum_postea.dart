@@ -214,6 +214,9 @@ extension _OculumPostea on _OculumHomePageState {
         applyMeccanioRepair(targetTag, natural: natural, total: total);
       },
     );
+    if (mounted && currentSheetScrollId() == origin) {
+      await flushPendingCombatTurnResources();
+    }
   }
 
   bool applyMeccanioRepair(

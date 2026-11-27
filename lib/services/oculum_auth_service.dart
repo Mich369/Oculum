@@ -26,6 +26,8 @@ const bool _appleOAuthConfigured = bool.fromEnvironment(
 
 enum OculumAuthProvider { google, apple }
 
+enum _OculumAccountRequest { email, signOut }
+
 enum OculumBackendAuthEventType {
   signedIn,
   signedOut,
@@ -192,6 +194,7 @@ class SupabaseOculumAuthBackend
     }
     return Supabase.instance.client;
   }
+
   static const _windowsOAuth = MethodChannel('oculum/windows_oauth');
 
   Future<void> _prepareNativeRedirect(String? redirectTo) async {
@@ -384,7 +387,7 @@ class OculumAuthState {
   final String? errorMessage;
   final bool isOffline;
 
-  bool get canSyncToCloud => isAuthenticated && !isGuest;
+  bool get canSyncToCloud => isAuthenticated && !isGuest && !isLoading;
 
   String get displayLabel {
     if (provider == 'anonymous') return 'Ospite online protetto';
@@ -457,8 +460,9 @@ class OculumAuthService extends ChangeNotifier {
   StreamSubscription<OculumBackendAuthEvent>? _authSubscription;
   Timer? _oauthTimer;
   bool _operationInProgress = false;
+  _OculumAccountRequest? _accountRequest;
   String? pendingEmail;
-  bool _linkingGuestEmail = false;
+  String? _emailLinkAccount;
   bool rememberAccess = true;
   static OculumSessionStorage? sessionStorage;
   OculumAuthProvider? _lastAttemptedProvider;
@@ -502,6 +506,9 @@ class OculumAuthService extends ChangeNotifier {
   );
 
   OculumAuthState get state => stateNotifier.value;
+  bool get isBusy => _operationInProgress || _accountRequest != null;
+  bool get isSigningOut => _accountRequest == _OculumAccountRequest.signOut;
+  bool get canCancelSignIn => _operationInProgress && state.isLoading;
   bool get isSupabaseReady => !oculumSmokeStorageActive && _backend != null;
   bool get googleConfigured =>
       _googleConfiguredOverride ?? _googleOAuthConfigured;
@@ -565,7 +572,7 @@ class OculumAuthService extends ChangeNotifier {
   }
 
   Future<void> setRememberAccess(bool remember) async {
-    if (oculumSmokeStorageActive) return;
+    if (oculumSmokeStorageActive || isBusy) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(OculumSessionStorage.rememberKey, remember);
     rememberAccess = remember;
@@ -596,24 +603,27 @@ class OculumAuthService extends ChangeNotifier {
   });
 
   Future<bool> requestEmailAccess(String email) => _runEmailOperation(() async {
-    final normalized = email.trim();
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(normalized)) {
-      throw const FormatException('Email non valida');
+    final normalized = _validateEmail(email);
+    final account = _backend?.currentUser;
+    if (account != null && account.provider != 'anonymous') {
+      throw const FormatException(
+        'Esci da questo account prima di accedere a un altro.',
+      );
     }
-    final link = state.provider == 'anonymous';
     await (_backend as OculumEmailAuthBackend).requestEmail(
       normalized,
-      linkGuest: link,
+      linkGuest: account != null,
     );
     pendingEmail = normalized;
-    _linkingGuestEmail = link;
+    _emailLinkAccount = account?.id;
   });
 
   Future<bool> linkGuestEmailPassword(String email, String password) =>
       _runEmailOperation(() async {
         final normalized = _validateEmail(email);
         _validatePassword(password);
-        if (state.provider != 'anonymous') {
+        final account = _backend?.currentUser;
+        if (account?.provider != 'anonymous' || account?.id != state.userId) {
           throw const FormatException(
             'Accedi prima come ospite online protetto per collegare l’email.',
           );
@@ -623,12 +633,17 @@ class OculumAuthService extends ChangeNotifier {
           password,
         );
         pendingEmail = normalized;
-        _linkingGuestEmail = true;
+        _emailLinkAccount = account!.id;
       });
 
   Future<bool> signInWithEmailPassword(String email, String password) =>
       _runEmailOperation(() async {
         final normalized = _validateEmail(email);
+        if (_backend?.currentUser != null) {
+          throw const FormatException(
+            'Esci da questo account prima di accedere a un altro.',
+          );
+        }
         if (password.isEmpty) {
           throw const FormatException('Inserisci la password.');
         }
@@ -714,39 +729,72 @@ class OculumAuthService extends ChangeNotifier {
 
   Future<bool> verifyEmailAccess(String code) => _runEmailOperation(() async {
     final email = pendingEmail;
+    final linkAccount = _emailLinkAccount;
     if (email == null || code.trim().isEmpty) {
       throw const FormatException('Codice mancante');
+    }
+    if (_backend?.currentUser?.id != linkAccount) {
+      _clearPendingEmail();
+      throw const FormatException(
+        'La sessione è cambiata. Richiedi un nuovo codice.',
+      );
     }
     await (_backend as OculumEmailAuthBackend).verifyEmail(
       email,
       code.trim(),
-      linkGuest: _linkingGuestEmail,
+      linkGuest: linkAccount != null,
     );
     final user = _backend!.currentUser;
     if (user == null) throw StateError('Missing email session');
-    pendingEmail = null;
+    _clearPendingEmail();
     await _applySignedIn(user);
   });
+
+  void _clearPendingEmail() {
+    pendingEmail = null;
+    _emailLinkAccount = null;
+  }
 
   Future<bool> _runEmailOperation(
     Future<void> Function() operation, {
     Duration? timeout = const Duration(seconds: 20),
   }) async {
     if (oculumSmokeStorageActive) return false;
-    if (_operationInProgress) return false;
+    if (isBusy) return false;
     if (_backend is! OculumEmailAuthBackend) {
       _showRecoverableError(
         'Accesso online non disponibile. I salvataggi restano locali.',
       );
       return false;
     }
-    _operationInProgress = true;
+    _accountRequest = _OculumAccountRequest.email;
+    notifyListeners();
+    Future<void>? pending;
+    var releaseOnReturn = true;
+    void release() {
+      _accountRequest = null;
+      if (!_disposed) notifyListeners();
+    }
+
     try {
-      final result = operation();
+      final result = pending = operation();
       await (timeout == null ? result : result.timeout(timeout));
       return true;
+    } on TimeoutException {
+      final request = pending;
+      if (request != null) {
+        // A UI timeout does not cancel the SDK request or its session event.
+        releaseOnReturn = false;
+        unawaited(
+          request.then<void>(
+            (_) => release(),
+            onError: (Object _) => release(),
+          ),
+        );
+      }
+      _showRecoverableError('Il servizio di accesso non ha ancora risposto.');
     } on AuthException catch (error) {
-      _showRecoverableError(_friendlyAuthError(error.message));
+      _showRecoverableError(_friendlyAuthError(error));
     } on FormatException catch (error) {
       _showRecoverableError(error.message);
     } catch (_) {
@@ -754,8 +802,7 @@ class OculumAuthService extends ChangeNotifier {
         'Accesso non riuscito. Controlla la rete e riprova.',
       );
     } finally {
-      _operationInProgress = false;
-      notifyListeners();
+      if (releaseOnReturn) release();
     }
     return false;
   }
@@ -786,7 +833,7 @@ class OculumAuthService extends ChangeNotifier {
     bool linkIdentity = false,
   }) async {
     if (oculumSmokeStorageActive) return false;
-    if (_operationInProgress) return false;
+    if (isBusy || state.isAuthenticated && !linkIdentity) return false;
     _lastAttemptedProvider = provider;
     _lastAttemptWasLink = linkIdentity;
     if (_backend == null) {
@@ -811,7 +858,8 @@ class OculumAuthService extends ChangeNotifier {
     }
     _operationInProgress = true;
     if (linkIdentity) _linkingGoogleUserId = _backend!.currentUser?.id;
-    if (!await _connectivityCheck()) {
+    notifyListeners();
+    if (!await _connectivityCheck().catchError((Object _) => false)) {
       _cancelPendingOperation();
       _setState(
         OculumAuthState(
@@ -865,7 +913,7 @@ class OculumAuthService extends ChangeNotifier {
         'Il servizio di accesso non risponde. Riprova.',
       );
     } on AuthException catch (error) {
-      _finishOperationWithError(_friendlyAuthError(error.message));
+      _finishOperationWithError(_friendlyAuthError(error));
     } catch (_) {
       _finishOperationWithError('Accesso non riuscito. Riprova più tardi.');
     }
@@ -873,8 +921,19 @@ class OculumAuthService extends ChangeNotifier {
   }
 
   Future<bool> continueAsGuest() async {
+    if (isBusy || state.isAuthenticated || _backend?.currentUser != null) {
+      return false;
+    }
+    await _enterGuestMode();
+    return true;
+  }
+
+  Future<void> _enterGuestMode() async {
     _passwordRecovery.value = null;
     _cancelPendingOperation();
+    _clearPendingEmail();
+    _lastAttemptedProvider = null;
+    _lastAttemptWasLink = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_guestModePrefsKey, true);
     await prefs.remove(_userIdPrefsKey);
@@ -890,13 +949,12 @@ class OculumAuthService extends ChangeNotifier {
             'Modalità locale attiva. Nessun salvataggio è stato modificato.',
       ),
     );
-    return true;
   }
 
   Future<bool> signOut() async {
     if (oculumSmokeStorageActive) return false;
-    if (_operationInProgress) return false;
-    _operationInProgress = true;
+    if (isBusy) return false;
+    _accountRequest = _OculumAccountRequest.signOut;
     _setState(
       OculumAuthState(
         isAuthenticated: state.isAuthenticated,
@@ -908,21 +966,35 @@ class OculumAuthService extends ChangeNotifier {
       ),
     );
     try {
-      await _backend?.signOut().timeout(const Duration(seconds: 10));
-    } catch (_) {
-      // Local cleanup must remain available when the remote endpoint is down.
+      var remotelyConfirmed = true;
+      try {
+        await _backend?.signOut().timeout(const Duration(seconds: 10));
+      } catch (_) {
+        remotelyConfirmed = false;
+      }
+      if (_backend?.currentUser != null) {
+        _showRecoverableError('La sessione è ancora attiva. Riprova a uscire.');
+        return false;
+      }
+      await _enterGuestMode();
+      try {
+        await sessionStorage?.removePersistedSession();
+      } catch (_) {
+        _showRecoverableError(
+          'Impossibile confermare la rimozione della sessione dal dispositivo.',
+        );
+        return false;
+      }
+      if (!remotelyConfirmed) {
+        _showRecoverableError(
+          'Uscita completata su questo dispositivo. Revoca online non confermata.',
+        );
+      }
+      return true;
+    } finally {
+      _accountRequest = null;
+      if (!_disposed) notifyListeners();
     }
-    try {
-      await sessionStorage?.removePersistedSession();
-    } catch (_) {
-      await continueAsGuest();
-      _showRecoverableError(
-        'Impossibile confermare la rimozione della sessione dal dispositivo.',
-      );
-      return false;
-    }
-    await continueAsGuest();
-    return true;
   }
 
   void cancelPendingSignIn() {
@@ -932,6 +1004,7 @@ class OculumAuthService extends ChangeNotifier {
   }
 
   Future<void> _handleBackendEvent(OculumBackendAuthEvent event) async {
+    if (_disposed || isSigningOut) return;
     switch (event.type) {
       case OculumBackendAuthEventType.passwordRecovery:
         final user = event.user;
@@ -971,11 +1044,12 @@ class OculumAuthService extends ChangeNotifier {
         }
       case OculumBackendAuthEventType.signedOut:
       case OculumBackendAuthEventType.userDeleted:
-        await continueAsGuest();
+        if (_backend?.currentUser == null) await _enterGuestMode();
     }
   }
 
   void _handleBackendError(Object error) {
+    if (_disposed || isSigningOut) return;
     const invalidLinkCodes = {
       'otp_expired',
       'flow_state_expired',
@@ -998,14 +1072,22 @@ class OculumAuthService extends ChangeNotifier {
   }
 
   Future<void> _applySignedIn(OculumBackendUser user) async {
+    if (_disposed || isSigningOut || _backend?.currentUser?.id != user.id) {
+      return;
+    }
     if (_passwordRecovery.value != user.id) _passwordRecovery.value = null;
-    _cancelPendingOperation();
     final provider = user.provider ?? _providerId(_lastAttemptedProvider);
     final prefs = await SharedPreferences.getInstance();
+    if (_disposed || isSigningOut || _backend?.currentUser?.id != user.id) {
+      return;
+    }
     await prefs.setBool(_guestModePrefsKey, false);
     await prefs.setString(_userIdPrefsKey, user.id);
     if (provider != null) await prefs.setString(_providerPrefsKey, provider);
-    if (_disposed || _backend?.currentUser?.id != user.id) return;
+    if (_disposed || isSigningOut || _backend?.currentUser?.id != user.id) {
+      return;
+    }
+    _cancelPendingOperation();
     _setState(
       OculumAuthState(
         isAuthenticated: true,
@@ -1060,8 +1142,15 @@ class OculumAuthService extends ChangeNotifier {
         null => null,
       };
 
-  static String _friendlyAuthError(String message) {
-    final normalized = message.toLowerCase();
+  static String _friendlyAuthError(AuthException error) {
+    final normalized = error.message.toLowerCase();
+    if (error.statusCode == '429' ||
+        const {
+          'over_request_rate_limit',
+          'over_email_send_rate_limit',
+        }.contains(error.code)) {
+      return 'Troppe richieste. Attendi prima di riprovare.';
+    }
     if (normalized.contains('callback registration')) {
       return 'Impossibile configurare il ritorno a Oculum su Windows.';
     }

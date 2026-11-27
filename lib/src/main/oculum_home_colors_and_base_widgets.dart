@@ -3167,6 +3167,100 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
     );
   }
 
+  void _setRollAdvantage(String value) {
+    final canonical = canonicalVantaggioTiroName(value);
+    if (canonical == vantaggioTiroSelezionato) return;
+    setState(() {
+      vantaggioTiroSelezionato = canonical;
+      invalidateDerivedDataCaches();
+      aggiungiLog('Modificatore tiri selezionato: $canonical.');
+    });
+    programmaSalvataggio();
+  }
+
+  String _rollAdvantageNumber(int value) => value > 0
+      ? '+$value'
+      : value < 0
+      ? '−${-value}'
+      : '0';
+
+  Widget advantageQuickStatTile() {
+    final bonus = vantaggioTiroBonus();
+    return quickStatTile(
+      label: t('Vantaggio', 'Advantage'),
+      value: _rollAdvantageNumber(bonus),
+      valueBuilder: () => _rollAdvantageNumber(vantaggioTiroBonus()),
+      icon: Icons.balance_rounded,
+      color: bonus < 0 ? Colors.redAccent : _dodgeCopper,
+      onTap: puoModificareSchivateOculum ? _chooseRollAdvantage : null,
+    );
+  }
+
+  Widget advantageActionButton() {
+    final bonus = vantaggioTiroBonus();
+    final color = bonus < 0 ? const Color(0xFFF29A96) : _dodgeCopper;
+    return OutlinedButton.icon(
+      key: const ValueKey('mobile-advantage'),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        backgroundColor: _dodgeInk,
+        foregroundColor: color,
+        side: BorderSide(color: color.withValues(alpha: .72)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      ),
+      onPressed: puoModificareSchivateOculum ? _chooseRollAdvantage : null,
+      icon: const Icon(Icons.balance_rounded),
+      label: Text(
+        '${t('Vantaggio', 'Advantage')} ${_rollAdvantageNumber(bonus)}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Future<void> _chooseRollAdvantage() async {
+    final origin = _dodgeSheet;
+    final current = canonicalVantaggioTiroName(vantaggioTiroSelezionato);
+    final choice = await _openDodgeDialog<String>(
+      (dialogContext) => _OculumDodgeDialog(
+        title: t('Vantaggio e svantaggio', 'Advantage and disadvantage'),
+        subtitle: t(
+          'Tiri di statistica, VC, CM e Iniziativa',
+          'Stat rolls, VC, CM and Initiative',
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final option in vantaggioTiroOptions())
+              ListTile(
+                dense: true,
+                selected: option.key == current,
+                selectedColor: _dodgeCopper,
+                title: Text(option.key),
+                leading: option.key == current
+                    ? const Icon(Icons.check, size: 17)
+                    : null,
+                trailing: Text(
+                  _rollAdvantageNumber(option.value),
+                  style: TextStyle(
+                    color: option.value < 0 ? Colors.redAccent : _dodgeCopper,
+                  ),
+                ),
+                onTap: () {
+                  if (ModalRoute.of(dialogContext)?.isCurrent == true) {
+                    Navigator.of(dialogContext).pop(option.key);
+                  }
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice != null && _dodgeSheetStillCurrent(origin)) {
+      _setRollAdvantage(choice);
+    }
+  }
+
   Widget advantageModifierDropdown() {
     final safeValue = canonicalVantaggioTiroName(vantaggioTiroSelezionato);
     final selected = vantaggioTiroOptions().firstWhere(
@@ -3178,6 +3272,7 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButtonFormField<String>(
+          key: ValueKey(safeValue),
           initialValue: safeValue,
           dropdownColor: const Color(0xFF11131A),
           decoration: fieldDecoration(
@@ -3194,16 +3289,11 @@ extension _OculumHomeColorsAndBaseWidgets on _OculumHomePageState {
                 ),
               ),
           ],
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() {
-              vantaggioTiroSelezionato = canonicalVantaggioTiroName(value);
-              aggiungiLog(
-                'Modificatore tiri selezionato: $vantaggioTiroSelezionato.',
-              );
-            });
-            programmaSalvataggio();
-          },
+          onChanged: puoModificareSchivateOculum
+              ? (value) {
+                  if (value != null) _setRollAdvantage(value);
+                }
+              : null,
         ),
         const SizedBox(height: 8),
         smallInfoText(

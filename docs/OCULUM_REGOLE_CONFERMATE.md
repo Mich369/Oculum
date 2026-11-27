@@ -1,5 +1,13 @@
 # Oculum — registro delle regole confermate
 
+## Azioni nella turnistica condivisa — 27 novembre 2026
+
+Conferma esplicita dell’utente, «le azioni devono passare per l’online». Quando un’attività consuma Azione o Reazione in uno scontro condiviso, la turnistica del Master deve ricevere il consumo anche per tiri e utility senza un attacco. La ricevuta identifica la scheda, lo scontro e il consumo effettivo. La ripetizione dell’invio non spende di nuovo la risorsa e non può spendere nel turno successivo.
+
+## Vantaggio e protezioni account — 27 novembre 2026
+
+Il comando Vantaggio è accanto a Schivate Oculum nella scheda e apre la scala di vantaggi e svantaggi già applicata ai tiri. L’utente chiede protezioni per registrazione, accesso e uscita. Per applicarle, l’app associa il codice di collegamento email all’ospite che lo ha richiesto e chiede conferma prima di uscire dal dispositivo corrente.
+
 ## Schivate Oculum: contatore e modifica dalla scheda — 24 novembre 2026
 
 Conferma esplicita dell’utente: mostrare un solo numero disponibile, mai il rapporto `1/1`. Tenendo premuto il comando Schivata nella scheda in uso, oppure con il tasto destro, aprire il menu con `+1`, `-1` e quantità scrivibile. La quantità è quella disponibile, compresa la possibilità di togliere cariche ottenute dal Grado; il minimo è zero. Il salvataggio riguarda soltanto la scheda e la campagna da cui il menu è stato aperto, rispettando gli eventuali vincoli di sola lettura. Le cariche consumate restano registrate: la modifica manuale non riattiva una Schivata già usata e non cambia la regola sulla mancata rigenerazione.

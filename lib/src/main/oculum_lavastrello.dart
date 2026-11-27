@@ -51,6 +51,7 @@ extension _OculumLavastrello on _OculumHomePageState {
         discoverLavastrelloNest(result.toInt());
       },
     );
+    await flushPendingCombatTurnResources();
   }
 
   Future<void> createLavastrelloNest() async {

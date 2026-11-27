@@ -181,6 +181,7 @@ extension _OculumParasites on _OculumHomePageState {
     programmaSalvataggio();
     unawaited(sendRealtimeActiveSheetToStaff());
     setState(() {});
+    await flushPendingCombatTurnResources();
   }
 
   void clearParasite({required bool killed}) {

@@ -235,7 +235,8 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
 
   Future<void> useRedcapBody(InventoryItem item) async {
     if (item.quantita <= 0 || !inventario.contains(item)) return;
-    if (item.craftData['cooked'] != true) {
+    final isAntidote = item.craftData['cooked'] == true;
+    if (!isAntidote) {
       final cooked = await showDialog<bool>(
         context: context,
         builder: (dialog) => AlertDialog(
@@ -292,6 +293,7 @@ extension _OculumReferenceCreatures on _OculumHomePageState {
     invalidateDerivedDataCaches();
     if (mounted) setState(() {});
     programmaSalvataggio();
+    if (isAntidote) await flushPendingCombatTurnResources();
   }
 
   void referenceCreatureTurn(Map<String, dynamic> token) {

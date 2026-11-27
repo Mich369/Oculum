@@ -177,6 +177,7 @@ extension _OculumSolarObserverAndBiter on _OculumHomePageState {
       );
       programmaSalvataggio();
       if (mounted) updateOculumHomeUi(() {});
+      await flushPendingCombatTurnResources();
     } finally {
       _solarGoldProofsInFlight.remove(condition.id);
     }

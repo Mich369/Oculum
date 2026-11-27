@@ -495,6 +495,7 @@ extension _OculumGuardianGold on _OculumHomePageState {
     );
     programmaSalvataggio();
     if (mounted) setState(() {});
+    await flushPendingCombatTurnResources();
   }
 
   Widget guardianGoldificationControls() => Column(

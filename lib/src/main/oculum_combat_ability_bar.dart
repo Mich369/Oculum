@@ -528,6 +528,11 @@ extension _OculumCombatAbilityBar on _OculumHomePageState {
       );
       if (mounted && currentSheetScrollId() == origin) {
         await deliverPendingSupport();
+        // Cancelling the target picker leaves the completed Medicine roll.
+        // A delivered support packet already carries the spend.
+        if (mounted && currentSheetScrollId() == origin) {
+          await flushPendingCombatTurnResources();
+        }
       }
       return;
     }

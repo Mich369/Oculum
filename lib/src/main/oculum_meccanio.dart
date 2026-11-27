@@ -539,6 +539,9 @@ extension _OculumMeccanio on _OculumHomePageState {
         applyMeccanioEmpathy(total, deception: deception, natural: natural);
       },
     );
+    if (mounted && currentSheetScrollId() == origin) {
+      await flushPendingCombatTurnResources();
+    }
   }
 
   bool applyMeccanioEmpathy(
@@ -734,6 +737,9 @@ extension _OculumMeccanio on _OculumHomePageState {
         if (currentSheetScrollId() == origin) tameMeccanio(index, total);
       },
     );
+    if (mounted && currentSheetScrollId() == origin) {
+      await flushPendingCombatTurnResources();
+    }
   }
 
   void claimMeccanioResults(Map<String, dynamic> request) {

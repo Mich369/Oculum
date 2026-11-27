@@ -5484,6 +5484,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     }
     onlineCombatReplayInFlight = true;
     try {
+      await flushPendingCombatTurnResources(retryOnly: true);
       await replayRewardSupportReceipts();
       final tag = sheetTagAt(schedaCorrente);
       final prefix =

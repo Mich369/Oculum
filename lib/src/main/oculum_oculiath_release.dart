@@ -240,6 +240,9 @@ extension _OculumOculiathRelease on _OculumHomePageState {
       if (mounted) {
         programmaSalvataggio();
         updateOculumHomeUi(() {});
+        if (origin == currentSheetScrollId()) {
+          await flushPendingCombatTurnResources();
+        }
       }
     } finally {
       inFlight.remove(holdId);

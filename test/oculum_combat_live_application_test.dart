@@ -15,6 +15,7 @@ import 'oculum_corallwhirl_tides_test.dart'
 
 const _runLive = bool.fromEnvironment('OculumLiveRealtimeTest');
 const _focusGrip = bool.fromEnvironment('OculumLiveGripTest');
+const _focusAction = bool.fromEnvironment('OculumLiveActionTest');
 
 class _LiveNetwork extends HttpOverrides {}
 
@@ -31,7 +32,9 @@ class _FixedCombatDice implements Random {
 
 void main() {
   testWidgets(
-    _focusGrip
+    _focusAction
+        ? 'a plain CM roll advances the Master turn for four authenticated clients'
+        : _focusGrip
         ? 'Octocruor targets an unopened sheet in a room with four authenticated clients'
         : 'four authenticated clients share combat and confirmed idempotent party rest',
     (tester) async {
@@ -234,6 +237,7 @@ void main() {
       final oldAvailable = OculumRealtimeService.supabaseAvailable;
       OculumRealtimeService.supabaseAvailable = true;
       final receipts = <Map<String, dynamic>>[];
+      final standaloneTurnSpends = <Map<String, dynamic>>[];
       bool? masterPatchApplied;
       Map<String, dynamic>? attackerInitiative;
       final attackerReceipts = <Map<String, dynamic>>[];
@@ -305,6 +309,11 @@ void main() {
         onStatusChanged: (s) => debugPrint('Master: $s'),
         onEvent: (event, payload) {
           if (event == 'combat_defense') receipts.add(payload);
+          if (event == 'combat_help' &&
+              payload['helpMode'] == 'turn_resource') {
+            masterProbe.receiveCombat(event, payload);
+            standaloneTurnSpends.add(payload);
+          }
           if (event == 'combat_scout' && payload['piovraGripReply'] is String) {
             piovraReplies.add(
               '${payload['piovraGripReply']}:${payload['hpLost'] ?? payload['roll']}',
@@ -403,6 +412,25 @@ void main() {
         fail('$label non si è connesso dopo tentativi limitati.');
       }
 
+      Future<void> finishLiveTest() async {
+        await tester.runAsync(() async {
+          await player.dispose();
+          await helper.dispose();
+          await attacker.dispose();
+          await master.dispose();
+          await closeClients();
+        });
+        state.realtimeService = null;
+        masterState.realtimeService = null;
+        state.realtimeAutoReconnectEnabled = false;
+        masterState.realtimeAutoReconnectEnabled = false;
+        state.autosaveTimer?.cancel();
+        masterState.autosaveTimer?.cancel();
+        await tester.pumpWidget(const SizedBox.shrink());
+        // Settle timeout timers created by widget-zone Realtime callbacks.
+        await tester.pump(const Duration(seconds: 16));
+      }
+
       await tester.runAsync(
         () => HttpOverrides.runWithHttpOverrides(() async {
           // Connect the room owner first and retry transient Auth/Postgres
@@ -430,6 +458,66 @@ void main() {
               (dynamic p) => p['activeSheetTag'] == masterTag,
             ),
           );
+          if (_focusAction) {
+            masterState.masterInitiativeGroups.clear();
+            masterState.selectedMasterInitiativeGroupId = 'encounter_1';
+            masterState.masterInitiativeRound = 7;
+            masterState.masterInitiativeActiveIndex = 1;
+            masterProbe.ensureEncounters();
+            masterState.masterInitiativeTokens
+              ..clear()
+              ..addAll(<Map<String, dynamic>>[
+                {
+                  'id': masterProbe.ownerTag(),
+                  'sheetTag': masterProbe.ownerTag(),
+                  'name': 'Master',
+                  'side': 'enemy',
+                  'status': 'ready',
+                },
+                {
+                  'id': playerTag,
+                  'sheetTag': playerTag,
+                  'name': 'Player',
+                  'side': 'party',
+                  'status': 'active',
+                  'actionUsed': false,
+                },
+              ]);
+            masterProbe.recordCurrentEncounter();
+            masterState.masterInitiativeGroups.first['fightStarted'] = true;
+            masterProbe.publishTurnOrder();
+            await waitFor(() {
+              final view = state.realtimeVisibleInitiativeSnapshot as Map;
+              return view['round'] == 7 &&
+                  view['activeIndex'] == 1 &&
+                  attackerInitiative?['snapshot']?['round'] == 7 &&
+                  helperInitiative?['snapshot']?['round'] == 7;
+            });
+            // A plain roll lacks an attack packet that could carry the spend.
+            await probe.rollSpecial('CM', 20);
+            await waitFor(
+              () =>
+                  standaloneTurnSpends.isNotEmpty &&
+                  masterState.masterInitiativeActiveIndex == 0 &&
+                  attackerInitiative?['snapshot']?['round'] == 8 &&
+                  helperInitiative?['snapshot']?['round'] == 8,
+            );
+            final spend =
+                (standaloneTurnSpends.single['turnResourceSpends'] as List)
+                        .single
+                    as Map;
+            expect(
+              oculumSameSheetIdentity(spend['sheetTag'], playerTag),
+              isTrue,
+            );
+            expect(spend['activityResource'], 'azione');
+            expect(masterState.masterInitiativeRound, 8);
+            debugPrint(
+              'ONLINE ACTION VERIFIED: ordinary CM spent once on Master, '
+              'next round received by both observers.',
+            );
+            return;
+          }
           if (_focusGrip) return;
           final sharedFight = <String, dynamic>{
             'campaignId': state.activeCampaignId,
@@ -813,6 +901,10 @@ void main() {
           );
         }, _LiveNetwork()),
       );
+      if (_focusAction) {
+        await finishLiveTest();
+        return;
+      }
 
       masterState.masterInitiativeGroups.clear();
       masterState.masterInitiativeTokens.clear();
@@ -1022,21 +1114,7 @@ void main() {
           masterProbe,
         );
       }
-      await tester.runAsync(() async {
-        await player.dispose();
-        await helper.dispose();
-        await attacker.dispose();
-        await master.dispose();
-        await closeClients();
-      });
-      state.realtimeService = null;
-      masterState.realtimeService = null;
-      state.realtimeAutoReconnectEnabled = false;
-      masterState.realtimeAutoReconnectEnabled = false;
-      state.autosaveTimer?.cancel();
-      masterState.autosaveTimer?.cancel();
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(seconds: 1));
+      await finishLiveTest();
     },
     skip: !_runLive,
     timeout: const Timeout(Duration(minutes: 5)),

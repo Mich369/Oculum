@@ -222,6 +222,7 @@ extension _OculumMecha on _OculumHomePageState {
       total: total,
       crafting: crafting,
     );
+    await flushPendingCombatTurnResources();
   }
 
   String resolveMechaConstruction(

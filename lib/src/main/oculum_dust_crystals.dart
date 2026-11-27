@@ -665,6 +665,7 @@ extension _OculumDustFusion on _OculumHomePageState {
       '[FUSIONE DUST] +$tier statistiche · +${tier * 10}% effetti positivi Art · $rests Riposi Lunghi.',
     );
     programmaSalvataggio();
+    await flushPendingCombatTurnResources();
   }
 
   List<OculumStructuredEffect> dustFusionArtEffects(

@@ -163,6 +163,9 @@ extension _OculumRacialRuntime on _OculumHomePageState {
         }
       },
     );
+    if (mounted && currentSheetScrollId() == owner) {
+      await flushPendingCombatTurnResources();
+    }
   }
 
   Widget racialCapabilitiesPanel() => Column(

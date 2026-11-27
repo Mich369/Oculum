@@ -212,6 +212,9 @@ extension _OculumMasterRollRequests on _OculumHomePageState {
       programmaSalvataggio();
       if (mounted) setState(() {});
     }
+    if (needsResource && mounted && currentSheetScrollId() == origin) {
+      await flushPendingCombatTurnResources();
+    }
   }
 
   Widget masterRequestedRollsPanel() {

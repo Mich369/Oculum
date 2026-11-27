@@ -792,7 +792,8 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     await salvaDati();
   }
 
-  bool currentTurnTrackerIsActive() => onlineCombatTokens().isNotEmpty;
+  bool currentTurnTrackerIsActive() =>
+      onlineCombatTokens().isNotEmpty || _sharedTurnReconnecting;
 
   bool encounterFightStarted(String id) =>
       masterInitiativeGroups
@@ -2083,11 +2084,13 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     final defenseOrigin = defenseRoll
         ? (sheetFeedbackTarget, onlineCombatEncounterId)
         : null;
-    if (!resourceAlreadySpent &&
+    final standaloneTurnRoll =
         actionLabel == null &&
         onResolved == null &&
-        nome.trim().toLowerCase() != 'iniziativa' &&
-        nome.trim().toLowerCase() != 'initiative' &&
+        rollName != 'iniziativa' &&
+        rollName != 'initiative';
+    if (!resourceAlreadySpent &&
+        standaloneTurnRoll &&
         !await spendCombatRollResource()) {
       return;
     }
@@ -2305,6 +2308,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
     onOculumDamageBonus?.call(oculumSpend.damageBonus);
     if (dado == faces) recoverPlanePressureCritical();
     onResolved?.call(dado, totale);
+    if (standaloneTurnRoll) await flushPendingCombatTurnResources();
   }
 
   Future<void> tiraSottotrattoOcchio(
@@ -2336,10 +2340,10 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       await scoutCombatTarget(requestedStat: stat);
       return;
     }
+    final standaloneTurnRoll =
+        actionLabel == null && onResolved == null && stat.id != 'iniziativa';
     if (!resourceAlreadySpent &&
-        actionLabel == null &&
-        onResolved == null &&
-        stat.id != 'iniziativa' &&
+        standaloneTurnRoll &&
         !await spendCombatRollResource()) {
       return;
     }
@@ -2726,6 +2730,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         afterCurrentFrame: false,
       );
     });
+    if (standaloneTurnRoll) await flushPendingCombatTurnResources();
   }
 
   void scheduleCombatRollRealtime({

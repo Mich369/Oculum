@@ -25,7 +25,7 @@ extension _OculumBoneRunes on _OculumHomePageState {
   }
 
   Future<void> activateMortalKi({int? natural}) async {
-    if (mortalKiLocked) return;
+    if (mortalKiLocked || _blockTurnSpendWhileReconnecting()) return;
     final level = max(0, leggiNumero(livelloController));
     final divisor = readIntValue(
       planarState['mortalKiDivisor'],
@@ -67,6 +67,7 @@ extension _OculumBoneRunes on _OculumHomePageState {
     await requestUtilitySpend('ki_grant_action', preferFreeReaction: false);
     invalidateDerivedDataCaches();
     programmaSalvataggio();
+    await flushPendingCombatTurnResources();
   }
 
   Future<void> mortalKiReaction() async {
@@ -77,6 +78,7 @@ extension _OculumBoneRunes on _OculumHomePageState {
     )) {
       spendMortalKi(5);
       aggiungiLog('[KI MORTALE] −5 Ki: una Reazione veloce extra.');
+      await flushPendingCombatTurnResources();
     }
   }
 

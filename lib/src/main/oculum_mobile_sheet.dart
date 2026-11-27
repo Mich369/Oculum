@@ -7,12 +7,35 @@ extension _OculumMobileSheet on _OculumHomePageState {
         OculumSurfaceButton(key: action.key, child: action),
     ];
     if (!phoneCompactUi) {
-      return Wrap(spacing: 10, runSpacing: 10, children: actions);
+      final dodge = actions.indexWhere(
+        (action) => action.key == const ValueKey('mobile-dodge'),
+      );
+      final next = dodge + 1;
+      final adjacent =
+          dodge >= 0 &&
+          next < actions.length &&
+          actions[next].key == const ValueKey('mobile-advantage');
+      return Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: adjacent
+            ? [
+                ...actions.take(dodge),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [actions[dodge], actions[next]],
+                ),
+                ...actions.skip(next + 1),
+              ]
+            : actions,
+      );
     }
     const order = [
       'mobile-attack',
       'mobile-defense',
       'mobile-dodge',
+      'mobile-advantage',
       'mobile-support',
     ];
     final primary = [

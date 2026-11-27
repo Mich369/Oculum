@@ -558,6 +558,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           );
         },
       );
+      await flushPendingCombatTurnResources();
       return;
     }
     final targetTag = onlineCombatTokenTag(target);
@@ -565,6 +566,10 @@ extension _OculumCombatScout on _OculumHomePageState {
       stat,
       actionLabel: '${stat.nome} su ${target['name']}',
       onResolved: (natural, total) {
+        if (currentSheetScrollId() != origin ||
+            online && encounter != onlineCombatEncounterId) {
+          return;
+        }
         final request = <String, dynamic>{
           'id': 'scout:$own:${DateTime.now().microsecondsSinceEpoch}',
           'kind': 'scout',
@@ -588,6 +593,7 @@ extension _OculumCombatScout on _OculumHomePageState {
           'total': total,
         };
         if (online) {
+          attachPendingCombatTurnResources(request);
           onlineCombatRequests['${request['id']}'] = request;
           unawaited(
             realtimeService!.sendCombatEvent(
