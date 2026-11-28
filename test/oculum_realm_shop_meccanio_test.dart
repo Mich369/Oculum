@@ -5,6 +5,64 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
+  testWidgets('old unknown deposit does not hide valid mineable deposits', (
+    tester,
+  ) async {
+    final dynamic state = await fixtures.mountSheet(
+      tester,
+      const Size(1440, 900),
+    );
+    final probe = OculumPerformanceProbe(state);
+    probe.saveSheet();
+    final deposits = <String, dynamic>{
+      'legacy': {
+        'realm': 'reame_cristallo',
+        'material': 'retired_material',
+        'remainingGrams': 1000,
+      },
+      'quartz': {
+        'realm': 'reame_cristallo',
+        'material': 'quarzo_risonante',
+        'remainingGrams': 500,
+      },
+      'wrong-realm-material': {
+        'realm': 'reame_cristallo',
+        'material': 'vetro_azzurro_divoratore',
+        'remainingGrams': 500,
+      },
+    };
+    final sheet = Map<String, dynamic>.from(state.schedePersonaggio[0] as Map)
+      ..['selectedPlaneId'] = 'reame_cristallo'
+      ..['planarRuntime'] = {
+        'realmExploration': {'deposits': deposits},
+      };
+    state.schedePersonaggio[0] = sheet;
+    probe.load(sheet);
+    await tester.pumpAndSettle();
+
+    final exploration = probe.openMicroRealm();
+    await tester.pumpAndSettle();
+    expect(find.text('Quarzo risonante'), findsOneWidget);
+    expect(find.text('Vetro azzurro del Deserto'), findsNothing);
+    expect(find.text('0.5 kg disponibili · Grado 0'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Estrai'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Estrai'));
+    await tester.pumpAndSettle();
+    expect(find.text('0.25 kg disponibili · Grado 0'), findsOneWidget);
+    final runtime = probe.snapshot()['planarRuntime'] as Map;
+    final explorationState = runtime['realmExploration'] as Map;
+    final savedDeposits = explorationState['deposits'] as Map;
+    expect(savedDeposits['legacy']['remainingGrams'], 1000);
+    expect(savedDeposits['quartz']['remainingGrams'], 250);
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.widgetWithText(TextButton, 'Chiudi').last);
+    await tester.pumpAndSettle();
+    await exploration;
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('the Sunken Realm areas show their art and restore per sheet', (
     tester,
   ) async {

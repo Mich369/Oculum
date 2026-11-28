@@ -37,7 +37,7 @@ class _OculumWindowsUpdatePlan {
       throw StateError(
         mode == 'Plan'
             ? 'Non è stato possibile confrontare i file installati.'
-            : 'Download incrementale interrotto. Puoi riprovare o scegliere il pacchetto completo.',
+            : 'Download incrementale interrotto. Puoi riprovare.',
       );
     }
   }
@@ -187,6 +187,42 @@ class _OculumWindowsUpdatePlan {
 
 String _oculumUpdateMegabytes(int bytes) =>
     '${(bytes / 1000000).toStringAsFixed(2)} MB';
+
+@visibleForTesting
+Future<bool> oculumConfirmAppUpdate(
+  BuildContext context, {
+  required String description,
+  bool incremental = false,
+  String? windowsFullSize,
+}) async {
+  return await showDialog<bool>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: const Text('Aggiorna Oculum'),
+          content: SingleChildScrollView(child: Text(description)),
+          actions: [
+            TextButton(
+              autofocus: windowsFullSize != null,
+              onPressed: () => Navigator.pop(dialog),
+              child: const Text('Dopo'),
+            ),
+            if (windowsFullSize != null)
+              TextButton(
+                onPressed: () => Navigator.pop(dialog, true),
+                child: Text('Pacchetto intero ($windowsFullSize)'),
+              )
+            else
+              FilledButton(
+                onPressed: () => Navigator.pop(dialog, true),
+                child: Text(
+                  incremental ? 'Scarica le modifiche' : 'Aggiorna ora',
+                ),
+              ),
+          ],
+        ),
+      ) ??
+      false;
+}
 
 Future<bool> _oculumWebBuildIsPublished(
   http.Client client,
@@ -433,8 +469,8 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       }
       if (!mounted) return;
 
-      var incrementalUnavailable = false;
-      if (!kIsWeb && Platform.isWindows && update.incremental != null) {
+      final windows = !kIsWeb && Platform.isWindows;
+      if (windows && update.incremental != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Confronto dei file di Oculum installati…'),
@@ -443,7 +479,7 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
         try {
           windowsPlan = await _OculumWindowsUpdatePlan.prepare(client, update);
         } catch (_) {
-          incrementalUnavailable = true;
+          // An unavailable plan requires a separate choice of the full archive.
         }
         if (!mounted) return;
       }
@@ -464,43 +500,22 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
           : plan != null
           ? '${plan.changed} file da aggiornare, ${plan.removed} obsoleti da rimuovere. '
                 'Download di ${plan.files} file per ${_oculumUpdateMegabytes(plan.bytes)}.'
+          : windows
+          ? 'Confronto incrementale non disponibile. Puoi riprovare più tardi o scegliere il pacchetto intero.'
           : Platform.isAndroid
           ? 'Scarica 1 pacchetto ($fullSize) e apre la conferma Android per l’APK firmato.'
-          : '${incrementalUnavailable ? 'Confronto incrementale non disponibile. ' : ''}'
-                'Scarica 1 pacchetto completo ($fullSize) e conserva un backup del runtime.';
-      final confirm = await showDialog<String>(
-        context: context,
-        builder: (d) => AlertDialog(
-          title: const Text('Aggiorna Oculum'),
-          content: SingleChildScrollView(
-            child: Text(
-              'Nuova versione ${update.commit.substring(0, 7)}. $description '
-              'I salvataggi vengono conservati.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(d),
-              child: const Text('Dopo'),
-            ),
-            if (plan != null)
-              TextButton(
-                onPressed: () => Navigator.pop(d, 'full'),
-                child: Text('Pacchetto intero ($fullSize)'),
-              ),
-            FilledButton(
-              onPressed: () =>
-                  Navigator.pop(d, plan == null ? 'full' : 'incremental'),
-              child: Text(
-                plan == null ? 'Aggiorna ora' : 'Scarica le modifiche',
-              ),
-            ),
-          ],
-        ),
+          : 'Scarica 1 pacchetto completo ($fullSize) e conserva un backup del runtime.';
+      final confirmed = await oculumConfirmAppUpdate(
+        context,
+        description:
+            'Nuova versione ${update.commit.substring(0, 7)}. $description '
+            'I salvataggi vengono conservati.',
+        incremental: plan != null,
+        windowsFullSize: windows && plan == null ? fullSize : null,
       );
 
-      if (confirm == null || !mounted) return;
-      final incremental = confirm == 'incremental' ? plan : null;
+      if (!confirmed || !mounted) return;
+      final incremental = plan;
 
       if (!kIsWeb) {
         final cache = await getApplicationCacheDirectory();

@@ -312,6 +312,28 @@ extension _OculumMicroRealms on _OculumHomePageState {
       planarState.putIfAbsent('realmExploration', () => <String, dynamic>{})
           as Map<String, dynamic>;
 
+  Map? get _savedRealmDeposits {
+    final deposits = realmExploration['deposits'];
+    return deposits is Map ? deposits : null;
+  }
+
+  Iterable<({String id, OculumAuthoredMaterial material, int grams})>
+  _visibleRealmDeposits() sync* {
+    final realm = selectedPlaneId;
+    final materials = oculumMineralsInRealm(realm);
+    for (final entry in (_savedRealmDeposits ?? const {}).entries) {
+      final row = entry.value;
+      final id = entry.key;
+      if (id is! String || row is! Map || row['realm'] != realm) continue;
+      final grams = readIntValue(row['remainingGrams']);
+      if (grams <= 0) continue;
+      final material = materials
+          .where((m) => m.id == row['material'])
+          .firstOrNull;
+      if (material != null) yield (id: id, material: material, grams: grams);
+    }
+  }
+
   Future<void> surveyRealm() async {
     final materials = oculumMineralsInRealm(selectedPlaneId);
     if (materials.isEmpty) return;
@@ -371,7 +393,7 @@ extension _OculumMicroRealms on _OculumHomePageState {
                 ),
               );
           final deposits = Map<String, dynamic>.from(
-            realmExploration['deposits'] as Map? ?? {},
+            _savedRealmDeposits ?? const {},
           );
           deposits[id] = {
             'id': id,
@@ -396,8 +418,7 @@ extension _OculumMicroRealms on _OculumHomePageState {
   }
 
   bool extractRealmDeposit(String id, int grams) {
-    final deposits = realmExploration['deposits'] as Map? ?? {};
-    final raw = deposits[id];
+    final raw = _savedRealmDeposits?[id];
     if (raw is! Map ||
         raw['realm'] != selectedPlaneId ||
         grams <= 0 ||
@@ -446,6 +467,8 @@ extension _OculumMicroRealms on _OculumHomePageState {
   }
 
   Future<void> showCurrentMicroRealm() async {
+    final origin = currentSheetScrollId();
+    final realm = selectedPlaneId;
     await showDialog<void>(
       context: context,
       builder: (dialog) => StatefulBuilder(
@@ -566,46 +589,29 @@ extension _OculumMicroRealms on _OculumHomePageState {
                         'Percezione o alternativa · cerca giacimenti',
                       ),
                     ),
-                    for (final row
-                        in (realmExploration['deposits'] as Map? ?? {}).values
-                            .whereType<Map>()
-                            .where(
-                              (r) =>
-                                  r['realm'] == selectedPlaneId &&
-                                  readIntValue(r['remainingGrams']) > 0,
-                            ))
+                    for (final deposit in _visibleRealmDeposits())
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          oculumRealmMaterials
-                              .firstWhere((m) => m.id == row['material'])
-                              .name,
-                        ),
+                        title: Text(deposit.material.name),
                         subtitle: Text(
-                          '${readIntValue(row['remainingGrams']) / 1000} kg disponibili · Grado ${oculumRealmMaterials.firstWhere((m) => m.id == row['material']).grade}',
+                          '${deposit.grams / 1000} kg disponibili · Grado ${deposit.material.grade}',
                         ),
                         trailing: TextButton(
                           onPressed:
-                              oculumRealmMaterials
-                                      .firstWhere(
-                                        (m) => m.id == row['material'],
-                                      )
-                                      .grade >
+                              deposit.material.grade >
                                   leggiNumero(gradoController)
                               ? null
                               : () async {
-                                  final input = TextEditingController(
-                                    text:
-                                        '${min(250, readIntValue(row['remainingGrams']))}',
-                                  );
+                                  var input = '${min(250, deposit.grams)}';
                                   final amount = await showDialog<int>(
                                     context: context,
                                     builder: (d) => AlertDialog(
                                       title: const Text(
                                         'Estrai quanto vuoi o lascia perdere',
                                       ),
-                                      content: TextField(
-                                        controller: input,
+                                      content: TextFormField(
+                                        initialValue: input,
+                                        onChanged: (value) => input = value,
                                         keyboardType: TextInputType.number,
                                         decoration: const InputDecoration(
                                           labelText: 'Grammi da estrarre',
@@ -619,15 +625,19 @@ extension _OculumMicroRealms on _OculumHomePageState {
                                         FilledButton(
                                           onPressed: () => Navigator.pop(
                                             d,
-                                            int.tryParse(input.text),
+                                            int.tryParse(input),
                                           ),
                                           child: const Text('Estrai'),
                                         ),
                                       ],
                                     ),
                                   );
-                                  if (dialog.mounted && amount != null) {
-                                    extractRealmDeposit('${row['id']}', amount);
+                                  if (mounted &&
+                                      dialog.mounted &&
+                                      amount != null &&
+                                      currentSheetScrollId() == origin &&
+                                      selectedPlaneId == realm &&
+                                      extractRealmDeposit(deposit.id, amount)) {
                                     update(() {});
                                   }
                                 },

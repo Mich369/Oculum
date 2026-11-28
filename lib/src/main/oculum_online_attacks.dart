@@ -2,6 +2,28 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+final _blackDragonShadowFlameEffect = RegExp(
+  r'^realm_black_dragon_shield_0_forma_[123]_0$',
+);
+
+bool oculumMonsterAttackCanHitIntangible(
+  MonsterBookEntry? monster, {
+  Iterable<Map> preparedAttackEffects = const [],
+}) {
+  if (monster?.id != 'black_dragon_shield' &&
+      monster?.encounterRules['canHitIntangible'] == true) {
+    return true;
+  }
+  return preparedAttackEffects.any((entry) {
+    final effect = entry['effect'] is Map ? entry['effect'] as Map : entry;
+    return entry['mode'] == 'prossima_azione' &&
+        effect['type'] == 'danno' &&
+        _blackDragonShadowFlameEffect.hasMatch(
+          '${effect['id'] ?? effect['effectId'] ?? ''}'.split('/').last,
+        );
+  });
+}
+
 /// Preserve repeated hits when the corruptor replaces the distinct targets.
 List<String> oculumRedirectAttackHits(
   List<String> original,
@@ -339,6 +361,20 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  bool _cynervailPhasesThroughAttack(
+    Map<String, dynamic> attack, {
+    bool? magicalAttack,
+  }) =>
+      cynervailIncomingDamagePercent(
+        element: '${attack['element'] ?? 'fisico'}',
+        magicalAttack:
+            magicalAttack ?? (attack['effects'] as List? ?? []).isNotEmpty,
+        attackKind: '${attack['choice'] ?? ''}',
+        hitBodyPart: '${attack['targetBodyPart'] ?? ''}',
+        canHitIntangible: attack['canHitIntangible'] == true,
+      ) ==
+      0;
+
   Map<String, dynamic> _opposedDefenseComparison(
     Map<String, dynamic> draft,
     String choice,
@@ -374,6 +410,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
             draft['targetBodyPart'] == 'core' &&
             !lunarGuardianCoreExposed ||
         senkaEvadesAsShadow(draft) ||
+        _cynervailPhasesThroughAttack(
+          draft,
+          magicalAttack: draft['attackHasEffects'] == true,
+        ) ||
         faunaCurrentMonsterId == 'smiling_storm' &&
             draft['baseAttack'] == true &&
             readIntValue(draft['sourcePlanarStats']) <=
@@ -3806,6 +3846,22 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     final directDamage = targetEffects
         .where((e) => e['type'] == 'danno')
         .toList();
+    bool hasCorruptionPassive(Map target) =>
+        corruptionMastery != null &&
+        corruptionSkillCooldown(corruptionMastery).ready &&
+        readIntValue(target['level']) > leggiNumero(livelloController) &&
+        !targetEffects.any(
+          (effect) =>
+              effect['type'] == 'stato' &&
+              effect['appliedState'] == 'corruzione',
+        );
+    bool hasMeccanioCriticalEffect(int natural) =>
+        robotAttack['kind'] == 'rays' && natural == 20;
+
+    final canHitIntangible = oculumMonsterAttackCanHitIntangible(
+      monsterBookEntryById(sourceMonsterId),
+      preparedAttackEffects: activeStructuredEffects,
+    );
     final manifestationTotal = hiddenEyeStats
         .where((stat) => stat.id == 'manifestazione_potere')
         .firstOrNull;
@@ -4331,19 +4387,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               )
             : 0;
         final selectedToken = byId[selectedTag]!;
-        final eligibleCorruptionPassive =
-            corruptionMastery != null &&
-            corruptionSkillCooldown(corruptionMastery).ready &&
-            readIntValue(selectedToken['level']) >
-                leggiNumero(livelloController) &&
-            !targetEffects.any(
-              (effect) =>
-                  effect['type'] == 'stato' &&
-                  effect['appliedState'] == 'corruzione',
-            );
+        final eligibleCorruptionPassive = hasCorruptionPassive(selectedToken);
         final effectsForTarget = <Map<String, dynamic>>[
           ...targetEffects,
-          if (robotAttack['kind'] == 'rays' && natural == 20)
+          if (hasMeccanioCriticalEffect(natural))
             OculumStructuredEffect(
               id: 'meccanio_beyond_defense',
               criticalOnly: true,
@@ -4427,17 +4474,13 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'sourceTotalPower': scoutTotalPowerAt(schedaCorrente),
           if (eligibleCorruptionPassive)
             'corruptionControlChancePercent': readIntValue(
-              corruptionMastery.scrollData['targetControlPercent'],
+              corruptionMastery?.scrollData['targetControlPercent'],
               fallback: oculumCorruptionMasteryTargetControlPercent,
             ).clamp(0, 100),
           'sourceMonsterBookId': sourceMonsterId,
           if (boneGoatAphoniaTurns != null)
             oculumBoneGoatAphoniaRule: readIntValue(boneGoatAphoniaTurns),
-          if (monsterBookEntryById(
-                sourceMonsterId,
-              )?.encounterRules['canHitIntangible'] ==
-              true)
-            'canHitIntangible': true,
+          if (canHitIntangible) 'canHitIntangible': true,
           'escapeReactionOf': ?escapeReactionOf,
           if (onlineCombatRequests['escape-return:$sourceTag']?['status'] ==
                   'ready' &&
@@ -5191,6 +5234,10 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           'comparison': 'roll',
           'choice': controlledPlan.choiceId,
           'element': element,
+          'attackHasEffects':
+              targetEffects.isNotEmpty ||
+              hasMeccanioCriticalEffect(natural) ||
+              hasCorruptionPassive(byId[tag]!),
           'sourceMonsterBookId': sourceMonsterId,
           'targetBodyPart': ?chosenBodyParts[tag]?['id'],
           'targetBodyPartLabel': ?chosenBodyParts[tag]?['label'],
@@ -5205,11 +5252,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
               volontaTotale() +
               materiaTotale() +
               oculumTotale(),
-          'canHitIntangible':
-              monsterBookEntryById(
-                sourceMonsterId,
-              )?.encounterRules['canHitIntangible'] ==
-              true,
+          'canHitIntangible': canHitIntangible,
         };
       }
       final answer = await _reviewOpposedAttack(
@@ -7460,14 +7503,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       aggiungiLog('[L’OMBRA] Il colpo fisico attraversa la sagoma.');
     }
     if (outcome != OculumAttackOutcome.avoided &&
-        cynervailIncomingDamagePercent(
-              element: '${request['element'] ?? 'fisico'}',
-              magicalAttack: (request['effects'] as List? ?? []).isNotEmpty,
-              attackKind: '${request['choice'] ?? ''}',
-              hitBodyPart: '${request['targetBodyPart'] ?? ''}',
-              canHitIntangible: request['canHitIntangible'] == true,
-            ) ==
-            0) {
+        _cynervailPhasesThroughAttack(request)) {
       outcome = OculumAttackOutcome.avoided;
       request['cynervailBodyPhased'] = true;
       aggiungiLog('[IMMATERIALE] Il colpo attraversa Cynervail.');

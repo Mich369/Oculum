@@ -393,6 +393,30 @@ const _lot0605Votes = <_Vote>[
   ),
 ];
 
+const _lot2101Votes = <_Vote>[
+  (
+    id: 'element_pack_vento',
+    slot: 'B',
+    sha256: 'b7e1fd833bdb397c673d6b5838d57bc23778faa3d966787801f10edfd9928f72',
+    originalSha256:
+        'b6138a3495942967a707ff4df7eb65d8c1fe8e64d6df5d3eace40bcf655917c3',
+  ),
+  (
+    id: 'vtt_obsidian_grid',
+    slot: 'F',
+    sha256: '77bc6eda37e2476d9f215602e428284993e5e9e7b089321a4a4d68142b3d4cf3',
+    originalSha256:
+        '23dfc2154b38d91da11ca5a0bbe52b06b8de8184b33260e81169b93f15947a6f',
+  ),
+  (
+    id: 'tidal_stained_glass',
+    slot: 'C',
+    sha256: '6189d08daebd70d3e724b5c768dcd79b83fac50f3f38c78aeaccc8c63c121335',
+    originalSha256:
+        'e59aaa0b9edd80e616e16bf44bced52fcf07654a0f4e57bc01cf49285040d9fe',
+  ),
+];
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -403,6 +427,7 @@ void main() {
         ..._votes.map((vote) => vote.id),
         ..._november28Votes.map((vote) => vote.id),
         ..._lot0605Votes.map((vote) => vote.id),
+        ..._lot2101Votes.map((vote) => vote.id),
         'kingi_wrong_future',
         'element_pack_oculum',
       ]),
@@ -413,7 +438,11 @@ void main() {
   });
 
   test('The 28 November choices load in their existing theme packs', () async {
-    for (final vote in [..._november28Votes, ..._lot0605Votes]) {
+    for (final vote in [
+      ..._november28Votes,
+      ..._lot0605Votes,
+      ..._lot2101Votes,
+    ]) {
       final path =
           'assets/oculum/theme_stories/webp/${vote.id}_canon_20261128_'
           '${vote.slot.toLowerCase()}_${vote.sha256.substring(0, 8)}.webp';
@@ -423,6 +452,15 @@ void main() {
         'assets/oculum/theme_stories/webp/${vote.id}.webp',
         vote.originalSha256,
       );
+    }
+  });
+
+  test('The 2101 desktop votes preserve phone and relic settings', () {
+    for (final vote in _lot2101Votes) {
+      final pack = oculumThemeAssetPacks[vote.id]!;
+      expect(pack.id, vote.id);
+      expect(pack.storySceneMobileAsset, isNull, reason: vote.id);
+      expect(pack.relic, 'assets/themes/${vote.id}/overlays/relic.png');
     }
   });
 

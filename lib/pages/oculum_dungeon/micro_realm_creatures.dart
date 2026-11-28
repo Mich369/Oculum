@@ -268,6 +268,7 @@ const _microRealmCreatureSeeds = <Map<String, dynamic>>[
     'element': 'fisico',
     'stats': [2, 2, 4, 2],
     'level': 1,
+    'generationSide': 'neutral',
     'look':
         'Creatura buffa color malva, dal corpo morbido e corna che si piegano come steli. Le zampe cambiano ampiezza mentre cammina fra alberi flosci e rigidi.',
     'weak': 'Il piccolo addensamento al centro del ventre morbido.',
@@ -283,6 +284,7 @@ const _microRealmCreatureSeeds = <Map<String, dynamic>>[
     'element': 'natura',
     'stats': [2, 3, 3, 4],
     'level': 3,
+    'generationSide': 'neutral',
     'look':
         'Pianta ambulante dai grandi fiori arancio e dai bulbi verde acqua. I passi alternano accelerazioni e pause; il corpo segue le trasformazioni del terreno morbido.',
     'weak': 'La corona di radici sotto il bulbo.',
@@ -298,6 +300,7 @@ const _microRealmCreatureSeeds = <Map<String, dynamic>>[
     'element': 'spirituale',
     'stats': [3, 3, 4, 4],
     'level': 4,
+    'generationSide': 'neutral',
     'look':
         'Piccolo animale irregolare dalle orecchie a disco, mantello rosa e sfere azzurre lungo la schiena. Si muove a scatti, alternando lentezza e velocità come il tempo del reame.',
     'weak': 'La giuntura fra le sfere e la schiena.',

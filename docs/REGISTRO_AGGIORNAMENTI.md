@@ -1,5 +1,16 @@
 # Registro cumulativo per i giocatori
 
+## Aggiornamento Windows, Fight e regni — 28 novembre 2026
+
+- Su Windows l’aggiornamento confronta automaticamente i file installati con il manifesto GitHub della stessa edizione. Scarica fino a quattro file diversi in parallelo, riutilizza i download già verificati e salta i file identici anche se mancano versioni intermedie. Se il confronto è indisponibile, il pacchetto intero indica il proprio peso e richiede una scelta separata. Un download incrementale interrotto si può riprovare.
+
+- Le tre forme della **Vampata d’ombra** di BlackDragonShield possono raggiungere gli immateriali. Contro Cynervail, l’anteprima e l’esito rispettano l’intangibilità del corpo e la possibilità di attaccare direttamente la Lanterna.
+- Slime e Mezzo Slime imparano **Forma Slime** raggiungendo 12 di Materia base e la conservano anche se la Materia scende. I contatti, la reazione dedicata e Assorbi si risolvono manualmente al tavolo.
+- Floscocorno, Fioripasso e Velocilento sono neutrali nei suggerimenti per area. Il Master può inserirli tra i nemici dopo una provocazione.
+- Sette creature di **Terre di Ghiaccio** usano lo sfondo del piano quando serve uno sfondo di riserva. La scheda continua a dare la precedenza alla tavola dedicata o allo sfondo scelto dal giocatore.
+- Nei giacimenti, le voci di salvataggio con materiali ritirati o di un altro regno vengono conservate. L’elenco resta utilizzabile e puoi estrarre dai depositi validi del regno.
+- Nuove tavole desktop Expressive Ink confermate per **Nastri della burrasca** (B), **Griglia ossidiana** (F) e **Vetrata delle maree** (C).
+
 ## Varianti dei mostri Expressive Ink — 28 novembre 2026
 
 - Nuove forme dell’Armadillo Corazzato, del Costrutto Minore, della Mosca Campana, del Cinghiale del Fango, dell’Uomo Cactus, dell’Airone, della Tartaruga e della Larva del Pozzo. Ferrynox e Anfravyre hanno tre forme per ambiente, ciascuna con tavola e tecniche dedicate.

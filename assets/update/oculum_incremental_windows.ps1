@@ -253,32 +253,56 @@ function Assert-OculumIncrementalRangeResponse($Status, [string]$Range, $Length,
   }
 }
 
-function Save-OculumIncrementalRange($Package, $Record, [string]$Destination) {
-  $url = [Uri]$Package.url
+function Get-OculumIncrementalRangeResponse([Uri]$Url, $Package, $Record) {
+  for ($redirect = 0; $redirect -lt 5; $redirect++) {
+    if (!$Url.IsAbsoluteUri -or $Url.Scheme -cne 'https' -or $Url.Port -ne 443 -or
+        $Url.UserInfo -or $Url.Fragment -or
+        $Url.Host -cnotin @('github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com')) {
+      throw 'Untrusted GitHub release asset redirect'
+    }
+    $request = [Net.HttpWebRequest]::Create($Url)
+    $request.AllowAutoRedirect = $false
+    $request.Timeout = 30000
+    $request.ReadWriteTimeout = 30000
+    $request.AutomaticDecompression = [Net.DecompressionMethods]::None
+    if ($request.ServicePoint.ConnectionLimit -lt 4) { $request.ServicePoint.ConnectionLimit = 4 }
+    $request.AddRange([long]$Record.offset, [long]($Record.offset + $Record.compressedBytes - 1))
+    $response = $request.GetResponse()
+    try {
+      if ([int]$response.StatusCode -in @(301,302,303,307,308)) {
+        $Url = [Uri]::new($Url, $response.Headers['Location'])
+        continue
+      }
+      Assert-OculumIncrementalRangeResponse $response.StatusCode $response.Headers['Content-Range'] `
+        $response.ContentLength $response.ContentEncoding $Package $Record
+      $result = $response
+      $response = $null
+      return $result
+    } finally { if ($response) { $response.Dispose() } }
+  }
+  throw 'GitHub release asset redirect limit reached'
+}
+
+function Save-OculumIncrementalRange($Package, $Record, [string]$Destination, [hashtable]$Transport) {
   $response = $null
   try {
-    for ($redirect = 0; $redirect -lt 5; $redirect++) {
-      if (!$url.IsAbsoluteUri -or $url.Scheme -cne 'https' -or $url.Port -ne 443 -or
-          $url.UserInfo -or $url.Fragment -or
-          $url.Host -cnotin @('github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com')) {
-        throw 'Untrusted GitHub release asset redirect'
+    $assetUri = if ($null -ne $Transport) { $Transport['assetUri'] } else { $null }
+    if ($assetUri) {
+      try {
+        $response = Get-OculumIncrementalRangeResponse $assetUri $Package $Record
+      } catch [Net.WebException] {
+        # A temporary asset URL can expire during a large update. Ask the
+        # official release for a fresh URL once, without changing the range.
+        $rejected = $_.Exception.Response
+        try {
+          if (!$rejected -or [int]$rejected.StatusCode -notin @(401,403,404,410)) { throw }
+        } finally { if ($rejected) { $rejected.Dispose() } }
       }
-      $request = [Net.HttpWebRequest]::Create($url)
-      $request.AllowAutoRedirect = $false
-      $request.Timeout = 30000
-      $request.ReadWriteTimeout = 30000
-      $request.AutomaticDecompression = [Net.DecompressionMethods]::None
-      $request.AddRange([long]$Record.offset, [long]($Record.offset + $Record.compressedBytes - 1))
-      $response = $request.GetResponse()
-      if ([int]$response.StatusCode -notin @(301,302,303,307,308)) { break }
-      $location = $response.Headers['Location']
-      $response.Dispose()
-      $response = $null
-      $url = [Uri]::new($url, $location)
     }
-    if (!$response) { throw 'GitHub release asset redirect limit reached' }
-    Assert-OculumIncrementalRangeResponse $response.StatusCode $response.Headers['Content-Range'] `
-      $response.ContentLength $response.ContentEncoding $Package $Record
+    if (!$response) { $response = Get-OculumIncrementalRangeResponse ([Uri]$Package.url) $Package $Record }
+    if ($null -ne $Transport -and $response.ResponseUri.Host -cne 'github.com') {
+      $Transport['assetUri'] = $response.ResponseUri
+    }
     $destinationStream = [IO.File]::Open($Destination, 'CreateNew', 'Write', 'None')
     try { Copy-OculumIncrementalExactBytes $response.GetResponseStream() $destinationStream $Record.compressedBytes }
     finally { $destinationStream.Dispose() }
@@ -287,7 +311,7 @@ function Save-OculumIncrementalRange($Package, $Record, [string]$Destination) {
   }
 }
 
-function Save-OculumIncrementalObject($Package, $Record, [string]$ObjectsRoot, [scriptblock]$ReadRange) {
+function Save-OculumIncrementalObject($Package, $Record, [string]$ObjectsRoot, [scriptblock]$ReadRange, [hashtable]$Transport) {
   $destination = Get-OculumIncrementalChild $ObjectsRoot "$($Record.sha256).bin"
   if (Test-OculumIncrementalFile $destination $Record) { return $destination }
   $nonce = [Guid]::NewGuid().ToString('N')
@@ -297,7 +321,11 @@ function Save-OculumIncrementalObject($Package, $Record, [string]$ObjectsRoot, [
     $output = [IO.File]::Open($temporary, 'CreateNew', 'Write', 'None')
     try {
       if ($Record.compressedBytes -gt 0) {
-        & $ReadRange $Package $Record $compressed | Out-Null
+        if ($ReadRange) {
+          & $ReadRange $Package $Record $compressed | Out-Null
+        } else {
+          Save-OculumIncrementalRange $Package $Record $compressed $Transport
+        }
         Assert-OculumIncrementalOrdinaryPath $compressed
         if ([IO.FileInfo]::new($compressed).Length -ne $Record.compressedBytes) { throw 'Incorrect downloaded ZIP range size' }
         $inputStream = [IO.File]::OpenRead($compressed)
@@ -322,6 +350,73 @@ function Save-OculumIncrementalObject($Package, $Record, [string]$ObjectsRoot, [
   }
 }
 
+function Save-OculumIncrementalDownloads {
+  param($Package, [object[]]$Records, [string]$ObjectsRoot, [scriptblock]$ReadRange)
+  $transport = [hashtable]::Synchronized(@{})
+  if ($Records.Count -le 1) {
+    foreach ($record in $Records) {
+      $path = Save-OculumIncrementalObject $Package $record $ObjectsRoot $ReadRange $transport
+      [pscustomobject]@{ Sha256 = $record.sha256; Path = $path }
+    }
+    return
+  }
+
+  $state = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+  foreach ($name in @(
+    'Assert-OculumIncrementalOrdinaryPath', 'Get-OculumIncrementalChild',
+    'Get-OculumIncrementalFileDigest', 'Test-OculumIncrementalFile',
+    'Copy-OculumIncrementalExactBytes', 'Assert-OculumIncrementalRangeResponse',
+    'Get-OculumIncrementalRangeResponse', 'Save-OculumIncrementalRange',
+    'Save-OculumIncrementalObject'
+  )) {
+    $definition = (Get-Command $name -CommandType Function).Definition
+    $state.Commands.Add([System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))
+  }
+  $worker = {
+    param($Archive, $Member, $Directory, $ReaderText, $Transport)
+    $ErrorActionPreference = 'Stop'
+    $reader = if ($ReaderText) { [scriptblock]::Create($ReaderText) } else { $null }
+    Save-OculumIncrementalObject $Archive $Member $Directory $reader $Transport
+  }
+  $readerText = if ($ReadRange) { $ReadRange.ToString() } else { $null }
+  $limit = [Math]::Min(4, $Records.Count)
+  $pool = [runspacefactory]::CreateRunspacePool(1, $limit, $state, $Host)
+  $active = [Collections.Generic.List[object]]::new()
+  $next = 0
+  try {
+    $pool.Open()
+    while ($next -lt $Records.Count -or $active.Count -gt 0) {
+      while ($active.Count -lt $limit -and $next -lt $Records.Count) {
+        $record = $Records[$next++]
+        $process = [powershell]::Create()
+        try {
+          $process.RunspacePool = $pool
+          [void]$process.AddScript($worker.ToString()).AddArgument($Package).AddArgument($record).
+            AddArgument($ObjectsRoot).AddArgument($readerText).AddArgument($transport)
+          $active.Add([pscustomobject]@{ Process = $process; Token = $process.BeginInvoke(); Record = $record })
+        } catch {
+          $process.Dispose()
+          throw
+        }
+      }
+      $handles = [Threading.WaitHandle[]]@($active | ForEach-Object { $_.Token.AsyncWaitHandle })
+      $ready = [Threading.WaitHandle]::WaitAny($handles)
+      $job = $active[$ready]
+      $active.RemoveAt($ready)
+      try {
+        $files = $job.Process.EndInvoke($job.Token)
+        if ($files.Count -ne 1) { throw "No verified file returned for $($job.Record.path)" }
+        [pscustomobject]@{ Sha256 = $job.Record.sha256; Path = [string]$files[0] }
+      } finally { $job.Process.Dispose() }
+    }
+  } finally {
+    foreach ($job in $active) {
+      try { $job.Process.Stop() } finally { $job.Process.Dispose() }
+    }
+    $pool.Dispose()
+  }
+}
+
 function Get-OculumIncrementalStageEntries([string]$Root) {
   $pending = [Collections.Generic.Stack[string]]::new()
   $pending.Push($Root)
@@ -342,7 +437,7 @@ function New-OculumIncrementalStage {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory = $true)]$Plan,
-    [scriptblock]$ReadRange = { param($package, $record, $file) Save-OculumIncrementalRange $package $record $file }
+    [scriptblock]$ReadRange
   )
   if ($Plan.IsNoOp) {
     return [pscustomobject]@{
@@ -361,16 +456,28 @@ function New-OculumIncrementalStage {
     $objects = [Collections.Generic.Dictionary[string,string]]::new($Plan.Satisfied, [StringComparer]::OrdinalIgnoreCase)
     $downloadCount = 0
     $downloadBytes = 0L
+    $remaining = [Collections.Generic.List[object]]::new()
     foreach ($file in @($Plan.Downloads.Values | Sort-Object -Property compressedBytes, path)) {
       $cached = Get-OculumIncrementalChild $Plan.ObjectsRoot "$($file.sha256).bin"
       if (Test-OculumIncrementalFile $cached $file) {
         $objects[$file.sha256] = $cached
       } else {
-        $objects[$file.sha256] = Save-OculumIncrementalObject $Plan.Target.Value.package $file $Plan.ObjectsRoot $ReadRange
+        $remaining.Add($file)
         if ($file.compressedBytes -gt 0) {
           $downloadCount++
           $downloadBytes += $file.compressedBytes
         }
+      }
+    }
+    if ($ReadRange) {
+      # Custom readers run in the caller's scope for existing integrations.
+      foreach ($file in $remaining) {
+        $objects[$file.sha256] = Save-OculumIncrementalObject $Plan.Target.Value.package $file $Plan.ObjectsRoot $ReadRange
+      }
+    } else {
+      $largestFirst = @($remaining | Sort-Object -Property compressedBytes -Descending)
+      foreach ($object in Save-OculumIncrementalDownloads $Plan.Target.Value.package $largestFirst $Plan.ObjectsRoot) {
+        $objects[$object.Sha256] = $object.Path
       }
     }
     $runtime = Get-OculumIncrementalChild $Plan.WorkRoot ("incremental-runtime-" + [Guid]::NewGuid().ToString('N'))

@@ -287,6 +287,112 @@ class IncrementalWindowsTests(unittest.TestCase):
         self.assertEqual(report["bytes"], len(current["data/second.dat"]))
         self.assertEqual((Path(report["RuntimeRoot"]) / "data/first.dat").read_bytes(), b"new")
 
+    def test_parallel_downloads_bound_workers_and_resume_verified_objects(self):
+        downloads = {f"data/parallel-{index}.dat": f"bytes-{index}".encode() for index in range(6)}
+        downloads["data/parallel-compressed.bin"] = b"deflated test bytes\n" * 8
+        cached_name = "data/parallel-cached.dat"
+        downloads[cached_name] = b"existing verified object"
+        corrupt_name = "data/parallel-corrupt.dat"
+        downloads[corrupt_name] = b"same length but different SHA"
+        target = self.create_manifest(90, RUNTIME | downloads)
+        objects = self.work / "objects"
+        objects.mkdir()
+        records = {digest(data): data for data in downloads.values()}
+        cached_hash = digest(downloads[cached_name])
+        originally_corrupt = downloads["data/parallel-0.dat"]
+        (objects / f"{cached_hash}.bin").write_bytes(downloads[cached_name])
+        (objects / f"{digest(originally_corrupt)}.bin").write_bytes(b"x" * len(originally_corrupt))
+
+        def run_batch(attempt, corrupt):
+            trace = self.work / attempt
+            trace.mkdir()
+            result = self.invoke(target, f"""
+                $settings = [pscustomobject]@{{
+                    url = $plan.Target.Value.package.url
+                    bytes = $plan.Target.Value.package.bytes
+                    sha256 = $plan.Target.Value.package.sha256
+                    source = $zipPath
+                    trace = {quote(trace)}
+                    corrupt = {quote(corrupt)}
+                    witness = {quote(objects / (digest(downloads['data/parallel-1.dat']) + '.bin'))}
+                }}
+                $records = @($plan.Target.Value.files | Where-Object {{ $_.path -like 'data/parallel-*' }})
+                $readRange = {{
+                    param($package, $record, $file)
+                    $log = [IO.Path]::Combine([string]$package.trace, [string]$record.sha256)
+                    [IO.File]::WriteAllText("$log.start", [Diagnostics.Stopwatch]::GetTimestamp().ToString())
+                    try {{
+                        if ($package.corrupt) {{
+                            $deadline = [Diagnostics.Stopwatch]::StartNew()
+                            while ([IO.Directory]::GetFiles($package.trace, '*.start').Length -lt 2) {{
+                                if ($deadline.Elapsed.TotalSeconds -gt 8) {{ throw 'No simultaneous range readers' }}
+                                [Threading.Thread]::Sleep(15)
+                            }}
+                            [Threading.Thread]::Sleep(350)
+                        }}
+                        $archive = [IO.File]::ReadAllBytes($package.source)
+                        $bytes = [byte[]]::new([int]$record.compressedBytes)
+                        [Array]::Copy($archive, $record.offset, $bytes, 0, $bytes.Length)
+                        if ($record.path -eq $package.corrupt) {{
+                            $deadline = [Diagnostics.Stopwatch]::StartNew()
+                            while (![IO.File]::Exists($package.witness)) {{
+                                if ($deadline.Elapsed.TotalSeconds -gt 8) {{ throw 'No verified peer object' }}
+                                [Threading.Thread]::Sleep(15)
+                            }}
+                            $bytes[0] = [byte]($bytes[0] -bxor 1)
+                        }}
+                        [IO.File]::WriteAllBytes($file, $bytes)
+                    }} finally {{
+                        [IO.File]::WriteAllText("$log.end", [Diagnostics.Stopwatch]::GetTimestamp().ToString())
+                    }}
+                }}
+                $saved = @(Save-OculumIncrementalDownloads -Package $settings -Records $records `
+                    -ObjectsRoot $plan.ObjectsRoot -ReadRange $readRange)
+                ConvertTo-Json -InputObject $saved -Compress
+            """)
+            started = {entry.stem: int(entry.read_text()) for entry in trace.glob("*.start")}
+            ended = {entry.stem: int(entry.read_text()) for entry in trace.glob("*.end")}
+            self.assertEqual(started.keys(), ended.keys())
+            self.assertFalse(list(objects.glob("*.partial")))
+            self.assertFalse(list(objects.glob("*.range")))
+            return result, started, ended
+
+        failed, started, ended = run_batch("parallel-first", corrupt_name)
+        self.assertNotEqual(failed.returncode, 0, failed.stdout)
+        self.assertIn("SHA-256", failed.stderr)
+        self.assertNotIn(cached_hash, started)
+        self.assertIn(digest(originally_corrupt), started)
+        changes = [(tick, 1) for tick in started.values()] + [(tick, -1) for tick in ended.values()]
+        active = peak = 0
+        for _, delta in sorted(changes):
+            active += delta
+            peak = max(peak, active)
+        self.assertGreaterEqual(peak, 2)
+        self.assertLessEqual(peak, 4)
+
+        failed_hash = digest(downloads[corrupt_name])
+        self.assertFalse((objects / f"{failed_hash}.bin").exists())
+        verified = {entry.stem: entry.stat().st_mtime_ns for entry in objects.glob("*.bin")}
+        self.assertIn(digest(downloads["data/parallel-1.dat"]), verified)
+        for checksum in verified:
+            self.assertEqual((objects / f"{checksum}.bin").read_bytes(), records[checksum])
+
+        recovered, retried, _ = run_batch("parallel-retry", "")
+        self.assertEqual(recovered.returncode, 0, recovered.stderr + recovered.stdout)
+        self.assertEqual(retried.keys(), records.keys() - verified.keys())
+        saved = json.loads(recovered.stdout)
+        self.assertEqual({row["Sha256"] for row in saved}, records.keys())
+        self.assertEqual(len(saved), len(records))
+        for row in saved:
+            checksum = row["Sha256"]
+            path = Path(row["Path"])
+            self.assertEqual(path, objects / f"{checksum}.bin")
+            self.assertEqual(path.read_bytes(), records[checksum])
+            if checksum in verified:
+                self.assertEqual(path.stat().st_mtime_ns, verified[checksum])
+        self.assertFalse((self.installed / corrupt_name).exists())
+        self.assertEqual((self.installed / "data/app.so").read_bytes(), RUNTIME["data/app.so"])
+
     def test_shared_cache_reuses_verified_objects_across_separate_attempts(self):
         content = b"resume candidate"
         target = self.create_manifest(83, RUNTIME | {"data/addition.dat": content})

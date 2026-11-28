@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "run": "20261127-2101",
+  "surface": "desktop",
+  "choices": [
+    {
+      "id": "element_pack_vento",
+      "name": "Nastri della burrasca",
+      "slot": "B",
+      "baseSlot": "B",
+      "baseSha256": "b7e1fd833bdb397c673d6b5838d57bc23778faa3d966787801f10edfd9928f72",
+      "sha256": "b7e1fd833bdb397c673d6b5838d57bc23778faa3d966787801f10edfd9928f72",
+      "originalSha256": "b6138a3495942967a707ff4df7eb65d8c1fe8e64d6df5d3eace40bcf655917c3",
+      "sourceWebP": "output/artwork/expressive_ink_player_20261117/element_pack_vento/B.webp",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_vento_canon_20261128_b_b7e1fd83.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "correction": null
+    },
+    {
+      "id": "vtt_obsidian_grid",
+      "name": "Griglia ossidiana",
+      "slot": "F",
+      "baseSlot": "F",
+      "baseSha256": "77bc6eda37e2476d9f215602e428284993e5e9e7b089321a4a4d68142b3d4cf3",
+      "sha256": "77bc6eda37e2476d9f215602e428284993e5e9e7b089321a4a4d68142b3d4cf3",
+      "originalSha256": "23dfc2154b38d91da11ca5a0bbe52b06b8de8184b33260e81169b93f15947a6f",
+      "sourceWebP": "output/artwork/expressive_ink_player_20261117/vtt_obsidian_grid/F.webp",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/vtt_obsidian_grid_canon_20261128_f_77bc6eda.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "correction": null
+    },
+    {
+      "id": "tidal_stained_glass",
+      "name": "Vetrata delle maree",
+      "slot": "C",
+      "baseSlot": "C",
+      "baseSha256": "6189d08daebd70d3e724b5c768dcd79b83fac50f3f38c78aeaccc8c63c121335",
+      "sha256": "6189d08daebd70d3e724b5c768dcd79b83fac50f3f38c78aeaccc8c63c121335",
+      "originalSha256": "e59aaa0b9edd80e616e16bf44bced52fcf07654a0f4e57bc01cf49285040d9fe",
+      "sourceWebP": "output/artwork/expressive_ink_player_20261117/tidal_stained_glass/C.webp",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/tidal_stained_glass_canon_20261128_c_6189d08d.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "correction": null
+    }
+  ]
+}

@@ -1211,6 +1211,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }) {
     notifyReferenceDetailChanged();
     grantFirstStatThresholdSkill();
+    ensureActiveSlimeForm();
     salvataggioMutazioneRevisione++;
     salvataggioMutazioneNota = true;
     if (appOculumInBackground || appOculumFocusTransition) {
@@ -1705,6 +1706,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       'selectedPlaneId': selectedPlaneId,
       for (final key in [
         'planarRuntime',
+        _slimeFormLearnedField,
         'receivedPartyQuestRewards',
         'lastDamageSourceTag',
         'lastDamageTitleItemIds',
@@ -3135,6 +3137,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     );
     restoreTemporaryOculumState(json);
     syncVisibleCurrentStatEditors();
+    ensureSlimeForm(json, loading: true);
 
     // Ogni scheda possiede dati e cache indipendenti. Senza questa
     // sincronizzazione un cambio scheda poteva riutilizzare formule, riepiloghi
@@ -4439,6 +4442,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       schedaCorrente = 0;
     }
 
+    ensureActiveSlimeForm();
     while (true) {
       final inputRevision = salvataggioMutazioneRevisione;
       final mutationKnown = salvataggioMutazioneNota;
@@ -4619,6 +4623,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
       schedaCorrente = 0;
     }
 
+    ensureActiveSlimeForm();
     final previous = Map<String, dynamic>.from(
       schedePersonaggio[schedaCorrente],
     );

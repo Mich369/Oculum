@@ -6,6 +6,16 @@ import 'oculum_theme_relic.dart';
 import 'oculum_narrative_atmosphere.dart';
 import 'oculum_focal_background.dart';
 
+// The creature catalogue and the canonical ice story use different stable IDs.
+String oculumMonsterPlaneFallbackAsset(String? realmId) {
+  final storyId = switch (realmId) {
+    'terre_di_ghiaccio' => 'ghiaccio',
+    null => 'mezzano',
+    final id => id,
+  };
+  return 'assets/oculum/theme_stories/webp/plane_$storyId.webp';
+}
+
 /// The entire decorative layer is excluded from input and accessibility.
 /// Controls remain ordinary Flutter widgets above it on readable surfaces.
 class OculumNarrativeBackground extends StatelessWidget {
@@ -42,7 +52,9 @@ class OculumNarrativeBackground extends StatelessWidget {
               ? monster?.illustrationMobile ?? monster?.illustration
               : monster?.illustration) ??
           (monster != null
-              ? 'assets/oculum/theme_stories/webp/plane_${monster.monster.planeIds.firstOrNull ?? 'mezzano'}.webp'
+              ? oculumMonsterPlaneFallbackAsset(
+                  monster.monster.planeIds.firstOrNull,
+                )
               : storyImage);
       return IgnorePointer(
         child: ExcludeSemantics(

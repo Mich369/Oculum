@@ -2,6 +2,100 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member, unused_element
 
+const _slimeFormLearnedField = 'slimeFormLearned';
+const _slimeFormSkillId = 'forma_slime';
+
+extension _OculumSlimeFormLearning on _OculumHomePageState {
+  void ensureActiveSlimeForm() {
+    if (!datiCaricati ||
+        loadingThresholdSheet ||
+        schedaCorrente < 0 ||
+        schedaCorrente >= schedePersonaggio.length) {
+      return;
+    }
+    ensureSlimeForm(schedePersonaggio[schedaCorrente]);
+  }
+
+  void ensureSlimeForm(Map<String, dynamic> sheet, {bool loading = false}) {
+    if (sheet[_slimeFormLearnedField] == true ||
+        readBoolValue(sheet['realtimeSharedSheet']) ||
+        readBoolValue(sheet['realtimeReadOnlyByMaster']) ||
+        readBoolValue(sheet['realtimeRestrictedByMaster'])) {
+      return;
+    }
+
+    final starterRace = trattiRazziali.any(
+      (trait) => const {'tutorial_race_slime', 'tutorial_race_mezzo_slime'}
+          .contains(trait.chiaveSistema),
+    );
+    if (!starterRace &&
+        !const {'slime', 'slime puro', 'mezzo slime'}.contains(
+          oculumNormalizeText(razzaVisibile()),
+        )) {
+      return;
+    }
+
+    const skillAliases = {'forma slime', 'slime form'};
+    if (skills.any(
+      (skill) => skillAliases.contains(oculumNormalizeText(skill.id)) ||
+          skillAliases.contains(oculumNormalizeText(skill.nome)),
+    )) {
+      // Keep the original skill, including its ID, edited name and forms.
+      sheet[_slimeFormLearnedField] = true;
+      return;
+    }
+    if ((stat35PermanentBaseStats()['materia'] ?? 0) < 12) return;
+
+    final rawSkills = sheet['skills'];
+    if (loading && rawSkills != null && rawSkills is! List) return;
+    final type = t('Passiva razziale', 'Racial passive');
+    final description = t(
+      'Appresa permanentemente con Materia base 12. Applica contatti, reazione e Assorbi manualmente al tavolo. Le regole sono nelle Note della forma.',
+      'Learned permanently at 12 base Matter. Resolve contact, the reaction, and Absorb manually at the table. See the form’s Notes for the rules.',
+    );
+    final skill = CharacterSkill(
+      id: _slimeFormSkillId,
+      nome: 'Forma Slime',
+      tipo: type,
+      costo: '',
+      cooldown: '',
+      descrizione: description,
+      forme: [
+        CharacterSkillForm(
+          nome: 'Forma I',
+          tipo: type,
+          descrizione: description,
+          // Passive descriptions are parsed by the combat engine. Notes keep
+          // these table rulings editable without applying them automatically.
+          note: t(
+            'Su un colpo riuscito, i contatti di Forza provocano un rimbalzo e i tagli fanno aderire ciò che tocca lo Slime. '
+                'Chi impugna un’arma aderente resta collegato allo Slime mentre la tiene. Attaccare con l’arma ancora infilzata '
+                'comporta una penalità di 2 al tiro per colpire e 5 punti aggiuntivi di Danni Taglienti.\n\n'
+                'Il contatto concede una Reazione gratuita dedicata, senza avanzare la turnistica. '
+                'Puoi attaccare tutti quelli rimasti collegati oppure usare Assorbi. Su ciascun avversario che fallisce la difesa, '
+                'Assorbi trasferisce allo Slime 1 punto per ciascuna statistica principale in Forma I, 3 in Forma II e 6 in Forma III. '
+                'Si parte dai punti già consumati dell’avversario. Bonus e penalità terminano al Riposo Breve o Lungo.',
+            'On a successful hit, forceful contact rebounds and cuts make what touched the Slime stick. '
+                'A wielder stays linked to the Slime while holding a stuck weapon. Attacking with that weapon while it remains '
+                'embedded gives a 2-point attack roll penalty and 5 extra Slashing Damage.\n\n'
+                'Contact grants a dedicated free reaction and leaves the turn order in place. '
+                'You can attack everyone still linked or use Absorb. From each opponent who fails their defence, Absorb '
+                'transfers 1 point from each main statistic to the Slime in Form I, 3 in Form II, and 6 in Form III. '
+                'Start with the opponent’s already spent points. Bonuses and penalties end at a Short or Long Rest.',
+          ),
+        ),
+      ],
+    );
+    skills.add(skill);
+    sheet[_slimeFormLearnedField] = true;
+    if (loading) {
+      sheet['skills'] = [if (rawSkills is List) ...rawSkills, skill.toJson()];
+    } else {
+      aggiungiLog(t('Forma Slime appresa.', 'Slime Form learned.'));
+    }
+  }
+}
+
 const oculumStatThresholdSkills = <String, List<Map<String, dynamic>>>{
   'volonta': [
     {

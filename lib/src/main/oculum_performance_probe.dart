@@ -902,6 +902,7 @@ class OculumPerformanceProbe {
       _state.itemDefenseBonus(item) +
       (_state.itemQuickBonuses(item)['difesa'] ?? 0);
   String get planeId => _state.selectedPlaneId;
+  Future<void> openMicroRealm() => _state.showCurrentMicroRealm();
   bool enterPartyWormhole(int natural) =>
       _state.enterPartyWormhole(natural: natural);
   Map<String, dynamic>? get partyWormhole => _state.activePartyWormhole;

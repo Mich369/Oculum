@@ -1126,10 +1126,9 @@ extension _OculumEscape on _OculumHomePageState {
           'grade': grade,
           'difficulty': difficulty,
           'sourceMonsterBookId': monsterId,
-          if (monsterBookEntryById(
-                monsterId,
-              )?.encounterRules['canHitIntangible'] ==
-              true)
+          if (oculumMonsterAttackCanHitIntangible(
+            monsterBookEntryById(monsterId),
+          ))
             'canHitIntangible': true,
           'effects': <Map<String, dynamic>>[],
           'status': 'pending',
