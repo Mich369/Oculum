@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Tavole dei mostri e pubblicazione — 28 novembre 2026
+
+- Nuove tavole desktop Expressive Ink per **Velario Uncinato** (C), **Occhio Quadrilama** (F), **Maschera della Memoria Spenta** (A), **Lavastrello** (E), **ThunderBird** (E) e **Nubyvriel** (D).
+- Dall’editor dei temi si possono scegliere la variante visiva **Verderame** di Velario Uncinato (I) e le varianti **Verderame** (I) e **Perla** (J) di Occhio Quadrilama, quando la creatura è disponibile per la scheda. Restano inalterate le statistiche e le probabilità delle colorazioni casuali.
+- Se GitHub ha già pubblicato e verificato tutti gli asset della stessa build, un rilancio controlla il manifesto Android e tre campioni dell’APK pubblico. Riutilizza l’archivio già disponibile ed evita di pubblicarlo una seconda volta.
+
 ## Accesso Google e aggiornamenti Android — 28 novembre 2026
 
 - L’accesso Google avvia il browser anche quando il telefono segnala per un momento che la rete è assente. Se il ritorno fallisce o il tentativo è già stato usato, puoi ripartire dal pulsante di accesso. Oculum conserva i salvataggi locali e l’identità del profilo durante un tentativo fallito.

@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-28",
+  "entries": [
+    {
+      "monsterId": "velario_uncinato",
+      "name": "Velario Uncinato",
+      "slot": "C",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_velario_uncinato_ink_20261128.webp",
+      "sha256": "61f17686f247705ee97efb39a1ca0179355123a12adc3bfa62730b7c758cd263",
+      "originalSha256": "33ce684bba3c7aa9e5f004ed9984fdff22e228a99e3097717c46a07a36f33be5",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "monsterId": "velario_uncinato",
+      "name": "Velario Uncinato",
+      "slot": "I",
+      "role": "visual_alternative",
+      "cosmeticKey": "ink_verderame",
+      "asset": "assets/oculum/home_art_authored/theme_velario_uncinato_alt_verderame_ink_20261128.webp",
+      "sha256": "77f93a6954b16191777e36d593695a06a58fba2ef89160293b9a6da6530abc75",
+      "originalSha256": "e57bf9079c7a29ad4af9ead697e88b638d87e151356e21c9d4291955e515b59b",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "monsterId": "occhio_quadrilama",
+      "name": "Occhio Quadrilama",
+      "slot": "F",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_occhio_quadrilama_ink_20261128.webp",
+      "sha256": "144f7cb9106ab870e0d2c5fd6c1fc5ca36020977ff3ebd1132e5d5d480a8d074",
+      "originalSha256": "9cf39eb0d5812ebf10eb36a30c70981b4e856458fad8b1800e65fa7db7f2182f",
+      "dimensions": [
+        1586,
+        992
+      ]
+    },
+    {
+      "monsterId": "occhio_quadrilama",
+      "name": "Occhio Quadrilama",
+      "slot": "I",
+      "role": "visual_alternative",
+      "cosmeticKey": "ink_verderame",
+      "asset": "assets/oculum/home_art_authored/theme_occhio_quadrilama_alt_verderame_ink_20261128.webp",
+      "sha256": "44f97a79a2eb63270bee127a8a9ae1d44806e2fc9599376208265fc962865fb4",
+      "originalSha256": "645487e02c19ad7c07c5d7cc3f6ce1c582fc743089a928abb981edec9ba62fc6",
+      "dimensions": [
+        1585,
+        992
+      ]
+    },
+    {
+      "monsterId": "occhio_quadrilama",
+      "name": "Occhio Quadrilama",
+      "slot": "J",
+      "role": "visual_alternative",
+      "cosmeticKey": "ink_perla",
+      "asset": "assets/oculum/home_art_authored/theme_occhio_quadrilama_alt_perla_ink_20261128.webp",
+      "sha256": "1676697253173b4369e207d2744389cbbc4bd38b7f49d486de7b76fbd1fcc57b",
+      "originalSha256": "ab282de642825a79cfcb34e6d18336db7b006fd932bb3a9603bd7cda0825e277",
+      "dimensions": [
+        1586,
+        992
+      ]
+    },
+    {
+      "monsterId": "habitat_oblio_maschera_della_memoria_spenta",
+      "name": "Maschera della memoria spenta",
+      "slot": "A",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_habitat_oblio_maschera_della_memoria_spenta_ink_20261128.webp",
+      "sha256": "b35f38e552732acf4fb076910b806d22e8ee581533606fbc017c62f43d7557a2",
+      "originalSha256": "0bfd05bb8952f6e04f1800558eca65ec595ca84e0096ecda359c83a57531f433",
+      "dimensions": [
+        1586,
+        992
+      ]
+    },
+    {
+      "monsterId": "lavastrello",
+      "name": "Lavastrello",
+      "slot": "E",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_lavastrello_ink_20261128.webp",
+      "sha256": "9a742f98072b914524135c1d5a9aaad48c8ac3f95ec3b8d95132445aad96c080",
+      "originalSha256": "478dd66ed47aad9d07d44ee3c263bef5b5dc3e0939ed06b6e3695b8cad22b770",
+      "dimensions": [
+        1586,
+        992
+      ]
+    },
+    {
+      "monsterId": "thunderbird",
+      "name": "ThunderBird",
+      "slot": "E",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_thunderbird_ink_20261128.webp",
+      "sha256": "ebc657f024aab3e22ed36de95560b52ca88d3fdae4e223e10a21d59549a8425b",
+      "originalSha256": "bd82b640e3b41813f2b31080dde1fe5a6688d2d205d41e87915f9d80ad105d29",
+      "dimensions": [
+        1586,
+        992
+      ]
+    },
+    {
+      "monsterId": "nuvola_in_bottiglia",
+      "name": "Nubyvriel",
+      "slot": "D",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_nuvola_in_bottiglia_ink_20261128.webp",
+      "sha256": "1bd44a56e80d6ef112730cc5ba60c659855a9a9ba0da88c5d650ac5f703f678f",
+      "originalSha256": "24c2f9184ab8335343f5d13b673ec5014bef8964dca1eb226051b54e1874f206",
+      "dimensions": [
+        1586,
+        992
+      ]
+    }
+  ]
+}

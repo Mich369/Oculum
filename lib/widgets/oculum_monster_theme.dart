@@ -156,6 +156,20 @@ List<OculumCreatureColor> oculumMonsterColors(MonsterBookEntry monster) {
       Color.lerp(color, const Color(0xffdfd6c4), .35)!,
       10,
     ),
+    if (id == 'velario_uncinato' || id == 'occhio_quadrilama')
+      const OculumCreatureColor(
+        'ink_verderame',
+        'Verderame',
+        Color(0xff8aab9c),
+        0,
+      ),
+    if (id == 'occhio_quadrilama')
+      const OculumCreatureColor(
+        'ink_perla',
+        'Nervo di perla',
+        Color(0xffbda5c7),
+        0,
+      ),
   ];
 }
 
@@ -844,10 +858,33 @@ class OculumMonsterTheme {
       'assets/oculum/home_art/relic_guardiano_solare_v2.png',
     _ => null,
   };
-  String? get illustration =>
-      oculumMonsterArtworkAsset(desktopIllustrationForId(monster.id));
+  static const _selectedInkAlternativeAssets = <(String, String), String>{
+    (
+      'velario_uncinato',
+      'ink_verderame',
+    ): 'assets/oculum/home_art_authored/theme_velario_uncinato_alt_verderame_ink_20261128.webp',
+    (
+      'occhio_quadrilama',
+      'ink_verderame',
+    ): 'assets/oculum/home_art_authored/theme_occhio_quadrilama_alt_verderame_ink_20261128.webp',
+    (
+      'occhio_quadrilama',
+      'ink_perla',
+    ): 'assets/oculum/home_art_authored/theme_occhio_quadrilama_alt_perla_ink_20261128.webp',
+  };
+
+  String? get illustration => oculumMonsterArtworkAsset(
+    _selectedInkAlternativeAssets[(monster.id, color.id)] ??
+        desktopIllustrationForId(monster.id),
+  );
 
   static const _selectedInkDesktopIds = {
+    'velario_uncinato',
+    'occhio_quadrilama',
+    'habitat_oblio_maschera_della_memoria_spenta',
+    'lavastrello',
+    'thunderbird',
+    'nuvola_in_bottiglia',
     'armadillo_corazzato_variante_placche_scolpite',
     'armadillo_corazzato_variante_scaglie_larghe',
     'costrutto_minore',
