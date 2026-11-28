@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -172,5 +174,67 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
     variant: const TargetPlatformVariant({TargetPlatform.android}),
+  );
+
+  test(
+    'every scroll can be cast by the guest with guest-only costs and effects',
+    () {
+      for (final scroll in LiteScroll.values) {
+        final run = LiteRun(
+          seed: 251,
+          hero: LiteHero.evasore,
+          weapon: LiteWeapon.arco,
+          playerCount: 2,
+        );
+        expect(
+          run.addCoopFighter(
+            'guest',
+            'Ospite',
+            LiteHero.duplicatore,
+            LiteWeapon.scettro,
+          ),
+          isTrue,
+        );
+        final fighter = run.coopFighter('guest')!
+          ..oculum = 50
+          ..shield = 0;
+        fighter.hp = fighter.maxHp / 2;
+        fighter.supply.scrolls[scroll] = 1;
+        final hostOculum = run.oculum;
+        final hostShield = run.shield;
+        final hostStock = run.scrolls[scroll.index];
+        final target = fighter.position + const Point<double>(3, 0);
+        expect(
+          run.castRestScroll(scroll, target, fighter),
+          isTrue,
+          reason: scroll.name,
+        );
+        expect(fighter.oculum, 50 - scroll.cost);
+        expect(fighter.supply.scrolls[scroll], 0);
+        expect(run.oculum, hostOculum);
+        expect(run.shield, hostShield);
+        expect(run.scrolls[scroll.index], hostStock);
+        switch (scroll) {
+          case LiteScroll.velo:
+            expect(fighter.shield, 15);
+          case LiteScroll.richiamo:
+            expect(
+              run.clones.any(
+                (ally) => ally.ownerId == fighter.id && ally.summoned,
+              ),
+              isTrue,
+            );
+          case LiteScroll.dardo || LiteScroll.raggioAlPlasma:
+            expect(
+              run.projectiles.any((shot) => shot.sourceCloneId == fighter.id),
+              isTrue,
+            );
+          case LiteScroll.linfaVerde:
+            expect(fighter.hp, closeTo(fighter.maxHp * .70, 1e-6));
+          default:
+            break;
+        }
+      }
+    },
   );
 }

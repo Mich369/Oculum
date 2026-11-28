@@ -738,35 +738,30 @@ extension LiteRestHub on LiteRun {
   ) {
     final cost = scroll.cost;
     final kit = fighter.supply;
+    final count = kit.scrolls[scroll] ?? 0;
     if (finished ||
         restHub ||
         fighter.hero == LiteHero.doppelganger ||
         cost > fighter.oculum ||
         fighter.hp <= 0 ||
+        !fighter.connected ||
         fighter.blocking ||
+        gripRemaining(fighter) > 0 ||
+        banditRopes(fighter) > 0 ||
         fighter._night.stun > 0 ||
-        kit.scrolls[scroll] == null ||
-        kit.scrolls[scroll]! <= 0 ||
-        fighter._hubCastCooldown > 0)
+        fighter._night.bat > 0 ||
+        count <= 0 ||
+        fighter._hubCastCooldown > 0 ||
+        (scroll == LiteScroll.richiamo && !_scrollSummonAvailable(fighter))) {
       return false;
-    final aim = LiteRun._unit(target - fighter.position);
-    if (aim.magnitude == 0 && scroll != LiteScroll.linfaVerde) return false;
-    switch (scroll) {
-      case LiteScroll.braceErrante:
-        _launchFireball(fighter.position, aim, 22, 3, fighter.id);
-      case LiteScroll.spaccaterra:
-        _fissure(fighter.position, aim, 7.8, 29, fighter.id);
-      case LiteScroll.falciLunari:
-        _lunarVolley(fighter.position, aim, 14, owner: fighter.id);
-      case LiteScroll.linfaVerde:
-        fighter.hp = min(fighter.maxHp, fighter.hp + fighter.maxHp * .20);
-        fighter._block.recover(fighter.weapon);
-      default:
-        return false;
     }
+    final aimed = LiteRun._unit(target - fighter.position);
+    final direction = aimed.magnitude > 0 ? aimed : fighter.aim;
+    _openAssassinBox(fighter);
     fighter.oculum -= cost;
-    kit.scrolls[scroll] = kit.scrolls[scroll]! - 1;
+    kit.scrolls[scroll] = count - 1;
     fighter._hubCastCooldown = .46;
+    _applyScrollEffect(scroll, direction, 1.0, fighter);
     return true;
   }
 

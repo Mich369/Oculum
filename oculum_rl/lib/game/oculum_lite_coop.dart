@@ -353,7 +353,14 @@ class OculumLiteCoop extends ChangeNotifier {
   void equipRestArt(LiteRestItem item) => _orderRest('equipArt', item.name);
   void castHostScroll(int slot) {
     final world = authority;
-    if (!canAct || world == null || world.restHub) return;
+    if (!canAct ||
+        world == null ||
+        world.restHub ||
+        world.hostDown ||
+        world.gripRemaining() > 0 ||
+        world.banditRopes() > 0) {
+      return;
+    }
     world.castScroll(slot, aim ?? world.position + world.aim);
   }
 
