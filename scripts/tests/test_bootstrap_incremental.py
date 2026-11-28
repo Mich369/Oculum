@@ -51,7 +51,7 @@ class BootstrapIncrementalWindowsTests(unittest.TestCase):
             cache = root / "Local AppData" / "com.example" / "oculum"
             for script in ("Oculum-Aggiornamento-Incrementale.ps1", "incremental_driver.ps1", "update.ps1"):
                 shutil.copyfile(WORK / script, work_bundle / script)
-            shutil.copyfile(PROJECT / "scripts/oculum_incremental_windows.ps1",
+            shutil.copyfile(PROJECT / "assets/update/oculum_incremental_windows.ps1",
                             work_bundle / "oculum_incremental_windows.ps1")
             zip_name = f"{artifact}-Folder.zip"
             manifest_name = f"{artifact}-Incrementale.json"
