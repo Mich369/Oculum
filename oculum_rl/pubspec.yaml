@@ -1,7 +1,7 @@
 name: oculum_rl
 description: "Oculum RL, campagna roguelite 2D"
 publish_to: none
-version: 0.4.28+33
+version: 0.4.29+34
 
 environment:
   sdk: ^3.13.1
@@ -28,6 +28,7 @@ flutter:
     - assets/fonts/licenses/
     - assets/oculum/lite/
     - assets/oculum/lite/audio/
+    - assets/oculum/lite/audio/alert-lines/
   fonts:
     - family: Poppins
       fonts:

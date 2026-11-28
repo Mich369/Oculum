@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game/oculum_lite_run.dart';
 import '../widgets/oculum_lite_appearance.dart';
+import 'oculum_lite_grimoire.dart';
 import 'oculum_lite_save_files.dart';
 import 'oculum_save_profile.dart';
 
@@ -21,12 +22,39 @@ class OculumLiteProgress {
     this.slimeCounters = const {},
     this.upgrades = const {},
     this.milestoneFloors = const {},
+    this.grimoire = const LiteProfileGrimoire.empty(),
   });
 
   final int bestClearedFloor;
   final bool scostubanditoUnlocked;
   final Set<LiteHero> unlockedHeroes;
   final Map<LiteDifficulty, int> milestoneFloors;
+  final LiteProfileGrimoire grimoire;
+
+  /// Record an accepted learning event after settling any applicable cost.
+  OculumLiteProgress learnArt(LiteLearnedArt art) =>
+      _withGrimoire(grimoire.learn(art));
+
+  OculumLiteProgress equipGrimoire(
+    String characterId,
+    LiteHero hero,
+    int slot,
+    LiteGrimoireAction? action,
+  ) => _withGrimoire(grimoire.equip(characterId, hero, slot, action));
+
+  OculumLiteProgress _withGrimoire(LiteProfileGrimoire next) {
+    if (identical(next, grimoire)) return this;
+    return OculumLiteProgress(
+      bestClearedFloor: bestClearedFloor,
+      scostubanditoUnlocked: scostubanditoUnlocked,
+      unlockedHeroes: unlockedHeroes,
+      discoveredPets: discoveredPets,
+      slimeCounters: slimeCounters,
+      upgrades: upgrades,
+      milestoneFloors: milestoneFloors,
+      grimoire: next,
+    );
+  }
 
   int clearedFor(LiteDifficulty minimum) => milestoneFloors.entries
       .where((entry) => entry.key.index >= minimum.index)
@@ -112,6 +140,7 @@ class OculumLiteProgress {
         ...improvedMilestones,
       }),
       upgrades: upgrades,
+      grimoire: grimoire,
     );
   }
 
@@ -126,6 +155,7 @@ class OculumLiteProgress {
       slimeCounters: slimeCounters,
       milestoneFloors: milestoneFloors,
       upgrades: Map.unmodifiable({...upgrades, upgrade: rank + 1}),
+      grimoire: grimoire,
     );
   }
 
@@ -144,6 +174,7 @@ class OculumLiteProgress {
     if (discoveredPets.isNotEmpty)
       'pets': discoveredPets.map((pet) => pet.name).toList(),
     if (slimeCounters.isNotEmpty) 'slimeCounters': slimeCounters,
+    if (!grimoire.isEmpty) 'grimoire': grimoire.toJson(),
   });
 
   static OculumLiteProgress decode(String source) {
@@ -183,6 +214,7 @@ class OculumLiteProgress {
             pet,
       }),
       upgrades: Map.unmodifiable(LitePermanentUpgrade.read(data['upgrades'])),
+      grimoire: LiteProfileGrimoire.fromJson(data['grimoire']),
     );
     if (profile.unspent < 0) throw const FormatException('Sigilli non validi');
     return profile;

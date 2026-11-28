@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oculum_rl/game/oculum_lite_audio.dart';
+import 'package:oculum_rl/game/oculum_lite_coop.dart';
 import 'package:oculum_rl/game/oculum_lite_run.dart';
 
 LiteRun arena(LiteHero hero, {int players = 1}) =>
@@ -15,7 +17,77 @@ LiteRun arena(LiteHero hero, {int players = 1}) =>
       ..obstacles.clear()
       ..enemies.clear();
 
+class _RecordedAudio extends OculumLiteAudio {
+  final effects = <String>[];
+
+  @override
+  void playEffect(String name) => effects.add(name);
+}
+
 void main() {
+  test('a guest hears one dash even at a late floor frame rate', () {
+    final master = arena(LiteHero.evasore, players: 2);
+    expect(
+      master.addCoopFighter(
+        'guest',
+        'Ospite',
+        LiteHero.evasore,
+        LiteWeapon.guanti,
+      ),
+      isTrue,
+    );
+    master.stage = 24;
+    final fighter = master.coopFighter('guest')!
+      ..position = const Point(12, 13);
+    final guest = OculumLiteCoop(
+      runId: 'audio-qa',
+      localAccount: 'guest',
+      send: (_) async => true,
+    );
+    final audio = _RecordedAudio();
+    addTearDown(guest.dispose);
+    addTearDown(audio.dispose);
+
+    void receive(int frame) {
+      guest.receive(
+        {
+          'kind': 'playState',
+          'runId': 'audio-qa',
+          'frame': frame,
+          'world': master.toJson(includeEffects: true),
+        },
+        account: 'master',
+        sessionId: 'master',
+        verifiedMaster: true,
+      );
+      audio.burstSound(guest.run!, fighter.id);
+    }
+
+    receive(1);
+    expect(
+      master.setCoopControls(
+        'guest',
+        const Point(0, 0),
+        const Point(20, 13),
+        attack: false,
+        dash: true,
+      ),
+      isTrue,
+    );
+    for (var tick = 0; tick < 8; tick++) {
+      master.advanceFrame(.02);
+    }
+    receive(2);
+    final trace = guest.run!.burstTraceFor(fighter.id)!;
+    expect(guest.run!.time - trace.startedAt, greaterThan(.24));
+    expect(audio.effects, ['scatto-inchiostro']);
+
+    receive(2);
+    master.advanceFrame(.02);
+    receive(3);
+    expect(audio.effects, ['scatto-inchiostro']);
+  });
+
   test('Shift leaves a trace on the travelled side of cover and fades', () {
     final run = arena(LiteHero.evasore);
     run.obstacles.add(LiteObstacle(13.4, 9, 1, 4));

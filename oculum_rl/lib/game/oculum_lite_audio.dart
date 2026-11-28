@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/oculum_save_profile.dart';
+import 'oculum_lite_alert_dialogue.dart';
 import 'oculum_lite_run.dart';
 
 class OculumLiteAudio {
@@ -13,6 +14,7 @@ class OculumLiteAudio {
   static const defaultEffectsVolume = .50;
   AudioPlayer? _music;
   AudioPlayer? _merchantVoice;
+  AudioPlayer? _alertVoice;
   AudioPlayer? _shadowRay;
   Future<void> _rayTransition = Future.value();
   bool _rayWanted = false;
@@ -20,6 +22,10 @@ class OculumLiteAudio {
   Future<void> _transition = Future.value();
   Future<void> _voiceTransition = Future.value();
   int _voiceRequest = 0;
+  Future<void> _alertTransition = Future.value();
+  int _alertRequest = 0;
+  bool _alertPreparing = false;
+  Future<Set<String>>? _bundledAssets;
   String? _wantedTrack;
   String? _loadedTrack;
   bool _closed = false;
@@ -124,6 +130,12 @@ class OculumLiteAudio {
     if (voice != null) {
       unawaited(_try(() => voice.setVolume(muted ? 0 : effectsVolume)));
     }
+    final alert = _alertVoice;
+    if (muted || effectsVolume == 0) {
+      stopAlert();
+    } else if (alert != null) {
+      unawaited(_try(() => alert.setVolume(effectsVolume * .86)));
+    }
   }
 
   void _updateRay(bool active) {
@@ -170,7 +182,10 @@ class OculumLiteAudio {
           LiteImpactTarget.emberRebirth => ('sentenza', 4),
           LiteImpactTarget.artCast => ('colpo', 2),
           LiteImpactTarget.chamberStrike => ('sentenza', 4),
-          LiteImpactTarget.bestiaryCast when impact.life == 1 => ('sentenza', 2),
+          LiteImpactTarget.bestiaryCast when impact.life == 1 => (
+            'sentenza',
+            2,
+          ),
           LiteImpactTarget.bestiaryCast => ('scatto-inchiostro', 2),
           LiteImpactTarget.frontierCast when impact.life == 5 => ('scudo', 2),
           LiteImpactTarget.frontierCast => ('scatto-arcano', 2),
@@ -194,7 +209,10 @@ class OculumLiteAudio {
 
   void burstSound(LiteRun run, int fighterId) {
     final trace = run.burstTraceFor(fighterId);
-    if (trace == null || run.time - trace.startedAt > .24) return;
+    // World time accelerates with the floor, but co-op frames arrive on real time.
+    if (trace == null || run.time - trace.startedAt > .24 * run.arenaSpeed) {
+      return;
+    }
     final key = (run.seed, fighterId, trace.startedAt, trace.kind);
     if (_lastBurst == key) return;
     _lastBurst = key;
@@ -221,6 +239,64 @@ class OculumLiteAudio {
         );
       }),
     );
+  }
+
+  bool get alertSpeaking =>
+      !_closed &&
+      !muted &&
+      effectsVolume > 0 &&
+      (_alertPreparing || _alertVoice?.state == PlayerState.playing);
+
+  void playAlert(LiteAlertDialogue line) {
+    if (_closed || muted || effectsVolume == 0) return;
+    final request = ++_alertRequest;
+    _alertPreparing = true;
+    _alertTransition = _alertTransition.then((_) async {
+      try {
+        await _try(() async {
+          if (!_acceptAlert(request)) return;
+          final asset = await _alertAsset(line);
+          if (!_acceptAlert(request)) return;
+          final player = _alertVoice ??= AudioPlayer();
+          await player.stop();
+          if (!_acceptAlert(request)) return;
+          await player.play(
+            AssetSource('$_prefix$asset.wav'),
+            volume: effectsVolume * .86,
+          );
+        });
+      } finally {
+        if (request == _alertRequest) _alertPreparing = false;
+      }
+    });
+  }
+
+  bool _acceptAlert(int request) =>
+      !_closed && !muted && effectsVolume > 0 && request == _alertRequest;
+
+  Future<String> _alertAsset(LiteAlertDialogue line) async {
+    final key = line.spokenKey;
+    if (key == null) return line.sound.asset;
+    final voice = 'alert-lines/$key';
+    try {
+      final assets = await (_bundledAssets ??=
+          AssetManifest.loadFromAssetBundle(rootBundle)
+              .then((manifest) => manifest.listAssets().toSet()));
+      if (assets.contains('assets/$_prefix$voice.wav')) return voice;
+    } catch (_) {
+      // A build without the offline speech bank still has every sound motif.
+    }
+    return line.sound.asset;
+  }
+
+  void stopAlert() {
+    _alertRequest++;
+    _alertPreparing = false;
+    if (_alertVoice != null) {
+      _alertTransition = _alertTransition.then(
+        (_) => _try(() async => _alertVoice?.stop()),
+      );
+    }
   }
 
   void playMerchantGreeting(String name) {
@@ -254,6 +330,9 @@ class OculumLiteAudio {
 
   void dispose() {
     _closed = true;
+    unawaited(
+      _alertTransition.then((_) => _try(() async => _alertVoice?.dispose())),
+    );
     unawaited(
       _rayTransition.then(
         (_) => _try(() async {

@@ -429,6 +429,7 @@ extension LiteSecondAct on LiteRun {
       enemy.cooldown += i * .14;
       if (i == chamberIndex) _seatChampion(enemy);
     }
+    _placeBushAmbush();
     _syncInfernalPact();
     message =
         'Atto II · ${realm!.label} · Visitazione $actRoom/$actTwoRooms'

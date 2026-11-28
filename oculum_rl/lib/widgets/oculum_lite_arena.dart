@@ -14,6 +14,7 @@ export 'oculum_lite_appearance.dart';
 part 'oculum_lite_creator_paint.dart';
 part 'oculum_lite_combat_paint.dart';
 part 'oculum_lite_world_ink_paint.dart';
+part 'oculum_lite_bush_paint.dart';
 part 'oculum_lite_art_paint.dart';
 part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_plague_paint.dart';
@@ -222,7 +223,13 @@ class OculumLiteArena extends StatefulWidget {
   static const infernalArt = AssetImage('assets/oculum/lite/infernali-ink.png');
   static const lusierArt = AssetImage('assets/oculum/lite/lusier-iii-ink.webp');
   static const bunnysArt = AssetImage('assets/oculum/lite/bunnys-ink.webp');
+  static const costruttoMinoreMotion = AssetImage(
+    'assets/oculum/lite/costrutto-minore-andature-ink.webp',
+  );
   static const bestiaryBodies = <LiteEnemyKind, AssetImage>{
+    LiteEnemyKind.miruscyrus: AssetImage(
+      'assets/oculum/lite/miruscyrus-movimento-ink.webp',
+    ),
     LiteEnemyKind.moscaCampana: AssetImage('assets/oculum/lite/mosca-campana-andature-ink.webp'),
     LiteEnemyKind.armadilloCorazzato: AssetImage('assets/oculum/lite/armadillo-corazzato-andature-ink.webp'),
   };
@@ -517,6 +524,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.lusierArt,
         OculumLiteArena.bunnysArt,
         ...OculumLiteArena.bestiaryBodies.values,
+        OculumLiteArena.costruttoMinoreMotion,
         OculumLiteArena.forgeMotion,
         OculumLiteArena.smithCombat,
         OculumLiteArena.veyrthMotion,
@@ -2180,6 +2188,15 @@ class _ArenaPaint extends CustomPainter {
     }
     final pads = run.dashPads;
     final local = follow ?? run.position;
+    final localBush = run.bushAt(local);
+    bool masked(math.Point<double> target) => run.bushBlocksSight(local, target);
+    final controlled = followedFighterId == null
+        ? null
+        : run.coopFighters
+              .where((fighter) => fighter.id == followedFighterId)
+              .firstOrNull;
+    final quiet = controlled?.stride.walking ?? run.quietSteps;
+    final spotting = run.spottingWarningRemaining(controlled);
     for (final (index, pad) in pads.indexed) {
       final at = _offset(pad);
       if (!visible.inflate(.55).contains(at)) continue;
@@ -2188,6 +2205,14 @@ class _ArenaPaint extends CustomPainter {
       _paintDashSeal(canvas, at, index == 0 ? 1 : -1, power, time);
     }
     final jobs = _jobs..clear();
+    final concealed = localBush != null;
+    for (final bush in run.concealmentBushes) {
+      final at = _offset(bush.center);
+      if (!visible.inflate(bush.radiusX).contains(at)) continue;
+      _paintBush(canvas, bush);
+      jobs.add((at.dy + bush.radiusY * .74,
+        () => _paintBush(canvas, bush, foreground: true)));
+    }
     for (final obstacle in run.obstacles) {
       final rect = Rect.fromLTWH(
         obstacle.left,
@@ -2512,7 +2537,9 @@ class _ArenaPaint extends CustomPainter {
       for (final animal in run.fauna) {
         final species = LiteAnimal.forCreature(animal.kind);
         final at = _offset(animal.position);
-        if (species == null || !visible.contains(at)) continue;
+        if (species == null || !visible.contains(at) || masked(animal.position)) {
+          continue;
+        }
         _shadow(canvas, at, .46, .17);
         if (run.faunaAggressive) {
           _oval(
@@ -2585,7 +2612,21 @@ class _ArenaPaint extends CustomPainter {
                 (flight.end! - flight.position) *
                     (1 - math.pow(1 - phase, 2).toDouble());
       final at = _offset(ground);
-      final onCamera = visible.contains(at);
+      final occupiedBush = run.bushAt(ground);
+      if (occupiedBush != null && occupiedBush != localBush) continue;
+      final onCamera = visible.contains(at) && !masked(ground);
+      final visionGuard = enemy.guard;
+      if (onCamera &&
+          enemy.hp > 0 &&
+          visionGuard != null &&
+          visionGuard.mode != LiteGuardMode.allerta &&
+          enemy.position.distanceTo(local) <= 9) {
+        _paintVisionFan(
+          canvas,
+          at,
+          run.guardVisionOutline(enemy, quiet: quiet),
+        );
+      }
       final target = enemy.attackTarget;
       if (enemy.burrow case final track?) {
         _burrowWarning(canvas, enemy, track);
@@ -2670,7 +2711,35 @@ class _ArenaPaint extends CustomPainter {
             () {
               if (flight != null && phase < 1)
                 canvas.rotate(-.20 * math.sin(phase * math.pi));
-              if (OculumLiteArena.bestiaryBodies.containsKey(enemy.kind)) {
+              if (dropImages[OculumLiteArena.costruttoMinoreMotion]?.image
+                  case final atlas? when enemy.kind == LiteEnemyKind.costrutto) {
+                _paintCostruttoMinore(
+                  canvas,
+                  atlas,
+                  enemy,
+                  animationLead,
+                  fallProgress: flight == null ? 1 : phase,
+                );
+                return;
+              }
+              if (enemy.kind == LiteEnemyKind.miruscyrus &&
+                  _heroSprites.bestiary[enemy.kind] != null) {
+                _paintMiruscyrus(
+                  canvas,
+                  _heroSprites.bestiary[enemy.kind]!,
+                  enemy.stride,
+                  animationLead,
+                  fallen: enemy.hp <= 0,
+                  fallProgress: flight == null ? 1 : phase,
+                  dashing: _enemyIsDashing(enemy),
+                  winding: enemy.attacking,
+                  release: enemy.strikePose,
+                  hurt: enemy.hitFlash,
+                );
+                return;
+              }
+              if (enemy.kind != LiteEnemyKind.miruscyrus &&
+                  OculumLiteArena.bestiaryBodies.containsKey(enemy.kind)) {
                 if (_heroSprites.bestiary[enemy.kind] case final atlas?) {
                   _paintBestiaryBody(canvas, atlas, enemy.kind, enemy.stride,
                     time, animationLead, fallen: enemy.hp <= 0,
@@ -3276,7 +3345,7 @@ class _ArenaPaint extends CustomPainter {
     }
     for (final clone in run.clones) {
       final at = _offset(clone.position);
-      if (!visible.contains(at)) continue;
+      if (!visible.contains(at) || masked(clone.position)) continue;
       if (clone.forgedWeapon) {
         jobs.add((at.dy, () => _paintForgedWeapon(canvas, clone, at, time)));
         continue;
@@ -3708,7 +3777,7 @@ class _ArenaPaint extends CustomPainter {
     }
     for (final fighter in run.coopFighters) {
       final at = _offset(fighter.position);
-      if (!visible.contains(at)) continue;
+      if (!visible.contains(at) || masked(fighter.position)) continue;
       final direction = _offset(fighter.weaponAim);
       final phase = fighter.hero == LiteHero.evasore
           ? _activePhase(run.burstTraceFor(fighter.id), time)
@@ -3847,7 +3916,10 @@ class _ArenaPaint extends CustomPainter {
                 releaseAge,
               ),
             );
-          }, pigment: _heroLivery(fighter.hero, standard.inkFinish));
+          }, pigment: _concealedHeroPigment(
+            _heroLivery(fighter.hero, standard.inkFinish),
+            run.bushAt(fighter.position) != null,
+          ));
           _health(
             canvas,
             at - Offset(0, 2.45 + growth * 1.08),
@@ -3888,7 +3960,7 @@ class _ArenaPaint extends CustomPainter {
         player,
         run.blockResistance / run.maxBlockResistance,
       );
-    jobs.add((
+    if (!masked(run.position)) jobs.add((
       player.dy,
       () {
         _actor(canvas, player, facing, 1, () {
@@ -3973,7 +4045,10 @@ class _ArenaPaint extends CustomPainter {
               releaseAge,
             ),
           );
-        }, pigment: _heroLivery(run.hero, appearance.inkFinish));
+        }, pigment: _concealedHeroPigment(
+          _heroLivery(run.hero, appearance.inkFinish),
+          run.bushAt(run.position) != null,
+        ));
         if (run.playerCount > 1) {
           _health(
             canvas,
@@ -3990,6 +4065,8 @@ class _ArenaPaint extends CustomPainter {
       job.$2();
     }
     jobs.clear();
+    if (concealed) _paintBushCoverMark(canvas, _offset(local));
+    if (spotting > 0) _paintSpottingWarning(canvas, _offset(local), spotting);
     _paintNightLink(canvas, run, run.night, run.position, time);
     for (final fighter in run.coopFighters) {
       _paintNightLink(canvas, run, fighter.night, fighter.position, time);
@@ -4010,7 +4087,7 @@ class _ArenaPaint extends CustomPainter {
     }
     for (final enemy in run.enemies) {
       final at = _offset(enemy.position);
-      if (!visible.contains(at)) continue;
+      if (!visible.contains(at) || masked(enemy.position)) continue;
       if (enemy.preparingSpheres) {
         _paintVeyrthSphereRing(canvas, enemy, time, animationLead);
       }
@@ -4117,7 +4194,7 @@ class _ArenaPaint extends CustomPainter {
       }
     }
     for (final projectile in run.projectiles) {
-      if (projectile.age < 0) continue;
+      if (projectile.age < 0 || masked(projectile.position)) continue;
       if (visible.contains(_offset(projectile.position))) {
         var finish = LiteInkFinish.canonica;
         if (projectile.kind == LiteProjectileKind.posteaRay ||
@@ -6311,42 +6388,6 @@ void _paintNightLink(
   }
 }
 
-void _paintBat(Canvas canvas, double time) {
-  final a = math.sin(time * 21) * .32;
-  final h = -1.32 + math.sin(time * 10) * .14;
-  final at = Offset(0, h);
-  for (final side in [-1.0, 1.0]) {
-    _poly(
-      canvas,
-      [
-        at,
-        Offset(.34 * side, h - .18 - a),
-        Offset(.92 * side, h - .41 - a),
-        Offset(.64 * side, h + .19),
-        Offset(.34 * side, h + .13),
-        Offset(.24 * side, h + .28),
-      ],
-      const Color(0xff692c50),
-      stroke: const Color(0xff1b1021),
-      width: .055,
-    );
-  }
-  _oval(
-    canvas,
-    at,
-    .23,
-    .34,
-    const Color(0xff282131),
-    stroke: const Color(0xffbd5375),
-    strokeWidth: .045,
-  );
-  canvas.drawCircle(
-    at + const Offset(.10, -.10),
-    .041,
-    Paint()..color = const Color(0xffff627b),
-  );
-}
-
 int? _newHeroRow(LiteHero hero, bool giant) => switch (hero) {
   LiteHero.curatorePeste => giant ? 1 : 0,
   LiteHero.pyrel => 6,
@@ -6572,13 +6613,15 @@ void _animalSprite(
   bool talent, {
   bool hero = false,
   bool fallen = false,
+  int? frameOverride,
 }) {
   final side = art.width / 4.0;
-  final frame = talent
-      ? 3
-      : attacking
-      ? 2
-      : _strideFrame(stride, .92, animationLead);
+  final frame = frameOverride ??
+      (talent
+          ? 3
+          : attacking
+          ? 2
+          : _strideFrame(stride, .92, animationLead));
   final size = hero ? 2.4 : 1.47;
   canvas.save();
   if (fallen) {
@@ -6674,7 +6717,22 @@ void _hero(
   final openRelease = openAge >= 0 && openAge < .16;
   final openRecovery = openAge >= .16 && openAge < .33;
   final bodyKind = mimic?.kind ?? hero.sprite;
-  if (OculumLiteArena.bestiaryBodies.containsKey(bodyKind)) {
+  if (bodyKind == LiteEnemyKind.miruscyrus && sprites.bestiary[bodyKind] != null) {
+    _paintMiruscyrus(
+      canvas,
+      sprites.bestiary[bodyKind]!,
+      stride,
+      animationLead,
+      fallen: fallen,
+      fallProgress: ((fallAge ?? .53) / .53).clamp(0, 1),
+      dashing: dashing,
+      winding: preparingAttack || preparingTalent,
+      release: weaponStrike,
+    );
+    return;
+  }
+  if (bodyKind != LiteEnemyKind.miruscyrus &&
+      OculumLiteArena.bestiaryBodies.containsKey(bodyKind)) {
     if (sprites.bestiary[bodyKind] case final atlas?) {
       _paintBestiaryBody(canvas, atlas, bodyKind!, stride, time, animationLead,
         fallen: fallen, dashing: dashing,
@@ -6910,7 +6968,21 @@ void _hero(
   final infernalActors = sprites.infernal;
   if ((night?.veil ?? 0) > 0 && hero == LiteHero.slimeBlu) return;
   if ((night?.bat ?? 0) > 0 && hero == LiteHero.vampiro && !fallen) {
-    _paintBat(canvas, time);
+    if (faunaActors != null) {
+      canvas.save();
+      canvas.translate(0, -.29 + .12 * math.sin(time * 10));
+      _animalSprite(
+        canvas,
+        faunaActors,
+        LiteAnimal.pipistrello,
+        null,
+        animationLead,
+        false,
+        false,
+        frameOverride: (time * 9.5).floor() % 2,
+      );
+      canvas.restore();
+    }
     return;
   }
   final infernalGait = switch (hero) {

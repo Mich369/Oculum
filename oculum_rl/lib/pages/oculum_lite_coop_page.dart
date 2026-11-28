@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../game/oculum_lite_alert_dialogue.dart';
 import '../game/oculum_lite_audio.dart';
 import '../game/oculum_lite_coop.dart';
 import '../game/oculum_lite_run.dart';
+import '../widgets/oculum_lite_alert_subtitle.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_routes.dart';
@@ -32,6 +34,11 @@ class OculumLiteCoopPage extends StatefulWidget {
 class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   final _focus = FocusNode(debugLabel: 'Oculum RL cooperativa');
   final _audio = OculumLiteAudio();
+  late final _alerts = LiteAlertPresenter(
+    play: _audio.playAlert,
+    stop: _audio.stopAlert,
+    speaking: () => _audio.alertSpeaking,
+  );
   final _held = <LogicalKeyboardKey>{};
   Point<double> _touch = const Point(0, 0);
   bool _touchWalk = false;
@@ -52,6 +59,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   void dispose() {
     _session.removeListener(_updateMusic);
     _session.stop();
+    _alerts.dispose();
     _audio.dispose();
     _focus.dispose();
     super.dispose();
@@ -73,7 +81,19 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       run,
       playing: run != null && !run.finished && !_session.pausedByHost,
     );
-    final fighterId = _session.host ? 0 : _session.localFighter?.id;
+    final local = _session.localFighter;
+    final fighterId = _session.host ? 0 : local?.id;
+    _alerts.update(
+      run,
+      session: _session,
+      viewerId: fighterId,
+      playing:
+          run != null &&
+          !_session.pausedByHost &&
+          _session.canAct &&
+          !run.finished &&
+          (_session.host ? !run.hostDown : (local?.hp ?? 0) > 0),
+    );
     if (run != null &&
         !run.finished &&
         !_session.pausedByHost &&
@@ -555,247 +575,262 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                     bottom: 12,
                     left: 12,
                     right: 12,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (limits.maxWidth < 720)
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              FilterChip(
-                                label: const Text('Cammina'),
-                                selected: _touchWalk,
-                                onSelected: (selected) {
-                                  setState(() => _touchWalk = selected);
-                                  _setMove();
-                                },
-                              ),
-                              _movePad(),
-                            ],
-                          )
-                        else
-                          const SizedBox(),
-                        Flexible(
-                          child: Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            alignment: WrapAlignment.end,
-                            children: [
-                              if (limits.maxWidth < 720) ...[
-                                FilledButton.tonal(
-                                  onPressed: _session.fire,
-                                  child: const Text('Attacca'),
-                                ),
-                                FilledButton.tonal(
-                                  onPressed: _session.talent,
-                                  child: Text(hero?.talentName ?? 'Talento'),
-                                ),
-                                FilledButton.tonal(
-                                  onPressed: _session.dash,
-                                  child: const Text('Scatto'),
-                                ),
-                              ],
-                              if (hero != null)
-                                FilledButton.tonal(
-                                  onPressed:
-                                      run.restHub ||
-                                          openRecovery > 0 ||
-                                          (mine?.oculum ?? run.oculum) <
-                                              LiteRun.granSummonCost
-                                      ? null
-                                      : _session.useOpen,
-                                  child: Text(
-                                    openRecovery > 0
-                                        ? 'Open · $openRecovery ${openRecovery == 1 ? 'stanza' : 'stanze'}'
-                                        : 'Open $openGrade · ${hero.openName}',
+                        OculumLiteAlertSubtitle(presenter: _alerts),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (limits.maxWidth < 720)
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  FilterChip(
+                                    label: const Text('Cammina'),
+                                    selected: _touchWalk,
+                                    onSelected: (selected) {
+                                      setState(() => _touchWalk = selected);
+                                      _setMove();
+                                    },
                                   ),
-                                ),
-                              if (hero == LiteHero.lusierTre)
-                                FilledButton.tonal(
-                                  onPressed: _session.callSolarRetinue,
-                                  child: Text(
-                                    'B · Scorta · ${(mine?.supply ?? run.supply).lusierCards}/12 carte',
-                                  ),
-                                ),
-                              if (hero == LiteHero.reGoblin)
-                                FilledButton.tonal(
-                                  onPressed: _session.rifleSkill,
-                                  child: const Text('Richiamo reale · Q'),
-                                ),
-                              if (hero == LiteHero.slimeBlu)
-                                FilledButton.tonal(
-                                  onPressed: _session.rifleSkill,
-                                  child: const Text('Scia invisibile · Q'),
-                                ),
-                              if (hero == LiteHero.scostubandito)
-                                FilledButton.tonal(
-                                  onPressed: _session.rifleSkill,
-                                  child: const Text('Fucile schivata · G'),
-                                ),
-                              if (hero == LiteHero.reGoblin)
-                                FilledButton.tonal(
-                                  onPressed: _session.rifleSkill,
-                                  child: const Text('Richiamo reale · Q'),
-                                ),
-                              if (hero == LiteHero.slimeBlu)
-                                FilledButton.tonal(
-                                  onPressed: _session.rifleSkill,
-                                  child: const Text('Scia invisibile · Q'),
-                                ),
-                              if (hero == LiteHero.scostubandito)
-                                FilledButton.tonal(
-                                  onPressed:
-                                      (mine?.bombCooldown ?? run.bombCooldown) >
-                                          0
-                                      ? null
-                                      : _session.bomb,
-                                  child: const Text('Bomba · B'),
-                                ),
-                              OculumLiteBlockControl(
-                                resistance:
-                                    mine?.blockResistance ??
-                                    run.blockResistance,
-                                capacity:
-                                    mine?.maxBlockResistance ??
-                                    run.maxBlockResistance,
-                                active: mine?.blocking ?? run.blocking,
-                                onHeld: _session.setBlocking,
-                              ),
-                              if (run.hasPowerWell && !run.powerWellClaimed)
-                                FilledButton.tonal(
-                                  onPressed: () => _showWell(run),
-                                  child: const Text('Offerte del pozzo'),
-                                ),
-                              if (_session.host && run.powerOffers.isNotEmpty)
-                                FilledButton.tonal(
-                                  onPressed: () => _choosePower(run),
-                                  child: const Text('Potenziamento squadra'),
-                                ),
-                              if (run.hasWeaponArt(mine) &&
-                                  hero != LiteHero.scostubandito)
-                                Tooltip(
-                                  message: '3 Oculum · recupero 4,2 s',
-                                  child: FilledButton.tonal(
-                                    onPressed:
-                                        (mine?.weaponArtCooldown ??
-                                                run.weaponArtCooldown) >
-                                            0
-                                        ? null
-                                        : _session.weaponTechnique,
-                                    child: Text(
-                                      'G · ${run.weaponArtLabel(mine)}',
-                                    ),
-                                  ),
-                                ),
-                              if (_session.host &&
-                                  (run.canClaimActRelic ||
-                                      run.actRelics.isNotEmpty))
-                                FilledButton.tonal(
-                                  onPressed: () => _openRelics(run),
-                                  child: const Text('Reliquie'),
-                                ),
-                              if (run.restHub && _session.canAct)
-                                FilledButton.tonal(
-                                  onPressed: _openBotteghe,
-                                  child: const Text('Botteghe'),
-                                ),
-                              if (_session.host)
-                                for (final slot in [0, 1, 2, 3])
-                                  if (run.scrolls[run
-                                          .equippedScrolls[slot]
-                                          .index] >
-                                      0)
+                                  _movePad(),
+                                ],
+                              )
+                            else
+                              const SizedBox(),
+                            Flexible(
+                              child: Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                alignment: WrapAlignment.end,
+                                children: [
+                                  if (limits.maxWidth < 720) ...[
                                     FilledButton.tonal(
-                                      onPressed: () =>
-                                          _session.castHostScroll(slot),
+                                      onPressed: _session.fire,
+                                      child: const Text('Attacca'),
+                                    ),
+                                    FilledButton.tonal(
+                                      onPressed: _session.talent,
                                       child: Text(
-                                        run.equippedScrolls[slot].label,
+                                        hero?.talentName ?? 'Talento',
                                       ),
                                     ),
-                              if (mine != null)
-                                for (final entry in mine.supply.scrolls.entries)
-                                  if (entry.value > 0)
+                                    FilledButton.tonal(
+                                      onPressed: _session.dash,
+                                      child: const Text('Scatto'),
+                                    ),
+                                  ],
+                                  if (hero != null)
+                                    FilledButton.tonal(
+                                      onPressed:
+                                          run.restHub ||
+                                              openRecovery > 0 ||
+                                              (mine?.oculum ?? run.oculum) <
+                                                  LiteRun.granSummonCost
+                                          ? null
+                                          : _session.useOpen,
+                                      child: Text(
+                                        openRecovery > 0
+                                            ? 'Open · $openRecovery ${openRecovery == 1 ? 'stanza' : 'stanze'}'
+                                            : 'Open $openGrade · ${hero.openName}',
+                                      ),
+                                    ),
+                                  if (hero == LiteHero.lusierTre)
+                                    FilledButton.tonal(
+                                      onPressed: _session.callSolarRetinue,
+                                      child: Text(
+                                        'B · Scorta · ${(mine?.supply ?? run.supply).lusierCards}/12 carte',
+                                      ),
+                                    ),
+                                  if (hero == LiteHero.reGoblin)
+                                    FilledButton.tonal(
+                                      onPressed: _session.rifleSkill,
+                                      child: const Text('Richiamo reale · Q'),
+                                    ),
+                                  if (hero == LiteHero.slimeBlu)
+                                    FilledButton.tonal(
+                                      onPressed: _session.rifleSkill,
+                                      child: const Text('Scia invisibile · Q'),
+                                    ),
+                                  if (hero == LiteHero.scostubandito)
+                                    FilledButton.tonal(
+                                      onPressed: _session.rifleSkill,
+                                      child: const Text('Fucile schivata · G'),
+                                    ),
+                                  if (hero == LiteHero.reGoblin)
+                                    FilledButton.tonal(
+                                      onPressed: _session.rifleSkill,
+                                      child: const Text('Richiamo reale · Q'),
+                                    ),
+                                  if (hero == LiteHero.slimeBlu)
+                                    FilledButton.tonal(
+                                      onPressed: _session.rifleSkill,
+                                      child: const Text('Scia invisibile · Q'),
+                                    ),
+                                  if (hero == LiteHero.scostubandito)
+                                    FilledButton.tonal(
+                                      onPressed:
+                                          (mine?.bombCooldown ??
+                                                  run.bombCooldown) >
+                                              0
+                                          ? null
+                                          : _session.bomb,
+                                      child: const Text('Bomba · B'),
+                                    ),
+                                  OculumLiteBlockControl(
+                                    resistance:
+                                        mine?.blockResistance ??
+                                        run.blockResistance,
+                                    capacity:
+                                        mine?.maxBlockResistance ??
+                                        run.maxBlockResistance,
+                                    active: mine?.blocking ?? run.blocking,
+                                    onHeld: _session.setBlocking,
+                                  ),
+                                  if (run.hasPowerWell && !run.powerWellClaimed)
+                                    FilledButton.tonal(
+                                      onPressed: () => _showWell(run),
+                                      child: const Text('Offerte del pozzo'),
+                                    ),
+                                  if (_session.host &&
+                                      run.powerOffers.isNotEmpty)
+                                    FilledButton.tonal(
+                                      onPressed: () => _choosePower(run),
+                                      child: const Text(
+                                        'Potenziamento squadra',
+                                      ),
+                                    ),
+                                  if (run.hasWeaponArt(mine) &&
+                                      hero != LiteHero.scostubandito)
+                                    Tooltip(
+                                      message: '3 Oculum · recupero 4,2 s',
+                                      child: FilledButton.tonal(
+                                        onPressed:
+                                            (mine?.weaponArtCooldown ??
+                                                    run.weaponArtCooldown) >
+                                                0
+                                            ? null
+                                            : _session.weaponTechnique,
+                                        child: Text(
+                                          'G · ${run.weaponArtLabel(mine)}',
+                                        ),
+                                      ),
+                                    ),
+                                  if (_session.host &&
+                                      (run.canClaimActRelic ||
+                                          run.actRelics.isNotEmpty))
+                                    FilledButton.tonal(
+                                      onPressed: () => _openRelics(run),
+                                      child: const Text('Reliquie'),
+                                    ),
+                                  if (run.restHub && _session.canAct)
+                                    FilledButton.tonal(
+                                      onPressed: _openBotteghe,
+                                      child: const Text('Botteghe'),
+                                    ),
+                                  if (_session.host)
+                                    for (final slot in [0, 1, 2, 3])
+                                      if (run.scrolls[run
+                                              .equippedScrolls[slot]
+                                              .index] >
+                                          0)
+                                        FilledButton.tonal(
+                                          onPressed: () =>
+                                              _session.castHostScroll(slot),
+                                          child: Text(
+                                            run.equippedScrolls[slot].label,
+                                          ),
+                                        ),
+                                  if (mine != null)
+                                    for (final entry
+                                        in mine.supply.scrolls.entries)
+                                      if (entry.value > 0)
+                                        FilledButton.tonal(
+                                          onPressed: () =>
+                                              _session.useRestScroll(entry.key),
+                                          child: Text(entry.key.label),
+                                        ),
+                                  if (run.activeArt(mine) case final art?
+                                      when !run.restHub)
+                                    FilledButton.tonal(
+                                      onPressed: _session.castLearnedArt,
+                                      child: Text('E · ${art.label}'),
+                                    ),
+                                  if (run.extraArt(mine) case final art?
+                                      when !run.restHub)
                                     FilledButton.tonal(
                                       onPressed: () =>
-                                          _session.useRestScroll(entry.key),
-                                      child: Text(entry.key.label),
+                                          _session.castLearnedArt(extra: true),
+                                      child: Text('Z · ${art.label}'),
                                     ),
-                              if (run.activeArt(mine) case final art?
-                                  when !run.restHub)
-                                FilledButton.tonal(
-                                  onPressed: _session.castLearnedArt,
-                                  child: Text('E · ${art.label}'),
-                                ),
-                              if (run.extraArt(mine) case final art?
-                                  when !run.restHub)
-                                FilledButton.tonal(
-                                  onPressed: () =>
-                                      _session.castLearnedArt(extra: true),
-                                  child: Text('Z · ${art.label}'),
-                                ),
-                              if (!run.restHub && run.nearDashPad(mine))
-                                FilledButton.tonal(
-                                  onPressed: _session.dash,
-                                  child: const Text(
-                                    'Shift · Aggancia la pedana',
-                                  ),
-                                ),
-                              if (_session.host && run.canEnterThirdAct)
-                                FilledButton(
-                                  onPressed: _session.enterThirdAct,
-                                  child: const Text('Entra nell’Atto III'),
-                                ),
-                              if (!run.finished &&
-                                  _redGrip == 0 &&
-                                  (_session.canRescue || rescueStatus != null))
-                                _rescueControl(rescueStatus)
-                              else if (!run.finished)
-                                FilledButton(
-                                  onPressed: _interact,
-                                  child: Text(
-                                    _redGrip > 0
-                                        ? 'Presa di Baghest · Premi R · $_redGrip'
-                                        : _session.host &&
-                                              run.canChallengeBaghest
-                                        ? 'Sfida Baghest · R'
-                                        : _session.host &&
-                                              run.canEnterSolarDungeon
-                                        ? 'Scendi le scale d’oro · R'
-                                        : _session.host &&
-                                              run.solarBossWaiting &&
-                                              run.hasPortalNearby
-                                        ? 'Sfida il Guardiano Solare · R'
-                                        : run.canSpeakToVampire(mine)
-                                        ? 'Parla col Vampiro · R'
-                                        : run.canSpeakToReysercth(mine)
-                                        ? 'Officina Reysercth · R'
-                                        : run.canSpeakToPetTrader(mine)
-                                        ? 'Parla col Bandito dei pet · R'
-                                        : restStation != null
-                                        ? (restStation ==
-                                                      LiteRestStation.forge &&
-                                                  run.partyHasSmith
-                                              ? 'Usa la forgia · R'
-                                              : 'Parla con ${run.restStationName(restStation)} · R')
-                                        : _session.canRest
-                                        ? 'Ristoro · R'
-                                        : _session.nearPortal(
-                                            _session.localAccount,
-                                          )
-                                        ? (run.inDesertEye
-                                              ? 'Varco di ritorno · R'
-                                              : run.awaitsRestHub
-                                              ? 'Sala di ristoro · R'
-                                              : _session.host &&
-                                                    run.canChooseActTwo
-                                              ? 'Entra nell’Atto II · R'
-                                              : 'Conferma portale')
-                                        : 'Ricarica · R',
-                                  ),
-                                ),
-                            ],
-                          ),
+                                  if (!run.restHub && run.nearDashPad(mine))
+                                    FilledButton.tonal(
+                                      onPressed: _session.dash,
+                                      child: const Text(
+                                        'Shift · Aggancia la pedana',
+                                      ),
+                                    ),
+                                  if (_session.host && run.canEnterThirdAct)
+                                    FilledButton(
+                                      onPressed: _session.enterThirdAct,
+                                      child: const Text('Entra nell’Atto III'),
+                                    ),
+                                  if (!run.finished &&
+                                      _redGrip == 0 &&
+                                      (_session.canRescue ||
+                                          rescueStatus != null))
+                                    _rescueControl(rescueStatus)
+                                  else if (!run.finished)
+                                    FilledButton(
+                                      onPressed: _interact,
+                                      child: Text(
+                                        _redGrip > 0
+                                            ? 'Presa di Baghest · Premi R · $_redGrip'
+                                            : _session.host &&
+                                                  run.canChallengeBaghest
+                                            ? 'Sfida Baghest · R'
+                                            : _session.host &&
+                                                  run.canEnterSolarDungeon
+                                            ? 'Scendi le scale d’oro · R'
+                                            : _session.host &&
+                                                  run.solarBossWaiting &&
+                                                  run.hasPortalNearby
+                                            ? 'Sfida il Guardiano Solare · R'
+                                            : run.canSpeakToVampire(mine)
+                                            ? 'Parla col Vampiro · R'
+                                            : run.canSpeakToReysercth(mine)
+                                            ? 'Officina Reysercth · R'
+                                            : run.canSpeakToPetTrader(mine)
+                                            ? 'Parla col Bandito dei pet · R'
+                                            : restStation != null
+                                            ? (restStation ==
+                                                          LiteRestStation
+                                                              .forge &&
+                                                      run.partyHasSmith
+                                                  ? 'Usa la forgia · R'
+                                                  : 'Parla con ${run.restStationName(restStation)} · R')
+                                            : _session.canRest
+                                            ? 'Ristoro · R'
+                                            : _session.nearPortal(
+                                                _session.localAccount,
+                                              )
+                                            ? (run.inDesertEye
+                                                  ? 'Varco di ritorno · R'
+                                                  : run.awaitsRestHub
+                                                  ? 'Sala di ristoro · R'
+                                                  : _session.host &&
+                                                        run.canChooseActTwo
+                                                  ? 'Entra nell’Atto II · R'
+                                                  : 'Conferma portale')
+                                            : 'Ricarica · R',
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

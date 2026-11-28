@@ -1472,6 +1472,10 @@ void main() {
     expect(run.stride.distance, beforeWall);
     expect(run.stride.strength, lessThan(.01));
 
+    run.obstacles.clear();
+    enemy.position = const Point(3, 8);
+    enemy.guard?.facing = const Point(1, 0);
+    run.position = const Point(4.5, 8);
     enemy.windup = .02;
     enemy.attackTarget = run.position;
     run.step(.04);

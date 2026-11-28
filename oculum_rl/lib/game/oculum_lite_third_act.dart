@@ -262,6 +262,7 @@ extension LiteThirdAct on LiteRun {
       if (i == championIndex && kind != LiteEnemyKind.aerovyr)
         _seatChampion(enemy);
     }
+    _placeBushAmbush();
     message = 'Atto III · ${room.label} · $thirdRoom/${rooms.length}';
   }
 

@@ -123,3 +123,87 @@ void _paintBestiaryCue(Canvas canvas, LiteCombatImpact impact, double age) {
     );
   }
 }
+
+void _paintMiruscyrus(
+  Canvas canvas,
+  ui.Image atlas,
+  LiteStride? stride,
+  double lead, {
+  required bool fallen,
+  required double fallProgress,
+  required bool dashing,
+  required bool winding,
+  required double release,
+  double hurt = 0,
+}) {
+  const slowSteps = [1, 0, 2, 0];
+  const fastSteps = [3, 4, 11, 4];
+  final speed = stride?.speed ?? 0;
+  final fast =
+      speed >= LiteEnemyKind.miruscyrus.speed * .87 && stride?.walking != true;
+  final travel = (stride?.distance ?? 0) + speed * lead;
+  final step = (travel * (fast ? 4.5 : 3.8)).floor() % 4;
+  final strike = math.max(0.0, release - lead);
+  final frame = switch ((fallen, dashing, winding, strike)) {
+    (true, _, _, _) => fallProgress < .62 ? 9 : 7,
+    (_, _, _, > .115) => 6,
+    (_, _, _, > 0) => 10,
+    (_, true, _, _) => 8,
+    (_, _, true, _) => 5,
+    _ when hurt > lead => 9,
+    _ when speed < .08 => 0,
+    _ => (fast ? fastSteps : slowSteps)[step],
+  };
+
+  const cell = 256.0;
+  const size = 3.45;
+  final source = Rect.fromLTWH(
+    (frame % 4) * cell,
+    (frame ~/ 4) * cell,
+    cell,
+    cell,
+  );
+  const destination = Rect.fromLTWH(-size / 2, -size * 235 / cell, size, size);
+  canvas.drawImageRect(atlas, source, destination, _monsterSampler);
+  if (!fallen && frame == 6) {
+    _paintMantisEdge(
+      canvas,
+      const Rect.fromLTRB(-1.47, -2.05, 1.47, -.12),
+      (strike / .24).clamp(0, 1),
+    );
+  }
+}
+
+void _paintCostruttoMinore(
+  Canvas canvas,
+  ui.Image atlas,
+  LiteEnemy enemy,
+  double lead, {
+  required double fallProgress,
+}) {
+  const walking = [1, 0, 2, 0];
+  const running = [1, 3, 2, 3];
+  final speed = enemy.stride.speed;
+  final hurrying = speed >= enemy.kind.speed * .9;
+  final travel = enemy.stride.distance + speed * lead;
+  final step = (travel * (hurrying ? 3.8 : 3.1)).floor() % 4;
+  final frame = switch (enemy) {
+    _ when enemy.hp <= 0 => fallProgress < .57 ? 6 : 7,
+    _ when enemy.strikePose > lead => 5,
+    _ when enemy.attacking => 4,
+    _ when enemy.hitFlash > lead => 6,
+    _ when _enemyIsDashing(enemy) => 3,
+    _ when speed < .065 => 0,
+    _ => (hurrying ? running : walking)[step],
+  };
+  const cell = 256.0;
+  const size = 2.68;
+  final source = Rect.fromLTWH(
+    (frame % 4) * cell,
+    (frame ~/ 4) * cell,
+    cell,
+    cell,
+  );
+  const destination = Rect.fromLTWH(-size / 2, -size * 235 / cell, size, size);
+  canvas.drawImageRect(atlas, source, destination, _monsterSampler);
+}

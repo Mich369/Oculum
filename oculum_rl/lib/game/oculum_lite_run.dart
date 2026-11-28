@@ -11,6 +11,8 @@ part 'oculum_lite_third_act.dart';
 part 'oculum_lite_arena_events.dart';
 part 'oculum_lite_floor_map.dart';
 part 'oculum_lite_stealth.dart';
+part 'oculum_lite_bushes.dart';
+part 'oculum_lite_alerts.dart';
 part 'oculum_lite_baghest.dart';
 part 'oculum_lite_chambers.dart';
 part 'oculum_lite_art_selection.dart';
@@ -160,8 +162,14 @@ enum LiteHero {
     'Corteo di cenere',
     'Raduni i nemici davanti a te in un grande sudario che rallenta e danneggia.',
   ),
-  moscaCampana('Rintocco delle due campane', 'Diffondi un rintocco che danneggia e stordisce i nemici in cerchio. Boss ed Elité si riprendono prima.'),
-  armadilloCorazzato('Carapace in corsa', 'Ti chiudi a palla e rotoli protetto. Speroni i nemici e ricevi Scudo.');
+  moscaCampana(
+    'Rintocco delle due campane',
+    'Diffondi un rintocco che danneggia e stordisce i nemici in cerchio. Boss ed Elité si riprendono prima.',
+  ),
+  armadilloCorazzato(
+    'Carapace in corsa',
+    'Ti chiudi a palla e rotoli protetto. Speroni i nemici e ricevi Scudo.',
+  );
 
   const LiteHero(this.openName, this.openDescription);
 
@@ -311,7 +319,8 @@ enum LiteHero {
     funerys =>
       'Dai il colpo di grazia a una Funerys nella Cripta della Campana Cieca.',
     moscaCampana => 'Dai il colpo di grazia a una Mosca Campana in Foresta.',
-    armadilloCorazzato => 'Dai il colpo di grazia a un Armadillo Corazzato in Foresta.',
+    armadilloCorazzato =>
+      'Dai il colpo di grazia a un Armadillo Corazzato in Foresta.',
     _ => null,
   };
 
@@ -2669,6 +2678,7 @@ class LiteRun {
   final List<LiteObstacle> obstacles = [];
   final List<LiteLoot> loot = [];
   final List<LiteCombatImpact> _combatImpacts = [];
+  final _alertSignals = _LiteAlertSignals();
   final _burstTraces = <int, LiteBurstTrace>{};
   Iterable<LiteBurstTrace> get burstTraces => _burstTraces.values;
   LiteBurstTrace? burstTraceFor(int fighterId) => _burstTraces[fighterId];
@@ -2687,6 +2697,11 @@ class LiteRun {
   int maxDodgeCharges = 1;
   int dodgeLevel = 0;
   double time = 0;
+  double _sightClock = 0;
+  String? _sightArena;
+  final _humanSpotting = <int, _LiteSpotting>{};
+  final _aggressiveSight = <int, LiteGuard>{};
+  List<_LiteSeenActor> _humanEyes = const [];
   bool stageClear = false;
   bool eliteDefeated = false;
   bool dead = false;
@@ -2865,7 +2880,8 @@ class LiteRun {
       if (character != LiteHero.granScostumato &&
           (character != LiteHero.polloMeccanico || guestAccount == null) &&
           (character != LiteHero.vampiro || guestAccount == null) &&
-          (!_individualCreatureHeroes.contains(character) || guestAccount == null) &&
+          (!_individualCreatureHeroes.contains(character) ||
+              guestAccount == null) &&
           character.unlockHint != null &&
           achievements.contains(heroUnlockKey(character)))
         character,
@@ -3649,6 +3665,7 @@ class LiteRun {
         major: true,
       ),
     ]);
+    _placeBushAmbush();
     _populateFauna();
     _syncLunarWolves();
     _placeSolarGate();
@@ -4374,7 +4391,8 @@ class LiteRun {
         fighter._strike = fighter.aim;
         fighter._windup =
             fighter.hero == LiteHero.doppelganger ||
-                fighter.hero.bodyOnly || fighter._night.solarMace > 0
+                fighter.hero.bodyOnly ||
+                fighter._night.solarMace > 0
             ? 0
             : item.chargeSeconds;
         if (fighter.hero == LiteHero.doppelganger)
@@ -4394,7 +4412,13 @@ class LiteRun {
 
   void _coopMainStrike(LiteCoopFighter fighter, Point<double> direction) {
     if (fighter.hero.bodyOnly) {
-      _bodyStrike(fighter.hero, fighter.position, direction, fighter.level, fighter);
+      _bodyStrike(
+        fighter.hero,
+        fighter.position,
+        direction,
+        fighter.level,
+        fighter,
+      );
       fighter.cooldown = fighter.hero.bodyAttackRecovery;
       return;
     }
@@ -4452,15 +4476,33 @@ class LiteRun {
     Point<double> from, {
     bool ignoreBreakable = false,
   }) {
-    if (clones.isEmpty && coopFighters.isEmpty) return position;
+    final concealment = concealmentBushes.isNotEmpty;
+    final hostVisible = !hostDown && _night.bat <= 0;
+    if (hostVisible && !concealment && clones.isEmpty && coopFighters.isEmpty) {
+      return position;
+    }
+    final observer = concealment
+        ? enemies
+              .where((enemy) => enemy.position == from && enemy.hp > 0)
+              .firstOrNull
+        : null;
+    final mind = observer == null ? null : _aggressiveSight[observer.id];
     Point<double>? visible;
     var visibleDistance = double.infinity;
-    var nearest = position;
+    var nearest = concealment ? mind?.lastSeen ?? from : from;
     var nearestDistance = double.infinity;
-    void consider(Point<double> candidate) {
-      if (inExplorationAtrium(candidate)) return;
+    void consider(Point<double> candidate, int id) {
+      if (inExplorationAtrium(candidate) ||
+          concealment &&
+              bushBlocksSight(
+                from,
+                candidate,
+                ignoreBush: mind?._bushEntries[id],
+              )) {
+        return;
+      }
       final distance = _distanceSquared(from, candidate);
-      if (distance < nearestDistance) {
+      if (!concealment && distance < nearestDistance) {
         nearestDistance = distance;
         nearest = candidate;
       }
@@ -4471,9 +4513,11 @@ class LiteRun {
       }
     }
 
-    if (!hostDown) consider(position);
+    if (hostVisible) consider(position, 0);
     for (final ally in _damageableAllies) {
-      if (ally.hp > 0) consider(ally.position);
+      if (ally.hp <= 0 || ally.corrupted) continue;
+      if (ally is LiteCoopFighter && ally.night.bat > 0) continue;
+      consider(ally.position, ally.id);
     }
     return visible ?? nearest;
   }
@@ -4590,7 +4634,12 @@ class LiteRun {
         );
         final scale = openTimeScale;
         if (scale > 0) {
-          _advanceSimulation(beat * arenaSpeed * scale, move: move, walk: walk);
+          _advanceSimulation(
+            beat * arenaSpeed * scale,
+            move: move,
+            walk: walk,
+            spottingSeconds: beat,
+          );
         }
         for (final scene in playing) {
           scene._remaining -= beat;
@@ -4598,7 +4647,12 @@ class LiteRun {
         _openScenes.removeWhere((scene) => scene.remaining <= 1e-9);
         timeToAdvance -= beat;
       }
-      _advanceSimulation(timeToAdvance * arenaSpeed, move: move, walk: walk);
+      _advanceSimulation(
+        timeToAdvance * arenaSpeed,
+        move: move,
+        walk: walk,
+        spottingSeconds: timeToAdvance,
+      );
     } finally {
       _presentingFrame = false;
     }
@@ -4618,6 +4672,7 @@ class LiteRun {
     double seconds, {
     required Point<double> move,
     required bool walk,
+    double? spottingSeconds,
   }) {
     if (finished ||
         shopOpen ||
@@ -4632,15 +4687,21 @@ class LiteRun {
     final total = min(.25, seconds);
     final slices = max(1, (total / (1 / 120)).ceil());
     final elapsed = total / slices;
+    final spottingElapsed = elapsed * (spottingSeconds ?? seconds) / seconds;
     final movement = _unit(move);
     final sceneCount = _openScenes.length;
     for (var i = 0; i < slices && !finished; i++) {
-      _tick(elapsed, movement, walk);
+      _tick(elapsed, movement, walk, spottingElapsed);
       if (_openScenes.length > sceneCount) break;
     }
   }
 
-  void _tick(double elapsed, Point<double> movement, bool walk) {
+  void _tick(
+    double elapsed,
+    Point<double> movement,
+    bool walk,
+    double spottingElapsed,
+  ) {
     if (gripRemaining() > 0) movement = const Point(0, 0);
     _walking = walk && _burstTime <= 0;
     time += elapsed;
@@ -4790,6 +4851,7 @@ class LiteRun {
     _tickDivoramituFields(elapsed / arenaSpeed);
     final enemiesAtStart = enemies.length;
     final sheltered = _combatantsSheltered;
+    _sampleRoomSight(spottingElapsed, sheltered);
     if (sheltered) _trialStart += elapsed;
     for (var i = 0; i < enemiesAtStart; i++) {
       final enemy = enemies[i];
@@ -4807,6 +4869,7 @@ class LiteRun {
       }
       if (dead || (soloOpenFrozen && _presentingFrame)) return;
     }
+    _tickAlertCalls(spottingElapsed, sheltered);
     _tickFauna(elapsed);
     _tickEmber(elapsed);
     for (final fighter in coopFighters) {
@@ -6190,7 +6253,7 @@ class LiteRun {
         } else {
           fighter._shadowProtection = max(fighter._shadowProtection, 3);
         }
-        message = 'Forma pipistrello · 3 s di intangibilità.';
+        message = 'Forma pipistrello · 3 s intangibile e impercettibile.';
         return true;
       case LiteHero.pyrel:
         _launchFireball(source, direction, 18 + 2.0 * characterLevel, 3, owner);
@@ -6906,6 +6969,12 @@ class LiteRun {
     }
     final ranged = _ranged(enemy.kind);
     if (enemy.windup > 0) {
+      if (enemy.guard != null && !_guardCanCompleteAttack(enemy)) {
+        enemy.windup = 0;
+        enemy.attackTarget = null;
+        enemy.cooldown = max(enemy.cooldown, .15);
+        return;
+      }
       final target = enemy.attackTarget;
       if (enemy.windup <= .19 &&
           _hasAttackLunge(enemy.kind) &&
@@ -6934,7 +7003,7 @@ class LiteRun {
     final target = enemy.guard != null
         ? _encounterTarget(enemy, elapsed)
         : _enemyAimFrom(enemy.position, ignoreBreakable: cannon);
-    if (target == null) {
+    if (target == null || target == enemy.position) {
       enemy.attackTarget = null;
       return;
     }
@@ -7012,13 +7081,17 @@ class LiteRun {
           elapsed *
           (arenaTrial == LiteArenaTrial.caccia ? 1.15 : 1) *
           (enemy.hitFlash > 0 || enemy.shockRemaining > 0 ? .70 : 1);
-      enemy.position = _chooseLane(
-        enemy.position,
-        direction,
-        speed,
-        enemy.radius,
-        rightFirst: enemy.id.isEven,
-      );
+      if (enemy.guard case final mind? when !strafe && !needsSpace) {
+        _followBelief(enemy, mind, target, elapsed, travel: speed);
+      } else {
+        enemy.position = _chooseLane(
+          enemy.position,
+          direction,
+          speed,
+          enemy.radius,
+          rightFirst: enemy.id.isEven,
+        );
+      }
     }
   }
 
@@ -9823,6 +9896,9 @@ class LiteRun {
   }
 
   Map<String, dynamic> toJson({bool includeEffects = false}) => {
+    if (_sightArena == inputArena) 'humanSight': _sightFrame,
+    if (_alertSignals.arena == inputArena)
+      'alertSignals': _alertSignals.frame(includeEffects),
     if (progressId != null) 'progressId': progressId,
     if (actRelics.isNotEmpty)
       'actRelics': actRelics.map((relic) => relic.name).toList(),
@@ -10155,7 +10231,8 @@ class LiteRun {
       (animal) =>
           animal.kind != LiteEnemyKind.lupoLunare &&
           animal.kind != LiteEnemyKind.orbryx &&
-          !animal.kind.armoredArmadillo && LiteAnimal.forCreature(animal.kind) == null,
+          !animal.kind.armoredArmadillo &&
+          LiteAnimal.forCreature(animal.kind) == null,
     );
     run._provokedRooms.addAll(
       _list(json['provokedRooms'])
@@ -10342,6 +10419,8 @@ class LiteRun {
     run._lastMove = _point(json['lastMove']);
     run._restorePadFrames(json['padDashes']);
     run.message = json['message'] as String? ?? '';
+    run._restoreSight(json['humanSight']);
+    run._alertSignals.restore(json['alertSignals'], run.time, run.inputArena);
     if (run.explorationRoutes) {
       for (final enemy in run.enemies) {
         run._setEnemyPerception(enemy, restoring: true);

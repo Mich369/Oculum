@@ -218,7 +218,7 @@ Point<double> follow(
   return unit(forward.first - at);
 }
 
-LiteEnemy? priorityTarget(LiteRun run) {
+LiteEnemy? priorityTarget(LiteRun run, {LiteEnemy? locked}) {
   LiteEnemy? preferred;
   var best = double.infinity;
   for (final enemy in run.enemies) {
@@ -228,7 +228,11 @@ LiteEnemy? priorityTarget(LiteRun run) {
         : enemy.kind == LiteEnemyKind.veyrth && !run.finalBossTangible
         ? 60
         : 0;
-    final distance = enemy.position.distanceTo(run.position) + priority;
+    // Keep two nearly equidistant enemies from alternating the planned route.
+    final distance =
+        enemy.position.distanceTo(run.position) +
+        priority -
+        (identical(enemy, locked) ? 1 : 0);
     if (distance < best) {
       best = distance;
       preferred = enemy;
@@ -272,6 +276,7 @@ String play(
   final hardest = difficulty == LiteDifficulty.oculum;
   var shopping = false;
   var soughtExplorationSupply = false;
+  LiteEnemy? locked;
   for (var frame = 0; frame < 80 * 60 * 60; frame++) {
     if (run.canEnterThirdAct) {
       completed.add(run.stage);
@@ -401,7 +406,8 @@ String play(
       }
       soughtExplorationSupply = true;
     }
-    final target = priorityTarget(run);
+    final target = priorityTarget(run, locked: locked);
+    locked = target;
     if (target == null) {
       run.advanceFrame(tick);
       continue;
@@ -416,14 +422,17 @@ String play(
       run.advanceFrame(tick, move: follow(run, outside));
       continue;
     }
-    final offset = target.position - run.position;
+    final aimingPoint = target.burrow?.exposed == true
+        ? target.closestHitboxPoint(run.position)
+        : target.position;
+    final offset = aimingPoint - run.position;
     final distance = offset.magnitude;
     final heading = unit(offset);
     final perpendicular = Point(-heading.y, heading.x);
-    final aimed = sight(run, run.position, target.position);
+    final aimed = sight(run, run.position, aimingPoint);
     Point<double> move;
     if (!aimed || distance > 8.7) {
-      move = follow(run, target.position, firingLane: true);
+      move = follow(run, aimingPoint, firingLane: true);
     } else {
       // Strafe along the enemy rather than backing into the outer wall.
       final keepDistance = target.kind.boss ? 6.3 : 4.5;
@@ -457,11 +466,40 @@ String play(
       final go = open(run, run.position + turn) ? turn : turn * -1;
       if (open(run, run.position + go)) move = go;
     }
-    if (target.burrow case final track? when track.warning > 0) {
+    if (target.burrow case final track?
+        when track.warning > 0 || track.exposed) {
       final line = unit(track.end - track.start);
-      final side = Point(-line.y, line.x);
-      move = open(run, run.position + side) ? side : side * -1.0;
-      if (track.warning < .30) run.special(run.position + move);
+      final start = track.start - line * target.hitboxHalfLength;
+      final length =
+          track.end.distanceTo(track.start) + 2 * target.hitboxHalfLength;
+      double clearance(Point<double> point) {
+        final offset = point - start;
+        final projected = (offset.x * line.x + offset.y * line.y).clamp(
+          0.0,
+          length,
+        );
+        return offset.distanceTo(line * projected) - target.hitboxRadius;
+      }
+
+      if (clearance(run.position) < .70 ||
+          clearance(run.position + move * 1.2) < .70) {
+        var best = -double.infinity;
+        for (var option = 0; option < 16; option++) {
+          final angle = option * pi / 8;
+          final direction = Point(cos(angle), sin(angle));
+          for (final distance in [1.2, 2.6]) {
+            final point = run.position + direction * distance;
+            if (!walkable(run, run.position, point)) continue;
+            final value = clearance(point);
+            if (value <= best) continue;
+            best = value;
+            move = direction;
+          }
+        }
+      }
+      if (track.warning < .19 && clearance(run.position) < .28) {
+        run.special(run.position + move);
+      }
     }
     if (hardest && run.inThirdAct) move = avoidGroundAttacks(run, move);
     final storm = run.stormWarning(target);
@@ -486,7 +524,7 @@ String play(
     if (run.arrows == 0) {
       run.beginReload();
     } else if (aimed && distance < 9.85) {
-      run.attack(target.position);
+      run.attack(aimingPoint);
     }
     run.advanceFrame(tick, move: move);
   }

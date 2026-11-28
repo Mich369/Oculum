@@ -10,6 +10,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../game/oculum_lite_alert_dialogue.dart';
 import '../game/oculum_lite_audio.dart';
 import '../game/oculum_lite_run.dart';
 import '../services/oculum_lite_saves.dart';
@@ -17,6 +18,7 @@ import '../services/oculum_rl_release.dart';
 import '../services/oculum_rl_download_stub.dart'
     if (dart.library.js_interop) '../services/oculum_rl_download_web.dart';
 import '../services/oculum_rl_updates.dart';
+import '../widgets/oculum_lite_alert_subtitle.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_creator.dart';
@@ -155,6 +157,11 @@ class _OculumLitePageState extends State<OculumLitePage>
   final _arenaFrame = ValueNotifier<int>(0);
   bool _wellPreviewOpen = false;
   final _audio = OculumLiteAudio();
+  late final _alerts = LiteAlertPresenter(
+    play: _audio.playAlert,
+    stop: _audio.stopAlert,
+    speaking: () => _audio.alertSpeaking,
+  );
   Duration? _lastFrame;
   Duration _lastHudCheck = Duration.zero;
   Object? _shownHud;
@@ -260,6 +267,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     unawaited(_save());
     WidgetsBinding.instance.removeObserver(this);
     _ticker.dispose();
+    _alerts.dispose();
     _audio.dispose();
     _updates.dispose();
     _arenaFrame.dispose();
@@ -711,6 +719,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     );
     _audio.combatSounds(run);
     _audio.burstSound(run, 0);
+    _alerts.update(run, viewerId: 0, playing: !run.finished);
     _arenaFrame.value++;
     _saveTime += dt;
     if (run.finished || _saveTime >= 5) {
@@ -824,6 +833,7 @@ class _OculumLitePageState extends State<OculumLitePage>
         !run.finished &&
         !run.shopOpen;
     _audio.update(run, playing: playing);
+    _alerts.update(run, viewerId: 0, playing: playing);
     if (playing == _ticker.isActive) return;
     _lastFrame = null;
     _lastHudCheck = Duration.zero;
@@ -1691,7 +1701,9 @@ class _OculumLitePageState extends State<OculumLitePage>
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(Icons.pets_outlined),
                       title: Text('Armamento naturale'),
-                      subtitle: Text('Attacca con il corpo, senza equipaggiare un’arma.'),
+                      subtitle: Text(
+                        'Attacca con il corpo, senza equipaggiare un’arma.',
+                      ),
                     )
                   else
                     ListTile(
@@ -2054,6 +2066,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                 right: 4,
                 child: Column(
                   children: [
+                    OculumLiteAlertSubtitle(presenter: _alerts),
                     if (run.powerOffers.isNotEmpty)
                       FilledButton.icon(
                         onPressed: () => _showPowerOffers(run),
@@ -2651,7 +2664,8 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   Widget _weaponIcon(LiteWeapon weapon, {double size = 46}) {
-    if (weapon == LiteWeapon.armamentoNaturale) return Icon(Icons.pets_outlined, size: size);
+    if (weapon == LiteWeapon.armamentoNaturale)
+      return Icon(Icons.pets_outlined, size: size);
     final icon =
         OculumLiteArena.weaponIcons[weapon] ??
         OculumLiteArena.weaponIcons[weapon.moveset];
