@@ -4,10 +4,14 @@ import 'package:oculum/pages/oculum_dungeon/monster_book.dart';
 
 void main() {
   test(
-    'Eight active weak horrors and the saved Sacristan retain their core kits',
+    'Eight base weak horrors and the saved Sacristan retain their core kits',
     () {
       final monsters = defaultMonsterBookEntries
-          .where((entry) => entry.id.startsWith('weak_horror_'))
+          .where(
+            (entry) =>
+                entry.id.startsWith('weak_horror_') &&
+                !entry.id.contains('_variante_'),
+          )
           .toList();
       expect(monsters, hasLength(8));
       const retiredId = 'weak_horror_sagrestano';
