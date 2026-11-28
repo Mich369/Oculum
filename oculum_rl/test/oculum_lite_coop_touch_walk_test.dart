@@ -122,6 +122,13 @@ void main() {
       expect(find.text('WASD / Frecce · Muoviti'), findsOneWidget);
       expect(find.text('Tieni R · Soccorri un alleato'), findsOneWidget);
       expect(find.text('1 · ${scroll.label}'), findsOneWidget);
+      session.setTransportReady(false);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+      expect(run.scrolls[scroll.index], 1);
+      expect(find.text('WASD / Frecce · Muoviti'), findsOneWidget);
+      session.setTransportReady(true);
+      await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
       await tester.pump(const Duration(milliseconds: 24));
       expect(run.scrolls[scroll.index], 0);
