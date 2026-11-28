@@ -215,7 +215,7 @@ extension LiteLusierSkill on LiteRun {
     healer.position = _chooseLane(
       healer.position,
       LiteRun._unit(goal - healer.position),
-      elapsed * 4.2 * _divoramituAllyPace(healer.position),
+      _alliedMovementTime(elapsed) * 4.2 * _divoramituAllyPace(healer.position),
       .35,
       rightFirst: healer.id.isEven,
     );

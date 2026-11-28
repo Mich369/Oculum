@@ -163,6 +163,67 @@ void main() {
     );
   });
 
+  test('co-op moves the team at 26 percent and enemies at 24 percent', () {
+    LiteRun world() {
+      final run = prepared(LiteHero.ashley, players: 2);
+      run.addCoopFighter('guest', 'Ospite', LiteHero.pyrel, LiteWeapon.guanti);
+      run.coopFighter('guest')!.position = guestOrigin;
+      run.setCoopControls('guest', right, guestOrigin + right, attack: false);
+      run.enemies
+        ..clear()
+        ..add(LiteEnemy(80, LiteEnemyKind.costrutto, const Point(22, 11), 900));
+      run.clones.add(
+        LiteClone(
+          const Point(12, 11),
+          100,
+          LiteWeapon.guanti,
+          id: 60,
+          companion: LiteCompanion.vedetta,
+        ),
+      );
+      return run;
+    }
+
+    final normal = world();
+    final slowed = world();
+    expect(slowed.useOpen(target), isTrue);
+    final allyAt = slowed.clones.single.position;
+    final enemyAt = slowed.enemies.single.position;
+    normal.advanceFrame(.12, move: right);
+    slowed.advanceFrame(.12, move: right);
+
+    void check(
+      Point<double> start,
+      Point<double> fast,
+      Point<double> slow,
+      double factor,
+    ) {
+      final motion = start.distanceTo(fast);
+      expect(motion, greaterThan(.03));
+      expect(start.distanceTo(slow) / motion, closeTo(factor, .004));
+    }
+
+    check(origin, normal.position, slowed.position, .26);
+    check(
+      guestOrigin,
+      normal.coopFighter('guest')!.position,
+      slowed.coopFighter('guest')!.position,
+      .26,
+    );
+    check(
+      allyAt,
+      normal.clones.single.position,
+      slowed.clones.single.position,
+      .26,
+    );
+    check(
+      enemyAt,
+      normal.enemies.single.position,
+      slowed.enemies.single.position,
+      .24,
+    );
+  });
+
   for (final shadow in [false, true]) {
     test('the ${shadow ? "Shadow" : "Light"} Open pauses at activation', () {
       final run = prepared(LiteHero.pyrel)..enemies.clear();

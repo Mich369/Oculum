@@ -119,7 +119,7 @@ extension _LiteFabbro on LiteRun {
     arm.position = _chooseLane(
       arm.position,
       LiteRun._unit(goal - arm.position),
-      elapsed * 5.7 * _divoramituAllyPace(arm.position),
+      _alliedMovementTime(elapsed) * 5.7 * _divoramituAllyPace(arm.position),
       .27,
       rightFirst: arm.id.isEven,
     );

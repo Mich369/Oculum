@@ -89,9 +89,10 @@ extension _LitePetDivoramitu on LiteRun {
     double elapsed,
   ) {
     if (pet._burrowDestination case final destination?) {
-      final step = min(1.0, elapsed / max(elapsed, pet._burrowTime));
+      final movementTime = _alliedMovementTime(elapsed);
+      final step = min(1.0, movementTime / max(movementTime, pet._burrowTime));
       pet.position += (destination - pet.position) * step;
-      pet._burrowTime = max(0, pet._burrowTime - elapsed);
+      pet._burrowTime = max(0, pet._burrowTime - movementTime);
       if (pet._burrowTime > 0) return true;
       pet._burrowDestination = null;
       pet._swing = .23;

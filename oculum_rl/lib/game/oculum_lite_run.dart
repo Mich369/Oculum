@@ -4135,6 +4135,7 @@ class LiteRun {
       this._tickSupply(elapsed, fighter: fighter);
       _tickRelicMana(elapsed, fighter);
       final beforeMove = fighter.position;
+      final movementTime = _alliedMovementTime(elapsed);
       final walking = fighter._slow && fighter._dashRemaining <= 0;
       final groundSpeed =
           this.terrainSpeedAt(fighter.position, enemy: false) *
@@ -4166,12 +4167,12 @@ class LiteRun {
         if (fighter._reload <= 1e-9) fighter.arrows = bowCapacity;
       }
       if (fighter._dashRemaining > 0) {
-        final slice = min(elapsed, fighter._dashRemaining);
+        final slice = min(movementTime, fighter._dashRemaining);
         fighter.position = _dashLandings.containsKey(fighter.id)
             ? _advancePadDash(
                 fighter.position,
                 fighter._dashRemaining,
-                elapsed,
+                movementTime,
                 fighter.id,
               )
             : _move(
@@ -4180,7 +4181,7 @@ class LiteRun {
                     (fighter._dashSpeed * slice * groundSpeed),
                 _playerRadius,
               );
-        fighter._dashRemaining = max(0, fighter._dashRemaining - elapsed);
+        fighter._dashRemaining = max(0, fighter._dashRemaining - movementTime);
         _recordBurstTrace(fighter.id, fighter.position, fighter._dashRemaining);
       } else if (fighter.connected &&
           fighter._night.stun <= 0 &&
@@ -4189,7 +4190,7 @@ class LiteRun {
           fighter.position,
           fighter.movement *
               ((fighter._slow ? 3.2 : 6.5) *
-                  elapsed *
+                  movementTime *
                   (fighter._night.sanguine > 0 ? 2 : 1) *
                   fighter.supply._vampireMoveScale *
                   groundSpeed),
@@ -4419,6 +4420,12 @@ class LiteRun {
   bool _presentingFrame = false;
   LiteOpenScene? get openScene => _openScenes.firstOrNull;
   bool get soloOpenFrozen => _openScenes.isNotEmpty && playerCount == 1;
+  double _alliedMovementTime(double elapsed) =>
+      playerCount > 1 && _openScenes.isNotEmpty
+      ? elapsed *
+            (LiteOpenScene.coopAllyMovementScale / LiteOpenScene.coopTimeScale)
+      : elapsed;
+
   double get openTimeScale => _openScenes.isEmpty
       ? 1
       : playerCount == 1
@@ -4582,19 +4589,20 @@ class LiteRun {
       _tickRelicMana(elapsed);
     }
     final beforeMove = position;
+    final movementTime = _alliedMovementTime(elapsed);
     final groundSpeed =
         this.terrainSpeedAt(position, enemy: false) *
         _divoramituAllyPace(position);
     if (!hostDown && _night.stun <= 0 && _burstTime > 0) {
       position = _dashLandings.containsKey(0)
-          ? _advancePadDash(position, _burstTime, elapsed, 0)
+          ? _advancePadDash(position, _burstTime, movementTime, 0)
           : _move(
               position,
               _burstDirection *
-                  (_burstSpeed * min(elapsed, _burstTime) * groundSpeed),
+                  (_burstSpeed * min(movementTime, _burstTime) * groundSpeed),
               _playerRadius,
             );
-      _burstTime = max(0, _burstTime - elapsed);
+      _burstTime = max(0, _burstTime - movementTime);
       _recordBurstTrace(0, position, _burstTime);
     } else if (!hostDown &&
         _night.stun <= 0 &&
@@ -4603,7 +4611,7 @@ class LiteRun {
         position,
         movement *
             ((walk ? 3.2 : 6.5) *
-                elapsed *
+                movementTime *
                 (1 + _power(LitePowerUp.passo)) *
                 (_night.sanguine > 0 ? 2 : 1) *
                 supply._vampireMoveScale *
@@ -7862,8 +7870,9 @@ class LiteRun {
         _tickPetDivoramitu(clone, enemy, ownerPosition, training, elapsed)) {
       return;
     }
+    final movementTime = _alliedMovementTime(elapsed);
     final pace =
-        elapsed *
+        movementTime *
         4.7 *
         paceScale *
         this.terrainSpeedAt(clone.position, enemy: false) *
@@ -7894,7 +7903,7 @@ class LiteRun {
     if (ranged && _distanceSquared(clone.position, enemy.position) < 9) {
       final retreat = _move(
         clone.position,
-        direction * (-elapsed * 3.6 * paceScale),
+        direction * (-movementTime * 3.6 * paceScale),
         .35,
       );
       if (retreat != clone.position) {

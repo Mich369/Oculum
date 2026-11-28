@@ -14,6 +14,7 @@ class LiteOpenScene {
 
   static const duration = .72;
   static const coopTimeScale = .24;
+  static const coopAllyMovementScale = .26;
 
   final LiteHero hero;
   final Point<double> at, direction;
