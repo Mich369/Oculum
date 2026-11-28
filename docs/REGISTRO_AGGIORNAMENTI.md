@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Dieci sfondi Expressive Ink — 28 novembre 2026
+
+- Dieci temi usano le nuove tavole desktop scelte dall’utente. Il Falò d’eclissi ha lanterne a stella indaco, con bracieri ambrati. La Lanterna dei mostri perde le impronte e le fate.
+- Le selezioni dei temi già salvate caricano la tavola associata allo stesso ID. Sfondi personalizzati, varianti telefono dedicate, reliquie e cornici seguono le impostazioni esistenti.
+
 ## Azioni online, Vantaggio e accesso — 27 novembre 2026
 
 - I tiri singoli, i sottotratti e le utility corrette inviano al Master l’Azione o la Reazione effettivamente usata. Per Percezione e Rilevatore con bersaglio, il consumo viaggia con la richiesta.

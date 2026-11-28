@@ -1,5 +1,9 @@
 # Oculum — canone visivo confermato
 
+## Dieci sfondi Expressive Ink — 28 novembre 2026
+
+Le scelte desktop, comprese le basi dei ritocchi e gli SHA dei WebP canonici, sono nel [registro delle tavole](theme-art/approved-desktop-20261128.json). Nel Falò d’eclissi le lanterne a stella della veglia sono indaco e il memoriale rimane una falce di pietra. I bracieri illuminano il sentiero in ambra. La Lanterna dei mostri conserva il carro e la lanterna dentata, con la piazzola libera da impronte e fate.
+
 ## Angelico su telefono — 24 novembre 2026
 
 Nel lotto **ANGELICO-TELEFONO-01** l’utente conferma **F · Campiture spezzate** solo per la scena verticale. Il soggetto riprende la navata, l’altare, le ali in avorio, i bracieri blu e l’oro spento della D desktop. La vista verticale dà più spazio alle ali della volta e al percorso sul pavimento. Si usa il medesimo ID esistente `element_pack_angelico`. La scelta della reliquia è indipendente.

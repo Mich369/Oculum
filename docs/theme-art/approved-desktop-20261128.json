@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "run": "20261128-0400",
+  "surface": "desktop",
+  "choices": [
+    {
+      "id": "element_pack_vapium",
+      "name": "Condotti del respiro",
+      "slot": "A",
+      "baseSlot": "A",
+      "baseSha256": "0fd2c9cb3ec45f8dc7fcd919c370831deebcdc7c930ab2176f6aad2dadc77cbf",
+      "sha256": "0fd2c9cb3ec45f8dc7fcd919c370831deebcdc7c930ab2176f6aad2dadc77cbf",
+      "originalSha256": "9e26611f6da589028a4cac22b5fe418bf86b2e20933605c5a92513b1e0f13446",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_vapium_canon_20261128_a_0fd2c9cb.webp",
+      "correction": null
+    },
+    {
+      "id": "element_pack_vero",
+      "name": "Specchio senza inganno",
+      "slot": "D",
+      "baseSlot": "D",
+      "baseSha256": "fc2e20ff9ce61adb11cfb5c8750ba725a9f2e641a5334e395613ae73b1abe0a2",
+      "sha256": "fc2e20ff9ce61adb11cfb5c8750ba725a9f2e641a5334e395613ae73b1abe0a2",
+      "originalSha256": "d3d26a76ed50c598ecf68de04ea5fc7a8fa0420e2e2864b501ab99c095f4a65b",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_vero_canon_20261128_d_fc2e20ff.webp",
+      "correction": null
+    },
+    {
+      "id": "deep_forest_demon",
+      "name": "Demone del bosco profondo",
+      "slot": "E",
+      "baseSlot": "E",
+      "baseSha256": "f34986a400420d98c00f189d32694f7b147c5ced051fdaea8b3c539de824ec31",
+      "sha256": "f34986a400420d98c00f189d32694f7b147c5ced051fdaea8b3c539de824ec31",
+      "originalSha256": "a0075530e2d249a1cbbbda38dd21efce4048b8fd40650e250a0d01a5b31d39c9",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/deep_forest_demon_canon_20261128_e_f34986a4.webp",
+      "correction": null
+    },
+    {
+      "id": "restyle_sangue",
+      "name": "Sangue",
+      "slot": "B",
+      "baseSlot": "B",
+      "baseSha256": "f79dd1e646502f1fa8d257a7588df45d231f2b28786992d5b526897499b3f0f2",
+      "sha256": "f79dd1e646502f1fa8d257a7588df45d231f2b28786992d5b526897499b3f0f2",
+      "originalSha256": "e8c2dda9da6c57d83378014899d4061fb0a9fc3da3fb39cb6488c1cf307260f2",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/restyle_sangue_canon_20261128_b_f79dd1e6.webp",
+      "correction": null
+    },
+    {
+      "id": "element_pack_cenere",
+      "name": "Polvere dei giuramenti",
+      "slot": "D",
+      "baseSlot": "D",
+      "baseSha256": "55251b19bb6ab17e6bc2ca004a6f0eda778fd3f4e1683ed5bae8aa2572d1ba14",
+      "sha256": "55251b19bb6ab17e6bc2ca004a6f0eda778fd3f4e1683ed5bae8aa2572d1ba14",
+      "originalSha256": "3a0570cd83de73be6675e9e6ab1014650729931aa210494efa50f335ab343cb5",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_cenere_canon_20261128_d_55251b19.webp",
+      "correction": null
+    },
+    {
+      "id": "element_pack_solare",
+      "name": "Disco del vespro",
+      "slot": "F",
+      "baseSlot": "F",
+      "baseSha256": "af2883a0b3cde42013a40be4af286fe932d60b20dce87d91f62c026788f1eb7b",
+      "sha256": "af2883a0b3cde42013a40be4af286fe932d60b20dce87d91f62c026788f1eb7b",
+      "originalSha256": "d87c7e232a1afa767a30c1c61713ae4b11753731cb93e9ae0ab09e2d2ea64387",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_solare_canon_20261128_f_af2883a0.webp",
+      "correction": null
+    },
+    {
+      "id": "eclipse_bonfire",
+      "name": "Falò d’eclissi",
+      "slot": "F1",
+      "baseSlot": "F",
+      "baseSha256": "cba3ae0afc501a386523e13c9c9b1d97a7695c4c285506c27a8bfdd375ca6da5",
+      "sha256": "306c4289327f13aec2503f4eb18cf7507f17627f843af5954a887157fd7ea3f1",
+      "originalSha256": "526ecfdf2c97ba2e560de911ae819fc86fde5df34c6b20607e0cee252c8f6bc4",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/eclipse_bonfire_canon_20261128_f1_306c4289.webp",
+      "correction": "f lucine a stella indaco"
+    },
+    {
+      "id": "monster_lantern",
+      "name": "Lanterna dei mostri",
+      "slot": "B1",
+      "baseSlot": "B",
+      "baseSha256": "437dbbc8cfa17aa1a6f7eccf428755766619d028256ff07611c0b6ee7d3333a2",
+      "sha256": "8a6a19c4a92f5c97d97dcfe9f195fea05c7d7e743817ce8c4794e025f2db9d02",
+      "originalSha256": "c45314c13881e7e6fdf798cb63bdb51d7fc9b9ff72f017fadc7741ec3d2ad330",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/monster_lantern_canon_20261128_b1_8a6a19c4.webp",
+      "correction": "b senza impronte e fate"
+    },
+    {
+      "id": "element_pack_gravita",
+      "name": "Anelli del peso",
+      "slot": "F",
+      "baseSlot": "F",
+      "baseSha256": "fa20910102366b71d8efa67fffad080f5819e08b967b679ae4665becd9b0a38f",
+      "sha256": "fa20910102366b71d8efa67fffad080f5819e08b967b679ae4665becd9b0a38f",
+      "originalSha256": "cf4263f3d13280db48f353dafbd900d80951d653b52a336880a6e8c6cdcef2ed",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_gravita_canon_20261128_f_fa209101.webp",
+      "correction": null
+    },
+    {
+      "id": "ember_rite",
+      "name": "Rito di brace",
+      "slot": "B",
+      "baseSlot": "B",
+      "baseSha256": "8a098210e2600f0e29435810a65171683ba77d0b47fdb964600293d2958d1f6c",
+      "sha256": "8a098210e2600f0e29435810a65171683ba77d0b47fdb964600293d2958d1f6c",
+      "originalSha256": "466b24c6ca8b20cb8784858c01afd213ffabd96abb44790e15ab3ed734c7f888",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/ember_rite_canon_20261128_b_8a098210.webp",
+      "correction": null
+    }
+  ]
+}

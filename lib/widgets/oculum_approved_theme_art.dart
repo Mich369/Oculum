@@ -67,6 +67,26 @@ const oculumApprovedThemeStoryAssets = <String, String>{
       'assets/oculum/theme_stories/webp/vervain_gothic_canon_20261118_b_97839b7a.webp',
   'void_liturgy':
       'assets/oculum/theme_stories/webp/void_liturgy_canon_20261118_b_65550dd8.webp',
+  'deep_forest_demon':
+      'assets/oculum/theme_stories/webp/deep_forest_demon_canon_20261128_e_f34986a4.webp',
+  'eclipse_bonfire':
+      'assets/oculum/theme_stories/webp/eclipse_bonfire_canon_20261128_f1_306c4289.webp',
+  'element_pack_cenere':
+      'assets/oculum/theme_stories/webp/element_pack_cenere_canon_20261128_d_55251b19.webp',
+  'element_pack_gravita':
+      'assets/oculum/theme_stories/webp/element_pack_gravita_canon_20261128_f_fa209101.webp',
+  'element_pack_solare':
+      'assets/oculum/theme_stories/webp/element_pack_solare_canon_20261128_f_af2883a0.webp',
+  'element_pack_vapium':
+      'assets/oculum/theme_stories/webp/element_pack_vapium_canon_20261128_a_0fd2c9cb.webp',
+  'element_pack_vero':
+      'assets/oculum/theme_stories/webp/element_pack_vero_canon_20261128_d_fc2e20ff.webp',
+  'ember_rite':
+      'assets/oculum/theme_stories/webp/ember_rite_canon_20261128_b_8a098210.webp',
+  'monster_lantern':
+      'assets/oculum/theme_stories/webp/monster_lantern_canon_20261128_b1_8a6a19c4.webp',
+  'restyle_sangue':
+      'assets/oculum/theme_stories/webp/restyle_sangue_canon_20261128_b_f79dd1e6.webp',
 };
 
 String? oculumApprovedThemeStoryAsset(String id) =>

@@ -254,14 +254,88 @@ Future<void> _expectDigest(String asset, String expected) async {
   expect(digest, expected, reason: asset);
 }
 
+const _november28Votes = <_Vote>[
+  (
+    id: 'element_pack_vapium',
+    slot: 'A',
+    sha256: '0fd2c9cb3ec45f8dc7fcd919c370831deebcdc7c930ab2176f6aad2dadc77cbf',
+    originalSha256:
+        '9e26611f6da589028a4cac22b5fe418bf86b2e20933605c5a92513b1e0f13446',
+  ),
+  (
+    id: 'element_pack_vero',
+    slot: 'D',
+    sha256: 'fc2e20ff9ce61adb11cfb5c8750ba725a9f2e641a5334e395613ae73b1abe0a2',
+    originalSha256:
+        'd3d26a76ed50c598ecf68de04ea5fc7a8fa0420e2e2864b501ab99c095f4a65b',
+  ),
+  (
+    id: 'deep_forest_demon',
+    slot: 'E',
+    sha256: 'f34986a400420d98c00f189d32694f7b147c5ced051fdaea8b3c539de824ec31',
+    originalSha256:
+        'a0075530e2d249a1cbbbda38dd21efce4048b8fd40650e250a0d01a5b31d39c9',
+  ),
+  (
+    id: 'restyle_sangue',
+    slot: 'B',
+    sha256: 'f79dd1e646502f1fa8d257a7588df45d231f2b28786992d5b526897499b3f0f2',
+    originalSha256:
+        'e8c2dda9da6c57d83378014899d4061fb0a9fc3da3fb39cb6488c1cf307260f2',
+  ),
+  (
+    id: 'element_pack_cenere',
+    slot: 'D',
+    sha256: '55251b19bb6ab17e6bc2ca004a6f0eda778fd3f4e1683ed5bae8aa2572d1ba14',
+    originalSha256:
+        '3a0570cd83de73be6675e9e6ab1014650729931aa210494efa50f335ab343cb5',
+  ),
+  (
+    id: 'element_pack_solare',
+    slot: 'F',
+    sha256: 'af2883a0b3cde42013a40be4af286fe932d60b20dce87d91f62c026788f1eb7b',
+    originalSha256:
+        'd87c7e232a1afa767a30c1c61713ae4b11753731cb93e9ae0ab09e2d2ea64387',
+  ),
+  (
+    id: 'eclipse_bonfire',
+    slot: 'F1',
+    sha256: '306c4289327f13aec2503f4eb18cf7507f17627f843af5954a887157fd7ea3f1',
+    originalSha256:
+        '526ecfdf2c97ba2e560de911ae819fc86fde5df34c6b20607e0cee252c8f6bc4',
+  ),
+  (
+    id: 'monster_lantern',
+    slot: 'B1',
+    sha256: '8a6a19c4a92f5c97d97dcfe9f195fea05c7d7e743817ce8c4794e025f2db9d02',
+    originalSha256:
+        'c45314c13881e7e6fdf798cb63bdb51d7fc9b9ff72f017fadc7741ec3d2ad330',
+  ),
+  (
+    id: 'element_pack_gravita',
+    slot: 'F',
+    sha256: 'fa20910102366b71d8efa67fffad080f5819e08b967b679ae4665becd9b0a38f',
+    originalSha256:
+        'cf4263f3d13280db48f353dafbd900d80951d653b52a336880a6e8c6cdcef2ed',
+  ),
+  (
+    id: 'ember_rite',
+    slot: 'B',
+    sha256: '8a098210e2600f0e29435810a65171683ba77d0b47fdb964600293d2958d1f6c',
+    originalSha256:
+        '466b24c6ca8b20cb8784858c01afd213ffabd96abb44790e15ab3ed734c7f888',
+  ),
+];
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('The canon includes the thirty choices and the two later themes', () {
+  test('The canon contains exactly the approved desktop IDs', () {
     expect(
       oculumApprovedThemeStoryAssets.keys,
       unorderedEquals([
         ..._votes.map((vote) => vote.id),
+        ..._november28Votes.map((vote) => vote.id),
         'kingi_wrong_future',
         'element_pack_oculum',
       ]),
@@ -269,6 +343,27 @@ void main() {
     expect(oculumApprovedThemeStoryAsset('whispering_reliquary'), isNull);
     expect(oculumApprovedThemeStoryAsset('senka_kamaria'), isNull);
   });
+
+  test(
+    'The ten 28 November choices load in their existing theme packs',
+    () async {
+      for (final vote in _november28Votes) {
+        final path =
+            'assets/oculum/theme_stories/webp/${vote.id}_canon_20261128_'
+            '${vote.slot.toLowerCase()}_${vote.sha256.substring(0, 8)}.webp';
+        expect(
+          oculumThemeAssetPacks[vote.id]?.storyScene,
+          path,
+          reason: vote.id,
+        );
+        await _expectDigest(path, vote.sha256);
+        await _expectDigest(
+          'assets/oculum/theme_stories/webp/${vote.id}.webp',
+          vote.originalSha256,
+        );
+      }
+    },
+  );
 
   test(
     'Iride cesellata loads the approved C scene and keeps the original',
