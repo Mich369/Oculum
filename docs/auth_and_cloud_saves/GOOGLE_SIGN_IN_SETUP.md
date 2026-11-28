@@ -37,3 +37,5 @@ Il web conserva la sessione nel profilo del browser sullo stesso origin quando l
 ## Profilo account
 
 Applica la migrazione `20261114091431_oculum_account_profiles.sql` a un progetto di test prima della produzione. Il nome scelto resta fisso. Con un indirizzo verificato si può scegliere un codice pubblico univoco da 3 a 24 caratteri, con lettere, numeri, trattini e underscore. Il profilo resta associato all’UUID Supabase. La scelta del nome e del codice è indipendente da stanze e salvataggi.
+
+In produzione la stessa migrazione risulta applicata dal 28 novembre 2026 come `20261128144020 oculum_account_profiles`, con la versione registrata dal connettore. Prima di riallineare lo storico delle migrazioni considera le due versioni come lo stesso intervento. Sono stati verificati i permessi del proprietario, il rifiuto via REST per il visitatore e il ritorno di Google verso gli indirizzi Web, app e Windows Test.

@@ -127,6 +127,50 @@
         1586,
         992
       ]
+    },
+    {
+      "monsterId": "il_doppione",
+      "name": "Duploryn",
+      "slot": "E",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_il_doppione_ink_20261128.webp",
+      "sha256": "cf434bd288756a705089db7bd353750366345106d62f674e599047a373ecf461",
+      "originalSha256": "5ed9629acf3c7a61e71e6414fcc71f8adda05df0af9d9a750081d8e1f528953f",
+      "dimensions": [
+        1586,
+        992
+      ]
+    },
+    {
+      "monsterId": "mezzo_demone_cosciente",
+      "name": "Mezzo Demone Cosciente",
+      "slot": "H",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_mezzo_demone_cosciente_ink_20261128.webp",
+      "sha256": "b1890fade7e09a384b1cf232cbdee21e2226a3c82ffff5189de4fc16ef6cb819",
+      "originalSha256": "b4351a376771f26edcceb2a9f322efd1065f202ab8ae368fabf496b5f3a2ce2e",
+      "dimensions": [
+        1586,
+        992
+      ]
+    },
+    {
+      "monsterId": "mostro_lunare_demoniaco",
+      "name": "Mostro lunare demoniaco",
+      "slot": "I",
+      "role": "desktop_base",
+      "cosmeticKey": null,
+      "asset": "assets/oculum/home_art_authored/theme_mostro_lunare_demoniaco_ink_20261128.webp",
+      "sha256": "bf0460bfebe70415a893898c0effa077ab98c862f090641cc0d891ae00ce4f12",
+      "originalSha256": "68fceee0bd190c21a331e02f696f3fd03c5d93593d5fd6af447a877e5f30b20f",
+      "dimensions": [
+        1585,
+        992
+      ],
+      "palette": "indaco",
+      "retainedReferenceSha256": "11d88980334c9079f90e93349e4b8fbb31716bbdb8c04955b0d1d2c4db89e6e4"
     }
   ]
 }

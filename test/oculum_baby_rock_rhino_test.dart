@@ -42,6 +42,18 @@ Future<(dynamic, OculumPerformanceProbe)> mountStoneguard(
       ),
     );
   }
+  // Exact shield depletion must not depend on random passive mitigation.
+  state.campaignDifficulty = 'normale';
+  state.fortuna = 0;
+  state.karmaController.text =
+      '-${readIntValue(state.livelloController.text) ~/ 2}';
+  state.oculumController.text = '0';
+  state.currentOculumController.text = '0';
+  for (final dynamic stat in state.hiddenEyeStats) {
+    if (const {'resistenza', 'riflessi'}.contains(stat.id)) {
+      stat.valore = -50;
+    }
+  }
   state.currentHpController.text = '75';
   state.scudoController.text = '7';
   state.scudoOculumController.text = '0';
@@ -50,6 +62,8 @@ Future<(dynamic, OculumPerformanceProbe)> mountStoneguard(
   state.scudoSalvataggioAttivo = false;
   state.modificatoreDannoSelezionato = 'Normale';
   p.invalidateDerivedCaches();
+  expect(p.subtraitValue('fortuna'), lessThanOrEqualTo(0));
+  expect(p.subtraitValue('resistenza'), lessThanOrEqualTo(0));
   p.recordCurrentEncounter();
   return (state, p);
 }

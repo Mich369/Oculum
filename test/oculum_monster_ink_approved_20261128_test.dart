@@ -69,6 +69,26 @@ const _picks = <({String monster, String? skin, String path, String sha})>[
         'assets/oculum/home_art_authored/theme_nuvola_in_bottiglia_ink_20261128.webp',
     sha: '1bd44a56e80d6ef112730cc5ba60c659855a9a9ba0da88c5d650ac5f703f678f',
   ),
+  (
+    monster: 'il_doppione',
+    skin: null,
+    path: 'assets/oculum/home_art_authored/theme_il_doppione_ink_20261128.webp',
+    sha: 'cf434bd288756a705089db7bd353750366345106d62f674e599047a373ecf461',
+  ),
+  (
+    monster: 'mezzo_demone_cosciente',
+    skin: null,
+    path:
+        'assets/oculum/home_art_authored/theme_mezzo_demone_cosciente_ink_20261128.webp',
+    sha: 'b1890fade7e09a384b1cf232cbdee21e2226a3c82ffff5189de4fc16ef6cb819',
+  ),
+  (
+    monster: 'mostro_lunare_demoniaco',
+    skin: null,
+    path:
+        'assets/oculum/home_art_authored/theme_mostro_lunare_demoniaco_ink_20261128.webp',
+    sha: 'bf0460bfebe70415a893898c0effa077ab98c862f090641cc0d891ae00ce4f12',
+  ),
 ];
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

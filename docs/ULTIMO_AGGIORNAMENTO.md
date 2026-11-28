@@ -1,6 +1,7 @@
-# Tavole dei mostri e pubblicazione — 28 novembre 2026
+# Aggiornamenti web e nuovi sfondi — 28 novembre 2026
 
-- Sei mostri hanno una nuova tavola desktop Expressive Ink. Velario Uncinato e Occhio Quadrilama hanno in tutto tre nuove colorazioni selezionabili.
-- Se viene rilanciata la pubblicazione della stessa build, GitHub ricontrolla e riusa gli asset Android già disponibili.
+- Il sito riutilizza le risorse identiche già scaricate e aggiorna quelle cambiate quando servono.
+- Duploryn E, Mezzo Demone Cosciente H e Mostro lunare demoniaco I indaco hanno i nuovi sfondi desktop.
+- Verificato il ritorno di Google e ripristinato l’accesso al profilo pubblico. Stabilizzate due prove di Fight.
 
 [Log cumulativo](REGISTRO_AGGIORNAMENTI.md)

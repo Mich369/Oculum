@@ -879,6 +879,9 @@ class OculumMonsterTheme {
   );
 
   static const _selectedInkDesktopIds = {
+    'il_doppione',
+    'mezzo_demone_cosciente',
+    'mostro_lunare_demoniaco',
     'velario_uncinato',
     'occhio_quadrilama',
     'habitat_oblio_maschera_della_memoria_spenta',

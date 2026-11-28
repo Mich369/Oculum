@@ -1,5 +1,12 @@
 # Registro cumulativo per i giocatori
 
+## Aggiornamenti web e nuovi sfondi — 28 novembre 2026
+
+- Nel sito, Oculum riutilizza le risorse di gioco già presenti nel browser quando il loro SHA-256 coincide con quello della nuova versione. Le risorse aggiornate vengono scaricate quando servono. Il ritorno dall’accesso Google e le richieste ai salvataggi passano fuori da questa cache.
+- Nuove tavole desktop Expressive Ink per **Duploryn** (E), **Mezzo Demone Cosciente** (H) e **Mostro lunare demoniaco** (I indaco).
+- Il sito e le app tornano al corretto indirizzo al termine dell’accesso Google. Il profilo pubblico si carica dall’account e conserva le proprie regole per il nome e il codice, indipendenti dai salvataggi cloud.
+- Le prove sullo Scudo del Cucciolo di Rinoceronte di Roccia e sui colpi mirati contro Ombra Ignota ora isolano le meccaniche casuali da quelle che stanno verificando.
+
 ## Tavole dei mostri e pubblicazione — 28 novembre 2026
 
 - Nuove tavole desktop Expressive Ink per **Velario Uncinato** (C), **Occhio Quadrilama** (F), **Maschera della Memoria Spenta** (A), **Lavastrello** (E), **ThunderBird** (E) e **Nubyvriel** (D).

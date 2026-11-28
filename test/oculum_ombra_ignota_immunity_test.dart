@@ -46,9 +46,22 @@ void main() {
     (sheet['planarRuntime'] as Map)['anatomicalPartRules'] = {
       'eyes': {'maximumHp': 1000},
     };
-    state.fortuna = 0;
     state.resilienzaController.text = '100';
     state.currentResilienzaController.text = '100';
+    // Isolate targeted damage from the independent below-half-HP awakening
+    // and the random passive mitigations of a normal character.
+    sheet['partialAwakeningHalfHpTriggered'] = true;
+    state.campaignDifficulty = 'normale';
+    state.fortuna = 0;
+    state.karmaController.text =
+        '-${readIntValue(state.livelloController.text) ~/ 2}';
+    state.oculumController.text = '0';
+    state.currentOculumController.text = '0';
+    for (final dynamic stat in state.hiddenEyeStats) {
+      if (const {'resistenza', 'riflessi'}.contains(stat.id)) {
+        stat.valore = -50;
+      }
+    }
     state.currentHpController.text = '300';
     state.scudoController.text = '12';
     state.scudoOculumController.text = '8';
@@ -57,6 +70,8 @@ void main() {
     probe.invalidateDerivedCaches();
     final hp = probe.currentHp();
     expect(hp, 300);
+    expect(probe.subtraitValue('fortuna'), lessThanOrEqualTo(0));
+    expect(probe.subtraitValue('resistenza'), lessThanOrEqualTo(0));
     final partsBefore = probe.anatomicalPartsSnapshot();
 
     Map<String, dynamic> attack(String id, String element) {
@@ -137,8 +152,11 @@ void main() {
       expect(strike['outcome'], isNot('avoided'));
       expect(strike['maskedShadowAvoided'], isNull);
       expect(strike['targetWeakPointPrecision'], isTrue);
-      final hpLost = readIntValue((strike['damageReceipt'] as Map)['hpLost']);
+      final structural = strike['structuralDamageReceipt'] as Map;
+      expect(structural['id'], strike['id']);
+      final hpLost = readIntValue(structural['hpLost']);
       expect(hpLost, greaterThan(0), reason: element);
+      expect((strike['damageReceipt'] as Map)['hpLost'], hpLost);
       eyeDamage += hpLost;
       final anatomy = probe.anatomicalPartsSnapshot();
       expect((anatomy['parts'] as Map)['eyes']['damageTaken'], eyeDamage);
@@ -172,7 +190,11 @@ void main() {
   ) async {
     final (state, probe) = await fixtures.mountFight(tester);
     state.realtimeUsers = <Map<String, dynamic>>[
-      {'sessionId': 'enemy-session', 'activeSheetTag': 'ENEMY', 'role': 'player'},
+      {
+        'sessionId': 'enemy-session',
+        'activeSheetTag': 'ENEMY',
+        'role': 'player',
+      },
     ];
 
     for (final (element, outcome) in [
