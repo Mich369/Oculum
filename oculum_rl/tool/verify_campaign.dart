@@ -406,7 +406,7 @@ String play(
       }
       soughtExplorationSupply = true;
     }
-    final target = priorityTarget(run, locked: locked);
+    final target = priorityTarget(run, locked: exploration ? locked : null);
     locked = target;
     if (target == null) {
       run.advanceFrame(tick);
@@ -422,7 +422,7 @@ String play(
       run.advanceFrame(tick, move: follow(run, outside));
       continue;
     }
-    final aimingPoint = target.burrow?.exposed == true
+    final aimingPoint = exploration && target.burrow?.exposed == true
         ? target.closestHitboxPoint(run.position)
         : target.position;
     final offset = aimingPoint - run.position;
@@ -467,7 +467,7 @@ String play(
       if (open(run, run.position + go)) move = go;
     }
     if (target.burrow case final track?
-        when track.warning > 0 || track.exposed) {
+        when exploration && (track.warning > 0 || track.exposed)) {
       final line = unit(track.end - track.start);
       final start = track.start - line * target.hitboxHalfLength;
       final length =
@@ -501,6 +501,13 @@ String play(
         run.special(run.position + move);
       }
     }
+    if (target.burrow case final track?
+        when !exploration && track.warning > 0) {
+      final line = unit(track.end - track.start);
+      final side = Point(-line.y, line.x);
+      move = open(run, run.position + side) ? side : side * -1.0;
+      if (track.warning < .30) run.special(run.position + move);
+    }
     if (hardest && run.inThirdAct) move = avoidGroundAttacks(run, move);
     final storm = run.stormWarning(target);
     if (storm != null) {
@@ -515,7 +522,12 @@ String play(
         target.attacking && distance < 3) {
       run.special(run.position + move);
     }
-    if (hardest && aimed && distance < 9) {
+    // Leave the Arconte alive long enough to verify each configured attack.
+    final observingArconte =
+        target.kind == LiteEnemyKind.arconte &&
+        target.hp <= target.maxHp * .34 &&
+        !finalAttacks.containsAll(LiteArchonAttack.values);
+    if (!observingArconte && hardest && aimed && distance < 9) {
       if (target.kind.boss || run.hp < run.maxHp * .40) {
         run.useOpen(target.position);
       }
@@ -523,7 +535,7 @@ String play(
     }
     if (run.arrows == 0) {
       run.beginReload();
-    } else if (aimed && distance < 9.85) {
+    } else if (!observingArconte && aimed && distance < 9.85) {
       run.attack(aimingPoint);
     }
     run.advanceFrame(tick, move: move);
