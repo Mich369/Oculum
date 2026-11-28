@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Correzioni al Fabbro e agli Scudi — 28 novembre 2026
+
+- Quando fondi due equipaggiamenti di livello diverso, ogni abilità conserva il proprio requisito di livello.
+- Gli effetti alla rottura dello Scudo restano distinti anche dopo aver chiuso e riaperto la scheda. Si attivano per il pezzo che si è rotto, anche se in inventario c’è un altro oggetto con lo stesso nome.
+- Puoi personalizzare separatamente valore, durata, destinazione, condizione e resistenza elementale di ogni effetto dall’editor dell’oggetto.
+
 ## Ricette dai mostri e fusione dal Fabbro — 28 novembre 2026
 
 - Ogni mostro ucciso può lasciare una ricetta extra con probabilità del 25%. Ricetta e materiali arrivano insieme allo stesso personaggio. L’app considera il suo equipaggiamento, i suoi elementi e gli ingredienti mancanti.

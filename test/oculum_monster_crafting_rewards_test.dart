@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+
+import 'oculum_escape_provoker_test.dart' show mountFight;
+import 'oculum_october27_resources_test.dart' show closeFixture;
 
 class _Rolls implements Random {
   _Rolls(this.values);
@@ -52,6 +56,109 @@ InventoryItem gear(String name, OculumEquipmentFusionKind kind) =>
     );
 
 void main() {
+  test('fusion keeps the original level requirement of each skill', () {
+    final lower = gear('Arma leggera', OculumEquipmentFusionKind.weapon)
+      ..livelloOggetto = 1
+      ..ability = oculumEquipmentAbility('Attacco leggero', 0);
+    final higher = gear('Arma maggiore', OculumEquipmentFusionKind.weapon)
+      ..livelloOggetto = 5
+      ..ability = oculumEquipmentAbility('Attacco maggiore', 0);
+    final output = oculumFuseEquipment(
+      [lower, higher],
+      lower,
+      higher,
+      name: 'Arma fusa',
+      receipt: 'levels',
+    )!;
+    final restored = InventoryItem.fromJson(output.toJson());
+    expect(restored.livelloOggetto, 5);
+    expect(
+      oculumAllEquipmentAbilities(restored).map(
+        (ability) =>
+            oculumEquipmentSkillItemLevel(restored, ability.forme.first),
+      ),
+      [1, 5],
+    );
+  });
+
+  testWidgets(
+    'both fused shield break effects apply after reloading the equipment',
+    (tester) async {
+      final (state, probe) = await mountFight(tester);
+      final first = gear('Scudo del varco', OculumEquipmentFusionKind.shield)
+        ..bonusScudo = 8
+        ..effettoRotturaScudo = {
+          'buffTarget': 'difesa',
+          'buffValue': 3,
+          'duration': 2,
+        };
+      final second = gear('Scudo del lampo', OculumEquipmentFusionKind.shield)
+        ..bonusScudo = 8
+        ..effettoRotturaScudo = {
+          'buffTarget': 'danni',
+          'buffValue': 4,
+          'duration': 3,
+        };
+      final fused = oculumFuseEquipment(
+        [first, second],
+        first,
+        second,
+        name: 'Scudo del tuono',
+        receipt: 'shield-break',
+      )!;
+      final shield = InventoryItem.fromJson(
+        jsonDecode(jsonEncode(fused.toJson())) as Map<String, dynamic>,
+      );
+      final unequipped = gear(shield.nome, OculumEquipmentFusionKind.shield)
+        ..effettoRotturaScudo = {'buffTarget': 'volonta', 'buffValue': 99};
+      state.updateOculumHomeUi(() {
+        state.inventario
+          ..clear()
+          ..addAll([unequipped, shield]);
+        state.fortuna = 0;
+        state.campaignDifficulty = 'normale';
+        state.currentHpController.text = '100';
+        state.scudoController.text = '0';
+        state.scudoOculumController.text = '0';
+        state.dannoOltreDifesa = false;
+        state.dannoOltreScudi = false;
+        state.incomingDamagePresets.clear();
+        state.modificatoreDannoSelezionato = 'Normale';
+        for (final HiddenEyeStat stat in state.hiddenEyeStats) {
+          if (stat.id == 'resistenza') stat.valore = -100;
+          if (stat.id == 'fortuna') stat.unlocked = false;
+        }
+        state.activeStructuredEffects.clear();
+        state.invalidateDerivedDataCaches();
+      });
+      probe.equipItem(shield, true);
+      expect(probe.shieldTotal(), 8);
+      await probe.damageResolved(8, bypassDefense: true);
+      expect(shield.scudoIntegritaCorrente, 0);
+      final effects = (state.activeStructuredEffects as List).whereType<Map>();
+      expect(effects.any((effect) => effect['value'] == 99), isFalse);
+      expect(
+        effects.any(
+          (effect) =>
+              effect['target'] == 'difesa' &&
+              effect['value'] == 3 &&
+              effect['remaining'] == 2,
+        ),
+        isTrue,
+      );
+      expect(
+        effects.any(
+          (effect) =>
+              effect['target'] == 'danni' &&
+              effect['value'] == 4 &&
+              effect['remaining'] == 3,
+        ),
+        isTrue,
+      );
+      await closeFixture(tester, probe);
+    },
+  );
+
   test(
     'A recipe roll keeps the old loot independent and targets missing gear and grams',
     () {

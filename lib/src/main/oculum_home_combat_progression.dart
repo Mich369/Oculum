@@ -7287,7 +7287,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
         'difficile' || 'oculum' => true,
         _ => false,
       };
-      final integrityBroken = <String>{};
+      final integrityBroken = <InventoryItem>{};
       InventoryItem? blockingEquipmentShield;
       final attributableShield =
           integrityShieldTotal <= max(0, leggiNumero(scudoController));
@@ -7296,7 +7296,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       void noteBrokenIntegrity(InventoryItem item) {
         if (itemIntegrityShieldCurrent(item) <= 0 &&
             itemIntegrityOculumShieldCurrent(item) <= 0) {
-          integrityBroken.add(item.nome.trim());
+          integrityBroken.add(item);
         }
       }
 
@@ -7725,12 +7725,15 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
           ).toString();
         }
         if (integrityBroken.isNotEmpty) {
+          final names = integrityBroken.map((item) => item.nome.trim()).join(', ');
           final brokenText = t(
-            'Scudo d\'integrità spezzato: ${integrityBroken.join(', ')}. I suoi parser/effetti non sono più attivi fino alla ricarica.',
-            'Integrity shield broken: ${integrityBroken.join(', ')}. Its parser/effects stay disabled until it is recharged.',
+            'Scudo d\'integrità spezzato: $names. I suoi parser/effetti non sono più attivi fino alla ricarica.',
+            'Integrity shield broken: $names. Its parser/effects stay disabled until it is recharged.',
           );
           combatArmorBreakLog = '\n$brokenText';
-          if (integrityBroken.contains('Armatura del Combattente') &&
+          if (integrityBroken.any(
+                (item) => item.nome.trim() == 'Armatura del Combattente',
+              ) &&
               !activeStructuredEffects.any(
                 (effect) => effect['source'] == 'Armatura del Combattente',
               )) {
@@ -7750,80 +7753,86 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
               '\nCombatant Armor broken: +200% damage for 2 turns (+$surge).',
             );
           }
-          for (final item in inventario.where(
-            (candidate) => integrityBroken.contains(candidate.nome.trim()),
-          )) {
-            final effect = item.effettoRotturaScudo;
-            if (item.craftData['cyberPostea'] == true) {
+          for (final item in integrityBroken) {
+            final cyberPostea = item.craftData['cyberPostea'] == true;
+            final effects = oculumEquipmentShieldBreakEffects(item);
+            if (cyberPostea) {
               if (item.craftData['cyberWorn'] == true) continue;
               item.craftData['cyberWorn'] = true;
               item.nome = 'Armatura logora · ${item.nome}';
               item.note +=
                   ' Scudo consumato: armatura logora, tutti i bonus passivi dimezzati; non si ricarica automaticamente.';
-              final chance = readIntValue(
-                effect['chancePercent'],
-                fallback: 99,
-              ).clamp(0, 100);
-              final roll = Random.secure().nextInt(100);
-              combatArmorBreakLog +=
-                  '\n[POSTEA] ${item.nome}: bonus dimezzati. Buff: ${roll + 1}/100, soglia $chance%.';
-              if (roll >= chance) continue;
+              if (effects.isEmpty) {
+                combatArmorBreakLog += '\n[POSTEA] ${item.nome}: bonus dimezzati.';
+              }
             }
-            if (effect.isEmpty) continue;
-            final source = 'Rottura scudo: ${item.nome.trim()}';
-            if (activeStructuredEffects.any(
-              (active) => active['source'] == source,
-            )) {
-              continue;
+            for (final (index, effect) in effects.indexed) {
+              if ((effect['usesPosteaBreakChance'] ?? cyberPostea) == true) {
+                final chance = readIntValue(
+                  effect['chancePercent'],
+                  fallback: 99,
+                ).clamp(0, 100);
+                final roll = Random.secure().nextInt(100);
+                combatArmorBreakLog +=
+                    '\n[POSTEA] ${item.nome}: bonus dimezzati. Buff: ${roll + 1}/100, soglia $chance%.';
+                if (roll >= chance) continue;
+              }
+              final suffix = index == 0 ? '' : ' · ${index + 1}';
+              final source = 'Rottura scudo: ${item.nome.trim()}$suffix';
+              if (activeStructuredEffects.any(
+                (active) => active['source'] == source,
+              )) {
+                continue;
+              }
+              final duration = max(
+                1,
+                readIntValue(effect['duration'], fallback: 2),
+              );
+              final configuredTarget = '${effect['buffTarget'] ?? ''}'.trim();
+              final mostUsed = dustExperienceHighestSubtraits();
+              final buffTarget = configuredTarget == 'piu_usato'
+                  ? (mostUsed.isEmpty ? 'riflessi' : mostUsed.first.id)
+                  : configuredTarget;
+              final buffValue = readIntValue(effect['buffValue']);
+              if (buffTarget.isNotEmpty && buffValue != 0) {
+                activeStructuredEffects.add(<String, dynamic>{
+                  'source': source,
+                  'target': buffTarget,
+                  'value': buffValue,
+                  'remaining': duration,
+                  'unit': 'turn',
+                  'frequency': '',
+                  'type': 'bonus',
+                  'stackable': false,
+                });
+              }
+              final condition = '${effect['condition'] ?? ''}'.trim();
+              if (condition.isNotEmpty) {
+                applyCondition(condition, duration: duration, source: source);
+              }
+              final element = oculumNormalizeElementId(
+                '${effect['element'] ?? ''}',
+              );
+              final resistance = '${effect['resistance'] ?? ''}'.trim();
+              if (element.isNotEmpty && resistance.isNotEmpty) {
+                activeStructuredEffects.add(<String, dynamic>{
+                  'source': source,
+                  'type': 'elemental_resistance',
+                  'target': 'resistenza_elementale',
+                  'element': element,
+                  'preset': resistance,
+                  'value': 0,
+                  'remaining': duration,
+                  'unit': 'turn',
+                  'frequency': '',
+                  'stackable': false,
+                });
+              }
+              combatArmorBreakLog += t(
+                '\n${item.nome} spezzata: bonus temporaneo${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance a $element, '}per $duration turni.',
+                '\n${item.nome} broken: temporary bonus${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance to $element, '}for $duration turns.',
+              );
             }
-            final duration = max(
-              1,
-              readIntValue(effect['duration'], fallback: 2),
-            );
-            final configuredTarget = '${effect['buffTarget'] ?? ''}'.trim();
-            final mostUsed = dustExperienceHighestSubtraits();
-            final buffTarget = configuredTarget == 'piu_usato'
-                ? (mostUsed.isEmpty ? 'riflessi' : mostUsed.first.id)
-                : configuredTarget;
-            final buffValue = readIntValue(effect['buffValue']);
-            if (buffTarget.isNotEmpty && buffValue != 0) {
-              activeStructuredEffects.add(<String, dynamic>{
-                'source': source,
-                'target': buffTarget,
-                'value': buffValue,
-                'remaining': duration,
-                'unit': 'turn',
-                'frequency': '',
-                'type': 'bonus',
-                'stackable': false,
-              });
-            }
-            final condition = '${effect['condition'] ?? ''}'.trim();
-            if (condition.isNotEmpty) {
-              applyCondition(condition, duration: duration, source: source);
-            }
-            final element = oculumNormalizeElementId(
-              '${effect['element'] ?? ''}',
-            );
-            final resistance = '${effect['resistance'] ?? ''}'.trim();
-            if (element.isNotEmpty && resistance.isNotEmpty) {
-              activeStructuredEffects.add(<String, dynamic>{
-                'source': source,
-                'type': 'elemental_resistance',
-                'target': 'resistenza_elementale',
-                'element': element,
-                'preset': resistance,
-                'value': 0,
-                'remaining': duration,
-                'unit': 'turn',
-                'frequency': '',
-                'stackable': false,
-              });
-            }
-            combatArmorBreakLog += t(
-              '\n${item.nome} spezzata: bonus temporaneo${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance a $element, '}per $duration turni.',
-              '\n${item.nome} broken: temporary bonus${buffValue == 0 ? '' : ' +$buffValue $buffTarget'}, ${condition.isEmpty ? '' : '$condition, '}${resistance.isEmpty ? '' : '$resistance to $element, '}for $duration turns.',
-            );
           }
         }
 

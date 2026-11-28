@@ -2,7 +2,7 @@
 
 ## Ricette dai mostri e fusione dal Fabbro — 28 novembre 2026
 
-- Ogni mostro ucciso può aggiungere una ricetta con probabilità del 25%, indipendente dal bottino normale. Il Fabbro fonde due pezzi in un solo oggetto con il nome scelto. I due effetti rimangono utilizzabili separatamente.
+- Ogni mostro ucciso può aggiungere una ricetta con probabilità del 25%, indipendente dal bottino normale. Il Fabbro fonde due pezzi in un solo oggetto con il nome scelto. I due effetti rimangono utilizzabili separatamente, ciascuno con i propri requisiti. Se entrambi i pezzi hanno un effetto alla rottura dello Scudo, ognuno conserva i propri parametri.
 - La fusione dà +1 Danni alle armi, +1 Difesa e +1 Scudo alle armature e +1 Danni e +1 Difesa agli scudi.
 - Il lotto accompagna la ricetta con il 25–75% della quantità totale richiesta, scegliendo ingredienti che mancano al personaggio. La selezione considera grado, elementi usati, equipaggiamento, ricette conosciute e preferiti. Viene assegnata allo stesso destinatario del lotto nelle ricompense di fine Fight. Evocazioni, KO e allenamenti non assegnano ricette.
 

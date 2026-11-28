@@ -38,6 +38,26 @@ int oculumFusedShieldDamageBonus(InventoryItem item) =>
     ? oculumEquipmentWearValue(item, item.bonusDanno)
     : 0;
 
+List<Map<String, dynamic>> oculumEquipmentShieldBreakEffects(
+  InventoryItem item,
+) => [
+  if (item.effettoRotturaScudo.isNotEmpty) item.effettoRotturaScudo,
+  if (item.craftData['extraShieldBreakEffects'] case final List extra)
+    for (final effect in extra.whereType<Map>())
+      if (effect.isNotEmpty) Map<String, dynamic>.from(effect),
+];
+
+void _setEquipmentShieldBreakEffects(
+  InventoryItem item,
+  List<Map<String, dynamic>> effects,
+) {
+  item.effettoRotturaScudo = effects.firstOrNull ?? const {};
+  item.craftData = {...item.craftData}..remove('extraShieldBreakEffects');
+  if (effects.length > 1) {
+    item.craftData['extraShieldBreakEffects'] = effects.skip(1).toList();
+  }
+}
+
 bool oculumEquipmentCanFuse(InventoryItem first, InventoryItem second) {
   final firstKind = oculumEquipmentFusionKind(first);
   return firstKind != null &&
@@ -82,6 +102,29 @@ InventoryItem? oculumFuseEquipment(
 
   retainNamedAbility(combined);
   retainNamedAbility(donor);
+  final level = max(first.livelloOggetto, second.livelloOggetto);
+  // The two source skills have their own item-level requirements.
+  for (final original in [combined, donor]) {
+    if (original.livelloOggetto == level) continue;
+    for (final ability in oculumAllEquipmentAbilities(original)) {
+      for (final form in ability.forme) {
+        form.unlockRequirements.putIfAbsent(
+          'equipmentItemLevel',
+          () => original.livelloOggetto,
+        );
+      }
+    }
+  }
+  final breakEffects = [
+    for (final original in [combined, donor])
+      for (final effect in oculumEquipmentShieldBreakEffects(original))
+        {
+          ...effect,
+          'usesPosteaBreakChance':
+              effect['usesPosteaBreakChance'] ??
+              (original.craftData['cyberPostea'] == true),
+        },
+  ];
   final abilities = oculumAllEquipmentAbilities(donor);
   combined.materialAbilities = [...combined.materialAbilities, ...abilities];
   // Make the second equipment skill accessible through the regular item editor
@@ -109,7 +152,7 @@ InventoryItem? oculumFuseEquipment(
     ..protegge = first.protegge || second.protegge
     ..gradoOggetto = max(first.gradoOggetto, second.gradoOggetto)
     ..gradoRichiesto = max(first.gradoRichiesto, second.gradoRichiesto)
-    ..livelloOggetto = max(first.livelloOggetto, second.livelloOggetto)
+    ..livelloOggetto = level
     ..bonusDanno =
         max(first.bonusDanno, second.bonusDanno) +
         (kind == OculumEquipmentFusionKind.armor ? 0 : 1)
@@ -135,10 +178,6 @@ InventoryItem? oculumFuseEquipment(
       first.effettoIntegritaScudo,
       second.effettoIntegritaScudo,
     )
-    ..effettoRotturaScudo = {
-      ...donor.effettoRotturaScudo,
-      ...combined.effettoRotturaScudo,
-    }
     ..monsterLoot = {...donor.monsterLoot, ...combined.monsterLoot}
     ..buff = appendText(first.buff, second.buff)
     ..note = appendText(first.note, second.note);
@@ -167,6 +206,7 @@ InventoryItem? oculumFuseEquipment(
     'equipmentFusionReceipt': receipt,
     'equipmentFusionSources': [first.nome, second.nome],
   };
+  _setEquipmentShieldBreakEffects(combined, breakEffects);
   first.quantita--;
   second.quantita--;
   inventory.removeWhere(

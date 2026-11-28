@@ -8118,45 +8118,54 @@ extension _OculumHomeTitlesInventoryPages on _OculumHomePageState {
                       programmaSalvataggio();
                     },
                   ),
-                  if (inventario[i].craftData['cyberPostea'] == true) ...[
-                    for (final field in [
-                      (
-                        'chancePercent',
-                        'Probabilità buff alla rottura (%)',
-                        '99',
-                      ),
-                      ('duration', 'Durata buff (turni)', '6'),
-                      ('buffValue', 'Valore buff alla rottura', '1'),
-                      (
-                        'buffTarget',
-                        'Destinazione buff (piu_usato = sottotratto più usato)',
-                        '',
-                      ),
-                      (
-                        'condition',
-                        'Condizione positiva alla rottura (ID)',
-                        '',
-                      ),
-                    ])
-                      campoModello(
-                        label: field.$2,
-                        initialValue:
-                            '${inventario[i].effettoRotturaScudo[field.$1] ?? field.$3}',
-                        onChanged: (v) {
-                          inventario[i].effettoRotturaScudo = {
-                            ...inventario[i].effettoRotturaScudo,
-                            field.$1:
-                                const {
-                                  'chancePercent',
-                                  'duration',
-                                  'buffValue',
-                                }.contains(field.$1)
-                                ? int.tryParse(v) ?? 0
-                                : v.trim(),
-                          };
-                          programmaSalvataggio();
-                        },
-                      ),
+                  if (oculumEquipmentShieldBreakEffects(inventario[i])
+                      case final effects
+                      when effects.isNotEmpty ||
+                          inventario[i].craftData['cyberPostea'] == true) ...[
+                    for (final (effectIndex, effect) in (effects.isEmpty
+                            ? <Map<String, dynamic>>[{}]
+                            : effects)
+                        .indexed) ...[
+                      if (effects.length > 1)
+                        Text('Rottura Scudo · effetto ${effectIndex + 1}'),
+                      for (final field in [
+                        if ((effect['usesPosteaBreakChance'] ??
+                                inventario[i].craftData['cyberPostea']) ==
+                            true)
+                          ('chancePercent', 'Probabilità buff alla rottura (%)', '99'),
+                        ('duration', 'Durata buff (turni)', '6'),
+                        ('buffValue', 'Valore buff alla rottura', '1'),
+                        ('buffTarget', 'Destinazione buff (piu_usato = sottotratto più usato)', ''),
+                        ('condition', 'Condizione positiva alla rottura (ID)', ''),
+                        ('element', 'Elemento resistenza alla rottura', ''),
+                        ('resistance', 'Resistenza alla rottura', ''),
+                      ])
+                        campoModello(
+                          label: effects.length < 2
+                              ? field.$2
+                              : '${field.$2} · ${effectIndex + 1}',
+                          initialValue: '${effect[field.$1] ?? field.$3}',
+                          onChanged: (v) {
+                            final target = inventario[i];
+                            final current =
+                                oculumEquipmentShieldBreakEffects(target);
+                            if (current.isEmpty && effectIndex == 0) {
+                              current.add({});
+                            }
+                            if (effectIndex >= current.length) return;
+                            current[effectIndex] = {
+                              ...current[effectIndex],
+                              field.$1: const {
+                                'chancePercent', 'duration', 'buffValue',
+                              }.contains(field.$1)
+                                  ? int.tryParse(v) ?? 0
+                                  : v.trim(),
+                            };
+                            _setEquipmentShieldBreakEffects(target, current);
+                            programmaSalvataggio();
+                          },
+                        ),
+                    ],
                   ],
                   if (inventario[i].craftData['silkResistances'] is Map)
                     for (final element
