@@ -327,6 +327,72 @@ const _november28Votes = <_Vote>[
   ),
 ];
 
+const _lot0605Votes = <_Vote>[
+  (
+    id: 'element_pack_nonmorto',
+    slot: 'B',
+    sha256: 'ca1a367bea72f38c8deef4c013e371518ad66e9e16ae833e9ff4c195bedb8e54',
+    originalSha256:
+        '3dbc5e0ac3faad59fbed171581a4a906805f83ae34df26beace4d925405e0d0d',
+  ),
+  (
+    id: 'cathedral_rose',
+    slot: 'C',
+    sha256: 'dd6d45be133296d7674130b903edbd2690fd9fd0f3083f1797d0b3504cad2fbc',
+    originalSha256:
+        '93bce0ee97f01c05bb306c0ddc62c63770ecb055a7be0678e56288c9cae22dbd',
+  ),
+  (
+    id: 'buried_herbarium',
+    slot: 'C',
+    sha256: '99e23d27b798fa13e3ee775a4a67a661487c32cdc72ac6bb62c8f37159bfe4b8',
+    originalSha256:
+        'acd686f09aca92bda9f53a9c1a2895bd21b419fb09bb54848eee1546b423254e',
+  ),
+  (
+    id: 'element_pack_acqua',
+    slot: 'E',
+    sha256: '254e5233da7f33d7167b044c7e046200fa2abf7586ee741c22971c76b9a28a83',
+    originalSha256:
+        '65ad37f2316ef4c82a8852abca0c1783774cdf08343a6b596fae3e39aed0f856',
+  ),
+  (
+    id: 'slime_prince',
+    slot: 'C',
+    sha256: '78673aa38a508986badb1a557c4deff9128561a5be408382dc72d2fee14b3c3c',
+    originalSha256:
+        '0b4d93e664bf8e121086cd10b781f6d958b667e8d03a368393e5c002acdade73',
+  ),
+  (
+    id: 'element_pack_perforante',
+    slot: 'C',
+    sha256: '0a0a315fd09bbfffa6065c89eda20c11bd71032f3ec808a50fc1b3b813261535',
+    originalSha256:
+        'acfbfcd3b6840f5e8cd22b77967be495a1d002a29a10d906e82025234e6139cc',
+  ),
+  (
+    id: 'plane_postea',
+    slot: 'C1',
+    sha256: '86264e7e129efbbabaad77cf7fce62bc3c5b77c9a72a268f650645ea5ef79ed2',
+    originalSha256:
+        '06fb00e289f2486085cbd10562604a09ade10de7beb3202e5965d2e40ea48bc5',
+  ),
+  (
+    id: 'element_pack_benedizione',
+    slot: 'C',
+    sha256: 'a9b469418484a05881cd60983dfa5815c57585693743eaff64d1f16d4b4f2fda',
+    originalSha256:
+        '2db6d9b390ec2f9d4b90e104d4006b9bccd158a3d93d341c330ad16230d73ee1',
+  ),
+  (
+    id: 'restyle_natura',
+    slot: 'C1',
+    sha256: '4e4bba45783efc5e1edfcc48a81d515ae8582aef43c37ba1eabfce23be790a7d',
+    originalSha256:
+        '7ce0ec3d8931ffd68744106e4989f62c4bc0d63233398619f57f726a495837da',
+  ),
+];
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -336,34 +402,29 @@ void main() {
       unorderedEquals([
         ..._votes.map((vote) => vote.id),
         ..._november28Votes.map((vote) => vote.id),
+        ..._lot0605Votes.map((vote) => vote.id),
         'kingi_wrong_future',
         'element_pack_oculum',
       ]),
     );
     expect(oculumApprovedThemeStoryAsset('whispering_reliquary'), isNull);
+    expect(oculumApprovedThemeStoryAsset('element_pack_laser'), isNull);
     expect(oculumApprovedThemeStoryAsset('senka_kamaria'), isNull);
   });
 
-  test(
-    'The ten 28 November choices load in their existing theme packs',
-    () async {
-      for (final vote in _november28Votes) {
-        final path =
-            'assets/oculum/theme_stories/webp/${vote.id}_canon_20261128_'
-            '${vote.slot.toLowerCase()}_${vote.sha256.substring(0, 8)}.webp';
-        expect(
-          oculumThemeAssetPacks[vote.id]?.storyScene,
-          path,
-          reason: vote.id,
-        );
-        await _expectDigest(path, vote.sha256);
-        await _expectDigest(
-          'assets/oculum/theme_stories/webp/${vote.id}.webp',
-          vote.originalSha256,
-        );
-      }
-    },
-  );
+  test('The 28 November choices load in their existing theme packs', () async {
+    for (final vote in [..._november28Votes, ..._lot0605Votes]) {
+      final path =
+          'assets/oculum/theme_stories/webp/${vote.id}_canon_20261128_'
+          '${vote.slot.toLowerCase()}_${vote.sha256.substring(0, 8)}.webp';
+      expect(oculumThemeAssetPacks[vote.id]?.storyScene, path, reason: vote.id);
+      await _expectDigest(path, vote.sha256);
+      await _expectDigest(
+        'assets/oculum/theme_stories/webp/${vote.id}.webp',
+        vote.originalSha256,
+      );
+    }
+  });
 
   test(
     'Iride cesellata loads the approved C scene and keeps the original',

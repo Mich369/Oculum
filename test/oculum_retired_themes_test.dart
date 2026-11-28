@@ -13,11 +13,18 @@ import 'package:oculum/widgets/oculum_theme_relic.dart';
 
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
-const retiredTheme = 'whispering_reliquary';
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  for (final (presetId, artPackId) in [
+    ('whispering_reliquary', 'whispering_reliquary'),
+    ('element_laser', 'element_pack_laser'),
+  ]) {
+    group(presetId, () => _verifyRetiredTheme(presetId, artPackId));
+  }
+}
+
+void _verifyRetiredTheme(String presetId, String retiredTheme) {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     final presentation = oculumThemePresentation.value;
@@ -35,6 +42,7 @@ void main() {
 
   test('retired artwork remains resolvable but cannot be newly selected', () {
     expect(oculumIsThemeSelectable(retiredTheme), isFalse);
+    expect(oculumIsThemeSelectable(presetId), isFalse);
     expect(oculumIsThemeSelectable('  $retiredTheme  '), isFalse);
     expect(oculumIsThemeSelectable(retiredTheme.toUpperCase()), isFalse);
     expect(oculumIsThemeSelectable(''), isTrue);
@@ -139,9 +147,7 @@ void main() {
           ),
         ),
       );
-      final field = find.byKey(
-        const ValueKey('theme-art-pack-whispering_reliquary'),
-      );
+      final field = find.byKey(ValueKey('theme-art-pack-$retiredTheme'));
       final dropdown = tester.widget<DropdownButton<String>>(
         find.descendant(
           of: field,
@@ -175,16 +181,16 @@ void main() {
         state.modalitaMaster = true;
       });
       final legacy = probe.snapshot()
-        ..['colorPreset'] = retiredTheme
-        ..['colorDecorationPresetId'] = retiredTheme
-        ..['colorGuiPresetId'] = retiredTheme;
+        ..['colorPreset'] = presetId
+        ..['colorDecorationPresetId'] = presetId
+        ..['colorGuiPresetId'] = presetId;
       probe.load(legacy);
       await tester.pump();
       final loaded = probe.snapshot();
-      expect(loaded['colorPreset'], retiredTheme);
-      expect(loaded['colorDecorationPresetId'], retiredTheme);
-      expect(loaded['colorGuiPresetId'], retiredTheme);
-      expect(probe.themes.any((preset) => preset.id == retiredTheme), isFalse);
+      expect(loaded['colorPreset'], presetId);
+      expect(loaded['colorDecorationPresetId'], presetId);
+      expect(loaded['colorGuiPresetId'], presetId);
+      expect(probe.themes.any((preset) => preset.id == presetId), isFalse);
       final dialog = showDialog<void>(
         context: tester.element(find.byType(OculumHomePage)),
         builder: (_) => AlertDialog(
@@ -207,7 +213,7 @@ void main() {
       );
       expect(colorDropdown.value, isNull);
       expect(
-        colorDropdown.items!.any((item) => item.value == retiredTheme),
+        colorDropdown.items!.any((item) => item.value == presetId),
         isFalse,
       );
       Navigator.of(tester.element(find.byType(AlertDialog))).pop();
@@ -215,7 +221,7 @@ void main() {
       await tester.pump();
       probe.applyTheme('classic_rpg');
       final before = probe.snapshot();
-      probe.applyTheme(retiredTheme);
+      probe.applyTheme(presetId);
       final after = probe.snapshot();
       for (final key in [
         'colorPreset',
@@ -227,10 +233,7 @@ void main() {
       ]) {
         expect(after[key], before[key], reason: key);
       }
-      expect(
-        (state.masterAssignedThemeIds as Set).contains(retiredTheme),
-        isFalse,
-      );
+      expect((state.masterAssignedThemeIds as Set).contains(presetId), isFalse);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     },
@@ -240,7 +243,7 @@ void main() {
     'Dungeon excludes retired injected rewards and does not charge for them',
     (tester) async {
       SharedPreferences.setMockInitialValues({
-        'oculumDungeon.unlockedThemePresetIds': [retiredTheme],
+        'oculumDungeon.unlockedThemePresetIds': [presetId],
       });
       final granted = <String>[];
       await tester.pumpWidget(
@@ -261,8 +264,11 @@ void main() {
             playerGrade: 0,
             onReward: ({int obser = 0, int ascensionDust = 0, String? log}) {},
             onThemeUnlocked: granted.add,
-            availableThemeUnlocks: const [
-              {'id': retiredTheme, 'nameIt': 'Reliquiario dei sussurri'},
+            availableThemeUnlocks: [
+              {
+                'id': presetId,
+                'nameIt': oculumThemeAssetPacks[retiredTheme]!.name,
+              },
             ],
           ),
         ),
@@ -271,18 +277,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       final dynamic state = tester.state(find.byType(OculumDungeonGameDialog));
       final themes = (state.allDungeonThemeUnlocks() as List).cast<dynamic>();
-      expect(themes.any((theme) => theme.id == retiredTheme), isFalse);
+      expect(themes.any((theme) => theme.id == presetId), isFalse);
       (state.unlockedThemePresetIds as Set).addAll(
         themes.map<String>((theme) => theme.id as String),
       );
       state.oculumSpento = 6;
       state.unlockRandomThemeWithSpent();
       expect(state.oculumSpento, 6);
-      expect(
-        (state.unlockedThemePresetIds as Set).contains(retiredTheme),
-        isTrue,
-      );
-      expect(granted, isNot(contains(retiredTheme)));
+      expect((state.unlockedThemePresetIds as Set).contains(presetId), isTrue);
+      expect(granted, isNot(contains(presetId)));
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     },

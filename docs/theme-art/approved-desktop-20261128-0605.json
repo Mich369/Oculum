@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "run": "20261128-0605",
+  "surface": "desktop",
+  "choices": [
+    {
+      "id": "element_pack_nonmorto",
+      "name": "Cuciture del ritorno",
+      "slot": "B",
+      "baseSlot": "B",
+      "baseSha256": "ca1a367bea72f38c8deef4c013e371518ad66e9e16ae833e9ff4c195bedb8e54",
+      "sha256": "ca1a367bea72f38c8deef4c013e371518ad66e9e16ae833e9ff4c195bedb8e54",
+      "originalSha256": "3dbc5e0ac3faad59fbed171581a4a906805f83ae34df26beace4d925405e0d0d",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_nonmorto_canon_20261128_b_ca1a367b.webp",
+      "correction": null
+    },
+    {
+      "id": "cathedral_rose",
+      "name": "Rosa cattedrale",
+      "slot": "C",
+      "baseSlot": "C",
+      "baseSha256": "dd6d45be133296d7674130b903edbd2690fd9fd0f3083f1797d0b3504cad2fbc",
+      "sha256": "dd6d45be133296d7674130b903edbd2690fd9fd0f3083f1797d0b3504cad2fbc",
+      "originalSha256": "93bce0ee97f01c05bb306c0ddc62c63770ecb055a7be0678e56288c9cae22dbd",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/cathedral_rose_canon_20261128_c_dd6d45be.webp",
+      "correction": null
+    },
+    {
+      "id": "buried_herbarium",
+      "name": "Erbario sepolto",
+      "slot": "C",
+      "baseSlot": "C",
+      "baseSha256": "99e23d27b798fa13e3ee775a4a67a661487c32cdc72ac6bb62c8f37159bfe4b8",
+      "sha256": "99e23d27b798fa13e3ee775a4a67a661487c32cdc72ac6bb62c8f37159bfe4b8",
+      "originalSha256": "acd686f09aca92bda9f53a9c1a2895bd21b419fb09bb54848eee1546b423254e",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/buried_herbarium_canon_20261128_c_99e23d27.webp",
+      "correction": null
+    },
+    {
+      "id": "element_pack_acqua",
+      "name": "Reliquia della risacca",
+      "slot": "E",
+      "baseSlot": "E",
+      "baseSha256": "254e5233da7f33d7167b044c7e046200fa2abf7586ee741c22971c76b9a28a83",
+      "sha256": "254e5233da7f33d7167b044c7e046200fa2abf7586ee741c22971c76b9a28a83",
+      "originalSha256": "65ad37f2316ef4c82a8852abca0c1783774cdf08343a6b596fae3e39aed0f856",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_acqua_canon_20261128_e_254e5233.webp",
+      "correction": null
+    },
+    {
+      "id": "slime_prince",
+      "name": "Principe slime",
+      "slot": "C",
+      "baseSlot": "C",
+      "baseSha256": "78673aa38a508986badb1a557c4deff9128561a5be408382dc72d2fee14b3c3c",
+      "sha256": "78673aa38a508986badb1a557c4deff9128561a5be408382dc72d2fee14b3c3c",
+      "originalSha256": "0b4d93e664bf8e121086cd10b781f6d958b667e8d03a368393e5c002acdade73",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/slime_prince_canon_20261128_c_78673aa3.webp",
+      "correction": null
+    },
+    {
+      "id": "element_pack_perforante",
+      "name": "Spine del bastione",
+      "slot": "C",
+      "baseSlot": "C",
+      "baseSha256": "0a0a315fd09bbfffa6065c89eda20c11bd71032f3ec808a50fc1b3b813261535",
+      "sha256": "0a0a315fd09bbfffa6065c89eda20c11bd71032f3ec808a50fc1b3b813261535",
+      "originalSha256": "acfbfcd3b6840f5e8cd22b77967be495a1d002a29a10d906e82025234e6139cc",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_perforante_canon_20261128_c_0a0a315f.webp",
+      "correction": null
+    },
+    {
+      "id": "plane_postea",
+      "name": "Postea",
+      "slot": "C1",
+      "baseSlot": "C",
+      "baseSha256": "599b5c74ab24553d3c7aa936efb9d5ec7338c54a681294740cb0d628bd9352e9",
+      "sha256": "86264e7e129efbbabaad77cf7fce62bc3c5b77c9a72a268f650645ea5ef79ed2",
+      "originalSha256": "06fb00e289f2486085cbd10562604a09ade10de7beb3202e5965d2e40ea48bc5",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/plane_postea_canon_20261128_c1_86264e7e.webp",
+      "correction": "I due crescenti del vessillo e della ruota runica diventano dischi solari."
+    },
+    {
+      "id": "element_pack_benedizione",
+      "name": "Nastri del voto",
+      "slot": "C",
+      "baseSlot": "C",
+      "baseSha256": "a9b469418484a05881cd60983dfa5815c57585693743eaff64d1f16d4b4f2fda",
+      "sha256": "a9b469418484a05881cd60983dfa5815c57585693743eaff64d1f16d4b4f2fda",
+      "originalSha256": "2db6d9b390ec2f9d4b90e104d4006b9bccd158a3d93d341c330ad16230d73ee1",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_benedizione_canon_20261128_c_a9b46941.webp",
+      "correction": null
+    },
+    {
+      "id": "restyle_natura",
+      "name": "Natura",
+      "slot": "C1",
+      "baseSlot": "C",
+      "baseSha256": "bda34e6518283bea6d8d3e5a350b255586b6a7578323b407aab60150f2475b99",
+      "sha256": "4e4bba45783efc5e1edfcc48a81d515ae8582aef43c37ba1eabfce23be790a7d",
+      "originalSha256": "7ce0ec3d8931ffd68744106e4989f62c4bc0d63233398619f57f726a495837da",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/restyle_natura_canon_20261128_c1_4e4bba45.webp",
+      "correction": "Rimosse le cinque fate blu, conservando linfa, rame e piante del vivaio."
+    }
+  ],
+  "retiredFromSelector": [
+    {
+      "id": "element_pack_laser",
+      "name": "Lenti allineate",
+      "preservesExistingSelections": true,
+      "originalSha256": "35b5ba676ca7e5ce1e7ae537f996fbb796d20922f0a8bcaaee7b6301bf14cd8a",
+      "colorPresetId": "element_laser"
+    }
+  ]
+}

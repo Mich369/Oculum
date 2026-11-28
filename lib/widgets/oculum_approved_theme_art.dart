@@ -87,6 +87,24 @@ const oculumApprovedThemeStoryAssets = <String, String>{
       'assets/oculum/theme_stories/webp/monster_lantern_canon_20261128_b1_8a6a19c4.webp',
   'restyle_sangue':
       'assets/oculum/theme_stories/webp/restyle_sangue_canon_20261128_b_f79dd1e6.webp',
+  'element_pack_nonmorto':
+      'assets/oculum/theme_stories/webp/element_pack_nonmorto_canon_20261128_b_ca1a367b.webp',
+  'cathedral_rose':
+      'assets/oculum/theme_stories/webp/cathedral_rose_canon_20261128_c_dd6d45be.webp',
+  'buried_herbarium':
+      'assets/oculum/theme_stories/webp/buried_herbarium_canon_20261128_c_99e23d27.webp',
+  'element_pack_acqua':
+      'assets/oculum/theme_stories/webp/element_pack_acqua_canon_20261128_e_254e5233.webp',
+  'slime_prince':
+      'assets/oculum/theme_stories/webp/slime_prince_canon_20261128_c_78673aa3.webp',
+  'element_pack_perforante':
+      'assets/oculum/theme_stories/webp/element_pack_perforante_canon_20261128_c_0a0a315f.webp',
+  'plane_postea':
+      'assets/oculum/theme_stories/webp/plane_postea_canon_20261128_c1_86264e7e.webp',
+  'element_pack_benedizione':
+      'assets/oculum/theme_stories/webp/element_pack_benedizione_canon_20261128_c_a9b46941.webp',
+  'restyle_natura':
+      'assets/oculum/theme_stories/webp/restyle_natura_canon_20261128_c1_4e4bba45.webp',
 };
 
 String? oculumApprovedThemeStoryAsset(String id) =>

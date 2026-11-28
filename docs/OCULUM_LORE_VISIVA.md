@@ -1,5 +1,11 @@
 # Oculum — canone visivo confermato
 
+## Lotto desktop 0605 e Postea — 28 novembre 2026
+
+Nove tavole desktop approvate nel [registro del lotto 0605](theme-art/approved-desktop-20261128-0605.json). Natura usa la C con le fate rimosse. Lenti allineate esce dal selettore e rimane disponibile alle schede che usano già il tema.
+
+**Postea appartiene al Sole Errante.** In questo futuro errante runico il Sole ha vinto definitivamente sulla Luna. Esistono veri giochi d’azzardo in cui a tenere il banco sono diavoli convertiti al Sole. Lo sfondo desktop di Postea riprende la C e reca il disco del Sole sul vessillo e sulla ruota runica della città sospesa.
+
 ## Dieci sfondi Expressive Ink — 28 novembre 2026
 
 Le scelte desktop, comprese le basi dei ritocchi e gli SHA dei WebP canonici, sono nel [registro delle tavole](theme-art/approved-desktop-20261128.json). Nel Falò d’eclissi le lanterne a stella della veglia sono indaco e il memoriale rimane una falce di pietra. I bracieri illuminano il sentiero in ambra. La Lanterna dei mostri conserva il carro e la lanterna dentata, con la piazzola libera da impronte e fate.

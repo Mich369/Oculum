@@ -1,5 +1,11 @@
 # Registro cumulativo per i giocatori
 
+## Nove sfondi Expressive Ink e Lenti allineate — 28 novembre 2026
+
+- Nuove tavole desktop per Cuciture del ritorno, Rosa cattedrale, Erbario sepolto, Reliquia della risacca, Principe slime, Spine del bastione, Postea, Nastri del voto e Natura.
+- Postea reca i simboli del Sole Errante. Natura conserva il vivaio con rame e linfa ambrata, ora senza fate.
+- Lenti allineate rimane attivo sulle schede che lo usano già. Il selettore lo esclude dalle nuove scelte.
+
 ## Correzioni al Fabbro e agli Scudi — 28 novembre 2026
 
 - Quando fondi due equipaggiamenti di livello diverso, ogni abilità conserva il proprio requisito di livello.

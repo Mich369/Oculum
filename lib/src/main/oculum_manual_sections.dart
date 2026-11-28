@@ -19,6 +19,16 @@ At the Blacksmith, choose Fuse two pieces of equipment, select two pieces of the
 ''',
   ),
   ManualSection(
+    titleIt: 'Postea · Il Sole Errante',
+    titleEn: 'Postea · The Wandering Sun',
+    contentIt: r'''
+Postea appartiene al Sole Errante. In questo futuro errante runico il Sole ha vinto definitivamente sulla Luna. A Postea si praticano veri giochi d’azzardo e il banco è tenuto da diavoli convertiti al Sole.
+''',
+    contentEn: r'''
+Postea belongs to the Wandering Sun. In this runic future the Sun defeated the Moon for good. Real games of chance are played in Postea, with devils converted to the Sun acting as the house.
+''',
+  ),
+  ManualSection(
     titleIt: 'Mappa degli Occhi · Colpo finale',
     titleEn: 'Eyes Map · Final blow',
     contentIt: r'''

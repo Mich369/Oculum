@@ -8,6 +8,10 @@ Ogni mostro ucciso può lasciare una ricetta aggiuntiva con il 25% di probabilit
 
 Dal Fabbro usa Fondi due equipaggiamenti, scegli due pezzi della stessa categoria e indica il nome del risultato. I due pezzi diventano un solo oggetto, da equipaggiare dopo la fusione. Le abilità mantengono i propri costi, requisiti e cooldown e si selezionano separatamente. Il risultato conserva il valore base più alto dei due pezzi per ogni statistica. Una fusione di armi dà +1 Danni, una fusione di armature dà +1 Difesa e +1 Scudo e una fusione di scudi dà +1 Danni e +1 Difesa. Gli editor dell’inventario continuano a gestirne nome, statistiche e abilità. Se entrambi i pezzi hanno un effetto alla rottura dello Scudo, ciascuno conserva i propri parametri e puoi modificarli separatamente nell’editor dell’oggetto.
 
+## Postea · Il Sole Errante
+
+Postea appartiene al Sole Errante. In questo futuro errante runico il Sole ha vinto definitivamente sulla Luna. A Postea si praticano veri giochi d’azzardo e il banco è tenuto da diavoli convertiti al Sole.
+
 ## Mappa degli Occhi · Colpo finale
 
 Alla chiusura del Fight, se la morte è confermata e il colpo che ha portato a 0 Vita è registrato, la Mappa degli Occhi di chi ha colpito mostra il nome della vittima con un occhio dei morti. Il collegamento «Ucciso» rimanda alla memoria del colpo finale. Un semplice KO non crea la memoria.
