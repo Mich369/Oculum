@@ -18,6 +18,7 @@ part 'oculum_lite_art_paint.dart';
 part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_plague_paint.dart';
 part 'oculum_lite_playable_motion.dart';
+part 'oculum_lite_encounter_motion.dart';
 part 'oculum_lite_weapon_paint.dart';
 
 class OculumLiteBlockControl extends StatelessWidget {
@@ -271,6 +272,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
   final _extraStreams = <AssetImage, (ImageStream, ImageStreamListener)>{};
   final _extraImages = <AssetImage, ImageInfo>{};
   bool _archonArtFailed = false;
+  bool _posteaArtFailed = false;
   final _weaponStreams = <LiteWeapon, (ImageStream, ImageStreamListener)>{};
   final _weapons = <LiteWeapon, ui.Image>{};
   final _weaponInfo = <LiteWeapon, ImageInfo>{};
@@ -288,12 +290,18 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
       _monsters = frame;
     });
   }, onError: (_, _) {});
-  late final _posteaMonsterListener = ImageStreamListener((frame, synchronous) {
-    _applyImage(frame, synchronous, () {
-      _posteaMonsters?.dispose();
-      _posteaMonsters = frame;
-    });
-  }, onError: (_, _) {});
+  late final _posteaMonsterListener = ImageStreamListener(
+    (frame, synchronous) {
+      _applyImage(frame, synchronous, () {
+        _posteaMonsters?.dispose();
+        _posteaMonsters = frame;
+        _posteaArtFailed = false;
+      });
+    },
+    onError: (_, _) {
+      if (mounted) setState(() => _posteaArtFailed = true);
+    },
+  );
   late final _groundListener = ImageStreamListener((frame, synchronous) {
     _applyImage(frame, synchronous, () {
       _ground?.dispose();
@@ -665,6 +673,26 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
             _archonArtFailed
                 ? 'Immagine dell’Arconte non disponibile.'
                 : 'Caricamento dell’Arconte…',
+          ),
+        ),
+      );
+    }
+    final needsPostea =
+        _posteaMonsters == null &&
+        (run.enemies.any((enemy) => _usesPosteaAtlas(enemy.kind)) ||
+            run.clones.any((clone) => clone.companion == LiteCompanion.drone) ||
+            run.hero == LiteHero.dronePostea ||
+            run.coopFighters.any(
+              (fighter) => fighter.hero == LiteHero.dronePostea,
+            ));
+    if (needsPostea) {
+      return ColoredBox(
+        color: const Color(0xff181219),
+        child: Center(
+          child: Text(
+            _posteaArtFailed
+                ? 'Illustrazioni di Postea non disponibili.'
+                : 'Caricamento delle creature di Postea…',
           ),
         ),
       );
@@ -1940,7 +1968,14 @@ class _ArenaPaint extends CustomPainter {
 
     final time = run.time + animationLead;
     final playerImpacts = <int, LiteCombatImpact>{};
+    final casts = <int, _ArtCastPose>{};
     for (final impact in run.combatImpacts) {
+      if (impact.target == LiteImpactTarget.artCast) {
+        if (_artCastPose(impact, time) case final pose?) {
+          casts[impact.subjectId] = pose;
+        }
+        continue;
+      }
       if (_reactionAge(impact, time) == null) continue;
       if (impact.target == LiteImpactTarget.player) {
         playerImpacts[0] = impact;
@@ -2056,16 +2091,10 @@ class _ArenaPaint extends CustomPainter {
         (1, Offset(15, 6.3), 'Fabbro'),
         (2, Offset(22, 9.8), 'Veggente'),
       ];
-      final cell = art.width / 4.0;
       for (final (index, at, name) in stations) {
         if (!visible.contains(at)) continue;
         _shadow(canvas, at, .72, .22);
-        canvas.drawImageRect(
-          art,
-          Rect.fromLTWH(index * cell, 0, cell, cell),
-          Rect.fromLTWH(at.dx - 1.45, at.dy - 2.9, 2.9, 2.9),
-          Paint()..filterQuality = FilterQuality.medium,
-        );
+        _paintRestStation(canvas, art, index, at, time, _offset(local));
         final label = TextPainter(
           text: TextSpan(
             text: name,
@@ -2407,6 +2436,10 @@ class _ArenaPaint extends CustomPainter {
                   height: _enemyHeight(enemy.kind),
                   stride: enemy.stride,
                   animationLead: animationLead,
+                  species: enemy.kind,
+                  windup: enemy.attacking ? enemy.windup : null,
+                  strike: math.max(0, enemy.strikePose - animationLead),
+                  hurt: enemy.hitFlash,
                   fallen: enemy.hp <= 0,
                 );
                 return;
@@ -2438,6 +2471,9 @@ class _ArenaPaint extends CustomPainter {
                 return;
               }
               if (mirror != null) {
+                if (casts[enemy.id] case final cast? when enemy.hp > 0) {
+                  _applyArtGesture(canvas, cast);
+                }
                 final tone = switch (enemy.kind) {
                   LiteEnemyKind.luce => const OculumLiteAppearance(
                     cloth: Color(0xff96876e),
@@ -2634,6 +2670,8 @@ class _ArenaPaint extends CustomPainter {
                   height: _enemyHeight(companion.sprite),
                   stride: clone.stride,
                   animationLead: animationLead,
+                  species: companion.sprite,
+                  strike: clone.swing,
                   fallen: clone.down,
                 );
                 if (isWolf) canvas.restore();
@@ -2826,6 +2864,7 @@ class _ArenaPaint extends CustomPainter {
               phasing: phase != null,
               blocking: fighter.blocking,
               impact: playerImpacts[fighter.id],
+              cast: casts[fighter.id],
               rescue: fighter.rescueStatus,
               riseAge: fighter.rescuedAge(time),
               openAge:
@@ -2953,6 +2992,7 @@ class _ArenaPaint extends CustomPainter {
             phasing: run.intangible,
             blocking: run.blocking,
             impact: playerImpacts[0],
+            cast: casts[0],
             rescue: run.rescueStatus,
             riseAge: run.rescuedAge(time),
             openAge: LiteRun.openRecoveryFor(run.openGrade) - run.openCooldown,
@@ -3804,7 +3844,12 @@ bool _paintMonster(
         : 0.0;
     final isSpider = kind == LiteEnemyKind.ragnoSaldatore;
     final hit = ((strike - animationLead) / .24).clamp(0.0, 1.0);
-    final tail = isSpider ? _spiderTailMotion(windup, hit * .24) : null;
+    final attackMotion = switch (kind) {
+      LiteEnemyKind.ragnoSaldatore => _spiderTailMotion(windup, hit * .24),
+      LiteEnemyKind.miruscyrus => _mantisClawMotion(windup, hit),
+      LiteEnemyKind.costrutto => _constructArmMotion(windup, hit),
+      _ => null,
+    };
     final compress = switch (kind) {
       LiteEnemyKind.ragnoSaldatore => strain * .038,
       LiteEnemyKind.slime => .055 + math.sin(time * 6 + phase) * .048,
@@ -3826,10 +3871,19 @@ bool _paintMonster(
       compress: compress + (flyer ? 0 : _stepCompression(phase) * strength),
       grounded: !flyer && kind != LiteEnemyKind.slime,
       running: running,
-      handMotion: tail,
+      handMotion: attackMotion,
+      secondaryMotion: kind == LiteEnemyKind.miruscyrus
+          ? _mantisWingMotion(time, strength, strain, hit)
+          : null,
     );
-    if (tail != null) {
-      _paintSpiderCharge(canvas, pose, tail, windup != null, time);
+    if (isSpider && attackMotion != null) {
+      _paintSpiderCharge(canvas, pose, attackMotion, windup != null, time);
+    }
+    if (kind == LiteEnemyKind.miruscyrus && hit > 0) {
+      _paintMantisEdge(canvas, pose, hit);
+    }
+    if (flyer && (strain > 0 || hit > 0)) {
+      _paintDroneThrottle(canvas, pose, strain, hit, time);
     }
     if (flyer) _paintDroneRotor(canvas, pose, time);
   }
@@ -5165,6 +5219,7 @@ void _newActor(
   bool fallen = false,
   bool phantom = false,
   LiteEnemyKind? species,
+  double? windup,
   double strike = 0,
   double hurt = 0,
 }) {
@@ -5172,8 +5227,17 @@ void _newActor(
   if (fallen) {
     canvas.rotate(1.24);
     canvas.scale(.73);
-  } else if (hurt > 0 &&
-      (species == LiteEnemyKind.rasvyr || species == LiteEnemyKind.orbryx)) {
+  } else if (species != null && _nightEnemyRow(species) != null) {
+    _applyNightCreaturePose(
+      canvas,
+      species,
+      stride,
+      animationLead,
+      windup: windup,
+      strike: strike,
+      hurt: hurt,
+    );
+  } else if (hurt > 0) {
     final recoil = (hurt / .18).clamp(0.0, 1.0);
     canvas.translate(-.16 * recoil, 0);
     canvas.rotate(-.095 * recoil);

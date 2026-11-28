@@ -146,7 +146,7 @@ extension LiteArtExecution on LiteRun {
       case LiteLearnedArt.basalto:
         _fissure(at, direction, 5.6 + .9 * rank, 18 + 6.0 * rank, owner);
     }
-    _markArtCast(art, at, direction, rank);
+    _markArtCast(art, at, direction, rank, casterId: owner ?? 0);
     if (extra) {
       kit.extraArtCooldown = art.cooldown;
     } else {
@@ -194,13 +194,14 @@ extension LiteArtExecution on LiteRun {
     LiteLearnedArt art,
     Point<double> at,
     Point<double> direction,
-    int rank,
-  ) {
+    int rank, {
+    required int casterId,
+  }) {
     if (_combatImpacts.length >= 32) _combatImpacts.removeAt(0);
     _combatImpacts.add(
       LiteCombatImpact(
         LiteImpactTarget.artCast,
-        _nextId++,
+        casterId,
         at,
         time,
         life: art.index.toDouble(),

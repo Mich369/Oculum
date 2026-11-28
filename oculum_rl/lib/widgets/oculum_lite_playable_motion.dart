@@ -29,6 +29,7 @@ void _applyPlayablePose(
   required bool phasing,
   required bool blocking,
   required LiteCombatImpact? impact,
+  _ArtCastPose? cast,
   required LiteRescueStatus? rescue,
   required double? riseAge,
   required double openAge,
@@ -97,6 +98,8 @@ void _applyPlayablePose(
     };
     canvas.rotate(bend * surge * lean);
     canvas.scale(1 + .045 * surge, 1 - (.06 + bend * .24) * surge);
+  } else if (!compact && cast != null) {
+    _applyArtGesture(canvas, cast, lean: lean);
   } else if (!compact && windup > 0 && weapon.chargeSeconds > 0) {
     final flex = _inkEase((1 - windup / weapon.chargeSeconds).clamp(0.0, 1.0));
     canvas.rotate(-.085 * flex * lean);

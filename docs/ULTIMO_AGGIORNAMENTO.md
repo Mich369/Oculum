@@ -1,5 +1,9 @@
 # Oculum RL e aggiornamenti alla campagna
 
+## Oculum RL 0.4.25
+
+- **Oculum RL 0.4.25.** Miruscyrus usa il suo atlante Ink Expressive anche al caricamento. Animate ali e falci della mantide, propulsione del Drone, colpi del Costrutto e pose di Lupo e Guardia Lunare e dei tre goblin. Taverniera, Fabbro e Veggente hanno animazioni proprie. Le otto Arti muovono il lanciatore effettivo, anche in cooperativa.
+
 ## Oculum RL 0.4.24
 
 - **Oculum RL 0.4.24.** Nuove animazioni di blocco, impatto, soccorso e rialzata per il roster giocabile. Attacchi caricati e doppio fendente seguono il momento reale del colpo. Riprese Open con gesti ed effetti Ink Expressive distinti. Gli indizi di posa passano anche in cooperativa.

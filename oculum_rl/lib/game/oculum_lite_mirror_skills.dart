@@ -143,7 +143,7 @@ extension LiteMirrorSkills on LiteRun {
           minDot: .97,
         );
     }
-    _markArtCast(art, boss.position, direction, rank);
+    _markArtCast(art, boss.position, direction, rank, casterId: boss.id);
     build.oculum -= art.cost;
     if (secondary) {
       build.secondaryArtCooldown = art.cooldown;

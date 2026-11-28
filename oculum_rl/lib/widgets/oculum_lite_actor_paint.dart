@@ -330,7 +330,8 @@ double _inkEase(double value) {
 }
 
 class _InkGripRig {
-  _InkGripRig(this.pivot, this.above, this.below);
+  _InkGripRig(this.pivot, this.above, this.below, {this.behind = false});
+  final bool behind;
   final Offset pivot;
   final double above, below;
   final _weights = <_InkGrid, Float32List>{};
@@ -345,7 +346,8 @@ class _InkGripRig {
   );
 
   double _weight(double x, double y) {
-    final side = _inkEase((x - pivot.dx + .20) / .20);
+    final lateral = behind ? pivot.dx - x : x - pivot.dx;
+    final side = _inkEase((lateral + .20) / .20);
     final top = _inkEase((y - pivot.dy + above + .075) / .075);
     final bottom = _inkEase((pivot.dy + below + .095 - y) / .095);
     return side * top * bottom;
@@ -445,6 +447,7 @@ void _inkActorSprite(
   bool grounded = true,
   bool running = false,
   _InkAttackMotion? handMotion,
+  _InkAttackMotion? secondaryMotion,
 }) {
   if (strength <= .005 &&
       anticipation == 0 &&
@@ -452,7 +455,8 @@ void _inkActorSprite(
       compress == 0 &&
       recoilArm == 0 &&
       clothFlow == 0 &&
-      handMotion == null) {
+      handMotion == null &&
+      secondaryMotion == null) {
     canvas.drawImageRect(atlas, source, destination, paint);
     return;
   }
@@ -481,10 +485,16 @@ void _inkActorSprite(
                       strength,
           )
           .toList(growable: false);
-  final arm = handMotion?.grip.weightsFor(grid);
-  final turn = handMotion?.turn ?? 0;
-  final cosine = math.cos(turn);
-  final sine = math.sin(turn);
+  final motionLayers = [
+    for (final motion in [handMotion, secondaryMotion])
+      if (motion != null)
+        (
+          motion,
+          motion.grip.weightsFor(grid),
+          math.cos(motion.turn),
+          math.sin(motion.turn),
+        ),
+  ];
   final clothWave = math.sin(phase * .7) * clothFlow;
   for (var row = 0, vertex = 0; row < grid.rowLength; row++) {
     final y = row / grid.divisions;
@@ -511,12 +521,12 @@ void _inkActorSprite(
         dx += feet[joint].dx * weight;
         dy += feet[joint].dy * weight;
       }
-      if (handMotion != null) {
-        final weight = arm![vertex];
-        final qx = x - handMotion.grip.pivot.dx;
-        final qy = y - handMotion.grip.pivot.dy;
-        dx += (handMotion.travel.dx + qx * (cosine - 1) - qy * sine) * weight;
-        dy += (handMotion.travel.dy + qx * sine + qy * (cosine - 1)) * weight;
+      for (final (motion, weights, cosine, sine) in motionLayers) {
+        final weight = weights[vertex];
+        final qx = x - motion.grip.pivot.dx;
+        final qy = y - motion.grip.pivot.dy;
+        dx += (motion.travel.dx + qx * (cosine - 1) - qy * sine) * weight;
+        dy += (motion.travel.dy + qx * sine + qy * (cosine - 1)) * weight;
       }
       final i = vertex * 2;
       positions[i] = destination.left + (x + dx) * destination.width;

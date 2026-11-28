@@ -28,6 +28,34 @@ LiteRun restHub({
       ..obser = 1500;
 
 void main() {
+  test('online art poses follow the actual caster and stay out of saves', () {
+    final run = LiteRun(
+      seed: 251,
+      hero: LiteHero.duplicatore,
+      weapon: LiteWeapon.guanti,
+      playerCount: 2,
+    )..enemies.clear();
+    run.addCoopFighter('guest', 'Ospite', LiteHero.ashley, LiteWeapon.guanti);
+    final guest = run.coopFighter('guest')!;
+    run.supply.art = LiteLearnedArt.brace;
+    guest.supply.art = LiteLearnedArt.plasma;
+    const target = Point<double>(18, 11);
+    expect(run.useLearnedArt(target), isTrue);
+    expect(run.useLearnedArt(target, guest), isTrue);
+    expect(run.useLearnedArt(target, guest), isFalse);
+    final live = LiteRun.fromJson(run.toJson(includeEffects: true));
+    final casts = live.combatImpacts.where(
+      (hit) => hit.target == LiteImpactTarget.artCast,
+    );
+    expect(casts.map((hit) => hit.subjectId), [0, guest.id]);
+    expect(casts.map((hit) => hit.life.toInt()), [
+      LiteLearnedArt.brace.index,
+      LiteLearnedArt.plasma.index,
+    ]);
+    expect(casts.map((hit) => hit.position), [run.position, guest.position]);
+    final save = LiteRun.fromJson(run.toJson());
+    expect(save.combatImpacts, isEmpty);
+  });
   test('weapon tempra stops at 12 and doubles the iron riposte reach', () {
     final run = restHub();
     expect(run.enterRestHub(), isTrue);
