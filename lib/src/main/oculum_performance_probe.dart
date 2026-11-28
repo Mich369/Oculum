@@ -992,8 +992,11 @@ class OculumPerformanceProbe {
   Future<void> requestPlayerSheets() => _state.requestRealtimePlayerSheets();
   Future<void> sendCurrentSheet() => _state.sendRealtimeCurrentSheetManually();
   void recordCurrentEncounter() => _state.captureActiveMasterInitiativeGroup();
-  Future<void> finishEncounter(String id, {Random? random}) =>
-      _state.finishEncounter(id, random: random);
+  Future<void> finishEncounter(
+    String id, {
+    Random? random,
+    bool automatic = false,
+  }) => _state.finishEncounter(id, random: random, automatic: automatic);
   bool ensureSheetTags() => _state.assicuraTagSchede();
   Future<void> syncOwnedStaffSheets() =>
       _state.sendRealtimeActiveSheetToStaff();

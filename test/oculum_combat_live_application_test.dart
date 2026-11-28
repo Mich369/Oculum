@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart'
+    show monsterSpriteStableSeed;
 import 'package:oculum/services/oculum_realtime_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,6 +18,8 @@ import 'oculum_corallwhirl_tides_test.dart'
 const _runLive = bool.fromEnvironment('OculumLiveRealtimeTest');
 const _focusGrip = bool.fromEnvironment('OculumLiveGripTest');
 const _focusAction = bool.fromEnvironment('OculumLiveActionTest');
+const _focusRewards = bool.fromEnvironment('OculumLiveEncounterRewardTest');
+const _rewardPolling = bool.fromEnvironment('OculumLiveRewardPollingTest');
 
 class _LiveNetwork extends HttpOverrides {}
 
@@ -32,7 +36,9 @@ class _FixedCombatDice implements Random {
 
 void main() {
   testWidgets(
-    _focusAction
+    _focusRewards
+        ? 'end fight delivers EXP, normal loot and crafting loot once across reconnect'
+        : _focusAction
         ? 'a plain CM roll advances the Master turn for four authenticated clients'
         : _focusGrip
         ? 'Octocruor targets an unopened sheet in a room with four authenticated clients'
@@ -245,6 +251,7 @@ void main() {
       final masterRestRequests = <Map<String, dynamic>>[];
       final piovraReplies = <String>[];
       final playerRestSnapshots = <Map<String, dynamic>>[];
+      var playerRewardSnapshots = 0;
       final attackerRestSnapshots = <Map<String, dynamic>>[];
       final helperRestSnapshots = <Map<String, dynamic>>[];
       bool containsGrant(Map<String, dynamic> payload, String id) =>
@@ -335,6 +342,7 @@ void main() {
         client: playerClient,
         roomId: room,
         playerName: 'Synthetic Player',
+        httpPollingOnly: _focusRewards && _rewardPolling,
         presenceDataProvider: () => {
           'role': 'player',
           'activeSheetTag': probe.ownerTag(),
@@ -347,7 +355,15 @@ void main() {
         onPresenceChanged: (users) => state.realtimeUsers = users,
         onStatusChanged: (s) => debugPrint('Player: $s'),
         onEvent: (event, payload) {
-          if (event == 'initiative_shared') probe.receiveInitiative(payload);
+          if (event == 'initiative_shared') {
+            if (((payload['snapshot'] as Map?)?['completedEncounterRewards']
+                        as List? ??
+                    const [])
+                .isNotEmpty) {
+              playerRewardSnapshots++;
+            }
+            probe.receiveInitiative(payload);
+          }
           if (event == 'initiative_control') {
             if (payload['worldClockSnapshot'] is Map) {
               playerRestSnapshots.add(payload);
@@ -458,6 +474,154 @@ void main() {
               (dynamic p) => p['activeSheetTag'] == masterTag,
             ),
           );
+          if (_focusRewards) {
+            final remotePlayer =
+                jsonDecode(jsonEncode(probe.snapshot()))
+                    as Map<String, dynamic>;
+            remotePlayer.addAll({
+              'id': playerTag,
+              'sheetTag': playerTag,
+              'realtimeSharedSheet': true,
+              'realtimeSourceSheetTag': playerTag,
+            });
+            masterState.schedePersonaggio.add(remotePlayer);
+            masterState.masterInitiativeGroups.clear();
+            const fightId = 'encounter_1';
+            masterState.selectedMasterInitiativeGroupId = fightId;
+            masterProbe.ensureEncounters();
+            const enemyId = 'LIVE-LOOT-ENEMY';
+            masterState.masterInitiativeTokens
+              ..clear()
+              ..addAll(<Map<String, dynamic>>[
+                {
+                  'id': playerTag,
+                  'sheetTag': playerTag,
+                  'name': 'Player',
+                  'side': 'party',
+                  'status': 'ready',
+                },
+                {
+                  'id': enemyId,
+                  'sheetTag': enemyId,
+                  'name': 'Robot artigliato',
+                  'side': 'enemy',
+                  'type': 'Mostro',
+                  'status': 'dead',
+                  'monsterBookId': 'pupazzo_robotico_postea',
+                  'level': 0,
+                  'grade': 0,
+                  'statsTotal': 9,
+                },
+              ]);
+            masterProbe.recordCurrentEncounter();
+            var nonce = 0;
+            String settlement() => 'live-reward-$nonce';
+            while (Random(
+                  monsterSpriteStableSeed(
+                    'crafting:$enemyId:${settlement()}:$playerTag',
+                  ),
+                ).nextInt(100) >=
+                25) {
+              nonce++;
+            }
+            final group = masterState.masterInitiativeGroups.first as Map;
+            group['fightStarted'] = true;
+            group['rewardAssignmentMethod'] = oculumEncounterRewardMethodLegacy;
+            group['pendingRewardSettlementId'] = settlement();
+            masterState.recipes
+              ..clear()
+              ..add(
+                const OculumRecipe(
+                  id: 'live_recipe',
+                  name: 'Custodia di prova online',
+                  ingredients: [
+                    OculumRecipeIngredient(name: 'Tela online', grams: '400'),
+                  ],
+                  resultName: 'Custodia di prova online',
+                  resultDescription: '',
+                  masterNotes: '',
+                  visibleToPlayers: true,
+                  createdAt: '',
+                  updatedAt: '',
+                ),
+              );
+            state.expController.text = '0';
+            final drops = state.inventario as List<InventoryItem>;
+            Iterable<InventoryItem> byName(String name) =>
+                drops.where((item) => item.nome == name);
+            int ordinaryDrop() => drops
+                .where(
+                  (item) =>
+                      item.monsterLoot['catalogueDropId'] ==
+                      'scarti_robotici_pupazzo',
+                )
+                .length;
+            final beforeOrdinary = ordinaryDrop();
+            const recipe = 'Ricetta · Custodia di prova online';
+            const material = 'Tela online';
+            masterProbe.publishTurnOrder();
+            await waitFor(
+              () => helperInitiative?['snapshot']?['encounterId'] == fightId,
+            );
+            await player.disconnect();
+            await masterProbe.finishEncounter(
+              fightId,
+              random: const _FixedCombatDice(high: true),
+              automatic: true,
+            );
+            final finalized = masterProbe.initiativeSnapshot();
+            final reward = (finalized['completedEncounterRewards'] as List)
+                .whereType<Map>()
+                .singleWhere((reward) => reward['endedEncounterId'] == fightId);
+            final awardedId = reward['id'];
+            expect((reward['lootByParticipant'] as Map)[playerTag], isNotEmpty);
+            debugPrint(
+              'Master finalized $awardedId (requested ${settlement()}).',
+            );
+            bool hasSettlement(Map? payload) =>
+                ((payload?['snapshot'] as Map?)?['completedEncounterRewards']
+                            as List? ??
+                        const [])
+                    .whereType<Map>()
+                    .any((row) => row['id'] == awardedId);
+            await waitFor(() => hasSettlement(helperInitiative));
+            expect(byName(recipe), isEmpty);
+            expect(state.expController.text, '0');
+            await connectWithRetry(player, 'Player reconnessione');
+            await waitFor(
+              () =>
+                  byName(recipe).isNotEmpty &&
+                  int.parse(state.expController.text as String) > 0,
+            );
+            expect(byName(recipe), hasLength(1));
+            expect(byName(material), hasLength(1));
+            expect(
+              byName(material).single.peso * 1000,
+              inInclusiveRange(100, 300),
+            );
+            expect(ordinaryDrop(), beforeOrdinary + 1);
+            final exp = state.expController.text;
+            final replay = Map<String, dynamic>.from(
+              helperInitiative!['snapshot'] as Map,
+            );
+            replay['sentAt'] = DateTime.now().toIso8601String();
+            final beforeReplay = playerRewardSnapshots;
+            await master.sendInitiativeSnapshot(
+              snapshot: replay,
+              campaignId: state.activeCampaignId,
+              campaignName: 'Reward verification',
+              closed: false,
+            );
+            await waitFor(() => playerRewardSnapshots > beforeReplay);
+            expect(state.expController.text, exp);
+            expect(byName(recipe), hasLength(1));
+            expect(byName(material), hasLength(1));
+            expect(ordinaryDrop(), beforeOrdinary + 1);
+            debugPrint(
+              'ONLINE DROP AND EXP VERIFIED: $exp EXP, standard Drop, recipe and materials, durable retry and replay once.',
+            );
+            return;
+          }
           if (_focusAction) {
             masterState.masterInitiativeGroups.clear();
             masterState.selectedMasterInitiativeGroupId = 'encounter_1';
@@ -901,7 +1065,7 @@ void main() {
           );
         }, _LiveNetwork()),
       );
-      if (_focusAction) {
+      if (_focusAction || _focusRewards) {
         await finishLiveTest();
         return;
       }

@@ -1,5 +1,10 @@
 # Registro cumulativo per i giocatori
 
+## Ricette dai mostri e fusione dal Fabbro — 28 novembre 2026
+
+- Ogni mostro ucciso può lasciare una ricetta extra con probabilità del 25%. Ricetta e materiali arrivano insieme allo stesso personaggio. L’app considera il suo equipaggiamento, i suoi elementi e gli ingredienti mancanti.
+- Usa **Fondi due equipaggiamenti** dal Fabbro per unire due pezzi della stessa categoria e dare un nome al risultato. Le abilità restano separate. La fusione dà +1 Danni alle armi, +1 Difesa e +1 Scudo alle armature, +1 Danni e +1 Difesa agli scudi.
+
 ## Dieci sfondi Expressive Ink — 28 novembre 2026
 
 - Dieci temi usano le nuove tavole desktop scelte dall’utente. Il Falò d’eclissi ha lanterne a stella indaco, con bracieri ambrati. La Lanterna dei mostri perde le impronte e le fate.

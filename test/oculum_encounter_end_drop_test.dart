@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum/main.dart';
+import 'package:oculum/pages/oculum_dungeon/monster_book.dart'
+    show monsterSpriteStableSeed;
 import 'oculum_theme_effects_portrait_test.dart' as fixtures;
 
 void main() {
@@ -157,6 +159,36 @@ void main() {
       state.masterInitiativeGroups.first['rewardAssignmentMethod'] =
           oculumEncounterRewardMethodLegacy;
 
+      final sheetTag = '${state.schedePersonaggio[0]['sheetTag']}';
+      var rewardNonce = 0;
+      while (Random(
+            monsterSpriteStableSeed(
+              'crafting:GOBLIN-DEAD:crafting-test-$rewardNonce:$sheetTag',
+            ),
+          ).nextInt(100) >=
+          25) {
+        rewardNonce++;
+      }
+      state.masterInitiativeGroups.first['pendingRewardSettlementId'] =
+          'crafting-test-$rewardNonce';
+      state.recipes
+        ..clear()
+        ..add(
+          const OculumRecipe(
+            id: 'fixture_crafting_recipe',
+            name: 'Custodia di tela di prova',
+            ingredients: [
+              OculumRecipeIngredient(name: 'Tela di prova', grams: '400'),
+            ],
+            resultName: 'Custodia di tela di prova',
+            resultDescription: '',
+            masterNotes: '',
+            visibleToPlayers: true,
+            createdAt: '',
+            updatedAt: '',
+          ),
+        );
+
       var seed = 0;
       while (true) {
         final rolls = Random(seed);
@@ -196,6 +228,17 @@ void main() {
               as Map;
       expect(playerExperience['amount'], 6);
       expect(playerExperience['discoveryEnemies'], hasLength(2));
+      final delivered = (playerExperience['items'] as List).whereType<Map>();
+      final recipeBook = delivered.singleWhere(
+        (item) => item['nome'] == 'Ricetta · Custodia di tela di prova',
+      );
+      expect(recipeBook['craftData']['recipeBook']['recipeIds'], [
+        'fixture_crafting_recipe',
+      ]);
+      final materials = delivered.singleWhere(
+        (item) => item['nome'] == 'Tela di prova',
+      );
+      expect((materials['peso'] as num) * 1000, inInclusiveRange(100, 300));
       for (final index in [1, 2]) {
         expect(state.schedePersonaggio[index]['monsterLootGenerated'], isTrue);
         expect(state.schedePersonaggio[index]['monsterLootPending'], isFalse);

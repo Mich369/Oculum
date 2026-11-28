@@ -1,5 +1,11 @@
 # Oculum — registro delle regole confermate
 
+## Ricette dai mostri e fusione dal Fabbro — 28 novembre 2026
+
+- Ogni mostro ucciso può aggiungere una ricetta con probabilità del 25%, indipendente dal bottino normale. Il Fabbro fonde due pezzi in un solo oggetto con il nome scelto. I due effetti rimangono utilizzabili separatamente.
+- La fusione dà +1 Danni alle armi, +1 Difesa e +1 Scudo alle armature e +1 Danni e +1 Difesa agli scudi.
+- Il lotto accompagna la ricetta con il 25–75% della quantità totale richiesta, scegliendo ingredienti che mancano al personaggio. La selezione considera grado, elementi usati, equipaggiamento, ricette conosciute e preferiti. Viene assegnata allo stesso destinatario del lotto nelle ricompense di fine Fight. Evocazioni, KO e allenamenti non assegnano ricette.
+
 ## Azioni nella turnistica condivisa — 27 novembre 2026
 
 Conferma esplicita dell’utente, «le azioni devono passare per l’online». Quando un’attività consuma Azione o Reazione in uno scontro condiviso, la turnistica del Master deve ricevere il consumo anche per tiri e utility senza un attacco. La ricevuta identifica la scheda, lo scontro e il consumo effettivo. La ripetizione dell’invio non spende di nuovo la risorsa e non può spendere nel turno successivo.

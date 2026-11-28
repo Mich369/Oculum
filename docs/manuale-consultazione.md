@@ -2,6 +2,12 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Ricette dai mostri e fusione dal Fabbro
+
+Ogni mostro ucciso può lasciare una ricetta aggiuntiva con il 25% di probabilità. Il destinatario riceve insieme la ricetta e il 25–75% dei grammi richiesti, prelevati dalle quantità mancanti. Tra le ricette visibili, di grado utilizzabile e ancora da imparare, il Fight dà priorità agli elementi e all’equipaggiamento del personaggio e ai materiali utili alle ricette preferite. Apri la ricetta dall’inventario con Leggi. Vale il normale apprendimento del party. KO, evocazioni e allenamenti non danno questo bottino.
+
+Dal Fabbro usa Fondi due equipaggiamenti, scegli due pezzi della stessa categoria e indica il nome del risultato. I due pezzi diventano un solo oggetto, da equipaggiare dopo la fusione. Le abilità mantengono i propri costi, requisiti e cooldown e si selezionano separatamente. Il risultato conserva il valore base più alto dei due pezzi per ogni statistica. Una fusione di armi dà +1 Danni, una fusione di armature dà +1 Difesa e +1 Scudo e una fusione di scudi dà +1 Danni e +1 Difesa. Gli editor dell’inventario continuano a gestirne nome, statistiche e abilità.
+
 ## Mappa degli Occhi · Colpo finale
 
 Alla chiusura del Fight, se la morte è confermata e il colpo che ha portato a 0 Vita è registrato, la Mappa degli Occhi di chi ha colpito mostra il nome della vittima con un occhio dei morti. Il collegamento «Ucciso» rimanda alla memoria del colpo finale. Un semplice KO non crea la memoria.

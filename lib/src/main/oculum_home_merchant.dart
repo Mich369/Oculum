@@ -4384,6 +4384,11 @@ extension _OculumHomeMerchant on _OculumHomePageState {
                 icon: const Icon(Icons.handyman_outlined),
                 label: const Text('Combina · armi, armature e scudi'),
               ),
+              OutlinedButton.icon(
+                onPressed: canUseBlacksmithFusion ? showBlacksmithFusion : null,
+                icon: const Icon(Icons.merge_type),
+                label: const Text('Fondi due equipaggiamenti'),
+              ),
               blacksmithEquipmentServiceButtons(),
             ],
             Align(

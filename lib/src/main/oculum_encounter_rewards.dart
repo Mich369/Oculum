@@ -1754,6 +1754,9 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         'name': token['name'],
         'monsterBookId': monsterId,
         'rebirthKilled': oculumEncounterEnemyKilled(token),
+        'craftingMonster': const {'mostro', 'monster', 'boss'}.contains(
+          oculumNormalizeText('${sourceSheet['tipoScheda'] ?? token['type'] ?? ''}'),
+        ),
         'isNpc':
             monsterSource?.isNpc == true ||
             monsterBookEntries
@@ -2419,6 +2422,27 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       }
     }
     final pooledLoot = <InventoryItem>[];
+    final craftingLoot = <String, List<InventoryItem>>{};
+    final reservedRecipes = <String, Set<String>>{};
+    void awardCraftingLoot(Map enemy, String recipient, int sheetIndex, String killId) {
+      if (trainingMode || enemy['rebirthKilled'] != true ||
+          enemy['isNpc'] == true || oculumEncounterEnemyIsSummon(enemy)) {
+        return;
+      }
+      final personalLoot = craftingLoot.putIfAbsent(recipient, () => []);
+      final crafting = craftingDropForEncounterParticipant(
+        sheetIndex: sheetIndex,
+        sheetTag: recipient,
+        killId: killId,
+        earlierDrops: personalLoot,
+        reservedRecipeIds: reservedRecipes.putIfAbsent(recipient, () => {}),
+      );
+      if (crafting.isEmpty) return;
+      personalLoot.addAll(crafting);
+      aggiungiLog(
+        '[CRAFTING] ${enemy['name']}: ${crafting.first.nome} e materiali per ${nomeSchedaPersonaggio(sheetIndex)}.',
+      );
+    }
     final fallenEyeCandidates = <Map<String, dynamic>>[];
     final encounterRandom = random ?? Random.secure();
     final knownEyeKillIds = occhiCaduti
@@ -2427,6 +2451,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         .toSet();
     final candidateEyeKillIds = <String>{};
     var rollerCursor = 0;
+    var customRecipeCursor = 0;
     for (final enemy in defeated) {
       collectObserverTearCurrency(enemy, cooldownFightId);
       final monsterId = '${enemy['monsterBookId'] ?? ''}';
@@ -2439,7 +2464,18 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       final monster = monsterId.isEmpty
           ? null
           : monsterBookEntryById(monsterId);
-      if (monster == null || partyTags.isEmpty) continue;
+      if (partyTags.isEmpty) continue;
+      if (monster == null) {
+        if (enemy['craftingMonster'] == true) {
+          final recipient = partyTags[customRecipeCursor++ % partyTags.length];
+          final index = localSheetIndexForOculumTag(recipient);
+          final enemyId = '${enemy['id'] ?? ''}';
+          if (index >= 0 && enemyId.isNotEmpty) {
+            awardCraftingLoot(enemy, recipient, index, '$enemyId:$cooldownFightId');
+          }
+        }
+        continue;
+      }
       if (monster.encounterRules[oculumEivaFamilyIdRule] ==
               oculumPredoneBoomerangId &&
           (enemy['predoneLootDeathConfirmed'] != true ||
@@ -2494,6 +2530,7 @@ extension _OculumEncounterRewards on _OculumHomePageState {
               oculumNormalizeElementId('${enemy['element'] ?? ''}') ==
                   'corrotto');
       final summon = oculumEncounterEnemyIsSummon(enemy);
+      awardCraftingLoot(enemy, rollerTag, rollerIndex, killId);
       final dropped = oculumGenerateMonsterLoot(
         monster: monster,
         level: level,
@@ -2646,6 +2683,9 @@ extension _OculumEncounterRewards on _OculumHomePageState {
       items: pooledLoot,
       participantTags: partyTags,
     );
+    for (final entry in craftingLoot.entries) {
+      lootByParticipant[entry.key]!.addAll(entry.value.map((item) => item.toJson()));
+    }
     final balena =
         defeated.any(
           (enemy) => enemy['monsterBookId'] == oculumBalenaMilleOcchiId,

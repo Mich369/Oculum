@@ -5591,7 +5591,11 @@ extension _OculumHomeCalculations on _OculumHomePageState {
           item.craftData['eivaWeaponId'] == oculumLamaOrbitaGauntletId,
     );
     return oculumWeaponStackDamage(armi) +
-        guanti.fold<int>(0, (total, item) => total + itemAttackBonus(item));
+        guanti.fold<int>(0, (total, item) => total + itemAttackBonus(item)) +
+        protezioniEquipaggiate().fold<int>(
+          0,
+          (total, item) => total + oculumFusedShieldDamageBonus(item),
+        );
   }
 
   InventoryItem? armaPiuForteEquipaggiata() {

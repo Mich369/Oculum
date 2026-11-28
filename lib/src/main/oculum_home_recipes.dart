@@ -778,10 +778,9 @@ extension _OculumHomeRecipes on _OculumHomePageState {
     programmaSalvataggio();
   }
 
-  String _recipeMaterialKey(String name) => name.trim().toLowerCase();
+  String _recipeMaterialKey(String name) => oculumRecipeMaterialKey(name);
 
-  int _recipeGrams(String raw) =>
-      (double.tryParse(raw.replaceAll(',', '.')) ?? 0).round();
+  int _recipeGrams(String raw) => oculumRecipeIngredientGrams(raw);
 
   int _finishedProductGrams(OculumRecipe recipe) {
     final explicit = _recipeGrams(recipe.resultGrams);
@@ -792,16 +791,8 @@ extension _OculumHomeRecipes on _OculumHomePageState {
     );
   }
 
-  Map<String, int> _availableRecipeMaterialGrams() {
-    final available = <String, int>{};
-    for (final item in inventario) {
-      final key = _recipeMaterialKey(item.nome);
-      if (key.isEmpty) continue;
-      final grams = (item.peso * 1000 * max(0, item.quantita)).round();
-      available[key] = (available[key] ?? 0) + max(0, grams);
-    }
-    return available;
-  }
+  Map<String, int> _availableRecipeMaterialGrams() =>
+      oculumRecipeInventoryGrams(inventario);
 
   List<OculumRecipeIngredient> _recipeRequirements(
     OculumRecipe recipe, {
