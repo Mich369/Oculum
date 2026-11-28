@@ -29,6 +29,8 @@ part 'oculum_lite_fabbro.dart';
 part 'oculum_lite_open_scene.dart';
 part 'oculum_lite_shadow_art.dart';
 part 'oculum_lite_reysercth.dart';
+part 'oculum_lite_frontier.dart';
+part 'oculum_lite_desert_eye.dart';
 
 enum LiteHero {
   evasore('Passo fantasma', 'Scatto intangibile più lungo.'),
@@ -148,6 +150,14 @@ enum LiteHero {
   fabbro(
     'Armeria vivente',
     'Evoca fino a 20 armi da 7 Vita. Colpiscono forte e sono intangibili nei primi 2 secondi. Non si curano e non si rialzano.',
+  ),
+  gablyn(
+    'Aguglie di cava',
+    'Avanzi con uno scatto breve e dai una stoccata a ventaglio che respinge.',
+  ),
+  funerys(
+    'Corteo di cenere',
+    'Raduni i nemici davanti a te in un grande sudario che rallenta e danneggia.',
   );
 
   const LiteHero(this.openName, this.openDescription);
@@ -188,6 +198,8 @@ enum LiteHero {
     pysciwarden => LiteWeapon.piccaOssidiana,
     lusierTre => LiteWeapon.spadaScudo,
     fabbro => LiteWeapon.martelloForgia,
+    gablyn => LiteWeapon.beccoCaverna,
+    funerys => LiteWeapon.falceFunerys,
     _ => null,
   };
   String get talentName => switch (this) {
@@ -231,6 +243,8 @@ enum LiteHero {
     pysciwarden => 'Canalstryke',
     lusierTre => 'Carta esplosiva',
     fabbro => 'Frattura della forgia',
+    gablyn => 'Finta della Cava',
+    funerys => 'Stretta del Sepolcro',
   };
   LiteEnemyKind? get sprite => switch (this) {
     scostubandito => LiteEnemyKind.scostubandito,
@@ -245,6 +259,8 @@ enum LiteHero {
     lupoDiVaitern => LiteEnemyKind.lupoLunare,
     pysciwarden => LiteEnemyKind.thalvyr,
     lusierTre => LiteEnemyKind.eliteSolare,
+    gablyn => LiteEnemyKind.gablyn,
+    funerys => LiteEnemyKind.funerys,
     _ => null,
   };
   String? get unlockHint => switch (this) {
@@ -283,6 +299,9 @@ enum LiteHero {
     pysciwarden => 'Supera 5 piani a Difficile.',
     lusierTre => 'Supera 5 piani a Oculum.',
     fabbro => 'Porta una qualsiasi arma a Tempra 3 al Ristoro.',
+    gablyn => 'Dai il colpo di grazia a un Gablyn nelle caverne.',
+    funerys =>
+      'Dai il colpo di grazia a una Funerys nella Cripta della Campana Cieca.',
     _ => null,
   };
 
@@ -566,7 +585,10 @@ enum LiteWeapon {
     LiteRelicFamily.mazzaGuardiano,
     5,
   ),
-  martelloForgia._variant('Martello della forgia', 12, 3.25, .78, guanti);
+  martelloForgia._variant('Martello della forgia', 12, 3.25, .78, guanti),
+  beccoCaverna._variant('Becco della Caverna', 9, 4.6, .69, piccaOssidiana),
+  falceFunerys._variant('Falce di Funerys', 8, 3.65, .78, falceRunica),
+  bobinaPostea._variant('Bobina di Postea', 3, 10, .57, scettro);
 
   const LiteWeapon(
     this.label,
@@ -1113,6 +1135,22 @@ enum LiteCompanion {
     LiteWeapon.guanti,
     34,
     0,
+  ),
+  saldino(
+    'Saldino',
+    null,
+    LiteEnemyKind.ragnoSaldatore,
+    LiteWeapon.bobinaPostea,
+    38,
+    9,
+  ),
+  frammentoLapysrieth(
+    'Frammento di Lapysrieth',
+    null,
+    LiteEnemyKind.lapysrieth,
+    LiteWeapon.guanti,
+    46,
+    8,
   );
 
   const LiteCompanion(
@@ -1155,13 +1193,18 @@ enum LiteCompanion {
     guardiaDiLusier ||
     eliteDiLusier ||
     divoramituMini ||
-    bunnys => null,
+    bunnys ||
+    saldino ||
+    frammentoLapysrieth => null,
   };
   String? get discovery => switch (this) {
     piccolaMarea => 'Spaccascheletri · abbatti tre Rasvyr durante la run',
     orbietto => 'Occhio per i segreti · trova una sala segreta a Orea Zalira',
     divoramituMini => 'Sconfiggi il miniboss Divoramitù. Ogni 10 s si interra, colpisce riemergendo e lascia un cratere che rallenta i nemici ai bordi e li danneggia al centro. Gli alleati si muovono più in fretta e al centro attaccano al doppio della velocità.',
     bunnys => 'Sconfiggi un Bunnys: ti segue e cura un alleato. Se cade, la sua ultima cura raggiunge la squadra e non può essere rianimato.',
+    saldino =>
+      'Sconfiggi un Ragno Saldatore. Le sue scariche saltano fra due nemici.',
+    frammentoLapysrieth => 'Sconfiggi un Lapysrieth. Il frammento protegge il proprietario con Scudo in pericolo.',
     lumin => 'Predatore speculare · un Doppelganger copia uno Slime',
     goblinColla => 'Fanteria goblin · abbatti uno Spara-colla per arruolarlo nell’Open del Re',
     _ => null,
@@ -1248,6 +1291,7 @@ enum LiteImpactTarget {
   fusionStrike,
   fiveFlames,
   bunnysHeal,
+  frontierCast,
 }
 
 class LiteCombatImpact {
@@ -1375,6 +1419,7 @@ class LiteObstacle {
     if (secretGate) 'secretGate': true,
     if (mapShortcut) 'mapShortcut': true,
     if (dashGap) 'dashGap': true,
+    if (fixedMap) 'fixedMap': true,
     if (solarGate) 'solarGate': true,
     'hp': hp,
   };
@@ -1387,6 +1432,7 @@ class LiteObstacle {
     secretGate: json['secretGate'] == true,
     mapShortcut: json['mapShortcut'] == true,
     dashGap: json['dashGap'] == true,
+    fixedMap: json['fixedMap'] == true,
     solarGate: json['solarGate'] == true,
     hp: _num(json['hp'], 20),
   );
@@ -2341,7 +2387,7 @@ class LiteCoopFighter extends LiteClone {
     if (allowMechanicalChicken) 'allowMechanicalChicken': true,
     'name': name,
     'hero': hero.name,
-    if (includeEffects && hero == LiteHero.ashley && stride.walking != null)
+    if (includeEffects && stride.speed > .1 && stride.walking != null)
       'strideWalking': stride.walking,
     'baseHp': _baseMaxHp,
     if (upgrades.isNotEmpty) 'upgrades': LitePermanentUpgrade.encode(upgrades),
@@ -2568,6 +2614,7 @@ class LiteRun {
   int _actRelicClaims = 0;
   double weaponArtCooldown = 0;
   int _goblinWave = 0;
+  _LiteDesertEye? _desertEye;
   String get slimeCreditId => progressId ?? 'legacy-$seed-${hero.name}';
   int slimeKills = 0;
   double get slimeDashCooldown => _night.utility;
@@ -2794,10 +2841,18 @@ class LiteRun {
     if (guestAccount != null &&
         achievements.contains(_fabbroUnlockKey(guestAccount)))
       LiteHero.fabbro,
+    if (guestAccount != null)
+      for (final character in [LiteHero.gablyn, LiteHero.funerys])
+        if (achievements.contains(
+          _LiteFrontierCombat.unlockKey(character, guestAccount),
+        ))
+          character,
     for (final character in LiteHero.values)
       if (character != LiteHero.granScostumato &&
           (character != LiteHero.polloMeccanico || guestAccount == null) &&
           (character != LiteHero.vampiro || guestAccount == null) &&
+          ((character != LiteHero.gablyn && character != LiteHero.funerys) ||
+              guestAccount == null) &&
           character.unlockHint != null &&
           achievements.contains(heroUnlockKey(character)))
         character,
@@ -3213,6 +3268,7 @@ class LiteRun {
       !inActTwo &&
       !inThirdAct &&
       !inSolarDungeon &&
+      !inDesertEye &&
       !restHub &&
       (stageClear || !usesExplorableFloor && campPatrols && stage == 0) &&
       _distance(position, shopPosition) < 2;
@@ -3231,7 +3287,12 @@ class LiteRun {
           : stage < lastStage) &&
       !shopOpen;
   bool get usesSubArena =>
-      restHub || inActTwo || inThirdAct || inSolarDungeon || goblinCamp;
+      restHub ||
+      inActTwo ||
+      inThirdAct ||
+      inSolarDungeon ||
+      goblinCamp ||
+      inDesertEye;
   final Set<String> _openCombatRooms = {};
   int? _activeLusierAttack;
   static const double openPower = 3;
@@ -3242,12 +3303,19 @@ class LiteRun {
     if (used == 0) return 0;
     final visits =
         _openCombatRooms.length +
-        (!restHub && !_openCombatRooms.contains(inputArena) ? 1 : 0);
+        (!restHub &&
+                desertEyeOutcome?.positive != true &&
+                !_openCombatRooms.contains(inputArena)
+            ? 1
+            : 0);
     return (used + openRecoveryRooms + 1 - visits).clamp(0, openRecoveryRooms);
   }
 
   void _registerOpenRoom() {
-    if (restHub || !_openCombatRooms.add(inputArena)) return;
+    if (restHub ||
+        desertEyeOutcome?.positive == true ||
+        !_openCombatRooms.add(inputArena))
+      return;
     _openCooldown = 0;
     for (final fighter in coopFighters) {
       fighter._openCooldown = 0;
@@ -3261,6 +3329,7 @@ class LiteRun {
     if (realm != null) ...[realm!.name, actRoom],
     if (inThirdAct) ...['atto-iii', thirdRoom],
     if (goblinCamp) 'goblin',
+    if (inDesertEye) 'occhio-divoratore',
   ].join(':');
   Point<double> get portalPosition => const Point(30, 11);
   Point<double> get shopPosition => const Point(5, 5);
@@ -3270,7 +3339,7 @@ class LiteRun {
       restHub ||
       (inThirdAct
           ? thirdRoom < LiteThirdAct.rooms.length && thirdRoom % 3 == 0
-          : !inActTwo && !inSolarDungeon && _hasRestAt(stage));
+          : !inActTwo && !inSolarDungeon && !inDesertEye && _hasRestAt(stage));
   bool get canRest => canUseRest();
 
   bool canUseRest([LiteCoopFighter? fighter]) =>
@@ -3352,7 +3421,7 @@ class LiteRun {
       !restHub && !inSolarDungeon && achievements.contains(_secretRoomKey);
 
   bool get hasSecretRoom {
-    if (restHub || inSolarDungeon || goblinCamp) return false;
+    if (restHub || inSolarDungeon || goblinCamp || inDesertEye) return false;
     if (inThirdAct) {
       final index = thirdRoom - 1;
       return index % 6 == _secretSlot(57199, index ~/ 6, 6);
@@ -4779,6 +4848,7 @@ class LiteRun {
     );
     enemies.removeWhere((enemy) => enemy.hp <= 0);
     _tickArenaEvent(elapsed);
+    if (_tickDesertEyeEntrance()) return;
     _collectLoot(elapsed / arenaSpeed);
     this._checkGoblinEntrance();
     if (hostDown && coopFighters.every((fighter) => fighter.hp <= 0)) {
@@ -4787,6 +4857,10 @@ class LiteRun {
       message = 'Il gruppo è caduto al piano $stage.';
     }
     if (dead || enemies.isNotEmpty || stageClear) return;
+    if (inDesertEye) {
+      _completeDesertEye();
+      return;
+    }
     if (baghestFight) {
       _completeBaghest();
       return;
@@ -5455,6 +5529,14 @@ class LiteRun {
     final aimed = _unit(target - source);
     final direction = aimed.magnitude > 0 ? aimed : fighter?.aim ?? aim;
     switch (character) {
+      case LiteHero.gablyn || LiteHero.funerys:
+        _frontierHeroMove(
+          character,
+          source,
+          direction,
+          fighter,
+          powerful: true,
+        );
       case LiteHero.ragnoSaldatore ||
           LiteHero.rasvyr ||
           LiteHero.lupoDiVaitern ||
@@ -5961,6 +6043,15 @@ class LiteRun {
     }
     final owner = fighter?.id;
     switch (character) {
+      case LiteHero.gablyn || LiteHero.funerys:
+        _frontierHeroMove(
+          character,
+          source,
+          direction,
+          fighter,
+          powerful: false,
+        );
+        return true;
       case LiteHero.ragnoSaldatore ||
           LiteHero.rasvyr ||
           LiteHero.lupoDiVaitern ||
@@ -7919,6 +8010,7 @@ class LiteRun {
       clone._burrowCooldown - elapsed / arenaSpeed,
     );
     if (owner != null && !owner.connected) return;
+    _frontierPetWard(clone, owner);
     final ownerPosition = owner?.position ?? position;
     final enemy = _companionTarget(clone, ownerPosition);
     if (clone.companion == LiteCompanion.divoramituMini &&
@@ -8007,6 +8099,7 @@ class LiteRun {
       );
       return;
     }
+    if (_frontierPetStrike(clone, direction, training)) return;
     final cannon = clone.companion == LiteCompanion.granScostumato;
     clone.cooldown = cannon ? 2.2 : clone.weapon.cooldown * 1.22;
     clone._poseAim = direction;
@@ -9028,6 +9121,7 @@ class LiteRun {
       ),
     );
     _dropWeapon(enemy);
+    _frontierDefeat(kind, attacker, sourceCloneId, ownerCanHeal);
     if (enemy.kind == LiteEnemyKind.ragnoSaldatore && _rng.nextInt(20) == 19) {
       loot.add(
         LiteLoot(
@@ -9167,10 +9261,15 @@ class LiteRun {
       if (pet.discovery != null && achievements.contains(pet.unlockKey)) pet,
   };
 
-  void _discoverPet(LiteCompanion companion, Point<double> near) {
+  void _discoverPet(
+    LiteCompanion companion,
+    Point<double> near, {
+    LiteCoopFighter? fighter,
+  }) {
     if (!achievements.add(companion.unlockKey)) return;
-    if (tradablePets().any((ally) => ally.companion == companion)) return;
-    _bringPet(companion, near: near);
+    if (tradablePets(fighter).any((ally) => ally.companion == companion))
+      return;
+    _bringPet(companion, near: near, fighter: fighter);
     message = '${companion.label} si unisce al gruppo.';
   }
 
@@ -9190,6 +9289,8 @@ class LiteRun {
 
   void _dropWeapon(LiteEnemy enemy) {
     final item = switch (enemy.kind) {
+      LiteEnemyKind.gablyn => LiteWeapon.beccoCaverna,
+      LiteEnemyKind.funerys => LiteWeapon.falceFunerys,
       LiteEnemyKind.ragnoSaldatore when biome == LiteBiome.postea =>
         LiteWeapon.carabinaImpulsi,
       LiteEnemyKind.dronePostea when biome == LiteBiome.postea =>
@@ -9620,6 +9721,7 @@ class LiteRun {
 
   bool advance([LiteBiome? destination]) {
     if (!hasPortalNearby || shopOpen) return false;
+    if (inDesertEye) return _leaveDesertEye();
     if (solarBossWaiting) return enterSolarBoss();
     if (canChooseActTwo) return false;
     if (nextActTwoRoom) return advanceActTwo();
@@ -9631,7 +9733,9 @@ class LiteRun {
       playerCount > 1 &&
       coopPortalOpen &&
       !canChooseActTwo &&
-      (solarBossWaiting
+      (inDesertEye
+          ? _leaveDesertEye()
+          : solarBossWaiting
           ? enterSolarBoss()
           : nextActTwoRoom
           ? advanceActTwo()
@@ -9703,6 +9807,7 @@ class LiteRun {
     if (_sparedRooms.isNotEmpty) 'sparedRooms': _sparedRooms.toList(),
     if (supply.active) 'supplies': supply.frame,
     if (_goblinWave > 0) 'goblinWave': _goblinWave,
+    if (_desertEye case final eye?) 'desertEye': eye.frame,
     if (allowGlue) 'allowGlue': true,
     if (allowMechanicalChicken) 'allowMechanicalChicken': true,
     if (groundShots.isNotEmpty)
@@ -9756,7 +9861,7 @@ class LiteRun {
       'openScenes': _openScenes.map((scene) => scene._frame()).toList(),
     if (_shadowRays.isNotEmpty)
       'shadowRays': _shadowRays.values.map((ray) => ray._frame()).toList(),
-    if (includeEffects && hero == LiteHero.ashley && stride.walking != null)
+    if (includeEffects && stride.speed > .1 && stride.walking != null)
       'strideWalking': stride.walking,
     if (includeEffects && _burstTraces.isNotEmpty)
       'burstTraces': _burstTraces.entries
@@ -9924,6 +10029,9 @@ class LiteRun {
         .clamp(0.0, plagueDurationFor(3));
     run.slimeKills = _int(json['slimeKills']).clamp(0, 10);
     run._goblinWave = _int(json['goblinWave']).clamp(0, 8);
+    if (run.biome == LiteBiome.deserto && run.explorationRoutes) {
+      run._desertEye = _LiteDesertEye.read(json['desertEye']);
+    }
     run.groundShots
       ..clear()
       ..addAll(

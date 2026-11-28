@@ -8,6 +8,7 @@ import 'package:oculum_rl/services/oculum_rl_cloud_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _live = bool.fromEnvironment('OculumRLLiveProof');
+const _wormhole = bool.fromEnvironment('OculumRLWormholeLiveProof');
 const _partySize = int.fromEnvironment(
   'OculumRLLivePartySize',
   defaultValue: 2,
@@ -23,7 +24,9 @@ Future<void> _until(bool Function() ready, String label) async {
 
 void main() {
   test(
-    '$_partySize authenticated clients share authoritative combat and quests',
+    _wormhole
+        ? '$_partySize authenticated clients return from the shared Desert Eye after host reconnect'
+        : '$_partySize authenticated clients share authoritative combat and quests',
     () async {
       final clients = List.generate(
         _partySize,
@@ -131,7 +134,9 @@ void main() {
       }
 
       final world = LiteRun(
-        seed: 711,
+        seed: _wormhole ? 130 : 711,
+        explorationRoutes: _wormhole,
+        biome: _wormhole ? LiteBiome.deserto : LiteBiome.campo,
         hero: LiteHero.evasore,
         weapon: LiteWeapon.arco,
         difficulty: LiteDifficulty.medio,
@@ -154,9 +159,11 @@ void main() {
       }
       final foe = LiteEnemy(1000, LiteEnemyKind.slime, const Point(7.6, 11), 18)
         ..cooldown = 80;
-      world.enemies
-        ..clear()
-        ..add(foe);
+      if (!_wormhole) {
+        world.enemies
+          ..clear()
+          ..add(foe);
+      }
       final hostSession = OculumLiteCoop(
         runId: code,
         localAccount: owner,
@@ -236,6 +243,140 @@ void main() {
       );
       expect(guestSession.run!.stage, 0);
       expect(guestSession.run!.coopFighter(user), isNotNull);
+      if (_wormhole) {
+        final sourceEnemyIds = world.enemies.map((enemy) => enemy.id).toList();
+        final contact = world.coopFighter(user)!;
+        final beforeHostLife = world.hp;
+        final beforeContactLife = contact.hp;
+        contact
+          ..shield = 20
+          ..position = world.desertEyePosition! + const Point<double>(1.4, 0);
+        guestSession.move = const Point(-.7, 0);
+        await _until(
+          () => game.every(
+            (session) => session.run?.inputArena == '0:occhio-divoratore',
+          ),
+          'the same Eye dimension on all clients',
+        );
+        for (final session in game) {
+          expect(session.run!.desertEyeFortune, 10);
+          expect(session.run!.desertEyeCut, 9);
+          expect(session.run!.hp, beforeHostLife);
+          expect(session.run!.coopFighter(user)!.hp, beforeContactLife);
+          expect(session.run!.coopFighter(user)!.shield, 11);
+          expect(session.run!.milestoneFloors, 0);
+          expect(session.run!.obser, 0);
+        }
+
+        await checkpoint(
+          master,
+          'rl-qa-role-0',
+          'save',
+          epoch: epoch,
+          snapshot: {
+            'lobby': {'runId': code},
+            'world': world.toJson(),
+          },
+        );
+        hostSession.stop();
+        await master.removeAllChannels();
+        await _until(() => guestSession.pausedByHost, 'guest waits in Eye');
+
+        final resumedClient = SupabaseClient(
+          oculumDefaultSupabaseUrl,
+          oculumDefaultSupabasePublishableKey,
+        );
+        addTearDown(() async {
+          await resumedClient.removeAllChannels();
+          await resumedClient.dispose();
+        });
+        await resumedClient.auth.setSession(
+          master.auth.currentSession!.refreshToken!,
+        );
+        expect((await join(resumedClient, true))['roomId'], room['roomId']);
+        const newSession = 'rl-qa-eye-recovered-master';
+        await resumedClient.rpc(
+          'oculum_touch_room_session',
+          params: {
+            'p_room': room['roomId'],
+            'p_session': newSession,
+            'p_presence': {'playerName': 'RL QA Master'},
+          },
+        );
+        final taken = (await checkpoint(resumedClient, newSession, 'claim'))!;
+        final resumed = LiteRun.fromJson(
+          Map<String, dynamic>.from((taken['snapshot'] as Map)['world'] as Map),
+        )..suspendCoopControls();
+        expect(taken['epoch'], epoch + 1);
+        expect(resumed.desertEyeFortune, 10);
+        final resumedHost = OculumLiteCoop(
+          runId: code,
+          localAccount: owner,
+          authority: resumed,
+          localSessionId: newSession,
+          epoch: epoch + 1,
+          send: (data) => sendAs(resumedClient, newSession, data),
+        );
+        game[0] = resumedHost;
+        addTearDown(resumedHost.dispose);
+        await subscribe(0, resumedClient);
+        resumedHost.start();
+        await sendAs(resumedClient, newSession, {
+          'kind': 'lobbySnapshot',
+          'runId': code,
+          'epoch': epoch + 1,
+        });
+        await _until(
+          () => game
+              .skip(1)
+              .every(
+                (session) =>
+                    session.epoch == epoch + 1 &&
+                    session.canAct &&
+                    session.run?.desertEyeFortune == 10,
+              ),
+          'everyone rejoins the recovered Eye',
+        );
+        resumed.enemies.clear();
+        resumed.position = resumed.portalPosition;
+        for (final fighter in resumed.coopFighters) {
+          fighter.position = resumed.portalPosition;
+        }
+        await _until(
+          () =>
+              resumed.coopFighters.every((fighter) => fighter.connected) &&
+              resumedHost.nearPortal(owner) &&
+              game
+                  .skip(1)
+                  .every((session) => session.nearPortal(session.localAccount)),
+          'the return portal is open on all clients',
+        );
+        resumedHost.confirmPortal(resumed.biome);
+        await _until(
+          () => game.skip(1).every((session) => session.destination != null),
+          'return vote delivered',
+        );
+        expect(resumed.inDesertEye, isTrue);
+        for (final session in game.skip(1)) {
+          session.confirmPortal();
+        }
+        await _until(
+          () => game.every((session) => session.run?.inDesertEye == false),
+          'everyone returned to the source floor',
+        );
+        expect(resumed.stage, 0);
+        expect(resumed.stageClear, isFalse);
+        expect(resumed.hp, beforeHostLife);
+        expect(resumed.coopFighter(user)!.hp, beforeContactLife);
+        expect(resumed.coopFighter(user)!.shield, 11);
+        expect(resumed.enemies.map((enemy) => enemy.id), sourceEnemyIds);
+        expect(resumed.obser, 5);
+        expect(
+          resumed.coopFighters.map((fighter) => fighter.obser),
+          everyElement(5),
+        );
+        return;
+      }
       guestSession.move = const Point(0, -.3);
       await _until(
         () => world.coopFighter(user)!.position.y < 11.75,
@@ -550,7 +691,7 @@ void main() {
       guestSession.move = const Point(0, 0);
       expect(resumed.obser, 47);
     },
-    skip: !_live,
+    skip: !_live && !_wormhole,
     timeout: const Timeout(Duration(minutes: 3)),
   );
 }

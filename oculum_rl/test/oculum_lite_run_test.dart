@@ -157,6 +157,27 @@ void _killAtRange(LiteRun run, LiteEnemy enemy) {
 }
 
 void main() {
+  test('Vesanybel warns about the second ground hit only when enraged', () {
+    final boss = LiteEnemy(1, LiteEnemyKind.vesanybel, const Point(20, 10), 240)
+      ..attackTarget = const Point(23, 11);
+    expect(boss.thirdGroundImpacts().single.center, const Point(23, 11));
+    expect(boss.thirdGroundImpacts().single.radius, 2.15);
+    boss.hp = 119;
+    final warning = boss.thirdGroundImpacts();
+    expect(warning.map((hit) => hit.radius), [2.15, 2.9]);
+    expect(warning.last.center, boss.position);
+    expect(boss.thirdGroundImpacts(landed: true), warning);
+  });
+
+  test('the preview and landing share the radius of Thalvyr’s attack', () {
+    final boss = LiteEnemy(3, LiteEnemyKind.thalvyr, const Point(16, 10), 200)
+      ..attackTarget = const Point(19, 11);
+    final warning = boss.thirdGroundImpacts().single;
+    expect(warning.center, const Point(19, 11));
+    expect(boss.thirdGroundImpacts(landed: true).single.center, boss.position);
+    expect(boss.thirdGroundImpacts(landed: true).single.radius, warning.radius);
+  });
+
   test('one deterministic secret is drawn from all six room positions', () {
     final slots = <(String, int), Set<int>>{};
     for (var seed = 0; seed < 60; seed++) {
@@ -770,6 +791,22 @@ void main() {
             expect(
               run.combatImpacts.any(
                 (effect) => effect.target == LiteImpactTarget.milestoneCast,
+              ),
+              isTrue,
+            );
+          case LiteHero.gablyn:
+            expect(run.intangible, isTrue);
+            expect(run.burstRemaining, greaterThan(0));
+            expect(
+              run.combatImpacts.any(
+                (effect) => effect.target == LiteImpactTarget.frontierCast,
+              ),
+              isTrue,
+            );
+          case LiteHero.funerys:
+            expect(
+              run.combatImpacts.any(
+                (effect) => effect.target == LiteImpactTarget.frontierCast,
               ),
               isTrue,
             );

@@ -257,7 +257,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     }
     final run = _session.run;
     if (run == null) return;
-    if (run.inThirdAct) {
+    if (run.inThirdAct || run.inDesertEye) {
       _session.confirmPortal(run.biome);
       return;
     }
@@ -768,7 +768,9 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                         : _session.nearPortal(
                                             _session.localAccount,
                                           )
-                                        ? (run.awaitsRestHub
+                                        ? (run.inDesertEye
+                                              ? 'Varco di ritorno · R'
+                                              : run.awaitsRestHub
                                               ? 'Sala di ristoro · R'
                                               : _session.host &&
                                                     run.canChooseActTwo

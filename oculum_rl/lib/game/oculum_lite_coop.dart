@@ -439,8 +439,9 @@ class OculumLiteCoop extends ChangeNotifier {
     if (!nearPortal(localAccount) || !canAct) return;
     if (host) {
       if (choice != null) _setDestination(choice);
-      if (authority?.inThirdAct == true && destination == null) {
-        _setDestination(authority!.biome);
+      if (authority case final world?
+          when (world.inThirdAct || world.inDesertEye) && destination == null) {
+        _setDestination(world.biome);
       }
       _confirmed.add(localAccount);
       _advanceIfReady();
@@ -502,11 +503,18 @@ class OculumLiteCoop extends ChangeNotifier {
     if (world != null) {
       final target = aim;
       if (target != null) world.lookAt(target);
+      final beforeArena = world.inputArena;
       world.advanceFrame(
         (now - _timeOfStep).clamp(0.0, .12),
         move: move,
         walk: slowed,
       );
+      if (world.inputArena != beforeArena) {
+        _resetInputs();
+        destination = null;
+        _confirmed.clear();
+        _timeOfSend = -1;
+      }
       _timeOfStep = now;
       _watching.removeWhere((_, at) => now - at > 4);
       if (_watching.isNotEmpty && now - _timeOfSend >= .16) {

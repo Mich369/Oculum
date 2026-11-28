@@ -27,6 +27,9 @@ extension LiteWeaponTechniques on LiteWeapon {
           LiteWeapon.piccaVaitern => 'Stoccata di Vaitern',
           LiteWeapon.vergaCorvina => 'Corona corvina',
           LiteWeapon.martelloForgia => 'Frattura della forgia',
+          LiteWeapon.beccoCaverna => 'Stoccata di selce',
+          LiteWeapon.falceFunerys => 'Raccolta del Sudario',
+          LiteWeapon.bobinaPostea => 'Scarica a catena',
           _ => throw StateError('Arma sconosciuta'),
         };
 }
@@ -104,6 +107,11 @@ extension LiteWeaponArt on LiteRun {
         radius: 4.0 * effectScale,
         push: 4 * effectScale,
       );
+      message = item.technique;
+      return true;
+    }
+    if (item.frontierWeapon) {
+      _castFrontierWeapon(item, origin, direction, owner, damage, effectScale);
       message = item.technique;
       return true;
     }

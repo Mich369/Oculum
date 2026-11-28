@@ -92,6 +92,9 @@ extension LiteFloorExploration on LiteRun {
     LiteBiome.orea => 'Conca dei due soli',
   };
 
+  Point<double> get _explorationCachePoint =>
+      biome == LiteBiome.deserto ? const Point(5.2, 14) : _encounterPoint;
+
   String get _explorationEncounterLabel => switch (biome) {
     LiteBiome.campo => 'Rifornimenti della palizzata',
     LiteBiome.foresta => 'Scorta tra le radici',
@@ -121,7 +124,7 @@ extension LiteFloorExploration on LiteRun {
           (
             site: LiteFloorSite.encounter,
             label: _explorationEncounterLabel,
-            position: _encounterPoint,
+            position: _explorationCachePoint,
           ),
           (
             site: LiteFloorSite.arena,
@@ -153,7 +156,7 @@ extension LiteFloorExploration on LiteRun {
   void _stockExplorationCache() {
     loot.add(
       LiteLoot(
-        _encounterPoint,
+        _explorationCachePoint,
         LiteLootKind.obser,
         6 + ((seed ^ (stage * 19)) % 5),
       ),

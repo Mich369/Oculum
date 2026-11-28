@@ -2,6 +2,14 @@
 
 La versione Windows autonoma si avvia da `Gioca/Oculum RL.exe` nella cartella della versione attiva. Su questa installazione, `C:/Oculum App/Oculum RL/VERSIONE-ATTIVA.json` indica il percorso. Mantieni `data` e le DLL accanto all’eseguibile. Windows Test ha una cartella, uno ZIP e un profilo di salvataggio propri.
 
+## Anteprima 0.4.27
+
+- **Occhio del Deserto Divoratore.** Apri Gioca subito con seed 41119 e imbocca il percorso a ovest. La fenditura si attiva mettendoci piede. Chi cade nella fenditura subisce 1d12 Taglio, con Scudo e difese normali. Camminare sulla sabbia resta innocuo. La Fortuna è condivisa fra tutti i combattenti. Gli esiti 1 e 2–10 hanno scontri diversi. Gli esiti 11–19 e 20 aprono subito il portale di ritorno. La deviazione non sostituisce un piano della campagna.
+- **Personaggi e compagni.** Abbatti Gablyn o Funerys con un tuo colpo per sbloccarlo. Gablyn schiva in affondo con la picca, Funerys raduna e rallenta i nemici. Entrambi hanno Talento e Open propri. Saldino si scopre con il Ragno Saldatore e il Frammento di Lapysrieth con Lapysrieth.
+- **Forgia.** Becco della Caverna, Falce di Funerys e Bobina di Postea costano 53, 64 e 67 Obser. Ognuna ha la sua tecnica su G, si può temprare e si può fondere con un’altra arma.
+- **Movimento Ink Expressive.** Nuove sequenze per Luce, Ombra, Doppelganger, Pyrel, Lithra, Vegliante, Sacrycrab, Lapysrieth e Thalvyr. Il compagno di Lapysrieth condivide la sagoma canonica. La modalità cammino o corsa viene mantenuta negli snapshot co-op.
+- **Leggibilità.** Vesanybel mostra l’impatto aggiuntivo sotto metà Vita. Il riepilogo di fine run indica seed, difficoltà, piani superati e risorse rimaste. Quando cade l’Arconte puoi ancora entrare nell’Atto III.
+
 ## Aggiornamenti Windows
 
 Le edizioni Windows normale e Windows Test cercano automaticamente una release Oculum RL pubblica più recente. Il gioco verifica la dimensione, lo SHA-256 e i file del runtime, poi prepara la nuova versione in una cartella separata per edizione. La versione corrente si chiude soltanto dopo che quella nuova ha aperto la sua prima schermata. Durante una run o una stanza online il riavvio aspetta il ritorno al menu.

@@ -33,6 +33,7 @@ extension LiteSolarDungeon on LiteRun {
   }
 
   bool get canEnterSolarDungeon =>
+      !inDesertEye &&
       stageClear &&
       !restHub &&
       !inSolarDungeon &&

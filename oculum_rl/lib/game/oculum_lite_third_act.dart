@@ -22,6 +22,48 @@ class LiteThirdRoom {
   final bool well;
 }
 
+typedef LiteThirdImpact = ({
+  Point<double> center,
+  double radius,
+  double damageScale,
+});
+
+extension LiteThirdStrike on LiteEnemy {
+  List<LiteThirdImpact> thirdGroundImpacts({bool landed = false}) {
+    final mark = attackTarget;
+    if (mark == null) return const [];
+    return switch (kind) {
+      LiteEnemyKind.vegliante => [
+        (center: mark, radius: 1.48, damageScale: 1.0),
+      ],
+      LiteEnemyKind.vesanybel => [
+        (center: mark, radius: 2.15, damageScale: 1.0),
+        if (hp < maxHp * .5) (center: position, radius: 2.9, damageScale: .68),
+      ],
+      LiteEnemyKind.gelycryn => [
+        (center: landed ? position : mark, radius: 1.85, damageScale: 1.0),
+      ],
+      LiteEnemyKind.thalvyr => [
+        (center: landed ? position : mark, radius: 2.75, damageScale: 1.0),
+      ],
+      _ => const [],
+    };
+  }
+
+  List<double> get thirdShotAngles => switch (kind) {
+    LiteEnemyKind.nymboryth => const [-.22, 0, .22],
+    LiteEnemyKind.aerovyr when hp < maxHp * .5 => const [
+      -.72,
+      -.36,
+      0,
+      .36,
+      .72,
+    ],
+    LiteEnemyKind.aerovyr => const [-.44, 0, .44],
+    _ => const [],
+  };
+}
+
 extension LiteThirdAct on LiteRun {
   static const rooms = [
     LiteThirdRoom(LiteThirdRegion.oblio, 'Archi abrasi', [
@@ -83,6 +125,8 @@ extension LiteThirdAct on LiteRun {
 
   bool get inThirdAct => thirdRoom > 0;
   String get arenaLabel => switch (thirdEncounter) {
+    null when inDesertEye =>
+      'Occhio del Deserto · Fortuna $desertEyeFortune/20 · ${desertEyeOutcome!.label}$desertEyeCutLabel',
     final room? when thirdRoom == rooms.length => 'Piano 36 · ${room.label}',
     final room? =>
       'Piano ${LiteRun.finalStage + 1 + thirdRoom} · ${room.region.label} · ${room.label}',
@@ -288,6 +332,7 @@ extension LiteThirdAct on LiteRun {
     if (profile == null) return false;
     final leaps =
         kind == LiteEnemyKind.gelycryn || kind == LiteEnemyKind.thalvyr;
+    if (enemy.windup > 0 && enemy.attackTarget == null) enemy.windup = 0;
     if (enemy.windup > 0) {
       final center = enemy.attackTarget!;
       final offset = center - enemy.position;
@@ -318,31 +363,16 @@ extension LiteThirdAct on LiteRun {
           1.9;
       final enraged = enemy.hp < enemy.maxHp * .5;
       enemy.cooldown = profile.$3 * (enraged ? .74 : 1);
-      switch (kind) {
-        case LiteEnemyKind.vegliante:
-        case LiteEnemyKind.vesanybel:
-          _astralImpact(center, kind.boss ? 2.15 : 1.48, damage);
-          if (kind.boss && enraged) {
-            _astralImpact(enemy.position, 2.9, damage * .68);
-          }
-        case LiteEnemyKind.gelycryn:
-        case LiteEnemyKind.thalvyr:
-          _astralImpact(enemy.position, kind.boss ? 2.75 : 1.85, damage);
-          if (kind.boss) {
-            for (final spread in [-.55, .0, .55]) {
-              _thirdShot(enemy, _rotate(direction, spread), damage * .56, 7.5);
-            }
-          }
-        case LiteEnemyKind.nymboryth:
-        case LiteEnemyKind.aerovyr:
-          final arcs = kind.boss
-              ? (enraged ? [-.72, -.36, .0, .36, .72] : [-.44, .0, .44])
-              : [-.22, .0, .22];
-          for (final spread in arcs) {
-            _thirdShot(enemy, _rotate(direction, spread), damage * .78, 11);
-          }
-        default:
-          break;
+      for (final hit in enemy.thirdGroundImpacts(landed: true)) {
+        _astralImpact(hit.center, hit.radius, damage * hit.damageScale);
+      }
+      if (kind == LiteEnemyKind.thalvyr) {
+        for (final spread in const [-.55, 0.0, .55]) {
+          _thirdShot(enemy, _rotate(direction, spread), damage * .56, 7.5);
+        }
+      }
+      for (final spread in enemy.thirdShotAngles) {
+        _thirdShot(enemy, _rotate(direction, spread), damage * .78, 11);
       }
       return true;
     }
@@ -535,7 +565,8 @@ extension LiteThirdAct on LiteRun {
   );
 
   bool get hasPowerWell {
-    if (restHub || inSolarDungeon || goblinCamp || finished) return false;
+    if (restHub || inSolarDungeon || goblinCamp || inDesertEye || finished)
+      return false;
     if (thirdEncounter case final room?) return room.well;
     if (inActTwo) return actRoom == 1 || actRoom == 3;
     return stage >= 2 && stage < lastStage && (stage - 2) % 3 == 0;

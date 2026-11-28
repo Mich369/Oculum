@@ -174,6 +174,24 @@ enum LiteRestItem {
     LiteRestStation.art,
     96,
     'Raggio guidato dalla mira. Il lanciatore resta ancorato.',
+  ),
+  beccoCaverna(
+    'Becco della Caverna',
+    LiteRestStation.forge,
+    53,
+    'Picca di selce. La tecnica spinge lungo una stoccata stretta.',
+  ),
+  falceFunerys(
+    'Falce di Funerys',
+    LiteRestStation.forge,
+    64,
+    'Falce ossaria. La tecnica raccoglie e rallenta i nemici.',
+  ),
+  bobinaPostea(
+    'Bobina di Postea',
+    LiteRestStation.forge,
+    67,
+    'Scettro runico. La tecnica salta fra tre nemici senza oltrepassare i muri.',
   );
 
   const LiteRestItem(this.label, this.station, this.basePrice, this.effect);
@@ -202,6 +220,9 @@ enum LiteRestItem {
     lame => LiteWeapon.doppieLame,
     picca => LiteWeapon.piccaOssidiana,
     balestra => LiteWeapon.balestraRunica,
+    beccoCaverna => LiteWeapon.beccoCaverna,
+    falceFunerys => LiteWeapon.falceFunerys,
+    bobinaPostea => LiteWeapon.bobinaPostea,
     _ => null,
   };
   LiteScroll? get scroll => switch (this) {

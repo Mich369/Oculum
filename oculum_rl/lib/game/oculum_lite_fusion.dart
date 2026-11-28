@@ -42,10 +42,14 @@ extension LiteForgeFusion on LiteRun {
     LiteWeapon.piccaVaitern,
     LiteWeapon.vergaCorvina,
     LiteWeapon.martelloForgia,
+    LiteWeapon.bobinaPostea,
   }.toList();
 
-  int signaturePrice(LiteWeapon item) =>
-      priceForWeapon(item) + (item.isBossLoot ? 18 : 0);
+  int signaturePrice(LiteWeapon item) => item.frontierWeapon
+      ? LiteRestItem.values
+            .firstWhere((entry) => entry.weapon == item)
+            .basePrice
+      : priceForWeapon(item) + (item.isBossLoot ? 18 : 0);
 
   bool _forgeOpen(LiteCoopFighter? fighter) =>
       canUseRestStation(LiteRestStation.forge, fighter) &&

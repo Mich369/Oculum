@@ -17,10 +17,14 @@ bool open(LiteRun run, Point<double> point, [double radius = .47]) =>
 
 bool sight(LiteRun run, Point<double> start, Point<double> end) {
   final delta = end - start;
+  final sheltered = run.inExplorationAtrium(start);
   final slices = max(1, (delta.magnitude / .12).ceil());
   for (var index = 1; index <= slices; index++) {
     final at = start + delta * (index / slices);
-    if (run.obstacles.any((wall) => wall.visibleAt(at, .16))) return false;
+    if (run.inExplorationAtrium(at) != sheltered ||
+        run.obstacles.any((wall) => wall.visibleAt(at, .16))) {
+      return false;
+    }
   }
   return true;
 }
@@ -75,6 +79,37 @@ Point<double> avoidAerovyr(
       movement != origin) {
     run.special(run.position + movement);
   }
+  return movement;
+}
+
+Point<double> avoidGroundAttacks(LiteRun run, Point<double> preferred) {
+  final hazards = [
+    for (final enemy in run.enemies)
+      if (enemy.hp > 0 && enemy.windup > 0) ...enemy.thirdGroundImpacts(),
+  ];
+  if (hazards.isEmpty) return preferred;
+  double clearance(Point<double> point) => hazards
+      .map((hit) => hit.center.distanceTo(point) - hit.radius)
+      .reduce(min);
+
+  if (clearance(run.position + preferred * 1.05) > .5 &&
+      clearance(run.position) > .15) {
+    return preferred;
+  }
+  var best = -double.infinity;
+  var movement = preferred;
+  for (var index = 0; index < 16; index++) {
+    final angle = index * pi / 8;
+    final step = Point(cos(angle), sin(angle));
+    final next = run.position + step * 1.65;
+    if (!walkable(run, run.position, next)) continue;
+    final score =
+        clearance(next) + .30 * (step.x * preferred.x + step.y * preferred.y);
+    if (score <= best) continue;
+    best = score;
+    movement = step;
+  }
+  if (clearance(run.position) < .4) run.special(run.position + movement);
   return movement;
 }
 
@@ -202,19 +237,41 @@ LiteEnemy? priorityTarget(LiteRun run) {
   return preferred;
 }
 
-String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
+LitePowerUp pickPower(Iterable<LitePowerUp> options) {
+  for (final priority in const [
+    LitePowerUp.lama,
+    LitePowerUp.cuore,
+    LitePowerUp.pelleRunica,
+    LitePowerUp.occhioLungo,
+    LitePowerUp.passo,
+  ]) {
+    if (options.contains(priority)) return priority;
+  }
+  return options.first;
+}
+
+String play(
+  LiteDifficulty difficulty,
+  int seed,
+  LiteRealm realm, {
+  bool exploration = false,
+}) {
   final run = LiteRun(
     seed: seed,
     hero: LiteHero.evasore,
     weapon: LiteWeapon.arco,
     difficulty: difficulty,
+    explorationRoutes: exploration,
+    biome: exploration ? LiteBiome.startingZone(seed) : LiteBiome.campo,
   );
   final completed = <int>[];
   final thirdCompleted = <int>[];
   final hubs = <int>[];
   final phases = <int>{};
   final finalAttacks = <LiteArchonAttack>{};
+  final hardest = difficulty == LiteDifficulty.oculum;
   var shopping = false;
+  var soughtExplorationSupply = false;
   for (var frame = 0; frame < 80 * 60 * 60; frame++) {
     if (run.canEnterThirdAct) {
       completed.add(run.stage);
@@ -233,11 +290,16 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
                     power == LitePowerUp.pelleRunica,
               )
               .firstOrNull;
-          run.choosePowerUp(defensive ?? run.powerOffers.first);
+          run.choosePowerUp(
+            hardest
+                ? pickPower(run.powerOffers)
+                : defensive ?? run.powerOffers.first,
+          );
         }
         final offers = run.powerWellOffers;
-        if (offers.isNotEmpty)
+        if (offers.isNotEmpty && !hardest) {
           run.claimPowerWell(offers.first, arena: run.inputArena);
+        }
         print(
           'seed=$seed attoIII=${run.thirdRoom} hp=${run.hp.ceil()} livello=${run.level}',
         );
@@ -246,13 +308,29 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
           (completed.isEmpty || completed.last != run.stage)) {
         completed.add(run.stage);
         if (run.powerOffers.isNotEmpty) {
-          run.choosePowerUp(run.powerOffers.first);
+          run.choosePowerUp(
+            hardest ? pickPower(run.powerOffers) : run.powerOffers.first,
+          );
         }
         shopping = run.hp < run.maxHp * .80 && run.obser >= LiteRun.potionPrice;
         print(
           'seed=$seed stage=${run.stage} ${run.encounter.name} '
           'hp=${run.hp.ceil()} level=${run.level} time=${run.time.round()}',
         );
+      }
+      if (hardest && run.canClaimPowerWell && run.powerWellOffers.isNotEmpty) {
+        if (!run.powerWellAt(run.position)) {
+          final move = follow(run, run.powerWellPosition);
+          if (move != origin) {
+            run.advanceFrame(tick, move: move);
+            continue;
+          }
+        } else {
+          run.claimPowerWell(
+            pickPower(run.powerWellOffers),
+            arena: run.inputArena,
+          );
+        }
       }
       if (run.hasRest && !run.restUsed && run.hp < run.maxHp * .90) {
         if (run.canRest) {
@@ -282,9 +360,19 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
             throw StateError('Ristoro non accessibile al piano ${run.stage}');
           hubs.add(run.stage);
           run.buyRestItem(LiteRestItem.token);
+          if (hardest) {
+            run.buyRestItem(LiteRestItem.artPlasma);
+            run.buyRestItem(LiteRestItem.bastione);
+          }
           run.buyRestItem(LiteRestItem.crosta);
           run.buyRestItem(LiteRestItem.spirale);
-          run.buyRestItem(LiteRestItem.tempra);
+          if (difficulty == LiteDifficulty.oculum) {
+            final reserve = LiteRun.potionPrice * 2;
+            while (run.obser >= reserve + run.restPrice(LiteRestItem.tempra) &&
+                run.buyRestItem(LiteRestItem.tempra)) {}
+          } else {
+            run.buyRestItem(LiteRestItem.tempra);
+          }
         } else if (run.canChooseActTwo) {
           run.enterSecondAct(realm);
         } else if (run.nextActTwoRoom) {
@@ -292,7 +380,9 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
           run.advanceActTwo();
         } else {
           run.advance(
-            LiteBiome.values[(run.stage + 1) % LiteBiome.values.length],
+            exploration
+                ? run.routeBiomes.first
+                : LiteBiome.values[(run.stage + 1) % LiteBiome.values.length],
           );
         }
       } else {
@@ -301,6 +391,16 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
       continue;
     }
 
+    if (exploration && run.stage == 0 && !soughtExplorationSupply) {
+      final supply = run.explorationLandmarks.firstWhere(
+        (site) => site.site == LiteFloorSite.encounter,
+      );
+      if (run.position.distanceTo(supply.position) > .65) {
+        run.advanceFrame(tick, move: follow(run, supply.position));
+        continue;
+      }
+      soughtExplorationSupply = true;
+    }
     final target = priorityTarget(run);
     if (target == null) {
       run.advanceFrame(tick);
@@ -309,6 +409,12 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
     if (target.kind == LiteEnemyKind.arconte) {
       phases.add(target.archonPhase);
       if (target.archonAttack case final attack?) finalAttacks.add(attack);
+    }
+    if (run.inExplorationAtrium(run.position)) {
+      final north = target.position.y <= 11;
+      final outside = Point<double>(16.25, north ? 5.65 : 16.25);
+      run.advanceFrame(tick, move: follow(run, outside));
+      continue;
     }
     final offset = target.position - run.position;
     final distance = offset.magnitude;
@@ -357,6 +463,7 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
       move = open(run, run.position + side) ? side : side * -1.0;
       if (track.warning < .30) run.special(run.position + move);
     }
+    if (hardest && run.inThirdAct) move = avoidGroundAttacks(run, move);
     final storm = run.stormWarning(target);
     if (storm != null) {
       move = avoidAerovyr(run, storm, move);
@@ -369,6 +476,10 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
         ) ||
         target.attacking && distance < 3) {
       run.special(run.position + move);
+    }
+    if (hardest && aimed && distance < 8 && target.kind.boss) {
+      run.useOpen(target.position);
+      run.useLearnedArt(target.position);
     }
     if (run.arrows == 0) {
       run.beginReload();
@@ -405,7 +516,25 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
   return summary;
 }
 
-void main() {
+void main(List<String> args) {
+  if (args.isNotEmpty) {
+    if (args.length < 3 ||
+        args.length > 4 ||
+        (args.length == 4 && args[3] != '--esplorazione')) {
+      throw ArgumentError(
+        'Uso: verify_campaign.dart <difficolta> <seed> <reame> [--esplorazione]',
+      );
+    }
+    print(
+      play(
+        LiteDifficulty.values.byName(args[0]),
+        int.parse(args[1]),
+        LiteRealm.values.byName(args[2]),
+        exploration: args.length == 4,
+      ),
+    );
+    return;
+  }
   print(play(LiteDifficulty.moltoFacile, 20261123, LiteRealm.caramella));
   print(play(LiteDifficulty.medio, 20261124, LiteRealm.inferno));
   print(play(LiteDifficulty.medio, 20261125, LiteRealm.postea));

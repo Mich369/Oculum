@@ -90,6 +90,9 @@ final liteMilestoneRewards = List<LiteMilestoneReward>.unmodifiable([
 extension LiteMilestoneRun on LiteRun {
   // Ristori and side rooms retain the already cleared main floor.
   int get milestoneFloors {
+    if (_desertEye case final eye?) {
+      return stage + (eye.origin['stageClear'] == true ? 1 : 0);
+    }
     if (inThirdAct) {
       return LiteRun.finalStage +
           thirdRoom +

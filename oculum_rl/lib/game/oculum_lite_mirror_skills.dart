@@ -35,6 +35,27 @@ extension LiteMirrorSkills on LiteRun {
         difficulty.enemyStrength *
         _challengeDamageScale(boss.kind);
     switch (build.hero) {
+      case LiteHero.gablyn:
+        if (distance > 4.2) return false;
+        _mirrorMelee(boss, direction, 4.2, damage, minDot: .62);
+        _frontierCue(
+          LiteFrontierEffect.caveCut,
+          boss.id,
+          boss.position,
+          boss.position + direction * 4.2,
+          1,
+        );
+      case LiteHero.funerys:
+        if (distance > 5.65) return false;
+        _mirrorMelee(boss, direction, 5.65, damage * .72, minDot: .62);
+        final center = _frontierGround(boss.position, direction, 3.3);
+        _frontierCue(
+          LiteFrontierEffect.shroud,
+          boss.id,
+          center,
+          center + direction,
+          2.4,
+        );
       case LiteHero.fabbro:
         if (distance > 5.2) return false;
         _mirrorMelee(boss, direction, 5.2, damage * 1.1, minDot: -1.1);
@@ -288,6 +309,39 @@ extension LiteMirrorOpen on LiteRun {
     }
 
     switch (build.hero) {
+      case LiteHero.gablyn:
+        if (distance > 8.8) return false;
+        boss
+          ..clashDirection = direction
+          ..clashRemaining = .30;
+        build.intangible = max(build.intangible, .30);
+        fan(3, .27, 16 + grade * 4, range: 8.8, speed: 16);
+        _frontierCue(
+          LiteFrontierEffect.shaleFan,
+          boss.id,
+          at,
+          at + direction * 8.8,
+          1,
+        );
+      case LiteHero.funerys:
+        final center = _frontierGround(at, direction, 4.8);
+        final radius = 4.8 + grade * .25;
+        final damage = (14 + 4 * grade) * strength;
+        bool inShroud(Point<double> target) =>
+            center.distanceTo(target) <= radius &&
+            !_lineBlocked(center, target) &&
+            !_lineBlocked(at, target);
+        if (!hostDown && inShroud(position)) _damagePlayer(damage);
+        for (final ally in _damageableAllies) {
+          if (ally.hp > 0 && inShroud(ally.position)) _hitAlly(ally, damage);
+        }
+        _frontierCue(
+          LiteFrontierEffect.shroud,
+          boss.id,
+          center,
+          center + direction,
+          radius,
+        );
       case LiteHero.ragnoSaldatore:
         _milestoneWave(
           this,

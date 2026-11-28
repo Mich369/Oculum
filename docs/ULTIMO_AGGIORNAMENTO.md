@@ -1,5 +1,5 @@
-# Oculum RL 0.4.26
+# Oculum RL 0.4.27
 
-- **Oculum RL 0.4.26.** Nelle nuove run i piani ordinari ed élite hanno un atrio protetto, due vie percorribili, la pittrice di Art, un banco scelto dal seed e un guardiano che sblocca il portale. A Postea l’officina Reysercth rinforza Vita e Danni arma dell’8% e offre una respinta fino a 3 m. L’Occhio d’Ombra propone Eco velata, Passo senza luce e Filo d’Ombra. Nuovi passi, cariche e cadute per Guardie Solari, Pysciwarden, Aerovyr e Arconte.
+- **Oculum RL 0.4.27.** L’Occhio del Deserto Divoratore porta tutto il party nella stessa dimensione con un unico tiro Fortuna e un portale di ritorno. Giocabili Gablyn e Funerys, due nuovi compagni e tre armi di Forgia con tecniche distinte. Nove nuove sequenze di movimento e combattimento Ink Expressive. Gli avvisi di Vesanybel corrispondono ai due impatti sotto metà Vita. Il riepilogo mostra seed, difficoltà e piani superati.
 
 [Registro cumulativo](REGISTRO_AGGIORNAMENTI.md)

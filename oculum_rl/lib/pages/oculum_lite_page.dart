@@ -67,6 +67,8 @@ const liteHeroLabels = {
   LiteHero.rasvyr: 'Rasvyr',
   LiteHero.lupoDiVaitern: 'Lupo Lunare di Vaitern',
   LiteHero.pysciwarden: 'Pysciwarden',
+  LiteHero.gablyn: 'Gablyn',
+  LiteHero.funerys: 'Funerys',
   LiteHero.lusierTre: 'Lusier III',
   LiteHero.fabbro: 'Fabbro',
 };
@@ -735,6 +737,7 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   Object _checkpointValues(LiteRun run) => (
+    run.inDesertEye,
     run.solarPhase,
     run.solarStairs,
     run.realm,
@@ -1015,6 +1018,11 @@ class _OculumLitePageState extends State<OculumLitePage>
       _gameFocus.requestFocus();
       return;
     }
+    if (run.inDesertEye && run.hasPortalNearby) {
+      _saveInventoryChange(run.advance);
+      _aim = null;
+      return;
+    }
     if (run.inThirdAct && run.hasPortalNearby) {
       _saveInventoryChange(run.advanceThirdAct);
       _aim = null;
@@ -1154,6 +1162,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       label = 'R · Sfida il Guardiano Solare';
     } else if (run.canChooseActTwo) {
       label = 'R · Entra nell’Atto II';
+    } else if (run.inDesertEye && run.hasPortalNearby) {
+      label = 'R · Ritorna al Deserto Divoratore';
     } else if (run.inThirdAct && run.hasPortalNearby) {
       label = 'R · Prossima sala dell’Atto III';
     } else if (run.nextActTwoRoom && run.hasPortalNearby) {
@@ -1842,6 +1852,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     final blocked =
         _paused || run.shopOpen || run.finished || run.soloOpenFrozen;
     final contextualAction = blocked ? null : _contextAction(run);
+    final campaignLength = LiteRun.campaignRooms + LiteThirdAct.rooms.length;
     final encounter = switch (run.encounter) {
       LiteEncounter.ordinary => '',
       LiteEncounter.elite => ' · Élite',
@@ -2249,7 +2260,9 @@ class _OculumLitePageState extends State<OculumLitePage>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                run.victorious
+                                run.canEnterThirdAct
+                                    ? 'L’Arconte è caduto'
+                                    : run.victorious
                                     ? 'Campagna completata'
                                     : run.dead
                                     ? 'Fine della run'
@@ -2266,11 +2279,51 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 Text(message),
                               if (_progressSaveFailed)
                                 const Text(_progressSaveWarning),
-                              Text(
-                                'Livello ${run.level} · EXP ${run.exp} · Ascension Dust ${run.crystals} · Obser ${run.obser}',
-                              ),
+                              if (!run.finished)
+                                Text(
+                                  'Livello ${run.level} · EXP ${run.exp} · Ascension Dust ${run.crystals} · Obser ${run.obser}',
+                                ),
                               if (run.finished) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      run.victorious
+                                          ? Icons.workspace_premium_outlined
+                                          : Icons.route_outlined,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '${run.difficulty.label} · ${run.milestoneFloors}/$campaignLength piani superati',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                LinearProgressIndicator(
+                                  value: (run.milestoneFloors / 36).clamp(
+                                    0.0,
+                                    1.0,
+                                  ),
+                                  semanticsLabel: 'Piani superati',
+                                ),
+                                const SizedBox(height: 12),
                                 Text(run.message),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${active.name} · Livello ${run.level} · Seed ${run.seed}',
+                                ),
+                                Text(
+                                  '${run.exp} EXP · ${run.crystals} Ascension Dust · ${run.obser} Obser',
+                                ),
+                                const SizedBox(height: 8),
                                 if (run.canEnterThirdAct)
                                   FilledButton(
                                     onPressed: _busy
@@ -2588,15 +2641,14 @@ class _OculumLitePageState extends State<OculumLitePage>
     );
   }
 
-  Widget _weaponIcon(LiteWeapon weapon, {double size = 46}) =>
-      OculumLiteArena.weaponIcons[weapon.moveset] != null
-      ? Image(
-          image: OculumLiteArena.weaponIcons[weapon.moveset]!,
-          width: size,
-          height: size,
-          fit: BoxFit.contain,
-        )
-      : OculumLiteWeaponIcon(weapon: weapon, size: size);
+  Widget _weaponIcon(LiteWeapon weapon, {double size = 46}) {
+    final icon =
+        OculumLiteArena.weaponIcons[weapon] ??
+        OculumLiteArena.weaponIcons[weapon.moveset];
+    return icon == null
+        ? OculumLiteWeaponIcon(weapon: weapon, size: size)
+        : Image(image: icon, width: size, height: size, fit: BoxFit.contain);
+  }
 
   Widget _movementPad() => Semantics(
     label: 'Movimento',

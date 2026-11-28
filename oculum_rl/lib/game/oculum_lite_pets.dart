@@ -25,7 +25,7 @@ extension LitePets on LiteRun {
         LiteCompanion.lumin,
         LiteCompanion.divoramituMini,
       },
-      LiteBiome.postea => const {LiteCompanion.lumin},
+      LiteBiome.postea => const {LiteCompanion.lumin, LiteCompanion.saldino},
       LiteBiome.deserto => const {LiteCompanion.piccolaMarea},
       LiteBiome.orea => const {LiteCompanion.orbietto, LiteCompanion.bunnys},
     };

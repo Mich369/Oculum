@@ -57,6 +57,8 @@ enum _OpenGlyph {
   LiteHero.pysciwarden => (const Color(0xff84dfd6), _OpenGlyph.trail, 6),
   LiteHero.lusierTre => (const Color(0xffffce89), _OpenGlyph.card, 6),
   LiteHero.fabbro => (const Color(0xffb5d8ff), _OpenGlyph.portal, 12),
+  LiteHero.gablyn => (const Color(0xffe7b17b), _OpenGlyph.fissure, 5),
+  LiteHero.funerys => (const Color(0xffdbb5e8), _OpenGlyph.feather, 8),
 };
 
 void _paintOpenCutscene(

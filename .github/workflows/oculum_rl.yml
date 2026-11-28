@@ -2,6 +2,9 @@ name: Oculum RL standalone
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'codex/oculum-rl-*'
   pull_request:
     paths:
       - 'oculum_rl/**'
@@ -48,13 +51,16 @@ jobs:
         run: flutter pub get
       - name: Check code
         if: matrix.target == 'Windows'
-        run: flutter analyze --no-pub --no-fatal-infos
+        run: flutter analyze --no-pub --no-fatal-infos lib test tool
       - name: Test game rules and saves
         if: matrix.target == 'Windows'
         run: flutter test --no-pub --reporter expanded
-      - name: Play two complete seeded campaigns
+      - name: Play three complete seeded campaigns
         if: matrix.target == 'Windows'
         run: dart tool/verify_campaign.dart
+      - name: Play the exploration campaign on Oculum difficulty
+        if: matrix.target == 'Windows'
+        run: dart tool/verify_campaign.dart oculum 72241 postea --esplorazione
       - name: Build and verify the selected target
         run: |
           $distribution = Join-Path $env:RUNNER_TEMP 'Oculum RL'

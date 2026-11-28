@@ -103,6 +103,8 @@ void _paintOpenPulse(
     LiteHero.rasvyr => const Color(0xffe1a788),
     LiteHero.lupoDiVaitern => const Color(0xffbbc8ee),
     LiteHero.lusierTre || LiteHero.fabbro => const Color(0xfff8cb85),
+    LiteHero.gablyn => const Color(0xffe7b17b),
+    LiteHero.funerys => const Color(0xffdbb5e8),
   };
   _paintOpenBrush(canvas, feet, hero, color, phase);
   _oval(
