@@ -1,10 +1,18 @@
 # Registro cumulativo per i giocatori
 
+## Varianti dei mostri Expressive Ink — 28 novembre 2026
+
+- Nuove forme dell’Armadillo Corazzato, del Costrutto Minore, della Mosca Campana, del Cinghiale del Fango, dell’Uomo Cactus, dell’Airone, della Tartaruga e della Larva del Pozzo. Ferrynox e Anfravyre hanno tre forme per ambiente, ciascuna con tavola e tecniche dedicate.
+- Il Costrutto difensivo ha +6 CM e guadagna +3 Resistenza per ogni 12 livelli. Il Costrutto rapido ha più Materia, meno Vita e meno Movimento. La sua tecnica rapida riguarda la Reazione veloce.
+- La Campana di Oculum lancia raggi. La Larva velenosa usa Avvelenato. La Tartaruga Incantatrice usa tecniche d’acqua. La tavola della Tartaruga accosta la sua altezza a quella di un albero adulto.
+- Chikar lascia 1d6+3 kg di carne pregiata alla morte confermata. Aberion può immettere fino a 10 Oculum aggiuntivi in ogni colpo pagato in Oculum, ottenendo Danni pari a 1,5 volte la spesa, arrotondati per difetto.
+- La chiusura del Fight riconosce correttamente i vecchi token a 0 Vita con massimo mancante e distingue morte, KO ed evocazione per le ricompense.
+
 ## Passkey, campagne e aggiornamenti più piccoli — 28 novembre 2026
 
 - Gioco e salvataggi locali restano disponibili senza account. Le passkey usano la finestra di sicurezza del dispositivo nelle piattaforme compatibili. Un ospite online collega prima Google o conferma l’email sullo stesso account.
 - In **Master → Sessione → Apri campagna**, **Altri dispositivi** raccoglie le campagne Master pubblicate dallo stesso account. Più sotto, le campagne condivise con te sono raggruppate per Master. Il nome della cartella si aggiorna con il nome visibile del Master.
-- **Aggiorna Oculum** confronta i file realmente installati su Windows. Mostra quanti file cambiano e quanto pesa il download. Puoi saltare le versioni intermedie. Windows e Windows Test hanno manifest distinti e resta disponibile il pacchetto completo.
+- **Aggiorna Oculum** confronta i file realmente installati su Windows. Mostra quanti file cambiano e quanto pesa il download. Scarica e sostituisce soltanto i file necessari, anche saltando più versioni. I file identici rimangono al loro posto. Se l'avvio non riesce, ripristina i file toccati. Windows e Windows Test hanno manifest distinti e resta disponibile il pacchetto completo.
 - Su Android la preparazione dell’APK firmato si svolge in background e l’app distingue la richiesta di autorizzazione dall’apertura dell’installer. La versione web controlla che il sito aggiornato sia pubblicato prima di ricaricarlo.
 - Una ricevuta con l’identificatore di un Fight precedente non viene attribuita al colpo finale del Fight corrente. I vecchi salvataggi senza quell’identificatore restano leggibili.
 

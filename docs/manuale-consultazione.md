@@ -2,6 +2,14 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Varianti Expressive Ink e Oculum di Aberion
+
+Le forme scelte hanno la propria scheda, tecnica e tavola. Il Costrutto Minore difensivo ha +6 CM e +3 Resistenza ogni 12 livelli completi. Il Costrutto rapido ha più Materia, meno Vita e meno Movimento, con una tecnica che prepara una Reazione veloce. La Campana di Oculum combatte a raggi, la Larva velenosa applica Avvelenato e la Tartaruga Incantatrice usa l’acqua per proteggere e curare.
+
+Chikar lascia 1d6+3 kg di carne pregiata per il riparto quando muore davvero nello scontro. Un KO, un’evocazione o un allenamento non danno questa porzione. Aberion può aggiungere fino a 10 Oculum a ogni colpo lanciato con una tecnica pagata in Oculum. La scelta vale per quel colpo, consuma le unità immesse e aggiunge 1,5 Danni per unità, arrotondati per difetto. Per esempio, 2 Oculum aggiungono 3 Danni e 10 aggiungono 15.
+
+Le forme di Ferrynox e Anfravyre hanno tecniche diverse secondo l’ambiente. Apri le tecniche e gli editor della scheda per cambiare i valori delle Skill, i costi, le durate e i recuperi secondo il tuo Fight.
+
 ## Passkey e cartelle delle campagne
 
 Puoi avviare Oculum, giocare e salvare in locale senza accedere. Se usi un account verificato e il dispositivo supporta le passkey, in Impostazioni apri Account Oculum e scegli Aggiungi una passkey. Per entrare successivamente usa Accedi con passkey. Il sistema presenta le opzioni disponibili, come impronta, volto oppure PIN. Annullare chiude il tentativo e conserva la sessione e i salvataggi.

@@ -9,7 +9,9 @@ void main() {
     'catalogue gives ordinary monsters at least nine regular techniques',
     () {
       for (final monster in defaultMonsterBookEntries) {
-        if (monster.isNpc || oculumMonsterHasFixedProgressionSkills(monster)) {
+        if (monster.isNpc ||
+            oculumMonsterHasFixedProgressionSkills(monster) ||
+            monster.encounterRules['authoredSkillPool'] == true) {
           continue;
         }
         final regular = monster.skillIds

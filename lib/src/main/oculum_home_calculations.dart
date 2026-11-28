@@ -4597,7 +4597,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
     return max(
       1,
-      oculumOculiathHealthFromResilience(
+      oculumMonsterIntrinsicHealth(
             faunaCurrentMonsterId,
             max(
                   1,
@@ -5163,6 +5163,12 @@ extension _OculumHomeCalculations on _OculumHomePageState {
                 monsterBookEntryById(
                   faunaCurrentMonsterId,
                 )?.encounterRules['empathyBonus'],
+              )
+            : 0) +
+        (stat.id == 'resistenza'
+            ? oculumConfirmedConstructResistanceBonus(
+                leggiNumero(livelloController),
+                referenceRule('variantShieldResistancePerTwelve', 0),
               )
             : 0) +
         activeStructuredEffectBonus(stat.id) +
@@ -6285,7 +6291,8 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     );
   }
 
-  int movimentoBase() => oculumBaseMovement(
+  int movimentoBase() => oculumMonsterBaseMovement(
+    monsterId: faunaCurrentMonsterId,
     level: leggiNumero(livelloController),
     materia: materiaTotale(),
   );
@@ -6330,6 +6337,7 @@ extension _OculumHomeCalculations on _OculumHomePageState {
     return lunarDefenseRollBonus +
         armadilloCmBonus +
         referenceDefenseRollBonus +
+        referenceRule('variantShieldCm', 0) +
         (faunaCurrentMonsterId == 'torretta_oculum' ? -9 : 0) +
         (coreMasteryPoints['cm'] ?? 0) +
         bonusLivelloGrado() +

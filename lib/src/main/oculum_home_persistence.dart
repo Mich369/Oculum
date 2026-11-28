@@ -1690,7 +1690,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
           'bottledCloudPhase': bottledCloudPhaseNumber,
         if (faunaCurrentMonsterId == oculumImbrytoadId)
           _imbrytoadSpitKey: imbrytoadSpitWindow,
-        if (faunaCurrentMonsterId == 'costrutto_minore')
+        if (oculumIsMinorConstructSpecies(faunaCurrentMonsterId))
           'minorConstructCoreExposed': minorConstructCoreExposed,
         if (isRunicGolemCoreCreature)
           'runicGolemCoreExposed': runicGolemCoreExposed,

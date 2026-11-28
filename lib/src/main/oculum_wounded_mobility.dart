@@ -10,6 +10,18 @@ int oculumBaseMovement({required int level, required int materia}) {
   return (max(0, 30 + materia ~/ 6) * percent + 50) ~/ 100;
 }
 
+int oculumMonsterBaseMovement({
+  required String monsterId,
+  required int level,
+  required int materia,
+}) {
+  final percent = readIntValue(
+    monsterBookEntryById(monsterId)?.encounterRules['variantMovementPercent'],
+    fallback: 100,
+  );
+  return oculumBaseMovement(level: level, materia: materia) * percent ~/ 100;
+}
+
 double oculumMovementConditionPercent(
   Iterable<String> conditions, {
   required double positiveMultiplier,

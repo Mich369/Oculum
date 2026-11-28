@@ -7478,7 +7478,11 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       sheet['derivedMateriaTotal'],
       fallback: sheetIntValueAt(index, 'materia'),
     );
-    final base = oculumBaseMovement(level: level, materia: materia);
+    final base = oculumMonsterBaseMovement(
+      monsterId: sheet['monsterBookSourceId']?.toString() ?? '',
+      level: level,
+      materia: materia,
+    );
     var derived = readIntValue(
       sheet['derivedUnwoundedMovimento'] ?? sheet['derivedMovimento'],
       fallback: -1,

@@ -322,20 +322,18 @@ function Save-OculumIncrementalObject($Package, $Record, [string]$ObjectsRoot, [
   }
 }
 
-function Get-OculumIncrementalDataEntries([string]$Root) {
-  $data = Get-OculumIncrementalChild $Root 'data'
-  if (![IO.Directory]::Exists($data)) { return }
+function Get-OculumIncrementalStageEntries([string]$Root) {
   $pending = [Collections.Generic.Stack[string]]::new()
-  $pending.Push($data)
+  $pending.Push($Root)
   while ($pending.Count -gt 0) {
     $directory = $pending.Pop()
     foreach ($entry in Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop) {
-      if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Linked local runtime entry: $($entry.FullName)" }
-      if ($entry.PSIsContainer) { $pending.Push($entry.FullName) }
+      if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Linked staged runtime entry: $($entry.FullName)" }
       [pscustomobject]@{
         Path = $entry.FullName.Substring($Root.Length + 1).Replace('\', '/')
         IsDirectory = $entry.PSIsContainer
       }
+      if ($entry.PSIsContainer) { $pending.Push($entry.FullName) }
     }
   }
 }
@@ -353,9 +351,12 @@ function New-OculumIncrementalStage {
     }
   }
   foreach ($root in @($Plan.WorkRoot, $Plan.ObjectsRoot, $Plan.InstalledRoot)) { Assert-OculumIncrementalOrdinaryPath $root }
-  [void][IO.Directory]::CreateDirectory($Plan.ObjectsRoot)
-  $lockPath = Get-OculumIncrementalChild $Plan.ObjectsRoot 'incremental.lock'
-  $lock = [IO.File]::Open($lockPath, 'OpenOrCreate', 'ReadWrite', 'None')
+  $lock = $null
+  if ($Plan.ChangedCount -gt 0) {
+    [void][IO.Directory]::CreateDirectory($Plan.ObjectsRoot)
+    $lockPath = Get-OculumIncrementalChild $Plan.ObjectsRoot 'incremental.lock'
+    $lock = [IO.File]::Open($lockPath, 'OpenOrCreate', 'ReadWrite', 'None')
+  }
   try {
     $objects = [Collections.Generic.Dictionary[string,string]]::new($Plan.Satisfied, [StringComparer]::OrdinalIgnoreCase)
     $downloadCount = 0
@@ -374,21 +375,9 @@ function New-OculumIncrementalStage {
     }
     $runtime = Get-OculumIncrementalChild $Plan.WorkRoot ("incremental-runtime-" + [Guid]::NewGuid().ToString('N'))
     [void][IO.Directory]::CreateDirectory($runtime)
-    $obsolete = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-    foreach ($file in $Plan.Removed) { [void]$obsolete.Add($file.path) }
-    foreach ($entry in @(Get-OculumIncrementalDataEntries $Plan.InstalledRoot)) {
-      if ($Plan.Target.Files.ContainsKey($entry.Path) -or $obsolete.Contains($entry.Path)) { continue }
-      $copy = Get-OculumIncrementalChild $runtime $entry.Path
-      if ($entry.IsDirectory) {
-        [void][IO.Directory]::CreateDirectory($copy)
-        continue
-      }
-      $original = Get-OculumIncrementalChild $Plan.InstalledRoot $entry.Path
-      [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($copy))
-      [IO.File]::Copy($original, $copy)
-    }
-    foreach ($file in $Plan.Target.Value.files) {
-      $copy = Get-OculumIncrementalChild $runtime $file.path
+    foreach ($relative in $Plan.ChangedPaths) {
+      $file = $Plan.Target.Files[$relative]
+      $copy = Get-OculumIncrementalChild $runtime $relative
       $original = $objects[$file.sha256]
       Assert-OculumIncrementalOrdinaryPath $original
       [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($copy))
@@ -401,7 +390,7 @@ function New-OculumIncrementalStage {
     }
     Assert-OculumIncrementalStageReady $Plan $stage
     return $stage
-  } finally { $lock.Dispose() }
+  } finally { if ($lock) { $lock.Dispose() } }
 }
 
 function Assert-OculumIncrementalStageReady($Plan, $Stage, [string]$ExpectedStagingParent = $Plan.WorkRoot) {
@@ -417,47 +406,34 @@ function Assert-OculumIncrementalStageReady($Plan, $Stage, [string]$ExpectedStag
     throw 'Invalid incremental runtime staging directory'
   }
   Assert-OculumIncrementalOrdinaryPath $root
-  foreach ($entry in Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop) {
-    if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint -or
-        ($entry.PSIsContainer -and $entry.Name -ine 'data') -or
-        (!$entry.PSIsContainer -and !$Plan.Target.Files.ContainsKey($entry.Name))) {
-      throw "Unexpected staged runtime entry: $($entry.Name)"
+  $changed = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+  $directories = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+  foreach ($relative in $Plan.ChangedPaths) {
+    [void]$changed.Add($relative)
+    for ($part = [IO.Path]::GetDirectoryName($relative); $part; $part = [IO.Path]::GetDirectoryName($part)) {
+      [void]$directories.Add($part.Replace('\', '/'))
+    }
+  }
+  Get-OculumIncrementalStageEntries $root | ForEach-Object {
+    if (($_.IsDirectory -and !$directories.Contains($_.Path)) -or
+        (!$_.IsDirectory -and !$changed.Contains($_.Path))) {
+      throw "Unexpected staged runtime entry: $($_.Path)"
     }
   }
   foreach ($file in $Plan.Target.Value.files) {
-    if (!(Test-OculumIncrementalFile (Get-OculumIncrementalChild $root $file.path) $file)) {
-      throw "Staged runtime file failed verification: $($file.path)"
+    $installed = Get-OculumIncrementalChild $Plan.InstalledRoot $file.path
+    if ($changed.Contains($file.path)) {
+      if ([IO.Directory]::Exists($installed)) { throw "A local folder occupies a managed file path: $($file.path)" }
+      if (!(Test-OculumIncrementalFile (Get-OculumIncrementalChild $root $file.path) $file)) {
+        throw "Staged runtime file failed verification: $($file.path)"
+      }
+    } elseif (!(Test-OculumIncrementalFile $installed $file)) {
+      throw "Unchanged runtime file changed after preview: $($file.path)"
     }
   }
-  $obsolete = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
   foreach ($file in $Plan.Removed) {
     if (!(Test-OculumIncrementalFile (Get-OculumIncrementalChild $Plan.InstalledRoot $file.path) $file)) {
       throw "Obsolete file changed after preview: $($file.path)"
-    }
-    [void]$obsolete.Add($file.path)
-  }
-  $local = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-  foreach ($entry in @(Get-OculumIncrementalDataEntries $Plan.InstalledRoot)) {
-    $relative = $entry.Path
-    if ($Plan.Target.Files.ContainsKey($relative) -or $obsolete.Contains($relative)) {
-      if ($entry.IsDirectory) { throw "A local folder occupies a managed file path: $relative" }
-      continue
-    }
-    $copy = Get-OculumIncrementalChild $root $relative
-    if ($entry.IsDirectory) {
-      if (![IO.Directory]::Exists($copy)) { throw "Local folder changed after staging: $relative" }
-      continue
-    }
-    $original = Get-OculumIncrementalChild $Plan.InstalledRoot $relative
-    $hash = Get-OculumIncrementalFileDigest $original
-    if (!(Test-OculumIncrementalFile $copy @{ bytes = [IO.FileInfo]::new($original).Length; sha256 = $hash })) {
-      throw "Local data changed after staging: $relative"
-    }
-    [void]$local.Add($relative)
-  }
-  foreach ($entry in @(Get-OculumIncrementalDataEntries $root)) {
-    if (!$entry.IsDirectory -and !$Plan.Target.Files.ContainsKey($entry.Path) -and !$local.Contains($entry.Path)) {
-      throw "Unexpected staged file: $($entry.Path)"
     }
   }
 }

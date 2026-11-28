@@ -539,7 +539,7 @@ extension _OculumWorldTravel on _OculumHomePageState {
       final stats = Map<String, dynamic>.from(raw['stats'] as Map);
       final level = readIntValue(raw['level']),
           grade = readIntValue(raw['grade']);
-      final hp = oculumOculiathHealthFromResilience(
+      final hp = oculumMonsterIntrinsicHealth(
         monster.id,
         max(1, readIntValue(stats['resilienza'])) *
             oculumHpMultiplierForGrade(grade, level: level),

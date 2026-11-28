@@ -673,6 +673,7 @@ bool oculumWeldSpiderTailIsBroken(Map anatomy) {
 }
 
 MonsterConcreteTechnique? oculumPlanarTechnique(String rawId) =>
+    _confirmedInkTechniques[rawId] ??
     _mutantRatTechniques[rawId] ??
     _acuagoblinTechniques[rawId] ??
     _goblinKingTechniques[rawId] ??
@@ -690,6 +691,7 @@ MonsterConcreteTechnique? oculumPlanarTechnique(String rawId) =>
       '',
     )] ??
     _cycleMonsterTechniques[rawId] ??
+    _selectedGuardianTechniques[rawId] ??
     _canonicalVariantTechniques[rawId] ??
     _sunkenRealmTechniques[rawId] ??
     _balenaMilleOcchiTechniques[rawId] ??

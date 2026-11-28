@@ -118,11 +118,8 @@ extension _OculumWeakPoints on _OculumHomePageState {
     }
     // Knowing a purchased page does not open the Guardian's intact chest.
     return !(oculumLunarGuardianCoreMonsterIds.contains(id) ||
-            const {
-              'costrutto_minore',
-              'nuvola_in_bottiglia',
-              oculumImbrytoadId,
-            }.contains(id)) ||
+            oculumIsMinorConstructSpecies(id) ||
+            const {'nuvola_in_bottiglia', oculumImbrytoadId}.contains(id)) ||
         precisionPartsForToken(token).any((part) => part['weak'] == true);
   }
 

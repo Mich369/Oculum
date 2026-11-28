@@ -14,6 +14,7 @@ $ack = Join-Path $work 'startup-ack.json'
 $token = [Guid]::NewGuid().ToString('N')
 $installed = [Collections.Generic.List[string]]::new()
 $moved = [Collections.Generic.List[string]]::new()
+$createdInstallDirectories = [Collections.Generic.List[string]]::new()
 $candidate = $null
 $ownsMutex = $false
 $mutex = $null
@@ -71,6 +72,42 @@ function Move-RuntimeEntry([string]$Source, [string]$Destination) {
   } else {
     [IO.File]::Move($Source, $Destination)
   }
+}
+
+function Get-IncrementalEntryPath([string]$Root, [string]$RelativePath) {
+  $path = Get-OculumIncrementalChild $Root $RelativePath
+  Assert-Child $path $Root
+  Assert-OculumIncrementalOrdinaryPath $path
+  if ([IO.Directory]::Exists($path)) {
+    throw "A local directory occupies a managed Windows runtime file: $RelativePath"
+  }
+  return $path
+}
+
+function New-IncrementalInstallParents([string]$Path) {
+  $missing = [Collections.Generic.Stack[string]]::new()
+  for ($parent = [IO.Path]::GetDirectoryName($Path); ![IO.Directory]::Exists($parent);
+      $parent = [IO.Path]::GetDirectoryName($parent)) {
+    Assert-Child $parent $target
+    Assert-OculumIncrementalOrdinaryPath $parent
+    if ([IO.File]::Exists($parent)) { throw "A runtime directory path is occupied by a file: $parent" }
+    $missing.Push($parent)
+  }
+  while ($missing.Count -gt 0) {
+    $parent = $missing.Pop()
+    Assert-Child $parent $target
+    Assert-OculumIncrementalOrdinaryPath $parent
+    if (![IO.Directory]::Exists($parent)) {
+      [void][IO.Directory]::CreateDirectory($parent)
+      $createdInstallDirectories.Add($parent)
+    }
+  }
+}
+
+function Get-IncrementalBackupPath([string]$RelativePath) {
+  $saved = Get-IncrementalEntryPath $backup $RelativePath
+  [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($saved))
+  return $saved
 }
 
 function Copy-LocalFilesMissingFromFullPackage([string]$InstalledData, [string]$StagedData) {
@@ -306,21 +343,12 @@ try {
   }
   $windowsClosed = $true
   if ($incremental) {
-    Write-UpdateStatus 'validating' 'Rechecking the staged runtime and local files after Oculum closed'
+    Write-UpdateStatus 'validating' 'Rechecking the approved files after Oculum closed'
     $plan = Get-VerifiedIncrementalInstallPlan $approved
     $installedStage = [pscustomobject]@{
       IsNoOp = $false; RuntimeRoot = $stagedRuntime; RemoveRootEntries = $preparedStage.RemoveRootEntries
     }
     Assert-OculumIncrementalStageReady $plan $installedStage -ExpectedStagingParent $staged
-    $files = @(Get-ChildItem -LiteralPath $stagedRuntime -Force)
-    foreach ($file in $files) {
-      $destination = Join-Path $target $file.Name
-      Assert-Child $destination $target
-      if ((Test-Path -LiteralPath $destination) -and
-          (Get-Item -LiteralPath $destination -Force).PSIsContainer -ne $file.PSIsContainer) {
-        throw "A local file or directory occupies a managed Windows runtime path: $($file.Name)"
-      }
-    }
   } else {
     Write-UpdateStatus 'validating' 'Preserving local files outside the new Windows package'
     Copy-LocalFilesMissingFromFullPackage (Join-Path $target 'data') (Join-Path $stagedRuntime 'data')
@@ -328,21 +356,43 @@ try {
   New-Item -ItemType Directory -Path $backup | Out-Null
   Write-UpdateStatus 'installing' 'Installing the verified runtime; previous files remain backed up'
   if ($incremental) {
-    foreach ($name in $installedStage.RemoveRootEntries) {
-      $destination = Join-Path $target $name
-      Assert-Child $destination $target
-      Move-RuntimeEntry $destination (Join-Path $backup $name)
-      $moved.Add($name)
+    foreach ($entry in $plan.Removed) {
+      $destination = Get-IncrementalEntryPath $target $entry.path
+      if (!(Test-OculumIncrementalFile $destination $entry)) {
+        throw "An obsolete runtime file changed before removal: $($entry.path)"
+      }
+      $saved = Get-IncrementalBackupPath $entry.path
+      [IO.File]::Move($destination, $saved)
+      $moved.Add($entry.path)
     }
-  }
-  foreach ($file in $files) {
-    $destination = Join-Path $target $file.Name
-    if (Test-Path -LiteralPath $destination) {
-      Move-RuntimeEntry $destination (Join-Path $backup $file.Name)
-      $moved.Add($file.Name)
+    foreach ($name in $plan.ChangedPaths) {
+      $sourceFile = Get-IncrementalEntryPath $stagedRuntime $name
+      $destination = Get-IncrementalEntryPath $target $name
+      New-IncrementalInstallParents $destination
+      if ([IO.File]::Exists($destination)) {
+        $saved = Get-IncrementalBackupPath $name
+        try { [IO.File]::Replace($sourceFile, $destination, $saved) }
+        catch {
+          # ReplaceFile can report failure after moving the old file to its backup.
+          if ([IO.File]::Exists($saved)) { $moved.Add($name) }
+          throw
+        }
+        $moved.Add($name)
+      } else {
+        [IO.File]::Move($sourceFile, $destination)
+      }
+      $installed.Add($name)
     }
-    Move-RuntimeEntry (Join-Path $stagedRuntime $file.Name) $destination
-    $installed.Add($file.Name)
+  } else {
+    foreach ($file in $files) {
+      $destination = Join-Path $target $file.Name
+      if (Test-Path -LiteralPath $destination) {
+        Move-RuntimeEntry $destination (Join-Path $backup $file.Name)
+        $moved.Add($file.Name)
+      }
+      Move-RuntimeEntry (Join-Path $stagedRuntime $file.Name) $destination
+      $installed.Add($file.Name)
+    }
   }
   $candidate = Start-Oculum $true
   Write-UpdateStatus 'starting' 'Waiting for Oculum to confirm its source and first frame'
@@ -384,14 +434,38 @@ try {
     for ($index = $installed.Count - 1; $index -ge 0; $index--) {
       $name = $installed[$index]
       try {
-        $path = Join-Path $target $name
-        Assert-Child $path $target
-        if (Test-Path -LiteralPath $path) { Move-RuntimeEntry $path (Join-Path $stagedRuntime $name) }
+        if ($incremental) {
+          $path = Get-IncrementalEntryPath $target $name
+          $previousStagePath = Get-IncrementalEntryPath $stagedRuntime $name
+          if ([IO.File]::Exists($path)) { [IO.File]::Move($path, $previousStagePath) }
+        } else {
+          $path = Join-Path $target $name
+          Assert-Child $path $target
+          if (Test-Path -LiteralPath $path) { Move-RuntimeEntry $path (Join-Path $stagedRuntime $name) }
+        }
       } catch { $rollbackErrors.Add("Could not remove new $name`: $($_.Exception.Message)") }
     }
     foreach ($name in $moved) {
-      try { Move-RuntimeEntry (Join-Path $backup $name) (Join-Path $target $name) }
-      catch { $rollbackErrors.Add("Could not restore $name`: $($_.Exception.Message)") }
+      try {
+        if ($incremental) {
+          $previous = Get-IncrementalEntryPath $backup $name
+          $destination = Get-IncrementalEntryPath $target $name
+          [IO.File]::Move($previous, $destination)
+        } else {
+          Move-RuntimeEntry (Join-Path $backup $name) (Join-Path $target $name)
+        }
+      } catch { $rollbackErrors.Add("Could not restore $name`: $($_.Exception.Message)") }
+    }
+    for ($index = $createdInstallDirectories.Count - 1; $index -ge 0; $index--) {
+      $directory = $createdInstallDirectories[$index]
+      try {
+        Assert-Child $directory $target
+        Assert-OculumIncrementalOrdinaryPath $directory
+        if ([IO.Directory]::Exists($directory) -and
+            ![IO.DirectoryInfo]::new($directory).EnumerateFileSystemInfos().GetEnumerator().MoveNext()) {
+          [IO.Directory]::Delete($directory)
+        }
+      } catch { $rollbackErrors.Add("Could not remove new directory $directory`: $($_.Exception.Message)") }
     }
   }
   if ($candidateAlive) { $problem += " The running app was left open. Previous runtime: $backup" }

@@ -1191,6 +1191,7 @@ class OculumPerformanceProbe {
     String? escapeReactionOf,
     String? targetId,
     String? sphereSoulOpportunityId,
+    bool oculumPowered = false,
   }) => _state.planOnlineAttack(
     minimumTargets: minimum,
     maximumTargets: maximum,
@@ -1200,6 +1201,7 @@ class OculumPerformanceProbe {
     escapeReactionOf: escapeReactionOf,
     sphereSoulOpportunityId: sphereSoulOpportunityId,
     resourceAlreadySpent: escapeReactionOf != null,
+    oculumPowered: oculumPowered,
   );
   bool prepareSandTail(String mode, {int? percent, int? cooldown}) => _state
       .prepareSandTail(mode, receivedPercent: percent, cooldown: cooldown);

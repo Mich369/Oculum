@@ -393,6 +393,13 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
     bool friendlyFireResisted = false,
   }) {
     if (applyFusionBonus) effects = dustFusionArtEffects(effects);
+    final aberionPaidAttack =
+        (spentResources['oculum'] ?? 0) > 0 &&
+        (spentResources['ki_mortale'] ?? 0) == 0 &&
+        schedaCorrente >= 0 &&
+        schedaCorrente < schedePersonaggio.length &&
+        schedePersonaggio[schedaCorrente]['monsterBookSourceId'] ==
+            oculumAberionMonsterId;
     if (effects.any(
       (effect) => effect.enabled && oculumIsSonoreyeEchoEffect(effect.id),
     )) {
@@ -675,6 +682,9 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'source': source,
             'type': 'pending_target',
             'mode': 'prossima_azione',
+            if (aberionPaidAttack &&
+                const {'danno', 'danno_percentuale'}.contains(effect.type))
+              'aberionOculumPrepared': true,
             'target': effect.target,
             'value': 0,
             'remaining': 1,
@@ -1090,6 +1100,8 @@ extension _OculumStructuredEffectRuntime on _OculumHomePageState {
             'source': source,
             'type': effect.type,
             'mode': effect.mode,
+            if (aberionPaidAttack && preparedAttackBonus)
+              'aberionOculumPrepared': true,
             'target': target,
             if (target == oculumGoblinVanishEffect ||
                 target == oculumGoblinRegalStrikeEffect) ...{

@@ -104,7 +104,7 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
   }) async {
     final monster = monsterBookEntryById(faunaCurrentMonsterId);
     final protectedCoverHit =
-        monster?.id == 'costrutto_minore' &&
+        oculumIsMinorConstructSpecies(monster?.id) &&
             const {'box', 'core'}.contains(request['targetBodyPart']) ||
         isRunicGolemCoreCreature &&
             const {
@@ -177,7 +177,8 @@ extension _OculumAnatomicalParts on _OculumHomePageState {
         await releaseOculiathHold(carrier, reason: 'L’uncino si rompe.');
       }
     }
-    if (faunaCurrentMonsterId == 'costrutto_minore' && point['id'] == 'box' ||
+    if (oculumIsMinorConstructSpecies(faunaCurrentMonsterId) &&
+            point['id'] == 'box' ||
         isRunicGolemCoreCreature && point['id'] == 'chest_plates') {
       publishReferenceCreatureAnatomyState();
     }

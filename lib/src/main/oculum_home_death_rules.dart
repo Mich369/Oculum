@@ -75,6 +75,15 @@ int? oculumSheetFixedCloneHpMaximum(Map<String, dynamic> sheet) {
   return clone && saved > 0 ? saved : null;
 }
 
+int oculumMonsterIntrinsicHealth(String id, int resilienceHealth) {
+  final health = oculumOculiathHealthFromResilience(id, resilienceHealth);
+  final percent = readIntValue(
+    monsterBookEntryById(id)?.encounterRules['variantHpPercent'],
+    fallback: 100,
+  );
+  return max(1, health * percent ~/ 100);
+}
+
 int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
   final fixedCloneHp = oculumSheetFixedCloneHpMaximum(sheet);
   if (fixedCloneHp != null) return fixedCloneHp;
@@ -102,11 +111,8 @@ int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
     return max(
       1,
       saved +
-          oculumOculiathHealthFromResilience(
-            monsterId,
-            resilience * multiplier,
-          ) -
-          oculumOculiathHealthFromResilience(
+          oculumMonsterIntrinsicHealth(monsterId, resilience * multiplier) -
+          oculumMonsterIntrinsicHealth(
             monsterId,
             resilience * readIntValue(sheet['hpGradeMultiplier'], fallback: 10),
           ),
@@ -114,7 +120,7 @@ int oculumSheetHpMaximum(Map<String, dynamic> sheet) {
   }
   return max(
     1,
-    oculumOculiathHealthFromResilience(monsterId, resilience * multiplier) +
+    oculumMonsterIntrinsicHealth(monsterId, resilience * multiplier) +
         readIntValue(sheet['manualHpMaximumAdjustment']),
   );
 }

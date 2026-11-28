@@ -5,6 +5,24 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Varianti Expressive Ink e Oculum di Aberion',
+    titleEn: 'Expressive Ink variants and Aberion Oculum',
+    contentIt: r'''
+Le forme scelte hanno la propria scheda, tecnica e tavola. Il Costrutto Minore difensivo ha +6 CM e +3 Resistenza ogni 12 livelli completi. Il Costrutto rapido ha più Materia, meno Vita e meno Movimento, con una tecnica che prepara una Reazione veloce. La Campana di Oculum combatte a raggi, la Larva velenosa applica Avvelenato e la Tartaruga Incantatrice usa l’acqua per proteggere e curare.
+
+Chikar lascia 1d6+3 kg di carne pregiata per il riparto quando muore davvero nello scontro. Un KO, un’evocazione o un allenamento non danno questa porzione. Aberion può aggiungere fino a 10 Oculum a ogni colpo lanciato con una tecnica pagata in Oculum. La scelta vale per quel colpo, consuma le unità immesse e aggiunge 1,5 Danni per unità, arrotondati per difetto. Per esempio, 2 Oculum aggiungono 3 Danni e 10 aggiungono 15.
+
+Le forme di Ferrynox e Anfravyre hanno tecniche diverse secondo l’ambiente. Apri le tecniche e gli editor della scheda per cambiare i valori delle Skill, i costi, le durate e i recuperi secondo il tuo Fight.
+''',
+    contentEn: r'''
+The selected forms have their own sheets, techniques and art. The defensive Minor Construct has +6 CM and +3 Resistance per 12 completed levels. The quick form has more Matter, lower Health and less Movement, with a technique that adds a quick Reaction. The Oculum Bell fires energy rays, the venomous Larva applies Poisoned, and the spellcasting Turtle protects and heals using water.
+
+Chikar drops 1d6+3 kg of fine meat for distribution when its death is confirmed. Knockouts, summons and training do not award the portion. Aberion can spend up to 10 additional Oculum on each strike from an Oculum-paid technique. The choice applies to that strike, consumes the additional units and adds 1.5 Damage per unit, rounded down. For example, 2 Oculum add 3 Damage and 10 add 15.
+
+Ferrynox and Anfravyre forms have different techniques according to their environment. Use the sheet's editors to change skills, costs, durations and cooldowns for your Fight.
+''',
+  ),
+  ManualSection(
     titleIt: 'Passkey e cartelle delle campagne',
     titleEn: 'Passkeys and campaign folders',
     contentIt: r'''

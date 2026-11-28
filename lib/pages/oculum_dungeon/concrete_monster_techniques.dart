@@ -72,6 +72,7 @@ class MonsterConcreteTechnique {
             'scudo' => '+$value Scudo, fino a esaurimento',
             'cura' => 'recuperi $value Vita, entro il massimo',
             'costrutto' => 'crei ${e.target} con $value Vita per ${e.duration} turni; la sua Vita si gestisce nella scheda effetti',
+            'aggiungi_reazioni_rapide' => '+$value Reazione veloce per ${e.duration} turni',
             'aggiungi_reazioni' => '+$value Reazione per ${e.duration} turno',
             'modifica_statistica' when e.target == oculumPredoneCloseReduction => '−$value Danni ravvicinati ricevuti per ${e.duration} ${e.durationUnit}',
             'modifica_statistica' when e.target == oculumPredoneRangedReduction => '−$value Danni a distanza ricevuti per ${e.duration} ${e.durationUnit}',

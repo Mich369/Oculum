@@ -2,6 +2,23 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+const oculumAberionMonsterId = 'ciclo_uomo_cactus_variante_aberion';
+const oculumAberionMaxOculum = 10;
+
+int oculumAberionDamageBonus(int paid) =>
+    paid.clamp(0, oculumAberionMaxOculum) * 3 ~/ 2;
+
+List<int> oculumAberionAllocatePaidOculum(List<int> investment, int paid) {
+  var remaining = max(0, paid);
+  final allocated = <int>[];
+  for (final units in investment) {
+    final share = min(remaining, units.clamp(0, oculumAberionMaxOculum));
+    allocated.add(share);
+    remaining -= share;
+  }
+  return allocated;
+}
+
 String oculumCelestialAllegiance(Map sheet) {
   final explicit =
       '${(sheet['planarRuntime'] as Map? ?? {})['identityCelestial'] ?? ''}';

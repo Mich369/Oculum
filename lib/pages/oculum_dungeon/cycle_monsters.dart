@@ -697,6 +697,7 @@ MonsterConcreteTechnique _cycleTechnique(
 
 final _cycleMonsterTechniques = <String, MonsterConcreteTechnique>{
   ..._suggestedCycleTechniques,
+  ..._cycleArtVariantTechniques,
   for (final species in _cycleSpecies.values)
     for (final spec in species) ...{
       '${spec.id}_prima': _cycleTechnique(spec, spec.first),

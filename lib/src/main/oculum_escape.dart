@@ -785,7 +785,8 @@ extension _OculumEscape on _OculumHomePageState {
                       0,
                       readIntValue(
                         token['movement'] ?? token['movimento'],
-                        fallback: oculumBaseMovement(
+                        fallback: oculumMonsterBaseMovement(
+                          monsterId: monsterBookIdForCombatToken(token),
                           level: masterInitiativeTokenLevel(token),
                           materia: readIntValue(token['materia']),
                         ),
@@ -1070,7 +1071,8 @@ extension _OculumEscape on _OculumHomePageState {
                       0,
                       readIntValue(
                         actor['movement'] ?? actor['movimento'],
-                        fallback: oculumBaseMovement(
+                        fallback: oculumMonsterBaseMovement(
+                          monsterId: monsterBookIdForCombatToken(actor),
                           level: masterInitiativeTokenLevel(actor),
                           materia: readIntValue(actor['materia']),
                         ),

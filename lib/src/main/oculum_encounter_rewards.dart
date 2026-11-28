@@ -2543,6 +2543,16 @@ extension _OculumEncounterRewards on _OculumHomePageState {
         finishingSkillId: '${(enemy['finisher'] as Map?)?['skillId'] ?? ''}',
         combatHistory: enemy['finisher'] as Map? ?? const {},
       );
+      final chikarMeat = oculumChikarMeatDrop(
+        monsterId: monster.id,
+        confirmedDeath: enemy['rebirthKilled'] == true,
+        training: trainingMode,
+        summon: summon,
+        killId: killId,
+        grade: grade,
+        random: encounterRandom,
+      );
+      if (chikarMeat != null) dropped.add(chikarMeat);
       if (enemy['canonicalNpc'] == 'lusier_iii' &&
           !oculumEncounterEnemyIsSummon(enemy)) {
         final sourceIndex = localSheetIndexForOculumTag(

@@ -35,6 +35,7 @@ part 'elemental_collector.dart';
 part 'concrete_monster_techniques.dart';
 part 'monster_progression_pool.dart';
 part 'planar_monsters.dart';
+part 'confirmed_ink_variants_20261128.dart';
 part 'sunken_realm_monsters.dart';
 part 'sunken_realm_reference_families.dart';
 part 'balena_mille_occhi.dart';
@@ -56,6 +57,8 @@ part 'monster_anatomy.dart';
 part 'non_return_undead.dart';
 part 'cycle_monsters.dart';
 part 'cycle_suggested_monsters.dart';
+part 'selected_guardians.dart';
+part 'cycle_variant_monsters.dart';
 part 'november_8_monster_names.dart';
 part 'monster_name_aliases.dart';
 part 'goblin_king.dart';
@@ -5861,6 +5864,7 @@ _builtinMonsterBookEntriesIncludingLegacy = List.unmodifiable(
                 ..._earthWoodWandererEntries,
                 ..._microRealmCreatureEntries,
                 ..._armadilloCreatureEntries,
+                ..._confirmedInkEntries,
                 ..._solarGuardAndGrofixEntries,
                 ..._lunarGuardEntries,
                 ..._spineHedgehogEntries,
@@ -5870,7 +5874,9 @@ _builtinMonsterBookEntriesIncludingLegacy = List.unmodifiable(
                 ..._necromancerMonsterEntries,
                 ..._runicAcidMonsterEntries,
                 ...oculumPlanarMonsterEntries,
+                ..._selectedGuardianEntries,
                 ...oculumCycleMonsterEntries,
+                ...oculumCycleArtVariantEntries,
                 ..._suggestedGiantEntries,
                 ..._witheredConstructWhiteLarvaEntries,
                 ..._goldMarbleAberrationEntries,
@@ -6237,7 +6243,9 @@ Iterable<MonsterBookEntry> get _staticMonsterBookEntries sync* {
   yield* _necromancerMonsterEntries;
   yield* _runicAcidMonsterEntries;
   yield* oculumPlanarMonsterEntries;
+  yield* _selectedGuardianEntries;
   yield* oculumCycleMonsterEntries;
+  yield* oculumCycleArtVariantEntries;
   yield* _suggestedGiantEntries;
   yield* _witheredConstructWhiteLarvaEntries;
   yield* _manualMonsterBookEntries;

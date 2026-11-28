@@ -1,5 +1,44 @@
 part of '../../main.dart';
 
+const oculumChikarMonsterId = 'ciclo_cinghiale_fango_variante_chikar';
+const oculumChikarMeatId = 'carne_chikar';
+
+InventoryItem? oculumChikarMeatDrop({
+  required String monsterId,
+  required bool confirmedDeath,
+  required bool training,
+  required bool summon,
+  required String killId,
+  required int grade,
+  required Random random,
+}) {
+  if (monsterId != oculumChikarMonsterId ||
+      !confirmedDeath ||
+      training ||
+      summon) {
+    return null;
+  }
+  final kilograms = 4 + random.nextInt(6);
+  return InventoryItem(
+    nome: 'Carne di Chikar',
+    peso: kilograms.toDouble(),
+    quantita: 1,
+    gradoOggetto: grade,
+    note: 'Carne di ottima qualità, da cuocere.',
+    putrefazioneSessioni: 2,
+    monsterLoot: {
+      'id': '$killId:$oculumChikarMeatId',
+      'monsterId': monsterId,
+      'sourceMonsterBookId': monsterId,
+      'catalogueDropId': oculumChikarMeatId,
+      'material': false,
+      'foodIngredient': true,
+      'raw': true,
+      'quality': 'ottima',
+    },
+  );
+}
+
 String oculumMonsterDropName(String id) => switch (id) {
   'zanne_goblin' => 'Zanne di goblin',
   'pelle_mostro' => 'Pelle di mostro',
@@ -1194,6 +1233,7 @@ List<InventoryItem> oculumGenerateMonsterLoot({
   final drops = <InventoryItem>[
     ...specialDrops,
     if (!monster.isNpc &&
+        monster.id != oculumChikarMonsterId &&
         !RegExp(
           r'costrutto|construct|golem|automata|morto vivente|undead',
         ).hasMatch('${monster.id} ${monster.speciesNameIt}'.toLowerCase()) &&

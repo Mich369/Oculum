@@ -508,6 +508,7 @@ bool _hasFixedMonsterLoadout(MonsterBookEntry monster) {
       (monster.isNpc &&
           (!identical(monster, builtin) ||
               monster.encounterRules['loadoutPolicy'] != 'sample_three')) ||
+      monster.encounterRules['fixedInkLoadout'] == true ||
       oculumMonsterHasFixedProgressionSkills(monster) ||
       id.startsWith('pawn_guardiano') ||
       id.startsWith('uomo_maschera') ||

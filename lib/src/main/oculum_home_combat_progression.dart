@@ -3733,7 +3733,6 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
             : 'Partecipante';
       }
       refreshAuraPowerRevision(token, sheetIndex);
-      refreshWoundedInitiativeToken(token, sheetIndex: sheetIndex);
       sampleFightRewardPowerToken(token, sheetIndexForToken: rewardSheetIndex);
       if (sheetIndex >= 0) token['reflexes'] = sheetReflexesAt(sheetIndex);
       if (sheetIndex >= 0 &&
@@ -3823,6 +3822,7 @@ extension _OculumHomeCombatProgression on _OculumHomePageState {
       );
       token['actionUsed'] = readBoolValue(token['actionUsed']);
       normalizeMasterInitiativeDeathState(token);
+      refreshWoundedInitiativeToken(token, sheetIndex: sheetIndex);
       final isTemporary = masterInitiativeTokenIsTemporary(token);
       token['temporaryTurn'] = isTemporary;
       token['duplicateAction'] = readBoolValue(

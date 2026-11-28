@@ -166,13 +166,13 @@ class IncrementalWindowsTests(unittest.TestCase):
         self.assertEqual(report["remove"], 2)
         self.assertEqual(report["RemoveRootEntries"], ["unused.dll"])
         staged = Path(report["RuntimeRoot"])
-        for relative, data in current.items():
-            self.assertEqual((staged / relative).read_bytes(), data)
-        self.assertFalse((staged / "data/obsolete.dat").exists())
-        self.assertFalse((staged / "unused.dll").exists())
-        self.assertEqual((staged / "data/customized.dat").read_bytes(), b"user-modified")
-        self.assertEqual((staged / "data/saves/my-save.json").read_bytes(), b"local saves")
-        self.assertTrue((staged / "data/empty-folder").is_dir())
+        changed = {relative for relative, data in current.items() if RUNTIME.get(relative) != data}
+        self.assertEqual({file.relative_to(staged).as_posix() for file in staged.rglob("*") if file.is_file()}, changed)
+        for relative in changed:
+            self.assertEqual((staged / relative).read_bytes(), current[relative])
+        self.assertEqual((self.installed / "data/customized.dat").read_bytes(), b"user-modified")
+        self.assertEqual((self.installed / "data/saves/my-save.json").read_bytes(), b"local saves")
+        self.assertTrue((self.installed / "data/empty-folder").is_dir())
         self.assertEqual((self.installed / "notes.txt").read_bytes(), b"local notes")
         self.assertEqual((self.installed / "unused.dll").read_bytes(), b"old plugin")
         self.assertEqual((self.installed / "data/obsolete.dat").read_bytes(), b"old catalog")
@@ -187,6 +187,22 @@ class IncrementalWindowsTests(unittest.TestCase):
         self.assertTrue(report["IsNoOp"])
         self.assertIsNone(report["RuntimeRoot"])
         self.assertEqual(list(self.work.iterdir()), [])
+
+    def test_removal_only_prepares_an_empty_stage_and_needs_no_cache(self):
+        original = RUNTIME | {"legacy.dll": b"old release file", "data/legacy.dat": b"old data"}
+        self.write_files(self.installed, original)
+        source = self.create_manifest(10, original)
+        target = self.create_manifest(11, RUNTIME)
+        result = self.invoke(target, self.stage, source=source)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        report = json.loads(result.stdout)
+        self.assertEqual((report["count"], report["bytes"], report["remove"]), (0, 0, 2))
+        self.assertFalse(report["IsNoOp"])
+        staged = Path(report["RuntimeRoot"])
+        self.assertTrue(staged.is_dir())
+        self.assertEqual(list(staged.iterdir()), [])
+        self.assertEqual(list(self.work.iterdir()), [staged])
+        self.assertEqual((self.installed / "data/legacy.dat").read_bytes(), b"old data")
 
     def test_refuses_bad_manifest_content_before_writes(self):
         target = self.create_manifest(27, RUNTIME | {"data/change.dat": b"new"})
@@ -343,7 +359,9 @@ class IncrementalWindowsTests(unittest.TestCase):
         result = self.invoke(target, self.stage + body, edition="test")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         staged = Path(json.loads(result.stdout)["RuntimeRoot"])
-        self.assertTrue((staged / "Oculum-Test.exe").is_file())
+        self.assertEqual((self.installed / "Oculum-Test.exe").read_bytes(), b"test application")
+        self.assertEqual((staged / "data/app.so").read_bytes(), b"new test code")
+        self.assertFalse((staged / "Oculum-Test.exe").exists())
         self.assertFalse((staged / "oculum.exe").exists())
 
     def test_accepts_manifest_emitted_by_release_publisher(self):
@@ -370,7 +388,7 @@ class IncrementalWindowsTests(unittest.TestCase):
         self.assertEqual(report["count"], 1)
         self.assertEqual((Path(report["RuntimeRoot"]) / "data/app.so").read_bytes(), target_files["data/app.so"])
 
-    def test_revalidation_refuses_local_edits_and_staged_runtime_injection(self):
+    def test_local_edits_remain_in_place_when_sparse_stage_is_revalidated(self):
         self.write_files(self.installed, {"data/user-settings.txt": b"before"})
         target = self.create_manifest(18, RUNTIME | {"data/app.so": b"updated"})
         check = """
@@ -378,16 +396,52 @@ class IncrementalWindowsTests(unittest.TestCase):
             Assert-OculumIncrementalStageReady $plan $stage
         """
         result = self.invoke(target, self.stage + check)
-        self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("Local data changed", result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        staged = Path(json.loads(result.stdout)["RuntimeRoot"])
+        self.assertFalse((staged / "data/user-settings.txt").exists())
         self.assertEqual((self.installed / "data/user-settings.txt").read_bytes(), b"changed")
+
+    def test_revalidation_rejects_injected_and_modified_managed_entries(self):
+        original = RUNTIME | {"data/legacy.dat": b"old data"}
+        source = self.create_manifest(17, original)
+        target = self.create_manifest(18, RUNTIME | {"data/app.so": b"updated", "data/upcoming.dat": b"new"})
+        cases = (
+            ("stage file", "$stage.RuntimeRoot", "unlisted.dll", "Unexpected staged runtime entry"),
+            ("unchanged staged copy", "$stage.RuntimeRoot", "data/icudtl.dat", "Unexpected staged runtime entry"),
+            ("unexpected staged folder", "$stage.RuntimeRoot", "data/extra", "Unexpected staged runtime entry"),
+            ("corrupt managed payload", "$stage.RuntimeRoot", "data/app.so", "Staged runtime file failed verification"),
+            ("changed installed runtime", "$plan.InstalledRoot", "data/icudtl.dat", "Unchanged runtime file changed after preview"),
+            ("changed obsolete file", "$plan.InstalledRoot", "data/legacy.dat", "Obsolete file changed after preview"),
+            ("installed folder collision", "$plan.InstalledRoot", "data/upcoming.dat", "A local folder occupies a managed file path"),
+        )
+        for case, root, relative, reason in cases:
+            with self.subTest(case=case):
+                self.write_files(self.installed, original)
+                path = f"(Join-Path {root} {quote(relative)})"
+                if "folder" in case:
+                    mutate = f"[void][IO.Directory]::CreateDirectory({path})"
+                else:
+                    mutate = f"[IO.File]::WriteAllText({path}, 'foreign')"
+                result = self.invoke(
+                    target,
+                    self.stage + mutate + "; Assert-OculumIncrementalStageReady $plan $stage",
+                    source=source,
+                )
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn(reason, result.stderr)
+
+    def test_revalidation_rejects_a_staged_junction_without_following_it(self):
+        target = self.create_manifest(18, RUNTIME | {"data/app.so": b"updated"})
         check = """
-            [IO.File]::WriteAllText((Join-Path $stage.RuntimeRoot 'unlisted.dll'), 'foreign')
+            $junction = Join-Path $stage.RuntimeRoot 'data/link'
+            $unrelated = Join-Path $plan.InstalledRoot 'data'
+            New-Item -ItemType Junction -Path $junction -Target $unrelated | Out-Null
             Assert-OculumIncrementalStageReady $plan $stage
         """
         result = self.invoke(target, self.stage + check)
         self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("Unexpected staged runtime entry", result.stderr)
+        self.assertIn("Linked staged runtime entry", result.stderr)
+        self.assertEqual((self.installed / "data/app.so").read_bytes(), RUNTIME["data/app.so"])
 
     def test_http_range_must_not_accept_full_response_wrong_bounds_or_encoding(self):
         target = self.create_manifest(51, RUNTIME)

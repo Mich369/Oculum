@@ -37,7 +37,7 @@ List<Map<String, dynamic>> oculumReferenceCreaturePrecisionParts(
     return parts;
   }
   final runic = oculumHasRunicGolemPlateCore(monsterId);
-  if (monsterId != 'costrutto_minore' && !runic) return parts;
+  if (!oculumIsMinorConstructSpecies(monsterId) && !runic) return parts;
   final coverId = runic ? 'chest_plates' : 'box';
   parts.removeWhere((p) => p['id'] == 'core' || p['group'] == 'core');
   if (!parts.any((p) => p['id'] == coverId)) {
@@ -94,7 +94,7 @@ extension _OculumMinorConstruct on _OculumHomePageState {
       isRunicGolemCoreCreature && oculumRunicGolemPlatesBroken(planarState);
 
   bool get minorConstructCoreExposed =>
-      faunaCurrentMonsterId == 'costrutto_minore' &&
+      oculumIsMinorConstructSpecies(faunaCurrentMonsterId) &&
       oculumMinorConstructBoxBroken(planarState);
 
   bool get currentHasExplicitMasterAnatomy {
@@ -110,7 +110,8 @@ extension _OculumMinorConstruct on _OculumHomePageState {
     final guarded =
         faunaCurrentMonsterId == oculumImbrytoadId &&
             oculumImbrytoadThroatSacs.contains(part) ||
-        faunaCurrentMonsterId == 'costrutto_minore' && part == 'core' ||
+        oculumIsMinorConstructSpecies(faunaCurrentMonsterId) &&
+            part == 'core' ||
         isRunicGolemCoreCreature && part == 'core' ||
         oculumRhinoStoneguardMonsterIds.contains(faunaCurrentMonsterId) &&
             part == 'core' ||
@@ -121,8 +122,8 @@ extension _OculumMinorConstruct on _OculumHomePageState {
   }
 
   void publishReferenceCreatureAnatomyState() {
-    if (!const {
-          'costrutto_minore',
+    if (!oculumIsMinorConstructSpecies(faunaCurrentMonsterId) &&
+        !const {
           'nuvola_in_bottiglia',
           oculumImbrytoadId,
         }.contains(faunaCurrentMonsterId) &&
@@ -135,7 +136,7 @@ extension _OculumMinorConstruct on _OculumHomePageState {
     )) {
       token['faunaPublic'] = {
         ...Map<String, dynamic>.from(token['faunaPublic'] as Map? ?? const {}),
-        if (faunaCurrentMonsterId == 'costrutto_minore')
+        if (oculumIsMinorConstructSpecies(faunaCurrentMonsterId))
           'minorConstructCoreExposed': minorConstructCoreExposed,
         if (isRunicGolemCoreCreature)
           'runicGolemCoreExposed': runicGolemCoreExposed,

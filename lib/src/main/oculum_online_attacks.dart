@@ -2348,6 +2348,65 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  Future<List<int>?> chooseAberionOculumForHits(
+    List<String> targetNames,
+    int available,
+  ) {
+    final investment = List<int>.filled(targetNames.length, 0);
+    return showDialog<List<int>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, update) {
+          final remaining =
+              available - investment.fold<int>(0, (a, b) => a + b);
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Aberion · Potenzia i colpi'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Oculum disponibile: $remaining di $available'),
+                for (final (hit, name) in targetNames.indexed) ...[
+                  const SizedBox(height: 12),
+                  Text('Colpo ${hit + 1} · $name'),
+                  Text(
+                    '${investment[hit]} Oculum · +${oculumAberionDamageBonus(investment[hit])} Danni',
+                  ),
+                  Slider(
+                    key: ValueKey('aberion-hit-$hit'),
+                    value: investment[hit].toDouble(),
+                    max: oculumAberionMaxOculum.toDouble(),
+                    divisions: oculumAberionMaxOculum,
+                    label: '${investment[hit]} Oculum',
+                    semanticFormatterCallback: (value) =>
+                        '${value.round()} Oculum',
+                    onChanged: (value) => update(() {
+                      investment[hit] = min(
+                        value.round(),
+                        remaining + investment[hit],
+                      );
+                    }),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Senza potenziamento'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, investment),
+                child: const Text('Conferma potenziamento'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> planOnlineAttack({
     String? escapeReactionOf,
     String? targetId,
@@ -3900,6 +3959,38 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       );
       return;
     }
+    List<int>? aberionInvestment;
+    final aberionPrepared = sourceMonsterId == oculumAberionMonsterId
+        ? activeStructuredEffects
+              .where((effect) => effect['aberionOculumPrepared'] == true)
+              .toList()
+        : const <Map<String, dynamic>>[];
+    if (sourceMonsterId == oculumAberionMonsterId &&
+        materia35Attack == null &&
+        !openMateria &&
+        !stat20WillPressure &&
+        cycleStomp == 0 &&
+        !hasCondition('oculum_sigillato') &&
+        readIntValue(planarState['mortalKiLock']) <= 0) {
+      final baseCost = stat35OculumBlast
+          ? stat35OculumBlastCost
+          : openOculum
+          ? statOpenAttackCost(openId)
+          : 0;
+      final available = oculumTotale() - baseCost;
+      if ((oculumPowered || baseCost > 0 || aberionPrepared.isNotEmpty) &&
+          available > 0) {
+        aberionInvestment = await chooseAberionOculumForHits([
+          for (final tag in hatTargets)
+            oculumReferenceEncounterTokenName(byId[tag]!),
+        ], available);
+        if (!mounted ||
+            currentSheetScrollId() != origin ||
+            encounter != onlineCombatEncounterId) {
+          return;
+        }
+      }
+    }
     final negotiate =
         incomingAttack == null &&
         escapeReactionOf == null &&
@@ -3982,6 +4073,7 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
     var weaponWearCommitted = false;
     var oculiathResolved = false;
     var sphereScrollCommitted = false;
+    List<int>? aberionPaidByHit;
     void resolved(int natural, int total) {
       if (!mounted ||
           currentSheetScrollId() != origin ||
@@ -4110,6 +4202,25 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
       final weaponWearTokens = attackWeapons.isEmpty
           ? const <Map<String, dynamic>>[]
           : onlineCombatTokens();
+      for (final prepared in aberionPrepared) {
+        prepared.remove('aberionOculumPrepared');
+      }
+      if (aberionPaidByHit == null && aberionInvestment != null) {
+        final investment = aberionInvestment;
+        final requested = investment.fold(0, (a, b) => a + b);
+        final paid = spendOculum(requested);
+        aberionPaidByHit = oculumAberionAllocatePaidOculum(investment, paid);
+        if (paid > 0) {
+          aggiungiLog('[ABERION] $paid Oculum spesi per potenziare i colpi.');
+        }
+      }
+      final aberionPaid = aberionPaidByHit;
+      final aberionTotalBonus =
+          aberionPaid?.fold(
+            0,
+            (sum, paid) => sum + oculumAberionDamageBonus(paid),
+          ) ??
+          0;
       for (final targetTag in controlledPlan.targetIds) {
         final token = byId[targetTag];
         if (token == null) continue;
@@ -4819,6 +4930,16 @@ extension _OculumOnlineAttacks on _OculumHomePageState {
           request['damageTotal'] =
               readIntValue(request['damageTotal']) + volenterosiWillBonus;
           if (share > 0) request['volenterosiWillBonus'] = share;
+        }
+        if (aberionPaid != null && aberionPaid[hit] > 0) {
+          final paid = aberionPaid[hit];
+          request['damage'] =
+              readIntValue(request['damage']) + oculumAberionDamageBonus(paid);
+          request['aberionOculumSpent'] = paid;
+        }
+        if (aberionTotalBonus > 0) {
+          request['damageTotal'] =
+              readIntValue(request['damageTotal']) + aberionTotalBonus;
         }
         if (attackWeapons.isNotEmpty &&
             cycleStomp == 0 &&

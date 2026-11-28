@@ -1,5 +1,13 @@
 # Oculum — registro delle regole confermate
 
+## Varianti scelte dei mostri — 28 novembre 2026
+
+- Armadillo Corazzato G e I sono due forme più forti. Costrutto Minore D è la tavola base. La forma difensiva I da cava ha +6 CM e +3 Resistenza per ogni 12 livelli. La forma Rapida J ha più Materia, meno Vita e meno Movimento. Le Skill restano modificabili con i normali editor.
+- Mosca Campana C è la base. J è la Campana di Oculum che lancia raggi. Larva del Pozzo C è la base, I è potenziata e J è velenosa. Airone C è la base, I è Airone colorato e J è Airone lunare.
+- Cinghiale del Fango G ha fango che cola. Chikar I è più forte e alla morte confermata lascia 1d6+3 kg di carne molto buona. La porzione appartiene al normale riparto del Fight e viene assegnata una volta sola.
+- Uomo Cactus Assetato B è la base. Aberion blu I ha più Materia e Danni. Aberion J può spendere fino a 10 Oculum aggiuntivi su ogni colpo fatto con Oculum. Per ogni Oculum immesso ottiene +1,5 Danni, quindi 2 Oculum danno +3 Danni. Si applica l’arrotondamento generale per difetto.
+- Tartaruga della Pioggia Chiara C è alta quanto un albero adulto. I è una forma più forte e J usa incantesimi d’acqua. Per Ferrynox e Anfravyre è scelta Guardia davanti al varco in tutti e tre gli ambienti di ciascuna creatura.
+
 ## Accesso facoltativo, campagne online e aggiornamenti — 28 novembre 2026
 
 - L’avvio locale, il gioco e i salvataggi sono disponibili senza account. «Aggiungi una passkey» richiede un account registrato e verificato. L’ospite online collega prima Google o conferma l’email sul proprio account esistente, conservando ID e schede. Il dispositivo gestisce la scelta tra impronta, volto o PIN secondo le opzioni disponibili. Annullare lascia invariati sessione e salvataggi.

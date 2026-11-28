@@ -4,7 +4,7 @@ I [download pubblici](https://github.com/Mich369/Oculum/releases/tag/oculum-down
 
 ## Aggiornamento dall’app
 
-Salva la sessione e usa **Aggiorna Oculum**. Su Windows puoi vedere quali file cambiano e la dimensione del download prima di scegliere **Scarica le modifiche**. Il confronto controlla i file presenti anche se hai saltato più versioni. Puoi scegliere **Pacchetto intero** dalla stessa finestra. Chiudi anche eventuali altre finestre di Oculum che usano la stessa cartella. L’aggiornamento le attende e conserva un backup del runtime. Conferma il successo quando la nuova app ha aperto il primo fotogramma con il commit e l’edizione attesi.
+Salva la sessione e usa **Aggiorna Oculum**. Su Windows puoi vedere quanti file cambiano e la dimensione del download prima di scegliere **Scarica le modifiche**. Il confronto controlla i file presenti anche se hai saltato più versioni. L’aggiornamento scarica e scrive solo i file nuovi o diversi e conserva al loro posto i file identici. Chiudi anche eventuali altre finestre di Oculum che usano la stessa cartella. L’aggiornamento le attende e prepara il ripristino dei singoli file che tocca. Conferma il successo quando la nuova app ha aperto il primo fotogramma con il commit e l’edizione attesi. Dalla stessa finestra puoi anche scegliere **Pacchetto intero**.
 
 Un messaggio di download completato non prova che la versione sia stata sostituita. Se l’aggiornamento non termina, riapri l’app dalla cartella verificata e controlla la versione; puoi riprovare. Conserva il backup e la cartella precedente fino alla verifica dei tuoi salvataggi e delle immagini personalizzate.
 
@@ -18,7 +18,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Oculum-Aggiornamento-I
 
 Per Windows Test indica `Oculum-Test.exe` dalla sua cartella. Aggiungi `-DryRun` per consultare il piano senza installare. Se il manifest della versione precedente manca, l’aggiornamento conserva i file rimasti fuori dal nuovo elenco. I download completi restano compatibili con le versioni precedenti.
 
-In questo caso scarica il pacchetto Windows completo ed estrailo **in una nuova cartella**, poi avvia l’EXE da lì. Conserva tutta la cartella con `data` e le DLL: l’EXE isolato non basta. Apri l’edizione che usavi prima; Windows Test mantiene un profilo separato. Conserva la vecchia cartella, soprattutto se contiene immagini personalizzate collegate tramite percorso assoluto.
+Se scegli il pacchetto Windows completo, estrailo **in una nuova cartella** e avvia l’EXE da lì. Conserva tutta la cartella con `data` e le DLL. Apri l’edizione che usavi prima. Windows Test mantiene un profilo separato. Conserva la vecchia cartella, soprattutto se contiene immagini personalizzate collegate tramite percorso assoluto.
 
 ## Android
 

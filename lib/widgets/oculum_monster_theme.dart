@@ -847,9 +847,41 @@ class OculumMonsterTheme {
   String? get illustration =>
       oculumMonsterArtworkAsset(desktopIllustrationForId(monster.id));
 
+  static const _selectedInkDesktopIds = {
+    'armadillo_corazzato_variante_placche_scolpite',
+    'armadillo_corazzato_variante_scaglie_larghe',
+    'costrutto_minore',
+    'costrutto_minore_variante_trapezoidale',
+    'costrutto_minore_variante_rapido',
+    'mosca_campana',
+    'mosca_campana_variante_oculum_ametista',
+    'ciclo_cinghiale_fango',
+    'ciclo_cinghiale_fango_variante_chikar',
+    'ciclo_uomo_cactus',
+    'ciclo_uomo_cactus_variante_aberion_blu',
+    'ciclo_uomo_cactus_variante_aberion',
+    'ciclo_airone_guado_quieto',
+    'ciclo_airone_guado_quieto_variante_colorato',
+    'ciclo_airone_guado_quieto_variante_lunare',
+    'ciclo_tartaruga_pioggia_chiara',
+    'ciclo_tartaruga_pioggia_chiara_variante_solida',
+    'ciclo_tartaruga_pioggia_chiara_variante_incantatrice',
+    'weak_horror_larva',
+    'weak_horror_larva_variante_potenziata',
+    'weak_horror_larva_variante_velenosa',
+    'ferrynox',
+    'ferrynox_variante_dune_vetro',
+    'ferrynox_variante_foresta_scoria',
+    'anfravyre',
+    'anfravyre_variante_gallerie_indaco',
+    'anfravyre_variante_pietra_nera',
+  };
+
   static String? desktopIllustrationForId(
     String monsterId,
   ) => switch (monsterId) {
+    final id when _selectedInkDesktopIds.contains(id) =>
+      'assets/oculum/home_art_authored/theme_${id}_ink_20261128.webp',
     'baby_forest_demon_variante_rituale' =>
       'assets/oculum/home_art_authored/theme_baby_forest_demon_variante_rituale_canon_20261118_ink_f.webp',
     'granscostumato_empatico' =>
