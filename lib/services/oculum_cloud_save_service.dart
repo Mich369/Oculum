@@ -12,6 +12,46 @@ const String _pendingCloudPayloadKey = 'oculum.cloud_save.pending_payload';
 const String _pendingCloudUserKey = 'oculum.cloud_save.pending_user';
 const String _pendingCloudDeviceKey = 'oculum.cloud_save.pending_device';
 
+enum OculumCloudSaveFolder {
+  desktop('PC', ['windows', 'macos', 'linux']),
+  phone('Telefono', ['android', 'ios']),
+  web('Web', ['web']),
+  older('Origine sconosciuta', []);
+
+  const OculumCloudSaveFolder(this.label, this.origins);
+
+  final String label;
+  final List<String> origins;
+
+  static OculumCloudSaveFolder forOrigin(String origin) => values.firstWhere(
+    (folder) => folder.origins.contains(origin),
+    orElse: () => older,
+  );
+}
+
+String currentOculumCloudDeviceOrigin() {
+  if (kIsWeb) return 'web';
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.windows => 'windows',
+    TargetPlatform.macOS => 'macos',
+    TargetPlatform.linux => 'linux',
+    TargetPlatform.android => 'android',
+    TargetPlatform.iOS => 'ios',
+    TargetPlatform.fuchsia => 'unknown',
+  };
+}
+
+class OculumCloudSaveSummary {
+  OculumCloudSaveSummary.fromJson(Map<String, dynamic> row)
+    : id = row['id'] as String,
+      updatedAt = DateTime.parse(row['updated_at'] as String),
+      deviceOrigin = row['device_origin'] as String? ?? '';
+
+  final String id;
+  final DateTime updatedAt;
+  final String deviceOrigin;
+}
+
 String _encodeCloudSavePayload(Map<String, dynamic> payload) {
   return jsonEncode(payload);
 }
@@ -50,12 +90,19 @@ void _validateCloudPayload(Map<String, dynamic> payload) {
 }
 
 class OculumCloudSaveService extends ChangeNotifier {
-  OculumCloudSaveService._();
+  OculumCloudSaveService._([this._injectedClient]);
 
   static final OculumCloudSaveService instance = OculumCloudSaveService._();
 
+  @visibleForTesting
+  OculumCloudSaveService.forTesting(SupabaseClient client) : this._(client);
+
+  final SupabaseClient? _injectedClient;
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+
   static const _cloudSavePrefsKey = 'oculum.cloud_save.last_status';
   static const _cloudSaveTable = 'oculum_cloud_saves';
+  static const folderPageSize = 12;
 
   final ValueNotifier<String> statusNotifier = ValueNotifier('Offline');
 
@@ -73,18 +120,67 @@ class OculumCloudSaveService extends ChangeNotifier {
     if (oculumSmokeStorageActive) return null;
     try {
       _requireCurrentUser(userId);
-      final response = await Supabase.instance.client
+      final response = await _client
           .from(_cloudSaveTable)
           .select()
           .eq('user_id', userId)
           .order('updated_at', ascending: false)
           .limit(1)
           .maybeSingle();
+      _requireCurrentUser(userId);
       return response == null ? null : Map<String, dynamic>.from(response);
     } catch (_) {
       debugPrint('Cloud save fetch failed.');
       return null;
     }
+  }
+
+  Future<List<OculumCloudSaveSummary>> listFolder(
+    String userId,
+    OculumCloudSaveFolder folder, {
+    int offset = 0,
+  }) async {
+    _requireCurrentUser(userId);
+    final owned = _client
+        .from(_cloudSaveTable)
+        .select('id,updated_at,device_origin')
+        .eq('user_id', userId);
+    final filtered = folder == OculumCloudSaveFolder.older
+        ? owned.not(
+            'device_origin',
+            'in',
+            OculumCloudSaveFolder.values
+                .expand((group) => group.origins)
+                .toList(),
+          )
+        : owned.inFilter('device_origin', folder.origins);
+    final rows = await filtered
+        .order('updated_at', ascending: false)
+        .order('id', ascending: false)
+        .range(offset, offset + folderPageSize - 1);
+    _requireCurrentUser(userId);
+    return rows.map(OculumCloudSaveSummary.fromJson).toList();
+  }
+
+  Future<Map<String, dynamic>?> fetchSnapshotForRestore(
+    String userId,
+    String snapshotId,
+  ) async {
+    _requireCurrentUser(userId);
+    final row = await _client
+        .from(_cloudSaveTable)
+        .select('id,user_id,payload')
+        .eq('user_id', userId)
+        .eq('id', snapshotId)
+        .maybeSingle();
+    _requireCurrentUser(userId);
+    if (row == null || row['id'] != snapshotId || row['user_id'] != userId) {
+      return null;
+    }
+    final raw = row['payload'];
+    if (raw is! Map<String, dynamic>) return null;
+    _validateCloudPayload(raw);
+    return raw;
   }
 
   Future<bool> queueLocalSaveForSync(
@@ -114,10 +210,11 @@ class OculumCloudSaveService extends ChangeNotifier {
       }
       // Each account keeps its own queue. Legacy keys remain readable for
       // existing clients, but never act as the only copy of a pending save.
+      final deviceOrigin = currentOculumCloudDeviceOrigin();
       await prefs.setString('$_pendingCloudPayloadKey.$userId', encoded);
-      await prefs.setString('$_pendingCloudDeviceKey.$userId', 'flutter');
+      await prefs.setString('$_pendingCloudDeviceKey.$userId', deviceOrigin);
       await prefs.setString(_pendingCloudUserKey, userId);
-      await prefs.setString(_pendingCloudDeviceKey, 'flutter');
+      await prefs.setString(_pendingCloudDeviceKey, deviceOrigin);
       await prefs.setString(_pendingCloudPayloadKey, encoded);
       statusNotifier.value = 'Saved on device';
       return true;
@@ -163,11 +260,10 @@ class OculumCloudSaveService extends ChangeNotifier {
       final snapshot = buildSnapshotRecord(
         userId: userId,
         payload: payload,
-        deviceOrigin: 'flutter',
+        deviceOrigin: currentOculumCloudDeviceOrigin(),
       );
-      await Supabase.instance.client
-          .from(_cloudSaveTable)
-          .insert(snapshot.toJson());
+      await _client.from(_cloudSaveTable).insert(snapshot.toJson());
+      _requireCurrentUser(userId);
       statusNotifier.value = 'Saved to cloud';
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cloudSavePrefsKey, statusNotifier.value);
@@ -268,14 +364,15 @@ class OculumCloudSaveService extends ChangeNotifier {
     );
   }
 
+  bool isCurrentAccount(String userId) {
+    if (oculumSmokeStorageActive || userId.isEmpty) return false;
+    final auth = _client.auth;
+    return auth.currentSession?.user.id == userId &&
+        auth.currentUser?.id == userId;
+  }
+
   void _requireCurrentUser(String userId) {
-    if (oculumSmokeStorageActive) {
-      throw const OculumSmokeStorageException('network_disabled');
-    }
-    final auth = Supabase.instance.client.auth;
-    if (userId.isEmpty ||
-        auth.currentSession == null ||
-        auth.currentUser?.id != userId) {
+    if (!isCurrentAccount(userId)) {
       throw StateError('Cloud account does not match the active session');
     }
   }

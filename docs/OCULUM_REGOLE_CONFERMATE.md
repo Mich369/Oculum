@@ -1,5 +1,10 @@
 # Oculum — registro delle regole confermate
 
+## Salvataggi e consegna per dispositivo — 28 novembre 2026
+
+- Nello stesso account cloud le copie PC e Telefono sono separate per origine e si ripristinano scegliendo una copia precisa. Il ripristino è esplicito e preceduto da un backup locale verificato. Le copie storiche prive di origine conservano la loro categoria.
+- I pacchetti di consegna per PC e telefono hanno cartelle distinte. Windows e Windows Test mantengono runtime e archivi separati.
+
 ## Postea e il Sole Errante — 28 novembre 2026
 
 Postea appartiene al Sole Errante, che in questo futuro errante runico ha sconfitto definitivamente la Luna. Esistono veri giochi d’azzardo con diavoli convertiti al Sole che tengono il banco.

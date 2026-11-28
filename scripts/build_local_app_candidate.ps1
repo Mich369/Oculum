@@ -96,11 +96,14 @@ try {
   & python (Join-Path $PSScriptRoot 'verify_android_signing.py') --apk $apkSource --min-version-code $AndroidBuildNumber `
     --java 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' --report (Join-Path $buildRoot "$Name-ANDROID-SIGNATURE.json")
   if ($LASTEXITCODE -ne 0) { throw 'Release APK signing verification failed' }
-  Copy-Item -LiteralPath $apkSource -Destination (Join-Path $destination 'Oculum-Android-release.apk')
+  $phonePackages = Join-Path $destination 'telefono'
+  $pcPackages = Join-Path $destination 'pc'
+  New-Item -ItemType Directory -Path $phonePackages, $pcPackages | Out-Null
+  Copy-Item -LiteralPath $apkSource -Destination (Join-Path $phonePackages 'Oculum-Android-release.apk')
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   foreach ($edition in @(@('windows', 'Oculum-Windows.zip'), @('windows-test', 'Oculum-Test-Windows.zip'))) {
     [IO.Compression.ZipFile]::CreateFromDirectory((Join-Path $destination $edition[0]),
-      (Join-Path $destination $edition[1]), [IO.Compression.CompressionLevel]::Fastest, $false)
+      (Join-Path $pcPackages $edition[1]), [IO.Compression.CompressionLevel]::Fastest, $false)
   }
   foreach ($doc in @('OCULUM_REGOLE_CONFERMATE.md', 'manuale-consultazione.md', 'REGISTRO_AGGIORNAMENTI.md', 'ULTIMO_AGGIORNAMENTO.md', 'VERIFICA_ARRETRATI_APP_2026-11-23.md', 'VERIFICA_SCHIVATE_2026-11-24.md')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot "docs\$doc") -Destination $destination

@@ -19,6 +19,38 @@ At the Blacksmith, choose Fuse two pieces of equipment, select two pieces of the
 ''',
   ),
   ManualSection(
+    titleIt: 'Salvataggi cloud per dispositivo',
+    titleEn: 'Cloud saves by device',
+    contentIt: r'''
+Da Impostazioni, apri Account Oculum e Salvataggi cloud con lo stesso account online. Le copie sono organizzate in PC, Telefono, Web e Origine sconosciuta. Le copie più vecchie senza dispositivo registrato restano nella cartella Origine sconosciuta. Ogni riga mostra il sistema di origine, la data e l’ora.
+
+Salva copia di questo dispositivo aggiunge una nuova copia alla cartella del dispositivo corrente. Per recuperare un salvataggio scegli la copia e conferma Ripristina su questo dispositivo. L’app verifica un backup locale prima di applicare la copia scelta. Entrare nell’account permette di consultare le copie. Il salvataggio caricato sul dispositivo cambia solo con il ripristino confermato.
+''',
+    contentEn: r'''
+Open Settings, Oculum Account, and Cloud saves using the same online account. Copies are organized into PC, Phone, Web, and Unknown origin. Older copies without recorded device information stay in Unknown origin. A row shows the system of origin and the date and time.
+
+Save a copy from this device adds a new copy to the current device folder. Choose a copy and confirm Restore on this device to recover it. The app verifies a local backup before applying the chosen copy. Signing in lets you see the copies. The loaded device save changes only after a confirmed restore.
+''',
+  ),
+  ManualSection(
+    titleIt: 'Mappe pronte e movimento a esagoni',
+    titleEn: 'Ready-made maps and hex movement',
+    contentIt: r'''
+Apri Mappa, poi Luoghi e scene e Mappe pronte. Il Master può creare una scena su Discarica solare di Postea, Rovine del santuario lunare, Dungeon indaco, Dungeon d’oro e marmo bianco, Dungeon di pietra nera o Radura della Foresta Elementale. Aprire la stessa tavola nella scena già attiva conserva pedine e annotazioni.
+
+Le sei tavole partono con la griglia esagonale e una scala di 2 metri per passo. Le zone ampie, i passaggi e le isole di copertura lasciano più percorsi disponibili. Misurazione, allineamento della pedina e disegno della griglia usano gli stessi centri anche quando cambia la dimensione dello schermo.
+
+Nelle scene pronte tutte le celle sono inizialmente accessibili. Il Master può modificare griglia, scala e visibilità, ingrandire le pedine e aggiungere muri e porte con gli strumenti della mappa. Le regole di turno e distanza del Fight continuano ad applicarsi.
+''',
+    contentEn: r'''
+Open Map, then Places and scenes, and Ready-made maps. The Master can create a scene in Postea's solar scrapyard, ruins of the lunar sanctuary, the indigo dungeon, the gold and white marble dungeon, the black stone dungeon, or the Elemental Forest clearing. Reopening the same art for the active scene preserves pieces and annotations.
+
+The six boards start with a hex grid and a scale of 2 metres per step. Open spaces, wide passages and islands of cover leave multiple routes. Measuring, snapping pieces and painting the grid use the same centres when the display resizes.
+
+All cells in a ready-made scene start out accessible. The Master can change the grid, scale and visibility, enlarge pieces, and add walls and doors through the map tools. Fight turn and movement rules still apply.
+''',
+  ),
+  ManualSection(
     titleIt: 'Postea · Il Sole Errante',
     titleEn: 'Postea · The Wandering Sun',
     contentIt: r'''

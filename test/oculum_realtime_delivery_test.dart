@@ -10,6 +10,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _Channel implements RealtimeChannel {
   ChannelResponse response = ChannelResponse.ok;
+  RealtimeSubscribeStatus subscriptionResult =
+      RealtimeSubscribeStatus.subscribed;
   Function? subscription;
   Completer<ChannelResponse>? pendingSend;
   final broadcasts = <Map<String, dynamic>>[];
@@ -21,7 +23,7 @@ class _Channel implements RealtimeChannel {
       case #subscribe:
         final callback = invocation.positionalArguments.first as Function;
         subscription = callback;
-        callback(RealtimeSubscribeStatus.subscribed, null);
+        callback(subscriptionResult, null);
         return this;
       case #track:
       case #untrack:
@@ -137,6 +139,9 @@ class _Client extends SupabaseClient {
             body = null;
           } else if (path.endsWith('/oculum_emit_room_event')) {
             final input = jsonDecode(request.body) as Map;
+            final started = backend.delayedCombatWriteStarted;
+            backend.delayedCombatWriteStarted = null;
+            started?.complete();
             final result =
                 await (testChannel.pendingSend?.future ??
                     Future.value(testChannel.response));
@@ -194,6 +199,12 @@ class _Client extends SupabaseClient {
               body = backend.events
                   .where((event) => event['id'] == eventId)
                   .firstOrNull;
+              final stalledRead = backend.delayedVerifiedEventRead;
+              backend.delayedVerifiedEventRead = null;
+              if (stalledRead != null) {
+                backend.delayedVerifiedEventReadStarted?.complete();
+                await stalledRead.future;
+              }
             } else if (request.url.queryParameters['event'] ==
                 'eq.initiative_shared') {
               backend.initiativeSnapshotReads++;
@@ -259,6 +270,8 @@ class _Client extends SupabaseClient {
   final _Channel testChannel;
   final _Backend backend;
   int channelCount = 0;
+  Completer<void>? delayedChannelRemoval;
+  Completer<void>? delayedChannelRemovalStarted;
 
   @override
   RealtimeChannel channel(
@@ -270,12 +283,23 @@ class _Client extends SupabaseClient {
   }
 
   @override
-  Future<String> removeChannel(RealtimeChannel channel) async => 'ok';
+  Future<String> removeChannel(RealtimeChannel channel) async {
+    final delayed = delayedChannelRemoval;
+    delayedChannelRemoval = null;
+    if (delayed != null) {
+      delayedChannelRemovalStarted?.complete();
+      await delayed.future;
+    }
+    return 'ok';
+  }
 }
 
 class _Backend {
   Completer<void>? stalledOpenRoom;
   Completer<void>? stalledEventReplay;
+  Completer<void>? delayedCombatWriteStarted;
+  Completer<void>? delayedVerifiedEventRead;
+  Completer<void>? delayedVerifiedEventReadStarted;
   String roomStatus = 'approved';
   String? roomRole;
   String? roomAccessError;
@@ -1324,6 +1348,173 @@ void main() {
     await service.disconnect();
     client.testChannel.pendingSend!.complete(ChannelResponse.ok);
     expect(await sending, isFalse);
+  });
+
+  for (final response in [ChannelResponse.ok, ChannelResponse.error]) {
+    test(
+      'HTTPS ignores an old Fight write response after reconnect ($response)',
+      () async {
+        final previous = OculumRealtimeService.supabaseAvailable;
+        OculumRealtimeService.supabaseAvailable = true;
+        addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+        final client = _Client();
+        addTearDown(client.dispose);
+        final statuses = <String>[];
+        final service = OculumRealtimeService(
+          client: client,
+          roomId: 'fight-reconnect-https',
+          playerName: 'Player',
+          httpPollingOnly: true,
+          onEvent: (_, _) {},
+          onPresenceChanged: (_) {},
+          onStatusChanged: statuses.add,
+        );
+        addTearDown(service.dispose);
+        final oldWrite = Completer<ChannelResponse>();
+        final oldWriteStarted = Completer<void>();
+        addTearDown(() {
+          if (!oldWrite.isCompleted) oldWrite.complete(ChannelResponse.error);
+        });
+
+        await service.connect();
+        client.testChannel.pendingSend = oldWrite;
+        client.backend.delayedCombatWriteStarted = oldWriteStarted;
+        final oldCommand = service.sendCombatEvent('initiative_control', {
+          'id': 'initiative:before-reconnect',
+        });
+        await oldWriteStarted.future.timeout(const Duration(seconds: 3));
+        await service.disconnect();
+        await service.connect();
+        expect(service.isConnected, isTrue);
+        expect(client.channelCount, 0);
+
+        client.testChannel.pendingSend = null;
+        expect(
+          await service.sendCombatEvent('initiative_control', {
+            'id': 'initiative:after-reconnect',
+          }),
+          isTrue,
+        );
+        final statusBeforeOldResponse = List<String>.of(statuses);
+        oldWrite.complete(response);
+        expect(await oldCommand, isFalse);
+        expect(statuses, statusBeforeOldResponse);
+      },
+    );
+  }
+
+  test('reconnect releases a blocked Fight broadcast verification', () async {
+    final previous = OculumRealtimeService.supabaseAvailable;
+    OculumRealtimeService.supabaseAvailable = true;
+    addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+    final client = _Client();
+    addTearDown(client.dispose);
+    final received = <String>[];
+    final currentCommandReceived = Completer<void>();
+    final service = OculumRealtimeService(
+      client: client,
+      roomId: 'fight-reconnect-websocket',
+      playerName: 'Master',
+      onEvent: (event, packet) {
+        if (event != 'initiative_control') return;
+        final id = packet['id'] as String;
+        received.add(id);
+        if (id == 'initiative:new' && !currentCommandReceived.isCompleted) {
+          currentCommandReceived.complete();
+        }
+      },
+      onPresenceChanged: (_) {},
+      onStatusChanged: printOnFailure,
+    );
+    addTearDown(service.dispose);
+    final staleRead = Completer<void>();
+    final staleReadStarted = Completer<void>();
+    addTearDown(() {
+      if (!staleRead.isCompleted) staleRead.complete();
+    });
+    Map<String, dynamic> record(String label, int sequence) => {
+      'id': 'event-$label',
+      'sequence': sequence,
+      'event': 'initiative_control',
+      'room_id': 'room',
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+      'payload': {
+        'id': 'initiative:$label',
+        'authenticatedRole': 'coMaster',
+        'sessionId': 'other-client',
+      },
+    };
+
+    await service.connect();
+    await service.refreshPresence();
+    client.backend.events.add(record('old', 1));
+    client.backend.delayedVerifiedEventRead = staleRead;
+    client.backend.delayedVerifiedEventReadStarted = staleReadStarted;
+    client.testChannel.callbacks['initiative_control']!({
+      'serverEventId': 'event-old',
+    });
+    await staleReadStarted.future.timeout(const Duration(seconds: 3));
+    await service.disconnect();
+    await service.connect();
+    await service.refreshPresence();
+    expect(received, ['initiative:old']);
+
+    client.backend.events.add(record('new', 2));
+    client.testChannel.callbacks['initiative_control']!({
+      'serverEventId': 'event-new',
+    });
+    await currentCommandReceived.future.timeout(const Duration(seconds: 3));
+    staleRead.complete();
+    await service.refreshPresence();
+    expect(received, ['initiative:old', 'initiative:new']);
+  });
+
+  test('manual disconnect cancels an in-flight WebSocket fallback', () async {
+    final previous = OculumRealtimeService.supabaseAvailable;
+    OculumRealtimeService.supabaseAvailable = true;
+    addTearDown(() => OculumRealtimeService.supabaseAvailable = previous);
+    final client = _Client();
+    addTearDown(client.dispose);
+    final statuses = <String>[];
+    final service = OculumRealtimeService(
+      client: client,
+      roomId: 'fight-cancel-fallback',
+      playerName: 'Master',
+      onEvent: (_, _) {},
+      onPresenceChanged: (_) {},
+      onStatusChanged: statuses.add,
+    );
+    addTearDown(service.dispose);
+    final oldRemoval = Completer<void>();
+    final removalStarted = Completer<void>();
+    addTearDown(() {
+      if (!oldRemoval.isCompleted) oldRemoval.complete();
+    });
+
+    client.testChannel.subscriptionResult =
+        RealtimeSubscribeStatus.channelError;
+    client.delayedChannelRemoval = oldRemoval;
+    client.delayedChannelRemovalStarted = removalStarted;
+    final staleConnect = service.connect();
+    await removalStarted.future.timeout(const Duration(seconds: 3));
+    await service.disconnect();
+    oldRemoval.complete();
+    await staleConnect;
+    expect(service.isConnected, isFalse);
+    expect(statuses.last, 'Realtime disconnesso.');
+
+    await service.connect();
+    expect(service.isConnected, isTrue);
+    expect(statuses.last, startsWith('WebSocket non disponibile'));
+    expect(
+      await service.sendCombatEvent('combat_ack', {'id': 'ack-on-https'}),
+      isTrue,
+    );
+    await service.disconnect();
+
+    client.testChannel.subscriptionResult = RealtimeSubscribeStatus.subscribed;
+    await service.connect();
+    expect(service.isConnected, isTrue);
   });
 
   test('linking Google to the same UUID preserves the room session', () async {

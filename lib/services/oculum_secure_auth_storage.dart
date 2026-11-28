@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -78,4 +80,72 @@ class OculumSecurePkceStorage extends GotrueAsyncStorage {
   @override
   Future<void> removeItem({required String key}) =>
       _storage._secure.delete(key: '$_prefix$key');
+}
+
+/// Tracks the verifier written by the SDK while opening an OAuth flow.
+/// Email and recovery writes use the same SDK storage and keep their own value.
+class OculumOAuthPkceStorage extends GotrueAsyncStorage {
+  OculumOAuthPkceStorage(this._storage);
+
+  final GotrueAsyncStorage _storage;
+  final _zoneKey = Object();
+  final _owners = <String, Object>{};
+  Object? _attempt;
+  Future<void> _tail = Future<void>.value();
+
+  Future<T> _serialize<T>(Future<T> Function() operation) {
+    final result = _tail.then((_) => operation());
+    _tail = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    return result;
+  }
+
+  Future<T> prepareOAuth<T>(Future<T> Function() prepare) {
+    final attempt = _attempt = Object();
+    return runZoned(prepare, zoneValues: {_zoneKey: attempt});
+  }
+
+  Future<void> cancelOAuth() {
+    final attempt = _attempt;
+    _attempt = null;
+    return _serialize(() async {
+      if (attempt == null) return;
+      final keys = [
+        for (final owner in _owners.entries)
+          if (identical(owner.value, attempt)) owner.key,
+      ];
+      for (final key in keys) {
+        await _storage.removeItem(key: key);
+        _owners.remove(key);
+      }
+    });
+  }
+
+  @override
+  Future<String?> getItem({required String key}) =>
+      _serialize(() => _storage.getItem(key: key));
+
+  @override
+  Future<void> setItem({required String key, required String value}) {
+    final owner = Zone.current[_zoneKey];
+    return _serialize(() async {
+      if (owner != null && !identical(owner, _attempt)) {
+        throw StateError('OAuth preparation was cancelled.');
+      }
+      await _storage.setItem(key: key, value: value);
+      if (owner == null) {
+        _owners.remove(key);
+      } else {
+        _owners[key] = owner;
+      }
+      if (owner != null && !identical(owner, _attempt)) {
+        throw StateError('OAuth preparation was cancelled.');
+      }
+    });
+  }
+
+  @override
+  Future<void> removeItem({required String key}) => _serialize(() async {
+    await _storage.removeItem(key: key);
+    _owners.remove(key);
+  });
 }

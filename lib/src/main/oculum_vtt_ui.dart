@@ -63,7 +63,8 @@ class _OculumVttBasePainter extends CustomPainter {
   }
 
   void _paintGrid(Canvas canvas, Size size) {
-    final cell = scene.gridSizePx.clamp(12.0, 512.0).toDouble();
+    if (size.isEmpty) return;
+    final cell = scene.gridCellSizeForViewport(size.width);
     if (scene.gridType == 'none') return;
     final paint = Paint()
       ..color = accent.withValues(alpha: 0.30)
@@ -83,28 +84,36 @@ class _OculumVttBasePainter extends CustomPainter {
     final radius = cell / 2;
     final hexWidth = sqrt(3) * radius;
     final vertical = radius * 1.5;
+    final halfWidth = hexWidth / 2;
+    final hexes = Path();
     for (var row = -1; row <= size.height / vertical + 1; row++) {
       final y = row * vertical;
-      final shift = row.isOdd ? hexWidth / 2 : 0.0;
+      final shift = row.isOdd ? halfWidth : 0.0;
       for (double x = -hexWidth; x <= size.width + hexWidth; x += hexWidth) {
-        final center = Offset(x + shift, y);
-        final path = Path();
-        for (var i = 0; i < 6; i++) {
-          final angle = (60 * i - 30) * pi / 180;
-          final point = Offset(
-            center.dx + radius * cos(angle),
-            center.dy + radius * sin(angle),
-          );
-          if (i == 0) {
-            path.moveTo(point.dx, point.dy);
-          } else {
-            path.lineTo(point.dx, point.dy);
-          }
-        }
-        path.close();
-        canvas.drawPath(path, paint);
+        final centerX = x + shift;
+        hexes.addPolygon([
+          Offset(centerX, y - radius),
+          Offset(centerX + halfWidth, y - radius / 2),
+          Offset(centerX + halfWidth, y + radius / 2),
+          Offset(centerX, y + radius),
+          Offset(centerX - halfWidth, y + radius / 2),
+          Offset(centerX - halfWidth, y - radius / 2),
+        ], true);
       }
     }
+    if (scene.bundledMap != null) {
+      canvas.drawPath(
+        hexes,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.35
+          ..color = Colors.black.withValues(alpha: 0.38),
+      );
+      paint
+        ..color = Colors.white.withValues(alpha: 0.25)
+        ..strokeWidth = 0.55;
+    }
+    canvas.drawPath(hexes, paint);
     _paintHexCoordinates(canvas, size, radius, hexWidth, vertical);
   }
 
@@ -510,6 +519,7 @@ class _OculumVttInteractionPainter extends CustomPainter {
       canvas.drawPath(path, paint);
     }
     if (measurements.length < 2) return;
+    final cell = scene.gridCellSizeForViewport(size.width);
     for (var i = 1; i < measurements.length; i++) {
       final a = measurements[i - 1];
       final b = measurements[i];
@@ -518,12 +528,12 @@ class _OculumVttInteractionPainter extends CustomPainter {
         a,
         b,
         gridType: scene.gridType,
-        cellSize: scene.gridSizePx,
+        cellSize: cell,
         distancePerCell: scene.distancePerCell,
         diagonalRule: scene.diagonalRule,
       );
       final label = scene.distanceUnit == 'cells'
-          ? '${oculumVttDistanceCells(a, b, gridType: scene.gridType, cellSize: scene.gridSizePx, diagonalRule: scene.diagonalRule).toStringAsFixed(1)} celle'
+          ? '${oculumVttDistanceCells(a, b, gridType: scene.gridType, cellSize: cell, diagonalRule: scene.diagonalRule).toStringAsFixed(1)} celle'
           : '${distance.toStringAsFixed(distance < 10 ? 1 : 0)} ${scene.distanceUnit}';
       final text = TextPainter(
         text: TextSpan(
@@ -634,12 +644,12 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
     }.contains(tool);
   }
 
-  Offset _vttMaybeSnap(Offset point, OculumVttScene scene) {
+  Offset _vttMaybeSnap(Offset point, OculumVttScene scene, double width) {
     if (!scene.snapToGrid || scene.gridType == 'none') return point;
     return oculumVttSnapPoint(
       point,
       gridType: scene.gridType,
-      cellSize: scene.gridSizePx,
+      cellSize: scene.gridCellSizeForViewport(width),
     );
   }
 
@@ -654,6 +664,13 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
       valueListenable: vttCanvasRevision,
       builder: (context, revision, child) {
         final scene = sceneOverride ?? vttSceneForDisplay();
+        final bundled = scene.bundledMap;
+        final board = scene.boardSizeForViewport(Size(width, height));
+        final resolvedImage = bundled == null
+            ? imageProvider
+            : AssetImage(bundled.assetPath);
+        final boardWidth = board.width;
+        final boardHeight = board.height;
         final remote = readOnly || vttShowingRemoteScene;
         final modules = remote ? vttModulesForDisplay() : vttState.modules;
         final tokens = remote ? scene.tokens : localMapTokens;
@@ -669,20 +686,25 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
             }.contains(vttTool) &&
             (!remote || vttTool == OculumVttTool.ping);
         final canvas = SizedBox(
-          width: width,
-          height: height,
+          width: boardWidth,
+          height: boardHeight,
           child: RepaintBoundary(
             child: Stack(
               fit: StackFit.expand,
               children: <Widget>[
-                if (imageProvider != null)
+                if (resolvedImage != null)
                   Image(
-                    image: imageProvider,
+                    image: resolvedImage,
                     fit: BoxFit.contain,
                     gaplessPlayback: true,
-                    errorBuilder: (context, error, stackTrace) => mapEmptyState(
-                      t('Immagine non leggibile.', 'Unreadable image.'),
-                    ),
+                    errorBuilder: (context, error, stackTrace) {
+                      if (bundled != null && imageProvider != null) {
+                        return Image(image: imageProvider, fit: BoxFit.contain);
+                      }
+                      return mapEmptyState(
+                        t('Immagine non leggibile.', 'Unreadable image.'),
+                      );
+                    },
                   )
                 else
                   ColoredBox(
@@ -712,41 +734,49 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onPanStart: canDraw
-                        ? (details) =>
-                              _vttCanvasPanStart(details.localPosition, scene)
+                        ? (details) => _vttCanvasPanStart(
+                            details.localPosition,
+                            scene,
+                            boardWidth,
+                          )
                         : null,
                     onPanUpdate: canDraw
-                        ? (details) =>
-                              _vttCanvasPanUpdate(details.localPosition, scene)
+                        ? (details) => _vttCanvasPanUpdate(
+                            details.localPosition,
+                            scene,
+                            boardWidth,
+                          )
                         : null,
                     onPanEnd: canDraw
-                        ? (_) => _vttCanvasPanEnd(Size(width, height), scene)
+                        ? (_) => _vttCanvasPanEnd(board, scene)
                         : null,
                     onTapUp: canTap
-                        ? (details) => _vttCanvasTap(
-                            details.localPosition,
-                            Size(width, height),
-                            scene,
-                          )
+                        ? (details) =>
+                              _vttCanvasTap(details.localPosition, board, scene)
                         : null,
                     onSecondaryTapDown: (details) => showVttCanvasContextMenu(
                       details.globalPosition,
                       details.localPosition,
-                      Size(width, height),
+                      board,
                     ),
                     onLongPressStart: (details) => showVttCanvasContextMenu(
                       details.globalPosition,
                       details.localPosition,
-                      Size(width, height),
+                      board,
                     ),
                   ),
                 ),
                 if (remote)
                   for (final token in tokens)
-                    vttReadOnlyTokenWidget(token, width, height, scene)
+                    vttReadOnlyTokenWidget(
+                      token,
+                      boardWidth,
+                      boardHeight,
+                      scene,
+                    )
                 else
                   for (final token in localMapTokens)
-                    localMapTokenWidget(token, width, height),
+                    localMapTokenWidget(token, boardWidth, boardHeight),
                 Positioned.fill(
                   child: IgnorePointer(
                     child: CustomPaint(
@@ -792,7 +822,7 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
             ),
           ),
         );
-        return InteractiveViewer(
+        final viewer = InteractiveViewer(
           transformationController: mapTransformationController,
           minScale: 0.35,
           maxScale: 10,
@@ -809,6 +839,7 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
                   child: canvas,
                 ),
         );
+        return bundled == null ? viewer : Center(child: viewer);
       },
     );
   }
@@ -819,13 +850,15 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
     double height,
     OculumVttScene scene,
   ) {
-    final size = _oculumVttDouble(token['size'], 64).clamp(24.0, 160.0);
+    final compact = scene.bundledMap != null;
+    final storedSize = _oculumVttDouble(token['size'], 64).clamp(24.0, 160.0);
+    final size = scene.tokenSizeForViewport(storedSize, width);
     final x = _oculumVttDouble(token['x'], 0.5).clamp(0.0, 1.0);
     final y = _oculumVttDouble(token['y'], 0.5).clamp(0.0, 1.0);
     final name = '${token['name'] ?? t('Token', 'Token')}';
-    final boxWidth = max(size + 40, 92).toDouble();
+    final boxWidth = compact ? size : max(size + 40, 92).toDouble();
     const infoHeight = 45.0;
-    final boxHeight = size + infoHeight + 3;
+    final boxHeight = compact ? size : size + infoHeight + 3;
     final color = localMapTokenColor(token);
     final ownerTag = normalizeOculumFriendTag(
       '${token['ownerTag'] ?? token['sheetTag'] ?? ''}',
@@ -878,7 +911,7 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
                         localMapTokenAxis(token, 'y') * height,
                       ),
                       gridType: scene.gridType,
-                      cellSize: scene.gridSizePx,
+                      cellSize: scene.gridCellSizeForViewport(width),
                     );
                     token['x'] = (snapped.dx / max(1.0, width)).clamp(0.0, 1.0);
                     token['y'] = (snapped.dy / max(1.0, height)).clamp(
@@ -894,63 +927,67 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
             message: canDrag
                 ? t('$name\nTrascina la tua pedina.', '$name\nDrag your token.')
                 : name,
-            child: Column(
-              children: <Widget>[
-                localMapTokenStateAvatar(token, size),
-                const SizedBox(height: 3),
-                Container(
-                  width: boxWidth,
-                  height: infoHeight,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.74),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: color.withValues(alpha: 0.55)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+            child: compact
+                ? localMapTokenStateAvatar(token, size)
+                : Column(
                     children: <Widget>[
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          shadows: <Shadow>[Shadow(blurRadius: 4)],
+                      localMapTokenStateAvatar(token, size),
+                      const SizedBox(height: 3),
+                      Container(
+                        width: boxWidth,
+                        height: infoHeight,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
                         ),
-                      ),
-                      localMapTokenVitals(
-                        token,
-                        boxWidth - 8,
-                        color,
-                        publicToken: true,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.74),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.55),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                shadows: <Shadow>[Shadow(blurRadius: 4)],
+                              ),
+                            ),
+                            localMapTokenVitals(
+                              token,
+                              boxWidth - 8,
+                              color,
+                              publicToken: true,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
     );
   }
 
-  void _vttCanvasPanStart(Offset point, OculumVttScene scene) {
-    vttPointerStart = _vttMaybeSnap(point, scene);
+  void _vttCanvasPanStart(Offset point, OculumVttScene scene, double width) {
+    vttPointerStart = _vttMaybeSnap(point, scene, width);
     vttDraftPoints
       ..clear()
       ..add(vttPointerStart!);
     vttCanvasRevision.value++;
   }
 
-  void _vttCanvasPanUpdate(Offset point, OculumVttScene scene) {
-    final next = _vttMaybeSnap(point, scene);
+  void _vttCanvasPanUpdate(Offset point, OculumVttScene scene, double width) {
+    final next = _vttMaybeSnap(point, scene, width);
     if (vttTool == OculumVttTool.fogReveal ||
         vttTool == OculumVttTool.fogHide) {
       if (vttDraftPoints.isEmpty || (vttDraftPoints.last - next).distance > 4) {
@@ -1034,7 +1071,7 @@ extension _OculumVttCanvasUi on _OculumHomePageState {
   }
 
   void _vttCanvasTap(Offset point, Size size, OculumVttScene scene) {
-    final snapped = _vttMaybeSnap(point, scene);
+    final snapped = _vttMaybeSnap(point, scene, size.width);
     switch (vttTool) {
       case OculumVttTool.ruler:
         vttMeasurePoints.add(snapped);

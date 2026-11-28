@@ -1,9 +1,8 @@
-# Fabbro, Scudi e nove sfondi Expressive Ink — 28 novembre 2026
+# Mappe esagonali, Fight online e salvataggi cloud — 28 novembre 2026
 
-- Le due abilità di un oggetto fuso conservano i rispettivi requisiti di livello.
-- Se entrambi i pezzi hanno un effetto alla rottura dello Scudo, la fusione li conserva e permette di modificarli separatamente. Un altro oggetto con lo stesso nome non attiva i suoi effetti quando si rompe lo Scudo equipaggiato.
-
-- Aggiunte nove tavole desktop. Postea porta il simbolo del Sole Errante e il vivaio di Natura è libero dalle fate.
-- Le schede che usano Lenti allineate lo conservano. Il tema è escluso dalle nuove scelte.
+- Nuove cartelle cloud PC e Telefono con copie separate, ripristino su conferma e backup locale. I pacchetti locali sono in cartelle PC e telefono distinte.
+- Sei mappe pronte con esagoni a 2 metri per passo, passaggi ampi e muri aggiungibili dal Master.
+- Corrette le conferme tardive nelle riconnessioni WebSocket e HTTPS e il passaggio a HTTPS dopo una disconnessione richiesta.
+- Protetti l’annullamento dell’accesso e il collegamento a Google. L’app segnala quando il provider è disattivato e lascia disponibile l’email.
 
 [Log cumulativo](REGISTRO_AGGIORNAMENTI.md)

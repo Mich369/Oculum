@@ -746,6 +746,11 @@ Future<bool> _initializeOculumSupabase() async {
     final projectRef = Uri.parse(supabaseUrl).host.split('.').first;
     final sessionKey = oculumAuthSessionStorageKey(projectRef, browser: kIsWeb);
     final sessionStorage = OculumSessionStorage(persistSessionKey: sessionKey);
+    final oauthStorage = OculumOAuthPkceStorage(
+      kIsWeb
+          ? SharedPreferencesGotrueAsyncStorage()
+          : OculumSecurePkceStorage(namespace: sessionKey),
+    );
     OculumAuthService.sessionStorage = sessionStorage;
     await Supabase.initialize(
       url: supabaseUrl,
@@ -753,9 +758,7 @@ Future<bool> _initializeOculumSupabase() async {
       debug: false,
       authOptions: FlutterAuthClientOptions(
         localStorage: sessionStorage,
-        pkceAsyncStorage: kIsWeb
-            ? null
-            : OculumSecurePkceStorage(namespace: sessionKey),
+        pkceAsyncStorage: oauthStorage,
         authFlowType: AuthFlowType.pkce,
         autoRefreshToken: true,
         detectSessionInUri: true,
@@ -763,7 +766,12 @@ Future<bool> _initializeOculumSupabase() async {
     ).timeout(const Duration(seconds: 10));
     OculumRealtimeService.supabaseAvailable = true;
     OculumRealtimeService.startupStatus = 'Supabase pronto.';
-    await OculumAuthService.instance.initialize(supabaseReady: true);
+    await OculumAuthService.instance.initialize(
+      supabaseReady: true,
+      oauthStorage: oauthStorage,
+      projectUrl: Uri.parse(supabaseUrl),
+      publishableKey: supabasePublishableKey,
+    );
     return true;
   } catch (error) {
     OculumRealtimeService.supabaseAvailable = false;

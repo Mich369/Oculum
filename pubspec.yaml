@@ -60,6 +60,7 @@ flutter:
     - assets/oculum/home_art_authored/
     # BEGIN generated monster artwork assets
     - assets/oculum/home_art_webp/
+    - assets/oculum/vtt_maps/
     - assets/oculum/home_art/amber_shore.png
     - assets/oculum/home_art/canva_spirit_duelist.png
     - assets/oculum/home_art/cathedral_eye.png

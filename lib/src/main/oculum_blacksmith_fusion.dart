@@ -325,8 +325,9 @@ extension _OculumBlacksmithFusion on _OculumHomePageState {
                     ? null
                     : () {
                         if (!canUseBlacksmithFusion ||
-                            currentSheetScrollId() != origin)
+                            currentSheetScrollId() != origin) {
                           return;
+                        }
                         final item = oculumFuseEquipment(
                           inventario,
                           activeFirst,

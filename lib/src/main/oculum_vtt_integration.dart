@@ -206,6 +206,32 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
     activateVttScene(scene.id, saveCurrent: false);
   }
 
+  void openBundledVttMap(OculumVttBundledMap map) {
+    if (!vttCanManageMap || vttShowingRemoteScene) return;
+    for (final scene in vttState.scenes) {
+      if (!scene.archived && scene.bundledMap == map) {
+        activateVttScene(scene.id);
+        return;
+      }
+    }
+    if (vttState.scenes.length >= oculumVttMaxScenes) {
+      setState(() {
+        risultato = t(
+          'Raggiunto il limite di scene della campagna.',
+          'This campaign has reached its scene limit.',
+        );
+      });
+      return;
+    }
+    syncActiveVttSceneFromLegacyMapState();
+    final scene = map.createScene(
+      english: linguaInglese,
+      sortOrder: vttState.scenes.length,
+    );
+    vttState.scenes.add(scene);
+    activateVttScene(scene.id, saveCurrent: false);
+  }
+
   void archiveVttScene(OculumVttScene scene, bool archived) {
     if (!vttCanManageMap) return;
     scene.archived = archived;
@@ -427,6 +453,17 @@ extension _OculumVttStateIntegration on _OculumHomePageState {
 
   Future<Map<String, dynamic>> _prepareActiveVttAsset() async {
     final scene = activeVttScene;
+    final bundled = scene.bundledMap;
+    if (bundled != null) {
+      // The bundled reference renders immediately for current clients. Send
+      // the existing JPEG fallback for clients without the board preset.
+      final data = await rootBundle.load(bundled.assetPath);
+      return prepareVttImportedImage(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        maxDimension: 1280,
+        quality: 68,
+      );
+    }
     final embedded = scene.imageDataBase64.trim();
     if (embedded.isNotEmpty) {
       final bytes = decodedBase64ImageCached(embedded);

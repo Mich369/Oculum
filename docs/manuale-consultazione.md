@@ -8,6 +8,20 @@ Ogni mostro ucciso può lasciare una ricetta aggiuntiva con il 25% di probabilit
 
 Dal Fabbro usa Fondi due equipaggiamenti, scegli due pezzi della stessa categoria e indica il nome del risultato. I due pezzi diventano un solo oggetto, da equipaggiare dopo la fusione. Le abilità mantengono i propri costi, requisiti e cooldown e si selezionano separatamente. Il risultato conserva il valore base più alto dei due pezzi per ogni statistica. Una fusione di armi dà +1 Danni, una fusione di armature dà +1 Difesa e +1 Scudo e una fusione di scudi dà +1 Danni e +1 Difesa. Gli editor dell’inventario continuano a gestirne nome, statistiche e abilità. Se entrambi i pezzi hanno un effetto alla rottura dello Scudo, ciascuno conserva i propri parametri e puoi modificarli separatamente nell’editor dell’oggetto.
 
+## Salvataggi cloud per dispositivo
+
+Da Impostazioni, apri Account Oculum e Salvataggi cloud con lo stesso account online. Le copie sono organizzate in PC, Telefono, Web e Origine sconosciuta. Le copie più vecchie senza dispositivo registrato restano nella cartella Origine sconosciuta. Ogni riga mostra il sistema di origine, la data e l’ora.
+
+Salva copia di questo dispositivo aggiunge una nuova copia alla cartella del dispositivo corrente. Per recuperare un salvataggio scegli la copia e conferma Ripristina su questo dispositivo. L’app verifica un backup locale prima di applicare la copia scelta. Entrare nell’account permette di consultare le copie. Il salvataggio caricato sul dispositivo cambia solo con il ripristino confermato.
+
+## Mappe pronte e movimento a esagoni
+
+Apri Mappa, poi Luoghi e scene e Mappe pronte. Il Master può creare una scena su Discarica solare di Postea, Rovine del santuario lunare, Dungeon indaco, Dungeon d’oro e marmo bianco, Dungeon di pietra nera o Radura della Foresta Elementale. Aprire la stessa tavola nella scena già attiva conserva pedine e annotazioni.
+
+Le sei tavole partono con la griglia esagonale e una scala di 2 metri per passo. Le zone ampie, i passaggi e le isole di copertura lasciano più percorsi disponibili. Misurazione, allineamento della pedina e disegno della griglia usano gli stessi centri anche quando cambia la dimensione dello schermo.
+
+Nelle scene pronte tutte le celle sono inizialmente accessibili. Il Master può modificare griglia, scala e visibilità, ingrandire le pedine e aggiungere muri e porte con gli strumenti della mappa. Le regole di turno e distanza del Fight continuano ad applicarsi.
+
 ## Postea · Il Sole Errante
 
 Postea appartiene al Sole Errante. In questo futuro errante runico il Sole ha vinto definitivamente sulla Luna. A Postea si praticano veri giochi d’azzardo e il banco è tenuto da diavoli convertiti al Sole.

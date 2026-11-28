@@ -1,6 +1,8 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
@@ -10,6 +12,8 @@ import 'oculum_escape_provoker_test.dart' show mountFight;
 import 'oculum_october27_resources_test.dart' show closeFixture;
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test(
     'token updates retain received map, changed maps and scenes clear it',
     () {
@@ -248,6 +252,230 @@ void main() {
     await closeFixture(tester, probe);
   });
 
+  group('Bundled battle maps', () {
+    test('six assets decode and support the existing JPEG fallback', () async {
+      expect(oculumVttBundledMaps, hasLength(6));
+      final ids = <String>{};
+      for (final map in oculumVttBundledMaps) {
+        expect(ids.add(map.id), isTrue);
+        final data = await rootBundle.load(map.assetPath);
+        final bytes = data.buffer.asUint8List(
+          data.offsetInBytes,
+          data.lengthInBytes,
+        );
+        final image = img.decodeWebP(bytes);
+        expect(image?.width, 1586, reason: map.assetPath);
+        expect(image?.height, 992, reason: map.assetPath);
+        final scene = map.createScene(english: false, sortOrder: 0);
+        expect(scene.bundledMap, map);
+        expect(scene.gridType, 'hex');
+        expect(scene.snapToGrid, isTrue);
+        expect(scene.distancePerCell, 2);
+        expect(scene.walls, isEmpty);
+        expect(scene.tokens, isEmpty);
+        expect(scene.imageDataBase64, isEmpty);
+        final restored = OculumVttScene.fromJson(
+          jsonDecode(jsonEncode(scene.toJson(includePrivate: false))),
+        );
+        expect(restored.bundledMap, map);
+        expect(restored.gridSizePx, 28);
+
+        final fallback = prepareOculumVttSharedImage({
+          'bytes': bytes,
+          'quality': 68,
+          'maxDimension': 1280,
+        });
+        expect(fallback['mime'], 'image/jpeg');
+        final decoded = img.decodeJpg(fallback['bytes'] as Uint8List);
+        expect(decoded?.width, 1280);
+        expect(decoded?.height, 801);
+      }
+      final unknown = OculumVttScene.fromJson({
+        'imagePath': 'oculum-board:../../outside',
+      });
+      expect(unknown.bundledMap, isNull);
+      expect(unknown.toJson(includePrivate: false)['imagePath'], isEmpty);
+    });
+
+    test(
+      'coordinates and token scale stay consistent across viewport sizes',
+      () {
+        final scene = oculumVttBundledMaps.first.createScene(
+          english: false,
+          sortOrder: 0,
+        );
+        const position = OculumVttPoint(0.41, 0.34);
+        OculumVttPoint snappedIn(Size size) {
+          final board = scene.boardSizeForViewport(size);
+          final snapped = oculumVttSnapPoint(
+            position.toOffset(board),
+            gridType: scene.gridType,
+            cellSize: scene.gridCellSizeForViewport(board.width),
+          );
+          return OculumVttPoint.fromOffset(snapped, board);
+        }
+
+        final desktop = snappedIn(const Size(980, 510));
+        final phone = snappedIn(const Size(360, 260));
+        expect(phone.x, closeTo(desktop.x, 0.000001));
+        expect(phone.y, closeTo(desktop.y, 0.000001));
+        expect(
+          scene.tokenSizeForViewport(64, 360) / 360,
+          closeTo(scene.tokenSizeForViewport(64, 640) / 640, 0.000001),
+        );
+        final oldSquare = OculumVttScene.empty()..gridType = 'square';
+        expect(
+          oldSquare.boardSizeForViewport(const Size(360, 260)),
+          const Size(360, 260),
+        );
+        expect(oldSquare.gridCellSizeForViewport(360), 64);
+        expect(oldSquare.tokenSizeForViewport(64, 360), 64);
+      },
+    );
+
+    testWidgets('Master opens a battle map from the real scene library', (
+      tester,
+    ) async {
+      final (state, probe) = await mountFight(tester);
+      state.updateOculumHomeUi(() {
+        state.datiCaricati = true;
+        state.linguaInglese = false;
+      });
+      final navigation = state.vaiAllaFunzione(page: 10) as Future<void>;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+      await navigation;
+
+      final library = find.byKey(const ValueKey('vtt-bundled-maps'));
+      expect(library, findsOneWidget);
+      await tester.ensureVisible(library);
+      Future<void> choosePostea() async {
+        await tester.tap(library);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(find.byType(ListTile), findsAtLeastNWidgets(6));
+        await tester.tap(
+          find.byKey(const ValueKey('vtt-board-postea_discarica')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+      }
+
+      await choosePostea();
+      final vtt = state.vttState as OculumVttState;
+      expect(vtt.scenes, hasLength(2));
+      expect(vtt.activeScene.bundledMap?.id, 'postea_discarica');
+      expect(vtt.activeScene.gridType, 'hex');
+      expect(vtt.activeScene.snapToGrid, isTrue);
+      expect(state.localMapTokens, isEmpty);
+      final sceneId = vtt.activeScene.id;
+      vtt.activeScene.drawings.add({'id': 'annotation'});
+      await choosePostea();
+      expect(vtt.scenes, hasLength(2));
+      expect(vtt.activeScene.id, sceneId);
+      expect(vtt.activeScene.drawings.single['id'], 'annotation');
+
+      final marker = <String, dynamic>{
+        'id': 'test-map-token',
+        'name': 'Pedina di prova',
+        'x': 0.41,
+        'y': 0.42,
+        'size': 64,
+        'shape': 'hex',
+        'visible': true,
+        'movementMaxMeters': 30,
+      };
+      state.updateOculumHomeUi(() => state.localMapTokens.add(marker));
+      await tester.pump();
+      final token = find.byKey(
+        const ValueKey('vtt_local_token_test-map-token'),
+      );
+      final mapScroll = find
+          .descendant(
+            of: find.byKey(state.sheetScrollKey('map') as Key),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.scrollUntilVisible(token, 150, scrollable: mapScroll);
+      await tester.pump();
+      final mapImage = find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName ==
+                oculumVttBundledMaps.first.assetPath,
+      );
+      expect(mapImage, findsOneWidget);
+      final board = tester.getSize(mapImage);
+      expect(board.width / board.height, closeTo(1586 / 992, 0.0001));
+      expect(tester.getSize(token).width, lessThan(35));
+      final startingX = marker['x'] as double;
+      await tester.drag(token, const Offset(68, 22));
+      await tester.pump();
+      expect(marker['x'], greaterThan(startingX));
+      final position = Offset(
+        (marker['x'] as num).toDouble() * board.width,
+        (marker['y'] as num).toDouble() * board.height,
+      );
+      final snapped = oculumVttSnapPoint(
+        position,
+        gridType: 'hex',
+        cellSize: vtt.activeScene.gridCellSizeForViewport(board.width),
+      );
+      expect((position - snapped).distance, lessThan(0.0001));
+
+      state.updateOculumHomeUi(() => state.modalitaMaster = false);
+      await tester.pump();
+      expect(library, findsNothing);
+      expect(tester.takeException(), isNull);
+      await closeFixture(tester, probe);
+    });
+
+    testWidgets('new and legacy scene snapshots accept the same fallback', (
+      tester,
+    ) async {
+      final (state, probe) = await mountFight(tester);
+      state.modalitaMaster = false;
+      final map = oculumVttBundledMaps.first;
+      final scene = map.createScene(english: true, sortOrder: 0);
+      final fallback = Uint8List.fromList(
+        img.encodeJpg(img.Image(width: 8, height: 5)),
+      );
+      final base64 = base64Encode(fallback);
+      final midpoint = base64.length ~/ 2;
+      for (final withBundle in [true, false]) {
+        final id = 'image-$withBundle';
+        final payload = scene.toJson(includePrivate: false);
+        if (!withBundle) payload.remove('imagePath');
+        probe.receiveRealtime('vtt_scene_shared', {
+          'senderRole': 'master',
+          'id': id,
+          'assetId': id,
+          'assetChunkCount': 2,
+          'snapshot': {'scene': payload},
+        });
+        final received = state.realtimeVisibleVttScene as OculumVttScene;
+        expect(received.bundledMap, withBundle ? map : isNull);
+        expect(received.gridType, 'hex');
+        for (final (index, data) in [
+          (1, base64.substring(midpoint)),
+          (0, base64.substring(0, midpoint)),
+        ]) {
+          probe.receiveRealtime('vtt_asset_chunk', {
+            'senderRole': 'master',
+            'id': id,
+            'assetId': id,
+            'chunkCount': 2,
+            'chunkIndex': index,
+            'data': data,
+          });
+        }
+        expect(state.realtimeVisibleVttImageBytes, orderedEquals(fallback));
+      }
+      await closeFixture(tester, probe);
+    });
+  });
+
   group('Oculum VTT geometry', () {
     const start = Offset.zero;
     const end = Offset(30, 40);
@@ -306,6 +534,37 @@ void main() {
         ),
         const Offset(24, 36),
       );
+    });
+
+    test('hex ruler and snapping use the rendered centres on all six axes', () {
+      const diameter = 28.0;
+      const radius = diameter / 2;
+      final horizontal = math.sqrt(3) * radius;
+      final neighbours = [
+        Offset(horizontal, 0),
+        Offset(horizontal / 2, radius * 1.5),
+        Offset(-horizontal / 2, radius * 1.5),
+        Offset(-horizontal, 0),
+        Offset(-horizontal / 2, -radius * 1.5),
+        Offset(horizontal / 2, -radius * 1.5),
+      ];
+      for (final target in neighbours) {
+        final snapped = oculumVttSnapPoint(
+          target + const Offset(0.5, -0.4),
+          gridType: 'hex',
+          cellSize: diameter,
+        );
+        expect((snapped - target).distance, lessThan(0.000001));
+        expect(
+          oculumVttDistanceCells(
+            Offset.zero,
+            snapped,
+            gridType: 'hex',
+            cellSize: diameter,
+          ),
+          closeTo(1, 0.000001),
+        );
+      }
     });
 
     test('keeps group translation inside the tightest map boundary', () {

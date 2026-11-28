@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:oculum/services/oculum_auth_service.dart';
 import 'package:oculum/services/oculum_auth_ui.dart';
 import 'package:oculum/services/oculum_cloud_save_service.dart';
@@ -16,6 +18,7 @@ class _FakeAuthBackend implements OculumAuthBackend {
   Object? launchError;
   int launchCount = 0;
   int signOutCount = 0;
+  Completer<bool>? launchConfirmation;
   Completer<void>? signOutConfirmation;
 
   @override
@@ -31,11 +34,13 @@ class _FakeAuthBackend implements OculumAuthBackend {
   }) async {
     launchCount++;
     if (launchError != null) throw launchError!;
+    final confirmation = launchConfirmation;
+    if (confirmation != null) return confirmation.future;
     return launchResult;
   }
 
-  void emit(OculumBackendAuthEvent event) {
-    user = event.user;
+  void emit(OculumBackendAuthEvent event, {bool updateCurrentUser = true}) {
+    if (updateCurrentUser) user = event.user;
     _events.add(event);
   }
 
@@ -412,6 +417,115 @@ void main() {
     await backend.close();
   });
 
+  test('annullare durante il controllo rete evita di aprire Google', () async {
+    final connection = Completer<bool>();
+    final backend = _FakeAuthBackend();
+    addTearDown(backend.close);
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () => connection.future,
+    );
+    addTearDown(auth.dispose);
+    await auth.initialize();
+
+    final attempt = auth.signInWithGoogle();
+    auth.cancelPendingSignIn();
+    connection.complete(true);
+
+    expect(await attempt, isFalse);
+    expect(backend.launchCount, 0);
+    expect(auth.state.errorMessage, contains('annullato'));
+  });
+
+  test(
+    'un esito del browser precedente lascia attivo il nuovo tentativo',
+    () async {
+      final oldLaunch = Completer<bool>();
+      final backend = _FakeAuthBackend()..launchConfirmation = oldLaunch;
+      addTearDown(backend.close);
+      final auth = OculumAuthService.forTesting(
+        backend: backend,
+        connectivityCheck: () async => true,
+        oauthTimeout: const Duration(minutes: 1),
+      );
+      addTearDown(auth.dispose);
+      await auth.initialize();
+
+      final oldAttempt = auth.signInWithGoogle();
+      await pumpEventQueue();
+      expect(backend.launchCount, 1);
+      auth.cancelPendingSignIn();
+      backend.launchConfirmation = null;
+      expect(await auth.retryLastSignIn(), isTrue);
+      expect(backend.launchCount, 2);
+      oldLaunch.completeError(StateError('Browser precedente chiuso'));
+
+      expect(await oldAttempt, isFalse);
+      expect(auth.canCancelSignIn, isTrue);
+      expect(auth.state.errorMessage, isNull);
+    },
+  );
+
+  testWidgets('una sessione Google tardiva dopo il timeout resta locale', (
+    tester,
+  ) async {
+    final backend = _FakeAuthBackend();
+    addTearDown(backend.close);
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+      oauthTimeout: const Duration(seconds: 1),
+    );
+    addTearDown(auth.dispose);
+    await auth.initialize();
+    expect(await auth.signInWithGoogle(), isTrue);
+    await tester.pump(const Duration(seconds: 1));
+    expect(auth.state.errorMessage, contains('non completato'));
+
+    backend.emit(
+      const OculumBackendAuthEvent(
+        OculumBackendAuthEventType.signedIn,
+        user: OculumBackendUser(id: 'late-user', provider: 'google'),
+      ),
+    );
+    await tester.pump();
+
+    expect(auth.state.isAuthenticated, isFalse);
+    expect(backend.signOutCount, 1);
+  });
+
+  test('un tentativo Google annullato conserva i rientri email', () async {
+    final backend = _FakeAuthBackend();
+    addTearDown(backend.close);
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    addTearDown(auth.dispose);
+    await auth.initialize();
+    expect(await auth.signInWithGoogle(), isTrue);
+    auth.cancelPendingSignIn();
+
+    const emailUser = OculumBackendUser(
+      id: 'linked-profile',
+      provider: 'email',
+      hasVerifiedEmail: true,
+      identityProviders: {'email', 'google'},
+    );
+    backend.emit(
+      const OculumBackendAuthEvent(
+        OculumBackendAuthEventType.signedIn,
+        user: emailUser,
+      ),
+    );
+    await pumpEventQueue();
+
+    expect(auth.state.userId, 'linked-profile');
+    expect(auth.state.isAuthenticated, isTrue);
+    expect(auth.hasVerifiedEmail, isTrue);
+    expect(backend.signOutCount, 0);
+  });
+
   test('provider non configurato non apre il browser', () async {
     final backend = _FakeAuthBackend();
     final auth = OculumAuthService.forTesting(
@@ -427,6 +541,112 @@ void main() {
     auth.dispose();
     await backend.close();
   });
+
+  test('legge solo le impostazioni pubbliche Google dal progetto', () async {
+    final client = MockClient((request) async {
+      expect(request.method, 'GET');
+      expect(
+        request.url.toString(),
+        'https://fixture.supabase.co/auth/v1/settings',
+      );
+      expect(request.headers['apikey'], 'sb_publishable_fixture');
+      expect(request.headers.containsKey('authorization'), isFalse);
+      expect(request.followRedirects, isFalse);
+      return http.Response('{"external":{"google":false}}', 200);
+    });
+    addTearDown(client.close);
+
+    expect(
+      await oculumGoogleOAuthExplicitlyDisabled(
+        projectUrl: Uri.parse('https://fixture.supabase.co'),
+        publishableKey: 'sb_publishable_fixture',
+        client: client,
+      ),
+      isTrue,
+    );
+  });
+
+  test('risposte sconosciute non bloccano Google', () async {
+    for (final (status, body) in [
+      (200, '{"external":{"google":true},"disable_signup":true}'),
+      (200, '{"external":{}}'),
+      (200, '{"external":{"google":null}}'),
+      (200, 'pagina temporanea'),
+      (503, '{"external":{"google":false}}'),
+    ]) {
+      final client = MockClient((_) async => http.Response(body, status));
+      addTearDown(client.close);
+      expect(
+        await oculumGoogleOAuthExplicitlyDisabled(
+          projectUrl: Uri.parse('https://fixture.supabase.co'),
+          publishableKey: 'sb_publishable_fixture',
+          client: client,
+        ),
+        isFalse,
+        reason: '$status $body',
+      );
+    }
+  });
+
+  test(
+    'il backend ferma OAuth prima del browser se Google è disabilitato',
+    () async {
+      var requests = 0;
+      await http.runWithClient(
+        () async {
+          final backend = SupabaseOculumAuthBackend(
+            projectUrl: Uri.parse('https://fixture.supabase.co'),
+            publishableKey: 'sb_publishable_fixture',
+          );
+          await expectLater(
+            backend.startOAuth(
+              OculumAuthProvider.google,
+              redirectTo: 'com.mich.oculum://login-callback',
+            ),
+            throwsA(
+              isA<AuthException>().having(
+                (error) => error.code,
+                'code',
+                'oculum_google_provider_disabled',
+              ),
+            ),
+          );
+        },
+        () => MockClient((request) async {
+          requests++;
+          return http.Response('{"external":{"google":false}}', 200);
+        }),
+      );
+      expect(requests, 1);
+    },
+  );
+
+  test(
+    'Google disabilitato spiega il blocco e mantiene disponibile email',
+    () async {
+      final backend = _FakeEmailBackend()
+        ..launchError = const AuthException(
+          'Google disabled',
+          code: 'oculum_google_provider_disabled',
+        );
+      addTearDown(backend.close);
+      final auth = OculumAuthService.forTesting(
+        backend: backend,
+        connectivityCheck: () async => true,
+      );
+      addTearDown(auth.dispose);
+      await auth.initialize();
+
+      expect(await auth.signInWithGoogle(), isFalse);
+      expect(auth.state.errorMessage, contains('Google non abilitato'));
+      expect(auth.isBusy, isFalse);
+      expect(
+        await auth.signInWithEmailPassword('user@example.com', 'pw'),
+        isTrue,
+      );
+      expect(auth.state.provider, 'email');
+    },
+  );
 
   test(
     'callback web conserva il percorso esatto e scarta codice e fragment',
@@ -473,6 +693,73 @@ void main() {
     expect(prefs.getString('oculum-local-fixture'), 'existing sheets');
     auth.dispose();
     await backend.close();
+  });
+
+  test(
+    'un evento precedente non scollega il profilo corrente da Google',
+    () async {
+      final backend = _FakeGoogleLinkBackend()
+        ..user = const OculumBackendUser(id: 'current-id', provider: 'email');
+      addTearDown(backend.close);
+      final auth = OculumAuthService.forTesting(
+        backend: backend,
+        connectivityCheck: () async => true,
+        oauthTimeout: const Duration(minutes: 1),
+      );
+      addTearDown(auth.dispose);
+      await auth.initialize();
+      expect(await auth.linkGoogle(), isTrue);
+      backend.emit(
+        const OculumBackendAuthEvent(
+          OculumBackendAuthEventType.tokenRefreshed,
+          user: OculumBackendUser(id: 'previous-id', provider: 'google'),
+        ),
+        updateCurrentUser: false,
+      );
+      await pumpEventQueue();
+
+      expect(auth.state.userId, 'current-id');
+      expect(auth.canCancelSignIn, isTrue);
+      expect(backend.signOutCount, 0);
+      backend.emit(
+        const OculumBackendAuthEvent(
+          OculumBackendAuthEventType.userUpdated,
+          user: OculumBackendUser(
+            id: 'current-id',
+            provider: 'email',
+            identityProviders: {'email', 'google'},
+          ),
+        ),
+      );
+      await pumpEventQueue();
+      expect(auth.hasGoogleIdentity, isTrue);
+      expect(auth.isBusy, isFalse);
+    },
+  );
+
+  test('il collegamento Google rifiuta un UUID corrente diverso', () async {
+    final backend = _FakeGoogleLinkBackend()
+      ..user = const OculumBackendUser(id: 'original-id', provider: 'email');
+    addTearDown(backend.close);
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    addTearDown(auth.dispose);
+    await auth.initialize();
+    expect(await auth.linkGoogle(), isTrue);
+
+    backend.emit(
+      const OculumBackendAuthEvent(
+        OculumBackendAuthEventType.signedIn,
+        user: OculumBackendUser(id: 'different-id', provider: 'google'),
+      ),
+    );
+    await pumpEventQueue();
+    expect(auth.state.isAuthenticated, isFalse);
+    expect(auth.state.userId, isNull);
+    expect(backend.signOutCount, 1);
+    expect(auth.state.errorMessage, contains('tentativo di accesso'));
   });
 
   test('assenza di rete mostra offline e non apre il browser', () async {

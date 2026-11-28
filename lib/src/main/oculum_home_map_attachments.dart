@@ -5251,14 +5251,15 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     programmaSalvataggio();
   }
 
+  bool get hasLocalVttMapArtwork =>
+      activeVttScene.bundledMap != null ||
+      activeVttScene.imageDataBase64.isNotEmpty ||
+      (!kIsWeb &&
+          mapImagePath.trim().isNotEmpty &&
+          File(mapImagePath.trim()).existsSync());
+
   Future<void> incollaImmagineMappa() async {
-    final hasExistingLocalMap =
-        mapMode == 'image' &&
-        (activeVttScene.imageDataBase64.isNotEmpty ||
-            (!kIsWeb &&
-                mapImagePath.trim().isNotEmpty &&
-                File(mapImagePath.trim()).existsSync()));
-    if (hasExistingLocalMap) {
+    if (mapMode == 'image' && hasLocalVttMapArtwork) {
       await incollaTokenImmagineMappa();
       return;
     }
@@ -5416,12 +5417,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
   }
 
   Future<void> incollaTokenImmagineMappa() async {
-    final hasMap =
-        activeVttScene.imageDataBase64.isNotEmpty ||
-        (!kIsWeb &&
-            mapImagePath.trim().isNotEmpty &&
-            File(mapImagePath.trim()).existsSync());
-    if (!hasMap) {
+    if (!hasLocalVttMapArtwork) {
       setState(() {
         risultato = t(
           'Prima genera o importa una mappa locale, poi incolla il token.',
@@ -7862,7 +7858,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       final snappedAnchor = oculumVttSnapPoint(
         anchorPoint,
         gridType: activeVttScene.gridType,
-        cellSize: activeVttScene.gridSizePx,
+        cellSize: activeVttScene.gridCellSizeForViewport(canvasWidth),
       );
       final requestedSnap = snappedAnchor - anchorPoint;
       var snapScale = 1.0;
@@ -7934,7 +7930,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
       child = Icon(Icons.person_pin_circle, color: color, size: size * 0.54);
     }
 
-    final border = max(3, size / 18).toDouble();
+    final compact = size < 28;
+    final border = compact ? size * 0.10 : max(3, size / 18).toDouble();
     return SizedBox(
       width: size,
       height: size,
@@ -7943,8 +7940,8 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.34),
-              blurRadius: 14,
-              spreadRadius: 1,
+              blurRadius: compact ? size * 0.26 : 14,
+              spreadRadius: compact ? 0.0 : 1,
             ),
           ],
         ),
@@ -7959,7 +7956,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                 child: ColoredBox(
                   color: color,
                   child: Padding(
-                    padding: const EdgeInsets.all(2),
+                    padding: EdgeInsets.all(compact ? size * 0.065 : 2),
                     child: ClipPath(
                       clipper: const HexagonClipper(),
                       child: child,
@@ -8155,8 +8152,13 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     double canvasWidth,
     double canvasHeight,
   ) {
-    final size = localMapTokenSize(token);
-    final boxWidth = max(size + 40, 92).toDouble();
+    final scene = activeVttScene;
+    final compact = scene.bundledMap != null;
+    final size = scene.tokenSizeForViewport(
+      localMapTokenSize(token),
+      canvasWidth,
+    );
+    final boxWidth = compact ? size : max(size + 40, 92).toDouble();
     final movementBudget = localMapTokenMovementBudget(token);
     final movementRemaining = localMapTokenMovementRemaining(token);
     final hasMovementLabel = movementBudget.isFinite && movementBudget > 0;
@@ -8173,7 +8175,9 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
           textScaler.scale(11) +
           (hasMovementLabel ? textScaler.scale(10) : 0),
     );
-    final boxHeight = size + infoHeight + 3 + (canDrag ? 24 : 0);
+    final boxHeight = compact
+        ? size
+        : size + infoHeight + 3 + (canDrag ? 24 : 0);
     final x = localMapTokenAxis(token, 'x');
     final y = localMapTokenAxis(token, 'y');
     final left = (x * canvasWidth - boxWidth / 2)
@@ -8218,86 +8222,96 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
             '$name${hasMovementLabel ? '\nMovimento: $movementLabel' : ''}\nTasto destro: turnistica e opzioni.',
             '$name${hasMovementLabel ? '\nMovement: $movementLabel' : ''}\nRight-click: initiative and options.',
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (canDrag)
-                SizedBox(
-                  height: 24,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton.filledTonal(
-                        tooltip: t('Rimpicciolisci token', 'Shrink token'),
-                        onPressed: () => resizeLocalMapToken(token, -8),
-                        constraints: const BoxConstraints.tightFor(
-                          width: 28,
-                          height: 22,
-                        ),
-                        padding: EdgeInsets.zero,
-                        iconSize: 14,
-                        icon: const Icon(Icons.remove),
-                      ),
-                      const SizedBox(width: 4),
-                      IconButton.filledTonal(
-                        tooltip: t('Ingrandisci token', 'Enlarge token'),
-                        onPressed: () => resizeLocalMapToken(token, 8),
-                        constraints: const BoxConstraints.tightFor(
-                          width: 28,
-                          height: 22,
-                        ),
-                        padding: EdgeInsets.zero,
-                        iconSize: 14,
-                        icon: const Icon(Icons.add),
-                      ),
-                    ],
-                  ),
-                ),
-              localMapTokenStateAvatar(token, size),
-              const SizedBox(height: 3),
-              Container(
-                width: boxWidth,
-                height: infoHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.74),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: color.withValues(alpha: 0.55)),
-                ),
-                child: Column(
+          child: compact
+              ? localMapTokenStateAvatar(token, size)
+              : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        height: 1,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (hasMovementLabel)
-                      Text(
-                        movementLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 10,
-                          height: 1,
-                          fontWeight: FontWeight.w900,
+                    if (canDrag)
+                      SizedBox(
+                        height: 24,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton.filledTonal(
+                              tooltip: t(
+                                'Rimpicciolisci token',
+                                'Shrink token',
+                              ),
+                              onPressed: () => resizeLocalMapToken(token, -8),
+                              constraints: const BoxConstraints.tightFor(
+                                width: 28,
+                                height: 22,
+                              ),
+                              padding: EdgeInsets.zero,
+                              iconSize: 14,
+                              icon: const Icon(Icons.remove),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton.filledTonal(
+                              tooltip: t('Ingrandisci token', 'Enlarge token'),
+                              onPressed: () => resizeLocalMapToken(token, 8),
+                              constraints: const BoxConstraints.tightFor(
+                                width: 28,
+                                height: 22,
+                              ),
+                              padding: EdgeInsets.zero,
+                              iconSize: 14,
+                              icon: const Icon(Icons.add),
+                            ),
+                          ],
                         ),
                       ),
-                    localMapTokenVitals(token, boxWidth - 8, color),
+                    localMapTokenStateAvatar(token, size),
+                    const SizedBox(height: 3),
+                    Container(
+                      width: boxWidth,
+                      height: infoHeight,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.74),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              height: 1,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (hasMovementLabel)
+                            Text(
+                              movementLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 10,
+                                height: 1,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          localMapTokenVitals(token, boxWidth - 8, color),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -8466,12 +8480,7 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
 
   Widget mapControlPanel() {
     final onlineSelected = mapMode == 'online';
-    final hasLocalImage =
-        !onlineSelected &&
-        (activeVttScene.imageDataBase64.isNotEmpty ||
-            (!kIsWeb &&
-                mapImagePath.trim().isNotEmpty &&
-                File(mapImagePath.trim()).existsSync()));
+    final hasLocalImage = !onlineSelected && hasLocalVttMapArtwork;
     return gothicPanel(
       borderColor: onlineSelected ? tertiaryColor : primaryColor,
       child: Column(
@@ -8655,7 +8664,10 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
     }
     final onlineUri = safeMapUri();
     final imagePath = mapImagePath.trim();
-    final imageFile = kIsWeb || imagePath.isEmpty ? null : File(imagePath);
+    final imageFile =
+        kIsWeb || imagePath.isEmpty || activeVttScene.bundledMap != null
+        ? null
+        : File(imagePath);
     final hasImage = imageFile != null && imageFile.existsSync();
     ImageProvider? embeddedImageProvider;
     final embedded = activeVttScene.imageDataBase64.trim();
@@ -8728,32 +8740,30 @@ extension _OculumHomeMapAttachments on _OculumHomePageState {
                           .withValues(alpha: 0.48),
                     ),
                   ),
-                  child: remoteSelected
-                      ? vttMapCanvas(
-                          width: constraints.maxWidth,
+                  child: LayoutBuilder(
+                    builder: (context, canvasConstraints) {
+                      final width = canvasConstraints.maxWidth;
+                      final height = canvasConstraints.maxHeight;
+                      if (remoteSelected) {
+                        return vttMapCanvas(
+                          width: width,
                           height: height,
                           imageProvider: remoteImageProvider,
                           sceneOverride: remoteScene,
                           readOnly: true,
-                        )
-                      : onlineSelected
-                      ? onlineMapViewer(onlineUri)
-                      : embeddedImageProvider != null
-                      ? vttMapCanvas(
-                          width: constraints.maxWidth,
-                          height: height,
-                          imageProvider: embeddedImageProvider,
-                        )
-                      : hasImage
-                      ? localImageMapViewer(
-                          imageFile,
-                          constraints.maxWidth,
-                          height,
-                        )
-                      : vttMapCanvas(
-                          width: constraints.maxWidth,
-                          height: height,
-                        ),
+                        );
+                      }
+                      if (onlineSelected) return onlineMapViewer(onlineUri);
+                      if (hasImage && embeddedImageProvider == null) {
+                        return localImageMapViewer(imageFile, width, height);
+                      }
+                      return vttMapCanvas(
+                        width: width,
+                        height: height,
+                        imageProvider: embeddedImageProvider,
+                      );
+                    },
+                  ),
                 ),
               );
             },

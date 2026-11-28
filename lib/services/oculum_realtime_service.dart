@@ -407,9 +407,9 @@ class OculumRealtimeService {
         channel.onBroadcast(
           event: eventName,
           callback: (payload) {
-            if (_channel == channel) {
+            if (_channel == channel && _generation == generation) {
               _incomingEvents = _incomingEvents.then(
-                (_) => _handleBroadcast(eventName, payload),
+                (_) => _handleBroadcast(eventName, payload, generation),
               );
             }
           },
@@ -423,7 +423,9 @@ class OculumRealtimeService {
       final subscribed = Completer<void>();
       _subscriptionReady = subscribed;
       channel.subscribe((status, error) {
-        if (_disposed || _channel != channel) return;
+        if (_disposed || _channel != channel || _generation != generation) {
+          return;
+        }
 
         switch (status) {
           case RealtimeSubscribeStatus.subscribed:
@@ -434,7 +436,11 @@ class OculumRealtimeService {
             _presenceRegistered = false;
             unawaited(() async {
               await _trackPresence();
-              if (_disposed || _channel != channel) return;
+              if (_disposed ||
+                  _channel != channel ||
+                  _generation != generation) {
+                return;
+              }
               if (!_presenceRegistered) {
                 if (!subscribed.isCompleted) {
                   subscribed.completeError(
@@ -488,8 +494,13 @@ class OculumRealtimeService {
       );
     } catch (error) {
       if (_disposed || generation != _generation) return;
+      final fallbackGeneration = generation + 1;
       await disconnect(notify: false);
-      if (_disposed || _roomAccountChanged) return;
+      if (_disposed ||
+          _roomAccountChanged ||
+          _generation != fallbackGeneration) {
+        return;
+      }
       if (_secureRoomId != null &&
           authenticatedRole != null &&
           _roomIdentityIsCurrent) {
@@ -594,6 +605,8 @@ class OculumRealtimeService {
     _idleClosing = false;
     _generation++;
     _sheetSendTail = Future<void>.value();
+    // A new connection can verify broadcasts independently of any stalled read.
+    _incomingEvents = Future<void>.value();
     final approvalCancelled = _approvalCancelled;
     final ready = _subscriptionReady;
     _subscriptionReady = null;
@@ -1430,7 +1443,9 @@ class OculumRealtimeService {
   ) async {
     final channel = _channel;
     final generation = _generation;
-    if (!isConnected || (channel == null && !_pollingFallback)) {
+    bool currentConnection() =>
+        _generation == generation && _channel == channel && isConnected;
+    if (!currentConnection()) {
       _safeStatus('Realtime non connesso.');
       return false;
     }
@@ -1447,13 +1462,11 @@ class OculumRealtimeService {
         }
         // A refresh started before a sheet switch may have registered the
         // previous identity. Finish registering the current identity first.
-        if (generation == _generation &&
+        if (currentConnection() &&
             _registeredIdentitySignature != _currentIdentitySignature) {
           await _trackPresence();
         }
-        if (!isConnected || generation != _generation || _channel != channel) {
-          return false;
-        }
+        if (!currentConnection()) return false;
         final unavailable = unavailableActiveSheetTag;
         if (unavailable != null &&
             (event == 'sheet_shared' &&
@@ -1466,14 +1479,11 @@ class OculumRealtimeService {
         }
       }
       if (event == 'session_note' || event == 'session_notes_snapshot') {
-        final generation = _generation;
         final encoded = await compute(
           oculumEncodeSheetTransfer,
           <String, dynamic>{'event': event, 'sheet': payload},
         );
-        if (_channel != channel || !isConnected || generation != _generation) {
-          return false;
-        }
+        if (!currentConnection()) return false;
         if (encoded.length > OculumSheetTransferAssembler.chunkSize) {
           final count =
               (encoded.length / OculumSheetTransferAssembler.chunkSize).ceil();
@@ -1486,11 +1496,7 @@ class OculumRealtimeService {
           final transferId =
               '${_presenceKey}_notes_${++_sheetTransferSequence}';
           for (var i = 0; i < count; i++) {
-            if (generation != _generation ||
-                _channel != channel ||
-                !isConnected) {
-              return false;
-            }
+            if (!currentConnection()) return false;
             final start = i * OculumSheetTransferAssembler.chunkSize;
             final end = (start + OculumSheetTransferAssembler.chunkSize).clamp(
               0,
@@ -1506,17 +1512,12 @@ class OculumRealtimeService {
             }
             await Future<void>.delayed(const Duration(milliseconds: 60));
           }
-          return generation == _generation &&
-              _channel == channel &&
-              isConnected;
+          return currentConnection();
         }
       }
       if (event == 'sheet_shared') {
-        final generation = _generation;
         final encoded = await compute(oculumEncodeSheetTransfer, payload);
-        if (_channel != channel || !isConnected || generation != _generation) {
-          return false;
-        }
+        if (!currentConnection()) return false;
         if (encoded.length > OculumSheetTransferAssembler.chunkSize) {
           final count =
               (encoded.length / OculumSheetTransferAssembler.chunkSize).ceil();
@@ -1528,11 +1529,7 @@ class OculumRealtimeService {
           }
           final transferId = '${_presenceKey}_${++_sheetTransferSequence}';
           for (var i = 0; i < count; i++) {
-            if (generation != _generation ||
-                _channel != channel ||
-                !isConnected) {
-              return false;
-            }
+            if (!currentConnection()) return false;
             final start = i * OculumSheetTransferAssembler.chunkSize;
             final end = (start + OculumSheetTransferAssembler.chunkSize).clamp(
               0,
@@ -1558,9 +1555,7 @@ class OculumRealtimeService {
               await Future<void>.delayed(const Duration(milliseconds: 60));
             }
           }
-          return generation == _generation &&
-              _channel == channel &&
-              isConnected;
+          return currentConnection();
         }
       }
       final retryChunk = event == 'sheet_shared_chunk';
@@ -1590,10 +1585,7 @@ class OculumRealtimeService {
                 );
           break;
         } on TimeoutException {
-          if (!retryChunk ||
-              attempt > 0 ||
-              _channel != channel ||
-              !isConnected) {
+          if (!retryChunk || attempt > 0 || !currentConnection()) {
             rethrow;
           }
           // A timed-out RPC may already have committed. Retrying only sheet
@@ -1601,11 +1593,12 @@ class OculumRealtimeService {
           _safeStatus('Blocco scheda lento: ritento la conferma una volta.');
         }
       }
-      if (_channel != channel || !isConnected) return false;
+      if (!currentConnection()) return false;
       if (response is String && response.isNotEmpty) return true;
       _safeStatus('Invio realtime non confermato.');
       return false;
     } catch (error) {
+      if (!currentConnection()) return false;
       if (error is PostgrestException &&
           error.code == '42501' &&
           error.message.contains('Sender sheet belongs')) {
@@ -1805,8 +1798,9 @@ class OculumRealtimeService {
   Future<void> _handleBroadcast(
     String event,
     Map<String, dynamic> payload,
+    int generation,
   ) async {
-    if (_disposed || !isConnected) return;
+    if (!isConnected || _generation != generation) return;
     final header = payload['payload'] is Map
         ? payload['payload'] as Map
         : payload;
@@ -1826,6 +1820,7 @@ class OculumRealtimeService {
           .maybeSingle()
           .timeout(const Duration(seconds: 10));
       if (!isConnected ||
+          _generation != generation ||
           _channel != channel ||
           record == null ||
           record['event'] != event ||
@@ -1837,6 +1832,9 @@ class OculumRealtimeService {
         'serverSequence': record['sequence'],
       });
     } catch (_) {
+      if (!isConnected || _generation != generation || _channel != channel) {
+        return;
+      }
       _safeStatus(
         'Evento in attesa di riconnessione: salvataggio locale conservato.',
       );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,6 +73,46 @@ void main() {
     expect(await normal.getItem(key: pkceKey), isNull);
     expect(await testProfile.getItem(key: pkceKey), 'test-verifier');
     expect(prefs.getString(pkceKey), 'unscoped-verifier');
+  });
+
+  test('cancelling OAuth removes only the verifier it prepared', () async {
+    final normal = OculumOAuthPkceStorage(
+      OculumSecurePkceStorage(namespace: key),
+    );
+    final testProfile = OculumSecurePkceStorage(namespace: otherProfile);
+    await testProfile.setItem(key: pkceKey, value: 'other-profile');
+    await normal.prepareOAuth(
+      () => normal.setItem(key: pkceKey, value: 'oauth-verifier'),
+    );
+    await normal.cancelOAuth();
+    expect(await normal.getItem(key: pkceKey), isNull);
+    expect(await testProfile.getItem(key: pkceKey), 'other-profile');
+
+    await normal.prepareOAuth(
+      () => normal.setItem(key: pkceKey, value: 'old-oauth-verifier'),
+    );
+    await normal.setItem(key: pkceKey, value: 'email-recovery-verifier');
+    await normal.cancelOAuth();
+    expect(await normal.getItem(key: pkceKey), 'email-recovery-verifier');
+  });
+
+  test('cancelled preparation cannot overwrite a newer verifier', () async {
+    final storage = OculumOAuthPkceStorage(
+      OculumSecurePkceStorage(namespace: key),
+    );
+    final resumeOldAttempt = Completer<void>();
+    final oldAttempt = storage.prepareOAuth(() async {
+      await resumeOldAttempt.future;
+      await storage.setItem(key: pkceKey, value: 'previous-verifier');
+    });
+    final oldFailure = expectLater(oldAttempt, throwsStateError);
+    await storage.cancelOAuth();
+    await storage.prepareOAuth(
+      () => storage.setItem(key: pkceKey, value: 'fresh-verifier'),
+    );
+    resumeOldAttempt.complete();
+    await oldFailure;
+    expect(await storage.getItem(key: pkceKey), 'fresh-verifier');
   });
 }
 

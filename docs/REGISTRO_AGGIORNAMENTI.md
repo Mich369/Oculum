@@ -1,5 +1,12 @@
 # Registro cumulativo per i giocatori
 
+## Mappe esagonali, Fight online e salvataggi cloud — 28 novembre 2026
+
+- In **Impostazioni → Account Oculum → Salvataggi cloud** puoi consultare copie distinte per PC, Telefono, Web e Origine sconosciuta. Salva una copia o scegline una da ripristinare. L’app verifica prima un backup locale.
+- Il Master trova sei mappe pronte in **Mappa → Luoghi e scene → Mappe pronte**. Le tavole hanno percorsi ampi, pedine su esagoni e 2 metri per passo all’apertura. Scala, griglia, muri, porte e visibilità sono modificabili.
+- La riconnessione nei Fight separa gli invii delle diverse connessioni. Una conferma o un errore in ritardo resta associato al collegamento che lo ha originato. La disconnessione richiesta chiude anche un passaggio a HTTPS in corso.
+- L’annullamento dell’accesso chiude il tentativo corrente e lascia indipendenti i tentativi successivi. Il collegamento a Google verifica l’identità corrente. Se il server segnala Google disattivato, l’accesso via email rimane disponibile.
+
 ## Nove sfondi Expressive Ink e Lenti allineate — 28 novembre 2026
 
 - Nuove tavole desktop per Cuciture del ritorno, Rosa cattedrale, Erbario sepolto, Reliquia della risacca, Principe slime, Spine del bastione, Postea, Nastri del voto e Natura.

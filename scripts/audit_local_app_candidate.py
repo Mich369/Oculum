@@ -66,6 +66,15 @@ def audit(root, expected_commit):
         for required in [executable, "flutter_windows.dll", "data/app.so", "data/icudtl.dat"]:
             if required.casefold() not in expected:
                 raise ValueError(f"Missing runtime component: {folder}/{required}")
+        # Earlier candidates kept these archives at the root.
+        archive_paths = [
+            records[key][0]
+            for name in (f"pc/{archive}", archive)
+            if (key := name.casefold()) in records
+        ]
+        if len(archive_paths) != 1:
+            raise ValueError(f"Missing or ambiguous Windows archive: {archive}")
+        archive = archive_paths[0]
         with zipfile.ZipFile(root / archive) as zipped:
             names = set()
             for member in zipped.infolist():
@@ -119,6 +128,9 @@ def audit(root, expected_commit):
         "androidApks": apks,
         "androidArtifact": manifest.get("androidArtifact"),
         "windowsAndTestSeparated": True,
+        "pcAndPhonePackagesSeparated": all(
+            item["path"].casefold().startswith("pc/") for item in archives
+        ) and all(apk.casefold().startswith("telefono/") for apk in apks),
         "cumulativeLogMatchesEveryPackage": True,
         "publicDistributionComplete": False,
         "verificationScope": "Local package integrity; no native launch, signing validation or live online test",

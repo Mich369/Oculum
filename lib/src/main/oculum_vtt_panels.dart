@@ -138,6 +138,13 @@ extension _OculumVttPanels on _OculumHomePageState {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
+              if (vttCanManageMap && !remote)
+                OutlinedButton.icon(
+                  key: const ValueKey('vtt-bundled-maps'),
+                  onPressed: showBundledVttMapsDialog,
+                  icon: const Icon(Icons.hexagon_outlined),
+                  label: Text(t('Mappe pronte', 'Battle maps')),
+                ),
               Chip(
                 avatar: const Icon(Icons.place, size: 16),
                 label: Text(active.collectionName),
@@ -179,6 +186,49 @@ extension _OculumVttPanels on _OculumHomePageState {
         ],
       ),
     );
+  }
+
+  Future<void> showBundledVttMapsDialog() async {
+    if (!vttCanManageMap || vttShowingRemoteScene) return;
+    final campaignId = activeCampaignId;
+    final selected = await showDialog<OculumVttBundledMap>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('Mappe pronte', 'Battle maps')),
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final map in oculumVttBundledMaps)
+                  ListTile(
+                    key: ValueKey('vtt-board-${map.id}'),
+                    leading: SizedBox(
+                      width: 72,
+                      child: Image.asset(
+                        map.assetPath,
+                        fit: BoxFit.contain,
+                        cacheWidth: 144,
+                      ),
+                    ),
+                    title: Text(map.name(english: linguaInglese)),
+                    onTap: () => Navigator.pop(dialogContext, map),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null || activeCampaignId != campaignId) return;
+    openBundledVttMap(selected);
   }
 
   Future<void> showCreateVttSceneDialog({bool duplicate = false}) async {

@@ -390,6 +390,31 @@ Map<String, dynamic> _compareOculumSheetSnapshots(
   };
 }
 
+@visibleForTesting
+Map<String, dynamic> oculumCloudSaveForAccount(
+  Map<String, dynamic> savePayload,
+  String accountId,
+) {
+  final journal = savePayload['personalMarketPending'];
+  final marketJournal = journal is Map ? journal : const {};
+  final ownJournal = <String, dynamic>{
+    for (final entry in marketJournal.entries)
+      if (entry.key is String &&
+          entry.value is Map &&
+          entry.value['requesterUserId'] == accountId &&
+          entry.value['privateMaster'] != true)
+        entry.key as String: entry.value,
+  };
+  final filtered =
+      savePayload.containsKey('privateMasterMarkets') ||
+          ownJournal.length != marketJournal.length
+      ? (Map<String, dynamic>.of(savePayload)
+          ..remove('privateMasterMarkets')
+          ..['personalMarketPending'] = ownJournal)
+      : savePayload;
+  return oculumSessionMaterialCloudSaveForMaster(filtered, accountId);
+}
+
 extension _OculumHomePersistence on _OculumHomePageState {
   static const String _progressJournalPreferenceKey =
       'oculum_progress_journal_v1';
@@ -4238,6 +4263,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     SharedPreferences prefs, {
     bool force = false,
     Future<String?>? currentRead,
+    bool preserveAnyData = false,
   }) async {
     final now = DateTime.now();
     final lastRotation = ultimaRotazioneBackupAt;
@@ -4250,7 +4276,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     final current =
         await (currentRead ??
             _readSaveBlob(prefs, _OculumHomePageState.saveKey));
-    if (!await _rawLooksLikeMeaningfulSave(current)) return;
+    if (current == null || current.isEmpty) return;
+    if (!preserveAnyData && !await _rawLooksLikeMeaningfulSave(current)) return;
 
     final backup1 = await _readSaveBlob(prefs, _backupSaveKey1);
     if (backup1 == current) return;
@@ -4262,7 +4289,7 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (backup1 != null && backup1.isNotEmpty) {
       await _writeSaveBlob(prefs, _backupSaveKey2, backup1);
     }
-    await _writeSaveBlob(prefs, _backupSaveKey1, current!);
+    await _writeSaveBlob(prefs, _backupSaveKey1, current);
     ultimaRotazioneBackupAt = now;
   }
 
@@ -4287,8 +4314,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
   Future<({bool saved, String encoded, String contentSignature})>
   _scriviSalvataggioProtetto(
     SharedPreferences prefs,
-    Map<String, dynamic> data,
-  ) async {
+    Map<String, dynamic> data, {
+    bool Function()? stillAuthorized,
+  }) async {
     if (salvataggioBloccatoPerErrore) {
       debugPrint(
         'Scrittura salvataggio bloccata per proteggere i dati vecchi.',
@@ -4331,14 +4359,28 @@ extension _OculumHomePersistence on _OculumHomePageState {
     }
 
     await _creaBackupDelSalvataggioCorrente(prefs, currentRead: previousRead);
-    if (diarySignature.isNotEmpty &&
-        diarySignature != ultimoArchivioDiarioFirma) {
+    Future<void> updateDiaryArchive() async {
+      if (diarySignature.isEmpty ||
+          diarySignature == ultimoArchivioDiarioFirma) {
+        return;
+      }
       await _buildDiaryArchiveFromRecentSaves(
         prefs,
         currentData: data,
         currentRaw: previous,
       );
       ultimoArchivioDiarioFirma = diarySignature;
+    }
+
+    if (stillAuthorized == null) {
+      await updateDiaryArchive();
+    }
+    if (stillAuthorized?.call() == false) {
+      return (
+        saved: false,
+        encoded: encoded,
+        contentSignature: contentSignature,
+      );
     }
     await _writeSaveBlob(prefs, _pendingSaveKey, encoded);
     final writeOk = await _writeSaveBlob(
@@ -4376,6 +4418,9 @@ extension _OculumHomePersistence on _OculumHomePageState {
     ultimoSalvataggioFirma = '${encoded.length}:$dataRevision';
     ultimoSalvataggioContenutoFirma = contentSignature;
     ultimoRawSalvataggioConfermato = verified;
+    if (stillAuthorized?.call() == true) {
+      await updateDiaryArchive();
+    }
     return (saved: true, encoded: encoded, contentSignature: contentSignature);
   }
 
@@ -4884,25 +4929,8 @@ extension _OculumHomePersistence on _OculumHomePageState {
     if (!oculumUsesIsolatedSaveProfile &&
         authState.canSyncToCloud &&
         authState.userId != null) {
-      final marketJournal =
-          savePayload['personalMarketPending']
-              as Map<String, Map<String, dynamic>>;
-      final cloudMarketJournal = <String, Map<String, dynamic>>{
-        for (final entry in marketJournal.entries)
-          if (entry.value['requesterUserId'] == authState.userId &&
-              entry.value['privateMaster'] != true)
-            entry.key: entry.value,
-      };
-      final needsMarketFilter =
-          savePayload.containsKey('privateMasterMarkets') ||
-          cloudMarketJournal.length != marketJournal.length;
-      final cloudSafePayload = needsMarketFilter
-          ? (Map<String, dynamic>.of(savePayload)
-              ..remove('privateMasterMarkets')
-              ..['personalMarketPending'] = cloudMarketJournal)
-          : savePayload;
-      final cloudPayload = oculumSessionMaterialCloudSaveForMaster(
-        cloudSafePayload,
+      final cloudPayload = oculumCloudSaveForAccount(
+        savePayload,
         authState.userId!,
       );
       unawaited(
@@ -4948,12 +4976,31 @@ extension _OculumHomePersistence on _OculumHomePageState {
   }
 
   Future<bool> importaBackupCompletoProtetto(
-    Map<String, dynamic> backup,
-  ) async {
-    if (!_saveDataLooksMeaningful(backup)) return false;
+    Map<String, dynamic> backup, {
+    bool Function()? stillAuthorized,
+  }) async {
+    bool canRestore() => mounted && (stillAuthorized?.call() ?? true);
+    if (!canRestore() || !_saveDataLooksMeaningful(backup)) return false;
     await forzaSalvataggioImmediato(soloLocale: true);
+    if (!canRestore()) return false;
     final prefs = await _prefs();
-    await _creaBackupDelSalvataggioCorrente(prefs, force: true);
+    if (!canRestore()) return false;
+    final currentRead = _readSaveBlob(prefs, _OculumHomePageState.saveKey);
+    await _creaBackupDelSalvataggioCorrente(
+      prefs,
+      force: true,
+      currentRead: currentRead,
+      preserveAnyData: stillAuthorized != null,
+    );
+    if (stillAuthorized != null) {
+      final current = await currentRead;
+      if (current != null &&
+          current.isNotEmpty &&
+          await _readSaveBlob(prefs, _backupSaveKey1) != current) {
+        return false;
+      }
+    }
+    if (!canRestore()) return false;
     final imported = _oculumVttDeepMap(backup)
       ..remove('oculumBackup')
       ..remove('versioneBackup')
@@ -4963,11 +5010,35 @@ extension _OculumHomePersistence on _OculumHomePageState {
     imported['savedAt'] = DateTime.now().toIso8601String();
     salvataggioBloccatoPerErrore = false;
     ultimoSalvataggioContenutoFirma = '';
-    final written = await _scriviSalvataggioProtetto(prefs, imported);
+    final written = await _scriviSalvataggioProtetto(
+      prefs,
+      imported,
+      stillAuthorized: stillAuthorized != null ? canRestore : null,
+    );
     if (!written.saved) return false;
     await caricaDati(allowBackupRecovery: true);
     return true;
   }
+
+  Future<Map<String, dynamic>?> leggiBackupLocalePerCloud(
+    String accountId,
+    bool Function() stillAuthorized,
+  ) async {
+    if (!mounted || !datiCaricati || !stillAuthorized()) return null;
+    salvaSchedaCorrenteInMemoria();
+    saveActiveCampaignInMemory();
+    final local = datiSalvataggioJson(revision: salvataggioRevisione);
+    if (!_saveDataLooksMeaningful(local)) return null;
+    return oculumCloudSaveForAccount(local, accountId);
+  }
+
+  Future<bool> ripristinaBackupCloud(
+    Map<String, dynamic> payload,
+    bool Function() stillAuthorized,
+  ) => importaBackupCompletoProtetto(
+    payload,
+    stillAuthorized: stillAuthorized,
+  );
 
   Future<void> caricaDati({bool allowBackupRecovery = true}) async {
     final loadWatch = Stopwatch()..start();

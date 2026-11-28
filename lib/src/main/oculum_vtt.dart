@@ -7,6 +7,80 @@ const int oculumVttMaxScenes = 200;
 const int oculumVttMaxSceneElements = 5000;
 const int oculumVttMaxFogOperations = 2000;
 
+class OculumVttBundledMap {
+  const OculumVttBundledMap(this.id, this.nameIt, this.nameEn);
+
+  final String id;
+  final String nameIt;
+  final String nameEn;
+
+  static const double referenceWidth = 640;
+  static const double aspectRatio = 1586 / 992;
+  static const String _marker = 'oculum-board:';
+
+  String get imagePath => '$_marker$id';
+  String get assetPath => 'assets/oculum/vtt_maps/$id.webp';
+  String name({required bool english}) => english ? nameEn : nameIt;
+
+  static OculumVttBundledMap? fromImagePath(String path) {
+    if (!path.startsWith(_marker)) return null;
+    for (final map in oculumVttBundledMaps) {
+      if (map.imagePath == path) return map;
+    }
+    return null;
+  }
+
+  OculumVttScene createScene({required bool english, required int sortOrder}) {
+    final title = name(english: english);
+    return OculumVttScene(
+      id: oculumVttGenerateId('scene'),
+      name: title,
+      collectionId: 'oculum-bundled-maps',
+      collectionName: english ? 'Battle maps' : 'Mappe di battaglia',
+      imagePath: imagePath,
+      imageName: title,
+      category: english ? 'Battle map' : 'Mappa di battaglia',
+      sortOrder: sortOrder,
+      gridType: 'hex',
+      gridSizePx: 28,
+      distancePerCell: 2,
+      snapToGrid: true,
+      showCoordinates: false,
+      widthMeters: 52.8,
+      heightMeters: 52.8 / aspectRatio,
+    );
+  }
+}
+
+const oculumVttBundledMaps = <OculumVttBundledMap>[
+  OculumVttBundledMap(
+    'postea_discarica',
+    'Discarica solare di Postea',
+    'Solar scrapyard of Postea',
+  ),
+  OculumVttBundledMap(
+    'rovine_lunari',
+    'Rovine del santuario lunare',
+    'Lunar sanctuary ruins',
+  ),
+  OculumVttBundledMap('dungeon_indaco', 'Dungeon indaco', 'Indigo dungeon'),
+  OculumVttBundledMap(
+    'oro_marmo_bianco',
+    'Dungeon d’oro e marmo bianco',
+    'Gold and white marble dungeon',
+  ),
+  OculumVttBundledMap(
+    'pietra_nera',
+    'Dungeon di pietra nera',
+    'Black stone dungeon',
+  ),
+  OculumVttBundledMap(
+    'radura_elementale',
+    'Radura della Foresta Elementale',
+    'Elemental Forest clearing',
+  ),
+];
+
 /// Lightweight scene updates reuse an already transferred image. A new scene,
 /// URL, file or embedded image must never retain the previous map by accident.
 bool oculumVttKeepReceivedImage({
@@ -340,6 +414,31 @@ class OculumVttScene {
   Map<String, dynamic> sharedData;
   Map<String, dynamic> extra;
 
+  OculumVttBundledMap? get bundledMap =>
+      OculumVttBundledMap.fromImagePath(imagePath);
+
+  Size boardSizeForViewport(Size viewport) {
+    if (bundledMap == null) return viewport;
+    final width = min(
+      viewport.width,
+      viewport.height * OculumVttBundledMap.aspectRatio,
+    );
+    return Size(width, width / OculumVttBundledMap.aspectRatio);
+  }
+
+  double gridCellSizeForViewport(double width) {
+    final cell = gridSizePx.clamp(12.0, 512.0).toDouble();
+    return bundledMap == null || !width.isFinite || width <= 0
+        ? cell
+        : cell * width / OculumVttBundledMap.referenceWidth;
+  }
+
+  double tokenSizeForViewport(double storedSize, double width) {
+    if (bundledMap == null) return storedSize;
+    final sizeInCells = (storedSize / 64).clamp(0.5, 1.7);
+    return max(6.0, gridCellSizeForViewport(width) * 0.8 * sizeInCells);
+  }
+
   factory OculumVttScene.empty({
     String name = 'Scena principale',
     String collectionName = 'Luogo principale',
@@ -495,7 +594,7 @@ class OculumVttScene {
       'name': name,
       'collectionId': collectionId,
       'collectionName': collectionName,
-      'imagePath': includePrivate ? imagePath : '',
+      'imagePath': includePrivate ? imagePath : bundledMap?.imagePath ?? '',
       'imageName': imageName,
       'imageDataBase64': includePrivate ? imageDataBase64 : '',
       'mapUrl': mapUrl,
@@ -813,13 +912,11 @@ double oculumVttDistanceCells(
   final dx = (end.dx - start.dx).abs() / safeCell;
   final dy = (end.dy - start.dy).abs() / safeCell;
   if (gridType == 'hex') {
-    final q1 = (sqrt(3) / 3 * start.dx - 1 / 3 * start.dy) / safeCell;
-    final r1 = (2 / 3 * start.dy) / safeCell;
-    final q2 = (sqrt(3) / 3 * end.dx - 1 / 3 * end.dy) / safeCell;
-    final r2 = (2 / 3 * end.dy) / safeCell;
-    final dq = q2 - q1;
-    final dr = r2 - r1;
-    final ds = -(q2 + r2) - (-(q1 + r1));
+    final radius = safeCell / 2;
+    final delta = end - start;
+    final dq = (sqrt(3) * delta.dx - delta.dy) / (3 * radius);
+    final dr = 2 * delta.dy / (3 * radius);
+    final ds = -dq - dr;
     return max(dq.abs(), max(dr.abs(), ds.abs()));
   }
   if (gridType != 'square') return sqrt(dx * dx + dy * dy);
@@ -917,11 +1014,10 @@ Offset oculumVttSnapPoint(
 }) {
   final safeCell = max(1.0, cellSize);
   if (gridType == 'hex') {
-    final q = (sqrt(3) / 3 * point.dx - 1 / 3 * point.dy) / safeCell;
-    final r = (2 / 3 * point.dy) / safeCell;
-    var x = q;
-    var z = r;
-    var y = -x - z;
+    final radius = safeCell / 2;
+    final x = (sqrt(3) * point.dx - point.dy) / (3 * radius);
+    final z = 2 * point.dy / (3 * radius);
+    final y = -x - z;
     var rx = x.roundToDouble();
     var ry = y.roundToDouble();
     var rz = z.roundToDouble();
@@ -935,7 +1031,7 @@ Offset oculumVttSnapPoint(
     } else {
       rz = -rx - ry;
     }
-    return Offset(safeCell * sqrt(3) * (rx + rz / 2), safeCell * 1.5 * rz);
+    return Offset(radius * sqrt(3) * (rx + rz / 2), radius * 1.5 * rz);
   }
   if (gridType != 'square') return point;
   return Offset(

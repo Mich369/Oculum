@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:oculum/services/oculum_account_profile.dart';
 import 'package:oculum/services/oculum_auth_service.dart';
+import 'package:oculum/services/oculum_cloud_save_service.dart';
+import 'package:oculum/services/oculum_cloud_save_ui.dart';
+import 'package:oculum/services/oculum_save_profile.dart';
 
 class OculumPasswordRecoveryHost extends StatefulWidget {
   const OculumPasswordRecoveryHost({
@@ -200,7 +203,37 @@ class _OculumPasswordRecoveryDialogState
 }
 
 class OculumAuthPanel extends StatelessWidget {
-  const OculumAuthPanel({super.key});
+  const OculumAuthPanel({
+    super.key,
+    this.readLocalCloudBackup,
+    this.restoreLocalCloudBackup,
+  });
+
+  final OculumReadCloudBackup? readLocalCloudBackup;
+  final OculumRestoreCloudBackup? restoreLocalCloudBackup;
+
+  void _showCloudSaves(
+    BuildContext context,
+    OculumAuthService auth,
+    String accountId,
+  ) {
+    if (auth.isBusy ||
+        !auth.state.canSyncToCloud ||
+        auth.state.userId != accountId) {
+      return;
+    }
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => OculumCloudSavesDialog(
+        auth: auth,
+        cloud: OculumCloudSaveService.instance,
+        accountId: accountId,
+        readLocalBackup: readLocalCloudBackup!,
+        restoreLocalBackup: restoreLocalCloudBackup!,
+      ),
+    );
+  }
 
   Future<void> _confirmSignOut(
     BuildContext context,
@@ -344,6 +377,19 @@ class OculumAuthPanel extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    if (!oculumUsesIsolatedSaveProfile &&
+                        readLocalCloudBackup != null &&
+                        restoreLocalCloudBackup != null &&
+                        auth.isSupabaseReady &&
+                        state.canSyncToCloud &&
+                        state.userId != null)
+                      OutlinedButton.icon(
+                        onPressed: auth.isBusy
+                            ? null
+                            : () => _showCloudSaves(context, auth, state.userId!),
+                        icon: const Icon(Icons.folder_outlined),
+                        label: const Text('Salvataggi cloud'),
+                      ),
                     if (!state.isAuthenticated)
                       OutlinedButton.icon(
                         onPressed: auth.isBusy ? null : auth.continueAsGuest,
