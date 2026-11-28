@@ -24,6 +24,7 @@ import '../widgets/oculum_lite_ink_finishes.dart';
 import '../widgets/oculum_lite_merchant_greeting.dart';
 import '../widgets/oculum_lite_routes.dart';
 import '../widgets/oculum_lite_rest_panel.dart';
+import '../widgets/oculum_lunar_prologue.dart';
 import '../widgets/oculum_rl_merchant.dart';
 
 const liteHeroLabels = {
@@ -60,7 +61,13 @@ const liteHeroLabels = {
   LiteHero.demoneMinore: 'Demone Minore',
   LiteHero.demoneIntermedio: 'Demone Intermedio',
   LiteHero.demoneMaggiore: 'Demone Maggiore Prediletto',
-  LiteHero.diavolo: 'Diavolo del Patto',
+  LiteHero.diavolo: 'Diavolo delle Cinque Fiamme',
+  LiteHero.ragnoSaldatore: 'Ragno Saldatore',
+  LiteHero.rasvyr: 'Rasvyr',
+  LiteHero.lupoDiVaitern: 'Lupo Lunare di Vaitern',
+  LiteHero.pysciwarden: 'Pysciwarden',
+  LiteHero.lusierTre: 'Lusier III',
+  LiteHero.fabbro: 'Fabbro',
 };
 const liteWeaponLabels = {
   LiteWeapon.boomerang: 'Boomerang in legno',
@@ -102,6 +109,9 @@ const _weaponDetails = {
   LiteWeapon.fucileScostubandito:
       '+5 Danni · tiro da 12 m o calcio del fucile da vicino',
 };
+String _gearDetail(LiteWeapon weapon) =>
+    _weaponDetails[weapon] ??
+    '+${weapon.damageBonus} Danni · ${weapon.technique}';
 const _difficultyLabels = {
   LiteDifficulty.moltoFacile: 'Molto facile',
   LiteDifficulty.facile: 'Facile',
@@ -161,7 +171,12 @@ class _OculumLitePageState extends State<OculumLitePage>
   LiteWeapon get _startingWeapon => _hero.startingWeapon(_weapon);
   LiteDifficulty _difficulty = LiteDifficulty.medio;
   LiteBiome _biome = LiteBiome.campo;
-  List<LiteBiome> _startOptions = LiteBiome.offers(0);
+  LiteCompanion? _starterPet;
+  List<LiteCompanion> get _starterPets => LitePets.starterOffers(
+    _progress.discoveredPets,
+    _biome,
+    int.tryParse(_seed.text) ?? 0,
+  );
   OculumLiteAppearance _look = const OculumLiteAppearance();
   LiteInkFinish _inkFinish = LiteInkFinish.canonica;
   OculumLiteAppearance get _selectedLook =>
@@ -308,6 +323,7 @@ class _OculumLitePageState extends State<OculumLitePage>
           observed.unlockedHeroes,
           pets: observed.discoveredPets,
           slimeCounters: observed.slimeCounters,
+          milestones: observed.milestoneFloors,
         );
         var progressSaveFailed = false;
         try {
@@ -316,7 +332,8 @@ class _OculumLitePageState extends State<OculumLitePage>
           if (progress.earned > 0 ||
               progress.unlockedHeroes.isNotEmpty ||
               progress.discoveredPets.isNotEmpty ||
-              progress.slimeKills > 0) {
+              progress.slimeKills > 0 ||
+              progress.milestoneFloors.isNotEmpty) {
             await store.writeProgress(progress);
           }
         } on Object {
@@ -327,10 +344,30 @@ class _OculumLitePageState extends State<OculumLitePage>
         if (mounted &&
             (!identical(progress, _progress) ||
                 _progressSaveFailed != progressSaveFailed)) {
+          final rewards = liteMilestoneRewards
+              .where(
+                (reward) =>
+                    progress.unlocked(reward) && !_progress.unlocked(reward),
+              )
+              .toList();
           setState(() {
             _progress = progress;
             _progressSaveFailed = progressSaveFailed;
           });
+          if (rewards.isNotEmpty) {
+            final first = rewards.first;
+            final label = first.weapon?.label ?? liteHeroLabels[first.hero]!;
+            final count = rewards.length;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  count == 1
+                      ? 'Sbloccato: $label'
+                      : '$count premi sbloccati · $label e altri',
+                ),
+              ),
+            );
+          }
         }
       });
       _writes = task.then<void>((_) {}, onError: (Object _, StackTrace _) {});
@@ -369,7 +406,7 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   void _saveInventoryChange(bool Function() change) {
-    if (!change()) return;
+    if (_active?.run.soloOpenFrozen == true || !change()) return;
     setState(() => _checkpointMessage = null);
     unawaited(_save());
   }
@@ -482,14 +519,11 @@ class _OculumLitePageState extends State<OculumLitePage>
       _seed.text = (previous?.run.seed ?? Random().nextInt(0x7fffffff))
           .toString();
       _hero = previous?.run.hero ?? LiteHero.evasore;
-      _weapon = LiteWeapon.starters.contains(previous?.startingWeapon)
+      _weapon = _progress.startingWeapons.contains(previous?.startingWeapon)
           ? previous!.startingWeapon
           : LiteWeapon.arco;
-      _startOptions = LiteBiome.offers(
-        int.parse(_seed.text),
-        include: previous?.startingBiome,
-      );
-      _biome = _startOptions.first;
+      _biome = LiteBiome.startingZone(int.parse(_seed.text));
+      _starterPet = null;
       _difficulty = previous?.run.difficulty ?? LiteDifficulty.medio;
       final wasDuplicator = previous?.run.hero == LiteHero.duplicatore;
       _name.text = wasDuplicator ? previous!.name : 'Duplicatore';
@@ -535,6 +569,10 @@ class _OculumLitePageState extends State<OculumLitePage>
       return;
     }
     if (!mounted) return;
+    if (_hero == LiteHero.cavaliereLunare) {
+      await showOculumLunarPrologue(context);
+      if (!mounted) return;
+    }
     _slots[index] = OculumLiteSaveSlot(
       run: LiteRun(
         seed: seed,
@@ -555,6 +593,9 @@ class _OculumLitePageState extends State<OculumLitePage>
       startingWeapon: _startingWeapon,
       startingBiome: _biome,
     );
+    if (_starterPet case final pet? when _starterPets.contains(pet)) {
+      _slots[index]!.run.bringStarterPet(pet);
+    }
     if (memory != null) _slots[index]!.run.carryRestMemory(memory);
     final saved = await _save(index);
     if (!mounted) return;
@@ -730,7 +771,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       run.canOpenShop,
       run.arrows,
       run.reloading,
-      run.openCooldown.ceil(),
+      run.openRoomsRemaining(),
+      run.soloOpenFrozen,
       run.weaponArtCooldown.ceil(),
       run.banditRounds,
       run.banditDodgeReady,
@@ -757,6 +799,7 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   void _clearMovement() {
+    _active?.run.setAttackHeld(false);
     _held.clear();
     _touchDirection = const Point(0, 0);
     _pointerAiding = false;
@@ -802,7 +845,9 @@ class _OculumLitePageState extends State<OculumLitePage>
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.keyF) {
       if (event is KeyUpEvent || event is KeyDownEvent) {
-        setState(() => run.setBlocking(event is KeyDownEvent && !_paused));
+        if (event is KeyUpEvent || !run.soloOpenFrozen) {
+          setState(() => run.setBlocking(event is KeyDownEvent && !_paused));
+        }
       }
       return KeyEventResult.handled;
     }
@@ -841,6 +886,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       return KeyEventResult.handled;
     }
     if (_paused || run.shopOpen || run.finished) return KeyEventResult.ignored;
+    if (run.soloOpenFrozen) return KeyEventResult.handled;
     final point = _targetFor(run);
     if (key == LogicalKeyboardKey.shiftLeft ||
         key == LogicalKeyboardKey.shiftRight) {
@@ -861,6 +907,9 @@ class _OculumLitePageState extends State<OculumLitePage>
       _saveInventoryChange(() => run.slimeDash(point));
     } else if (key == LogicalKeyboardKey.keyV) {
       _saveInventoryChange(() => run.special(point));
+    } else if (key == LogicalKeyboardKey.keyB &&
+        run.hero == LiteHero.lusierTre) {
+      _saveInventoryChange(run.callSolarRetinue);
     } else if (key == LogicalKeyboardKey.keyB &&
         run.hero == LiteHero.scostubandito) {
       _saveInventoryChange(() => run.throwBanditBomb(point));
@@ -926,12 +975,30 @@ class _OculumLitePageState extends State<OculumLitePage>
       _saveInventoryChange(run.interact);
       return;
     }
-    if (run.canChooseActTwo) {
+    if (run.canSpeakToVampire()) {
       _togglePause();
-      final realm = await chooseLiteSecondAct(context);
+      final pact = await showLiteVampirePact(context);
       if (!mounted) return;
+      if (pact != null) _saveInventoryChange(() => run.acceptVampirePact(pact));
       _togglePause();
-      if (realm != null) _saveInventoryChange(() => run.enterSecondAct(realm));
+      return;
+    }
+    if (run.canSpeakToPetTrader()) {
+      _togglePause();
+      final trade = await showLitePetTrader(context, run);
+      if (!mounted) return;
+      if (trade != null)
+        _saveInventoryChange(() => run.tradePet(trade.$1, trade.$2));
+      _togglePause();
+      _gameFocus.requestFocus();
+      return;
+    }
+    if (run.restStationNearby() case final station?) {
+      await _openRestHub(run, station: station);
+      return;
+    }
+    if (run.canChooseActTwo) {
+      _saveInventoryChange(() => run.enterSecondAct(run.seededRealm));
       _gameFocus.requestFocus();
       return;
     }
@@ -969,7 +1036,11 @@ class _OculumLitePageState extends State<OculumLitePage>
       return;
     }
     _togglePause();
-    final destination = await chooseOculumLiteRoute(context, run);
+    final destination = await chooseOculumLiteRoute(
+      context,
+      run,
+      fixedDestination: true,
+    );
     if (!mounted) return;
     final changed = destination != null && run.advance(destination);
     setState(() {
@@ -999,13 +1070,21 @@ class _OculumLitePageState extends State<OculumLitePage>
     _gameFocus.requestFocus();
   }
 
-  Future<void> _openRestHub(LiteRun run) async {
+  Future<void> _openRestHub(LiteRun run, {LiteRestStation? station}) async {
     _togglePause();
     await showLiteRestHub(
       context,
       world: () => run,
+      initialStation: station,
       playVoice: _audio.playMerchantGreeting,
       buy: (item) => _saveInventoryChange(() => run.buyRestItem(item)),
+      buySignature: (item) =>
+          _saveInventoryChange(() => run.buySignature(item)),
+      equipWeapon: (item) =>
+          _saveInventoryChange(() => run.equipFromForge(item)),
+      fuseWeapons: (primary, secondary) =>
+          _saveInventoryChange(() => run.fuseWeapons(primary, secondary)),
+      splitWeapons: () => _saveInventoryChange(run.splitWeapons),
       equip: (item) => _saveInventoryChange(() => run.equipRestArt(item)),
       remember: (item) =>
           _saveInventoryChange(() => run.rememberRestItem(item)),
@@ -1046,12 +1125,20 @@ class _OculumLitePageState extends State<OculumLitePage>
           : 'Soccorso $progress%';
     } else if (run.fallenAllyNearby != null) {
       label = 'Tieni R · Soccorri';
+    } else if (run.canSpeakToVampire()) {
+      label = 'R · Parla col Vampiro';
+    } else if (run.canSpeakToPetTrader()) {
+      label = 'R · Parla col Bandito dei pet';
+    } else if (run.restStationNearby() case final station?) {
+      label = station == LiteRestStation.forge && run.partyHasSmith
+          ? 'R · Usa la forgia'
+          : 'R · Parla con ${run.restStationName(station)}';
     } else if (run.canEnterSolarDungeon) {
       label = 'R · Scendi le scale d’oro';
     } else if (run.solarBossWaiting && run.hasPortalNearby) {
       label = 'R · Sfida il Guardiano Solare';
     } else if (run.canChooseActTwo) {
-      label = 'R · Scegli il percorso dell’Atto II';
+      label = 'R · Entra nell’Atto II';
     } else if (run.inThirdAct && run.hasPortalNearby) {
       label = 'R · Prossima sala dell’Atto III';
     } else if (run.nextActTwoRoom && run.hasPortalNearby) {
@@ -1064,8 +1151,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       label = 'R · Ristoro';
     } else if (run.canOpenShop) {
       label = 'R · Mercante';
-    } else if (run.weapon == LiteWeapon.arco &&
-        run.arrows < LiteRun.bowCapacity) {
+    } else if (run.hasBow() && run.arrows < LiteRun.bowCapacity) {
       label = run.reloading ? 'Ricarica…' : 'R · Ricarica';
     } else {
       return null;
@@ -1523,6 +1609,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                     LiteHero.luce => 'Destro · Affondo a lunga portata. L’Open rinforza lo Scudo.',
                     LiteHero.ombra => 'Destro · Scatto intangibile. L’Open mantiene il velo per 3 secondi.',
                     LiteHero.veyrth => 'Destro · Sfera cava. Con Spazio lanci un anello di sfere.',
+                    LiteHero.lusierTre => 'Lancia tre carte per attacco. Riserva di 12, recupera 3 carte al secondo. Premi B per evocare due Guardie e un’Elité (5 Oculum). Fino al piano 6, i colpi a segno battono mostri comuni in 1 attacco, Elité in 2 e boss in 3.',
                     LiteHero.cavaliereLunare => 'Destro o V evoca due Guardie Lunari. Spada e scudo raddoppiati, Blocco a 300.',
                     LiteHero.slimeBlu => 'Q rende invisibile durante lo scatto. Mira da vicino e ripeti il clic destro per mantenere l’assorbimento e recuperare Vita e Oculum.',
                     LiteHero.polloMeccanico => 'Tre raggi inseguono i nemici. Clic destro/V spara tre uova meccaniche alle spalle. Spazio ne potenzia le esplosioni.',
@@ -1540,7 +1627,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                   }),
                   Text(
                     'Destro o V per la skill. Spazio · ${_hero.openName} · 5 Oculum. ${_hero.openDescription} '
-                    'Recupero al livello 1/3/6: 8/7/6 s.',
+                    'Effetto principale triplicato. Dopo l’uso, si ricarica per due stanze di combattimento.',
                   ),
                   const SizedBox(height: 14),
                   if (_hero.fixedWeapon == null)
@@ -1551,10 +1638,12 @@ class _OculumLitePageState extends State<OculumLitePage>
                         labelText: 'Equipaggiamento iniziale',
                       ),
                       items: [
-                        for (final weapon in LiteWeapon.starters)
+                        for (final weapon in _progress.startingWeapons)
                           DropdownMenuItem(
                             value: weapon,
-                            child: Text(liteWeaponLabels[weapon]!),
+                            child: Text(
+                              liteWeaponLabels[weapon] ?? weapon.label,
+                            ),
                           ),
                       ],
                       onChanged: (weapon) {
@@ -1574,7 +1663,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: _weaponIcon(_startingWeapon),
-                      title: Text(_weaponDetails[_startingWeapon]!),
+                      title: Text(_gearDetail(_startingWeapon)),
                       subtitle: _hero.fixedWeapon != null
                           ? Text('${_startingWeapon.label} · Arma iniziale')
                           : null,
@@ -1593,26 +1682,12 @@ class _OculumLitePageState extends State<OculumLitePage>
                       if (level != null) setState(() => _difficulty = level);
                     },
                   ),
-                  DropdownButtonFormField<LiteBiome>(
-                    isExpanded: true,
-                    key: ValueKey(_startOptions),
-                    initialValue: _biome,
-                    decoration: const InputDecoration(labelText: 'Primo piano'),
-                    items: [
-                      for (final biome in _startOptions)
-                        DropdownMenuItem(
-                          value: biome,
-                          child: Text(
-                            liteBiomeLabels[biome]!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ],
-                    onChanged: (biome) {
-                      if (biome != null) setState(() => _biome = biome);
-                    },
+                  OculumLiteStarterPetPicker(
+                    offers: _starterPets,
+                    selected: _starterPet,
+                    onChanged: (pet) => setState(() => _starterPet = pet),
                   ),
+                  Text('Primo piano · ${_biome.label}'),
                   if (_biome == LiteBiome.postea)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -1635,9 +1710,9 @@ class _OculumLitePageState extends State<OculumLitePage>
                       final seed = int.tryParse(value);
                       if (seed == null) return;
                       setState(() {
-                        _startOptions = LiteBiome.offers(seed);
-                        if (!_startOptions.contains(_biome))
-                          _biome = _startOptions.first;
+                        _biome = LiteBiome.startingZone(seed);
+                        if (!_starterPets.contains(_starterPet))
+                          _starterPet = null;
                       });
                     },
                     decoration: const InputDecoration(labelText: 'Seed'),
@@ -1647,24 +1722,55 @@ class _OculumLitePageState extends State<OculumLitePage>
                       LengthLimitingTextInputFormatter(10),
                     ],
                   ),
-                  if (LiteHero.values.any((hero) => !_progress.canPlay(hero)))
-                    ExpansionTile(
-                      tilePadding: EdgeInsets.zero,
-                      title: const Text('Come sbloccare gli altri eroi'),
-                      children: [
-                        for (final hero in LiteHero.values.where(
-                          (hero) => !_progress.canPlay(hero),
-                        ))
-                          ListTile(
-                            title: Text(liteHeroLabels[hero]!),
-                            subtitle: Text(
-                              hero == LiteHero.slimeBlu
-                                  ? '${hero.unlockHint!} ${_progress.slimeKills}/10'
-                                  : hero.unlockHint!,
-                            ),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('Premi ogni cinque piani'),
+                    children: [
+                      for (final floor in [5, 10, 15, 20, 25, 30, 35])
+                        ExpansionTile(
+                          title: Text('$floor piani superati'),
+                          children: [
+                            for (final reward in liteMilestoneRewards.where(
+                              (entry) => entry.floors == floor,
+                            ))
+                              ListTile(
+                                leading: Icon(
+                                  _progress.unlocked(reward)
+                                      ? Icons.check_circle_outline
+                                      : Icons.lock_outline,
+                                ),
+                                title: Text(
+                                  reward.weapon?.label ??
+                                      liteHeroLabels[reward.hero]!,
+                                ),
+                                subtitle: Text(reward.difficulty.label),
+                              ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('Achievement personaggi'),
+                    children: [
+                      for (final hero in LiteHero.values.where(
+                        (hero) => hero.unlockHint != null,
+                      ))
+                        ListTile(
+                          leading: Icon(
+                            _progress.canPlay(hero)
+                                ? Icons.check_circle_outline
+                                : Icons.lock_outline,
                           ),
-                      ],
-                    ),
+                          title: Text(liteHeroLabels[hero]!),
+                          subtitle: Text(
+                            hero == LiteHero.slimeBlu
+                                ? '${hero.unlockHint!} ${_progress.slimeKills}/10'
+                                : hero.unlockHint!,
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1718,7 +1824,8 @@ class _OculumLitePageState extends State<OculumLitePage>
 
   Widget _fight(OculumLiteSaveSlot active) {
     final run = active.run;
-    final blocked = _paused || run.shopOpen || run.finished;
+    final blocked =
+        _paused || run.shopOpen || run.finished || run.soloOpenFrozen;
     final contextualAction = blocked ? null : _contextAction(run);
     final encounter = switch (run.encounter) {
       LiteEncounter.ordinary => '',
@@ -1739,6 +1846,7 @@ class _OculumLitePageState extends State<OculumLitePage>
             Listener(
               onPointerSignal: (event) {
                 if (!blocked &&
+                    !run.soloOpenFrozen &&
                     event is PointerScrollEvent &&
                     event.scrollDelta.dy != 0) {
                   setState(
@@ -1749,17 +1857,16 @@ class _OculumLitePageState extends State<OculumLitePage>
               child: OculumLiteArena(
                 run: run,
                 view: _arenaFrame,
-                appearance: run.hero == LiteHero.evasore
-                    ? OculumLiteAppearance.evasore
-                    : active.appearance,
+                appearance: active.appearance,
                 onAim: (target) {
-                  if (blocked) return;
+                  if (blocked || run.soloOpenFrozen) return;
                   _aim = target;
                   run.lookAt(target);
                 },
                 onAttack: blocked
                     ? null
                     : (target) {
+                        if (run.soloOpenFrozen) return;
                         _gameFocus.requestFocus();
                         if (run.powerWellAt(target)) {
                           unawaited(_showWell(run));
@@ -1767,9 +1874,11 @@ class _OculumLitePageState extends State<OculumLitePage>
                           run.attack(target);
                         }
                       },
+                onAttackHeld: blocked ? null : run.setAttackHeld,
                 onTalent: blocked
                     ? null
                     : (target) {
+                        if (run.soloOpenFrozen) return;
                         _gameFocus.requestFocus();
                         run.special(target);
                       },
@@ -1971,15 +2080,22 @@ class _OculumLitePageState extends State<OculumLitePage>
                                   () => run.special(_targetFor(run)),
                                 ),
                               _action(
-                                run.openCooldown > 0
-                                    ? (run.plagueForm
-                                          ? 'Forma corvina · ${run.plagueSeconds.toStringAsFixed(1)} s'
-                                          : 'Open ${run.openGrade} · ${run.openCooldown.ceil()} s')
+                                run.openRoomsRemaining() > 0
+                                    ? 'Open · ${run.openRoomsRemaining()} ${run.openRoomsRemaining() == 1 ? 'stanza' : 'stanze'}'
                                     : 'Open ${run.openGrade} · ${run.hero.openName}',
-                                () => _saveInventoryChange(
-                                  () => run.useOpen(_targetFor(run)),
-                                ),
+                                run.restHub || run.openRoomsRemaining() > 0
+                                    ? null
+                                    : () => _saveInventoryChange(
+                                        () => run.useOpen(_targetFor(run)),
+                                      ),
                               ),
+                              if (run.hero == LiteHero.lusierTre)
+                                _action(
+                                  'B · Scorta · ${run.supply.lusierCards}/12 carte',
+                                  () => _saveInventoryChange(
+                                    run.callSolarRetinue,
+                                  ),
+                                ),
                               if (run.hero == LiteHero.scostubandito)
                                 _action(
                                   run.banditRounds > 0
@@ -2093,7 +2209,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                     ),
                     if (!compact)
                       Text(
-                        '${liteWeaponLabels[run.weapon]} · WASD movimento · clic attacco · '
+                        '${liteWeaponLabels[run.weapon] ?? run.weapon.label} · WASD movimento · clic attacco · '
                         'destro/V talento · Spazio Open · F blocco · G arma · Shift scatto · E inventario'
                         '${run.banditDodgeReady ? ' · Prossimo scatto intangibile' : ''}'
                         '${run.hero == LiteHero.evasore ? ' · Schivate ${run.dodgeCharges}' : ''}',
@@ -2199,7 +2315,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                                   ),
                                 for (final weapon in run.shopWeapons)
                                   Tooltip(
-                                    message: _weaponDetails[weapon]!,
+                                    message: _gearDetail(weapon),
                                     child: OutlinedButton.icon(
                                       onPressed: !run.canBuyWeapon(weapon)
                                           ? null
@@ -2275,10 +2391,10 @@ class _OculumLitePageState extends State<OculumLitePage>
                                   contentPadding: EdgeInsets.zero,
                                   leading: _weaponIcon(run.weapon),
                                   title: Text(
-                                    'In uso: ${liteWeaponLabels[run.weapon]}',
+                                    'In uso: ${liteWeaponLabels[run.weapon] ?? run.weapon.label}',
                                   ),
                                   subtitle: Text(
-                                    '${_weaponDetails[run.weapon]!}\n'
+                                    '${_gearDetail(run.weapon)}\n'
                                     'Portata con i bonus · ${run.weaponReach(run.weapon).toStringAsFixed(1).replaceFirst('.', ',')} m',
                                   ),
                                 ),
@@ -2458,9 +2574,9 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   Widget _weaponIcon(LiteWeapon weapon, {double size = 46}) =>
-      OculumLiteArena.weaponIcons[weapon] != null
+      OculumLiteArena.weaponIcons[weapon.moveset] != null
       ? Image(
-          image: OculumLiteArena.weaponIcons[weapon]!,
+          image: OculumLiteArena.weaponIcons[weapon.moveset]!,
           width: size,
           height: size,
           fit: BoxFit.contain,

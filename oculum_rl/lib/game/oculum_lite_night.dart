@@ -59,7 +59,7 @@ class _NightKit implements LiteNightVisual {
   void restore(Object? data) {
     if (data is! List || data.length < 9) return;
     bat = _num(data[0]).clamp(0.0, 3.0);
-    sanguine = _num(data[1]).clamp(0.0, 8.0);
+    sanguine = _num(data[1]).clamp(0.0, 8 * LiteRun.openPower);
     veil = _num(data[2]).clamp(0.0, .55);
     absorb = _num(data[3]).clamp(0.0, 1.55);
     utility = _num(data[4]).clamp(0.0, 12.0);
@@ -70,7 +70,9 @@ class _NightKit implements LiteNightVisual {
     targetId = id >= 0 ? id : null;
     mud = data.length > 9 ? _num(data[9]).clamp(0.0, .9) : 0;
     stun = data.length > 10 ? _num(data[10]).clamp(0.0, .9) : 0;
-    solarMace = data.length > 11 ? _num(data[11]).clamp(0, 8) : 0;
+    solarMace = data.length > 11
+        ? _num(data[11]).clamp(0, 7 * LiteRun.openPower)
+        : 0;
     solarMantle = data.length > 12 ? _num(data[12]).clamp(0, 5) : 0;
   }
 }

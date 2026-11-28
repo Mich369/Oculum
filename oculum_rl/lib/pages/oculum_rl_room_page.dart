@@ -13,6 +13,8 @@ import '../widgets/oculum_lite_appearance.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_creator.dart';
 import '../widgets/oculum_lite_ink_finishes.dart';
+import '../widgets/oculum_lite_rest_panel.dart';
+import '../widgets/oculum_lunar_prologue.dart';
 import 'oculum_lite_coop_page.dart';
 import 'oculum_lite_page.dart' show liteHeroLabels;
 
@@ -51,6 +53,7 @@ typedef _Seat = ({
   Map<LitePermanentUpgrade, int> upgrades,
   bool ready,
   bool allowGlue,
+  LiteCompanion? pet,
   bool allowMechanicalChicken,
   LiteRestMemory? memory,
 });
@@ -83,6 +86,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   int _epoch = 0;
   bool _checkpointBusy = false;
   (String, bool, bool)? _checkpointMilestone;
+  int _failedMilestoneFloors = 0;
   int _failedClearedFloor = -1;
   String? _room;
   String? _role;
@@ -90,6 +94,8 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   String? _hostAccount;
   String _status = '';
   String _runId = '';
+  String? _lunarIntroShownFor;
+  bool _showingLunarIntro = false;
   bool _busy = false;
   bool _connected = false;
   bool _reading = false;
@@ -104,6 +110,9 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   LiteWeapon _weapon = LiteWeapon.arco;
   LiteDifficulty _difficulty = LiteDifficulty.medio;
   LiteBiome _biome = LiteBiome.campo;
+  LiteCompanion? _starterPet;
+  List<LiteCompanion> get _starterPets =>
+      LitePets.starterOffers(_progress.discoveredPets, _biome, _seed);
   bool _observer = false;
   int _seed = 0;
   OculumLiteCoop? _run;
@@ -124,7 +133,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     super.initState();
     _seed = _random.nextInt(0x7fffffff);
     _seedInput.text = '$_seed';
-    _biome = LiteBiome.offers(_seed).first;
+    _biome = LiteBiome.startingZone(_seed);
     unawaited(_loadProgress());
   }
 
@@ -399,6 +408,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       return;
     }
     _runId = id;
+    _lunarIntroShownFor = id;
     _seed = world.seed;
     _difficulty = world.difficulty;
     _biome = world.biome;
@@ -536,6 +546,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     'weapon': seat.weapon.name,
     'ready': seat.ready,
     if (seat.allowGlue) 'allowGlue': true,
+    if (seat.pet case final pet?) 'pet': pet.name,
     if (seat.allowMechanicalChicken) 'allowMechanicalChicken': true,
     if (seat.memory case final memory?) 'restMemory': memory.frame,
     if (seat.upgrades.isNotEmpty)
@@ -551,8 +562,12 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     final hero = LiteHero.values
         .where((item) => item.name == value['hero'])
         .firstOrNull;
-    final selectedWeapon = LiteWeapon.starters
-        .where((item) => item.name == value['weapon'])
+    final selectedWeapon = LiteWeapon.values
+        .where(
+          (item) =>
+              (LiteWeapon.starters.contains(item) || item.isMilestone) &&
+              item.name == value['weapon'],
+        )
         .firstOrNull;
     if (hero == null) return null;
     if (selectedWeapon == null && value['weapon'] != hero.fixedWeapon?.name) {
@@ -566,6 +581,9 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
           ? OculumLiteAppearance.fromJson(value['look'])
           : null,
       ready: value['ready'] as bool,
+      pet: LiteCompanion.values
+          .where((pet) => pet.discovery != null && pet.name == value['pet'])
+          .firstOrNull,
       allowGlue: value['allowGlue'] == true,
       allowMechanicalChicken: value['allowMechanicalChicken'] == true,
       memory: LiteRestMemory.read(value['restMemory']),
@@ -693,6 +711,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       allowMechanicalChicken: _progress.canPlay(LiteHero.pollo),
       memory: memory,
       ready: _seats[uid]?.ready != true,
+      pet: _starterPets.contains(_starterPet) ? _starterPet : null,
     );
     if (_master) {
       setState(() => _seats[uid] = seat);
@@ -725,11 +744,25 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     if (!_master ||
         uid == null ||
         mine == null ||
+        _showingLunarIntro ||
         _seats.length < 2 ||
         _seats.values.any((seat) => !seat.ready)) {
       return;
     }
+    if (mine.hero == LiteHero.cavaliereLunare) {
+      setState(() => _showingLunarIntro = true);
+      await showOculumLunarPrologue(context);
+      if (!mounted) return;
+      setState(() => _showingLunarIntro = false);
+      if (_account != uid ||
+          _seats[uid] != mine ||
+          _runId.isNotEmpty ||
+          _seats.length < 2 ||
+          _seats.values.any((seat) => !seat.ready))
+        return;
+    }
     _runId = '${_sessionId}_${_random.nextInt(0x7fffffff)}';
+    _lunarIntroShownFor = _runId;
     final world = LiteRun(
       seed: _seed,
       progressId: _runId,
@@ -742,6 +775,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       allowMechanicalChicken: mine.allowMechanicalChicken,
       playerCount: _seats.length,
     );
+    if (mine.pet case final pet?) world.bringStarterPet(pet);
     if (mine.memory case final memory?) world.carryRestMemory(memory);
     for (final entry in _seats.entries) {
       if (entry.key == uid) continue;
@@ -755,9 +789,10 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         allowGlue: seat.allowGlue,
         allowMechanicalChicken: seat.allowMechanicalChicken,
       );
-      if (seat.memory case final memory?) {
-        final fighter = world.coopFighter(entry.key);
-        if (fighter != null) world.carryRestMemory(memory, fighter: fighter);
+      if (world.coopFighter(entry.key) case final fighter?) {
+        if (seat.pet case final pet?) world.bringStarterPet(pet, fighter);
+        if (seat.memory case final memory?)
+          world.carryRestMemory(memory, fighter: fighter);
       }
     }
     _run = OculumLiteCoop(
@@ -780,9 +815,19 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     _enterRun();
   }
 
-  void _enterRun() {
+  Future<void> _enterRun() async {
     final uid = _account;
-    if (uid == null || _runId.isEmpty) return;
+    final id = _runId;
+    if (uid == null || id.isEmpty || _showingLunarIntro) return;
+    if (_seats[uid]?.hero == LiteHero.cavaliereLunare &&
+        _lunarIntroShownFor != id) {
+      setState(() => _showingLunarIntro = true);
+      await showOculumLunarPrologue(context);
+      if (!mounted) return;
+      setState(() => _showingLunarIntro = false);
+      if (id != _runId || uid != _account) return;
+      _lunarIntroShownFor = id;
+    }
     final play = _run ??= OculumLiteCoop(
       runId: _runId,
       localAccount: uid,
@@ -795,6 +840,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       ..addListener(_recordRunUnlocks);
     _failedUnlocks.clear();
     _failedClearedFloor = -1;
+    _failedMilestoneFloors = 0;
     final hostAccount = _master ? uid : _hostAccount;
     final appearances = {
       for (final entry in _seats.entries) entry.key: ?entry.value.appearance,
@@ -851,7 +897,11 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     final cleared = run.stageClear || run.victorious
         ? run.stage
         : run.stage - 1;
-    if (cleared <= max(_progress.bestClearedFloor, _failedClearedFloor) &&
+    final earnedMilestone =
+        run.milestoneFloors > _progress.clearedFor(run.difficulty) &&
+        run.milestoneFloors > _failedMilestoneFloors;
+    if (!earnedMilestone &&
+        cleared <= max(_progress.bestClearedFloor, _failedClearedFloor) &&
         heroes.every(
           (hero) => _progress.canPlay(hero) || _failedUnlocks.contains(hero),
         ) &&
@@ -864,7 +914,15 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       return;
     _savingUnlocks = true;
     unawaited(
-      _saveRunUnlocks(cleared, heroes, pets, run.slimeCreditId, run.slimeKills),
+      _saveRunUnlocks(
+        cleared,
+        heroes,
+        pets,
+        run.slimeCreditId,
+        run.slimeKills,
+        run.difficulty,
+        run.milestoneFloors,
+      ),
     );
   }
 
@@ -888,6 +946,8 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     Set<LiteCompanion> pets,
     String slimeId,
     int slimeKills,
+    LiteDifficulty difficulty,
+    int milestoneFloors,
   ) async {
     try {
       final store = await OculumLiteSaveStore.open();
@@ -897,11 +957,13 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         heroes,
         pets: pets,
         slimeCounters: {slimeId: slimeKills},
+        milestones: {difficulty: milestoneFloors},
       );
       await store.writeProgress(progress);
       if (mounted) setState(() => _progress = progress);
     } on Object {
       _failedClearedFloor = max(_failedClearedFloor, cleared);
+      _failedMilestoneFloors = max(_failedMilestoneFloors, milestoneFloors);
       _failedUnlocks.addAll(heroes);
       _failedPets.addAll(pets);
       _failedSlimeCredit = slimeKills;
@@ -1032,8 +1094,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                         if (seed == null) return;
                         setState(() {
                           _seed = seed;
-                          final offers = LiteBiome.offers(seed);
-                          if (!offers.contains(_biome)) _biome = offers.first;
+                          _biome = LiteBiome.startingZone(seed);
                         });
                         unawaited(_announce());
                       },
@@ -1055,24 +1116,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                         unawaited(_announce());
                       },
                     ),
-                    DropdownButtonFormField<LiteBiome>(
-                      key: ValueKey(_seed),
-                      initialValue: _biome,
-                      decoration: const InputDecoration(
-                        labelText: 'Zona iniziale',
-                      ),
-                      items: [
-                        for (final item in LiteBiome.offers(_seed))
-                          DropdownMenuItem(
-                            value: item,
-                            child: Text(item.label),
-                          ),
-                      ],
-                      onChanged: (item) {
-                        if (item != null) setState(() => _biome = item);
-                        unawaited(_announce());
-                      },
-                    ),
+                    Text('Zona iniziale · ${_biome.label}'),
                   ],
                   if (!_master)
                     SwitchListTile(
@@ -1108,7 +1152,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                         labelText: 'Arma iniziale',
                       ),
                       items: [
-                        for (final item in LiteWeapon.starters)
+                        for (final item in _progress.startingWeapons)
                           DropdownMenuItem(
                             value: item,
                             child: Text(item.label),
@@ -1127,6 +1171,13 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                       label: const Text('Personalizza in 2D'),
                     ),
                   if (!_observer) ...[
+                    OculumLiteStarterPetPicker(
+                      offers: _starterPets,
+                      selected: _starterPet,
+                      onChanged: _seats[_account]?.ready == true
+                          ? null
+                          : (pet) => setState(() => _starterPet = pet),
+                    ),
                     OculumLiteInkFinishPicker(
                       selected: _inkFinish,
                       onChanged: _seats[_account]?.ready == true

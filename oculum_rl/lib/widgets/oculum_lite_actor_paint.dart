@@ -377,7 +377,7 @@ _InkAttackMotion? _inkWeaponMotion(
   bool preparing,
 ) {
   if (elapsed == null || !elapsed.isFinite) return null;
-  final (forward, rise, pivot, settle) = switch (weapon) {
+  final (forward, rise, pivot, settle) = switch (weapon.moveset) {
     LiteWeapon.spadaScudo => (.083, -.008, .20, .22),
     LiteWeapon.guanti => (.101, -.017, .055, .33),
     LiteWeapon.arco => (-.045, -.013, -.048, .23),
@@ -390,6 +390,7 @@ _InkAttackMotion? _inkWeaponMotion(
     LiteWeapon.carabinaImpulsi => (-.083, -.009, -.127, .37),
     LiteWeapon.balestraRunica => (-.067, -.007, -.08, .32),
     LiteWeapon.fucileScostubandito => (-.076, -.010, -.139, .29),
+    _ => (.083, -.008, .20, .22),
   };
   final windup = weapon == LiteWeapon.doppieLame ? .11 : weapon.chargeSeconds;
   if (preparing) {

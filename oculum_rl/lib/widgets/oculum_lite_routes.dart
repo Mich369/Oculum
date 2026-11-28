@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../game/oculum_lite_run.dart';
 
-Future<LiteBiome?> chooseOculumLiteRoute(BuildContext context, LiteRun run) {
-  final routes = [
-    for (final biome in run.routeBiomes) ?run.previewNextFloor(biome),
-  ];
+Future<LiteBiome?> chooseOculumLiteRoute(
+  BuildContext context,
+  LiteRun run, {
+  bool fixedDestination = false,
+}) {
+  final options = fixedDestination ? run.routeBiomes.take(1) : run.routeBiomes;
+  final routes = [for (final biome in options) ?run.previewNextFloor(biome)];
   if (routes.isEmpty) return Future.value();
   final solo = run.playerCount == 1;
   return showDialog<LiteBiome>(

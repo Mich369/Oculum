@@ -95,11 +95,11 @@ void main() {
   });
 
   test(
-    'vendor sells Art after the second rest hub and fixed Art stays fixed',
+    'vendor sells Art from the first rest hub and fixed Art stays fixed',
     () {
       final early = restHub();
       expect(early.enterRestHub(), isTrue);
-      expect(early.buyRestItem(LiteRestItem.artPlasma), isFalse);
+      expect(early.buyRestItem(LiteRestItem.artPlasma), isTrue);
       final run = restHub(stage: 11);
       expect(run.enterRestHub(), isTrue);
       expect(run.buyRestItem(LiteRestItem.artPlasma), isTrue);
@@ -143,7 +143,10 @@ void main() {
       expect(run.supply.hasGrimoire, isFalse);
       expect(run.restPrice(LiteRestItem.artBrace, fighter: lunar), 54);
       expect(run.buyRestItem(LiteRestItem.artBrace, fighter: lunar), isTrue);
-      expect(run.buyRestItem(LiteRestItem.artPlasma, fighter: lunar), isFalse);
+      expect(
+        run.restPrice(LiteRestItem.artPlasma, fighter: lunar),
+        lessThan(77),
+      );
       expect(run.equipRestArt(LiteRestItem.artPlasma, fighter: lunar), isTrue);
       final restored = LiteRun.fromJson(run.toJson(includeEffects: true));
       final guest = restored.coopFighter('luna')!;
@@ -162,6 +165,28 @@ void main() {
       expect(old.knowsArt(LiteLearnedArt.linfa), isTrue);
     },
   );
+
+  test('two lessons improve the Art and survive a save', () {
+    final run = restHub();
+    expect(run.enterRestHub(), isTrue);
+    for (var purchase = 0; purchase < 3; purchase++) {
+      expect(run.buyRestItem(LiteRestItem.artPlasma), isTrue);
+    }
+    expect(run.buyRestItem(LiteRestItem.artPlasma), isFalse);
+
+    final restored = LiteRun.fromJson(run.toJson())..restHub = false;
+    expect(restored.activeArt(), LiteLearnedArt.plasma);
+    expect(restored.supply.artTraining(LiteLearnedArt.plasma), 2);
+    expect(
+      restored.useLearnedArt(restored.position + const Point(5, 0)),
+      isTrue,
+    );
+    expect(restored.projectiles, hasLength(3));
+    expect(
+      restored.supply.artCooldown,
+      closeTo(LiteLearnedArt.plasma.cooldown * .80, .001),
+    );
+  });
 
   test('Incisione adds braci without extra presses and shares the Ink cue', () {
     for (final (level, rank) in [(1, 1), (4, 2), (7, 3)]) {
@@ -193,6 +218,205 @@ void main() {
           ..stage = 11,
     ].where((run) => run.devilArtTutor);
     expect(devilVisits.length, inInclusiveRange(8, 43));
+  });
+
+  test(
+    'forge pairs lower and upper rings and shields without replacing gear',
+    () {
+      var run = restHub();
+      expect(run.enterRestHub(), isTrue);
+      expect(run.buySignature(LiteWeapon.chakram), isTrue);
+      expect(
+        run.fuseWeapons(LiteWeapon.spadaScudo, LiteWeapon.chakram),
+        isTrue,
+      );
+      expect(run.maxBlockResistance, 240);
+      expect(run.weaponDamage, closeTo(14 * 1.15, .001));
+      expect(
+        run.fuseWeapons(LiteWeapon.spadaScudo, LiteWeapon.chakram),
+        isFalse,
+      );
+      expect(run.buyRestItem(LiteRestItem.tempra), isTrue);
+      run = LiteRun.fromJson(run.toJson())
+        ..restHub = false
+        ..stage = 0
+        ..position = const Point(14, 11)
+        ..obstacles.clear();
+      expect(run.supply.forgeRank(LiteWeapon.spadaScudo), 1);
+      expect(run.fusedWeapon(), LiteWeapon.chakram);
+      expect(run.attack(const Point(20, 11)), isTrue);
+      final rings = run.projectiles
+          .where((shot) => shot.kind == LiteProjectileKind.chakram)
+          .toList();
+      expect(rings, hasLength(2));
+      expect(rings.map((shot) => shot.chakramSide), [1, -1]);
+      expect(rings.every((shot) => shot.chakramOrbit), isTrue);
+      expect(rings.last.age, closeTo(-.30, .001));
+      run.setAttackHeld(true);
+      wait(run, .22);
+      expect(rings.first.position, isNot(run.position));
+      expect(rings.last.position, run.position);
+      wait(run, 1.18);
+      expect(run.projectiles, isEmpty);
+      wait(run, .28);
+      expect(
+        run.projectiles.where(
+          (shot) => shot.kind == LiteProjectileKind.chakram,
+        ),
+        hasLength(2),
+      );
+    },
+  );
+
+  test('a guest can buy, combine and save signature equipment', () {
+    final run = restHub(stage: 0, players: 2);
+    expect(
+      run.addCoopFighter(
+        'guest',
+        'S',
+        LiteHero.scostubandito,
+        LiteWeapon.guanti,
+      ),
+      isTrue,
+    );
+    final guest = run.coopFighter('guest')!..obser = 500;
+    run.restHub = true;
+    expect(run.buySignature(LiteWeapon.vergaCorvina, guest), isTrue);
+    expect(
+      run.fuseWeapons(
+        LiteWeapon.fucileScostubandito,
+        LiteWeapon.vergaCorvina,
+        guest,
+      ),
+      isTrue,
+    );
+    expect(run.buyRestItem(LiteRestItem.tempra, fighter: guest), isTrue);
+    final copy = LiteRun.fromJson(run.toJson(includeEffects: true))
+      ..restHub = false;
+    final restored = copy.coopFighter('guest')!..cooldown = 0;
+    copy.obstacles.clear();
+    expect(restored.weapon, LiteWeapon.fucileScostubandito);
+    expect(copy.fusedWeapon(restored), LiteWeapon.vergaCorvina);
+    expect(restored.supply.forgeRank(restored.weapon), 1);
+    expect(
+      copy.setCoopControls(
+        'guest',
+        const Point(0, 0),
+        const Point(14, 11),
+        attack: true,
+      ),
+      isTrue,
+    );
+    copy.step(.016);
+    expect(
+      copy.projectiles.map((shot) => shot.kind),
+      containsAll([
+        LiteProjectileKind.rifleBullet,
+        LiteProjectileKind.inkEmber,
+      ]),
+    );
+  });
+
+  test(
+    'merchant interactions resolve from the approaching fighter position',
+    () {
+      final run = restHub(stage: 0, players: 2);
+      expect(
+        run.addCoopFighter('g', 'G', LiteHero.evasore, LiteWeapon.arco),
+        isTrue,
+      );
+      final guest = run.coopFighter('g')!;
+      run.restHub = true;
+      run.stage = 5;
+      run.position = LiteRestStation.forge.position + const Point(0, .9);
+      guest.position = LiteRestStation.art.position;
+      expect(run.restStationNearby(), LiteRestStation.forge);
+      expect(run.restStationNearby(guest), LiteRestStation.art);
+      guest.position = const Point(15, 20);
+      expect(run.restStationNearby(guest), isNull);
+    },
+  );
+
+  test('Lusier cards share one early attack against an elite', () {
+    final run = restHub(stage: 2, hero: LiteHero.lusierTre)
+      ..stageClear = false
+      ..position = const Point(12, 11);
+    final elite = LiteEnemy(
+      818,
+      LiteEnemyKind.eliteLunare,
+      const Point(14, 11),
+      240,
+    )..stunned = 8;
+    run.enemies.add(elite);
+    expect(run.attack(elite.position), isTrue);
+    expect(
+      run.projectiles.where(
+        (shot) => shot.kind == LiteProjectileKind.cartaLusier,
+      ),
+      hasLength(3),
+    );
+    expect(run.supply.lusierCards, 9);
+    wait(run, .35);
+    expect(elite.hp, closeTo(120, .001));
+    wait(run, .77);
+    expect(run.supply.lusierCards, 12);
+    expect(run.callSolarRetinue(), isTrue);
+    expect(
+      run.clones.where(
+        (ally) => ally.companion == LiteCompanion.guardiaDiLusier,
+      ),
+      hasLength(2),
+    );
+    expect(
+      run.clones.where((ally) => ally.companion == LiteCompanion.eliteDiLusier),
+      hasLength(1),
+    );
+  });
+
+  test('Bunnys heals living enemies in battle and on defeat', () {
+    final run = restHub(stage: 1, hero: LiteHero.lusierTre)
+      ..stageClear = false
+      ..position = const Point(12, 11);
+    final wounded =
+        LiteEnemy(919, LiteEnemyKind.eliteLunare, const Point(16, 11), 200)
+          ..hp = 40
+          ..stunned = 8;
+    final bunny = LiteEnemy(920, LiteEnemyKind.bunnys, const Point(14, 11), 45)
+      ..windup = .01;
+    run.enemies.addAll([wounded, bunny]);
+    run.step(.022);
+    expect(wounded.hp, 50);
+    expect(run.attack(bunny.position), isTrue);
+    expect(bunny.hp, 0);
+    expect(wounded.hp, 75);
+  });
+
+  test('the devil rejects reviving demons but the guest can help them', () {
+    final run = restHub(stage: 0, hero: LiteHero.diavolo, players: 2);
+    expect(
+      run.addCoopFighter('g', 'G', LiteHero.evasore, LiteWeapon.arco),
+      isTrue,
+    );
+    final guest = run.coopFighter('g')!;
+    expect(run.useOpen(const Point(8, 11)), isTrue);
+    expect(
+      run.projectiles.where(
+        (shot) => shot.kind == LiteProjectileKind.pattoFiamma,
+      ),
+      hasLength(5),
+    );
+    expect(
+      run.clones.where((ally) => ally.companion?.isFlameDemon == true),
+      hasLength(4),
+    );
+    final lesser = run.clones.first
+      ..hp = 0
+      ..downRemaining = 8;
+    run.position = lesser.position + const Point(.5, 0);
+    guest.position = lesser.position + const Point(0, .7);
+    expect(run.beginRescue(), isFalse);
+    expect(run.message, 'è una perdita di tempo è solo un inutile demone');
+    expect(run.beginRescue(guest), isTrue);
   });
 
   test('a potion heals only companions of its living consumer', () {

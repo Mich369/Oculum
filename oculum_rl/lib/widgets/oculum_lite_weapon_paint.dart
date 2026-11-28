@@ -334,13 +334,54 @@ void _paintChakramRing(
   canvas.restore();
 }
 
+void _paintCanonicalChakram(
+  Canvas canvas,
+  ui.Image? art, {
+  required double tilt,
+  required double spin,
+}) {
+  if (art == null) {
+    _paintChakramRing(canvas, tilt: tilt, spin: spin);
+    return;
+  }
+  canvas.save();
+  canvas.scale(1, tilt);
+  canvas.rotate(spin);
+  // Read the foreground ring of the canonical paired inventory image.
+  const bounds = Rect.fromLTRB(-.41, -.41, .41, .41);
+  canvas.save();
+  canvas.clipPath(
+    Path()
+      ..moveTo(-.41, .01)
+      ..quadraticBezierTo(-.33, -.35, .06, -.39)
+      ..quadraticBezierTo(.30, -.37, .40, -.07)
+      ..quadraticBezierTo(.46, .28, .11, .41)
+      ..quadraticBezierTo(-.27, .48, -.41, .01)
+      ..close(),
+  );
+  canvas.drawImageRect(
+    art,
+    Rect.fromLTRB(
+      art.width * .025,
+      art.height * .323,
+      art.width * .657,
+      art.height * .991,
+    ),
+    bounds,
+    Paint()..filterQuality = FilterQuality.medium,
+  );
+  canvas.restore();
+  canvas.restore();
+}
+
 void _paintChakramFlight(
   Canvas canvas,
   Offset feet,
   Offset direction,
   double age,
-  Offset? returnTarget,
-) {
+  Offset? returnTarget, {
+  ui.Image? art,
+}) {
   final launch = (1 - age / .11).clamp(0.0, 1.0);
   final catchEase = returnTarget == null
       ? 0.0
@@ -370,10 +411,8 @@ void _paintChakramFlight(
   );
   _actor(canvas, at, 1 - catchEase * .28, 1 - catchEase * .28, () {
     canvas.rotate(direction.direction * .64 + math.sin(age * 15) * .11);
-    _paintChakramRing(
-      canvas,
-      tilt: .60 + math.sin(age * 14) * .17,
-      spin: age * 29 + math.sin(age * 14) * .1,
-    );
+    final tilt = .60 + math.sin(age * 14) * .17;
+    final spin = age * 29 + math.sin(age * 14) * .1;
+    _paintCanonicalChakram(canvas, art, tilt: tilt, spin: spin);
   });
 }

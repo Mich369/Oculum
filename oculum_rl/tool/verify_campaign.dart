@@ -25,6 +25,59 @@ bool sight(LiteRun run, Point<double> start, Point<double> end) {
   return true;
 }
 
+Point<double> avoidAerovyr(
+  LiteRun run,
+  LiteStormWarning cue,
+  Point<double> preferred,
+) {
+  if (cue.pattern == LiteStormPattern.corona &&
+      run.position.distanceTo(cue.target) < cue.inner - .42)
+    return origin;
+
+  double clearance(Point<double> at) => switch (cue.pattern) {
+    LiteStormPattern.corona => max(
+      cue.inner - at.distanceTo(cue.target),
+      at.distanceTo(cue.target) - cue.outer,
+    ),
+    LiteStormPattern.croce =>
+      cue.marks.map((mark) => at.distanceTo(mark) - cue.radius).reduce(min),
+    LiteStormPattern.ventaglio =>
+      cue.spread
+          .map((arc) {
+            final delta = at - cue.origin;
+            final angle = atan2(cue.direction.y, cue.direction.x);
+            final axis = Point(cos(angle + arc), sin(angle + arc));
+            final projection = max(0.0, delta.x * axis.x + delta.y * axis.y);
+            return delta.distanceTo(axis * projection) - .68;
+          })
+          .reduce(min),
+  };
+
+  var optimum = -double.infinity;
+  var movement = preferred;
+  for (var seat = 0; seat < 17; seat++) {
+    final axis = seat == 16
+        ? origin
+        : Point(cos(seat * pi / 8), sin(seat * pi / 8));
+    final at = run.position + axis * 1.65;
+    if (!walkable(run, run.position, at)) continue;
+    final wall = min(min(at.x, run.width - at.x), min(at.y, run.height - at.y));
+    final score =
+        clearance(at) +
+        min(3.0, wall) * .24 +
+        (preferred.x * axis.x + preferred.y * axis.y) * .20;
+    if (score <= optimum) continue;
+    optimum = score;
+    movement = axis;
+  }
+  if (cue.remaining < .19 &&
+      clearance(run.position) < .38 &&
+      movement != origin) {
+    run.special(run.position + movement);
+  }
+  return movement;
+}
+
 final _routes = <LiteRun, (String, Point<double>, List<Point<double>>)>{};
 
 bool walkable(LiteRun run, Point<double> start, Point<double> finish) {
@@ -231,6 +284,7 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
           run.buyRestItem(LiteRestItem.token);
           run.buyRestItem(LiteRestItem.crosta);
           run.buyRestItem(LiteRestItem.spirale);
+          run.buyRestItem(LiteRestItem.tempra);
         } else if (run.canChooseActTwo) {
           run.enterSecondAct(realm);
         } else if (run.nextActTwoRoom) {
@@ -303,7 +357,12 @@ String play(LiteDifficulty difficulty, int seed, LiteRealm realm) {
       move = open(run, run.position + side) ? side : side * -1.0;
       if (track.warning < .30) run.special(run.position + move);
     }
-    if (move == origin) move = follow(run, const Point(16, 11));
+    final storm = run.stormWarning(target);
+    if (storm != null) {
+      move = avoidAerovyr(run, storm, move);
+    } else if (move == origin) {
+      move = follow(run, const Point(16, 11));
+    }
     if (run.projectiles.any(
           (item) =>
               item.fromEnemy && item.position.distanceTo(run.position) < 1.8,

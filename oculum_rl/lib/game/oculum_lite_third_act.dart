@@ -74,12 +74,6 @@ extension LiteThirdAct on LiteRun {
       LiteEnemyKind.lapysrieth,
       LiteEnemyKind.lapysrieth,
     ]),
-    LiteThirdRoom(LiteThirdRegion.nuvole, 'Versante dei parafulmini', [
-      LiteEnemyKind.nymboryth,
-      LiteEnemyKind.lapysrieth,
-      LiteEnemyKind.lapysrieth,
-      LiteEnemyKind.dronePostea,
-    ], well: true),
     LiteThirdRoom(LiteThirdRegion.nuvole, 'Occhio del cumulonembo', [
       LiteEnemyKind.aerovyr,
       LiteEnemyKind.lapysrieth,
@@ -89,8 +83,9 @@ extension LiteThirdAct on LiteRun {
 
   bool get inThirdAct => thirdRoom > 0;
   String get arenaLabel => switch (thirdEncounter) {
+    final room? when thirdRoom == rooms.length => 'Piano 36 · ${room.label}',
     final room? =>
-      'Atto III · $thirdRoom/${rooms.length} · ${room.region.label} · ${room.label}',
+      'Piano ${LiteRun.finalStage + 1 + thirdRoom} · ${room.region.label} · ${room.label}',
     null when realm != null =>
       'Atto II · ${realm!.label} · $actRoom/${LiteSecondAct.actTwoRooms}',
     _ => 'Piano $stage/$lastStage · ${biome.label}',
@@ -129,6 +124,7 @@ extension LiteThirdAct on LiteRun {
     _consumeMealForVisit();
     _clearArenaActions();
     stageClear = shopOpen = restHub = restUsed = false;
+    _registerOpenRoom();
     arenaTrial = null;
     enemies.clear();
     fauna.clear();
@@ -206,7 +202,6 @@ extension LiteThirdAct on LiteRun {
       8 => LiteEnemyKind.thalvyr,
       9 => LiteEnemyKind.lapysrieth,
       10 => LiteEnemyKind.nymboryth,
-      11 => LiteEnemyKind.dronePostea,
       _ => LiteEnemyKind.aerovyr,
     };
     final selected = room.enemies.indexOf(principal);
@@ -220,7 +215,8 @@ extension LiteThirdAct on LiteRun {
         i == championIndex ? chamberCenter : Point(x, y),
       );
       enemy.cooldown += i * .17;
-      if (i == championIndex) _seatChampion(enemy);
+      if (i == championIndex && kind != LiteEnemyKind.aerovyr)
+        _seatChampion(enemy);
     }
     message = 'Atto III · ${room.label} · $thirdRoom/${rooms.length}';
   }
@@ -239,7 +235,7 @@ extension LiteThirdAct on LiteRun {
       achievements
         ..add('atto-iii-completato')
         ..add(LiteRun.heroUnlockKey(LiteHero.aerovyr));
-      message = 'Aerovyr sconfitto. Le Nuvole Rocciose sono libere.';
+      message = 'Piano 36 superato · Aerovyr sconfitto. Le Nuvole Rocciose sono libere.';
     } else {
       _offerPowers();
       message = '${thirdEncounter!.label} superata. Raggiungi il portale.';
@@ -247,8 +243,39 @@ extension LiteThirdAct on LiteRun {
     return true;
   }
 
+  static const _leapDistance = 3.7;
+  static const _leapTravelSeconds = .22;
+
+  Point<double> _thirdLeapLanding(
+    LiteEnemy enemy,
+    Point<double> toward,
+    double distance,
+  ) {
+    final start = enemy.position;
+    final landing = _chooseLane(
+      start,
+      toward,
+      min(_leapDistance, distance),
+      enemy.radius,
+      rightFirst: enemy.id.isEven,
+    );
+    final offset = landing - start;
+    final steps = (offset.magnitude / .08).ceil();
+    var reachable = start;
+    for (var i = 1; i <= steps; i++) {
+      final point = start + offset * (i / steps);
+      if (_blocked(point, enemy.radius)) break;
+      reachable = point;
+    }
+    return reachable;
+  }
+
   bool _tickThirdEnemy(LiteEnemy enemy, double elapsed) {
     final kind = enemy.kind;
+    if (kind == LiteEnemyKind.aerovyr && thirdRoom == rooms.length) {
+      _tickAerovyr(enemy, elapsed);
+      return true;
+    }
     final profile = switch (kind) {
       LiteEnemyKind.vegliante => (6.0, .67, 2.05),
       LiteEnemyKind.vesanybel => (8.2, .92, 2.55),
@@ -259,13 +286,33 @@ extension LiteThirdAct on LiteRun {
       _ => null,
     };
     if (profile == null) return false;
+    final leaps =
+        kind == LiteEnemyKind.gelycryn || kind == LiteEnemyKind.thalvyr;
     if (enemy.windup > 0) {
-      enemy.windup = max(0, enemy.windup - elapsed);
-      if (enemy.windup > 0) return true;
       final center = enemy.attackTarget!;
-      final direction = LiteRun._unit(center - enemy.position);
+      final offset = center - enemy.position;
+      final direction = LiteRun._unit(offset);
+      if (leaps && enemy.windup <= _leapTravelSeconds) {
+        // Older checkpoints can store the final windup with the body
+        // still at the takeoff point. Give it enough time to travel.
+        final travel = offset.magnitude * _leapTravelSeconds / _leapDistance;
+        enemy.windup = max(enemy.windup, min(_leapTravelSeconds, travel));
+      }
+      final travelLeft = min(enemy.windup, _leapTravelSeconds);
+      enemy.windup = max(0, enemy.windup - elapsed);
+      if (leaps && enemy.windup < travelLeft) {
+        final advance = (travelLeft - enemy.windup) / travelLeft;
+        final point = enemy.position + offset * advance;
+        if (_blocked(point, enemy.radius)) {
+          enemy.attackTarget = enemy.position;
+        } else {
+          enemy.position = point;
+        }
+      }
+      if (enemy.windup > 0) return true;
+      enemy._strikePose = .24;
       final damage =
-          kind.damage *
+          enemy.attackDamage *
           difficulty.enemyStrength *
           _challengeDamageScale(kind) *
           1.9;
@@ -280,9 +327,7 @@ extension LiteThirdAct on LiteRun {
           }
         case LiteEnemyKind.gelycryn:
         case LiteEnemyKind.thalvyr:
-          final swim = center;
-          enemy.position = swim;
-          _astralImpact(swim, kind.boss ? 2.75 : 1.85, damage);
+          _astralImpact(enemy.position, kind.boss ? 2.75 : 1.85, damage);
           if (kind.boss) {
             for (final spread in [-.55, .0, .55]) {
               _thirdShot(enemy, _rotate(direction, spread), damage * .56, 7.5);
@@ -308,15 +353,8 @@ extension LiteThirdAct on LiteRun {
     if (enemy.cooldown <= 0 &&
         distance < profile.$1 &&
         !_lineBlocked(enemy.position, target)) {
-      enemy.attackTarget =
-          kind == LiteEnemyKind.gelycryn || kind == LiteEnemyKind.thalvyr
-          ? _chooseLane(
-              enemy.position,
-              toward,
-              min(3.7, distance),
-              enemy.radius,
-              rightFirst: enemy.id.isEven,
-            )
+      enemy.attackTarget = leaps
+          ? _thirdLeapLanding(enemy, toward, distance)
           : target;
       enemy.windup = profile.$2;
       return true;
@@ -365,6 +403,7 @@ extension LiteThirdAct on LiteRun {
     required bool open,
   }) {
     final owner = fighter?.id;
+    final power = open ? LiteRun.openPower : 1.0;
     switch (actor) {
       case LiteHero.vesanybel:
         if (!open) {
@@ -378,7 +417,7 @@ extension LiteThirdAct on LiteRun {
         _openBurst(
           source,
           open ? 3.6 + grade * .4 : 2.1,
-          (open ? 24 : 10) + grade * 5.0,
+          ((open ? 24 : 10) + grade * 5.0) * power,
           owner ?? 0,
           push: open ? 2.4 : .7,
         );
@@ -388,13 +427,14 @@ extension LiteThirdAct on LiteRun {
           _launchSphere(
             source,
             _rotate(direction, arc),
-            10 + grade * 3.0,
+            (10 + grade * 3.0) * power,
             owner,
           );
         }
       case LiteHero.vedettaEiva:
+        var at = source;
         if (open) {
-          _playableShadowStep(
+          at = _playableShadowStep(
             source,
             direction,
             fighter,
@@ -402,12 +442,11 @@ extension LiteThirdAct on LiteRun {
             protection: .28,
           );
         }
-        final at = fighter?.position ?? position;
         _melee(
           at,
           direction,
           LiteWeapon.piccaOssidiana,
-          (open ? 26 : 13) + grade * 5.0,
+          ((open ? 26 : 13) + grade * 5.0) * power,
           sourceCloneId: owner,
           ownerCanHeal: owner == null,
           reach: open ? 4.8 : 3.6,
@@ -418,29 +457,60 @@ extension LiteThirdAct on LiteRun {
     }
   }
 
-  bool _eliteCanBefriend(LiteHero character) =>
-      character == LiteHero.cavaliereLunare ||
-      character == LiteHero.eliteSolare;
+  // The party's allegiance is stable during a room, even while a fighter
+  // is down or briefly disconnected.
+  bool get _wolfHostility =>
+      hero.solar || coopFighters.any((member) => member.hero.solar);
+  LiteCoopFighter? get _wolfLunarGuest =>
+      coopFighters.where((member) => member.hero.lunar).firstOrNull;
 
-  void _befriendWolves() {
-    if (!enemies.any(
-      (enemy) => enemy.kind == LiteEnemyKind.lupoLunare && enemy.hp > 0,
-    )) {
+  void _syncLunarWolves() {
+    if (_wolfHostility) {
+      final neutrals = fauna.where(_liveLunarWolf).toList();
+      if (neutrals.isNotEmpty) {
+        fauna.removeWhere(_liveLunarWolf);
+        enemies.addAll(neutrals);
+        stageClear = false;
+        _powerOffers.clear();
+      }
+      final allies = clones
+          .where(
+            (wolf) =>
+                wolf.companion == LiteCompanion.lupoAlleato && wolf.hp > 0,
+          )
+          .toList();
+      if (allies.isNotEmpty) {
+        _dismissRoomWolves();
+        for (final wolf in allies) {
+          enemies.add(
+            LiteEnemy(
+              wolf.id,
+              LiteEnemyKind.lupoLunare,
+              wolf.position,
+              wolf.maxHp,
+            )..hp = wolf.hp,
+          );
+        }
+        stageClear = false;
+        _powerOffers.clear();
+      }
       return;
     }
-    final hostQualifies = !hostDown && _eliteCanBefriend(hero);
-    final guest = coopFighters
-        .where(
-          (fighter) =>
-              fighter.connected &&
-              fighter.hp > 0 &&
-              _eliteCanBefriend(fighter.hero),
-        )
-        .firstOrNull;
-    if (!hostQualifies && guest == null) return;
-    for (final wolf in enemies.where(
-      (enemy) => enemy.kind == LiteEnemyKind.lupoLunare && enemy.hp > 0,
-    )) {
+
+    final moved = enemies.where(_liveLunarWolf).toList();
+    if (moved.isNotEmpty) {
+      enemies.removeWhere(_liveLunarWolf);
+      fauna.addAll(moved);
+      for (final _ in moved) {
+        _progressQuest(0);
+      }
+    }
+    final lunar = hero.lunar ? null : _wolfLunarGuest;
+    if (!hero.lunar && lunar == null) return;
+    final pack = fauna.where(_liveLunarWolf).toList();
+    if (pack.isEmpty) return;
+    fauna.removeWhere(_liveLunarWolf);
+    for (final wolf in pack) {
       clones.add(
         LiteClone(
           wolf.position,
@@ -448,17 +518,17 @@ extension LiteThirdAct on LiteRun {
           LiteWeapon.guanti,
           companion: LiteCompanion.lupoAlleato,
           id: wolf.id,
+          ownerId: lunar?.id ?? 0,
           maxHp: wolf.maxHp,
           damageScale: 1 + .10 * stage,
         ),
       );
-      _progressQuest(0);
     }
-    enemies.removeWhere(
-      (enemy) => enemy.kind == LiteEnemyKind.lupoLunare && enemy.hp > 0,
-    );
-    message = 'I Lupi Lunari vi seguono fino all’uscita di questa sala.';
+    message = 'I Lupi Lunari combatteranno al vostro fianco in questa sala.';
   }
+
+  bool _liveLunarWolf(LiteEnemy enemy) =>
+      enemy.kind == LiteEnemyKind.lupoLunare && enemy.hp > 0;
 
   void _dismissRoomWolves() => clones.removeWhere(
     (clone) => clone.companion == LiteCompanion.lupoAlleato,

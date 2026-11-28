@@ -744,7 +744,7 @@ void main() {
     () {
       for (final hero in LiteHero.values) {
         final run = _run(hero: hero)..obstacles.clear();
-        final target = _stationaryEnemy(301, const Point(6.5, 11));
+        final target = _stationaryEnemy(301, const Point(6.5, 11), hp: 340);
         run.enemies
           ..clear()
           ..add(target);
@@ -757,6 +757,22 @@ void main() {
         expect(run.useOpen(target.position), isFalse);
         expect(_restore(run).openCooldown, LiteRun.openRecovery);
         switch (hero) {
+          case LiteHero.fabbro:
+            expect(
+              run.clones.where((ally) => ally.forgedWeapon),
+              hasLength(20),
+            );
+          case LiteHero.ragnoSaldatore ||
+              LiteHero.rasvyr ||
+              LiteHero.lupoDiVaitern ||
+              LiteHero.pysciwarden ||
+              LiteHero.lusierTre:
+            expect(
+              run.combatImpacts.any(
+                (effect) => effect.target == LiteImpactTarget.milestoneCast,
+              ),
+              isTrue,
+            );
           case LiteHero.evasore:
             expect(run.intangible, isTrue);
             expect(run.burstRemaining, .48);
@@ -765,7 +781,7 @@ void main() {
             expect(run.clones.every((ally) => ally.expiresAfter == 12), isTrue);
           case LiteHero.ashley:
             expect(run.springPunchActive, isTrue);
-            expect(target.hp, target.maxHp - 42);
+            expect(target.hp, target.maxHp - 42 * LiteRun.openPower);
           case LiteHero.scostubandito:
             expect(run.ownedWeapons, [LiteWeapon.fucileScostubandito]);
             expect(run.clones.single.companion, LiteCompanion.granScostumato);
@@ -779,7 +795,7 @@ void main() {
             expect(target.hp, lessThan(target.maxHp));
             expect(target.shockRemaining, greaterThan(0));
           case LiteHero.sentinella:
-            expect(run.shield, 42);
+            expect(run.shield, 6 + 36 * LiteRun.openPower);
             expect(target.position.x, greaterThan(6.5));
           case LiteHero.babyForestDemon:
             expect(target.hp, lessThan(target.maxHp));
@@ -799,6 +815,7 @@ void main() {
             expect(target.hp, lessThan(target.maxHp));
           case LiteHero.ombra:
             expect(run.intangible, isTrue);
+            _wait(run, .35);
             expect(run.position.x, greaterThan(6.5));
           case LiteHero.veyrth:
             expect(run.projectiles, hasLength(7));
@@ -808,6 +825,7 @@ void main() {
             expect(target.hp, lessThan(target.maxHp));
           case LiteHero.vedettaEiva:
             expect(run.intangible, isTrue);
+            _wait(run, .35);
             expect(run.position.x, greaterThan(6.5));
           case LiteHero.doppelganger:
             expect(run.mimic?.kind, target.kind);
@@ -849,7 +867,7 @@ void main() {
           case LiteHero.diavolo:
             expect(
               run.projectiles
-                  .where((shot) => shot.kind == LiteProjectileKind.fireball)
+                  .where((shot) => shot.kind == LiteProjectileKind.pattoFiamma)
                   .length,
               5,
             );
@@ -1222,6 +1240,169 @@ void main() {
       expect(_restore(run).clones.single.companion, type);
     }
   });
+  test(
+    'enemy liveries survive saves and co-op frames without chamber seats',
+    () {
+      final run = _run();
+      final enemy = run.enemies.first..livery = LiteEnemyLivery.eclissi;
+      expect(enemy.chamberSeat, isNull);
+      final expectedDamage = enemy.attackDamage;
+      for (final includeEffects in [false, true]) {
+        final restored = LiteRun.fromJson(
+          run.toJson(includeEffects: includeEffects),
+        ).enemies.first;
+        expect(restored.livery, LiteEnemyLivery.eclissi);
+        expect(restored.attackDamage, expectedDamage);
+      }
+    },
+  );
+
+  test('enemy feedback decays during special AI and canceled windups', () {
+    final run = _run()
+      ..obstacles.clear()
+      ..enemies.clear();
+    final interrupted =
+        LiteEnemy(571, LiteEnemyKind.scostubandito, const Point(18, 11), 100)
+          ..windup = .02
+          ..stunned = .08;
+    final muddied =
+        LiteEnemy(572, LiteEnemyKind.scostubandito, const Point(22, 16), 100)
+          ..windup = .02
+          ..muddied = .08;
+    final enemies = [
+      interrupted,
+      muddied,
+      LiteEnemy(573, LiteEnemyKind.bunnys, const Point(18, 7), 100),
+      LiteEnemy(574, LiteEnemyKind.baghest, const Point(24, 7), 100),
+      LiteEnemy(575, LiteEnemyKind.divoramitu, const Point(24, 11), 100),
+      LiteEnemy(
+        576,
+        LiteEnemyKind.cuccioloDivoramitu,
+        const Point(24, 16),
+        100,
+      ),
+    ];
+    for (final enemy in enemies) {
+      enemy.hitFlash = .05;
+    }
+    run.enemies.addAll(enemies);
+    run.step(.03);
+
+    for (final enemy in enemies) {
+      expect(enemy.hitFlash, closeTo(.02, 1e-9), reason: enemy.kind.name);
+    }
+    expect(interrupted.windup, 0);
+    expect(muddied.windup, 0);
+    expect(interrupted.strikePose, 0);
+    expect(muddied.strikePose, 0);
+    run.step(.04);
+    expect(enemies.map((enemy) => enemy.hitFlash), everyElement(0));
+  });
+
+  test('both echoes record a fall without awarding experience or loot', () {
+    final run = _run(weapon: LiteWeapon.spadaScudo)
+      ..position = const Point(16, 11);
+    run.obstacles.clear();
+    final mirror = LiteMirrorBuild(
+      hero: LiteHero.duplicatore,
+      weapon: LiteWeapon.falceRunica,
+      slots: [],
+      quantities: [],
+      learned: {},
+      oculum: 4,
+      damage: 17,
+      shield: 0,
+      playerId: 2,
+    );
+    final echoes = [
+      LiteEnemy(582, LiteEnemyKind.ecoSpeculare, const Point(17, 11), 1)
+        ..mirror = mirror
+        ..livery = LiteEnemyLivery.braci,
+      LiteEnemy(583, LiteEnemyKind.minionVeyrth, const Point(17.5, 11), 1),
+    ];
+    run.enemies
+      ..clear()
+      ..addAll(echoes);
+    final experience = run.exp;
+    final loot = run.loot.length;
+    expect(run.attack(echoes.first.position), isTrue);
+    expect(echoes.map((enemy) => enemy.hp), everyElement(0));
+    expect(run.exp, experience);
+    expect(run.loot, hasLength(loot));
+    expect(run.defeats, hasLength(2));
+    expect(run.defeats.every((impact) => impact.end != null), isTrue);
+    expect(run.defeats.first.mirror, same(mirror));
+    expect(_restore(run).defeats, isEmpty);
+
+    final encoded = jsonEncode(run.toJson(includeEffects: true));
+    final guest = LiteRun.fromJson(jsonDecode(encoded) as Map<String, dynamic>);
+    final echo = guest.defeats.first;
+    expect(echo.enemyKind, LiteEnemyKind.ecoSpeculare);
+    expect(echo.mirror?.hero, LiteHero.duplicatore);
+    expect(echo.mirror?.weapon, LiteWeapon.falceRunica);
+    expect(echo.mirror?.playerId, 2);
+    expect(echo.mirror?.damage, 17);
+    expect(echo.livery, LiteEnemyLivery.braci);
+    expect(echo.silent, isFalse);
+    final minion = guest.defeats.last;
+    expect(minion.enemyKind, LiteEnemyKind.minionVeyrth);
+    expect(minion.mirror, isNull);
+    expect(minion.livery, isNull);
+  });
+
+  test(
+    'impact frames retain legacy endpoints and silent flags with visual data',
+    () {
+      final run = _run();
+      final base = [
+        LiteImpactTarget.defeat.index,
+        584,
+        12,
+        10,
+        run.time,
+        0,
+        0,
+        false,
+        LiteEnemyKind.scostubandito.index,
+      ];
+      final state = run.toJson()
+        ..['impacts'] = [
+          base,
+          [...base, true],
+          [...base, 13, 10],
+          [...base, 13, 10, true],
+          [
+            ...base,
+            13,
+            10,
+            true,
+            {'livery': LiteEnemyLivery.eclissi.name},
+          ],
+        ];
+      final restored = LiteRun.fromJson(state).defeats.toList();
+      expect(restored.map((impact) => impact.silent), [
+        false,
+        true,
+        false,
+        true,
+        true,
+      ]);
+      expect(
+        restored.take(2).map((impact) => impact.end),
+        everyElement(isNull),
+      );
+      expect(
+        restored.skip(2).map((impact) => impact.end),
+        everyElement(const Point(13, 10)),
+      );
+      expect(
+        restored.take(4).map((impact) => impact.livery),
+        everyElement(isNull),
+      );
+      expect(restored.last.livery, LiteEnemyLivery.eclissi);
+    },
+  );
+
   test('stride follows displacement and survives a cooperative frame', () {
     final run = _run()..position = const Point(13.7, 13.15);
     final enemy = run.enemies.first;
@@ -2150,9 +2331,13 @@ void main() {
       expect(run.attack(enemy.position), isTrue);
       _wait(run, .38);
       expect(enemy.position.x, greaterThan(8.5));
-      _wait(run, 3.65);
+      run.enemies.clear();
+      run.projectiles.clear();
+      run.stageClear = true;
+      final transformedHealth = run.hp;
+      _wait(run, LiteRun.plagueDurationFor(1));
       expect(run.plagueForm, isFalse);
-      expect(run.hp, 60);
+      expect(run.hp, transformedHealth / 2);
     },
   );
 
@@ -2669,9 +2854,12 @@ void main() {
       ..add(enemy);
     expect(run.attack(enemy.position), isTrue);
     expect(enemy.hp, closeTo(60 - 12 * .56, .0001));
-    expect(run.position.x, closeTo(5.05, .0001));
+    expect(run.position.x, 4);
+    _wait(run, .050);
+    expect(run.position.x, inExclusiveRange(4, 5.05));
     final restored = _restore(run);
-    _wait(restored, .13);
+    _wait(restored, .09);
+    expect(restored.position.x, closeTo(5.05, .0001));
     expect(restored.enemies.single.hp, closeTo(60 - 24 * .56, .0001));
     expect(restored.preparingAttack, isFalse);
   });
@@ -2861,7 +3049,108 @@ void main() {
     });
   }
 
-  test('Act III plays twelve distinct rooms and reloads with victory', () {
+  for (final kind in [LiteEnemyKind.gelycryn, LiteEnemyKind.thalvyr]) {
+    test(
+      '${kind.name} travels during windup and hits at the marked landing',
+      () {
+        var run = _run()
+          ..enemies.clear()
+          ..obstacles.clear()
+          ..position = const Point(8, 11);
+        const takeoff = Point<double>(4, 11);
+        var enemy = LiteEnemy(101, kind, takeoff, 100)..cooldown = 0;
+        run.enemies.add(enemy);
+
+        run.step(1 / 120);
+        final landing = enemy.attackTarget!;
+        expect(landing.x, closeTo(7.7, 1e-9));
+        _wait(run, enemy.windup - .24);
+        expect(enemy.position, takeoff);
+
+        run.step(.11);
+        expect(enemy.position.x, inExclusiveRange(takeoff.x, landing.x));
+        expect(enemy.attackTarget, landing);
+        expect(enemy.strikePose, 0);
+        expect(run.combatImpacts, isEmpty);
+
+        final midair = enemy.position;
+        run = _restore(run);
+        enemy = run.enemies.single;
+        expect(enemy.position, midair);
+        expect(enemy.attackTarget, landing);
+        run.position = landing + const Point(0, 1.4);
+        final health = run.hp;
+        for (var i = 0; i < 30 && enemy.attacking; i++) {
+          final previous = enemy.position;
+          run.step(1 / 120);
+          expect(enemy.position.distanceTo(previous), lessThan(.15));
+        }
+        expect(enemy.strikePose, greaterThan(0));
+        expect(enemy.position.distanceTo(landing), lessThan(1e-9));
+        final impact = run.combatImpacts.singleWhere(
+          (event) => event.target == LiteImpactTarget.explosion,
+        );
+        expect(impact.position, enemy.position);
+        expect(run.hp, lessThan(health));
+        if (kind == LiteEnemyKind.thalvyr) {
+          expect(run.projectiles, hasLength(3));
+          expect(run.projectiles.every((shot) => shot.direction.x > 0), isTrue);
+        }
+      },
+    );
+  }
+
+  test('the crystal crab marks a landing that its full body can reach', () {
+    final run = _run()
+      ..enemies.clear()
+      ..obstacles.clear()
+      ..position = const Point(8, 11);
+    const takeoff = Point<double>(4, 11);
+    final crab = LiteEnemy(101, LiteEnemyKind.gelycryn, takeoff, 100)
+      ..cooldown = 0;
+    run.enemies.add(crab);
+    // Clear line of sight at y=11 but the crab's radius hits this corner.
+    run.obstacles.add(LiteObstacle(5.5, 11.16, .15, .3));
+
+    run.step(1 / 120);
+    final landing = crab.attackTarget!;
+    expect(landing.x, inExclusiveRange(takeoff.x, 5));
+    for (var i = 0; i < 90 && crab.attacking; i++) {
+      run.step(1 / 120);
+      expect(crab.position.x, lessThanOrEqualTo(landing.x + 1e-9));
+    }
+    expect(crab.strikePose, greaterThan(0));
+    expect(crab.position.distanceTo(landing), lessThan(1e-9));
+    expect(run.hp, run.maxHp);
+  });
+
+  test('a legacy crab near impact still moves without a position jump', () {
+    var run = _run()
+      ..enemies.clear()
+      ..obstacles.clear()
+      ..position = const Point(8, 11);
+    const takeoff = Point<double>(4, 11);
+    const landing = Point<double>(7.7, 11);
+    run.enemies.add(
+      LiteEnemy(101, LiteEnemyKind.gelycryn, takeoff, 100)
+        ..windup = .008
+        ..attackTarget = landing,
+    );
+    run = _restore(run);
+    final crab = run.enemies.single;
+
+    run.step(1 / 120);
+    expect(crab.position.distanceTo(takeoff), lessThan(.15));
+    expect(crab.attackTarget, landing);
+    expect(crab.attacking, isTrue);
+    for (var i = 0; i < 30 && crab.attacking; i++) {
+      run.step(1 / 120);
+    }
+    expect(crab.strikePose, greaterThan(0));
+    expect(crab.position.distanceTo(landing), lessThan(1e-9));
+  });
+
+  test('Act III plays eleven distinct rooms and reloads with victory', () {
     var run = _reachFloor(LiteRun.finalStage);
     while (!run.stageClear) {
       _strikeCampaignEnemy(run, run.enemies.first);
@@ -2873,7 +3162,7 @@ void main() {
     final arenas = <String>{};
     final regions = <LiteThirdRegion>{};
     final bosses = <LiteEnemyKind>[];
-    for (var room = 1; room <= 12; room++) {
+    for (var room = 1; room <= LiteThirdAct.rooms.length; room++) {
       run = _restore(run);
       expect(arenas.add(run.inputArena), isTrue);
       expect(run.thirdRoom, room);
@@ -2888,7 +3177,7 @@ void main() {
         _strikeCampaignEnemy(run, run.enemies.first);
       }
       expect(run.stageClear, isTrue, reason: 'sala $room');
-      if (room < 12) {
+      if (room < LiteThirdAct.rooms.length) {
         expect(run.victorious, isFalse);
         run.position = run.portalPosition;
         expect(run.advance(), isTrue);
@@ -2917,6 +3206,128 @@ void main() {
     expect(run.enterThirdAct(), isFalse);
   });
 
+  test(
+    'Space recovers on the third combat room, across rest and reconnect',
+    () {
+      var run =
+          LiteRun(
+              seed: 81,
+              hero: LiteHero.sentinella,
+              weapon: LiteWeapon.guanti,
+              playerCount: 2,
+            )
+            ..obstacles.clear()
+            ..enemies.clear();
+      expect(
+        run.addCoopFighter('guest', 'Ombra', LiteHero.ombra, LiteWeapon.guanti),
+        isTrue,
+      );
+      run.stage = 4;
+      final target = run.position + const Point(2, 0);
+      final oldShield = run.shield;
+      expect(run.useOpen(target), isTrue);
+      expect(run.shield - oldShield, 108);
+      run.oculum = run.maxOculum;
+      _wait(run, 9);
+      expect(run.useOpen(target), isFalse);
+      expect(run.openRoomsRemaining(), 2);
+
+      void enterNextFloor() {
+        run.enemies.clear();
+        run.stageClear = true;
+        run.position = run.portalPosition;
+        expect(run.advance(), isTrue);
+      }
+
+      enterNextFloor();
+      expect(run.stage, 5);
+      expect(run.openRoomsRemaining(), 2);
+      final guest = run.coopFighter('guest')!;
+      expect(run.openRoomsRemaining(guest), 0);
+      expect(
+        run.setCoopControls(
+          'guest',
+          const Point(0, 0),
+          target,
+          attack: false,
+          open: true,
+        ),
+        isTrue,
+      );
+      expect(run.openRoomsRemaining(guest), 2);
+      run.stageClear = true;
+      run.position = run.portalPosition;
+      expect(run.enterRestHub(), isTrue);
+      expect(run.openRoomsRemaining(), 2);
+      expect(run.useOpen(target), isFalse);
+
+      run = _restore(run);
+      enterNextFloor();
+      expect(run.stage, 6);
+      expect(run.openRoomsRemaining(), 1);
+      expect(run.openRoomsRemaining(run.coopFighter('guest')), 2);
+      expect(run.useOpen(target), isFalse);
+      run = LiteRun.fromJson(run.toJson(includeEffects: true));
+      enterNextFloor();
+      expect(run.stage, 7);
+      expect(run.openRoomsRemaining(), 0);
+      expect(run.openRoomsRemaining(run.coopFighter('guest')), 1);
+      expect(run.useOpen(target), isTrue);
+      expect(run.openRoomsRemaining(), 2);
+    },
+  );
+
+  test('the final Aerovyr telegraphs and resolves three distinct attacks', () {
+    LiteRun prepare(double health) {
+      final run =
+          LiteRun(
+              seed: 921,
+              hero: LiteHero.duplicatore,
+              weapon: LiteWeapon.guanti,
+              difficulty: LiteDifficulty.oculum,
+            )
+            ..stage = LiteRun.finalStage
+            ..thirdRoom = LiteThirdAct.rooms.length
+            ..position = const Point(20, 11)
+            ..obstacles.clear()
+            ..enemies.clear();
+      run.enemies.add(
+        LiteEnemy(1220, LiteEnemyKind.aerovyr, const Point(14, 11), 1000)
+          ..hp = health
+          ..cooldown = 0,
+      );
+      run.step(1 / 120);
+      return run;
+    }
+
+    final fan = prepare(1000);
+    expect(fan.arenaLabel, startsWith('Piano 36'));
+    final fanCue = fan.stormWarning(fan.enemies.single)!;
+    expect(fanCue.pattern, LiteStormPattern.ventaglio);
+    expect(fanCue.phase, 1);
+    _wait(fan, fanCue.duration + .02);
+    expect(fan.projectiles.where((shot) => shot.fromEnemy), hasLength(5));
+
+    final cross = _restore(prepare(630));
+    final crossCue = cross.stormWarning(cross.enemies.single)!;
+    expect(crossCue.pattern, LiteStormPattern.croce);
+    expect(crossCue.phase, 2);
+    expect(crossCue.marks, contains(cross.position));
+    _wait(cross, crossCue.duration + .02);
+    expect(cross.hp, lessThan(cross.maxHp));
+
+    final ring = prepare(300);
+    final ringOutsideCenter = _restore(ring);
+    final ringCue = ring.stormWarning(ring.enemies.single)!;
+    expect(ringCue.pattern, LiteStormPattern.corona);
+    expect(ringCue.phase, 3);
+    ringOutsideCenter.position = ringCue.target + const Point(3, 0);
+    _wait(ring, ringCue.duration + .02);
+    _wait(ringOutsideCenter, ringCue.duration + .02);
+    expect(ring.hp, ring.maxHp);
+    expect(ringOutsideCenter.hp, lessThan(ringOutsideCenter.maxHp));
+  });
+
   test('a well previews three families and persists a single claim', () {
     var run = _reachFloor(2);
     final arena = run.inputArena;
@@ -2936,7 +3347,7 @@ void main() {
     expect(run.claimPowerWell(offers.last, arena: arena), isFalse);
   });
 
-  test('wolves join a hero or connected guard and leave on room change', () {
+  test('wolves join a lunar host or guest and leave on room change', () {
     for (final guest in [false, true]) {
       var run = _run(
         hero: guest ? LiteHero.evasore : LiteHero.cavaliereLunare,
@@ -2949,7 +3360,7 @@ void main() {
           run.addCoopFighter(
             'elite',
             'Elite',
-            LiteHero.eliteSolare,
+            LiteHero.cavaliereLunare,
             LiteWeapon.spadaScudo,
           ),
           isTrue,

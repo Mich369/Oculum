@@ -98,7 +98,11 @@ void _paintOpenPulse(
     LiteHero.ombra || LiteHero.veyrth || LiteHero.doppelganger => _violet,
     LiteHero.vesanybel => const Color(0xffdca66c),
     LiteHero.aerovyr => const Color(0xffa6d8ff),
-    LiteHero.vedettaEiva => const Color(0xff90d8c6),
+    LiteHero.vedettaEiva || LiteHero.pysciwarden => const Color(0xff90d8c6),
+    LiteHero.ragnoSaldatore => const Color(0xff75d9e0),
+    LiteHero.rasvyr => const Color(0xffe1a788),
+    LiteHero.lupoDiVaitern => const Color(0xffbbc8ee),
+    LiteHero.lusierTre || LiteHero.fabbro => const Color(0xfff8cb85),
   };
   _paintOpenBrush(canvas, feet, hero, color, phase);
   _oval(
@@ -164,7 +168,7 @@ void _paintOpenBrush(
   }
 }
 
-Color _weaponInk(LiteWeapon weapon) => switch (weapon) {
+Color _weaponInk(LiteWeapon weapon) => switch (weapon.moveset) {
   LiteWeapon.arco => const Color(0xffe6bf81),
   LiteWeapon.spadaScudo => const Color(0xffe6d4b3),
   LiteWeapon.guanti => const Color(0xfff2a364),
@@ -177,6 +181,7 @@ Color _weaponInk(LiteWeapon weapon) => switch (weapon) {
   LiteWeapon.piccaOssidiana => const Color(0xffc4a2d5),
   LiteWeapon.balestraRunica => const Color(0xffa9e7ef),
   LiteWeapon.fucileScostubandito => const Color(0xffdfae68),
+  _ => _sand,
 };
 
 void _paintAttackInk(
@@ -783,7 +788,7 @@ int? _infernalRow(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.demoneIntermedio => 1,
   LiteEnemyKind.demoneMaggiore => 2,
   LiteEnemyKind.diavolo => 3,
-  LiteEnemyKind.divoramitu => 4,
+  LiteEnemyKind.divoramitu || LiteEnemyKind.cuccioloDivoramitu => 4,
   LiteEnemyKind.divoramituBoss => 5,
   _ => null,
 };
@@ -823,6 +828,12 @@ void _burrowWarning(Canvas canvas, LiteEnemy enemy, LiteBurrow track) {
     return;
   }
   if (track.warning <= 0) return;
+  _paintPetDivoramituTrail(
+    canvas,
+    _offset(enemy.position),
+    _offset(track.start),
+    track.warning,
+  );
   final axis = _offset(enemy.hitboxAxis);
   final extent = enemy.hitboxHalfLength + enemy.hitboxRadius;
   final start = _offset(track.start) - axis * extent;
@@ -864,6 +875,82 @@ void _burrowWarning(Canvas canvas, LiteEnemy enemy, LiteBurrow track) {
   );
 }
 
+void _paintPetDivoramituTrail(
+  Canvas canvas,
+  Offset at,
+  Offset target,
+  double time,
+) {
+  final bend = target - at;
+  if (bend.distance < .01) return;
+  final direction = bend / bend.distance;
+  final flank = Offset(-direction.dy, direction.dx);
+  _oval(canvas, at, .46, .27, const Color(0x71492e40));
+  for (var i = 0; i < 6; i++) {
+    final along = math.min(bend.distance, .12 + i * .19);
+    final drift = flank * math.sin(time * 17 + i * 1.7) * (.13 + i * .035);
+    final crest = at + direction * along + drift;
+    _inkSlash(
+      canvas,
+      crest - direction * (.24 + i * .03),
+      crest + flank * .08,
+      const Color(0xc7be9b78),
+      .085,
+    );
+  }
+}
+
+void _paintDivoramituField(
+  Canvas canvas,
+  LiteDivoramituField field,
+  double time,
+) {
+  final center = _offset(field.center);
+  final fade = (field.remaining / .45).clamp(0.0, 1.0);
+  const outer = LiteDivoramituField.radius;
+  const core = LiteDivoramituField.coreRadius;
+  canvas.drawCircle(
+    center,
+    outer,
+    Paint()..color = Color.fromRGBO(63, 45, 65, .40 * fade),
+  );
+  canvas.drawCircle(
+    center,
+    core,
+    Paint()..color = Color.fromRGBO(154, 69, 44, .48 * fade),
+  );
+  final shimmer = .76 + .24 * math.sin(time * 9);
+  for (var i = 0; i < 17; i++) {
+    final angle = i * math.pi * 2 / 17;
+    final spoke = Offset(math.cos(angle), math.sin(angle));
+    final tangent = Offset(-spoke.dy, spoke.dx);
+    final rim = center + spoke * outer;
+    final cracked = center + spoke * (core * (.85 + (i % 3) * .08));
+    _inkSlash(
+      canvas,
+      rim - tangent * .23,
+      rim + tangent * .28 - spoke * .19,
+      const Color(0xffb99bc3).withValues(alpha: .63 * fade),
+      .075,
+    );
+    _inkSlash(
+      canvas,
+      cracked,
+      center + spoke * (outer * (.71 + i % 4 * .07)) + tangent * .25,
+      const Color(0xffe9af78).withValues(alpha: .49 * fade * shimmer),
+      .064,
+    );
+  }
+  canvas.drawCircle(
+    center,
+    core,
+    Paint()
+      ..color = const Color(0xfff4b982).withValues(alpha: .68 * fade * shimmer)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .052,
+  );
+}
+
 void _paintWeaponArtPulse(
   Canvas canvas,
   Offset at,
@@ -872,6 +959,7 @@ void _paintWeaponArtPulse(
   double cooldown, {
   int rank = 0,
 }) {
+  if (weapon.isMilestone) return;
   final time = LiteWeaponArt.weaponArtRecovery - cooldown;
   if (time < 0 || time >= .27 || direction.distance < .01) return;
   final phase = time / .27;

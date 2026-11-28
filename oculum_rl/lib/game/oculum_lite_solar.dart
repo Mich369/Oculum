@@ -67,6 +67,7 @@ extension LiteSolarDungeon on LiteRun {
     solarPhase = phase;
     restHub = false;
     stageClear = false;
+    _registerOpenRoom();
     projectiles.clear();
     groundShots.clear();
     position = LiteRun._spawn;
@@ -213,17 +214,20 @@ extension LiteSolarDungeon on LiteRun {
     Point<double> at,
     Point<double> direction,
     LiteCoopFighter? fighter,
-    int grade,
-  ) {
+    int grade, {
+    bool open = false,
+  }) {
+    final power = open ? LiteRun.openPower : 1.0;
+    var landing = at;
     if (character == LiteHero.aberrazioneSolare) {
       (fighter?._night ?? _night).solarMantle = 2.25 + grade * .5;
       if (fighter == null) {
-        shield += 8 + 5.0 * grade;
+        shield += (8 + 5 * grade) * power;
       } else {
-        fighter.shield += 8 + 5.0 * grade;
+        fighter.shield += (8 + 5 * grade) * power;
       }
     } else {
-      _playableShadowStep(
+      landing = _playableShadowStep(
         at,
         direction,
         fighter,
@@ -232,9 +236,9 @@ extension LiteSolarDungeon on LiteRun {
       );
     }
     _openBurst(
-      fighter?.position ?? position,
+      landing,
       2.2,
-      12 + grade * 5.0,
+      (12 + grade * 5) * power,
       fighter?.id ?? 0,
       push: 1.2,
     );

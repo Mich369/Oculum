@@ -20,11 +20,28 @@ class OculumLiteProgress {
     this.discoveredPets = const {},
     this.slimeCounters = const {},
     this.upgrades = const {},
+    this.milestoneFloors = const {},
   });
 
   final int bestClearedFloor;
   final bool scostubanditoUnlocked;
   final Set<LiteHero> unlockedHeroes;
+  final Map<LiteDifficulty, int> milestoneFloors;
+
+  int clearedFor(LiteDifficulty minimum) => milestoneFloors.entries
+      .where((entry) => entry.key.index >= minimum.index)
+      .fold(0, (best, entry) => entry.value > best ? entry.value : best);
+
+  bool unlocked(LiteMilestoneReward reward) =>
+      clearedFor(reward.difficulty) >= reward.floors;
+
+  Iterable<LiteWeapon> get startingWeapons sync* {
+    yield* LiteWeapon.starters;
+    for (final reward in liteMilestoneRewards) {
+      if (unlocked(reward) && reward.weapon != null) yield reward.weapon!;
+    }
+  }
+
   final Set<LiteCompanion> discoveredPets;
   final Map<String, int> slimeCounters;
   int get slimeKills => slimeCounters.values
@@ -33,6 +50,9 @@ class OculumLiteProgress {
   bool canPlay(LiteHero hero) =>
       hero.unlockHint == null ||
       unlockedHeroes.contains(hero) ||
+      liteMilestoneRewards.any(
+        (reward) => reward.hero == hero && unlocked(reward),
+      ) ||
       hero == LiteHero.slimeBlu && slimeKills >= 10 ||
       hero == LiteHero.scostubandito && scostubanditoUnlocked;
   final Map<LitePermanentUpgrade, int> upgrades;
@@ -51,6 +71,7 @@ class OculumLiteProgress {
       run.unlockedHeroesFor(run.hero),
       pets: run.discoveredPets,
       slimeCounters: {run.slimeCreditId: run.slimeKills},
+      milestones: {run.difficulty: run.milestoneFloors},
     );
   }
 
@@ -59,6 +80,7 @@ class OculumLiteProgress {
     Set<LiteHero> heroes, {
     Set<LiteCompanion> pets = const {},
     Map<String, int> slimeCounters = const {},
+    Map<LiteDifficulty, int> milestones = const {},
   }) {
     final unlocksBandit = heroes.contains(LiteHero.scostubandito);
     final additions = {
@@ -67,7 +89,13 @@ class OculumLiteProgress {
           if (entry.value > (this.slimeCounters[entry.key] ?? 0))
             entry.key: entry.value.clamp(0, 10),
     };
+    final improvedMilestones = {
+      for (final entry in milestones.entries)
+        if (entry.value > (milestoneFloors[entry.key] ?? 0))
+          entry.key: entry.value.clamp(0, 36),
+    };
     if (cleared <= bestClearedFloor &&
+        improvedMilestones.isEmpty &&
         heroes.every(canPlay) &&
         pets.every(discoveredPets.contains) &&
         additions.isEmpty) {
@@ -79,6 +107,10 @@ class OculumLiteProgress {
       unlockedHeroes: Set.unmodifiable({...unlockedHeroes, ...heroes}),
       discoveredPets: Set.unmodifiable({...discoveredPets, ...pets}),
       slimeCounters: Map.unmodifiable({...this.slimeCounters, ...additions}),
+      milestoneFloors: Map.unmodifiable({
+        ...milestoneFloors,
+        ...improvedMilestones,
+      }),
       upgrades: upgrades,
     );
   }
@@ -92,6 +124,7 @@ class OculumLiteProgress {
       unlockedHeroes: unlockedHeroes,
       discoveredPets: discoveredPets,
       slimeCounters: slimeCounters,
+      milestoneFloors: milestoneFloors,
       upgrades: Map.unmodifiable({...upgrades, upgrade: rank + 1}),
     );
   }
@@ -103,6 +136,11 @@ class OculumLiteProgress {
     if (unlockedHeroes.isNotEmpty)
       'heroes': unlockedHeroes.map((hero) => hero.name).toList(growable: false),
     'upgrades': LitePermanentUpgrade.encode(upgrades),
+    if (milestoneFloors.isNotEmpty)
+      'milestones': {
+        for (final entry in milestoneFloors.entries)
+          entry.key.name: entry.value,
+      },
     if (discoveredPets.isNotEmpty)
       'pets': discoveredPets.map((pet) => pet.name).toList(),
     if (slimeCounters.isNotEmpty) 'slimeCounters': slimeCounters,
@@ -112,6 +150,7 @@ class OculumLiteProgress {
     final data = jsonDecode(source) as Map<String, dynamic>;
     if (data['schema'] != 1) throw const FormatException('Profilo sconosciuto');
     final counters = data['slimeCounters'];
+    final milestones = data['milestones'];
     final profile = OculumLiteProgress(
       slimeCounters: Map.unmodifiable({
         if (counters is Map)
@@ -120,6 +159,12 @@ class OculumLiteProgress {
                 entry.value is int &&
                 (entry.value as int) > 0)
               entry.key as String: (entry.value as int).clamp(1, 10),
+      }),
+      milestoneFloors: Map.unmodifiable({
+        if (milestones is Map)
+          for (final difficulty in LiteDifficulty.values)
+            if (milestones[difficulty.name] case final int count when count > 0)
+              difficulty: count.clamp(1, 36),
       }),
       bestClearedFloor: (data['floor'] as int).clamp(-1, LiteRun.finalStage),
       scostubanditoUnlocked: data['scostubandito'] == true,

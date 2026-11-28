@@ -103,6 +103,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     _touch = const Point(0, 0);
     _session.setBlocking(false);
     _session.setRescuing(false);
+    _session.holdFire(false);
     _setMove();
   }
 
@@ -144,6 +145,9 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       _session.rifleSkill();
     } else if (key == LogicalKeyboardKey.keyV) {
       _session.talent();
+    } else if (key == LogicalKeyboardKey.keyB &&
+        _localHero == LiteHero.lusierTre) {
+      _session.callSolarRetinue();
     } else if (key == LogicalKeyboardKey.keyB &&
         _localHero == LiteHero.scostubandito) {
       _session.bomb();
@@ -195,13 +199,39 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       _session.struggleRedGrip();
       return;
     }
+    if (_session.canAct &&
+        _session.run?.canSpeakToVampire(_session.localFighter) == true) {
+      _clear();
+      final pact = await showLiteVampirePact(context);
+      if (mounted && pact != null) _session.acceptVampirePact(pact);
+      if (mounted) _focus.requestFocus();
+      return;
+    }
+    if (_session.run case final world?
+        when _session.canAct &&
+            world.canSpeakToPetTrader(_session.localFighter)) {
+      _clear();
+      final trade = await showLitePetTrader(
+        context,
+        world,
+        _session.localFighter,
+      );
+      if (mounted && trade != null) _session.tradePet(trade.$1, trade.$2);
+      if (mounted) _focus.requestFocus();
+      return;
+    }
+    final station = _session.run?.restStationNearby(_session.localFighter);
+    if (_session.canAct && station != null) {
+      await _openBotteghe(station: station);
+      return;
+    }
     if (_session.authority?.challengeBaghest() == true) return;
     if (_session.solarInteraction() || _session.advanceActTwo()) return;
-    if (_session.host && (_session.run?.canChooseActTwo ?? false)) {
+    if (_session.run case final world?
+        when _session.host && world.canChooseActTwo) {
       _clear();
-      final realm = await chooseLiteSecondAct(context);
-      if (mounted && realm != null) _session.enterSecondAct(realm);
-      if (mounted) _focus.requestFocus();
+      _session.enterSecondAct(world.seededRealm);
+      _focus.requestFocus();
       return;
     }
     if (_session.canRest) {
@@ -226,7 +256,11 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       _session.enterRestHub();
       return;
     }
-    final next = await chooseOculumLiteRoute(context, run);
+    final next = await chooseOculumLiteRoute(
+      context,
+      run,
+      fixedDestination: true,
+    );
     if (!mounted || next == null) return;
     _session.confirmPortal(next);
     _focus.requestFocus();
@@ -243,19 +277,29 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     if (mounted) _focus.requestFocus();
   }
 
-  Future<void> _openBotteghe() async {
+  bool _visitingMerchant = false;
+
+  Future<void> _openBotteghe({LiteRestStation? station}) async {
+    if (_visitingMerchant) return;
+    _visitingMerchant = true;
     _clear();
     await showLiteRestHub(
       context,
       world: () => _session.run,
+      initialStation: station,
       playVoice: _audio.playMerchantGreeting,
       fighter: () => _session.localFighter,
       refresh: _session,
       buy: _session.buyRestItem,
+      buySignature: _session.buySignature,
+      equipWeapon: _session.equipWeapon,
+      fuseWeapons: _session.fuseWeapons,
+      splitWeapons: _session.splitWeapons,
       equip: _session.equipRestArt,
       remember: _session.rememberRestItem,
       exchange: _session.exchangeLunarPiece,
     );
+    _visitingMerchant = false;
     _audio.stopMerchantGreeting();
     if (mounted) _focus.requestFocus();
   }
@@ -346,7 +390,10 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
           }
           final mine = run.coopFighter(_session.localAccount);
           final hero = _localHero;
-          final openRecovery = mine?.openCooldown ?? run.openCooldown;
+          final restStation = _session.canAct
+              ? run.restStationNearby(mine)
+              : null;
+          final openRecovery = run.openRoomsRemaining(mine);
           final openGrade = mine?.openGrade ?? run.openGrade;
           final down = _session.host ? run.hostDown : mine?.hp == 0;
           final rescueStatus = _session.rescueStatus;
@@ -362,6 +409,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                 OculumLiteArena(
                   run: run,
                   animationLead: _session.animationLead,
+                  openSceneLead: _session.openSceneLead,
                   appearance: widget.hostAppearance,
                   guestAppearances: widget.guestAppearances,
                   focusAccount: mine?.account,
@@ -376,6 +424,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                           }
                         }
                       : null,
+                  onAttackHeld: playing ? _session.holdFire : null,
                   onTalent: playing
                       ? (_) {
                           _focus.requestFocus();
@@ -526,15 +575,23 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                               if (hero != null)
                                 FilledButton.tonal(
                                   onPressed:
-                                      openRecovery > 0 ||
+                                      run.restHub ||
+                                          openRecovery > 0 ||
                                           (mine?.oculum ?? run.oculum) <
                                               LiteRun.granSummonCost
                                       ? null
                                       : _session.useOpen,
                                   child: Text(
                                     openRecovery > 0
-                                        ? 'Open $openGrade · ${openRecovery.ceil()} s'
+                                        ? 'Open · $openRecovery ${openRecovery == 1 ? 'stanza' : 'stanze'}'
                                         : 'Open $openGrade · ${hero.openName}',
+                                  ),
+                                ),
+                              if (hero == LiteHero.lusierTre)
+                                FilledButton.tonal(
+                                  onPressed: _session.callSolarRetinue,
+                                  child: Text(
+                                    'B · Scorta · ${(mine?.supply ?? run.supply).lusierCards}/12 carte',
                                   ),
                                 ),
                               if (hero == LiteHero.reGoblin)
@@ -685,6 +742,16 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                               run.solarBossWaiting &&
                                               run.hasPortalNearby
                                         ? 'Sfida il Guardiano Solare · R'
+                                        : run.canSpeakToVampire(mine)
+                                        ? 'Parla col Vampiro · R'
+                                        : run.canSpeakToPetTrader(mine)
+                                        ? 'Parla col Bandito dei pet · R'
+                                        : restStation != null
+                                        ? (restStation ==
+                                                      LiteRestStation.forge &&
+                                                  run.partyHasSmith
+                                              ? 'Usa la forgia · R'
+                                              : 'Parla con ${run.restStationName(restStation)} · R')
                                         : _session.canRest
                                         ? 'Ristoro · R'
                                         : _session.nearPortal(
@@ -694,7 +761,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                               ? 'Sala di ristoro · R'
                                               : _session.host &&
                                                     run.canChooseActTwo
-                                              ? 'Scegli il percorso dell’Atto II · R'
+                                              ? 'Entra nell’Atto II · R'
                                               : 'Conferma portale')
                                         : 'Ricarica · R',
                                   ),

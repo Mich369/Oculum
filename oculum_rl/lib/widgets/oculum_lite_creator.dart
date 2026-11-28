@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../game/oculum_lite_run.dart';
 import '../services/oculum_lite_saves.dart';
@@ -34,11 +35,39 @@ class _Creator extends StatefulWidget {
   State<_Creator> createState() => _CreatorState();
 }
 
+enum _CreatorPose {
+  posa('Posa'),
+  cammina('Cammina'),
+  corri('Corri'),
+  scatto('Scatto'),
+  attacco('Attacco');
+
+  const _CreatorPose(this.label);
+  final String label;
+}
+
+enum _CreatorSection {
+  identity('Identità', Icons.person_outline),
+  face('Volto', Icons.face_outlined),
+  gear('Tenuta', Icons.shield_outlined),
+  colors('Colori', Icons.palette_outlined);
+
+  const _CreatorSection(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
+
 class _CreatorState extends State<_Creator> {
   late final _name = TextEditingController(text: widget.name);
   late var _look = widget.appearance;
   late var _weapon = widget.weapon;
   final _random = Random();
+  final _previewAnchor = GlobalKey();
+  final _sections = {
+    for (final section in _CreatorSection.values) section: GlobalKey(),
+  };
+  var _pose = _CreatorPose.posa;
+  var _take = 0;
   var _showClone = true;
   var _zoomed = false;
   var _readingSaves = false;
@@ -148,7 +177,50 @@ class _CreatorState extends State<_Creator> {
     super.dispose();
   }
 
+  void _jumpTo(GlobalKey anchor) {
+    final section = anchor.currentContext;
+    if (section == null) return;
+    Scrollable.ensureVisible(
+      section,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 230),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Widget _sectionHeading(_CreatorSection section) => Padding(
+    key: _sections[section],
+    padding: const EdgeInsets.only(top: 12, bottom: 8),
+    child: Semantics(
+      header: true,
+      child: Text(
+        section.label,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+    ),
+  );
+
+  Widget _sectionLinks({required bool includePreview}) => Wrap(
+    spacing: 5,
+    children: [
+      if (includePreview)
+        TextButton.icon(
+          onPressed: () => _jumpTo(_previewAnchor),
+          icon: const Icon(Icons.visibility_outlined, size: 16),
+          label: const Text('Anteprima'),
+        ),
+      for (final section in _CreatorSection.values)
+        TextButton.icon(
+          onPressed: () => _jumpTo(_sections[section]!),
+          icon: Icon(section.icon, size: 16),
+          label: Text(section.label),
+        ),
+    ],
+  );
+
   Widget _preview(double height) => Column(
+    key: _previewAnchor,
     mainAxisSize: MainAxisSize.min,
     children: [
       Container(
@@ -168,14 +240,24 @@ class _CreatorState extends State<_Creator> {
           children: [
             AnimatedScale(
               scale: _zoomed ? 1.45 : 1,
-              duration: const Duration(milliseconds: 160),
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 160),
               alignment: const Alignment(0, .4),
-              child: OculumLiteHeroPreview(
-                hero: LiteHero.duplicatore,
-                weapon: _weapon,
-                appearance: _look,
-                showClone: _showClone,
-              ),
+              child: _pose == _CreatorPose.posa
+                  ? OculumLiteHeroPreview(
+                      hero: LiteHero.duplicatore,
+                      weapon: _weapon,
+                      appearance: _look,
+                      showClone: _showClone,
+                    )
+                  : _CreatorMotionStage(
+                      key: ValueKey((_pose, _take, _weapon, _showClone)),
+                      pose: _pose,
+                      weapon: _weapon,
+                      appearance: _look,
+                      showClone: _showClone,
+                    ),
             ),
             Positioned(
               top: 4,
@@ -191,10 +273,38 @@ class _CreatorState extends State<_Creator> {
           ],
         ),
       ),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 5,
+          runSpacing: 2,
+          children: [
+            for (final pose in _CreatorPose.values)
+              ChoiceChip(
+                label: Text(pose.label),
+                selected: _pose == pose,
+                onSelected: (_) => setState(() {
+                  _pose = pose;
+                  _take++;
+                }),
+              ),
+            if (_pose != _CreatorPose.posa)
+              IconButton(
+                tooltip: 'Ripeti prova',
+                onPressed: () => setState(() => _take++),
+                icon: const Icon(Icons.replay),
+              ),
+          ],
+        ),
+      ),
       DropdownButtonFormField<LiteWeapon>(
         initialValue: _weapon,
         isExpanded: true,
-        decoration: const InputDecoration(labelText: 'Posa da provare'),
+        decoration: const InputDecoration(
+          labelText: 'Posa da provare',
+          helperText: 'Arma usata nell’anteprima',
+        ),
         items: [
           for (final weapon in LiteWeapon.values)
             DropdownMenuItem(value: weapon, child: Text(weapon.label)),
@@ -215,6 +325,7 @@ class _CreatorState extends State<_Creator> {
   Widget _options() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      _sectionHeading(_CreatorSection.identity),
       TextField(
         controller: _name,
         maxLength: 32,
@@ -240,20 +351,6 @@ class _CreatorState extends State<_Creator> {
         _look.body,
         (body) => _change(_look.copyWith(body: body)),
       ),
-      _choices(
-        'Lineamenti',
-        const [
-          'Affilati',
-          'Arrotondati',
-          'Marcati',
-          'Scavati',
-          'Squadrati',
-          'Dolci',
-        ],
-        OculumLiteFace.values,
-        _look.face,
-        (face) => _change(_look.copyWith(face: face)),
-      ),
       const Text('Corporatura'),
       Slider(
         key: const ValueKey('rl-corpo'),
@@ -269,6 +366,21 @@ class _CreatorState extends State<_Creator> {
           onChanged: (value) => _change(_look.copyWith(ears: value)),
         ),
       ],
+      _sectionHeading(_CreatorSection.face),
+      _choices(
+        'Lineamenti',
+        const [
+          'Affilati',
+          'Arrotondati',
+          'Marcati',
+          'Scavati',
+          'Squadrati',
+          'Dolci',
+        ],
+        OculumLiteFace.values,
+        _look.face,
+        (face) => _change(_look.copyWith(face: face)),
+      ),
       _choices(
         'Pettinatura',
         [for (final hair in OculumLiteHair.values) hair.label],
@@ -305,6 +417,7 @@ class _CreatorState extends State<_Creator> {
         _look.faceDetail,
         (detail) => _change(_look.copyWith(faceDetail: detail)),
       ),
+      _sectionHeading(_CreatorSection.gear),
       _choices(
         'Tenuta',
         const [
@@ -336,6 +449,7 @@ class _CreatorState extends State<_Creator> {
         _look.emblem,
         (emblem) => _change(_look.copyWith(emblem: emblem)),
       ),
+      _sectionHeading(_CreatorSection.colors),
       _swatches(
         'Abito',
         OculumLiteAppearance.clothPalette,
@@ -424,7 +538,13 @@ class _CreatorState extends State<_Creator> {
   Widget build(BuildContext context) {
     final screen = MediaQuery.sizeOf(context);
     final wide = screen.width >= 830 && screen.height >= 540;
+    final panelHeight = min(540.0, screen.height - 152);
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: wide ? 36 : 12,
+        vertical: 16,
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
       title: Row(
         children: [
           const Expanded(child: Text('Clonatore · Crea il personaggio')),
@@ -442,18 +562,40 @@ class _CreatorState extends State<_Creator> {
       ),
       content: SizedBox(
         width: wide ? 912 : 460,
-        height: wide ? 540 : null,
+        height: panelHeight,
         child: wide
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _preview(310)),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: _preview((panelHeight - 166).clamp(180.0, 310.0)),
+                    ),
+                  ),
                   const SizedBox(width: 22),
-                  Expanded(child: SingleChildScrollView(child: _options())),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionLinks(includePreview: false),
+                        Expanded(
+                          child: SingleChildScrollView(child: _options()),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               )
-            : SingleChildScrollView(
-                child: Column(children: [_preview(172), _options()]),
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionLinks(includePreview: true),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(children: [_preview(172), _options()]),
+                    ),
+                  ),
+                ],
               ),
       ),
       actions: [
@@ -471,4 +613,125 @@ class _CreatorState extends State<_Creator> {
       ],
     );
   }
+}
+
+/// Plays a brief take with the same simulation and renderer as an actual run.
+class _CreatorMotionStage extends StatefulWidget {
+  const _CreatorMotionStage({
+    super.key,
+    required this.pose,
+    required this.weapon,
+    required this.appearance,
+    required this.showClone,
+  });
+
+  final _CreatorPose pose;
+  final LiteWeapon weapon;
+  final OculumLiteAppearance appearance;
+  final bool showClone;
+
+  @override
+  State<_CreatorMotionStage> createState() => _CreatorMotionStageState();
+}
+
+class _CreatorMotionStageState extends State<_CreatorMotionStage>
+    with SingleTickerProviderStateMixin {
+  late final LiteRun _run;
+  late final Ticker _ticker;
+  final _view = ValueNotifier<int>(0);
+  Duration _lastTick = Duration.zero;
+  bool _started = false;
+  double _played = 0;
+
+  bool get _moving =>
+      widget.pose == _CreatorPose.cammina || widget.pose == _CreatorPose.corri;
+
+  double get _duration => switch (widget.pose) {
+    _CreatorPose.posa => 0,
+    _CreatorPose.cammina => 1.45,
+    _CreatorPose.corri => 1.05,
+    _CreatorPose.scatto => .46,
+    _CreatorPose.attacco =>
+      widget.weapon.chargeSeconds + (widget.weapon.returns ? 2.1 : .58),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _run = LiteRun(seed: 251, hero: LiteHero.duplicatore, weapon: widget.weapon)
+      ..stageClear = true
+      ..enemies.clear()
+      ..obstacles.clear()
+      ..fauna.clear()
+      ..loot.clear();
+    _run.position = Point(_run.width / 2, _run.height / 2);
+    final aim = _run.position + const Point<double>(8, 0);
+    if (widget.showClone) {
+      _run.special(_run.position - const Point<double>(2, 0));
+    }
+    _run.lookAt(aim);
+    switch (widget.pose) {
+      case _CreatorPose.scatto:
+        _run.dash(aim);
+      case _CreatorPose.attacco:
+        _run.attack(aim);
+      case _CreatorPose.posa:
+      case _CreatorPose.cammina:
+      case _CreatorPose.corri:
+        break;
+    }
+    _ticker = createTicker(_tick);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      // A still from the selected move is enough with reduced motion.
+      _step(widget.pose == _CreatorPose.scatto ? .09 : .13);
+    } else {
+      _ticker.start();
+    }
+  }
+
+  void _step(double seconds) {
+    _run.advanceFrame(
+      seconds,
+      move: _moving ? const Point(1, 0) : const Point(0, 0),
+      walk: widget.pose == _CreatorPose.cammina,
+    );
+    _played += seconds;
+  }
+
+  void _tick(Duration elapsed) {
+    final delta = (elapsed - _lastTick).inMicroseconds / 1000000;
+    _lastTick = elapsed;
+    final seconds = min(min(delta, .05), _duration - _played);
+    if (seconds <= 0) return;
+    _step(seconds);
+    _view.value++;
+    if (_played >= _duration - .0001) _ticker.stop();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _view.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    child: Transform.scale(
+      scale: 2.25,
+      alignment: const Alignment(0, -.15),
+      child: OculumLiteArena(
+        run: _run,
+        appearance: widget.appearance,
+        view: _view,
+      ),
+    ),
+  );
 }

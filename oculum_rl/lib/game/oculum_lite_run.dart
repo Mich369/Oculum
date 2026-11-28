@@ -17,7 +17,16 @@ part 'oculum_lite_art_selection.dart';
 part 'oculum_lite_mirror_skills.dart';
 part 'oculum_lite_ember.dart';
 part 'oculum_lite_dash_crossings.dart';
+part 'oculum_lite_milestones.dart';
+part 'oculum_lite_aerovyr.dart';
 part 'oculum_lite_weapon_art.dart';
+part 'oculum_lite_fusion.dart';
+part 'oculum_lite_five_flames.dart';
+part 'oculum_lite_lusier_bunnys.dart';
+part 'oculum_lite_vampire_pact.dart';
+part 'oculum_lite_pets.dart';
+part 'oculum_lite_fabbro.dart';
+part 'oculum_lite_open_scene.dart';
 
 enum LiteHero {
   evasore('Passo fantasma', 'Scatto intangibile più lungo.'),
@@ -101,8 +110,8 @@ enum LiteHero {
     'Attraversa la distanza e apre un sigillo al suolo.',
   ),
   diavolo(
-    'Patto dei cinque fuochi',
-    'Scaglia cinque fiamme rimbalzanti a ventaglio.',
+    'Patto delle Cinque Fiamme',
+    'Lancia cinque fiamme a inseguimento che esplodono ed evoca tre Minori e un Intermedio finché sei in vita.',
   ),
   polloMeccanico(
     'Uova di Postea',
@@ -116,6 +125,27 @@ enum LiteHero {
   vedettaEiva(
     'Passo tra le maree',
     'Scatta e apre un varco con un ampio colpo di picca.',
+  ),
+  ragnoSaldatore(
+    'Raggio al plasma',
+    'Scarica un impulso al plasma lungo la linea del bersaglio.',
+  ),
+  rasvyr(
+    'Morsa di Rasvyr',
+    'Apri le chele e respingi i nemici nel raggio della morsa.',
+  ),
+  lupoDiVaitern(
+    'Ululato di Vaitern',
+    'Le due falci lunari seguono il suo ululato.',
+  ),
+  pysciwarden(
+    'Canalstryke · Piena',
+    'Apre tre scie d’Eiva in direzioni diverse.',
+  ),
+  lusierTre('Custodia di Lusier', 'Esplode la carta solare e riceve Scudo.'),
+  fabbro(
+    'Armeria vivente',
+    'Evoca fino a 20 armi da 7 Vita. Colpiscono forte e sono intangibili nei primi 2 secondi. Non si curano e non si rialzano.',
   );
 
   const LiteHero(this.openName, this.openDescription);
@@ -150,6 +180,12 @@ enum LiteHero {
     polloMeccanico ||
     raganella ||
     pipistrello => LiteWeapon.guanti,
+    ragnoSaldatore => LiteWeapon.balestraRunica,
+    rasvyr => LiteWeapon.guanti,
+    lupoDiVaitern => LiteWeapon.guanti,
+    pysciwarden => LiteWeapon.piccaOssidiana,
+    lusierTre => LiteWeapon.spadaScudo,
+    fabbro => LiteWeapon.martelloForgia,
     _ => null,
   };
   String get talentName => switch (this) {
@@ -187,6 +223,12 @@ enum LiteHero {
     vesanybel => 'Rintocco protetto',
     aerovyr => 'Sfere gemelle',
     vedettaEiva => 'Stoccata di marea',
+    ragnoSaldatore => 'Saldatura a coda',
+    rasvyr => 'La chela di Rasvyr',
+    lupoDiVaitern => 'Balzo del Lupo Lunare',
+    pysciwarden => 'Canalstryke',
+    lusierTre => 'Carta esplosiva',
+    fabbro => 'Frattura della forgia',
   };
   LiteEnemyKind? get sprite => switch (this) {
     scostubandito => LiteEnemyKind.scostubandito,
@@ -196,6 +238,11 @@ enum LiteHero {
     babyForestDemon => LiteEnemyKind.babyForestDemon,
     vesanybel => LiteEnemyKind.vesanybel,
     aerovyr => LiteEnemyKind.aerovyr,
+    ragnoSaldatore => LiteEnemyKind.ragnoSaldatore,
+    rasvyr => LiteEnemyKind.rasvyr,
+    lupoDiVaitern => LiteEnemyKind.lupoLunare,
+    pysciwarden => LiteEnemyKind.thalvyr,
+    lusierTre => LiteEnemyKind.eliteSolare,
     _ => null,
   };
   String? get unlockHint => switch (this) {
@@ -209,6 +256,7 @@ enum LiteHero {
     veyrth => 'Sconfiggi Veyrth al piano 23.',
     cavaliereLunare => 'Completa la campagna in Facile o superiore.',
     slimeBlu => 'Abbatti dieci Slime nelle tue run.',
+    vampiro => 'Trova il raro Vampiro e accetta un patto in cambio del 35% della Vita massima.',
     reGoblin => 'Sconfiggi il Re Goblin nel Campo goblin segreto.',
     pollo => 'Lascia tre stanze senza ferirne la fauna.',
     polloMeccanico => 'Dopo aver sbloccato il Pollo di Brace, resta fermo dieci secondi in mezzo a tre polli senza aver mai ferito la fauna nella run.',
@@ -227,11 +275,19 @@ enum LiteHero {
     vesanybel => 'Sconfiggi Vesanybel nella Cripta della Campana Cieca.',
     aerovyr => 'Sconfiggi Aerovyr e completa l’Atto III.',
     vedettaEiva => 'Libera gli Altari di bassa marea nell’Atto III.',
+    ragnoSaldatore => 'Supera 5 piani a Molto facile.',
+    rasvyr => 'Supera 5 piani a Facile.',
+    lupoDiVaitern => 'Supera 5 piani a Medio.',
+    pysciwarden => 'Supera 5 piani a Difficile.',
+    lusierTre => 'Supera 5 piani a Oculum.',
+    fabbro => 'Porta una qualsiasi arma a Tempra 3 al Ristoro.',
     _ => null,
   };
 
   bool get solar =>
-      index >= guardiaSolare.index && index <= aberrazioneSolare.index;
+      this == lusierTre ||
+      (index >= guardiaSolare.index && index <= aberrazioneSolare.index);
+  bool get lunar => this == cavaliereLunare || this == lupoDiVaitern;
   bool get infernal => switch (this) {
     demoneMinore || demoneIntermedio || demoneMaggiore || diavolo => true,
     _ => false,
@@ -294,34 +350,279 @@ enum LiteWeapon {
   piccaOssidiana('Picca d’ossidiana', 9, 4.3, .73),
   balestraRunica('Balestra runica', 12, 11, 1.24),
   fucileScostubandito('Fucile Scostubandito', 5, 12, .68),
-  chakram('Chakram d’Iridio', 9, 9, .32);
+  chakram('Chakram d’Iridio', 9, 9, .32),
+  cheleRasvyr._variant('Chele di Rasvyr', 9, 2.85, .72, guanti),
+  piccaVaitern._variant('Picca di Vaitern', 8, 5.25, .78, piccaOssidiana),
+  vergaCorvina._variant('Verga corvina', 2, 10, .37, scettro),
+  orbita1._canon(
+    'Lama Orbita · Acqua',
+    6,
+    boomerang,
+    LiteRelicFamily.orbita,
+    1,
+  ),
+  orbita2._canon(
+    'Lama Orbita · Metallo',
+    6,
+    boomerang,
+    LiteRelicFamily.orbita,
+    2,
+  ),
+  orbita3._canon(
+    'Lama Orbita · Vento',
+    7,
+    boomerang,
+    LiteRelicFamily.orbita,
+    3,
+  ),
+  orbita4._canon(
+    'Lama Orbita · Triplice',
+    7,
+    boomerang,
+    LiteRelicFamily.orbita,
+    4,
+  ),
+  orbita5._canon(
+    'Lama Orbita · Custodia',
+    8,
+    boomerang,
+    LiteRelicFamily.orbita,
+    5,
+  ),
+  terramaul1._canon(
+    'Terramaul · Scisto',
+    10,
+    guanti,
+    LiteRelicFamily.terramaul,
+    1,
+  ),
+  terramaul2._canon(
+    'Terramaul · Pietra',
+    10,
+    guanti,
+    LiteRelicFamily.terramaul,
+    2,
+  ),
+  terramaul3._canon(
+    'Terramaul · Faglia',
+    11,
+    guanti,
+    LiteRelicFamily.terramaul,
+    3,
+  ),
+  terramaul4._canon(
+    'Terramaul · Frattura',
+    11,
+    guanti,
+    LiteRelicFamily.terramaul,
+    4,
+  ),
+  terramaul5._canon(
+    'Terramaul · Cataclisma',
+    12,
+    guanti,
+    LiteRelicFamily.terramaul,
+    5,
+  ),
+  segugio1._canon(
+    'Chakram al Plasma Segugio · Traccia',
+    9,
+    chakram,
+    LiteRelicFamily.segugio,
+    1,
+  ),
+  segugio2._canon(
+    'Chakram al Plasma Segugio · Caccia',
+    9,
+    chakram,
+    LiteRelicFamily.segugio,
+    2,
+  ),
+  segugio3._canon(
+    'Chakram al Plasma Segugio · Ritorno',
+    10,
+    chakram,
+    LiteRelicFamily.segugio,
+    3,
+  ),
+  segugio4._canon(
+    'Chakram al Plasma Segugio · Orbita',
+    10,
+    chakram,
+    LiteRelicFamily.segugio,
+    4,
+  ),
+  segugio5._canon(
+    'Chakram al Plasma Segugio · Morsa',
+    11,
+    chakram,
+    LiteRelicFamily.segugio,
+    5,
+  ),
+  canna1._canon(
+    'Lancia di canna · Canale',
+    8,
+    piccaOssidiana,
+    LiteRelicFamily.canna,
+    1,
+  ),
+  canna2._canon(
+    'Lancia di canna · Eiva',
+    8,
+    piccaOssidiana,
+    LiteRelicFamily.canna,
+    2,
+  ),
+  canna3._canon(
+    'Lancia di canna · Corrente',
+    9,
+    piccaOssidiana,
+    LiteRelicFamily.canna,
+    3,
+  ),
+  canna4._canon(
+    'Lancia di canna · Cateratta',
+    9,
+    piccaOssidiana,
+    LiteRelicFamily.canna,
+    4,
+  ),
+  canna5._canon(
+    'Lancia di canna · Piena',
+    10,
+    piccaOssidiana,
+    LiteRelicFamily.canna,
+    5,
+  ),
+  spadaLusier1._canon(
+    'Spada sacra di Lusier III · Sigillo',
+    7,
+    spadaScudo,
+    LiteRelicFamily.spadaLusier,
+    1,
+  ),
+  spadaLusier2._canon(
+    'Spada sacra di Lusier III · Seta d’oro',
+    7,
+    spadaScudo,
+    LiteRelicFamily.spadaLusier,
+    2,
+  ),
+  spadaLusier3._canon(
+    'Spada sacra di Lusier III · Carta',
+    8,
+    spadaScudo,
+    LiteRelicFamily.spadaLusier,
+    3,
+  ),
+  spadaLusier4._canon(
+    'Spada sacra di Lusier III · Custodia',
+    8,
+    spadaScudo,
+    LiteRelicFamily.spadaLusier,
+    4,
+  ),
+  spadaLusier5._canon(
+    'Spada sacra di Lusier III · Corona',
+    9,
+    spadaScudo,
+    LiteRelicFamily.spadaLusier,
+    5,
+  ),
+  mazzaGuardiano1._canon(
+    'Mazza d’oro · Oro',
+    11,
+    guanti,
+    LiteRelicFamily.mazzaGuardiano,
+    1,
+  ),
+  mazzaGuardiano2._canon(
+    'Mazza d’oro · Placche',
+    11,
+    guanti,
+    LiteRelicFamily.mazzaGuardiano,
+    2,
+  ),
+  mazzaGuardiano3._canon(
+    'Mazza d’oro · Presidio',
+    12,
+    guanti,
+    LiteRelicFamily.mazzaGuardiano,
+    3,
+  ),
+  mazzaGuardiano4._canon(
+    'Mazza d’oro · Bagliore',
+    12,
+    guanti,
+    LiteRelicFamily.mazzaGuardiano,
+    4,
+  ),
+  mazzaGuardiano5._canon(
+    'Mazza d’oro · Guardiano',
+    13,
+    guanti,
+    LiteRelicFamily.mazzaGuardiano,
+    5,
+  ),
+  martelloForgia._variant('Martello della forgia', 12, 3.25, .78, guanti);
 
   const LiteWeapon(
     this.label,
     this.damageBonus,
-    this.range,
-    this.cooldown, {
+    this._range,
+    this._cooldown, {
     this.isPostea = false,
-  });
+  }) : _base = null,
+       relicFamily = null,
+       form = 0;
+
+  const LiteWeapon._variant(
+    this.label,
+    this.damageBonus,
+    this._range,
+    this._cooldown,
+    this._base,
+  ) : isPostea = false,
+      relicFamily = null,
+      form = 0;
+
+  const LiteWeapon._canon(
+    this.label,
+    this.damageBonus,
+    this._base,
+    this.relicFamily,
+    this.form,
+  ) : _range = 0,
+      _cooldown = 0,
+      isPostea = false;
+
   final String label;
   final int damageBonus;
-  final double range;
-  final double cooldown;
+  final double _range;
+  final double _cooldown;
   final bool isPostea;
+  final LiteWeapon? _base;
+  final LiteRelicFamily? relicFamily;
+  final int form;
+
+  LiteWeapon get moveset => _base ?? this;
+  bool get isMilestone => relicFamily != null;
+  double get range => _range > 0 ? _range : moveset._range;
+  double get cooldown => _cooldown > 0 ? _cooldown : moveset._cooldown;
 
   static const starters = [boomerang, spadaScudo, guanti, arco, scettro];
   static const scytheReturnRange = 6.3;
   bool get returns =>
-      this == boomerang || this == falceRunica || this == chakram;
+      moveset == boomerang || moveset == falceRunica || moveset == chakram;
   bool get isBossLoot => this == piccaOssidiana || this == balestraRunica;
-  double get chargeSeconds => switch (this) {
+  double get chargeSeconds => switch (moveset) {
     guanti => .32,
     carabinaImpulsi => .43,
     piccaOssidiana => .20,
     balestraRunica => .29,
     _ => 0,
   };
-  double get thrustArc => this == piccaOssidiana ? .87 : .38;
+  double get thrustArc => moveset == piccaOssidiana ? .87 : .38;
 }
 
 enum LiteDifficulty {
@@ -355,6 +656,14 @@ enum LiteBiome {
   const LiteBiome(this.label);
   final String label;
   static const legacy = [campo, foresta, dungeon, postea];
+
+  static LiteBiome startingZone(int seed) => switch (seed) {
+    251 => campo,
+    72241 => postea,
+    41119 => deserto,
+    60803 => orea,
+    _ => offers(seed).first,
+  };
 
   static List<LiteBiome> offers(
     int seed, {
@@ -567,7 +876,7 @@ enum LiteEnemyKind {
   demoneIntermedio('Demone Intermedio', 57, .70, 2.75, 12),
   demoneMaggiore('Demone Maggiore Prediletto', 72, .65, 3.68, 14),
   diavolo('Diavolo del Patto', 146, .94, 2.38, 19),
-  divoramitu('Divoramitù Elité', 78, 1.13, 2.3, 18),
+  divoramitu('Divoramitù · Miniboss', 122, 1.55, 2.3, 24),
   divoramituBoss('Divoramitù · Bocca della Cripta', 132, 1.85, 2.5, 23),
   arconte('Arconte delle Fratture', 312, 1.52, 1.7, 27),
   funerys('Funerys', 57, .62, 3.3, 15),
@@ -580,7 +889,9 @@ enum LiteEnemyKind {
   nymboryth('Nymboryth', 127, 1.07, 3.0, 21),
   aerovyr('Aerovyr', 261, 1.30, 2.63, 26),
   baghest('Baghest', 265, 1.24, 2.55, 24),
-  corrottoRosso('Baghest Slave', 48, .58, 3.8, 14);
+  corrottoRosso('Baghest Slave', 48, .58, 3.8, 14),
+  bunnys('Bunnys', 32, .47, 4.2, 0),
+  cuccioloDivoramitu('Cucciolo di Divoramitù', 22, .48, 1.6, 0);
 
   const LiteEnemyKind(
     this.label,
@@ -744,6 +1055,62 @@ enum LiteCompanion {
     LiteWeapon.guanti,
     42,
     15,
+  ),
+  diavoloAlleato(
+    'Diavolo alleato',
+    null,
+    LiteEnemyKind.diavolo,
+    LiteWeapon.scettro,
+    74,
+    18,
+  ),
+  demoneMinoreEvocato(
+    'Demone Minore',
+    null,
+    LiteEnemyKind.demoneMinore,
+    LiteWeapon.guanti,
+    43,
+    13,
+  ),
+  guardiaDiLusier(
+    'Guardia Solare della scorta',
+    null,
+    LiteEnemyKind.guardiaSolare,
+    LiteWeapon.spadaScudo,
+    47,
+    14,
+  ),
+  eliteDiLusier(
+    'Guardia Elité della scorta',
+    null,
+    LiteEnemyKind.eliteSolare,
+    LiteWeapon.spadaScudo,
+    81,
+    21,
+  ),
+  demoneIntermedioEvocato(
+    'Demone Intermedio',
+    null,
+    LiteEnemyKind.demoneIntermedio,
+    LiteWeapon.falceRunica,
+    76,
+    18,
+  ),
+  divoramituMini(
+    'Divoramitù Mini',
+    LiteEnemyKind.divoramitu,
+    LiteEnemyKind.cuccioloDivoramitu,
+    LiteWeapon.guanti,
+    42,
+    9,
+  ),
+  bunnys(
+    'Bunnys',
+    LiteEnemyKind.bunnys,
+    LiteEnemyKind.bunnys,
+    LiteWeapon.guanti,
+    34,
+    0,
   );
 
   const LiteCompanion(
@@ -779,17 +1146,28 @@ enum LiteCompanion {
     goblinColtello ||
     goblinFango ||
     goblinColla ||
-    lupoAlleato => null,
+    lupoAlleato ||
+    diavoloAlleato ||
+    demoneMinoreEvocato ||
+    demoneIntermedioEvocato ||
+    guardiaDiLusier ||
+    eliteDiLusier ||
+    divoramituMini ||
+    bunnys => null,
   };
   String? get discovery => switch (this) {
     piccolaMarea => 'Spaccascheletri · abbatti tre Rasvyr durante la run',
     orbietto => 'Occhio per i segreti · trova una sala segreta a Orea Zalira',
+    divoramituMini => 'Sconfiggi il miniboss Divoramitù. Ogni 10 s si interra, colpisce riemergendo e lascia un cratere che rallenta i nemici ai bordi e li danneggia al centro. Gli alleati si muovono più in fretta e al centro attaccano al doppio della velocità.',
+    bunnys => 'Sconfiggi un Bunnys: ti segue e cura un alleato. Se cade, la sua ultima cura raggiunge la squadra e non può essere rianimato.',
     lumin => 'Predatore speculare · un Doppelganger copia uno Slime',
     goblinColla => 'Fanteria goblin · abbatti uno Spara-colla per arruolarlo nell’Open del Re',
     _ => null,
   };
 
   bool get isSkeleton => this == scheletroFalce || this == scheletroArco;
+  bool get isFlameDemon =>
+      this == demoneMinoreEvocato || this == demoneIntermedioEvocato;
 
   static LiteCompanion? unlockedBy(LiteEnemyKind kind) =>
       values.where((companion) => companion.unlocksAfter == kind).firstOrNull;
@@ -845,7 +1223,9 @@ enum LiteProjectileKind {
   solarRay,
   posteaRay,
   posteaEgg,
-  inkEmber;
+  inkEmber,
+  pattoFiamma,
+  cartaLusier;
 
   bool get ricochets => this == fireball || this == inkEmber;
 }
@@ -862,6 +1242,10 @@ enum LiteImpactTarget {
   emberRebirth,
   artCast,
   chamberStrike,
+  milestoneCast,
+  fusionStrike,
+  fiveFlames,
+  bunnysHeal,
 }
 
 class LiteCombatImpact {
@@ -876,6 +1260,8 @@ class LiteCombatImpact {
     this.enemyKind,
     this.end,
     this.silent = false,
+    this.mirror,
+    this.livery,
   });
 
   final LiteImpactTarget target;
@@ -889,6 +1275,8 @@ class LiteCombatImpact {
   final LiteEnemyKind? enemyKind;
   final Point<double>? end;
   final bool silent;
+  final LiteMirrorBuild? mirror;
+  final LiteEnemyLivery? livery;
 
   List<Object?> _frame() => [
     target.index,
@@ -902,10 +1290,18 @@ class LiteCombatImpact {
     enemyKind?.index,
     if (end != null) ...[end!.x, end!.y],
     if (silent) true,
+    if (mirror != null || livery != null)
+      {
+        if (mirror case final build?) 'mirror': build._json(),
+        if (livery case final coat?) 'livery': coat.name,
+      },
   ];
 
   static LiteCombatImpact? _fromFrame(Object? value, double now) {
-    if (value is! List || value.length < 9 || value.length > 12) return null;
+    if (value is! List || value.length < 9 || value.length > 13) return null;
+    final visual = value.last is Map ? value.last as Map : null;
+    final legacySize = value.length - (visual == null ? 0 : 1);
+    if (legacySize < 9 || legacySize > 12) return null;
     final target = _int(value[0], -1);
     final kind = _int(value[8], -1);
     final at = _num(value[4], -1);
@@ -916,13 +1312,20 @@ class LiteCombatImpact {
         now - at > LiteRun.combatImpactDuration) {
       return null;
     }
+    final mirror = visual?['mirror'];
     return LiteCombatImpact(
       LiteImpactTarget.values[target],
       _int(value[1]),
       Point(_num(value[2]), _num(value[3])),
       at,
-      end: value.length >= 11 ? Point(_num(value[9]), _num(value[10])) : null,
-      silent: value.length.isEven && value.last == true,
+      end: legacySize >= 11 ? Point(_num(value[9]), _num(value[10])) : null,
+      silent: legacySize.isEven && value[legacySize - 1] == true,
+      mirror: mirror is Map<String, dynamic>
+          ? LiteMirrorBuild._read(mirror)
+          : null,
+      livery: LiteEnemyLivery.values
+          .where((coat) => coat.name == visual?['livery'])
+          .firstOrNull,
       life: max(0.0, _num(value[5])),
       shield: max(0.0, _num(value[6])),
       intangible: value[7] == true,
@@ -992,12 +1395,20 @@ class LiteStride {
   double _distance = 0;
   double _strength = 0;
   double _speed = 0;
+  bool? _walking;
 
   double get distance => _distance;
   double get strength => _strength;
   double get speed => _speed;
+  bool? get walking => _walking;
 
-  void _track(Point<double> start, Point<double> end, double elapsed) {
+  void _track(
+    Point<double> start,
+    Point<double> end,
+    double elapsed, {
+    bool? walking,
+  }) {
+    _walking = walking;
     final displacement = start == end ? 0.0 : start.distanceTo(end);
     // A teleport has a separate effect. It does not play several steps.
     final travel = displacement <= 1.25 ? displacement : 0.0;
@@ -1008,16 +1419,29 @@ class LiteStride {
     if (_strength < .005) _strength = 0;
   }
 
-  void _reset() => _distance = _strength = _speed = 0;
+  void _reset() {
+    _distance = _strength = _speed = 0;
+    _walking = null;
+  }
 
   List<double> _frame() => [_distance, _strength, _speed];
 
-  void _restore(Object? frame) {
+  void _restore(Object? frame, {Object? walking}) {
     if (frame is! List || frame.length != 3) return;
+    _walking = walking is bool ? walking : null;
     _distance = max(0.0, _num(frame[0]));
     _strength = _num(frame[1]).clamp(0.0, 1.0);
     _speed = _num(frame[2]).clamp(0.0, 35.0);
   }
+}
+
+enum LiteEnemyLivery {
+  braci('Braci', 1.22, 1.14),
+  eclissi('Eclissi', 1.35, 1.23);
+
+  const LiteEnemyLivery(this.label, this.lifeScale, this.damageScale);
+  final String label;
+  final double lifeScale, damageScale;
 }
 
 class LiteEnemy {
@@ -1030,6 +1454,9 @@ class LiteEnemy {
           ? LiteBurrow()
           : null;
   final LiteBurrow? burrow;
+  int? pupParent;
+  int defeatedPups = 0;
+  double get burrowSpeed => kind.speed + .3 * defeatedPups;
   LiteGuard? guard;
 
   final int id;
@@ -1057,16 +1484,29 @@ class LiteEnemy {
   bool glueRetinue = false;
   int combatCycle = 0;
   LiteArchonAttack? archonAttack;
+  LiteStormPattern? _stormPattern;
+  int _stormPhase = 1;
   int? chamberSeat;
   int chamberCycle = 0;
   double chamberWait = 0;
   bool exalted = false;
+  bool fiveFlames = false;
+  bool demonSummoned = false;
+  final Set<int> _lusierStrikes = {};
+  LiteEnemyLivery? livery;
+  double get liveryPower =>
+      (livery?.damageScale ?? 1) * (fiveFlames ? 1.24 : 1);
+  double get attackDamage => kind.damage * liveryPower;
   LiteChamberWarning? chamberWarning;
   int get archonPhase => hp > maxHp * .70 ? 1 : (hp > maxHp * .35 ? 2 : 3);
   double _strikePose = 0;
   double get strikePose => _strikePose;
 
-  String get name => exalted ? '${kind.label} · Risvegliato' : kind.label;
+  String get name => [
+    fiveFlames ? 'Diavolo delle Cinque Fiamme' : kind.label,
+    if (exalted) 'Risvegliato',
+    if (livery case final color?) color.label,
+  ].join(' · ');
   double get radius => kind.radius;
   double get hitboxRadius => burrow == null ? radius : radius * .73;
   double get hitboxHalfLength => burrow == null ? 0 : radius * 1.22;
@@ -1119,6 +1559,7 @@ class LiteEnemy {
     'cooldown': cooldown,
     'windup': windup,
     if (combatCycle != 0) 'combatCycle': combatCycle,
+    if (livery case final color?) 'livery': color.name,
     if (chamberSeat case final seat?) ...{
       'chamberSeat': seat,
       'chamberCycle': chamberCycle,
@@ -1128,7 +1569,11 @@ class LiteEnemy {
     },
     if (archonAttack case final attack? when attacking)
       'archonAttack': attack.name,
+    if (_stormPattern case final pattern? when attacking)
+      'stormCue': [pattern.name, _stormPhase],
     if (burrow case final track?) 'burrow': track.frame,
+    if (pupParent case final parent?) 'pupParent': parent,
+    if (defeatedPups > 0) 'defeatedPups': defeatedPups,
     if (includeEffects) ...{
       'stride': stride._frame(),
       if (_strikePose > 0) 'strikePose': _strikePose,
@@ -1138,7 +1583,10 @@ class LiteEnemy {
       'clashDirection': _savePoint(clashDirection),
     },
     if (attackTarget != null) 'attackTarget': _savePoint(attackTarget!),
-    if (kind == LiteEnemyKind.reGoblin) 'summonIn': summonIn,
+    if (kind == LiteEnemyKind.reGoblin || fiveFlames) 'summonIn': summonIn,
+    if (fiveFlames) 'fiveFlames': true,
+    if (demonSummoned) 'demonSummoned': true,
+    if (_lusierStrikes.isNotEmpty) 'lusierStrikes': _lusierStrikes.toList(),
     if (glueRetinue) 'glueRetinue': true,
     if (kind == LiteEnemyKind.veyrth) ...{
       'preparingBeam': preparingBeam,
@@ -1156,6 +1604,9 @@ class LiteEnemy {
           max(1, _num(json['maxHp'], 1)),
         )
         ..hp = _num(json['hp'])
+        ..livery = LiteEnemyLivery.values
+            .where((tone) => tone.name == json['livery'])
+            .firstOrNull
         ..guard = LiteGuard.read(json['guard'])
         ..hitFlash = _num(json['hitFlash'])
         ..stunned = _num(json['stun']).clamp(0.0, .9)
@@ -1168,6 +1619,7 @@ class LiteEnemy {
             : _point(json['shockSource'])
         ..cooldown = _num(json['cooldown'])
         ..windup = _num(json['windup'])
+        .._readStormCue(json['stormCue'])
         ..combatCycle = _int(json['combatCycle'])
         ..chamberSeat = json['chamberSeat'] is int
             ? _int(json['chamberSeat'])
@@ -1187,10 +1639,17 @@ class LiteEnemy {
         ..preparingBeam = json['preparingBeam'] == true
         ..mirrorSummon = json['mirrorSummon'] == true
         ..summonIn = _num(json['summonIn'], 3)
+        ..fiveFlames = json['fiveFlames'] == true
+        ..demonSummoned = json['demonSummoned'] == true
+        .._lusierStrikes.addAll(
+          _list(json['lusierStrikes']).whereType<int>().take(24),
+        )
         ..beamReadyIn = _num(json['beamReadyIn'])
         ..mirror = json['mirror'] is Map<String, dynamic>
             ? LiteMirrorBuild._read(json['mirror'] as Map<String, dynamic>)
             : null
+        ..pupParent = json['pupParent'] is int ? _int(json['pupParent']) : null
+        ..defeatedPups = _int(json['defeatedPups']).clamp(0, 2)
         ..burrow?.restore(json['burrow'])
         ..attackTarget = json['attackTarget'] == null
             ? null
@@ -1403,6 +1862,10 @@ class LiteProjectile {
   double remaining;
   int bounces;
   double? eggFuse;
+  Point<double>? chakramAim;
+  int chakramSide = 0;
+  bool chakramOrbit = false;
+  int? lusierVolley;
   double age = 0;
   final bool fromEnemy, magic, boomerang, ownerCanHeal, nonLethal;
   final LiteProjectileKind kind;
@@ -1418,6 +1881,9 @@ class LiteProjectile {
     'remaining': remaining,
     'damage': damage,
     'age': age,
+    if (chakramAim case final heading?)
+      'chakram': [_savePoint(heading), chakramSide, chakramOrbit],
+    if (lusierVolley case final salvo?) 'lusierVolley': salvo,
     if (bounces > 0) 'bounces': bounces,
     if (eggFuse case final fuse?) 'eggFuse': fuse,
     'fromEnemy': fromEnemy,
@@ -1453,6 +1919,10 @@ class LiteProjectile {
           bounces: _int(json['bounces']).clamp(0, 6),
         )
         ..age = _num(json['age'])
+        .._readChakram(json['chakram'])
+        ..lusierVolley = json['lusierVolley'] is int
+            ? json['lusierVolley'] as int
+            : null
         ..eggFuse = json['eggFuse'] is num
             ? _num(json['eggFuse']).clamp(0, .9)
             : null
@@ -1471,12 +1941,27 @@ class LiteClone {
     this.expiresAfter,
     this.recruitedFloor,
     this.damageScale = 1,
+    this.forgedWeapon = false,
+    double forgedWard = 0,
     double? maxHp,
-  }) : _baseMaxHp = maxHp ?? hp;
+  }) : _baseMaxHp = maxHp ?? hp,
+       _forgedWard = forgedWard;
   Point<double> position;
   double hp;
   final double _baseMaxHp;
-  double get maxHp => _baseMaxHp;
+  int _level = 1;
+  int get level => _level;
+  double get maxHp => _baseMaxHp * (1 + .06 * (_level - 1));
+
+  void _growWith(int ownerLevel) {
+    if (forgedWeapon) return;
+    final target = ownerLevel.clamp(1, 99);
+    if (_level == target) return;
+    final fraction = (hp / maxHp).clamp(0.0, 1.0);
+    _level = target;
+    hp = maxHp * fraction;
+  }
+
   LiteWeapon weapon;
   final bool summoned;
   final LiteCompanion? companion;
@@ -1485,8 +1970,17 @@ class LiteClone {
   double? expiresAfter;
   final int? recruitedFloor;
   final double damageScale;
+  final bool forgedWeapon;
+  double _forgedWard;
+  bool get forgedProtected => _forgedWard > 0;
   double cooldown = .35;
   double downRemaining = 0;
+  double _burrowCooldown = 0;
+  Point<double>? _burrowDestination;
+  double _burrowTime = 0;
+  bool get burrowing => hp > 0 && _burrowDestination != null;
+  Point<double>? get burrowDestination => _burrowDestination;
+  double get burrowCooldown => _burrowCooldown;
   bool corrupted = false;
   final stride = LiteStride();
   Point<double> _poseAim = const Point(1, 0);
@@ -1496,13 +1990,15 @@ class LiteClone {
   double get preparingPose => hp > 0 && !corrupted ? _preparingPose : 0;
   double get swing => _swing;
 
-  bool get down => hp <= 0 && downRemaining > 0;
-
+  bool get canBeRevived => !forgedWeapon && companion != LiteCompanion.bunnys;
+  bool get down => canBeRevived && hp <= 0 && downRemaining > 0;
   void _takeDamage(double damage) {
-    if (hp <= 0) return;
+    if (hp <= 0 || forgedProtected) return;
     hp = max(0, hp - damage);
     if (hp == 0 && expiresAfter == null) {
-      downRemaining = LiteRun.allyRescueWindow;
+      _burrowDestination = null;
+      _burrowTime = 0;
+      if (canBeRevived) downRemaining = LiteRun.allyRescueWindow;
     }
   }
 
@@ -1510,6 +2006,8 @@ class LiteClone {
     'position': _savePoint(position),
     'hp': hp,
     'maxHp': maxHp,
+    if (_level > 1) 'allyLevel': _level,
+    if (_level > 1) 'allyBaseHp': _baseMaxHp,
     'weapon': weapon.name,
     'summoned': summoned,
     if (companion != null) 'companion': companion!.name,
@@ -1518,9 +2016,16 @@ class LiteClone {
     if (expiresAfter case final remaining?) 'expiresAfter': remaining,
     if (recruitedFloor case final floor?) 'recruitedFloor': floor,
     if (damageScale != 1) 'damageScale': damageScale,
+    if (forgedWeapon) 'forgedWeapon': true,
+    if (forgedProtected) 'forgedWard': _forgedWard,
     'cooldown': cooldown,
     'downRemaining': downRemaining,
     if (corrupted) 'corrupted': true,
+    if (_burrowCooldown > 0) 'petBurrowCooldown': _burrowCooldown,
+    if (burrowing) ...{
+      'petBurrowDestination': _savePoint(_burrowDestination!),
+      'petBurrowTime': _burrowTime,
+    },
     if (includeEffects) ...{
       'stride': stride._frame(),
       'poseAim': _savePoint(_poseAim),
@@ -1545,9 +2050,15 @@ class LiteClone {
           recruitedFloor: json['recruitedFloor'] is int
               ? _int(json['recruitedFloor'])
               : null,
-          damageScale: _num(json['damageScale'], 1).clamp(.5, 4.0),
-          maxHp: max(1, _num(json['maxHp'], _num(json['hp'], 1))),
+          damageScale: _num(json['damageScale'], 1).clamp(.5, 6.0),
+          forgedWeapon: json['forgedWeapon'] == true,
+          forgedWard: _num(json['forgedWard']).clamp(0, 2),
+          maxHp: max(
+            1,
+            _num(json['allyBaseHp'], _num(json['maxHp'], _num(json['hp'], 1))),
+          ),
         )
+        .._level = _int(json['allyLevel'], 1).clamp(1, 99)
         ..cooldown = _num(json['cooldown'])
         ..stride._restore(json['stride'])
         .._poseAim = json['poseAim'] == null
@@ -1555,6 +2066,11 @@ class LiteClone {
             : _point(json['poseAim'])
         .._swing = _num(json['swing']).clamp(0.0, .23)
         .._preparingPose = _num(json['preparingPose']).clamp(0.0, 1.0)
+        .._burrowCooldown = _num(json['petBurrowCooldown']).clamp(0, 10)
+        .._burrowDestination = json['petBurrowDestination'] == null
+            ? null
+            : _point(json['petBurrowDestination'])
+        .._burrowTime = _num(json['petBurrowTime']).clamp(0, .62)
         ..corrupted = json['corrupted'] == true
         ..downRemaining = _num(json['downRemaining']);
 }
@@ -1584,9 +2100,14 @@ class _LiteBanditSkills {
 }
 
 class _LiteBlock {
-  _LiteBlock({required this.lunar, required this.bonus});
+  _LiteBlock({
+    required this.lunar,
+    required this.bonus,
+    required this.fusedGuard,
+  });
   final bool lunar;
   final int Function() bonus;
+  final bool Function() fusedGuard;
   int get _baseCapacity => 100 + bonus();
   bool held = false;
   double _baseWear = 0;
@@ -1594,13 +2115,18 @@ class _LiteBlock {
   bool get worn => _baseWear + _shieldWear > 0;
   List<double> get frame => [_baseWear, _shieldWear];
 
+  bool _hasShield(LiteWeapon weapon) =>
+      weapon.moveset == LiteWeapon.spadaScudo || fusedGuard();
+  int get _extraShield => lunar ? 200 : 60;
+  int get _fusionShield => ((_baseCapacity + _extraShield) * .50).round();
   int capacity(LiteWeapon weapon) =>
       _baseCapacity +
-      (weapon == LiteWeapon.spadaScudo ? (lunar ? 200 : 60) : 0);
-  double remaining(LiteWeapon weapon) =>
-      capacity(weapon) -
-      _baseWear -
-      (weapon == LiteWeapon.spadaScudo ? _shieldWear : 0);
+      (_hasShield(weapon) ? _extraShield : 0) +
+      (fusedGuard() ? _fusionShield : 0);
+  double remaining(LiteWeapon weapon) => max(
+    0,
+    capacity(weapon) - _baseWear - (_hasShield(weapon) ? _shieldWear : 0),
+  );
 
   double absorb(LiteWeapon weapon, double damage) {
     final blocked = min(remaining(weapon), damage);
@@ -1613,7 +2139,7 @@ class _LiteBlock {
   void recover(LiteWeapon weapon, [double amount = 10]) {
     final base = min(_baseWear, amount);
     _baseWear -= base;
-    if (weapon == LiteWeapon.spadaScudo) {
+    if (_hasShield(weapon)) {
       _shieldWear = max(0, _shieldWear - (amount - base));
     }
   }
@@ -1621,7 +2147,8 @@ class _LiteBlock {
   void restore(Object? value) {
     if (value is List && value.length == 2) {
       _baseWear = _num(value[0]).clamp(0.0, _baseCapacity.toDouble());
-      _shieldWear = _num(value[1]).clamp(0.0, lunar ? 200.0 : 60.0);
+      _shieldWear = _num(value[1])
+          .clamp(0.0, (_extraShield + _fusionShield).toDouble());
       return;
     }
     final wear = _num(value).clamp(0.0, 160.0);
@@ -1693,8 +2220,11 @@ class LiteCoopFighter extends LiteClone {
     this.upgrades = const {},
     this.allowGlue = false,
     this.allowMechanicalChicken = false,
-  });
+  }) {
+    ownedWeapons.add(weapon);
+  }
 
+  final Set<LiteWeapon> ownedWeapons = {};
   final bool allowGlue;
   final bool allowMechanicalChicken;
   final supply = LiteRestLoadout();
@@ -1710,6 +2240,9 @@ class LiteCoopFighter extends LiteClone {
   Point<double> aim = const Point(1, 0);
   Point<double> movement = const Point(0, 0);
   bool firing = false;
+  bool _attackHeld = false;
+  double _heldRecovery = 0;
+  double _chakramRecovery = 0;
   double _inputAge = 1;
   double _protection = 0;
   double _shadowProtection = 0;
@@ -1719,6 +2252,7 @@ class LiteCoopFighter extends LiteClone {
   double get bombCooldown => _bombCooldown;
   double _dashCooldown = 0;
   double _openCooldown = 0;
+  int _openUsedInRoom = 0;
   double _plagueFormRemaining = 0;
   bool get plagueForm => _plagueFormRemaining > 0;
   double get plagueSeconds => _plagueFormRemaining;
@@ -1727,6 +2261,7 @@ class LiteCoopFighter extends LiteClone {
   int _teamBlockBonus = 0;
   late final _block = _LiteBlock(
     lunar: hero == LiteHero.cavaliereLunare,
+    fusedGuard: () => _hasSwordFusion(weapon, supply._fusion),
     bonus: () =>
         _teamBlockBonus +
         (upgrades[LitePermanentUpgrade.resistenza] ?? 0) *
@@ -1738,6 +2273,7 @@ class LiteCoopFighter extends LiteClone {
       connected && hp > 0 && _block.held && blockResistance > 0;
   final _bandit = _LiteBanditSkills();
   double get openCooldown => _openCooldown;
+  @override
   int get level => LiteRun.levelForExperience(experience);
   int get openGrade => LiteRun.openGradeFor(level);
   int get banditRounds => _bandit.rounds;
@@ -1775,9 +2311,10 @@ class LiteCoopFighter extends LiteClone {
   bool restUsed = false;
   @override
   double get maxHp =>
-      _mimic?.maxHp ??
-      (super.maxHp + (level - 1) * 10) *
-          (plagueForm || _night.sanguine > 0 ? 2 : 1);
+      (_mimic?.maxHp ??
+          (super.maxHp + (level - 1) * 10) *
+              (plagueForm || _night.sanguine > 0 ? 2 : 1)) *
+      supply._vampireLifeScale;
   double get maxOculum =>
       10.0 + (level - 1) * 2 + (upgrades[LitePermanentUpgrade.oculum] ?? 0);
   double shield = 0;
@@ -1794,17 +2331,23 @@ class LiteCoopFighter extends LiteClone {
   }) => {
     ..._json(includeEffects: includeEffects),
     'account': account,
+    if (ownedWeapons.length > 1)
+      'ownedWeapons': ownedWeapons.map((entry) => entry.name).toList(),
     if (supply.active) 'supplies': supply.frame,
     if (allowGlue) 'allowGlue': true,
     if (allowMechanicalChicken) 'allowMechanicalChicken': true,
     'name': name,
     'hero': hero.name,
+    if (includeEffects && hero == LiteHero.ashley && stride.walking != null)
+      'strideWalking': stride.walking,
     'baseHp': _baseMaxHp,
     if (upgrades.isNotEmpty) 'upgrades': LitePermanentUpgrade.encode(upgrades),
     if (_shadowProtection > 0) 'shadowProtection': _shadowProtection,
     if (_staffCooldown > 0) 'staffCooldown': _staffCooldown,
+    if (_chakramRecovery > 0) 'chakramRecovery': _chakramRecovery,
     if (_bombCooldown > 0) 'bombCooldown': _bombCooldown,
     if (_openCooldown > 0) 'openCooldown': _openCooldown,
+    if (_openUsedInRoom > 0) 'openUsedInRoom': _openUsedInRoom,
     if (plagueForm) 'plagueForm': _plagueFormRemaining,
     if (_mimic case final form?) 'mimic': form.frame,
     if (_night.active) 'night': _night.frame,
@@ -1855,11 +2398,17 @@ class LiteCoopFighter extends LiteClone {
       allowMechanicalChicken: data['allowMechanicalChicken'] == true,
       upgrades: LitePermanentUpgrade.read(data['upgrades']),
     );
+    for (final id in _list(data['ownedWeapons'])) {
+      if (LiteWeapon.values.where((entry) => entry.name == id).firstOrNull
+          case final item?) {
+        fighter.ownedWeapons.add(item);
+      }
+    }
     return fighter
       ..hp = _num(data['hp'])
       ..aim = _point(data['aim'])
       ..cooldown = _num(data['cooldown'])
-      ..stride._restore(data['stride'])
+      ..stride._restore(data['stride'], walking: data['strideWalking'])
       .._windup = _num(data['windup'])
       .._weaponReleasedAt = _readArenaPoseTime(data['weaponReleasedAt'])
       .._rescuedAt = _readArenaPoseTime(data['rescuedAt'])
@@ -1874,10 +2423,13 @@ class LiteCoopFighter extends LiteClone {
       ..shield = _num(data['shield'])
       ..oculum = _num(data['oculum'])
       .._staffCooldown = _num(data['staffCooldown'])
+      .._chakramRecovery = _num(data['chakramRecovery']).clamp(0, .30)
       .._bombCooldown = _num(data['bombCooldown']).clamp(0.0, 5.5)
+      .._openUsedInRoom = max(0, _int(data['openUsedInRoom']))
       .._openCooldown = _num(data['openCooldown'])
           .clamp(0.0, LiteRun.openRecovery)
-      .._plagueFormRemaining = _num(data['plagueForm']).clamp(0.0, 5.0)
+      .._plagueFormRemaining = _num(data['plagueForm'])
+          .clamp(0.0, LiteRun.plagueDurationFor(3))
       .._mimic = fighter.hero == LiteHero.doppelganger
           ? LiteMimicForm.read(data['mimic'])
           : null
@@ -1891,7 +2443,8 @@ class LiteCoopFighter extends LiteClone {
       ..obser = _int(data['obser'])
       ..crystals = _int(data['crystals'])
       .._protection = _num(data['protection'])
-      .._shadowProtection = _num(data['shadowProtection']).clamp(0.0, 3.0)
+      .._shadowProtection = _num(data['shadowProtection'])
+          .clamp(0.0, 3 * LiteRun.openPower)
       .._night.restore(data['night'])
       ..supply.restore(data['supplies'])
       .._springPose = _num(data['springPose'])
@@ -1986,6 +2539,8 @@ class LiteRun {
   bool get hasGlue =>
       allowGlue || achievements.contains(LiteCompanion.goblinColla.unlockKey);
   final groundShots = <LiteGroundShot>[];
+  final _divoramituFields = <LiteDivoramituField>[];
+  Iterable<LiteDivoramituField> get divoramituFields => _divoramituFields;
   final supply = LiteRestLoadout();
   final fauna = <LiteEnemy>[];
   final _chickenTrial = <int, double>{};
@@ -2080,6 +2635,9 @@ class LiteRun {
   LiteBeam? _activeBeam;
   int _nextId = 1;
   double _attackCooldown = 0;
+  bool _attackHeld = false;
+  double _heldRecovery = .30;
+  double _chakramRecovery = 0;
   double _windup = 0;
   double? _weaponReleasedAt;
   double? _secondBladeReleasedAt;
@@ -2106,8 +2664,10 @@ class LiteRun {
   double _bombCooldown = 0;
   double get bombCooldown => _bombCooldown;
   double _openCooldown = 0;
+  int _openUsedInRoom = 0;
   late final _block = _LiteBlock(
     lunar: hero == LiteHero.cavaliereLunare,
+    fusedGuard: () => _hasSwordFusion(weapon, weaponFusion()),
     bonus: () =>
         _power(LitePowerUp.ferroVivo).round() +
         _permanent(LitePermanentUpgrade.resistenza),
@@ -2133,7 +2693,8 @@ class LiteRun {
   double get burstRemaining => _burstTime;
   Point<double> get burstDirection => _burstDirection;
   final stride = LiteStride();
-  static double plagueDurationFor(int grade) => 4.0 + .5 * (grade - 1);
+  static double plagueDurationFor(int grade) =>
+      (4 + .5 * (grade - 1)) * openPower;
   static const springRange = 4.2;
   static const springCooldown = 3.4;
   double _scrollCooldown = 0;
@@ -2222,9 +2783,16 @@ class LiteRun {
           LiteFauna._mechanicalChickenGuestKey(guestAccount),
         ))
       LiteHero.polloMeccanico,
+    if (guestAccount != null &&
+        achievements.contains(_vampirePactKey(guestAccount)))
+      LiteHero.vampiro,
+    if (guestAccount != null &&
+        achievements.contains(_fabbroUnlockKey(guestAccount)))
+      LiteHero.fabbro,
     for (final character in LiteHero.values)
       if (character != LiteHero.granScostumato &&
           (character != LiteHero.polloMeccanico || guestAccount == null) &&
+          (character != LiteHero.vampiro || guestAccount == null) &&
           character.unlockHint != null &&
           achievements.contains(heroUnlockKey(character)))
         character,
@@ -2293,12 +2861,13 @@ class LiteRun {
   double get height => 22;
   int _permanent(LitePermanentUpgrade upgrade) => _profileBonus(upgrade, null);
   double get maxHp =>
-      _mimic?.maxHp ??
-      (100.0 +
-              (level - 1) * 10 +
-              _power(LitePowerUp.cuore) +
-              _permanent(LitePermanentUpgrade.vita)) *
-          (plagueForm || _night.sanguine > 0 ? 2 : 1);
+      (_mimic?.maxHp ??
+          (100.0 +
+                  (level - 1) * 10 +
+                  _power(LitePowerUp.cuore) +
+                  _permanent(LitePermanentUpgrade.vita)) *
+              (plagueForm || _night.sanguine > 0 ? 2 : 1)) *
+      supply._vampireLifeScale;
   double get maxOculum =>
       10.0 + (level - 1) * 2 + _permanent(LitePermanentUpgrade.oculum);
   double get weaponDamage => _damageFor(weapon);
@@ -2403,7 +2972,8 @@ class LiteRun {
   int get restarts => difficulty.revives - livesRemaining;
   bool get intangible => _invulnerability > 1e-9;
   bool get clashDashing => _clashRemaining > 1e-9;
-  bool get invulnerable => intangible || _hitProtectionRemaining > 1e-9;
+  bool get invulnerable =>
+      intangible || _hitProtectionRemaining > 1e-9 || openProtects(0);
   double get hitProtectionRemaining => _hitProtectionRemaining;
   Iterable<LiteCombatImpact> get combatImpacts => _combatImpacts.where(
     (effect) => effect.target != LiteImpactTarget.defeat,
@@ -2537,11 +3107,16 @@ class LiteRun {
           ? LiteEnemyKind.lupoLunare
           : LiteEnemyKind.guardiaLunare;
     }
+    if (floor >= 2 &&
+        order == 1 &&
+        (location == LiteBiome.foresta || location == LiteBiome.orea)) {
+      return LiteEnemyKind.bunnys;
+    }
     return switch (location) {
       LiteBiome.campo => LiteEnemyKind.scostubandito,
       LiteBiome.foresta =>
         floor > 0 && order % 3 == 1
-            ? LiteEnemyKind.lupoLunare
+            ? LiteEnemyKind.slime
             : LiteEnemyKind.babyForestDemon,
       LiteBiome.dungeon =>
         floor > 0 && order % 3 == 2
@@ -2651,6 +3226,28 @@ class LiteRun {
       !shopOpen;
   bool get usesSubArena =>
       restHub || inActTwo || inThirdAct || inSolarDungeon || goblinCamp;
+  final Set<String> _openCombatRooms = {};
+  int? _activeLusierAttack;
+  static const double openPower = 3;
+  static const int openRecoveryRooms = 2;
+
+  int openRoomsRemaining([LiteCoopFighter? fighter]) {
+    final used = fighter?._openUsedInRoom ?? _openUsedInRoom;
+    if (used == 0) return 0;
+    final visits =
+        _openCombatRooms.length +
+        (!restHub && !_openCombatRooms.contains(inputArena) ? 1 : 0);
+    return (used + openRecoveryRooms + 1 - visits).clamp(0, openRecoveryRooms);
+  }
+
+  void _registerOpenRoom() {
+    if (restHub || !_openCombatRooms.add(inputArena)) return;
+    _openCooldown = 0;
+    for (final fighter in coopFighters) {
+      fighter._openCooldown = 0;
+    }
+  }
+
   String get inputArena => [
     stage,
     if (restHub) 'rest',
@@ -2722,7 +3319,9 @@ class LiteRun {
   Iterable<LiteWeapon> get shopWeapons => biome == LiteBiome.postea
       ? LiteWeapon.values.where(
           (weapon) =>
-              !weapon.isBossLoot && weapon != LiteWeapon.fucileScostubandito,
+              !weapon.isMilestone &&
+              !weapon.isBossLoot &&
+              weapon != LiteWeapon.fucileScostubandito,
         )
       : LiteWeapon.starters;
 
@@ -2787,9 +3386,19 @@ class LiteRun {
   }
 
   void _clearArenaActions() {
+    _openScenes.clear();
+    _divoramituFields.clear();
+    for (final clone in clones) {
+      clone._burrowDestination = null;
+      clone._burrowTime = 0;
+    }
+    clones.removeWhere(
+      (companion) => companion.companion == LiteCompanion.diavoloAlleato,
+    );
     _dashLandings.clear();
     _burstTraces.clear();
     _burstTime = _clashRemaining = _windup = _springPose = 0;
+    setAttackHeld(false);
     _weaponReleasedAt = _secondBladeReleasedAt = _rescuedAt = null;
     _lastMove = const Point(0, 0);
     _block.held = false;
@@ -2803,6 +3412,7 @@ class LiteRun {
         .._rescuedAt = null
         ..movement = const Point(0, 0)
         ..firing = false
+        .._attackHeld = false
         .._block.held = false;
       endRescue(fighter);
     }
@@ -2828,6 +3438,7 @@ class LiteRun {
     actRoom = 0;
     supply._foodUntil.removeWhere((_, until) => until < stage);
     _goblinWave = 0;
+    _registerOpenRoom();
     enemies.clear();
     fauna.clear();
     _chickenTrial.clear();
@@ -2993,6 +3604,7 @@ class LiteRun {
       ),
     ]);
     _populateFauna();
+    _syncLunarWolves();
     _placeSolarGate();
     _optionalMissions.add(
       LiteQuest('fauna-$stage', 'Passa oltre lasciando intatta la fauna', 1, 8),
@@ -3176,6 +3788,7 @@ class LiteRun {
     Point<double> candidate, {
     double? maxHealth,
     LiteCoopFighter? mirrorOf,
+    int? pupParent,
   }) {
     final p = _safePoint(candidate, kind.radius, const Point(27.4, 11));
     final maxHp =
@@ -3193,12 +3806,40 @@ class LiteRun {
                                   100) *
                           (1 + challengeBonus(stage, kind).life / 100) *
                           (arenaTrial == LiteArenaTrial.muraglia ? 1.25 : 1) *
+                          (kind == LiteEnemyKind.aerovyr ? 1.54 : 1) *
                           monsterLifeMultiplier)
                       .roundToDouble() +
                   (kind == LiteEnemyKind.luce || kind == LiteEnemyKind.ombra
                       ? _power(LitePowerUp.cuore)
                       : 0));
-    final enemy = LiteEnemy(_nextId++, kind, p, maxHp);
+    final ordinal = _nextId++;
+    final hueSeed = _LiteRandom(seed ^ (stage * 7919) ^ (ordinal * 461));
+    final hueChance = hueSeed.nextInt(100);
+    final livery =
+        stage >= 4 &&
+            maxHp > 1 &&
+            !kind.echo &&
+            kind != LiteEnemyKind.luce &&
+            kind != LiteEnemyKind.ombra &&
+            hueChance < (kind.boss ? 9 : 14)
+        ? (hueSeed.nextInt(2) == 0
+              ? LiteEnemyLivery.braci
+              : LiteEnemyLivery.eclissi)
+        : null;
+    final fiveFlames =
+        kind == LiteEnemyKind.diavolo &&
+        realm == LiteRealm.inferno &&
+        actRoom == LiteSecondAct.actTwoRooms;
+    final enemy =
+        LiteEnemy(
+            ordinal,
+            kind,
+            p,
+            maxHp * (livery?.lifeScale ?? 1) * (fiveFlames ? 1.34 : 1),
+          )
+          ..fiveFlames = fiveFlames
+          ..pupParent = pupParent
+          ..livery = livery;
     if (campPatrols && kind == LiteEnemyKind.scostubandito) {
       enemy.guard = LiteGuard(p);
     }
@@ -3242,6 +3883,15 @@ class LiteRun {
     }
     enemy.cooldown += _rng.nextDouble() * .5;
     enemies.add(enemy);
+    if (kind == LiteEnemyKind.divoramitu) {
+      for (final side in [-1, 1]) {
+        _spawnEnemy(
+          LiteEnemyKind.cuccioloDivoramitu,
+          p + Point(-1.7, 1.95 * side),
+          pupParent: enemy.id,
+        );
+      }
+    }
     return enemy;
   }
 
@@ -3302,7 +3952,7 @@ class LiteRun {
   }
 
   static double _startingShield(LiteHero hero, LiteWeapon weapon) =>
-      weapon == LiteWeapon.spadaScudo
+      weapon.moveset == LiteWeapon.spadaScudo
       ? (hero == LiteHero.cavaliereLunare ? 12 : 6)
       : hero == LiteHero.scostubandito
       ? _banditShield
@@ -3314,6 +3964,7 @@ class LiteRun {
         .._inputAge = 2
         ..movement = const Point(0, 0)
         ..firing = false
+        .._attackHeld = false
         .._block.held = false;
       endRescue(fighter);
     }
@@ -3324,6 +3975,7 @@ class LiteRun {
     Point<double> move,
     Point<double> target, {
     required bool attack,
+    bool holdAttack = false,
     bool dodge = false,
     bool dash = false,
     bool reload = false,
@@ -3357,6 +4009,7 @@ class LiteRun {
     fighter
       ..movement = _unit(move)
       ..firing = attack
+      .._attackHeld = holdAttack
       .._slow = slow;
     if (rest) useRest(fighter);
     if (rescue) {
@@ -3444,7 +4097,7 @@ class LiteRun {
     }
     if (reload &&
         fighter._rescue == null &&
-        fighter.weapon == LiteWeapon.arco &&
+        hasBow(fighter) &&
         fighter.arrows < bowCapacity &&
         fighter._reload <= 0) {
       fighter._reload = reloadDuration;
@@ -3482,8 +4135,12 @@ class LiteRun {
       this._tickSupply(elapsed, fighter: fighter);
       _tickRelicMana(elapsed, fighter);
       final beforeMove = fighter.position;
-      final groundSpeed = this.terrainSpeedAt(fighter.position, enemy: false);
-      fighter.cooldown = max(0, fighter.cooldown - elapsed);
+      final walking = fighter._slow && fighter._dashRemaining <= 0;
+      final groundSpeed =
+          this.terrainSpeedAt(fighter.position, enemy: false) *
+          _divoramituAllyPace(fighter.position);
+      final attackElapsed = elapsed * _divoramituAllyAttack(fighter.position);
+      fighter.cooldown = max(0, fighter.cooldown - attackElapsed);
       fighter.weaponArtCooldown = max(0, fighter.weaponArtCooldown - elapsed);
       fighter._protection = max(0, fighter._protection - elapsed);
       fighter._shadowProtection = max(0, fighter._shadowProtection - elapsed);
@@ -3534,11 +4191,17 @@ class LiteRun {
               ((fighter._slow ? 3.2 : 6.5) *
                   elapsed *
                   (fighter._night.sanguine > 0 ? 2 : 1) *
+                  fighter.supply._vampireMoveScale *
                   groundSpeed),
           _playerRadius,
         );
       }
-      fighter.stride._track(beforeMove, fighter.position, elapsed);
+      fighter.stride._track(
+        beforeMove,
+        fighter.position,
+        elapsed,
+        walking: walking,
+      );
       final item = fighter.weapon;
       if (fighter._night.stun > 0 || fighter._night.bat > 0) continue;
       if (item == LiteWeapon.scettro &&
@@ -3551,8 +4214,17 @@ class LiteRun {
           )) {
         fighter._staffCooldown = staffShockInterval;
       }
+      if (fighter._chakramRecovery > 0 && !_activeChakrams(fighter)) {
+        fighter._chakramRecovery = max(
+          0,
+          fighter._chakramRecovery - elapsed / arenaSpeed,
+        );
+      }
+      if (fighter._attackHeld && fighter.connected) {
+        fighter._heldRecovery = _heldAttackDelay(elapsed, fighter);
+      }
       if (fighter._windup > 0) {
-        fighter._windup = max(0, fighter._windup - elapsed);
+        fighter._windup = max(0, fighter._windup - attackElapsed);
         if (fighter._windup <= 1e-9) {
           fighter._windup = 0;
           _coopStrike(fighter, fighter._strike);
@@ -3560,9 +4232,11 @@ class LiteRun {
       } else if (fighter.connected &&
           !fighter.blocking &&
           fighter._rescue == null &&
-          fighter.firing &&
+          (fighter.firing ||
+              fighter._attackHeld && fighter._heldRecovery <= 0) &&
           fighter.cooldown <= 0 &&
-          (item != LiteWeapon.arco ||
+          (item.moveset != LiteWeapon.chakram || _chakramReady(fighter)) &&
+          (item.moveset != LiteWeapon.arco ||
               fighter._night.solarMace > 0 ||
               fighter.arrows > 0 && fighter._reload <= 0)) {
         fighter.firing = false;
@@ -3571,7 +4245,7 @@ class LiteRun {
           fighter.openCooldown,
           fighter.openGrade,
         );
-        if (item == LiteWeapon.arco && fighter._night.solarMace <= 0)
+        if (item.moveset == LiteWeapon.arco && fighter._night.solarMace <= 0)
           fighter.arrows--;
         fighter._strike = fighter.aim;
         fighter._windup =
@@ -3588,6 +4262,13 @@ class LiteRun {
 
   void _coopStrike(LiteCoopFighter fighter, Point<double> direction) {
     fighter._weaponReleasedAt = time;
+    _withLusierVolley(fighter.position, direction, fighter, () {
+      _coopMainStrike(fighter, direction);
+      _castFusedAttack(fighter.position, direction, fighter);
+    });
+  }
+
+  void _coopMainStrike(LiteCoopFighter fighter, Point<double> direction) {
     if (fighter.hero == LiteHero.guardianoSolare &&
         fighter._night.solarMace > 0) {
       _melee(
@@ -3611,7 +4292,7 @@ class LiteRun {
     ))
       return;
     if (fighter.hero == LiteHero.slimeBlu &&
-        fighter.weapon == LiteWeapon.guanti) {
+        fighter.weapon.moveset == LiteWeapon.guanti) {
       _melee(
         fighter.position,
         direction,
@@ -3632,15 +4313,7 @@ class LiteRun {
       fighter.position,
       direction,
       fighter.weapon,
-      (8 +
-              fighter.weapon.damageBonus.toDouble() +
-              fighter.permanentDamage +
-              2 * (fighter.level - 1)) *
-          (1 + .04 * fighter.supply.forgeRank(fighter.weapon)) *
-          (fighter.hero == LiteHero.cavaliereLunare &&
-                  fighter.weapon == LiteWeapon.spadaScudo
-              ? 2
-              : 1),
+      _guestWeaponDamage(fighter, fighter.weapon),
       ownerCanHeal: false,
       sourceCloneId: fighter.id,
     );
@@ -3742,18 +4415,71 @@ class LiteRun {
     if (direction != const Point<double>(0, 0)) aim = direction;
   }
 
-  /// Converts the real frame interval to time inside the arena.
+  final _openScenes = <LiteOpenScene>[];
+  bool _presentingFrame = false;
+  LiteOpenScene? get openScene => _openScenes.firstOrNull;
+  bool get soloOpenFrozen => _openScenes.isNotEmpty && playerCount == 1;
+  double get openTimeScale => _openScenes.isEmpty
+      ? 1
+      : playerCount == 1
+      ? 0
+      : LiteOpenScene.coopTimeScale;
+
+  LiteOpenScene? openSceneFor(int actorId) =>
+      _openScenes
+          .where((scene) => !scene.hostile && scene.actorId == actorId)
+          .firstOrNull ??
+      openScene;
+
+  bool openProtects(int actorId) =>
+      _openScenes.any((scene) => !scene.hostile && scene.actorId == actorId);
+
+  /// Advances the presentation clock independently of combat speed.
   void advanceFrame(
     double seconds, {
     Point<double> move = const Point(0, 0),
     bool walk = false,
-  }) => step(seconds * arenaSpeed, move: move, walk: walk);
+  }) {
+    if (!seconds.isFinite || seconds <= 0) return;
+    _presentingFrame = true;
+    try {
+      var timeToAdvance = seconds;
+      while (_openScenes.isNotEmpty && timeToAdvance > 1e-9) {
+        final playing = List<LiteOpenScene>.of(_openScenes);
+        final beat = min(
+          timeToAdvance,
+          playing.map((scene) => scene.remaining).reduce(min),
+        );
+        final scale = openTimeScale;
+        if (scale > 0) {
+          _advanceSimulation(beat * arenaSpeed * scale, move: move, walk: walk);
+        }
+        for (final scene in playing) {
+          scene._remaining -= beat;
+        }
+        _openScenes.removeWhere((scene) => scene.remaining <= 1e-9);
+        timeToAdvance -= beat;
+      }
+      _advanceSimulation(timeToAdvance * arenaSpeed, move: move, walk: walk);
+    } finally {
+      _presentingFrame = false;
+    }
+  }
 
-  /// Advances an explicit amount of simulation time.
+  /// Advances simulation time directly without playing a presentation.
   void step(
     double seconds, {
     Point<double> move = const Point(0, 0),
     bool walk = false,
+  }) {
+    if (seconds.isFinite && seconds > 0) _openScenes.clear();
+    _advanceSimulation(seconds, move: move, walk: walk);
+  }
+
+  void _advanceSimulation(
+    double seconds, {
+    required Point<double> move,
+    required bool walk,
   }) {
     if (finished ||
         shopOpen ||
@@ -3763,13 +4489,16 @@ class LiteRun {
         !move.y.isFinite) {
       return;
     }
+    _registerOpenRoom();
     // Split a long frame so projectiles and charges cannot cross obstacles.
     final total = min(.25, seconds);
     final slices = max(1, (total / (1 / 120)).ceil());
     final elapsed = total / slices;
     final movement = _unit(move);
+    final sceneCount = _openScenes.length;
     for (var i = 0; i < slices && !finished; i++) {
       _tick(elapsed, movement, walk);
+      if (_openScenes.length > sceneCount) break;
     }
   }
 
@@ -3784,8 +4513,11 @@ class LiteRun {
     }
 
     tickArts(supply);
+    if (hero == LiteHero.lusierTre) _rechargeLusier(supply, elapsed);
     for (final fighter in coopFighters) {
       tickArts(fighter.supply);
+      if (fighter.hero == LiteHero.lusierTre)
+        _rechargeLusier(fighter.supply, elapsed);
     }
     if (_burstTraces.isNotEmpty) {
       _burstTraces.removeWhere(
@@ -3810,7 +4542,8 @@ class LiteRun {
     _clashRemaining = max(0, _clashRemaining - elapsed);
     final recovery = _power(LitePowerUp.condotto);
     if (recovery > 0) oculum = min(maxOculum, oculum + elapsed * recovery);
-    _attackCooldown = max(0, _attackCooldown - elapsed);
+    final attackElapsed = elapsed * _divoramituAllyAttack(position);
+    _attackCooldown = max(0, _attackCooldown - attackElapsed);
     _scrollCooldown = max(0, _scrollCooldown - elapsed);
     _dashCooldown = max(0, _dashCooldown - elapsed);
     _openCooldown = max(0, _openCooldown - elapsed);
@@ -3828,7 +4561,7 @@ class LiteRun {
       if (_reloadRemaining <= 1e-9) {
         _reloadRemaining = 0;
         _arrows = bowCapacity;
-        if (weapon == LiteWeapon.arco && !rescuing) {
+        if (hasBow() && !rescuing) {
           message = 'Arco ricaricato.';
         }
       }
@@ -3849,7 +4582,9 @@ class LiteRun {
       _tickRelicMana(elapsed);
     }
     final beforeMove = position;
-    final groundSpeed = this.terrainSpeedAt(position, enemy: false);
+    final groundSpeed =
+        this.terrainSpeedAt(position, enemy: false) *
+        _divoramituAllyPace(position);
     if (!hostDown && _night.stun <= 0 && _burstTime > 0) {
       position = _dashLandings.containsKey(0)
           ? _advancePadDash(position, _burstTime, elapsed, 0)
@@ -3871,51 +4606,58 @@ class LiteRun {
                 elapsed *
                 (1 + _power(LitePowerUp.passo)) *
                 (_night.sanguine > 0 ? 2 : 1) *
+                supply._vampireMoveScale *
                 groundSpeed),
         _playerRadius,
       );
     }
-    stride._track(beforeMove, position, elapsed);
+    stride._track(beforeMove, position, elapsed, walking: _walking);
     if (_windup > 0) {
-      _windup = max(0, _windup - elapsed);
+      _windup = max(0, _windup - attackElapsed);
       if (_windup <= 1e-9) {
         _windup = 0;
-        if (weapon == LiteWeapon.doppieLame) {
+        if (weapon.moveset == LiteWeapon.doppieLame) {
           _secondBladeReleasedAt = time;
           _melee(position, _strikeDirection, weapon, _damageFor(weapon) * .56);
         } else {
           _weaponReleasedAt = time;
-          _weaponAction(position, _strikeDirection, weapon, _damageFor(weapon));
+          _releaseWeaponWithFusion(position, _strikeDirection);
         }
       }
+    }
+    if (_chakramRecovery > 0 && !_activeChakrams()) {
+      _chakramRecovery = max(0, _chakramRecovery - elapsed / arenaSpeed);
+    }
+    if (_attackHeld) {
+      _heldRecovery = _heldAttackDelay(elapsed);
+      if (_heldRecovery <= 0) attack(position + aim);
     }
     if (coopFighters.isNotEmpty) _tickCoop(elapsed);
     _discoverFloorMap();
     if (!hostDown &&
-        weapon == LiteWeapon.scettro &&
+        weapon.moveset == LiteWeapon.scettro &&
         _staffCooldown == 0 &&
         _staffShock(position, 4.0 + (level - 1) ~/ 3)) {
       _staffCooldown = staffShockInterval;
     }
     _tickFinalBeam(elapsed);
     if (dead) return;
-    _befriendWolves();
+    _syncLunarWolves();
+    _syncInfernalPact();
+    _dismissOwnerlessDemons();
     // New summons enter combat on the next substep.
+    _tickDivoramituFields(elapsed / arenaSpeed);
     final enemiesAtStart = enemies.length;
     for (var i = 0; i < enemiesAtStart; i++) {
       final enemy = enemies[i];
       if (enemy.hp > 0) {
         final beforeMove = enemy.position;
-        final hadWindup = enemy.attacking;
         enemy._strikePose = max(0, enemy._strikePose - elapsed);
         enemy.shockRemaining = max(0, enemy.shockRemaining - elapsed);
-        _enemyTick(enemy, elapsed);
+        _enemyTick(enemy, elapsed * _divoramituFieldPace(enemy.position));
         enemy.stride._track(beforeMove, enemy.position, elapsed);
-        if (hadWindup && !enemy.attacking && enemy.clashRemaining <= 0) {
-          enemy._strikePose = .24;
-        }
       }
-      if (dead) return;
+      if (dead || (soloOpenFrozen && _presentingFrame)) return;
     }
     _tickFauna(elapsed);
     _tickEmber(elapsed);
@@ -3926,6 +4668,8 @@ class LiteRun {
     final alliesAtStart = clones.length;
     for (var i = 0; i < alliesAtStart; i++) {
       final clone = clones[i];
+      clone._growWith(_coopFighterById(clone.ownerId)?.level ?? level);
+      clone._forgedWard = max(0, clone._forgedWard - elapsed / arenaSpeed);
       if (clone.expiresAfter case final remaining?) {
         clone.expiresAfter = max(0, remaining - elapsed);
         if (clone.expiresAfter == 0) clone.hp = 0;
@@ -3934,6 +4678,8 @@ class LiteRun {
         final beforeMove = clone.position;
         clone._swing = max(0, clone._swing - elapsed);
         if (clone.corrupted) {
+          clone._burrowDestination = null;
+          clone._burrowTime = 0;
           _redAllyTick(clone, elapsed);
         } else {
           _cloneTick(clone, elapsed);
@@ -3970,7 +4716,7 @@ class LiteRun {
       (clone) =>
           clone.hp <= 0 &&
           !clone.down &&
-          !(royalRescue && clone.expiresAfter == null),
+          !(royalRescue && clone.canBeRevived && clone.expiresAfter == null),
     );
     enemies.removeWhere((enemy) => enemy.hp <= 0);
     _tickArenaEvent(elapsed);
@@ -3978,6 +4724,7 @@ class LiteRun {
     this._checkGoblinEntrance();
     if (hostDown && coopFighters.every((fighter) => fighter.hp <= 0)) {
       dead = true;
+      _dismissOwnerlessDemons();
       message = 'Il gruppo è caduto al piano $stage.';
     }
     if (dead || enemies.isNotEmpty || stageClear) return;
@@ -4028,6 +4775,18 @@ class LiteRun {
     _offerPowers();
   }
 
+  double _guestWeaponDamage(LiteCoopFighter fighter, LiteWeapon item) =>
+      (8 +
+          item.damageBonus.toDouble() +
+          fighter.permanentDamage +
+          2 * (fighter.level - 1)) *
+      (1 + .04 * fighter.supply.forgeRank(item)) *
+      _swordFusionDamage(item, fighter) *
+      (fighter.hero == LiteHero.cavaliereLunare &&
+              item.moveset == LiteWeapon.spadaScudo
+          ? 2
+          : 1);
+
   double _damageFor(LiteWeapon item) =>
       (8 +
           2.0 * (level - 1) +
@@ -4035,6 +4794,7 @@ class LiteRun {
           _permanent(LitePermanentUpgrade.danni)) *
       (1 + _power(LitePowerUp.lama)) *
       (1 + .04 * supply.forgeRank(item)) *
+      _swordFusionDamage(item) *
       (hero == LiteHero.cavaliereLunare && item == LiteWeapon.spadaScudo
           ? 2
           : 1);
@@ -4108,10 +4868,11 @@ class LiteRun {
         rescuing ||
         _attackCooldown > 0 ||
         _windup > 0 ||
-        clashDashing) {
+        clashDashing ||
+        (weapon.moveset == LiteWeapon.chakram && !_chakramReady())) {
       return false;
     }
-    if (weapon == LiteWeapon.arco &&
+    if (weapon.moveset == LiteWeapon.arco &&
         !(hero == LiteHero.guardianoSolare && _night.solarMace > 0)) {
       if (reloading) return false;
       if (_arrows == 0) {
@@ -4134,14 +4895,16 @@ class LiteRun {
         minDot: .22,
       );
       _weaponReleasedAt = time;
+      if (!clashDashing) _castFusedAttack(position, aim);
       return true;
     }
     if (_animalStrike(hero, position, aim, level, null)) {
       _attackCooldown = .42;
       _weaponReleasedAt = time;
+      if (!clashDashing) _castFusedAttack(position, aim);
       return true;
     }
-    if (hero == LiteHero.slimeBlu && weapon == LiteWeapon.guanti) {
+    if (hero == LiteHero.slimeBlu && weapon.moveset == LiteWeapon.guanti) {
       _attackCooldown = .58;
       _melee(
         position,
@@ -4152,48 +4915,76 @@ class LiteRun {
         minDot: .1,
       );
       _weaponReleasedAt = time;
+      if (!clashDashing) _castFusedAttack(position, aim);
       return true;
     }
     if (hero == LiteHero.doppelganger) {
       _attackCooldown = _mimic == null ? .64 : .82;
       _mimicStrike(_mimic, position, aim, null);
       _weaponReleasedAt = time;
+      if (!clashDashing) _castFusedAttack(position, aim);
       return true;
     }
     _weaponReleasedAt = weapon.chargeSeconds == 0 ? time : null;
     _attackCooldown = _weaponRecovery(weapon, openCooldown, openGrade);
-    switch (weapon) {
+    switch (weapon.moveset) {
       case LiteWeapon.doppieLame:
-        _melee(position, aim, weapon, _damageFor(weapon) * .56);
+        _withLusierVolley(position, aim, null, () {
+          _melee(position, aim, weapon, _damageFor(weapon) * .56);
+          if (!clashDashing) _castFusedAttack(position, aim);
+        });
         if (clashDashing) return true;
         final reposition = _lastMove == const Point<double>(0, 0)
             ? aim
             : _lastMove;
-        position = _move(position, reposition * 1.05, _playerRadius);
+        _beginTravel(reposition, 1.05, .11, null);
         _windup = .11;
       default:
         _windup = weapon.chargeSeconds;
         if (_windup == 0) {
-          _weaponAction(position, aim, weapon, _damageFor(weapon));
+          _releaseWeaponWithFusion(position, aim);
         }
     }
     return true;
   }
 
+  void _releaseWeaponWithFusion(Point<double> from, Point<double> facing) {
+    _withLusierVolley(from, facing, null, () {
+      _weaponAction(from, facing, weapon, _damageFor(weapon));
+      if (!clashDashing) _castFusedAttack(from, facing);
+    });
+  }
+
   void _weaponAction(
     Point<double> source,
     Point<double> direction,
-    LiteWeapon item,
+    LiteWeapon equipped,
     double damage, {
     bool ownerCanHeal = true,
     int? sourceCloneId,
   }) {
+    final item = equipped.moveset;
+    final firstShot = projectiles.length;
     final fighter = ownerCanHeal ? null : _coopFighterById(sourceCloneId);
     final kit = ownerCanHeal ? supply : fighter?.supply;
     final rangeScale = ownerCanHeal || fighter != null
         ? _weaponRangeScale(fighter)
         : 1.0;
     if (kit?.fed(LiteRestItem.stufato, stage) == true) damage *= 1.20;
+    if (item == LiteWeapon.chakram) {
+      _launchChakrams(
+        source,
+        direction,
+        damage,
+        rangeScale,
+        ownerCanHeal,
+        sourceCloneId,
+      );
+      for (var i = firstShot; i < projectiles.length; i++) {
+        projectiles[i].lusierVolley = _activeLusierAttack;
+      }
+      return;
+    }
     if (item == LiteWeapon.fucileScostubandito) {
       final buttRange = 2.0 * rangeScale;
       if (enemies.any(
@@ -4237,7 +5028,7 @@ class LiteRun {
           kind: critical
               ? LiteProjectileKind.rifleCritical
               : LiteProjectileKind.rifleBullet,
-        ),
+        )..lusierVolley = _activeLusierAttack,
       );
       return;
     }
@@ -4250,6 +5041,8 @@ class LiteRun {
         item,
         damage,
         minDot: item.thrustArc,
+        reach: equipped == item ? null : equipped.range * rangeScale,
+        push: equipped == LiteWeapon.cheleRasvyr ? 1.45 : 0,
         ownerCanHeal: ownerCanHeal,
         sourceCloneId: sourceCloneId,
       );
@@ -4302,7 +5095,7 @@ class LiteRun {
         remaining:
             (item == LiteWeapon.falceRunica
                 ? LiteWeapon.scytheReturnRange
-                : item.range) *
+                : equipped.range) *
             rangeScale,
         damage: switch (item) {
           LiteWeapon.scettro => damage * (1 + magicBonus),
@@ -4312,16 +5105,19 @@ class LiteRun {
         magic: item == LiteWeapon.scettro,
         boomerang: item.returns,
         ownerCanHeal: ownerCanHeal,
-        kind: switch (item) {
-          LiteWeapon.falceRunica => LiteProjectileKind.scythe,
-          LiteWeapon.chakram => LiteProjectileKind.chakram,
-          LiteWeapon.fucileScostubandito => LiteProjectileKind.rifleBullet,
-          LiteWeapon.carabinaImpulsi => LiteProjectileKind.pulse,
-          LiteWeapon.balestraRunica => LiteProjectileKind.frostBolt,
-          _ => LiteProjectileKind.normal,
-        },
+        kind: equipped == LiteWeapon.vergaCorvina
+            ? LiteProjectileKind.inkEmber
+            : switch (item) {
+                LiteWeapon.falceRunica => LiteProjectileKind.scythe,
+                LiteWeapon.chakram => LiteProjectileKind.chakram,
+                LiteWeapon.fucileScostubandito =>
+                  LiteProjectileKind.rifleBullet,
+                LiteWeapon.carabinaImpulsi => LiteProjectileKind.pulse,
+                LiteWeapon.balestraRunica => LiteProjectileKind.frostBolt,
+                _ => LiteProjectileKind.normal,
+              },
         sourceCloneId: sourceCloneId,
-      ),
+      )..lusierVolley = _activeLusierAttack,
     );
   }
 
@@ -4467,8 +5263,8 @@ class LiteRun {
         _enemyIntangible(enemy) ||
         _windup <= 0 ||
         _windup > _clashWindow ||
-        (weapon != LiteWeapon.guanti &&
-            weapon != LiteWeapon.doppieLame &&
+        (weapon.moveset != LiteWeapon.guanti &&
+            weapon.moveset != LiteWeapon.doppieLame &&
             weapon != LiteWeapon.piccaOssidiana)) {
       return false;
     }
@@ -4580,13 +5376,14 @@ class LiteRun {
   bool useOpen(Point<double> target) => _useOpen(target, null);
 
   bool _useOpen(Point<double> target, LiteCoopFighter? fighter) {
+    if (soloOpenFrozen || openProtects(fighter?.id ?? 0)) return false;
     final character = fighter?.hero ?? hero;
-    final cooldown = fighter?._openCooldown ?? _openCooldown;
     final available = fighter?.oculum ?? oculum;
     if (finished ||
         shopOpen ||
+        restHub ||
         (fighter == null ? hostDown || clashDashing : fighter.hp <= 0) ||
-        cooldown > 0 ||
+        openRoomsRemaining(fighter) > 0 ||
         available < granSummonCost) {
       return false;
     }
@@ -4597,6 +5394,18 @@ class LiteRun {
     final aimed = _unit(target - source);
     final direction = aimed.magnitude > 0 ? aimed : fighter?.aim ?? aim;
     switch (character) {
+      case LiteHero.ragnoSaldatore ||
+          LiteHero.rasvyr ||
+          LiteHero.lupoDiVaitern ||
+          LiteHero.pysciwarden ||
+          LiteHero.lusierTre:
+        _milestoneHeroMove(
+          character,
+          source,
+          direction,
+          fighter,
+          powerful: true,
+        );
       case LiteHero.vesanybel || LiteHero.aerovyr || LiteHero.vedettaEiva:
         _thirdHeroMove(
           character,
@@ -4611,25 +5420,34 @@ class LiteRun {
           LiteHero.demoneMaggiore ||
           LiteHero.diavolo:
         _infernalMove(character, source, direction, fighter, grade, open: true);
+      case LiteHero.fabbro:
+        _armory(source, ownerId, grade);
       case LiteHero.guardiaSolare || LiteHero.aberrazioneSolare:
-        _solarPlayerGuard(character, source, direction, fighter, grade);
+        _solarPlayerGuard(
+          character,
+          source,
+          direction,
+          fighter,
+          grade,
+          open: true,
+        );
       case LiteHero.eliteSolare:
         _fireSun(
           source,
           direction,
-          28 + grade * 7.0,
+          (28 + grade * 7) * openPower,
           owner: fighter?.id,
           ray: true,
         );
       case LiteHero.guardianoSolare:
-        (fighter?._night ?? _night).solarMace = 4 + grade.toDouble();
+        (fighter?._night ?? _night).solarMace = (4 + grade) * openPower;
       case LiteHero.pollo || LiteHero.polloMeccanico:
         final mechanical = character == LiteHero.polloMeccanico;
         _throwEggs(
           source,
           direction,
           fighter?.id,
-          damage: mechanical ? 24 + 6.0 * grade : 16 + 5.0 * grade,
+          damage: (mechanical ? 24 + 6 * grade : 16 + 5 * grade) * openPower,
           spread: .31,
           mechanical: mechanical,
         );
@@ -4641,7 +5459,7 @@ class LiteRun {
           }
         }
       case LiteHero.raganella:
-        _playableShadowStep(
+        final landed = _playableShadowStep(
           source,
           direction,
           fighter,
@@ -4649,14 +5467,14 @@ class LiteRun {
           protection: .4,
         );
         _openBurst(
-          fighter?.position ?? position,
+          landed,
           2.65,
-          18 + grade * 6.0,
+          (18 + grade * 6) * openPower,
           ownerId,
           push: 1.2,
         );
       case LiteHero.pipistrello:
-        _playableShadowStep(
+        final landed = _playableShadowStep(
           source,
           direction,
           fighter,
@@ -4664,9 +5482,9 @@ class LiteRun {
           protection: .85,
         );
         _openBurst(
-          fighter?.position ?? position,
+          landed,
           3.3,
-          13 + grade * 6.0,
+          (13 + grade * 6) * openPower,
           ownerId,
           push: 1.3,
         );
@@ -4678,14 +5496,14 @@ class LiteRun {
           aim = _burstDirection = direction;
           _burstSpeed = speed;
           _burstTime = duration;
-          _invulnerability = max(_invulnerability, duration);
+          _invulnerability = max(_invulnerability, duration * openPower);
         } else {
           fighter
             ..aim = direction
             .._dashDirection = direction
             .._dashSpeed = speed
             .._dashRemaining = duration
-            .._protection = max(fighter._protection, duration);
+            .._protection = max(fighter._protection, duration * openPower);
         }
         _beginBurstTrace(LiteBurstKind.open, duration, fighter: fighter);
       case LiteHero.duplicatore:
@@ -4707,7 +5525,7 @@ class LiteRun {
               22.0 + grade * 7,
               fighter?.weapon ?? weapon,
               expiresAfter: 10.0 + grade * 2,
-              damageScale: 1 + grade * .30,
+              damageScale: (1 + grade * .30) * openPower,
               id: _nextId++,
               ownerId: ownerId,
             ),
@@ -4727,7 +5545,7 @@ class LiteRun {
           source,
           direction,
           LiteWeapon.guanti,
-          38.0 + 4 * characterLevel + 10 * (grade - 1),
+          (38 + 4 * characterLevel + 10 * (grade - 1)) * openPower,
           reach: 5 + .45 * (grade - 1),
           minDot: .69,
           ownerCanHeal: fighter == null,
@@ -4741,6 +5559,7 @@ class LiteRun {
           direction,
           ownerId,
           grade,
+          damageMultiplier: openPower,
         )) {
           return false;
         }
@@ -4752,6 +5571,7 @@ class LiteRun {
           direction,
           ownerId,
           grade,
+          damageMultiplier: openPower,
         )) {
           return false;
         }
@@ -4759,12 +5579,12 @@ class LiteRun {
         _openBurst(
           source,
           3.2 + grade * .5,
-          20.0 + grade * 11,
+          (20 + grade * 11) * openPower,
           ownerId,
           shock: .6 + grade * .2,
         );
       case LiteHero.sentinella:
-        final ward = 24.0 + 12 * grade;
+        final ward = (24 + 12 * grade) * openPower;
         if (fighter == null) {
           shield += ward;
         } else {
@@ -4773,7 +5593,7 @@ class LiteRun {
         _openBurst(
           source,
           2.6 + grade * .35,
-          15.0 + grade * 7,
+          (15 + grade * 7) * openPower,
           ownerId,
           push: 1.0 + grade * .4,
         );
@@ -4782,7 +5602,7 @@ class LiteRun {
           source,
           direction,
           LiteWeapon.guanti,
-          28.0 + grade * 13 + 2 * characterLevel,
+          (28 + grade * 13 + 2 * characterLevel) * openPower,
           reach: 3.9 + grade * .5,
           minDot: .25,
           ownerCanHeal: false,
@@ -4793,7 +5613,7 @@ class LiteRun {
           _launchFireball(
             source,
             _rotate(direction, turn),
-            17 + grade * 5.0,
+            (17 + grade * 5) * openPower,
             2 + grade,
             fighter?.id,
           );
@@ -4804,20 +5624,20 @@ class LiteRun {
             source,
             _rotate(direction, turn),
             6 + grade * .7,
-            17 + grade * 6.0,
+            (17 + grade * 6) * openPower,
             fighter?.id,
           );
         }
       case LiteHero.luce:
         if (fighter == null) {
-          shield += 15 + 6 * grade;
+          shield += (15 + 6 * grade) * openPower;
         } else {
-          fighter.shield += 15 + 6 * grade;
+          fighter.shield += (15 + 6 * grade) * openPower;
         }
         _openBurst(
           source,
           3.4 + grade * .4,
-          23 + grade * 7.0,
+          (23 + grade * 7) * openPower,
           ownerId,
           push: 1.5,
         );
@@ -4827,14 +5647,14 @@ class LiteRun {
           direction,
           fighter,
           distance: 4.6 + grade * .65,
-          protection: 3,
+          protection: 3 * openPower,
         );
       case LiteHero.veyrth:
         for (var i = 0; i < 5 + grade * 2; i++) {
           _launchSphere(
             source,
             _rotate(direction, i * 2 * pi / (5 + grade * 2)),
-            12 + grade * 3.0,
+            (12 + grade * 3) * openPower,
             fighter?.id,
           );
         }
@@ -4846,7 +5666,7 @@ class LiteRun {
           source,
           direction,
           fighter?.id,
-          factor: 1.6 + grade * .25,
+          factor: (1.6 + grade * .25) * openPower,
           special: true,
         );
       case LiteHero.reGoblin:
@@ -4860,20 +5680,21 @@ class LiteRun {
           direction,
           ownerId,
           grade,
+          damageMultiplier: openPower,
         ))
           return false;
       case LiteHero.slimeBlu:
         if (!this._extendAbsorption(source, direction, fighter, empower: true))
           return false;
         if (fighter == null) {
-          shield += 12 + 4 * grade;
+          shield += (12 + 4 * grade) * openPower;
         } else {
-          fighter.shield += 12 + 4 * grade;
+          fighter.shield += (12 + 4 * grade) * openPower;
         }
       case LiteHero.vampiro:
         final state = fighter?._night ?? _night;
         if (state.sanguine > 0) return false;
-        state.sanguine = 5 + grade.toDouble();
+        state.sanguine = (5 + grade) * openPower;
         if (fighter == null) {
           hp *= 2;
         } else {
@@ -4891,15 +5712,19 @@ class LiteRun {
             ..hp *= 2;
         }
     }
+    _registerOpenRoom();
     if (fighter == null) {
+      _openUsedInRoom = _openCombatRooms.length;
       oculum -= granSummonCost;
       shield += _power(LitePowerUp.riflusso);
       _openCooldown = openRecoveryFor(grade);
     } else {
+      fighter._openUsedInRoom = _openCombatRooms.length;
       fighter.oculum -= granSummonCost;
       fighter.shield += _power(LitePowerUp.riflusso);
       fighter._openCooldown = openRecoveryFor(grade);
     }
+    _openScenes.add(LiteOpenScene._(character, source, direction, ownerId));
     message = 'Open · ${character.openName}.';
     return true;
   }
@@ -5074,6 +5899,18 @@ class LiteRun {
     }
     final owner = fighter?.id;
     switch (character) {
+      case LiteHero.ragnoSaldatore ||
+          LiteHero.rasvyr ||
+          LiteHero.lupoDiVaitern ||
+          LiteHero.pysciwarden ||
+          LiteHero.lusierTre:
+        _milestoneHeroMove(
+          character,
+          source,
+          direction,
+          fighter,
+          powerful: false,
+        );
       case LiteHero.vesanybel || LiteHero.aerovyr || LiteHero.vedettaEiva:
         _thirdHeroMove(
           character,
@@ -5174,6 +6011,18 @@ class LiteRun {
       case LiteHero.pyrel:
         _launchFireball(source, direction, 18 + 2.0 * characterLevel, 3, owner);
         return true;
+      case LiteHero.fabbro:
+        final rank = (fighter?.supply ?? supply).forgeRank(
+          LiteWeapon.martelloForgia,
+        );
+        _forgeQuake(
+          source,
+          (20 + 2.2 * characterLevel) * (1 + .04 * rank),
+          owner,
+          radius: 5.15 + .12 * rank,
+          push: 5.8 + .15 * rank,
+        );
+        return true;
       case LiteHero.lithra:
         _fissure(source, direction, 7, 22 + 2.0 * characterLevel, owner);
         return true;
@@ -5244,7 +6093,7 @@ class LiteRun {
     a.x * sin(theta) + a.y * cos(theta),
   );
 
-  void _playableShadowStep(
+  Point<double> _playableShadowStep(
     Point<double> from,
     Point<double> direction,
     LiteCoopFighter? fighter, {
@@ -5257,13 +6106,45 @@ class LiteRun {
       if (next == target) break;
       target = next;
     }
+    final actual = target.distanceTo(from);
+    if (actual < .02) return from;
+    final duration = (.14 + actual * .031).clamp(.14, .34);
+    _beginTravel(
+      LiteRun._unit(target - from),
+      actual,
+      duration,
+      fighter,
+      protection: protection,
+    );
+    return target;
+  }
+
+  void _beginTravel(
+    Point<double> direction,
+    double distance,
+    double duration,
+    LiteCoopFighter? fighter, {
+    double protection = 0,
+  }) {
     if (fighter == null) {
-      position = target;
+      _dashLandings.remove(0);
+      _burstDirection = direction;
+      _burstSpeed = distance / duration;
+      _burstTime = duration;
       _invulnerability = max(_invulnerability, protection);
     } else {
-      fighter.position = target;
-      fighter._shadowProtection = max(fighter._shadowProtection, protection);
+      _dashLandings.remove(fighter.id);
+      fighter
+        .._dashDirection = direction
+        .._dashSpeed = distance / duration
+        .._dashRemaining = duration
+        .._shadowProtection = max(fighter._shadowProtection, protection);
     }
+    _beginBurstTrace(
+      protection > 0 ? LiteBurstKind.phase : LiteBurstKind.dash,
+      duration,
+      fighter: fighter,
+    );
   }
 
   bool _copyEnemy(
@@ -5301,7 +6182,7 @@ class LiteRun {
       target.kind,
       target.maxHp,
       fighter?.hp ?? hp,
-      target.kind.damage * scale,
+      target.attackDamage * scale,
     );
     if (fighter == null) {
       _mimic = form;
@@ -5578,8 +6459,9 @@ class LiteRun {
     Point<double> source,
     Point<double> direction,
     int ownerId,
-    int grade,
-  ) {
+    int grade, {
+    double damageMultiplier = 1,
+  }) {
     final living = clones
         .where(
           (ally) =>
@@ -5607,7 +6489,7 @@ class LiteRun {
           companion: companion,
           summoned: true,
           expiresAfter: granSummonDuration + (grade - 1) * 3,
-          damageScale: 1 + .30 * grade,
+          damageScale: (1 + .30 * grade) * damageMultiplier,
           id: _nextId++,
           ownerId: ownerId,
         ),
@@ -5696,7 +6578,7 @@ class LiteRun {
       }
     }
     final modifier =
-        (weapon == LiteWeapon.scettro ? 1 + magicBonus : 1.0) *
+        (weapon.moveset == LiteWeapon.scettro ? 1 + magicBonus : 1.0) *
         (1 + _power(LitePowerUp.prisma));
     switch (scroll) {
       case LiteScroll.dardo:
@@ -5761,8 +6643,20 @@ class LiteRun {
   }
 
   void _enemyTick(LiteEnemy enemy, double elapsed) {
+    enemy.hitFlash = max(0, enemy.hitFlash - elapsed);
     if (enemy.kind == LiteEnemyKind.baghest && enemy.stunned <= 0) {
       _baghestTick(enemy, elapsed);
+      return;
+    }
+    if (enemy.kind == LiteEnemyKind.cuccioloDivoramitu) {
+      final heading = _unit(_enemyAimFrom(enemy.position) - enemy.position);
+      enemy.position = _chooseLane(
+        enemy.position,
+        heading,
+        elapsed * enemy.kind.speed,
+        enemy.radius,
+        rightFirst: enemy.id.isEven,
+      );
       return;
     }
     if (enemy.burrow != null) {
@@ -5790,6 +6684,11 @@ class LiteRun {
       enemy.windup = 0;
       return;
     }
+    if (enemy.kind == LiteEnemyKind.bunnys) {
+      _tickBunnys(enemy, elapsed);
+      return;
+    }
+    if (enemy.fiveFlames) _tickFiveFlames(enemy, elapsed);
     if (_tickChamber(enemy, elapsed) && enemy.kind != LiteEnemyKind.veyrth) {
       return;
     }
@@ -5806,7 +6705,6 @@ class LiteRun {
       _recordBurstTrace(-enemy.id, enemy.position, enemy.clashRemaining);
       return;
     }
-    enemy.hitFlash = max(0, enemy.hitFlash - elapsed);
     if (this._answerSlime(enemy, elapsed)) return;
     if (enemy.kind == LiteEnemyKind.veyrth) {
       _tickVeyrth(enemy, elapsed);
@@ -5823,8 +6721,26 @@ class LiteRun {
     }
     final ranged = _ranged(enemy.kind);
     if (enemy.windup > 0) {
+      final target = enemy.attackTarget;
+      if (enemy.windup <= .19 &&
+          _hasAttackLunge(enemy.kind) &&
+          target != null) {
+        final advance = min(
+          18.3 * elapsed,
+          max(0.0, target.distanceTo(enemy.position) - .62),
+        );
+        final direction = _unit(target - enemy.position);
+        enemy.position = _move(
+          enemy.position,
+          direction * advance,
+          enemy.radius,
+        );
+      }
       enemy.windup = max(0, enemy.windup - elapsed);
-      if (enemy.windup == 0) _resolveEnemyAttack(enemy, ranged);
+      if (enemy.windup == 0) {
+        _resolveEnemyAttack(enemy, ranged);
+        if (enemy.clashRemaining <= 0) enemy._strikePose = .24;
+      }
       return;
     }
     enemy.cooldown = max(0, enemy.cooldown - elapsed);
@@ -5999,6 +6915,7 @@ class LiteRun {
     boss._strikePose = .24;
     final damage =
         attack.damage *
+        boss.liveryPower *
         difficulty.enemyStrength *
         _challengeDamageScale(boss.kind);
     if (attack == LiteArchonAttack.crown) {
@@ -6086,6 +7003,7 @@ class LiteRun {
       } else {
         _fireVeyrthSpheres(boss);
       }
+      boss._strikePose = .24;
       boss.cooldown = 1.35;
       return;
     }
@@ -6130,6 +7048,7 @@ class LiteRun {
         boss,
         _unit((boss.attackTarget ?? position) - boss.position),
       );
+      boss._strikePose = .24;
       return;
     }
     boss.cooldown = max(0, boss.cooldown - elapsed);
@@ -6203,7 +7122,7 @@ class LiteRun {
     }
     final reach = build.weapon.range * (isLight && ranged ? .88 : .76);
     if (boss.cooldown <= 0 && distance <= reach && hasLine) {
-      boss.windup = switch (build.weapon) {
+      boss.windup = switch (build.weapon.moveset) {
         LiteWeapon.carabinaImpulsi => .43,
         LiteWeapon.piccaOssidiana => .20,
         LiteWeapon.balestraRunica => .29,
@@ -6253,6 +7172,7 @@ class LiteRun {
   }
 
   void _resolveVerdict(LiteEnemy boss, Point<double> mark) {
+    boss._strikePose = .24;
     _recordImpact(LiteImpactTarget.verdict, boss.id, mark);
     final damage =
         verdictDamage *
@@ -6354,7 +7274,7 @@ class LiteRun {
         continue;
       }
       final modifier =
-          (build.weapon == LiteWeapon.scettro ? 1 + magicBonus : 1.0) *
+          (build.weapon.moveset == LiteWeapon.scettro ? 1 + magicBonus : 1.0) *
           (1 + build.power(LitePowerUp.prisma)) *
           _challengeDamageScale(boss.kind);
       switch (scroll) {
@@ -6409,7 +7329,7 @@ class LiteRun {
     double scale = 1,
   ]) {
     final build = boss.mirror!;
-    final item = build.weapon;
+    final item = build.weapon.moveset;
     final damage =
         build.damage *
         (.78 + stage * .012) *
@@ -6585,7 +7505,12 @@ class LiteRun {
       final damage =
           8.0 *
           difficulty.enemyStrength *
-          _challengeDamageScale(LiteEnemyKind.veyrth);
+          _challengeDamageScale(LiteEnemyKind.veyrth) *
+          (enemies
+                  .where((enemy) => enemy.kind == LiteEnemyKind.veyrth)
+                  .firstOrNull
+                  ?.liveryPower ??
+              1);
       for (final clone in _damageableAllies) {
         if (_beamTouches(beam, clone.position, distance, .30)) {
           _hitAlly(clone, damage);
@@ -6671,12 +7596,23 @@ class LiteRun {
         _ => true,
       };
 
+  bool _hasAttackLunge(LiteEnemyKind kind) => switch (kind) {
+    LiteEnemyKind.miruscyrus ||
+    LiteEnemyKind.rasvyr ||
+    LiteEnemyKind.orbryx ||
+    LiteEnemyKind.lupoLunare ||
+    LiteEnemyKind.goblinColtello ||
+    LiteEnemyKind.demoneMinore ||
+    LiteEnemyKind.demoneMaggiore => true,
+    _ => false,
+  };
+
   void _resolveEnemyAttack(LiteEnemy enemy, bool ranged) {
     final target = enemy.attackTarget ?? position;
     final direction = _unit(target - enemy.position);
     final kind = enemy.kind;
     final scale = difficulty.enemyStrength * (1 + .12 * max(0, stage - 1));
-    final rawDamage = kind.damage * scale * _challengeDamageScale(kind);
+    final rawDamage = enemy.attackDamage * scale * _challengeDamageScale(kind);
     final damage =
         kind == LiteEnemyKind.goblinFango || kind == LiteEnemyKind.goblinColla
         ? min(rawDamage, 7 / _floorDamageScale)
@@ -6724,28 +7660,6 @@ class LiteRun {
     if (ranged) {
       _fireEnemyProjectile(enemy, direction, damage);
       return;
-    }
-    if (kind == LiteEnemyKind.miruscyrus ||
-        kind == LiteEnemyKind.rasvyr ||
-        kind == LiteEnemyKind.orbryx ||
-        kind == LiteEnemyKind.lupoLunare ||
-        kind == LiteEnemyKind.goblinColtello ||
-        kind == LiteEnemyKind.demoneMinore ||
-        kind == LiteEnemyKind.demoneMaggiore) {
-      final charge = min(
-        3.25,
-        max(0.0, _distance(enemy.position, target) - .62),
-      );
-      final strides = (charge / .22).ceil();
-      for (var i = 0; i < strides; i++) {
-        final next = _move(
-          enemy.position,
-          direction * (charge / strides),
-          enemy.radius,
-        );
-        if (next == enemy.position) break;
-        enemy.position = next;
-      }
     }
     final reach = 1.35 + enemy.radius;
     if (_counterClash(enemy, reach) ||
@@ -6909,27 +7823,51 @@ class LiteRun {
   }
 
   void _cloneTick(LiteClone clone, double elapsed) {
+    if (clone.forgedWeapon) {
+      _tickForgedWeapon(clone, elapsed);
+      return;
+    }
+    if (clone.companion == LiteCompanion.bunnys) {
+      _tickPetBunnys(clone, elapsed);
+      return;
+    }
     clone._preparingPose = 0;
     final owner = _coopFighterById(clone.ownerId);
     final rooms = clone.recruitedFloor == null
         ? ((owner?.level ?? level) - 1).clamp(0, 12)
         : (stage - clone.recruitedFloor! + actRoom + thirdRoom).clamp(0, 12);
-    final training = clone.companion == null ? 0.0 : rooms * .04;
+    final levelTraining = (clone.level - 1).clamp(0, 12);
+    final training = clone.companion == null
+        ? (clone.summoned ? levelTraining * .04 : 0.0)
+        : max(rooms, levelTraining) * .04;
     final paceScale = clone.companion == null
         ? 1.0
         : 1 +
               _power(LitePowerUp.legameVigile) +
               training * .45 +
               _profileBonus(LitePermanentUpgrade.passoCompagno, owner) / 100;
-    clone.cooldown = max(0, clone.cooldown - elapsed * paceScale);
+    clone.cooldown = max(
+      0,
+      clone.cooldown -
+          elapsed * paceScale * _divoramituAllyAttack(clone.position),
+    );
+    clone._burrowCooldown = max(
+      0,
+      clone._burrowCooldown - elapsed / arenaSpeed,
+    );
     if (owner != null && !owner.connected) return;
     final ownerPosition = owner?.position ?? position;
     final enemy = _companionTarget(clone, ownerPosition);
+    if (clone.companion == LiteCompanion.divoramituMini &&
+        _tickPetDivoramitu(clone, enemy, ownerPosition, training, elapsed)) {
+      return;
+    }
     final pace =
         elapsed *
         4.7 *
         paceScale *
-        this.terrainSpeedAt(clone.position, enemy: false);
+        this.terrainSpeedAt(clone.position, enemy: false) *
+        _divoramituAllyPace(clone.position);
     if (enemy == null ||
         (clone.companion != LiteCompanion.lupoAlleato &&
             _distanceSquared(clone.position, ownerPosition) > 150)) {
@@ -7111,6 +8049,7 @@ class LiteRun {
     for (final playerShot in projectiles) {
       if (playerShot.fromEnemy ||
           playerShot.remaining <= 0 ||
+          playerShot.age < 0 ||
           playerShot.eggFuse != null)
         continue;
       final from = playerShot.position;
@@ -7170,6 +8109,7 @@ class LiteRun {
       return;
     }
     projectile.age += elapsed;
+    if (projectile.age < 0) return;
     if (projectile.kind == LiteProjectileKind.egg ||
         projectile.kind == LiteProjectileKind.posteaEgg) {
       _tickEgg(projectile, elapsed);
@@ -7178,10 +8118,22 @@ class LiteRun {
     if (projectile.kind == LiteProjectileKind.posteaRay) {
       _steerPosteaRay(projectile, elapsed);
     }
+    if (projectile.kind == LiteProjectileKind.pattoFiamma) {
+      final target = _nearestEnemy(projectile.position);
+      if (target != null &&
+          target.position.distanceTo(projectile.position) < 6.5 &&
+          !_lineBlocked(projectile.position, target.position)) {
+        final desired = _unit(target.position - projectile.position);
+        projectile.direction = _unit(
+          projectile.direction + desired * (4.2 * elapsed),
+        );
+      }
+    }
     if (projectile.kind == LiteProjectileKind.spiral) {
       projectile.direction = _rotate(projectile.direction, .91 * elapsed);
     }
-    if (projectile.boomerang) {
+    final routed = projectile.chakramAim != null;
+    if (projectile.boomerang && !routed) {
       if (projectile.returning) {
         final returnTo = projectileReturnTarget(projectile);
         if (_distanceSquared(projectile.position, returnTo) < .58 * .58) {
@@ -7201,8 +8153,21 @@ class LiteRun {
         }
       }
     }
-    final travelled = min(projectile.remaining, projectile.speed * elapsed);
-    final next = projectile.position + projectile.direction * travelled;
+    final Point<double> next;
+    if (routed) {
+      final target = _chakramPoint(projectile, elapsed);
+      if (target == null) {
+        projectile.remaining = 0;
+        return;
+      }
+      next = target;
+    } else {
+      next =
+          projectile.position +
+          projectile.direction *
+              min(projectile.remaining, projectile.speed * elapsed);
+    }
+    final travelled = next.distanceTo(projectile.position);
     final cannon = projectile.kind == LiteProjectileKind.cannon;
     final hitRadius = cannon ? .24 : .12;
     if (_blocked(next, hitRadius)) {
@@ -7234,6 +8199,11 @@ class LiteRun {
           projectile.bounces--;
           projectile.remaining -= travelled;
           return;
+        }
+        if (routed) {
+          projectile
+            ..chakramAim = null
+            ..returning = false;
         }
         _stopProjectile(projectile);
         return;
@@ -7328,6 +8298,7 @@ class LiteRun {
         projectile.damage,
         ownerCanHeal: projectile.ownerCanHeal,
         sourceCloneId: projectile.sourceCloneId,
+        lusierVolley: projectile.lusierVolley,
         impactFrom: projectile.origin,
       );
       if (projectile.kind == LiteProjectileKind.rifleCritical) {
@@ -7392,6 +8363,16 @@ class LiteRun {
     if (projectile.kind == LiteProjectileKind.mud ||
         projectile.kind == LiteProjectileKind.glue) {
       this._leaveGroundShot(projectile);
+    }
+    if (projectile.kind == LiteProjectileKind.pattoFiamma) {
+      _openBurst(
+        projectile.position,
+        1.72,
+        projectile.damage * .72,
+        projectile.sourceCloneId ?? 0,
+        push: .57,
+      );
+      _recordImpact(LiteImpactTarget.explosion, _nextId++, projectile.position);
     }
     if (projectile.kind == LiteProjectileKind.bomb) {
       _openBurst(
@@ -7518,6 +8499,7 @@ class LiteRun {
   }
 
   bool _enemyIntangible(LiteEnemy enemy) =>
+      _openScenes.any((scene) => scene.enemyId == enemy.id) ||
       enemy.clashRemaining > 0 ||
       enemy.burrow?.exposed == false ||
       enemy.kind == LiteEnemyKind.veyrth && !finalBossTangible ||
@@ -7597,12 +8579,12 @@ class LiteRun {
   void _hitAlly(LiteClone clone, double damage) {
     damage *= _floorDamageScale;
     if (clone is LiteCoopFighter) {
-      if (clone.protected || clone.hp <= 0) return;
+      if (clone.protected || clone.hp <= 0 || openProtects(clone.id)) return;
       if (clone.supply.fed(LiteRestItem.crosta, stage)) damage *= .80;
       if (clone._night.solarMantle > 0) damage *= .55;
       damage *= 1 - relicProtection;
       if (clone.hero == LiteHero.cavaliereLunare &&
-          clone.weapon == LiteWeapon.spadaScudo) {
+          clone.weapon.moveset == LiteWeapon.spadaScudo) {
         damage = max(1, damage - 2);
       }
       if (clone.blocking) {
@@ -7660,8 +8642,12 @@ class LiteRun {
       }
       return;
     }
+    if (clone.hp <= 0 || clone.burrowing || clone.forgedProtected) return;
     final previousHp = clone.hp;
     clone._takeDamage(damage);
+    if (clone.hp <= 0 && clone.companion == LiteCompanion.bunnys) {
+      _bunnysPetDeathHeal(clone);
+    }
     _recordImpact(
       LiteImpactTarget.ally,
       clone.id == 0 ? identityHashCode(clone) : clone.id,
@@ -7708,6 +8694,7 @@ class LiteRun {
     bool ownerCanHeal = true,
     int? sourceCloneId,
     bool vampireStrike = true,
+    int? lusierVolley,
     Point<double>? impactFrom,
     bool forceImpact = false,
     double launch = 0,
@@ -7723,10 +8710,12 @@ class LiteRun {
         (ownerCanHeal ? hero : vampire?.hero) == LiteHero.vampiro;
     final transformed = hasVampire && (vampire?._night ?? _night).sanguine > 0;
     if (transformed) amount *= 2;
+    final mortal = ownerCanHeal ? supply : vampire?.supply;
+    if (mortal?.vampirePact == LiteVampirePact.ferocia) amount *= 1.60;
     final mirror = enemy.mirror;
     final defense = enemy.kind.elite
         ? 2
-        : mirror?.weapon == LiteWeapon.spadaScudo
+        : mirror?.weapon.moveset == LiteWeapon.spadaScudo
         ? 1
         : 0;
     var damage = max(1.0, amount * (1 + relicDamage) - defense);
@@ -7755,6 +8744,21 @@ class LiteRun {
         transformed ? force * 2 : force,
       ))
         damage += 5;
+    }
+    if ((ownerCanHeal ? hero : vampire?.hero) == LiteHero.lusierTre &&
+        stage <= 6 &&
+        !inActTwo &&
+        !inThirdAct) {
+      final salvo = lusierVolley ?? _activeLusierAttack;
+      if (salvo != null && !enemy._lusierStrikes.add(salvo)) return;
+      if (enemy._lusierStrikes.length > 24)
+        enemy._lusierStrikes.remove(enemy._lusierStrikes.first);
+      final hits = enemy.kind.boss
+          ? 3
+          : enemy.kind.elite
+          ? 2
+          : 1;
+      damage = enemy.maxHp / hits + 1e-8;
     }
     final lifeLost = min(enemy.hp, damage);
     enemy.hp = max(0, enemy.hp - damage);
@@ -7811,10 +8815,10 @@ class LiteRun {
       _ram(enemy, impactFrom ?? attacker?.position ?? position, launch);
       enemy.stunned = max(enemy.stunned, .55);
     }
-    if (enemy.hp <= 0 && !enemy.kind.echo) {
+    if (enemy.hp <= 0) {
       final origin = impactFrom ?? attacker?.position ?? position;
       final direction = _unit(enemy.position - origin);
-      final travel = silent
+      final travel = silent || enemy.kind.echo
           ? .55
           : enemy.kind.boss
           ? .81
@@ -7838,6 +8842,8 @@ class LiteRun {
           end: endpoint,
           enemyKind: enemy.kind,
           silent: silent,
+          mirror: enemy.mirror,
+          livery: enemy.livery,
         ),
       );
     }
@@ -7851,6 +8857,21 @@ class LiteRun {
       return;
     }
     if (enemy.hp > 0) return;
+    if (enemy.pupParent case final parentId?) {
+      final parent = enemies.where((foe) => foe.id == parentId).firstOrNull;
+      if (parent != null &&
+          parent.hp > 0 &&
+          parent.kind == LiteEnemyKind.divoramitu) {
+        parent.defeatedPups = min(2, parent.defeatedPups + 1);
+        message = 'Divoramitù accelera · +0,3 velocità.';
+      }
+      return;
+    }
+    if (enemy.kind == LiteEnemyKind.divoramitu) {
+      for (final pup in enemies.where((foe) => foe.pupParent == enemy.id)) {
+        pup.hp = 0;
+      }
+    }
     if (!ownerCanHeal && attacker == null && sourceCloneId != null) {
       final skeleton = clones
           .where(
@@ -7871,8 +8892,12 @@ class LiteRun {
       }
     } else if (ownerCanHeal || attacker != null) {
       _plagueKill(attacker);
+      if (mortal?.vampirePact == LiteVampirePact.fame && !enemy.kind.echo) {
+        _healFighter((attacker?.maxHp ?? maxHp) * .12, attacker);
+      }
     }
     final kind = enemy.kind;
+    if (kind == LiteEnemyKind.bunnys) _bunnysDeathHeal(enemy);
     if (kind == LiteEnemyKind.baghest) _redGrips.clear();
     if (!kind.echo &&
         (attacker?.hero == LiteHero.cavaliereLunare ||
@@ -8062,17 +9087,8 @@ class LiteRun {
 
   void _discoverPet(LiteCompanion companion, Point<double> near) {
     if (!achievements.add(companion.unlockKey)) return;
-    final beside = near + Point(-aim.y, aim.x) * 1.15;
-    clones.add(
-      LiteClone(
-        _safePoint(beside, .35, near),
-        companion.life,
-        companion.weapon,
-        companion: companion,
-        recruitedFloor: stage,
-        id: _nextId++,
-      ),
-    );
+    if (tradablePets().any((ally) => ally.companion == companion)) return;
+    _bringPet(companion, near: near);
     message = '${companion.label} si unisce al gruppo.';
   }
 
@@ -8116,7 +9132,7 @@ class LiteRun {
     var remaining = max(
       1.0,
       damage * _floorDamageScale -
-          (weapon == LiteWeapon.spadaScudo
+          (weapon.moveset == LiteWeapon.spadaScudo
               ? (hero == LiteHero.cavaliereLunare ? 2 : 1)
               : 0),
     );
@@ -8361,7 +9377,7 @@ class LiteRun {
       return true;
     }
     if (hasPortalNearby) {
-      message = 'Scegli il prossimo piano.';
+      message = 'Raggiungi il portale del prossimo piano.';
       return true;
     }
     return beginReload();
@@ -8372,7 +9388,7 @@ class LiteRun {
         shopOpen ||
         rescuing ||
         reloading ||
-        weapon != LiteWeapon.arco ||
+        !hasBow() ||
         _arrows == bowCapacity) {
       return false;
     }
@@ -8393,10 +9409,18 @@ class LiteRun {
       return false;
     final target = _nearbyRescueTarget(fighter);
     if (target == null) return false;
+    if ((fighter?.hero ?? hero) == LiteHero.diavolo) {
+      final ally = target.ally;
+      if (ally?.companion?.isFlameDemon == true &&
+          ally?.ownerId == (fighter?.id ?? 0)) {
+        message = 'è una perdita di tempo è solo un inutile demone';
+        return false;
+      }
+      message = 'tu mi servi ancora';
+    }
     final rescue = _LiteRescue(
       target,
-      (fighter?.weapon ?? weapon) == LiteWeapon.arco &&
-          (fighter?.arrows ?? _arrows) < bowCapacity,
+      hasBow(fighter) && (fighter?.arrows ?? _arrows) < bowCapacity,
     );
     if (fighter == null) {
       _rescue = rescue;
@@ -8569,7 +9593,7 @@ class LiteRun {
     if (weaponArtCooldown > 0) 'weaponArtCooldown': weaponArtCooldown,
     if (restHub) 'restHub': true,
     if (realm case final area?) ...{'realm': area.name, 'actRoom': actRoom},
-    if (inThirdAct) 'thirdRoom': thirdRoom,
+    if (inThirdAct) ...{'thirdRoom': thirdRoom, 'thirdRoute': 2},
     if (baghestFight) ...{
       'baghestArena': _baghestEncounter,
       if (_redGrips.isNotEmpty)
@@ -8643,6 +9667,10 @@ class LiteRun {
         .map((enemy) => enemy._json(includeEffects: includeEffects))
         .toList(),
     if (includeEffects) 'stride': stride._frame(),
+    if (includeEffects && _openScenes.isNotEmpty)
+      'openScenes': _openScenes.map((scene) => scene._frame()).toList(),
+    if (includeEffects && hero == LiteHero.ashley && stride.walking != null)
+      'strideWalking': stride.walking,
     if (includeEffects && _burstTraces.isNotEmpty)
       'burstTraces': _burstTraces.entries
           .map((entry) => entry.value._frame(entry.key))
@@ -8653,6 +9681,10 @@ class LiteRun {
           .map((impact) => impact._frame())
           .toList(),
     'projectiles': projectiles.map((projectile) => projectile._json()).toList(),
+    if (_divoramituFields.isNotEmpty)
+      'divoramituFields': _divoramituFields
+          .map((field) => field._frame)
+          .toList(),
     'clones': clones
         .map((clone) => clone._json(includeEffects: includeEffects))
         .toList(),
@@ -8704,11 +9736,15 @@ class LiteRun {
     'dashCooldown': _dashCooldown,
     if (_block.worn) 'blockWear': _block.frame,
     if (includeEffects && blocking) 'blocking': true,
+    if (_openCombatRooms.isNotEmpty)
+      'openCombatRooms': _openCombatRooms.toList(),
     if (_openCooldown > 0) 'openCooldown': _openCooldown,
+    if (_openUsedInRoom > 0) 'openUsedInRoom': _openUsedInRoom,
     if (hero == LiteHero.scostubandito) 'banditSkills': _bandit.frame,
     'dodgeRecharge': _dodgeRecharge,
     if (_springCooldown > 0) 'springCooldown': _springCooldown,
     if (_staffCooldown > 0) 'staffCooldown': _staffCooldown,
+    if (_chakramRecovery > 0) 'chakramRecovery': _chakramRecovery,
     if (_bombCooldown > 0) 'bombCooldown': _bombCooldown,
     if (hero == LiteHero.ashley) 'springPose': _springPose,
     'scrollCooldown': _scrollCooldown,
@@ -8796,7 +9832,8 @@ class LiteRun {
     run.ascensionDust = _int(json['ascensionDust']);
     run.spentOculum = _int(json['spentOculum']);
     run.livesRemaining = _int(json['livesRemaining']);
-    run._plagueFormRemaining = _num(json['plagueForm']).clamp(0.0, 5.0);
+    run._plagueFormRemaining = _num(json['plagueForm'])
+        .clamp(0.0, plagueDurationFor(3));
     run.slimeKills = _int(json['slimeKills']).clamp(0, 10);
     run._goblinWave = _int(json['goblinWave']).clamp(0, 8);
     run.groundShots
@@ -8856,6 +9893,11 @@ class LiteRun {
     load(run.projectiles, json['projectiles'], LiteProjectile._read);
     load(run.clones, json['clones'], LiteClone._read);
     load(
+      run._divoramituFields,
+      _list(json['divoramituFields']).take(12).toList(),
+      LiteDivoramituField._read,
+    );
+    load(
       run.coopFighters,
       _list(json['fighters']).take(maxCoopPlayers - 1).toList(),
       (data) => LiteCoopFighter._fromWire(
@@ -8865,7 +9907,10 @@ class LiteRun {
     );
     load(run.fauna, json['fauna'], LiteEnemy._read);
     run.fauna.removeWhere(
-      (animal) => LiteAnimal.forCreature(animal.kind) == null,
+      (animal) =>
+          animal.kind != LiteEnemyKind.lupoLunare &&
+          animal.kind != LiteEnemyKind.orbryx &&
+          LiteAnimal.forCreature(animal.kind) == null,
     );
     run._provokedRooms.addAll(
       _list(json['provokedRooms'])
@@ -8928,15 +9973,35 @@ class LiteRun {
         .where((trial) => trial.name == json['arenaTrial'])
         .firstOrNull;
     run._trialStart = _num(json['trialStart'], run.time).clamp(0.0, run.time);
-    run.stride._restore(json['stride']);
+    run.stride._restore(json['stride'], walking: json['strideWalking']);
+    for (final scene in _list(json['openScenes']).take(maxCoopPlayers + 1)) {
+      if (LiteOpenScene._read(scene) case final cinematic?) {
+        run._openScenes.add(cinematic);
+      }
+    }
     run._restoreBurstTraces(json['burstTraces']);
     for (final value in _list(json['impacts']).take(16)) {
       if (LiteCombatImpact._fromFrame(value, run.time) case final impact?) {
         run._combatImpacts.add(impact);
       }
     }
-    run.thirdRoom = _int(json['thirdRoom']).clamp(0, LiteThirdAct.rooms.length);
+    final savedThird = _int(json['thirdRoom']);
+    // The old eleventh room was the prelude. Its residents, loot and
+    // checkpoint remain intact before the player opens the new final gate.
+    final oldPrelude = json['thirdRoute'] != 2 && savedThird == 11;
+    run.thirdRoom = (oldPrelude ? 10 : savedThird).clamp(
+      0,
+      LiteThirdAct.rooms.length,
+    );
     if (run.stage != run.lastStage || run.realm != null) run.thirdRoom = 0;
+    if (run.inThirdAct && run.thirdRoom == LiteThirdAct.rooms.length) {
+      for (final enemy in run.enemies.where(
+        (unit) => unit.kind == LiteEnemyKind.aerovyr,
+      )) {
+        enemy.chamberSeat = null;
+        enemy.chamberWarning = null;
+      }
+    }
     run._claimedWell = json['claimedWell'] is String
         ? json['claimedWell'] as String
         : null;
@@ -9006,10 +10071,17 @@ class LiteRun {
     run._dashCooldown = _num(json['dashCooldown']);
     run._block.restore(json['blockWear']);
     run._block.held = json['blocking'] == true;
+    run._openCombatRooms.clear();
+    if (json['openCombatRooms'] case final List<dynamic> rooms) {
+      run._openCombatRooms.addAll(rooms.whereType<String>());
+    }
+    run._openUsedInRoom = _int(json['openUsedInRoom'])
+        .clamp(0, run._openCombatRooms.length);
     run._openCooldown = _num(json['openCooldown']).clamp(0.0, openRecovery);
     run._bandit.restore(json['banditSkills']);
     run._dodgeRecharge = _num(json['dodgeRecharge']);
     run._springCooldown = _num(json['springCooldown']);
+    run._chakramRecovery = _num(json['chakramRecovery']).clamp(0, .30);
     run._staffCooldown = _num(json['staffCooldown'])
         .clamp(0, staffShockInterval);
     run._bombCooldown = _num(json['bombCooldown']).clamp(0.0, 5.5);

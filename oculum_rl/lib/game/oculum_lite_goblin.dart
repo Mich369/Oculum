@@ -66,6 +66,7 @@ extension LiteGoblinCombat on LiteRun {
     _goblinWave = 0;
     stageClear = false;
     _nextGoblinWave();
+    _registerOpenRoom();
   }
 
   void _nextGoblinWave() {
@@ -141,6 +142,7 @@ extension LiteGoblinCombat on LiteRun {
       direction,
       ownerId,
       grade,
+      damageMultiplier: LiteRun.openPower,
     );
     final mud = _summonCompanions(
       LiteCompanion.goblinFango,
@@ -149,6 +151,7 @@ extension LiteGoblinCombat on LiteRun {
       direction * -1.0,
       ownerId,
       grade,
+      damageMultiplier: LiteRun.openPower,
     );
     final glue =
         (hasGlue ||
@@ -162,6 +165,7 @@ extension LiteGoblinCombat on LiteRun {
           direction,
           ownerId,
           grade,
+          damageMultiplier: LiteRun.openPower,
         );
     return knives || mud || glue;
   }
@@ -208,6 +212,7 @@ extension LiteGoblinCombat on LiteRun {
     }
     for (final ally in _damageableAllies) {
       if (ally.hp > 0 ||
+          !ally.canBeRevived ||
           ally.expiresAfter != null ||
           LiteRun._distanceSquared(origin, ally.position) > 100)
         continue;

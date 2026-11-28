@@ -1,20 +1,34 @@
 part of 'oculum_lite_run.dart';
 
 extension LiteWeaponTechniques on LiteWeapon {
-  String get technique => switch (this) {
-    LiteWeapon.boomerang => 'Doppio rimbalzo',
-    LiteWeapon.chakram => 'Doppia orbita',
-    LiteWeapon.spadaScudo => 'Riposta di ferro',
-    LiteWeapon.guanti => 'Pugno tellurico',
-    LiteWeapon.arco => 'Ventaglio a tre frecce',
-    LiteWeapon.scettro => 'Corona folgorante',
-    LiteWeapon.falceRunica => 'Richiamo di falce',
-    LiteWeapon.doppieLame => 'Taglio di passaggio',
-    LiteWeapon.carabinaImpulsi => 'Doppio impulso',
-    LiteWeapon.piccaOssidiana => 'Stoccata lunga',
-    LiteWeapon.balestraRunica => 'Doppio quadrello',
-    LiteWeapon.fucileScostubandito => 'Colpo concentrato',
-  };
+  String get technique => isMilestone
+      ? switch (relicFamily!) {
+          LiteRelicFamily.orbita => 'Orbita del Boomerang',
+          LiteRelicFamily.terramaul => 'Percossa di Terramaul',
+          LiteRelicFamily.segugio => 'Caccia al plasma',
+          LiteRelicFamily.canna => 'Canalstryke',
+          LiteRelicFamily.spadaLusier => 'Incisione solare',
+          LiteRelicFamily.mazzaGuardiano => 'Potere dell’Oro',
+        }
+      : switch (this) {
+          LiteWeapon.boomerang => 'Doppio rimbalzo',
+          LiteWeapon.chakram => 'Doppia orbita',
+          LiteWeapon.spadaScudo => 'Riposta di ferro',
+          LiteWeapon.guanti => 'Pugno tellurico',
+          LiteWeapon.arco => 'Ventaglio a tre frecce',
+          LiteWeapon.scettro => 'Corona folgorante',
+          LiteWeapon.falceRunica => 'Richiamo di falce',
+          LiteWeapon.doppieLame => 'Taglio di passaggio',
+          LiteWeapon.carabinaImpulsi => 'Doppio impulso',
+          LiteWeapon.piccaOssidiana => 'Stoccata lunga',
+          LiteWeapon.balestraRunica => 'Doppio quadrello',
+          LiteWeapon.fucileScostubandito => 'Colpo concentrato',
+          LiteWeapon.cheleRasvyr => 'Morsa della duna',
+          LiteWeapon.piccaVaitern => 'Stoccata di Vaitern',
+          LiteWeapon.vergaCorvina => 'Corona corvina',
+          LiteWeapon.martelloForgia => 'Frattura della forgia',
+          _ => throw StateError('Arma sconosciuta'),
+        };
 }
 
 extension LiteWeaponArt on LiteRun {
@@ -70,7 +84,8 @@ extension LiteWeaponArt on LiteRun {
     final effectScale = 1 + rank / 12;
     final damage =
         (12 + item.damageBonus + ((fighter?.level ?? level) - 1) * 1.8) *
-        (1 + rank * .04);
+        (1 + rank * .04) *
+        _swordFusionDamage(item, fighter);
     if (fighter == null) {
       aim = direction;
       oculum -= weaponArtCost;
@@ -80,6 +95,29 @@ extension LiteWeaponArt on LiteRun {
         ..aim = direction
         ..oculum -= weaponArtCost
         ..weaponArtCooldown = weaponArtRecovery;
+    }
+    if (item == LiteWeapon.martelloForgia) {
+      _forgeQuake(
+        origin,
+        damage,
+        owner,
+        radius: 4.0 * effectScale,
+        push: 4 * effectScale,
+      );
+      message = item.technique;
+      return true;
+    }
+    if (item.isMilestone) {
+      _castMilestoneWeapon(
+        item,
+        origin,
+        direction,
+        damage,
+        effectScale,
+        fighter,
+      );
+      message = item.technique;
+      return true;
     }
     void shot(
       double angle,
@@ -125,7 +163,7 @@ extension LiteWeaponArt on LiteRun {
       );
     }
 
-    switch (item) {
+    switch (item.moveset) {
       case LiteWeapon.boomerang || LiteWeapon.chakram:
         final type = item == LiteWeapon.chakram
             ? LiteProjectileKind.chakram
@@ -183,14 +221,14 @@ extension LiteWeaponArt on LiteRun {
           returns: true,
         );
       case LiteWeapon.doppieLame:
-        _playableShadowStep(
+        final landing = _playableShadowStep(
           origin,
           direction,
           fighter,
           distance: 3.1,
           protection: .23,
         );
-        melee(2.4, damage, arc: -.1, at: fighter?.position ?? position);
+        melee(2.4, damage, arc: -.1, at: landing);
       case LiteWeapon.carabinaImpulsi:
         shot(-.07, 13, 21, damage, type: LiteProjectileKind.pulse);
         shot(.07, 13, 21, damage, type: LiteProjectileKind.pulse);
@@ -201,6 +239,8 @@ extension LiteWeaponArt on LiteRun {
         shot(.11, 11, 22, damage * .88, type: LiteProjectileKind.pulse);
       case LiteWeapon.fucileScostubandito:
         shot(0, 12, 24, damage * 1.25, type: LiteProjectileKind.rifleBullet);
+      default:
+        throw StateError('Tecnica sconosciuta');
     }
     message = '${item.technique} · tecnica dell’arma.';
     return true;

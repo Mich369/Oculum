@@ -35,6 +35,10 @@ extension LiteMirrorSkills on LiteRun {
         difficulty.enemyStrength *
         _challengeDamageScale(boss.kind);
     switch (build.hero) {
+      case LiteHero.fabbro:
+        if (distance > 5.2) return false;
+        _mirrorMelee(boss, direction, 5.2, damage * 1.1, minDot: -1.1);
+        _recordImpact(LiteImpactTarget.explosion, boss.id, boss.position);
       case LiteHero.ashley:
         if (distance > LiteRun.springRange) return false;
         _mirrorMelee(boss, direction, LiteRun.springRange, damage, minDot: .79);
@@ -161,7 +165,7 @@ extension LiteMirrorSkills on LiteRun {
     double distance,
   ) {
     final build = boss.mirror!;
-    final item = build.weapon;
+    final item = build.weapon.moveset;
     if (build.techniqueCooldown > 0 ||
         build.oculum < LiteWeaponArt.weaponArtCost ||
         build.hero == LiteHero.doppelganger ||
@@ -197,7 +201,8 @@ extension LiteMirrorSkills on LiteRun {
 extension LiteMirrorOpen on LiteRun {
   bool _copyOpen(LiteEnemy boss, Point<double> direction, double distance) {
     final build = boss.mirror!;
-    if (build.openCooldown > 0 ||
+    if (_openScenes.isNotEmpty ||
+        build.openCooldown > 0 ||
         build.oculum < LiteRun.granSummonCost ||
         distance > 10.5 ||
         build.hero == LiteHero.doppelganger)
@@ -263,6 +268,53 @@ extension LiteMirrorOpen on LiteRun {
     }
 
     switch (build.hero) {
+      case LiteHero.ragnoSaldatore:
+        _milestoneWave(
+          this,
+          boss.position,
+          direction,
+          25 * strength,
+          null,
+          kind: LiteProjectileKind.plasma,
+          range: 11,
+          speed: 33,
+          hostile: true,
+        );
+      case LiteHero.rasvyr:
+        burst(3.1 + grade * .32, 21 + grade * 6);
+      case LiteHero.lupoDiVaitern:
+        _lunarVolley(boss.position, direction, 16 + grade * 4, enemy: true);
+      case LiteHero.pysciwarden:
+        for (final side in [-.22, 0.0, .22]) {
+          _milestoneWave(
+            this,
+            boss.position,
+            _rotate(direction, side),
+            14 * strength,
+            null,
+            kind: LiteProjectileKind.frostBolt,
+            range: 8,
+            hostile: true,
+          );
+        }
+      case LiteHero.lusierTre:
+        burst(3.35, 23 + grade * 4);
+      case LiteHero.fabbro:
+        if (distance > 8) return false;
+        burst(4.6, 19 + grade * 4);
+        for (final offset in [-.52, -.26, 0.0, .26, .52]) {
+          projectiles.add(
+            LiteProjectile(
+              position: boss.position,
+              direction: _rotate(direction, offset),
+              speed: 8.6,
+              remaining: 8.5,
+              damage: (10 + grade * 2) * strength,
+              fromEnemy: true,
+              kind: LiteProjectileKind.normal,
+            ),
+          );
+        }
       case LiteHero.evasore:
         dash(4.1 + grade, .48 + (grade - 1) * .10);
       case LiteHero.ombra:
@@ -387,6 +439,18 @@ extension LiteMirrorOpen on LiteRun {
     build.artCooldown = max(build.artCooldown, .72);
     boss._strikePose = .24;
     build.openUses++;
+    if (_presentingFrame) {
+      _openScenes.add(
+        LiteOpenScene._(
+          build.hero,
+          at,
+          direction,
+          build.playerId,
+          enemyId: boss.id,
+          shadow: boss.kind == LiteEnemyKind.ombra,
+        ),
+      );
+    }
     return true;
   }
 }

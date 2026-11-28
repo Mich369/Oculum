@@ -44,11 +44,132 @@ class LiteBurrow {
   void restore(Object? raw) {
     if (raw is! Map) return;
     delay = _num(raw['delay']).clamp(0, 4);
-    warning = _num(raw['warning']).clamp(0, 1);
+    warning = _num(raw['warning']).clamp(0, 6);
     leap = _num(raw['leap']).clamp(0, .76);
     start = _point(raw['start']);
     end = _point(raw['end']);
     _hit.addAll(_list(raw['hit']).whereType<int>().take(12));
+  }
+}
+
+class LiteDivoramituField {
+  LiteDivoramituField(this.center, this._damage);
+  static const duration = 3.0;
+  static const radius = 2.75;
+  static const coreRadius = 1.20;
+  static const _pulse = .6;
+
+  final Point<double> center;
+  final double _damage;
+  double remaining = duration;
+  double _nextPulse = _pulse;
+
+  Map<String, Object> get _frame => {
+    'center': _savePoint(center),
+    'damage': _damage,
+    'remaining': remaining,
+    'nextPulse': _nextPulse,
+  };
+
+  static LiteDivoramituField _read(Map<String, dynamic> data) =>
+      LiteDivoramituField(
+          _point(data['center']),
+          _num(data['damage']).clamp(0, 100),
+        )
+        ..remaining = _num(data['remaining']).clamp(0, duration)
+        .._nextPulse = _num(data['nextPulse'], _pulse).clamp(0, _pulse);
+}
+
+extension _LitePetDivoramitu on LiteRun {
+  bool _tickPetDivoramitu(
+    LiteClone pet,
+    LiteEnemy? enemy,
+    Point<double> owner,
+    double training,
+    double elapsed,
+  ) {
+    if (pet._burrowDestination case final destination?) {
+      final step = min(1.0, elapsed / max(elapsed, pet._burrowTime));
+      pet.position += (destination - pet.position) * step;
+      pet._burrowTime = max(0, pet._burrowTime - elapsed);
+      if (pet._burrowTime > 0) return true;
+      pet._burrowDestination = null;
+      pet._swing = .23;
+      _divoramituFields.add(
+        LiteDivoramituField(destination, 5 * (1 + training)),
+      );
+      _recordImpact(LiteImpactTarget.explosion, _nextId++, destination);
+      for (final target in enemies) {
+        if (target.hitboxContains(destination, extra: 1.35)) {
+          _hitEnemy(
+            target,
+            17 * (1 + training),
+            ownerCanHeal: false,
+            impactFrom: destination,
+          );
+        }
+      }
+      return true;
+    }
+    if (pet._burrowCooldown > 0 ||
+        enemy == null ||
+        pet.position.distanceTo(owner) > 12 ||
+        pet.position.distanceTo(enemy.position) > 7.5) {
+      return false;
+    }
+    pet
+      .._burrowDestination = _safePoint(enemy.position, .35, pet.position)
+      .._burrowTime = .62
+      .._burrowCooldown = 10;
+    return true;
+  }
+
+  double _divoramituFieldPace(Point<double> at) {
+    for (final field in _divoramituFields) {
+      final distance = at.distanceTo(field.center);
+      if (distance > LiteDivoramituField.coreRadius &&
+          distance <= LiteDivoramituField.radius) {
+        return .60;
+      }
+    }
+    return 1;
+  }
+
+  double _divoramituAllyPace(Point<double> at) =>
+      _divoramituFields.any(
+        (field) => at.distanceTo(field.center) <= LiteDivoramituField.radius,
+      )
+      ? 1.40
+      : 1;
+
+  double _divoramituAllyAttack(Point<double> at) =>
+      _divoramituFields.any(
+        (field) =>
+            at.distanceTo(field.center) <= LiteDivoramituField.coreRadius,
+      )
+      ? 2
+      : 1;
+
+  void _tickDivoramituFields(double elapsed) {
+    for (final field in _divoramituFields) {
+      final active = min(elapsed, field.remaining);
+      field.remaining -= active;
+      field._nextPulse -= active;
+      if (field._nextPulse > 0 || active <= 0) continue;
+      field._nextPulse += LiteDivoramituField._pulse;
+      for (final enemy in enemies) {
+        if (enemy.position.distanceTo(field.center) <=
+            LiteDivoramituField.coreRadius) {
+          _hitEnemy(
+            enemy,
+            field._damage,
+            ownerCanHeal: false,
+            impactFrom: field.center,
+          );
+        }
+      }
+    }
+    _divoramituFields.removeWhere((field) => field.remaining <= 0);
   }
 }
 
@@ -62,6 +183,9 @@ extension LiteSecondAct on LiteRun {
       !finished &&
       !hostDown &&
       hasPortalNearby;
+  LiteRealm get seededRealm =>
+      LiteRealm.values[_LiteRandom(seed ^ 0x0ac72f41)
+          .nextInt(LiteRealm.values.length)];
   bool get inActTwo => realm != null;
   bool get nextActTwoRoom => inActTwo && stageClear && actRoom < actTwoRooms;
   bool get canClaimActRelic =>
@@ -150,6 +274,7 @@ extension LiteSecondAct on LiteRun {
     _dismissRoomWolves();
     _powerOffers.clear();
     stageClear = restHub = false;
+    _registerOpenRoom();
     arenaTrial = null;
     loot.clear();
     projectiles.clear();
@@ -202,6 +327,7 @@ extension LiteSecondAct on LiteRun {
           LiteEnemyKind.demoneMaggiore,
           LiteEnemyKind.demoneMaggiore,
           LiteEnemyKind.demoneIntermedio,
+          LiteEnemyKind.diavolo,
         ],
         _ => [
           LiteEnemyKind.diavolo,
@@ -210,21 +336,13 @@ extension LiteSecondAct on LiteRun {
         ],
       },
       LiteRealm.caramella => switch (actRoom) {
-        1 => [
-          LiteEnemyKind.divoramitu,
-          LiteEnemyKind.slime,
-          LiteEnemyKind.slime,
-        ],
+        1 => [LiteEnemyKind.slime, LiteEnemyKind.slime, LiteEnemyKind.orbryx],
         2 => [
           LiteEnemyKind.divoramitu,
-          LiteEnemyKind.divoramitu,
+          LiteEnemyKind.slime,
           LiteEnemyKind.slime,
         ],
-        3 => [
-          LiteEnemyKind.divoramitu,
-          LiteEnemyKind.divoramitu,
-          LiteEnemyKind.orbryx,
-        ],
+        3 => [LiteEnemyKind.orbryx, LiteEnemyKind.slime, LiteEnemyKind.orbryx],
         _ => [
           LiteEnemyKind.divoramituBoss,
           LiteEnemyKind.slime,
@@ -310,6 +428,7 @@ extension LiteSecondAct on LiteRun {
       enemy.cooldown += i * .14;
       if (i == chamberIndex) _seatChampion(enemy);
     }
+    _syncInfernalPact();
     message =
         'Atto II · ${realm!.label} · Visitazione $actRoom/$actTwoRooms'
         ' · ${arenaEventKind!.label}';
@@ -358,12 +477,12 @@ extension LiteSecondAct on LiteRun {
 
   void _tickBurrow(LiteEnemy beast, double elapsed) {
     final state = beast.burrow!;
-    beast.hitFlash = max(0, beast.hitFlash - elapsed);
+    final speedScale = beast.burrowSpeed / beast.kind.speed;
     if (state.leap > 0) {
-      state.leap = min(.76, state.leap + elapsed);
+      state.leap = min(.76, state.leap + elapsed * speedScale);
       beast.position = state.start + (state.end - state.start) * state.progress;
       final damage =
-          beast.kind.damage *
+          beast.attackDamage *
           difficulty.enemyStrength *
           (beast.kind.boss ? 1.15 : 1.0);
       if (!invulnerable &&
@@ -390,11 +509,13 @@ extension LiteSecondAct on LiteRun {
       return;
     }
     if (state.warning > 0) {
-      state.warning = max(0, state.warning - elapsed);
+      final portion = min(1.0, elapsed * speedScale / state.warning);
+      beast.position += (state.start - beast.position) * portion;
+      state.warning = max(0, state.warning - elapsed * speedScale);
       if (state.warning == 0) state.leap = elapsed;
       return;
     }
-    state.delay -= elapsed;
+    state.delay -= elapsed * speedScale;
     if (state.delay > 0) return;
     final target = _enemyAimFrom(beast.position);
     var heading = LiteRun._unit(target - beast.position);
@@ -406,9 +527,8 @@ extension LiteSecondAct on LiteRun {
     state
       ..start = bounds(rawStart)
       ..end = bounds(rawEnd)
-      ..warning = .82
+      ..warning = max(.82, beast.position.distanceTo(bounds(rawStart)) / 12)
       .._hit.clear();
-    beast.position = state.start;
     beast.attackTarget = state.end;
   }
 
@@ -421,9 +541,10 @@ extension LiteSecondAct on LiteRun {
     bool open = false,
   }) {
     final owner = fighter?.id;
+    final power = open ? LiteRun.openPower : 1.0;
     switch (character) {
       case LiteHero.demoneMinore:
-        _playableShadowStep(
+        final arrived = _playableShadowStep(
           at,
           direction,
           fighter,
@@ -431,10 +552,10 @@ extension LiteSecondAct on LiteRun {
           protection: .22,
         );
         _melee(
-          fighter?.position ?? position,
+          arrived,
           direction,
           LiteWeapon.guanti,
-          (open ? 18 : 11) + grade * 4.0,
+          ((open ? 18 : 11) + grade * 4.0) * power,
           sourceCloneId: owner,
           ownerCanHeal: owner == null,
           reach: 2.4,
@@ -445,7 +566,7 @@ extension LiteSecondAct on LiteRun {
           _openBurst(
             at,
             3.1 + grade * .27,
-            21 + 8.0 * grade,
+            (21 + 8.0 * grade) * power,
             owner ?? 0,
             push: 2.4,
           );
@@ -453,18 +574,17 @@ extension LiteSecondAct on LiteRun {
           _fissure(at, direction, 6.8, 15 + grade * 4.0, owner);
         }
       case LiteHero.demoneMaggiore:
-        _playableShadowStep(
+        final arrived = _playableShadowStep(
           at,
           direction,
           fighter,
           distance: open ? 5.1 : 3.2,
           protection: .26,
         );
-        final arrived = fighter?.position ?? position;
         _openBurst(
           arrived,
           2.1 + grade * .3,
-          (open ? 23 : 12) + grade * 5.0,
+          ((open ? 23 : 12) + grade * 5.0) * power,
           owner ?? 0,
           push: .75,
         );
@@ -476,15 +596,10 @@ extension LiteSecondAct on LiteRun {
           }
         }
       case LiteHero.diavolo:
-        final branches = open ? const [-.45, -.20, 0.0, .20, .45] : const [0.0];
-        for (final arc in branches) {
-          _launchFireball(
-            at,
-            _rotate(direction, arc),
-            14 + grade * 4.0,
-            1,
-            owner,
-          );
+        if (open) {
+          _openFiveFlames(at, direction, fighter, grade);
+        } else {
+          _launchFireball(at, direction, 14 + grade * 4.0, 1, owner);
         }
       default:
         break;

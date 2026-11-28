@@ -81,7 +81,7 @@ extension LiteChambers on LiteRun {
     LiteEnemyKind.orbryx,
     LiteEnemyKind.rasvyr,
     LiteEnemyKind.guardiaLunare,
-    LiteEnemyKind.lupoLunare,
+    LiteEnemyKind.custodeLunare,
     LiteEnemyKind.aberrazioneSolare,
     LiteEnemyKind.corrottoRosso,
     LiteEnemyKind.demoneIntermedio,
@@ -213,7 +213,7 @@ extension LiteChambers on LiteRun {
       enemy.chamberCycle++;
       final scale = enemy.exalted ? 1.19 : 1.0;
       final damage =
-          min(32.0, 5 + .64 * enemy.kind.damage) *
+          min(32.0, 5 + .64 * enemy.attackDamage) *
           difficulty.enemyStrength *
           _floorDamageScale *
           scale;

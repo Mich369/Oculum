@@ -146,7 +146,7 @@ extension LiteRedCorruption on LiteRun {
               direction: _rotate(LiteRun._unit(mark - boss.position), i * .23),
               speed: 10.8,
               remaining: 11,
-              damage: boss.kind.damage * .72,
+              damage: boss.attackDamage * .72,
               fromEnemy: true,
               magic: true,
             ),
@@ -216,12 +216,17 @@ extension LiteRedCorruption on LiteRun {
   }
 
   void _hitRedAlly(LiteClone clone, double damage) {
+    if (clone.forgedProtected) return;
     final life = min(clone.hp, damage);
     clone._takeDamage(damage);
     _recordImpact(LiteImpactTarget.ally, clone.id, clone.position, life: life);
     if (clone.hp > 0) return;
     clone.corrupted = false;
-    clone.downRemaining = max(clone.downRemaining, 18);
+    if (clone.companion == LiteCompanion.bunnys) {
+      _bunnysPetDeathHeal(clone);
+      return;
+    }
+    if (clone.canBeRevived) clone.downRemaining = max(clone.downRemaining, 18);
     message = 'Presa spezzata · Tieni R per rialzare il compagno.';
   }
 }

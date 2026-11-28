@@ -139,4 +139,48 @@ void main() {
     _advance(run, 43);
     expect(guest.rescuedAge(run.time), isNull);
   });
+
+  test('Ashley walk mode follows movement and is carried in live frames', () {
+    const move = Point<double>(1, 0);
+    final run =
+        LiteRun(
+            seed: 251,
+            hero: LiteHero.ashley,
+            weapon: LiteWeapon.arco,
+            playerCount: 2,
+          )
+          ..position = _origin
+          ..obstacles.clear()
+          ..enemies.clear();
+    run.addCoopFighter('ashley', 'Ospite', LiteHero.ashley, LiteWeapon.chakram);
+    final guest = run.coopFighter('ashley')!
+      ..position = _origin + const Point<double>(0, 2);
+    expect(
+      run.setCoopControls('ashley', move, _aim, attack: false, slow: false),
+      isTrue,
+    );
+    run.step(.04, move: move, walk: true);
+    expect(run.stride.walking, isTrue);
+    expect(guest.stride.walking, isFalse);
+    expect(run.stride.distance, greaterThan(0));
+    expect(guest.stride.speed, greaterThan(run.stride.speed));
+    final live = LiteRun.fromJson(run.toJson(includeEffects: true));
+    expect(live.stride.walking, isTrue);
+    expect(live.coopFighter('ashley')!.stride.walking, isFalse);
+    final saved = LiteRun.fromJson(run.toJson());
+    expect(saved.stride.walking, isNull);
+    expect(saved.coopFighter('ashley')!.stride.walking, isNull);
+
+    expect(
+      run.setCoopControls('ashley', move, _aim, attack: false, slow: true),
+      isTrue,
+    );
+    run.step(.04, move: move);
+    expect(run.stride.walking, isFalse);
+    expect(guest.stride.walking, isTrue);
+    expect(run.dash(_aim), isTrue);
+    run.step(.01, move: move, walk: true);
+    expect(run.stride.walking, isFalse);
+    expect(run.burstRemaining, greaterThan(0));
+  });
 }

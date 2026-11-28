@@ -26,18 +26,25 @@ enum LiteLearnedArt {
 
   String formEffect(int rank) => switch (this) {
     plasma =>
-      'Raggio da ${17 + rank * 7} Danni, portata ${_metric(11 + .8 * rank)} m.',
-    falci => 'Due falci da ${10 + 4 * rank} Danni ciascuna, fino a 10 m.',
+      'Raggio da ${17 + rank * 7} Danni, portata ${_metric(11 + .8 * rank)} m.'
+          '${rank >= 3 ? " Due scariche laterali." : ""}',
+    falci =>
+      'Due falci da ${10 + 4 * rank} Danni ciascuna, fino a 10 m.'
+          '${rank >= 3 ? " Terza lama centrale da 19 Danni." : ""}',
     linfa =>
-      'Cura il ${_metric(11 + 4.5 * rank)}% della Vita massima e ripristina Resistenza al blocco.',
-    pattuglia || lame =>
-      'Affondo da ${12 + rank * 4} Danni, portata ${_metric(2.9 + rank * .42)} m.',
+      'Cura il ${_metric(11 + 4.5 * rank)}% della Vita massima e ripristina Resistenza al blocco.'
+          '${rank >= 3 ? " Dona anche 6 Scudo." : ""}',
+    pattuglia =>
+      'Scatto e affondo da ${12 + rank * 4} Danni, portata ${_metric(2.9 + rank * .42)} m.',
+    lame =>
+      'Affondo con respinta da ${12 + rank * 4} Danni, portata ${_metric(2.9 + rank * .42)} m.',
     corruzione =>
       'Onda da ${9 + rank * 5} Danni entro ${_metric(3.3 + rank * .25)} m. Stordisce i nemici comuni per ${_metric(.25 + rank * .23)} s.',
     brace =>
       '${rank + 1} braci da ${8 + 3 * rank} Danni ciascuna, fino a ${rank + 1} rimbalzi ciascuna.',
     basalto =>
-      'Faglia da ${18 + 6 * rank} Danni, lunga ${_metric(5.6 + .9 * rank)} m. Può spezzare i ripari.',
+      'Faglia da ${18 + 6 * rank} Danni, lunga ${_metric(5.6 + .9 * rank)} m. Può spezzare i ripari.'
+          '${rank >= 3 ? " Apre anche due fenditure laterali." : ""}',
   };
 
   static String _metric(double value) => value
@@ -47,7 +54,7 @@ enum LiteLearnedArt {
 }
 
 extension LiteArtExecution on LiteRun {
-  bool get artDealerOpen => restHub && stage >= 11;
+  bool get artDealerOpen => restHub && stage >= 5;
   LiteLearnedArt? activeArt([LiteCoopFighter? fighter]) =>
       LiteLearnedArt.fixedFor(fighter?.hero ?? hero) ??
       (fighter?.supply ?? supply).art;
@@ -83,7 +90,7 @@ extension LiteArtExecution on LiteRun {
     final at = fighter?.position ?? position;
     final heading = LiteRun._unit(target - at);
     final direction = heading.magnitude == 0 ? fighter?.aim ?? aim : heading;
-    final rank = art.rankAt(fighter?.level ?? level);
+    final rank = kit.artRank(art, fighter?.level ?? level);
     final owner = fighter?.id;
     switch (art) {
       case LiteLearnedArt.plasma:
@@ -100,21 +107,64 @@ extension LiteArtExecution on LiteRun {
             ownerCanHeal: owner == null,
           ),
         );
+        if (rank >= 3) {
+          for (final side in [-.11, .11]) {
+            _milestoneWave(
+              this,
+              at,
+              _rotate(direction, side),
+              11,
+              owner,
+              kind: LiteProjectileKind.plasma,
+              range: 7.4,
+              speed: 34,
+            );
+          }
+        }
       case LiteLearnedArt.falci:
         _lunarVolley(at, direction, 10 + 4.0 * rank, owner: owner);
+        if (rank >= 3) {
+          _milestoneWave(
+            this,
+            at,
+            direction,
+            19,
+            owner,
+            kind: LiteProjectileKind.lunarCrescent,
+            range: 9.4,
+          );
+        }
       case LiteLearnedArt.linfa:
         if ((fighter?.hp ?? hp) >= (fighter?.maxHp ?? maxHp)) return false;
         _healFighter((fighter?.maxHp ?? maxHp) * (.11 + .045 * rank), fighter);
         (fighter?._block ?? _block).recover(fighter?.weapon ?? weapon);
+        if (rank >= 3) {
+          if (fighter == null) {
+            shield += 6;
+          } else {
+            fighter.shield += 6;
+          }
+        }
       case LiteLearnedArt.pattuglia || LiteLearnedArt.lame:
         final reach = 2.9 + rank * .42;
+        var landing = at;
+        if (art == LiteLearnedArt.pattuglia) {
+          landing = _playableShadowStep(
+            at,
+            direction,
+            fighter,
+            distance: .75 + rank * .24,
+            protection: .10,
+          );
+        }
         _melee(
-          at,
+          landing,
           direction,
           fighter?.weapon ?? weapon,
           12 + rank * 4,
           reach: reach,
           minDot: art == LiteLearnedArt.lame ? .11 : .68,
+          push: art == LiteLearnedArt.lame ? rank * .38 : .22,
           sourceCloneId: owner,
           ownerCanHeal: owner == null,
         );
@@ -145,12 +195,17 @@ extension LiteArtExecution on LiteRun {
         _castInkBrace(at, direction, rank, owner: owner);
       case LiteLearnedArt.basalto:
         _fissure(at, direction, 5.6 + .9 * rank, 18 + 6.0 * rank, owner);
+        if (rank >= 3) {
+          for (final side in [-.36, .36]) {
+            _fissure(at, _rotate(direction, side), 4.1, 13, owner);
+          }
+        }
     }
     _markArtCast(art, at, direction, rank, casterId: owner ?? 0);
     if (extra) {
-      kit.extraArtCooldown = art.cooldown;
+      kit.extraArtCooldown = kit.artRecovery(art);
     } else {
-      kit.artCooldown = art.cooldown;
+      kit.artCooldown = kit.artRecovery(art);
     }
     if (fighter == null) {
       oculum -= art.cost;

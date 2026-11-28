@@ -20,6 +20,7 @@ part 'oculum_lite_plague_paint.dart';
 part 'oculum_lite_playable_motion.dart';
 part 'oculum_lite_encounter_motion.dart';
 part 'oculum_lite_weapon_paint.dart';
+part 'oculum_lite_open_paint.dart';
 
 class OculumLiteBlockControl extends StatelessWidget {
   const OculumLiteBlockControl({
@@ -98,9 +99,11 @@ class OculumLiteArena extends StatefulWidget {
     this.view,
     this.onAim,
     this.onAttack,
+    this.onAttackHeld,
     this.onTalent,
     this.focusAccount,
     this.animationLead = 0,
+    this.openSceneLead = 0,
   });
 
   final LiteRun run;
@@ -109,9 +112,11 @@ class OculumLiteArena extends StatefulWidget {
   final Listenable? view;
   final ValueChanged<math.Point<double>>? onAim;
   final ValueChanged<math.Point<double>>? onAttack;
+  final ValueChanged<bool>? onAttackHeld;
   final ValueChanged<math.Point<double>>? onTalent;
   final String? focusAccount;
   final double animationLead;
+  final double openSceneLead;
 
   static const coverArt = ResizeImage(
     AssetImage('assets/oculum/lite/ripari-inchiostro.png'),
@@ -133,6 +138,9 @@ class OculumLiteArena extends StatefulWidget {
   static const feminineHeads = AssetImage(
     'assets/oculum/lite/clonatrice-volti.png',
   );
+  static const ashleyWalk = AssetImage(
+    'assets/oculum/lite/ashley-camminata-ink.webp',
+  );
   static const ashleyFrames = AssetImage(
     'assets/oculum/lite/ashley-sprite.png',
   );
@@ -143,6 +151,9 @@ class OculumLiteArena extends StatefulWidget {
     'assets/oculum/lite/mostri-inchiostro.png',
   );
   static const baghestArt = AssetImage('assets/oculum/lite/baghest.webp');
+  static const baghestMotion = AssetImage(
+    'assets/oculum/lite/baghest-andature-ink.webp',
+  );
   static const weaponIcons = <LiteWeapon, AssetImage>{
     LiteWeapon.spadaScudo: AssetImage(
       'assets/oculum/lite/arma-spada-scudo.webp',
@@ -150,6 +161,7 @@ class OculumLiteArena extends StatefulWidget {
     LiteWeapon.guanti: AssetImage('assets/oculum/lite/arma-guanti.webp'),
     LiteWeapon.scettro: AssetImage('assets/oculum/lite/arma-scettro.webp'),
     LiteWeapon.arco: AssetImage('assets/oculum/lite/arma-arco.webp'),
+    LiteWeapon.chakram: AssetImage('assets/oculum/lite/arma-chakram.png'),
   };
   static const greenStoneArt = AssetImage(
     'assets/oculum/lite/cura-pietra.webp',
@@ -182,14 +194,63 @@ class OculumLiteArena extends StatefulWidget {
   static const propArt = AssetImage(
     'assets/oculum/lite/oggetti-inchiostro.png',
   );
-  static AssetImage? weaponArt(LiteWeapon weapon) =>
-      weapon.isBossLoot ||
-          weapon == LiteWeapon.fucileScostubandito ||
-          weapon == LiteWeapon.chakram
-      ? null
-      : AssetImage('assets/oculum/lite/arma-${weapon.name}.png');
+  static AssetImage? weaponArt(LiteWeapon item) {
+    final weapon = item.moveset;
+    if (weapon == LiteWeapon.chakram) return weaponIcons[weapon];
+    return weapon.isBossLoot || weapon == LiteWeapon.fucileScostubandito
+        ? null
+        : AssetImage('assets/oculum/lite/arma-${weapon.name}.png');
+  }
+
   static const lootArt = AssetImage('assets/oculum/lite/bottino-ink.png');
   static const infernalArt = AssetImage('assets/oculum/lite/infernali-ink.png');
+  static const lusierArt = AssetImage('assets/oculum/lite/lusier-iii-ink.webp');
+  static const bunnysArt = AssetImage('assets/oculum/lite/bunnys-ink.webp');
+  static const forgeMotion = AssetImage(
+    'assets/oculum/lite/fabbro-forgia-ink.webp',
+  );
+  static const divoramituGait = AssetImage(
+    'assets/oculum/lite/divoramitu-movimento-ink.webp',
+  );
+  static const veyrthMotion = AssetImage(
+    'assets/oculum/lite/veyrth-movimento-ink.webp',
+  );
+  static const pysciGait = AssetImage(
+    'assets/oculum/lite/pysciwarden-andature.webp',
+  );
+  static const cryptGaits = AssetImage(
+    'assets/oculum/lite/funerys-gelycryn-andature.webp',
+  );
+  static const aerovyrGait = AssetImage(
+    'assets/oculum/lite/aerovyr-andature-ink.webp',
+  );
+  static const posteaGaits = AssetImage(
+    'assets/oculum/lite/postea-andature.webp',
+  );
+  static const lesserDemons = AssetImage(
+    'assets/oculum/lite/demoni-minore-intermedio-andature.webp',
+  );
+  static const forestGait = AssetImage(
+    'assets/oculum/lite/forest-demon-andature.webp',
+  );
+  static const redGait = AssetImage(
+    'assets/oculum/lite/corrotto-rosso-andature.webp',
+  );
+  static const golemGait = AssetImage(
+    'assets/oculum/lite/golem-andature-ink.webp',
+  );
+  static const devilGait = AssetImage(
+    'assets/oculum/lite/diavolo-andature-ink.webp',
+  );
+  static const demonGait = AssetImage(
+    'assets/oculum/lite/demone-maggiore-andature-ink.webp',
+  );
+  static const thirdMotion = AssetImage(
+    'assets/oculum/lite/atto-tre-andature.webp',
+  );
+  static const smithCombat = AssetImage(
+    'assets/oculum/lite/fabbro-giocabile-ink.webp',
+  );
   static const thirdGround = AssetImage(
     'assets/oculum/lite/arene-nuove-ink.webp',
   );
@@ -200,6 +261,9 @@ class OculumLiteArena extends StatefulWidget {
   static const infernoGround = AssetImage('assets/oculum/lite/inferno.jpg');
   static const caramellaGround = AssetImage(
     'assets/oculum/lite/realm-caramella.jpg',
+  );
+  static const solarGaits = AssetImage(
+    'assets/oculum/lite/guardie-solari-andature.webp',
   );
   static const solarArt = AssetImage('assets/oculum/lite/solari-ink.png');
   static const solarGround = AssetImage(
@@ -219,6 +283,12 @@ class OculumLiteArena extends StatefulWidget {
   };
   static const restGround = AssetImage('assets/oculum/lite/sala-riposo.jpg');
   static const hubArt = AssetImage('assets/oculum/lite/sala-npc.png');
+  static const artTutor = AssetImage(
+    'assets/oculum/lite/istruttrice-arte.webp',
+  );
+  static const devilTutor = AssetImage(
+    'assets/oculum/lite/istruttore-diavolo.webp',
+  );
   static const nightActors = AssetImage(
     'assets/oculum/lite/lunari-e-forme.png',
   );
@@ -230,6 +300,9 @@ class OculumLiteArena extends StatefulWidget {
   );
   static const oreaGround = AssetImage('assets/oculum/lite/arena-orea.jpg');
 
+  static const archonGait = AssetImage(
+    'assets/oculum/lite/arconte-andature-ink.webp',
+  );
   static const archonArt = AssetImage(
     'assets/oculum/lite/arconte-delle-fratture.webp',
   );
@@ -397,6 +470,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.newActors,
         OculumLiteArena.banditGaits,
         OculumLiteArena.baghestArt,
+        OculumLiteArena.baghestMotion,
         ...OculumLiteArena.weaponIcons.values,
         OculumLiteArena.greenStoneArt,
         OculumLiteArena.refinedGemArt,
@@ -404,11 +478,31 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.nightActors,
         OculumLiteArena.lootArt,
         OculumLiteArena.hubArt,
+        OculumLiteArena.artTutor,
+        OculumLiteArena.devilTutor,
         OculumLiteArena.restGround,
         OculumLiteArena.faunaArt,
         OculumLiteArena.solarArt,
+        OculumLiteArena.solarGaits,
         OculumLiteArena.solarGround,
         OculumLiteArena.infernalArt,
+        OculumLiteArena.lusierArt,
+        OculumLiteArena.bunnysArt,
+        OculumLiteArena.forgeMotion,
+        OculumLiteArena.smithCombat,
+        OculumLiteArena.veyrthMotion,
+        OculumLiteArena.golemGait,
+        OculumLiteArena.redGait,
+        OculumLiteArena.forestGait,
+        OculumLiteArena.lesserDemons,
+        OculumLiteArena.posteaGaits,
+        OculumLiteArena.aerovyrGait,
+        OculumLiteArena.pysciGait,
+        OculumLiteArena.cryptGaits,
+        OculumLiteArena.devilGait,
+        OculumLiteArena.demonGait,
+        OculumLiteArena.divoramituGait,
+        OculumLiteArena.thirdMotion,
         OculumLiteArena.thirdArt,
         OculumLiteArena.thirdGround,
         OculumLiteArena.thirdEncounters,
@@ -417,6 +511,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.desertoGround,
         OculumLiteArena.oreaGround,
         OculumLiteArena.archonArt,
+        OculumLiteArena.archonGait,
       ]) {
         _resolveExtraImage(art, config);
       }
@@ -483,6 +578,9 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         widget.run.hero == hero ||
         widget.run.coopFighters.any((fighter) => fighter.hero == hero);
 
+    if (includes(LiteHero.ashley)) {
+      _resolveExtraImage(OculumLiteArena.ashleyWalk, config);
+    }
     if (includes(LiteHero.evasore)) {
       _resolveExtraImage(OculumLiteArena.evasorFrames, config);
     }
@@ -681,10 +779,8 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         _posteaMonsters == null &&
         (run.enemies.any((enemy) => _usesPosteaAtlas(enemy.kind)) ||
             run.clones.any((clone) => clone.companion == LiteCompanion.drone) ||
-            run.hero == LiteHero.dronePostea ||
-            run.coopFighters.any(
-              (fighter) => fighter.hero == LiteHero.dronePostea,
-            ));
+            _heroUsesPostea(run.hero) ||
+            run.coopFighters.any((fighter) => _heroUsesPostea(fighter.hero)));
     if (needsPostea) {
       return ColoredBox(
         color: const Color(0xff181219),
@@ -717,9 +813,19 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
             widget.onTalent?.call(world);
           } else if (event.kind != PointerDeviceKind.mouse ||
               (event.buttons & kPrimaryMouseButton) != 0) {
+            if (event.kind == PointerDeviceKind.mouse &&
+                !run.powerWellAt(world)) {
+              widget.onAttackHeld?.call(true);
+            }
             widget.onAttack?.call(world);
           }
         },
+        onPointerUp: (event) {
+          if ((event.buttons & kPrimaryMouseButton) == 0) {
+            widget.onAttackHeld?.call(false);
+          }
+        },
+        onPointerCancel: (_) => widget.onAttackHeld?.call(false),
         onPointerMove: (event) =>
             widget.onAim?.call(point(event.localPosition)),
         child: RepaintBoundary(
@@ -765,6 +871,8 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
               follow: fighter?.position,
               followedFighterId: fighter?.id,
               animationLead: widget.animationLead,
+              openSceneLead: widget.openSceneLead,
+              reduceOpenMotion: MediaQuery.disableAnimationsOf(context),
               repaint: widget.view,
             ),
           ),
@@ -868,21 +976,24 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
       LiteHero.evasore => OculumLiteArena.evasorFrames,
       LiteHero.ashley => OculumLiteArena.ashleyFrames,
       LiteHero.scostubandito => OculumLiteArena.monsterArt,
-      LiteHero.granScostumato ||
-      LiteHero.sentinella ||
-      LiteHero.babyForestDemon => OculumLiteArena.monsterArt,
-      LiteHero.dronePostea => OculumLiteArena.posteaMonsters,
+      LiteHero.sentinella => OculumLiteArena.golemGait,
+      LiteHero.granScostumato => OculumLiteArena.monsterArt,
+      LiteHero.babyForestDemon => OculumLiteArena.forestGait,
+      LiteHero.dronePostea ||
+      LiteHero.ragnoSaldatore => OculumLiteArena.posteaGaits,
       LiteHero.curatorePeste ||
       LiteHero.pyrel ||
       LiteHero.lithra ||
       LiteHero.luce ||
       LiteHero.ombra ||
-      LiteHero.doppelganger => OculumLiteArena.newActors,
+      LiteHero.doppelganger ||
+      LiteHero.rasvyr => OculumLiteArena.newActors,
       LiteHero.veyrth => OculumLiteArena.finalBossArt,
       LiteHero.cavaliereLunare ||
       LiteHero.slimeBlu ||
       LiteHero.vampiro ||
-      LiteHero.reGoblin => OculumLiteArena.nightActors,
+      LiteHero.reGoblin ||
+      LiteHero.lupoDiVaitern => OculumLiteArena.nightActors,
       LiteHero.pollo ||
       LiteHero.raganella ||
       LiteHero.pipistrello => OculumLiteArena.faunaArt,
@@ -890,16 +1001,18 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
         OculumLiteArena.mechanicalChickenArts[widget.appearance?.inkFinish ??
             LiteInkFinish.canonica]!,
       LiteHero.guardiaSolare ||
-      LiteHero.eliteSolare ||
+      LiteHero.eliteSolare => OculumLiteArena.solarGaits,
       LiteHero.guardianoSolare ||
       LiteHero.aberrazioneSolare => OculumLiteArena.solarArt,
+      LiteHero.lusierTre => OculumLiteArena.lusierArt,
+      LiteHero.fabbro => OculumLiteArena.smithCombat,
       LiteHero.demoneMinore ||
-      LiteHero.demoneIntermedio ||
-      LiteHero.demoneMaggiore ||
-      LiteHero.diavolo => OculumLiteArena.infernalArt,
-      LiteHero.vesanybel ||
-      LiteHero.aerovyr ||
-      LiteHero.vedettaEiva => OculumLiteArena.thirdArt,
+      LiteHero.demoneIntermedio => OculumLiteArena.lesserDemons,
+      LiteHero.demoneMaggiore => OculumLiteArena.demonGait,
+      LiteHero.diavolo => OculumLiteArena.devilGait,
+      LiteHero.aerovyr => OculumLiteArena.aerovyrGait,
+      LiteHero.vesanybel || LiteHero.vedettaEiva => OculumLiteArena.thirdArt,
+      LiteHero.pysciwarden => OculumLiteArena.pysciGait,
       LiteHero.duplicatore =>
         feminine
             ? OculumLiteArena.femininePoses
@@ -1720,7 +1833,21 @@ class _HeroSprites {
     this.infernal,
     this.third,
     this.ashley,
+    this.ashleyWalk,
     this.evasore,
+    this.lusier,
+    this.smith,
+    this.veyMotion,
+    this.thirdMotion,
+    this.devilGait,
+    this.demonGait,
+    this.golemGait,
+    this.forestGait,
+    this.lesserDemons,
+    this.posteaGaits,
+    this.aerovyrGait,
+    this.pysciGait,
+    this.solarGaits,
   });
 
   final ui.Image? monsters, banditGaits;
@@ -1730,11 +1857,21 @@ class _HeroSprites {
   final ui.Image? nightActors;
   final ui.Image? fauna;
   final Map<LiteInkFinish, ui.Image?> mechanical;
-  final ui.Image? solar;
+  final ui.Image? solar, solarGaits;
   final ui.Image? infernal;
   final ui.Image? third;
-  final ui.Image? ashley;
+  final ui.Image? ashley, ashleyWalk;
   final ui.Image? evasore;
+  final ui.Image? lusier;
+  final ui.Image? smith;
+  final ui.Image? veyMotion;
+  final ui.Image? thirdMotion, aerovyrGait, pysciGait;
+  final ui.Image? devilGait,
+      demonGait,
+      golemGait,
+      forestGait,
+      lesserDemons,
+      posteaGaits;
 }
 
 class _ArenaPaint extends CustomPainter {
@@ -1773,6 +1910,8 @@ class _ArenaPaint extends CustomPainter {
     this.follow,
     this.followedFighterId,
     this.animationLead = 0,
+    this.openSceneLead = 0,
+    this.reduceOpenMotion = false,
     super.repaint,
   });
 
@@ -1807,6 +1946,8 @@ class _ArenaPaint extends CustomPainter {
   final math.Point<double>? follow;
   final int? followedFighterId;
   final double animationLead;
+  final double openSceneLead;
+  final bool reduceOpenMotion;
   final _jobs = <(double, VoidCallback)>[];
 
   late final _heroSprites = _HeroSprites(
@@ -1819,10 +1960,24 @@ class _ArenaPaint extends CustomPainter {
     fauna: faunaArt,
     mechanical: mechanicalChickenArt,
     solar: solarArt,
+    solarGaits: dropImages[OculumLiteArena.solarGaits]?.image,
     infernal: infernalArt,
     third: thirdArt,
     ashley: run.hero == LiteHero.ashley ? heroFrames : ashleyFrames,
+    ashleyWalk: dropImages[OculumLiteArena.ashleyWalk]?.image,
     evasore: evasoreFrames,
+    lusier: dropImages[OculumLiteArena.lusierArt]?.image,
+    smith: dropImages[OculumLiteArena.smithCombat]?.image,
+    veyMotion: dropImages[OculumLiteArena.veyrthMotion]?.image,
+    thirdMotion: dropImages[OculumLiteArena.thirdMotion]?.image,
+    devilGait: dropImages[OculumLiteArena.devilGait]?.image,
+    demonGait: dropImages[OculumLiteArena.demonGait]?.image,
+    golemGait: dropImages[OculumLiteArena.golemGait]?.image,
+    forestGait: dropImages[OculumLiteArena.forestGait]?.image,
+    lesserDemons: dropImages[OculumLiteArena.lesserDemons]?.image,
+    posteaGaits: dropImages[OculumLiteArena.posteaGaits]?.image,
+    aerovyrGait: dropImages[OculumLiteArena.aerovyrGait]?.image,
+    pysciGait: dropImages[OculumLiteArena.pysciGait]?.image,
   );
 
   ui.Image? _poses(OculumLiteAppearance look) =>
@@ -1970,7 +2125,8 @@ class _ArenaPaint extends CustomPainter {
     final playerImpacts = <int, LiteCombatImpact>{};
     final casts = <int, _ArtCastPose>{};
     for (final impact in run.combatImpacts) {
-      if (impact.target == LiteImpactTarget.artCast) {
+      if (impact.target == LiteImpactTarget.artCast ||
+          impact.target == LiteImpactTarget.milestoneCast) {
         if (_artCastPose(impact, time) case final pose?) {
           casts[impact.subjectId] = pose;
         }
@@ -2086,19 +2242,12 @@ class _ArenaPaint extends CustomPainter {
       }
     }
     if (hubArt case final ui.Image art when run.restHub) {
-      const stations = [
-        (0, Offset(9, 9), 'Taverniera'),
-        (1, Offset(15, 6.3), 'Fabbro'),
-        (2, Offset(22, 9.8), 'Veggente'),
-      ];
-      for (final (index, at, name) in stations) {
-        if (!visible.contains(at)) continue;
-        _shadow(canvas, at, .72, .22);
-        _paintRestStation(canvas, art, index, at, time, _offset(local));
+      void stationLabel(Offset at, String name) {
         final label = TextPainter(
           text: TextSpan(
             text: name,
             style: const TextStyle(
+              fontFamily: 'Poppins',
               fontSize: .39,
               fontWeight: FontWeight.bold,
               color: Color(0xffffe7b5),
@@ -2110,8 +2259,99 @@ class _ArenaPaint extends CustomPainter {
         label.paint(canvas, at - Offset(label.width / 2, -.08));
         label.dispose();
       }
-      if (objects != null && visible.contains(const Offset(16, 14))) {
-        _arenaProp(canvas, objects, 0, const Offset(16, 14), 2.6, true);
+
+      const stations = [
+        LiteRestStation.tavern,
+        LiteRestStation.forge,
+        LiteRestStation.seer,
+      ];
+      for (final (index, station) in stations.indexed) {
+        final at = _offset(station.position);
+        if (!visible.contains(at)) continue;
+        _shadow(canvas, at, .72, .22);
+        _paintRestStation(
+          canvas,
+          art,
+          index,
+          at,
+          time,
+          _offset(local),
+          forge: dropImages[OculumLiteArena.forgeMotion]?.image,
+          smithPresent: !run.partyHasSmith,
+        );
+        stationLabel(at, run.restStationName(station));
+      }
+      final merchant = _offset(LiteRestStation.merchant.position);
+      if (objects != null && visible.contains(merchant)) {
+        _arenaProp(canvas, objects, 0, merchant, 2.6, true);
+        stationLabel(merchant, LiteRestStation.merchant.label);
+      }
+      if (run.petTraderPosition case final trader? when monsters != null) {
+        final at = _offset(trader);
+        if (visible.contains(at)) {
+          _shadow(canvas, at, .52, .20);
+          _actor(canvas, at, _offset(local).dx < at.dx ? -1 : 1, 1, () {
+            _paintMonster(
+              canvas,
+              monsters!,
+              LiteEnemyKind.scostubandito,
+              0,
+              LiteStride(),
+              time,
+              animationLead,
+              fallen: false,
+              hitFlash: 0,
+              banditGaits: banditGaits,
+            );
+          });
+          stationLabel(at, 'Bandito dei pet');
+        }
+      }
+      final teacher = _offset(LiteRestStation.art.position);
+      final portrait = run.devilArtTutor
+          ? OculumLiteArena.devilTutor
+          : OculumLiteArena.artTutor;
+      final image = dropImages[portrait]?.image;
+      if (run.artDealerOpen && visible.contains(teacher) && image != null) {
+        final height = 2.55;
+        final width = height * image.width / image.height;
+        _shadow(canvas, teacher, .58, .21);
+        canvas.drawImageRect(
+          image,
+          Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+          Rect.fromLTWH(
+            teacher.dx - width / 2,
+            teacher.dy - height,
+            width,
+            height,
+          ),
+          Paint()..filterQuality = FilterQuality.medium,
+        );
+        stationLabel(teacher, run.restStationName(LiteRestStation.art));
+      }
+    }
+    if (run.vampirePosition case final worldPoint?) {
+      final at = _offset(worldPoint);
+      final row = _nightHeroRow(LiteHero.vampiro, false);
+      if (visible.contains(at) && nightActors != null && row != null) {
+        _shadow(canvas, at, .61, .21);
+        _actor(canvas, at, _offset(local).dx < at.dx ? -1 : 1, 1, () {
+          _newActor(canvas, nightActors!, row, 0, height: 2.46);
+        }, pigment: _emberLivery);
+        final text = TextPainter(
+          text: const TextSpan(
+            text: 'Vampiro',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: .37,
+              fontWeight: FontWeight.bold,
+              color: Color(0xfff4d0a8),
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        text.paint(canvas, at + Offset(-text.width / 2, .12));
+        text.dispose();
       }
     }
     final rest = _offset(run.restPosition);
@@ -2205,10 +2445,31 @@ class _ArenaPaint extends CustomPainter {
       for (final impact in run.defeats)
         if (impact.enemyKind != null && impact.end != null)
           (LiteEnemy(impact.subjectId, impact.enemyKind!, impact.position, 1)
-                ..hp = 0):
+                ..hp = 0
+                ..mirror = impact.mirror
+                ..livery = impact.livery):
               impact,
     };
-    for (final enemy in [...run.enemies, ...falling.keys]) {
+    final neutralCreatures = run.fauna
+        .where(
+          (animal) =>
+              animal.kind == LiteEnemyKind.lupoLunare ||
+              animal.kind == LiteEnemyKind.orbryx,
+        )
+        .toSet();
+    for (final field in run.divoramituFields) {
+      if (visible
+          .inflate(LiteDivoramituField.radius)
+          .contains(_offset(field.center))) {
+        _paintDivoramituField(canvas, field, time);
+      }
+    }
+    final defeatedIds = falling.keys.map((enemy) => enemy.id).toSet();
+    for (final enemy in [
+      ...run.enemies.where((enemy) => !defeatedIds.contains(enemy.id)),
+      ...neutralCreatures.where((enemy) => !defeatedIds.contains(enemy.id)),
+      ...falling.keys,
+    ]) {
       final flight = falling[enemy];
       final phase = flight == null
           ? 0.0
@@ -2223,7 +2484,7 @@ class _ArenaPaint extends CustomPainter {
       final target = enemy.attackTarget;
       if (enemy.burrow case final track?) {
         _burrowWarning(canvas, enemy, track);
-        if (!track.exposed) continue;
+        if (!track.exposed && enemy.hp > 0) continue;
       }
       final archon = enemy.kind == LiteEnemyKind.arconte;
       // The live run can mutate between widget rebuilds. Never draw an
@@ -2233,7 +2494,9 @@ class _ArenaPaint extends CustomPainter {
           enemy.attacking &&
           target != null &&
           _thirdThreatRadius(enemy.kind) != null;
-      if (thirdWarning) {
+      if (run.stormWarning(enemy) case final storm?) {
+        _paintStormWarning(canvas, storm);
+      } else if (thirdWarning) {
         _thirdAttackWarning(canvas, enemy);
       } else if (archon && enemy.attacking) {
         _paintArchonWarning(canvas, run, enemy);
@@ -2300,8 +2563,24 @@ class _ArenaPaint extends CustomPainter {
             () {
               if (flight != null && phase < 1)
                 canvas.rotate(-.20 * math.sin(phase * math.pi));
+              if (enemy.kind == LiteEnemyKind.bunnys) {
+                if (dropImages[OculumLiteArena.bunnysArt]?.image
+                    case final atlas?) {
+                  _paintBunnys(
+                    canvas,
+                    atlas,
+                    time,
+                    speed: enemy.stride.speed,
+                    fallen: enemy.hp <= 0,
+                    casting: enemy.windup > 0,
+                  );
+                }
+                return;
+              }
               if (baghestArt case final art?
-                  when enemy.kind == LiteEnemyKind.baghest) {
+                  when enemy.kind == LiteEnemyKind.baghest &&
+                      dropImages[OculumLiteArena.baghestMotion]?.image ==
+                          null) {
                 final h = _enemyHeight(enemy.kind);
                 if (enemy.hp <= 0) {
                   canvas.rotate(1.24);
@@ -2323,7 +2602,50 @@ class _ArenaPaint extends CustomPainter {
                 return;
               }
               if (archon) {
-                _paintArchon(canvas, archonArt!, enemy, time);
+                final gait = dropImages[OculumLiteArena.archonGait]?.image;
+                if (gait == null) {
+                  _paintArchon(canvas, archonArt!, enemy, time);
+                } else {
+                  _paintAuthoredGait(
+                    canvas,
+                    gait,
+                    enemy.stride,
+                    animationLead,
+                    fallen: enemy.hp <= 0,
+                    dashing: _enemyIsDashing(enemy),
+                    windup: enemy.attacking || enemy.chamberWarning != null,
+                    striking: enemy.strikePose > 0,
+                    height: 3.3,
+                  );
+                }
+                return;
+              }
+              if (enemy.kind == LiteEnemyKind.baghest &&
+                  dropImages[OculumLiteArena.baghestMotion]?.image != null) {
+                _paintBaghestGait(
+                  canvas,
+                  dropImages[OculumLiteArena.baghestMotion]!.image,
+                  enemy,
+                  animationLead,
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.cryptGaits]?.image
+                  case final atlas?
+                  when enemy.kind == LiteEnemyKind.funerys ||
+                      enemy.kind == LiteEnemyKind.gelycryn) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  enemy.kind == LiteEnemyKind.funerys ? 0 : 4,
+                  enemy.stride,
+                  animationLead,
+                  height: 2.65,
+                  fallen: enemy.hp <= 0,
+                  winding: enemy.attacking,
+                  striking: enemy.strikePose > 0,
+                  dashing: _enemyIsDashing(enemy),
+                );
                 return;
               }
               final phaseBoss =
@@ -2353,6 +2675,21 @@ class _ArenaPaint extends CustomPainter {
                 );
                 return;
               }
+              if (dropImages[OculumLiteArena.aerovyrGait]?.image
+                  case final atlas? when enemy.kind == LiteEnemyKind.aerovyr) {
+                _paintAuthoredGait(
+                  canvas,
+                  atlas,
+                  enemy.stride,
+                  animationLead,
+                  fallen: enemy.hp <= 0,
+                  dashing: _enemyIsDashing(enemy),
+                  windup: enemy.attacking,
+                  striking: enemy.strikePose > 0,
+                  height: 3.15,
+                );
+                return;
+              }
               final sprite = _thirdEnemySprite(enemy.kind);
               if (sprite != null && thirdArt != null) {
                 _paintThirdActor(
@@ -2375,8 +2712,129 @@ class _ArenaPaint extends CustomPainter {
                 );
                 return;
               }
+              if (dropImages[OculumLiteArena.forestGait]?.image
+                  case final atlas?
+                  when enemy.kind == LiteEnemyKind.babyForestDemon ||
+                      enemy.kind == LiteEnemyKind.forestDemon) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  enemy.kind == LiteEnemyKind.babyForestDemon ? 0 : 4,
+                  enemy.stride,
+                  animationLead,
+                  fallen: enemy.hp <= 0,
+                  winding: enemy.attacking,
+                  striking: enemy.strikePose > 0,
+                  dashing: _enemyIsDashing(enemy),
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.lesserDemons]?.image
+                  case final atlas?
+                  when enemy.kind == LiteEnemyKind.demoneMinore ||
+                      enemy.kind == LiteEnemyKind.demoneIntermedio) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  enemy.kind == LiteEnemyKind.demoneMinore ? 0 : 4,
+                  enemy.stride,
+                  animationLead,
+                  fallen: enemy.hp <= 0,
+                  winding: enemy.attacking,
+                  striking: enemy.strikePose > 0,
+                  dashing: _enemyIsDashing(enemy),
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.posteaGaits]?.image
+                  case final atlas?
+                  when enemy.kind == LiteEnemyKind.dronePostea ||
+                      enemy.kind == LiteEnemyKind.ragnoSaldatore) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  enemy.kind == LiteEnemyKind.ragnoSaldatore ? 0 : 4,
+                  enemy.stride,
+                  animationLead,
+                  height: 2.68,
+                  fallen: enemy.hp <= 0,
+                  winding: enemy.attacking,
+                  striking: enemy.strikePose > 0,
+                  dashing: _enemyIsDashing(enemy),
+                );
+                return;
+              }
+              final infernalGait = switch (enemy.kind) {
+                LiteEnemyKind.costrutto =>
+                  dropImages[OculumLiteArena.golemGait]?.image,
+                LiteEnemyKind.corrottoRosso =>
+                  dropImages[OculumLiteArena.redGait]?.image,
+                LiteEnemyKind.diavolo =>
+                  dropImages[OculumLiteArena.devilGait]?.image,
+                LiteEnemyKind.demoneMaggiore =>
+                  dropImages[OculumLiteArena.demonGait]?.image,
+                _ => null,
+              };
+              if (infernalGait != null) {
+                if (enemy.fiveFlames && enemy.hp > 0) {
+                  _paintInfernalCrown(
+                    canvas,
+                    Offset.zero,
+                    time,
+                    enemy.attacking ? 1 : .7,
+                  );
+                }
+                _paintAuthoredGait(
+                  canvas,
+                  infernalGait,
+                  enemy.stride,
+                  animationLead,
+                  fallen: enemy.hp <= 0,
+                  dashing: _enemyIsDashing(enemy),
+                  windup: enemy.attacking,
+                  striking: enemy.strikePose > 0,
+                  height: 2.95,
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.divoramituGait]?.image
+                  case final atlas?
+                  when enemy.burrow != null ||
+                      enemy.kind == LiteEnemyKind.cuccioloDivoramitu) {
+                _paintDivoramitu(
+                  canvas,
+                  atlas,
+                  enemy.stride,
+                  animationLead,
+                  leap: enemy.burrow?.progress,
+                  fallen: enemy.hp <= 0,
+                  juvenile: enemy.kind == LiteEnemyKind.cuccioloDivoramitu,
+                );
+                return;
+              }
+              if (LiteAnimal.forCreature(enemy.kind) case final animal?
+                  when faunaArt != null) {
+                _animalSprite(
+                  canvas,
+                  faunaArt!,
+                  animal,
+                  enemy.stride,
+                  animationLead,
+                  enemy.attacking,
+                  enemy.hitFlash > 0,
+                  fallen: enemy.hp <= 0,
+                );
+                return;
+              }
               final infernal = _infernalRow(enemy.kind);
               if (infernal != null && infernalArt != null) {
+                if (enemy.fiveFlames)
+                  _paintInfernalCrown(
+                    canvas,
+                    Offset.zero,
+                    time,
+                    enemy.windup > 0 ? 1 : .7,
+                  );
                 if (enemy.burrow case final track?) {
                   canvas.translate(
                     0,
@@ -2393,6 +2851,25 @@ class _ArenaPaint extends CustomPainter {
                   enemy.strikePose,
                   enemy.hitFlash,
                   columns: 6,
+                  fallen: enemy.hp <= 0,
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.solarGaits]?.image
+                  case final atlas?
+                  when enemy.kind == LiteEnemyKind.guardiaSolare ||
+                      enemy.kind == LiteEnemyKind.eliteSolare) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  enemy.kind == LiteEnemyKind.guardiaSolare ? 0 : 4,
+                  enemy.stride,
+                  animationLead,
+                  fallen: enemy.hp <= 0,
+                  winding: enemy.attacking,
+                  striking: enemy.strikePose > 0,
+                  dashing: _enemyIsDashing(enemy),
+                  dashFrame: true,
                 );
                 return;
               }
@@ -2407,10 +2884,33 @@ class _ArenaPaint extends CustomPainter {
                   enemy.windup,
                   enemy.strikePose,
                   enemy.hitFlash,
+                  fallen: enemy.hp <= 0,
                 );
                 return;
               }
               if (phaseBoss) {
+                final gait = dropImages[OculumLiteArena.veyrthMotion]?.image;
+                if (gait != null && enemy.kind == LiteEnemyKind.veyrth) {
+                  if (!bossIsTangible && enemy.hp > 0) {
+                    canvas.saveLayer(
+                      null,
+                      Paint()..color = const Color(0x809e81d3),
+                    );
+                  }
+                  _paintAuthoredGait(
+                    canvas,
+                    gait,
+                    enemy.stride,
+                    animationLead,
+                    fallen: enemy.hp <= 0,
+                    dashing: _enemyIsDashing(enemy),
+                    windup: enemy.attacking,
+                    striking: enemy.strikePose > 0,
+                    height: 3.25,
+                  );
+                  if (!bossIsTangible && enemy.hp > 0) canvas.restore();
+                  return;
+                }
                 _paintVeyrth(
                   canvas,
                   bossArt,
@@ -2567,6 +3067,11 @@ class _ArenaPaint extends CustomPainter {
                 );
               }
             },
+            pigment: switch (enemy.livery) {
+              LiteEnemyLivery.braci => _emberLivery,
+              LiteEnemyLivery.eclissi => _eclipseLivery,
+              null => null,
+            },
           );
           if (enemy.hp > 0) {
             final leapHeight = enemy.burrow == null
@@ -2591,7 +3096,9 @@ class _ArenaPaint extends CustomPainter {
                 barAt,
                 enemy.hp / enemy.maxHp,
                 size,
-                _LifeBarRole.enemy,
+                neutralCreatures.contains(enemy)
+                    ? _LifeBarRole.gold
+                    : _LifeBarRole.enemy,
               );
             }
           }
@@ -2604,7 +3111,15 @@ class _ArenaPaint extends CustomPainter {
     for (final clone in run.clones) {
       final at = _offset(clone.position);
       if (!visible.contains(at)) continue;
+      if (clone.forgedWeapon) {
+        jobs.add((at.dy, () => _paintForgedWeapon(canvas, clone, at, time)));
+        continue;
+      }
       final companion = clone.companion;
+      if (clone.burrowDestination case final target? when clone.burrowing) {
+        _paintPetDivoramituTrail(canvas, at, _offset(target), time);
+        continue;
+      }
       if (clone.corrupted) {
         _oval(
           canvas,
@@ -2633,9 +3148,27 @@ class _ArenaPaint extends CustomPainter {
           _shadow(canvas, at, .49, .20, alpha: .36);
           final direction = _offset(clone.poseAim);
           final side = direction.dx < 0 ? -1.0 : 1.0;
-          final scale = companion == LiteCompanion.granScostumato ? 1.19 : .89;
+          final scale = switch (companion) {
+            LiteCompanion.granScostumato => 1.19,
+            LiteCompanion.divoramituMini => .58,
+            _ => .89,
+          };
           _actor(canvas, at, side * scale, scale, () {
             if (companion != null) {
+              if (companion == LiteCompanion.bunnys) {
+                if (dropImages[OculumLiteArena.bunnysArt]?.image
+                    case final atlas?) {
+                  _paintBunnys(
+                    canvas,
+                    atlas,
+                    time,
+                    speed: clone.stride.speed,
+                    fallen: clone.hp <= 0,
+                    casting: clone.preparingPose > 0,
+                  );
+                }
+                return;
+              }
               if (companion.isSkeleton) {
                 final art = newActors;
                 if (art == null) {
@@ -2643,6 +3176,132 @@ class _ArenaPaint extends CustomPainter {
                 } else {
                   _paintPlagueSkeleton(canvas, art, clone, time, animationLead);
                 }
+                return;
+              }
+              if (dropImages[OculumLiteArena.solarGaits]?.image
+                  case final atlas?
+                  when companion.sprite == LiteEnemyKind.guardiaSolare ||
+                      companion.sprite == LiteEnemyKind.eliteSolare) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  companion.sprite == LiteEnemyKind.guardiaSolare ? 0 : 4,
+                  clone.stride,
+                  animationLead,
+                  fallen: clone.hp <= 0,
+                  winding: clone.preparingPose > 0,
+                  striking: clone.swing > 0,
+                  dashing: false,
+                  dashFrame: true,
+                );
+                return;
+              }
+              if (_solarRow(companion.sprite) case final row?
+                  when solarArt != null) {
+                if (clone.down) canvas.rotate(1.20);
+                _solarActor(
+                  canvas,
+                  solarArt!,
+                  row,
+                  animationLead,
+                  clone.stride,
+                  clone.preparingPose,
+                  clone.swing,
+                  0,
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.devilGait]?.image case final atlas?
+                  when companion.sprite == LiteEnemyKind.diavolo) {
+                _paintAuthoredGait(
+                  canvas,
+                  atlas,
+                  clone.stride,
+                  animationLead,
+                  fallen: clone.hp <= 0,
+                  dashing: false,
+                  windup: clone.preparingPose > 0,
+                  striking: clone.swing > 0,
+                  height: 2.95,
+                );
+                return;
+              }
+              if (companion == LiteCompanion.divoramituMini &&
+                  dropImages[OculumLiteArena.divoramituGait]?.image != null) {
+                _paintDivoramitu(
+                  canvas,
+                  dropImages[OculumLiteArena.divoramituGait]!.image,
+                  clone.stride,
+                  animationLead,
+                  juvenile: true,
+                  striking: clone.swing > 0,
+                  fallen: clone.hp <= 0,
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.golemGait]?.image case final atlas?
+                  when companion.sprite == LiteEnemyKind.costrutto) {
+                _paintAuthoredGait(
+                  canvas,
+                  atlas,
+                  clone.stride,
+                  animationLead,
+                  fallen: clone.hp <= 0,
+                  dashing: false,
+                  windup: clone.preparingPose > 0,
+                  striking: clone.swing > 0,
+                  height: 2.8,
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.lesserDemons]?.image
+                  case final atlas?
+                  when companion.sprite == LiteEnemyKind.demoneMinore ||
+                      companion.sprite == LiteEnemyKind.demoneIntermedio) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  companion.sprite == LiteEnemyKind.demoneMinore ? 0 : 4,
+                  clone.stride,
+                  animationLead,
+                  fallen: clone.hp <= 0,
+                  winding: clone.preparingPose > 0,
+                  striking: clone.swing > 0,
+                  dashing: false,
+                );
+                return;
+              }
+              if (dropImages[OculumLiteArena.posteaGaits]?.image
+                  case final atlas?
+                  when companion.sprite == LiteEnemyKind.dronePostea) {
+                _paintCreatureGait(
+                  canvas,
+                  atlas,
+                  4,
+                  clone.stride,
+                  animationLead,
+                  fallen: clone.hp <= 0,
+                  winding: clone.preparingPose > 0,
+                  striking: clone.swing > 0,
+                  dashing: false,
+                  height: 2.64,
+                );
+                return;
+              }
+              final demon = _infernalRow(companion.sprite);
+              if (demon != null && infernalArt != null) {
+                if (clone.down) canvas.rotate(1.20);
+                _solarActor(
+                  canvas,
+                  infernalArt!,
+                  demon,
+                  animationLead,
+                  clone.stride,
+                  clone.preparingPose,
+                  clone.swing,
+                  0,
+                  columns: 6,
+                );
                 return;
               }
               final isWolf = companion == LiteCompanion.lupoAlleato;
@@ -2761,7 +3420,7 @@ class _ArenaPaint extends CustomPainter {
               attackElapsed: clone.swing > 0 ? .23 - clone.swing : null,
             );
           });
-          if (companion != null && !clone.down) {
+          if ((companion != null || clone.summoned) && !clone.down) {
             _oval(
               canvas,
               at,
@@ -2771,13 +3430,36 @@ class _ArenaPaint extends CustomPainter {
               stroke: const Color(0xff87d6b0),
               strokeWidth: .038,
             );
+            final bar =
+                at -
+                Offset(
+                  0,
+                  (companion == null ? 2.18 : _enemyHeight(companion.sprite)) *
+                          scale +
+                      .27,
+                );
             _health(
               canvas,
-              at - Offset(0, _enemyHeight(companion.sprite) * scale + .27),
+              bar,
               clone.hp / clone.maxHp,
               .78,
               _LifeBarRole.ally,
             );
+            final rank = TextPainter(
+              text: TextSpan(
+                text: 'Lv ${clone.level}',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: .26,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xffc6eccc),
+                  shadows: [Shadow(color: Color(0xff161218), blurRadius: .12)],
+                ),
+              ),
+              textDirection: TextDirection.ltr,
+            )..layout();
+            rank.paint(canvas, bar - Offset(rank.width / 2, .40));
+            rank.dispose();
           }
           if (clone.down) {
             final height = at - const Offset(0, .68);
@@ -2852,6 +3534,9 @@ class _ArenaPaint extends CustomPainter {
               at,
               fighter.blockResistance / fighter.maxBlockResistance,
             );
+          final standard =
+              guestAppearances[fighter.account] ??
+              oculumLiteDefaultAppearance(fighter.hero);
           _actor(canvas, at, side, 1, () {
             final releaseAge = fighter.weaponReleaseAge(time);
             _applyPlayablePose(
@@ -2874,9 +3559,6 @@ class _ArenaPaint extends CustomPainter {
               windup: fighter.weaponWindup,
               compact: fighter.plagueForm || (fighter.night.bat > 0),
             );
-            final standard =
-                guestAppearances[fighter.account] ??
-                oculumLiteDefaultAppearance(fighter.hero);
             final phaseArt = _heroSprites.evasore;
             if (phase != null &&
                 phaseArt != null &&
@@ -2910,6 +3592,7 @@ class _ArenaPaint extends CustomPainter {
               giant: fighter.plagueForm,
               plagueGrowth: growth,
               phantom: phase != null,
+              dashing: fighter.burstRemaining > 0,
               mimic: fighter.mimic,
               night: fighter.night,
               preparingTalent: fighter.springPunchActive,
@@ -2918,6 +3601,7 @@ class _ArenaPaint extends CustomPainter {
               poseArt: _poses(standard),
               heads: _heads(standard),
               gearArt: weapons[fighter.weapon],
+              chakramAway: run.chakramInFlight(fighter),
               fallen: fighter.hp <= 0,
               aiming: direction * side,
               front: direction.dy >= -.25,
@@ -2935,7 +3619,7 @@ class _ArenaPaint extends CustomPainter {
                 releaseAge,
               ),
             );
-          });
+          }, pigment: _heroLivery(fighter.hero, standard.inkFinish));
           _health(
             canvas,
             at - Offset(0, 2.45 + growth * 1.08),
@@ -3039,10 +3723,12 @@ class _ArenaPaint extends CustomPainter {
             poseArt: _poses(appearance),
             heads: _heads(appearance),
             gearArt: weapons[run.weapon],
+            chakramAway: run.chakramInFlight(),
             figureArt: _hasDefaultAppearance(appearance, run.hero)
                 ? heroFrames
                 : null,
             phantom: run.intangible,
+            dashing: run.burstRemaining > 0 || run.clashDashing,
             fallen: run.dead || run.hostDown,
             aiming: weaponAim * facing,
             front: weaponAim.dy >= -.25,
@@ -3058,7 +3744,7 @@ class _ArenaPaint extends CustomPainter {
               releaseAge,
             ),
           );
-        });
+        }, pigment: _heroLivery(run.hero, appearance.inkFinish));
         if (run.playerCount > 1) {
           _health(
             canvas,
@@ -3110,7 +3796,7 @@ class _ArenaPaint extends CustomPainter {
         canvas,
         player,
         weaponAim,
-        run.weapon,
+        run.weapon.moveset,
         releaseAge: run.weaponReleaseAge(time),
         secondBladeAge: run.secondBladeReleaseAge(time),
         windup: run.weaponWindup,
@@ -3124,7 +3810,7 @@ class _ArenaPaint extends CustomPainter {
         canvas,
         at,
         _offset(fighter.weaponAim),
-        fighter.weapon,
+        fighter.weapon.moveset,
         releaseAge: fighter.weaponReleaseAge(time),
         windup: fighter.weaponWindup,
         springAge: fighter.springPunchActive
@@ -3139,6 +3825,25 @@ class _ArenaPaint extends CustomPainter {
       if (impact.target == LiteImpactTarget.fissure) continue;
       if (impact.target == LiteImpactTarget.chamberStrike) {
         _paintChamberStrike(canvas, at, impact, time - impact.time);
+        continue;
+      }
+      if (impact.target == LiteImpactTarget.milestoneCast) {
+        _paintMilestoneTechnique(canvas, impact, time - impact.time);
+        continue;
+      }
+      if (impact.target == LiteImpactTarget.bunnysHeal) {
+        _paintBunnysHeal(canvas, at, impact, time - impact.time);
+        continue;
+      }
+      if (impact.target == LiteImpactTarget.fiveFlames) {
+        final age = time - impact.time;
+        if (age >= 0 && age < .64) {
+          _paintInfernalCrown(canvas, at, time, 1 - age / .64);
+        }
+        continue;
+      }
+      if (impact.target == LiteImpactTarget.fusionStrike) {
+        _paintFusionStrike(canvas, impact, time - impact.time);
         continue;
       }
       if (impact.target == LiteImpactTarget.artCast) {
@@ -3172,6 +3877,7 @@ class _ArenaPaint extends CustomPainter {
       }
     }
     for (final projectile in run.projectiles) {
+      if (projectile.age < 0) continue;
       if (visible.contains(_offset(projectile.position))) {
         var finish = LiteInkFinish.canonica;
         if (projectile.kind == LiteProjectileKind.posteaRay ||
@@ -3193,6 +3899,9 @@ class _ArenaPaint extends CustomPainter {
           projectile,
           finish: finish,
           animationLead: animationLead,
+          chakramArt:
+              dropImages[OculumLiteArena.weaponIcons[LiteWeapon.chakram]]
+                  ?.image,
           returnTarget:
               projectile.kind == LiteProjectileKind.chakram &&
                   projectile.returning
@@ -3227,6 +3936,9 @@ class _ArenaPaint extends CustomPainter {
               ?.night;
     if ((localNight?.mud ?? 0) > 0)
       _paintMudOnScreen(canvas, size, localNight!.mud);
+    if (run.openSceneFor(followedFighterId ?? 0) case final scene?) {
+      _paintOpenCutscene(canvas, size, camera, this, scene);
+    }
   }
 
   @override
@@ -3382,6 +4094,10 @@ void _paintCombatImpacts(
     if (opacity == 0 ||
         impact.target == LiteImpactTarget.verdict ||
         impact.target == LiteImpactTarget.artCast ||
+        impact.target == LiteImpactTarget.milestoneCast ||
+        impact.target == LiteImpactTarget.fusionStrike ||
+        impact.target == LiteImpactTarget.fiveFlames ||
+        impact.target == LiteImpactTarget.bunnysHeal ||
         impact.target == LiteImpactTarget.chamberStrike ||
         impact.target == LiteImpactTarget.fissure ||
         impact.target == LiteImpactTarget.explosion)
@@ -4209,11 +4925,101 @@ void _forestObstacleDetail(
   );
 }
 
-void _actor(Canvas canvas, Offset at, double sx, double sy, VoidCallback draw) {
+final _emberLivery = Paint()
+  ..colorFilter = const ColorFilter.matrix([
+    1.14,
+    .16,
+    .05,
+    0,
+    0,
+    .02,
+    .73,
+    .10,
+    0,
+    0,
+    .06,
+    .08,
+    .57,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ]);
+final _eclipseLivery = Paint()
+  ..colorFilter = const ColorFilter.matrix([
+    .75,
+    .09,
+    .12,
+    0,
+    0,
+    .02,
+    .83,
+    .21,
+    0,
+    0,
+    .14,
+    .17,
+    1.10,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ]);
+final _patinaLivery = Paint()
+  ..colorFilter = const ColorFilter.matrix([
+    .74,
+    .13,
+    .03,
+    0,
+    0,
+    .10,
+    .92,
+    .14,
+    0,
+    0,
+    .10,
+    .20,
+    .89,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ]);
+
+Paint? _heroLivery(LiteHero hero, LiteInkFinish finish) {
+  if (hero == LiteHero.polloMeccanico) return null;
+  return switch (finish) {
+    LiteInkFinish.canonica => null,
+    LiteInkFinish.cremisi => _emberLivery,
+    LiteInkFinish.patina => _patinaLivery,
+  };
+}
+
+void _actor(
+  Canvas canvas,
+  Offset at,
+  double sx,
+  double sy,
+  VoidCallback draw, {
+  Paint? pigment,
+}) {
   canvas.save();
   canvas.translate(at.dx, at.dy);
   canvas.scale(sx, sy);
+  if (pigment != null) {
+    canvas.saveLayer(const Rect.fromLTRB(-6, -8, 6, 3.3), pigment);
+  }
   draw();
+  if (pigment != null) canvas.restore();
   canvas.restore();
 }
 
@@ -4424,6 +5230,10 @@ void _holdWeapon(
   Color trim,
   Color ink,
 ) {
+  if (weapon == LiteWeapon.chakram) {
+    _paintCanonicalChakram(canvas, art, tilt: .84, spin: -.12);
+    return;
+  }
   if (art == null) {
     if (weapon == LiteWeapon.arco) canvas.translate(-.55, .032);
     _weapon(canvas, weapon, trim, ink);
@@ -4558,18 +5368,22 @@ void _paintClonatorePose(
   double animationLead = 0,
   double? attackElapsed,
   bool preparingAttack = false,
+  ui.Image? chakramArt,
+  bool chakramAway = false,
 }) {
-  final frame = switch (weapon) {
+  final holdsChakram = weapon.moveset == LiteWeapon.chakram;
+  final frame = switch (weapon.moveset) {
     LiteWeapon.spadaScudo => 0,
     LiteWeapon.arco => 1,
-    LiteWeapon.guanti => 2,
+    LiteWeapon.guanti || LiteWeapon.chakram => 2,
     LiteWeapon.scettro => 3,
-    LiteWeapon.boomerang || LiteWeapon.chakram => 4,
+    LiteWeapon.boomerang => 4,
     LiteWeapon.falceRunica || LiteWeapon.piccaOssidiana => 5,
     LiteWeapon.doppieLame => 6,
     LiteWeapon.carabinaImpulsi ||
     LiteWeapon.balestraRunica ||
     LiteWeapon.fucileScostubandito => 7,
+    _ => 2,
   };
   const cell = 384.0;
   final feminine = appearance.usesFeminineAtlas;
@@ -4623,7 +5437,7 @@ void _paintClonatorePose(
   }
   final customHead =
       heads != null && !_hasDefaultAppearance(appearance, LiteHero.duplicatore);
-  if (!customHead && !weapon.isBossLoot) {
+  if (!customHead && !weapon.isBossLoot && !holdsChakram) {
     _inkActorSprite(
       canvas,
       atlas,
@@ -4735,6 +5549,15 @@ void _paintClonatorePose(
     _paintBossWeaponAtGrip(canvas, weapon, feminine);
     canvas.restore();
   }
+  if (holdsChakram && !chakramAway) {
+    canvas.save();
+    handMotion?.attach(canvas, cell);
+    final hand = _inkGripRigs[feminine]![frame].pivot * cell;
+    canvas.translate(hand.dx + 13, hand.dy - 5);
+    canvas.scale(71);
+    _paintCanonicalChakram(canvas, chakramArt, tilt: .80, spin: -.18);
+    canvas.restore();
+  }
   if (!customHead) {
     canvas.restore();
     return;
@@ -4822,6 +5645,88 @@ void _paintClonatorePose(
   canvas.restore();
 }
 
+final _ashleyWalkGrips = [
+  _InkGripRig(const Offset(.417, .487), .075, .043, behind: true),
+  _InkGripRig(const Offset(.402, .507), .075, .043, behind: true),
+  _InkGripRig(const Offset(.428, .507), .075, .043, behind: true),
+  _InkGripRig(const Offset(.488, .485), .075, .043, behind: true),
+  _InkGripRig(const Offset(.502, .495), .075, .043, behind: true),
+  _InkGripRig(const Offset(.501, .485), .075, .043, behind: true),
+];
+final _ashleyWalkRig = _InkRig([], strideMetres: 2.35);
+
+void _paintAshleyWalk(
+  Canvas canvas,
+  ui.Image atlas,
+  LiteStride stride,
+  double animationLead,
+  ui.Image? gear,
+  LiteWeapon weapon,
+  Offset aim, {
+  required bool releasingChakram,
+  required bool preparingAttack,
+  double? attackElapsed,
+}) {
+  const columns = 3;
+  const height = 2.48;
+  final width =
+      height * _isometricY * (atlas.width / columns) / (atlas.height / 2);
+  final phase = _stridePhase(
+    stride,
+    _ashleyWalkRig.strideMetres,
+    animationLead,
+  );
+  final frame =
+      (phase * _ashleyWalkGrips.length / (2 * math.pi)).floor() %
+      _ashleyWalkGrips.length;
+  final cellWidth = atlas.width / columns;
+  final cellHeight = atlas.height / 2;
+  final source = Rect.fromLTWH(
+    (frame % columns) * cellWidth,
+    (frame ~/ columns) * cellHeight,
+    cellWidth,
+    cellHeight,
+  );
+  final pose = Rect.fromLTWH(-width / 2, -height, width, height);
+  final grip = _ashleyWalkGrips[frame];
+  final motion = _inkWeaponMotion(weapon, grip, attackElapsed, preparingAttack);
+  _inkActorSprite(
+    canvas,
+    atlas,
+    source,
+    pose,
+    Paint()..filterQuality = FilterQuality.medium,
+    _ashleyWalkRig,
+    phase: phase,
+    strength: 0,
+    handMotion: motion,
+  );
+  if (weapon != LiteWeapon.guanti && !releasingChakram) {
+    _paintAshleyWeapon(canvas, gear, weapon, aim, pose, grip.pivot, motion);
+  }
+}
+
+void _paintAshleyWeapon(
+  Canvas canvas,
+  ui.Image? gear,
+  LiteWeapon weapon,
+  Offset aim,
+  Rect pose,
+  Offset grip,
+  _InkAttackMotion? motion,
+) {
+  final hand = grip + (motion?.travel ?? Offset.zero);
+  canvas.save();
+  canvas.translate(
+    pose.left + hand.dx * pose.width,
+    pose.top + hand.dy * pose.height,
+  );
+  canvas.rotate(aim.direction.clamp(-.34, .38) + (motion?.turn ?? 0));
+  canvas.scale(.63);
+  _holdWeapon(canvas, weapon, gear, _sand, _ink);
+  canvas.restore();
+}
+
 void _paintAshley(
   Canvas canvas,
   ui.Image atlas,
@@ -4885,16 +5790,7 @@ void _paintAshley(
       weapon != LiteWeapon.guanti &&
       !releasingChakram) {
     final grip = spring ? const Offset(.316, .502) : _ashleyGrips[frame].pivot;
-    final hand = grip + (motion?.travel ?? Offset.zero);
-    canvas.save();
-    canvas.translate(
-      pose.left + hand.dx * width,
-      pose.top + hand.dy * pose.height,
-    );
-    canvas.rotate(aim.direction.clamp(-.34, .38) + (motion?.turn ?? 0));
-    canvas.scale(.63);
-    _holdWeapon(canvas, weapon, gear, _sand, _ink);
-    canvas.restore();
+    _paintAshleyWeapon(canvas, gear, weapon, aim, pose, grip, motion);
   }
 }
 
@@ -5094,6 +5990,7 @@ int? _nightHeroRow(LiteHero hero, bool unleashed) => switch (hero) {
   LiteHero.slimeBlu => 3,
   LiteHero.vampiro => unleashed ? 5 : 4,
   LiteHero.reGoblin => 8,
+  LiteHero.lupoDiVaitern => 6,
   _ => null,
 };
 
@@ -5176,6 +6073,7 @@ int? _newHeroRow(LiteHero hero, bool giant) => switch (hero) {
   LiteHero.luce => 8,
   LiteHero.ombra => 9,
   LiteHero.doppelganger => 10,
+  LiteHero.rasvyr => 4,
   _ => null,
 };
 
@@ -5419,7 +6317,7 @@ void _animalSprite(
 void _hero(
   Canvas canvas,
   OculumLiteAppearance appearance,
-  LiteWeapon weapon,
+  LiteWeapon equipment,
   double time, {
   required LiteHero hero,
   _HeroSprites sprites = const _HeroSprites(),
@@ -5434,6 +6332,8 @@ void _hero(
   ui.Image? heads,
   bool clone = false,
   bool phantom = false,
+  bool dashing = false,
+  bool chakramAway = false,
   bool fallen = false,
   bool giant = false,
   double plagueGrowth = 0,
@@ -5447,13 +6347,126 @@ void _hero(
   double openAge = -1,
   Offset aiming = const Offset(.9, .08),
 }) {
+  final weapon = equipment.moveset;
   final age = releaseAge ?? (preparingAttack ? null : attackElapsed);
-  final strike = math.max(0.0, .24 - (age ?? .24));
+  final weaponStrike = math.max(0.0, .24 - (age ?? .24));
+  final strike = liteMilestoneHeirs.contains(hero)
+      ? math.max(
+          weaponStrike,
+          math.max(
+            springRemaining * .8,
+            openAge >= 0 ? math.max(0.0, .24 - openAge) : 0.0,
+          ),
+        )
+      : weaponStrike;
   final openRelease = openAge >= 0 && openAge < .16;
   final openRecovery = openAge >= .16 && openAge < .33;
+  if (sprites.smith case final atlas? when hero == LiteHero.fabbro) {
+    _paintAuthoredGait(
+      canvas,
+      atlas,
+      stride,
+      animationLead,
+      fallen: fallen,
+      dashing: dashing,
+      windup: preparingAttack || openRelease,
+      striking: strike > 0 || preparingTalent || openRecovery,
+    );
+    return;
+  }
+  if (sprites.forestGait case final atlas?
+      when hero == LiteHero.babyForestDemon) {
+    _paintCreatureGait(
+      canvas,
+      atlas,
+      0,
+      stride,
+      animationLead,
+      fallen: fallen,
+      dashing: dashing,
+      winding: preparingAttack || openRecovery,
+      striking: strike > 0 || preparingTalent || openRelease,
+    );
+    return;
+  }
+  if (sprites.posteaGaits case final atlas? when _heroUsesPostea(hero)) {
+    _paintCreatureGait(
+      canvas,
+      atlas,
+      hero == LiteHero.ragnoSaldatore ? 0 : 4,
+      stride,
+      animationLead,
+      fallen: fallen,
+      height: 2.72,
+      dashing: dashing,
+      winding: preparingAttack || openRecovery,
+      striking: strike > 0 || preparingTalent || openRelease,
+    );
+    return;
+  }
+  if (sprites.aerovyrGait case final atlas? when hero == LiteHero.aerovyr) {
+    _paintAuthoredGait(
+      canvas,
+      atlas,
+      stride,
+      animationLead,
+      fallen: fallen,
+      dashing: dashing,
+      windup: preparingAttack || openRecovery,
+      striking: strike > 0 || preparingTalent || openRelease,
+      height: 3.10,
+    );
+    return;
+  }
+  if (sprites.pysciGait case final atlas? when hero == LiteHero.pysciwarden) {
+    _paintAuthoredGait(
+      canvas,
+      atlas,
+      stride,
+      animationLead,
+      fallen: fallen,
+      dashing: dashing,
+      windup: preparingAttack || openRecovery,
+      striking: strike > 0 || preparingTalent || openRelease,
+      height: 2.88,
+    );
+    return;
+  }
+  if (hero == LiteHero.pysciwarden) return;
   final third = sprites.third;
   final thirdIndex = _thirdHeroSprite(hero);
   if (third != null && thirdIndex != null) {
+    final movingAtlas = sprites.thirdMotion;
+    final thirdSpeed = stride?.speed ?? 0;
+    final thirdStep =
+        (((stride?.distance ?? 0) + thirdSpeed * animationLead) * 2.45)
+            .floor()
+            .isOdd;
+    final strideFrame = thirdSpeed > .18 && thirdStep;
+    if (!fallen &&
+        movingAtlas != null &&
+        (hero == LiteHero.vesanybel || hero == LiteHero.vedettaEiva) &&
+        (dashing ||
+            strike > 0 ||
+            preparingTalent ||
+            openRelease ||
+            strideFrame)) {
+      final base = hero == LiteHero.vesanybel ? 0 : 4;
+      final pose = strike > 0 || preparingTalent || openRelease
+          ? 3
+          : dashing
+          ? 2
+          : thirdSpeed > 4
+          ? 1
+          : 0;
+      _forgeCell(
+        canvas,
+        movingAtlas,
+        base + pose,
+        const Rect.fromLTWH(-1.49, -2.72, 2.98, 2.98),
+      );
+      return;
+    }
     if (!fallen) {
       _groundedMotion(canvas, stride, animationLead, strideMetres: 1.74);
     }
@@ -5471,8 +6484,32 @@ void _hero(
     return;
   }
   final ashley = sprites.ashley;
-  final releasingChakram = weapon == LiteWeapon.chakram && (age ?? 1) < .18;
+  final releasingChakram =
+      weapon == LiteWeapon.chakram && (chakramAway || (age ?? 1) < .18);
   if (hero == LiteHero.ashley && ashley != null) {
+    final walking = stride?.walking ?? (stride?.speed ?? 0) <= 3.55;
+    final walkAtlas = sprites.ashleyWalk;
+    if (!fallen &&
+        !dashing &&
+        !preparingTalent &&
+        walking &&
+        stride != null &&
+        stride.speed > .10 &&
+        walkAtlas != null) {
+      _paintAshleyWalk(
+        canvas,
+        walkAtlas,
+        stride,
+        animationLead,
+        gearArt,
+        weapon,
+        aiming,
+        preparingAttack: preparingAttack,
+        attackElapsed: attackElapsed,
+        releasingChakram: releasingChakram,
+      );
+      return;
+    }
     if (fallen) {
       canvas.rotate(1.24);
       canvas.scale(.73);
@@ -5484,7 +6521,7 @@ void _hero(
           ? 2
           : preparingTalent
           ? (springRemaining > .064 ? 3 : 2)
-          : moving && (stride?.speed ?? 0) > 3.55
+          : dashing || (moving && !walking)
           ? 1
           : 0,
       gearArt,
@@ -5500,8 +6537,7 @@ void _hero(
     return;
   }
   final postea =
-      hero == LiteHero.dronePostea ||
-      (mimic != null && _usesPosteaAtlas(mimic.kind));
+      _heroUsesPostea(hero) || (mimic != null && _usesPosteaAtlas(mimic.kind));
   final banditArt = postea ? sprites.postea : sprites.monsters;
   final newActors = sprites.newActors;
   final bossArt = sprites.boss;
@@ -5513,6 +6549,52 @@ void _hero(
   if ((night?.veil ?? 0) > 0 && hero == LiteHero.slimeBlu) return;
   if ((night?.bat ?? 0) > 0 && hero == LiteHero.vampiro && !fallen) {
     _paintBat(canvas, time);
+    return;
+  }
+  final infernalGait = switch (hero) {
+    LiteHero.sentinella => sprites.golemGait,
+    LiteHero.diavolo => sprites.devilGait,
+    LiteHero.demoneMaggiore => sprites.demonGait,
+    _ => null,
+  };
+  if (infernalGait != null) {
+    _paintAuthoredGait(
+      canvas,
+      infernalGait,
+      stride,
+      animationLead,
+      fallen: fallen,
+      dashing: dashing,
+      windup: preparingAttack || openRecovery,
+      striking: strike > 0 || preparingTalent || openRelease,
+      height: hero == LiteHero.diavolo ? 3.0 : 2.85,
+    );
+    if (hero == LiteHero.sentinella &&
+        weapon != LiteWeapon.spadaScudo &&
+        !fallen &&
+        !releasingChakram) {
+      canvas.save();
+      canvas.translate(.51, -.89);
+      canvas.rotate(aiming.direction.clamp(-.48, .48));
+      canvas.scale(.55);
+      _holdWeapon(canvas, weapon, gearArt, _sand, _ink);
+      canvas.restore();
+    }
+    return;
+  }
+  if (sprites.lesserDemons case final atlas?
+      when hero == LiteHero.demoneMinore || hero == LiteHero.demoneIntermedio) {
+    _paintCreatureGait(
+      canvas,
+      atlas,
+      hero == LiteHero.demoneMinore ? 0 : 4,
+      stride,
+      animationLead,
+      fallen: fallen,
+      dashing: dashing,
+      winding: preparingAttack || openRecovery,
+      striking: strike > 0 || preparingTalent || openRelease,
+    );
     return;
   }
   if (hero.infernal && infernalActors != null) {
@@ -5529,6 +6611,33 @@ void _hero(
       hero: true,
       fallen: fallen,
       columns: 6,
+    );
+    return;
+  }
+  if (sprites.lusier case final atlas? when hero == LiteHero.lusierTre) {
+    _paintLusier(
+      canvas,
+      atlas,
+      stride,
+      time,
+      strike > 0 || preparingAttack,
+      fallen,
+    );
+    return;
+  }
+  if (sprites.solarGaits case final atlas?
+      when hero == LiteHero.guardiaSolare || hero == LiteHero.eliteSolare) {
+    _paintCreatureGait(
+      canvas,
+      atlas,
+      hero == LiteHero.guardiaSolare ? 0 : 4,
+      stride,
+      animationLead,
+      fallen: fallen,
+      dashing: dashing,
+      dashFrame: true,
+      winding: preparingAttack || openRecovery,
+      striking: strike > 0 || preparingTalent || openRelease,
     );
     return;
   }
@@ -5747,6 +6856,8 @@ void _hero(
       height: height,
       fallen: fallen,
       phantom: phantom,
+      species: hero == LiteHero.rasvyr ? LiteEnemyKind.rasvyr : null,
+      strike: strike,
     );
     final kitWeapon =
         hero == LiteHero.pyrel ||
@@ -5764,6 +6875,32 @@ void _hero(
       canvas.restore();
     }
     canvas.restore();
+    return;
+  }
+  if (sprites.veyMotion case final atlas? when hero == LiteHero.veyrth) {
+    final speed = stride?.speed ?? 0;
+    final phase = (time * (speed > 3.7 ? 8 : 4.5)).floor().isEven;
+    final pose = strike > 0 || preparingTalent || openRelease
+        ? 7
+        : preparingAttack || openRecovery
+        ? 6
+        : dashing
+        ? 5
+        : speed > 3.7
+        ? (phase ? 3 : 4)
+        : speed > .15
+        ? (phase ? 1 : 2)
+        : 0;
+    if (fallen) {
+      canvas.rotate(.85);
+      canvas.scale(.76);
+    }
+    _forgeCell(
+      canvas,
+      atlas,
+      pose,
+      const Rect.fromLTWH(-1.80, -3.08, 3.6, 3.6),
+    );
     return;
   }
   if (hero == LiteHero.veyrth && bossArt != null) {
@@ -5823,6 +6960,7 @@ void _hero(
       _enemy(canvas, kind, fallen: fallen, time: time, cannonRaised: false);
     }
     if (!fallen &&
+        !(hero == LiteHero.sentinella && weapon == LiteWeapon.spadaScudo) &&
         !swinging &&
         !releasingChakram &&
         (isBandit
@@ -5843,9 +6981,7 @@ void _hero(
     canvas.scale(.86);
   } else if (attackElapsed != null &&
       aiming.distanceSquared > .001 &&
-      !(poseArt != null &&
-          hero == LiteHero.duplicatore &&
-          weapon != LiteWeapon.chakram)) {
+      !(poseArt != null && hero == LiteHero.duplicatore)) {
     final direction = aiming / aiming.distance;
     if (preparingAttack) {
       final hold = (attackElapsed / .42).clamp(0.0, 1.0);
@@ -5865,9 +7001,7 @@ void _hero(
       canvas.rotate(.075 * impulse);
     }
   }
-  if (poseArt != null &&
-      hero == LiteHero.duplicatore &&
-      weapon != LiteWeapon.chakram) {
+  if (poseArt != null && hero == LiteHero.duplicatore) {
     _paintClonatorePose(
       canvas,
       poseArt,
@@ -5875,6 +7009,8 @@ void _hero(
       weapon,
       appearance,
       spectral: clone || phantom,
+      chakramArt: gearArt,
+      chakramAway: releasingChakram || chakramAway,
       attackElapsed: attackElapsed,
       preparingAttack: preparingAttack,
       stride: stride,
@@ -6003,6 +7139,7 @@ void _hero(
       heading * .64 - .64 + swing * .88,
       0.0,
     ),
+    _ => (const Offset(.65, -1.16), const Offset(-.36, -.91), heading, 0.0),
   };
   // These contacts use the weapon's own rotated frame, so both hands stay on
   // the bowstring, barrel or shaft when the character aims or changes stance.
@@ -6852,12 +7989,15 @@ void _heroShield(
   });
 }
 
+bool _heroUsesPostea(LiteHero hero) =>
+    hero == LiteHero.dronePostea || hero == LiteHero.ragnoSaldatore;
+
 void _weapon(Canvas canvas, LiteWeapon weapon, Color accent, Color ink) {
   final steel = Color.lerp(accent, const Color(0xffc8c5c0), .71)!;
   final wood = Color.lerp(accent, const Color(0xff743e32), .67)!;
   final glint = Color.lerp(steel, const Color(0xfff2e3c7), .78)!;
   final steelShadow = Color.lerp(steel, const Color(0xff403744), .62)!;
-  switch (weapon) {
+  switch (weapon.moveset) {
     case LiteWeapon.chakram:
       _paintChakramRing(canvas, tilt: .8, spin: -.15);
     case LiteWeapon.boomerang:
@@ -7284,6 +8424,8 @@ void _weapon(Canvas canvas, LiteWeapon weapon, Color accent, Color ink) {
         const Color(0xfff4cb86),
         .025,
       );
+    default:
+      break;
   }
 }
 
@@ -7438,7 +8580,8 @@ double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.demoneMinore => .81,
   LiteEnemyKind.demoneIntermedio || LiteEnemyKind.demoneMaggiore => 1.12,
   LiteEnemyKind.diavolo => 1.40,
-  LiteEnemyKind.divoramitu => 1.85,
+  LiteEnemyKind.divoramitu => 2.46,
+  LiteEnemyKind.cuccioloDivoramitu => .72,
   LiteEnemyKind.divoramituBoss => 2.68,
   LiteEnemyKind.funerys ||
   LiteEnemyKind.sacrycrab ||
@@ -7451,6 +8594,7 @@ double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.aerovyr => 1.48,
   LiteEnemyKind.baghest => 1.40,
   LiteEnemyKind.corrottoRosso => .98,
+  LiteEnemyKind.bunnys => .84,
 };
 
 double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
@@ -7487,8 +8631,11 @@ double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.demoneMinore => 1.78,
   LiteEnemyKind.demoneIntermedio || LiteEnemyKind.demoneMaggiore => 2.47,
   LiteEnemyKind.diavolo => 2.95,
+  LiteEnemyKind.bunnys => 2.39,
   LiteEnemyKind.divoramitu || LiteEnemyKind.divoramituBoss => 2.25,
-  LiteEnemyKind.funerys || LiteEnemyKind.vegliante => 2.04,
+  LiteEnemyKind.cuccioloDivoramitu => 1.6,
+  LiteEnemyKind.funerys => 1.30,
+  LiteEnemyKind.vegliante => 2.04,
   LiteEnemyKind.sacrycrab || LiteEnemyKind.gelycryn => 1.53,
   LiteEnemyKind.lapysrieth || LiteEnemyKind.nymboryth => 1.74,
   LiteEnemyKind.vesanybel || LiteEnemyKind.aerovyr => 2.62,
@@ -7511,6 +8658,8 @@ void _enemy(
   }
   final step = fallen ? 0.0 : math.sin(time * 6.0) * .048;
   switch (kind) {
+    case LiteEnemyKind.bunnys:
+      return;
     case LiteEnemyKind.goblinColtello ||
         LiteEnemyKind.goblinFango ||
         LiteEnemyKind.goblinColla ||
@@ -7569,6 +8718,7 @@ void _enemy(
         LiteEnemyKind.demoneMaggiore ||
         LiteEnemyKind.diavolo ||
         LiteEnemyKind.divoramitu ||
+        LiteEnemyKind.cuccioloDivoramitu ||
         LiteEnemyKind.divoramituBoss ||
         LiteEnemyKind.funerys ||
         LiteEnemyKind.vegliante ||
@@ -9202,6 +10352,7 @@ void _projectile(
   LiteInkFinish finish = LiteInkFinish.canonica,
   double animationLead = 0,
   Offset? returnTarget,
+  ui.Image? chakramArt,
 }) {
   final p = _offset(projectile.position);
   final heading = _offset(projectile.direction);
@@ -9213,6 +10364,7 @@ void _projectile(
         heading,
         projectile.age + animationLead,
         returnTarget,
+        art: chakramArt,
       );
       return;
     case LiteProjectileKind.solarBolt || LiteProjectileKind.solarRay:
@@ -9358,9 +10510,32 @@ void _projectile(
         const Color(0xddc2573b),
         .048,
       );
-    case LiteProjectileKind.fireball:
+    case LiteProjectileKind.cartaLusier:
+      _paintLusierCard(canvas, p, heading, projectile.age);
+    case LiteProjectileKind.fireball || LiteProjectileKind.pattoFiamma:
+      final seeking = projectile.kind == LiteProjectileKind.pattoFiamma;
       final a = projectile.age * 17;
       final side = Offset(-heading.dy, heading.dx);
+      if (seeking) {
+        for (var i = 0; i < 3; i++) {
+          final flicker = math.sin(a - i * .79) * (.11 + i * .045);
+          final from = p - heading * (.44 + i * .34) + side * flicker;
+          _inkSlash(
+            canvas,
+            from,
+            from - heading * (.55 - i * .075),
+            const Color(0xffcd4950).withValues(alpha: .83 - i * .19),
+            .18 - i * .045,
+          );
+          _inkSlash(
+            canvas,
+            from + side * .075,
+            from - heading * .29,
+            const Color(0xffefbd7d).withValues(alpha: .66 - i * .16),
+            .065,
+          );
+        }
+      }
       _poly(
         canvas,
         [
@@ -9706,9 +10881,14 @@ class _HeroPreviewPaint extends CustomPainter {
     canvas.save();
     canvas.translate(size.width * center, baseline);
     canvas.scale(scale);
+    final pigment = _heroLivery(hero, appearance.inkFinish);
+    if (pigment != null) {
+      canvas.saveLayer(const Rect.fromLTRB(-3, -4.5, 5, 1), pigment);
+    }
     if (hero == LiteHero.ashley && figure != null) {
       _shadow(canvas, Offset.zero, .61, .24);
       _paintAshley(canvas, figure!, 0, gear, weapon, const Offset(1, 0));
+      if (pigment != null) canvas.restore();
       canvas.restore();
       return;
     }
@@ -9740,17 +10920,43 @@ class _HeroPreviewPaint extends CustomPainter {
       0,
       hero: hero,
       sprites: _HeroSprites(
-        monsters: hero.sprite != null ? figure : null,
-        postea: hero == LiteHero.dronePostea ? figure : null,
+        monsters:
+            hero.sprite != null &&
+                hero != LiteHero.sentinella &&
+                hero != LiteHero.babyForestDemon
+            ? figure
+            : null,
+        posteaGaits: _heroUsesPostea(hero) ? figure : null,
         newActors: _newHeroRow(hero, false) != null ? figure : null,
         nightActors: _nightHeroRow(hero, false) != null ? figure : null,
         fauna: LiteAnimal.forHero(hero) != null ? figure : null,
         mechanical: hero == LiteHero.polloMeccanico
             ? {appearance.inkFinish: figure}
             : const {},
-        solar: hero.solar ? figure : null,
-        infernal: hero.infernal ? figure : null,
-        third: _thirdHeroSprite(hero) != null ? figure : null,
+        solar:
+            hero == LiteHero.guardianoSolare ||
+                hero == LiteHero.aberrazioneSolare
+            ? figure
+            : null,
+        solarGaits:
+            hero == LiteHero.guardiaSolare || hero == LiteHero.eliteSolare
+            ? figure
+            : null,
+        lusier: hero == LiteHero.lusierTre ? figure : null,
+        smith: hero == LiteHero.fabbro ? figure : null,
+        devilGait: hero == LiteHero.diavolo ? figure : null,
+        golemGait: hero == LiteHero.sentinella ? figure : null,
+        demonGait: hero == LiteHero.demoneMaggiore ? figure : null,
+        forestGait: hero == LiteHero.babyForestDemon ? figure : null,
+        lesserDemons:
+            hero == LiteHero.demoneMinore || hero == LiteHero.demoneIntermedio
+            ? figure
+            : null,
+        aerovyrGait: hero == LiteHero.aerovyr ? figure : null,
+        pysciGait: hero == LiteHero.pysciwarden ? figure : null,
+        third: _thirdHeroSprite(hero) != null && hero != LiteHero.aerovyr
+            ? figure
+            : null,
         boss: hero == LiteHero.veyrth ? figure : null,
       ),
       gearArt: gear,
@@ -9758,6 +10964,7 @@ class _HeroPreviewPaint extends CustomPainter {
       poseArt: poses,
       heads: heads,
     );
+    if (pigment != null) canvas.restore();
     canvas.restore();
   }
 

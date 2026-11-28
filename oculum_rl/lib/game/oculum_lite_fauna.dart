@@ -30,6 +30,36 @@ extension LiteFauna on LiteRun {
     };
     final species = <LiteAnimal>{habitat};
     if (stage % 3 == 0) species.add(LiteAnimal.pollo);
+    if (biome == LiteBiome.foresta || biome == LiteBiome.orea)
+      species.add(LiteAnimal.pollo);
+    if (biome == LiteBiome.foresta && stage.isEven && !solarCampaign) {
+      const wolf = LiteEnemyKind.lupoLunare;
+      for (final offset in const [
+        Point<double>(15, 5),
+        Point<double>(18, 6.4),
+      ]) {
+        fauna.add(
+          LiteEnemy(
+            _nextId++,
+            wolf,
+            _safePoint(offset, wolf.radius, _spawnForFauna),
+            wolf.health.toDouble(),
+          ),
+        );
+      }
+    }
+    if (biome == LiteBiome.orea && stage.isOdd) {
+      const orb = LiteEnemyKind.orbryx;
+      const point = Point<double>(19, 15.3);
+      fauna.add(
+        LiteEnemy(
+          _nextId++,
+          orb,
+          _safePoint(point, orb.radius, _spawnForFauna),
+          orb.health.toDouble(),
+        ),
+      );
+    }
     final rng = _LiteRandom(seed ^ (stage + 1) * 7889);
     var lane = 0;
     for (final animal in species) {
@@ -171,10 +201,15 @@ extension LiteFauna on LiteRun {
       if (animal.hp <= 0) continue;
       final previous = animal.position;
       animal._strikePose = max(0, animal._strikePose - elapsed);
-      if (faunaAggressive) {
-        final winding = animal.attacking;
+      final wild =
+          animal.kind == LiteEnemyKind.lupoLunare ||
+          animal.kind == LiteEnemyKind.orbryx;
+      if (wild) {
+        animal.shockRemaining = max(0, animal.shockRemaining - elapsed);
+        if (animal.shockRemaining <= 0) animal.shockSource = null;
+      }
+      if (faunaAggressive && !wild) {
         _enemyTick(animal, elapsed);
-        if (winding && !animal.attacking) animal._strikePose = .24;
       } else {
         animal.hitFlash = max(0, animal.hitFlash - elapsed);
         if (_hasChickenTrialParticipant &&

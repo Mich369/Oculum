@@ -34,7 +34,7 @@ Lavora nel progetto autonomo `C:\Oculum App\Oculum RL`. Leggi le istruzioni del 
 
 ## Istruttrice e Grimorio
 
-- Dal secondo ristoro, l’Istruttrice insegna sei Art. In circa il 12% delle visite un diavolo elegante tiene la bottega. L’identità è determinata dal seed e dal piano. Le stirpi lunari, demoniache e diaboliche pagano il 20% in meno.
+- Dal primo Ristoro, l’Istruttrice insegna le Art del Grimorio. In circa il 12% delle visite un diavolo elegante tiene la bottega. L’identità è determinata dal seed e dal piano. Le stirpi lunari, demoniache e diaboliche pagano il 20% in meno.
 - La prima lezione include il Grimorio per un sovrapprezzo di 24 Obser. Nelle visite successive si pagano le sole skill. Le lezioni imparate e la skill pronta seguono il personaggio nel salvataggio. In bottega si cambia la skill pronta gratuitamente. Le vecchie run con una skill già appresa ricevono il libro.
 - E usa la skill pronta o l’Art innata. Chi ha un’Art innata lancia quella del Grimorio con Z. I due recuperi sono indipendenti. I controlli a schermo riportano gli stessi nomi in solo e co-op.
 - Incisione di brace apre un ventaglio e le braci rimbalzano sulle pareti. Piega di basalto incide una linea di terreno, ferisce chi vi si trova e spezza i ripari fragili. Le schede mostrano le forme effettive per livello. Rapida risposta al tasto, direzioni riconoscibili e tratto Ink Expressive, con campiture e attacchi leggibili anche nelle stanze più scure.
@@ -54,3 +54,22 @@ Lavora nel progetto autonomo `C:\Oculum App\Oculum RL`. Leggi le istruzioni del 
 - Controlla primo frame, massima estensione, contatto e dissolvenza con lo stesso seed e la stessa camera. Ritarda apposta l’atlante dell’Arconte per rilevare lampeggi di sagome generiche al ripristino.
 - Tratta a parte le forme di Raggio al plasma, Falci di Vaitern, Linfa verde, Affondo della pattuglia, Lame lunari, Corruzione Rossa, Incisione di brace e Piega di basalto. Conserva la posa di rilascio, la direzione del vero attacco e la separazione visiva fra cura e danno.
 - Confronta ciascun attacco di sala con la sua geometria. Ventaglio radente, croce che si incide dal centro, faglia irregolare, corona con centro sicuro, morsa con corridoio. Le crepe e i residui si spengono dopo l’impatto.
+
+
+## Traguardi, fazioni e compagni
+
+- I premi permanenti si sbloccano a 5, 10, 15, 20, 25, 30 e 35 piani superati. Contano i piani della campagna e dell’Atto III. I Ristori e le deviazioni conservano il traguardo già raggiunto. Una difficoltà superiore assegna anche i premi delle difficoltà inferiori per lo stesso numero di piani.
+- A cinque piani si sbloccano Ragno Saldatore, Rasvyr, Lupo Lunare di Vaitern, Pysciwarden e Lusier III, in ordine di difficoltà. I traguardi successivi introducono Lama Orbita, Terramaul, Chakram al Plasma Segugio, Lancia di canna, Spada sacra di Lusier III e Mazza d’oro. Ciascuna arma ha cinque forme da scegliere e la propria tecnica su G. Costi, portate e ritmo delle forme sono adattati al combattimento in tempo reale.
+- Un Lupo Lunare combatte contro un gruppo con almeno un Solare. Con un Lunare e senza Solari combatte dalla parte del gruppo fino all’uscita dalla sala. Con gli altri gruppi resta neutrale e non impedisce di completare il piano. In foresta compaiono piccoli branchi e a Orea si possono incontrare anche Orbryx neutrali.
+- Compagni NPC ed evocazioni seguono il livello del proprietario. Il bilanciamento iniziale assegna loro il 6% di Vita massima per livello oltre il primo. La quota di Vita attuale resta proporzionale. I bonus di allenamento per danno e ritmo mantengono il tetto di dodici livelli.
+
+
+## Regole della build
+
+- Aerovyr chiude la campagna di 36 piani. Cambia fase al 67% e al 32% di Vita. La corona ha il centro sicuro.
+- L’Open su Spazio costa 5 Oculum e triplica l’effetto principale. La ricarica dura due stanze di combattimento e si salva per ogni giocatore. I Ristori lasciano invariato il contatore.
+- Con R puoi parlare con il mercante più vicino nel Ristoro. Ogni Art appresa può ricevere due lezioni, con una forma effettiva aggiuntiva e −10% sul recupero per lezione fino al limite dell’Art.
+- Dal Fabbro la fusione costa 90 Obser ed è reversibile. L’arma primaria conserva il ritmo e la tecnica. Le due armi usano Tempra separata. Con Spada e scudo il Blocco della fusione è maggiore del 50% e la spada infligge il 15% di danni in più.
+- I Chakram curvano su lati opposti e tornano alla mano. In fusione compiono un giro e inseguono brevemente i nemici. Il secondo parte con 0,3 secondi di ritardo. Per le armi istantanee, tenere premuto il tasto sinistro ripete dopo il recupero e altri 0,3 secondi. Per le armi di ritorno attende che si chiuda il volo.
+- Le livree Braci ed Eclissi aumentano Vita e Danni di mostri e boss. Le finiture dei giocatori cambiano la resa dello sprite.
+- I Lunari ricevono aiuto dai diavoli. Le Cinque Fiamme conservano l’ostilità, evocano demoni e hanno Vita e Danni maggiori. La versione giocabile lancia cinque esplosioni a inseguimento ed evoca tre Minori e un Intermedio. Un compagno può rianimare queste evocazioni. I pasti curano i compagni del proprietario del 20% della loro Vita massima.

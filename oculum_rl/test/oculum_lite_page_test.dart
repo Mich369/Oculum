@@ -11,6 +11,7 @@ import 'package:oculum_rl/pages/oculum_lite_page.dart';
 import 'package:oculum_rl/services/oculum_lite_saves.dart';
 import 'package:oculum_rl/services/oculum_save_profile.dart';
 import 'package:oculum_rl/widgets/oculum_lite_arena.dart';
+import 'package:oculum_rl/widgets/oculum_lunar_prologue.dart';
 import 'package:oculum_rl/widgets/oculum_lite_creator.dart';
 import 'package:oculum_rl/widgets/oculum_lite_routes.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -273,7 +274,7 @@ void main() {
     }
   });
 
-  testWidgets('chakram paints just one steel ring on launch and return', (
+  testWidgets('chakram paints one canonical ring per projectile', (
     tester,
   ) async {
     final run =
@@ -299,6 +300,13 @@ void main() {
       var wood = 0;
       for (final call in canvas.invocations) {
         final invocation = call.invocation;
+        if (invocation.memberName == #drawImageRect) {
+          final destination = invocation.positionalArguments[2] as Rect;
+          if ((destination.width - .82).abs() < .0001 &&
+              (destination.height - .82).abs() < .0001)
+            steel++;
+          continue;
+        }
         if (invocation.memberName != #drawPath) continue;
         final color = (invocation.positionalArguments[1] as Paint).color
             .toARGB32();
@@ -308,7 +316,10 @@ void main() {
       return (steel, wood);
     }
 
-    expect(OculumLiteArena.weaponArt(LiteWeapon.chakram), isNull);
+    expect(
+      OculumLiteArena.weaponArt(LiteWeapon.chakram),
+      OculumLiteArena.weaponIcons[LiteWeapon.chakram],
+    );
     final (steel, wood) = countWeaponPaints();
     for (final returning in [false, true]) {
       run.projectiles
@@ -562,6 +573,34 @@ void main() {
     },
   );
 
+  testWidgets(
+    'the lunar prologue has the authored line and closes automatically',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => showOculumLunarPrologue(context),
+                child: const Text('Avvia'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Avvia'));
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(find.text(oculumLunarPrologue), findsOneWidget);
+      expect(
+        tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+        Colors.black,
+      );
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(find.text('Avvia'), findsOneWidget);
+    },
+  );
+
   testWidgets('Gioca subito starts the Campo proof with the floor map', (
     tester,
   ) async {
@@ -583,12 +622,7 @@ void main() {
     final firstFloor = find.byWidgetPredicate(
       (widget) => widget is DropdownButtonFormField<LiteBiome>,
     );
-    await tester.ensureVisible(firstFloor);
-    await tester.pumpAndSettle();
-    await tester.tap(firstFloor);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Campo Scostubanditi').last);
-    await tester.pumpAndSettle();
+    expect(firstFloor, findsNothing);
     final start = find.byKey(const ValueKey('oculum-lite-start-run'));
     await tester.scrollUntilVisible(start, 130, scrollable: scroll);
     await tester.ensureVisible(start);

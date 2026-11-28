@@ -46,6 +46,8 @@ class OculumLiteCoop extends ChangeNotifier {
   double _timeOfSend = -1;
   double _timeOfFrame = -1;
   bool _fire = false;
+  bool _attackHeld = false;
+  bool _lastAttackHeld = false;
   bool _dodge = false;
   bool _dash = false;
   bool _reload = false;
@@ -74,10 +76,13 @@ class OculumLiteCoop extends ChangeNotifier {
           (_timeOfFrame < 0 ||
               _clock.elapsedMilliseconds / 1000 > _timeOfFrame + 3));
   bool get active => _timer != null;
-  double get animationLead => host || _timeOfFrame < 0 || pausedByHost
+  double get openSceneLead => host || _timeOfFrame < 0 || pausedByHost
       ? 0
-      : (_clock.elapsedMilliseconds / 1000 - _timeOfFrame).clamp(0.0, .16) *
-            (run?.arenaSpeed ?? 1);
+      : (_clock.elapsedMilliseconds / 1000 - _timeOfFrame).clamp(0.0, .20);
+  double get animationLead =>
+      openSceneLead.clamp(0.0, .16) *
+      (run?.arenaSpeed ?? 1) *
+      (run?.openTimeScale ?? 1);
   bool get canAct =>
       _transportReady &&
       (host || (!pausedByHost && run?.coopFighter(localAccount) != null));
@@ -116,6 +121,8 @@ class OculumLiteCoop extends ChangeNotifier {
     _restAction = null;
     setBlocking(false);
     setRescuing(false);
+    holdFire(false);
+    _lastAttackHeld = false;
   }
 
   LiteCoopFighter? get localFighter => run?.coopFighter(localAccount);
@@ -147,6 +154,11 @@ class OculumLiteCoop extends ChangeNotifier {
     } else if (canAct) {
       _fire = true;
     }
+  }
+
+  void holdFire(bool held) {
+    _attackHeld = held && canAct;
+    authority?.setAttackHeld(_attackHeld);
   }
 
   void talent() {
@@ -300,7 +312,17 @@ class OculumLiteCoop extends ChangeNotifier {
     notifyListeners();
   }
 
+  void tradePet(int give, LiteCompanion take) =>
+      _orderRest('tradePet', give.toString() + ':' + take.name);
   void buyRestItem(LiteRestItem item) => _orderRest('buy', item.name);
+  void callSolarRetinue() => _orderRest('lusierRetinue', '');
+  void acceptVampirePact(LiteVampirePact pact) =>
+      _orderRest('vampire', pact.name);
+  void buySignature(LiteWeapon item) => _orderRest('signature', item.name);
+  void equipWeapon(LiteWeapon item) => _orderRest('equipWeapon', item.name);
+  void fuseWeapons(LiteWeapon primary, LiteWeapon secondary) =>
+      _orderRest('fuse', '${primary.name}:${secondary.name}');
+  void splitWeapons() => _orderRest('split', '');
   void rememberRestItem(LiteRestItem item) => _orderRest('remember', item.name);
   void exchangeLunarPiece() => _orderRest('exchange', '');
   void struggleRedGrip() => _orderRest('struggle', '');
@@ -350,6 +372,49 @@ class OculumLiteCoop extends ChangeNotifier {
           .where((value) => value.name == id)
           .firstOrNull;
       if (scroll != null) world.castRestScroll(scroll, aim, fighter);
+      return;
+    }
+    if (kind == 'tradePet' && id is String) {
+      final parts = id.split(':');
+      if (parts.length != 2) return;
+      final give = int.tryParse(parts.first);
+      final take = LiteCompanion.values
+          .where((pet) => pet.name == parts.last)
+          .firstOrNull;
+      if (give != null && take != null) world.tradePet(give, take, fighter);
+      return;
+    }
+    if (kind == 'vampire') {
+      final pact = LiteVampirePact.values
+          .where((choice) => choice.name == id)
+          .firstOrNull;
+      if (pact != null) world.acceptVampirePact(pact, fighter);
+      return;
+    }
+    if (kind == 'lusierRetinue') {
+      world.callSolarRetinue(fighter);
+      return;
+    }
+    if (kind == 'signature' || kind == 'equipWeapon') {
+      final weapon = LiteWeapon.values
+          .where((value) => value.name == id)
+          .firstOrNull;
+      if (weapon == null) return;
+      if (kind == 'signature') {
+        world.buySignature(weapon, fighter);
+      } else {
+        world.equipFromForge(weapon, fighter);
+      }
+      return;
+    }
+    if (kind == 'fuse' && id is String) {
+      final pair = LiteWeaponFusion.read(id.split(':'));
+      if (pair != null)
+        world.fuseWeapons(pair.primary, pair.secondary, fighter);
+      return;
+    }
+    if (kind == 'split') {
+      world.splitWeapons(fighter);
       return;
     }
     final item = LiteRestItem.values
@@ -460,6 +525,8 @@ class OculumLiteCoop extends ChangeNotifier {
         _pendingInput != null ||
         move.magnitude > 0 ||
         _fire ||
+        _attackHeld ||
+        _attackHeld != _lastAttackHeld ||
         _dodge ||
         _dash ||
         _reload ||
@@ -492,6 +559,7 @@ class OculumLiteCoop extends ChangeNotifier {
           'move': [move.x, move.y],
           'aim': [at.x, at.y],
           'attack': _fire,
+          if (_attackHeld) 'holdAttack': true,
           'dodge': _dodge,
           'dash': _dash,
           'reload': _reload,
@@ -519,6 +587,7 @@ class OculumLiteCoop extends ChangeNotifier {
           _pendingInput = packet;
         }
         _blockSent = _blocking;
+        _lastAttackHeld = _attackHeld;
         _rescueSent = _rescuing;
         _restAction = null;
         _fire = _dodge = _dash = _reload = _open = _rifleSkill = _weaponArt =
@@ -675,6 +744,7 @@ class OculumLiteCoop extends ChangeNotifier {
       direction,
       target,
       attack: packet['attack'] == true,
+      holdAttack: packet['holdAttack'] == true,
       dodge: packet['dodge'] == true,
       dash: packet['dash'] == true,
       reload: packet['reload'] == true,

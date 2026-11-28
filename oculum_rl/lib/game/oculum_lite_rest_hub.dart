@@ -1,14 +1,15 @@
 part of 'oculum_lite_run.dart';
 
 enum LiteRestStation {
-  tavern('Taverniera'),
-  forge('Fabbro'),
-  merchant('Mercante'),
-  seer('Veggente'),
-  art('Istruttrice di Art');
+  tavern('Taverniera', Point(9, 9)),
+  forge('Fabbro', Point(15, 6.3)),
+  merchant('Mercante', Point(16, 14)),
+  seer('Veggente', Point(22, 9.8)),
+  art('Istruttrice di Art', Point(23, 16.5));
 
-  const LiteRestStation(this.label);
+  const LiteRestStation(this.label, this.position);
   final String label;
+  final Point<double> position;
 }
 
 enum LiteRestItem {
@@ -219,8 +220,22 @@ class LiteRestLoadout {
   final _receipts = <LiteRestItem, int>{};
   final scrolls = <LiteScroll, int>{};
   final _forgeRanks = <LiteWeapon, int>{};
+  LiteWeaponFusion? _fusion;
+  LiteVampirePact? vampirePact;
+  int? _petTradeStage;
+  double get _vampireLifeScale => vampirePact == null ? 1 : .65;
+  double get _vampireMoveScale =>
+      vampirePact == LiteVampirePact.passo ? 1.45 : 1;
+  int lusierCards = 12;
+  double _lusierRecharge = 0;
   LiteLearnedArt? art;
   final _learnedArts = <LiteLearnedArt>{};
+  final _artTraining = <LiteLearnedArt, int>{};
+  int artTraining(LiteLearnedArt art) => _artTraining[art] ?? 0;
+  int artRank(LiteLearnedArt art, int level) =>
+      min(art.maxRank, art.rankAt(level) + artTraining(art));
+  double artRecovery(LiteLearnedArt art) =>
+      art.cooldown * (1 - .10 * artTraining(art));
   bool hasGrimoire = false;
   bool knowsArt(LiteLearnedArt entry) =>
       _learnedArts.contains(entry) || art == entry;
@@ -245,6 +260,10 @@ class LiteRestLoadout {
       _evolutions.isNotEmpty ||
       _receipts.isNotEmpty ||
       _forgeRanks.isNotEmpty ||
+      _fusion != null ||
+      vampirePact != null ||
+      _petTradeStage != null ||
+      lusierCards < 12 ||
       hasGrimoire ||
       art != null ||
       emberSpent ||
@@ -261,6 +280,8 @@ class LiteRestLoadout {
     if (_learnedArts.isNotEmpty)
       'learnedArts': _learnedArts.map((entry) => entry.name).toList(),
     if (art case final learned?) 'chosenArt': learned.name,
+    if (_artTraining.isNotEmpty)
+      'artTraining': _artTraining.map((art, rank) => MapEntry(art.name, rank)),
     if (artCooldown > 0) 'artCooldown': artCooldown,
     if (extraArtCooldown > 0) 'extraArtCooldown': extraArtCooldown,
     if (lunarPieces > 0) 'lunarPieces': lunarPieces,
@@ -270,6 +291,10 @@ class LiteRestLoadout {
       'evolutions': _evolutions.map((key, value) => MapEntry(key.name, value)),
     if (_receipts.isNotEmpty)
       'receipts': _receipts.map((key, value) => MapEntry(key.name, value)),
+    if (_fusion case final pair?) 'fusion': pair.frame,
+    if (vampirePact case final pact?) 'vampirePact': pact.name,
+    if (_petTradeStage case final floor?) 'petTradeStage': floor,
+    if (lusierCards < 12) 'lusierCards': [lusierCards, _lusierRecharge],
     if (_forgeRanks.isNotEmpty)
       'forge': _forgeRanks.map((weapon, rank) => MapEntry(weapon.name, rank)),
     if (scrolls.isNotEmpty)
@@ -282,6 +307,9 @@ class LiteRestLoadout {
   void restore(Object? data) {
     if (data is! Map) return;
     token = data['token'] == true;
+    _petTradeStage = data['petTradeStage'] is int
+        ? data['petTradeStage'] as int
+        : null;
     emberSpent = data['emberSpent'] == true;
     emberCooldown = _num(data['emberCooldown']).clamp(0, 1.45);
     art = LiteLearnedArt.values
@@ -300,6 +328,13 @@ class LiteRestLoadout {
       );
       if (art case final chosen?) _learnedArts.add(chosen);
     }
+    _artTraining.clear();
+    if (data['artTraining'] case final Map ranks) {
+      for (final spell in LiteLearnedArt.values.where(knowsArt)) {
+        final rank = _int(ranks[spell.name]).clamp(0, 2);
+        if (rank > 0) _artTraining[spell] = rank;
+      }
+    }
     artCooldown = _num(data['artCooldown']).clamp(0, 8);
     extraArtCooldown = _num(data['extraArtCooldown']).clamp(0, 8);
     lunarPieces = _int(data['lunarPieces']).clamp(0, 255);
@@ -316,6 +351,14 @@ class LiteRestLoadout {
     read('meals', _foodUntil, LiteRun.finalStage + 3);
     read('evolutions', _evolutions, 3);
     read('receipts', _receipts, 3);
+    _fusion = LiteWeaponFusion.read(data['fusion']);
+    vampirePact = LiteVampirePact.values
+        .where((choice) => choice.name == data['vampirePact'])
+        .firstOrNull;
+    if (data['lusierCards'] case final List cards when cards.length == 2) {
+      lusierCards = _int(cards[0]).clamp(0, 12);
+      _lusierRecharge = _num(cards[1]).clamp(0, 1);
+    }
     if (data['forge'] case final Map ranks) {
       for (final weapon in LiteWeapon.values) {
         final rank = _int(ranks[weapon.name]).clamp(0, 12);
@@ -342,6 +385,33 @@ extension LiteRestHub on LiteRun {
   static const grimoirePrice = 24;
   static const tutorDiscountPercent = 20;
 
+  LiteRestStation? restStationNearby([LiteCoopFighter? fighter]) {
+    if (!restHub || (fighter?.hp ?? hp) <= 0) return null;
+    final at = fighter?.position ?? position;
+    LiteRestStation? nearest;
+    var distance = 2.25;
+    for (final station in LiteRestStation.values) {
+      if (station == LiteRestStation.art && !artDealerOpen) continue;
+      final remaining = at.distanceTo(station.position);
+      if (remaining >= distance) continue;
+      nearest = station;
+      distance = remaining;
+    }
+    return nearest;
+  }
+
+  bool get partyHasSmith =>
+      hero == LiteHero.fabbro ||
+      coopFighters.any(
+        (fighter) => fighter.connected && fighter.hero == LiteHero.fabbro,
+      );
+
+  String restStationName(LiteRestStation station) => switch (station) {
+    LiteRestStation.forge when partyHasSmith => 'Forgia',
+    LiteRestStation.art when devilArtTutor => 'Istruttore di Art',
+    _ => station.label,
+  };
+
   bool get devilArtTutor {
     final random = _LiteRandom(seed ^ (stage * 10037) ^ 0x2f861);
     random.nextDouble();
@@ -351,6 +421,7 @@ extension LiteRestHub on LiteRun {
   bool hasTutorDiscount([LiteCoopFighter? fighter]) =>
       switch (fighter?.hero ?? hero) {
         LiteHero.cavaliereLunare ||
+        LiteHero.lupoDiVaitern ||
         LiteHero.demoneMinore ||
         LiteHero.demoneIntermedio ||
         LiteHero.demoneMaggiore ||
@@ -394,8 +465,10 @@ extension LiteRestHub on LiteRun {
 
   int restPrice(LiteRestItem item, {LiteCoopFighter? fighter}) {
     final kit = fighter?.supply ?? supply;
-    if (item.art != null) {
-      final price = item.basePrice + (kit.hasGrimoire ? 0 : grimoirePrice);
+    if (item.art case final art?) {
+      final price = kit.knowsArt(art)
+          ? (item.basePrice * .64).ceil() + kit.artTraining(art) * 26
+          : item.basePrice + (kit.hasGrimoire ? 0 : grimoirePrice);
       return hasTutorDiscount(fighter)
           ? (price * (100 - tutorDiscountPercent) / 100).round()
           : price;
@@ -415,7 +488,7 @@ extension LiteRestHub on LiteRun {
     final kit = fighter?.supply ?? supply;
     if (item.art case final art?) {
       return artDealerOpen &&
-          !kit.knowsArt(art) &&
+          (!kit.knowsArt(art) || kit.artTraining(art) < 2) &&
           (art != LiteLearnedArt.corruzione ||
               achievements.contains('baghest-sconfitto'));
     }
@@ -454,14 +527,26 @@ extension LiteRestHub on LiteRun {
     final kit = fighter?.supply ?? supply;
     final price = restPrice(item, fighter: fighter);
     final firstLesson = item.art != null && !kit.hasGrimoire;
+    final studying = item.art != null && kit.knowsArt(item.art!);
     if (item.art case final art?) {
-      kit
-        ..hasGrimoire = true
-        .._learnedArts.add(art)
-        ..art = art;
+      if (studying) {
+        kit._artTraining[art] = kit.artTraining(art) + 1;
+      } else {
+        kit
+          ..hasGrimoire = true
+          .._learnedArts.add(art)
+          ..art = art;
+      }
     } else if (item == LiteRestItem.tempra) {
       final blade = fighter?.weapon ?? weapon;
       kit._forgeRanks[blade] = kit.forgeRank(blade) + 1;
+      if (kit.forgeRank(blade) >= 3) {
+        achievements.add(
+          fighter == null
+              ? LiteRun.heroUnlockKey(LiteHero.fabbro)
+              : _fabbroUnlockKey(fighter.account),
+        );
+      }
     } else {
       final rank = item.evolution ? kit.rank(item) + 1 : 1;
       _grantRestItem(item, rank, kit, fighter, stage + 3);
@@ -475,6 +560,8 @@ extension LiteRestHub on LiteRun {
     final blade = fighter?.weapon ?? weapon;
     message = item == LiteRestItem.tempra
         ? '${blade.label} · Tempra ${kit.forgeRank(blade)}/12.'
+        : studying
+        ? 'Allenamento completato · Forma anticipata e recupero ridotto.'
         : firstLesson
         ? 'Grimorio aperto · ${item.label} appresa.'
         : '${item.label} acquistato.';
@@ -543,6 +630,13 @@ extension LiteRestHub on LiteRun {
   ) {
     if (item.meal) {
       kit._foodUntil[item] = foodUntil;
+      for (final ally in clones) {
+        if (ally.companion != null &&
+            ally.ownerId == (fighter?.id ?? 0) &&
+            ally.hp > 0) {
+          ally.hp = min(ally.maxHp, ally.hp + ally.maxHp * .20);
+        }
+      }
     } else if (item.evolution) {
       kit._evolutions[item] = rank;
     } else if (item == LiteRestItem.token) {
@@ -553,6 +647,7 @@ extension LiteRestHub on LiteRun {
         if (!ownedWeapons.contains(blade)) ownedWeapons.add(blade);
         weapon = blade;
       } else if (fighter.hero != LiteHero.doppelganger) {
+        fighter.ownedWeapons.add(blade);
         fighter.weapon = blade;
       }
     } else if (item.scroll case final scroll?) {

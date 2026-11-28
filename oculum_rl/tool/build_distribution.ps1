@@ -63,6 +63,7 @@ function ExportEdition([string]$Folder, [string]$Executable, [string]$Archive) {
       'data/flutter_assets/assets/oculum/lite/clonatrice-armi.png',
       'data/flutter_assets/assets/oculum/lite/clonatrice-volti.png',
       'data/flutter_assets/assets/oculum/lite/ashley-sprite.png',
+      'data/flutter_assets/assets/oculum/lite/ashley-camminata-ink.webp',
       'data/flutter_assets/assets/oculum/lite/arene-inchiostro.png',
       'data/flutter_assets/assets/oculum/lite/oggetti-inchiostro.png',
       'data/flutter_assets/assets/oculum/lite/curatore-e-combattenti.png',
