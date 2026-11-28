@@ -344,10 +344,11 @@ enum LiteHero {
     armadilloCorazzato =>
       'Dai il colpo di grazia a un Armadillo Corazzato in Foresta.',
     scostubanditoErrato =>
-      'Incontra lo Scostubandito errato durante la fuga dalla palizzata.',
+        'Incontra lo Scostubandito errato durante la fuga dalla palizzata.',
     scostubanditoVeteranoErrato =>
-      'Incontra lo Scostubandito veterano dell’errato durante la fuga.',
-    assassino => 'Fino al piano 3 abbatti in silenzio almeno un nemico per piano valido. Le stanze d’imboscata sono escluse.',
+        'Incontra lo Scostubandito veterano dell’errato durante la fuga.',
+    assassino =>
+      'Fino al piano 3 abbatti in silenzio almeno un nemico per piano valido. Le stanze d’imboscata sono escluse.',
     _ => null,
   };
 
@@ -363,14 +364,9 @@ enum LiteHero {
   bool get specialTalent =>
       this == LiteHero.scostubanditoErrato ||
       this == LiteHero.scostubanditoVeteranoErrato ||
-      sprite != null ||
-      this == curatorePeste ||
-      index >= pyrel.index;
+      sprite != null || this == curatorePeste || index >= pyrel.index;
 
-  LiteWeapon startingWeapon(
-    LiteWeapon choice, {
-    bool assassinTactical = false,
-  }) {
+  LiteWeapon startingWeapon(LiteWeapon choice, {bool assassinTactical = false}) {
     if (this == assassino && assassinTactical) {
       return LiteWeapon.pistolaRicognitore;
     }
@@ -1029,22 +1025,10 @@ enum LiteEnemyKind {
 }
 
 enum LiteCompanion {
-  errato(
-    'Scostubandito errato',
-    null,
-    LiteEnemyKind.scostubandito,
-    LiteWeapon.scettro,
-    65,
-    13,
-  ),
-  erratoVeterano(
-    'Scostubandito veterano dell’errato',
-    null,
-    LiteEnemyKind.scostubandito,
-    LiteWeapon.scettro,
-    105,
-    19,
-  ),
+  errato('Scostubandito errato', null, LiteEnemyKind.scostubandito,
+      LiteWeapon.scettro, 65, 13),
+  erratoVeterano('Scostubandito veterano dell’errato', null,
+      LiteEnemyKind.scostubandito, LiteWeapon.scettro, 105, 19),
   vedetta(
     'Vedetta Scostubandita',
     LiteEnemyKind.granScostumato,
@@ -1649,12 +1633,7 @@ class LiteEnemy {
   bool get banditWarden => _banditWarden;
 
   String get name => [
-    if (errato case final wrong?)
-      wrong.label
-    else if (_banditWarden)
-      'Gran Scostumato Elité'
-    else
-      fiveFlames ? 'Diavolo delle Cinque Fiamme' : kind.label,
+    if (errato case final wrong?) wrong.label else if (_banditWarden) 'Gran Scostumato Elité' else fiveFlames ? 'Diavolo delle Cinque Fiamme' : kind.label,
     if (exalted) 'Risvegliato',
     if (livery case final color?) color.label,
   ].join(' · ');
@@ -1702,10 +1681,7 @@ class LiteEnemy {
     'hp': hp,
     'hitFlash': hitFlash,
     if (guard case final senses?) 'guard': senses.frame,
-    if (errato case final wrong?) ...{
-      'errato': wrong.name,
-      'erratoWard': erratoWard,
-    },
+    if (errato case final wrong?) ...{'errato': wrong.name, 'erratoWard': erratoWard},
     if (stunned > 0) 'stun': stunned,
     if (muddied > 0) 'mud': muddied,
     if (shockSource case final source? when shockRemaining > 0) ...{
@@ -1761,9 +1737,7 @@ class LiteEnemy {
           _point(json['position']),
           max(1, _num(json['maxHp'], 1)),
         )
-        ..errato = LiteErrato.values
-            .where((kind) => kind.name == json['errato'])
-            .firstOrNull
+        ..errato = LiteErrato.values.where((kind) => kind.name == json['errato']).firstOrNull
         ..erratoWard = _num(json['erratoWard']).clamp(0.0, 1000)
         ..hp = _num(json['hp'])
         ..livery = LiteEnemyLivery.values
@@ -1772,8 +1746,7 @@ class LiteEnemy {
         ..profile = LiteEnemyProfile._read(json['attributes'])
         ..guard = LiteGuard.read(json['guard'])
         .._bunnysFacingRight = switch (json['bunnysFacingRight']) {
-          final bool facingRight
-              when json['kind'] == LiteEnemyKind.bunnys.name =>
+          final bool facingRight when json['kind'] == LiteEnemyKind.bunnys.name =>
             facingRight,
           _ => null,
         }
@@ -1788,8 +1761,7 @@ class LiteEnemy {
             : _point(json['shockSource'])
         ..cooldown = _num(json['cooldown'])
         ..windup = _num(json['windup'])
-        .._stormRevived =
-            json['kind'] == LiteEnemyKind.aerovyr.name &&
+        .._stormRevived = json['kind'] == LiteEnemyKind.aerovyr.name &&
             json['stormRevived'] == true
         .._readStormCue(json['stormCue'])
         ..combatCycle = _int(json['combatCycle'])
@@ -2627,11 +2599,10 @@ class LiteCoopFighter extends LiteClone {
     }
     return fighter
       ..hp = _num(data['hp'])
-      .._assassinQuiet = _num(data['assassinQuiet'])
-          .clamp(0, _assassinQuietDelay)
+      .._assassinQuiet = _num(data['assassinQuiet']).clamp(0, _assassinQuietDelay)
       .._assassinBox.restore(data['assassinBox'])
-      .._assassinSideBlade = _num(data['assassinSideBlade'])
-          .clamp(0, _assassinFollowThrough)
+      .._assassinSideBlade =
+          _num(data['assassinSideBlade']).clamp(0, _assassinFollowThrough)
       ..aim = _point(data['aim'])
       ..cooldown = _num(data['cooldown'])
       ..stride._restore(data['stride'], walking: data['strideWalking'])
@@ -3132,7 +3103,6 @@ class LiteRun {
     final ratio = source == null ? 1 : _rushDamageRatio(source);
     return (1 + challengeBonus(floor, kind).damage / 100) * ratio;
   }
-
   bool get hostDown => hp <= 0 && playerCount > 1;
   double get height => 22;
   int _permanent(LitePermanentUpgrade upgrade) => _profileBonus(upgrade, null);
@@ -3651,12 +3621,7 @@ class LiteRun {
       !restHub && !inSolarDungeon && achievements.contains(_secretRoomKey);
 
   bool get hasSecretRoom {
-    if (restHub ||
-        inSolarDungeon ||
-        goblinCamp ||
-        inDesertEye ||
-        inBanditEscape)
-      return false;
+    if (restHub || inSolarDungeon || goblinCamp || inDesertEye || inBanditEscape) return false;
     if (inThirdAct) {
       final index = thirdRoom - 1;
       return index % 6 == _secretSlot(57199, index ~/ 6, 6);
@@ -4161,8 +4126,7 @@ class LiteRun {
     final hueSeed = _LiteRandom(seed ^ (stage * 7919) ^ (ordinal * 461));
     final hueChance = hueSeed.nextInt(100);
     final livery =
-        alternateLivery &&
-            stage >= 4 &&
+        alternateLivery && stage >= 4 &&
             maxHp > 1 &&
             !kind.echo &&
             kind != LiteEnemyKind.luce &&
@@ -4179,8 +4143,7 @@ class LiteRun {
     final profile = LiteEnemyProfile.forKind(
       kind,
       difficulty,
-      originFloor:
-          originFloor ?? (inThirdAct ? lastStage + 1 + thirdRoom : stage),
+      originFloor: originFloor ?? (inThirdAct ? lastStage + 1 + thirdRoom : stage),
       champion: kind.elite || kind.boss,
       applyBalance: explorationRoutes && applyEnemyBalance && maxHealth == null,
     );
@@ -4189,10 +4152,7 @@ class LiteRun {
             ordinal,
             kind,
             p,
-            maxHp *
-                profile.lifeScale *
-                (livery?.lifeScale ?? 1) *
-                (fiveFlames ? 1.34 : 1),
+            maxHp * profile.lifeScale * (livery?.lifeScale ?? 1) * (fiveFlames ? 1.34 : 1),
           )
           ..profile = profile
           ..fiveFlames = fiveFlames
@@ -4531,10 +4491,8 @@ class LiteRun {
       }
       if (fighter._night.stun > 0 || fighter._night.bat > 0) continue;
       if (fighter._assassinSideBlade > 0) {
-        fighter._assassinSideBlade = max(
-          0,
-          fighter._assassinSideBlade - attackElapsed,
-        );
+        fighter._assassinSideBlade =
+            max(0, fighter._assassinSideBlade - attackElapsed);
         if (fighter._assassinSideBlade <= 1e-9) {
           fighter._assassinSideBlade = 0;
           if (fighter.hero == LiteHero.assassino &&
@@ -4612,7 +4570,8 @@ class LiteRun {
       );
       fighter.hp -= cost;
     }
-    if (fighter.hero == LiteHero.scostubandito && fighter._windup <= 0) {
+    if (fighter.hero == LiteHero.scostubandito &&
+        fighter._windup <= 0) {
       _banditPunch(
         fighter.position,
         fighter.aim,
@@ -4621,8 +4580,7 @@ class LiteRun {
         fighter.id,
       );
     }
-    if ((fighter.hero.specialTalent &&
-            fighter.hero != LiteHero.scostubandito) ||
+    if ((fighter.hero.specialTalent && fighter.hero != LiteHero.scostubandito) ||
         LiteErrato.forHero(fighter.hero) != null) {
       _npcTalent(fighter.aim, fighter);
     }
@@ -4661,8 +4619,11 @@ class LiteRun {
     fighter.firing = false;
     _openAssassinBox(fighter);
     final speed = attributeAttackSpeed(fighter);
-    fighter.cooldown =
-        _weaponRecovery(item, fighter.openCooldown, fighter.openGrade) / speed;
+    fighter.cooldown = _weaponRecovery(
+      item,
+      fighter.openCooldown,
+      fighter.openGrade,
+    ) / speed;
     if (item.moveset == LiteWeapon.arco && fighter._night.solarMace <= 0)
       fighter.arrows--;
     fighter._strike = fighter.aim;
@@ -4690,12 +4651,7 @@ class LiteRun {
   void _coopMainStrike(LiteCoopFighter fighter, Point<double> direction) {
     if (fighter.hero == LiteHero.assassino &&
         fighter.weapon == LiteWeapon.doppieLame) {
-      _assassinBlade(
-        fighter.position,
-        direction,
-        fighter,
-        followThrough: false,
-      );
+      _assassinBlade(fighter.position, direction, fighter, followThrough: false);
       fighter._assassinSideBlade =
           _assassinFollowThrough / attributeAttackSpeed(fighter);
       if (fighter._dashRemaining <= 0) {
@@ -4774,15 +4730,11 @@ class LiteRun {
   }) {
     final concealment = concealmentBushes.isNotEmpty;
     final veiled = _assassinVeiled;
-    final boxes =
-        assassinBoxActive ||
+    final boxes = assassinBoxActive ||
         coopFighters.any((fighter) => fighter.assassinBoxActive);
     final hostVisible = !hostDown && _night.bat <= 0 && !veiled;
-    if (hostVisible &&
-        !concealment &&
-        !boxes &&
-        clones.isEmpty &&
-        coopFighters.isEmpty) {
+    if (hostVisible && !concealment && !boxes &&
+        clones.isEmpty && coopFighters.isEmpty) {
       return position;
     }
     final observer = concealment || veiled || boxes
@@ -5152,12 +5104,7 @@ class LiteRun {
               followThrough: true,
             );
           } else {
-            _melee(
-              position,
-              _strikeDirection,
-              weapon,
-              _damageFor(weapon) * .56,
-            );
+            _melee(position, _strikeDirection, weapon, _damageFor(weapon) * .56);
           }
         } else {
           _weaponReleasedAt = time;
@@ -5353,32 +5300,32 @@ class LiteRun {
 
   double _guestWeaponDamage(LiteCoopFighter fighter, LiteWeapon item) =>
       (8 +
-              item.damageBonus.toDouble() +
-              fighter.permanentDamage +
-              2 * (fighter.level - 1)) *
-          (1 + .04 * fighter.supply.forgeRank(item)) *
-          _swordFusionDamage(item, fighter) *
-          fighter.supply._reysercthWeaponScale *
-          _assassinDamageScale(fighter.hero, item) *
-          (fighter.hero == LiteHero.cavaliereLunare &&
-                  item.moveset == LiteWeapon.spadaScudo
-              ? 2
-              : 1) +
+          item.damageBonus.toDouble() +
+          fighter.permanentDamage +
+          2 * (fighter.level - 1)) *
+      (1 + .04 * fighter.supply.forgeRank(item)) *
+      _swordFusionDamage(item, fighter) *
+      fighter.supply._reysercthWeaponScale *
+      _assassinDamageScale(fighter.hero, item) *
+      (fighter.hero == LiteHero.cavaliereLunare &&
+              item.moveset == LiteWeapon.spadaScudo
+          ? 2
+          : 1) +
       _attributeDamage(fighter);
 
   double _damageFor(LiteWeapon item) =>
       (8 +
-              2.0 * (level - 1) +
-              item.damageBonus +
-              _permanent(LitePermanentUpgrade.danni)) *
-          (1 + _power(LitePowerUp.lama)) *
-          (1 + .04 * supply.forgeRank(item)) *
-          _swordFusionDamage(item) *
-          supply._reysercthWeaponScale *
-          _assassinDamageScale(hero, item) *
-          (hero == LiteHero.cavaliereLunare && item == LiteWeapon.spadaScudo
-              ? 2
-              : 1) +
+          2.0 * (level - 1) +
+          item.damageBonus +
+          _permanent(LitePermanentUpgrade.danni)) *
+      (1 + _power(LitePowerUp.lama)) *
+      (1 + .04 * supply.forgeRank(item)) *
+      _swordFusionDamage(item) *
+      supply._reysercthWeaponScale *
+      _assassinDamageScale(hero, item) *
+      (hero == LiteHero.cavaliereLunare && item == LiteWeapon.spadaScudo
+          ? 2
+          : 1) +
       _attributeDamage();
 
   double _weaponRecovery(LiteWeapon item, double openCooldown, int grade) =>
@@ -5440,8 +5387,7 @@ class LiteRun {
   }
 
   bool attack(Point<double> target) {
-    if (banditRopes() > 0 ||
-        finished ||
+    if (banditRopes() > 0 || finished ||
         gripRemaining() > 0 ||
         _night.bat > 0 ||
         _night.stun > 0 ||
@@ -5707,8 +5653,8 @@ class LiteRun {
             : switch (item) {
                 LiteWeapon.falceRunica => LiteProjectileKind.scythe,
                 LiteWeapon.chakram => LiteProjectileKind.chakram,
-                LiteWeapon.fucileScostubandito ||
-                LiteWeapon.pistolaRicognitore => LiteProjectileKind.rifleBullet,
+                LiteWeapon.fucileScostubandito || LiteWeapon.pistolaRicognitore =>
+                  LiteProjectileKind.rifleBullet,
                 LiteWeapon.carabinaImpulsi => LiteProjectileKind.pulse,
                 LiteWeapon.balestraRunica => LiteProjectileKind.frostBolt,
                 _ => LiteProjectileKind.normal,
@@ -5943,8 +5889,7 @@ class LiteRun {
 
   bool dash(Point<double> target) {
     if (_banditEscape?.launches.containsKey(0) == true ||
-        banditRopes() > 0 ||
-        finished ||
+        banditRopes() > 0 || finished ||
         hostDown ||
         shopOpen ||
         _dashCooldown > 0 ||
@@ -5976,10 +5921,7 @@ class LiteRun {
   bool useOpen(Point<double> target) => _useOpen(target, null);
 
   bool _useOpen(Point<double> target, LiteCoopFighter? fighter) {
-    if (banditRopes(fighter) > 0 ||
-        soloOpenFrozen ||
-        openProtects(fighter?.id ?? 0))
-      return false;
+    if (banditRopes(fighter) > 0 || soloOpenFrozen || openProtects(fighter?.id ?? 0)) return false;
     final character = fighter?.hero ?? hero;
     final available = fighter?.oculum ?? oculum;
     if (finished ||
@@ -6437,8 +6379,7 @@ class LiteRun {
   }
 
   bool special(Point<double> target) {
-    if (banditRopes() > 0 || finished || shopOpen || clashDashing || blocking)
-      return false;
+    if (banditRopes() > 0 || finished || shopOpen || clashDashing || blocking) return false;
     if (hostDown) return false;
     lookAt(target);
     if (hero == LiteHero.scostubandito) {
@@ -6922,8 +6863,7 @@ class LiteRun {
       direction,
       LiteWeapon.guanti,
       damage,
-      reach:
-          reachScale *
+      reach: reachScale *
           switch (kind) {
             LiteEnemyKind.rasvyr => 3.0,
             LiteEnemyKind.babyForestDemon || LiteEnemyKind.orbryx => 2.5,
@@ -7622,9 +7562,7 @@ class LiteRun {
 
   void _checkArchonBreach(LiteEnemy boss) {
     if (boss.archonPhase != 2) return;
-    final quest = quests
-        .where((item) => item.id == 'p$stage:breccia')
-        .firstOrNull;
+    final quest = quests.where((item) => item.id == 'p$stage:breccia').firstOrNull;
     if (quest != null) _advanceMission(quest);
   }
 
@@ -7769,8 +7707,7 @@ class LiteRun {
       return;
     }
     boss.cooldown = max(0, boss.cooldown - elapsed);
-    final target =
-        copied != null &&
+    final target = copied != null &&
             copied.connected &&
             copied.hp > 0 &&
             !_boxHiddenFrom(copied.id, boss.id) &&
@@ -8174,9 +8111,7 @@ class LiteRun {
           speed: 7.2,
           remaining: 24,
           damage:
-              14 *
-              difficulty.enemyStrength *
-              _challengeDamageScale(boss.kind, source: boss),
+              14 * difficulty.enemyStrength * _challengeDamageScale(boss.kind, source: boss),
           fromEnemy: true,
           magic: true,
           kind: LiteProjectileKind.veyrthSphere,
@@ -8339,11 +8274,8 @@ class LiteRun {
     final direction = _unit(target - enemy.position);
     final kind = enemy.kind;
     final attackFloor = _rushOriginalFloor(enemy) ?? stage;
-    final scale =
-        difficulty.enemyStrength * (1 + .12 * max(0, attackFloor - 1));
-    final rawDamage =
-        enemy.attackDamage *
-        scale *
+    final scale = difficulty.enemyStrength * (1 + .12 * max(0, attackFloor - 1));
+    final rawDamage = enemy.attackDamage * scale *
         (1 + challengeBonus(attackFloor, kind).damage / 100) *
         _rushDamageRatio(enemy);
     final damage =
@@ -8489,17 +8421,14 @@ class LiteRun {
           LiteEnemyKind.ragnoSaldatore => 45,
           _ => 8.6,
         },
-        remaining:
-            (switch (kind) {
-              LiteEnemyKind.granScostumato => 16.0,
-              LiteEnemyKind.ragnoSaldatore => 10.0,
-              _ => 12.0,
-            }) *
-            (enemy.profile?.reachScale ?? 1),
+        remaining: (switch (kind) {
+          LiteEnemyKind.granScostumato => 16.0,
+          LiteEnemyKind.ragnoSaldatore => 10.0,
+          _ => 12.0,
+        }) * (enemy.profile?.reachScale ?? 1),
         damage: damage,
         fromEnemy: true,
-        banditCapture:
-            kind == LiteEnemyKind.scostubandito ||
+        banditCapture: kind == LiteEnemyKind.scostubandito ||
             kind == LiteEnemyKind.granScostumato,
         kind: switch (kind) {
           LiteEnemyKind.scostubandito => LiteProjectileKind.rifleBullet,
@@ -8640,8 +8569,7 @@ class LiteRun {
         !_lineBlocked(clone.position, enemy.position);
     final direction = _unit(enemy.position - clone.position);
     if (LiteErrato.forCompanion(clone.companion) case final wrong? when close) {
-      if (clone.cooldown == 0)
-        _erratoAllyStrike(clone, wrong, enemy, direction, training);
+      if (clone.cooldown == 0) _erratoAllyStrike(clone, wrong, enemy, direction, training);
       return;
     }
     final ranged =
@@ -8989,18 +8917,13 @@ class LiteRun {
           final subject = -clone.id - 2;
           if (projectile.hit.contains(subject)) continue;
           if (projectile.boomerang) projectile.hit.add(subject);
-          if (clone is LiteCoopFighter &&
-              _rollMateriaDodge(projectile, clone)) {
+          if (clone is LiteCoopFighter && _rollMateriaDodge(projectile, clone)) {
             continue;
           }
           if (projectile.kind == LiteProjectileKind.mud &&
               clone is LiteCoopFighter)
             clone._night.mud = .9;
-          _hitAlly(
-            clone,
-            projectile.damage,
-            banditShot: projectile.nonLethal || projectile.banditCapture,
-          );
+          _hitAlly(clone, projectile.damage, banditShot: projectile.nonLethal || projectile.banditCapture);
           if (!projectile.boomerang) {
             _stopProjectile(projectile);
             return;
@@ -9058,9 +8981,7 @@ class LiteRun {
           projectile.kind == LiteProjectileKind.normal &&
           _distanceSquared(projectile.origin, enemy.position) >
               _square(
-                projectile.origin.distanceTo(next) +
-                    projectile.remaining +
-                    1e-9,
+                projectile.origin.distanceTo(next) + projectile.remaining + 1e-9,
               )) {
         continue;
       }
@@ -9354,12 +9275,7 @@ class LiteRun {
     );
   }
 
-  void _hitAlly(
-    LiteClone clone,
-    double damage, {
-    bool banditShot = false,
-    bool banditCollision = false,
-  }) {
+  void _hitAlly(LiteClone clone, double damage, {bool banditShot = false, bool banditCollision = false}) {
     if (inExplorationAtrium(clone.position)) return;
     damage *= _floorDamageScale;
     if (clone is LiteCoopFighter) {
@@ -9367,8 +9283,7 @@ class LiteRun {
       if (clone.hero == LiteHero.assassino) {
         clone._assassinQuiet = _assassinQuietDelay;
       }
-      if (openProtects(clone.id) || (clone.protected && !banditCollision))
-        return;
+      if (openProtects(clone.id) || (clone.protected && !banditCollision)) return;
       if (damage > 0) _openAssassinBox(clone);
       if (clone.supply.fed(LiteRestItem.crosta, stage)) damage *= .80;
       if (clone._night.solarMantle > 0) damage *= .55;
@@ -9403,9 +9318,7 @@ class LiteRun {
       }
       if (clone.hp <= 0) _tryAnimalRebirth(clone);
       if (clone.hp <= 0) {
-        if (banditShot &&
-            _canBanditCapture() &&
-            hostDown &&
+        if (banditShot && _canBanditCapture() && hostDown &&
             coopFighters.every((fighter) => fighter.hp <= 0)) {
           _pendingBanditCapture = true;
         }
@@ -9607,8 +9520,7 @@ class LiteRun {
           ownerCanHeal
               ? _walking
               : attacker?._slow == true && attacker!._dashRemaining <= 0,
-          finisherAccount:
-              attacker?.account ??
+          finisherAccount: attacker?.account ??
               (ownerCanHeal ? _LiteAssassinStealth.host : null),
         );
     _recordImpact(
@@ -9963,11 +9875,7 @@ class LiteRun {
     loot.add(LiteLoot(enemy.position, LiteLootKind.weapon, 1, weapon: item));
   }
 
-  void _damagePlayer(
-    double damage, {
-    bool banditShot = false,
-    bool banditCollision = false,
-  }) {
+  void _damagePlayer(double damage, {bool banditShot = false, bool banditCollision = false}) {
     if (finished || hostDown || inExplorationAtrium(position)) return;
     if (hero == LiteHero.assassino) _assassinQuiet = _assassinQuietDelay;
     if (invulnerable && !banditCollision) return;
@@ -10211,11 +10119,7 @@ class LiteRun {
   }
 
   bool interact() {
-    if (fightBanditRopes() ||
-        shakeRedGrip() ||
-        enterBossRush() ||
-        challengeBaghest())
-      return true;
+    if (fightBanditRopes() || shakeRedGrip() || enterBossRush() || challengeBaghest()) return true;
     if (useRest()) return true;
     if (canOpenShop) {
       if (campPatrols &&
@@ -10755,8 +10659,7 @@ class LiteRun {
     if (run.hero == LiteHero.doppelganger)
       run._mimic = LiteMimicForm.read(json['mimic']);
     run.hp = _num(json['hp'], run.maxHp);
-    run._assassinQuiet = _num(json['assassinQuiet'])
-        .clamp(0, _assassinQuietDelay);
+    run._assassinQuiet = _num(json['assassinQuiet']).clamp(0, _assassinQuietDelay);
     run._assassinBox.restore(json['assassinBox']);
     run._rescueSnapshot = _readRescueStatus(json['rescue']);
     run.oculum = _num(json['oculum'], run.maxOculum);
