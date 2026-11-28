@@ -38,4 +38,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id || '' }}
           GH_REPO: ${{ github.repository }}
-        run: python scripts/publish_github_downloads.py "$SOURCE_RUN_ID"
+        run: python scripts/publish_github_downloads.py "$SOURCE_RUN_ID" --incremental-windows

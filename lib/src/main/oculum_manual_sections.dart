@@ -5,6 +5,24 @@ part of '../../main.dart';
 
 const List<ManualSection> oculumManualSections = [
   ManualSection(
+    titleIt: 'Passkey e cartelle delle campagne',
+    titleEn: 'Passkeys and campaign folders',
+    contentIt: r'''
+Puoi avviare Oculum, giocare e salvare in locale senza accedere. Se usi un account verificato e il dispositivo supporta le passkey, in Impostazioni apri Account Oculum e scegli Aggiungi una passkey. Per entrare successivamente usa Accedi con passkey. Il sistema presenta le opzioni disponibili, come impronta, volto oppure PIN. Annullare chiude il tentativo e conserva la sessione e i salvataggi.
+
+Un ospite online collega prima Google o conferma l’email sul profilo in uso. Così mantiene la stessa identità online e le schede associate. Poi può aggiungere una passkey.
+
+In Master, Sessione, Apri campagna, le campagne locali sono in alto. Altri dispositivi elenca le campagne Master sincronizzate dallo stesso account. La lista mostra i nomi. Per importare una campagna scegli esplicitamente una copia dal cloud. Le campagne condivise compaiono sotto il nome attuale del Master per chi ha ricevuto l’approvazione. La condivisione dal Master è esplicita e revocabile.
+''',
+    contentEn: r'''
+You can open Oculum, play, and save locally without signing in. On a device that supports passkeys, a verified account can choose Add a passkey in Settings, Oculum Account. Use Sign in with a passkey to return. The device presents its available verification options, such as fingerprint, face, or PIN. Canceling leaves the current session and saves intact.
+
+An online guest first links Google or confirms email on the current profile to keep the same online identity and associated sheets. They can then add a passkey.
+
+In Master, Session, Open campaign, local campaigns appear first. Other devices lists Master campaigns synced from the same account. The list shows their names. Choose a cloud copy explicitly to import a campaign. Shared campaigns are organized by their Master's current display name and are visible to approved players. The Master shares them explicitly and can revoke sharing.
+''',
+  ),
+  ManualSection(
     titleIt: 'Ricette dai mostri e fusione dal Fabbro',
     titleEn: 'Monster recipes and Blacksmith fusion',
     contentIt: r'''

@@ -25,7 +25,9 @@ dependencies:
   shared_preferences_platform_interface: 2.4.2
   shared_preferences_windows: 2.4.1
   pdf: ^3.11.3
-  supabase_flutter: ^2.12.4
+  supabase_flutter: ^2.16.0
+  passkeys_platform_interface: 2.11.0
+  passkeys_windows: 0.1.6
   flutter_secure_storage: 11.2.0
   pointycastle: 4.0.0
   google_sign_in: ^6.2.2

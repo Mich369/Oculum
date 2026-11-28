@@ -227,6 +227,17 @@ extension _OculumRewardSupportTracking on _OculumHomePageState {
         .where((token) => combatTokenMatchesSheet(token, target))
         .firstOrNull;
     if (attacker == null || defender == null) return;
+    bool matchesFight(Map<String, dynamic> token, String requestKey) {
+      final recorded = '${request[requestKey] ?? ''}';
+      final current =
+          '${token['fightInstanceId'] ?? group['rewardFightInstanceId'] ?? ''}';
+      return recorded.isEmpty || recorded == current;
+    }
+
+    if (!matchesFight(attacker, 'sourceFightInstance') ||
+        !matchesFight(defender, 'targetFightInstance')) {
+      return;
+    }
     final receipt = request['damageReceipt'] as Map;
     if (group['combatEnded'] != true &&
         readIntValue(receipt['hpLost']) > 0 &&

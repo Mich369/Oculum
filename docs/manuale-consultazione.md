@@ -2,6 +2,14 @@
 
 Esportato dal manuale interno dell’app. Per le correzioni più recenti consultare prima [il registro delle regole confermate](OCULUM_REGOLE_CONFERMATE.md). Non modificare questa copia: aggiornare il sorgente e riesportare.
 
+## Passkey e cartelle delle campagne
+
+Puoi avviare Oculum, giocare e salvare in locale senza accedere. Se usi un account verificato e il dispositivo supporta le passkey, in Impostazioni apri Account Oculum e scegli Aggiungi una passkey. Per entrare successivamente usa Accedi con passkey. Il sistema presenta le opzioni disponibili, come impronta, volto oppure PIN. Annullare chiude il tentativo e conserva la sessione e i salvataggi.
+
+Un ospite online collega prima Google o conferma l’email sul profilo in uso. Così mantiene la stessa identità online e le schede associate. Poi può aggiungere una passkey.
+
+In Master, Sessione, Apri campagna, le campagne locali sono in alto. Altri dispositivi elenca le campagne Master sincronizzate dallo stesso account. La lista mostra i nomi. Per importare una campagna scegli esplicitamente una copia dal cloud. Le campagne condivise compaiono sotto il nome attuale del Master per chi ha ricevuto l’approvazione. La condivisione dal Master è esplicita e revocabile.
+
 ## Ricette dai mostri e fusione dal Fabbro
 
 Ogni mostro ucciso può lasciare una ricetta aggiuntiva con il 25% di probabilità. Il destinatario riceve insieme la ricetta e il 25–75% dei grammi richiesti, prelevati dalle quantità mancanti. Tra le ricette visibili, di grado utilizzabile e ancora da imparare, il Fight dà priorità agli elementi e all’equipaggiamento del personaggio e ai materiali utili alle ricette preferite. Apri la ricetta dall’inventario con Leggi. Vale il normale apprendimento del party. KO, evocazioni e allenamenti non danno questo bottino.

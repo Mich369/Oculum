@@ -47,7 +47,12 @@ jobs:
             "--dart-define=OculumSupabaseUrl=${OCULUM_SUPABASE_URL}" \
             "--dart-define=OculumSupabasePublishableKey=${OCULUM_SUPABASE_PUBLISHABLE_KEY}"
       - name: Version published scripts
-        run: python3 -c "from pathlib import Path; import os; [p.write_text(p.read_text().replace('__OCULUM_BUILD__', os.environ['OCULUM_SOURCE_COMMIT'])) for p in [Path('build/web/index.html'), Path('build/web/flutter_bootstrap.js')]]"
+        run: |
+          if [ -f scripts/stamp_oculum_web.py ]; then
+            python3 scripts/stamp_oculum_web.py "$OCULUM_SOURCE_COMMIT"
+          else
+            python3 -c "from pathlib import Path; import os; [p.write_text(p.read_text().replace('__OCULUM_BUILD__', os.environ['OCULUM_SOURCE_COMMIT'])) for p in [Path('build/web/index.html'), Path('build/web/flutter_bootstrap.js')]]"
+          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web

@@ -11,10 +11,151 @@ class OculumAppUpdate {
     required this.bytes,
     required this.runId,
     this.changes = const [],
+    this.incremental,
   });
   final String commit, url, sha256;
   final int bytes, runId;
   final List<String> changes;
+  final OculumIncrementalUpdateReference? incremental;
+}
+
+class OculumIncrementalUpdateReference {
+  const OculumIncrementalUpdateReference({
+    required this.url,
+    required this.bytes,
+    required this.sha256,
+    required this.packageUrl,
+    required this.packageBytes,
+    required this.packageSha256,
+    required this.edition,
+  });
+
+  final String url, sha256, packageUrl, packageSha256, edition;
+  final int bytes, packageBytes;
+}
+
+OculumIncrementalUpdateReference? _incrementalReference(
+  Map group,
+  Iterable<Map> entries,
+  String artifact,
+  int run,
+) {
+  final edition = switch (artifact) {
+    'Oculum-Windows' => 'normal',
+    'Oculum-Test-Windows' => 'test',
+    _ => null,
+  };
+  final raw = group['incremental'];
+  if (edition == null || raw is! List) return null;
+  final options = raw.whereType<Map>().where(
+    (item) => item['artifact'] == artifact,
+  );
+  final packages = entries.where(
+    (entry) => entry['name'] == '$artifact-Folder',
+  );
+  if (options.length != 1 || packages.length != 1) return null;
+  final option = options.single;
+  final package = packages.single;
+  final base =
+      'https://github.com/Mich369/Oculum/releases/download/oculum-build-$run';
+  final url = '$base/$artifact-Incrementale.json';
+  final packageUrl = '$base/$artifact-Folder.zip';
+  final bytes = option['bytes'];
+  final packageBytes = package['bytes'];
+  final hashPattern = RegExp(r'^sha256:[a-f0-9]{64}$');
+  final hash = '${option['sha256']}';
+  final packageHash = '${package['sha256']}';
+  if (option['edition'] != edition ||
+      option['url'] != url ||
+      package['url'] != packageUrl ||
+      bytes is! int ||
+      bytes <= 0 ||
+      bytes > 12 * 1024 * 1024 ||
+      packageBytes is! int ||
+      packageBytes <= 0 ||
+      packageBytes >= 2 * 1024 * 1024 * 1024 ||
+      !hashPattern.hasMatch(hash) ||
+      !hashPattern.hasMatch(packageHash)) {
+    return null;
+  }
+  return OculumIncrementalUpdateReference(
+    url: url,
+    bytes: bytes,
+    sha256: hash.substring(7),
+    packageUrl: packageUrl,
+    packageBytes: packageBytes,
+    packageSha256: packageHash.substring(7),
+    edition: edition,
+  );
+}
+
+Future<({String url, int bytes, String sha256})?>
+oculumFindInstalledWindowsManifest(
+  http.Client client,
+  String edition, {
+  String currentCommit = oculumSourceCommit,
+}) async {
+  if (!RegExp(r'^[a-f0-9]{40}$').hasMatch(currentCommit) ||
+      !const ['normal', 'test'].contains(edition)) {
+    return null;
+  }
+  const api = 'https://api.github.com/repos/Mich369/Oculum';
+  Future<Map?> read(String path) async {
+    final response = await client
+        .get(
+          Uri.parse('$api/$path'),
+          headers: const {'Accept': 'application/vnd.github+json'},
+        )
+        .timeout(const Duration(seconds: 8));
+    return response.statusCode == 200 ? jsonDecode(response.body) as Map : null;
+  }
+
+  try {
+    final runs = (await read(
+      'actions/workflows/build_distribution.yml/runs'
+      '?head_sha=$currentCommit&branch=main&status=success&per_page=5',
+    ))?['workflow_runs'];
+    if (runs is! List) return null;
+    for (final run in runs.whereType<Map>()) {
+      final id = run['id'];
+      if (id is! int ||
+          id <= 0 ||
+          run['head_sha'] != currentCommit ||
+          run['head_branch'] != 'main' ||
+          run['conclusion'] != 'success') {
+        continue;
+      }
+      final release = await read('releases/tags/oculum-build-$id');
+      final assets = release?['assets'];
+      if (release?['target_commitish'] != currentCommit ||
+          release?['draft'] != false ||
+          assets is! List) {
+        continue;
+      }
+      final name = edition == 'test'
+          ? 'Oculum-Test-Windows-Incrementale.json'
+          : 'Oculum-Windows-Incrementale.json';
+      final url =
+          'https://github.com/Mich369/Oculum/releases/download/oculum-build-$id/$name';
+      for (final asset in assets.whereType<Map>().where(
+        (item) => item['name'] == name,
+      )) {
+        final bytes = asset['size'];
+        final hash = '${asset['digest']}';
+        if (asset['state'] == 'uploaded' &&
+            asset['browser_download_url'] == url &&
+            bytes is int &&
+            bytes > 0 &&
+            bytes <= 12 * 1024 * 1024 &&
+            RegExp(r'^sha256:[a-f0-9]{64}$').hasMatch(hash)) {
+          return (url: url, bytes: bytes, sha256: hash.substring(7));
+        }
+      }
+    }
+  } catch (_) {
+    // A missing historical index never authorizes a removal.
+  }
+  return null;
 }
 
 Future<OculumAppUpdate?> oculumCheckAppUpdate(
@@ -95,6 +236,7 @@ Future<OculumAppUpdate?> oculumCheckAppUpdate(
         sha256: hash,
         bytes: bytes,
         runId: run,
+        incremental: _incrementalReference(group, entries, artifact, run),
         changes: (group['changes'] as List? ?? [])
             .whereType<String>()
             .map((s) => s.trim())

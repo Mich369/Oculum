@@ -325,6 +325,24 @@ class OculumAuthPanel extends StatelessWidget {
                   auth: auth,
                 ),
                 const SizedBox(height: 10),
+                if (auth.showPasskeySignIn) ...[
+                  OutlinedButton.icon(
+                    key: const ValueKey('oculum-passkey-sign-in'),
+                    onPressed: auth.isBusy ? null : auth.signInWithPasskey,
+                    icon: const Icon(Icons.vpn_key_outlined),
+                    label: const Text('Accedi con passkey'),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (auth.showPasskeyRegistration) ...[
+                  OutlinedButton.icon(
+                    key: const ValueKey('oculum-passkey-register'),
+                    onPressed: auth.isBusy ? null : auth.registerPasskey,
+                    icon: const Icon(Icons.vpn_key_outlined),
+                    label: const Text('Aggiungi passkey'),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 if (!state.isAuthenticated) ...[
                   _ProviderButton(
                     label: 'Google',
@@ -386,7 +404,8 @@ class OculumAuthPanel extends StatelessWidget {
                       OutlinedButton.icon(
                         onPressed: auth.isBusy
                             ? null
-                            : () => _showCloudSaves(context, auth, state.userId!),
+                            : () =>
+                                  _showCloudSaves(context, auth, state.userId!),
                         icon: const Icon(Icons.folder_outlined),
                         label: const Text('Salvataggi cloud'),
                       ),
@@ -402,7 +421,9 @@ class OculumAuthPanel extends StatelessWidget {
                         icon: const Icon(Icons.close),
                         label: const Text('Annulla'),
                       ),
-                    if (!auth.isBusy && state.errorMessage != null)
+                    if (!auth.isBusy &&
+                        state.errorMessage != null &&
+                        auth.canRetryProviderSignIn)
                       TextButton.icon(
                         onPressed: auth.retryLastSignIn,
                         icon: const Icon(Icons.refresh),

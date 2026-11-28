@@ -1,5 +1,13 @@
 # Registro cumulativo per i giocatori
 
+## Passkey, campagne e aggiornamenti più piccoli — 28 novembre 2026
+
+- Gioco e salvataggi locali restano disponibili senza account. Le passkey usano la finestra di sicurezza del dispositivo nelle piattaforme compatibili. Un ospite online collega prima Google o conferma l’email sullo stesso account.
+- In **Master → Sessione → Apri campagna**, **Altri dispositivi** raccoglie le campagne Master pubblicate dallo stesso account. Più sotto, le campagne condivise con te sono raggruppate per Master. Il nome della cartella si aggiorna con il nome visibile del Master.
+- **Aggiorna Oculum** confronta i file realmente installati su Windows. Mostra quanti file cambiano e quanto pesa il download. Puoi saltare le versioni intermedie. Windows e Windows Test hanno manifest distinti e resta disponibile il pacchetto completo.
+- Su Android la preparazione dell’APK firmato si svolge in background e l’app distingue la richiesta di autorizzazione dall’apertura dell’installer. La versione web controlla che il sito aggiornato sia pubblicato prima di ricaricarlo.
+- Una ricevuta con l’identificatore di un Fight precedente non viene attribuita al colpo finale del Fight corrente. I vecchi salvataggi senza quell’identificatore restano leggibili.
+
 ## Mappe esagonali, Fight online e salvataggi cloud — 28 novembre 2026
 
 - In **Impostazioni → Account Oculum → Salvataggi cloud** puoi consultare copie distinte per PC, Telefono, Web e Origine sconosciuta. Salva una copia o scegline una da ripristinare. L’app verifica prima un backup locale.

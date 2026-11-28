@@ -20,6 +20,8 @@ const _extraArtifactNames = <String>[
   'Oculum-UI-Catture',
   'Oculum-Verifica-Mostri',
 ];
+const _windowsIncrementalBootstrapName =
+    'Oculum-Aggiornamento-Incrementale-Windows';
 
 const oculumCumulativeUpdateLogUrl =
     'https://github.com/Mich369/Oculum/blob/main/docs/REGISTRO_AGGIORNAMENTI.md';
@@ -90,9 +92,27 @@ Future<List<OculumDownloadArtifact>> oculumFetchDownloadArtifacts(
       );
     }
     if (_requiredArtifactNames.every(found.containsKey)) {
+      final bootstrap = group['windowsIncrementalBootstrap'];
+      final bootstrapUrl =
+          'https://github.com/Mich369/Oculum/releases/download/oculum-build-$runId/$_windowsIncrementalBootstrapName.zip';
+      final bootstrapBytes = bootstrap is Map ? bootstrap['bytes'] : null;
+      final verifiedBootstrap =
+          bootstrap is Map &&
+          bootstrap['name'] == _windowsIncrementalBootstrapName &&
+          bootstrap['url'] == bootstrapUrl &&
+          bootstrapBytes is int &&
+          bootstrapBytes > 0 &&
+          bootstrapBytes <= 512 * 1024 &&
+          RegExp(r'^sha256:[a-f0-9]{64}$').hasMatch('${bootstrap['sha256']}');
       return [
         for (final name in [..._requiredArtifactNames, ..._extraArtifactNames])
           if (found.containsKey(name)) found[name]!,
+        if (verifiedBootstrap)
+          OculumDownloadArtifact(
+            'Aggiornamento incrementale Windows',
+            bootstrapBytes,
+            Uri.parse(bootstrapUrl),
+          ),
       ];
     }
   }

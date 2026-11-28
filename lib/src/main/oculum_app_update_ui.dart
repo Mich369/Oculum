@@ -2,6 +2,211 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+class _OculumWindowsUpdatePlan {
+  const _OculumWindowsUpdatePlan(this.work, this.config, this.preview);
+
+  final Directory work;
+  final Map<String, Object> config;
+  final Map<String, dynamic> preview;
+
+  int get files => preview['downloadCount'] as int;
+  int get bytes => preview['downloadBytes'] as int;
+  int get changed => preview['changedCount'] as int;
+  int get removed => preview['removeCount'] as int;
+  bool get isNoOp => changed == 0 && removed == 0;
+
+  static String _digest(Uint8List bytes) => SHA256Digest()
+      .process(bytes)
+      .map((value) => value.toRadixString(16).padLeft(2, '0'))
+      .join();
+
+  static Future<void> _runDriver(Directory work, String mode) async {
+    final result = await Process.run('powershell.exe', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-File',
+      '${work.path}/incremental_driver.ps1',
+      '-Mode',
+      mode,
+      '-ConfigPath',
+      '${work.path}/incremental-config.json',
+    ]);
+    if (result.exitCode != 0) {
+      throw StateError(
+        mode == 'Plan'
+            ? 'Non è stato possibile confrontare i file installati.'
+            : 'Download incrementale interrotto. Puoi riprovare o scegliere il pacchetto completo.',
+      );
+    }
+  }
+
+  static Future<void> _downloadIndex(
+    http.Client client,
+    File file,
+    String url,
+    int size,
+    String checksum,
+  ) async {
+    final response = await client
+        .send(http.Request('GET', Uri.parse(url)))
+        .timeout(const Duration(seconds: 25));
+    if (response.statusCode != 200) throw StateError('Indice non disponibile.');
+    final output = file.openWrite();
+    var length = 0;
+    try {
+      await output.addStream(
+        response.stream.timeout(const Duration(seconds: 30)).map((chunk) {
+          length += chunk.length;
+          if (length > size) {
+            throw StateError('Indice oltre la dimensione attesa.');
+          }
+          return chunk;
+        }),
+      );
+    } finally {
+      await output.close();
+    }
+    await oculumVerifyUpdateArchive(
+      file.path,
+      expectedBytes: size,
+      expectedSha256: checksum,
+    );
+  }
+
+  static Future<_OculumWindowsUpdatePlan> prepare(
+    http.Client client,
+    OculumAppUpdate update,
+  ) async {
+    final reference = update.incremental!;
+    final cache = await getApplicationCacheDirectory();
+    final work = await cache.createTemp('oculum-update-${update.runId}-');
+    final manifest = File('${work.path}/incremental-target.json');
+    final helper = File('${work.path}/oculum_incremental_windows.ps1');
+    final code = await rootBundle.load(
+      'assets/update/oculum_incremental_windows.ps1',
+    );
+    final bytes = code.buffer.asUint8List(
+      code.offsetInBytes,
+      code.lengthInBytes,
+    );
+    final helperSha = _digest(bytes);
+    await helper.writeAsBytes(bytes, flush: true);
+    await File('${work.path}/incremental_driver.ps1').writeAsString(
+      await rootBundle.loadString('assets/update/incremental_driver.ps1'),
+      flush: true,
+    );
+    await _downloadIndex(
+      client,
+      manifest,
+      reference.url,
+      reference.bytes,
+      reference.sha256,
+    );
+    final executable = File(Platform.resolvedExecutable).absolute.path;
+    final cacheId = _digest(
+      utf8.encode(
+        '${executable.toLowerCase()}\n${reference.edition}\n${reference.sha256}',
+      ),
+    );
+    final config = <String, Object>{
+      'work': work.absolute.path,
+      'executable': executable,
+      'commit': update.commit,
+      'edition': reference.edition,
+      'incrementalManifest': manifest.absolute.path,
+      'incrementalManifestSha256': reference.sha256,
+      'incrementalHelper': helper.absolute.path,
+      'incrementalHelperSha256': helperSha,
+      'incrementalPlan': '${work.path}/incremental-stage.json',
+      'incrementalRunId': update.runId,
+      'incrementalPackageUrl': reference.packageUrl,
+      'incrementalPackageBytes': reference.packageBytes,
+      'incrementalPackageSha256': reference.packageSha256,
+      'incrementalCachedObjectsRoot':
+          '${cache.path}${Platform.pathSeparator}oculum-update-objects-$cacheId',
+    };
+    final previous = await oculumFindInstalledWindowsManifest(
+      client,
+      reference.edition,
+    );
+    if (previous != null) {
+      final source = File('${work.path}/incremental-source.json');
+      try {
+        await _downloadIndex(
+          client,
+          source,
+          previous.url,
+          previous.bytes,
+          previous.sha256,
+        );
+        config['incrementalSourceManifest'] = source.absolute.path;
+        config['incrementalSourceManifestSha256'] = previous.sha256;
+        config['incrementalSourceCommit'] = oculumSourceCommit;
+      } catch (_) {
+        // A legacy version without a verifiable index can still update the
+        // managed destination, while all obsolete paths are left alone.
+      }
+    }
+    await File(
+      '${work.path}/incremental-config.json',
+    ).writeAsString(jsonEncode(config), flush: true);
+    await _runDriver(work, 'Plan');
+    final raw = await File(
+      '${work.path}/incremental-preview.json',
+    ).readAsString();
+    final preview =
+        jsonDecode(raw.replaceFirst('\uFEFF', '')) as Map<String, dynamic>;
+    if (preview['commit'] != update.commit ||
+        preview['edition'] != reference.edition ||
+        ['downloadCount', 'downloadBytes', 'changedCount', 'removeCount'].any((
+          key,
+        ) {
+          final value = preview[key];
+          return value is! int || value < 0;
+        })) {
+      throw StateError('Piano di aggiornamento non valido.');
+    }
+    return _OculumWindowsUpdatePlan(work, config, preview);
+  }
+
+  Future<String> stage() async {
+    await _runDriver(work, 'Stage');
+    final raw = await File(
+      '${work.path}/incremental-stage.json',
+    ).readAsString();
+    final receipt = jsonDecode(raw.replaceFirst('\uFEFF', '')) as Map;
+    final name = '${receipt['runtimeDirectoryName']}';
+    if (!RegExp(r'^incremental-runtime-[a-f0-9]{32}$').hasMatch(name)) {
+      throw StateError('Cartella di installazione incrementale non valida.');
+    }
+    return '${work.path}${Platform.pathSeparator}$name';
+  }
+}
+
+String _oculumUpdateMegabytes(int bytes) =>
+    '${(bytes / 1000000).toStringAsFixed(2)} MB';
+
+Future<bool> _oculumWebBuildIsPublished(
+  http.Client client,
+  String commit,
+) async {
+  try {
+    final marker = Uri.base
+        .resolve('oculum-build.json')
+        .replace(queryParameters: {'version': commit});
+    final response = await client
+        .get(marker)
+        .timeout(const Duration(seconds: 8));
+    if (response.statusCode != 200 || response.body.length > 256) return false;
+    final payload = jsonDecode(response.body);
+    return payload is Map && payload['commit'] == commit;
+  } catch (_) {
+    return false;
+  }
+}
+
 extension _OculumAppUpdateUi on _OculumHomePageState {
   void scheduleOculumStartupLog() {
     if (oculumStartupLogPending || oculumStartupLogChecked) return;
@@ -86,6 +291,7 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
 
   Future<void> checkOculumUpdateAutomatically() async {
     if (oculumSmokeStorageActive) return;
+    if (!kIsWeb && Platform.isIOS) return;
     if (!mounted ||
         oculumSourceCommit.isEmpty ||
         oculumUpdateBusy ||
@@ -115,6 +321,11 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
         return;
       }
 
+      if (kIsWeb && !await _oculumWebBuildIsPublished(client, update.commit)) {
+        return;
+      }
+      if (!mounted) return;
+
       oculumUpdateNotifiedCommit = update.commit;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -140,12 +351,23 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
   Future<void> checkAndInstallOculumUpdate() async {
     if (oculumSmokeStorageActive) return;
     if (oculumUpdateBusy) return;
+    if (!kIsWeb && Platform.isIOS) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Su iPhone aggiorna Oculum dallo stesso canale da cui l’hai installato.',
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => oculumUpdateBusy = true);
 
     final client = http.Client();
 
     Directory? staging;
+    _OculumWindowsUpdatePlan? windowsPlan;
     OculumAppUpdate? selectedUpdate;
     var stage = 'checking';
     final progress = ValueNotifier<({String message, double? value})>((
@@ -197,41 +419,98 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
         return;
       }
 
-      final confirm = await showDialog<bool>(
+      if (kIsWeb && !await _oculumWebBuildIsPublished(client, update.commit)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'I download sono pronti. La nuova versione del sito è ancora in pubblicazione.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
+
+      var incrementalUnavailable = false;
+      if (!kIsWeb && Platform.isWindows && update.incremental != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Confronto dei file di Oculum installati…'),
+          ),
+        );
+        try {
+          windowsPlan = await _OculumWindowsUpdatePlan.prepare(client, update);
+        } catch (_) {
+          incrementalUnavailable = true;
+        }
+        if (!mounted) return;
+      }
+      final plan = windowsPlan;
+      if (plan?.isNoOp == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'I file installati corrispondono già alla versione verificata.',
+            ),
+          ),
+        );
+        return;
+      }
+      final fullSize = _oculumUpdateMegabytes(update.bytes);
+      final description = kIsWeb
+          ? 'Salva e ricarica il sito.'
+          : plan != null
+          ? '${plan.changed} file da aggiornare, ${plan.removed} obsoleti da rimuovere. '
+                'Download di ${plan.files} file per ${_oculumUpdateMegabytes(plan.bytes)}.'
+          : Platform.isAndroid
+          ? 'Scarica 1 pacchetto ($fullSize) e apre la conferma Android per l’APK firmato.'
+          : '${incrementalUnavailable ? 'Confronto incrementale non disponibile. ' : ''}'
+                'Scarica 1 pacchetto completo ($fullSize) e conserva un backup del runtime.';
+      final confirm = await showDialog<String>(
         context: context,
         builder: (d) => AlertDialog(
           title: const Text('Aggiorna Oculum'),
           content: SingleChildScrollView(
             child: Text(
-              'Nuova versione ${update.commit.substring(0, 7)}. ${kIsWeb
-                  ? 'Salva e ricarica il sito.'
-                  : Platform.isAndroid
-                  ? 'Scarica il pacchetto verificato e apre la conferma Android.'
-                  : 'Scarica e verifica i file, conserva un backup del runtime e riavvia Oculum.'} I salvataggi vengono conservati.',
+              'Nuova versione ${update.commit.substring(0, 7)}. $description '
+              'I salvataggi vengono conservati.',
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(d, false),
+              onPressed: () => Navigator.pop(d),
               child: const Text('Dopo'),
             ),
+            if (plan != null)
+              TextButton(
+                onPressed: () => Navigator.pop(d, 'full'),
+                child: Text('Pacchetto intero ($fullSize)'),
+              ),
             FilledButton(
-              onPressed: () => Navigator.pop(d, true),
-              child: const Text('Aggiorna ora'),
+              onPressed: () =>
+                  Navigator.pop(d, plan == null ? 'full' : 'incremental'),
+              child: Text(
+                plan == null ? 'Aggiorna ora' : 'Scarica le modifiche',
+              ),
             ),
           ],
         ),
       );
 
-      if (confirm != true || !mounted) return;
+      if (confirm == null || !mounted) return;
+      final incremental = confirm == 'incremental' ? plan : null;
 
       if (!kIsWeb) {
         final cache = await getApplicationCacheDirectory();
         // Every retry owns fresh files; a previous helper or partial download
         // can never share its archive, config, status or extraction directory.
-        staging = await Directory(
-          cache.path,
-        ).createTemp('oculum-update-${update.runId}-');
+        staging =
+            incremental?.work ??
+            await Directory(
+              cache.path,
+            ).createTemp('oculum-update-${update.runId}-');
         await File(
           '${cache.path}/oculum-update-latest-${oculumUsesIsolatedSaveProfile ? 'test' : 'normal'}.json',
         ).writeAsString(
@@ -331,65 +610,74 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       }
 
       final archive = File('${staging!.path}/release.zip');
+      String? incrementalRuntime;
 
-      await reportStage('downloading', 'Download del pacchetto…', value: 0);
-
-      final request = await client
-          .send(http.Request('GET', Uri.parse(update.url)))
-          .timeout(const Duration(seconds: 30));
-
-      if (request.statusCode != 200) {
-        throw StateError('Download non disponibile (${request.statusCode}).');
-      }
-
-      var received = 0;
-      final sink = archive.openWrite();
-      final downloadClock = Stopwatch()..start();
-      var lastProgress = -100;
-
-      try {
-        await sink.addStream(
-          request.stream.timeout(const Duration(seconds: 60)).map((chunk) {
-            received += chunk.length;
-            if (received > update.bytes) {
-              throw StateError('Dimensione del pacchetto non valida.');
-            }
-            if (downloadClock.elapsedMilliseconds - lastProgress >= 100) {
-              progress.value = (
-                message:
-                    'Download: ${(received / 1048576).toStringAsFixed(1)} / ${(update.bytes / 1048576).toStringAsFixed(1)} MB',
-                value: received / update.bytes,
-              );
-              lastProgress = downloadClock.elapsedMilliseconds;
-            }
-            return chunk;
-          }),
+      if (incremental != null) {
+        await reportStage(
+          'downloading',
+          'Download e verifica dei file modificati…',
         );
-        await sink.flush();
-      } finally {
-        await sink.close();
-      }
+        incrementalRuntime = await incremental.stage();
+      } else {
+        await reportStage('downloading', 'Download del pacchetto…', value: 0);
 
-      if (received != update.bytes) {
-        throw StateError(
-          'Integrità del pacchetto non valida. Nessun file installato.',
+        final request = await client
+            .send(http.Request('GET', Uri.parse(update.url)))
+            .timeout(const Duration(seconds: 30));
+
+        if (request.statusCode != 200) {
+          throw StateError('Download non disponibile (${request.statusCode}).');
+        }
+
+        var received = 0;
+        final sink = archive.openWrite();
+        final downloadClock = Stopwatch()..start();
+        var lastProgress = -100;
+
+        try {
+          await sink.addStream(
+            request.stream.timeout(const Duration(seconds: 60)).map((chunk) {
+              received += chunk.length;
+              if (received > update.bytes) {
+                throw StateError('Dimensione del pacchetto non valida.');
+              }
+              if (downloadClock.elapsedMilliseconds - lastProgress >= 100) {
+                progress.value = (
+                  message:
+                      'Download: ${(received / 1048576).toStringAsFixed(1)} / ${(update.bytes / 1048576).toStringAsFixed(1)} MB',
+                  value: received / update.bytes,
+                );
+                lastProgress = downloadClock.elapsedMilliseconds;
+              }
+              return chunk;
+            }),
+          );
+          await sink.flush();
+        } finally {
+          await sink.close();
+        }
+
+        if (received != update.bytes) {
+          throw StateError(
+            'Integrità del pacchetto non valida. Nessun file installato.',
+          );
+        }
+
+        await reportStage(
+          'verifying',
+          'Verifica SHA-256 del pacchetto…',
+          value: 0,
+        );
+        await oculumVerifyUpdateArchive(
+          archive.path,
+          expectedBytes: update.bytes,
+          expectedSha256: update.sha256,
+          onProgress: (bytes, total) => progress.value = (
+            message: 'Verifica SHA-256: ${(100 * bytes / total).floor()}%',
+            value: bytes / total,
+          ),
         );
       }
-
-      await reportStage(
-        'verifying',
-        'Verifica SHA-256 del pacchetto…',
-        value: 0,
-      );
-      await oculumVerifyUpdateArchive(
-        archive.path,
-        expectedBytes: update.bytes,
-        expectedSha256: update.sha256,
-        onProgress: (bytes, total) => progress.value = (
-          message: 'Verifica SHA-256: ${(100 * bytes / total).floor()}%',
-          value: bytes / total,
-        ),
-      );
 
       // The download may take minutes while online state changes. Persist and
       // verify again before an installer exists; a refused write must leave the
@@ -410,7 +698,9 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
 
       await config.writeAsString(
         jsonEncode({
-          'archive': archive.absolute.path,
+          if (incremental == null) 'archive': archive.absolute.path,
+          if (incremental != null) ...incremental.config,
+          'incrementalRuntime': ?incrementalRuntime,
           'work': staging.absolute.path,
           'executable': executable,
           'pid': pid,
@@ -424,13 +714,21 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       );
 
       if (Platform.isAndroid) {
-        await const MethodChannel(
+        final installerStatus = await const MethodChannel(
           'com.mich.oculum/update',
-        ).invokeMethod<void>('installApk', {'archive': archive.path});
+        ).invokeMethod<String>('installApk', {'archive': archive.path});
+        if (installerStatus != 'installer_opened' &&
+            installerStatus != 'installer_permission_required') {
+          throw StateError(
+            'Impossibile confermare lo stato dell’installazione Android.',
+          );
+        }
 
         await reportStage(
-          'installer_opened',
-          'Conferma di installazione Android aperta.',
+          installerStatus!,
+          installerStatus == 'installer_permission_required'
+              ? 'Android richiede l’autorizzazione a installare Oculum.'
+              : 'Conferma di installazione Android aperta.',
         );
         // Android has already copied and verified the separate APK it opens.
         // The downloaded ZIP is owned by this attempt and is no longer needed.

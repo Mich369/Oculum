@@ -6,6 +6,11 @@ const _campaignMonsterBookFields = [
   'monsterBookCustomEntries',
   'monsterBookRemovedIds',
 ];
+const _campaignDirectoryOwnerKey = 'campaignDirectoryOwnerId';
+final _campaignDirectoryOwner = Expando<String>();
+final _campaignDirectoryServices = Expando<OculumCampaignDirectoryService>();
+final _campaignDirectoryRoomCleanup = Expando<VoidCallback>();
+final _campaignDirectoryRenameTimers = Expando<Map<String, Timer>>();
 
 Map<String, dynamic> _campaignMonsterBookJson(
   Map<String, dynamic> campaign,
@@ -34,6 +39,528 @@ Map<String, dynamic> _campaignMonsterBookJson(
 }
 
 extension _OculumCampaigns on _OculumHomePageState {
+  String? get campaignDirectoryAccountId {
+    if (oculumSmokeStorageActive) return null;
+    final auth = OculumAuthService.instance;
+    final state = auth.state;
+    return state.canSyncToCloud && !state.isOffline && auth.hasVerifiedEmail
+        ? state.userId
+        : null;
+  }
+
+  OculumCampaignDirectoryService get _campaignDirectoryService =>
+      _campaignDirectoryServices[this] ??= OculumCampaignDirectoryService(
+        Supabase.instance.client,
+      );
+
+  bool _campaignDirectoryAuthorized(String accountId) =>
+      mounted && campaignDirectoryAccountId == accountId;
+
+  void disposeCampaignDirectory() {
+    _campaignDirectoryRoomCleanup[this]?.call();
+    _campaignDirectoryRoomCleanup[this] = null;
+    _campaignDirectoryServices[this]?.dispose();
+    _campaignDirectoryServices[this] = null;
+    for (final timer
+        in _campaignDirectoryRenameTimers[this]?.values ?? const <Timer>[]) {
+      timer.cancel();
+    }
+    _campaignDirectoryRenameTimers[this] = null;
+  }
+
+  Future<void> _publishMasterCampaigns(
+    String accountId, {
+    bool allowEmpty = false,
+  }) async {
+    if (!_campaignDirectoryAuthorized(accountId) || !datiCaricati) return;
+    try {
+      await _campaignDirectoryService.replaceDeviceCampaigns(
+        accountId: accountId,
+        platform: oculumClientPlatformLabel(),
+        allowEmpty: allowEmpty,
+        campaigns: [
+          for (final campaign in campagneOculum)
+            if (campaign[_campaignDirectoryOwnerKey] == accountId &&
+                campaign['id'] is String &&
+                '${campaign['id']}'.isNotEmpty)
+              OculumOwnCampaignLabel(
+                ownerId: accountId,
+                campaignId: campaign['id'] as String,
+                campaignName: '${campaign['name'] ?? ''}',
+              ),
+        ],
+      );
+    } catch (_) {
+      // Runs alongside local saves; retry when the directory is next opened.
+    }
+  }
+
+  bool get _isMasterForCampaignDirectory => realtimeService?.isConnected == true
+      ? realtimeAuthenticatedMaster
+      : realtimeWantsMasterRole;
+
+  String? _activeCampaignShareRoom(String? accountId) {
+    final service = realtimeService;
+    if (accountId == null ||
+        _campaignDirectoryOwner[this] != accountId ||
+        !realtimeAuthenticatedMaster ||
+        service == null ||
+        service.authenticatedUserId != accountId) {
+      return null;
+    }
+    return RegExp(
+      r'^oculum_secure_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$',
+    ).firstMatch(service.channelName)?.group(1);
+  }
+
+  Future<void> _attachActiveMasterCampaign(String accountId) async {
+    if (!_campaignDirectoryAuthorized(accountId) ||
+        !_isMasterForCampaignDirectory ||
+        _campaignDirectoryOwner[this] != null) {
+      return;
+    }
+    final id = activeCampaignId;
+    final name = activeCampaignName();
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(t('Collegare questa campagna?', 'Link this campaign?')),
+        content: Text(
+          t(
+            'Il nome di «$name» comparirà tra le tue campagne sugli altri dispositivi collegati a questo account.',
+            '“$name” will appear in your campaign list on other devices signed in to this account.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(t('Collega', 'Link')),
+          ),
+        ],
+      ),
+    );
+    if (approved != true ||
+        !_campaignDirectoryAuthorized(accountId) ||
+        activeCampaignId != id ||
+        !_isMasterForCampaignDirectory ||
+        _campaignDirectoryOwner[this] != null) {
+      return;
+    }
+    setState(() {
+      _campaignDirectoryOwner[this] = accountId;
+      saveActiveCampaignInMemory();
+    });
+    await salvaDatiSoloLocale();
+    if (!salvataggioBloccatoPerErrore) await _publishMasterCampaigns(accountId);
+  }
+
+  void _campaignDirectoryNotice(String text) {
+    if (mounted) {
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(text)));
+    }
+  }
+
+  Future<void> _openSharedCampaignRoom(
+    String accountId,
+    OculumSharedCampaign row,
+  ) async {
+    if (!_campaignDirectoryAuthorized(accountId)) return;
+    if (realtimeConnected || realtimeConnecting) {
+      _campaignDirectoryNotice(
+        t(
+          'Scollega la stanza attuale prima di aprirne un’altra.',
+          'Disconnect the current room before opening another one.',
+        ),
+      );
+      return;
+    }
+    final code = row.roomCode;
+    if (code.isEmpty) return;
+    _campaignDirectoryRoomCleanup[this]?.call();
+    final auth = OculumAuthService.instance;
+    final previousRoom = realtimeRoomController.text;
+    late final VoidCallback accountChanged;
+    void stopPrefill() => auth.removeListener(accountChanged);
+    accountChanged = () {
+      final state = auth.state;
+      if (state.userId == accountId &&
+          state.isAuthenticated &&
+          !state.isGuest) {
+        return;
+      }
+      stopPrefill();
+      _campaignDirectoryRoomCleanup[this] = null;
+      if (mounted && realtimeRoomController.text == code) {
+        realtimeRoomController.clear();
+        realtimeRoomPasswordController.clear();
+      }
+    };
+    if (previousRoom != code) {
+      realtimeRoomPasswordController.clear();
+    }
+    realtimeRoomController.text = code;
+    _campaignDirectoryRoomCleanup[this] = () {
+      stopPrefill();
+      if (mounted &&
+          realtimeRoomController.text == code &&
+          !realtimeConnected &&
+          !realtimeConnecting) {
+        realtimeRoomController.text = previousRoom;
+      }
+    };
+    auth.addListener(accountChanged);
+    await vaiAllaFunzione(
+      page: _OculumHomePageState.onlinePageIndex,
+      anchorId: 'online_root',
+    );
+  }
+
+  Future<void> _setListedCampaignShare(String accountId, bool share) async {
+    final room = _activeCampaignShareRoom(accountId);
+    final campaignId = activeCampaignId;
+    final campaignName = activeCampaignName();
+    if (!_campaignDirectoryAuthorized(accountId) || room == null) return;
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(
+          share
+              ? t('Condividere la campagna?', 'Share the campaign?')
+              : t('Revocare la condivisione?', 'Revoke sharing?'),
+        ),
+        content: Text(
+          share
+              ? t(
+                  'Chi è autorizzato a entrare nella stanza vedrà «$campaignName» nelle proprie campagne condivise.',
+                  'Players authorized to enter this room will see “$campaignName” among their shared campaigns.',
+                )
+              : t(
+                  'La campagna sparirà dalle cartelle condivise. Gestisci gli accessi alla stanza da Online.',
+                  'The campaign will disappear from shared folders. Manage room access in Online.',
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(
+              share ? t('Condividi', 'Share') : t('Revoca', 'Revoke'),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (approved != true ||
+        !_campaignDirectoryAuthorized(accountId) ||
+        _activeCampaignShareRoom(accountId) != room ||
+        activeCampaignId != campaignId) {
+      return;
+    }
+    await _campaignDirectoryService.shareCampaign(
+      accountId: accountId,
+      roomId: room,
+      campaignId: campaignId,
+      campaignName: campaignName,
+      shared: share,
+    );
+  }
+
+  Future<void> _editCampaignMasterDisplayName(String accountId) async {
+    if (!_campaignDirectoryAuthorized(accountId)) return;
+    var value = realtimeNameController.text.trim();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(t('Nome Master visibile', 'Visible Master name')),
+        content: TextFormField(
+          initialValue: value,
+          maxLength: 60,
+          decoration: InputDecoration(
+            labelText: t(
+              'Nome nelle cartelle condivise',
+              'Name in shared folders',
+            ),
+          ),
+          onChanged: (text) => value = text.trim(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: Text(t('Annulla', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (value.isNotEmpty) Navigator.pop(dialog, value);
+            },
+            child: Text(t('Salva', 'Save')),
+          ),
+        ],
+      ),
+    );
+    if (name != null && _campaignDirectoryAuthorized(accountId)) {
+      await _campaignDirectoryService.setMasterDisplayName(
+        accountId: accountId,
+        displayName: name,
+      );
+    }
+  }
+
+  Future<void> _recoverOwnedCampaign(
+    String accountId,
+    OculumOtherDeviceCampaign row,
+  ) async {
+    if (!_campaignDirectoryAuthorized(accountId) || !datiCaricati) return;
+    final auth = OculumAuthService.instance;
+    final cloud = OculumCloudSaveService.instance;
+    final folder = OculumCloudSaveFolder.forOrigin(row.platform);
+    final metadata = cloud
+        .listFolder(accountId, folder)
+        .then<List<OculumCloudSaveSummary>?>(
+          (copies) => copies,
+          onError: (Object error, StackTrace stack) => null,
+        );
+    final copyId = await showDialog<String>(
+      context: context,
+      builder: (dialog) => ListenableBuilder(
+        listenable: auth,
+        builder: (context, _) => AlertDialog(
+          scrollable: true,
+          title: Text(
+            t('Recupera una copia della campagna', 'Recover a campaign copy'),
+          ),
+          content: !_campaignDirectoryAuthorized(accountId)
+              ? Text(
+                  t(
+                    'L’account è cambiato. Riapri Campagne.',
+                    'The account changed. Reopen Campaigns.',
+                  ),
+                )
+              : FutureBuilder<List<OculumCloudSaveSummary>?>(
+                  future: metadata,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const LinearProgressIndicator();
+                    }
+                    if (!snapshot.hasData) {
+                      return Text(
+                        t('Copie non disponibili.', 'Backups are unavailable.'),
+                      );
+                    }
+                    final items = snapshot.data!;
+                    if (items.isEmpty) {
+                      return Text(
+                        t(
+                          'Nessuna copia cloud per questo tipo di dispositivo.',
+                          'There are no cloud backups for this type of device.',
+                        ),
+                      );
+                    }
+                    final dates = MaterialLocalizations.of(context);
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t(
+                            'Scegli una copia di ${row.campaignName}. Verrà aggiunta tra le campagne locali con un nuovo ID.',
+                            'Choose a backup for ${row.campaignName}. The copy will be added to local campaigns with a new ID.',
+                          ),
+                        ),
+                        for (final copy in items)
+                          ListTile(
+                            key: ValueKey(copy.id),
+                            title: Text(
+                              dates.formatCompactDate(copy.updatedAt.toLocal()),
+                            ),
+                            subtitle: Text(
+                              dates.formatTimeOfDay(
+                                TimeOfDay.fromDateTime(
+                                  copy.updatedAt.toLocal(),
+                                ),
+                              ),
+                            ),
+                            trailing: const Icon(Icons.add),
+                            onTap: () => Navigator.pop(dialog, copy.id),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: Text(t('Chiudi', 'Close')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (copyId == null ||
+        !_campaignDirectoryAuthorized(accountId) ||
+        salvataggioBloccatoPerErrore ||
+        !datiCaricati) {
+      return;
+    }
+    final payload = await cloud.fetchSnapshotForRestore(accountId, copyId);
+    if (!_campaignDirectoryAuthorized(accountId) ||
+        salvataggioBloccatoPerErrore) {
+      return;
+    }
+    final rawCampaigns = payload?['campaigns'];
+    final matches = rawCampaigns is List
+        ? rawCampaigns
+              .whereType<Map>()
+              .where(
+                (campaign) =>
+                    campaign['id'] == row.campaignId &&
+                    campaign[_campaignDirectoryOwnerKey] == accountId &&
+                    campaign['schedePersonaggio'] is List,
+              )
+              .toList(growable: false)
+        : const <Map>[];
+    if (matches.length != 1) {
+      _campaignDirectoryNotice(
+        t(
+          'Questa copia non contiene la campagna collegata al tuo account.',
+          'This backup does not contain the campaign linked to your account.',
+        ),
+      );
+      return;
+    }
+    final recovered = Map<String, dynamic>.from(matches.single);
+    final recoveryId = generateCampaignId();
+    recovered
+      ..remove(_campaignDirectoryOwnerKey)
+      ..['id'] = recoveryId
+      ..['name'] = t(
+        '${row.campaignName} (Copia)',
+        '${row.campaignName} (Copy)',
+      );
+    setState(() => campagneOculum.add(recovered));
+    await salvaDatiSoloLocale();
+    if (!mounted) return;
+    if (salvataggioBloccatoPerErrore) {
+      setState(
+        () => campagneOculum.removeWhere(
+          (campaign) => campaign['id'] == recoveryId,
+        ),
+      );
+      _campaignDirectoryNotice(
+        t(
+          'Salvataggio della copia non confermato.',
+          'The copy was not confirmed saved.',
+        ),
+      );
+      return;
+    }
+    if (_campaignDirectoryAuthorized(accountId)) {
+      _campaignDirectoryNotice(
+        t(
+          'Copia aggiunta alle campagne locali.',
+          'Copy added to local campaigns.',
+        ),
+      );
+    }
+  }
+
+  void _scheduleCampaignDirectoryRename() {
+    final account = campaignDirectoryAccountId;
+    if (account == null || _campaignDirectoryOwner[this] != account) return;
+    final campaignId = activeCampaignId;
+    final timers = _campaignDirectoryRenameTimers[this] ??= {};
+    timers.remove(campaignId)?.cancel();
+    timers[campaignId] = Timer(const Duration(milliseconds: 2100), () async {
+      timers.remove(campaignId);
+      if (!_campaignDirectoryAuthorized(account)) return;
+      final snapshot = campagneOculum
+          .where(
+            (campaign) =>
+                campaign['id'] == campaignId &&
+                campaign[_campaignDirectoryOwnerKey] == account,
+          )
+          .firstOrNull;
+      if (snapshot == null) return;
+      await salvaDatiSoloLocale();
+      if (!_campaignDirectoryAuthorized(account) ||
+          salvataggioBloccatoPerErrore ||
+          !campagneOculum.any(
+            (campaign) =>
+                campaign['id'] == campaignId &&
+                campaign[_campaignDirectoryOwnerKey] == account &&
+                campaign['name'] == snapshot['name'],
+          )) {
+        return;
+      }
+      unawaited(_publishMasterCampaigns(account));
+      try {
+        await _campaignDirectoryService.renameOwnedCampaignShare(
+          accountId: account,
+          campaignId: campaignId,
+          campaignName: '${snapshot['name'] ?? ''}',
+        );
+      } catch (_) {
+        // The local rename remains usable while the directory is unavailable.
+      }
+    });
+  }
+
+  Widget _campaignDirectoryPanel() => ListenableBuilder(
+    listenable: OculumAuthService.instance,
+    builder: (context, _) {
+      final account = campaignDirectoryAccountId;
+      final ownsActive =
+          account != null && _campaignDirectoryOwner[this] == account;
+      final activeRoom = _activeCampaignShareRoom(account);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (account != null &&
+              _isMasterForCampaignDirectory &&
+              _campaignDirectoryOwner[this] == null)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                onPressed: () => _attachActiveMasterCampaign(account),
+                icon: const Icon(Icons.link),
+                label: Text(
+                  t(
+                    'Collega campagna al tuo account',
+                    'Link campaign to your account',
+                  ),
+                ),
+              ),
+            ),
+          OculumCampaignDirectoryPanel(
+            accountChanges: OculumAuthService.instance,
+            currentAccountId: () => campaignDirectoryAccountId,
+            load: (owner) {
+              unawaited(_publishMasterCampaigns(owner));
+              return _campaignDirectoryService.list(accountId: owner);
+            },
+            openOwn: _recoverOwnedCampaign,
+            openShared: _openSharedCampaignRoom,
+            english: linguaInglese,
+            accent: tertiaryColor,
+            activeCampaignId: activeCampaignId,
+            activeShareRoomId: activeRoom,
+            setSharing: activeRoom == null ? null : _setListedCampaignShare,
+            renameMaster: ownsActive && _isMasterForCampaignDirectory
+                ? _editCampaignMasterDisplayName
+                : null,
+          ),
+        ],
+      );
+    },
+  );
+
   String generateCampaignId() {
     return 'camp_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(999999)}';
   }
@@ -48,6 +575,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     return <String, dynamic>{
       'id': activeCampaignId.isEmpty ? generateCampaignId() : activeCampaignId,
       'name': activeCampaignName(),
+      _campaignDirectoryOwnerKey: ?_campaignDirectoryOwner[this],
       'monsterBookCustomEntries': monsterBookCustomEntries
           .map((entry) => entry.toJson())
           .toList(growable: false),
@@ -261,6 +789,9 @@ extension _OculumCampaigns on _OculumHomePageState {
     }
     sheetSidebarRevision.value++;
     activeCampaignId = '${campaign['id'] ?? generateCampaignId()}';
+    final boundOwner = campaign[_campaignDirectoryOwnerKey];
+    _campaignDirectoryOwner[this] =
+        boundOwner is String && boundOwner.isNotEmpty ? boundOwner : null;
     sessionMaterialsByMaster.clear();
     final sessionMaterials = campaign['sessionMaterialByMaster'];
     if (sessionMaterials is Map) {
@@ -440,6 +971,7 @@ extension _OculumCampaigns on _OculumHomePageState {
   void ensureCampaignsReady() {
     if (activeCampaignId.isEmpty) {
       activeCampaignId = generateCampaignId();
+      _campaignDirectoryOwner[this] = null;
     }
     if (campaignNameController.text.trim().isEmpty) {
       campaignNameController.text = 'Campagna principale';
@@ -458,10 +990,14 @@ extension _OculumCampaigns on _OculumHomePageState {
     saveActiveCampaignInMemory();
 
     final newId = generateCampaignId();
+    final directoryOwner = _isMasterForCampaignDirectory
+        ? campaignDirectoryAccountId
+        : null;
     final emptySheet = statoVuotoPersonaggio(nome: '???');
 
     setState(() {
       activeCampaignId = newId;
+      _campaignDirectoryOwner[this] = directoryOwner;
       restoreMonsterBookCustomization(const {});
       sessionMaterialsByMaster.clear();
       campaignNameController.text = name;
@@ -486,6 +1022,9 @@ extension _OculumCampaigns on _OculumHomePageState {
     });
 
     await salvaDatiSoloLocale();
+    if (directoryOwner != null && !salvataggioBloccatoPerErrore) {
+      unawaited(_publishMasterCampaigns(directoryOwner));
+    }
   }
 
   Future<void> deleteActiveCampaignPermanently() async {
@@ -520,6 +1059,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       ),
     );
     if (confirmed != true || !mounted) return;
+    final directoryOwner = _campaignDirectoryOwner[this];
 
     salvaSchedaCorrenteInMemoria();
     saveActiveCampaignInMemory();
@@ -529,6 +1069,7 @@ extension _OculumCampaigns on _OculumHomePageState {
       );
       if (campagneOculum.isEmpty) {
         activeCampaignId = generateCampaignId();
+        _campaignDirectoryOwner[this] = null;
         restoreMonsterBookCustomization(const {});
         sessionMaterialsByMaster.clear();
         campaignNameController.text = t('Campagna principale', 'Main campaign');
@@ -551,6 +1092,9 @@ extension _OculumCampaigns on _OculumHomePageState {
       aggiungiLog(risultato);
     });
     await salvaDatiSoloLocale();
+    if (directoryOwner != null && !salvataggioBloccatoPerErrore) {
+      unawaited(_publishMasterCampaigns(directoryOwner, allowEmpty: true));
+    }
   }
 
   Future<void> switchCampaign(String campaignId) async {
@@ -861,6 +1405,7 @@ extension _OculumCampaigns on _OculumHomePageState {
     salvaSchedaCorrenteInMemoria();
     saveActiveCampaignInMemory();
     await salvaDatiSoloLocale();
+    _scheduleCampaignDirectoryRename();
   }
 
   Future<void> requestKickSheet({
@@ -1152,6 +1697,7 @@ extension _OculumCampaigns on _OculumHomePageState {
             onChanged: (value) {
               campaignNameController.text = value;
               saveActiveCampaignInMemory();
+              _scheduleCampaignDirectoryRename();
             },
           ),
           const SizedBox(height: 10),
@@ -1169,6 +1715,7 @@ extension _OculumCampaigns on _OculumHomePageState {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            key: ValueKey(('local-campaigns', activeCampaignId)),
             isExpanded: true,
             initialValue:
                 campagneOculum.any(
@@ -1190,6 +1737,8 @@ extension _OculumCampaigns on _OculumHomePageState {
               if (value != null) switchCampaign(value);
             },
           ),
+          const SizedBox(height: 8),
+          _campaignDirectoryPanel(),
           const SizedBox(height: 12),
           Row(
             children: [

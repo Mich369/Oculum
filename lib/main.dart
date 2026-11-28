@@ -47,6 +47,8 @@ import 'services/oculum_rebirth_rules.dart';
 import 'services/oculum_memory_inspiration.dart';
 import 'services/oculum_auth_ui.dart';
 import 'services/oculum_cloud_save_service.dart';
+import 'services/oculum_campaign_directory.dart';
+import 'services/oculum_campaign_directory_ui.dart';
 import 'services/oculum_realtime_service.dart';
 import 'services/oculum_save_profile.dart';
 import 'services/oculum_smoke_storage.dart';
@@ -4277,6 +4279,7 @@ class _OculumHomePageState extends State<OculumHomePage>
 
   @override
   void dispose() {
+    disposeCampaignDirectory();
     cancelPendingSheetRollReview();
     oculumSheetRelicSelections.removeListener(onSheetRelicChanged);
     _appFeedbackHost?.detach(sheetFeedback);

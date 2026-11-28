@@ -49,7 +49,8 @@ class WindowsUpdateTests(unittest.TestCase):
         subprocess.run([str(COMPILER), "/nologo", "/target:winexe", f"/out:{folder/name}", str(code)], check=True, capture_output=True)
 
     def exercise(self, edition="normal", unsafe=False, missing=None, crash=False,
-                 retry=False, held_instance=False, locked_dll=False, wrong_ack=False):
+                 retry=False, held_instance=False, locked_dll=False, wrong_ack=False,
+                 linked_local_data=False):
         BUILD.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="update-fixture-", dir=BUILD) as name:
             root = Path(name).resolve()
@@ -66,7 +67,28 @@ class WindowsUpdateTests(unittest.TestCase):
                     file.parent.mkdir(parents=True, exist_ok=True)
                     file.write_text(value)
             (source / "data/approved-scene.png").write_bytes(b"new-approved-scene")
+            (target / "data/approved-scene.png").write_bytes(b"old-approved-scene")
             (target / "data/old-scene.png").write_bytes(b"old-scene")
+            local = target / "data/local/player-map.json"
+            local.parent.mkdir()
+            local.write_text('{"keep":"local VTT map"}')
+            if linked_local_data:
+                other = root / "independent-local-folder"
+                other.mkdir()
+                (other / "local.json").write_text("external fixture")
+                link = target / "data/linked-local"
+                link_argument = "'" + str(link).replace("'", "''") + "'"
+                target_argument = "'" + str(other).replace("'", "''") + "'"
+                junction = subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+                     f"New-Item -ItemType Junction -Path {link_argument} -Target {target_argument}"],
+                    capture_output=True, text=True, timeout=15,
+                )
+                if junction.returncode:
+                    error = junction.stderr.casefold()
+                    if any(text in error for text in ("permissiondenied", "unauthorizedaccess", "accesso negato", "access is denied")):
+                        self.skipTest("The environment does not permit a junction in the Windows fixture")
+                    self.fail(junction.stdout + junction.stderr)
             sentinel = target / "user-save.json"; sentinel.write_text('{"keep":"all saves"}')
             if missing:
                 (source / missing).unlink()
@@ -131,6 +153,7 @@ class WindowsUpdateTests(unittest.TestCase):
                 # Acknowledged fixtures exit themselves; never terminate an app.
                 time.sleep(1.6)
             self.assertEqual(sentinel.read_text(), '{"keep":"all saves"}')
+            self.assertEqual(local.read_text(), '{"keep":"local VTT map"}')
             status = json.loads((work/"update-status.json").read_text(encoding="utf-8-sig"))
             if unsafe or missing or crash or held_instance or locked_dll:
                 self.assertTrue(archive.is_file())
@@ -153,7 +176,14 @@ class WindowsUpdateTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertEqual((target/"flutter_windows.dll").read_text(), "new-runtime")
                 self.assertEqual((target/"data/approved-scene.png").read_bytes(), b"new-approved-scene")
-                self.assertFalse((target/"data/old-scene.png").exists())
+                self.assertEqual((target/"data/old-scene.png").read_bytes(), b"old-scene")
+                self.assertEqual(
+                    (Path(status["backup"])/"data/approved-scene.png").read_bytes(),
+                    b"old-approved-scene",
+                )
+                if linked_local_data:
+                    self.assertFalse(link.exists())
+                    self.assertEqual((other / "local.json").read_text(), "external fixture")
                 self.assertEqual((Path(status["backup"])/"flutter_windows.dll").read_text(), "previous-runtime")
                 self.assertEqual((work/"result.txt").read_text().strip(), "success")
                 self.assertEqual(status["state"], "success")
@@ -177,6 +207,8 @@ class WindowsUpdateTests(unittest.TestCase):
 
     def test_normal_replaces_entire_runtime_and_requires_startup_ack(self): self.exercise()
     def test_test_edition_keeps_its_executable_and_saves(self): self.exercise("test")
+    def test_full_update_preserves_ordinary_local_data_without_copying_junctions(self):
+        self.exercise(linked_local_data=True)
     def test_path_traversal_cannot_replace_runtime(self): self.exercise(unsafe=True)
     def test_incomplete_runtime_never_replaces_installed_files(self):
         for path in REQUIRED:

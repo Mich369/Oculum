@@ -4,13 +4,19 @@ I [download pubblici](https://github.com/Mich369/Oculum/releases/tag/oculum-down
 
 ## Aggiornamento dall’app
 
-Salva la sessione e usa **Aggiorna Oculum**. Il pacchetto viene scaricato e verificato prima dell’installazione. Su Windows chiudi anche eventuali altre finestre di Oculum che usano la stessa cartella: l’aggiornamento le attende, senza terminarle forzatamente. Il nuovo aggiornamento conserva il runtime precedente e conferma il successo soltanto quando la nuova app ha avviato il primo fotogramma con il commit e l’edizione attesi.
+Salva la sessione e usa **Aggiorna Oculum**. Su Windows puoi vedere quali file cambiano e la dimensione del download prima di scegliere **Scarica le modifiche**. Il confronto controlla i file presenti anche se hai saltato più versioni. Puoi scegliere **Pacchetto intero** dalla stessa finestra. Chiudi anche eventuali altre finestre di Oculum che usano la stessa cartella. L’aggiornamento le attende e conserva un backup del runtime. Conferma il successo quando la nuova app ha aperto il primo fotogramma con il commit e l’edizione attesi.
 
 Un messaggio di download completato non prova che la versione sia stata sostituita. Se l’aggiornamento non termina, riapri l’app dalla cartella verificata e controlla la versione; puoi riprovare. Conserva il backup e la cartella precedente fino alla verifica dei tuoi salvataggi e delle immagini personalizzate.
 
 ## Versioni Windows precedenti
 
-Le versioni con il vecchio aggiornamento possono usare gli stessi pacchetti pubblici: il formato dei download resta compatibile. Un errore nel programma di aggiornamento già installato, un percorso non gestito correttamente o un blocco dei file possono comunque impedire quel primo passaggio.
+Per una versione precedente, apri i download ufficiali e cerca **Aggiornamento incrementale per installazioni Windows esistenti**. Estrai il suo ZIP in una cartella dedicata. Da PowerShell avvia lo script indicando il tuo EXE. Sostituisci il percorso con quello effettivo. Lo script mostra l’anteprima prima di scaricare il contenuto.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Oculum-Aggiornamento-Incrementale.ps1 -Executable 'C:\Oculum\oculum.exe'
+```
+
+Per Windows Test indica `Oculum-Test.exe` dalla sua cartella. Aggiungi `-DryRun` per consultare il piano senza installare. Se il manifest della versione precedente manca, l’aggiornamento conserva i file rimasti fuori dal nuovo elenco. I download completi restano compatibili con le versioni precedenti.
 
 In questo caso scarica il pacchetto Windows completo ed estrailo **in una nuova cartella**, poi avvia l’EXE da lì. Conserva tutta la cartella con `data` e le DLL: l’EXE isolato non basta. Apri l’edizione che usavi prima; Windows Test mantiene un profilo separato. Conserva la vecchia cartella, soprattutto se contiene immagini personalizzate collegate tramite percorso assoluto.
 

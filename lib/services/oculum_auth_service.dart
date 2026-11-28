@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'oculum_platform_passkey.dart' as platform_passkey;
 import 'oculum_save_profile.dart';
 import 'oculum_smoke_storage.dart';
 import 'oculum_secure_auth_storage.dart';
@@ -29,6 +30,23 @@ const _googleProviderDisabledCode = 'oculum_google_provider_disabled';
 enum OculumAuthProvider { google, apple }
 
 enum _OculumAccountRequest { email, signOut }
+
+const _passkeyEnabled = bool.fromEnvironment(
+  'OculumPasskeyEnabled',
+  defaultValue: true,
+);
+
+typedef OculumPasskeyPrompt =
+    Future<Map<String, dynamic>?> Function(Map<String, dynamic> options);
+typedef OculumPasskeyChallenge = ({String id, Map<String, dynamic> options});
+
+class _OculumPasskeyAttempt {
+  _OculumPasskeyAttempt(this.accountId);
+
+  final String? accountId;
+  bool registeringCredential = false;
+  String? adoptingUserId;
+}
 
 class _OculumOAuthAttempt {
   _OculumOAuthAttempt(this.provider, this.linkUserId);
@@ -92,6 +110,27 @@ abstract class OculumIdentityLinkBackend {
 
 abstract class OculumOAuthCancellationBackend {
   Future<void> cancelOAuth();
+}
+
+class OculumVerifiedPasskeySession {
+  const OculumVerifiedPasskeySession({required this.user, required this.adopt});
+
+  final OculumBackendUser user;
+  final Future<void> Function() adopt;
+}
+
+abstract class OculumPasskeyAuthBackend {
+  bool get passkeysConfigured;
+  Future<OculumPasskeyChallenge> startPasskeyAuthentication();
+  Future<OculumPasskeyChallenge> startPasskeyRegistration();
+  Future<OculumVerifiedPasskeySession> verifyPasskeyAuthentication(
+    String challengeId,
+    Map<String, dynamic> credential,
+  );
+  Future<void> verifyPasskeyRegistration(
+    String challengeId,
+    Map<String, dynamic> credential,
+  );
 }
 
 String oculumWebAuthRedirect(Uri page) => Uri(
@@ -238,7 +277,8 @@ class SupabaseOculumAuthBackend
         OculumAuthBackend,
         OculumEmailAuthBackend,
         OculumIdentityLinkBackend,
-        OculumOAuthCancellationBackend {
+        OculumOAuthCancellationBackend,
+        OculumPasskeyAuthBackend {
   SupabaseOculumAuthBackend({
     OculumOAuthPkceStorage? oauthStorage,
     Uri? projectUrl,
@@ -395,6 +435,115 @@ class SupabaseOculumAuthBackend
   }
 
   @override
+  bool get passkeysConfigured {
+    final project = _projectUrl;
+    return project != null &&
+        project.scheme == 'https' &&
+        project.host.isNotEmpty &&
+        project.userInfo.isEmpty &&
+        !project.hasQuery &&
+        !project.hasFragment &&
+        (_publishableKey?.isNotEmpty ?? false);
+  }
+
+  @override
+  Future<OculumPasskeyChallenge> startPasskeyAuthentication() async {
+    // ignore: experimental_member_use
+    final result = await _client.auth.passkey.startAuthentication();
+    return (id: result.challengeId, options: result.options);
+  }
+
+  @override
+  Future<OculumPasskeyChallenge> startPasskeyRegistration() async {
+    // ignore: experimental_member_use
+    final result = await _client.auth.passkey.startRegistration();
+    return (id: result.challengeId, options: result.options);
+  }
+
+  @override
+  Future<void> verifyPasskeyRegistration(
+    String challengeId,
+    Map<String, dynamic> credential,
+  ) async {
+    // ignore: experimental_member_use
+    await _client.auth.passkey.verifyRegistration(
+      challengeId: challengeId,
+      credential: credential,
+    );
+  }
+
+  @override
+  Future<OculumVerifiedPasskeySession> verifyPasskeyAuthentication(
+    String challengeId,
+    Map<String, dynamic> credential,
+  ) async {
+    if (!passkeysConfigured) throw const AuthException('Passkey unavailable');
+    final project = _projectUrl!;
+    final path = project.path.replaceFirst(RegExp(r'/+$'), '');
+    final request =
+        http.Request(
+            'POST',
+            project.replace(
+              path: '$path/auth/v1/passkeys/authentication/verify',
+            ),
+          )
+          ..followRedirects = false
+          ..headers.addAll({
+            'apikey': _publishableKey!,
+            'authorization': 'Bearer $_publishableKey',
+            'content-type': 'application/json',
+            'accept': 'application/json',
+          })
+          ..body = jsonEncode({
+            'challenge_id': challengeId,
+            'credential': credential,
+          });
+    final transport = http.Client();
+    late final http.Response response;
+    try {
+      response = await transport
+          .send(request)
+          .then(http.Response.fromStream)
+          .timeout(const Duration(seconds: 20));
+    } finally {
+      transport.close();
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw AuthException(
+        'Passkey verification failed',
+        statusCode: '${response.statusCode}',
+      );
+    }
+
+    // The SDK's verification method saves and broadcasts immediately. Keep the
+    // server response detached until the original signed-out action is current.
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const AuthException('Invalid passkey response');
+    }
+    final session = AuthResponse.fromJson(decoded).session;
+    if (session == null ||
+        session.expiresAt == null ||
+        session.isExpired ||
+        !(session.refreshToken?.isNotEmpty ?? false) ||
+        session.user.isAnonymous) {
+      throw const AuthException('No registered session returned');
+    }
+    return OculumVerifiedPasskeySession(
+      user: _mapUser(session.user),
+      adopt: () async {
+        final auth = _client.auth;
+        if (auth.currentUser != null || session.isExpired) {
+          throw const AuthException('Passkey session is no longer current');
+        }
+        // With a fresh session recoverSession saves synchronously before it
+        // can yield. An expired session must never request a refresh here.
+        await auth.recoverSession(jsonEncode(session.toJson()));
+      },
+    );
+  }
+
+  @override
   Future<void> signOut() => _client.auth.signOut(scope: SignOutScope.local);
 
   @override
@@ -523,12 +672,18 @@ class OculumAuthService extends ChangeNotifier {
     bool? appleConfigured,
     Duration oauthTimeout = const Duration(minutes: 2),
     bool requireOAuthRedirect = true,
+    bool? passkeySupported,
+    OculumPasskeyPrompt? createPasskey,
+    OculumPasskeyPrompt? getPasskey,
   }) : _backend = backend,
        _connectivityCheck = connectivityCheck ?? _hasNetworkConnection,
        _googleConfiguredOverride = googleConfigured,
        _appleConfiguredOverride = appleConfigured,
        _oauthTimeout = oauthTimeout,
-       _requireOAuthRedirect = requireOAuthRedirect;
+       _requireOAuthRedirect = requireOAuthRedirect,
+       _passkeySupportedOverride = passkeySupported,
+       _createPasskey = createPasskey ?? platform_passkey.createPasskey,
+       _getPasskey = getPasskey ?? platform_passkey.getPasskey;
 
   static final OculumAuthService instance = OculumAuthService._();
 
@@ -539,6 +694,9 @@ class OculumAuthService extends ChangeNotifier {
     bool googleConfigured = true,
     bool appleConfigured = true,
     Duration oauthTimeout = const Duration(milliseconds: 100),
+    bool? passkeySupported,
+    OculumPasskeyPrompt? createPasskey,
+    OculumPasskeyPrompt? getPasskey,
   }) {
     return OculumAuthService._(
       backend: backend,
@@ -547,6 +705,9 @@ class OculumAuthService extends ChangeNotifier {
       appleConfigured: appleConfigured,
       oauthTimeout: oauthTimeout,
       requireOAuthRedirect: false,
+      passkeySupported: passkeySupported,
+      createPasskey: createPasskey,
+      getPasskey: getPasskey,
     );
   }
 
@@ -572,6 +733,10 @@ class OculumAuthService extends ChangeNotifier {
   _OculumOAuthAttempt? _abandonedOAuth;
   Future<void>? _oauthCleanup;
   _OculumAccountRequest? _accountRequest;
+  final bool? _passkeySupportedOverride;
+  final OculumPasskeyPrompt _createPasskey;
+  final OculumPasskeyPrompt _getPasskey;
+  _OculumPasskeyAttempt? _passkeyAttempt;
   String? pendingEmail;
   String? _emailLinkAccount;
   bool rememberAccess = true;
@@ -618,13 +783,160 @@ class OculumAuthService extends ChangeNotifier {
 
   OculumAuthState get state => stateNotifier.value;
   bool get isBusy =>
-      _oauthAttempt != null || _oauthCleanup != null || _accountRequest != null;
+      _oauthAttempt != null ||
+      _oauthCleanup != null ||
+      _accountRequest != null ||
+      _passkeyAttempt != null;
   bool get isSigningOut => _accountRequest == _OculumAccountRequest.signOut;
-  bool get canCancelSignIn => _oauthAttempt != null;
+  bool get canCancelSignIn =>
+      _oauthAttempt != null ||
+      (_passkeyAttempt != null &&
+          !_passkeyAttempt!.registeringCredential &&
+          _passkeyAttempt!.adoptingUserId == null);
   bool get isSupabaseReady => !oculumSmokeStorageActive && _backend != null;
   bool get googleConfigured =>
       _googleConfiguredOverride ?? _googleOAuthConfigured;
   bool get appleConfigured => _appleConfiguredOverride ?? _appleOAuthConfigured;
+
+  OculumPasskeyAuthBackend? get _passkeyBackend {
+    final backend = _backend;
+    return backend is OculumPasskeyAuthBackend
+        ? backend as OculumPasskeyAuthBackend
+        : null;
+  }
+
+  bool get passkeysAvailable =>
+      !_disposed &&
+      _passkeyEnabled &&
+      !oculumSmokeStorageActive &&
+      (_passkeySupportedOverride ?? platform_passkey.isPasskeySupported) &&
+      (_passkeyBackend?.passkeysConfigured ?? false);
+
+  bool get showPasskeySignIn =>
+      passkeysAvailable &&
+      !state.isLoading &&
+      !state.isAuthenticated &&
+      _backend?.currentUser == null;
+
+  bool get showPasskeyRegistration =>
+      passkeysAvailable &&
+      state.canSyncToCloud &&
+      !state.isOffline &&
+      hasVerifiedEmail &&
+      _backend?.currentUser?.provider != 'anonymous';
+  bool get canRetryProviderSignIn => _lastAttemptedProvider != null;
+
+  Future<bool> signInWithPasskey() => _performPasskey(registration: false);
+  Future<bool> registerPasskey() => _performPasskey(registration: true);
+
+  bool _passkeyStillAuthorized(_OculumPasskeyAttempt attempt) =>
+      !_disposed &&
+      identical(_passkeyAttempt, attempt) &&
+      _backend?.currentUser?.id == attempt.accountId &&
+      (attempt.accountId == null
+          ? showPasskeySignIn
+          : showPasskeyRegistration && state.userId == attempt.accountId);
+
+  Future<bool> _performPasskey({required bool registration}) async {
+    final backend = _passkeyBackend;
+    if (backend == null ||
+        isBusy ||
+        !(registration ? showPasskeyRegistration : showPasskeySignIn)) {
+      return false;
+    }
+    _lastAttemptedProvider = null;
+    final attempt = _passkeyAttempt = _OculumPasskeyAttempt(
+      registration ? state.userId : null,
+    );
+    notifyListeners();
+    try {
+      if (!_passkeyStillAuthorized(attempt)) return false;
+      final challenge =
+          await (registration
+                  ? backend.startPasskeyRegistration()
+                  : backend.startPasskeyAuthentication())
+              .timeout(const Duration(seconds: 20));
+      if (!_passkeyStillAuthorized(attempt)) return false;
+      final credential = await (registration ? _createPasskey : _getPasskey)(
+        challenge.options,
+      ).timeout(const Duration(minutes: 2));
+      if (!_passkeyStillAuthorized(attempt)) return false;
+      if (credential == null) {
+        _reportPasskeyError('Operazione con passkey annullata.');
+        return false;
+      }
+      if (registration) {
+        attempt.registeringCredential = true;
+        notifyListeners();
+        if (!_passkeyStillAuthorized(attempt)) return false;
+        await backend
+            .verifyPasskeyRegistration(challenge.id, credential)
+            .timeout(const Duration(seconds: 20));
+        if (!_passkeyStillAuthorized(attempt)) return false;
+        _setState(
+          OculumAuthState(
+            isAuthenticated: true,
+            isGuest: false,
+            isLoading: false,
+            userId: state.userId,
+            provider: state.provider,
+            message: 'Passkey aggiunta al tuo account.',
+          ),
+        );
+        return true;
+      }
+
+      final verified = await backend
+          .verifyPasskeyAuthentication(challenge.id, credential)
+          .timeout(const Duration(seconds: 22));
+      if (!_passkeyStillAuthorized(attempt)) return false;
+      if (verified.user.id.isEmpty ||
+          verified.user.provider == 'anonymous' ||
+          !verified.user.hasVerifiedEmail) {
+        throw const AuthException('Passkey requires a verified account');
+      }
+      attempt.adoptingUserId = verified.user.id;
+      await verified.adopt();
+      final account = _backend?.currentUser;
+      if (_disposed ||
+          !identical(_passkeyAttempt, attempt) ||
+          account?.id != verified.user.id) {
+        return false;
+      }
+      await _applySignedIn(account!);
+      return !_disposed &&
+          identical(_passkeyAttempt, attempt) &&
+          state.userId == account.id;
+    } catch (_) {
+      if (!_disposed && identical(_passkeyAttempt, attempt)) {
+        _reportPasskeyError(
+          'Passkey non confermata. Puoi accedere con un altro metodo.',
+        );
+      }
+      return false;
+    } finally {
+      if (identical(_passkeyAttempt, attempt)) {
+        _passkeyAttempt = null;
+        if (!_disposed) notifyListeners();
+      }
+    }
+  }
+
+  void _reportPasskeyError(String message) {
+    final before = state;
+    _setState(
+      OculumAuthState(
+        isAuthenticated: before.isAuthenticated,
+        isGuest: before.isGuest,
+        isLoading: before.isLoading,
+        isOffline: before.isOffline,
+        userId: before.userId,
+        provider: before.provider,
+        message: before.message,
+        errorMessage: message,
+      ),
+    );
+  }
 
   bool isProviderSupported(OculumAuthProvider provider) {
     if (provider == OculumAuthProvider.google) {
@@ -1149,6 +1461,11 @@ class OculumAuthService extends ChangeNotifier {
   }
 
   void cancelPendingSignIn() {
+    if (_passkeyAttempt != null && canCancelSignIn) {
+      _passkeyAttempt = null;
+      _reportPasskeyError('Operazione con passkey annullata.');
+      return;
+    }
     if (_oauthAttempt == null) return;
     _finishOperationWithError('Accesso annullato. Puoi continuare in locale.');
   }
@@ -1156,6 +1473,16 @@ class OculumAuthService extends ChangeNotifier {
   Future<void> _handleBackendEvent(OculumBackendAuthEvent event) async {
     if (_disposed || isSigningOut) return;
     final current = _backend?.currentUser;
+    final passkey = _passkeyAttempt;
+    if (passkey != null &&
+        (event.type == OculumBackendAuthEventType.signedOut ||
+            event.type == OculumBackendAuthEventType.userDeleted ||
+            _unexpectedPasskeyAccount(passkey, current?.id) ||
+            (event.user != null &&
+                _unexpectedPasskeyAccount(passkey, event.user!.id)))) {
+      _passkeyAttempt = null;
+      notifyListeners();
+    }
     if (event.user != null && event.user?.id != current?.id) return;
     switch (event.type) {
       case OculumBackendAuthEventType.passwordRecovery:
@@ -1178,6 +1505,8 @@ class OculumAuthService extends ChangeNotifier {
       case OculumBackendAuthEventType.userUpdated:
         final user = current;
         if (user != null) {
+          // The attempt applies this verified sign-in after adoption returns.
+          if (_passkeyAttempt?.adoptingUserId == user.id) return;
           final attempt = _oauthAttempt;
           final expectedLinkUser = attempt?.linkUserId;
           if (expectedLinkUser != null) {
@@ -1201,6 +1530,13 @@ class OculumAuthService extends ChangeNotifier {
         if (_backend?.currentUser == null) await _enterGuestMode();
     }
   }
+
+  bool _unexpectedPasskeyAccount(
+    _OculumPasskeyAttempt attempt,
+    String? accountId,
+  ) =>
+      accountId != attempt.accountId &&
+      (attempt.adoptingUserId == null || accountId != attempt.adoptingUserId);
 
   void _handleBackendError(Object error) {
     if (_disposed || isSigningOut) return;
@@ -1416,6 +1752,7 @@ class OculumAuthService extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _passkeyAttempt = null;
     _cancelPendingOperation();
     _authSubscription?.cancel();
     stateNotifier.dispose();

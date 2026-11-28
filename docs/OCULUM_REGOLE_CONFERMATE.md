@@ -1,5 +1,11 @@
 # Oculum — registro delle regole confermate
 
+## Accesso facoltativo, campagne online e aggiornamenti — 28 novembre 2026
+
+- L’avvio locale, il gioco e i salvataggi sono disponibili senza account. «Aggiungi una passkey» richiede un account registrato e verificato. L’ospite online collega prima Google o conferma l’email sul proprio account esistente, conservando ID e schede. Il dispositivo gestisce la scelta tra impronta, volto o PIN secondo le opzioni disponibili. Annullare lascia invariati sessione e salvataggi.
+- Sotto le campagne personali compare «Altri dispositivi» per le campagne Master dello stesso account. Le campagne condivise e autorizzate sono raccolte sotto il nome del rispettivo Master. Il nome può cambiare e la cartella continua a riferirsi allo stesso account.
+- Una vecchia installazione Windows confronta i file effettivi con l’ultima release compatibile e scarica in un solo passaggio i file mancanti o modificati. Prima della conferma vede quantità e peso del download. I file obsoleti si rimuovono solo quando appartengono alla distribuzione riconosciuta. Il pacchetto completo rimane disponibile e Android usa l’APK firmato con l’installer di sistema.
+
 ## Salvataggi e consegna per dispositivo — 28 novembre 2026
 
 - Nello stesso account cloud le copie PC e Telefono sono separate per origine e si ripristinano scegliendo una copia precisa. Il ripristino è esplicito e preceduto da un backup locale verificato. Le copie storiche prive di origine conservano la loro categoria.

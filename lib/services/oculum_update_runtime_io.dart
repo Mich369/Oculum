@@ -173,7 +173,11 @@ Future<String?> oculumReadUpdateFailure({
       }
     }
     final state = '${status['state']}';
-    if (state == 'success' || state == 'installer_opened') return null;
+    if (state == 'success' ||
+        state == 'installer_opened' ||
+        state == 'installer_permission_required') {
+      return null;
+    }
     final notice = switch (state) {
       'error' || 'frontend_error' =>
         'L’ultimo aggiornamento non è riuscito. I salvataggi sono conservati; puoi riprovare dal pulsante Aggiorna.',

@@ -16,6 +16,12 @@ from time import sleep, time_ns
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from zipfile import BadZipFile, ZIP_DEFLATED, ZipFile, ZipInfo
+
+try:
+    from scripts import oculum_incremental_publish
+except ModuleNotFoundError:
+    import oculum_incremental_publish
 
 REPO = os.environ.get("GH_REPO", "Mich369/Oculum")
 CHANNEL = "oculum-downloads"
@@ -31,6 +37,18 @@ PUBLIC_ARTIFACTS = (
 EXTRA_PUBLIC_ARTIFACTS = ("Oculum-Android-AAB", "Oculum-UI-Catture",
                           "Oculum-Verifica-Mostri")
 LEGACY_ARCHIVES = {"Oculum-Windows-Folders"}
+WINDOWS_RUNTIMES = {
+    "Oculum-Windows-Folder.zip": ("normal", "Oculum-Windows"),
+    "Oculum-Test-Windows-Folder.zip": ("test", "Oculum-Test-Windows"),
+}
+WINDOWS_MANIFEST_NAMES = {oculum_incremental_publish.windows_manifest_asset_name(edition)
+                          for edition, _ in WINDOWS_RUNTIMES.values()}
+MAX_INCREMENTAL_MANIFEST_BYTES = 12 * 1024 ** 2
+WINDOWS_BOOTSTRAP_ASSET = "Oculum-Aggiornamento-Incrementale-Windows.zip"
+WINDOWS_BOOTSTRAP_SCRIPTS = (
+    "Oculum-Aggiornamento-Incrementale.ps1", "incremental_driver.ps1",
+    "oculum_incremental_windows.ps1", "update.ps1",
+)
 
 
 def gh(*args, **kwargs):
@@ -128,6 +146,8 @@ def verified_release_assets(released, tag, commit, expected):
     verified = set()
     for asset in released.get("assets", []):
         name = asset.get("name")
+        if name in WINDOWS_MANIFEST_NAMES or name == WINDOWS_BOOTSTRAP_ASSET:
+            continue  # verified separately before any incremental option is advertised
         entry = expected.get(name)
         if (entry is None or name in verified or asset.get("state") != "uploaded"
                 or (asset.get("size"), asset.get("digest"), asset.get("browser_download_url"))
@@ -135,6 +155,70 @@ def verified_release_assets(released, tag, commit, expected):
             raise ValueError(f"Release asset does not match the verified artifact: {name}")
         verified.add(name)
     return verified
+
+
+def read_incremental_release_assets(released, tag, revision, run_id, expected):
+    """Bind each public index to its exact verified runtime archive and edition."""
+    by_name = {asset["name"]: asset for asset in released.get("assets", [])}
+    found = []
+    for archive, (edition, artifact) in WINDOWS_RUNTIMES.items():
+        filename = oculum_incremental_publish.windows_manifest_asset_name(edition)
+        asset = by_name.get(filename)
+        if asset is None:
+            continue
+        url = f"https://github.com/{REPO}/releases/download/{tag}/{filename}"
+        length, checksum = asset.get("size"), asset.get("digest")
+        if (asset.get("state") != "uploaded" or asset.get("browser_download_url") != url
+                or type(length) is not int or not 0 < length <= MAX_INCREMENTAL_MANIFEST_BYTES
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", checksum or "")):
+            raise ValueError(f"Invalid incremental asset metadata: {filename}")
+        request = Request(url, headers={"User-Agent": "Oculum-public-download-check"})
+        with urlopen(request, timeout=30) as response:
+            raw = response.read(length + 1)
+        if len(raw) != length or "sha256:" + hashlib.sha256(raw).hexdigest() != checksum:
+            raise ValueError(f"Incremental manifest integrity check failed: {filename}")
+        manifest = json.loads(raw)
+        package = expected[archive]
+        if (manifest.get("schemaVersion") != 1 or manifest.get("platform") != "windows"
+                or manifest.get("edition") != edition or manifest.get("commit") != revision
+                or manifest.get("runId") != int(run_id)
+                or manifest.get("package") != {"url": package["url"], "bytes": package["bytes"],
+                                                "sha256": package["sha256"].removeprefix("sha256:")}
+                or not manifest.get("files")):
+            raise ValueError(f"Incremental manifest does not match the build: {filename}")
+        found.append({"artifact": artifact, "edition": edition, "url": url,
+                      "bytes": length, "sha256": checksum})
+    return found
+
+
+def read_compiled_windows_bootstrap(revision):
+    scripts = {}
+    for name in WINDOWS_BOOTSTRAP_SCRIPTS:
+        query = urlencode({"ref": revision})
+        try:
+            file = api(f"contents/assets/update/{name}?{query}")
+        except subprocess.CalledProcessError as error:
+            if b"404" in (error.stderr or b""):
+                return {}  # a historical build can still publish complete packages
+            raise
+        if file.get("encoding") != "base64" or type(file.get("size")) is not int:
+            raise ValueError(f"Unverified bundled updater source: {name}")
+        blob = base64.b64decode(file["content"])
+        if not 0 < len(blob) == file["size"] <= 128 * 1024:
+            raise ValueError(f"Unexpected bundled updater source size: {name}")
+        scripts[name] = blob
+    return scripts
+
+
+def build_windows_bootstrap_zip(path, scripts, tag):
+    with ZipFile(path, "w", compression=ZIP_DEFLATED, compresslevel=9) as bundle:
+        for name in WINDOWS_BOOTSTRAP_SCRIPTS:
+            info = ZipInfo(name)
+            bundle.writestr(info, scripts[name], compress_type=ZIP_DEFLATED, compresslevel=9)
+    with path.open("rb") as stream:
+        digest = "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
+    return {"name": WINDOWS_BOOTSTRAP_ASSET.removesuffix(".zip"), "bytes": path.stat().st_size,
+            "sha256": digest, "url": f"https://github.com/{REPO}/releases/download/{tag}/{path.name}"}
 
 
 def read_catalog(body):
@@ -181,6 +265,8 @@ def notes(catalog):
             lines.append("")
         for artifact in item["artifacts"]:
             lines.append(f"- [{artifact['name']}]({artifact['url']}) — {artifact['bytes'] / 1024 ** 2:.1f} MB")
+        if bootstrap := item.get("windowsIncrementalBootstrap"):
+            lines.append(f"- [Aggiornamento incrementale per installazioni Windows esistenti]({bootstrap['url']})")
         lines.append("")
     lines.append(MARKER + json.dumps(catalog, ensure_ascii=True, separators=(",", ":")) + " -->")
     return "\n".join(lines)
@@ -247,7 +333,7 @@ def resolve_run_id(run_id):
     raise ValueError("No successful trusted Build distribution available to publish")
 
 
-def publish(run_id):
+def publish(run_id, *, incremental_updates=False):
     run_id = resolve_run_id(run_id)
     run = api(f"actions/runs/{run_id}")
     workflow = api(f"actions/workflows/{run['workflow_id']}")
@@ -267,12 +353,15 @@ def publish(run_id):
     tag = f"oculum-build-{run_id}"
     entries = [archive_entry(artifact, tag) for artifact in selected]
     expected = {entry["name"] + ".zip": entry for entry in entries}
+    bootstrap_scripts = read_compiled_windows_bootstrap(run["head_sha"]) if incremental_updates else {}
     existing = release(tag)
     present = set()
+    existing_indices = set()
     if existing:
         # A previously published full mirror can be re-indexed in place. Do
         # not add, remove or replace its internal artifacts.
         existing_names = {asset.get("name") for asset in existing.get("assets", [])}
+        existing_indices = existing_names & WINDOWS_MANIFEST_NAMES
         for artifact in artifacts:
             name = artifact.get("name")
             if name in LEGACY_ARCHIVES and name + ".zip" in existing_names:
@@ -286,7 +375,12 @@ def publish(run_id):
                "--latest=false", "--notes", f"Verified build: {run['html_url']}")
         for artifact, entry in zip(selected, entries, strict=True):
             filename = entry["name"] + ".zip"
-            if filename in present:
+            incremental = WINDOWS_RUNTIMES.get(filename)
+            make_index = (
+                bootstrap_scripts and incremental
+                and oculum_incremental_publish.windows_manifest_asset_name(incremental[0]) not in existing_indices
+            )
+            if filename in present and not make_index:
                 continue
             path = root / filename
             with path.open("wb") as stream:
@@ -295,11 +389,43 @@ def publish(run_id):
                 digest = "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
             if path.stat().st_size != entry["bytes"] or entry["sha256"] != digest:
                 raise ValueError(f"Artifact integrity check failed: {filename}")
-            gh("release", "upload", tag, str(path), "--repo", REPO)
+            if filename not in present:
+                gh("release", "upload", tag, str(path), "--repo", REPO)
+            if make_index:
+                edition, _ = incremental
+                try:
+                    manifest = oculum_incremental_publish.build_windows_range_manifest(
+                        path, edition=edition, commit=run["head_sha"],
+                        run_id=int(run_id), package=entry, repository=REPO,
+                    )
+                    oculum_incremental_publish.verify_public_archive_ranges(manifest, path)
+                except (BadZipFile, URLError, TimeoutError, ValueError, RuntimeError) as error:
+                    print(f"Incremental option unavailable for {edition}; full package retained: {error}")
+                else:
+                    manifest_path = root / oculum_incremental_publish.windows_manifest_asset_name(edition)
+                    manifest_path.write_bytes(oculum_incremental_publish.serialize_windows_range_manifest(manifest))
+                    gh("release", "upload", tag, str(manifest_path), "--repo", REPO)
             path.unlink()
         published = release(tag)
         if verified_release_assets(published, tag, run["head_sha"], expected) != set(expected):
             raise ValueError("Versioned release is missing verified assets")
+        try:
+            incremental_entries = read_incremental_release_assets(published, tag, run["head_sha"], run_id, expected)
+        except (URLError, TimeoutError, ValueError, TypeError) as error:
+            print(f"Incremental index could not be verified; complete packages retained: {error}")
+            incremental_entries = []
+        bootstrap = None
+        if bootstrap_scripts and len(incremental_entries) == len(WINDOWS_RUNTIMES):
+            bootstrap_path = root / WINDOWS_BOOTSTRAP_ASSET
+            bootstrap = build_windows_bootstrap_zip(bootstrap_path, bootstrap_scripts, tag)
+            if not any(asset["name"] == WINDOWS_BOOTSTRAP_ASSET for asset in published["assets"]):
+                gh("release", "upload", tag, str(bootstrap_path), "--repo", REPO)
+                published = release(tag)
+            item, = [asset for asset in published["assets"] if asset["name"] == WINDOWS_BOOTSTRAP_ASSET]
+            if (item["state"], item["size"], item["digest"], item["browser_download_url"]) != (
+                    "uploaded", bootstrap["bytes"], bootstrap["sha256"], bootstrap["url"]):
+                raise ValueError("Existing Windows incremental updater does not match the compiled source")
+            verify_anonymous_download(bootstrap, item.get("id"))
         asset_ids = {asset["name"]: asset.get("id") for asset in published["assets"]}
         for entry in entries:
             verify_anonymous_download(entry, asset_ids[entry["name"] + ".zip"])
@@ -332,7 +458,10 @@ def publish(run_id):
             "changelogPath": "docs/REGISTRO_AGGIORNAMENTI.md",
             "changelogBaseline": "b917217d98d16861a5bbaf1706d78825d883c970",
             "artifacts": entries,
+            "incremental": incremental_entries,
         }}
+        if bootstrap:
+            catalog[str(workflow_id)]["windowsIncrementalBootstrap"] = bootstrap
         note_file = root / "downloads.md"
         note_file.write_text(notes(catalog), encoding="utf-8")
         if current:
@@ -345,5 +474,5 @@ def publish(run_id):
 
 
 if __name__ == "__main__":
-    publish(sys.argv[1])
+    publish(sys.argv[1], incremental_updates="--incremental-windows" in sys.argv[2:])
 

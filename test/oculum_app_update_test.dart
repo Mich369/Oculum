@@ -88,6 +88,148 @@ void main() {
       expect(result.sha256.length, 64);
     },
   );
+  test(
+    'incremental manifest and runtime must match the Windows edition',
+    () async {
+      const base =
+          'https://github.com/Mich369/Oculum/releases/download/oculum-build-123';
+      final releaseJson = jsonDecode(release()) as Map;
+      final catalog =
+          jsonDecode(
+                (releaseJson['body'] as String)
+                    .split('OCULUM_DOWNLOADS:')
+                    .last
+                    .split(' -->')
+                    .first,
+              )
+              as Map;
+      final group = catalog['1'] as Map;
+      (group['artifacts'] as List).addAll([
+        for (final edition in ['Oculum-Windows', 'Oculum-Test-Windows'])
+          {
+            'name': '$edition-Folder',
+            'bytes': 100,
+            'sha256': 'sha256:${'c' * 64}',
+            'url': '$base/$edition-Folder.zip',
+          },
+      ]);
+      group['incremental'] = [
+        {
+          'artifact': 'Oculum-Test-Windows',
+          'edition': 'test',
+          'bytes': 8,
+          'sha256': 'sha256:${'d' * 64}',
+          'url': '$base/Oculum-Test-Windows-Incrementale.json',
+        },
+      ];
+      releaseJson['body'] = '<!-- OCULUM_DOWNLOADS:${jsonEncode(catalog)} -->';
+      final client = MockClient(
+        (request) async => http.Response(
+          request.url.path.contains('/compare/')
+              ? '{"status":"ahead"}'
+              : jsonEncode(releaseJson),
+          200,
+        ),
+      );
+      addTearDown(client.close);
+      final testUpdate = await oculumCheckAppUpdate(
+        client,
+        'Oculum-Test-Windows',
+        currentCommit: old,
+      );
+      final normal = await oculumCheckAppUpdate(
+        client,
+        'Oculum-Windows',
+        currentCommit: old,
+      );
+      expect(testUpdate!.incremental!.edition, 'test');
+      expect(testUpdate.incremental!.bytes, 8);
+      expect(
+        testUpdate.incremental!.packageUrl,
+        '$base/Oculum-Test-Windows-Folder.zip',
+      );
+      expect(normal!.incremental, isNull);
+      (group['incremental'] as List).single['url'] =
+          '$base/Oculum-Windows-Incrementale.json';
+      releaseJson['body'] = '<!-- OCULUM_DOWNLOADS:${jsonEncode(catalog)} -->';
+      final fallback = await oculumCheckAppUpdate(
+        client,
+        'Oculum-Test-Windows',
+        currentCommit: old,
+      );
+      expect(fallback!.url, '$base/Oculum-Test-Windows.zip');
+      expect(fallback.incremental, isNull);
+    },
+  );
+  test(
+    'historical index must belong to the installed commit and edition',
+    () async {
+      const filename = 'Oculum-Test-Windows-Incrementale.json';
+      const url =
+          'https://github.com/Mich369/Oculum/releases/download/oculum-build-20/$filename';
+      var releaseCommit = old;
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/runs')) {
+          expect(request.url.queryParameters['head_sha'], old);
+          return http.Response(
+            jsonEncode({
+              'workflow_runs': [
+                {
+                  'id': 20,
+                  'head_sha': old,
+                  'head_branch': 'main',
+                  'conclusion': 'success',
+                },
+              ],
+            }),
+            200,
+          );
+        }
+        return http.Response(
+          jsonEncode({
+            'target_commitish': releaseCommit,
+            'draft': false,
+            'assets': [
+              {
+                'name': filename,
+                'browser_download_url': url,
+                'size': 42,
+                'digest': 'sha256:${'e' * 64}',
+                'state': 'uploaded',
+              },
+            ],
+          }),
+          200,
+        );
+      });
+      addTearDown(client.close);
+      expect(
+        await oculumFindInstalledWindowsManifest(
+          client,
+          'test',
+          currentCommit: old,
+        ),
+        (url: url, bytes: 42, sha256: 'e' * 64),
+      );
+      expect(
+        await oculumFindInstalledWindowsManifest(
+          client,
+          'normal',
+          currentCommit: old,
+        ),
+        isNull,
+      );
+      releaseCommit = newer;
+      expect(
+        await oculumFindInstalledWindowsManifest(
+          client,
+          'test',
+          currentCommit: old,
+        ),
+        isNull,
+      );
+    },
+  );
   for (final status in ['identical', 'behind', 'diverged']) {
     test('never replace when comparison is $status', () async {
       final client = MockClient(

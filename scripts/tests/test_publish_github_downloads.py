@@ -3,9 +3,12 @@ from pathlib import Path
 import unittest
 import hashlib
 import base64
+import json
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 from io import BytesIO
 from urllib.error import HTTPError
+from zipfile import ZipFile
 
 spec = importlib.util.spec_from_file_location("publisher", Path(__file__).parents[1] / "publish_github_downloads.py")
 publisher = importlib.util.module_from_spec(spec)
@@ -18,6 +21,40 @@ def mirror_asset(entry):
 
 
 class DownloadPublicationTests(unittest.TestCase):
+    def test_windows_bootstrap_contains_only_compiled_scripts(self):
+        scripts = {name: (name + "\n").encode() for name in publisher.WINDOWS_BOOTSTRAP_SCRIPTS}
+        with TemporaryDirectory() as directory:
+            file = Path(directory) / publisher.WINDOWS_BOOTSTRAP_ASSET
+            entry = publisher.build_windows_bootstrap_zip(file, scripts, "oculum-build-42")
+            self.assertEqual(entry["sha256"], "sha256:" + hashlib.sha256(file.read_bytes()).hexdigest())
+            with ZipFile(file) as archive:
+                self.assertEqual({name: archive.read(name) for name in archive.namelist()}, scripts)
+            self.assertEqual(entry, publisher.build_windows_bootstrap_zip(file, scripts, "oculum-build-42"))
+
+    def test_incremental_catalog_rejects_a_manifest_for_another_edition(self):
+        filename = "Oculum-Windows-Incrementale.json"
+        commit, tag = "a" * 40, "oculum-build-42"
+        url = f"https://github.com/{publisher.REPO}/releases/download/{tag}/{filename}"
+        package = {"url": f"https://github.com/{publisher.REPO}/releases/download/{tag}/Oculum-Windows-Folder.zip",
+                   "bytes": 100, "sha256": "b" * 64}
+        manifest = {"schemaVersion": 1, "platform": "windows", "edition": "normal",
+                    "commit": commit, "runId": 42, "package": package, "files": [{"path": "oculum.exe"}]}
+        expected = {"Oculum-Windows-Folder.zip": {**package, "sha256": "sha256:" + package["sha256"]}}
+        for edition in ("normal", "test"):
+            body = json.dumps({**manifest, "edition": edition}).encode()
+            digest = "sha256:" + hashlib.sha256(body).hexdigest()
+            asset = {"name": filename, "state": "uploaded", "size": len(body),
+                     "digest": digest, "browser_download_url": url}
+            with patch.object(publisher, "urlopen", return_value=BytesIO(body)) as fetch:
+                if edition == "normal":
+                    rows = publisher.read_incremental_release_assets({"assets": [asset]}, tag, commit, 42, expected)
+                    self.assertEqual(rows, [{"artifact": "Oculum-Windows", "edition": "normal",
+                                             "bytes": len(body), "sha256": digest, "url": url}])
+                    self.assertFalse(fetch.call_args.args[0].has_header("Authorization"))
+                else:
+                    with self.assertRaisesRegex(ValueError, "does not match the build"):
+                        publisher.read_incremental_release_assets({"assets": [asset]}, tag, commit, 42, expected)
+
     def test_android_builds_finish_before_packaging_and_keep_signature_checks(self):
         workflow = (Path(__file__).parents[2] / ".github/workflows/build_distribution.yml").read_text(encoding="utf-8")
         apk = workflow.index("flutter build apk --release")
