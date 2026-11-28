@@ -48,7 +48,8 @@ extension LiteForgeFusion on LiteRun {
       priceForWeapon(item) + (item.isBossLoot ? 18 : 0);
 
   bool _forgeOpen(LiteCoopFighter? fighter) =>
-      restHub && !finished && (fighter?.hp ?? hp) > 0 && hasWeaponArt(fighter);
+      canUseRestStation(LiteRestStation.forge, fighter) &&
+      hasWeaponArt(fighter);
 
   bool canBuySignature(LiteWeapon item, [LiteCoopFighter? fighter]) =>
       _forgeOpen(fighter) &&

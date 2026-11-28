@@ -181,6 +181,9 @@ _ArtCastPose? _artCastPose(LiteCombatImpact hit, double time) {
     LiteLearnedArt.corruzione => .46,
     LiteLearnedArt.brace => .32,
     LiteLearnedArt.basalto => .45,
+    LiteLearnedArt.ecoVelata => .57,
+    LiteLearnedArt.passoSenzaLuce => .29,
+    LiteLearnedArt.filoOmbra => .38,
   };
   return age >= 0 && age < duration ? (art, age / duration) : null;
 }
@@ -196,6 +199,9 @@ void _applyArtGesture(Canvas canvas, _ArtCastPose cast, {double lean = 1}) {
     LiteLearnedArt.corruzione => (.067, -.099, .150, 1),
     LiteLearnedArt.brace => (-.064, -.12, .075, 3),
     LiteLearnedArt.basalto => (.19, .24, .158, 1),
+    LiteLearnedArt.ecoVelata => (-.065, -.075, .12, 2),
+    LiteLearnedArt.passoSenzaLuce => (.26, .19, .057, 1),
+    LiteLearnedArt.filoOmbra => (-.14, -.21, .064, 2),
   };
   final falloff = (1 - age) * (1 - age);
   final beat = falloff * (.80 + .20 * math.cos(age * math.pi * 2 * count));

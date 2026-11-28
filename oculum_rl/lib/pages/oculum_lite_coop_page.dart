@@ -11,6 +11,7 @@ import '../game/oculum_lite_run.dart';
 import '../widgets/oculum_lite_arena.dart';
 import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_routes.dart';
+import '../widgets/oculum_lite_reysercth_dialog.dart';
 import '../widgets/oculum_lite_rest_panel.dart';
 
 class OculumLiteCoopPage extends StatefulWidget {
@@ -204,6 +205,14 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       _clear();
       final pact = await showLiteVampirePact(context);
       if (mounted && pact != null) _session.acceptVampirePact(pact);
+      if (mounted) _focus.requestFocus();
+      return;
+    }
+    if (_session.canAct &&
+        _session.run?.canSpeakToReysercth(_session.localFighter) == true) {
+      _clear();
+      final choice = await showLiteReysercth(context);
+      if (mounted && choice != null) _session.acceptReysercthMod(choice);
       if (mounted) _focus.requestFocus();
       return;
     }
@@ -744,6 +753,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                         ? 'Sfida il Guardiano Solare · R'
                                         : run.canSpeakToVampire(mine)
                                         ? 'Parla col Vampiro · R'
+                                        : run.canSpeakToReysercth(mine)
+                                        ? 'Officina Reysercth · R'
                                         : run.canSpeakToPetTrader(mine)
                                         ? 'Parla col Bandito dei pet · R'
                                         : restStation != null

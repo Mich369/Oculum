@@ -23,6 +23,7 @@ import '../widgets/oculum_lite_creator.dart';
 import '../widgets/oculum_lite_ink_finishes.dart';
 import '../widgets/oculum_lite_merchant_greeting.dart';
 import '../widgets/oculum_lite_routes.dart';
+import '../widgets/oculum_lite_reysercth_dialog.dart';
 import '../widgets/oculum_lite_rest_panel.dart';
 import '../widgets/oculum_lunar_prologue.dart';
 import '../widgets/oculum_rl_merchant.dart';
@@ -576,6 +577,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     _slots[index] = OculumLiteSaveSlot(
       run: LiteRun(
         seed: seed,
+        explorationRoutes: true,
         progressId: 'solo-' + DateTime.now().microsecondsSinceEpoch.toString(),
         hero: _hero,
         allowGlue: _progress.discoveredPets.contains(LiteCompanion.goblinColla),
@@ -983,6 +985,17 @@ class _OculumLitePageState extends State<OculumLitePage>
       _togglePause();
       return;
     }
+    if (run.canSpeakToReysercth()) {
+      _togglePause();
+      final choice = await showLiteReysercth(context);
+      if (!mounted) return;
+      if (choice != null) {
+        _saveInventoryChange(() => run.acceptReysercthMod(choice, null));
+      }
+      _togglePause();
+      _gameFocus.requestFocus();
+      return;
+    }
     if (run.canSpeakToPetTrader()) {
       _togglePause();
       final trade = await showLitePetTrader(context, run);
@@ -1127,6 +1140,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       label = 'Tieni R · Soccorri';
     } else if (run.canSpeakToVampire()) {
       label = 'R · Parla col Vampiro';
+    } else if (run.canSpeakToReysercth()) {
+      label = 'R · Officina Reysercth';
     } else if (run.canSpeakToPetTrader()) {
       label = 'R · Parla col Bandito dei pet';
     } else if (run.restStationNearby() case final station?) {

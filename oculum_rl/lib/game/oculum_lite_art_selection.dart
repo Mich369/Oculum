@@ -8,7 +8,10 @@ enum LiteLearnedArt {
   lame('Affondo delle lame lunari', 'Martial Art', 0, 2.8),
   corruzione('Presa della Corruzione Rossa', 'Defiled Art', 4, 8),
   brace('Incisione di brace', 'Oculum Art', 3, 3.2),
-  basalto('Piega di basalto', 'Oculum Art', 4, 4.4);
+  basalto('Piega di basalto', 'Oculum Art', 4, 4.4),
+  ecoVelata('Eco velata', 'Oculum Art Ombra', 4, 8.8),
+  passoSenzaLuce('Passo senza luce', 'Oculum Art Ombra', 3, 4.6),
+  filoOmbra('Filo d’Ombra', 'Oculum Art Ombra', 5, 6.9);
 
   const LiteLearnedArt(this.label, this.family, this.cost, this.cooldown);
   final String label, family;
@@ -45,6 +48,11 @@ enum LiteLearnedArt {
     basalto =>
       'Faglia da ${18 + 6 * rank} Danni, lunga ${_metric(5.6 + .9 * rank)} m. Può spezzare i ripari.'
           '${rank >= 3 ? " Apre anche due fenditure laterali." : ""}',
+    ecoVelata => 'Due copie d’inchiostro attaccano per ${6 + 2 * rank} s.',
+    passoSenzaLuce =>
+      'Scatti intangibile per ${_metric(.29 + .055 * rank)} s. I ripari fermano il tragitto.',
+    filoOmbra =>
+      'Resti fermo per ${_metric(.94 + .24 * rank)} s e guidi il raggio con la mira. ${5 + rank * 2} Danni ogni 0,18 s.',
   };
 
   static String _metric(double value) => value
@@ -54,7 +62,7 @@ enum LiteLearnedArt {
 }
 
 extension LiteArtExecution on LiteRun {
-  bool get artDealerOpen => restHub && stage >= 5;
+  bool get artDealerOpen => usesExplorableFloor || (restHub && stage >= 5);
   LiteLearnedArt? activeArt([LiteCoopFighter? fighter]) =>
       LiteLearnedArt.fixedFor(fighter?.hero ?? hero) ??
       (fighter?.supply ?? supply).art;
@@ -80,6 +88,7 @@ extension LiteArtExecution on LiteRun {
         restHub ||
         shopOpen ||
         gripRemaining(fighter) > 0 ||
+        _shadowRays.containsKey((false, fighter?.id ?? 0)) ||
         (fighter?.hp ?? hp) <= 0 ||
         (fighter?.blocking ?? blocking) ||
         (fighter?._night ?? _night).stun > 0 ||
@@ -200,6 +209,20 @@ extension LiteArtExecution on LiteRun {
             _fissure(at, _rotate(direction, side), 4.1, 13, owner);
           }
         }
+      case LiteLearnedArt.ecoVelata:
+        if (!_castVeiledEcho(
+          owner ?? 0,
+          at,
+          direction,
+          rank,
+          fighter?.weapon ?? weapon,
+        ))
+          return false;
+      case LiteLearnedArt.passoSenzaLuce:
+        if (!_castLightlessStep(direction, rank, fighter)) return false;
+      case LiteLearnedArt.filoOmbra:
+        if ((fighter?.burstRemaining ?? _burstTime) > 0) return false;
+        _beginShadowRay(owner ?? 0, at, direction, rank);
     }
     _markArtCast(art, at, direction, rank, casterId: owner ?? 0);
     if (extra) {

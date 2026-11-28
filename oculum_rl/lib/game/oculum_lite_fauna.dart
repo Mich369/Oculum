@@ -209,7 +209,7 @@ extension LiteFauna on LiteRun {
         if (animal.shockRemaining <= 0) animal.shockSource = null;
       }
       if (faunaAggressive && !wild) {
-        _enemyTick(animal, elapsed);
+        if (!_combatantsSheltered) _enemyTick(animal, elapsed);
       } else {
         animal.hitFlash = max(0, animal.hitFlash - elapsed);
         if (_hasChickenTrialParticipant &&
@@ -232,6 +232,7 @@ extension LiteFauna on LiteRun {
           );
         }
       }
+      if (inExplorationAtrium(animal.position)) animal.position = previous;
       animal.stride._track(previous, animal.position, elapsed);
     }
     fauna.removeWhere((animal) => animal.hp <= 0);

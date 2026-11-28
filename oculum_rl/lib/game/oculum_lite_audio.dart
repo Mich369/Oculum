@@ -13,6 +13,9 @@ class OculumLiteAudio {
   static const defaultEffectsVolume = .50;
   AudioPlayer? _music;
   AudioPlayer? _merchantVoice;
+  AudioPlayer? _shadowRay;
+  Future<void> _rayTransition = Future.value();
+  bool _rayWanted = false;
   final _effects = <String, AudioPlayer>{};
   Future<void> _transition = Future.value();
   Future<void> _voiceTransition = Future.value();
@@ -51,6 +54,7 @@ class OculumLiteAudio {
       _lastImpact = null;
       _lastEffectTime = -1;
     }
+    _updateRay(playing && run?.shadowRays.isNotEmpty == true);
     final wanted = !playing || muted || musicVolume == 0 || run == null
         ? null
         : _track(run);
@@ -112,13 +116,40 @@ class OculumLiteAudio {
     for (final effect in _effects.values) {
       unawaited(_try(() => effect.setVolume(muted ? 0 : effectsVolume)));
     }
+    final ray = _shadowRay;
+    if (ray != null) {
+      unawaited(_try(() => ray.setVolume(muted ? 0 : effectsVolume * .54)));
+    }
     final voice = _merchantVoice;
     if (voice != null) {
       unawaited(_try(() => voice.setVolume(muted ? 0 : effectsVolume)));
     }
   }
 
+  void _updateRay(bool active) {
+    final wanted = active && !muted && effectsVolume > 0 && !_closed;
+    if (wanted == _rayWanted) return;
+    _rayWanted = wanted;
+    _rayTransition = _rayTransition.then(
+      (_) => _try(() async {
+        if (_closed || wanted != _rayWanted) return;
+        if (!wanted) {
+          await _shadowRay?.stop();
+          return;
+        }
+        final player = _shadowRay ??= AudioPlayer();
+        await player.setReleaseMode(ReleaseMode.loop);
+        if (_closed || !_rayWanted) return;
+        await player.play(
+          AssetSource('${_prefix}filo-ombra.wav'),
+          volume: effectsVolume * .54,
+        );
+      }),
+    );
+  }
+
   void combatSounds(LiteRun run) {
+    _updateRay(run.shadowRays.isNotEmpty);
     String? sound;
     var highest = 0;
     final impacts = run.combatImpacts;
@@ -219,6 +250,13 @@ class OculumLiteAudio {
 
   void dispose() {
     _closed = true;
+    unawaited(
+      _rayTransition.then(
+        (_) => _try(() async {
+          await _shadowRay?.dispose();
+        }),
+      ),
+    );
     unawaited(
       _voiceTransition.then(
         (_) => _try(() async {

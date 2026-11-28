@@ -316,6 +316,8 @@ class OculumLiteCoop extends ChangeNotifier {
       _orderRest('tradePet', give.toString() + ':' + take.name);
   void buyRestItem(LiteRestItem item) => _orderRest('buy', item.name);
   void callSolarRetinue() => _orderRest('lusierRetinue', '');
+  void acceptReysercthMod(LiteReysercthMod upgrade) =>
+      _orderRest('reysercth', upgrade.name);
   void acceptVampirePact(LiteVampirePact pact) =>
       _orderRest('vampire', pact.name);
   void buySignature(LiteWeapon item) => _orderRest('signature', item.name);
@@ -389,6 +391,13 @@ class OculumLiteCoop extends ChangeNotifier {
           .where((choice) => choice.name == id)
           .firstOrNull;
       if (pact != null) world.acceptVampirePact(pact, fighter);
+      return;
+    }
+    if (kind == 'reysercth') {
+      final choice = LiteReysercthMod.values
+          .where((value) => value.name == id)
+          .firstOrNull;
+      if (choice != null) world.acceptReysercthMod(choice, fighter);
       return;
     }
     if (kind == 'lusierRetinue') {

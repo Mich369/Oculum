@@ -132,6 +132,12 @@ I passi seguono la distanza percorsa nell’arena, con appoggi più leggibili e 
 - I piani 0, 3, 6, 9, 12, 13, 15, 18, 21 e 24 danno un Sigillo al primo completamento, anche se il traguardo è già presente in un salvataggio leggibile. In **Potenziamenti permanenti** spendi un Sigillo per grado. Per grado puoi ottenere +5 Vita massima, +1 Danni base, +1 Oculum massimo, +5% portata delle armi +0,75 m di attrazione Obser, +5% velocità e ritmo dei compagni, +4 Scudo a ogni piano o +10 capacità del blocco. Ogni voce ha due gradi. Il personaggio riceve i bonus all’avvio di ogni nuova run, anche in cooperativa.
 - Con lo **Scettro magico** equipaggiato due scintille orbitano attorno al personaggio. Ogni 0,86 secondi di gioco una scarica può colpire il nemico visibile più vicino entro 2,6 m. La scarica infligge 4 Danni base e riduce la velocità di movimento del 30% per 0,5 secondi.
 
+## Piani esplorabili e Occhio d’Ombra
+
+- Nelle nuove run i piani principali ordinari ed élite iniziano in un atrio protetto. Si usano due gallerie, la pittrice di Art, un banco scelto dal seed e l’arena che custodisce l’uscita. R apre i banchi quando si è vicini. Il guardiano deve essere sconfitto per aprire il portale.
+- A Postea la Reysercth aumenta dell’8% Vita massima e Danni arma una volta per combattente. Il propulsore respinge fino a 3 metri e si ferma davanti ai ripari.
+- Nell’Occhio d’Ombra trovi Eco velata, Passo senza luce e Filo d’Ombra. Le forme crescono con il livello e gli studi. Il raggio tiene fermo chi lo lancia e segue lentamente la mira fino al primo riparo. Un colpo subito, il blocco o uno scatto lo interrompono.
+
 ## Open e deviazioni
 
 - Premi **Spazio** oppure **Open** su telefono. Al livello 1–2 hai l’Open di grado 1 (8 s di recupero), al 3–5 di grado 2 (7 s), dal 6 di grado 3 (6 s). Il costo è 5 Oculum. Il comando mostra grado e recupero in solo e in cooperativa.

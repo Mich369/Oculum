@@ -169,6 +169,7 @@ Future<void> showLiteRestHub(
       (start?.artDealerOpen == true
           ? LiteRestStation.art
           : LiteRestStation.tavern);
+  var shadowLessons = false;
   LiteWeapon? selectedPrimary;
   LiteWeapon? selectedSecondary;
   await showDialog<void>(
@@ -177,10 +178,10 @@ Future<void> showLiteRestHub(
       builder: (context, redraw) {
         Widget panel() {
           final run = world();
-          if (run == null || !run.restHub) {
-            return const Text('La sala è chiusa.');
-          }
           final player = fighter?.call();
+          if (run == null || !run.canUseRestStation(station, player)) {
+            return const Text('Allontanati dallo scontro e torna al banco.');
+          }
           final supplies = player?.supply ?? run.supply;
           final balance = player?.obser ?? run.obser;
           final fixedArt = LiteLearnedArt.fixedFor(player?.hero ?? run.hero);
@@ -199,7 +200,12 @@ Future<void> showLiteRestHub(
           final level = player?.level ?? run.level;
           final stock = station == LiteRestStation.seer
               ? supplies.receipts
-              : LiteRestItem.values.where((item) => item.station == station);
+              : LiteRestItem.values.where((item) {
+                  if (item.station != station) return false;
+                  if (station != LiteRestStation.art) return true;
+                  return (item.art?.family == 'Oculum Art Ombra') ==
+                      shadowLessons;
+                });
           final shopkeeper = switch (station) {
             LiteRestStation.tavern => LiteShopkeeper.taverniera,
             LiteRestStation.forge => LiteShopkeeper.fabbro,
@@ -221,14 +227,10 @@ Future<void> showLiteRestHub(
                 spacing: 6,
                 runSpacing: 4,
                 children: [
-                  for (final booth in LiteRestStation.values)
-                    if (booth != LiteRestStation.art || run.artDealerOpen)
+                  if (run.restHub)
+                    for (final booth in run.restStations)
                       ChoiceChip(
-                        label: Text(
-                          booth == LiteRestStation.art && run.devilArtTutor
-                              ? 'Istruttore di Art'
-                              : booth.label,
-                        ),
+                        label: Text(run.restStationName(booth)),
                         selected: station == booth,
                         onSelected: (_) => redraw(() => station = booth),
                       ),
@@ -380,6 +382,30 @@ Future<void> showLiteRestHub(
                     null =>
                       'Scegli un acquisto di questa visita da portare nella prossima run. Costo: ${LiteRestHub.memoryPrice} Obser.',
                   }),
+                ),
+              if (station == LiteRestStation.art)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Altre Art'),
+                        selected: !shadowLessons,
+                        onSelected: (_) => redraw(() => shadowLessons = false),
+                      ),
+                      ChoiceChip(
+                        avatar: const Icon(
+                          Icons.remove_red_eye_outlined,
+                          size: 17,
+                        ),
+                        label: const Text('Occhio d’Ombra'),
+                        selected: shadowLessons,
+                        onSelected: (_) => redraw(() => shadowLessons = true),
+                      ),
+                    ],
+                  ),
                 ),
               for (final item in stock)
                 Padding(

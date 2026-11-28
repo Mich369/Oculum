@@ -255,27 +255,129 @@ void main() {
       );
       expect(world.enemies.any((enemy) => enemy.id == foe.id), isFalse);
       expect(guestSession.run!.coopFighter(user)!.experience, greaterThan(0));
+      final guarding = world.coopFighter(user)!;
+      world.obstacles.clear();
+      world.fauna.clear();
+      world.arenaTrial = null;
+      world.position = const Point(14, 6);
+      guarding.position = const Point(14, 16);
+      final clockFoe = LiteEnemy(
+        1551,
+        LiteEnemyKind.costrutto,
+        const Point(25, 11),
+        500,
+      )..cooldown = 100;
+      world.enemies
+        ..clear()
+        ..add(clockFoe);
+      const right = Point<double>(1, 0);
+      const stopped = Point<double>(0, 0);
+      hostSession.move = right;
+      guestSession.move = right;
+      await _until(() => guarding.movement == right, 'movement reaches Master');
+
+      // Sample the authoritative frames after the guest's real Open input.
+      // Measuring network arrival intervals would factor in Realtime latency.
+      final motion =
+          Completer<({double host, double guest, double foe, double clock})>();
+      ({
+        double remaining,
+        double time,
+        double hostX,
+        double guestX,
+        double foeTravel,
+      })?
+      firstOpenFrame;
+      void measureOpenMotion() {
+        final scene = world.openScene;
+        if (motion.isCompleted ||
+            scene == null ||
+            scene.actorId != guarding.id) {
+          return;
+        }
+        final first = firstOpenFrame ??= (
+          remaining: scene.remaining,
+          time: world.time,
+          hostX: world.position.x,
+          guestX: guarding.position.x,
+          foeTravel: clockFoe.stride.distance,
+        );
+        final elapsed = (first.remaining - scene.remaining) * world.arenaSpeed;
+        if (elapsed < .06) return;
+        motion.complete((
+          host: (world.position.x - first.hostX) / (6.5 * elapsed),
+          guest: (guarding.position.x - first.guestX) / (6.5 * elapsed),
+          foe:
+              (clockFoe.stride.distance - first.foeTravel) /
+              (clockFoe.kind.speed * elapsed),
+          clock: (world.time - first.time) / elapsed,
+        ));
+      }
+
+      hostSession.addListener(measureOpenMotion);
       guestSession.useOpen();
+      try {
+        final speed = await motion.future.timeout(const Duration(seconds: 18));
+        expect(speed.host, closeTo(.26, .004), reason: 'Master movement');
+        expect(speed.guest, closeTo(.26, .004), reason: 'caster movement');
+        expect(speed.foe, closeTo(.24, .004), reason: 'enemy movement');
+        expect(speed.clock, closeTo(.24, .004), reason: 'arena clock');
+      } finally {
+        hostSession.removeListener(measureOpenMotion);
+        hostSession.move = stopped;
+        guestSession.move = stopped;
+      }
+      expect(world.openProtects(guarding.id), isTrue);
+      expect(world.openProtects(0), isFalse);
+      final masterHp = world.hp;
+      final casterHp = guarding.hp;
+      LiteProjectile incoming(Point<double> at) => LiteProjectile(
+        position: at - const Point(.14, 0),
+        direction: right,
+        speed: 24,
+        remaining: 3,
+        damage: 12,
+        fromEnemy: true,
+      );
+      final casterShot = incoming(guarding.position);
+      final masterShot = incoming(world.position);
+      // The Open spawns two allies. Count and clear them so
+      // they cannot step in front of this test's shots.
+      final summonedAllies = world.clones
+          .where((clone) => clone.ownerId == guarding.id)
+          .toList();
+      expect(summonedAllies, hasLength(2));
+      world.clones.removeWhere(summonedAllies.contains);
+      world.projectiles.addAll([casterShot, masterShot]);
       await _until(
-        () => guestSession.run!.coopFighter(user)!.openCooldown > 0,
-        'remote Open received and broadcast',
+        () =>
+            casterShot.remaining == 0 &&
+            masterShot.remaining == 0 &&
+            world.hp < masterHp,
+        'both Open-time shots reached their targets',
+      );
+      expect(world.openProtects(guarding.id), isTrue);
+      expect(guarding.hp, casterHp);
+      await _until(
+        () =>
+            guestSession.run!.coopFighter(user)!.openCooldown > 0 &&
+            guestSession.run!.hp == world.hp &&
+            guestSession.run!.coopFighter(user)!.hp == casterHp,
+        'guest receives the Open and the selective damage',
       );
       expect(world.coopFighter(user)!.oculum, 5);
       expect(openInputs.length, greaterThanOrEqualTo(2));
       expect(openInputs.toSet(), hasLength(1));
-      expect(
-        world.clones.where(
-          (clone) => clone.ownerId == world.coopFighter(user)!.id,
-        ),
-        hasLength(2),
-      );
       expect(world.oculum, world.maxOculum);
+      await _until(
+        () => world.openScene == null && guestSession.run?.openScene == null,
+        'Open finished on both clients before guard',
+      );
       guestSession.setBlocking(true);
       await _until(
         () => guestSession.run!.coopFighter(user)!.blocking,
         'remote guard held',
       );
-      final guarding = world.coopFighter(user)!;
       world.projectiles.add(
         LiteProjectile(
           position: guarding.position,

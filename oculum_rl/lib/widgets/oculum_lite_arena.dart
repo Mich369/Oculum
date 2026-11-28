@@ -19,6 +19,7 @@ part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_plague_paint.dart';
 part 'oculum_lite_playable_motion.dart';
 part 'oculum_lite_encounter_motion.dart';
+part 'oculum_lite_roster_finish.dart';
 part 'oculum_lite_weapon_paint.dart';
 part 'oculum_lite_open_paint.dart';
 
@@ -266,6 +267,9 @@ class OculumLiteArena extends StatefulWidget {
     'assets/oculum/lite/guardie-solari-andature.webp',
   );
   static const solarArt = AssetImage('assets/oculum/lite/solari-ink.png');
+  static const rosterFinish = AssetImage(
+    'assets/oculum/lite/pose-finale-ink.webp',
+  );
   static const solarGround = AssetImage(
     'assets/oculum/lite/dungeon-solare.jpg',
   );
@@ -484,6 +488,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.faunaArt,
         OculumLiteArena.solarArt,
         OculumLiteArena.solarGaits,
+        OculumLiteArena.rosterFinish,
         OculumLiteArena.solarGround,
         OculumLiteArena.infernalArt,
         OculumLiteArena.lusierArt,
@@ -1848,6 +1853,7 @@ class _HeroSprites {
     this.aerovyrGait,
     this.pysciGait,
     this.solarGaits,
+    this.rosterFinish,
   });
 
   final ui.Image? monsters, banditGaits;
@@ -1857,7 +1863,7 @@ class _HeroSprites {
   final ui.Image? nightActors;
   final ui.Image? fauna;
   final Map<LiteInkFinish, ui.Image?> mechanical;
-  final ui.Image? solar, solarGaits;
+  final ui.Image? solar, solarGaits, rosterFinish;
   final ui.Image? infernal;
   final ui.Image? third;
   final ui.Image? ashley, ashleyWalk;
@@ -1961,6 +1967,7 @@ class _ArenaPaint extends CustomPainter {
     mechanical: mechanicalChickenArt,
     solar: solarArt,
     solarGaits: dropImages[OculumLiteArena.solarGaits]?.image,
+    rosterFinish: dropImages[OculumLiteArena.rosterFinish]?.image,
     infernal: infernalArt,
     third: thirdArt,
     ashley: run.hero == LiteHero.ashley ? heroFrames : ashleyFrames,
@@ -2161,6 +2168,14 @@ class _ArenaPaint extends CustomPainter {
         _paintInkDashGap(canvas, rect, surface);
         continue;
       }
+      if (run.usesExplorableFloor &&
+          obstacle.fixedMap &&
+          rect.longestSide > rect.shortestSide * 3.0 &&
+          rect.longestSide > 1.60 &&
+          cover != null) {
+        _queueExplorationWall(canvas, jobs, cover!, rect, surface);
+        continue;
+      }
       _shadow(
         canvas,
         rect.center + const Offset(.24, .19),
@@ -2231,6 +2246,7 @@ class _ArenaPaint extends CustomPainter {
       }
     }
     if (!run.restHub &&
+        (!run.usesExplorableFloor || run.stageClear) &&
         !run.inSolarDungeon &&
         !run.inActTwo &&
         !run.inThirdAct &&
@@ -2241,7 +2257,8 @@ class _ArenaPaint extends CustomPainter {
         _merchant(canvas, merchant, active: run.stageClear, time: time);
       }
     }
-    if (hubArt case final ui.Image art when run.restHub) {
+    if (hubArt case final ui.Image art
+        when run.restHub || run.usesExplorableFloor) {
       void stationLabel(Offset at, String name) {
         final label = TextPainter(
           text: TextSpan(
@@ -2265,8 +2282,10 @@ class _ArenaPaint extends CustomPainter {
         LiteRestStation.forge,
         LiteRestStation.seer,
       ];
+      final booths = run.restStations;
       for (final (index, station) in stations.indexed) {
-        final at = _offset(station.position);
+        if (!booths.contains(station)) continue;
+        final at = _offset(run.restStationPoint(station));
         if (!visible.contains(at)) continue;
         _shadow(canvas, at, .72, .22);
         _paintRestStation(
@@ -2281,10 +2300,15 @@ class _ArenaPaint extends CustomPainter {
         );
         stationLabel(at, run.restStationName(station));
       }
-      final merchant = _offset(LiteRestStation.merchant.position);
-      if (objects != null && visible.contains(merchant)) {
-        _arenaProp(canvas, objects, 0, merchant, 2.6, true);
-        stationLabel(merchant, LiteRestStation.merchant.label);
+      final trader = _offset(run.restStationPoint(LiteRestStation.merchant));
+      if (booths.contains(LiteRestStation.merchant) &&
+          visible.contains(trader)) {
+        if (objects != null) {
+          _arenaProp(canvas, objects, 0, trader, 2.6, true);
+        } else {
+          _merchant(canvas, trader, active: true, time: time);
+        }
+        stationLabel(trader, LiteRestStation.merchant.label);
       }
       if (run.petTraderPosition case final trader? when monsters != null) {
         final at = _offset(trader);
@@ -2307,7 +2331,7 @@ class _ArenaPaint extends CustomPainter {
           stationLabel(at, 'Bandito dei pet');
         }
       }
-      final teacher = _offset(LiteRestStation.art.position);
+      final teacher = _offset(run.restStationPoint(LiteRestStation.art));
       final portrait = run.devilArtTutor
           ? OculumLiteArena.devilTutor
           : OculumLiteArena.artTutor;
@@ -2328,6 +2352,54 @@ class _ArenaPaint extends CustomPainter {
           Paint()..filterQuality = FilterQuality.medium,
         );
         stationLabel(teacher, run.restStationName(LiteRestStation.art));
+      }
+    }
+    if (run.reysercthPosition case final station?) {
+      final at = _offset(station);
+      if (visible.contains(at)) {
+        const pigment = Color(0xff72beca);
+        _shadow(canvas, at, .84, .36);
+        final rail = Path()
+          ..moveTo(at.dx - .72, at.dy - .12)
+          ..lineTo(at.dx - .64, at.dy - .84)
+          ..lineTo(at.dx - .15, at.dy - 1.15)
+          ..lineTo(at.dx + .69, at.dy - .72)
+          ..lineTo(at.dx + .72, at.dy - .12)
+          ..lineTo(at.dx + .18, at.dy + .08)
+          ..close();
+        canvas.drawPath(rail, Paint()..color = const Color(0xff40434f));
+        canvas.drawPath(
+          rail,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = .085
+            ..color = _ink,
+        );
+        _lines(
+          canvas,
+          [
+            at + const Offset(-.58, -.58),
+            at + const Offset(-.15, -.91),
+            at + const Offset(.16, -.64),
+            at + const Offset(.53, -.59),
+          ],
+          pigment,
+          .049,
+        );
+        final text = TextPainter(
+          text: const TextSpan(
+            text: 'Reysercth',
+            style: TextStyle(
+              fontSize: .37,
+              fontWeight: FontWeight.w700,
+              color: Color(0xffe5ebdf),
+              shadows: [Shadow(blurRadius: .12, color: Color(0xff171218))],
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        text.paint(canvas, at + Offset(-text.width / 2, .14));
+        text.dispose();
       }
     }
     if (run.vampirePosition case final worldPoint?) {
@@ -2576,6 +2648,21 @@ class _ArenaPaint extends CustomPainter {
                   );
                 }
                 return;
+              }
+              if (_RosterFinisher.forEnemy(enemy.kind) case final finish?) {
+                if (_paintRosterFinish(
+                  canvas,
+                  _heroSprites.rosterFinish,
+                  finish,
+                  height: finish.height(hero: false),
+                  fallen: enemy.hp <= 0,
+                  fallAge: flight == null || run.finished
+                      ? null
+                      : time - flight.time,
+                  charge: finish.enemyCharge(run, enemy),
+                )) {
+                  return;
+                }
               }
               if (baghestArt case final art?
                   when enemy.kind == LiteEnemyKind.baghest &&
@@ -2859,6 +2946,20 @@ class _ArenaPaint extends CustomPainter {
                   case final atlas?
                   when enemy.kind == LiteEnemyKind.guardiaSolare ||
                       enemy.kind == LiteEnemyKind.eliteSolare) {
+                if (enemy.hp > 0 &&
+                    !enemy.attacking &&
+                    enemy.strikePose <= 0 &&
+                    !_enemyIsDashing(enemy) &&
+                    _paintSolarMarch(
+                      canvas,
+                      _heroSprites.rosterFinish,
+                      elite: enemy.kind == LiteEnemyKind.eliteSolare,
+                      stride: enemy.stride,
+                      lead: animationLead,
+                      sprintSpeed: enemy.kind.speed * .94,
+                    )) {
+                  return;
+                }
                 _paintCreatureGait(
                   canvas,
                   atlas,
@@ -3182,6 +3283,29 @@ class _ArenaPaint extends CustomPainter {
                   case final atlas?
                   when companion.sprite == LiteEnemyKind.guardiaSolare ||
                       companion.sprite == LiteEnemyKind.eliteSolare) {
+                final finish = _RosterFinisher.forEnemy(companion.sprite)!;
+                if (_paintRosterFinish(
+                  canvas,
+                  _heroSprites.rosterFinish,
+                  finish,
+                  height: finish.height(hero: false),
+                  fallen: clone.down,
+                  charge: clone.preparingPose > 0 ? clone.preparingPose : null,
+                )) {
+                  return;
+                }
+                if (clone.hp > 0 &&
+                    clone.swing <= 0 &&
+                    _paintSolarMarch(
+                      canvas,
+                      _heroSprites.rosterFinish,
+                      elite: companion.sprite == LiteEnemyKind.eliteSolare,
+                      stride: clone.stride,
+                      lead: animationLead,
+                      sprintSpeed: companion.sprite.speed * .94,
+                    )) {
+                  return;
+                }
                 _paintCreatureGait(
                   canvas,
                   atlas,
@@ -3603,6 +3727,9 @@ class _ArenaPaint extends CustomPainter {
               gearArt: weapons[fighter.weapon],
               chakramAway: run.chakramInFlight(fighter),
               fallen: fighter.hp <= 0,
+              fallAge: run.finished
+                  ? null
+                  : _impactAge(playerImpacts[fighter.id], time),
               aiming: direction * side,
               front: direction.dy >= -.25,
               moving: fighter.isMoving,
@@ -3730,6 +3857,7 @@ class _ArenaPaint extends CustomPainter {
             phantom: run.intangible,
             dashing: run.burstRemaining > 0 || run.clashDashing,
             fallen: run.dead || run.hostDown,
+            fallAge: run.finished ? null : _impactAge(playerImpacts[0], time),
             aiming: weaponAim * facing,
             front: weaponAim.dy >= -.25,
             moving: run.isMoving,
@@ -3818,6 +3946,9 @@ class _ArenaPaint extends CustomPainter {
             : null,
         guest: true,
       );
+    }
+    for (final ray in run.shadowRays) {
+      _paintShadowRay(canvas, ray, time);
     }
     for (final impact in run.combatImpacts) {
       final at = _offset(impact.position);
@@ -4711,6 +4842,41 @@ const _coverTrims = [
   Rect.fromLTRB(33, 111, 592, 550),
   Rect.fromLTRB(6, 102, 602, 553),
 ];
+
+void _queueExplorationWall(
+  Canvas canvas,
+  List<(double, VoidCallback)> jobs,
+  ui.Image atlas,
+  Rect wall,
+  LiteBiome biome,
+) {
+  final horizontal = wall.width > wall.height;
+  final length = wall.longestSide;
+  final count = (length / (horizontal ? 1.04 : .81)).ceil();
+  final span = length / count;
+  for (var index = 0; index < count; index++) {
+    final along = (index + .5) * span;
+    final center = horizontal
+        ? Offset(wall.left + along, wall.center.dy)
+        : Offset(wall.center.dx, wall.top + along);
+    final stone = Rect.fromCenter(
+      center: center,
+      width: horizontal ? span * 1.14 : .81,
+      height: horizontal ? .56 : span * .98,
+    );
+    _shadow(
+      canvas,
+      center + const Offset(.14, .13),
+      stone.width * .67,
+      stone.height * .62,
+      alpha: .45,
+    );
+    jobs.add((
+      stone.bottom,
+      () => _illustratedCover(canvas, atlas, stone, biome),
+    ));
+  }
+}
 
 void _illustratedCover(
   Canvas canvas,
@@ -6335,6 +6501,7 @@ void _hero(
   bool dashing = false,
   bool chakramAway = false,
   bool fallen = false,
+  double? fallAge,
   bool giant = false,
   double plagueGrowth = 0,
   bool front = true,
@@ -6361,6 +6528,22 @@ void _hero(
       : weaponStrike;
   final openRelease = openAge >= 0 && openAge < .16;
   final openRecovery = openAge >= .16 && openAge < .33;
+  if (_RosterFinisher.forHero(hero) case final finish?) {
+    final charge = preparingAttack && weapon.chargeSeconds > 0
+        ? (attackElapsed ?? 0) / weapon.chargeSeconds
+        : null;
+    if (_paintRosterFinish(
+      canvas,
+      sprites.rosterFinish,
+      finish,
+      height: finish.height(hero: true),
+      fallen: fallen,
+      fallAge: fallAge,
+      charge: charge,
+    )) {
+      return;
+    }
+  }
   if (sprites.smith case final atlas? when hero == LiteHero.fabbro) {
     _paintAuthoredGait(
       canvas,
@@ -6627,6 +6810,23 @@ void _hero(
   }
   if (sprites.solarGaits case final atlas?
       when hero == LiteHero.guardiaSolare || hero == LiteHero.eliteSolare) {
+    if (!fallen &&
+        !dashing &&
+        strike <= 0 &&
+        !preparingAttack &&
+        !preparingTalent &&
+        !openRelease &&
+        !openRecovery &&
+        _paintSolarMarch(
+          canvas,
+          sprites.rosterFinish,
+          elite: hero == LiteHero.eliteSolare,
+          stride: stride,
+          lead: animationLead,
+          sprintSpeed: 4.3,
+        )) {
+      return;
+    }
     _paintCreatureGait(
       canvas,
       atlas,

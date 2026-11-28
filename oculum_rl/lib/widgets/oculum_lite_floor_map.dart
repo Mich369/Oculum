@@ -192,17 +192,6 @@ class _FloorMapPaint extends CustomPainter {
           ..strokeWidth = 1.0
           ..style = PaintingStyle.stroke,
       );
-      if (!labels || rect.width < 36) continue;
-      final name = TextPainter(
-        text: TextSpan(
-          text: room.label,
-          style: const TextStyle(fontSize: 10, color: Color(0xffe2c9ae)),
-        ),
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.ltr,
-        maxLines: 2,
-      )..layout(maxWidth: rect.width - 6);
-      name.paint(canvas, rect.center - Offset(name.width / 2, name.height / 2));
     }
     for (final wall in run.obstacles) {
       if (wall.secretGate ||
@@ -223,6 +212,37 @@ class _FloorMapPaint extends CustomPainter {
               ? const Color(0xffc2825e)
               : const Color(0xff24202a),
       );
+    }
+    if (labels) {
+      for (final room in rooms) {
+        if (!run.hasMapped(room.sector)) continue;
+        final left = room.left * dx;
+        final right = room.right * dx;
+        final top = room.top * dy;
+        final bottom = room.bottom * dy;
+        if (right - left < 36) continue;
+        final label = TextPainter(
+          text: TextSpan(
+            text: room.label,
+            style: const TextStyle(
+              color: Color(0xffecd0b4),
+              fontFamily: 'Poppins',
+              fontSize: 10,
+              shadows: [Shadow(color: Color(0xff100c15), blurRadius: 2)],
+            ),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+          maxLines: 2,
+        )..layout(maxWidth: right - left - 8);
+        final y = run.usesExplorableFloor
+            ? room.sector == LiteMapSector.ingresso
+                  ? bottom - label.height - 7
+                  : top + 9
+            : (top + bottom - label.height) / 2;
+        label.paint(canvas, Offset((left + right - label.width) / 2, y));
+        label.dispose();
+      }
     }
     if (run.hasMapped(LiteMapSector.uscita)) {
       if (run.hasChamber) {
@@ -249,7 +269,10 @@ class _FloorMapPaint extends CustomPainter {
         Paint()..color = const Color(0xffb69cdd),
       );
     }
-    if (run.hasMapped(LiteMapSector.ingresso) && !run.usesSubArena) {
+    if (!run.usesSubArena &&
+        (run.usesExplorableFloor
+            ? run.stageClear && run.hasMapped(LiteMapSector.fianco)
+            : run.hasMapped(LiteMapSector.ingresso))) {
       final q = p(run.shopPosition);
       canvas.drawRect(
         Rect.fromCenter(
@@ -259,6 +282,47 @@ class _FloorMapPaint extends CustomPainter {
         ),
         Paint()..color = const Color(0xffdcac6f),
       );
+    }
+    if (run.usesExplorableFloor) {
+      for (final landmark in run.explorationLandmarks) {
+        final color = switch (landmark.site) {
+          LiteFloorSite.art => const Color(0xffbd9ae0),
+          LiteFloorSite.merchant => const Color(0xffdcac6f),
+          LiteFloorSite.encounter => const Color(0xffb7ba9a),
+          _ => null,
+        };
+        if (color == null ||
+            !rooms.any(
+              (room) =>
+                  run.hasMapped(room.sector) &&
+                  room.contains(landmark.position),
+            ))
+          continue;
+        final at = p(landmark.position);
+        final radius = labels ? 4.0 : 2.0;
+        canvas.drawCircle(
+          at,
+          radius + 1,
+          Paint()..color = const Color(0xff120d17),
+        );
+        canvas.drawCircle(at, radius, Paint()..color = color);
+        if (!labels || landmark.site == LiteFloorSite.encounter) continue;
+        final name = TextPainter(
+          text: TextSpan(
+            text: landmark.label,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 8.5,
+              color: color,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+        )..layout(maxWidth: 69);
+        name.paint(canvas, at - Offset(name.width / 2, name.height + 5));
+        name.dispose();
+      }
     }
     if (run.secretRoomRevealed) {
       canvas.drawCircle(

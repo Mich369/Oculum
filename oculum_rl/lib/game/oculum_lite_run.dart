@@ -27,6 +27,8 @@ part 'oculum_lite_vampire_pact.dart';
 part 'oculum_lite_pets.dart';
 part 'oculum_lite_fabbro.dart';
 part 'oculum_lite_open_scene.dart';
+part 'oculum_lite_shadow_art.dart';
+part 'oculum_lite_reysercth.dart';
 
 enum LiteHero {
   evasore('Passo fantasma', 'Scatto intangibile più lungo.'),
@@ -2314,7 +2316,8 @@ class LiteCoopFighter extends LiteClone {
       (_mimic?.maxHp ??
           (super.maxHp + (level - 1) * 10) *
               (plagueForm || _night.sanguine > 0 ? 2 : 1)) *
-      supply._vampireLifeScale;
+      supply._vampireLifeScale *
+      supply._reysercthLifeScale;
   double get maxOculum =>
       10.0 + (level - 1) * 2 + (upgrades[LitePermanentUpgrade.oculum] ?? 0);
   double shield = 0;
@@ -2514,6 +2517,7 @@ class LiteRun {
     this.progressId,
     this.allowGlue = false,
     this.allowMechanicalChicken = false,
+    this.explorationRoutes = false,
     required this.hero,
     required LiteWeapon weapon,
     this.difficulty = LiteDifficulty.medio,
@@ -2536,6 +2540,7 @@ class LiteRun {
   final String? progressId;
   final bool allowGlue;
   bool allowMechanicalChicken;
+  final bool explorationRoutes;
   bool get hasGlue =>
       allowGlue || achievements.contains(LiteCompanion.goblinColla.unlockKey);
   final groundShots = <LiteGroundShot>[];
@@ -2867,7 +2872,8 @@ class LiteRun {
                   _power(LitePowerUp.cuore) +
                   _permanent(LitePermanentUpgrade.vita)) *
               (plagueForm || _night.sanguine > 0 ? 2 : 1)) *
-      supply._vampireLifeScale;
+      supply._vampireLifeScale *
+      supply._reysercthLifeScale;
   double get maxOculum =>
       10.0 + (level - 1) * 2 + _permanent(LitePermanentUpgrade.oculum);
   double get weaponDamage => _damageFor(weapon);
@@ -3208,7 +3214,7 @@ class LiteRun {
       !inThirdAct &&
       !inSolarDungeon &&
       !restHub &&
-      (stageClear || campPatrols && stage == 0) &&
+      (stageClear || !usesExplorableFloor && campPatrols && stage == 0) &&
       _distance(position, shopPosition) < 2;
   bool get hasPortalNearby =>
       !finished &&
@@ -3387,6 +3393,7 @@ class LiteRun {
 
   void _clearArenaActions() {
     _openScenes.clear();
+    _shadowRays.clear();
     _divoramituFields.clear();
     for (final clone in clones) {
       clone._burrowDestination = null;
@@ -3451,7 +3458,8 @@ class LiteRun {
     obstacles.clear();
     quests.clear();
     _optionalMissions.clear();
-    position = _spawn;
+    final arrival = _floorSpawn;
+    position = arrival;
     stride._reset();
     _activeBeam = null;
     _finalBossDefeated = false;
@@ -3462,7 +3470,7 @@ class LiteRun {
           clone.companion == LiteCompanion.lupoAlleato,
     );
     for (final clone in clones) {
-      clone.position = _spawn + const Point<double>(0, 1.15);
+      clone.position = arrival + const Point<double>(0, 1.15);
       clone.stride._reset();
       clone._swing = 0;
       clone._preparingPose = 0;
@@ -3498,64 +3506,11 @@ class LiteRun {
       _startBossArena(_specialKind(stage));
       return;
     }
-    if (biome == LiteBiome.campo) {
-      obstacles.addAll([
-        LiteObstacle(11, 4 + _rng.nextDouble(), 2.1, 2.2),
-        LiteObstacle(15.5, 14 + _rng.nextDouble(), 2.6, 1.8),
-        LiteObstacle(22, 7, 2.4, 2.1, breakable: true),
-        LiteObstacle(25, 16, 3, 1.2),
-      ]);
-    } else if (biome == LiteBiome.foresta) {
-      obstacles.addAll([
-        LiteObstacle(8, 3 + _rng.nextDouble(), 2.4, 3.2),
-        LiteObstacle(11, 14.5 + _rng.nextDouble(), 2.1, 3.6),
-        LiteObstacle(18, 16.5, 2.8, 2.1, breakable: true),
-        LiteObstacle(27, 4, 2.8, 3.4),
-      ]);
-    } else if (biome == LiteBiome.dungeon) {
-      obstacles.addAll([
-        LiteObstacle(
-          11,
-          1,
-          1.3,
-          mapHasShortcut ? 3.4 : 7.2,
-          fixedMap: mapHasShortcut,
-        ),
-        if (mapHasShortcut) LiteObstacle(11, 6.74, 1.3, 1.46, fixedMap: true),
-        LiteObstacle(11, 14, 1.3, 7),
-        LiteObstacle(18, 9.5, 3, 2.7),
-        LiteObstacle(25, 1, 1.25, 6.8),
-        LiteObstacle(25, 14, 1.25, 7),
-        LiteObstacle(22, 15 + _rng.nextDouble(), 1.4, 2.5, breakable: true),
-      ]);
-    } else if (biome == LiteBiome.deserto) {
-      obstacles.addAll([
-        LiteObstacle(8.2, 3.1, 2.8, 2.2),
-        LiteObstacle(13.5, 14.6, 2.3, 3.0),
-        LiteObstacle(18.2, 6.3, 3.0, 2.5, breakable: true),
-        LiteObstacle(25.6, 11.3, 2.5, 3.4, breakable: true),
-      ]);
-    } else if (biome == LiteBiome.orea) {
-      obstacles.addAll([
-        LiteObstacle(8.7, 5.0, 2.6, 2.2, breakable: true),
-        LiteObstacle(10.8, 14.2, 3.0, 2.9),
-        LiteObstacle(19.1, 10.2, 3.5, 2.1, breakable: true),
-        LiteObstacle(25.0, 3.5, 2.8, 2.5),
-        LiteObstacle(25.5, 16.2, 2.2, 2.3),
-      ]);
+    if (usesExplorableFloor) {
+      _stockExplorationCache();
     } else {
-      // The service corridor stays open between the foundry's press housings.
-      obstacles.addAll([
-        LiteObstacle(8.8, 2.0, 4.2, 4.5),
-        LiteObstacle(8.8, 15.6, 4.2, 4.4),
-        LiteObstacle(15.1, 5.1 + _rng.nextDouble(), 2.3, 2.8, breakable: true),
-        LiteObstacle(17.5, 14.2, 3.1, 2.8, breakable: true),
-        LiteObstacle(23.6, 1.8, 3.3, 3.2),
-        LiteObstacle(26.9, 15.1, 1.7, 4.2),
-      ]);
+      _placeStandardCover();
     }
-    if (stage > 0) _varyFloorCover();
-    _placeLayoutCover();
     _placeSecretRoom();
     final count = _openingEnemyCount(stage, arenaTrial);
     final formation = stage >= 3 ? floorLayout.index % 3 : 0;
@@ -3572,11 +3527,16 @@ class LiteRun {
         _ => 19.0,
       };
       final spread = formation == 0 ? 7.0 : 1.5;
-      final candidate = Point(column + _rng.nextDouble() * spread, y);
+      final roll = _rng.nextDouble();
+      final candidate = usesExplorableFloor
+          ? Point(26.5 + roll * 5.5, y)
+          : Point(column + roll * spread, y);
       final enemy = _spawnEnemy(
         kind,
         campPatrols && stage == 0 && i == 0
-            ? const Point(12.3, 13.15)
+            ? usesExplorableFloor
+                  ? const Point(12.3, 5.4)
+                  : const Point(12.3, 13.15)
             : i == chamberIndex
             ? chamberCenter
             : candidate,
@@ -3638,6 +3598,67 @@ class LiteRun {
           ? 'Assedio lunare · Custode, due Elité e tre Guardie.'
           : 'Campagna del Sole · $message · Pattuglie lunari.';
     }
+  }
+
+  void _placeStandardCover() {
+    if (biome == LiteBiome.campo) {
+      obstacles.addAll([
+        LiteObstacle(11, 4 + _rng.nextDouble(), 2.1, 2.2),
+        LiteObstacle(15.5, 14 + _rng.nextDouble(), 2.6, 1.8),
+        LiteObstacle(22, 7, 2.4, 2.1, breakable: true),
+        LiteObstacle(25, 16, 3, 1.2),
+      ]);
+    } else if (biome == LiteBiome.foresta) {
+      obstacles.addAll([
+        LiteObstacle(8, 3 + _rng.nextDouble(), 2.4, 3.2),
+        LiteObstacle(11, 14.5 + _rng.nextDouble(), 2.1, 3.6),
+        LiteObstacle(18, 16.5, 2.8, 2.1, breakable: true),
+        LiteObstacle(27, 4, 2.8, 3.4),
+      ]);
+    } else if (biome == LiteBiome.dungeon) {
+      obstacles.addAll([
+        LiteObstacle(
+          11,
+          1,
+          1.3,
+          mapHasShortcut ? 3.4 : 7.2,
+          fixedMap: mapHasShortcut,
+        ),
+        if (mapHasShortcut) LiteObstacle(11, 6.74, 1.3, 1.46, fixedMap: true),
+        LiteObstacle(11, 14, 1.3, 7),
+        LiteObstacle(18, 9.5, 3, 2.7),
+        LiteObstacle(25, 1, 1.25, 6.8),
+        LiteObstacle(25, 14, 1.25, 7),
+        LiteObstacle(22, 15 + _rng.nextDouble(), 1.4, 2.5, breakable: true),
+      ]);
+    } else if (biome == LiteBiome.deserto) {
+      obstacles.addAll([
+        LiteObstacle(8.2, 3.1, 2.8, 2.2),
+        LiteObstacle(13.5, 14.6, 2.3, 3.0),
+        LiteObstacle(18.2, 6.3, 3.0, 2.5, breakable: true),
+        LiteObstacle(25.6, 11.3, 2.5, 3.4, breakable: true),
+      ]);
+    } else if (biome == LiteBiome.orea) {
+      obstacles.addAll([
+        LiteObstacle(8.7, 5.0, 2.6, 2.2, breakable: true),
+        LiteObstacle(10.8, 14.2, 3.0, 2.9),
+        LiteObstacle(19.1, 10.2, 3.5, 2.1, breakable: true),
+        LiteObstacle(25.0, 3.5, 2.8, 2.5),
+        LiteObstacle(25.5, 16.2, 2.2, 2.3),
+      ]);
+    } else {
+      // The service corridor stays open between the foundry's press housings.
+      obstacles.addAll([
+        LiteObstacle(8.8, 2.0, 4.2, 4.5),
+        LiteObstacle(8.8, 15.6, 4.2, 4.4),
+        LiteObstacle(15.1, 5.1 + _rng.nextDouble(), 2.3, 2.8, breakable: true),
+        LiteObstacle(17.5, 14.2, 3.1, 2.8, breakable: true),
+        LiteObstacle(23.6, 1.8, 3.3, 3.2),
+        LiteObstacle(26.9, 15.1, 1.7, 4.2),
+      ]);
+    }
+    if (stage > 0) _varyFloorCover();
+    _placeLayoutCover();
   }
 
   void _placeLayoutCover() {
@@ -3762,6 +3783,19 @@ class LiteRun {
         return LiteEnemyKind.eliteSolare;
       case 21:
         return LiteEnemyKind.diavolo;
+    }
+    if (explorationRoutes && floor == 0) {
+      return switch (_startingBiome) {
+        LiteBiome.postea => LiteEnemyKind.ragnoSaldatore,
+        LiteBiome.deserto => LiteEnemyKind.rasvyr,
+        LiteBiome.orea => LiteEnemyKind.orbryx,
+        _ =>
+          _startingBiome == LiteBiome.campo
+              ? LiteEnemyKind.granScostumato
+              : _startingBiome == LiteBiome.foresta
+              ? LiteEnemyKind.forestDemon
+              : LiteEnemyKind.costrutto,
+      };
     }
     final rotation = LiteBiome.legacy.contains(_startingBiome)
         ? LiteBiome.legacy
@@ -3895,8 +3929,12 @@ class LiteRun {
     return enemy;
   }
 
+  Point<double> get _floorSpawn =>
+      usesExplorableFloor ? LiteFloorExploration._explorationStart : _spawn;
+
   Point<double> _coopSpawn(int index) =>
-      _spawn + Point<double>(.85 * (1 + index ~/ 2), index.isEven ? 1 : -1);
+      _floorSpawn +
+      Point<double>(.85 * (1 + index ~/ 2), index.isEven ? 1 : -1);
 
   LiteCoopFighter? coopFighter(String account) {
     for (final fighter in coopFighters) {
@@ -4185,6 +4223,7 @@ class LiteRun {
         _recordBurstTrace(fighter.id, fighter.position, fighter._dashRemaining);
       } else if (fighter.connected &&
           fighter._night.stun <= 0 &&
+          !_shadowRays.containsKey((false, fighter.id)) &&
           fighter.movement.magnitude > .01) {
         fighter.position = _move(
           fighter.position,
@@ -4330,6 +4369,7 @@ class LiteRun {
     var nearest = position;
     var nearestDistance = double.infinity;
     void consider(Point<double> candidate) {
+      if (inExplorationAtrium(candidate)) return;
       final distance = _distanceSquared(from, candidate);
       if (distance < nearestDistance) {
         nearestDistance = distance;
@@ -4417,6 +4457,8 @@ class LiteRun {
   }
 
   final _openScenes = <LiteOpenScene>[];
+  final _shadowRays = <(bool, int), LiteShadowRay>{};
+  Iterable<LiteShadowRay> get shadowRays => _shadowRays.values;
   bool _presentingFrame = false;
   LiteOpenScene? get openScene => _openScenes.firstOrNull;
   bool get soloOpenFrozen => _openScenes.isNotEmpty && playerCount == 1;
@@ -4606,6 +4648,7 @@ class LiteRun {
       _recordBurstTrace(0, position, _burstTime);
     } else if (!hostDown &&
         _night.stun <= 0 &&
+        !_shadowRays.containsKey((false, 0)) &&
         (movement.x != 0 || movement.y != 0)) {
       position = _move(
         position,
@@ -4641,6 +4684,7 @@ class LiteRun {
       if (_heldRecovery <= 0) attack(position + aim);
     }
     if (coopFighters.isNotEmpty) _tickCoop(elapsed);
+    if (_shadowRays.isNotEmpty) _tickShadowRays(elapsed);
     _discoverFloorMap();
     if (!hostDown &&
         weapon.moveset == LiteWeapon.scettro &&
@@ -4656,13 +4700,20 @@ class LiteRun {
     // New summons enter combat on the next substep.
     _tickDivoramituFields(elapsed / arenaSpeed);
     final enemiesAtStart = enemies.length;
+    final sheltered = _combatantsSheltered;
+    if (sheltered) _trialStart += elapsed;
     for (var i = 0; i < enemiesAtStart; i++) {
       final enemy = enemies[i];
       if (enemy.hp > 0) {
         final beforeMove = enemy.position;
         enemy._strikePose = max(0, enemy._strikePose - elapsed);
         enemy.shockRemaining = max(0, enemy.shockRemaining - elapsed);
-        _enemyTick(enemy, elapsed * _divoramituFieldPace(enemy.position));
+        if (!sheltered) {
+          _enemyTick(enemy, elapsed * _divoramituFieldPace(enemy.position));
+          if (inExplorationAtrium(enemy.position)) {
+            enemy.position = beforeMove;
+          }
+        }
         enemy.stride._track(beforeMove, enemy.position, elapsed);
       }
       if (dead || (soloOpenFrozen && _presentingFrame)) return;
@@ -4689,7 +4740,7 @@ class LiteRun {
           clone._burrowDestination = null;
           clone._burrowTime = 0;
           _redAllyTick(clone, elapsed);
-        } else {
+        } else if (!sheltered || !inExplorationAtrium(clone.position)) {
           _cloneTick(clone, elapsed);
         }
         clone.stride._track(beforeMove, clone.position, elapsed);
@@ -4790,6 +4841,7 @@ class LiteRun {
           2 * (fighter.level - 1)) *
       (1 + .04 * fighter.supply.forgeRank(item)) *
       _swordFusionDamage(item, fighter) *
+      fighter.supply._reysercthWeaponScale *
       (fighter.hero == LiteHero.cavaliereLunare &&
               item.moveset == LiteWeapon.spadaScudo
           ? 2
@@ -4803,6 +4855,7 @@ class LiteRun {
       (1 + _power(LitePowerUp.lama)) *
       (1 + .04 * supply.forgeRank(item)) *
       _swordFusionDamage(item) *
+      supply._reysercthWeaponScale *
       (hero == LiteHero.cavaliereLunare && item == LiteWeapon.spadaScudo
           ? 2
           : 1);
@@ -5732,6 +5785,7 @@ class LiteRun {
       fighter.shield += _power(LitePowerUp.riflusso);
       fighter._openCooldown = openRecoveryFor(grade);
     }
+    _shadowRays.remove((false, ownerId));
     _openScenes.add(LiteOpenScene._(character, source, direction, ownerId));
     message = 'Open · ${character.openName}.';
     return true;
@@ -6652,6 +6706,7 @@ class LiteRun {
 
   void _enemyTick(LiteEnemy enemy, double elapsed) {
     enemy.hitFlash = max(0, enemy.hitFlash - elapsed);
+    if (_shadowRays.containsKey((true, enemy.id))) return;
     if (enemy.kind == LiteEnemyKind.baghest && enemy.stunned <= 0) {
       _baghestTick(enemy, elapsed);
       return;
@@ -8176,6 +8231,10 @@ class LiteRun {
           projectile.direction *
               min(projectile.remaining, projectile.speed * elapsed);
     }
+    if (inExplorationAtrium(next) != inExplorationAtrium(projectile.position)) {
+      projectile.remaining = 0;
+      return;
+    }
     final travelled = next.distanceTo(projectile.position);
     final cannon = projectile.kind == LiteProjectileKind.cannon;
     final hitRadius = cannon ? .24 : .12;
@@ -8586,6 +8645,7 @@ class LiteRun {
   }
 
   void _hitAlly(LiteClone clone, double damage) {
+    if (inExplorationAtrium(clone.position)) return;
     damage *= _floorDamageScale;
     if (clone is LiteCoopFighter) {
       if (clone.protected || clone.hp <= 0 || openProtects(clone.id)) return;
@@ -8605,6 +8665,7 @@ class LiteRun {
       clone.shield -= absorbed;
       final life = min(clone.hp, damage - absorbed);
       clone.hp -= life;
+      if (life > 0 || absorbed > 0) _shadowRays.remove((false, clone.id));
       clone._protection = life > 0 ? lifeHitProtection : shieldHitProtection;
       if (clone._rescue case final rescue?) {
         rescue.pause = rescueHitPause;
@@ -8820,9 +8881,21 @@ class LiteRun {
       silent: silent,
     );
     enemy.hitFlash = .14;
-    if (enemy.hp > 0 && launch > 0 && lifeLost + absorbed > 0) {
-      _ram(enemy, impactFrom ?? attacker?.position ?? position, launch);
-      enemy.stunned = max(enemy.stunned, .55);
+    final propulsion =
+        vampireStrike &&
+            !hasVampire &&
+            mortal?.reysercthMod == LiteReysercthMod.propulsore
+        ? LiteReysercthMod.push
+        : 0.0;
+    final shove = max(launch, propulsion);
+    if (enemy.hp > 0 && shove > 0 && lifeLost + absorbed > 0) {
+      _ram(
+        enemy,
+        impactFrom ?? attacker?.position ?? position,
+        shove,
+        breakCover: launch > 0,
+      );
+      if (launch > 0) enemy.stunned = max(enemy.stunned, .55);
     }
     if (enemy.hp <= 0) {
       final origin = impactFrom ?? attacker?.position ?? position;
@@ -9134,7 +9207,8 @@ class LiteRun {
   }
 
   void _damagePlayer(double damage, {bool nonLethal = false}) {
-    if (finished || hostDown || invulnerable) return;
+    if (finished || hostDown || invulnerable || inExplorationAtrium(position))
+      return;
     if (supply.fed(LiteRestItem.crosta, stage)) damage *= .80;
     if (_night.solarMantle > 0) damage *= .55;
     damage *= 1 - relicProtection;
@@ -9155,6 +9229,7 @@ class LiteRun {
     remaining -= absorbed;
     final previousHp = hp;
     hp = max(0, hp - remaining);
+    if (remaining > 0 || absorbed > 0) _shadowRays.remove((false, 0));
     final formBroken = hp == 0 && _mimic != null && !nonLethal;
     final collapsed = formBroken ? _mimic! : null;
     if (hp == 0 && nonLethal) hp = 1;
@@ -9639,6 +9714,7 @@ class LiteRun {
     if (_legacyVeyrthFinal) 'legacyVeyrthFinal': true,
     if (_legacyOrdinary23 && stage == veyrthStage) 'legacyOrdinary23': true,
     'seed': seed,
+    if (explorationRoutes) 'explorationRoutes': true,
     if (upgrades.isNotEmpty) 'upgrades': LitePermanentUpgrade.encode(upgrades),
     'playerCount': playerCount,
     'rng': _rng.state,
@@ -9678,6 +9754,8 @@ class LiteRun {
     if (includeEffects) 'stride': stride._frame(),
     if (includeEffects && _openScenes.isNotEmpty)
       'openScenes': _openScenes.map((scene) => scene._frame()).toList(),
+    if (_shadowRays.isNotEmpty)
+      'shadowRays': _shadowRays.values.map((ray) => ray._frame()).toList(),
     if (includeEffects && hero == LiteHero.ashley && stride.walking != null)
       'strideWalking': stride.walking,
     if (includeEffects && _burstTraces.isNotEmpty)
@@ -9776,6 +9854,7 @@ class LiteRun {
       progressId: json['progressId'] as String?,
       allowGlue: json['allowGlue'] == true,
       allowMechanicalChicken: json['allowMechanicalChicken'] == true,
+      explorationRoutes: json['explorationRoutes'] == true,
       upgrades: LitePermanentUpgrade.read(json['upgrades']),
       hero: _enum(LiteHero.values, json['hero'], LiteHero.evasore),
       weapon: _enum(LiteWeapon.values, json['weapon'], LiteWeapon.spadaScudo),
@@ -9983,6 +10062,11 @@ class LiteRun {
         .firstOrNull;
     run._trialStart = _num(json['trialStart'], run.time).clamp(0.0, run.time);
     run.stride._restore(json['stride'], walking: json['strideWalking']);
+    for (final row in _list(json['shadowRays']).take(maxCoopPlayers * 2)) {
+      if (LiteShadowRay._read(row) case final ray?) {
+        run._shadowRays[(ray.hostile, ray.casterId)] = ray;
+      }
+    }
     for (final scene in _list(json['openScenes']).take(maxCoopPlayers + 1)) {
       if (LiteOpenScene._read(scene) case final cinematic?) {
         run._openScenes.add(cinematic);

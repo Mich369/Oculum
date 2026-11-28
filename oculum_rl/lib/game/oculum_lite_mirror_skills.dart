@@ -146,6 +146,26 @@ extension LiteMirrorSkills on LiteRun {
           (18 + 6 * rank) * modifier,
           minDot: .97,
         );
+      case LiteLearnedArt.ecoVelata:
+        if (!_summonMirrorEcho(boss, summoned: true, usingOpen: true))
+          return false;
+        _summonMirrorEcho(boss, summoned: true, usingOpen: true);
+      case LiteLearnedArt.passoSenzaLuce:
+        if (distance > 9 || boss.clashRemaining > 0) return false;
+        boss
+          ..clashDirection = direction
+          ..clashRemaining = .29 + .055 * rank;
+        build.intangible = boss.clashRemaining;
+      case LiteLearnedArt.filoOmbra:
+        if (distance > 7 + rank * 1.2) return false;
+        _beginShadowRay(
+          boss.id,
+          boss.position,
+          direction,
+          rank,
+          hostile: true,
+          strength: modifier,
+        );
     }
     _markArtCast(art, boss.position, direction, rank, casterId: boss.id);
     build.oculum -= art.cost;

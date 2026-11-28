@@ -765,6 +765,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     _lunarIntroShownFor = _runId;
     final world = LiteRun(
       seed: _seed,
+      explorationRoutes: true,
       progressId: _runId,
       difficulty: _difficulty,
       biome: _biome,

@@ -156,6 +156,24 @@ enum LiteRestItem {
     LiteRestStation.art,
     74,
     'Spacca il terreno in linea e può rompere i ripari.',
+  ),
+  artEcoVelata(
+    'Eco velata',
+    LiteRestStation.art,
+    82,
+    'Evoca due copie d’ombra temporanee.',
+  ),
+  artPassoSenzaLuce(
+    'Passo senza luce',
+    LiteRestStation.art,
+    66,
+    'Scatto continuo con intangibilità.',
+  ),
+  artFiloOmbra(
+    'Filo d’Ombra',
+    LiteRestStation.art,
+    96,
+    'Raggio guidato dalla mira. Il lanciatore resta ancorato.',
   );
 
   const LiteRestItem(this.label, this.station, this.basePrice, this.effect);
@@ -170,6 +188,9 @@ enum LiteRestItem {
     artCorruzione => LiteLearnedArt.corruzione,
     artBrace => LiteLearnedArt.brace,
     artBasalto => LiteLearnedArt.basalto,
+    artEcoVelata => LiteLearnedArt.ecoVelata,
+    artPassoSenzaLuce => LiteLearnedArt.passoSenzaLuce,
+    artFiloOmbra => LiteLearnedArt.filoOmbra,
     _ => null,
   };
   bool get meal => station == LiteRestStation.tavern;
@@ -222,6 +243,11 @@ class LiteRestLoadout {
   final _forgeRanks = <LiteWeapon, int>{};
   LiteWeaponFusion? _fusion;
   LiteVampirePact? vampirePact;
+  LiteReysercthMod? reysercthMod;
+  double get _reysercthLifeScale =>
+      reysercthMod == null ? 1 : LiteReysercthMod.vitality;
+  double get _reysercthWeaponScale =>
+      reysercthMod == null ? 1 : LiteReysercthMod.power;
   int? _petTradeStage;
   double get _vampireLifeScale => vampirePact == null ? 1 : .65;
   double get _vampireMoveScale =>
@@ -262,6 +288,7 @@ class LiteRestLoadout {
       _forgeRanks.isNotEmpty ||
       _fusion != null ||
       vampirePact != null ||
+      reysercthMod != null ||
       _petTradeStage != null ||
       lusierCards < 12 ||
       hasGrimoire ||
@@ -293,6 +320,7 @@ class LiteRestLoadout {
       'receipts': _receipts.map((key, value) => MapEntry(key.name, value)),
     if (_fusion case final pair?) 'fusion': pair.frame,
     if (vampirePact case final pact?) 'vampirePact': pact.name,
+    if (reysercthMod case final upgrade?) 'reysercthMod': upgrade.name,
     if (_petTradeStage case final floor?) 'petTradeStage': floor,
     if (lusierCards < 12) 'lusierCards': [lusierCards, _lusierRecharge],
     if (_forgeRanks.isNotEmpty)
@@ -307,6 +335,9 @@ class LiteRestLoadout {
   void restore(Object? data) {
     if (data is! Map) return;
     token = data['token'] == true;
+    reysercthMod = LiteReysercthMod.values
+        .where((choice) => choice.name == data['reysercthMod'])
+        .firstOrNull;
     _petTradeStage = data['petTradeStage'] is int
         ? data['petTradeStage'] as int
         : null;
@@ -385,14 +416,24 @@ extension LiteRestHub on LiteRun {
   static const grimoirePrice = 24;
   static const tutorDiscountPercent = 20;
 
+  Iterable<LiteRestStation> get restStations =>
+      (restHub ? LiteRestStation.values : explorationStations).where(
+        (station) => station != LiteRestStation.art || artDealerOpen,
+      );
+
+  bool canUseRestStation(LiteRestStation station, [LiteCoopFighter? fighter]) =>
+      !finished &&
+      (fighter?.hp ?? hp) > 0 &&
+      restStations.contains(station) &&
+      (restHub || restStationNearby(fighter) == station);
+
   LiteRestStation? restStationNearby([LiteCoopFighter? fighter]) {
-    if (!restHub || (fighter?.hp ?? hp) <= 0) return null;
+    if (finished || (fighter?.hp ?? hp) <= 0) return null;
     final at = fighter?.position ?? position;
     LiteRestStation? nearest;
     var distance = 2.25;
-    for (final station in LiteRestStation.values) {
-      if (station == LiteRestStation.art && !artDealerOpen) continue;
-      final remaining = at.distanceTo(station.position);
+    for (final station in restStations) {
+      final remaining = at.distanceTo(restStationPoint(station));
       if (remaining >= distance) continue;
       nearest = station;
       distance = remaining;
@@ -409,6 +450,7 @@ extension LiteRestHub on LiteRun {
   String restStationName(LiteRestStation station) => switch (station) {
     LiteRestStation.forge when partyHasSmith => 'Forgia',
     LiteRestStation.art when devilArtTutor => 'Istruttore di Art',
+    LiteRestStation.art when usesExplorableFloor => 'Pittrice di Art',
     _ => station.label,
   };
 
@@ -480,9 +522,7 @@ extension LiteRestHub on LiteRun {
   }
 
   bool canBuyRestItem(LiteRestItem item, {LiteCoopFighter? fighter}) {
-    if (!restHub ||
-        finished ||
-        (fighter?.hp ?? hp) <= 0 ||
+    if (!canUseRestStation(item.station, fighter) ||
         (fighter?.obser ?? obser) < restPrice(item, fighter: fighter))
       return false;
     final kit = fighter?.supply ?? supply;
@@ -510,7 +550,9 @@ extension LiteRestHub on LiteRun {
 
   bool exchangeLunarPiece({LiteCoopFighter? fighter}) {
     final kit = fighter?.supply ?? supply;
-    if ((!restHub && !shopOpen) || finished || kit.lunarPieces <= 0)
+    if ((!canUseRestStation(LiteRestStation.merchant, fighter) && !shopOpen) ||
+        finished ||
+        kit.lunarPieces <= 0)
       return false;
     kit.lunarPieces--;
     if (fighter == null) {
@@ -572,9 +614,7 @@ extension LiteRestHub on LiteRun {
     final art = item.art;
     final kit = fighter?.supply ?? supply;
     if (art == null ||
-        !artDealerOpen ||
-        finished ||
-        (fighter?.hp ?? hp) <= 0 ||
+        !canUseRestStation(LiteRestStation.art, fighter) ||
         !kit.hasGrimoire ||
         !kit.knowsArt(art) ||
         kit.art == art) {
@@ -589,11 +629,10 @@ extension LiteRestHub on LiteRun {
     final kit = fighter?.supply ?? supply;
     final purchased = kit._receipts[item];
     final money = fighter?.obser ?? obser;
-    if (!restHub ||
+    if (!canUseRestStation(LiteRestStation.seer, fighter) ||
         purchased == null ||
         money < memoryPrice ||
-        kit.promised != null ||
-        (fighter?.hp ?? hp) <= 0)
+        kit.promised != null)
       return false;
     final id = '$slimeCreditId-$stage-${fighter?.id ?? 0}-${item.name}';
     kit.promised = LiteRestMemory(id, item, purchased);

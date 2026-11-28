@@ -14,6 +14,9 @@ void _paintArtCast(Canvas canvas, LiteCombatImpact cast, double age) {
     LiteLearnedArt.corruzione => .68,
     LiteLearnedArt.brace => .42,
     LiteLearnedArt.basalto => .61,
+    LiteLearnedArt.ecoVelata => .68,
+    LiteLearnedArt.passoSenzaLuce => .45,
+    LiteLearnedArt.filoOmbra => .36,
   };
   if (age >= duration) return;
   final start = _offset(cast.position);
@@ -40,6 +43,43 @@ void _paintArtCast(Canvas canvas, LiteCombatImpact cast, double age) {
       _artBrace(ink, form);
     case LiteLearnedArt.basalto:
       _artBasalto(ink, form);
+    case LiteLearnedArt.ecoVelata:
+      for (final side in [-1.0, 1.0]) {
+        final origin = Offset(-.15, side * (.5 + ink.out));
+        ink.arc(
+          origin,
+          .36 + .21 * ink.out,
+          -2.61,
+          4.7,
+          .07,
+          const Color(0xffac82d2),
+        );
+        ink.stroke(
+          origin,
+          origin + Offset(-.78, side * .25),
+          .12,
+          const Color(0xff785b99),
+        );
+      }
+    case LiteLearnedArt.passoSenzaLuce:
+      for (var i = 0; i < 5; i++) {
+        final at = Offset(-(i * .19 + ink.out), i.isEven ? -.24 : .24);
+        ink.stroke(
+          at,
+          at + const Offset(-.80, .16),
+          .10 - i * .008,
+          const Color(0xffad92d9),
+        );
+      }
+    case LiteLearnedArt.filoOmbra:
+      ink.arc(
+        Offset.zero,
+        .22 + .2 * ink.out,
+        -.58,
+        4.9,
+        .055,
+        const Color(0xffdcc1ff),
+      );
   }
   canvas.restore();
 }
@@ -318,4 +358,60 @@ void _artBasalto(_ArtInk fx, int rank) {
       opacity: 1 - lift,
     );
   }
+}
+
+void _paintShadowRay(Canvas canvas, LiteShadowRay ray, double time) {
+  final start = _offset(ray.start);
+  final end = _offset(ray.end);
+  if ((end - start).distanceSquared <= .01) return;
+  final alpha = ray.opacity;
+  final axis = _offset(ray.direction);
+  final side = Offset(-axis.dy, axis.dx);
+  final brush = Paint();
+  _sweptInk(
+    canvas,
+    start,
+    end,
+    ray.width * 2,
+    const Color(0xff110820).withValues(alpha: alpha * .92),
+    brush,
+  );
+  _sweptInk(
+    canvas,
+    start,
+    end,
+    ray.width * .80,
+    const Color(0xffae80dd).withValues(alpha: alpha * .78),
+    brush,
+  );
+  _sweptInk(
+    canvas,
+    start,
+    end,
+    ray.width * .14,
+    const Color(0xffe3c7ff).withValues(alpha: alpha * .95),
+    brush,
+  );
+  final range = (end - start).distance;
+  for (var i = 0; i < 8; i++) {
+    final length = (((i * .91 + time * 5) % range) + range) % range;
+    final from =
+        start + axis * length + side * ray.width * (i.isEven ? .84 : -.84);
+    final until = from + axis * math.min(range - length, .29 + (i % 3) * .09);
+    _sweptInk(
+      canvas,
+      from,
+      until,
+      .038,
+      const Color(0xffc4a5ee).withValues(alpha: alpha * .72),
+      brush,
+    );
+  }
+  _oval(
+    canvas,
+    end,
+    .24,
+    .24,
+    const Color(0xffdfbdff).withValues(alpha: alpha * .92),
+  );
 }
