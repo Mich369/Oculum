@@ -170,6 +170,8 @@ class OculumLiteAudio {
           LiteImpactTarget.emberRebirth => ('sentenza', 4),
           LiteImpactTarget.artCast => ('colpo', 2),
           LiteImpactTarget.chamberStrike => ('sentenza', 4),
+          LiteImpactTarget.bestiaryCast when impact.life == 1 => ('sentenza', 2),
+          LiteImpactTarget.bestiaryCast => ('scatto-inchiostro', 2),
           LiteImpactTarget.frontierCast when impact.life == 5 => ('scudo', 2),
           LiteImpactTarget.frontierCast => ('scatto-arcano', 2),
           LiteImpactTarget.player when impact.life > 0 => ('ferita', 3),

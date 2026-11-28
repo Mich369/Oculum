@@ -182,6 +182,7 @@ extension LiteChambers on LiteRun {
         ? 31 + actRoom + realm!.index * 4
         : stage;
     enemy
+      ..guard = null
       ..chamberSeat = room
       ..chamberWait = 3.3
       ..chamberCycle = 0;

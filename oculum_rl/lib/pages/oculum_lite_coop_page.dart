@@ -34,6 +34,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   final _audio = OculumLiteAudio();
   final _held = <LogicalKeyboardKey>{};
   Point<double> _touch = const Point(0, 0);
+  bool _touchWalk = false;
   OculumLiteCoop get _session => widget.session;
 
   @override
@@ -95,6 +96,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
           .clamp(-1.0, 1.0),
     );
     _session.slowed =
+        _touchWalk ||
         _held.contains(LogicalKeyboardKey.controlLeft) ||
         _held.contains(LogicalKeyboardKey.controlRight);
   }
@@ -558,7 +560,20 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         if (limits.maxWidth < 720)
-                          _movePad()
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FilterChip(
+                                label: const Text('Cammina'),
+                                selected: _touchWalk,
+                                onSelected: (selected) {
+                                  setState(() => _touchWalk = selected);
+                                  _setMove();
+                                },
+                              ),
+                              _movePad(),
+                            ],
+                          )
                         else
                           const SizedBox(),
                         Flexible(

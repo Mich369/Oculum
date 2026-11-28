@@ -2,6 +2,12 @@
 
 La versione Windows autonoma si avvia da `Gioca/Oculum RL.exe` nella cartella della versione attiva. Su questa installazione, `C:/Oculum App/Oculum RL/VERSIONE-ATTIVA.json` indica il percorso. Mantieni `data` e le DLL accanto all’eseguibile. Windows Test ha una cartella, uno ZIP e un profilo di salvataggio propri.
 
+## Anteprima 0.4.28
+
+- **Furtività.** Tieni Ctrl o attiva Cammina su schermo piccolo, anche in cooperativa. I nemici in ronda ti vedono se attraversi il loro campo visivo. Sentono la corsa e lo scatto più da lontano. Il colpo di Forza contro un bersaglio inconsapevole è silenzioso se basta ad abbatterlo. Un testimone con la visuale libera può comunque dare l’allarme. I boss e i miniboss iniziano in combattimento.
+- **Mostri giocabili.** Cerca Mosca Campana e Armadillo Corazzato nella Foresta Elementale. La Mosca combatte con due campane. L’Armadillo si chiude nel carapace, rotola e sperona. I due personaggi hanno attacchi naturali, Talento e Open propri.
+- **Equipaggiamento in arena.** Le creature mostrano solo le armi che impugnano. Le copie conservano la sagoma del personaggio che le ha create. Le Guardie Solari copiate dal Doppelganger mantengono l’equipaggiamento dipinto nello sprite.
+
 ## Anteprima 0.4.27
 
 - **Occhio del Deserto Divoratore.** Apri Gioca subito con seed 41119 e imbocca il percorso a ovest. La fenditura si attiva mettendoci piede. Chi cade nella fenditura subisce 1d12 Taglio, con Scudo e difese normali. Camminare sulla sabbia resta innocuo. La Fortuna è condivisa fra tutti i combattenti. Gli esiti 1 e 2–10 hanno scontri diversi. Gli esiti 11–19 e 20 aprono subito il portale di ritorno. La deviazione non sostituisce un piano della campagna.

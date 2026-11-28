@@ -35,7 +35,7 @@ extension LiteForgeFusion on LiteRun {
 
   List<LiteWeapon> get signatureWeapons => {
     for (final hero in LiteHero.values)
-      if (hero.fixedWeapon case final weapon?) weapon,
+      if (hero.fixedWeapon case final weapon? when !hero.bodyOnly) weapon,
     LiteWeapon.chakram,
     LiteWeapon.boomerang,
     LiteWeapon.cheleRasvyr,
@@ -170,7 +170,7 @@ extension LiteForgeFusion on LiteRun {
     final second = fusedWeapon(fighter);
     final character = fighter?.hero ?? hero;
     final attackingInstantly =
-        main.chargeSeconds == 0 ||
+        main.chargeSeconds == 0 || character.bodyOnly ||
         character == LiteHero.doppelganger ||
         character == LiteHero.slimeBlu ||
         LiteAnimal.forHero(character) != null ||

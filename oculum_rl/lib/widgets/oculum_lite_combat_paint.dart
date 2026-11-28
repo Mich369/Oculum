@@ -105,6 +105,8 @@ void _paintOpenPulse(
     LiteHero.lusierTre || LiteHero.fabbro => const Color(0xfff8cb85),
     LiteHero.gablyn => const Color(0xffe7b17b),
     LiteHero.funerys => const Color(0xffdbb5e8),
+    LiteHero.moscaCampana => const Color(0xffffcf84),
+    LiteHero.armadilloCorazzato => const Color(0xffdda477),
   };
   _paintOpenBrush(canvas, feet, hero, color, phase);
   _oval(

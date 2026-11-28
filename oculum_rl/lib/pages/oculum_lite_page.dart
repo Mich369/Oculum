@@ -69,6 +69,8 @@ const liteHeroLabels = {
   LiteHero.pysciwarden: 'Pysciwarden',
   LiteHero.gablyn: 'Gablyn',
   LiteHero.funerys: 'Funerys',
+  LiteHero.moscaCampana: 'Mosca Campana',
+  LiteHero.armadilloCorazzato: 'Armadillo Corazzato',
   LiteHero.lusierTre: 'Lusier III',
   LiteHero.fabbro: 'Fabbro',
 };
@@ -1684,6 +1686,13 @@ class _OculumLitePageState extends State<OculumLitePage>
                         'Clic sinistro per attaccare. Cambia mosse quando copi una creatura.',
                       ),
                     )
+                  else if (_hero.bodyOnly)
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.pets_outlined),
+                      title: Text('Armamento naturale'),
+                      subtitle: Text('Attacca con il corpo, senza equipaggiare un’arma.'),
+                    )
                   else
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -2236,7 +2245,7 @@ class _OculumLitePageState extends State<OculumLitePage>
                     if (!compact)
                       Text(
                         '${liteWeaponLabels[run.weapon] ?? run.weapon.label} · WASD movimento · clic attacco · '
-                        'destro/V talento · Spazio Open · F blocco · G arma · Shift scatto · E inventario'
+                        'destro/V talento · Spazio Open · F blocco · G arma · Ctrl cammina · Shift scatto · E Art'
                         '${run.banditDodgeReady ? ' · Prossimo scatto intangibile' : ''}'
                         '${run.hero == LiteHero.evasore ? ' · Schivate ${run.dodgeCharges}' : ''}',
                         textAlign: TextAlign.center,
@@ -2642,6 +2651,7 @@ class _OculumLitePageState extends State<OculumLitePage>
   }
 
   Widget _weaponIcon(LiteWeapon weapon, {double size = 46}) {
+    if (weapon == LiteWeapon.armamentoNaturale) return Icon(Icons.pets_outlined, size: size);
     final icon =
         OculumLiteArena.weaponIcons[weapon] ??
         OculumLiteArena.weaponIcons[weapon.moveset];

@@ -24,6 +24,7 @@ part 'oculum_lite_roster_motion.dart';
 part 'oculum_lite_weapon_paint.dart';
 part 'oculum_lite_open_paint.dart';
 part 'oculum_lite_frontier_paint.dart';
+part 'oculum_lite_bestiary_paint.dart';
 part 'oculum_lite_desert_eye_paint.dart';
 
 class OculumLiteBlockControl extends StatelessWidget {
@@ -208,6 +209,7 @@ class OculumLiteArena extends StatefulWidget {
     'assets/oculum/lite/oggetti-inchiostro.png',
   );
   static AssetImage? weaponArt(LiteWeapon item) {
+    if (item == LiteWeapon.armamentoNaturale) return null;
     if (item.frontierWeapon) return weaponIcons[item];
     final weapon = item.moveset;
     if (weapon == LiteWeapon.chakram) return weaponIcons[weapon];
@@ -220,6 +222,10 @@ class OculumLiteArena extends StatefulWidget {
   static const infernalArt = AssetImage('assets/oculum/lite/infernali-ink.png');
   static const lusierArt = AssetImage('assets/oculum/lite/lusier-iii-ink.webp');
   static const bunnysArt = AssetImage('assets/oculum/lite/bunnys-ink.webp');
+  static const bestiaryBodies = <LiteEnemyKind, AssetImage>{
+    LiteEnemyKind.moscaCampana: AssetImage('assets/oculum/lite/mosca-campana-andature-ink.webp'),
+    LiteEnemyKind.armadilloCorazzato: AssetImage('assets/oculum/lite/armadillo-corazzato-andature-ink.webp'),
+  };
   static const forgeMotion = AssetImage(
     'assets/oculum/lite/fabbro-forgia-ink.webp',
   );
@@ -510,6 +516,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.infernalArt,
         OculumLiteArena.lusierArt,
         OculumLiteArena.bunnysArt,
+        ...OculumLiteArena.bestiaryBodies.values,
         OculumLiteArena.forgeMotion,
         OculumLiteArena.smithCombat,
         OculumLiteArena.veyrthMotion,
@@ -1018,6 +1025,8 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
       LiteHero.lupoDiVaitern ||
       LiteHero.gablyn => OculumLiteArena.nightActors,
       LiteHero.funerys => OculumLiteArena.cryptGaits,
+      LiteHero.moscaCampana => OculumLiteArena.bestiaryBodies[LiteEnemyKind.moscaCampana]!,
+      LiteHero.armadilloCorazzato => OculumLiteArena.bestiaryBodies[LiteEnemyKind.armadilloCorazzato]!,
       LiteHero.pollo ||
       LiteHero.raganella ||
       LiteHero.pipistrello => OculumLiteArena.faunaArt,
@@ -1867,6 +1876,7 @@ class _HeroSprites {
     this.rosterMotion,
     this.rosterFallback,
     this.funerysGait,
+    this.bestiary = const {},
   });
 
   final ui.Image? monsters, banditGaits;
@@ -1885,6 +1895,7 @@ class _HeroSprites {
   final ui.Image? smith;
   final ui.Image? veyMotion;
   final ui.Image? thirdMotion, aerovyrGait, pysciGait, funerysGait;
+  final Map<LiteEnemyKind, ui.Image?> bestiary;
   final ui.Image? devilGait,
       demonGait,
       golemGait,
@@ -1993,6 +2004,10 @@ class _ArenaPaint extends CustomPainter {
     veyMotion: dropImages[OculumLiteArena.veyrthMotion]?.image,
     thirdMotion: dropImages[OculumLiteArena.thirdMotion]?.image,
     funerysGait: dropImages[OculumLiteArena.cryptGaits]?.image,
+    bestiary: {
+      for (final entry in OculumLiteArena.bestiaryBodies.entries)
+        entry.key: dropImages[entry.value]?.image,
+    },
     devilGait: dropImages[OculumLiteArena.devilGait]?.image,
     demonGait: dropImages[OculumLiteArena.demonGait]?.image,
     golemGait: dropImages[OculumLiteArena.golemGait]?.image,
@@ -2543,7 +2558,8 @@ class _ArenaPaint extends CustomPainter {
         .where(
           (animal) =>
               animal.kind == LiteEnemyKind.lupoLunare ||
-              animal.kind == LiteEnemyKind.orbryx,
+              animal.kind == LiteEnemyKind.orbryx ||
+              animal.kind.armoredArmadillo,
         )
         .toSet();
     for (final field in run.divoramituFields) {
@@ -2654,6 +2670,17 @@ class _ArenaPaint extends CustomPainter {
             () {
               if (flight != null && phase < 1)
                 canvas.rotate(-.20 * math.sin(phase * math.pi));
+              if (OculumLiteArena.bestiaryBodies.containsKey(enemy.kind)) {
+                if (_heroSprites.bestiary[enemy.kind] case final atlas?) {
+                  _paintBestiaryBody(canvas, atlas, enemy.kind, enemy.stride,
+                    time, animationLead, fallen: enemy.hp <= 0,
+                    dashing: _enemyIsDashing(enemy) ||
+                      enemy.kind.armoredArmadillo && enemy.attacking && enemy.windup < .19,
+                    striking: enemy.strikePose > 0,
+                    quiet: neutralCreatures.contains(enemy) && enemy.attackTarget == null);
+                }
+                return;
+              }
               if (enemy.kind == LiteEnemyKind.bunnys) {
                 if (dropImages[OculumLiteArena.bunnysArt]?.image
                     case final atlas?) {
@@ -3271,15 +3298,19 @@ class _ArenaPaint extends CustomPainter {
         );
       }
       final guestOwned = clone.ownerId > 0;
-      final cloneHero = guestOwned ? LiteHero.duplicatore : run.hero;
-      final account = guestOwned
+      final owner = guestOwned
           ? run.coopFighters
                 .where((fighter) => fighter.id == clone.ownerId)
                 .firstOrNull
-                ?.account
           : null;
-      final cloneLook = guestOwned
-          ? guestAppearances[account] ?? oculumLiteDefaultAppearance(cloneHero)
+      final cloneHero = clone.summoned
+          ? LiteHero.duplicatore
+          : owner?.hero ?? (guestOwned ? LiteHero.duplicatore : run.hero);
+      final cloneLook = clone.summoned
+          ? oculumLiteDefaultAppearance(cloneHero)
+          : guestOwned
+          ? guestAppearances[owner?.account] ??
+                oculumLiteDefaultAppearance(cloneHero)
           : appearance;
       jobs.add((
         at.dy,
@@ -4032,6 +4063,10 @@ class _ArenaPaint extends CustomPainter {
         _paintMilestoneTechnique(canvas, impact, time - impact.time);
         continue;
       }
+      if (impact.target == LiteImpactTarget.bestiaryCast) {
+        _paintBestiaryCue(canvas, impact, time - impact.time);
+        continue;
+      }
       if (impact.target == LiteImpactTarget.frontierCast) {
         _paintFrontierCast(canvas, impact, time - impact.time);
         continue;
@@ -4304,6 +4339,7 @@ void _paintCombatImpacts(
         impact.target == LiteImpactTarget.fiveFlames ||
         impact.target == LiteImpactTarget.bunnysHeal ||
         impact.target == LiteImpactTarget.frontierCast ||
+        impact.target == LiteImpactTarget.bestiaryCast ||
         impact.target == LiteImpactTarget.chamberStrike ||
         impact.target == LiteImpactTarget.fissure ||
         impact.target == LiteImpactTarget.explosion)
@@ -6158,7 +6194,7 @@ void _paintPlagueForm(
     Offset(.14, -1.87),
   ], _ink);
   _oval(canvas, const Offset(.223, -1.917), .038, .024, glint);
-  if (fallen) return;
+  if (fallen || giant) return;
   canvas.save();
   canvas.translate(.38, -.94);
   canvas.rotate(aim.direction.clamp(-.65, .55));
@@ -6593,7 +6629,37 @@ void _hero(
   double openAge = -1,
   Offset aiming = const Offset(.9, .08),
 }) {
-  final weapon = equipment.moveset;
+  final holdsEquipment =
+      mimic == null &&
+      switch (hero) {
+        LiteHero.evasore ||
+        LiteHero.duplicatore ||
+        LiteHero.ashley ||
+        LiteHero.scostubandito ||
+        LiteHero.granScostumato ||
+        LiteHero.curatorePeste ||
+        LiteHero.pyrel ||
+        LiteHero.lithra ||
+        LiteHero.luce ||
+        LiteHero.ombra ||
+        LiteHero.cavaliereLunare ||
+        LiteHero.reGoblin ||
+        LiteHero.guardiaSolare ||
+        LiteHero.eliteSolare ||
+        LiteHero.guardianoSolare ||
+        LiteHero.demoneMaggiore ||
+        LiteHero.diavolo ||
+        LiteHero.vedettaEiva ||
+        LiteHero.pysciwarden ||
+        LiteHero.lusierTre ||
+        LiteHero.fabbro ||
+        LiteHero.gablyn ||
+        LiteHero.funerys => true,
+        LiteHero.vampiro =>
+          (night?.sanguine ?? 0) <= 0 && (night?.bat ?? 0) <= 0,
+        _ => false,
+      };
+  final weapon = holdsEquipment ? equipment.moveset : LiteWeapon.guanti;
   final age = releaseAge ?? (preparingAttack ? null : attackElapsed);
   final weaponStrike = math.max(0.0, .24 - (age ?? .24));
   final strike = liteMilestoneHeirs.contains(hero)
@@ -6607,6 +6673,16 @@ void _hero(
       : weaponStrike;
   final openRelease = openAge >= 0 && openAge < .16;
   final openRecovery = openAge >= .16 && openAge < .33;
+  final bodyKind = mimic?.kind ?? hero.sprite;
+  if (OculumLiteArena.bestiaryBodies.containsKey(bodyKind)) {
+    if (sprites.bestiary[bodyKind] case final atlas?) {
+      _paintBestiaryBody(canvas, atlas, bodyKind!, stride, time, animationLead,
+        fallen: fallen, dashing: dashing,
+        striking: weaponStrike > 0 || preparingTalent || openRelease,
+        quiet: stride?.walking == true);
+    }
+    return;
+  }
   if (_RosterFinisher.forHero(hero) case final finish?) {
     final charge = preparingAttack && weapon.chargeSeconds > 0
         ? (attackElapsed ?? 0) / weapon.chargeSeconds
@@ -6855,17 +6931,6 @@ void _hero(
       striking: strike > 0 || preparingTalent || openRelease,
       height: hero == LiteHero.diavolo ? 3.0 : 2.85,
     );
-    if (hero == LiteHero.sentinella &&
-        weapon != LiteWeapon.spadaScudo &&
-        !fallen &&
-        !releasingChakram) {
-      canvas.save();
-      canvas.translate(.51, -.89);
-      canvas.rotate(aiming.direction.clamp(-.48, .48));
-      canvas.scale(.55);
-      _holdWeapon(canvas, weapon, gearArt, _sand, _ink);
-      canvas.restore();
-    }
     return;
   }
   if (sprites.lesserDemons case final atlas?
@@ -7078,6 +7143,37 @@ void _hero(
     return;
   }
   if (mimic != null) {
+    if (sprites.solarGaits case final atlas?
+        when mimic.kind == LiteEnemyKind.guardiaSolare ||
+            mimic.kind == LiteEnemyKind.eliteSolare) {
+      _paintCreatureGait(
+        canvas,
+        atlas,
+        mimic.kind == LiteEnemyKind.guardiaSolare ? 0 : 4,
+        stride,
+        animationLead,
+        fallen: fallen,
+        dashing: dashing,
+        dashFrame: true,
+        winding: preparingAttack || openRecovery,
+        striking: strike > 0 || preparingTalent || openRelease,
+      );
+      return;
+    }
+    if (_solarRow(mimic.kind) case final row? when solarActors != null) {
+      _solarActor(
+        canvas,
+        solarActors,
+        row,
+        animationLead,
+        stride,
+        preparingAttack ? .5 : 0,
+        strike,
+        0,
+        fallen: fallen,
+      );
+      return;
+    }
     if (_RosterMotion.forEnemy(mimic.kind) case final motion?) {
       if (_paintRosterMotion(
             canvas,
@@ -7231,7 +7327,8 @@ void _hero(
         hero == LiteHero.pyrel &&
             (rosterPose == null || rosterPose == _RosterPose.idle) ||
         (hero != LiteHero.doppelganger && weapon != hero.fixedWeapon);
-    if (kitWeapon &&
+    if (holdsEquipment &&
+        kitWeapon &&
         !giant &&
         !fallen &&
         !preparingTalent &&
@@ -7328,13 +7425,14 @@ void _hero(
         )) {
       _enemy(canvas, kind, fallen: fallen, time: time, cannonRaised: false);
     }
-    if (!fallen &&
-        !(hero == LiteHero.sentinella && weapon == LiteWeapon.spadaScudo) &&
+    if (holdsEquipment &&
+        !fallen &&
         !swinging &&
         !releasingChakram &&
+        hero != LiteHero.granScostumato &&
         (isBandit
             ? weapon != LiteWeapon.fucileScostubandito
-            : weapon != hero.fixedWeapon || hero != LiteHero.granScostumato)) {
+            : weapon != hero.fixedWeapon)) {
       canvas.save();
       canvas.translate(.54, -.86);
       canvas.rotate(aiming.direction.clamp(-.48, .48));
@@ -7845,6 +7943,19 @@ void _hero(
     edge,
     narrow: lean,
   );
+
+  if (!holdsEquipment) {
+    _heroGrip(
+      canvas,
+      nearGrip,
+      math.atan2(nearGrip.dy - elbow.dy, nearGrip.dx - elbow.dx),
+      skin,
+      shadeSkin,
+      edge,
+      gesture: _HandGesture.grip,
+    );
+    return;
+  }
 
   if (weapon == LiteWeapon.spadaScudo) {
     if (gearArt == null) {
@@ -8964,6 +9075,8 @@ double _enemyScale(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.baghest => 1.40,
   LiteEnemyKind.corrottoRosso => .98,
   LiteEnemyKind.bunnys => .84,
+  LiteEnemyKind.moscaCampana => .78,
+  LiteEnemyKind.armadilloCorazzato => .88,
 };
 
 double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
@@ -9001,6 +9114,8 @@ double _enemyHeight(LiteEnemyKind kind) => switch (kind) {
   LiteEnemyKind.demoneIntermedio || LiteEnemyKind.demoneMaggiore => 2.47,
   LiteEnemyKind.diavolo => 2.95,
   LiteEnemyKind.bunnys => 2.39,
+  LiteEnemyKind.moscaCampana => 2.18,
+  LiteEnemyKind.armadilloCorazzato => 1.30,
   LiteEnemyKind.divoramitu || LiteEnemyKind.divoramituBoss => 2.25,
   LiteEnemyKind.cuccioloDivoramitu => 1.6,
   LiteEnemyKind.funerys => 1.30,
@@ -9027,7 +9142,9 @@ void _enemy(
   }
   final step = fallen ? 0.0 : math.sin(time * 6.0) * .048;
   switch (kind) {
-    case LiteEnemyKind.bunnys:
+    case LiteEnemyKind.bunnys ||
+        LiteEnemyKind.moscaCampana ||
+        LiteEnemyKind.armadilloCorazzato:
       return;
     case LiteEnemyKind.goblinColtello ||
         LiteEnemyKind.goblinFango ||
@@ -9038,6 +9155,7 @@ void _enemy(
         kind == LiteEnemyKind.reGoblin,
         step,
         cannonRaised: false,
+        showFirearm: false,
       );
     case LiteEnemyKind.baghest:
       _forestDemon(canvas, false, step);
@@ -9121,6 +9239,7 @@ void _bandit(
   bool tall,
   double step, {
   required bool cannonRaised,
+  bool showFirearm = true,
 }) {
   const fur = Color(0xff977068);
   const litFur = Color(0xffddac82);
@@ -9328,6 +9447,7 @@ void _bandit(
       4,
     );
   }
+  if (!showFirearm) return;
   canvas.save();
   if (cannonRaised) {
     canvas.translate(.54, -1.53);
@@ -11324,6 +11444,7 @@ class _HeroPreviewPaint extends CustomPainter {
         aerovyrGait: hero == LiteHero.aerovyr ? figure : null,
         pysciGait: hero == LiteHero.pysciwarden ? figure : null,
         funerysGait: hero == LiteHero.funerys ? figure : null,
+        bestiary: {if (hero.bodyOnly) hero.sprite!: figure},
         third: _thirdHeroSprite(hero) != null && hero != LiteHero.aerovyr
             ? figure
             : null,

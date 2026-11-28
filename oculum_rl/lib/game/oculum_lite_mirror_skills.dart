@@ -35,6 +35,13 @@ extension LiteMirrorSkills on LiteRun {
         difficulty.enemyStrength *
         _challengeDamageScale(boss.kind);
     switch (build.hero) {
+      case LiteHero.moscaCampana:
+        if (distance > 4.1) return false;
+        _hostileBell(boss, direction, 4.1, damage, stun: .46, minDot: .32);
+      case LiteHero.armadilloCorazzato:
+        if (distance > 3.9) return false;
+        _mirrorMelee(boss, direction, 3.9, damage, minDot: .45);
+        _hostileArmadilloCue(boss, direction);
       case LiteHero.gablyn:
         if (distance > 4.2) return false;
         _mirrorMelee(boss, direction, 4.2, damage, minDot: .62);
@@ -209,7 +216,7 @@ extension LiteMirrorSkills on LiteRun {
     final item = build.weapon.moveset;
     if (build.techniqueCooldown > 0 ||
         build.oculum < LiteWeaponArt.weaponArtCost ||
-        build.hero == LiteHero.doppelganger ||
+        build.hero.bodyOnly || build.hero == LiteHero.doppelganger ||
         LiteAnimal.forHero(build.hero) != null)
       return false;
     final reach = item == LiteWeapon.spadaScudo
@@ -309,6 +316,17 @@ extension LiteMirrorOpen on LiteRun {
     }
 
     switch (build.hero) {
+      case LiteHero.moscaCampana:
+        final reach = 5.80 + grade * .36;
+        if (distance > reach) return false;
+        _hostileBell(boss, direction, reach, (19 + grade * 5) * strength, stun: .74);
+      case LiteHero.armadilloCorazzato:
+        if (distance > 6.3) return false;
+        boss..clashDirection = direction..clashRemaining = .31;
+        build.intangible = max(build.intangible, .31);
+        build.shield += 13 + grade * 7;
+        strike(3.8, 18 + grade * 5, dot: -.18);
+        _hostileArmadilloCue(boss, direction);
       case LiteHero.gablyn:
         if (distance > 8.8) return false;
         boss

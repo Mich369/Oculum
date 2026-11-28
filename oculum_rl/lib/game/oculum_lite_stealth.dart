@@ -28,6 +28,39 @@ class LiteGuard {
   }
 }
 
+enum _LiteEnemySenses {
+  umano(8.2, 4.9, .39, 1.15, 6.7, .9, .53),
+  macchina(9.2, 6.2, .70, 1.04, 4.2, .45, .43),
+  predatore(6.2, 3.8, .18, 1.35, 8.15, 1.42, .64),
+  gel(4.9, 3.2, .12, 1.15, 5.8, 1.04, .55),
+  volante(6.8, 4.1, .20, 1.25, 7.4, .88, .46);
+
+  const _LiteEnemySenses(
+    this.sight,
+    this.quietSight,
+    this.cone,
+    this.near,
+    this.running,
+    this.walking,
+    this.coverHearing,
+  );
+  final double sight, quietSight, cone, near, running, walking, coverHearing;
+
+  static _LiteEnemySenses forKind(LiteEnemyKind kind) => switch (kind) {
+    LiteEnemyKind.dronePostea ||
+    LiteEnemyKind.ragnoSaldatore ||
+    LiteEnemyKind.aberrazioneSolare => macchina,
+    LiteEnemyKind.rasvyr ||
+    LiteEnemyKind.babyForestDemon ||
+    LiteEnemyKind.lupoLunare ||
+    LiteEnemyKind.sacrycrab => predatore,
+    LiteEnemyKind.armadilloCorazzato => predatore,
+    LiteEnemyKind.moscaCampana => volante,
+    LiteEnemyKind.slime || LiteEnemyKind.orbryx => gel,
+    _ => umano,
+  };
+}
+
 extension LiteCampStealth on LiteRun {
   bool get quietSteps => _walking;
 
@@ -45,14 +78,51 @@ extension LiteCampStealth on LiteRun {
       position.y >= 7.4 &&
       position.y <= 15.4;
 
+  bool _canPatrol(LiteEnemy enemy) {
+    final kind = enemy.kind;
+    if (kind.boss || kind.elite || kind.echo || enemy.chamberSeat != null) {
+      return false;
+    }
+    if (campPatrols && kind == LiteEnemyKind.scostubandito) return true;
+    return explorationRoutes &&
+        !restHub &&
+        !goblinCamp &&
+        !inSolarDungeon &&
+        !inDesertEye &&
+        !baghestFight &&
+        kind != LiteEnemyKind.cuccioloDivoramitu &&
+        kind != LiteEnemyKind.bunnys &&
+        kind != LiteEnemyKind.corrottoRosso &&
+        LiteAnimal.forCreature(kind) == null;
+  }
+
+  void _setEnemyPerception(LiteEnemy enemy, {bool restoring = false}) {
+    if (!_canPatrol(enemy)) {
+      enemy.guard = null;
+      return;
+    }
+    if (enemy.guard != null) return;
+    final guard = LiteGuard(enemy.position);
+    enemy.guard = guard;
+    if (campPatrols && enemy.kind == LiteEnemyKind.scostubandito) return;
+    final lane = ((seed ^ (enemy.id * 11)) % 3) - 1;
+    guard.facing = LiteRun._unit(Point(-.84, lane * .54));
+    if (enemy.attackTarget case final target? when restoring) {
+      _rallyGuard(enemy, target, LiteGuardMode.allerta);
+    }
+  }
+
   bool _guardSees(LiteEnemy enemy, Point<double> at, {bool quiet = false}) {
     final delta = at - enemy.position;
     final distance = delta.magnitude;
-    if (distance > (quiet ? 4.9 : 8.2) || _lineBlocked(enemy.position, at))
-      return false;
-    if (distance < 1.15) return true;
+    final senses = _LiteEnemySenses.forKind(enemy.kind);
+    if (distance > (quiet ? senses.quietSight : senses.sight)) return false;
     final facing = enemy.guard!.facing;
-    return (delta.x * facing.x + delta.y * facing.y) / distance >= .39;
+    if (distance >= senses.near &&
+        (delta.x * facing.x + delta.y * facing.y) / distance < senses.cone) {
+      return false;
+    }
+    return !_lineBlocked(enemy.position, at);
   }
 
   void _rallyGuard(LiteEnemy enemy, Point<double> at, LiteGuardMode mode) {
@@ -66,31 +136,37 @@ extension LiteCampStealth on LiteRun {
       ..target = at;
   }
 
-  void _campNoise(Point<double> at, double radius, {LiteEnemy? except}) {
-    if (!campPatrols) return;
+  void _encounterNoise(Point<double> at, double radius, {LiteEnemy? except}) {
     for (final witness in enemies) {
       if (witness == except || witness.hp <= 0 || witness.guard == null)
         continue;
-      final reach = _lineBlocked(witness.position, at) ? radius * .53 : radius;
-      if (witness.position.distanceTo(at) <= reach) {
+      final senses = _LiteEnemySenses.forKind(witness.kind);
+      final reach = radius * senses.running / _LiteEnemySenses.umano.running;
+      final distance = witness.position.distanceTo(at);
+      if (distance > reach) continue;
+      if (distance <= reach * senses.coverHearing ||
+          !_lineBlocked(witness.position, at)) {
         _rallyGuard(witness, at, LiteGuardMode.indaga);
       }
     }
   }
 
-  Point<double>? _campTarget(LiteEnemy enemy, double elapsed) {
+  Point<double>? _encounterTarget(LiteEnemy enemy, double elapsed) {
     final guard = enemy.guard!;
+    final senses = _LiteEnemySenses.forKind(enemy.kind);
     Point<double>? seen, heard;
     var sightDistance = double.infinity, soundDistance = double.infinity;
     void sense(Point<double> at, bool quiet, double speed) {
+      if (inExplorationAtrium(at)) return;
       final distance = enemy.position.distanceTo(at);
       if (distance < sightDistance && _guardSees(enemy, at, quiet: quiet)) {
         seen = at;
         sightDistance = distance;
       }
-      if (speed <= .12 || distance >= soundDistance) return;
-      final clear = !_lineBlocked(enemy.position, at);
-      if (distance <= (quiet ? .9 : 6.7) * (clear ? 1 : .53)) {
+      final reach = quiet ? senses.walking : senses.running;
+      if (speed <= .12 || distance >= soundDistance || distance > reach) return;
+      if (distance <= reach * senses.coverHearing ||
+          !_lineBlocked(enemy.position, at)) {
         heard = at;
         soundDistance = distance;
       }
@@ -98,16 +174,12 @@ extension LiteCampStealth on LiteRun {
 
     if (!hostDown) sense(position, _walking, stride.speed);
     for (final ally in _damageableAllies) {
-      if (ally.hp <= 0) continue;
-      sense(
-        ally.position,
-        ally is LiteCoopFighter && ally._slow,
-        ally.stride.speed,
-      );
+      if (ally.hp <= 0 || ally.corrupted) continue;
+      sense(ally.position, ally.stride.walking == true, ally.stride.speed);
     }
     if (seen case final target?) {
       if (guard.mode != LiteGuardMode.allerta) {
-        _campNoise(enemy.position, 6.5, except: enemy);
+        _encounterNoise(enemy.position, 6.5, except: enemy);
       }
       _rallyGuard(enemy, target, LiteGuardMode.allerta);
       final direction = LiteRun._unit(target - enemy.position);
@@ -145,21 +217,21 @@ extension LiteCampStealth on LiteRun {
     return null;
   }
 
-  bool _campImpact(
+  bool _encounterImpact(
     LiteEnemy victim,
     Point<double> from,
     bool force,
     bool walking,
   ) {
     final guard = victim.guard;
-    if (!campPatrols || guard == null) return false;
+    if (guard == null) return false;
     final quiet =
         force &&
         walking &&
         victim.hp <= 0 &&
         guard.mode != LiteGuardMode.allerta;
     if (victim.hp > 0) _rallyGuard(victim, from, LiteGuardMode.allerta);
-    if (!quiet) _campNoise(victim.position, 8.2, except: victim);
+    if (!quiet) _encounterNoise(victim.position, 8.2, except: victim);
     var witnessed = false;
     for (final other in enemies) {
       if (other == victim || other.hp <= 0 || other.guard == null) continue;

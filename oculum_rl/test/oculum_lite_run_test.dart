@@ -794,6 +794,13 @@ void main() {
               ),
               isTrue,
             );
+          case LiteHero.moscaCampana:
+            expect(target.hp, lessThan(target.maxHp));
+            expect(target.stunned, greaterThan(0));
+          case LiteHero.armadilloCorazzato:
+            expect(run.intangible, isTrue);
+            expect(run.burstRemaining, greaterThan(0));
+            expect(run.shield, greaterThan(0));
           case LiteHero.gablyn:
             expect(run.intangible, isTrue);
             expect(run.burstRemaining, greaterThan(0));

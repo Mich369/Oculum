@@ -1,5 +1,5 @@
-# Oculum RL 0.4.27
+# Oculum RL 0.4.28
 
-- **Oculum RL 0.4.27.** L’Occhio del Deserto Divoratore porta tutto il party nella stessa dimensione con un unico tiro Fortuna e un portale di ritorno. Giocabili Gablyn e Funerys, due nuovi compagni e tre armi di Forgia con tecniche distinte. Nove nuove sequenze di movimento e combattimento Ink Expressive. Gli avvisi di Vesanybel corrispondono ai due impatti sotto metà Vita. Il riepilogo mostra seed, difficoltà e piani superati.
+- **Oculum RL 0.4.28.** Furtività contro i mostri in ronda, con vista, rumore, ripari e testimoni. I colpi di Forza letali possono restare silenziosi. Boss e miniboss partono in allerta. Mosca Campana e Armadillo Corazzato giocabili, con sprite di movimento e attacchi naturali. Cammina disponibile anche in cooperativa su schermo piccolo. Le armi visibili seguono la presa e le copie conservano la sagoma del loro creatore.
 
 [Registro cumulativo](REGISTRO_AGGIORNAMENTI.md)

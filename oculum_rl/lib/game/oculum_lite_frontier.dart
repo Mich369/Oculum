@@ -3,6 +3,8 @@ part of 'oculum_lite_run.dart';
 /// Identifiers carried in the existing combat-impact frame.
 enum LiteFrontierEffect { caveCut, shaleFan, shroud, coil, fragment, solder }
 
+const _individualCreatureHeroes = [LiteHero.gablyn, LiteHero.funerys, LiteHero.moscaCampana, LiteHero.armadilloCorazzato];
+
 extension LiteFrontierWeapons on LiteWeapon {
   bool get frontierWeapon => switch (this) {
     LiteWeapon.beccoCaverna ||
@@ -25,6 +27,8 @@ extension _LiteFrontierCombat on LiteRun {
     final unlocked = switch (defeated) {
       LiteEnemyKind.gablyn => LiteHero.gablyn,
       LiteEnemyKind.funerys => LiteHero.funerys,
+      LiteEnemyKind.moscaCampana => LiteHero.moscaCampana,
+      LiteEnemyKind.armadilloCorazzato => LiteHero.armadilloCorazzato,
       _ => null,
     };
     final pet = switch (defeated) {

@@ -1,7 +1,7 @@
 name: oculum_rl
 description: "Oculum RL, campagna roguelite 2D"
 publish_to: none
-version: 0.4.27+32
+version: 0.4.28+33
 
 environment:
   sdk: ^3.13.1

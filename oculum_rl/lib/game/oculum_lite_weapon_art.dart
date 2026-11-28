@@ -30,6 +30,7 @@ extension LiteWeaponTechniques on LiteWeapon {
           LiteWeapon.beccoCaverna => 'Stoccata di selce',
           LiteWeapon.falceFunerys => 'Raccolta del Sudario',
           LiteWeapon.bobinaPostea => 'Scarica a catena',
+          LiteWeapon.armamentoNaturale => 'Talento naturale',
           _ => throw StateError('Arma sconosciuta'),
         };
 }
@@ -40,7 +41,7 @@ extension LiteWeaponArt on LiteRun {
 
   bool hasWeaponArt([LiteCoopFighter? fighter]) {
     final character = fighter?.hero ?? hero;
-    return character != LiteHero.doppelganger &&
+    return !character.bodyOnly && character != LiteHero.doppelganger &&
         LiteAnimal.forHero(character) == null;
   }
 

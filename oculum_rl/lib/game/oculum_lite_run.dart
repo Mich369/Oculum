@@ -30,6 +30,7 @@ part 'oculum_lite_open_scene.dart';
 part 'oculum_lite_shadow_art.dart';
 part 'oculum_lite_reysercth.dart';
 part 'oculum_lite_frontier.dart';
+part 'oculum_lite_bestiary_playables.dart';
 part 'oculum_lite_desert_eye.dart';
 
 enum LiteHero {
@@ -158,7 +159,9 @@ enum LiteHero {
   funerys(
     'Corteo di cenere',
     'Raduni i nemici davanti a te in un grande sudario che rallenta e danneggia.',
-  );
+  ),
+  moscaCampana('Rintocco delle due campane', 'Diffondi un rintocco che danneggia e stordisce i nemici in cerchio. Boss ed Elité si riprendono prima.'),
+  armadilloCorazzato('Carapace in corsa', 'Ti chiudi a palla e rotoli protetto. Speroni i nemici e ricevi Scudo.');
 
   const LiteHero(this.openName, this.openDescription);
 
@@ -200,6 +203,7 @@ enum LiteHero {
     fabbro => LiteWeapon.martelloForgia,
     gablyn => LiteWeapon.beccoCaverna,
     funerys => LiteWeapon.falceFunerys,
+    moscaCampana || armadilloCorazzato => LiteWeapon.armamentoNaturale,
     _ => null,
   };
   String get talentName => switch (this) {
@@ -245,6 +249,8 @@ enum LiteHero {
     fabbro => 'Frattura della forgia',
     gablyn => 'Finta della Cava',
     funerys => 'Stretta del Sepolcro',
+    moscaCampana => 'Rintocco di Bronzo',
+    armadilloCorazzato => 'Speronamento Corazzato',
   };
   LiteEnemyKind? get sprite => switch (this) {
     scostubandito => LiteEnemyKind.scostubandito,
@@ -261,6 +267,8 @@ enum LiteHero {
     lusierTre => LiteEnemyKind.eliteSolare,
     gablyn => LiteEnemyKind.gablyn,
     funerys => LiteEnemyKind.funerys,
+    moscaCampana => LiteEnemyKind.moscaCampana,
+    armadilloCorazzato => LiteEnemyKind.armadilloCorazzato,
     _ => null,
   };
   String? get unlockHint => switch (this) {
@@ -302,6 +310,8 @@ enum LiteHero {
     gablyn => 'Dai il colpo di grazia a un Gablyn nelle caverne.',
     funerys =>
       'Dai il colpo di grazia a una Funerys nella Cripta della Campana Cieca.',
+    moscaCampana => 'Dai il colpo di grazia a una Mosca Campana in Foresta.',
+    armadilloCorazzato => 'Dai il colpo di grazia a un Armadillo Corazzato in Foresta.',
     _ => null,
   };
 
@@ -588,7 +598,8 @@ enum LiteWeapon {
   martelloForgia._variant('Martello della forgia', 12, 3.25, .78, guanti),
   beccoCaverna._variant('Becco della Caverna', 9, 4.6, .69, piccaOssidiana),
   falceFunerys._variant('Falce di Funerys', 8, 3.65, .78, falceRunica),
-  bobinaPostea._variant('Bobina di Postea', 3, 10, .57, scettro);
+  bobinaPostea._variant('Bobina di Postea', 3, 10, .57, scettro),
+  armamentoNaturale._variant('Armamento naturale', 0, 2.3, .53, guanti);
 
   const LiteWeapon(
     this.label,
@@ -915,7 +926,9 @@ enum LiteEnemyKind {
   baghest('Baghest', 265, 1.24, 2.55, 24),
   corrottoRosso('Baghest Slave', 48, .58, 3.8, 14),
   bunnys('Bunnys', 32, .47, 4.2, 0),
-  cuccioloDivoramitu('Cucciolo di Divoramitù', 22, .48, 1.6, 0);
+  cuccioloDivoramitu('Cucciolo di Divoramitù', 22, .48, 1.6, 0),
+  moscaCampana('Mosca Campana', 30, .49, 3.35, 10),
+  armadilloCorazzato('Armadillo Corazzato', 42, .55, 2.75, 13);
 
   const LiteEnemyKind(
     this.label,
@@ -1292,6 +1305,7 @@ enum LiteImpactTarget {
   fiveFlames,
   bunnysHeal,
   frontierCast,
+  bestiaryCast,
 }
 
 class LiteCombatImpact {
@@ -2842,7 +2856,7 @@ class LiteRun {
         achievements.contains(_fabbroUnlockKey(guestAccount)))
       LiteHero.fabbro,
     if (guestAccount != null)
-      for (final character in [LiteHero.gablyn, LiteHero.funerys])
+      for (final character in _individualCreatureHeroes)
         if (achievements.contains(
           _LiteFrontierCombat.unlockKey(character, guestAccount),
         ))
@@ -2851,8 +2865,7 @@ class LiteRun {
       if (character != LiteHero.granScostumato &&
           (character != LiteHero.polloMeccanico || guestAccount == null) &&
           (character != LiteHero.vampiro || guestAccount == null) &&
-          ((character != LiteHero.gablyn && character != LiteHero.funerys) ||
-              guestAccount == null) &&
+          (!_individualCreatureHeroes.contains(character) || guestAccount == null) &&
           character.unlockHint != null &&
           achievements.contains(heroUnlockKey(character)))
         character,
@@ -3175,10 +3188,12 @@ class LiteRun {
     }
     return switch (location) {
       LiteBiome.campo => LiteEnemyKind.scostubandito,
-      LiteBiome.foresta =>
-        floor > 0 && order % 3 == 1
-            ? LiteEnemyKind.slime
-            : LiteEnemyKind.babyForestDemon,
+      LiteBiome.foresta => switch (order % 4) {
+        1 when floor < 2 => LiteEnemyKind.moscaCampana,
+        2 => LiteEnemyKind.moscaCampana,
+        3 => LiteEnemyKind.slime,
+        _ => LiteEnemyKind.babyForestDemon,
+      },
       LiteBiome.dungeon =>
         floor > 0 && order % 3 == 2
             ? LiteEnemyKind.gablyn
@@ -3396,7 +3411,8 @@ class LiteRun {
           (weapon) =>
               !weapon.isMilestone &&
               !weapon.isBossLoot &&
-              weapon != LiteWeapon.fucileScostubandito,
+              weapon != LiteWeapon.fucileScostubandito &&
+              weapon != LiteWeapon.armamentoNaturale,
         )
       : LiteWeapon.starters;
 
@@ -3408,6 +3424,7 @@ class LiteRun {
       : weaponPrice;
 
   bool canBuyWeapon(LiteWeapon item) =>
+      !hero.bodyOnly &&
       hero != LiteHero.doppelganger &&
       shopOpen &&
       shopWeapons.contains(item) &&
@@ -3943,9 +3960,7 @@ class LiteRun {
           ..fiveFlames = fiveFlames
           ..pupParent = pupParent
           ..livery = livery;
-    if (campPatrols && kind == LiteEnemyKind.scostubandito) {
-      enemy.guard = LiteGuard(p);
-    }
+    _setEnemyPerception(enemy);
     if (kind == LiteEnemyKind.ragnoSaldatore) enemy.cooldown = 1.45;
     if (kind == LiteEnemyKind.veyrth) enemy.cooldown = .75;
     if (kind == LiteEnemyKind.luce || kind == LiteEnemyKind.ombra) {
@@ -4359,7 +4374,7 @@ class LiteRun {
         fighter._strike = fighter.aim;
         fighter._windup =
             fighter.hero == LiteHero.doppelganger ||
-                fighter._night.solarMace > 0
+                fighter.hero.bodyOnly || fighter._night.solarMace > 0
             ? 0
             : item.chargeSeconds;
         if (fighter.hero == LiteHero.doppelganger)
@@ -4378,6 +4393,11 @@ class LiteRun {
   }
 
   void _coopMainStrike(LiteCoopFighter fighter, Point<double> direction) {
+    if (fighter.hero.bodyOnly) {
+      _bodyStrike(fighter.hero, fighter.position, direction, fighter.level, fighter);
+      fighter.cooldown = fighter.hero.bodyAttackRecovery;
+      return;
+    }
     if (fighter.hero == LiteHero.guardianoSolare &&
         fighter._night.solarMace > 0) {
       _melee(
@@ -5033,6 +5053,12 @@ class LiteRun {
       if (!clashDashing) _castFusedAttack(position, aim);
       return true;
     }
+    if (hero.bodyOnly) {
+      _attackCooldown = hero.bodyAttackRecovery;
+      _weaponReleasedAt = time;
+      _bodyStrike(hero, position, aim, level, null);
+      return true;
+    }
     if (_animalStrike(hero, position, aim, level, null)) {
       _attackCooldown = .42;
       _weaponReleasedAt = time;
@@ -5146,7 +5172,7 @@ class LiteRun {
         );
         return;
       }
-      _campNoise(source, 12);
+      _encounterNoise(source, 12);
       final skills = ownerCanHeal ? _bandit : _banditForFighter(sourceCloneId);
       final infused = (skills?.rounds ?? 0) > 0;
       if (infused) skills!.rounds--;
@@ -5307,7 +5333,7 @@ class LiteRun {
             !_meleeThreatensPlayer(enemy, enemyRange)) {
           continue;
         }
-        _campNoise(origin, 9);
+        _encounterNoise(origin, 9);
         _startClashDash(enemy);
         return true;
       }
@@ -5529,6 +5555,8 @@ class LiteRun {
     final aimed = _unit(target - source);
     final direction = aimed.magnitude > 0 ? aimed : fighter?.aim ?? aim;
     switch (character) {
+      case LiteHero.moscaCampana || LiteHero.armadilloCorazzato:
+        _bestiaryHeroMove(character, source, direction, fighter, open: true);
       case LiteHero.gablyn || LiteHero.funerys:
         _frontierHeroMove(
           character,
@@ -6043,6 +6071,9 @@ class LiteRun {
     }
     final owner = fighter?.id;
     switch (character) {
+      case LiteHero.moscaCampana || LiteHero.armadilloCorazzato:
+        _bestiaryHeroMove(character, source, direction, fighter, open: false);
+        return true;
       case LiteHero.gablyn || LiteHero.funerys:
         _frontierHeroMove(
           character,
@@ -6901,7 +6932,7 @@ class LiteRun {
     final kind = enemy.kind;
     final cannon = kind == LiteEnemyKind.granScostumato;
     final target = enemy.guard != null
-        ? _campTarget(enemy, elapsed)
+        ? _encounterTarget(enemy, elapsed)
         : _enemyAimFrom(enemy.position, ignoreBreakable: cannon);
     if (target == null) {
       enemy.attackTarget = null;
@@ -6921,6 +6952,8 @@ class LiteRun {
       LiteEnemyKind.goblinFango || LiteEnemyKind.goblinColla => 7.2,
       LiteEnemyKind.goblinColtello => 4.2,
       LiteEnemyKind.reGoblin => 2.8,
+      LiteEnemyKind.moscaCampana => 3.25,
+      LiteEnemyKind.armadilloCorazzato => 4.5,
       LiteEnemyKind.guardianoSolare => enemy.combatCycle % 3 == 2 ? 3.4 : 12,
       LiteEnemyKind.eliteSolare => 7.4,
       LiteEnemyKind.custodeLunare => 3.35,
@@ -6948,6 +6981,8 @@ class LiteRun {
         LiteEnemyKind.reGoblin => .31,
         LiteEnemyKind.guardianoSolare => 1.10,
         LiteEnemyKind.custodeLunare => .86,
+        LiteEnemyKind.moscaCampana => .52,
+        LiteEnemyKind.armadilloCorazzato => .43,
         LiteEnemyKind.eliteSolare || LiteEnemyKind.eliteLunare => .66,
 
         _ => kind.elite ? .52 : .34,
@@ -7741,7 +7776,7 @@ class LiteRun {
       kind == LiteEnemyKind.veyrth;
 
   static bool _usesRangedWeapon(LiteEnemy enemy) =>
-      switch (enemy.mirror?.weapon) {
+      switch (enemy.mirror?.weapon.moveset) {
         null => _ranged(enemy.kind),
         LiteWeapon.spadaScudo ||
         LiteWeapon.guanti ||
@@ -7757,6 +7792,7 @@ class LiteRun {
     LiteEnemyKind.lupoLunare ||
     LiteEnemyKind.goblinColtello ||
     LiteEnemyKind.demoneMinore ||
+    LiteEnemyKind.armadilloCorazzato ||
     LiteEnemyKind.demoneMaggiore => true,
     _ => false,
   };
@@ -7780,8 +7816,15 @@ class LiteRun {
       LiteEnemyKind.goblinFango ||
       LiteEnemyKind.goblinColla => 1.8,
       LiteEnemyKind.goblinColtello => .92,
+      LiteEnemyKind.moscaCampana => 1.90,
+      LiteEnemyKind.armadilloCorazzato => 1.45,
       _ => ranged ? 1.35 : 1.15,
     };
+    if (kind.bellFly) {
+      _hostileBell(enemy, direction, 3.25, damage);
+      return;
+    }
+    if (kind.armoredArmadillo) _hostileArmadilloCue(enemy, direction);
     if (kind == LiteEnemyKind.guardianoSolare ||
         kind == LiteEnemyKind.eliteSolare) {
       _solarVolley(enemy, direction, damage);
@@ -8617,7 +8660,7 @@ class LiteRun {
 
   void _destroyCover(LiteObstacle obstacle) {
     if (!obstacles.remove(obstacle)) return;
-    _campNoise(obstacle.center, 8);
+    _encounterNoise(obstacle.center, 8);
     if (obstacle.mapShortcut) {
       message = 'Scorciatoia aperta verso il bivio.';
       return;
@@ -8956,9 +8999,11 @@ class LiteRun {
     final silent =
         enemy.guard != null &&
         lifeLost + absorbed > 0 &&
-        _campImpact(
+        _encounterImpact(
           enemy,
-          impactFrom ?? attacker?.position ?? enemy.position,
+          impactFrom ??
+              attacker?.position ??
+              (ownerCanHeal ? position : enemy.position),
           forceImpact && (ownerCanHeal || attacker != null),
           ownerCanHeal
               ? _walking
@@ -9022,12 +9067,16 @@ class LiteRun {
         ),
       );
     }
-    if (LiteAnimal.forCreature(enemy.kind) != null) {
+    if (LiteAnimal.forCreature(enemy.kind) != null ||
+        enemy.kind.armoredArmadillo && fauna.contains(enemy)) {
       if (lifeLost > 0 && (ownerCanHeal || attacker != null)) {
         _noteFaunaHit(enemy, attacker?.position ?? position);
       }
       if (enemy.hp <= 0 && (ownerCanHeal || attacker != null)) {
         achievements.add('fauna-abbattuta-${enemy.kind.name}');
+        if (enemy.kind.armoredArmadillo) {
+          _frontierDefeat(enemy.kind, attacker, sourceCloneId, ownerCanHeal);
+        }
       }
       return;
     }
@@ -10106,7 +10155,7 @@ class LiteRun {
       (animal) =>
           animal.kind != LiteEnemyKind.lupoLunare &&
           animal.kind != LiteEnemyKind.orbryx &&
-          LiteAnimal.forCreature(animal.kind) == null,
+          !animal.kind.armoredArmadillo && LiteAnimal.forCreature(animal.kind) == null,
     );
     run._provokedRooms.addAll(
       _list(json['provokedRooms'])
@@ -10293,6 +10342,11 @@ class LiteRun {
     run._lastMove = _point(json['lastMove']);
     run._restorePadFrames(json['padDashes']);
     run.message = json['message'] as String? ?? '';
+    if (run.explorationRoutes) {
+      for (final enemy in run.enemies) {
+        run._setEnemyPerception(enemy, restoring: true);
+      }
+    }
     return run;
   }
 }

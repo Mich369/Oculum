@@ -48,6 +48,12 @@ extension LiteFauna on LiteRun {
         );
       }
     }
+    if (biome == LiteBiome.foresta && stage % 3 != 1) {
+      const armadillo = LiteEnemyKind.armadilloCorazzato;
+      const clearing = Point<double>(9.7, 16.6);
+      fauna.add(LiteEnemy(_nextId++, armadillo,
+          _safePoint(clearing, armadillo.radius, _spawnForFauna), armadillo.health.toDouble()));
+    }
     if (biome == LiteBiome.orea && stage.isOdd) {
       const orb = LiteEnemyKind.orbryx;
       const point = Point<double>(19, 15.3);
@@ -208,7 +214,9 @@ extension LiteFauna on LiteRun {
         animal.shockRemaining = max(0, animal.shockRemaining - elapsed);
         if (animal.shockRemaining <= 0) animal.shockSource = null;
       }
-      if (faunaAggressive && !wild) {
+      if (animal.kind.armoredArmadillo) {
+        _tickTerritorialArmadillo(animal, elapsed);
+      } else if (faunaAggressive && !wild) {
         if (!_combatantsSheltered) _enemyTick(animal, elapsed);
       } else {
         animal.hitFlash = max(0, animal.hitFlash - elapsed);

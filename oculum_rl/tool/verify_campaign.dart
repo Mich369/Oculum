@@ -477,8 +477,10 @@ String play(
         target.attacking && distance < 3) {
       run.special(run.position + move);
     }
-    if (hardest && aimed && distance < 8 && target.kind.boss) {
-      run.useOpen(target.position);
+    if (hardest && aimed && distance < 9) {
+      if (target.kind.boss || run.hp < run.maxHp * .40) {
+        run.useOpen(target.position);
+      }
       run.useLearnedArt(target.position);
     }
     if (run.arrows == 0) {

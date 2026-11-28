@@ -561,7 +561,8 @@ extension LiteRestHub on LiteRun {
     if (item.evolution) return kit.rank(item) < 3;
     if (item.meal) return !kit._receipts.containsKey(item);
     if (item.weapon case final blade?) {
-      return (fighter?.hero ?? hero) != LiteHero.doppelganger &&
+      return !(fighter?.hero ?? hero).bodyOnly &&
+          (fighter?.hero ?? hero) != LiteHero.doppelganger &&
           (fighter != null
               ? fighter.weapon != blade
               : !ownedWeapons.contains(blade));
