@@ -11,7 +11,9 @@ import '../game/oculum_lite_coop.dart';
 import '../game/oculum_lite_run.dart';
 import '../widgets/oculum_lite_alert_subtitle.dart';
 import '../widgets/oculum_lite_arena.dart';
+import '../widgets/oculum_lite_attributes_panel.dart';
 import '../widgets/oculum_lite_floor_map.dart';
+import '../widgets/oculum_lite_grimoire_panel.dart';
 import '../widgets/oculum_lite_routes.dart';
 import '../widgets/oculum_lite_reysercth_dialog.dart';
 import '../widgets/oculum_lite_rest_panel.dart';
@@ -99,6 +101,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
         !_session.pausedByHost &&
         fighterId != null) {
       _audio.burstSound(run, fighterId);
+      _audio.banditSpottingSound(run, fighterId);
     }
   }
 
@@ -137,6 +140,46 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
         : run?.coopFighter(_session.localAccount)?.hero;
   }
 
+  LiteCoopFighter? _grimoireFighter() =>
+      _session.host ? null : _session.localFighter;
+
+  void _useMouseSlot(int slot) {
+    final run = _session.run;
+    final fighter = _grimoireFighter();
+    if (run?.grimoireConfigured(fighter) == true &&
+        (slot != 0 ||
+            run!.grimoireSlots(fighter)[0]?.kind !=
+                LiteGrimoireActionKind.weapon)) {
+      _session.useGrimoireSlot(slot);
+    } else if (slot == 0) {
+      _session.fire();
+    } else {
+      _session.talent();
+    }
+  }
+
+  void _holdPrimary(bool held) {
+    final run = _session.run;
+    final fighter = _grimoireFighter();
+    _session.holdFire(
+      held &&
+          (run?.grimoireConfigured(fighter) != true ||
+              run!.grimoireSlots(fighter)[0]?.kind ==
+                  LiteGrimoireActionKind.weapon),
+    );
+  }
+
+  Future<void> _openGrimoire(LiteRun run) async {
+    _clear();
+    await showOculumLiteGrimoire(
+      context,
+      run: run,
+      fighter: _grimoireFighter(),
+      onAssign: _session.equipGrimoireSlot,
+    );
+    if (mounted) _focus.requestFocus();
+  }
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.keyF) {
@@ -161,7 +204,11 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     if (event is KeyDownEvent) _held.add(key);
     _setMove();
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (key == LogicalKeyboardKey.space) {
+    final index = liteGrimoireKeyboardSlot(key);
+    if (index >= 0 &&
+        _session.run?.grimoireConfigured(_grimoireFighter()) == true) {
+      _session.useGrimoireSlot(index);
+    } else if (key == LogicalKeyboardKey.space) {
       _session.useOpen();
     } else if (key == LogicalKeyboardKey.keyQ &&
         (_localHero == LiteHero.slimeBlu || _localHero == LiteHero.reGoblin)) {
@@ -178,6 +225,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       _session.castLearnedArt();
     } else if (key == LogicalKeyboardKey.keyZ) {
       _session.castLearnedArt(extra: true);
+    } else if (key == LogicalKeyboardKey.keyC) {
+      _session.toggleAssassinBox();
     } else if (key == LogicalKeyboardKey.keyG) {
       _session.weaponTechnique();
     } else if (key == LogicalKeyboardKey.shiftLeft ||
@@ -214,7 +263,9 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     final guest = _session.host
         ? null
         : world.coopFighter(_session.localAccount);
-    return _session.host || guest != null ? world.gripRemaining(guest) : 0;
+    return _session.host || guest != null
+        ? world.banditRopes(guest) + world.gripRemaining(guest)
+        : 0;
   }
 
   Future<void> _interact() async {
@@ -256,6 +307,7 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
       await _openBotteghe(station: station);
       return;
     }
+    if (_session.startBossRush()) return;
     if (_session.authority?.challengeBaghest() == true) return;
     if (_session.solarInteraction() || _session.advanceActTwo()) return;
     if (_session.run case final world?
@@ -295,6 +347,30 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     if (!mounted || next == null) return;
     _session.confirmPortal(next);
     _focus.requestFocus();
+  }
+
+  Future<void> _openAttributes() async {
+    _clear();
+    await showLiteAttributePanel(
+      context,
+      refresh: _session,
+      read: () {
+        final world = _session.run;
+        final fighter = _session.localFighter;
+        if (world == null || (!_session.host && fighter == null)) return null;
+        final custom = fighter?.customAttributes ?? world.customAttributes;
+        return (
+          scores: world.attributesOf(fighter),
+          freePoints: custom ? world.freeAttributePoints(fighter) : null,
+          canSpend:
+              _session.canAct &&
+              !world.finished &&
+              (fighter?.hp ?? world.hp) > 0,
+        );
+      },
+      onSpend: _session.spendAttributePoint,
+    );
+    if (mounted) _focus.requestFocus();
   }
 
   Future<void> _openRelics(LiteRun run) async {
@@ -451,15 +527,15 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                           if (run.powerWellAt(at)) {
                             unawaited(_showWell(run));
                           } else {
-                            _session.fire();
+                            _useMouseSlot(0);
                           }
                         }
                       : null,
-                  onAttackHeld: playing ? _session.holdFire : null,
+                  onAttackHeld: playing ? _holdPrimary : null,
                   onTalent: playing
                       ? (_) {
                           _focus.requestFocus();
-                          _session.talent();
+                          _useMouseSlot(1);
                         }
                       : null,
                 ),
@@ -522,6 +598,21 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                             ],
                           ),
                           Text('Livello ${mine?.level ?? run.level}'),
+                          if (_session.host || mine != null)
+                            IconButton(
+                              tooltip: 'Grimorio',
+                              onPressed: playing
+                                  ? () => unawaited(_openGrimoire(run))
+                                  : null,
+                              icon: const Icon(Icons.auto_stories_outlined),
+                            ),
+                          OculumLiteAttributesButton(
+                            freePoints:
+                                (mine?.customAttributes ?? run.customAttributes)
+                                ? run.freeAttributePoints(mine)
+                                : null,
+                            onPressed: () => unawaited(_openAttributes()),
+                          ),
                           Text(
                             'Oculum ${(mine?.oculum ?? run.oculum).floor()}'
                             '/${(mine?.maxOculum ?? run.maxOculum).floor()}',
@@ -608,13 +699,25 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                 children: [
                                   if (limits.maxWidth < 720) ...[
                                     FilledButton.tonal(
-                                      onPressed: _session.fire,
-                                      child: const Text('Attacca'),
+                                      onPressed: () => _useMouseSlot(0),
+                                      child: Text(
+                                        run.grimoireConfigured(mine)
+                                            ? liteGrimoireActionName(
+                                                run.grimoireSlots(mine)[0],
+                                                mine?.hero ?? run.hero,
+                                              )
+                                            : 'Attacca',
+                                      ),
                                     ),
                                     FilledButton.tonal(
-                                      onPressed: _session.talent,
+                                      onPressed: () => _useMouseSlot(1),
                                       child: Text(
-                                        hero?.talentName ?? 'Talento',
+                                        run.grimoireConfigured(mine)
+                                            ? liteGrimoireActionName(
+                                                run.grimoireSlots(mine)[1],
+                                                mine?.hero ?? run.hero,
+                                              )
+                                            : hero?.talentName ?? 'Talento',
                                       ),
                                     ),
                                     FilledButton.tonal(
@@ -622,6 +725,18 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                       child: const Text('Scatto'),
                                     ),
                                   ],
+                                  if (hero == LiteHero.assassino)
+                                    FilledButton.tonal(
+                                      onPressed: _session.canAct
+                                          ? _session.toggleAssassinBox
+                                          : null,
+                                      child: Text(
+                                        (mine?.assassinBoxActive ??
+                                                run.assassinBoxActive)
+                                            ? 'C · Esci dalla scatola'
+                                            : 'C · Nasconditi nella scatola',
+                                      ),
+                                    ),
                                   if (hero != null)
                                     FilledButton.tonal(
                                       onPressed:
@@ -730,7 +845,24 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                       onPressed: _openBotteghe,
                                       child: const Text('Botteghe'),
                                     ),
-                                  if (_session.host)
+                                  if (run.grimoireConfigured(mine))
+                                    for (final slot in [2, 3, 4, 5])
+                                      if (run.grimoireSlots(mine)[slot]
+                                          case final action?)
+                                        FilledButton.tonal(
+                                          onPressed: () =>
+                                              _session.useGrimoireSlot(slot),
+                                          child: Text(
+                                            liteGrimoireBindings[slot] +
+                                                ' · ' +
+                                                liteGrimoireActionName(
+                                                  action,
+                                                  mine?.hero ?? run.hero,
+                                                ),
+                                          ),
+                                        ),
+                                  if (_session.host &&
+                                      !run.grimoireConfigured(mine))
                                     for (final slot in [0, 1, 2, 3])
                                       if (run.scrolls[run
                                               .equippedScrolls[slot]
@@ -743,7 +875,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                             run.equippedScrolls[slot].label,
                                           ),
                                         ),
-                                  if (mine != null)
+                                  if (mine != null &&
+                                      !run.grimoireConfigured(mine))
                                     for (final entry
                                         in mine.supply.scrolls.entries)
                                       if (entry.value > 0)
@@ -787,7 +920,9 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                       onPressed: _interact,
                                       child: Text(
                                         _redGrip > 0
-                                            ? 'Presa di Baghest · Premi R · $_redGrip'
+                                            ? run.inBanditEscape
+                                                  ? 'Corde · Premi R · $_redGrip'
+                                                  : 'Presa di Baghest · Premi R · $_redGrip'
                                             : _session.host &&
                                                   run.canChallengeBaghest
                                             ? 'Sfida Baghest · R'

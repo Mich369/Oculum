@@ -277,6 +277,8 @@ class LiteRestLoadout {
   double _lusierRecharge = 0;
   LiteLearnedArt? art;
   final _learnedArts = <LiteLearnedArt>{};
+  List<LiteGrimoireAction?>? _grimoireSlots;
+  Set<LiteLearnedArt> get knownArts => Set.unmodifiable(_learnedArts);
   final _artTraining = <LiteLearnedArt, int>{};
   int artTraining(LiteLearnedArt art) => _artTraining[art] ?? 0;
   int artRank(LiteLearnedArt art, int level) =>
@@ -313,6 +315,7 @@ class LiteRestLoadout {
       _petTradeStage != null ||
       lusierCards < 12 ||
       hasGrimoire ||
+      _grimoireSlots != null ||
       art != null ||
       emberSpent ||
       emberCooldown > 0 ||
@@ -328,6 +331,8 @@ class LiteRestLoadout {
     if (_learnedArts.isNotEmpty)
       'learnedArts': _learnedArts.map((entry) => entry.name).toList(),
     if (art case final learned?) 'chosenArt': learned.name,
+    if (_grimoireSlots case final slots?)
+      'grimoireSlots': slots.map((action) => action?.key).toList(),
     if (_artTraining.isNotEmpty)
       'artTraining': _artTraining.map((art, rank) => MapEntry(art.name, rank)),
     if (artCooldown > 0) 'artCooldown': artCooldown,
@@ -369,6 +374,10 @@ class LiteRestLoadout {
         .firstOrNull;
     hasGrimoire = data['grimoire'] == true || art != null;
     _learnedArts.clear();
+    final slots = _list(data['grimoireSlots']);
+    _grimoireSlots = slots.length == _grimoireSlotCount
+        ? slots.map(LiteGrimoireAction.tryRead).toList()
+        : null;
     if (hasGrimoire) {
       final names = _list(data['learnedArts']);
       _learnedArts.addAll(
@@ -561,11 +570,13 @@ extension LiteRestHub on LiteRun {
     if (item.evolution) return kit.rank(item) < 3;
     if (item.meal) return !kit._receipts.containsKey(item);
     if (item.weapon case final blade?) {
-      return !(fighter?.hero ?? hero).bodyOnly &&
-          (fighter?.hero ?? hero) != LiteHero.doppelganger &&
-          (fighter != null
-              ? fighter.weapon != blade
-              : !ownedWeapons.contains(blade));
+      final character = fighter?.hero ?? hero;
+      final alreadyOwned = fighter == null || character == LiteHero.assassino
+          ? (fighter?.ownedWeapons ?? ownedWeapons).contains(blade)
+          : fighter.weapon == blade;
+      return !character.bodyOnly &&
+          character != LiteHero.doppelganger &&
+          !alreadyOwned;
     }
     return true;
   }
@@ -706,10 +717,10 @@ extension LiteRestHub on LiteRun {
       if (fighter == null) {
         if (hero == LiteHero.doppelganger) return;
         if (!ownedWeapons.contains(blade)) ownedWeapons.add(blade);
-        weapon = blade;
+        if (_assassinCanEquip(blade)) weapon = blade;
       } else if (fighter.hero != LiteHero.doppelganger) {
         fighter.ownedWeapons.add(blade);
-        fighter.weapon = blade;
+        if (_assassinCanEquip(blade, fighter)) fighter.weapon = blade;
       }
     } else if (item.scroll case final scroll?) {
       if (fighter == null) {

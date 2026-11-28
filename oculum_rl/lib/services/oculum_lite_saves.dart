@@ -90,6 +90,24 @@ class OculumLiteProgress {
   int get unspent =>
       earned - upgrades.values.fold(0, (sum, rank) => sum + rank);
 
+  OculumLiteProgress recordGrimoire(
+    Iterable<LiteLearnedArt> arts, {
+    String? characterId,
+    LiteHero? hero,
+    List<LiteGrimoireAction?>? slots,
+  }) {
+    var next = grimoire;
+    for (final art in arts) {
+      next = next.learn(art);
+    }
+    if (characterId != null && hero != null && slots != null) {
+      for (var i = 0; i < slots.length; i++) {
+        next = next.equip(characterId, hero, i, slots[i]);
+      }
+    }
+    return _withGrimoire(next);
+  }
+
   OculumLiteProgress recordRun(LiteRun run) {
     final cleared = run.stageClear || run.victorious
         ? run.stage
@@ -100,7 +118,7 @@ class OculumLiteProgress {
       pets: run.discoveredPets,
       slimeCounters: {run.slimeCreditId: run.slimeKills},
       milestones: {run.difficulty: run.milestoneFloors},
-    );
+    ).recordGrimoire(run.supply.knownArts);
   }
 
   OculumLiteProgress record(
@@ -467,24 +485,45 @@ class OculumLiteSaveSlot {
     final data = jsonDecode(source) as Map<String, dynamic>;
     if (data['schema'] != 1) throw const FormatException('Versione ignota');
     final savedRun = data['run'] as Map<String, dynamic>;
+    final look = OculumLiteAppearance.fromJson(data['look']);
+    if (savedRun['hero'] == LiteHero.duplicatore.name &&
+        !savedRun.containsKey('customAttributes')) {
+      final name = data['name'] as String;
+      savedRun['customAttributes'] =
+          (name.trim().isNotEmpty && name.trim() != 'Duplicatore') ||
+          !look.sameAs(const OculumLiteAppearance(), includeInkFinish: false);
+    }
+    if (savedRun['hero'] == LiteHero.assassino.name &&
+        !savedRun.containsKey('assassinTactical') &&
+        look.inkFinish == LiteInkFinish.tattica) {
+      savedRun['assassinTactical'] = true;
+    }
     final run = LiteRun.fromJson(savedRun);
-    final startingWeapon = data['startingWeapon'];
+    final slotLook = run.assassinTactical
+        ? look.copyWith(inkFinish: LiteInkFinish.tattica)
+        : look.inkFinish == LiteInkFinish.tattica
+        ? look.copyWith(inkFinish: LiteInkFinish.canonica)
+        : look;
+    final startedWith = LiteWeapon.values
+        .where((item) => item.name == data['startingWeapon'])
+        .firstOrNull;
     final startingBiome = data['startingBiome'] ?? savedRun['startingBiome'];
     return OculumLiteSaveSlot(
       run: run,
       name: data['name'] as String,
       attempt: data['attempt'] as int,
-      startingWeapon:
-          LiteWeapon.values
-              .where((item) => item.name == startingWeapon)
-              .firstOrNull ??
-          run.weapon,
+      startingWeapon: run.hero == LiteHero.assassino
+          ? run.hero.startingWeapon(
+              startedWith ?? run.weapon,
+              assassinTactical: run.assassinTactical,
+            )
+          : startedWith ?? run.weapon,
       startingBiome:
           LiteBiome.values
               .where((item) => item.name == startingBiome)
               .firstOrNull ??
           run.biome,
-      appearance: OculumLiteAppearance.fromJson(data['look']),
+      appearance: slotLook,
     );
   }
 

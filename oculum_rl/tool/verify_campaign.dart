@@ -272,6 +272,7 @@ String play(
   final thirdCompleted = <int>[];
   final hubs = <int>[];
   final phases = <int>{};
+  final aerovyrPhases = <int>{};
   final finalAttacks = <LiteArchonAttack>{};
   final hardest = difficulty == LiteDifficulty.oculum;
   var shopping = false;
@@ -415,6 +416,8 @@ String play(
     if (target.kind == LiteEnemyKind.arconte) {
       phases.add(target.archonPhase);
       if (target.archonAttack case final attack?) finalAttacks.add(attack);
+    } else if (target.kind == LiteEnemyKind.aerovyr) {
+      aerovyrPhases.add(run.aerovyrPhase(target));
     }
     if (run.inExplorationAtrium(run.position)) {
       final north = target.position.y <= 11;
@@ -525,7 +528,7 @@ String play(
     // Leave the Arconte alive long enough to verify each configured attack.
     final observingArconte =
         target.kind == LiteEnemyKind.arconte &&
-        target.hp <= target.maxHp * .34 &&
+        target.archonPhase == 2 &&
         !finalAttacks.containsAll(LiteArchonAttack.values);
     if (!observingArconte && hardest && aimed && distance < 9) {
       if (target.kind.boss || run.hp < run.maxHp * .40) {
@@ -545,12 +548,14 @@ String play(
       'seed=$seed ${difficulty.name}: won=${run.victorious} '
       'stage=${run.stage} act2=${realm.name} completed=${completed.join(",")} hubs=${hubs.join(",")} '
       'archonPhases=${phases.join(",")} attacks=${finalAttacks.map((a) => a.name).join(",")} '
+      'aerovyrPhases=${aerovyrPhases.join(",")} '
       'attoIII=${thirdCompleted.join(",")}';
   if (!run.victorious ||
       completed.length != LiteRun.campaignRooms ||
       thirdCompleted.length != LiteThirdAct.rooms.length ||
       !run.achievements.contains('atto-iii-completato') ||
-      phases.length != 3 ||
+      !phases.containsAll({1, 2}) ||
+      !aerovyrPhases.containsAll({1, 2, 3}) ||
       finalAttacks.length != LiteArchonAttack.values.length ||
       hubs.join(',') != '5,11,17,23' ||
       !run.achievements.contains('atto-ii-${realm.name}')) {

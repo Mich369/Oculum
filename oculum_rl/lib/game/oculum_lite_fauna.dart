@@ -51,8 +51,14 @@ extension LiteFauna on LiteRun {
     if (biome == LiteBiome.foresta && stage % 3 != 1) {
       const armadillo = LiteEnemyKind.armadilloCorazzato;
       const clearing = Point<double>(9.7, 16.6);
-      fauna.add(LiteEnemy(_nextId++, armadillo,
-          _safePoint(clearing, armadillo.radius, _spawnForFauna), armadillo.health.toDouble()));
+      fauna.add(
+        LiteEnemy(
+          _nextId++,
+          armadillo,
+          _safePoint(clearing, armadillo.radius, _spawnForFauna),
+          armadillo.health.toDouble(),
+        ),
+      );
     }
     if (biome == LiteBiome.orea && stage.isOdd) {
       const orb = LiteEnemyKind.orbryx;
@@ -324,7 +330,10 @@ extension LiteFauna on LiteRun {
     int level,
     int? owner,
   ) {
+    final fighter = _coopFighterById(owner);
     if (animal == LiteHero.polloMeccanico) {
+      final extraDamage = _attributeDamage(fighter) / 3;
+      final range = 11.5 * attributeAttackReach(fighter);
       final forward = LiteRun._unit(direction);
       final side = Point(-forward.y, forward.x);
       for (var index = -1; index <= 1; index++) {
@@ -334,8 +343,8 @@ extension LiteFauna on LiteRun {
             position: _blocked(at, .1) ? origin : at,
             direction: _rotate(forward, index * .16),
             speed: 18,
-            remaining: 11.5,
-            damage: 7 + level * .75,
+            remaining: range,
+            damage: 7 + level * .75 + extraDamage,
             magic: true,
             kind: LiteProjectileKind.posteaRay,
             ownerCanHeal: owner == null,
@@ -350,10 +359,14 @@ extension LiteFauna on LiteRun {
       origin,
       direction,
       LiteWeapon.guanti,
-      (animal == LiteHero.pollo ? 11.0 : 9.0) + level,
+      (animal == LiteHero.pollo ? 11.0 : 9.0) +
+          level +
+          _attributeDamage(fighter),
       ownerCanHeal: owner == null,
       sourceCloneId: owner,
-      reach: animal == LiteHero.raganella ? 3.1 : 1.85,
+      reach:
+          (animal == LiteHero.raganella ? 3.1 : 1.85) *
+          attributeAttackReach(fighter),
       minDot: .42,
     );
     return true;

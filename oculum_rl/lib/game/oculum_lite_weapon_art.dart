@@ -23,6 +23,7 @@ extension LiteWeaponTechniques on LiteWeapon {
           LiteWeapon.piccaOssidiana => 'Stoccata lunga',
           LiteWeapon.balestraRunica => 'Doppio quadrello',
           LiteWeapon.fucileScostubandito => 'Colpo concentrato',
+          LiteWeapon.pistolaRicognitore => 'Punto cieco',
           LiteWeapon.cheleRasvyr => 'Morsa della duna',
           LiteWeapon.piccaVaitern => 'Stoccata di Vaitern',
           LiteWeapon.vergaCorvina => 'Corona corvina',
@@ -41,7 +42,8 @@ extension LiteWeaponArt on LiteRun {
 
   bool hasWeaponArt([LiteCoopFighter? fighter]) {
     final character = fighter?.hero ?? hero;
-    return !character.bodyOnly && character != LiteHero.doppelganger &&
+    return !character.bodyOnly &&
+        character != LiteHero.doppelganger &&
         LiteAnimal.forHero(character) == null;
   }
 
@@ -83,6 +85,7 @@ extension LiteWeaponArt on LiteRun {
       message = 'Il ventaglio richiede tre frecce.';
       return false;
     }
+    _openAssassinBox(fighter);
     final owner = fighter?.id;
     final rank = (fighter?.supply ?? supply).forgeRank(item);
     final effectScale = 1 + rank / 12;
@@ -248,6 +251,9 @@ extension LiteWeaponArt on LiteRun {
         shot(.11, 11, 22, damage * .88, type: LiteProjectileKind.pulse);
       case LiteWeapon.fucileScostubandito:
         shot(0, 12, 24, damage * 1.25, type: LiteProjectileKind.rifleBullet);
+      case LiteWeapon.pistolaRicognitore:
+        _encounterNoise(origin, 2);
+        shot(0, 9.5, 27, damage * 1.28, type: LiteProjectileKind.rifleBullet);
       default:
         throw StateError('Tecnica sconosciuta');
     }

@@ -49,7 +49,7 @@ extension LiteFloorExploration on LiteRun {
   static const _encounterPoint = Point<double>(5.2, 11);
 
   bool inExplorationAtrium(Point<double> at) =>
-      usesExplorableFloor && _atrium.contains(at);
+      usesExplorableFloor && !bossRushActive && _atrium.contains(at);
 
   LiteRestStation get explorationMerchant {
     if (stage == 0) {

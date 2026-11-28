@@ -56,11 +56,23 @@ extension on LiteEnemy {
 }
 
 extension LiteAerovyr on LiteRun {
-  int aerovyrPhase(LiteEnemy enemy) => enemy.hp > enemy.maxHp * .67
+  int aerovyrPhase(LiteEnemy enemy) => enemy._stormRevived
+      ? 3
+      : enemy.hp > enemy.maxHp * .5
       ? 1
-      : enemy.hp > enemy.maxHp * .32
-      ? 2
-      : 3;
+      : 2;
+
+  void _reviveAerovyr(LiteEnemy enemy) {
+    enemy
+      .._stormRevived = true
+      ..hp = enemy.maxHp * .5
+      .._stormPattern = null
+      ..windup = 0
+      ..attackTarget = null
+      ..combatCycle = 0
+      ..cooldown = .76;
+    message = 'Aerovyr si rialza · Terza fase.';
+  }
 
   LiteStormWarning? stormWarning(LiteEnemy enemy) {
     if (enemy.kind != LiteEnemyKind.aerovyr || !enemy.attacking) return null;
@@ -148,7 +160,7 @@ extension LiteAerovyr on LiteRun {
         (cue.phase == 3 ? 1.76 : 1.43) *
         enemy.attackDamage *
         difficulty.enemyStrength *
-        _challengeDamageScale(enemy.kind);
+        _challengeDamageScale(enemy.kind, source: enemy);
     if (cue.pattern == LiteStormPattern.ventaglio) {
       for (final angle in cue.spread) {
         _thirdShot(

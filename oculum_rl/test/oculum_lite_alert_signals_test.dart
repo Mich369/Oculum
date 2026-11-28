@@ -14,8 +14,8 @@ LiteRun _newRun() {
     ..position = const Point(6, 2)
     ..hp = 900;
   run.obstacles.clear();
-  final first = run.enemies.first;
-  final second = run.enemies[1];
+  final first = LiteEnemy(801, LiteEnemyKind.rasvyr, const Point(4, 2), 120);
+  final second = LiteEnemy(802, LiteEnemyKind.orbryx, const Point(30, 20), 120);
   run.enemies
     ..clear()
     ..addAll([first, second]);

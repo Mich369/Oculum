@@ -15,6 +15,8 @@ part 'oculum_lite_creator_paint.dart';
 part 'oculum_lite_combat_paint.dart';
 part 'oculum_lite_world_ink_paint.dart';
 part 'oculum_lite_bush_paint.dart';
+part 'oculum_lite_assassin_fx.dart';
+part 'oculum_lite_bandit_escape_paint.dart';
 part 'oculum_lite_art_paint.dart';
 part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_plague_paint.dart';
@@ -26,6 +28,7 @@ part 'oculum_lite_weapon_paint.dart';
 part 'oculum_lite_open_paint.dart';
 part 'oculum_lite_frontier_paint.dart';
 part 'oculum_lite_bestiary_paint.dart';
+part 'oculum_lite_assassin_paint.dart';
 part 'oculum_lite_desert_eye_paint.dart';
 
 class OculumLiteBlockControl extends StatelessWidget {
@@ -222,7 +225,19 @@ class OculumLiteArena extends StatefulWidget {
   static const lootArt = AssetImage('assets/oculum/lite/bottino-ink.png');
   static const infernalArt = AssetImage('assets/oculum/lite/infernali-ink.png');
   static const lusierArt = AssetImage('assets/oculum/lite/lusier-iii-ink.webp');
-  static const bunnysArt = AssetImage('assets/oculum/lite/bunnys-ink.webp');
+  static const bunnysArt = AssetImage('assets/oculum/lite/bunnys-expressive-h.webp');
+  static const erratoMotion = AssetImage(
+    'assets/oculum/lite/scostubanditi-errati-andature-ink.webp',
+  );
+  static const assassinBox = AssetImage(
+    'assets/oculum/lite/scatola-ricognizione-ink.webp',
+  );
+  static const assassinMotion = AssetImage(
+    'assets/oculum/lite/assassino-andature-ink.webp',
+  );
+  static const assassinTacticalMotion = AssetImage(
+    'assets/oculum/lite/assassino-tattico-andature-ink.webp',
+  );
   static const costruttoMinoreMotion = AssetImage(
     'assets/oculum/lite/costrutto-minore-andature-ink.webp',
   );
@@ -523,6 +538,10 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.infernalArt,
         OculumLiteArena.lusierArt,
         OculumLiteArena.bunnysArt,
+        OculumLiteArena.assassinMotion,
+        OculumLiteArena.assassinBox,
+        OculumLiteArena.erratoMotion,
+        OculumLiteArena.assassinTacticalMotion,
         ...OculumLiteArena.bestiaryBodies.values,
         OculumLiteArena.costruttoMinoreMotion,
         OculumLiteArena.forgeMotion,
@@ -691,7 +710,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
     final key = (
       run.seed,
       run.stage,
-      run.goblinCamp
+      (run.goblinCamp || run.inBanditEscape)
           ? LiteBiome.campo
           : run.realm == LiteRealm.postea
           ? LiteBiome.postea
@@ -1033,14 +1052,19 @@ class _OculumLiteHeroPreviewState extends State<OculumLiteHeroPreview> {
       LiteHero.lupoDiVaitern ||
       LiteHero.gablyn => OculumLiteArena.nightActors,
       LiteHero.funerys => OculumLiteArena.cryptGaits,
+      LiteHero.scostubanditoErrato || LiteHero.scostubanditoVeteranoErrato =>
+          OculumLiteArena.erratoMotion,
+      LiteHero.assassino => _assassinTacticalLook(widget.appearance, widget.weapon)
+          ? OculumLiteArena.assassinTacticalMotion
+          : OculumLiteArena.assassinMotion,
       LiteHero.moscaCampana => OculumLiteArena.bestiaryBodies[LiteEnemyKind.moscaCampana]!,
       LiteHero.armadilloCorazzato => OculumLiteArena.bestiaryBodies[LiteEnemyKind.armadilloCorazzato]!,
       LiteHero.pollo ||
       LiteHero.raganella ||
       LiteHero.pipistrello => OculumLiteArena.faunaArt,
       LiteHero.polloMeccanico =>
-        OculumLiteArena.mechanicalChickenArts[widget.appearance?.inkFinish ??
-            LiteInkFinish.canonica]!,
+        OculumLiteArena.mechanicalChickenArts[widget.appearance?.inkFinish] ??
+            OculumLiteArena.mechanicalChickenArts[LiteInkFinish.canonica]!,
       LiteHero.guardiaSolare ||
       LiteHero.eliteSolare => OculumLiteArena.solarGaits,
       LiteHero.guardianoSolare ||
@@ -1883,7 +1907,11 @@ class _HeroSprites {
     this.rosterFinish,
     this.rosterMotion,
     this.rosterFallback,
+    this.costruttoGait,
     this.funerysGait,
+    this.assassinMotion,
+    this.erratoMotion,
+    this.assassinTacticalMotion,
     this.bestiary = const {},
   });
 
@@ -1903,7 +1931,9 @@ class _HeroSprites {
   final ui.Image? smith;
   final ui.Image? veyMotion;
   final ui.Image? thirdMotion, aerovyrGait, pysciGait, funerysGait;
+  final ui.Image? costruttoGait;
   final Map<LiteEnemyKind, ui.Image?> bestiary;
+  final ui.Image? assassinMotion, assassinTacticalMotion, erratoMotion;
   final ui.Image? devilGait,
       demonGait,
       golemGait,
@@ -2002,6 +2032,7 @@ class _ArenaPaint extends CustomPainter {
     rosterFinish: dropImages[OculumLiteArena.rosterFinish]?.image,
     rosterMotion: dropImages[OculumLiteArena.rosterMotion]?.image,
     rosterFallback: thirdEncounters,
+    costruttoGait: dropImages[OculumLiteArena.costruttoMinoreMotion]?.image,
     infernal: infernalArt,
     third: thirdArt,
     ashley: run.hero == LiteHero.ashley ? heroFrames : ashleyFrames,
@@ -2012,6 +2043,10 @@ class _ArenaPaint extends CustomPainter {
     veyMotion: dropImages[OculumLiteArena.veyrthMotion]?.image,
     thirdMotion: dropImages[OculumLiteArena.thirdMotion]?.image,
     funerysGait: dropImages[OculumLiteArena.cryptGaits]?.image,
+    assassinMotion: dropImages[OculumLiteArena.assassinMotion]?.image,
+    erratoMotion: dropImages[OculumLiteArena.erratoMotion]?.image,
+    assassinTacticalMotion:
+        dropImages[OculumLiteArena.assassinTacticalMotion]?.image,
     bestiary: {
       for (final entry in OculumLiteArena.bestiaryBodies.entries)
         entry.key: dropImages[entry.value]?.image,
@@ -2041,7 +2076,7 @@ class _ArenaPaint extends CustomPainter {
       LiteThirdRegion.oblio || LiteThirdRegion.sommerso => LiteBiome.dungeon,
       LiteThirdRegion.nuvole => LiteBiome.postea,
       null when run.realm == LiteRealm.postea => LiteBiome.postea,
-      _ => run.goblinCamp ? LiteBiome.campo : run.biome,
+      _ => (run.goblinCamp || run.inBanditEscape) ? LiteBiome.campo : run.biome,
     };
     final palette = _palette(surface);
     canvas.save();
@@ -2080,6 +2115,10 @@ class _ArenaPaint extends CustomPainter {
         run.stageClear,
         run.chamberGrade.startsWith('Boss'),
       );
+    }
+    if (run.banditCannonTarget case final mark?) {
+      _paintBanditFireMark(canvas, _offset(mark), run.banditCannonRadius,
+          run.banditWardenWindup);
     }
     for (final enemy in run.enemies) {
       if (enemy.chamberWarning case final cue?
@@ -2137,6 +2176,12 @@ class _ArenaPaint extends CustomPainter {
       if (visible.contains(at)) _paintGroundShot(canvas, at, ground);
     }
     for (final impact in run.combatImpacts) {
+      if (impact.target == LiteImpactTarget.assassinSlash) {
+        if (!run.bushBlocksSight(follow ?? run.position, impact.position)) {
+          _paintAssassinSweep(canvas, impact, run.time, nearSide: false);
+        }
+        continue;
+      }
       if (impact.target != LiteImpactTarget.fissure || impact.end == null)
         continue;
       _paintFissure(canvas, terrain, impact, run.time);
@@ -2186,7 +2231,7 @@ class _ArenaPaint extends CustomPainter {
         playerImpacts[impact.subjectId] = impact;
       }
     }
-    final pads = run.dashPads;
+    final pads = run.inBanditEscape ? const <math.Point<double>>[] : run.dashPads;
     final local = follow ?? run.position;
     final localBush = run.bushAt(local);
     bool masked(math.Point<double> target) => run.bushBlocksSight(local, target);
@@ -2197,6 +2242,8 @@ class _ArenaPaint extends CustomPainter {
               .firstOrNull;
     final quiet = controlled?.stride.walking ?? run.quietSteps;
     final spotting = run.spottingWarningRemaining(controlled);
+    final veil = run.assassinVeilRemaining;
+    final veiled = veil > 0;
     for (final (index, pad) in pads.indexed) {
       final at = _offset(pad);
       if (!visible.inflate(.55).contains(at)) continue;
@@ -2294,12 +2341,20 @@ class _ArenaPaint extends CustomPainter {
     }
     final objects = props;
     final portal = _offset(run.portalPosition);
+    final rushGate = _offset(run.bossRushGate);
+    if (run.hasBossRushGate && visible.contains(rushGate)) {
+      _paintBossRushMarker(canvas, rushGate, time, sealed: false);
+    }
     final merchant = _offset(run.shopPosition);
+    final portalOpen = run.inBanditEscape ? run.banditEscapeExit : run.stageClear;
     if (visible.contains(portal)) {
       if (objects != null) {
-        _arenaProp(canvas, objects, 1, portal, 2.65, run.stageClear);
+        _arenaProp(canvas, objects, 1, portal, 2.65, portalOpen);
       } else {
-        _portal(canvas, portal, active: run.stageClear, time: time);
+        _portal(canvas, portal, active: portalOpen, time: time);
+      }
+      if (run.bossRushActive) {
+        _paintBossRushMarker(canvas, portal, time, sealed: true);
       }
     }
     if (!run.restHub &&
@@ -2672,11 +2727,12 @@ class _ArenaPaint extends CustomPainter {
           !thirdWarning &&
           !enemy.preparingBeam &&
           !verdict &&
+          !enemy.banditWarden &&
           (onCamera || (target != null && visible.contains(_offset(target))))) {
         if (!enemy.preparingSpheres) _enemyWarning(canvas, enemy);
       }
       if (!onCamera) continue;
-      final size = _enemyScale(enemy.kind);
+      final size = enemy.banditWarden ? 4.4 : _enemyScale(enemy.kind);
       _shadow(canvas, at, size * .59, size * .23);
       jobs.add((
         at.dy,
@@ -2711,14 +2767,27 @@ class _ArenaPaint extends CustomPainter {
             () {
               if (flight != null && phase < 1)
                 canvas.rotate(-.20 * math.sin(phase * math.pi));
-              if (dropImages[OculumLiteArena.costruttoMinoreMotion]?.image
+              if (enemy.errato case final wrong?) {
+                if (_heroSprites.erratoMotion case final atlas?) {
+                  _paintErratoMotion(canvas, atlas, wrong, enemy.stride, time,
+                    casting: enemy.attacking || enemy.strikePose > 0,
+                    fallen: enemy.hp <= 0, ward: enemy.erratoWard);
+                  return;
+                }
+              }
+              if (_heroSprites.costruttoGait
                   case final atlas? when enemy.kind == LiteEnemyKind.costrutto) {
                 _paintCostruttoMinore(
                   canvas,
                   atlas,
-                  enemy,
+                  enemy.stride,
                   animationLead,
+                  fallen: enemy.hp <= 0,
                   fallProgress: flight == null ? 1 : phase,
+                  winding: enemy.attacking,
+                  release: enemy.strikePose,
+                  dashing: _enemyIsDashing(enemy),
+                  hurt: enemy.hitFlash,
                 );
                 return;
               }
@@ -3346,6 +3415,40 @@ class _ArenaPaint extends CustomPainter {
     for (final clone in run.clones) {
       final at = _offset(clone.position);
       if (!visible.contains(at) || masked(clone.position)) continue;
+      final sneaking = run.companionConcealed(clone);
+      if (clone.assassinDecoy) {
+        final aimed = _offset(clone.poseAim);
+        final side = aimed.dx < 0 ? -1.0 : 1.0;
+        jobs.add((
+          at.dy,
+          () => _actor(
+            canvas,
+            at,
+            side,
+            1,
+            () => _hero(
+              canvas,
+              oculumLiteDefaultAppearance(LiteHero.assassino),
+              LiteWeapon.doppieLame,
+              time,
+              hero: LiteHero.assassino,
+              sprites: _heroSprites,
+              stride: clone.stride,
+              animationLead: animationLead,
+              aiming: aimed * side,
+              moving: clone.stride.speed > .1,
+              dashing: clone.stride.speed > 9,
+              preparingAttack: clone.preparingPose > 0,
+              releaseAge: clone.swing > 0 ? .11 : null,
+              clone: true,
+              phantom: veiled,
+            ),
+            pigment: Paint()..color = Color(veiled || sneaking ? 0x54ffffff : 0xa4ffffff),
+          ),
+        ));
+        continue;
+      }
+      if (veiled) continue;
       if (clone.forgedWeapon) {
         jobs.add((at.dy, () => _paintForgedWeapon(canvas, clone, at, time)));
         continue;
@@ -3394,6 +3497,14 @@ class _ArenaPaint extends CustomPainter {
             _ => .89,
           };
           _actor(canvas, at, side * scale, scale, () {
+            if (LiteErrato.forCompanion(companion) case final wrong?) {
+              if (_heroSprites.erratoMotion case final atlas?) {
+                _paintErratoMotion(canvas, atlas, wrong, clone.stride, time,
+                    casting: clone.swing > 0 || clone.preparingPose > 0,
+                    fallen: clone.down, ward: clone.erratoWard);
+                return;
+              }
+            }
             if (companion != null) {
               if (_RosterMotion.forEnemy(companion.sprite) case final motion?) {
                 if (_paintRosterMotion(
@@ -3713,7 +3824,7 @@ class _ArenaPaint extends CustomPainter {
               front: direction.dy >= -.25,
               attackElapsed: clone.swing > 0 ? .23 - clone.swing : null,
             );
-          });
+          }, pigment: sneaking ? (Paint()..color = const Color(0x89ffffff)) : null);
           if ((companion != null || clone.summoned) && !clone.down) {
             _oval(
               canvas,
@@ -3775,9 +3886,24 @@ class _ArenaPaint extends CustomPainter {
         },
       ));
     }
+    final cardboard = dropImages[OculumLiteArena.assassinBox]?.image;
     for (final fighter in run.coopFighters) {
       final at = _offset(fighter.position);
       if (!visible.contains(at) || masked(fighter.position)) continue;
+      if (fighter.assassinBoxActive && cardboard != null) {
+        jobs.add((
+          at.dy,
+          () => _paintAssassinBox(
+            canvas,
+            cardboard,
+            at,
+            fighter.stride,
+            time,
+            inBush: run.bushAt(fighter.position) != null,
+          ),
+        ));
+        continue;
+      }
       final direction = _offset(fighter.weaponAim);
       final phase = fighter.hero == LiteHero.evasore
           ? _activePhase(run.burstTraceFor(fighter.id), time)
@@ -3831,7 +3957,7 @@ class _ArenaPaint extends CustomPainter {
           final standard =
               guestAppearances[fighter.account] ??
               oculumLiteDefaultAppearance(fighter.hero);
-          _actor(canvas, at, side, 1, () {
+          _actor(canvas, at - Offset(0, run.banditAirborne(fighter.id)), side, 1, () {
             final releaseAge = fighter.weaponReleaseAge(time);
             _applyPlayablePose(
               canvas,
@@ -3919,6 +4045,7 @@ class _ArenaPaint extends CustomPainter {
           }, pigment: _concealedHeroPigment(
             _heroLivery(fighter.hero, standard.inkFinish),
             run.bushAt(fighter.position) != null,
+            veil: veiled,
           ));
           _health(
             canvas,
@@ -3963,7 +4090,18 @@ class _ArenaPaint extends CustomPainter {
     if (!masked(run.position)) jobs.add((
       player.dy,
       () {
-        _actor(canvas, player, facing, 1, () {
+        if (run.assassinBoxActive && cardboard != null) {
+          _paintAssassinBox(
+            canvas,
+            cardboard,
+            player,
+            run.stride,
+            time,
+            inBush: run.bushAt(run.position) != null,
+          );
+          return;
+        }
+        _actor(canvas, player - Offset(0, run.banditAirborne()), facing, 1, () {
           final secondBladeAge = run.secondBladeReleaseAge(time);
           final releaseAge = secondBladeAge ?? run.weaponReleaseAge(time);
           _applyPlayablePose(
@@ -4048,6 +4186,7 @@ class _ArenaPaint extends CustomPainter {
         }, pigment: _concealedHeroPigment(
           _heroLivery(run.hero, appearance.inkFinish),
           run.bushAt(run.position) != null,
+          veil: veiled,
         ));
         if (run.playerCount > 1) {
           _health(
@@ -4067,6 +4206,7 @@ class _ArenaPaint extends CustomPainter {
     jobs.clear();
     if (concealed) _paintBushCoverMark(canvas, _offset(local));
     if (spotting > 0) _paintSpottingWarning(canvas, _offset(local), spotting);
+    if (veiled) _paintAssassinVeil(canvas, _offset(local), veil);
     _paintNightLink(canvas, run, run.night, run.position, time);
     for (final fighter in run.coopFighters) {
       _paintNightLink(canvas, run, fighter.night, fighter.position, time);
@@ -4095,6 +4235,12 @@ class _ArenaPaint extends CustomPainter {
           when enemy.shockRemaining >
               LiteRun.staffShockSlow - LiteRun.staffShockFlash) {
         _paintStaffDischarge(canvas, _offset(source), at, time);
+      }
+    }
+    if (run.banditEscapeRoom == 0 && run.inBanditEscape) {
+      _paintBanditRopes(canvas, player, run.banditRopes());
+      for (final guest in run.coopFighters) {
+        _paintBanditRopes(canvas, _offset(guest.position), run.banditRopes(guest));
       }
     }
     if (!run.dead && !run.hostDown && !run.clashDashing) {
@@ -4131,6 +4277,17 @@ class _ArenaPaint extends CustomPainter {
     for (final impact in run.combatImpacts) {
       final at = _offset(impact.position);
       if (!visible.contains(at)) continue;
+      if (impact.target == LiteImpactTarget.wardenCannon ||
+          impact.target == LiteImpactTarget.wardenSwing) {
+        _paintWardenStrike(canvas, impact, time, run.banditCannonRadius);
+        continue;
+      }
+      if (impact.target == LiteImpactTarget.assassinSlash) {
+        if (!masked(impact.position)) {
+          _paintAssassinSweep(canvas, impact, time, nearSide: true);
+        }
+        continue;
+      }
       if (impact.target == LiteImpactTarget.fissure) continue;
       if (impact.target == LiteImpactTarget.chamberStrike) {
         _paintChamberStrike(canvas, at, impact, time - impact.time);
@@ -4150,6 +4307,10 @@ class _ArenaPaint extends CustomPainter {
       }
       if (impact.target == LiteImpactTarget.bunnysHeal) {
         _paintBunnysHeal(canvas, at, impact, time - impact.time);
+        continue;
+      }
+      if (impact.target == LiteImpactTarget.materiaDodge) {
+        _paintMateriaDodge(canvas, at, time - impact.time);
         continue;
       }
       if (impact.target == LiteImpactTarget.fiveFlames) {
@@ -4414,11 +4575,11 @@ void _paintCombatImpacts(
         impact.target == LiteImpactTarget.milestoneCast ||
         impact.target == LiteImpactTarget.fusionStrike ||
         impact.target == LiteImpactTarget.fiveFlames ||
-        impact.target == LiteImpactTarget.bunnysHeal ||
         impact.target == LiteImpactTarget.frontierCast ||
         impact.target == LiteImpactTarget.bestiaryCast ||
         impact.target == LiteImpactTarget.chamberStrike ||
         impact.target == LiteImpactTarget.fissure ||
+        impact.target == LiteImpactTarget.assassinSlash ||
         impact.target == LiteImpactTarget.explosion)
       continue;
     final clash = impact.target == LiteImpactTarget.clash;
@@ -4453,8 +4614,13 @@ void _paintCombatImpacts(
       occupiedLabels,
       [
         if (clash) ('Clash', _sand),
+        if (impact.target == LiteImpactTarget.materiaDodge)
+          ('Schivata', const Color(0xffbbdbe6)),
+        if (impact.target == LiteImpactTarget.bunnysHeal)
+          ('+${_damageLabel(impact.life)}', const Color(0xffa9df8f)),
         if (impact.intangible) ('Intangibile', _violet),
-        if (impact.life > 0) ('−${_damageLabel(impact.life)}', lifeColor),
+        if (impact.life > 0 && impact.target != LiteImpactTarget.bunnysHeal)
+          ('−${_damageLabel(impact.life)}', lifeColor),
         if (impact.shield > 0)
           ('Scudo −${_damageLabel(impact.shield)}', const Color(0xffa2ddfd)),
       ],
@@ -5352,7 +5518,7 @@ final _patinaLivery = Paint()
 Paint? _heroLivery(LiteHero hero, LiteInkFinish finish) {
   if (hero == LiteHero.polloMeccanico) return null;
   return switch (finish) {
-    LiteInkFinish.canonica => null,
+    LiteInkFinish.canonica || LiteInkFinish.tattica => null,
     LiteInkFinish.cremisi => _emberLivery,
     LiteInkFinish.patina => _patinaLivery,
   };
@@ -6716,7 +6882,52 @@ void _hero(
       : weaponStrike;
   final openRelease = openAge >= 0 && openAge < .16;
   final openRecovery = openAge >= .16 && openAge < .33;
+  if (LiteErrato.forHero(hero) case final wrong?) {
+    if (sprites.erratoMotion case final atlas?) {
+      _paintErratoMotion(canvas, atlas, wrong, stride ?? LiteStride(), time,
+        casting: preparingAttack || preparingTalent || weaponStrike > 0 || openRelease,
+        fallen: fallen);
+      return;
+    }
+  }
+  if (hero == LiteHero.assassino) {
+    final tactical = _assassinTacticalLook(appearance, equipment);
+    final art = tactical ? sprites.assassinTacticalMotion : sprites.assassinMotion;
+    if (art case final atlas?) {
+      _paintAssassin(
+        canvas,
+        atlas,
+        stride,
+        animationLead,
+        moving: moving,
+        dashing: dashing,
+        winding: preparingAttack || preparingTalent,
+        fallen: fallen,
+        phantom: clone || phantom,
+        tactical: tactical,
+        strike: weaponStrike,
+        openAge: openAge,
+        impactAge: fallAge,
+      );
+    }
+    return;
+  }
   final bodyKind = mimic?.kind ?? hero.sprite;
+  if (sprites.costruttoGait case final atlas?
+      when bodyKind == LiteEnemyKind.costrutto) {
+    _paintCostruttoMinore(
+      canvas,
+      atlas,
+      stride,
+      animationLead,
+      fallen: fallen,
+      fallProgress: ((fallAge ?? .53) / .53).clamp(0, 1),
+      winding: preparingAttack || preparingTalent || openRecovery,
+      release: openRelease ? math.max(.16 - openAge, weaponStrike) : weaponStrike,
+      dashing: dashing,
+    );
+    return;
+  }
   if (bodyKind == LiteEnemyKind.miruscyrus && sprites.bestiary[bodyKind] != null) {
     _paintMiruscyrus(
       canvas,
@@ -10954,7 +11165,7 @@ void _projectile(
       );
     case LiteProjectileKind.posteaRay:
       final (edge, light, core) = switch (finish) {
-        LiteInkFinish.canonica => (
+        LiteInkFinish.canonica || LiteInkFinish.tattica => (
           const Color(0x9951b3bd),
           const Color(0xff54d9df),
           const Color(0xffdbfff4),
@@ -11516,6 +11727,15 @@ class _HeroPreviewPaint extends CustomPainter {
         aerovyrGait: hero == LiteHero.aerovyr ? figure : null,
         pysciGait: hero == LiteHero.pysciwarden ? figure : null,
         funerysGait: hero == LiteHero.funerys ? figure : null,
+        erratoMotion: LiteErrato.forHero(hero) == null ? null : figure,
+        assassinMotion: hero == LiteHero.assassino &&
+                !_assassinTacticalLook(appearance, weapon)
+            ? figure
+            : null,
+        assassinTacticalMotion: hero == LiteHero.assassino &&
+                _assassinTacticalLook(appearance, weapon)
+            ? figure
+            : null,
         bestiary: {if (hero.bodyOnly) hero.sprite!: figure},
         third: _thirdHeroSprite(hero) != null && hero != LiteHero.aerovyr
             ? figure

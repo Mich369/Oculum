@@ -177,22 +177,28 @@ void _paintMiruscyrus(
 void _paintCostruttoMinore(
   Canvas canvas,
   ui.Image atlas,
-  LiteEnemy enemy,
+  LiteStride? stride,
   double lead, {
+  required bool fallen,
   required double fallProgress,
+  required bool winding,
+  required double release,
+  required bool dashing,
+  double hurt = 0,
 }) {
   const walking = [1, 0, 2, 0];
   const running = [1, 3, 2, 3];
-  final speed = enemy.stride.speed;
-  final hurrying = speed >= enemy.kind.speed * .9;
-  final travel = enemy.stride.distance + speed * lead;
+  final speed = stride?.speed ?? 0;
+  final hurrying =
+      speed >= LiteEnemyKind.costrutto.speed * .9 && stride?.walking != true;
+  final travel = (stride?.distance ?? 0) + speed * lead;
   final step = (travel * (hurrying ? 3.8 : 3.1)).floor() % 4;
-  final frame = switch (enemy) {
-    _ when enemy.hp <= 0 => fallProgress < .57 ? 6 : 7,
-    _ when enemy.strikePose > lead => 5,
-    _ when enemy.attacking => 4,
-    _ when enemy.hitFlash > lead => 6,
-    _ when _enemyIsDashing(enemy) => 3,
+  final frame = switch (speed) {
+    _ when fallen => fallProgress < .57 ? 6 : 7,
+    _ when release > lead => 5,
+    _ when winding => 4,
+    _ when hurt > lead => 6,
+    _ when dashing => 3,
     _ when speed < .065 => 0,
     _ => (hurrying ? running : walking)[step],
   };

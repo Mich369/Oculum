@@ -7,3 +7,5 @@ Le battute italiane d’allerta sono state sintetizzate con Piper e poi trattate
 - **Piper.** Motore di sintesi locale di Open Home Foundation. [Piper](https://github.com/OHF-Voice/piper1-gpl)
 
 I ruggiti, gli stridii, i segnali del ferro e gli altri versi brevi sono effetti generati per Oculum RL.
+
+I segnali all’avvistamento dello Scostubandito e del Gran Scostumato usano i due MP3 forniti dal giocatore. I file vengono inclusi senza ricodifica e seguono il volume degli effetti.

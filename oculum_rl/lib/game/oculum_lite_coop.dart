@@ -50,6 +50,7 @@ class OculumLiteCoop extends ChangeNotifier {
   bool _lastAttackHeld = false;
   bool _dodge = false;
   bool _dash = false;
+  bool _assassinBox = false;
   bool _reload = false;
   bool _open = false;
   bool _rifleSkill = false;
@@ -116,7 +117,7 @@ class OculumLiteCoop extends ChangeNotifier {
     aim = null;
     slowed = false;
     _fire = _dodge = _dash = _reload = _open = _rifleSkill = _weaponArt =
-        _bomb = _rest = false;
+        _bomb = _rest = _assassinBox = false;
     _blockSent = _rescueSent = false;
     _restAction = null;
     setBlocking(false);
@@ -264,6 +265,16 @@ class OculumLiteCoop extends ChangeNotifier {
     }
   }
 
+  void toggleAssassinBox() {
+    if (!canAct) return;
+    final world = authority;
+    if (world != null) {
+      world.toggleAssassinBox();
+    } else if (run?.coopFighter(localAccount)?.hero == LiteHero.assassino) {
+      _assassinBox = !_assassinBox;
+    }
+  }
+
   bool nearPortal(String account) {
     final world = run;
     if (world == null || !world.coopPortalOpen) return false;
@@ -291,6 +302,15 @@ class OculumLiteCoop extends ChangeNotifier {
     if (authority?.advanceActTwo() != true) return false;
     destination = null;
     _confirmed.clear();
+    notifyListeners();
+    return true;
+  }
+
+  bool startBossRush() {
+    if (authority?.enterBossRush() != true) return false;
+    destination = null;
+    _confirmed.clear();
+    _timeOfSend = -1;
     notifyListeners();
     return true;
   }
@@ -337,7 +357,15 @@ class OculumLiteCoop extends ChangeNotifier {
     world.castScroll(slot, aim ?? world.position + world.aim);
   }
 
+  void spendAttributePoint(LiteAttribute attribute) =>
+      _orderRest('attribute', attribute.name);
+
   void useRestScroll(LiteScroll scroll) => _orderRest('scroll', scroll.name);
+
+  void equipGrimoireSlot(int slot, LiteGrimoireAction? action) =>
+      _orderRest('grimoireEquip', slot.toString() + ':' + (action?.key ?? '-'));
+
+  void useGrimoireSlot(int slot) => _orderRest('grimoireCast', slot.toString());
 
   void _orderRest(String kind, String item) {
     if (!canAct) return;
@@ -357,12 +385,35 @@ class OculumLiteCoop extends ChangeNotifier {
     LiteCoopFighter? fighter,
     Point<double> aim,
   ) {
+    if (kind == 'grimoireCast' && id is String) {
+      final slot = int.tryParse(id);
+      if (slot != null) world.useGrimoire(slot, aim, fighter);
+      return;
+    }
+    if (kind == 'grimoireEquip' && id is String) {
+      final separator = id.indexOf(':');
+      if (separator < 1) return;
+      final slot = int.tryParse(id.substring(0, separator));
+      final key = id.substring(separator + 1);
+      final action = LiteGrimoireAction.tryRead(key);
+      if (slot != null && (key == '-' || action != null)) {
+        world.assignGrimoire(slot, action, fighter);
+      }
+      return;
+    }
+    if (kind == 'attribute') {
+      final attribute = LiteAttribute.values
+          .where((value) => value.name == id)
+          .firstOrNull;
+      if (attribute != null) world.spendAttributePoint(attribute, fighter);
+      return;
+    }
     if (kind == 'art' || kind == 'extraArt') {
       world.useLearnedArt(aim, fighter, kind == 'extraArt');
       return;
     }
     if (kind == 'struggle') {
-      world.shakeRedGrip(fighter);
+      if (!world.fightBanditRopes(fighter)) world.shakeRedGrip(fighter);
       return;
     }
     if (kind == 'exchange') {
@@ -546,6 +597,7 @@ class OculumLiteCoop extends ChangeNotifier {
         _attackHeld != _lastAttackHeld ||
         _dodge ||
         _dash ||
+        _assassinBox ||
         _reload ||
         _open ||
         _rifleSkill ||
@@ -579,6 +631,7 @@ class OculumLiteCoop extends ChangeNotifier {
           if (_attackHeld) 'holdAttack': true,
           'dodge': _dodge,
           'dash': _dash,
+          if (_assassinBox) 'assassinBox': true,
           'reload': _reload,
           if (_open) 'open': true,
           if (_rifleSkill) 'rifleSkill': true,
@@ -594,6 +647,7 @@ class OculumLiteCoop extends ChangeNotifier {
             (_fire ||
                 _dodge ||
                 _dash ||
+                _assassinBox ||
                 _reload ||
                 _open ||
                 _rifleSkill ||
@@ -608,7 +662,7 @@ class OculumLiteCoop extends ChangeNotifier {
         _rescueSent = _rescuing;
         _restAction = null;
         _fire = _dodge = _dash = _reload = _open = _rifleSkill = _weaponArt =
-            _bomb = _rest = false;
+            _bomb = _rest = _assassinBox = false;
         _postInput(packet);
       } else {
         unawaited(_announce());
@@ -764,6 +818,7 @@ class OculumLiteCoop extends ChangeNotifier {
       holdAttack: packet['holdAttack'] == true,
       dodge: packet['dodge'] == true,
       dash: packet['dash'] == true,
+      assassinBox: packet['assassinBox'] == true,
       reload: packet['reload'] == true,
       slow: packet['slow'] == true,
       open: packet['open'] == true,

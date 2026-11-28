@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _live = bool.fromEnvironment('OculumRLLiveProof');
 const _wormhole = bool.fromEnvironment('OculumRLWormholeLiveProof');
+const _bandit = bool.fromEnvironment('OculumRLBanditLiveProof');
 const _partySize = int.fromEnvironment(
   'OculumRLLivePartySize',
   defaultValue: 2,
@@ -24,7 +25,9 @@ Future<void> _until(bool Function() ready, String label) async {
 
 void main() {
   test(
-    _wormhole
+    _bandit
+        ? 'two authenticated clients escape the bandits with owner-specific pet stealth'
+        : _wormhole
         ? '$_partySize authenticated clients return from the shared Desert Eye after host reconnect'
         : '$_partySize authenticated clients share authoritative combat and quests',
     () async {
@@ -135,7 +138,7 @@ void main() {
 
       final world = LiteRun(
         seed: _wormhole ? 130 : 711,
-        explorationRoutes: _wormhole,
+        explorationRoutes: _wormhole || _bandit,
         biome: _wormhole ? LiteBiome.deserto : LiteBiome.campo,
         hero: LiteHero.evasore,
         weapon: LiteWeapon.arco,
@@ -151,8 +154,8 @@ void main() {
           world.addCoopFighter(
             client.auth.currentUser!.id,
             'RL QA Player',
-            LiteHero.duplicatore,
-            LiteWeapon.arco,
+            _bandit ? LiteHero.scostubandito : LiteHero.duplicatore,
+            _bandit ? LiteWeapon.fucileScostubandito : LiteWeapon.arco,
           ),
           isTrue,
         );
@@ -243,6 +246,340 @@ void main() {
       );
       expect(guestSession.run!.stage, 0);
       expect(guestSession.run!.coopFighter(user), isNotNull);
+      if (_bandit) {
+        expect(_partySize, 2);
+        var banditWorld = world;
+        var activeHost = hostSession;
+        var scout = banditWorld.coopFighter(user)!;
+        await _until(
+          () => scout.connected && guestSession.canAct,
+          'both authenticated players ready',
+        );
+        banditWorld
+          ..fauna.clear()
+          ..obstacles.clear()
+          ..stageClear = false
+          ..position = const Point(6, 3.7)
+          ..shield = 0
+          ..hp = 1
+          ..obser = 100;
+        scout
+          ..position = const Point(8, 18.5)
+          ..shield = 0
+          ..hp = 1
+          ..obser = 100;
+        banditWorld.supply.scrolls[LiteScroll.velo] = 10;
+        scout.supply.scrolls[LiteScroll.velo] = 10;
+        const grimoireSlot = 3;
+        const grimoireWeapon = LiteGrimoireAction.weapon();
+        guestSession.equipGrimoireSlot(grimoireSlot, grimoireWeapon);
+        await _until(
+          () =>
+              banditWorld.grimoireSlots(scout)[grimoireSlot] ==
+                  grimoireWeapon &&
+              guestSession.run!.grimoireSlots(
+                    guestSession.run!.coopFighter(user),
+                  )[grimoireSlot] ==
+                  grimoireWeapon,
+          'guest equips a Grimorio slot on the authority and sees it replicated',
+        );
+        guestSession.aim = scout.position + const Point(5, 0);
+        guestSession.useGrimoireSlot(grimoireSlot);
+        await _until(
+          () => scout.cooldown > 0,
+          'the guest uses the newly assigned slot on the authority',
+        );
+        const hostPetId = 99101;
+        const guestPetId = 99102;
+        banditWorld.clones.addAll([
+          LiteClone(
+            const Point(7, 4),
+            65,
+            LiteWeapon.scettro,
+            id: hostPetId,
+            companion: LiteCompanion.errato,
+          ),
+          LiteClone(
+            const Point(8.3, 19.1),
+            65,
+            LiteWeapon.scettro,
+            id: guestPetId,
+            companion: LiteCompanion.errato,
+            ownerId: scout.id,
+          ),
+        ]);
+        LiteProjectile fatal(Point<double> at) => LiteProjectile(
+          position: at,
+          direction: const Point(1, 0),
+          speed: 6,
+          remaining: 4,
+          damage: 35,
+          kind: LiteProjectileKind.cannon,
+          fromEnemy: true,
+          banditCapture: true,
+        );
+        bool getWorld(
+          List<OculumLiteCoop> clients,
+          bool Function(LiteRun) check,
+        ) => clients.every(
+          (session) => session.run != null && check(session.run!),
+        );
+
+        banditWorld.projectiles.add(fatal(banditWorld.position));
+        await _until(
+          () => getWorld(game, (run) => run.hostDown && !run.inBanditEscape),
+          'a living guest sees the Master down while the fight continues',
+        );
+        expect(guestSession.run!.coopFighter(user)!.hp, 1);
+        banditWorld.projectiles.add(fatal(scout.position));
+        await _until(
+          () => getWorld(
+            game,
+            (run) => run.inBanditEscape && run.banditEscapeRoom == 0,
+          ),
+          'both clients wake up in the same prison',
+        );
+        final ropeCount = banditWorld.banditRopes();
+        expect(ropeCount, anyOf(1, 5));
+        for (final session in game) {
+          final run = session.run!;
+          final fighter = run.coopFighter(user)!;
+          expect(run.hp, closeTo(run.maxHp / 4, 1e-7));
+          expect(fighter.hp, closeTo(fighter.maxHp / 4, 1e-7));
+          expect(run.obser, 40);
+          expect(run.supply.scrolls[LiteScroll.velo], 4);
+          expect(fighter.obser, 100);
+          expect(fighter.supply.scrolls[LiteScroll.velo], 10);
+          expect(run.banditRopes(fighter), 1);
+        }
+        await checkpoint(
+          master,
+          'rl-qa-role-0',
+          'save',
+          epoch: epoch,
+          snapshot: {
+            'lobby': {'runId': code},
+            'world': banditWorld.toJson(),
+          },
+        );
+        activeHost.stop();
+        await master.removeAllChannels();
+        await _until(() => guestSession.pausedByHost, 'guest waits in prison');
+        final restartedClient = SupabaseClient(
+          oculumDefaultSupabaseUrl,
+          oculumDefaultSupabasePublishableKey,
+        );
+        addTearDown(() async {
+          await restartedClient.removeAllChannels();
+          await restartedClient.dispose();
+        });
+        await restartedClient.auth.setSession(
+          master.auth.currentSession!.refreshToken!,
+        );
+        expect((await join(restartedClient, true))['roomId'], room['roomId']);
+        const resumedId = 'rl-qa-bandit-recovered-master';
+        await restartedClient.rpc(
+          'oculum_touch_room_session',
+          params: {
+            'p_room': room['roomId'],
+            'p_session': resumedId,
+            'p_presence': {'playerName': 'RL QA Master'},
+          },
+        );
+        final resumed = (await checkpoint(
+          restartedClient,
+          resumedId,
+          'claim',
+        ))!;
+        expect(resumed['epoch'], epoch + 1);
+        banditWorld = LiteRun.fromJson(
+          Map<String, dynamic>.from(
+            (resumed['snapshot'] as Map)['world'] as Map,
+          ),
+        )..suspendCoopControls();
+        scout = banditWorld.coopFighter(user)!;
+        expect(banditWorld.banditRopes(), ropeCount);
+        expect(banditWorld.obser, 40);
+        expect(scout.obser, 100);
+        expect(banditWorld.grimoireSlots(scout)[grimoireSlot], grimoireWeapon);
+        activeHost = OculumLiteCoop(
+          runId: code,
+          localAccount: owner,
+          authority: banditWorld,
+          localSessionId: resumedId,
+          epoch: epoch + 1,
+          send: (packet) => sendAs(restartedClient, resumedId, packet),
+        );
+        game[0] = activeHost;
+        addTearDown(activeHost.dispose);
+        await subscribe(0, restartedClient);
+        activeHost.start();
+        await sendAs(restartedClient, resumedId, {
+          'kind': 'lobbySnapshot',
+          'runId': code,
+          'epoch': epoch + 1,
+        });
+        await _until(
+          () =>
+              guestSession.epoch == epoch + 1 &&
+              guestSession.canAct &&
+              scout.connected &&
+              guestSession.run?.banditEscapeRoom == 0,
+          'new authenticated Master resumes the same prison without repeating robbery',
+        );
+        expect(guestSession.run!.banditRopes(), ropeCount);
+        expect(guestSession.run!.obser, 40);
+
+        guestSession.struggleRedGrip();
+        await _until(
+          () => getWorld(
+            game,
+            (run) => run.banditRopes(run.coopFighter(user)) == 0,
+          ),
+          'guest R reached the authority and severed only the guest ropes',
+        );
+        expect(banditWorld.banditRopes(), ropeCount);
+        expect(banditWorld.banditEscapeRoom, 0);
+        for (var left = ropeCount; left > 0; left--) {
+          activeHost.struggleRedGrip();
+          await _until(
+            () => getWorld(game, (run) => run.banditRopes() == left - 1),
+            'Master R number ${ropeCount - left + 1}',
+          );
+        }
+        expect(banditWorld.banditEscapeRoom, 1);
+
+        // One sentry looks directly at the Master. Only the guest's pet is
+        // placed within the sentry's cone, with its owner behind solid cover.
+        const sentryAt = Point<double>(20, 4);
+        final sentry =
+            LiteEnemy(99103, LiteEnemyKind.scostubandito, sentryAt, 2000)
+              ..guard = (LiteGuard(sentryAt)..facing = const Point(-1, 0))
+              ..cooldown = 120;
+        banditWorld.enemies
+          ..clear()
+          ..add(sentry);
+        banditWorld.obstacles
+          ..clear()
+          ..add(LiteObstacle(13, 8.0, .8, 3.2));
+        banditWorld.position = const Point(16.8, 4);
+        scout.position = const Point(7, 16);
+        final hostPet = banditWorld.clones.singleWhere(
+          (ally) => ally.id == hostPetId,
+        )..position = const Point(14, 5);
+        final guestPet = banditWorld.clones.singleWhere(
+          (ally) => ally.id == guestPetId,
+        )..position = const Point(18, 4);
+        final initialGuestPetDistance = guestPet.position.distanceTo(
+          scout.position,
+        );
+        await _until(
+          () => getWorld(game, (run) {
+            final mine = run.clones.singleWhere((ally) => ally.id == hostPetId);
+            final theirs = run.clones.singleWhere(
+              (ally) => ally.id == guestPetId,
+            );
+            return !run.companionConcealed(mine) &&
+                run.companionConcealed(theirs);
+          }),
+          'Master pet comes out and guest pet is still concealed on both clients',
+        );
+        await _until(
+          () =>
+              guestPet.position.distanceTo(scout.position) <
+              initialGuestPetDistance - .35,
+          'the guest pet actually retreats towards its owner while concealed',
+        );
+        expect(banditWorld.companionConcealed(hostPet), isFalse);
+        expect(banditWorld.companionConcealed(guestPet), isTrue);
+        scout.position = const Point(17.8, 4.14);
+        await _until(
+          () => getWorld(
+            game,
+            (run) => !run.companionConcealed(
+              run.clones.singleWhere((ally) => ally.id == guestPetId),
+            ),
+          ),
+          'guest pet comes out only when its owner is spotted',
+        );
+
+        Future<void> advance(String label, bool Function(LiteRun) after) async {
+          banditWorld.position = banditWorld.portalPosition;
+          scout.position = banditWorld.portalPosition;
+          await _until(
+            () => activeHost.nearPortal(owner) && guestSession.nearPortal(user),
+            '$label opens on both clients',
+          );
+          activeHost.confirmPortal(banditWorld.biome);
+          await _until(
+            () => guestSession.destination != null,
+            '$label vote arrives',
+          );
+          guestSession.confirmPortal();
+          await _until(
+            () => getWorld(game, after),
+            '$label moves both clients',
+          );
+        }
+
+        await advance(
+          'first corridor, guards alive',
+          (run) => run.banditEscapeRoom == 2,
+        );
+        await advance(
+          'second corridor, guards alive',
+          (run) => run.banditEscapeRoom == 3,
+        );
+        expect(
+          guestSession.run!.enemies.where((enemy) => enemy.banditWarden),
+          hasLength(1),
+        );
+        final warden = banditWorld.enemies.singleWhere(
+          (enemy) => enemy.banditWarden,
+        );
+        expect(
+          banditWorld.enemies.where((enemy) => !enemy.banditWarden).length,
+          greaterThanOrEqualTo(8),
+        );
+        expect(banditWorld.coopPortalOpen, isFalse);
+        banditWorld.obstacles.clear();
+        banditWorld.position = warden.position - const Point(4.3, 0);
+        scout.position = warden.position - const Point(4.1, 1.4);
+        scout.shield = 1500;
+        banditWorld.shield = 1500;
+        warden.hp = 1;
+        // Use the host's normal ranged attack. Its launch, damage and the
+        // resulting portal are resolved in the game, not assigned by the test.
+        activeHost.aim = warden.position;
+        activeHost.fire();
+        await _until(
+          () => getWorld(
+            game,
+            (run) => run.banditEscapeExit && run.coopPortalOpen,
+          ),
+          'the last Warden hit opens the shared exit',
+        );
+        expect(banditWorld.enemies.any((enemy) => enemy.hp > 0), isTrue);
+        await advance(
+          'glowing escape exit',
+          (run) => run.stage == 1 && !run.inBanditEscape,
+        );
+        expect(banditWorld.achievements, contains('fuga-dalla-palizzata'));
+        expect(
+          guestSession.run!.achievements,
+          contains('fuga-dalla-palizzata'),
+        );
+        expect(banditWorld.supply.scrolls[LiteScroll.velo], 4);
+        expect(
+          banditWorld.coopFighter(user)!.supply.scrolls[LiteScroll.velo],
+          10,
+        );
+        // This is intentionally the network test result, not a UI or VM claim.
+        print(
+          'LIVE BANDIT ESCAPE: two identities, real host rejoin, independent concealment, remote R, shared portals, surviving reinforcements, Grimorio equip and cast',
+        );
+        return;
+      }
       if (_wormhole) {
         final sourceEnemyIds = world.enemies.map((enemy) => enemy.id).toList();
         final contact = world.coopFighter(user)!;
@@ -691,7 +1028,7 @@ void main() {
       guestSession.move = const Point(0, 0);
       expect(resumed.obser, 47);
     },
-    skip: !_live && !_wormhole,
+    skip: !_live && !_wormhole && !_bandit,
     timeout: const Timeout(Duration(minutes: 3)),
   );
 }

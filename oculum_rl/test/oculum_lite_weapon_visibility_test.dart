@@ -156,4 +156,103 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     view.dispose();
   });
+
+  testWidgets('Doppelganger uses the ink atlas of the copied construct', (
+    tester,
+  ) async {
+    const target = Point<double>(18, 11);
+    const forward = Point<double>(1, 0);
+    final run = LiteRun(
+      seed: 72241,
+      hero: LiteHero.doppelganger,
+      weapon: LiteWeapon.guanti,
+      playerCount: 2,
+    )
+      ..position = const Point(14, 11)
+      ..obstacles.clear()
+      ..fauna.clear()
+      ..enemies.clear()
+      ..enemies.add(LiteEnemy(30, LiteEnemyKind.costrutto, target, 900));
+    expect(run.special(target), isTrue);
+    expect(run.mimic?.kind, LiteEnemyKind.costrutto);
+    expect(
+      run.addCoopFighter('pyrel', 'Pyrel', LiteHero.pyrel, LiteWeapon.scettro),
+      isTrue,
+    );
+    run.enemies
+      ..clear()
+      ..add(LiteEnemy(31, LiteEnemyKind.scostubandito, target, 900)..stunned = 9);
+
+    await tester.pumpWidget(
+      MaterialApp(home: OculumLiteArena(run: run)),
+    );
+    await tester.runAsync(() async {
+      final context = tester.element(find.byType(OculumLiteArena));
+      await precacheImage(OculumLiteArena.costruttoMinoreMotion, context);
+    });
+    await tester.pumpAndSettle();
+
+    final painter = tester
+        .widget<CustomPaint>(
+          find.descendant(
+            of: find.byType(OculumLiteArena),
+            matching: find.byType(CustomPaint),
+          ),
+        )
+        .painter!;
+    Rect pose() {
+      final canvas = _RecordingArenaCanvas();
+      painter.paint(canvas, const Size(800, 600));
+      final draw = canvas.invocations
+          .where((call) {
+            if (call.invocation.memberName != #drawImageRect) return false;
+            final rect = call.invocation.positionalArguments[2] as Rect;
+            return (rect.width - 2.68).abs() < .0001 &&
+                (rect.height - 2.68).abs() < .0001;
+          })
+          .single;
+      final source = draw.invocation.positionalArguments[1] as Rect;
+      expect(source.size, const Size.square(256));
+      return source;
+    }
+
+    expect(pose().topLeft, const Offset(0, 256));
+    for (var i = 0; i < 36; i++) {
+      run.step(.02);
+    }
+    expect(pose().topLeft, Offset.zero);
+    final walking = <Offset>{};
+    for (var i = 0; i < 14; i++) {
+      run.step(.02, move: forward, walk: true);
+      walking.add(pose().topLeft);
+    }
+    expect(walking, contains(const Offset(256, 0)));
+    expect(walking, isNot(contains(const Offset(768, 0))));
+
+    final sprinting = <Offset>{};
+    for (var i = 0; i < 14; i++) {
+      run.step(.02, move: forward);
+      sprinting.add(pose().topLeft);
+    }
+    expect(sprinting, contains(const Offset(768, 0)));
+
+    expect(run.attack(run.position + forward), isTrue);
+    expect(pose().topLeft, const Offset(256, 256));
+
+    expect(
+      run.setCoopControls(
+        'pyrel',
+        const Point(0, 0),
+        target,
+        attack: false,
+        open: true,
+      ),
+      isTrue,
+    );
+    run.advanceFrame(.18);
+    expect(run.openScene?.hero, LiteHero.pyrel);
+    // Only the host in the arena still draws the construct atlas.
+    pose();
+    await tester.pumpWidget(const SizedBox());
+  });
 }

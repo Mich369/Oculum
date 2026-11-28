@@ -76,7 +76,11 @@ extension LiteForgeFusion on LiteRun {
 
   LiteWeaponFusion? weaponFusion([LiteCoopFighter? fighter]) {
     final pair = (fighter?.supply ?? supply)._fusion;
-    if (pair == null || !hasWeaponArt(fighter)) return null;
+    if (pair == null ||
+        !hasWeaponArt(fighter) ||
+        !_assassinCanEquip(pair.primary, fighter)) {
+      return null;
+    }
     if (fighter == null) {
       return ownedWeapons.contains(pair.primary) &&
               ownedWeapons.contains(pair.secondary)
@@ -102,6 +106,7 @@ extension LiteForgeFusion on LiteRun {
     LiteCoopFighter? fighter,
   ]) {
     if (!_forgeOpen(fighter) ||
+        !_assassinCanEquip(primary, fighter) ||
         primary == secondary ||
         (fighter?.obser ?? obser) < fusionPrice)
       return false;
@@ -139,6 +144,7 @@ extension LiteForgeFusion on LiteRun {
 
   bool equipFromForge(LiteWeapon item, [LiteCoopFighter? fighter]) {
     if (!_forgeOpen(fighter) ||
+        !_assassinCanEquip(item, fighter) ||
         !forgeInventory(fighter).contains(item) ||
         (fighter?.weapon ?? weapon) == item)
       return false;
@@ -170,7 +176,8 @@ extension LiteForgeFusion on LiteRun {
     final second = fusedWeapon(fighter);
     final character = fighter?.hero ?? hero;
     final attackingInstantly =
-        main.chargeSeconds == 0 || character.bodyOnly ||
+        main.chargeSeconds == 0 ||
+        character.bodyOnly ||
         character == LiteHero.doppelganger ||
         character == LiteHero.slimeBlu ||
         LiteAnimal.forHero(character) != null ||

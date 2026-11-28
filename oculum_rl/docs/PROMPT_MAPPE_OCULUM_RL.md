@@ -66,7 +66,8 @@ Lavora nel progetto autonomo `C:\Oculum App\Oculum RL`. Leggi le istruzioni del 
 
 ## Regole della build
 
-- Aerovyr chiude la campagna di 36 piani. Cambia fase al 67% e al 32% di Vita. La corona ha il centro sicuro.
+- L’Arconte del piano 24 ha due fasi. La seconda scatta al 50% della Vita massima.
+- Aerovyr chiude la campagna di 36 piani. Passa alla seconda fase al 50% della prima barra. Alla prima sconfitta si rialza una sola volta al 50% della Vita massima, in terza fase. La sconfitta in terza fase conclude l’incontro. La corona ha il centro sicuro.
 - L’Open su Spazio costa 5 Oculum e triplica l’effetto principale. La ricarica dura due stanze di combattimento e si salva per ogni giocatore. I Ristori lasciano invariato il contatore.
 - Con R puoi parlare con il mercante più vicino nel Ristoro. Ogni Art appresa può ricevere due lezioni, con una forma effettiva aggiuntiva e −10% sul recupero per lezione fino al limite dell’Art.
 - Dal Fabbro la fusione costa 90 Obser ed è reversibile. L’arma primaria conserva il ritmo e la tecnica. Le due armi usano Tempra separata. Con Spada e scudo il Blocco della fusione è maggiore del 50% e la spada infligge il 15% di danni in più.

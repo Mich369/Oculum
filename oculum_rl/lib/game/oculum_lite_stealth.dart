@@ -2,6 +2,13 @@ part of 'oculum_lite_run.dart';
 
 enum LiteGuardMode { ronda, indaga, allerta }
 
+bool _forgetfulBandit(LiteEnemy enemy) =>
+    enemy.errato == null &&
+    (enemy.kind == LiteEnemyKind.scostubandito ||
+        enemy.kind == LiteEnemyKind.granScostumato);
+
+typedef _LiteBanditSighting = ({int subject, Point<double> point});
+
 class LiteGuard {
   LiteGuard(this.post);
   final Point<double> post;
@@ -14,8 +21,10 @@ class LiteGuard {
   final _cover = <_LiteObservedCover>[];
   final _bushEntries = <int, int>{};
   final _glimpses = <int, _LiteGlimpse>{};
+  final _alertMotion = <int, _LiteAlertMotion>{};
   int _seenHumans = 0;
-  int? _attackSubject;
+  int? _attackSubject, _focusSubject;
+  _LiteBanditSighting? _banditSighting;
   double _nextScan = 0, _nextPlan = 0;
   double? _arrived;
   Point<double>? _waypoint;
@@ -31,6 +40,14 @@ class LiteGuard {
       if (lastSeen case final point?) 'last': _savePoint(point),
       if (_seenHumans != 0) 'seen': _seenHumans,
       if (_attackSubject != null) 'attacking': _attackSubject!,
+      if (_focusSubject != null) 'focus': _focusSubject!,
+      if (_banditSighting case final sight?)
+        'banditSighting': [sight.subject, ..._savePoint(sight.point)],
+      if (_alertMotion.isNotEmpty)
+        'motion': [
+          for (final entry in _alertMotion.entries)
+            [entry.key, entry.value.since, entry.value.choice.index],
+        ],
       if (_cover.isNotEmpty)
         'cover': _cover.map((stone) => stone.frame).toList(),
       if (_bushEntries.isNotEmpty)
@@ -67,10 +84,21 @@ class LiteGuard {
       .._attackSubject = memo['attacking'] is int
           ? memo['attacking'] as int
           : null
+      .._focusSubject = memo['focus'] is int ? memo['focus'] as int : null
       .._nextScan = _num(memo['scan'])
       .._nextPlan = _num(memo['plan'])
       .._arrived = memo['arrived'] is num ? _num(memo['arrived']) : null
       .._waypoint = memo['path'] is List ? _point(memo['path']) : null;
+    if (memo['banditSighting'] case [
+      final int subject,
+      final num x,
+      final num y,
+    ]) {
+      guard._banditSighting = (
+        subject: subject,
+        point: Point(x.toDouble(), y.toDouble()),
+      );
+    }
     for (final raw in _list(memo['cover']).take(6)) {
       if (_LiteObservedCover.read(raw) case final stone?)
         guard._cover.add(stone);
@@ -78,6 +106,18 @@ class LiteGuard {
     for (final raw in _list(memo['bushes']).take(6)) {
       if (raw is List && raw.length == 2 && raw[0] is int && raw[1] is int) {
         guard._bushEntries[raw[0] as int] = raw[1] as int;
+      }
+    }
+    for (final raw in _list(memo['motion']).take(6)) {
+      if (raw is List &&
+          raw.length == 3 &&
+          raw[0] is int &&
+          raw[1] is num &&
+          raw[2] is int &&
+          (raw[2] as int) >= 0 &&
+          (raw[2] as int) < _LiteMotionChoice.values.length) {
+        guard._alertMotion[raw[0] as int] = _LiteAlertMotion(_num(raw[1]))
+          ..choice = _LiteMotionChoice.values[raw[2] as int];
       }
     }
     for (final raw in _list(memo['glimpses']).take(6)) {
@@ -101,8 +141,17 @@ typedef _LiteSeenActor = ({
   Point<double> at,
   bool quiet,
   bool active,
+  double speed,
   int? bush,
 });
+
+enum _LiteMotionChoice { observing, point, brush, ignored }
+
+class _LiteAlertMotion {
+  _LiteAlertMotion(this.since);
+  final double since;
+  _LiteMotionChoice choice = _LiteMotionChoice.observing;
+}
 
 class _LiteSpotting {
   double? lastSeen;
@@ -197,6 +246,67 @@ enum _LiteEnemySenses {
 extension LiteCampStealth on LiteRun {
   bool get quietSteps => _walking;
 
+  bool enemyEngagedForMusic(LiteEnemy enemy) {
+    if (enemy.hp <= 0 || restHub || finished) return false;
+    final guard = enemy.guard;
+    if (guard != null) {
+      // A Gran Scostumato can spawn pre-alerted with no actual target.
+      return guard.mode == LiteGuardMode.allerta &&
+          (!_forgetfulBandit(enemy) ||
+              guard._focusSubject != null ||
+              guard._attackSubject != null ||
+              enemy.attacking);
+    }
+    return enemy.attacking ||
+        (enemy.attackTarget != null && enemy.attackTarget != enemy.position) ||
+        (_aggressiveSight[enemy.id]?._seenHumans ?? 0) != 0;
+  }
+
+  bool banditBossIntroReady(LiteEnemy enemy) =>
+      enemy.guard == null || enemy.guard!._banditSighting != null;
+
+  bool companionConcealed(LiteClone ally) {
+    if (ally is LiteCoopFighter || ally.hp <= 0 || ally.corrupted) return false;
+    if (_assassinVeiled) return true;
+    final owner = _coopFighterById(ally.ownerId);
+    if (ally.ownerId != 0 && (owner == null || !owner.connected)) return false;
+    if ((owner?.hp ?? hp) <= 0 || bossRushActive) return false;
+    var patrolled = false;
+    for (final enemy in enemies) {
+      if (enemy.hp <= 0) continue;
+      final guard = enemy.guard;
+      if (guard == null && _immediateObserver(enemy)) return false;
+      if (guard == null) continue;
+      patrolled = true;
+      if (guard.mode == LiteGuardMode.allerta &&
+          guard._focusSubject == ally.ownerId)
+        return false;
+    }
+    if (!patrolled) return false;
+    final sight = _humanSpotting[ally.ownerId];
+    return sight?.visible != true ||
+        (sight?.warningUntil ?? 0) > _sightClock + 1e-8;
+  }
+
+  void _followWhileHidden(LiteClone ally, double elapsed) {
+    final owner = _coopFighterById(ally.ownerId)?.position ?? position;
+    final angle = (ally.id % 8) * pi / 4;
+    final trail = owner + Point(cos(angle), sin(angle)) * .65;
+    final delta = trail - ally.position;
+    ally
+      .._preparingPose = 0
+      .._swing = 0;
+    if (delta.magnitude <= .10) return;
+    final pace = min(delta.magnitude, _alliedMovementTime(elapsed) * 5.7);
+    ally.position = _chooseLane(
+      ally.position,
+      LiteRun._unit(delta),
+      pace,
+      .37,
+      rightFirst: ally.id.isEven,
+    );
+  }
+
   double spottingWarningRemaining([LiteCoopFighter? fighter]) =>
       ((_humanSpotting[fighter?.id ?? 0]?.warningUntil ?? 0) - _sightClock)
           .clamp(0.0, 1.3);
@@ -241,7 +351,7 @@ extension LiteCampStealth on LiteRun {
       }
     }
     if (raw['bosses'] case final Map bosses) {
-      for (final enemy in enemies.where(_immediateObserver)) {
+      for (final enemy in enemies.where((enemy) => enemy.guard == null)) {
         if (LiteGuard.read(bosses[enemy.id.toString()]) case final mind?) {
           _aggressiveSight[enemy.id] = mind;
         }
@@ -250,7 +360,10 @@ extension LiteCampStealth on LiteRun {
   }
 
   bool _immediateObserver(LiteEnemy enemy) =>
-      enemy.kind.boss || enemy.kind.elite || enemy.chamberSeat != null;
+      enemy.banditWarden ||
+      enemy.kind.boss ||
+      enemy.kind.elite ||
+      enemy.chamberSeat != null;
 
   void _sampleRoomSight(double elapsed, bool sheltered) {
     _sightClock += elapsed;
@@ -260,11 +373,17 @@ extension LiteCampStealth on LiteRun {
       _aggressiveSight.clear();
     }
     final previousRoster = _humanEyes;
+    final boxes = {
+      if (assassinBoxActive) 0: _assassinBox,
+      for (final fighter in coopFighters)
+        if (fighter.assassinBoxActive) fighter.id: fighter._assassinBox,
+    };
     _humanEyes = [
       (
         id: 0,
         at: position,
         quiet: _walking,
+        speed: stride.speed,
         active: !hostDown && _night.bat <= 0 && !inExplorationAtrium(position),
         bush: bushAt(position),
       ),
@@ -273,6 +392,7 @@ extension LiteCampStealth on LiteRun {
           id: fighter.id,
           at: fighter.position,
           quiet: fighter.stride.walking == true,
+          speed: fighter.stride.speed,
           active:
               fighter.connected &&
               fighter.hp > 0 &&
@@ -298,7 +418,9 @@ extension LiteCampStealth on LiteRun {
     );
     for (final enemy in enemies) {
       if (enemy.hp <= 0 ||
-          (enemy.guard == null && !_immediateObserver(enemy))) {
+          (enemy.guard == null &&
+              !_immediateObserver(enemy) &&
+              (boxes.isEmpty || enemy.kind.echo))) {
         continue;
       }
       final mind = _sightStateFor(enemy);
@@ -317,6 +439,12 @@ extension LiteCampStealth on LiteRun {
         mind._glimpses.removeWhere(
           (id, _) => !_humanEyes.any((actor) => actor.id == id),
         );
+        mind._alertMotion.removeWhere(
+          (id, _) => !_humanEyes.any((actor) => actor.id == id),
+        );
+        if (!_humanEyes.any((actor) => actor.id == mind._focusSubject)) {
+          mind._focusSubject = null;
+        }
       }
       if (!sheltered) {
         for (final (seat, actor) in _humanEyes.indexed) {
@@ -325,7 +453,12 @@ extension LiteCampStealth on LiteRun {
           if (!actor.active || mind._bushEntries[actor.id] != actor.bush) {
             mind._bushEntries.remove(actor.id);
           }
-          if (!actor.active) continue;
+          final box = boxes[actor.id];
+          if (!actor.active || _assassinVeiled) {
+            box?.witnesses.remove(enemy.id);
+            continue;
+          }
+          if (box != null && !box.witnesses.contains(enemy.id)) continue;
           if (entered &&
               mind.mode == LiteGuardMode.allerta &&
               (previous & (1 << seat)) != 0 &&
@@ -342,16 +475,26 @@ extension LiteCampStealth on LiteRun {
             enemy,
             mind,
             actor.at,
-            actor.quiet,
+            box == null && actor.quiet,
             ignoreBush: mind._bushEntries[actor.id],
           )) {
             mind._seenHumans |= 1 << seat;
             if (enemy.guard == null) mind.lastSeen = actor.at;
+          } else {
+            box?.witnesses.remove(enemy.id);
           }
         }
+      } else {
+        for (final box in boxes.values) {
+          box.witnesses.remove(enemy.id);
+        }
       }
+      if (enemy.guard != null) _observeAlertMotion(enemy, mind, previous);
       seenByAnyone |= mind._seenHumans;
-      if (_immediateObserver(enemy)) seenByImmediate |= mind._seenHumans;
+      if (_immediateObserver(enemy) &&
+          (!_forgetfulBandit(enemy) || mind.mode == LiteGuardMode.allerta)) {
+        seenByImmediate |= mind._seenHumans;
+      }
     }
 
     for (final (seat, actor) in _humanEyes.indexed) {
@@ -377,6 +520,18 @@ extension LiteCampStealth on LiteRun {
     // A last unresolved glimpse is evaluated once, before the guard acts.
     for (final enemy in enemies) {
       if (enemy.guard case final mind? when enemy.hp > 0) {
+        final forgetful = _forgetfulBandit(enemy);
+        if (forgetful &&
+            mind._focusSubject != null &&
+            mind.mode == LiteGuardMode.allerta) {
+          final last = _humanSpotting[mind._focusSubject]?.lastSeen;
+          if (last != null && _sightClock - last >= 3 - 1e-8) {
+            _forgetGuardTarget(mind);
+            _alertSignals.enemyTimers.remove(enemy.id);
+            enemy.windup = 0;
+            enemy.attackTarget = null;
+          }
+        }
         for (final (seat, actor) in _humanEyes.indexed) {
           final seen = (mind._seenHumans & (1 << seat)) != 0;
           final glimpse = mind._glimpses[actor.id];
@@ -404,12 +559,93 @@ extension LiteCampStealth on LiteRun {
                 )
                 ..nextDouble()
                 ..nextDouble();
-          if (odds.nextInt(100) < 60) {
+          if (odds.nextInt(100) < (forgetful ? 35 : 60)) {
             mind.lastSeen = glimpse.point;
             _rallyGuard(enemy, glimpse.point, LiteGuardMode.indaga);
           }
         }
       }
+    }
+  }
+
+  void _observeAlertMotion(LiteEnemy enemy, LiteGuard mind, int previousSight) {
+    if (mind.mode != LiteGuardMode.allerta || mind._focusSubject == null) {
+      mind._alertMotion.clear();
+      return;
+    }
+    for (final (seat, actor) in _humanEyes.indexed) {
+      final bit = 1 << seat;
+      if (mind._seenHumans & bit == 0) {
+        mind._alertMotion.remove(actor.id);
+        continue;
+      }
+      final existing = mind._alertMotion[actor.id];
+      if (existing != null && existing.choice != _LiteMotionChoice.observing) {
+        continue;
+      }
+      if (actor.speed <= .12) {
+        mind._alertMotion.remove(actor.id);
+        continue;
+      }
+      // Keep following a target the guard already sees continuously.
+      if (existing == null &&
+          mind._focusSubject == actor.id &&
+          previousSight & bit != 0) {
+        continue;
+      }
+      final trace = existing ?? _LiteAlertMotion(_sightClock);
+      mind._alertMotion[actor.id] = trace;
+      if (_sightClock - trace.since < .9 - 1e-8) continue;
+      final roll =
+          _LiteRandom(
+              seed ^
+                  (enemy.id * 19727) ^
+                  (actor.id * 7757) ^
+                  ((trace.since * 1000).round() * 3511),
+            )
+            ..nextDouble()
+            ..nextDouble();
+      final outcome = roll.nextInt(10);
+      final forgetful = _forgetfulBandit(enemy);
+      if (outcome != 0) {
+        trace.choice = forgetful && outcome >= 7
+            ? _LiteMotionChoice.ignored
+            : _LiteMotionChoice.point;
+        continue;
+      }
+
+      LiteBush? suspected;
+      var closest = 4.0;
+      for (final bush in concealmentBushes) {
+        final distance = actor.at.distanceTo(bush.center);
+        if (distance >= closest ||
+            _blocked(bush.center, enemy.radius) ||
+            !_observerSees(
+              enemy,
+              mind,
+              bush.center,
+              false,
+              ignoreBush: bush.id,
+            )) {
+          continue;
+        }
+        closest = distance;
+        suspected = bush;
+      }
+      if (suspected == null) {
+        trace.choice = forgetful
+            ? _LiteMotionChoice.ignored
+            : _LiteMotionChoice.point;
+        continue;
+      }
+      trace.choice = _LiteMotionChoice.brush;
+      mind
+        ..lastSeen = actor.at
+        ..target = suspected.center
+        ..attention = max(mind.attention, 3)
+        .._arrived = null
+        .._waypoint = null
+        .._nextPlan = 0;
     }
   }
 
@@ -437,10 +673,12 @@ extension LiteCampStealth on LiteRun {
   }
 
   bool _guardCanCompleteAttack(LiteEnemy enemy) {
+    if (_assassinVeiled) return false;
     final mind = enemy.guard!;
     final id = mind._attackSubject;
     for (final (seat, actor) in _humanEyes.indexed) {
       if (id != null && actor.id != id) continue;
+      if (_boxHiddenFrom(actor.id, enemy.id)) continue;
       if ((mind._seenHumans & (1 << seat)) != 0 &&
           (_humanSpotting[actor.id]?.warningUntil ?? 0) <= _sightClock) {
         return true;
@@ -451,6 +689,7 @@ extension LiteCampStealth on LiteRun {
           clone.hp > 0 &&
           (id == null || clone.id == id) &&
           !clone.corrupted &&
+          !companionConcealed(clone) &&
           _guardSees(
             enemy,
             clone.position,
@@ -474,7 +713,15 @@ extension LiteCampStealth on LiteRun {
       position.y <= 15.4;
 
   bool _canPatrol(LiteEnemy enemy) {
+    if (enemy.banditWarden) return false;
+    if (inBanditEscape && banditEscapeRoom < 3) return true;
     final kind = enemy.kind;
+    if (kind == LiteEnemyKind.granScostumato &&
+        explorationRoutes &&
+        !bossRushActive &&
+        enemy.chamberSeat == null) {
+      return true;
+    }
     if (kind.boss || kind.elite || kind.echo || enemy.chamberSeat != null) {
       return false;
     }
@@ -499,6 +746,18 @@ extension LiteCampStealth on LiteRun {
     if (enemy.guard != null) return;
     final guard = LiteGuard(enemy.position);
     enemy.guard = guard;
+    if (enemy.kind == LiteEnemyKind.granScostumato && !inBanditEscape) {
+      final direction = LiteRun._unit(position - enemy.position);
+      if (direction.magnitude > 0) guard.facing = direction;
+      guard
+        ..mode = LiteGuardMode.allerta
+        ..attention = 12;
+      if (restoring && enemy.attackTarget != null) {
+        guard.lastSeen = enemy.attackTarget;
+        guard.target = enemy.attackTarget;
+      }
+      return;
+    }
     if (campPatrols && enemy.kind == LiteEnemyKind.scostubandito) return;
     final lane = ((seed ^ (enemy.id * 11)) % 3) - 1;
     guard.facing = LiteRun._unit(Point(-.84, lane * .54));
@@ -538,15 +797,55 @@ extension LiteCampStealth on LiteRun {
     }
   }
 
+  void _forgetGuardTarget(LiteGuard guard) {
+    guard
+      ..mode = LiteGuardMode.ronda
+      ..attention = 0
+      .._focusSubject = null
+      .._attackSubject = null
+      .._banditSighting = null
+      .._alertMotion.clear()
+      ..lastSeen = null
+      ..target = guard.post
+      .._arrived = null
+      .._waypoint = null;
+  }
+
+  void _relayBanditSighting(LiteEnemy source, _LiteBanditSighting sight) {
+    for (final other in enemies) {
+      if (other == source || other.hp <= 0 || other.kind.echo) continue;
+      final guard = other.guard;
+      if (guard == null) {
+        if (_immediateObserver(other)) {
+          _sightStateFor(other).lastSeen ??= sight.point;
+        }
+        continue;
+      }
+      if (guard._seenHumans != 0) continue;
+      _rallyGuard(other, sight.point, LiteGuardMode.allerta);
+      guard
+        ..lastSeen = sight.point
+        .._focusSubject = sight.subject
+        .._arrived = null
+        .._waypoint = null;
+    }
+  }
+
   Point<double>? _encounterTarget(LiteEnemy enemy, double elapsed) {
     final guard = enemy.guard!;
     final senses = _LiteEnemySenses.forKind(enemy.kind);
     _observeCover(enemy, guard);
     Point<double>? seen, warningPoint, heard;
     int? seenSubject;
+    var seenHuman = false;
     var sightDistance = double.infinity, warningDistance = double.infinity;
     var soundDistance = double.infinity;
-    void observe(int id, Point<double> at, {bool warning = false}) {
+    void observe(
+      int id,
+      Point<double> at, {
+      bool warning = false,
+      bool human = false,
+    }) {
       final distance = enemy.position.distanceTo(at);
       if (warning) {
         if (distance < warningDistance) {
@@ -557,6 +856,7 @@ extension LiteCampStealth on LiteRun {
         sightDistance = distance;
         seen = at;
         seenSubject = id;
+        seenHuman = human;
       }
     }
 
@@ -576,25 +876,33 @@ extension LiteCampStealth on LiteRun {
 
     for (final (seat, actor) in _humanEyes.indexed) {
       if (!actor.active) continue;
-      if (guard._seenHumans & (1 << seat) != 0) {
+      final motion = guard._alertMotion[actor.id]?.choice;
+      if (guard._seenHumans & (1 << seat) != 0 &&
+          (motion == null || motion == _LiteMotionChoice.point)) {
         observe(
           actor.id,
           actor.at,
+          human: true,
           warning: (_humanSpotting[actor.id]?.warningUntil ?? 0) > _sightClock,
         );
       }
-      if (actor.id == 0) {
-        hear(actor.at, actor.quiet, stride.speed);
-      } else if (_coopFighterById(actor.id) case final fighter?) {
-        hear(actor.at, actor.quiet, fighter.stride.speed);
-      }
+      hear(actor.at, actor.quiet, actor.speed);
     }
+    final confirmingHuman =
+        seenHuman &&
+        (guard.mode != LiteGuardMode.allerta ||
+            (_forgetfulBandit(enemy) && guard._banditSighting == null));
     for (final clone in clones) {
       if (clone.hp <= 0 ||
           clone.corrupted ||
+          companionConcealed(clone) ||
           inExplorationAtrium(clone.position))
         continue;
-      if (_guardSees(enemy, clone.position)) observe(clone.id, clone.position);
+      if (!confirmingHuman &&
+          !_assassinVeiled &&
+          _guardSees(enemy, clone.position)) {
+        observe(clone.id, clone.position);
+      }
       hear(clone.position, false, clone.stride.speed);
     }
     if (seen case final target?) {
@@ -603,6 +911,26 @@ extension LiteCampStealth on LiteRun {
         ..lastSeen = target
         .._attackSubject = seenSubject
         .._arrived = null;
+      if (seenHuman) {
+        guard._focusSubject = seenSubject;
+        if (_forgetfulBandit(enemy)) {
+          final viewer = seenSubject!;
+          if (guard._banditSighting == null) {
+            if (_combatImpacts.length >= 32) _combatImpacts.removeAt(0);
+            _combatImpacts.add(
+              LiteCombatImpact(
+                LiteImpactTarget.banditSpotted,
+                viewer,
+                enemy.position,
+                time,
+                enemyKind: enemy.kind,
+                end: target,
+              ),
+            );
+          }
+          guard._banditSighting = (subject: viewer, point: target);
+        }
+      }
       final direction = LiteRun._unit(target - enemy.position);
       if (direction.magnitude > 0) guard.facing = direction;
       return target;
@@ -622,15 +950,13 @@ extension LiteCampStealth on LiteRun {
       _rallyGuard(enemy, target, LiteGuardMode.indaga);
     }
     guard.attention = max(0, guard.attention - elapsed);
-    if (guard.mode != LiteGuardMode.ronda &&
+    final tracksBanditTarget =
+        _forgetfulBandit(enemy) && guard._focusSubject != null;
+    if (!tracksBanditTarget &&
+        guard.mode != LiteGuardMode.ronda &&
         (guard.attention == 0 ||
             guard._arrived != null && time - guard._arrived! >= 1.7)) {
-      guard
-        ..mode = LiteGuardMode.ronda
-        ..lastSeen = null
-        ..target = guard.post
-        .._arrived = null
-        .._waypoint = null;
+      _forgetGuardTarget(guard);
     }
     if (guard.target case final goal?) {
       if (goal.distanceTo(enemy.position) > .35) {
@@ -823,8 +1149,9 @@ extension LiteCampStealth on LiteRun {
     LiteEnemy victim,
     Point<double> from,
     bool force,
-    bool walking,
-  ) {
+    bool walking, {
+    String? finisherAccount,
+  }) {
     final guard = victim.guard;
     if (guard == null) return false;
     final quiet =
@@ -837,13 +1164,21 @@ extension LiteCampStealth on LiteRun {
     var witnessed = false;
     for (final other in enemies) {
       if (other == victim || other.hp <= 0 || other.guard == null) continue;
-      if (_guardSees(other, victim.position) ||
-          _guardSees(other, from, quiet: walking)) {
-        _rallyGuard(other, from, LiteGuardMode.allerta);
+      final sawFinisher =
+          !_assassinVeiled && _guardSees(other, from, quiet: walking);
+      if (_guardSees(other, victim.position) || sawFinisher) {
+        _rallyGuard(
+          other,
+          sawFinisher ? from : victim.position,
+          LiteGuardMode.allerta,
+        );
         witnessed = true;
       }
     }
     if (quiet) {
+      if (!witnessed && finisherAccount != null) {
+        _creditAssassinKill(victim, finisherAccount);
+      }
       message = witnessed
           ? 'Un testimone ha visto il colpo.'
           : 'Abbattimento silenzioso.';

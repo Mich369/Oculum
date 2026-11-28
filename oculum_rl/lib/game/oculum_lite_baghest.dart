@@ -128,12 +128,11 @@ extension LiteRedCorruption on LiteRun {
   }
 
   void _baghestTick(LiteEnemy boss, double elapsed) {
-    final target = _closestRedTarget(boss.position);
-    final delta = target - boss.position;
+    final target = _closestRedTarget(boss.position, boss.id);
     if (boss.windup > 0) {
       boss.windup = max(0, boss.windup - elapsed);
       if (boss.windup > 0) return;
-      final mark = boss.attackTarget ?? target;
+      final mark = boss.attackTarget ?? target ?? boss.position;
       boss._strikePose = .24;
       boss.cooldown = 2.0;
       if (boss.combatCycle % 3 == 1) {
@@ -156,6 +155,8 @@ extension LiteRedCorruption on LiteRun {
       return;
     }
     boss.cooldown = max(0, boss.cooldown - elapsed);
+    if (_assassinVeiled || target == null) return;
+    final delta = target - boss.position;
     if (boss.cooldown <= 0 &&
         delta.magnitude <= 7.5 &&
         !_lineBlocked(boss.position, target)) {
@@ -173,23 +174,29 @@ extension LiteRedCorruption on LiteRun {
     }
   }
 
-  Point<double> _closestRedTarget(Point<double> from) {
-    Point<double>? nearest = hostDown ? null : position;
+  Point<double>? _closestRedTarget(Point<double> from, int threatId) {
+    Point<double>? nearest =
+        hostDown || _boxHiddenFrom(0, threatId) ? null : position;
     for (final guest in coopFighters) {
-      if (!guest.connected || guest.hp <= 0) continue;
+      if (!guest.connected || guest.hp <= 0 ||
+          _boxHiddenFrom(guest.id, threatId)) {
+        continue;
+      }
       if (nearest == null ||
           guest.position.distanceTo(from) < nearest.distanceTo(from)) {
         nearest = guest.position;
       }
     }
-    return nearest ?? position;
+    return nearest;
   }
 
   void _redAllyTick(LiteClone clone, double elapsed) {
-    final target = _closestRedTarget(clone.position);
+    clone.cooldown = max(0, clone.cooldown - elapsed);
+    if (_assassinVeiled) return;
+    final target = _closestRedTarget(clone.position, clone.id);
+    if (target == null) return;
     final delta = target - clone.position;
     final direction = LiteRun._unit(delta);
-    clone.cooldown = max(0, clone.cooldown - elapsed);
     if (delta.magnitude > 3.2 || _lineBlocked(clone.position, target)) {
       clone.position = _chooseLane(
         clone.position,

@@ -8,6 +8,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+
+import '../widgets/oculum_lite_grimoire_panel.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game/oculum_lite_alert_dialogue.dart';
@@ -20,6 +23,7 @@ import '../services/oculum_rl_download_stub.dart'
 import '../services/oculum_rl_updates.dart';
 import '../widgets/oculum_lite_alert_subtitle.dart';
 import '../widgets/oculum_lite_arena.dart';
+import '../widgets/oculum_lite_attributes_panel.dart';
 import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_creator.dart';
 import '../widgets/oculum_lite_ink_finishes.dart';
@@ -73,6 +77,9 @@ const liteHeroLabels = {
   LiteHero.funerys: 'Funerys',
   LiteHero.moscaCampana: 'Mosca Campana',
   LiteHero.armadilloCorazzato: 'Armadillo Corazzato',
+  LiteHero.assassino: 'Assassino',
+  LiteHero.scostubanditoErrato: 'Scostubandito errato',
+  LiteHero.scostubanditoVeteranoErrato: 'Scostubandito veterano dell’errato',
   LiteHero.lusierTre: 'Lusier III',
   LiteHero.fabbro: 'Fabbro',
 };
@@ -170,6 +177,7 @@ class _OculumLitePageState extends State<OculumLitePage>
   bool _paused = false;
   bool _showSettings = false;
   bool _mapOpen = false;
+  bool _attributePanelOpen = false;
   bool _touchWalk = false;
   bool _busy = false;
   bool _openingRoom = false;
@@ -180,7 +188,10 @@ class _OculumLitePageState extends State<OculumLitePage>
   int? _setupSlot;
   LiteHero _hero = LiteHero.evasore;
   LiteWeapon _weapon = LiteWeapon.arco;
-  LiteWeapon get _startingWeapon => _hero.startingWeapon(_weapon);
+  LiteWeapon get _startingWeapon => _hero.startingWeapon(
+    _weapon,
+    assassinTactical: _setupFinish == LiteInkFinish.tattica,
+  );
   LiteDifficulty _difficulty = LiteDifficulty.medio;
   LiteBiome _biome = LiteBiome.campo;
   LiteCompanion? _starterPet;
@@ -190,12 +201,17 @@ class _OculumLitePageState extends State<OculumLitePage>
     int.tryParse(_seed.text) ?? 0,
   );
   OculumLiteAppearance _look = const OculumLiteAppearance();
+  bool _usesCustomAttributes = false;
   LiteInkFinish _inkFinish = LiteInkFinish.canonica;
+  LiteInkFinish get _setupFinish =>
+      _inkFinish == LiteInkFinish.tattica && _hero != LiteHero.assassino
+      ? LiteInkFinish.canonica
+      : _inkFinish;
   OculumLiteAppearance get _selectedLook =>
       (_hero == LiteHero.duplicatore
               ? _look
               : oculumLiteDefaultAppearance(_hero))
-          .copyWith(inkFinish: _inkFinish);
+          .copyWith(inkFinish: _setupFinish);
   Point<double> _touchDirection = const Point(0, 0);
   bool _pointerAiding = false;
   Point<double>? _aim;
@@ -328,16 +344,26 @@ class _OculumLitePageState extends State<OculumLitePage>
       final value = _slots[slot]!.encode();
       final carried = _slots[slot]!.run.supply.carriedId;
       final promised = _slots[slot]!.run.supply.promised;
-      final observed = const OculumLiteProgress().recordRun(_slots[slot]!.run);
+      final run = _slots[slot]!.run;
+      final observed = const OculumLiteProgress().recordRun(run);
+      final characterId = _grimoireId(run.hero, slot, run.customAttributes);
+      final layout = run.grimoireConfigured() ? run.grimoireSlots() : null;
       final task = _writes.then((_) async {
         await store.write(slot, value);
-        final progress = _progress.record(
-          observed.bestClearedFloor,
-          observed.unlockedHeroes,
-          pets: observed.discoveredPets,
-          slimeCounters: observed.slimeCounters,
-          milestones: observed.milestoneFloors,
-        );
+        final progress = _progress
+            .record(
+              observed.bestClearedFloor,
+              observed.unlockedHeroes,
+              pets: observed.discoveredPets,
+              slimeCounters: observed.slimeCounters,
+              milestones: observed.milestoneFloors,
+            )
+            .recordGrimoire(
+              observed.grimoire.learnedArts,
+              characterId: characterId,
+              hero: run.hero,
+              slots: layout,
+            );
         var progressSaveFailed = false;
         try {
           if (carried != null) await store.spendRestMemory(carried);
@@ -346,7 +372,8 @@ class _OculumLitePageState extends State<OculumLitePage>
               progress.unlockedHeroes.isNotEmpty ||
               progress.discoveredPets.isNotEmpty ||
               progress.slimeKills > 0 ||
-              progress.milestoneFloors.isNotEmpty) {
+              progress.milestoneFloors.isNotEmpty ||
+              !progress.grimoire.isEmpty) {
             await store.writeProgress(progress);
           }
         } on Object {
@@ -539,6 +566,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       _starterPet = null;
       _difficulty = previous?.run.difficulty ?? LiteDifficulty.medio;
       final wasDuplicator = previous?.run.hero == LiteHero.duplicatore;
+      _usesCustomAttributes = wasDuplicator && previous!.run.customAttributes;
       _name.text = wasDuplicator ? previous!.name : 'Duplicatore';
       _inkFinish = previous?.appearance.inkFinish ?? LiteInkFinish.canonica;
       _look = wasDuplicator
@@ -586,19 +614,33 @@ class _OculumLitePageState extends State<OculumLitePage>
       await showOculumLunarPrologue(context);
       if (!mounted) return;
     }
+    final characterId = _grimoireId(_hero, index, _usesCustomAttributes);
+    final grimoire = _progress.grimoire;
     _slots[index] = OculumLiteSaveSlot(
-      run: LiteRun(
-        seed: seed,
-        explorationRoutes: true,
-        progressId: 'solo-' + DateTime.now().microsecondsSinceEpoch.toString(),
-        hero: _hero,
-        allowGlue: _progress.discoveredPets.contains(LiteCompanion.goblinColla),
-        allowMechanicalChicken: _progress.canPlay(LiteHero.pollo),
-        weapon: _startingWeapon,
-        difficulty: _difficulty,
-        biome: _biome,
-        upgrades: _progress.upgrades,
-      ),
+      run:
+          LiteRun(
+            seed: seed,
+            explorationRoutes: true,
+            progressId:
+                'solo-' + DateTime.now().microsecondsSinceEpoch.toString(),
+            hero: _hero,
+            customAttributes: _usesCustomAttributes,
+            assassinTactical: _setupFinish == LiteInkFinish.tattica,
+            allowGlue: _progress.discoveredPets.contains(
+              LiteCompanion.goblinColla,
+            ),
+            allowMechanicalChicken: _progress.canPlay(LiteHero.pollo),
+            weapon: _startingWeapon,
+            difficulty: _difficulty,
+            biome: _biome,
+            upgrades: _progress.upgrades,
+          )..restoreProfileGrimoire(
+            grimoire.learnedArts,
+            grimoire.hasLoadout(characterId, _hero) ||
+                    _hero == LiteHero.duplicatore
+                ? grimoire.loadoutFor(characterId, _hero).actions
+                : null,
+          ),
       name: _hero == LiteHero.duplicatore && _name.text.trim().isNotEmpty
           ? _name.text.trim()
           : liteHeroLabels[_hero]!,
@@ -710,6 +752,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       moveX + _touchDirection.x,
       moveY + _touchDirection.y,
     );
+    final wasCaptured = run.inBanditEscape;
     run.advanceFrame(
       dt,
       move: movement,
@@ -719,10 +762,11 @@ class _OculumLitePageState extends State<OculumLitePage>
     );
     _audio.combatSounds(run);
     _audio.burstSound(run, 0);
+    _audio.banditSpottingSound(run, 0);
     _alerts.update(run, viewerId: 0, playing: !run.finished);
     _arenaFrame.value++;
     _saveTime += dt;
-    if (run.finished || _saveTime >= 5) {
+    if (run.finished || wasCaptured != run.inBanditEscape || _saveTime >= 5) {
       _saveTime = 0;
       unawaited(_save());
     }
@@ -829,6 +873,7 @@ class _OculumLitePageState extends State<OculumLitePage>
         run != null &&
         !_paused &&
         !_mapOpen &&
+        !_attributePanelOpen &&
         !_busy &&
         !run.finished &&
         !run.shopOpen;
@@ -905,9 +950,15 @@ class _OculumLitePageState extends State<OculumLitePage>
     if (_paused || run.shopOpen || run.finished) return KeyEventResult.ignored;
     if (run.soloOpenFrozen) return KeyEventResult.handled;
     final point = _targetFor(run);
-    if (key == LogicalKeyboardKey.shiftLeft ||
+    final grimoireSlot = liteGrimoireKeyboardSlot(key);
+    if (grimoireSlot >= 0 && run.grimoireConfigured()) {
+      run.useGrimoire(grimoireSlot, point);
+    } else if (key == LogicalKeyboardKey.shiftLeft ||
         key == LogicalKeyboardKey.shiftRight) {
       run.dash(point);
+    } else if (key == LogicalKeyboardKey.keyC &&
+        run.hero == LiteHero.assassino) {
+      _saveInventoryChange(() => run.toggleAssassinBox());
     } else if (key == LogicalKeyboardKey.space) {
       _saveInventoryChange(() => run.useOpen(point));
     } else if (key == LogicalKeyboardKey.keyE) {
@@ -946,6 +997,34 @@ class _OculumLitePageState extends State<OculumLitePage>
       run.castScroll(which, point);
     }
     return KeyEventResult.handled;
+  }
+
+  static String _grimoireId(LiteHero hero, int slot, bool custom) =>
+      custom ? 'solo-custom:' + slot.toString() : 'hero:' + hero.name;
+
+  void _useGrimoireOrDefault(LiteRun run, int slot, Point<double> target) {
+    if (run.grimoireConfigured()) {
+      run.useGrimoire(slot, target);
+    } else if (slot == 0) {
+      run.attack(target);
+    } else {
+      run.special(target);
+    }
+  }
+
+  Future<void> _openGrimoire(LiteRun run) async {
+    final wasPaused = _paused;
+    if (!wasPaused) _togglePause();
+    try {
+      await showOculumLiteGrimoire(
+        context,
+        run: run,
+        onAssign: (slot, action) =>
+            _saveInventoryChange(() => run.assignGrimoire(slot, action)),
+      );
+    } finally {
+      if (mounted && !wasPaused && _paused) _togglePause();
+    }
   }
 
   void _togglePause({bool showSettings = false}) {
@@ -988,7 +1067,9 @@ class _OculumLitePageState extends State<OculumLitePage>
 
   Future<void> _interact(LiteRun run) async {
     if (_paused || run.finished || run.shopOpen) return;
-    if (run.gripRemaining() > 0 || run.canChallengeBaghest) {
+    if (run.banditRopes() > 0 ||
+        run.gripRemaining() > 0 ||
+        run.canChallengeBaghest) {
       _saveInventoryChange(run.interact);
       return;
     }
@@ -1011,6 +1092,11 @@ class _OculumLitePageState extends State<OculumLitePage>
       _gameFocus.requestFocus();
       return;
     }
+    if (run.canEnterBossRush) {
+      _saveInventoryChange(run.enterBossRush);
+      _gameFocus.requestFocus();
+      return;
+    }
     if (run.canSpeakToPetTrader()) {
       _togglePause();
       final trade = await showLitePetTrader(context, run);
@@ -1030,7 +1116,7 @@ class _OculumLitePageState extends State<OculumLitePage>
       _gameFocus.requestFocus();
       return;
     }
-    if (run.inDesertEye && run.hasPortalNearby) {
+    if ((run.inBanditEscape || run.inDesertEye) && run.hasPortalNearby) {
       _saveInventoryChange(run.advance);
       _aim = null;
       return;
@@ -1089,6 +1175,35 @@ class _OculumLitePageState extends State<OculumLitePage>
     }
   }
 
+  Future<void> _openAttributes(LiteRun run) async {
+    if (_attributePanelOpen || run.soloOpenFrozen) return;
+    _attributePanelOpen = true;
+    _clearMovement();
+    _syncTicker();
+    try {
+      await showLiteAttributePanel(
+        context,
+        refresh: _arenaFrame,
+        read: () => (
+          scores: run.attributesOf(),
+          freePoints: run.customAttributes ? run.freeAttributePoints() : null,
+          canSpend: !run.finished && !run.hostDown,
+        ),
+        onSpend: (attribute) => _saveInventoryChange(() {
+          if (!run.spendAttributePoint(attribute)) return false;
+          _arenaFrame.value++;
+          return true;
+        }),
+      );
+    } finally {
+      _attributePanelOpen = false;
+      if (mounted) {
+        _syncTicker();
+        _gameFocus.requestFocus();
+      }
+    }
+  }
+
   Future<void> _openRelics(LiteRun run) async {
     _togglePause();
     await showLiteActRelics(
@@ -1133,7 +1248,7 @@ class _OculumLitePageState extends State<OculumLitePage>
     if (_paused ||
         run.finished ||
         run.shopOpen ||
-        run.gripRemaining() > 0 ||
+        (run.banditRopes() > 0 || run.gripRemaining() > 0) ||
         run.fallenAllyNearby == null) {
       return false;
     }
@@ -1147,7 +1262,9 @@ class _OculumLitePageState extends State<OculumLitePage>
 
   Widget? _contextAction(LiteRun run) {
     final String label;
-    if (run.gripRemaining() > 0) {
+    if (run.banditRopes() > 0) {
+      label = 'Premi R · Corde: ${run.banditRopes()}';
+    } else if (run.gripRemaining() > 0) {
       label = 'Premi R · Presa di Baghest: ${run.gripRemaining()}';
     } else if (run.canChallengeBaghest) {
       label = 'R · Sfida Baghest';
@@ -1174,6 +1291,8 @@ class _OculumLitePageState extends State<OculumLitePage>
       label = 'R · Sfida il Guardiano Solare';
     } else if (run.canChooseActTwo) {
       label = 'R · Entra nell’Atto II';
+    } else if (run.inBanditEscape && run.hasPortalNearby) {
+      label = 'R · Prosegui la fuga';
     } else if (run.inDesertEye && run.hasPortalNearby) {
       label = 'R · Ritorna al Deserto Divoratore';
     } else if (run.inThirdAct && run.hasPortalNearby) {
@@ -1633,7 +1752,8 @@ class _OculumLitePageState extends State<OculumLitePage>
                     ),
                   ),
                   OculumLiteInkFinishPicker(
-                    selected: _inkFinish,
+                    selected: _setupFinish,
+                    assassinTacticalAvailable: _hero == LiteHero.assassino,
                     onChanged: (finish) => setState(() => _inkFinish = finish),
                   ),
                   Text(switch (_hero) {
@@ -1852,14 +1972,22 @@ class _OculumLitePageState extends State<OculumLitePage>
     );
     if (!mounted || selected == null) return;
     _name.text = selected.name;
-    setState(() => _look = selected.appearance);
+    setState(() {
+      _look = selected.appearance;
+      _usesCustomAttributes = true;
+    });
   }
 
   void _setActiveInkFinish(LiteInkFinish finish) {
     final slot = _activeSlot;
     final active = _active;
-    if (slot == null || active == null || active.appearance.inkFinish == finish)
+    if (slot == null ||
+        active == null ||
+        active.run.assassinTactical ||
+        finish == LiteInkFinish.tattica ||
+        active.appearance.inkFinish == finish) {
       return;
+    }
     setState(
       () => _slots[slot] = active.withAppearance(
         active.appearance.copyWith(inkFinish: finish),
@@ -1918,16 +2046,23 @@ class _OculumLitePageState extends State<OculumLitePage>
                         if (run.powerWellAt(target)) {
                           unawaited(_showWell(run));
                         } else {
-                          run.attack(target);
+                          _useGrimoireOrDefault(run, 0, target);
                         }
                       },
-                onAttackHeld: blocked ? null : run.setAttackHeld,
+                onAttackHeld: blocked
+                    ? null
+                    : (held) => run.setAttackHeld(
+                        held &&
+                            (!run.grimoireConfigured() ||
+                                run.grimoireSlots()[0]?.kind ==
+                                    LiteGrimoireActionKind.weapon),
+                      ),
                 onTalent: blocked
                     ? null
                     : (target) {
                         if (run.soloOpenFrozen) return;
                         _gameFocus.requestFocus();
-                        run.special(target);
+                        _useGrimoireOrDefault(run, 1, target);
                       },
               ),
             ),
@@ -2015,6 +2150,17 @@ class _OculumLitePageState extends State<OculumLitePage>
                             OculumLitePlayerLifeBar(value: run.hp / run.maxHp),
                           ],
                         ),
+                      ),
+                      OculumLiteAttributesButton(
+                        freePoints: run.customAttributes
+                            ? run.freeAttributePoints()
+                            : null,
+                        onPressed: () => unawaited(_openAttributes(run)),
+                      ),
+                      IconButton(
+                        tooltip: 'Grimorio',
+                        onPressed: () => unawaited(_openGrimoire(run)),
+                        icon: const Icon(Icons.auto_stories_outlined),
                       ),
                       IconButton(
                         tooltip: 'Inventario e pausa',
@@ -2113,8 +2259,17 @@ class _OculumLitePageState extends State<OculumLitePage>
                             children: [
                               if (compact)
                                 _action(
-                                  'Attacco',
-                                  () => run.attack(_targetFor(run)),
+                                  run.grimoireConfigured()
+                                      ? liteGrimoireActionName(
+                                          run.grimoireSlots()[0],
+                                          run.hero,
+                                        )
+                                      : 'Attacco',
+                                  () => _useGrimoireOrDefault(
+                                    run,
+                                    0,
+                                    _targetFor(run),
+                                  ),
                                 ),
                               if (compact)
                                 _action(
@@ -2124,8 +2279,17 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 ),
                               if (compact)
                                 _action(
-                                  run.hero.talentName,
-                                  () => run.special(_targetFor(run)),
+                                  run.grimoireConfigured()
+                                      ? liteGrimoireActionName(
+                                          run.grimoireSlots()[1],
+                                          run.hero,
+                                        )
+                                      : run.hero.talentName,
+                                  () => _useGrimoireOrDefault(
+                                    run,
+                                    1,
+                                    _targetFor(run),
+                                  ),
                                 ),
                               _action(
                                 run.openRoomsRemaining() > 0
@@ -2173,6 +2337,15 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 _action(
                                   'Scatto',
                                   () => run.dash(_targetFor(run)),
+                                ),
+                              if (run.hero == LiteHero.assassino)
+                                _action(
+                                  run.assassinBoxActive
+                                      ? 'C · Esci dalla scatola'
+                                      : 'C · Nasconditi nella scatola',
+                                  () => _saveInventoryChange(
+                                    () => run.toggleAssassinBox(),
+                                  ),
                                 ),
                               if (run.hero == LiteHero.reGoblin)
                                 _action(
@@ -2433,10 +2606,19 @@ class _OculumLitePageState extends State<OculumLitePage>
                                 ),
                               ] else if (_showSettings) ...[
                                 _audioSettings(),
-                                OculumLiteInkFinishPicker(
-                                  selected: active.appearance.inkFinish,
-                                  onChanged: _setActiveInkFinish,
-                                ),
+                                if (active.run.assassinTactical)
+                                  ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: Text(LiteInkFinish.tattica.label),
+                                    subtitle: const Text(
+                                      'Costume scelto prima della run',
+                                    ),
+                                  )
+                                else
+                                  OculumLiteInkFinishPicker(
+                                    selected: active.appearance.inkFinish,
+                                    onChanged: _setActiveInkFinish,
+                                  ),
                                 TextButton(
                                   onPressed: () =>
                                       setState(() => _showSettings = false),
@@ -2648,6 +2830,17 @@ class _OculumLitePageState extends State<OculumLitePage>
   );
 
   Widget _scrollAction(LiteRun run, int index) {
+    if (run.grimoireConfigured()) {
+      final action = run.grimoireSlots()[index + 2];
+      return _action(
+        liteGrimoireBindings[index + 2] +
+            ' · ' +
+            liteGrimoireActionName(action, run.hero),
+        action == null
+            ? null
+            : () => run.useGrimoire(index + 2, _targetFor(run)),
+      );
+    }
     final scroll = run.equippedScrolls[index];
     final copies = run.scrolls[scroll.index];
     final isArt =

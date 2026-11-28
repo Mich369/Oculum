@@ -7,10 +7,12 @@ class OculumLiteInkFinishPicker extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onChanged,
+    this.assassinTacticalAvailable = false,
   });
 
   final LiteInkFinish selected;
   final ValueChanged<LiteInkFinish>? onChanged;
+  final bool assassinTacticalAvailable;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -27,16 +29,17 @@ class OculumLiteInkFinishPicker extends StatelessWidget {
         runSpacing: 3,
         children: [
           for (final finish in LiteInkFinish.values)
-            ChoiceChip(
-              avatar: CircleAvatar(backgroundColor: finish.color),
-              label: Text(finish.label),
-              selected: finish == selected,
-              onSelected: onChanged == null
-                  ? null
-                  : (active) {
-                      if (active) onChanged!(finish);
-                    },
-            ),
+            if (finish != LiteInkFinish.tattica || assassinTacticalAvailable)
+              ChoiceChip(
+                avatar: CircleAvatar(backgroundColor: finish.color),
+                label: Text(finish.label),
+                selected: finish == selected,
+                onSelected: onChanged == null
+                    ? null
+                    : (active) {
+                        if (active) onChanged!(finish);
+                      },
+              ),
         ],
       ),
     ],

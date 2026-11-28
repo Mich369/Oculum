@@ -272,3 +272,54 @@ void _paintInkDashPadBase(Canvas canvas, Offset centre, LiteBiome biome) {
     .052,
   );
 }
+
+void _paintBossRushMarker(
+  Canvas canvas,
+  Offset at,
+  double time, {
+  required bool sealed,
+}) {
+  final rim = sealed ? const Color(0xffa55768) : const Color(0xffddac85);
+  final wash = sealed ? const Color(0xa4442231) : const Color(0x9e4f3145);
+  _oval(canvas, at, 2.46, 1.16, wash, stroke: rim, strokeWidth: .037);
+  final ink = const Color(0xff1f1828);
+  final pillars = [
+    at + const Offset(-.95, .35),
+    at + const Offset(-.75, -.54),
+    at + const Offset(0, -.91),
+    at + const Offset(.77, -.56),
+    at + const Offset(.96, .34),
+  ];
+  _lines(canvas, pillars, ink, .128);
+  _lines(canvas, pillars, rim, .037);
+  for (var index = 0; index < 5; index++) {
+    final x = (index - 2) * .26;
+    final height = .24 + (1 - x.abs()) * .45;
+    final foot = at + Offset(x, .22);
+    final spike = at + Offset(x * .64, -height);
+    _inkSlash(
+      canvas,
+      foot,
+      spike,
+      rim.withValues(
+        alpha: sealed ? .87 : .65 + .19 * math.sin(time * 4 + index),
+      ),
+      .068,
+    );
+  }
+  if (sealed) return;
+  final caption = TextPainter(
+    text: TextSpan(
+      text: 'R · Boss Rush',
+      style: TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: .34,
+        fontWeight: FontWeight.w700,
+        color: rim,
+        shadows: const [Shadow(blurRadius: .1, color: Color(0xff1c1426))],
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  caption.paint(canvas, at + Offset(-caption.width / 2, -1.30));
+}

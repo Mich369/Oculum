@@ -778,6 +778,21 @@ void main() {
         expect(run.useOpen(target.position), isFalse);
         expect(_restore(run).openCooldown, LiteRun.openRecovery);
         switch (hero) {
+          case LiteHero.scostubanditoErrato || LiteHero.scostubanditoVeteranoErrato:
+            expect(target.hp, lessThan(target.maxHp));
+            expect(run.projectiles.any((shot) => shot.kind == LiteProjectileKind.inkEmber),
+              isTrue);
+          case LiteHero.assassino:
+            expect(
+              run.clones.where((ally) => ally.assassinDecoy),
+              hasLength(2),
+            );
+            expect(
+              run.combatImpacts.any(
+                (effect) => effect.target == LiteImpactTarget.assassinSlash,
+              ),
+              isTrue,
+            );
           case LiteHero.fabbro:
             expect(
               run.clones.where((ally) => ally.forgedWeapon),
@@ -2304,7 +2319,8 @@ void main() {
 
   test('power offers are saved in order, grant one rank and cap at three', () {
     var run = _reachFloor(0);
-    final startingDamage = run.weaponDamage;
+    final willDamage = (run.attributesOf().volonta - 10) * 3;
+    final startingDamage = run.weaponDamage - willDamage;
     for (var i = 1; i <= 3; i++) {
       while (!run.stageClear) {
         _strikeCampaignEnemy(run, run.enemies.first);
@@ -2320,7 +2336,7 @@ void main() {
       run.position = run.portalPosition;
       expect(run.advance(LiteBiome.campo), isTrue);
     }
-    expect(run.weaponDamage, closeTo(startingDamage * 1.65, 1e-6));
+    expect(run.weaponDamage, closeTo(startingDamage * 1.65 + willDamage, 1e-6));
     while (!run.stageClear) {
       _strikeCampaignEnemy(run, run.enemies.first);
     }
@@ -2449,7 +2465,8 @@ void main() {
         run.clones.where((ally) => ally.ownerId == guest.id),
         hasLength(2),
       );
-      expect(_restore(run).coopFighter('guest')!.maxHp, 150);
+      expect(guest.maxHp, 190);
+      expect(_restore(run).coopFighter('guest')!.maxHp, guest.maxHp);
     },
   );
 
@@ -2788,7 +2805,7 @@ void main() {
     final failure = LiteRun.fromJson(bad);
     expect(success.attack(const Point(5.5, 11)), true);
     expect(failure.attack(const Point(5.5, 11)), true);
-    expect(success.hp, closeTo(80 + 110 * .06, .0001));
+    expect(success.hp, closeTo(80 + success.maxHp * .06, .0001));
     expect(failure.hp, 80);
     expect(_restore(success).hp, success.hp);
   });
@@ -3326,7 +3343,7 @@ void main() {
   );
 
   test('the final Aerovyr telegraphs and resolves three distinct attacks', () {
-    LiteRun prepare(double health) {
+    LiteRun prepare(double health, {bool revived = false}) {
       final run =
           LiteRun(
               seed: 921,
@@ -3344,8 +3361,14 @@ void main() {
           ..hp = health
           ..cooldown = 0,
       );
-      run.step(1 / 120);
-      return run;
+      final encounter = run.toJson();
+      if (revived) {
+        final enemy = (encounter['enemies'] as List).single as Map;
+        enemy['stormRevived'] = true;
+      }
+      final restored = LiteRun.fromJson(encounter);
+      restored.step(1 / 120);
+      return restored;
     }
 
     final fan = prepare(1000);
@@ -3356,7 +3379,7 @@ void main() {
     _wait(fan, fanCue.duration + .02);
     expect(fan.projectiles.where((shot) => shot.fromEnemy), hasLength(5));
 
-    final cross = _restore(prepare(630));
+    final cross = _restore(prepare(500));
     final crossCue = cross.stormWarning(cross.enemies.single)!;
     expect(crossCue.pattern, LiteStormPattern.croce);
     expect(crossCue.phase, 2);
@@ -3364,7 +3387,7 @@ void main() {
     _wait(cross, crossCue.duration + .02);
     expect(cross.hp, lessThan(cross.maxHp));
 
-    final ring = prepare(300);
+    final ring = prepare(500, revived: true);
     final ringOutsideCenter = _restore(ring);
     final ringCue = ring.stormWarning(ring.enemies.single)!;
     expect(ringCue.pattern, LiteStormPattern.corona);
@@ -3374,6 +3397,94 @@ void main() {
     _wait(ringOutsideCenter, ringCue.duration + .02);
     expect(ring.hp, ring.maxHp);
     expect(ringOutsideCenter.hp, lessThan(ringOutsideCenter.maxHp));
+  });
+
+  test('Aerovyr revives once and pays out only at the final defeat', () {
+    final run =
+        _run()
+          ..stage = LiteRun.finalStage
+          ..thirdRoom = LiteThirdAct.rooms.length
+          ..position = const Point(20, 11)
+          ..obstacles.clear()
+          ..projectiles.clear()
+          ..enemies.clear();
+    final boss = LiteEnemy(
+      1220,
+      LiteEnemyKind.aerovyr,
+      const Point(14, 11),
+      1000,
+    )..cooldown = 10;
+    run.enemies.add(boss);
+
+    void strike(LiteRun world, double damage) {
+      final enemy = world.enemies.single;
+      world.projectiles.add(
+        LiteProjectile(
+          position: enemy.position - const Point<double>(.5, 0),
+          direction: const Point(1, 0),
+          speed: 60,
+          remaining: 3,
+          damage: damage,
+        ),
+      );
+      world.step(1 / 120);
+    }
+
+    expect(run.aerovyrPhase(boss), 1);
+    boss.hp = 500.01;
+    expect(run.aerovyrPhase(boss), 1);
+    boss.hp = 500;
+    expect(run.aerovyrPhase(boss), 2);
+    boss.hp = 90;
+    final legacy = run.toJson();
+    final legacyBoss = (legacy['enemies'] as List).single as Map;
+    legacyBoss['stormCue'] = ['corona', 3];
+    final legacyRun = LiteRun.fromJson(legacy);
+    expect(legacyRun.aerovyrPhase(legacyRun.enemies.single), 2);
+
+    final initialLoot = run.loot.length;
+    final initialExp = run.exp;
+    boss.cooldown = 0;
+    run.step(1 / 120);
+    expect(run.stormWarning(boss), isNotNull);
+    strike(run, 5000);
+    expect(run.enemies.single.id, boss.id);
+    expect(boss.hp, 500);
+    expect(run.aerovyrPhase(boss), 3);
+    expect(run.bossStatus, contains('Aerovyr 3/3'));
+    expect(run.stormWarning(boss), isNull);
+    expect(run.stageClear, isFalse);
+    expect(run.victorious, isFalse);
+    expect(run.defeats, isEmpty);
+    expect(run.loot.length, initialLoot);
+    expect(run.exp, initialExp);
+    expect(run.achievements, isNot(contains('atto-iii-completato')));
+
+    for (final restarted in [
+      _restore(run),
+      LiteRun.fromJson(run.toJson(includeEffects: true)),
+    ]) {
+      final continued = restarted.enemies.single;
+      expect(continued.id, boss.id);
+      expect(continued.hp, 500);
+      expect(restarted.aerovyrPhase(continued), 3);
+      expect(restarted.bossStatus, contains('Aerovyr 3/3'));
+      strike(restarted, 5000);
+      expect(restarted.stageClear, isTrue);
+      expect(restarted.victorious, isTrue);
+      expect(restarted.defeats.single.subjectId, boss.id);
+      expect(
+        restarted.loot.where((item) => item.kind == LiteLootKind.obser),
+        hasLength(1),
+      );
+      expect(restarted.exp, greaterThan(initialExp));
+      expect(restarted.achievements, contains('atto-iii-completato'));
+      final won = _restore(restarted);
+      _wait(won, 1);
+      expect(won.victorious, isTrue);
+      expect(won.loot.length, restarted.loot.length);
+      expect(won.exp, restarted.exp);
+    }
   });
 
   test('a well previews three families and persists a single claim', () {
@@ -3744,7 +3855,9 @@ void main() {
     _wait(replay, 1.4);
     expect(replay.hp, lessThan(initialHp));
 
-    boss.hp = boss.maxHp * .69;
+    boss.hp = boss.maxHp * .5001;
+    expect(boss.archonPhase, 1);
+    boss.hp = boss.maxHp * .5;
     expect(boss.archonPhase, 2);
     boss.combatCycle = 0;
     boss.cooldown = 0;
@@ -3760,14 +3873,19 @@ void main() {
     );
 
     boss.hp = boss.maxHp * .34;
-    expect(boss.archonPhase, 3);
+    expect(boss.archonPhase, 2);
     boss.windup = boss.cooldown = 0;
-    boss.combatCycle = 0;
+    boss.combatCycle = 1;
     run.obstacles.clear();
     run.step(.01);
     expect(boss.archonAttack, LiteArchonAttack.crown);
     final frame = LiteRun.fromJson(run.toJson(includeEffects: true));
-    expect(frame.bossStatus, contains('Corona spezzata'));
+    expect(frame.bossStatus, contains('Arconte 2/2 · Corona spezzata'));
+    final breach = frame.quests.singleWhere(
+      (quest) => quest.id.endsWith(':breccia'),
+    );
+    expect(breach.complete, isTrue);
+    expect(breach.name, 'Porta l’Arconte alla seconda fase');
     final restored = frame.enemies.single;
     expect(frame.archonCrownDirections(restored), hasLength(11));
     final gap = restored.attackTarget! - restored.position;

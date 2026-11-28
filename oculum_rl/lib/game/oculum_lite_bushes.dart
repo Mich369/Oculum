@@ -171,6 +171,7 @@ extension LiteConcealment on LiteRun {
           ..guard = (LiteGuard(bush.center)
             ..facing = LiteRun._unit(position - bush.center));
         chosen.stride._reset();
+        _noteAssassinAmbush();
         return;
       }
     }

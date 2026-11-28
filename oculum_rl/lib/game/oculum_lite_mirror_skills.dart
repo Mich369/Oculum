@@ -33,7 +33,7 @@ extension LiteMirrorSkills on LiteRun {
     final damage =
         (12 + build.sourceLevel * 1.7) *
         difficulty.enemyStrength *
-        _challengeDamageScale(boss.kind);
+        _challengeDamageScale(boss.kind, source: boss);
     switch (build.hero) {
       case LiteHero.moscaCampana:
         if (distance > 4.1) return false;
@@ -109,7 +109,8 @@ extension LiteMirrorSkills on LiteRun {
     if (art == null || build.oculum < art.cost) return false;
     final rank = art.rankAt(build.sourceLevel);
     final modifier =
-        difficulty.enemyStrength * _challengeDamageScale(boss.kind);
+        difficulty.enemyStrength *
+        _challengeDamageScale(boss.kind, source: boss);
     switch (art) {
       case LiteLearnedArt.plasma:
         if (distance > 11 + rank * .8) return false;
@@ -216,7 +217,8 @@ extension LiteMirrorSkills on LiteRun {
     final item = build.weapon.moveset;
     if (build.techniqueCooldown > 0 ||
         build.oculum < LiteWeaponArt.weaponArtCost ||
-        build.hero.bodyOnly || build.hero == LiteHero.doppelganger ||
+        build.hero.bodyOnly ||
+        build.hero == LiteHero.doppelganger ||
         LiteAnimal.forHero(build.hero) != null)
       return false;
     final reach = item == LiteWeapon.spadaScudo
@@ -258,7 +260,8 @@ extension LiteMirrorOpen on LiteRun {
     final at = boss.position;
     final grade = LiteRun.openGradeFor(build.sourceLevel);
     final strength =
-        difficulty.enemyStrength * _challengeDamageScale(boss.kind);
+        difficulty.enemyStrength *
+        _challengeDamageScale(boss.kind, source: boss);
     void fan(
       int count,
       double spread,
@@ -316,13 +319,29 @@ extension LiteMirrorOpen on LiteRun {
     }
 
     switch (build.hero) {
+      case LiteHero.scostubanditoErrato || LiteHero.scostubanditoVeteranoErrato:
+        if (build.hero == LiteHero.scostubanditoErrato) build.shield = 0;
+        _mirrorMelee(boss, direction, 3.15, build.damage * 1.45);
+        break;
+      case LiteHero.assassino:
+        if (distance > 4.6) return false;
+        strike(4.6, 29 + grade * 5, dot: -.65);
+        _assassinSlashCue(at, direction, 4.6, open: true);
       case LiteHero.moscaCampana:
         final reach = 5.80 + grade * .36;
         if (distance > reach) return false;
-        _hostileBell(boss, direction, reach, (19 + grade * 5) * strength, stun: .74);
+        _hostileBell(
+          boss,
+          direction,
+          reach,
+          (19 + grade * 5) * strength,
+          stun: .74,
+        );
       case LiteHero.armadilloCorazzato:
         if (distance > 6.3) return false;
-        boss..clashDirection = direction..clashRemaining = .31;
+        boss
+          ..clashDirection = direction
+          ..clashRemaining = .31;
         build.intangible = max(build.intangible, .31);
         build.shield += 13 + grade * 7;
         strike(3.8, 18 + grade * 5, dot: -.18);

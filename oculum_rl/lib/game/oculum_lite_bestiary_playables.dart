@@ -44,12 +44,14 @@ extension _LiteBestiaryCombat on LiteRun {
     LiteCoopFighter? fighter,
   ) {
     final owner = fighter?.id;
+    final extraDamage = _attributeDamage(fighter);
+    final reachScale = attributeAttackReach(fighter);
     if (character == LiteHero.moscaCampana) {
       _bestiaryRing(
         from,
         direction,
-        2.95,
-        8 + level * 1.4,
+        2.95 * reachScale,
+        8 + level * 1.4 + extraDamage,
         .30,
         owner,
         minDot: .24,
@@ -60,8 +62,8 @@ extension _LiteBestiaryCombat on LiteRun {
       from,
       direction,
       LiteWeapon.guanti,
-      9 + level * 1.6,
-      reach: 2.2,
+      9 + level * 1.6 + extraDamage,
+      reach: 2.2 * reachScale,
       push: .54,
       minDot: .40,
       ownerCanHeal: owner == null,
@@ -237,14 +239,21 @@ extension _LiteBestiaryCombat on LiteRun {
           (dash || stride.speed > 3.85 && stride.walking != true);
     }
 
-    if (!hostDown) notice(position, stride, dash: _burstTime > 0);
-    for (final fighter in coopFighters) {
-      if (fighter.hp <= 0 || !fighter.connected) continue;
-      notice(
-        fighter.position,
-        fighter.stride,
-        dash: fighter._dashRemaining > 0,
-      );
+    if (!_assassinVeiled) {
+      if (!hostDown && !_boxHiddenFrom(0, animal.id)) {
+        notice(position, stride, dash: _burstTime > 0);
+      }
+      for (final fighter in coopFighters) {
+        if (fighter.hp <= 0 || !fighter.connected ||
+            _boxHiddenFrom(fighter.id, animal.id)) {
+          continue;
+        }
+        notice(
+          fighter.position,
+          fighter.stride,
+          dash: fighter._dashRemaining > 0,
+        );
+      }
     }
     if (threat != null &&
         (animal.windup > 0 ||

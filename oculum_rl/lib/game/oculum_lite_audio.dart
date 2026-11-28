@@ -8,6 +8,72 @@ import '../services/oculum_save_profile.dart';
 import 'oculum_lite_alert_dialogue.dart';
 import 'oculum_lite_run.dart';
 
+enum _AlertAudioPriority { dialogue, spotting, boss }
+
+class LiteAdaptiveSoundtrack {
+  final _banditIntroductions = <String>{};
+  int? _seed;
+  double _time = 0;
+
+  ({String track, bool banditIntro}) cue(LiteRun run) {
+    if (run.seed != _seed || run.time < _time) {
+      reset();
+      _seed = run.seed;
+    }
+    _time = run.time;
+
+    var combat = false;
+    var banditIntroReady = false;
+    String? bossTrack;
+    var bossPriority = 0;
+    for (final enemy in run.enemies) {
+      if (!run.enemyEngagedForMusic(enemy)) continue;
+      combat = true;
+      final (track, priority) = switch (enemy.kind) {
+        LiteEnemyKind.veyrth => ('veyrth', 4),
+        LiteEnemyKind.granScostumato
+            when enemy.errato == null &&
+                (!run.inBanditEscape || enemy.banditWarden) =>
+          ('boss-banda', 3),
+        LiteEnemyKind.luce => ('luce', 2),
+        LiteEnemyKind.ombra => ('ombra', 2),
+        _ when enemy.kind.elite || enemy.kind.boss => ('elite', 1),
+        _ => (null, 0),
+      };
+      if (track == 'boss-banda' && run.banditBossIntroReady(enemy)) {
+        banditIntroReady = true;
+      }
+      if (priority > bossPriority) {
+        bossTrack = track;
+        bossPriority = priority;
+      }
+    }
+
+    final biome = (run.goblinCamp || run.inBanditEscape)
+        ? LiteBiome.campo
+        : switch (run.thirdEncounter?.region) {
+            LiteThirdRegion.oblio ||
+            LiteThirdRegion.sommerso => LiteBiome.dungeon,
+            LiteThirdRegion.nuvole => LiteBiome.postea,
+            null when run.realm == LiteRealm.postea => LiteBiome.postea,
+            _ => run.biome,
+          };
+    return (
+      track: bossTrack ?? '${combat ? 'scontro' : 'quiete'}-${biome.name}',
+      banditIntro:
+          bossTrack == 'boss-banda' &&
+          banditIntroReady &&
+          _banditIntroductions.add(run.inputArena),
+    );
+  }
+
+  void reset() {
+    _seed = null;
+    _time = 0;
+    _banditIntroductions.clear();
+  }
+}
+
 class OculumLiteAudio {
   static const _prefix = 'oculum/lite/audio/';
   static const defaultMusicVolume = .35;
@@ -25,6 +91,9 @@ class OculumLiteAudio {
   Future<void> _alertTransition = Future.value();
   int _alertRequest = 0;
   bool _alertPreparing = false;
+  _AlertAudioPriority? _alertPriority;
+  final _soundtrack = LiteAdaptiveSoundtrack();
+  (int, String)? _audioArena;
   Future<Set<String>>? _bundledAssets;
   String? _wantedTrack;
   String? _loadedTrack;
@@ -36,6 +105,9 @@ class OculumLiteAudio {
   LiteCombatImpact? _lastImpact;
   double _lastEffectTime = -1;
   (int, int, double, LiteBurstKind)? _lastBurst;
+  (int, String, int)? _spottingScope;
+  final _lastSpotting = <LiteEnemyKind, double>{};
+  double _spottingTime = 0;
 
   static String preferenceKey(String name) =>
       oculumProfiledStorageKey('oculum_lite_audio_$name');
@@ -61,37 +133,33 @@ class OculumLiteAudio {
       _lastEffectTime = -1;
     }
     _updateRay(playing && run?.shadowRays.isNotEmpty == true);
-    final wanted = !playing || muted || musicVolume == 0 || run == null
-        ? null
-        : _track(run);
+    _useAudioArena(run == null ? null : (run.seed, run.inputArena));
+    if (!playing) _stopEncounterClip();
+    if (run == null) _soundtrack.reset();
+    final cue = playing && run != null ? _soundtrack.cue(run) : null;
+    if (cue?.banditIntro == true) {
+      _playAlertClip(
+        () async => 'boss-gran-scostumato.mp3',
+        _AlertAudioPriority.boss,
+      );
+    }
+    final wanted = muted || musicVolume == 0 ? null : cue?.track;
     if (wanted == _wantedTrack) return;
     _wantedTrack = wanted;
     _transition = _transition.then((_) => _applyTrack(wanted));
   }
 
-  static String _track(LiteRun run) {
-    for (final enemy in run.enemies) {
-      if (enemy.hp <= 0) continue;
-      if (enemy.kind.elite) return 'elite';
-      switch (enemy.kind) {
-        case LiteEnemyKind.luce:
-          return 'luce';
-        case LiteEnemyKind.ombra:
-          return 'ombra';
-        case LiteEnemyKind.veyrth:
-          return 'veyrth';
-        default:
-          break;
-      }
+  void _useAudioArena((int, String)? arena) {
+    if (arena == _audioArena) return;
+    _audioArena = arena;
+    _stopEncounterClip();
+  }
+
+  void _stopEncounterClip() {
+    if (_alertPriority == _AlertAudioPriority.spotting ||
+        _alertPriority == _AlertAudioPriority.boss) {
+      _stopAlertChannel();
     }
-    return switch (run.biome) {
-      LiteBiome.campo => 'campo',
-      LiteBiome.foresta => 'foresta',
-      LiteBiome.dungeon => 'sotterraneo',
-      LiteBiome.postea => 'postea',
-      LiteBiome.deserto => 'sotterraneo',
-      LiteBiome.orea => 'foresta',
-    };
   }
 
   Future<void> _applyTrack(String? track) => _try(() async {
@@ -109,7 +177,7 @@ class OculumLiteAudio {
       await player.stop();
       await player.setReleaseMode(ReleaseMode.loop);
       if (track != _wantedTrack || _closed) return;
-      await player.play(AssetSource('$_prefix$track.wav'));
+      await player.play(AssetSource('$_prefix$track.wav'), volume: musicVolume);
       _loadedTrack = track;
     }
   });
@@ -132,7 +200,7 @@ class OculumLiteAudio {
     }
     final alert = _alertVoice;
     if (muted || effectsVolume == 0) {
-      stopAlert();
+      _stopAlertChannel();
     } else if (alert != null) {
       unawaited(_try(() => alert.setVolume(effectsVolume * .86)));
     }
@@ -182,6 +250,8 @@ class OculumLiteAudio {
           LiteImpactTarget.emberRebirth => ('sentenza', 4),
           LiteImpactTarget.artCast => ('colpo', 2),
           LiteImpactTarget.chamberStrike => ('sentenza', 4),
+          LiteImpactTarget.bunnysHeal => ('', 0),
+          LiteImpactTarget.materiaDodge => ('scatto-arcano', 2),
           LiteImpactTarget.bestiaryCast when impact.life == 1 => (
             'sentenza',
             2,
@@ -226,7 +296,41 @@ class OculumLiteAudio {
     }
   }
 
-  void playEffect(String name) {
+  void banditSpottingSound(LiteRun run, int fighterId) {
+    if (run.finished) return;
+    final arena = run.inputArena;
+    _useAudioArena((run.seed, arena));
+    final scope = (run.seed, arena, fighterId);
+    if (_spottingScope != scope || run.time < _spottingTime) {
+      _spottingScope = scope;
+      _lastSpotting.clear();
+    }
+    _spottingTime = run.time;
+    for (final impact in run.combatImpacts) {
+      if (impact.target != LiteImpactTarget.banditSpotted ||
+          impact.subjectId != fighterId ||
+          run.time - impact.time > .36 * run.arenaSpeed) {
+        continue;
+      }
+      final kind = impact.enemyKind;
+      final file = switch (kind) {
+        LiteEnemyKind.scostubandito => 'avvistamento-scostubandito',
+        LiteEnemyKind.granScostumato => 'avvistamento-gran-scostumato',
+        _ => null,
+      };
+      if (kind == null ||
+          file == null ||
+          impact.time <= (_lastSpotting[kind] ?? -1)) {
+        continue;
+      }
+      _lastSpotting[kind] = impact.time;
+      _playAlertClip(() async => '$file.mp3', _AlertAudioPriority.spotting);
+    }
+  }
+
+  void playEffect(String name) => _playEffect(name);
+
+  void _playEffect(String name) {
     if (_closed || muted || effectsVolume == 0) return;
     unawaited(
       _try(() async {
@@ -247,21 +351,35 @@ class OculumLiteAudio {
       effectsVolume > 0 &&
       (_alertPreparing || _alertVoice?.state == PlayerState.playing);
 
-  void playAlert(LiteAlertDialogue line) {
-    if (_closed || muted || effectsVolume == 0) return;
+  void playAlert(LiteAlertDialogue line) => _playAlertClip(
+    () async => '${await _alertAsset(line)}.wav',
+    _AlertAudioPriority.dialogue,
+  );
+
+  void _playAlertClip(
+    Future<String> Function() resolveAsset,
+    _AlertAudioPriority priority,
+  ) {
+    if (_closed ||
+        muted ||
+        effectsVolume == 0 ||
+        alertSpeaking && (_alertPriority?.index ?? -1) > priority.index) {
+      return;
+    }
     final request = ++_alertRequest;
+    _alertPriority = priority;
     _alertPreparing = true;
     _alertTransition = _alertTransition.then((_) async {
       try {
         await _try(() async {
           if (!_acceptAlert(request)) return;
-          final asset = await _alertAsset(line);
+          final asset = await resolveAsset();
           if (!_acceptAlert(request)) return;
           final player = _alertVoice ??= AudioPlayer();
           await player.stop();
           if (!_acceptAlert(request)) return;
           await player.play(
-            AssetSource('$_prefix$asset.wav'),
+            AssetSource('$_prefix$asset'),
             volume: effectsVolume * .86,
           );
         });
@@ -290,7 +408,12 @@ class OculumLiteAudio {
   }
 
   void stopAlert() {
+    if (_alertPriority == _AlertAudioPriority.dialogue) _stopAlertChannel();
+  }
+
+  void _stopAlertChannel() {
     _alertRequest++;
+    _alertPriority = null;
     _alertPreparing = false;
     if (_alertVoice != null) {
       _alertTransition = _alertTransition.then(

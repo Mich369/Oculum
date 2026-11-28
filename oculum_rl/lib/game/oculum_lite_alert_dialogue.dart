@@ -269,6 +269,16 @@ _AlertLine _heroLine(LiteHero hero) => switch (hero) {
     'Bzzzz… DLINN!',
     LiteAlertSound.campana,
   ),
+  LiteHero.scostubanditoErrato || LiteHero.scostubanditoVeteranoErrato => (
+    'Scostubandito errato',
+    'Fsss…',
+    LiteAlertSound.ombra,
+  ),
+  LiteHero.assassino => (
+    'Assassino',
+    'Troppo tardi. Avete visto solo l’ombra.',
+    LiteAlertSound.ombra,
+  ),
   LiteHero.armadilloCorazzato => (
     'Armadillo Corazzato',
     'Trrr-TRAK! Hrff!',
@@ -429,7 +439,9 @@ String? _heroVoiceKey(LiteHero hero) => switch (hero) {
   LiteHero.rasvyr ||
   LiteHero.lupoDiVaitern ||
   LiteHero.moscaCampana ||
-  LiteHero.armadilloCorazzato => null,
+  LiteHero.armadilloCorazzato ||
+  LiteHero.scostubanditoErrato ||
+  LiteHero.scostubanditoVeteranoErrato => null,
   _ => hero.name,
 };
 

@@ -51,7 +51,8 @@ enum OculumLiteEmblem { none, eye, moon, flame, rune, feather, crystal }
 enum LiteInkFinish {
   canonica('Canonica', Color(0xffcda373)),
   cremisi('Ferro Cremisi', Color(0xffe6906a)),
-  patina('Patina di Eiva', Color(0xff80d7c4));
+  patina('Patina di Eiva', Color(0xff80d7c4)),
+  tattica('Ricognitore di cenere', Color(0xff9b9870));
 
   const LiteInkFinish(this.label, this.color);
   final String label;

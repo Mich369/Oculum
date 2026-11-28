@@ -445,7 +445,11 @@ void _paintSpottingWarning(Canvas canvas, Offset foot, double remaining) {
   _oval(canvas, at, .075, .113, tint);
 }
 
-Paint? _concealedHeroPigment(Paint? livery, bool concealed) {
-  if (!concealed) return livery;
-  return (livery ?? Paint())..color = const Color(0x73ffffff);
+Paint? _concealedHeroPigment(
+  Paint? livery,
+  bool concealed, {
+  bool veil = false,
+}) {
+  if (!concealed && !veil) return livery;
+  return (livery ?? Paint())..color = Color(veil ? 0x37ffffff : 0x73ffffff);
 }

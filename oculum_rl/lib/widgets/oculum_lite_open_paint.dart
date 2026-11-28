@@ -61,6 +61,8 @@ enum _OpenGlyph {
   LiteHero.funerys => (const Color(0xffdbb5e8), _OpenGlyph.feather, 8),
   LiteHero.moscaCampana => (const Color(0xffffcf84), _OpenGlyph.ring, 7),
   LiteHero.armadilloCorazzato => (const Color(0xffdda477), _OpenGlyph.ward, 5),
+  LiteHero.scostubanditoErrato || LiteHero.scostubanditoVeteranoErrato => (const Color(0xffb78ed9), _OpenGlyph.claw, 2),
+  LiteHero.assassino => (const Color(0xffb5d4cc), _OpenGlyph.claw, 2),
 };
 
 void _paintOpenCutscene(
@@ -141,6 +143,7 @@ void _paintOpenCutscene(
         : arena.guestAppearances[fighter.account] ??
               oculumLiteDefaultAppearance(scene.hero);
     final equipment = rival?.mirror?.weapon ?? fighter?.weapon ?? run.weapon;
+    final host = !scene.hostile && scene.actorId == 0;
     final facing = direction.dx < 0 ? -1.0 : 1.0;
     final scale = spread * (coop ? .37 : .57);
     canvas.saveLayer(
@@ -162,9 +165,9 @@ void _paintOpenCutscene(
       poseArt: arena._poses(look),
       heads: arena._heads(look),
       gearArt: arena.weapons[equipment],
-      mimic: fighter?.mimic ?? run.mimic,
-      night: fighter?.night ?? run.night,
-      giant: fighter?.plagueForm ?? run.plagueForm,
+      mimic: host ? run.mimic : fighter?.mimic,
+      night: host ? run.night : fighter?.night,
+      giant: host ? run.plagueForm : fighter?.plagueForm ?? false,
       preparingTalent:
           scene.hero == LiteHero.ashley && energy > .38 && energy < .87,
       springRemaining: energy < .74 ? .22 : .049,

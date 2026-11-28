@@ -247,7 +247,7 @@ void main() {
     },
   );
 
-  test('a clone draws a sentry to the flank while its owner can leave', () {
+  test('a clone sneaks along the flank while its owner can leave', () {
     final run = camp();
     go(run, const Point(7.5, 16.55), walk: true);
     go(run, const Point(10.55, 16.55), walk: true);
@@ -257,8 +257,9 @@ void main() {
     for (var i = 0; i < 40; i++) {
       run.step(1 / 120, walk: true);
     }
-    expect(sentry.guard!.mode, isNot(LiteGuardMode.ronda));
-    expect(sentry.guard!.target, isNot(run.position));
+    expect(sentry.guard!.mode, LiteGuardMode.ronda);
+    expect(run.clones, hasLength(1));
+    expect(run.companionConcealed(run.clones.single), isTrue);
     go(run, const Point(7.5, 16.55), walk: true);
     go(run, const Point(5, 5), walk: true);
     expect(run.canOpenShop, isTrue);

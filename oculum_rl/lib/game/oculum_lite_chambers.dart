@@ -175,12 +175,14 @@ extension LiteChambers on LiteRun {
     return roster[(slot + _startingBiome.index * 2) % roster.length];
   }
 
-  void _seatChampion(LiteEnemy enemy, {bool boost = true}) {
-    final room = inThirdAct
-        ? thirdRoom + 60
-        : inActTwo
-        ? 31 + actRoom + realm!.index * 4
-        : stage;
+  void _seatChampion(LiteEnemy enemy, {bool boost = true, int? originalSeat}) {
+    final room =
+        originalSeat ??
+        (inThirdAct
+            ? thirdRoom + 60
+            : inActTwo
+            ? 31 + actRoom + realm!.index * 4
+            : stage);
     enemy
       ..guard = null
       ..chamberSeat = room
@@ -196,7 +198,7 @@ extension LiteChambers on LiteRun {
             enemy.kind == LiteEnemyKind.vesanybel ||
             enemy.kind == LiteEnemyKind.thalvyr ||
             enemy.kind == LiteEnemyKind.aerovyr);
-    enemy.exalted = upgrade;
+    enemy.exalted = boost && upgrade;
     if (boost && (upgrade || !major && !enemy.kind.elite)) {
       final factor = upgrade ? 1.28 : 1.34 + min(.22, stage / 110);
       enemy._maxHp *= factor;
@@ -217,6 +219,8 @@ extension LiteChambers on LiteRun {
           min(32.0, 5 + .64 * enemy.attackDamage) *
           difficulty.enemyStrength *
           _floorDamageScale *
+          _rushDamageRatio(enemy) *
+          _rushDamageRatio(enemy) *
           scale;
       if (cue.pattern == LiteChamberPattern.ventaglio) {
         for (final angle in cue.angles) {
@@ -260,7 +264,10 @@ extension LiteChambers on LiteRun {
           );
         }
       }
-      final danger = _chamberDanger(seat);
+      final danger = _chamberDanger(
+        seat,
+        originFloor: _rushOriginalFloor(enemy),
+      );
       enemy.chamberWait = max(2.6, (enemy.exalted ? 3.25 : 4.7) - danger);
       enemy.cooldown = max(.72, enemy.cooldown);
       enemy._strikePose = .22;
@@ -303,7 +310,8 @@ extension LiteChambers on LiteRun {
         : target;
     final charge = max(
       .66,
-      (enemy.exalted ? .96 : 1.01) - _chamberDanger(seat) * .17,
+      (enemy.exalted ? .96 : 1.01) -
+          _chamberDanger(seat, originFloor: _rushOriginalFloor(enemy)) * .17,
     );
     enemy.chamberWarning = LiteChamberWarning(
       pattern,
@@ -314,7 +322,7 @@ extension LiteChambers on LiteRun {
     return true;
   }
 
-  double _chamberDanger(int seat) =>
-      min(.85, stage * .027 + max(0, seat - 60) * .036) +
+  double _chamberDanger(int seat, {int? originFloor}) =>
+      min(.85, (originFloor ?? stage) * .027 + max(0, seat - 60) * .036) +
       difficulty.index * .19;
 }

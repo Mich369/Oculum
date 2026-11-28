@@ -52,10 +52,13 @@ typedef _Seat = ({
   OculumLiteAppearance? appearance,
   Map<LitePermanentUpgrade, int> upgrades,
   bool ready,
+  bool customAttributes,
   bool allowGlue,
   LiteCompanion? pet,
   bool allowMechanicalChicken,
   LiteRestMemory? memory,
+  Set<LiteLearnedArt> grimoireArts,
+  List<LiteGrimoireAction?>? grimoireSlots,
 });
 
 class OculumRlRoomPage extends StatefulWidget {
@@ -101,12 +104,21 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
   bool _reading = false;
   LiteHero _hero = LiteHero.evasore;
   OculumLiteAppearance _look = const OculumLiteAppearance();
+  bool _usesCustomAttributes = false;
   LiteInkFinish _inkFinish = LiteInkFinish.canonica;
+  LiteInkFinish get _setupFinish =>
+      _inkFinish == LiteInkFinish.tattica && _hero != LiteHero.assassino
+      ? LiteInkFinish.canonica
+      : _inkFinish;
+  LiteWeapon get _startingWeapon => _hero.startingWeapon(
+    _weapon,
+    assassinTactical: _setupFinish == LiteInkFinish.tattica,
+  );
   OculumLiteAppearance get _selectedLook =>
       (_hero == LiteHero.duplicatore
               ? _look
               : oculumLiteDefaultAppearance(_hero))
-          .copyWith(inkFinish: _inkFinish);
+          .copyWith(inkFinish: _setupFinish);
   LiteWeapon _weapon = LiteWeapon.arco;
   LiteDifficulty _difficulty = LiteDifficulty.medio;
   LiteBiome _biome = LiteBiome.campo;
@@ -399,9 +411,28 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     final seats = lobby['seats'];
     final owner = _account;
     if (id is! String || id.isEmpty || owner == null || seats is! Map) return;
-    final world = LiteRun.fromJson(
-      Map<String, dynamic>.from(saved['world'] as Map),
+    final snapshot = Map<String, dynamic>.from(saved['world'] as Map);
+    final hostSeat = _parseSeat(seats[owner]);
+    snapshot.putIfAbsent(
+      'customAttributes',
+      () => hostSeat?.customAttributes ?? false,
     );
+    snapshot.putIfAbsent(
+      'assassinTactical',
+      () =>
+          hostSeat != null &&
+          _usesTacticalLook(hostSeat.hero, hostSeat.appearance),
+    );
+    if (snapshot['fighters'] case final List fighters) {
+      snapshot['fighters'] = [
+        for (final raw in fighters)
+          if (raw case final Map entry)
+            _normalizeSavedSeat(entry, _parseSeat(seats[entry['account']]))
+          else
+            raw,
+      ];
+    }
+    final world = LiteRun.fromJson(snapshot);
     if (world.finished ||
         world.playerCount < 2 ||
         world.coopFighters.length != world.playerCount - 1) {
@@ -423,6 +454,18 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       send: _send,
     );
   }
+
+  Map<dynamic, dynamic> _normalizeSavedSeat(
+    Map<dynamic, dynamic> entry,
+    _Seat? seat,
+  ) => {
+    ...entry,
+    'customAttributes':
+        entry['customAttributes'] ?? seat?.customAttributes ?? false,
+    'assassinTactical':
+        entry['assassinTactical'] ??
+        (seat != null && _usesTacticalLook(seat.hero, seat.appearance)),
+  };
 
   void _showSuperseded() {
     _heartbeat?.cancel();
@@ -545,6 +588,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     'hero': seat.hero.name,
     'weapon': seat.weapon.name,
     'ready': seat.ready,
+    'customAttributes': seat.customAttributes,
     if (seat.allowGlue) 'allowGlue': true,
     if (seat.pet case final pet?) 'pet': pet.name,
     if (seat.allowMechanicalChicken) 'allowMechanicalChicken': true,
@@ -552,6 +596,10 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     if (seat.upgrades.isNotEmpty)
       'upgrades': LitePermanentUpgrade.encode(seat.upgrades),
     if (seat.appearance case final look?) 'look': look.toJson(),
+    if (seat.grimoireArts.isNotEmpty)
+      'grimoireArts': seat.grimoireArts.map((art) => art.name).toList(),
+    if (seat.grimoireSlots case final slots?)
+      'grimoireSlots': slots.map((action) => action?.key).toList(),
   };
   static _Seat? _parseSeat(Object? value) {
     if (value is! Map || value['name'] is! String || value['ready'] is! bool) {
@@ -570,17 +618,38 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         )
         .firstOrNull;
     if (hero == null) return null;
-    if (selectedWeapon == null && value['weapon'] != hero.fixedWeapon?.name) {
+    final proposedLook = value['look'] is Map
+        ? OculumLiteAppearance.fromJson(value['look'])
+        : null;
+    final tactical = _usesTacticalLook(hero, proposedLook);
+    final look = proposedLook?.inkFinish == LiteInkFinish.tattica && !tactical
+        ? proposedLook!.copyWith(inkFinish: LiteInkFinish.canonica)
+        : proposedLook;
+    final defaultWeapon = hero.startingWeapon(
+      LiteWeapon.arco,
+      assassinTactical: tactical,
+    );
+    if (selectedWeapon == null && value['weapon'] != defaultWeapon.name) {
       return null;
     }
     return (
       name: name,
       hero: hero,
-      weapon: hero.startingWeapon(selectedWeapon ?? LiteWeapon.arco),
-      appearance: value['look'] is Map
-          ? OculumLiteAppearance.fromJson(value['look'])
-          : null,
+      weapon: hero.startingWeapon(
+        selectedWeapon ?? LiteWeapon.arco,
+        assassinTactical: tactical,
+      ),
+      appearance: look,
       ready: value['ready'] as bool,
+      customAttributes:
+          hero == LiteHero.duplicatore &&
+          (value['customAttributes'] is bool
+              ? value['customAttributes'] == true
+              : look != null &&
+                    !look.sameAs(
+                      const OculumLiteAppearance(),
+                      includeInkFinish: false,
+                    )),
       pet: LiteCompanion.values
           .where((pet) => pet.discovery != null && pet.name == value['pet'])
           .firstOrNull,
@@ -588,8 +657,30 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       allowMechanicalChicken: value['allowMechanicalChicken'] == true,
       memory: LiteRestMemory.read(value['restMemory']),
       upgrades: LitePermanentUpgrade.read(value['upgrades']),
+      grimoireArts: {
+        if (value['grimoireArts'] case final List names
+            when names.length <= LiteLearnedArt.values.length)
+          for (final art in LiteLearnedArt.values)
+            if (names.contains(art.name) &&
+                !LiteHero.values.any(
+                  (hero) => LiteLearnedArt.fixedFor(hero) == art,
+                ))
+              art,
+      },
+      grimoireSlots: switch (value['grimoireSlots']) {
+        List slots when slots.length == 6 =>
+          slots.map(LiteGrimoireAction.tryRead).toList(),
+        _ => null,
+      },
     );
   }
+
+  static bool _usesTacticalLook(
+    LiteHero hero,
+    OculumLiteAppearance? appearance,
+  ) =>
+      hero == LiteHero.assassino &&
+      appearance?.inkFinish == LiteInkFinish.tattica;
 
   Map<String, Object> _lobbyPacket() => {
     'kind': 'lobbySnapshot',
@@ -698,15 +789,26 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         );
     }
     if (!mounted || _account != uid || _runId.isNotEmpty) return;
+    final grimoire = _progress.grimoire;
+    final custom = _hero == LiteHero.duplicatore && _usesCustomAttributes;
+    final characterId = _grimoireId(_hero, custom);
     final seat = (
       name: _displayName,
       hero: _hero,
-      weapon: _hero.startingWeapon(_weapon),
+      weapon: _startingWeapon,
       appearance:
-          _hero == LiteHero.duplicatore || _inkFinish != LiteInkFinish.canonica
+          _hero == LiteHero.duplicatore ||
+              _setupFinish != LiteInkFinish.canonica
           ? _selectedLook
           : null,
       upgrades: _progress.upgrades,
+      customAttributes: custom,
+      grimoireArts: grimoire.learnedArts,
+      grimoireSlots:
+          grimoire.hasLoadout(characterId, _hero) ||
+              _hero == LiteHero.duplicatore
+          ? grimoire.loadoutFor(characterId, _hero).actions
+          : null,
       allowGlue: _progress.discoveredPets.contains(LiteCompanion.goblinColla),
       allowMechanicalChicken: _progress.canPlay(LiteHero.pollo),
       memory: memory,
@@ -735,7 +837,10 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     );
     if (!mounted || selected == null || _runId.isNotEmpty) return;
     _name.text = selected.name;
-    setState(() => _look = selected.appearance);
+    setState(() {
+      _look = selected.appearance;
+      _usesCustomAttributes = true;
+    });
   }
 
   Future<void> _start() async {
@@ -772,10 +877,13 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
       hero: mine.hero,
       weapon: mine.weapon,
       upgrades: mine.upgrades,
+      customAttributes: mine.customAttributes,
+      assassinTactical: _usesTacticalLook(mine.hero, mine.appearance),
       allowGlue: mine.allowGlue,
       allowMechanicalChicken: mine.allowMechanicalChicken,
       playerCount: _seats.length,
     );
+    world.restoreProfileGrimoire(mine.grimoireArts, mine.grimoireSlots);
     if (mine.pet case final pet?) world.bringStarterPet(pet);
     if (mine.memory case final memory?) world.carryRestMemory(memory);
     for (final entry in _seats.entries) {
@@ -787,10 +895,17 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         seat.hero,
         seat.weapon,
         upgrades: seat.upgrades,
+        customAttributes: seat.customAttributes,
+        assassinTactical: _usesTacticalLook(seat.hero, seat.appearance),
         allowGlue: seat.allowGlue,
         allowMechanicalChicken: seat.allowMechanicalChicken,
       );
       if (world.coopFighter(entry.key) case final fighter?) {
+        world.restoreProfileGrimoire(
+          seat.grimoireArts,
+          seat.grimoireSlots,
+          fighter,
+        );
         if (seat.pet case final pet?) world.bringStarterPet(pet, fighter);
         if (seat.memory case final memory?)
           world.carryRestMemory(memory, fighter: fighter);
@@ -863,6 +978,9 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     );
   }
 
+  static String _grimoireId(LiteHero hero, bool custom) =>
+      custom ? 'coop-custom' : 'hero:' + hero.name;
+
   void _recordRunUnlocks() {
     final play = _run;
     final run = play?.run;
@@ -877,7 +995,22 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     if (_savingUnlocks) return;
     final played = play.host ? run.hero : play.localFighter?.hero;
     if (played == null) return;
-    final kit = play.host ? run.supply : play.localFighter!.supply;
+    final fighter = play.host ? null : play.localFighter;
+    final kit = fighter?.supply ?? run.supply;
+    final custom = fighter?.customAttributes ?? run.customAttributes;
+    final characterId = _grimoireId(played, custom);
+    final arts = kit.knownArts;
+    final slots = run.grimoireConfigured(fighter)
+        ? run.grimoireSlots(fighter)
+        : null;
+    final grimoire = _progress
+        .recordGrimoire(
+          arts,
+          hero: played,
+          characterId: characterId,
+          slots: slots,
+        )
+        .grimoire;
     final memory = kit.promised;
     final spent = kit.carriedId;
     if (spent != null && _handledMemoryIds.add('spent-$spent')) {
@@ -901,7 +1034,8 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     final earnedMilestone =
         run.milestoneFloors > _progress.clearedFor(run.difficulty) &&
         run.milestoneFloors > _failedMilestoneFloors;
-    if (!earnedMilestone &&
+    if (identical(grimoire, _progress.grimoire) &&
+        !earnedMilestone &&
         cleared <= max(_progress.bestClearedFloor, _failedClearedFloor) &&
         heroes.every(
           (hero) => _progress.canPlay(hero) || _failedUnlocks.contains(hero),
@@ -923,6 +1057,10 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
         run.slimeKills,
         run.difficulty,
         run.milestoneFloors,
+        arts,
+        played,
+        characterId,
+        slots,
       ),
     );
   }
@@ -949,17 +1087,28 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
     int slimeKills,
     LiteDifficulty difficulty,
     int milestoneFloors,
+    Set<LiteLearnedArt> arts,
+    LiteHero hero,
+    String characterId,
+    List<LiteGrimoireAction?>? slots,
   ) async {
     try {
       final store = await OculumLiteSaveStore.open();
       final current = await store.readProgressWithSlots();
-      final progress = current.record(
-        cleared,
-        heroes,
-        pets: pets,
-        slimeCounters: {slimeId: slimeKills},
-        milestones: {difficulty: milestoneFloors},
-      );
+      final progress = current
+          .record(
+            cleared,
+            heroes,
+            pets: pets,
+            slimeCounters: {slimeId: slimeKills},
+            milestones: {difficulty: milestoneFloors},
+          )
+          .recordGrimoire(
+            arts,
+            characterId: characterId,
+            hero: hero,
+            slots: slots,
+          );
       await store.writeProgress(progress);
       if (mounted) setState(() => _progress = progress);
     } on Object {
@@ -1141,9 +1290,9 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                       if (item != null) setState(() => _hero = item);
                     },
                   ),
-                  if (_hero.fixedWeapon case final fixed?)
+                  if (_hero.fixedWeapon != null)
                     ListTile(
-                      title: Text(fixed.label),
+                      title: Text(_startingWeapon.label),
                       subtitle: const Text('Arma iniziale'),
                     )
                   else
@@ -1180,7 +1329,8 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                           : (pet) => setState(() => _starterPet = pet),
                     ),
                     OculumLiteInkFinishPicker(
-                      selected: _inkFinish,
+                      selected: _setupFinish,
+                      assassinTacticalAvailable: _hero == LiteHero.assassino,
                       onChanged: _seats[_account]?.ready == true
                           ? null
                           : (finish) => setState(() => _inkFinish = finish),
@@ -1189,7 +1339,7 @@ class _OculumRlRoomPageState extends State<OculumRlRoomPage> {
                       height: 112,
                       child: OculumLiteHeroPreview(
                         hero: _hero,
-                        weapon: _hero.startingWeapon(_weapon),
+                        weapon: _startingWeapon,
                         appearance: _selectedLook,
                       ),
                     ),

@@ -699,4 +699,149 @@ void main() {
       expect(size, lessThan(46000));
     },
   );
+  test(
+    'an alerted guard considers a visible motion trail once after .9 seconds',
+    () {
+      const guardAt = Point<double>(22.55, 4);
+      const seenAt = Point<double>(20.35, 4);
+      const lookout = Point<double>(-1, 0);
+
+      (LiteRun, LiteBush) build(int seed, {bool cover = false}) {
+        final run = _newRun(seed: seed);
+        final guard = run.enemies.first;
+        run.enemies.removeWhere((other) => other != guard);
+        run.obstacles.clear();
+        final bush = run.concealmentBushes[1];
+        if (cover) {
+          run.obstacles.add(LiteObstacle(18.25, 2.8, .45, 2.5, fixedMap: true));
+        }
+        _place(guard, guardAt, lookout)..cooldown = 90;
+        run.position = seenAt;
+        run.step(.025);
+        expect(guard.guard!.mode, LiteGuardMode.allerta);
+        expect(guard.attackTarget, isNotNull);
+        run.position = const Point(28, 4);
+        run.step(.025);
+        expect(guard.attackTarget, isNull);
+        run.position = seenAt;
+        return (run, bush);
+      }
+
+      void steps(LiteRun run, int from, int to) {
+        final guard = run.enemies.single;
+        for (var i = from; i < to; i++) {
+          guard
+            ..position = guardAt
+            ..guard!.facing = lookout;
+          run.step(.05, move: Point<double>(i.isEven ? 1 : -1, 0), walk: true);
+        }
+      }
+
+      int? branch(LiteRun run) {
+        final frame = run.enemies.single.guard!.frame[5] as Map;
+        final trace = frame['motion'] as List?;
+        return (trace?.firstOrNull as List?)?[2] as int?;
+      }
+
+      int? hedgeSeed;
+      var directed = false;
+      for (
+        var seed = 40000;
+        seed < 40064 && (!directed || hedgeSeed == null);
+        seed += 4
+      ) {
+        final (run, bush) = build(seed);
+        steps(run, 0, 17);
+        expect(branch(run), 0);
+        expect(run.enemies.single.attackTarget, isNull);
+        final stored = _roundTrip(run);
+        steps(run, 17, 19);
+        steps(stored, 17, 19);
+        expect(branch(stored), branch(run));
+        final guard = run.enemies.single;
+        if (branch(run) == 2) {
+          hedgeSeed = seed;
+          expect(guard.guard!.target, bush.center);
+          expect(guard.guard!.lastSeen, isNot(bush.center));
+          expect(guard.attackTarget, isNull);
+          steps(run, 19, 32);
+          expect(branch(run), 2);
+        } else {
+          expect(branch(run), 1);
+          directed = true;
+          expect(guard.attackTarget, run.position);
+        }
+      }
+      expect(directed, isTrue);
+      expect(hedgeSeed, isNotNull);
+
+      final (covered, hiddenBush) = build(hedgeSeed!, cover: true);
+      steps(covered, 0, 19);
+      expect(branch(covered), 1);
+      expect(covered.enemies.single.guard!.target, isNot(hiddenBush.center));
+      expect(covered.enemies.single.attackTarget, covered.position);
+    },
+  );
+
+  test('brief movement episodes cannot accumulate their time across cover', () {
+    final run = _newRun(seed: 41120);
+    final guard = _focusOn(run);
+    _showTo(run, guard);
+    const search = Point<double>(20.5, 7);
+    for (var pass = 0; pass < 3; pass++) {
+      run.position = const Point(3, 21);
+      run.step(.025);
+      for (var i = 0; i < 14; i++) {
+        guard
+          ..position = const Point(24, 7)
+          ..guard!.facing = const Point(-1, 0);
+        run.position = search;
+        run.step(.05, move: const Point(-1, 0), walk: true);
+      }
+      expect(guard.attackTarget, isNull);
+    }
+  });
+
+  test(
+    'a discovered host lets a guard investigate fresh movement from a guest',
+    () {
+      final run = _newRun(seed: 41120, players: 2);
+      expect(
+        run.addCoopFighter(
+          'guest',
+          'Ospite',
+          LiteHero.evasore,
+          LiteWeapon.guanti,
+        ),
+        isTrue,
+      );
+      final guest = run.coopFighters.single..position = const Point(3, 21);
+      final guard = _focusOn(run);
+      _showTo(run, guard);
+      expect(guard.attackTarget, run.position);
+
+      run.position = const Point(3, 21);
+      run.step(.025);
+      expect(guard.attackTarget, isNull);
+      for (var i = 0; i < 19; i++) {
+        guard
+          ..position = const Point(24, 7)
+          ..guard!.facing = const Point(-1, 0);
+        guest.position = const Point(21, 7);
+        expect(
+          run.setCoopControls(
+            guest.account,
+            const Point(-1, 0),
+            guard.position,
+            attack: false,
+            slow: true,
+          ),
+          isTrue,
+        );
+        run.step(.05);
+        if (i < 17) expect(guard.attackTarget, isNull);
+      }
+      expect(guard.attackTarget, guest.position);
+    },
+  );
 }

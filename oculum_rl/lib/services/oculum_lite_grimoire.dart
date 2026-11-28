@@ -1,48 +1,7 @@
 import '../game/oculum_lite_run.dart';
 
-enum LiteGrimoireActionKind { weapon, talent, scroll, art }
-
-class LiteGrimoireAction {
-  const LiteGrimoireAction.weapon()
-    : kind = LiteGrimoireActionKind.weapon,
-      art = null;
-
-  const LiteGrimoireAction.talent()
-    : kind = LiteGrimoireActionKind.talent,
-      art = null;
-
-  const LiteGrimoireAction.scroll()
-    : kind = LiteGrimoireActionKind.scroll,
-      art = null;
-
-  const LiteGrimoireAction.art(LiteLearnedArt this.art)
-    : kind = LiteGrimoireActionKind.art;
-
-  final LiteGrimoireActionKind kind;
-  final LiteLearnedArt? art;
-
-  String get _key => art == null ? kind.name : 'art:${art!.name}';
-
-  static LiteGrimoireAction? _read(Object? value) => switch (value) {
-    'weapon' => const LiteGrimoireAction.weapon(),
-    'talent' => const LiteGrimoireAction.talent(),
-    'scroll' => const LiteGrimoireAction.scroll(),
-    String key when key.startsWith('art:') => switch (_readArt(
-      key.substring(4),
-    )) {
-      final art? => LiteGrimoireAction.art(art),
-      null => null,
-    },
-    _ => null,
-  };
-
-  @override
-  bool operator ==(Object other) =>
-      other is LiteGrimoireAction && kind == other.kind && art == other.art;
-
-  @override
-  int get hashCode => Object.hash(kind, art);
-}
+export '../game/oculum_lite_run.dart'
+    show LiteGrimoireAction, LiteGrimoireActionKind;
 
 class LiteGrimoireLoadout {
   const LiteGrimoireLoadout._(this.hero, this.actions);
@@ -63,6 +22,9 @@ class LiteProfileGrimoire {
       _loadouts = Map.unmodifiable(loadouts);
 
   static const slotCount = 6;
+
+  bool hasLoadout(String characterId, LiteHero hero) =>
+      _loadouts[characterId]?.hero == hero;
 
   final Set<LiteLearnedArt> learnedArts;
   final Map<String, LiteGrimoireLoadout> _loadouts;
@@ -135,7 +97,7 @@ class LiteProfileGrimoire {
         for (final entry in _loadouts.entries)
           entry.key: {
             'hero': entry.value.hero.name,
-            'slots': entry.value.actions.map((action) => action?._key).toList(),
+            'slots': entry.value.actions.map((action) => action?.key).toList(),
           },
       },
   };
@@ -165,7 +127,7 @@ class LiteProfileGrimoire {
         final slots = data['slots'];
         if (hero == null || slots is! List || slots.length != slotCount)
           continue;
-        final actions = slots.map(LiteGrimoireAction._read);
+        final actions = slots.map(LiteGrimoireAction.tryRead);
         loadouts[characterId] = LiteGrimoireLoadout._(
           hero,
           List.unmodifiable([

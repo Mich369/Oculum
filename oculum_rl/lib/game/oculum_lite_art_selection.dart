@@ -81,9 +81,17 @@ extension LiteArtExecution on LiteRun {
     bool extra = false,
   ]) {
     final art = extra ? extraArt(fighter) : activeArt(fighter);
+    return art != null && _castLearnedArt(art, target, fighter, extra: extra);
+  }
+
+  bool _castLearnedArt(
+    LiteLearnedArt art,
+    Point<double> target,
+    LiteCoopFighter? fighter, {
+    bool extra = false,
+  }) {
     final kit = fighter?.supply ?? supply;
-    if (art == null ||
-        (extra ? kit.extraArtCooldown : kit.artCooldown) > 0 ||
+    if ((extra ? kit.extraArtCooldown : kit.artCooldown) > 0 ||
         finished ||
         restHub ||
         shopOpen ||
@@ -96,6 +104,7 @@ extension LiteArtExecution on LiteRun {
         !target.y.isFinite ||
         (fighter?.oculum ?? oculum) < art.cost)
       return false;
+    _openAssassinBox(fighter);
     final at = fighter?.position ?? position;
     final heading = LiteRun._unit(target - at);
     final direction = heading.magnitude == 0 ? fighter?.aim ?? aim : heading;

@@ -152,15 +152,27 @@ extension LiteAlertAudio on LiteRun {
         allCalled = false;
         continue;
       }
-      final previous = state.enemyTimers[enemy.id] ?? 0;
-      final total = min(_LiteAlertSignals.delay, previous + elapsed + 1e-10);
-      state.enemyTimers[enemy.id] = total;
-      if (total == _LiteAlertSignals.delay &&
-          previous < _LiteAlertSignals.delay) {
-        state.add(time, enemy: enemy);
-        _encounterNoise(enemy.position, 6.5, except: enemy);
+      final special = _forgetfulBandit(enemy) && guard != null;
+      final sighting = guard?._banditSighting;
+      if (special && sighting == null) {
+        allCalled = false;
+        continue;
       }
-      if (total < _LiteAlertSignals.delay) allCalled = false;
+      final delay = special && enemy.kind == LiteEnemyKind.scostubandito
+          ? 2.0
+          : _LiteAlertSignals.delay;
+      final previous = state.enemyTimers[enemy.id] ?? 0;
+      final total = min(delay, previous + elapsed + 1e-10);
+      state.enemyTimers[enemy.id] = total;
+      if (total == delay && previous < delay) {
+        if (enemy.errato == null) state.add(time, enemy: enemy);
+        if (special && sighting != null) {
+          _relayBanditSighting(enemy, sighting);
+        } else {
+          _encounterNoise(enemy.position, 6.5, except: enemy);
+        }
+      }
+      if (total < delay) allCalled = false;
     }
     if (!allAlert || !hasEnemy) {
       state.groupCalled = false;

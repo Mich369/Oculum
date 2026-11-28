@@ -1004,35 +1004,97 @@ void _paintBunnysHeal(
   LiteCombatImpact hit,
   double age,
 ) {
-  if (age < 0 || age > .60) return;
-  final intensity = 1 - age / .60;
-  final moss = const Color(0xff9adb80).withValues(alpha: intensity);
-  final mint = const Color(0xffe6e9af).withValues(alpha: intensity * .90);
-  final from = _offset(hit.end ?? hit.position);
-  _oval(
-    canvas,
-    at,
-    .82 + age * 2.2,
-    .27 + age * .43,
-    const Color(0x00324f2a),
-    stroke: moss,
-    strokeWidth: .046 * intensity,
+  if (age < 0 || age >= .68) return;
+  final fade = 1 - age / .68;
+  final leaf = const Color(0xff91cf86).withValues(alpha: fade);
+  final core = const Color(0xfff1e5b2).withValues(alpha: fade);
+  final ink = const Color(0xff203b2e).withValues(alpha: .9 * fade);
+  final from = _offset(hit.end ?? hit.position) - const Offset(0, .65);
+  final destination = at - const Offset(0, 1.02);
+  final axis = destination - from;
+  final trail = Path()
+    ..moveTo(from.dx, from.dy)
+    ..cubicTo(
+      from.dx + axis.dx * .14,
+      from.dy - .98,
+      from.dx + axis.dx * .77,
+      destination.dy - .92,
+      destination.dx,
+      destination.dy,
+    );
+  final metric = trail.computeMetrics().first;
+  final head = (age / .30).clamp(0.0, 1.0);
+  final tail = ((age - .22) / .34).clamp(0.0, 1.0);
+  if (head > tail) {
+    final arc = metric.extractPath(metric.length * tail, metric.length * head);
+    final brush = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..color = ink
+      ..strokeWidth = .16 * fade;
+    canvas.drawPath(arc, brush);
+    canvas.drawPath(
+      arc,
+      brush
+        ..color = leaf
+        ..strokeWidth = .055 + .055 * fade,
+    );
+    for (var i = 0; i < 7; i++) {
+      final along = head - i * .098;
+      if (along < tail) break;
+      final section = metric.getTangentForOffset(along * metric.length);
+      if (section == null) continue;
+      final direction = section.vector;
+      final side = Offset(-direction.dy, direction.dx) * (i.isEven ? 1 : -1);
+      final base = section.position + side * (.067 + i * .009);
+      final tip = base + direction * .17 + side * .16;
+      final sprout = Path()
+        ..moveTo(base.dx, base.dy)
+        ..quadraticBezierTo(
+          base.dx + side.dx * .19,
+          base.dy + side.dy * .19,
+          tip.dx,
+          tip.dy,
+        )
+        ..quadraticBezierTo(
+          tip.dx + direction.dx * .035,
+          tip.dy + direction.dy * .035,
+          base.dx,
+          base.dy,
+        )
+        ..close();
+      canvas.drawPath(sprout, Paint()..color = i % 3 == 0 ? core : leaf);
+    }
+  }
+  if (age < .21) return;
+  final burst = (age - .21) / .47;
+  final radius = .35 + 1.15 * burst;
+  final ring = Rect.fromCenter(
+    center: at,
+    width: radius * 2,
+    height: radius * .65,
   );
-  final axis = at - from;
-  final side = Offset(-axis.dy, axis.dx);
-  for (var i = 0; i < 5; i++) {
-    final progress = (age * 1.65 + i * .17).clamp(0.0, 1.0);
-    final point =
-        from +
-        axis * progress +
-        side * (math.sin(progress * math.pi) * .07) -
-        Offset(0, .81 * progress + .20 + (i % 2) * .24);
+  final brush = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = .085 * (1 - burst);
+  for (var i = 0; i < 4; i++) {
+    canvas.drawArc(
+      ring,
+      i * math.pi / 2 + burst * .7,
+      .98 + burst * .27,
+      false,
+      brush..color = i.isEven ? core : leaf,
+    );
+    final rise = .23 + burst * .86;
+    final x = (i - 1.5) * (.25 + burst * .23);
+    final glint = at + Offset(x, -rise - (i.isEven ? .21 : 0));
     _inkSlash(
       canvas,
-      point - const Offset(.07, .12),
-      point + const Offset(.075, -.06),
-      i.isEven ? mint : moss,
-      .070 * intensity,
+      glint + const Offset(-.09, .14),
+      glint,
+      leaf,
+      .075 * fade,
     );
   }
 }
