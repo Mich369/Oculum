@@ -9,8 +9,9 @@ Future<OculumRlVersion?> findOculumRlUpdate(
 
 Future<OculumRlVersion?> prepareOculumRlUpdate(
   OculumRlVersion current,
-  OculumRlEdition edition,
-) async => null;
+  OculumRlEdition edition, {
+  void Function(OculumRlTransfer)? onTransfer,
+}) async => null;
 
 Future<bool> startOculumRlUpdate(
   OculumRlVersion version,

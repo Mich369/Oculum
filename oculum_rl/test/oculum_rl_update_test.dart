@@ -127,4 +127,39 @@ void main() {
     );
     expect(File('${directory.path}/outside.txt').existsSync(), isFalse);
   });
+
+  test(
+    'both Windows indexes are validated and kept with their own edition',
+    () {
+      final paired = release('oculum-rl-v0.5.1');
+      final assets = paired['assets']! as List<Map<String, Object>>;
+      for (final edition in OculumRlEdition.values) {
+        assets.add({
+          'name': edition.indexAssetName,
+          'size': 8000,
+          'state': 'uploaded',
+          'digest': 'sha256:${'b' * 64}',
+          'browser_download_url':
+              '$releasePrefix/oculum-rl-v0.5.1/${edition.indexAssetName}',
+        });
+      }
+      for (final edition in OculumRlEdition.values) {
+        final selected = selectOculumRlRelease(
+          jsonEncode([paired]),
+          current: current,
+          edition: edition,
+        );
+        expect(selected?.index?.uri.pathSegments.last, edition.indexAssetName);
+      }
+      assets.removeLast();
+      expect(
+        selectOculumRlRelease(
+          jsonEncode([paired]),
+          current: current,
+          edition: OculumRlEdition.normal,
+        ),
+        isNull,
+      );
+    },
+  );
 }

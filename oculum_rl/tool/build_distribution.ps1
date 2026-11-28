@@ -44,7 +44,7 @@ function Build([string]$Label, [string[]]$Options) {
   Invoke-OculumBuildProcess -FilePath $dart -Arguments $argsForTool -WorkingDirectory $project -LogPath (Join-Path $stagePath "build-$Label.log") -Description $Label -TimeoutSeconds 2700 -Environment $environment
 }
 
-function ExportEdition([string]$Folder, [string]$Executable, [string]$Archive) {
+function ExportEdition([string]$Folder, [string]$Executable, [string]$Archive, [string]$Edition) {
   $runtime = Join-Path $stagePath $Folder
   if (Test-Path -LiteralPath $runtime) { throw "Runtime already exists: $runtime" }
   New-Item -ItemType Directory -Path $runtime | Out-Null
@@ -107,14 +107,16 @@ function ExportEdition([string]$Folder, [string]$Executable, [string]$Archive) {
       }
     }
   } finally { $reader.Dispose() }
+  python (Join-Path $PSScriptRoot 'index_windows_update.py') $zip $version $Edition
+  if ($LASTEXITCODE) { throw "Update index failed: $Folder" }
 }
 
 switch ($Target) {
   { $_ -in 'All','Windows' } {
     Build 'windows' @('build','windows','--release','--no-pub')
-    ExportEdition 'Windows' 'Oculum RL.exe' 'Oculum-RL-Windows.zip'
+    ExportEdition 'Windows' 'Oculum RL.exe' 'Oculum-RL-Windows.zip' 'normal'
     Build 'windows-test' @('build','windows','--release','--no-pub','--dart-define=OculumSaveProfile=test')
-    ExportEdition 'Windows Test' 'Oculum RL Test.exe' 'Oculum-RL-Windows-Test.zip'
+    ExportEdition 'Windows Test' 'Oculum RL Test.exe' 'Oculum-RL-Windows-Test.zip' 'test'
     if ((Get-FileHash -LiteralPath (Join-Path $stagePath 'Windows/data/app.so')).Hash -eq
         (Get-FileHash -LiteralPath (Join-Path $stagePath 'Windows Test/data/app.so')).Hash) {
       throw 'Both releases use the same save profile.'

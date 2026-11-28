@@ -22,6 +22,7 @@ part 'oculum_lite_actor_paint.dart';
 part 'oculum_lite_plague_paint.dart';
 part 'oculum_lite_playable_motion.dart';
 part 'oculum_lite_encounter_motion.dart';
+part 'oculum_lite_bunnys_motion.dart';
 part 'oculum_lite_roster_finish.dart';
 part 'oculum_lite_roster_motion.dart';
 part 'oculum_lite_weapon_paint.dart';
@@ -226,6 +227,9 @@ class OculumLiteArena extends StatefulWidget {
   static const infernalArt = AssetImage('assets/oculum/lite/infernali-ink.png');
   static const lusierArt = AssetImage('assets/oculum/lite/lusier-iii-ink.webp');
   static const bunnysArt = AssetImage('assets/oculum/lite/bunnys-expressive-h.webp');
+  static const bunnysGait = AssetImage(
+    'assets/oculum/lite/bunnys-andature-ink.webp',
+  );
   static const erratoMotion = AssetImage(
     'assets/oculum/lite/scostubanditi-errati-andature-ink.webp',
   );
@@ -538,6 +542,7 @@ class _OculumLiteArenaState extends State<OculumLiteArena> {
         OculumLiteArena.infernalArt,
         OculumLiteArena.lusierArt,
         OculumLiteArena.bunnysArt,
+        OculumLiteArena.bunnysGait,
         OculumLiteArena.assassinMotion,
         OculumLiteArena.assassinBox,
         OculumLiteArena.erratoMotion,
@@ -2738,8 +2743,16 @@ class _ArenaPaint extends CustomPainter {
         at.dy,
         () {
           final guard = enemy.guard;
+          final bunnysFacing =
+              enemy.kind == LiteEnemyKind.bunnys &&
+                  !enemy.attacking &&
+                  enemy.strikePose <= 0
+              ? enemy.bunnysFacingRight
+              : null;
           final facingTarget = flight != null
               ? at.dx + flight.position.x - flight.end!.x
+              : bunnysFacing != null
+              ? at.dx + (bunnysFacing ? 1 : -1)
               : guard != null && target == null
               ? at.dx + guard.facing.x
               : target == null
@@ -2825,10 +2838,12 @@ class _ArenaPaint extends CustomPainter {
                   _paintBunnys(
                     canvas,
                     atlas,
+                    dropImages[OculumLiteArena.bunnysGait]?.image,
+                    enemy.stride,
+                    animationLead,
                     time,
-                    speed: enemy.stride.speed,
                     fallen: enemy.hp <= 0,
-                    casting: enemy.windup > 0,
+                    casting: enemy.windup > 0 || enemy.strikePose > 0,
                   );
                 }
                 return;
@@ -3268,6 +3283,8 @@ class _ArenaPaint extends CustomPainter {
                   stride: enemy.stride,
                   animationLead: animationLead,
                   species: enemy.kind,
+                  windup: enemy.attacking ? enemy.windup : null,
+                  dashing: _enemyIsDashing(enemy),
                   strike: math.max(0, enemy.strikePose - animationLead),
                   hurt: enemy.hitFlash,
                   fallen: enemy.hp <= 0,
@@ -3543,8 +3560,10 @@ class _ArenaPaint extends CustomPainter {
                   _paintBunnys(
                     canvas,
                     atlas,
+                    dropImages[OculumLiteArena.bunnysGait]?.image,
+                    clone.stride,
+                    animationLead,
                     time,
-                    speed: clone.stride.speed,
                     fallen: clone.hp <= 0,
                     casting: clone.preparingPose > 0,
                   );
@@ -3766,6 +3785,8 @@ class _ArenaPaint extends CustomPainter {
                   height: _enemyHeight(companion.sprite) * .78,
                   stride: clone.stride,
                   animationLead: animationLead,
+                  species: companion.sprite,
+                  strike: math.max(0, clone.swing - animationLead),
                   fallen: clone.down,
                 );
                 return;
@@ -6606,9 +6627,22 @@ void _newActor(
   bool phantom = false,
   LiteEnemyKind? species,
   double? windup,
+  bool dashing = false,
   double strike = 0,
   double hurt = 0,
 }) {
+  final orbryx = species == LiteEnemyKind.orbryx;
+  final rasvyr = species == LiteEnemyKind.rasvyr;
+  final bodyFrame = orbryx
+      ? _orbryxFrame(
+          stride,
+          animationLead,
+          rolling: fallen || strike > 0 || dashing,
+          braced: windup != null,
+        )
+      : rasvyr && dashing && frame < 3
+      ? 1
+      : frame;
   canvas.save();
   if (fallen) {
     canvas.rotate(1.24);
@@ -6627,7 +6661,7 @@ void _newActor(
     final recoil = (hurt / .18).clamp(0.0, 1.0);
     canvas.translate(-.16 * recoil, 0);
     canvas.rotate(-.095 * recoil);
-  } else if (frame <= 1) {
+  } else if (bodyFrame <= 1 && !rasvyr && !orbryx) {
     _groundedMotion(canvas, stride, animationLead, strideMetres: 1.55);
   }
   final dest = Rect.fromLTWH(
@@ -6636,27 +6670,37 @@ void _newActor(
     height * 1.5,
     height,
   );
-  final source = Rect.fromLTWH(360.0 * frame, 240.0 * row, 360, 240);
+  final source = Rect.fromLTWH(360.0 * bodyFrame, 240.0 * row, 360, 240);
   final paint = Paint()
     ..filterQuality = FilterQuality.medium
     ..color = Color(phantom ? 0xc0ffffff : 0xffffffff);
-  if (!fallen && species == LiteEnemyKind.rasvyr) {
+  if (!fallen && rasvyr) {
     _paintRasvyrMotion(
       canvas,
       art,
       source,
       dest,
       paint,
-      frame,
+      bodyFrame,
       stride,
       animationLead,
-      strike,
+      strike: strike,
+      windup: windup,
+      dashing: dashing,
     );
-  } else if (!fallen &&
-      species == LiteEnemyKind.orbryx &&
-      frame == 3 &&
-      strike > 0) {
-    _paintOrbryxRoll(canvas, art, source, dest, paint, strike);
+  } else if (!fallen && orbryx) {
+    _paintOrbryxMotion(
+      canvas,
+      art,
+      source,
+      dest,
+      paint,
+      bodyFrame,
+      stride,
+      animationLead,
+      windup: windup,
+      strike: strike,
+    );
   } else {
     canvas.drawImageRect(art, source, dest, paint);
   }
@@ -7514,6 +7558,7 @@ void _hero(
         stride: stride,
         animationLead: animationLead,
         species: mimic.kind,
+        dashing: dashing,
         strike: strike,
         fallen: fallen,
       );

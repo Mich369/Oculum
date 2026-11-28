@@ -2,6 +2,12 @@
 
 La versione Windows autonoma si avvia da `Gioca/Oculum RL.exe` nella cartella della versione attiva. Su questa installazione, `C:/Oculum App/Oculum RL/VERSIONE-ATTIVA.json` indica il percorso. Mantieni `data` e le DLL accanto all’eseguibile. Windows Test ha una cartella, uno ZIP e un profilo di salvataggio propri.
 
+## Oculum RL 0.5.1
+
+- **Aggiornamenti incrementali.** Windows e Windows Test confrontano il proprio runtime con quello dell’ultima versione. Il gioco scarica i file nuovi e cambiati e riusa gli altri, anche saltando più release.
+- **Andature Ink.** Bunnys ha cicli distinti al passo e in fuga, con direzione sincronizzata in co-op. Orbryx distingue passo, balzo e rotolamento. Rasvyr inclina il carapace in corsa e prepara il colpo ritraendo la chela.
+- **Open.** Carica, rilascio e assestamento usano pose dell’atlante quando disponibili. Luce e Ombra riprendono l’aspetto del personaggio copiato.
+
 ## Oculum RL 0.5.0
 
 - **Fuga dal Campo Scostubanditi.** Il colpo fatale dei banditi può riaprire la run in prigionia. Gli altri personaggi si svegliano al 25% di Vita e perdono il 60% delle risorse di run, comprese le pergamene. Scostubandito e Gran Scostumato tengono il bottino e si liberano premendo R una volta. L’uscita finale si apre dopo l’Elité, anche se restano dei rinforzi in piedi.
@@ -36,7 +42,9 @@ La prova di rete usa due client autenticati nella stessa stanza Supabase. Verifi
 
 ## Aggiornamenti Windows
 
-Le edizioni Windows normale e Windows Test cercano automaticamente una release Oculum RL pubblica più recente. Il gioco verifica la dimensione, lo SHA-256 e i file del runtime, poi prepara la nuova versione in una cartella separata per edizione. La versione corrente si chiude soltanto dopo che quella nuova ha aperto la sua prima schermata. Durante una run o una stanza online il riavvio aspetta il ritorno al menu.
+Da Oculum RL 0.5.1 le edizioni Windows normale e Windows Test cercano la release pubblica più recente e confrontano lo SHA-256 dei file distribuiti con quelli della cartella da cui è in esecuzione il gioco. Prima del trasferimento, **Aggiornamenti** mostra quanti file cambiano e quanti byte compressi verranno scaricati. I file si prendono direttamente dalla versione finale, anche se sono state saltate più release. Un file che nel frattempo è tornato identico viene riusato.
+
+Il runtime verificato viene preparato a parte con i file della versione di arrivo. I salvataggi e le impostazioni restano nel profilo di ciascuna edizione. La cartella di partenza conserva i suoi file, comprese eventuali aggiunte manuali. La versione corrente si chiude quando la nuova ha aperto la prima schermata. Un’interruzione lascia avviabile la versione precedente. Le versioni dell’updater anteriori alla 0.5.1 usano ancora lo ZIP completo per installare il nuovo updater.
 
 Da **Aggiornamenti** puoi disattivare i controlli automatici, cercare una nuova versione e riavviare quando vuoi. Per avviare un eseguibile precedente senza passare all’ultimo, aggiungi `--no-update` al suo collegamento. Web e APK restano scaricabili dalla pagina release.
 

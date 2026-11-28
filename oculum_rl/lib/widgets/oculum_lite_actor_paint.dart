@@ -595,6 +595,9 @@ final _rasvyrSupports = [
 ];
 final _rasvyrClaw = _InkGripRig(const Offset(.78, .57), .24, .08);
 
+bool _frontierCreatureRunning(LiteStride? stride, LiteEnemyKind kind) =>
+    stride?.walking != true && (stride?.speed ?? 0) >= kind.speed * .87;
+
 void _paintRasvyrMotion(
   Canvas canvas,
   ui.Image atlas,
@@ -603,12 +606,25 @@ void _paintRasvyrMotion(
   Paint paint,
   int frame,
   LiteStride? stride,
-  double lead,
-  double strike,
-) {
+  double lead, {
+  required double strike,
+  required double? windup,
+  required bool dashing,
+}) {
   final rig = _rasvyrSupports[frame == 1 ? 1 : 0];
-  final phase = _stridePhase(stride, rig.strideMetres, lead);
+  final running =
+      dashing || _frontierCreatureRunning(stride, LiteEnemyKind.rasvyr);
+  final phase = _stridePhase(
+    stride,
+    rig.strideMetres * (running ? 1.25 : 1),
+    lead,
+  );
   final pace = frame < 2 ? stride?.strength ?? 0.0 : 0.0;
+  final load = frame == 2
+      ? windup == null
+            ? .5
+            : .22 + .78 * _inkEase(1 - windup / .53)
+      : 0.0;
   final follow = (strike / .24).clamp(0.0, 1.0);
   final claw = frame == 3
       ? _InkAttackMotion(
@@ -617,7 +633,21 @@ void _paintRasvyrMotion(
           -.12 * follow,
           follow,
         )
+      : load > 0
+      ? _InkAttackMotion(
+          _rasvyrClaw,
+          Offset(-.046 * load, .014 * load),
+          .18 * load,
+          load,
+        )
       : null;
+  canvas.save();
+  if (pace > .005) {
+    // The plated body is heavy. The run lowers the shell and reaches farther
+    // with the front supports instead of playing the short walk faster.
+    canvas.rotate((running ? .062 : .024) * pace);
+    canvas.translate(.056 * pace * (running ? 1 : .25), 0);
+  }
   _inkActorSprite(
     canvas,
     atlas,
@@ -627,10 +657,82 @@ void _paintRasvyrMotion(
     rig,
     phase: phase,
     strength: pace,
-    compress: _stepCompression(phase) * pace + (frame == 2 ? .037 : 0),
+    anticipation: load,
+    compress: _stepCompression(phase) * pace + .072 * load,
     handMotion: claw,
-    running: (stride?.speed ?? 0) >= 3.1,
+    running: running,
   );
+  canvas.restore();
+}
+
+final _orbryxFeet = _InkRig(
+  const [Offset(.31, .92), Offset(.69, .92), Offset(.51, .86)],
+  reach: .16,
+  strideMetres: 1.58,
+);
+
+int _orbryxFrame(
+  LiteStride? stride,
+  double lead, {
+  required bool rolling,
+  required bool braced,
+}) {
+  if (rolling) return 3;
+  if (braced) return 2;
+  if (!_frontierCreatureRunning(stride, LiteEnemyKind.orbryx)) return 0;
+  final phase = _stridePhase(stride, _orbryxFeet.strideMetres, lead);
+  // The existing extended and braced cells are takeoff and touchdown.
+  return math.sin(phase) > .66 ? 1 : 2;
+}
+
+void _paintOrbryxMotion(
+  Canvas canvas,
+  ui.Image atlas,
+  Rect source,
+  Rect pose,
+  Paint paint,
+  int frame,
+  LiteStride? stride,
+  double lead, {
+  required double? windup,
+  required double strike,
+}) {
+  if (frame == 3) {
+    final progress = strike > 0
+        ? (1 - strike / .24).clamp(0.0, 1.0)
+        : (math.max(0.0, _stridePhase(stride, 1.48, lead)) / (2 * math.pi)) % 1;
+    _paintOrbryxRoll(canvas, atlas, source, pose, paint, progress);
+    return;
+  }
+  final pace = stride == null || stride.speed < .08 ? 0.0 : stride.strength;
+  final running = _frontierCreatureRunning(stride, LiteEnemyKind.orbryx);
+  final phase = _stridePhase(stride, _orbryxFeet.strideMetres, lead);
+  final hop = running && windup == null
+      ? math.max(0.0, math.sin(phase)) * pace
+      : 0.0;
+  final load = frame == 2 && windup != null
+      ? .28 + .72 * _inkEase(1 - windup / .62)
+      : 0.0;
+  canvas.save();
+  if (hop > 0) {
+    canvas.translate(0, -pose.height * .13 * hop);
+    canvas.rotate(.09 * hop);
+  } else if (!running && load == 0 && pace > 0) {
+    canvas.rotate(.04 * math.sin(phase) * pace);
+  }
+  _inkActorSprite(
+    canvas,
+    atlas,
+    source,
+    pose,
+    paint,
+    _orbryxFeet,
+    phase: phase,
+    strength: load > 0 ? 0 : pace * (running ? .26 : .72),
+    grounded: !running,
+    compress: .087 * load + .028 * pace * (1 - hop),
+  );
+  canvas.restore();
 }
 
 void _paintOrbryxRoll(
@@ -639,9 +741,8 @@ void _paintOrbryxRoll(
   Rect source,
   Rect pose,
   Paint paint,
-  double strike,
+  double progress,
 ) {
-  final progress = (1.0 - strike / .24).clamp(0.0, 1.0);
   final lift = math.sin(progress * math.pi) * pose.height * .12;
   final at = Offset(pose.center.dx, pose.bottom - pose.height * .43 - lift);
   final dust = const Color(0xff98616e).withValues(alpha: 1 - progress);

@@ -968,36 +968,6 @@ void _paintLusier(
   );
 }
 
-void _paintBunnys(
-  Canvas canvas,
-  ui.Image atlas,
-  double time, {
-  required double speed,
-  required bool fallen,
-  required bool casting,
-}) {
-  final cycle = (time * (speed > 2.3 ? 9 : 5.1)).floor() % 4;
-  final moving = speed > .1;
-  final phase = fallen
-      ? 5
-      : casting
-      ? 4
-      : moving
-      ? (cycle == 3
-            ? 3
-            : cycle == 1
-            ? 2
-            : 1)
-      : 0;
-  final lift = phase == 0 || phase == 5 ? 0.0 : .15 + .12 * math.sin(time * 14);
-  _paintSixPose(
-    canvas,
-    atlas,
-    phase,
-    Rect.fromLTWH(-1.45, -2.9 - lift, 2.9, 2.9),
-  );
-}
-
 void _paintBunnysHeal(
   Canvas canvas,
   Offset at,

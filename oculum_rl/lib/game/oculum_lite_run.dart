@@ -1624,6 +1624,9 @@ class LiteEnemy {
   double _strikePose = 0;
   double get strikePose => _strikePose;
 
+  bool? _bunnysFacingRight;
+  bool? get bunnysFacingRight => _bunnysFacingRight;
+
   bool _banditWarden = false;
   LiteErrato? errato;
   double erratoWard = 0;
@@ -1674,6 +1677,7 @@ class LiteEnemy {
     'kind': kind.name,
     'position': _savePoint(position),
     'maxHp': maxHp,
+    if (_bunnysFacingRight case final side?) 'bunnysFacingRight': side,
     'hp': hp,
     'hitFlash': hitFlash,
     if (guard case final senses?) 'guard': senses.frame,
@@ -1741,6 +1745,11 @@ class LiteEnemy {
             .firstOrNull
         ..profile = LiteEnemyProfile._read(json['attributes'])
         ..guard = LiteGuard.read(json['guard'])
+        .._bunnysFacingRight = switch (json['bunnysFacingRight']) {
+          final bool facingRight when json['kind'] == LiteEnemyKind.bunnys.name =>
+            facingRight,
+          _ => null,
+        }
         ..hitFlash = _num(json['hitFlash'])
         ..stunned = _num(json['stun']).clamp(0.0, .9)
         ..muddied = _num(json['mud']).clamp(0.0, .9)
@@ -5144,6 +5153,10 @@ class LiteRun {
           }
         }
         enemy.stride._track(beforeMove, enemy.position, elapsed);
+        if (enemy.kind == LiteEnemyKind.bunnys) {
+          final travel = enemy.position.x - beforeMove.x;
+          if (travel.abs() > .002) enemy._bunnysFacingRight = travel > 0;
+        }
       }
       if (dead || (soloOpenFrozen && _presentingFrame)) return;
     }

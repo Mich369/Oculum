@@ -28,9 +28,13 @@
 | Fuga co-op verificata | Due client autenticati nella stessa stanza Supabase hanno completato la fuga. Verificati rientro reale del Master con recupero del checkpoint, corde individuali, penalità di inventario applicata una volta, furtività dei pet per proprietario, portali con voto condiviso e uscita dopo l’Elité con rinforzi vivi. Lo stesso test prova assegnazione e uso del Grimorio dal client ospite. |
 | Animazioni | Il Doppelganger usa le pose Ink del Costrutto Minore, con trasformazione, riposo, camminata, corsa e attacco. L’Open di un ospite mantiene le sue pose quando il Master è trasformato. Provate le attivazioni Open dei 47 personaggi, con 13 famiglie di glifi condivise. Completare i cicli autonomi delle specie che riusano fotogrammi. |
 
+## Completati nella 0.5.1
+
+- Aggiornamento incrementale Windows e Windows Test con confronto SHA-256, conteggio di file e byte, trasferimenti HTTP parziali e staging separato. Le installazioni restano indipendenti e conservano il rollback.
+- Cicli distinti per Bunnys, rifiniture di Orbryx e Rasvyr da pose Ink approvate e nuove sequenze Open con livrea corretta per Luce e Ombra.
+
 ## Lavori ancora aperti
 
-- Updater incrementale per Windows e Windows Test, con stima di file e byte prima del trasferimento, manifesto per file e rollback. L’updater corrente verifica e installa il pacchetto intero.
 - Daphne, Riflesso, Levitazione e la versione avanzata del Necromante.
 - Occhi dei Caduti evocabili e fino a due personaggi salvati come compagni.
 - Ciclo della giornata, fame e gestione di due pasti. Nel Ristoro esistono già i cibi con effetti a stanze.

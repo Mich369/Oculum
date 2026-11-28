@@ -1,5 +1,5 @@
-# Oculum RL 0.5.0
+# Oculum RL 0.5.1
 
-- **Oculum RL 0.5.0.** Fuga dal Campo Scostubanditi con prigionia condivisa, corde individuali, soccorso Errato e portale dopo l’Elité. Pet furtivi insieme al proprietario. Grimorio a sei slot con Art acquistabili, audio adattivo per sei ambientazioni, Boss Rush, attributi per personaggi e mostri e Vitalium proporzionato al piano. Arconte in due fasi al piano 24, Aerovyr in tre fasi al piano 36 con una rinascita al 50% della Vita massima.
+- **Oculum RL 0.5.1.** Aggiornamenti incrementali distinti per Windows e Windows Test. I file si confrontano per SHA-256 con la versione installata e si trasferiscono soltanto i nuovi o quelli cambiati. Lo staging conserva il runtime precedente anche in caso di interruzione. Nuove andature Ink per Bunnys, pose più leggibili per Orbryx e Rasvyr e vignette Open con la livrea corretta per Luce e Ombra.
 
 [Registro cumulativo](REGISTRO_AGGIORNAMENTI.md)

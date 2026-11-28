@@ -61,9 +61,42 @@ enum _OpenGlyph {
   LiteHero.funerys => (const Color(0xffdbb5e8), _OpenGlyph.feather, 8),
   LiteHero.moscaCampana => (const Color(0xffffcf84), _OpenGlyph.ring, 7),
   LiteHero.armadilloCorazzato => (const Color(0xffdda477), _OpenGlyph.ward, 5),
-  LiteHero.scostubanditoErrato || LiteHero.scostubanditoVeteranoErrato => (const Color(0xffb78ed9), _OpenGlyph.claw, 2),
+  LiteHero.scostubanditoErrato || LiteHero.scostubanditoVeteranoErrato => (
+    const Color(0xffb78ed9),
+    _OpenGlyph.claw,
+    2,
+  ),
   LiteHero.assassino => (const Color(0xffb5d4cc), _OpenGlyph.claw, 2),
 };
+
+OculumLiteAppearance _mirrorInkLook(
+  OculumLiteAppearance source,
+  LiteHero hero,
+  LiteEnemyKind kind,
+) {
+  final (cloth, accent, hair) = switch (kind) {
+    LiteEnemyKind.luce => (
+      const Color(0xff96876e),
+      const Color(0xffefcb7a),
+      const Color(0xff875b4f),
+    ),
+    LiteEnemyKind.ombra => (
+      const Color(0xff47304d),
+      const Color(0xffbc7fb1),
+      const Color(0xff28202a),
+    ),
+    _ => (
+      const Color(0xff514060),
+      const Color(0xffac8e7a),
+      const Color(0xff393240),
+    ),
+  };
+  return source.copyWith(
+    cloth: cloth,
+    accent: accent,
+    hair: hero == LiteHero.duplicatore ? source.hair : hair,
+  );
+}
 
 void _paintOpenCutscene(
   Canvas canvas,
@@ -138,20 +171,47 @@ void _paintOpenCutscene(
     final rival = run.enemies
         .where((enemy) => enemy.id == scene.enemyId)
         .firstOrNull;
-    final look = fighter == null
+    final sourceLook = scene.actorId == 0
         ? arena.appearance
-        : arena.guestAppearances[fighter.account] ??
+        : arena.guestAppearances[fighter?.account] ??
               oculumLiteDefaultAppearance(scene.hero);
+    final look = scene.hostile
+        ? _mirrorInkLook(
+            sourceLook,
+            scene.hero,
+            rival?.kind ??
+                (scene.shadow ? LiteEnemyKind.ombra : LiteEnemyKind.luce),
+          )
+        : sourceLook;
     final equipment = rival?.mirror?.weapon ?? fighter?.weapon ?? run.weapon;
     final host = !scene.hostile && scene.actorId == 0;
+    final ally = scene.hostile ? null : fighter;
     final facing = direction.dx < 0 ? -1.0 : 1.0;
     final scale = spread * (coop ? .37 : .57);
+    const releaseAt = .36;
+    const settleAt = .69;
+    final winding = energy < releaseAt;
+    final releasing = energy >= releaseAt && energy < settleAt;
+    final releaseAge = releasing
+        ? (energy - releaseAt) / (settleAt - releaseAt) * .22
+        : null;
+    final dash = glyph == _OpenGlyph.trail && releasing;
+    final spring = scene.hero == LiteHero.ashley && (winding || releasing);
+    final windup = _inkEase(energy / releaseAt);
+    final push =
+        _inkEase((energy - releaseAt) / .09) *
+        (1 - _inkEase((energy - .49) / .34));
     canvas.saveLayer(
       Rect.fromCenter(center: panel, width: spread * 3.4, height: spread * 4),
       Paint()..color = Colors.white.withValues(alpha: fade),
     );
     canvas.translate(panel.dx, panel.dy);
     canvas.scale(scale * facing, scale * _isometricY);
+    if (!reduceMotion) {
+      // Rock around the feet so the weight shifts without sliding the sprite.
+      final recoil = windup * (1 - _inkEase((energy - releaseAt) / .09));
+      canvas.rotate(-.12 * recoil + .15 * push);
+    }
     _hero(
       canvas,
       look,
@@ -159,22 +219,27 @@ void _paintOpenCutscene(
       run.time,
       hero: scene.hero,
       sprites: arena._heroSprites,
-      figureArt: scene.actorId == 0 && scene.hero == run.hero
-          ? arena.heroFrames
-          : null,
+      figureArt: scene.hostile
+          ? (scene.hero == LiteHero.evasore &&
+                    _hasDefaultAppearance(sourceLook, scene.hero)
+                ? arena._heroSprites.evasore
+                : null)
+          : (host && scene.hero == run.hero ? arena.heroFrames : null),
       poseArt: arena._poses(look),
       heads: arena._heads(look),
       gearArt: arena.weapons[equipment],
-      mimic: host ? run.mimic : fighter?.mimic,
-      night: host ? run.night : fighter?.night,
-      giant: host ? run.plagueForm : fighter?.plagueForm ?? false,
-      preparingTalent:
-          scene.hero == LiteHero.ashley && energy > .38 && energy < .87,
-      springRemaining: energy < .74 ? .22 : .049,
-      dashing: glyph == _OpenGlyph.trail && energy > .42,
-      attackElapsed: energy > .35 && energy < .78 ? (energy - .35) * .48 : null,
-      releaseAge: energy > .35 && energy < .78 ? (energy - .35) * .48 : null,
-      openAge: energy * .39,
+      mimic: host ? run.mimic : ally?.mimic,
+      night: host ? run.night : ally?.night,
+      giant: host ? run.plagueForm : ally?.plagueForm ?? false,
+      preparingTalent: spring,
+      springRemaining: winding ? .22 : .049,
+      dashing: dash,
+      preparingAttack: winding && !spring,
+      attackElapsed: winding
+          ? equipment.chargeSeconds * windup
+          : (dash ? null : releaseAge),
+      releaseAge: dash ? null : releaseAge,
+      openAge: scene.hero == LiteHero.assassino ? energy * .39 : -1,
       aiming: Offset(direction.dx.abs(), direction.dy * facing),
     );
     canvas.restore();

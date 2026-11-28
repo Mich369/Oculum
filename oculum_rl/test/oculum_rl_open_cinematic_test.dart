@@ -1,7 +1,12 @@
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oculum_rl/game/oculum_lite_run.dart';
+import 'package:oculum_rl/widgets/oculum_lite_appearance.dart';
+import 'package:oculum_rl/widgets/oculum_lite_arena.dart';
 
 const origin = Point<double>(14, 11);
 const guestOrigin = Point<double>(14, 14);
@@ -34,7 +39,165 @@ LiteProjectile incoming(Point<double> at) => LiteProjectile(
   fromEnemy: true,
 );
 
+class _OpenCanvas extends TestRecordingCanvas {
+  @override
+  Float64List getTransform() => Matrix4.identity().storage;
+}
+
+_OpenCanvas paintedArena(WidgetTester tester) {
+  final arena = find.byType(OculumLiteArena);
+  final painter = tester
+      .widget<CustomPaint>(
+        find.descendant(of: arena, matching: find.byType(CustomPaint)),
+      )
+      .painter!;
+  final canvas = _OpenCanvas();
+  painter.paint(canvas, const Size(800, 600));
+  return canvas;
+}
+
 void main() {
+  for (final cooperative in [false, true]) {
+    testWidgets('Pyrel uses charge, strike and rest Ink poses in the '
+        '${cooperative ? "guest" : "solo"} Open', (tester) async {
+      final run =
+          LiteRun(
+              seed: 251,
+              hero: cooperative ? LiteHero.evasore : LiteHero.pyrel,
+              weapon: LiteWeapon.scettro,
+              playerCount: cooperative ? 2 : 1,
+            )
+            ..position = origin
+            ..obstacles.clear()
+            ..enemies.clear()
+            ..fauna.clear();
+      if (cooperative) {
+        expect(
+          run.addCoopFighter(
+            'pyrel',
+            'Pyrel',
+            LiteHero.pyrel,
+            LiteWeapon.scettro,
+          ),
+          isTrue,
+        );
+        run.coopFighter('pyrel')!.position = guestOrigin;
+      }
+      await tester.pumpWidget(MaterialApp(home: OculumLiteArena(run: run)));
+      final arena = tester.element(find.byType(OculumLiteArena));
+      await tester.runAsync(
+        () => precacheImage(OculumLiteArena.rosterMotion, arena),
+      );
+      await tester.pumpAndSettle();
+
+      int vignettePose() {
+        final paint = paintedArena(tester);
+        final draws = paint.invocations.where((call) {
+          if (call.invocation.memberName != #drawImageRect) return false;
+          final source = call.invocation.positionalArguments[1] as Rect;
+          final image = call.invocation.positionalArguments[0] as ui.Image;
+          return source.width * 9 == image.width &&
+              source.height * 9 == image.height &&
+              source.top / source.height == 3;
+        }).toList();
+        expect(draws.length, greaterThanOrEqualTo(2));
+        final source = draws.last.invocation.positionalArguments[1] as Rect;
+        return (source.left / source.width).round();
+      }
+
+      if (cooperative) {
+        expect(
+          run.setCoopControls(
+            'pyrel',
+            right,
+            target,
+            attack: false,
+            open: true,
+          ),
+          isTrue,
+        );
+      } else {
+        expect(run.useOpen(target), isTrue);
+      }
+      expect(run.openScene?.hero, LiteHero.pyrel);
+      run.advanceFrame(.14);
+      expect(vignettePose(), 6);
+      run.advanceFrame(.21);
+      expect(vignettePose(), 7);
+      run.advanceFrame(.24);
+      expect(vignettePose(), 0);
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
+  testWidgets('the Shadow Open vignette shows the copied guest in Shadow ink', (
+    tester,
+  ) async {
+    const guestSkin = Color(0xffcb8177);
+    const guestAccent = Color(0xff10a664);
+    const shadowAccent = Color(0xffbc7fb1);
+    final run = prepared(LiteHero.pyrel, players: 2)..enemies.clear();
+    expect(
+      run.addCoopFighter(
+        'evasore',
+        'Ospite',
+        LiteHero.evasore,
+        LiteWeapon.guanti,
+      ),
+      isTrue,
+    );
+    final guest = run.coopFighter('evasore')!..position = guestOrigin;
+    final mirror = LiteEnemy(74, LiteEnemyKind.ombra, target, 900)
+      ..mirror =
+          (LiteMirrorBuild(
+              hero: LiteHero.evasore,
+              weapon: LiteWeapon.guanti,
+              slots: [],
+              quantities: [],
+              learned: {},
+              oculum: 40,
+              damage: 12,
+              shield: 0,
+              playerId: guest.id,
+            )
+            ..openCooldown = 0
+            ..signatureCooldown = 12)
+      ..cooldown = 0;
+    run.enemies.add(mirror);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OculumLiteArena(
+          run: run,
+          guestAppearances: const {
+            'evasore': OculumLiteAppearance(
+              skin: guestSkin,
+              accent: guestAccent,
+            ),
+          },
+        ),
+      ),
+    );
+    run.advanceFrame(.04);
+    expect(run.openScene?.enemyId, mirror.id);
+    expect(run.openScene?.actorId, guest.id);
+    run.advanceFrame(.19);
+    final frames = paintedArena(tester).invocations;
+    final vignette = frames.lastIndexWhere((call) {
+      if (call.invocation.memberName != #saveLayer) return false;
+      final bounds = call.invocation.positionalArguments[0];
+      return bounds is Rect && (bounds.width - 193.8).abs() < .0001;
+    });
+    expect(vignette, isNonNegative);
+    final fills = frames.skip(vignette).expand((call) {
+      return call.invocation.positionalArguments.whereType<Paint>().map(
+        (paint) => paint.color.toARGB32(),
+      );
+    });
+    expect(fills, containsAll([guestSkin.toARGB32(), shadowAccent.toARGB32()]));
+    expect(fills, isNot(contains(guestAccent.toARGB32())));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   test('all playable Opens pause the entire solo simulation exactly once', () {
     for (final hero in LiteHero.values) {
       final run = prepared(hero);

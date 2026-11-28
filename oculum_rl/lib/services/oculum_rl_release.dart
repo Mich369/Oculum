@@ -5,6 +5,7 @@ const oculumRlRepository = 'Mich369/Oculum';
 const oculumRlReleaseApi =
     'https://api.github.com/repos/$oculumRlRepository/releases?per_page=100';
 const oculumRlMaxArchiveBytes = 512 * 1024 * 1024;
+const oculumRlMaxIndexBytes = 2 * 1024 * 1024;
 
 enum OculumRlEdition {
   normal('Windows', 'Oculum RL.exe', 'Oculum-RL-Windows.zip'),
@@ -14,6 +15,7 @@ enum OculumRlEdition {
   final String label;
   final String executable;
   final String archive;
+  String get indexAssetName => archive.replaceFirst('.zip', '.index.json');
 }
 
 class OculumRlVersion implements Comparable<OculumRlVersion> {
@@ -47,11 +49,53 @@ class OculumRlVersion implements Comparable<OculumRlVersion> {
 }
 
 class OculumRlRelease {
-  const OculumRlRelease(this.version, this.uri, this.bytes, this.sha256);
+  const OculumRlRelease(
+    this.version,
+    this.uri,
+    this.bytes,
+    this.sha256, {
+    this.index,
+  });
   final OculumRlVersion version;
   final Uri uri;
   final int bytes;
   final String sha256;
+  final OculumRlAsset? index;
+}
+
+class OculumRlAsset {
+  const OculumRlAsset(this.uri, this.bytes, this.sha256);
+
+  final Uri uri;
+  final int bytes;
+  final String sha256;
+}
+
+class OculumRlTransfer {
+  const OculumRlTransfer(this.bytes, {this.files});
+
+  final int bytes;
+  final int? files;
+}
+
+OculumRlAsset? _findAsset(List assets, String tag, String name, int maxBytes) {
+  final url =
+      'https://github.com/$oculumRlRepository/releases/download/$tag/$name';
+  for (final asset in assets.whereType<Map>()) {
+    final hash = asset['digest'];
+    final bytes = asset['size'];
+    if (asset['name'] == name &&
+        asset['state'] == 'uploaded' &&
+        asset['browser_download_url'] == url &&
+        hash is String &&
+        RegExp(r'^sha256:[a-f0-9]{64}$').hasMatch(hash) &&
+        bytes is int &&
+        bytes > 0 &&
+        bytes <= maxBytes) {
+      return OculumRlAsset(Uri.parse(url), bytes, hash.substring(7));
+    }
+  }
+  return null;
 }
 
 OculumRlRelease? selectOculumRlRelease(
@@ -81,33 +125,40 @@ OculumRlRelease? selectOculumRlRelease(
     }
     final assets = release['assets'];
     if (assets is! List) continue;
-    final validated = <OculumRlEdition, OculumRlRelease>{};
-    for (final target in OculumRlEdition.values) {
-      final url =
-          'https://github.com/$oculumRlRepository/releases/download/$tag/${target.archive}';
-      for (final asset in assets.whereType<Map>()) {
-        final hash = asset['digest'];
-        final bytes = asset['size'];
-        if (asset['name'] == target.archive &&
-            asset['state'] == 'uploaded' &&
-            asset['browser_download_url'] == url &&
-            hash is String &&
-            RegExp(r'^sha256:[a-f0-9]{64}$').hasMatch(hash) &&
-            bytes is int &&
-            bytes > 0 &&
-            bytes <= oculumRlMaxArchiveBytes) {
-          validated[target] = OculumRlRelease(
-            version,
-            Uri.parse(url),
-            bytes,
-            hash.substring(7),
-          );
-          break;
-        }
-      }
-    }
-    if (validated.length == OculumRlEdition.values.length)
-      newest = validated[edition];
+    final archives = {
+      for (final target in OculumRlEdition.values)
+        target: _findAsset(
+          assets,
+          tag,
+          target.archive,
+          oculumRlMaxArchiveBytes,
+        ),
+    };
+    if (archives.values.any((asset) => asset == null)) continue;
+
+    final hasIndexes = assets.whereType<Map>().any(
+      (asset) => OculumRlEdition.values.any(
+        (target) => asset['name'] == target.indexAssetName,
+      ),
+    );
+    final indexes = {
+      for (final target in OculumRlEdition.values)
+        target: _findAsset(
+          assets,
+          tag,
+          target.indexAssetName,
+          oculumRlMaxIndexBytes,
+        ),
+    };
+    if (hasIndexes && indexes.values.any((asset) => asset == null)) continue;
+    final archive = archives[edition]!;
+    newest = OculumRlRelease(
+      version,
+      archive.uri,
+      archive.bytes,
+      archive.sha256,
+      index: indexes[edition],
+    );
   }
   return newest;
 }

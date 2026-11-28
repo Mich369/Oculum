@@ -56,13 +56,27 @@ class OculumRlUpdates extends ChangeNotifier {
   Future<void> check() async {
     if (!supported || checking || _disposed) return;
     checking = true;
-    message = 'Controllo la disponibilità e preparo il pacchetto…';
+    message = 'Controllo la versione e confronto i file installati…';
     notifyListeners();
     try {
-      ready = await platform.prepareOculumRlUpdate(_current!, edition);
+      String? transferSummary;
+      ready = await platform.prepareOculumRlUpdate(
+        _current!,
+        edition,
+        onTransfer: (transfer) {
+          final files = transfer.files;
+          transferSummary = files == null
+              ? 'Pacchetto completo · ${transfer.bytes} byte'
+              : '$files file da aggiornare · ${transfer.bytes} byte da scaricare';
+          message = transferSummary;
+          if (!_disposed) notifyListeners();
+        },
+      );
       message = ready == null
           ? 'Hai già la versione più recente.'
-          : 'Versione $ready pronta.';
+          : transferSummary == null
+          ? 'Versione $ready pronta.'
+          : 'Versione $ready pronta. $transferSummary.';
     } on Exception {
       message = 'Aggiornamento momentaneamente non disponibile. Puoi giocare e riprovare più tardi.';
     } on StateError {

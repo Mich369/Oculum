@@ -73,6 +73,7 @@ jobs:
           path: |
             ${{ runner.temp }}/Oculum RL/candidate/Windows/
             ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows.zip
+            ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows.index.json
           if-no-files-found: error
       - uses: actions/upload-artifact@v6
         if: matrix.target == 'Windows'
@@ -81,6 +82,7 @@ jobs:
           path: |
             ${{ runner.temp }}/Oculum RL/candidate/Windows Test/
             ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows-Test.zip
+            ${{ runner.temp }}/Oculum RL/candidate/Oculum-RL-Windows-Test.index.json
           if-no-files-found: error
       - uses: actions/upload-artifact@v6
         if: matrix.target == 'Android'
