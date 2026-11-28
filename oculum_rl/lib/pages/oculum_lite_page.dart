@@ -23,6 +23,7 @@ import '../services/oculum_rl_download_stub.dart'
 import '../services/oculum_rl_updates.dart';
 import '../widgets/oculum_lite_alert_subtitle.dart';
 import '../widgets/oculum_lite_arena.dart';
+import '../widgets/oculum_lite_command_guide.dart';
 import '../widgets/oculum_lite_attributes_panel.dart';
 import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_creator.dart';
@@ -1996,7 +1997,14 @@ class _OculumLitePageState extends State<OculumLitePage>
     unawaited(_save(slot));
   }
 
-  Widget _fight(OculumLiteSaveSlot active) {
+  Widget _fight(OculumLiteSaveSlot active) => Column(
+    children: [
+      Expanded(child: _fightArena(active)),
+      OculumLiteCommandGuide(run: active.run, cooperative: false),
+    ],
+  );
+
+  Widget _fightArena(OculumLiteSaveSlot active) {
     final run = active.run;
     final blocked =
         _paused || run.shopOpen || run.finished || run.soloOpenFrozen;

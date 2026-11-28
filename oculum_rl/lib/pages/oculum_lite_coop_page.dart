@@ -11,6 +11,7 @@ import '../game/oculum_lite_coop.dart';
 import '../game/oculum_lite_run.dart';
 import '../widgets/oculum_lite_alert_subtitle.dart';
 import '../widgets/oculum_lite_arena.dart';
+import '../widgets/oculum_lite_command_guide.dart';
 import '../widgets/oculum_lite_attributes_panel.dart';
 import '../widgets/oculum_lite_floor_map.dart';
 import '../widgets/oculum_lite_grimoire_panel.dart';
@@ -228,10 +229,25 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
     } else if (key == LogicalKeyboardKey.keyC) {
       _session.toggleAssassinBox();
     } else if (key == LogicalKeyboardKey.keyG) {
-      _session.weaponTechnique();
+      if (_localHero == LiteHero.scostubandito) {
+        _session.rifleSkill();
+      } else {
+        _session.weaponTechnique();
+      }
     } else if (key == LogicalKeyboardKey.shiftLeft ||
         key == LogicalKeyboardKey.shiftRight) {
       _session.dash();
+    } else if (index >= 2 && _session.run != null) {
+      final run = _session.run!;
+      final fighter = _grimoireFighter();
+      if (liteLegacyScrollBindings(run, fighter)[index - 2]
+          case final scroll?) {
+        if (_session.host) {
+          _session.castHostScroll(index - 2);
+        } else {
+          _session.useRestScroll(scroll);
+        }
+      }
     } else {
       return KeyEventResult.ignored;
     }
@@ -479,6 +495,20 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Oculum RL · Cooperativa')),
+    bottomNavigationBar: AnimatedBuilder(
+      animation: _session,
+      builder: (context, _) {
+        final run = _session.run;
+        if (run == null || (!_session.host && _session.localFighter == null)) {
+          return const SizedBox.shrink();
+        }
+        return OculumLiteCommandGuide(
+          run: run,
+          fighter: _grimoireFighter(),
+          cooperative: true,
+        );
+      },
+    ),
     body: Focus(
       focusNode: _focus,
       autofocus: true,
@@ -674,7 +704,10 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            if (limits.maxWidth < 720)
+                            if (liteShowTouchControls(
+                              limits.maxWidth,
+                              cooperative: true,
+                            ))
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -697,7 +730,10 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                 runSpacing: 4,
                                 alignment: WrapAlignment.end,
                                 children: [
-                                  if (limits.maxWidth < 720) ...[
+                                  if (liteShowTouchControls(
+                                    limits.maxWidth,
+                                    cooperative: true,
+                                  )) ...[
                                     FilledButton.tonal(
                                       onPressed: () => _useMouseSlot(0),
                                       child: Text(
@@ -748,8 +784,8 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                           : _session.useOpen,
                                       child: Text(
                                         openRecovery > 0
-                                            ? 'Open · $openRecovery ${openRecovery == 1 ? 'stanza' : 'stanze'}'
-                                            : 'Open $openGrade · ${hero.openName}',
+                                            ? 'Spazio · Open · $openRecovery ${openRecovery == 1 ? 'stanza' : 'stanze'}'
+                                            : 'Spazio · Open $openGrade · ${hero.openName}',
                                       ),
                                     ),
                                   if (hero == LiteHero.lusierTre)
@@ -758,16 +794,6 @@ class _OculumLiteCoopPageState extends State<OculumLiteCoopPage> {
                                       child: Text(
                                         'B · Scorta · ${(mine?.supply ?? run.supply).lusierCards}/12 carte',
                                       ),
-                                    ),
-                                  if (hero == LiteHero.reGoblin)
-                                    FilledButton.tonal(
-                                      onPressed: _session.rifleSkill,
-                                      child: const Text('Richiamo reale · Q'),
-                                    ),
-                                  if (hero == LiteHero.slimeBlu)
-                                    FilledButton.tonal(
-                                      onPressed: _session.rifleSkill,
-                                      child: const Text('Scia invisibile · Q'),
                                     ),
                                   if (hero == LiteHero.scostubandito)
                                     FilledButton.tonal(

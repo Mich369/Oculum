@@ -2,6 +2,12 @@
 
 La versione Windows autonoma si avvia da `Gioca/Oculum RL.exe` nella cartella della versione attiva. Su questa installazione, `C:/Oculum App/Oculum RL/VERSIONE-ATTIVA.json` indica il percorso. Mantieni `data` e le DLL accanto all’eseguibile. Windows Test ha una cartella, uno ZIP e un profilo di salvataggio propri.
 
+## Oculum RL 0.5.2
+
+- **Comandi in partita.** La legenda resta visibile durante il gioco in solo e in cooperativa. Su desktop mostra tasti, talento, tecniche e assegnazioni del Grimorio del giocatore. Su telefono e tablet indica i gesti e mantiene visibili i pulsanti touch.
+- **Scorciatoie in cooperativa.** Le pergamene pronte si possono usare con Q, 1, 2 e 3 anche senza configurare il Grimorio. Q resta riservato a Richiamo reale e Scia invisibile quando applicabile. G fa usare allo Scostubandito il Fucile schivata, come il pulsante in partita.
+- **Verifica online.** Tre scenari su Supabase con due e sei client autenticati coprono combattimento, fuga, Grimorio, portali e rientro del Master.
+
 ## Oculum RL 0.5.1
 
 - **Aggiornamenti incrementali.** Windows e Windows Test confrontano il proprio runtime con quello dell’ultima versione. Il gioco scarica i file nuovi e cambiati e riusa gli altri, anche saltando più release.
