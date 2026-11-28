@@ -1295,34 +1295,38 @@ class OculumAuthService extends ChangeNotifier {
       provider,
       linkIdentity ? currentUser?.id : null,
     );
-    _setState(
-      OculumAuthState(
-        isAuthenticated: state.isAuthenticated,
-        isGuest: state.isGuest,
-        isLoading: true,
-        userId: state.userId,
-        provider: state.provider,
-        message: 'Controllo della connessione in corso…',
-      ),
-    );
-    final connected = await Future<bool>.sync(_connectivityCheck)
-        .timeout(const Duration(seconds: 10), onTimeout: () => false)
-        .catchError((Object _) => false);
-    if (!identical(_oauthAttempt, attempt)) return attempt.completed;
-    if (!connected) {
-      _cancelPendingOperation();
+    // The mobile browser can reach Google even when the OS interface check
+    // reports none during a handover. Let the OAuth request report its own errors.
+    if (provider != OculumAuthProvider.google) {
       _setState(
         OculumAuthState(
           isAuthenticated: state.isAuthenticated,
           isGuest: state.isGuest,
-          isLoading: false,
+          isLoading: true,
           userId: state.userId,
           provider: state.provider,
-          isOffline: true,
-          errorMessage: 'Connessione assente. Controlla la rete e riprova.',
+          message: 'Controllo della connessione in corso…',
         ),
       );
-      return false;
+      final connected = await Future<bool>.sync(_connectivityCheck)
+          .timeout(const Duration(seconds: 10), onTimeout: () => false)
+          .catchError((Object _) => false);
+      if (!identical(_oauthAttempt, attempt)) return attempt.completed;
+      if (!connected) {
+        _cancelPendingOperation();
+        _setState(
+          OculumAuthState(
+            isAuthenticated: state.isAuthenticated,
+            isGuest: state.isGuest,
+            isLoading: false,
+            userId: state.userId,
+            provider: state.provider,
+            isOffline: true,
+            errorMessage: 'Connessione assente. Controlla la rete e riprova.',
+          ),
+        );
+        return false;
+      }
     }
     if (backend.currentUser?.id != attempt.linkUserId) {
       _finishOperationWithError(
@@ -1540,6 +1544,19 @@ class OculumAuthService extends ChangeNotifier {
 
   void _handleBackendError(Object error) {
     if (_disposed || isSigningOut) return;
+    if (error is AuthException &&
+        (error.code == 'flow_state_already_used' ||
+            error.statusCode == 'flow_state_already_used' ||
+            error.message.toLowerCase().contains(
+              'state has already been used',
+            ))) {
+      if (_oauthAttempt == null && state.isAuthenticated) return;
+      if (_oauthAttempt != null && _abandonedOAuth != null) return;
+      _finishOperationWithError(
+        'Questo tentativo di accesso è già stato usato. Apri un nuovo accesso da Oculum.',
+      );
+      return;
+    }
     const invalidLinkCodes = {
       'otp_expired',
       'flow_state_expired',
@@ -1556,6 +1573,15 @@ class OculumAuthService extends ChangeNotifier {
       if (_oauthAttempt != null && _abandonedOAuth != null) return;
       _invalidAuthLink.value++;
       _finishOperationWithError(invalidAuthLinkMessage);
+      return;
+    }
+    if (_oauthAttempt != null) {
+      if (_abandonedOAuth != null) return;
+      _finishOperationWithError(
+        error is AuthException
+            ? _friendlyAuthError(error)
+            : 'Accesso non completato. Apri un nuovo tentativo da Oculum.',
+      );
       return;
     }
     _showRecoverableError(
@@ -1734,8 +1760,10 @@ class OculumAuthService extends ChangeNotifier {
     if (normalized.contains('provider') || normalized.contains('enabled')) {
       return 'Provider non configurato in Supabase.';
     }
-    if (normalized.contains('network') || normalized.contains('socket')) {
-      return 'Connessione assente. Controlla la rete e riprova.';
+    if (error is AuthRetryableFetchException ||
+        normalized.contains('network') ||
+        normalized.contains('socket')) {
+      return 'Il servizio di accesso non è raggiungibile. Riprova tra poco.';
     }
     return 'Accesso non riuscito. Verifica la configurazione e riprova.';
   }

@@ -50,6 +50,54 @@
         941
       ],
       "correction": null
+    },
+    {
+      "id": "shadow_gate_rank",
+      "name": "Porta d’ombra",
+      "slot": "B",
+      "baseSlot": "B",
+      "baseSha256": "35118eacc20df438f63983e3f6e5be5303a8d39ddc69c33e37d68cfa3c5890ad",
+      "sha256": "35118eacc20df438f63983e3f6e5be5303a8d39ddc69c33e37d68cfa3c5890ad",
+      "originalSha256": "f81562c21560f3ad50bd0560ef7675c8906222375cc5907ca567de79ecca3664",
+      "sourceWebP": "output/artwork/expressive_ink_player_20261117/shadow_gate_rank/B.webp",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/shadow_gate_rank_canon_20261128_b_35118eac.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "correction": null
+    },
+    {
+      "id": "plane_sacro",
+      "name": "Regno sacro",
+      "slot": "F",
+      "baseSlot": "F",
+      "baseSha256": "63b1e5984f0934f61f75ae49f81e9daa1a09523e82ea263585b2eb54e9bb955b",
+      "sha256": "63b1e5984f0934f61f75ae49f81e9daa1a09523e82ea263585b2eb54e9bb955b",
+      "originalSha256": "073416aaa565b4a376b796600fd3902bf47e6f0ab531833f770b5273c29560a6",
+      "sourceWebP": "output/artwork/expressive_ink_player_20261117/plane_sacro/F.webp",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/plane_sacro_canon_20261128_f_63b1e598.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "correction": null
+    },
+    {
+      "id": "element_pack_fulmine",
+      "name": "Guglie del temporale",
+      "slot": "B",
+      "baseSlot": "B",
+      "baseSha256": "27f3488297db8449af008429f41160e886543e7f8a26e841ff6d9c08a2cce441",
+      "sha256": "27f3488297db8449af008429f41160e886543e7f8a26e841ff6d9c08a2cce441",
+      "originalSha256": "459a16335bad05959fefa68fddd08ddf4c915451518ee644818ea02dd3b25b18",
+      "sourceWebP": "output/artwork/expressive_ink_player_20261117/element_pack_fulmine/B.webp",
+      "runtimeWebP": "assets/oculum/theme_stories/webp/element_pack_fulmine_canon_20261128_b_27f34882.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "correction": null
     }
   ]
 }

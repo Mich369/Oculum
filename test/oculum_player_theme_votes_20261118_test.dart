@@ -415,6 +415,27 @@ const _lot2101Votes = <_Vote>[
     originalSha256:
         'e59aaa0b9edd80e616e16bf44bced52fcf07654a0f4e57bc01cf49285040d9fe',
   ),
+  (
+    id: 'shadow_gate_rank',
+    slot: 'B',
+    sha256: '35118eacc20df438f63983e3f6e5be5303a8d39ddc69c33e37d68cfa3c5890ad',
+    originalSha256:
+        'f81562c21560f3ad50bd0560ef7675c8906222375cc5907ca567de79ecca3664',
+  ),
+  (
+    id: 'plane_sacro',
+    slot: 'F',
+    sha256: '63b1e5984f0934f61f75ae49f81e9daa1a09523e82ea263585b2eb54e9bb955b',
+    originalSha256:
+        '073416aaa565b4a376b796600fd3902bf47e6f0ab531833f770b5273c29560a6',
+  ),
+  (
+    id: 'element_pack_fulmine',
+    slot: 'B',
+    sha256: '27f3488297db8449af008429f41160e886543e7f8a26e841ff6d9c08a2cce441',
+    originalSha256:
+        '459a16335bad05959fefa68fddd08ddf4c915451518ee644818ea02dd3b25b18',
+  ),
 ];
 
 void main() {

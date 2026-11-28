@@ -4,9 +4,11 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data' show BytesBuilder;
 import 'dart:ui' show FontFeature, FrameTiming;
 import 'package:http/http.dart' as http;
 import 'services/oculum_app_update.dart';
+import 'services/oculum_android_incremental.dart';
 import 'services/oculum_update_runtime.dart';
 import 'services/oculum_update_log.dart';
 import 'widgets/oculum_update_log_dialog.dart';
@@ -39,6 +41,7 @@ import 'package:webview_windows/webview_windows.dart' as windows_webview;
 
 import 'services/oculum_auth_service.dart';
 import 'services/oculum_secure_auth_storage.dart';
+import 'services/oculum_supabase_startup.dart';
 import 'services/oculum_progression_surge.dart';
 import 'services/oculum_blind_spot.dart';
 import 'services/oculum_fate_pact.dart';
@@ -628,7 +631,7 @@ class _OculumFrameProfiler {
 
 bool _oculumStartupServicesReady = false;
 Future<void>? _oculumStartupServicesFuture;
-Future<bool>? _oculumSupabaseInitializationFuture;
+final _oculumSupabaseStartup = OculumSupabaseStartup();
 
 enum OculumStartupRole { player, master }
 
@@ -713,77 +716,81 @@ Future<bool> ensureOculumSupabaseInitialized() {
   if (OculumRealtimeService.supabaseAvailable) {
     return Future<bool>.value(true);
   }
-  final pending = _oculumSupabaseInitializationFuture;
-  if (pending != null) return pending;
-  final future = _initializeOculumSupabase();
-  _oculumSupabaseInitializationFuture = future;
-  return future.whenComplete(() {
-    _oculumSupabaseInitializationFuture = null;
-  });
+  final supabaseUrl = oculumConfiguredSupabaseUrl;
+  final supabasePublishableKey = oculumConfiguredSupabasePublishableKey;
+  if (!oculumSupabaseConfigurationIsValid(
+    url: supabaseUrl,
+    publishableKey: supabasePublishableKey,
+  )) {
+    OculumRealtimeService.startupStatus =
+        'Supabase non configurato: l\'app resta in modalità locale.';
+    return Future<bool>.value(false);
+  }
+  return _oculumSupabaseStartup.waitUntilReady(
+    startSdk: () => _startOculumSupabase(supabaseUrl, supabasePublishableKey),
+    disposeIncompleteSdk: _disposeIncompleteOculumSupabase,
+    timeout: const Duration(seconds: 10),
+    onWaitExpired: () {
+      OculumRealtimeService.startupStatus =
+          'Supabase in preparazione: l\'app resta reattiva.';
+    },
+    onError: (error) {
+      OculumRealtimeService.startupStatus =
+          'Supabase non disponibile: l\'app resta locale.';
+      debugPrint(
+        'Supabase initialization failed (${error.runtimeType}); local mode remains active.',
+      );
+    },
+  );
 }
 
-Future<bool> _initializeOculumSupabase() async {
-  if (oculumSmokeStorageActive) return false;
-  try {
-    try {
-      Supabase.instance.client;
-      OculumRealtimeService.supabaseAvailable = true;
-      OculumRealtimeService.startupStatus = 'Supabase pronto.';
-      return true;
-    } catch (_) {}
-
-    final supabaseUrl = oculumConfiguredSupabaseUrl;
-    final supabasePublishableKey = oculumConfiguredSupabasePublishableKey;
-
-    if (!oculumSupabaseConfigurationIsValid(
-      url: supabaseUrl,
-      publishableKey: supabasePublishableKey,
-    )) {
-      OculumRealtimeService.supabaseAvailable = false;
-      OculumRealtimeService.startupStatus =
-          'Supabase non configurato: l\'app resta in modalità locale.';
-      return false;
-    }
-
-    final projectRef = Uri.parse(supabaseUrl).host.split('.').first;
-    final sessionKey = oculumAuthSessionStorageKey(projectRef, browser: kIsWeb);
-    final sessionStorage = OculumSessionStorage(persistSessionKey: sessionKey);
-    final oauthStorage = OculumOAuthPkceStorage(
-      kIsWeb
-          ? SharedPreferencesGotrueAsyncStorage()
-          : OculumSecurePkceStorage(namespace: sessionKey),
-    );
+Future<OculumBindSupabaseAuth> _startOculumSupabase(
+  String supabaseUrl,
+  String supabasePublishableKey,
+) async {
+  final projectUrl = Uri.parse(supabaseUrl);
+  final projectRef = projectUrl.host.split('.').first;
+  final sessionKey = oculumAuthSessionStorageKey(projectRef, browser: kIsWeb);
+  final sessionStorage = OculumSessionStorage(persistSessionKey: sessionKey);
+  final oauthStorage = OculumOAuthPkceStorage(
+    kIsWeb
+        ? SharedPreferencesGotrueAsyncStorage()
+        : OculumSecurePkceStorage(namespace: sessionKey),
+  );
+  await Supabase.initialize(
+    url: supabaseUrl,
+    publishableKey: supabasePublishableKey,
+    debug: false,
+    authOptions: FlutterAuthClientOptions(
+      localStorage: sessionStorage,
+      pkceAsyncStorage: oauthStorage,
+      authFlowType: AuthFlowType.pkce,
+      autoRefreshToken: true,
+      detectSessionInUri: true,
+    ),
+  );
+  return () async {
     OculumAuthService.sessionStorage = sessionStorage;
-    await Supabase.initialize(
-      url: supabaseUrl,
-      publishableKey: supabasePublishableKey,
-      debug: false,
-      authOptions: FlutterAuthClientOptions(
-        localStorage: sessionStorage,
-        pkceAsyncStorage: oauthStorage,
-        authFlowType: AuthFlowType.pkce,
-        autoRefreshToken: true,
-        detectSessionInUri: true,
-      ),
-    ).timeout(const Duration(seconds: 10));
-    OculumRealtimeService.supabaseAvailable = true;
-    OculumRealtimeService.startupStatus = 'Supabase pronto.';
     await OculumAuthService.instance.initialize(
       supabaseReady: true,
       oauthStorage: oauthStorage,
-      projectUrl: Uri.parse(supabaseUrl),
+      projectUrl: projectUrl,
       publishableKey: supabasePublishableKey,
     );
-    return true;
-  } catch (error) {
-    OculumRealtimeService.supabaseAvailable = false;
-    OculumRealtimeService.startupStatus =
-        'Supabase offline: l\'app resta locale.';
-    debugPrint(
-      'Supabase initialization failed (${error.runtimeType}); local mode remains active.',
-    );
-    return false;
+    OculumRealtimeService.supabaseAvailable = true;
+    OculumRealtimeService.startupStatus = 'Supabase pronto.';
+  };
+}
+
+Future<void> _disposeIncompleteOculumSupabase() async {
+  final Supabase sdk;
+  try {
+    sdk = Supabase.instance;
+  } on AssertionError {
+    // The SDK failed before creating a client in a debug build.
+    return;
   }
+  if (sdk.isInitialized) await sdk.dispose();
 }
 
 String oculumClientPlatformLabel() {

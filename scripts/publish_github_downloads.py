@@ -1,7 +1,8 @@
 """Mirror platform packages from successful builds to immutable GitHub Releases.
 
 Only metadata is merged into the central download page; old releases survive.
-Never execute or extract downloaded artifacts. Tokens stay in GH_TOKEN.
+The optional Android index reads only the signed, expected APK member of a
+verified archive. The publisher never runs artifact content. Tokens stay in GH_TOKEN.
 """
 import hashlib
 import base64
@@ -9,19 +10,26 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
 from time import sleep, time_ns
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener, urlopen
 from zipfile import BadZipFile, ZIP_DEFLATED, ZipFile, ZipInfo
 
 try:
     from scripts import oculum_incremental_publish
 except ModuleNotFoundError:
     import oculum_incremental_publish
+try:
+    from scripts import oculum_android_incremental_publish, verify_android_signing
+except ImportError:
+    import oculum_android_incremental_publish
+    import verify_android_signing
 
 REPO = os.environ.get("GH_REPO", "Mich369/Oculum")
 CHANNEL = "oculum-downloads"
@@ -49,6 +57,10 @@ WINDOWS_BOOTSTRAP_SCRIPTS = (
     "Oculum-Aggiornamento-Incrementale.ps1", "incremental_driver.ps1",
     "oculum_incremental_windows.ps1", "update.ps1",
 )
+ANDROID_APK_ASSET = oculum_android_incremental_publish.ANDROID_APK_ASSET
+ANDROID_MANIFEST_ASSET = oculum_android_incremental_publish.ANDROID_MANIFEST_ASSET
+ANDROID_INCREMENTAL_ASSETS = {ANDROID_APK_ASSET, ANDROID_MANIFEST_ASSET}
+ANDROID_ARTIFACT_MEMBERS = {"Oculum-Android-release.apk", "distribution/Oculum-Android-release.apk"}
 
 
 def gh(*args, **kwargs):
@@ -146,7 +158,7 @@ def verified_release_assets(released, tag, commit, expected):
     verified = set()
     for asset in released.get("assets", []):
         name = asset.get("name")
-        if name in WINDOWS_MANIFEST_NAMES or name == WINDOWS_BOOTSTRAP_ASSET:
+        if name in WINDOWS_MANIFEST_NAMES or name in ANDROID_INCREMENTAL_ASSETS or name == WINDOWS_BOOTSTRAP_ASSET:
             continue  # verified separately before any incremental option is advertised
         entry = expected.get(name)
         if (entry is None or name in verified or asset.get("state") != "uploaded"
@@ -155,6 +167,117 @@ def verified_release_assets(released, tag, commit, expected):
             raise ValueError(f"Release asset does not match the verified artifact: {name}")
         verified.add(name)
     return verified
+
+
+def download_verified_archive(artifact, entry, path):
+    with path.open("wb") as stream:
+        gh("api", f"repos/{REPO}/actions/artifacts/{artifact['id']}/zip", stdout=stream)
+    with path.open("rb") as stream:
+        digest = "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
+    if path.stat().st_size != entry["bytes"] or entry["sha256"] != digest:
+        raise ValueError(f"Artifact integrity check failed: {path.name}")
+
+
+def prepare_android_incremental(archive_path, output, run):
+    """Extract the single expected APK, then verify its pinned, compiled identity."""
+    version = 100000 + run["run_number"]
+    apk_path = output / ANDROID_APK_ASSET
+    with ZipFile(archive_path) as archive:
+        members = [item for item in archive.infolist() if item.orig_filename in ANDROID_ARTIFACT_MEMBERS]
+        if len(members) != 1:
+            raise ValueError("Official Android artifact must contain exactly one release APK")
+        member, = members
+        if (stat.S_IFMT(member.external_attr >> 16) not in (0, stat.S_IFREG)
+                or not 0 < member.file_size < 2 ** 31):
+            raise ValueError("Official Android artifact APK is not a supported regular file")
+        with archive.open(member) as source, apk_path.open("xb") as destination:
+            shutil.copyfileobj(source, destination, length=1024 ** 2)
+    sdk = os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME")
+    java = shutil.which("java")
+    if not sdk or not java:
+        raise ValueError("Android incremental publishing requires Android SDK build-tools and Java")
+    identity = api(f"contents/android/signing-certificate.sha256?ref={run['head_sha']}")
+    certificate = base64.b64decode(identity["content"]).decode("ascii").strip().lower()
+    proof = verify_android_signing.verify_apk(apk_path, Path(sdk), java, certificate, version)
+    if not proof["signatureVerified"] or proof["versionCode"] != version:
+        raise ValueError("Signed Android APK version does not match the verified build run number")
+    base_url = f"https://github.com/{REPO}/releases/download/oculum-build-{run['id']}"
+    manifest = oculum_android_incremental_publish.build_android_range_manifest(
+        apk_path, commit=run["head_sha"], run_id=run["id"], android_version_code=version,
+        package={"url": f"{base_url}/{ANDROID_APK_ASSET}", "bytes": proof["apkBytes"],
+                 "sha256": proof["apkSha256"]}, repository=REPO,
+    )
+    raw = oculum_android_incremental_publish.serialize_android_range_manifest(manifest)
+    if not 0 < len(raw) <= MAX_INCREMENTAL_MANIFEST_BYTES:
+        raise ValueError("Android range manifest exceeds the distribution limit")
+    manifest_path = output / ANDROID_MANIFEST_ASSET
+    manifest_path.write_bytes(raw)
+    catalog = {"artifact": "Oculum-Android", "edition": "android",
+               "url": f"{base_url}/{ANDROID_MANIFEST_ASSET}", "bytes": len(raw),
+               "sha256": "sha256:" + hashlib.sha256(raw).hexdigest(),
+               "package": {**manifest["apk"], "sha256": "sha256:" + proof["apkSha256"]}}
+    return manifest, raw, catalog
+
+
+def matching_android_assets(released, catalog):
+    """Check existing assets without replacing any published bytes."""
+    expected = {ANDROID_MANIFEST_ASSET: catalog, ANDROID_APK_ASSET: catalog["package"]}
+    matched = set()
+    for asset in (released or {}).get("assets", []):
+        name = asset.get("name")
+        if name not in expected:
+            continue
+        entry = expected[name]
+        if (name in matched or asset.get("state") != "uploaded"
+                or (asset.get("browser_download_url"), asset.get("size"), asset.get("digest"))
+                != (entry["url"], entry["bytes"], entry["sha256"])):
+            raise ValueError(f"Existing Android incremental asset differs: {name}")
+        matched.add(name)
+    return matched
+
+
+def _android_public_asset(opener, url, size, digest, *, position=None, apk_size=None):
+    headers = {"Accept-Encoding": "identity", "Cache-Control": "no-cache",
+               "User-Agent": "Oculum-public-range-check"}
+    if position is not None:
+        end = position + size - 1
+        headers["Range"] = f"bytes={position}-{end}"
+    for delay in (2, 5, None):
+        try:
+            with opener.open(Request(url, headers=headers), timeout=60) as response:
+                if response.headers.get("Content-Encoding", "identity").lower() != "identity":
+                    raise ValueError("Public Android asset uses unexpected content encoding")
+                if position is None and response.status != 200:
+                    raise ValueError("Public Android manifest is unavailable")
+                if position is not None and (response.status != 206
+                        or response.headers.get("Content-Range") != f"bytes {position}-{end}/{apk_size}"):
+                    raise ValueError("Public Android APK did not return the exact partial range")
+                raw = response.read(size + 1)
+            if len(raw) != size or hashlib.sha256(raw).hexdigest() != digest:
+                raise ValueError("Public Android incremental bytes differ from the verified artifact")
+            return raw
+        except (URLError, TimeoutError) as error:
+            if delay is None or (isinstance(error, HTTPError) and error.code not in {408, 429, 500, 502, 503, 504}):
+                raise RuntimeError("Anonymous Android incremental asset request failed") from error
+            sleep(delay)
+
+
+def verify_public_android_incremental(manifest, raw, catalog):
+    """Verify the exact manifest and multiple signed-APK ranges anonymously."""
+    opener = build_opener(oculum_incremental_publish._GithubRedirect())
+    downloaded = _android_public_asset(
+        opener, catalog["url"], catalog["bytes"], catalog["sha256"].removeprefix("sha256:"),
+    )
+    if downloaded != raw or json.loads(downloaded) != manifest:
+        raise ValueError("Public Android range manifest does not match the verified build")
+    segments = manifest["segments"]
+    first_member = next((segment for segment in segments if "member" in segment), None)
+    if first_member is None or len(segments) < 3 or "member" in segments[-1]:
+        raise ValueError("Too few APK regions to verify published Range support")
+    package = manifest["apk"]
+    for segment in (segments[0], first_member, segments[-1]):
+        _android_public_asset(opener, package["url"], segment["bytes"], segment["sha256"],
+                              position=segment["offset"], apk_size=package["bytes"])
 
 
 def read_incremental_release_assets(released, tag, revision, run_id, expected):
@@ -333,11 +456,17 @@ def resolve_run_id(run_id):
     raise ValueError("No successful trusted Build distribution available to publish")
 
 
-def publish(run_id, *, incremental_updates=False):
+def publish(run_id, *, incremental_updates=False, android_incremental_updates=False):
     run_id = resolve_run_id(run_id)
     run = api(f"actions/runs/{run_id}")
     workflow = api(f"actions/workflows/{run['workflow_id']}")
     validate_run(run, workflow)
+    if android_incremental_updates:
+        if (run["head_branch"] != PUBLIC_BRANCH or type(run.get("id")) is not int
+                or str(run["id"]) != run_id or resolve_run_id(None) != run_id):
+            raise ValueError("Android incremental publishing requires the latest verified main build")
+        if type(run.get("run_number")) is not int or not 0 < run["run_number"] < (2 ** 31) - 100000:
+            raise ValueError("Latest main build lacks a valid Android run number")
     workflow_id = run["workflow_id"]
     artifacts = []
     page = 1
@@ -369,6 +498,15 @@ def publish(run_id, *, incremental_updates=False):
         present = verified_release_assets(existing, tag, run["head_sha"], expected)
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
+        android = None
+        android_archive_path = root / "Oculum-Android.zip"
+        if android_incremental_updates:
+            android_artifact = next(artifact for artifact in selected if artifact["name"] == "Oculum-Android")
+            download_verified_archive(android_artifact, expected[android_archive_path.name], android_archive_path)
+            android = prepare_android_incremental(android_archive_path, root, run)
+            matching_android_assets(existing, android[2])
+            if android_archive_path.name in present:
+                android_archive_path.unlink()
         if not existing:
             gh("release", "create", tag, "--repo", REPO, "--target", run["head_sha"],
                "--title", f"{run['name']} — {run['head_sha'][:7]}", "--prerelease",
@@ -383,12 +521,8 @@ def publish(run_id, *, incremental_updates=False):
             if filename in present and not make_index:
                 continue
             path = root / filename
-            with path.open("wb") as stream:
-                gh("api", f"repos/{REPO}/actions/artifacts/{artifact['id']}/zip", stdout=stream)
-            with path.open("rb") as stream:
-                digest = "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
-            if path.stat().st_size != entry["bytes"] or entry["sha256"] != digest:
-                raise ValueError(f"Artifact integrity check failed: {filename}")
+            if path != android_archive_path or not android_incremental_updates:
+                download_verified_archive(artifact, entry, path)
             if filename not in present:
                 gh("release", "upload", tag, str(path), "--repo", REPO)
             if make_index:
@@ -448,6 +582,23 @@ def publish(run_id, *, incremental_updates=False):
         if newer_run_exists or not can_promote_channel(catalog, run_id):
             print("Archived verified build without rolling back the public channel")
             return
+        if android is not None:
+            android_manifest, android_raw, android_entry = android
+            already_present = matching_android_assets(published, android_entry)
+            for filename in (ANDROID_APK_ASSET, ANDROID_MANIFEST_ASSET):
+                if filename not in already_present:
+                    gh("release", "upload", tag, str(root / filename), "--repo", REPO)
+            published = release(tag)
+            if (verified_release_assets(published, tag, run["head_sha"], expected) != set(expected)
+                    or matching_android_assets(published, android_entry) != ANDROID_INCREMENTAL_ASSETS):
+                raise ValueError("Versioned release is missing verified Android incremental assets")
+            verify_public_android_incremental(android_manifest, android_raw, android_entry)
+            incremental_entries.append(android_entry)
+        elif any(item.get("runId") == run["id"] and item.get("commit") == run["head_sha"]
+                 and any(entry.get("edition") == "android" for entry in item.get("incremental", []))
+                 for item in catalog.values()):
+            # A repeated automatic job must preserve an explicitly verified opt-in on this exact build.
+            return
         # The channel points to one latest platform build. Versioned releases
         # and their historical archives remain available at their own tags.
         catalog = {str(workflow_id): {
@@ -474,5 +625,5 @@ def publish(run_id, *, incremental_updates=False):
 
 
 if __name__ == "__main__":
-    publish(sys.argv[1], incremental_updates="--incremental-windows" in sys.argv[2:])
-
+    publish(sys.argv[1], incremental_updates="--incremental-windows" in sys.argv[2:],
+            android_incremental_updates="--incremental-android" in sys.argv[2:])

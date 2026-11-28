@@ -2,6 +2,87 @@ part of '../../main.dart';
 
 // ignore_for_file: invalid_use_of_protected_member
 
+const _oculumAndroidUpdateChannel = MethodChannel('com.mich.oculum/update');
+
+Future<OculumAndroidIncrementalPlan?> _oculumPrepareAndroidUpdate(
+  http.Client client,
+  OculumAppUpdate update,
+) async {
+  final reference = update.incremental;
+  if (reference == null || reference.edition != 'android') return null;
+  final installed = await _oculumAndroidUpdateChannel
+      .invokeMapMethod<String, Object?>('installedApk');
+  final source = installed?['path'];
+  final version = installed?['versionCode'];
+  if (source is! String || source.isEmpty || version is! int) return null;
+
+  var uri = Uri.parse(reference.url);
+  for (var redirects = 0; redirects < 5; redirects++) {
+    if (uri.scheme != 'https' ||
+        uri.port != 443 ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasFragment ||
+        !const {
+          'github.com',
+          'release-assets.githubusercontent.com',
+          'objects.githubusercontent.com',
+        }.contains(uri.host)) {
+      throw StateError('Indirizzo del manifesto Android non valido.');
+    }
+    final request = http.Request('GET', uri)..followRedirects = false;
+    request.headers['Accept-Encoding'] = 'identity';
+    final response = await client
+        .send(request)
+        .timeout(const Duration(seconds: 25));
+    if (const {301, 302, 303, 307, 308}.contains(response.statusCode)) {
+      final location = response.headers['location'];
+      await response.stream.listen(null).cancel();
+      if (location == null || location.isEmpty) break;
+      uri = uri.resolve(location);
+      continue;
+    }
+    final length = response.contentLength;
+    if (response.statusCode != 200 ||
+        (length != null && length != reference.bytes) ||
+        !const {
+          null,
+          'identity',
+        }.contains(response.headers['content-encoding'])) {
+      await response.stream.listen(null).cancel();
+      throw StateError('Manifesto Android non disponibile.');
+    }
+    final bytes = BytesBuilder(copy: false);
+    await for (final chunk in response.stream.timeout(
+      const Duration(seconds: 30),
+    )) {
+      if (bytes.length + chunk.length > reference.bytes) {
+        throw StateError('Dimensione del manifesto Android non valida.');
+      }
+      bytes.add(chunk);
+    }
+    if (bytes.length != reference.bytes) {
+      throw StateError('Dimensione del manifesto Android non valida.');
+    }
+    final plan = await OculumAndroidIncrementalPlan.prepare(
+      manifestBytes: bytes.takeBytes(),
+      manifestSha256: reference.sha256,
+      commit: update.commit,
+      runId: update.runId,
+      apkUrl: Uri.parse(reference.packageUrl),
+      apkBytes: reference.packageBytes,
+      apkSha256: reference.packageSha256,
+      installedApk: File(source),
+      installedVersionCode: version,
+    );
+    return plan.isNoOp ||
+            (plan.canStage &&
+                plan.downloadBytes + reference.bytes < update.bytes)
+        ? plan
+        : null;
+  }
+  throw StateError('Manifesto Android non disponibile.');
+}
+
 class _OculumWindowsUpdatePlan {
   const _OculumWindowsUpdatePlan(this.work, this.config, this.preview);
 
@@ -193,7 +274,7 @@ Future<bool> oculumConfirmAppUpdate(
   BuildContext context, {
   required String description,
   bool incremental = false,
-  String? windowsFullSize,
+  String? fullArchiveSize,
 }) async {
   return await showDialog<bool>(
         context: context,
@@ -202,14 +283,14 @@ Future<bool> oculumConfirmAppUpdate(
           content: SingleChildScrollView(child: Text(description)),
           actions: [
             TextButton(
-              autofocus: windowsFullSize != null,
+              autofocus: fullArchiveSize != null,
               onPressed: () => Navigator.pop(dialog),
               child: const Text('Dopo'),
             ),
-            if (windowsFullSize != null)
+            if (fullArchiveSize != null)
               TextButton(
                 onPressed: () => Navigator.pop(dialog, true),
-                child: Text('Pacchetto intero ($windowsFullSize)'),
+                child: Text('Pacchetto intero ($fullArchiveSize)'),
               )
             else
               FilledButton(
@@ -403,6 +484,7 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
     final client = http.Client();
 
     Directory? staging;
+    File? androidCandidate;
     _OculumWindowsUpdatePlan? windowsPlan;
     OculumAppUpdate? selectedUpdate;
     var stage = 'checking';
@@ -470,6 +552,21 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       if (!mounted) return;
 
       final windows = !kIsWeb && Platform.isWindows;
+      final android = !kIsWeb && Platform.isAndroid;
+      OculumAndroidIncrementalPlan? androidPlan;
+      if (android && update.incremental != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Confronto del pacchetto Android installato…'),
+          ),
+        );
+        try {
+          androidPlan = await _oculumPrepareAndroidUpdate(client, update);
+        } catch (_) {
+          // The full archive stays a separate, explicitly sized action.
+        }
+        if (!mounted) return;
+      }
       if (windows && update.incremental != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -484,7 +581,7 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
         if (!mounted) return;
       }
       final plan = windowsPlan;
-      if (plan?.isNoOp == true) {
+      if (plan?.isNoOp == true || androidPlan?.isNoOp == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -500,18 +597,23 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
           : plan != null
           ? '${plan.changed} file da aggiornare, ${plan.removed} obsoleti da rimuovere. '
                 'Download di ${plan.files} file per ${_oculumUpdateMegabytes(plan.bytes)}.'
-          : windows
-          ? 'Confronto incrementale non disponibile. Puoi riprovare più tardi o scegliere il pacchetto intero.'
-          : Platform.isAndroid
-          ? 'Scarica 1 pacchetto ($fullSize) e apre la conferma Android per l’APK firmato.'
+          : androidPlan != null
+          ? 'Scarica ${androidPlan.changedCount} parti per '
+                '${_oculumUpdateMegabytes(androidPlan.downloadBytes)} e apre '
+                'la conferma Android per l’APK firmato.'
+          : windows || android
+          ? 'Aggiornamento incrementale non disponibile. Puoi riprovare più tardi o scegliere il pacchetto intero.'
           : 'Scarica 1 pacchetto completo ($fullSize) e conserva un backup del runtime.';
       final confirmed = await oculumConfirmAppUpdate(
         context,
         description:
             'Nuova versione ${update.commit.substring(0, 7)}. $description '
             'I salvataggi vengono conservati.',
-        incremental: plan != null,
-        windowsFullSize: windows && plan == null ? fullSize : null,
+        incremental: plan != null || androidPlan != null,
+        fullArchiveSize:
+            (windows || android) && plan == null && androidPlan == null
+            ? fullSize
+            : null,
       );
 
       if (!confirmed || !mounted) return;
@@ -627,7 +729,20 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       final archive = File('${staging!.path}/release.zip');
       String? incrementalRuntime;
 
-      if (incremental != null) {
+      if (androidPlan != null) {
+        await reportStage('downloading', 'Preparazione dell’APK incrementale…');
+        androidCandidate = await androidPlan.stage(
+          workDirectory: staging,
+          client: client,
+          onProgress: (received, total) => progress.value = (
+            message: total == 0 || received == total
+                ? 'Verifica dell’APK ricostruito…'
+                : 'Download: ${_oculumUpdateMegabytes(received)} / '
+                      '${_oculumUpdateMegabytes(total)}',
+            value: total == 0 || received == total ? null : received / total,
+          ),
+        );
+      } else if (incremental != null) {
         await reportStage(
           'downloading',
           'Download e verifica dei file modificati…',
@@ -707,31 +822,18 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
         'preparing',
         'Preparazione dell’installazione verificata…',
       );
-      final config = File('${staging.path}/update.json');
-
-      final executable = File(Platform.resolvedExecutable).absolute.path;
-
-      await config.writeAsString(
-        jsonEncode({
-          if (incremental == null) 'archive': archive.absolute.path,
-          if (incremental != null) ...incremental.config,
-          'incrementalRuntime': ?incrementalRuntime,
-          'work': staging.absolute.path,
-          'executable': executable,
-          'pid': pid,
-          'platform': Platform.operatingSystem,
-          'commit': update.commit,
-          'edition': oculumUsesIsolatedSaveProfile ? 'test' : 'normal',
-          'startupTimeoutSeconds': 45,
-          'attemptId': staging.uri.pathSegments.where((s) => s.isNotEmpty).last,
-        }),
-        flush: true,
-      );
-
-      if (Platform.isAndroid) {
-        final installerStatus = await const MethodChannel(
-          'com.mich.oculum/update',
-        ).invokeMethod<String>('installApk', {'archive': archive.path});
+      if (android) {
+        final installerStatus = androidPlan == null
+            ? await _oculumAndroidUpdateChannel.invokeMethod<String>(
+                'installApk',
+                {'archive': archive.path},
+              )
+            : await _oculumAndroidUpdateChannel
+                  .invokeMethod<String>('installIncrementalApk', {
+                    'apk': androidCandidate!.path,
+                    'sha256': androidPlan.apkSha256,
+                    'versionCode': androidPlan.versionCode,
+                  });
         if (installerStatus != 'installer_opened' &&
             installerStatus != 'installer_permission_required') {
           throw StateError(
@@ -758,6 +860,27 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
 
         return;
       }
+
+      final config = File('${staging.path}/update.json');
+
+      final executable = File(Platform.resolvedExecutable).absolute.path;
+
+      await config.writeAsString(
+        jsonEncode({
+          if (incremental == null) 'archive': archive.absolute.path,
+          if (incremental != null) ...incremental.config,
+          'incrementalRuntime': ?incrementalRuntime,
+          'work': staging.absolute.path,
+          'executable': executable,
+          'pid': pid,
+          'platform': Platform.operatingSystem,
+          'commit': update.commit,
+          'edition': oculumUsesIsolatedSaveProfile ? 'test' : 'normal',
+          'startupTimeoutSeconds': 45,
+          'attemptId': staging.uri.pathSegments.where((s) => s.isNotEmpty).last,
+        }),
+        flush: true,
+      );
 
       final helper = File(
         '${staging.path}/${Platform.isWindows ? 'update.ps1' : 'update.py'}',
@@ -845,6 +968,17 @@ extension _OculumAppUpdateUi on _OculumHomePageState {
       }
     } finally {
       client.close();
+      final candidate = androidCandidate;
+      if (candidate != null) {
+        try {
+          if (await FileSystemEntity.type(candidate.path, followLinks: false) ==
+              FileSystemEntityType.file) {
+            await candidate.delete();
+          }
+        } catch (_) {
+          // Native Android owns the candidate after it moves it to the installer.
+        }
+      }
       if (progressRoute?.isActive ?? false) {
         progressRoute!.navigator?.removeRoute(progressRoute);
       }

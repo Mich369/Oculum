@@ -161,6 +161,64 @@ void main() {
       expect(fallback.incremental, isNull);
     },
   );
+  test('Android increment requires its own verified APK ranges', () async {
+    const base =
+        'https://github.com/Mich369/Oculum/releases/download/oculum-build-123';
+    final response = jsonDecode(release()) as Map;
+    const marker = '<!-- OCULUM_DOWNLOADS:';
+    final catalog =
+        jsonDecode(
+              (response['body'] as String)
+                  .split(marker)
+                  .last
+                  .split(' -->')
+                  .first,
+            )
+            as Map;
+    final group = catalog['1'] as Map;
+    final apk = <String, Object>{
+      'url': '$base/Oculum-Android-Incrementale.apk',
+      'bytes': 200,
+      'sha256': 'sha256:${'e' * 64}',
+    };
+    group['incremental'] = [
+      {
+        'artifact': 'Oculum-Android',
+        'edition': 'android',
+        'bytes': 20,
+        'sha256': 'sha256:${'f' * 64}',
+        'url': '$base/Oculum-Android-Incrementale.json',
+        'package': apk,
+      },
+    ];
+    final client = MockClient(
+      (request) async => http.Response(
+        request.url.path.contains('/compare/')
+            ? jsonEncode({'status': 'ahead'})
+            : jsonEncode({
+                'draft': false,
+                'body': '$marker${jsonEncode(catalog)} -->',
+              }),
+        200,
+      ),
+    );
+    addTearDown(client.close);
+    Future<OculumAppUpdate?> check() =>
+        oculumCheckAppUpdate(client, 'Oculum-Android', currentCommit: old);
+
+    final update = await check();
+    expect(update!.url, '$base/Oculum-Android.zip');
+    expect(update.incremental!.edition, 'android');
+    expect(update.incremental!.packageUrl, apk['url']);
+    expect(update.incremental!.packageBytes, 200);
+    expect(update.incremental!.packageSha256, 'e' * 64);
+
+    apk['url'] = '$base/Oculum-Android-AAB.zip';
+    final fallback = await check();
+    expect(fallback!.url, '$base/Oculum-Android.zip');
+    expect(fallback.incremental, isNull);
+  });
+
   test(
     'historical index must belong to the installed commit and edition',
     () async {

@@ -11,6 +11,10 @@ on:
         required: false
         default: ''
         type: string
+      android_incremental_updates:
+        description: 'Publish signed Android incremental assets for the latest verified main run'
+        type: boolean
+        default: true
 permissions:
   contents: read
 concurrency:
@@ -20,7 +24,7 @@ jobs:
   publish:
     if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request' && github.event.workflow_run.event != 'pull_request_target' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
     permissions:
       actions: read
       contents: write
@@ -33,9 +37,39 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s scripts/tests -p test_publish_github_downloads.py
+      - run: python -m unittest discover -s scripts/tests -p '*android_incremental_publish.py'
       - name: Mirror verified artifacts and update public download page
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id || '' }}
           GH_REPO: ${{ github.repository }}
         run: python scripts/publish_github_downloads.py "$SOURCE_RUN_ID" --incremental-windows
+      - name: Identify a compatible latest Android client build
+        id: android
+        if: (github.event_name == 'workflow_dispatch' && inputs.android_incremental_updates) || github.event.workflow_run.head_branch == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id || '' }}
+        run: |
+          run_id="$(python -c 'from scripts.publish_github_downloads import resolve_run_id; print(resolve_run_id(None))')"
+          if [[ -n "$SOURCE_RUN_ID" && "$SOURCE_RUN_ID" != "$run_id" ]]; then
+            exit 0
+          fi
+          revision="$(gh api "repos/$GH_REPO/actions/runs/$run_id" --jq .head_sha)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          if gh api "repos/$GH_REPO/contents/lib/services/oculum_android_incremental.dart?ref=$revision" --silent; then
+            echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v5
+        if: steps.android.outputs.run_id != ''
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Publish and verify signed Android incremental assets
+        if: steps.android.outputs.run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ANDROID_RUN_ID: ${{ steps.android.outputs.run_id }}
+        run: python scripts/publish_github_downloads.py "$ANDROID_RUN_ID" --incremental-windows --incremental-android

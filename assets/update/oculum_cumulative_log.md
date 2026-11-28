@@ -1,5 +1,12 @@
 # Registro cumulativo per i giocatori
 
+## Accesso Google e aggiornamenti Android — 28 novembre 2026
+
+- L’accesso Google avvia il browser anche quando il telefono segnala per un momento che la rete è assente. Se il ritorno fallisce o il tentativo è già stato usato, puoi ripartire dal pulsante di accesso. Oculum conserva i salvataggi locali e l’identità del profilo durante un tentativo fallito.
+- La preparazione della connessione a Supabase può terminare in background. I tentativi successivi condividono lo stesso avvio finché è in corso. Se lo storage ha restituito un errore, Oculum riprova senza cancellare il profilo.
+- Sulle installazioni Android da APK singolo, **Aggiorna Oculum** confronta l’APK installato con il manifesto della release. Quando può riusare parti già presenti, mostra il peso del nuovo download, verifica l’APK ricostruito e apre la conferma di Android. Il pacchetto intero resta una scelta esplicita quando il confronto è indisponibile.
+- Nuove tavole desktop Expressive Ink confermate per **Porta d’ombra** (B), **Regno sacro** (F) e **Guglie del temporale** (B).
+
 ## Aggiornamento Windows, Fight e regni — 28 novembre 2026
 
 - Su Windows l’aggiornamento confronta automaticamente i file installati con il manifesto GitHub della stessa edizione. Scarica fino a quattro file diversi in parallelo, riutilizza i download già verificati e salta i file identici anche se mancano versioni intermedie. Se il confronto è indisponibile, il pacchetto intero indica il proprio peso e richiede una scelta separata. Un download incrementale interrotto si può riprovare.

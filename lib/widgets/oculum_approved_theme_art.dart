@@ -111,6 +111,12 @@ const oculumApprovedThemeStoryAssets = <String, String>{
       'assets/oculum/theme_stories/webp/vtt_obsidian_grid_canon_20261128_f_77bc6eda.webp',
   'tidal_stained_glass':
       'assets/oculum/theme_stories/webp/tidal_stained_glass_canon_20261128_c_6189d08d.webp',
+  'shadow_gate_rank':
+      'assets/oculum/theme_stories/webp/shadow_gate_rank_canon_20261128_b_35118eac.webp',
+  'plane_sacro':
+      'assets/oculum/theme_stories/webp/plane_sacro_canon_20261128_f_63b1e598.webp',
+  'element_pack_fulmine':
+      'assets/oculum/theme_stories/webp/element_pack_fulmine_canon_20261128_b_27f34882.webp',
 };
 
 String? oculumApprovedThemeStoryAsset(String id) =>

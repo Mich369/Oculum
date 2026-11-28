@@ -8,7 +8,7 @@ const _openDialog = 'Apri aggiornamento';
 Future<bool? Function()> _mountUpdateDialog(
   WidgetTester tester, {
   bool incremental = false,
-  String? windowsFullSize,
+  String? fullArchiveSize,
 }) async {
   bool? confirmed;
   await tester.pumpWidget(
@@ -21,7 +21,7 @@ Future<bool? Function()> _mountUpdateDialog(
                 context,
                 description: 'Versione verificata per la prova.',
                 incremental: incremental,
-                windowsFullSize: windowsFullSize,
+                fullArchiveSize: fullArchiveSize,
               );
             },
             child: const Text(_openDialog),
@@ -53,33 +53,32 @@ void main() {
     expect(decision(), isTrue);
   });
 
-  testWidgets(
-    'Windows without a plan defaults to later, with an explicit ZIP',
-    (tester) async {
-      final decision = await _mountUpdateDialog(
-        tester,
-        windowsFullSize: '320.50 MB',
-      );
-      const fullLabel = 'Pacchetto intero (320.50 MB)';
-      final later = find.widgetWithText(TextButton, 'Dopo');
-      final full = find.widgetWithText(TextButton, fullLabel);
-      expect(later, findsOneWidget);
-      expect(full, findsOneWidget);
-      expect(tester.widget<TextButton>(later).autofocus, isTrue);
-      expect(tester.widget<TextButton>(full).autofocus, isFalse);
-      expect(find.byType(FilledButton), findsNothing);
+  testWidgets('Without a plan the full archive requires an explicit choice', (
+    tester,
+  ) async {
+    final decision = await _mountUpdateDialog(
+      tester,
+      fullArchiveSize: '320.50 MB',
+    );
+    const fullLabel = 'Pacchetto intero (320.50 MB)';
+    final later = find.widgetWithText(TextButton, 'Dopo');
+    final full = find.widgetWithText(TextButton, fullLabel);
+    expect(later, findsOneWidget);
+    expect(full, findsOneWidget);
+    expect(tester.widget<TextButton>(later).autofocus, isTrue);
+    expect(tester.widget<TextButton>(full).autofocus, isFalse);
+    expect(find.byType(FilledButton), findsNothing);
 
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pumpAndSettle();
-      expect(decision(), isFalse);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(decision(), isFalse);
 
-      await tester.tap(find.text(_openDialog));
-      await tester.pumpAndSettle();
-      await tester.tap(full);
-      await tester.pumpAndSettle();
-      expect(decision(), isTrue);
-    },
-  );
+    await tester.tap(find.text(_openDialog));
+    await tester.pumpAndSettle();
+    await tester.tap(full);
+    await tester.pumpAndSettle();
+    expect(decision(), isTrue);
+  });
 
   testWidgets('other platforms keep their normal confirmation', (tester) async {
     final decision = await _mountUpdateDialog(tester);

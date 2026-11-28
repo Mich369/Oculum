@@ -43,6 +43,7 @@ OculumIncrementalUpdateReference? _incrementalReference(
   final edition = switch (artifact) {
     'Oculum-Windows' => 'normal',
     'Oculum-Test-Windows' => 'test',
+    'Oculum-Android' => 'android',
     _ => null,
   };
   final raw = group['incremental'];
@@ -53,13 +54,20 @@ OculumIncrementalUpdateReference? _incrementalReference(
   final packages = entries.where(
     (entry) => entry['name'] == '$artifact-Folder',
   );
-  if (options.length != 1 || packages.length != 1) return null;
+  if (options.length != 1) return null;
   final option = options.single;
-  final package = packages.single;
+  final package = edition == 'android'
+      ? option['package']
+      : packages.length == 1
+      ? packages.single
+      : null;
+  if (package is! Map) return null;
   final base =
       'https://github.com/Mich369/Oculum/releases/download/oculum-build-$run';
   final url = '$base/$artifact-Incrementale.json';
-  final packageUrl = '$base/$artifact-Folder.zip';
+  final packageUrl = edition == 'android'
+      ? '$base/$artifact-Incrementale.apk'
+      : '$base/$artifact-Folder.zip';
   final bytes = option['bytes'];
   final packageBytes = package['bytes'];
   final hashPattern = RegExp(r'^sha256:[a-f0-9]{64}$');

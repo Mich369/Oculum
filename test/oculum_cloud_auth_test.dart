@@ -417,25 +417,28 @@ void main() {
     await backend.close();
   });
 
-  test('annullare durante il controllo rete evita di aprire Google', () async {
-    final connection = Completer<bool>();
-    final backend = _FakeAuthBackend();
-    addTearDown(backend.close);
-    final auth = OculumAuthService.forTesting(
-      backend: backend,
-      connectivityCheck: () => connection.future,
-    );
-    addTearDown(auth.dispose);
-    await auth.initialize();
+  test(
+    'annullare durante il controllo rete di Apple evita di aprire il browser',
+    () async {
+      final connection = Completer<bool>();
+      final backend = _FakeAuthBackend();
+      addTearDown(backend.close);
+      final auth = OculumAuthService.forTesting(
+        backend: backend,
+        connectivityCheck: () => connection.future,
+      );
+      addTearDown(auth.dispose);
+      await auth.initialize();
 
-    final attempt = auth.signInWithGoogle();
-    auth.cancelPendingSignIn();
-    connection.complete(true);
+      final attempt = auth.signInWithApple();
+      auth.cancelPendingSignIn();
+      connection.complete(true);
 
-    expect(await attempt, isFalse);
-    expect(backend.launchCount, 0);
-    expect(auth.state.errorMessage, contains('annullato'));
-  });
+      expect(await attempt, isFalse);
+      expect(backend.launchCount, 0);
+      expect(auth.state.errorMessage, contains('annullato'));
+    },
+  );
 
   test(
     'un esito del browser precedente lascia attivo il nuovo tentativo',
@@ -762,7 +765,7 @@ void main() {
     expect(auth.state.errorMessage, contains('tentativo di accesso'));
   });
 
-  test('assenza di rete mostra offline e non apre il browser', () async {
+  test('Apple mantiene il controllo offline prima del browser', () async {
     final backend = _FakeAuthBackend();
     final auth = OculumAuthService.forTesting(
       backend: backend,
@@ -770,11 +773,92 @@ void main() {
     );
     await auth.initialize();
 
-    expect(await auth.signInWithGoogle(), isFalse);
+    expect(await auth.signInWithApple(), isFalse);
     expect(auth.state.isOffline, isTrue);
     expect(backend.launchCount, 0);
     auth.dispose();
     await backend.close();
+  });
+
+  test(
+    'Google continua durante una segnalazione offline transitoria',
+    () async {
+      final backend = _FakeAuthBackend();
+      addTearDown(backend.close);
+      final auth = OculumAuthService.forTesting(
+        backend: backend,
+        connectivityCheck: () async => false,
+      );
+      addTearDown(auth.dispose);
+      await auth.initialize();
+
+      expect(await auth.signInWithGoogle(), isTrue);
+      expect(backend.launchCount, 1);
+      backend.emit(
+        const OculumBackendAuthEvent(
+          OculumBackendAuthEventType.signedIn,
+          user: OculumBackendUser(id: 'google-account', provider: 'google'),
+        ),
+      );
+      await pumpEventQueue();
+      expect(auth.state.userId, 'google-account');
+      expect(auth.state.isOffline, isFalse);
+    },
+  );
+
+  test('un ritorno Google già usato consente una nuova richiesta', () async {
+    final backend = _FakeAuthBackend();
+    addTearDown(backend.close);
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    addTearDown(auth.dispose);
+    await auth.initialize();
+    expect(await auth.signInWithGoogle(), isTrue);
+
+    const duplicate = AuthException(
+      'State has already been used',
+      code: 'flow_state_already_used',
+    );
+    backend.emitError(duplicate);
+    await pumpEventQueue();
+    expect(auth.isBusy, isFalse);
+    expect(auth.state.errorMessage, contains('già stato usato'));
+    expect(await auth.retryLastSignIn(), isTrue);
+
+    backend.emit(
+      const OculumBackendAuthEvent(
+        OculumBackendAuthEventType.signedIn,
+        user: OculumBackendUser(id: 'same-account', provider: 'google'),
+      ),
+    );
+    await pumpEventQueue();
+    backend.emitError(duplicate);
+    await pumpEventQueue();
+    expect(backend.launchCount, 2);
+    expect(backend.signOutCount, 0);
+    expect(auth.state.userId, 'same-account');
+    expect(auth.state.errorMessage, isNull);
+  });
+
+  test('un errore di rete al ritorno chiude il tentativo Google', () async {
+    final backend = _FakeAuthBackend();
+    addTearDown(backend.close);
+    final auth = OculumAuthService.forTesting(
+      backend: backend,
+      connectivityCheck: () async => true,
+    );
+    addTearDown(auth.dispose);
+    await auth.initialize();
+    expect(await auth.signInWithGoogle(), isTrue);
+
+    backend.emitError(const AuthException('Network request failed'));
+    await pumpEventQueue();
+    expect(auth.state.errorMessage, contains('servizio di accesso'));
+    expect(auth.state.isOffline, isFalse);
+    expect(auth.isBusy, isFalse);
+    expect(await auth.retryLastSignIn(), isTrue);
   });
 
   test('sessione persistita viene ripristinata all’avvio', () async {
